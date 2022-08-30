@@ -1,6 +1,6 @@
 import { Callout, DirectionalHint, FontWeights, Link, mergeStyleSets, MessageBar, MessageBarType, Panel, ProgressIndicator, Text } from '@fluentui/react';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { completedStates, Operation } from '../../../models/operation';
+import { completedStates, inProgressStates, Operation } from '../../../models/operation';
 import { OperationsContext } from '../../../contexts/OperationsContext';
 import { NotificationItem } from './NotificationItem';
 import { IconButton } from '@fluentui/react/lib/Button';
@@ -25,12 +25,15 @@ export const NotificationPanel: React.FunctionComponent = () => {
 
   return (
     <>
-      <IconButton id="tre-notification-btn" className='tre-notifications-button' iconProps={{ iconName: opsContext.operations.length > 0 ? 'Ringer' : 'Ringer' }} onClick={() => setIsOpen(true)} title="Notifications" ariaLabel="Notifications">
+      <IconButton id="tre-notification-btn" className='tre-notifications-button' iconProps={{ iconName: opsContext.operations.length > 0 ? 'Ringer' : 'Ringer' }} onClick={() => setIsOpen(true)} title="Notifications" ariaLabel="Notifications" />
 
-      </IconButton>
-      <span style={{ marginTop: -15, display:'block'}}>
+      {
+        opsContext.operations && opsContext.operations.filter((o:Operation) => inProgressStates.includes(o.status)).length > 0 &&
+        <span style={{ marginTop: -15, display:'block'}}>
         <ProgressIndicator barHeight={2} />
       </span>
+      }
+
       {
         showCallout &&
         <Callout
