@@ -1,11 +1,293 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/azureml/template_schema.json",
-    "type": "object",
-    "title": "Azure Machine Learning",
-    "description": "Installs Azure Machine Learning. Please be aware this template opens up additional firewall rules to enable Azure ML to function.",
-    "required": [
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/azureml/template_schema.json",
+  "type": "object",
+  "title": "Azure Machine Learning",
+  "description": "Installs Azure Machine Learning. Please be aware this template opens up additional firewall rules to enable Azure ML to function.",
+  "required": [],
+  "properties": {},
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "260421b3-7308-491f-b531-e007cdc0ff46",
+        "stepTitle": "Add network firewall rules for azureml",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_azureml",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureMachineLearning",
+                  "description": "Azure Machine Learning rules",
+                  "source_addresses": [
+                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
+                  ],
+                  "destination_addresses": [
+                    "AzureMachineLearning"
+                  ],
+                  "destination_ports": [
+                    "443",
+                    "8787",
+                    "18881"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "AzureActiveDirectory",
+                  "description": "Azure Active Directory",
+                  "source_addresses": [
+                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
+                  ],
+                  "destination_addresses": [
+                    "AzureActiveDirectory"
+                  ],
+                  "destination_ports": [
+                    "443",
+                    "80"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "AzureML_Dependancies",
+                  "description": "AzureML Dependancies",
+                  "source_addresses": [
+                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
+                  ],
+                  "destination_addresses": [
+                    "AzureActiveDirectory",
+                    "AzureResourceManager",
+                    "MicrosoftContainerRegistry"
+                  ],
+                  "destination_ports": [
+                    "443"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "AzureML_Storage",
+                  "description": "AzureML Storage",
+                  "source_addresses": [
+                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
+                  ],
+                  "destination_addresses": [
+                    "{{ resource.properties.storage_tag }}"
+                  ],
+                  "destination_ports": [
+                    "443",
+                    "445"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_azureml",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureML",
+                  "description": "AzureML rules",
+                  "source_addresses": [
+                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
+                  ],
+                  "target_fqdns": [
+                    "aadcdn.msftauth.net",
+                    "ml.azure.com"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
     ],
-    "properties": {
-    }
+    "upgrade": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "260421b3-7308-491f-b531-e007cdc0ff47",
+        "stepTitle": "Add network firewall rules for azureml",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_azureml",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureMachineLearning",
+                  "description": "Azure Machine Learning rules",
+                  "source_addresses": [
+                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
+                  ],
+                  "destination_addresses": [
+                    "AzureMachineLearning"
+                  ],
+                  "destination_ports": [
+                    "443",
+                    "8787",
+                    "18881"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "AzureActiveDirectory",
+                  "description": "Azure Active Directory",
+                  "source_addresses": [
+                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
+                  ],
+                  "destination_addresses": [
+                    "AzureActiveDirectory"
+                  ],
+                  "destination_ports": [
+                    "443",
+                    "80"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "AzureML_Dependancies",
+                  "description": "AzureML Dependancies",
+                  "source_addresses": [
+                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
+                  ],
+                  "destination_addresses": [
+                    "AzureActiveDirectory",
+                    "AzureResourceManager",
+                    "MicrosoftContainerRegistry"
+                  ],
+                  "destination_ports": [
+                    "443"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "AzureML_Storage",
+                  "description": "AzureML Storage",
+                  "source_addresses": [
+                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
+                  ],
+                  "destination_addresses": [
+                    "{{ resource.properties.storage_tag }}"
+                  ],
+                  "destination_ports": [
+                    "443",
+                    "445"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_azureml",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureML",
+                  "description": "AzureML rules",
+                  "source_addresses": [
+                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
+                  ],
+                  "target_fqdns": [
+                    "aadcdn.msftauth.net",
+                    "ml.azure.com"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "260421b3-7308-491f-b531-e007cdc0ff48",
+        "stepTitle": "Add network firewall rules for azureml",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_azureml"
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_azureml"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ]
+  }
 }
