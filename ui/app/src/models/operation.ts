@@ -13,7 +13,7 @@ export interface Operation {
     updatedWhen: number,
     user: User,
     steps?: Array<OperationStep>,
-    dismiss?: Boolean // virtual prop
+    dismiss?: Boolean // UI-only prop, not fed from the API
 }
 
 export interface OperationStep {

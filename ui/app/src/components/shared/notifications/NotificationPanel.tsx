@@ -18,7 +18,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
 
   useEffect(() => {
     const loadAllOps = async () => {
-      let opsToAdd = (await apiCall(`${ApiEndpoint.Operations}/my`, HttpMethod.Get)).operations as Array<Operation>;
+      let opsToAdd = (await apiCall(`${ApiEndpoint.Operations}`, HttpMethod.Get)).operations as Array<Operation>;
       opsWriteContext.current.addOperations(opsToAdd);
     };
 

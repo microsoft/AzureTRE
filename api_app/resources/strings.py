@@ -4,7 +4,7 @@ PONG = "pong"
 API_GET_HEALTH_STATUS = "Get health status"
 API_MIGRATE_DATABASE = "Migrate documents in the database"
 
-API_GET_MY_OPERATIONS = "Get Operations the current user has initiated"
+API_GET_MY_OPERATIONS = "Get Operations that the current user has initiated"
 API_GET_ALL_WORKSPACES = "Get all workspaces"
 API_GET_WORKSPACE_BY_ID = "Get workspace by Id"
 API_CREATE_WORKSPACE = "Create a workspace"
