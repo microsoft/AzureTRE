@@ -91,10 +91,10 @@ async def create_airlock_review(airlock_review_input: AirlockReviewInCreate, air
 @airlock_workspace_router.get("/workspaces/{workspace_id}/requests/{airlock_request_id}/link",
                               status_code=status.HTTP_200_OK, response_model=AirlockRequestTokenInResponse,
                               name=strings.API_AIRLOCK_REQUEST_LINK,
-                              dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
+                              dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 async def get_airlock_container_link(workspace=Depends(get_deployed_workspace_by_id_from_path),
                                      airlock_request=Depends(get_airlock_request_by_id_from_path),
-                                     user=Depends(get_current_workspace_owner_or_researcher_user)) -> AirlockRequestTokenInResponse:
+                                     user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)) -> AirlockRequestTokenInResponse:
     validate_user_allowed_to_access_storage_account(user, airlock_request)
     validate_request_status(airlock_request)
     account_name: str = get_account_by_request(airlock_request, workspace)
