@@ -11,9 +11,8 @@ import { Workspace } from './models/workspace';
 import { AppRolesContext } from './contexts/AppRolesContext';
 import { WorkspaceContext } from './contexts/WorkspaceContext';
 import { GenericErrorBoundary } from './components/shared/GenericErrorBoundary';
-import { NotificationsContext } from './contexts/NotificationsContext';
-import { Operation } from './models/operation';
-import { ResourceUpdate } from './models/resource';
+import { OperationsContext } from './contexts/OperationsContext';
+import { completedStates, Operation } from './models/operation';
 import { HttpMethod, ResultType, useAuthApiCall } from './hooks/useAuthApiCall';
 import { ApiEndpoint } from './models/apiEndpoints';
 import { CreateUpdateResource } from './components/shared/create-update-resource/CreateUpdateResource';
@@ -25,7 +24,6 @@ export const App: React.FunctionComponent = () => {
   const [selectedWorkspace, setSelectedWorkspace] = useState({} as Workspace);
   const [workspaceRoles, setWorkspaceRoles] = useState([] as Array<string>);
   const [operations, setOperations] = useState([] as Array<Operation>);
-  const [resourceUpdates, setResourceUpdates] = useState([] as Array<ResourceUpdate>);
 
   const [createFormOpen, setCreateFormOpen] = useState(false);
   const [createFormResource, setCreateFormResource] = useState({ resourceType: ResourceType.Workspace } as CreateFormResource);
@@ -53,13 +51,13 @@ export const App: React.FunctionComponent = () => {
                 setCreateFormOpen(true);
               }
             }} >
-              <NotificationsContext.Provider value={{
+              <OperationsContext.Provider value={{
                 operations: operations,
                 addOperations: (ops: Array<Operation>) => {
                   let stateOps = [...operations];
                   ops.forEach((op: Operation) => {
                     let i = stateOps.findIndex((f: Operation) => f.id === op.id);
-                    if (i > 0) {
+                    if (i !== -1) {
                       stateOps.splice(i, 1, op);
                     } else {
                       stateOps.push(op);
@@ -67,18 +65,15 @@ export const App: React.FunctionComponent = () => {
                   });
                   setOperations(stateOps);
                 },
-                resourceUpdates: resourceUpdates,
-                addResourceUpdate: (r: ResourceUpdate) => {
-                  let updates = [...resourceUpdates];
-                  let i = updates.findIndex((f: ResourceUpdate) => f.resourceId === r.resourceId);
-                  if (i > 0) {
-                    updates.splice(i, 1, r);
-                  } else {
-                    updates.push(r);
-                  }
-                  setResourceUpdates(updates);
-                },
-                clearUpdatesForResource: (resourceId: string) => { let updates = [...resourceUpdates].filter((r: ResourceUpdate) => r.resourceId !== resourceId); setResourceUpdates(updates); }
+                dismissCompleted: () => {
+                  let stateOps = [...operations];
+                  stateOps.forEach((o:Operation) => {
+                    if(completedStates.includes(o.status)) {
+                      o.dismiss = true;
+                    }
+                  })
+                  setOperations(stateOps);
+                }
               }}>
                 <AppRolesContext.Provider value={{
                   roles: appRoles,
@@ -104,9 +99,9 @@ export const App: React.FunctionComponent = () => {
                           <Route path="/workspaces/:workspaceId//*" element={
                             <WorkspaceContext.Provider value={{
                               roles: workspaceRoles,
-                              setRoles: (roles: Array<string>) => { console.warn("Workspace roles", roles); setWorkspaceRoles(roles) },
+                              setRoles: (roles: Array<string>) => { console.info("Workspace roles", roles); setWorkspaceRoles(roles) },
                               workspace: selectedWorkspace,
-                              setWorkspace: (w: Workspace) => { console.warn("Workspace set", w); setSelectedWorkspace(w) },
+                              setWorkspace: (w: Workspace) => { console.info("Workspace set", w); setSelectedWorkspace(w) },
                               workspaceApplicationIdURI: selectedWorkspace.properties?.scope_id
                             }}>
                               <WorkspaceProvider />
@@ -117,7 +112,7 @@ export const App: React.FunctionComponent = () => {
                     </Stack.Item>
                   </Stack>
                 </AppRolesContext.Provider>
-              </NotificationsContext.Provider>
+              </OperationsContext.Provider>
             </CreateUpdateResourceContext.Provider>
           </MsalAuthenticationTemplate>
         } />
