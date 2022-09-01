@@ -7,6 +7,7 @@ import { AirlockRequest } from '../../../models/airlock';
 import moment from 'moment';
 import { Route, Routes, useNavigate } from 'react-router-dom';
 import { AirlockViewRequest } from './AirlockViewRequest';
+import { LoadingState } from '../../../models/loadingState';
 
 interface AirlockProps {
 }
@@ -14,7 +15,7 @@ interface AirlockProps {
 export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockProps) => {
   const [airlockRequests, setAirlockRequests] = useState([] as AirlockRequest[]);
   const [requestColumns, setRequestColumns] = useState([] as IColumn[]);
-  const [loadingState, setLoadingState] = useState('loading');
+  const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
   const theme = getTheme();
@@ -39,9 +40,9 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
         // Order by updatedWhen for initial view
         requests.sort((a, b) => a.updatedWhen < b.updatedWhen ? 1 : -1);
         setAirlockRequests(requests);
-        setLoadingState('ok');
+        setLoadingState(LoadingState.Ok);
       } catch (error) {
-        setLoadingState('error');
+        setLoadingState(LoadingState.Error);
       }
     }
     getAirlockRequests();
@@ -149,7 +150,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
 
   let requestsList;
   switch (loadingState) {
-    case 'ok':
+    case LoadingState.Ok:
       if (airlockRequests.length > 0) {
         requestsList = (
           <DetailsList
@@ -170,7 +171,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
         )
       }
       break;
-    case 'error':
+    case LoadingState.Error:
       requestsList = (
         <MessageBar
           messageBarType={MessageBarType.error}

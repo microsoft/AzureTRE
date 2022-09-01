@@ -129,7 +129,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
         }
         <div style={{textAlign: 'end'}}>
           {
-            request.status !== AirlockRequestStatus.Cancelled && <DefaultButton onClick={() => setHideCancelDialog(false)} styles={cancelButtonStyles}>Cancel</DefaultButton>
+            request.status !== AirlockRequestStatus.Cancelled && <DefaultButton onClick={() => setHideCancelDialog(false)} styles={cancelButtonStyles}>Cancel Request</DefaultButton>
           }
           {
             request.status === AirlockRequestStatus.Draft && <PrimaryButton onClick={() => setHideSubmitDialog(false)}>Submit</PrimaryButton>
@@ -143,8 +143,9 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
   return (
     <>
       <Panel
-        headerText="View request"
+        headerText="View Airlock Request"
         isOpen={true}
+        isLightDismiss={true}
         onDismiss={dismissPanel}
         onRenderFooterContent={renderFooter}
         isFooterAtBottom={true}
@@ -275,8 +276,8 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           hidden={hideCancelDialog}
           onDismiss={() => setHideCancelDialog(true)}
           dialogContentProps={{
-            title: 'Cancel request?',
-            subText: 'Are you sure you want to cancel this request?',
+            title: 'Cancel Airlock Request?',
+            subText: 'Are you sure you want to cancel this airlock request?',
           }}
         >
           {
@@ -286,7 +287,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
             cancelling
             ? <Spinner label="Cancelling..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
             : <DialogFooter>
-              <PrimaryButton onClick={cancelRequest} text="Cancel" styles={cancelButtonStyles} />
+              <PrimaryButton onClick={cancelRequest} text="Cancel Request" styles={cancelButtonStyles} />
               <DefaultButton onClick={() => setHideCancelDialog(true)} text="Back" />
             </DialogFooter>
           }

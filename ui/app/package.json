@@ -6,7 +6,6 @@
     "@azure/msal-browser": "^2.24.0",
     "@azure/msal-react": "^1.4.0",
     "@fluentui/react": "^8.68.2",
-    "@fluentui/react-northstar": "^0.64.0",
     "@rjsf/core": "^4.2.0",
     "@rjsf/fluent-ui": "^4.2.0",
     "@testing-library/jest-dom": "^5.16.1",

@@ -18,6 +18,7 @@ import { ApiEndpoint } from './models/apiEndpoints';
 import { CreateUpdateResource } from './components/shared/create-update-resource/CreateUpdateResource';
 import { CreateUpdateResourceContext } from './contexts/CreateUpdateResourceContext';
 import { CreateFormResource, ResourceType } from './models/resourceType';
+import { Footer } from './components/shared/Footer';
 
 export const App: React.FunctionComponent = () => {
   const [appRoles, setAppRoles] = useState([] as Array<string>);
@@ -109,6 +110,9 @@ export const App: React.FunctionComponent = () => {
                           } />
                         </Routes>
                       </GenericErrorBoundary>
+                    </Stack.Item>
+                    <Stack.Item grow>
+                      <Footer />
                     </Stack.Item>
                   </Stack>
                 </AppRolesContext.Provider>
