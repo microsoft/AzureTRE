@@ -70,11 +70,13 @@ OK = "OK"
 NOT_OK = "Not OK"
 COSMOS_DB = "Cosmos DB"
 STATE_STORE_ENDPOINT_NOT_RESPONDING = "State Store endpoint is not responding"
+STATE_STORE_ENDPOINT_NOT_ACCESSIBLE = "State Store endpoint is not accessible"
 UNSPECIFIED_ERROR = "Unspecified error"
 
 # Service bus status
 SERVICE_BUS = "Service Bus"
 SERVICE_BUS_NOT_RESPONDING = "Service Bus is not responding"
+SERVICE_BUS_AUTHENTICATION_ERROR = "Cannot authenticate Service Bus"
 
 # Resource processor status
 RESOURCE_PROCESSOR = "Resource Processor"

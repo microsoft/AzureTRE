@@ -20,7 +20,7 @@ if [[ $(az group list --output json --query "[?name=='${core_rg_name}'] | length
   exit 0
 fi
 
-az config set extension.use_dynamic_install=yes_without_prompt
+sudo az config set extension.use_dynamic_install=yes_without_prompt
 az --version
 
 if [[ "$1" == *"start"* ]]; then
