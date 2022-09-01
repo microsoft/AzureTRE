@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { DefaultPalette, IStackStyles, MessageBar, MessageBarType, Stack } from '@fluentui/react';
 import './App.scss';
 import { TopNav } from './components/shared/TopNav';
-import { Footer } from './components/shared/Footer';
 import { Routes, Route } from 'react-router-dom';
 import { RootLayout } from './components/root/RootLayout';
 import { WorkspaceProvider } from './components/workspaces/WorkspaceProvider';
@@ -19,6 +18,7 @@ import { ApiEndpoint } from './models/apiEndpoints';
 import { CreateUpdateResource } from './components/shared/create-update-resource/CreateUpdateResource';
 import { CreateUpdateResourceContext } from './contexts/CreateUpdateResourceContext';
 import { CreateFormResource, ResourceType } from './models/resourceType';
+import { Footer } from './components/shared/Footer';
 
 export const App: React.FunctionComponent = () => {
   const [appRoles, setAppRoles] = useState([] as Array<string>);
