@@ -1,4 +1,4 @@
-import { DefaultPalette, getTheme, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
+import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
 import moment from "moment";
 import React from "react";
 import { Resource } from "../../models/resource";
@@ -94,5 +94,3 @@ export const ResourcePropertyPanel: React.FunctionComponent<ResourcePropertyPane
       </> : <></>
   );
 };
-
-const theme = getTheme();

@@ -4,7 +4,7 @@ import { CommandBar, IconButton, IContextualMenuItem, IContextualMenuProps } fro
 import { RoleName, WorkspaceRoleName } from '../../models/roleNames';
 import { SecuredByRole } from './SecuredByRole';
 import { ResourceType } from '../../models/resourceType';
-import { NotificationsContext } from '../../contexts/NotificationsContext';
+import { OperationsContext } from '../../contexts/OperationsContext';
 import { HttpMethod, useAuthApiCall } from '../../hooks/useAuthApiCall';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { ApiEndpoint } from '../../models/apiEndpoints';
@@ -30,7 +30,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   const [showDelete, setShowDelete] = useState(false);
   const [resourceTemplate, setResourceTemplate] = useState({} as ResourceTemplate);
   const createFormCtx = useContext(CreateUpdateResourceContext);
-  const opsWriteContext = useRef(useContext(NotificationsContext)); // useRef to avoid re-running a hook on context write
+  const opsWriteContext = useRef(useContext(OperationsContext)); // useRef to avoid re-running a hook on context write
   const [parentResource, setParentResource] = useState({} as WorkspaceService | Workspace);
 
   // get the resource template

@@ -8,7 +8,7 @@ import config from '../../../config.json';
 
 interface NotificationPollerProps {
   notification: TRENotification,
-  updateNotification: (n: TRENotification) => void
+  updateOperation: (n: Operation) => void
 }
 
 export const NotificationPoller: React.FunctionComponent<NotificationPollerProps> = (props: NotificationPollerProps) => {
@@ -21,7 +21,7 @@ export const NotificationPoller: React.FunctionComponent<NotificationPollerProps
     // check if any fields have changed - ie the json is any different. we don't care _what_ has changed, just that something has
     if (JSON.stringify(op) !== JSON.stringify(props.notification.operation)) {
       props.notification.operation = op;
-      props.updateNotification(props.notification);
+      props.updateOperation(op);
     }
   }, config.pollingDelayMilliseconds);
 

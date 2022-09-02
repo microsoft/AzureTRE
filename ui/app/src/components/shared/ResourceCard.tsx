@@ -24,7 +24,6 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   const [loading] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const workspaceCtx = useContext(WorkspaceContext);
-
   const latestUpdate = useComponentManager(
     props.resource,
     (r: Resource) => { props.onUpdate(r) },
@@ -127,7 +126,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                   }
                 </Stack.Item>
                 <Stack.Item style={{ paddingTop: 2, paddingLeft: 10 }}>
-                  <StatusBadge resourceId={props.resource.id} status={latestUpdate.operation ? latestUpdate.operation?.status : props.resource.deploymentStatus} />
+                  <StatusBadge resourceId={props.resource.id} status={latestUpdate.operation?.status ? latestUpdate.operation.status : props.resource.deploymentStatus} />
                 </Stack.Item>
               </Stack>
             </Stack.Item>
