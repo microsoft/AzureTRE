@@ -1,38 +1,49 @@
-import { useContext, useEffect, useRef, useState } from "react";
-import { NotificationsContext } from "../contexts/NotificationsContext";
+import { useContext, useEffect, useState } from "react";
+import { OperationsContext } from "../contexts/OperationsContext";
 import { WorkspaceContext } from "../contexts/WorkspaceContext";
+import { completedStates, inProgressStates, Operation } from "../models/operation";
 import { ResourceUpdate, ComponentAction, getResourceFromResult, Resource } from "../models/resource";
+import { ResourceType } from "../models/resourceType";
 import { HttpMethod, useAuthApiCall } from "./useAuthApiCall";
 
 export const useComponentManager = (resource: Resource, onUpdate: (r: Resource) => void, onRemove: (r: Resource) => void) => {
-  const opsReadContext = useContext(NotificationsContext);
-  const opsWriteContext = useRef(useContext(NotificationsContext));
-  const [latestUpdate, setLatestUpdate] = useState({} as ResourceUpdate);
+  const opsReadContext = useContext(OperationsContext);
+  const [latestUpdate, setLatestUpdate] = useState({ componentAction: ComponentAction.None, operation: {} as Operation } as ResourceUpdate);
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
 
-  // set the latest component action
   useEffect(() => {
-    let updates = opsReadContext.resourceUpdates.filter((r: ResourceUpdate) => { return r.resourceId === resource.id });
-    setLatestUpdate((updates && updates.length > 0) ?
-      updates[updates.length - 1] :
-      { componentAction: ComponentAction.None } as ResourceUpdate);
-  }, [opsReadContext.resourceUpdates, resource.id])
+    const checkOps = async () => {
+      let ops = opsReadContext.operations;
+      let resourceOps = ops.filter((o: Operation) => o.resourceId === resource.id);
+      if (resourceOps && resourceOps.length > 0){
+        let latestOp = resourceOps[resourceOps.length - 1];
 
-  // act on component action changes
-  useEffect(() => {
-    const checkForReload = async () => {
-      if (latestUpdate.componentAction === ComponentAction.Reload) {
-        let result = await apiCall(resource.resourcePath, HttpMethod.Get, workspaceCtx.workspaceApplicationIdURI);
-        opsWriteContext.current.clearUpdatesForResource(resource.id);
-        onUpdate(getResourceFromResult(result));
-      } else if (latestUpdate.componentAction === ComponentAction.Remove) {
-        opsWriteContext.current.clearUpdatesForResource(resource.id);
-        onRemove(resource);
+        // only act when a status has changed
+        if (latestOp.status === latestUpdate.operation.status) return;
+
+        if (inProgressStates.includes(latestOp.status)) {
+          setLatestUpdate({componentAction:ComponentAction.Lock, operation: latestOp});
+        } else if (completedStates.includes(latestOp.status)) {
+          if (latestOp.status === "deleted"){
+            onRemove(resource);
+          } else {
+            setLatestUpdate({componentAction:ComponentAction.Reload, operation: latestOp});
+
+            // if it's transitioned from an in-progress to a completed state, we need to reload it
+            if (inProgressStates.includes(latestUpdate.operation.status)) {
+              let result = await apiCall(resource.resourcePath, HttpMethod.Get, resource.resourceType === ResourceType.Workspace ? undefined : workspaceCtx.workspaceApplicationIdURI);
+              onUpdate(getResourceFromResult(result));
+            }
+          }
+        } else {
+          setLatestUpdate({componentAction:ComponentAction.None, operation: latestOp});
+        }
       }
     }
-    checkForReload();
-  }, [apiCall, latestUpdate, workspaceCtx.workspaceApplicationIdURI, resource, onUpdate, onRemove, resource.resourcePath]);
+
+    checkOps();
+  }, [opsReadContext.operations, apiCall, latestUpdate.operation.status, onRemove, onUpdate, resource, workspaceCtx.workspaceApplicationIdURI]);
 
   return latestUpdate;
 }

@@ -8,7 +8,7 @@ import { AnimationClassNames, getTheme, mergeStyles } from '@fluentui/react';
 export const Footer: React.FunctionComponent = () => {
   return (
       <div className={contentClass}>
-        Azure TRE
+        Azure Trusted Research Environment
       </div>
   );
 };

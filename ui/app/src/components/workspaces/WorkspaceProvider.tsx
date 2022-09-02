@@ -15,6 +15,7 @@ import { Workspace } from '../../models/workspace';
 import { SharedService } from '../../models/sharedService';
 import { SharedServices } from '../shared/SharedServices';
 import { SharedServiceItem } from '../shared/SharedServiceItem';
+import { Airlock } from '../shared/airlock/Airlock';
 
 export const WorkspaceProvider: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
@@ -130,6 +131,9 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                     } />
                     <Route path="shared-services/:sharedServiceId/*" element={
                       <SharedServiceItem readonly={true} />
+                    } />
+                    <Route path="requests/*" element={
+                      <Airlock/>
                     } />
                   </Routes>
                 </Stack.Item>
