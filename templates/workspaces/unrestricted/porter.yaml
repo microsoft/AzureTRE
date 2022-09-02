@@ -135,7 +135,6 @@ mixins:
   - exec
   - terraform:
       clientVersion: 1.1.7
-      initFile: providers.tf
   - az
 
 install:

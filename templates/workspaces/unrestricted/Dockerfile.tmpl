@@ -9,6 +9,12 @@ RUN  apt-get update \
   && apt-get install jq ca-certificates curl -y \
   && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
+WORKDIR $BUNDLE_DIR
+
+RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/refs/tags/v${AZURE_TRE_VERSION}.tar.gz" \
+  && tar -xzf azuretre.tar.gz "AzureTRE-${AZURE_TRE_VERSION}/templates/workspaces/base"  --strip-components=4 --skip-old-files \
+  && rm -rf azuretre.tar.gz
+
 # This is a template Dockerfile for the bundle's invocation image
 # You can customize it to use different base images, install tools and copy configuration files.
 #
@@ -26,9 +32,4 @@ RUN  apt-get update \
 
 COPY . $BUNDLE_DIR
 
-WORKDIR $BUNDLE_DIR
 
-RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/refs/tags/v${AZURE_TRE_VERSION}.tar.gz" \
-  && tar -xzf azuretre.tar.gz "AzureTRE-${AZURE_TRE_VERSION}/templates/workspaces/base"  --strip-components=4 --skip-old-files \
-  && tar -xzf azuretre.tar.gz "AzureTRE-${AZURE_TRE_VERSION}/templates/workspaces/base/terraform/providers.tf" --strip-components=4 --overwrite \
-  && rm -rf azuretre.tar.gz
