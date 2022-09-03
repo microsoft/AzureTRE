@@ -20,7 +20,7 @@ data "azurerm_role_definition" "azure_ml_data_scientist" {
 }
 
 resource "azurerm_role_assignment" "app_role_members_aml_data_sceintist" {
-  for_each = split("\n",data.external.app_role_members.result)
+  for_each = split("\n",data.external.app_role_members.result.principals)
   scope = data.external.app_role_members.id
   role_definition_id = data.azurerm_role_definition.azure_ml_data_scientist.id
   principal_id = each.value
