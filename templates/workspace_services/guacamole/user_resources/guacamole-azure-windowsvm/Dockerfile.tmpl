@@ -2,6 +2,9 @@ FROM debian:buster-slim
 
 ARG BUNDLE_DIR
 
+# Disable Terraform checkpoint
+ENV CHECKPOINT_DISABLE=1
+
 # This is a template Dockerfile for the bundle's invocation image
 # You can customize it to use different base images, install tools and copy configuration files.
 #
@@ -22,4 +25,5 @@ COPY . $BUNDLE_DIR
 # Remove when available from https://github.com/getporter/terraform-mixin/issues/90
 WORKDIR $BUNDLE_DIR/terraform
 RUN terraform init -backend=false \
+  && rm -fr $BUNDLE_DIR/terraform/.terraform/providers \
   && terraform providers mirror /usr/local/share/terraform/plugins
