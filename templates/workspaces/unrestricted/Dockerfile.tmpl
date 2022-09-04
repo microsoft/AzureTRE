@@ -32,4 +32,6 @@ RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/r
 
 COPY . $BUNDLE_DIR
 
+RUN terraform init -backend=false \
+  && terraform providers mirror /usr/local/share/terraform/plugins
 
