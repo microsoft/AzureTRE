@@ -8,6 +8,9 @@ RUN apt-get update && \
     apt-get install -y jq="1.5+dfsg-2+b1" --no-install-recommends && \
     apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
+# Disable Terraform checkpoint
+ENV CHECKPOINT_DISABLE=1
+
 # This is a template Dockerfile for the bundle's invocation image
 # You can customize it to use different base images, install tools and copy configuration files.
 #
@@ -28,4 +31,5 @@ COPY . $BUNDLE_DIR
 # Remove when available from https://github.com/getporter/terraform-mixin/issues/90
 WORKDIR $BUNDLE_DIR/terraform
 RUN terraform init -backend=false \
+  && rm -fr $BUNDLE_DIR/terraform/.terraform/providers \
   && terraform providers mirror /usr/local/share/terraform/plugins
