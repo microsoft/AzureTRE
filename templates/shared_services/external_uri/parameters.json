@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0.0-DRAFT",
+  "name": "base",
+  "created": "2021-06-04T13:37:29.5071039+03:00",
+  "modified": "2021-06-04T13:37:29.5071039+03:00",
+  "parameters": [
+    {
+      "name": "connection_uri",
+      "source": {
+        "env": "CONNECTION_URI"
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/certs/template_schema.json",
+  "type": "object",
+  "title": "External URI",
+  "description": "Create a shared service that is solely a link to an external URI",
+  "required": [
+    "connection_uri"
+  ],
+  "properties": {
+    "connection_uri": {
+      "$id": "#/properties/connection_uri",
+      "type": "string",
+      "title": "External URL",
+      "description": "The external URL for the service"
+    }
+  }
+}
