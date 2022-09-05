@@ -161,7 +161,9 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, mess
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
     porter_command = await build_porter_command(config, message_logger_adapter, msg_body, is_custom_action)
+    message_logger_adapter.debug("Starting to run porter execution command...")
     returncode, _, err = await run_porter(porter_command, message_logger_adapter, config)
+    message_logger_adapter.debug("Finished running porter execution command.")
 
     # Handle command output
     if returncode != 0:
@@ -191,7 +193,9 @@ async def get_porter_outputs(msg_body: dict, message_logger_adapter: logging.Log
     Get outputs JSON from a Porter command
     """
     porter_command = await build_porter_command_for_outputs(msg_body)
+    message_logger_adapter.debug("Starting to run porter output command...")
     returncode, stdout, err = await run_porter(porter_command, message_logger_adapter, config)
+    message_logger_adapter.debug("Finished running porter output command.")
 
     if returncode != 0:
         error_message = "Error context message = " + " ".join(err.split('\n'))
