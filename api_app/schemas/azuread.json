@@ -18,12 +18,6 @@
       "title": "Application (Client) Secret",
       "description": "The AAD Application Registration secret for the workspace. Leave blank if using `auto_create` above. This value will be stored in the Workspace Key Vault.",
       "sensitive": true
-    },
-    "create_aad_groups": {
-      "type": "boolean",
-      "title": "Create AAD Groups for each workspace role",
-      "description": "Create AAD Groups for the workspace roles, requires `auto_create`. If this is set to true, the workspace will create new AAD Groups.",
-      "default": false
     }
   }
 }
