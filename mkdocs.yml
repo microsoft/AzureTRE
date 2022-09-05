@@ -74,6 +74,7 @@ nav:
       - tre-templates/index.md
       - Workspaces:
           - Base: tre-templates/workspaces/base.md
+          - Unrestricted: tre-templates/workspaces/unrestricted.md
       - Workspace Services:
           - Azure ML: tre-templates/workspace-services/azure-ml.md
           - Gitea: tre-templates/workspace-services/gitea.md
