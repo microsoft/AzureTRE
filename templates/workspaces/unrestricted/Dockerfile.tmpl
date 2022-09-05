@@ -6,7 +6,7 @@ ARG BUNDLE_DIR
 ARG AZURE_TRE_VERSION="0.4.2"
 
 RUN  apt-get update \
-  && apt-get install jq ca-certificates curl -y \
+  && apt-get install --no-install-recommends jq ca-certificates curl -y \
   && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 WORKDIR $BUNDLE_DIR
