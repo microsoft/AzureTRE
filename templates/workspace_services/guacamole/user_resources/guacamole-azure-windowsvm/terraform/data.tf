@@ -22,7 +22,7 @@ data "azurerm_key_vault" "ws" {
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
-data "azurerm_app_service" "guacamole" {
+data "azurerm_linux_web_app" "guacamole" {
   name                = "guacamole-${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_parent_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
