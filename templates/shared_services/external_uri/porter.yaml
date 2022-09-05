@@ -27,8 +27,8 @@ install:
       arguments:
         - "{{ bundle.parameters.connection_uri }}"
       outputs:
-      - name: connection_uri
-        regex: "(.*)"
+        - name: connection_uri
+          regex: "(.*)"
 
 upgrade:
   - exec:
@@ -37,8 +37,8 @@ upgrade:
       arguments:
         - "{{ bundle.parameters.connection_uri }}"
       outputs:
-      - name: connection_uri
-        regex: "(.*)"
+        - name: connection_uri
+          regex: "(.*)"
 
 uninstall:
   - exec:
@@ -46,4 +46,3 @@ uninstall:
       command: echo
       arguments:
         - "This shared service does not have anythign to uninstall"
-
