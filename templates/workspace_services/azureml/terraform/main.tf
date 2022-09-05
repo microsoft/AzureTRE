@@ -45,7 +45,7 @@ resource "azapi_resource" "aml_workspace" {
       description                      = var.description
       hbiWorkspace                     = true
       keyVault                         = data.azurerm_key_vault.ws.id
-      publicNetworkAccess              = "Disabled"
+      publicNetworkAccess              = var.is_exposed_externally ? "Enabled" : "Disabled"
       storageAccount                   = azurerm_storage_account.aml.id
       v1LegacyMode                     = false
     }

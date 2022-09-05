@@ -9,3 +9,6 @@ variable "arm_client_id" {}
 variable "arm_client_secret" {}
 variable "display_name" {}
 variable "description" {}
+variable "is_exposed_externally" {
+  type = bool
+}
