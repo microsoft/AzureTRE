@@ -1,0 +1,37 @@
+# We need azurecli 2.37+ which doesn't exist for strech so the minimum is buster
+FROM debian:buster-slim
+
+ARG BUNDLE_DIR
+
+ARG AZURE_TRE_VERSION="0.4.2"
+
+RUN  apt-get update \
+  && apt-get install --no-install-recommends jq ca-certificates curl -y \
+  && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+
+WORKDIR $BUNDLE_DIR
+
+RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/refs/tags/v${AZURE_TRE_VERSION}.tar.gz" \
+  && tar -xzf azuretre.tar.gz "AzureTRE-${AZURE_TRE_VERSION}/templates/workspaces/base"  --strip-components=4 --skip-old-files \
+  && rm -rf azuretre.tar.gz
+
+# This is a template Dockerfile for the bundle's invocation image
+# You can customize it to use different base images, install tools and copy configuration files.
+#
+# Porter will use it as a template and append lines to it for the mixins
+# and to set the CMD appropriately for the CNAB specification.
+#
+# Add the following line to porter.yaml to instruct Porter to use this template
+# dockerfile: Dockerfile.tmpl
+
+# You can control where the mixin's Dockerfile lines are inserted into this file by moving "# PORTER_MIXINS" line
+# another location in this file. If you remove that line, the mixins generated content is appended to this file.
+# PORTER_MIXINS
+
+# Use the BUNDLE_DIR build argument to copy files into the bundle
+
+COPY . $BUNDLE_DIR
+
+RUN terraform init -backend=false \
+  && terraform providers mirror /usr/local/share/terraform/plugins
+
