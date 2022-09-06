@@ -27,9 +27,9 @@ To get started with AzureTRE follow the next steps:
 
 1. Follow the steps in this [Github templates guide](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template) to set up the repo.
 1. Having the project setup in your account, follow the next steps and guides to setup and extend AzureTRE in your environment:
-    - [Local development](docs/using-tre/local-development/index.md)
-    - Setup [CI/CD pipelines](docs/using-tre/pipelines/index.md)
-    - Add your [custom templates](docs/using-tre/templates/index.md)
+    - [Local Development](local-development/index.md)
+    - Setup [CI/CD pipelines](pipelines/index.md)
+    - Add your [custom templates](templates/index.md)
 
 ## How to Contribute to our Documentation
 
