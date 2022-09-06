@@ -17,6 +17,7 @@ export const ExceptionLayout: React.FunctionComponent<ExceptionLayoutProps> = (p
           isMultiline={true}
         >
           <h3>Access Denied</h3>
+          <h4>{props.e.userMessage}</h4>
           <p>{props.e.message}</p>
           <p>Attempted resource: {props.e.endpoint}</p>
         </MessageBar>

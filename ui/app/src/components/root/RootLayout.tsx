@@ -1,4 +1,4 @@
-import { MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import React, { useEffect, useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Admin } from '../../App';
@@ -28,7 +28,7 @@ export const RootLayout: React.FunctionComponent = () => {
         setLoadingState(LoadingState.Ok);
         r && r.workspaces && setWorkspaces(r.workspaces);
       } catch (e:any) {
-        e.userMessage = 'Error retrieving workspaces';
+        e.userMessage = 'Error retrieving resources';
         setApiError(e);
         setLoadingState(LoadingState.Error);
       }

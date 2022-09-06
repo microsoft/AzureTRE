@@ -6,6 +6,8 @@ import Form from "@rjsf/fluent-ui";
 import { Operation } from "../../../models/operation";
 import { Resource } from "../../../models/resource";
 import { ResourceType } from "../../../models/resourceType";
+import { APIError } from "../../../models/exceptions";
+import { ExceptionLayout } from "../ExceptionLayout";
 
 interface ResourceFormProps {
   templateName: string,
@@ -23,6 +25,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
   const [deployError, setDeployError] = useState(false);
   const [sendingData, setSendingData] = useState(false);
   const apiCall = useAuthApiCall();
+  const [apiError, setApiError] = useState({} as APIError);
 
   useEffect(() => {
     const getFullTemplate = async () => {
@@ -41,7 +44,9 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
 
         setTemplate(templateResponse);
         setLoading(LoadingState.Ok);
-      } catch {
+      } catch (err: any){
+        err.userMessage = "Error retrieving resource template";
+        setApiError(err);
         setLoading(LoadingState.Error);
       }
     };
@@ -116,13 +121,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
       )
     case LoadingState.Error:
       return (
-        <MessageBar
-          messageBarType={MessageBarType.error}
-          isMultiline={true}
-        >
-          <h3>Error retrieving template</h3>
-          <p>There was an error retrieving the full resource template. Please see the browser console for details.</p>
-        </MessageBar>
+        <ExceptionLayout e={apiError} />
       );
     default:
       return (
