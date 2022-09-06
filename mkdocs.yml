@@ -64,6 +64,9 @@ nav:
   - Using the TRE for Research: # Documentation for users of the TRE
       - Introduction: using-tre/index.md
       - Terms and Definitions: using-tre/terms-definitions.md
+      - Local Development: using-tre/local-development/index.md
+      - CI/CD pipelines: using-tre/pipelines/index.md
+      - Custom Templates: using-tre/templates/index.md
       - Workspaces:
           - using-tre/wks/index.md # Documentation describing what a workspace is
           - Using Workspaces: using-tre/wks/using-wks.md # Interacting with workspaces (via the UI)
