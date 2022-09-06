@@ -297,7 +297,7 @@ build-and-deploy-ui:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env,auth \
 	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
-	&& if [ "$${DEPLOY_UI}" == "true" ]; then ${MAKEFILE_DIR}/devops/scripts/build_deploy_ui.sh; else echo "UI Deploy skipped as DEPLOY_UI not true"; fi \
+	&& if [ "$${DEPLOY_UI}" != "false" ]; then ${MAKEFILE_DIR}/devops/scripts/build_deploy_ui.sh; else echo "UI Deploy skipped as DEPLOY_UI is false"; fi \
 
 prepare-for-e2e:
 	$(call workspace_bundle,base) \

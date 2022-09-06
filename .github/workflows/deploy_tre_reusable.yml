@@ -679,11 +679,43 @@ jobs:
           TF_VAR_stateful_resources_locked:
             "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
+  deploy_ui:
+    name: Deploy UI
+    runs-on: ubuntu-latest
+    needs: [deploy_tre]
+    environment: ${{ inputs.environmentName }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
+          ref: ${{ inputs.prRef }}
+
+      - name: Deploy UI
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make build-and-deploy-ui"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          LOCATION: ${{ secrets.LOCATION }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"
     runs-on: ubuntu-latest
     environment: ${{ inputs.environmentName }}
-    needs: [deploy_shared_services, register_bundles]
+    needs: [deploy_shared_services, register_bundles, deploy_ui]
     timeout-minutes: 10
     steps:
       - name: Checkout
