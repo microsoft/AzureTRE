@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-unrestricted
-version: 0.1.7
+version: 0.1.8
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
