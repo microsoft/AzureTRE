@@ -71,21 +71,21 @@ async def build_porter_command(config, logger, msg_body, custom_action=False):
                     f" {porter_parameters} --allow-docker-host-access --force"
                     f" --cred ./vmss_porter/arm_auth_local_debugging.json"
                     f" --cred ./vmss_porter/aad_auth.json"
-                    f" && porter show {installation_id}"]
+                    ]
     return command_line
 
 
 async def build_porter_command_for_outputs(msg_body):
     installation_id = get_installation_id(msg_body)
     # we only need "real" outputs and use jq to remove the logs which are big
-    command_line = [f"porter show {installation_id} --output json | jq -c '. | select(.Outputs!=null) | .Outputs | del (.[] | select(.Name==\"io.cnab.outputs.invocationImageLogs\"))'"]
+    command_line = [f"porter installations output list --installation {installation_id} --output json | jq -c 'del (.[] | select(.Name==\"io.cnab.outputs.invocationImageLogs\"))'"]
     return command_line
 
 
 async def get_porter_parameter_keys(config, logger, msg_body):
     command = [f"{azure_login_command(config)} >/dev/null && \
         {azure_acr_login_command(config)} >/dev/null && \
-        porter explain --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']} -ojson"]
+        porter explain --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']} --output json"]
 
     proc = await asyncio.create_subprocess_shell(
         ''.join(command),

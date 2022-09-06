@@ -4,8 +4,6 @@ locals {
   short_parent_id                = substr(var.parent_service_id, -4, -1)
   workspace_resource_name_suffix = "${var.tre_id}-ws-${local.short_workspace_id}"
   service_resource_name_suffix   = "${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_service_id}"
-  core_vnet                      = "vnet-${var.tre_id}"
-  core_resource_group_name       = data.azurerm_resource_group.core.name
   vm_name                        = "windowsvm${local.short_service_id}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))

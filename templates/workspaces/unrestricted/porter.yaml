@@ -1,6 +1,6 @@
 ---
-name: tre-workspace-base
-version: 0.3.29
+name: tre-workspace-unrestricted
+version: 0.1.8
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -59,10 +59,6 @@ parameters:
     type: boolean
     default: false
     description: "Whether this bundle should register the workspace in AAD"
-  - name: create_aad_groups
-    type: boolean
-    default: false
-    description: "Whether this bundle should create AAD groups for the workspace app roles"
   - name: workspace_owner_object_id
     type: string
     description: "The object id of the user that will be granted WorkspaceOwner after it is created."
@@ -107,7 +103,7 @@ parameters:
     default: "P1v3"
   - name: enable_airlock
     type: boolean
-    default: true
+    default: false
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -138,7 +134,7 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.2.8
+      clientVersion: 1.1.7
   - az
 
 install:
@@ -152,7 +148,6 @@ install:
         shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
         enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
         register_aad_application: "{{ bundle.parameters.register_aad_application }}"
-        create_aad_groups: "{{ bundle.parameters.create_aad_groups }}"
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
         auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
@@ -246,7 +241,6 @@ uninstall:
         shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
         enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
         register_aad_application: "{{ bundle.parameters.register_aad_application }}"
-        create_aad_groups: "{{ bundle.parameters.create_aad_groups }}"
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
         auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
