@@ -1,0 +1,134 @@
+{
+  "schemaVersion": "1.0.0-DRAFT+TODO",
+  "name": "base",
+  "created": "2021-06-04T13:37:29.5071039+03:00",
+  "modified": "2021-06-04T13:37:29.5071039+03:00",
+  "parameters": [
+    {
+      "name": "address_space",
+      "source": {
+        "env": "ADDRESS_SPACE"
+      }
+    },
+    {
+      "name": "azure_location",
+      "source": {
+        "env": "LOCATION"
+      }
+    },
+    {
+      "name": "tre_id",
+      "source": {
+        "env": "TRE_ID"
+      }
+    },
+    {
+      "name": "id",
+      "source": {
+        "env": "ID"
+      }
+    },
+    {
+      "name": "tfstate_container_name",
+      "source": {
+        "env": "TERRAFORM_STATE_CONTAINER_NAME"
+      }
+    },
+    {
+      "name": "tfstate_resource_group_name",
+      "source": {
+        "env": "MGMT_RESOURCE_GROUP_NAME"
+      }
+    },
+    {
+      "name": "tfstate_storage_account_name",
+      "source": {
+        "env": "MGMT_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "shared_storage_quota",
+      "source": {
+        "env": "SHARED_STORAGE_QUOTA"
+      }
+    },
+    {
+      "name": "enable_local_debugging",
+      "source": {
+        "env": "ENABLE_LOCAL_DEBUGGING"
+      }
+    },
+    {
+      "name": "register_aad_application",
+      "source": {
+        "env": "REGISTER_AAD_APPLICATION"
+      }
+    },
+    {
+      "name": "client_id",
+      "source": {
+        "env": "CLIENT_ID"
+      }
+    },
+    {
+      "name": "client_secret",
+      "source": {
+        "env": "CLIENT_SECRET"
+      }
+    },
+    {
+      "name": "scope_id",
+      "source": {
+        "env": "SCOPE_ID"
+      }
+    },
+    {
+      "name": "workspace_owner_object_id",
+      "source": {
+        "env": "WORKSPACE_OWNER_OBJECT_ID"
+      }
+    },
+    {
+      "name": "sp_id",
+      "source": {
+        "env": "SP_ID"
+      }
+    },
+    {
+      "name": "app_role_id_workspace_owner",
+      "source": {
+        "env": "APP_ROLE_ID_WORKSPACE_OWNER"
+      }
+    },
+    {
+      "name": "app_role_id_workspace_researcher",
+      "source": {
+        "env": "APP_ROLE_ID_WORKSPACE_RESEARCHER"
+      }
+    },
+    {
+      "name": "app_role_id_workspace_airlock_manager",
+      "source": {
+        "env": "APP_ROLE_ID_WORKSPACE_AIRLOCK_MANAGER"
+      }
+    },
+    {
+      "name": "aad_redirect_uris",
+      "source": {
+        "env": "AAD_REDIRECT_URIS"
+      }
+    },
+    {
+      "name": "app_service_plan_sku",
+      "source": {
+        "env": "APP_SERVICE_PLAN_SKU"
+      }
+    },
+    {
+      "name": "enable_airlock",
+      "source": {
+        "env": "ENABLE_AIRLOCK"
+      }
+    }
+  ]
+}
