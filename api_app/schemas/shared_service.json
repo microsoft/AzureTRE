@@ -29,8 +29,14 @@
     },
     "connection_uri": {
       "type": "string",
-      "title": "Shared Service Connection URL",
-      "description": "Connection URL of the shared service",
+      "title": "Service Connection URL",
+      "description": "Connection URL for the service",
+      "updateable": true
+    },
+    "internal_connection_uri": {
+      "type": "string",
+      "title": "Service Internal Connection URL",
+      "description": "Internal connection URL for the service",
       "updateable": true
     }
   }

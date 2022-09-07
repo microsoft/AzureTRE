@@ -9,6 +9,7 @@ class RestrictedProperties(AzureTREModel):
     description: str = ""
     overview: str = ""
     connection_uri: str = ""
+    internal_connection_uri: str = ""
 
 
 class RestrictedResource(AzureTREModel):
