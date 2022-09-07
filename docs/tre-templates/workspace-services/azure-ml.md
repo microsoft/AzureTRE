@@ -6,6 +6,8 @@ This service installs the following resources into an existing virtual network w
 
 ![Azure Machine Learning Service](images/aml_service.png)
 
+Any users with the role of `Workspace Researcher` will be assigned the `AzureML Data Scientist` role within the AML workspace.
+
 ## Properties
 
 - `display_name` - The name of the Azure Machine Learning workspace.

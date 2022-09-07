@@ -1,11 +1,19 @@
 ---
 name: tre-service-azureml
-version: 0.4.6
+version: 0.4.7
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
 
 credentials:
+  # Credentials for interacting with the AAD Auth tenant
+  - name: auth_client_id
+    env: AUTH_CLIENT_ID
+  - name: auth_client_secret
+    env: AUTH_CLIENT_SECRET
+  - name: auth_tenant_id
+    env: AUTH_TENANT_ID
+  # Credentials for interacting with Azure
   - name: azure_tenant_id
     env: ARM_TENANT_ID
   - name: azure_subscription_id
@@ -103,6 +111,9 @@ install:
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        auth_client_id: "{{ bundle.credentials.auth_client_id }}"
+        auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
+        auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -131,6 +142,9 @@ upgrade:
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        auth_client_id: "{{ bundle.credentials.auth_client_id }}"
+        auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
+        auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -159,6 +173,9 @@ uninstall:
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        auth_client_id: "{{ bundle.credentials.auth_client_id }}"
+        auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
+        auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
