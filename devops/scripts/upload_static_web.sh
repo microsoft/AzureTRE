@@ -12,8 +12,8 @@ fi
 
 # The storage account is protected by network rules
 echo "Enabling public access to storage account..."
-az storage account update --public-network-access Enabled --allow-blob-public-access true --name "${STORAGE_ACCOUNT}"
-sleep 20
+az storage account update --default-action Allow --name "${STORAGE_ACCOUNT}"
+sleep 10
 
 echo "Uploading ${CONTENT_DIR} to static web storage"
 
@@ -28,4 +28,4 @@ az storage blob upload-batch \
     --overwrite
 
 echo "Disabling public access to storage account..."
-az storage account update --public-network-access Disabled --name "${STORAGE_ACCOUNT}"
+az storage account update --default-action Deny --name "${STORAGE_ACCOUNT}"
