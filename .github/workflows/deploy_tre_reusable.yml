@@ -696,7 +696,9 @@ jobs:
       - name: Deploy UI
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make build-and-deploy-ui"
+          COMMAND: >-
+            IFS='.' read -r -a array <<< "$(curl ipecho.net/plain; echo)";
+            PUBLIC_DEPLOYMENT_IP_ADDRESS="${array[0]}.${array[1]}.${array[2]}.0/24" make build-and-deploy-ui
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
