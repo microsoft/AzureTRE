@@ -27,31 +27,35 @@ async def migrate_database(resources_repo=Depends(get_repository(ResourceReposit
                            resource_migration=Depends(get_repository(ResourceMigration))):
     try:
         migrations = list()
-        logging.info("PR 1030.")
+        logging.info("PR 1030")
         resources_repo.rename_field_name('resourceTemplateName', 'templateName')
         resources_repo.rename_field_name('resourceTemplateVersion', 'templateVersion')
         resources_repo.rename_field_name('resourceTemplateParameters', 'properties')
         migrations.append(Migration(issueNumber="PR 1030", status="Executed"))
 
-        logging.info("PR 1031.")
+        logging.info("PR 1031")
         resources_repo.rename_field_name('workspaceType', 'templateName')
         resources_repo.rename_field_name('workspaceServiceType', 'templateName')
         resources_repo.rename_field_name('userResourceType', 'templateName')
         migrations.append(Migration(issueNumber="PR 1031", status="Executed"))
 
-        logging.info("PR 1717. - Shared services")
+        logging.info("PR 1717 - Shared services")
         migration_status = "Executed" if shared_services_migration.deleteDuplicatedSharedServices() else "Skipped"
         migrations.append(Migration(issueNumber="PR 1717", status=migration_status))
 
-        logging.info("PR 1726. - Authentication needs to be in properties so we can update them")
+        logging.info("PR 1726 - Authentication needs to be in properties so we can update them")
         migration_status = "Executed" if workspace_migration.moveAuthInformationToProperties() else "Skipped"
         migrations.append(Migration(issueNumber="PR 1726", status=migration_status))
 
-        logging.info("#1406 - Extra field to support UI")
+        logging.info("PR 1406 - Extra field to support UI")
         num_rows = resource_migration.add_deployment_status_field(operations_repo)
         migrations.append(Migration(issueNumber="1406", status=f'Updated {num_rows} resource objects'))
 
+        logging.info("PR 2371 - Validate min firewall version")
+        shared_services_migration.checkMinFirewallVersion()
+        migrations.append(Migration(issueNumber="2371", status='Firewall version meets requirement'))
+
         return MigrationOutList(migrations=migrations)
     except Exception as e:
-        logging.error(f"Failed to migrate database: {e}")
+        logging.error("Failed to migrate database: %s", e)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

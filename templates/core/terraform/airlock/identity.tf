@@ -42,32 +42,18 @@ resource "azurerm_role_assignment" "eventgrid_data_sender_notification" {
   principal_id         = var.api_principal_id
 }
 
-resource "azurerm_role_assignment" "sa_import_external" {
-  scope                = azurerm_storage_account.sa_import_external.id
-  role_definition_name = "Contributor"
+resource "azurerm_role_assignment" "airlock_blob_data_contributor" {
+  count                = length(local.airlock_sa_blob_data_contributor)
+  scope                = local.airlock_sa_blob_data_contributor[count.index]
+  role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
-resource "azurerm_role_assignment" "sa_import_in_progress" {
-  scope                = azurerm_storage_account.sa_import_in_progress.id
-  role_definition_name = "Contributor"
-  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-resource "azurerm_role_assignment" "sa_import_rejected" {
-  scope                = azurerm_storage_account.sa_import_rejected.id
-  role_definition_name = "Contributor"
-  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-resource "azurerm_role_assignment" "sa_export_approved" {
-  scope                = azurerm_storage_account.sa_export_approved.id
-  role_definition_name = "Contributor"
-  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-resource "azurerm_role_assignment" "sa_import_blocked" {
-  scope                = azurerm_storage_account.sa_import_blocked.id
-  role_definition_name = "Contributor"
-  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
+# This might be considered redundent since we give Virtual Machine Contributor
+# at the subscription level, but best to be explicit.
+resource "azurerm_role_assignment" "api_sa_data_contributor" {
+  count                = length(local.api_sa_data_contributor)
+  scope                = local.api_sa_data_contributor[count.index]
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = var.api_principal_id
 }

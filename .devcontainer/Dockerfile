@@ -24,7 +24,7 @@ ARG NODE_VERSION="lts/*"
 RUN su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"
 
 # Install terraform
-ARG TERRAFORM_VERSION="1.1.5"
+ARG TERRAFORM_VERSION="1.2.7"
 COPY .devcontainer/scripts/terraform.sh /tmp/
 RUN bash /tmp/terraform.sh "${TERRAFORM_VERSION}" /usr/bin
 
@@ -33,7 +33,6 @@ COPY .devcontainer/scripts/docker-client.sh /tmp/
 RUN /tmp/docker-client.sh $USERNAME
 
 # Install Docker
-# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y ca-certificates curl gnupg lsb-release --no-install-recommends \
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
@@ -45,7 +44,6 @@ RUN apt-get update && apt-get install -y ca-certificates curl gnupg lsb-release 
 RUN if [ "${INTERACTIVE}" = "true" ]; then curl https://raw.githubusercontent.com/nektos/act/master/install.sh | bash; fi
 
 # Install Certbot
-# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y python3 python3-venv libaugeas0 --no-install-recommends \
     && python3 -m venv /opt/certbot/ \
     && /opt/certbot/bin/pip install --no-cache-dir --upgrade pip \
@@ -56,7 +54,7 @@ RUN apt-get update && apt-get install -y python3 python3-venv libaugeas0 --no-in
 # Not using the script from https://cdn.porter.sh/latest/install-linux.sh
 # as it installs things we don't need and duplicates the binary.
 ARG PORTER_MIRROR=https://cdn.porter.sh
-ARG PORTER_PERMALINK=v0.38.11
+ARG PORTER_PERMALINK=v0.38.12
 ARG PORTER_PKG_PERMALINK=latest
 ARG PORTER_HOME=/home/$USERNAME/.porter/
 COPY .devcontainer/scripts/porter.sh /tmp/
@@ -83,7 +81,7 @@ COPY .devcontainer/scripts/azure-cli.sh /tmp/
 RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh
 
-ARG YQ_VERSION="v4.13.0"
+ARG YQ_VERSION="v4.27.2"
 RUN curl -L --fail -o /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" \
     && chmod +x /usr/local/bin/yq
 

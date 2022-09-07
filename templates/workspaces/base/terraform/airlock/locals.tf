@@ -19,4 +19,18 @@ locals {
   export_rejected_storage_name = lower(replace("stalexrej${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   # STorage AirLock EXport BLOCKED
   export_blocked_storage_name = lower(replace("stalexblocked${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
+
+  airlock_blob_data_contributor = [
+    azurerm_storage_account.sa_import_approved.id,
+    azurerm_storage_account.sa_export_internal.id,
+    azurerm_storage_account.sa_export_inprogress.id,
+    azurerm_storage_account.sa_export_rejected.id,
+    azurerm_storage_account.sa_export_blocked.id
+  ]
+
+  api_sa_data_contributor = [
+    azurerm_storage_account.sa_import_approved.id,
+    azurerm_storage_account.sa_export_internal.id,
+    azurerm_storage_account.sa_export_inprogress.id
+  ]
 }

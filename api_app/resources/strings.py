@@ -4,6 +4,7 @@ PONG = "pong"
 API_GET_HEALTH_STATUS = "Get health status"
 API_MIGRATE_DATABASE = "Migrate documents in the database"
 
+API_GET_MY_OPERATIONS = "Get Operations that the current user has initiated"
 API_GET_ALL_WORKSPACES = "Get all workspaces"
 API_GET_WORKSPACE_BY_ID = "Get workspace by Id"
 API_CREATE_WORKSPACE = "Create a workspace"
@@ -86,6 +87,8 @@ ACCESS_APP_IS_MISSING_ROLE = "The App is missing role"
 ACCESS_PLEASE_SUPPLY_CLIENT_ID = "Please supply the client_id for the AAD application"
 ACCESS_UNABLE_TO_GET_INFO_FOR_APP = "Unable to get app info for app:"
 ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER = "Unable to get role assignments for user"
+ACCESS_UNABLE_TO_GET_ACCOUNT_TYPE = "Unable to look up account type"
+ACCESS_UNHANDLED_ACCOUNT_TYPE = "Unhandled account type"
 
 ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER = "Workspace Researcher or Owner rights are required"
 ACCESS_USER_IS_NOT_OWNER = "Workspace Owner rights are required"
@@ -177,6 +180,7 @@ AIRLOCK_RESOURCE_STATUS_REJECTED = "rejected"
 AIRLOCK_RESOURCE_STATUS_CANCELLED = "cancelled"
 AIRLOCK_RESOURCE_STATUS_BLOCKING_INPROGRESS = "blocking_in_progress"
 AIRLOCK_RESOURCE_STATUS_BLOCKED = "blocked_by_scan"
+AIRLOCK_RESOURCE_STATUS_FAILED = "failed"
 
 # Airlock Request Types
 AIRLOCK_REQUEST_TYPE_IMPORT = "import"
@@ -187,11 +191,17 @@ AIRLOCK_REQUEST_DOES_NOT_EXIST = "Airlock request does not exist"
 AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE = "Airlock request status change was illegal"
 AIRLOCK_REQUEST_IN_PROGRESS = "Airlock request is being processed, please try again later."
 AIRLOCK_REQUEST_IS_CANCELED = "Airlock request was cancelled."
+AIRLOCK_REQUEST_UNACCESSIBLE = "Airlock request is in invalid status: rejected, blocked or failed."
 AIRLOCK_REQUEST_INVALID_STATUS = "Airlock request status is unknown."
 AIRLOCK_UNAUTHORIZED_TO_SA = "User is unauthorized to access airlock request files in its current status."
 AIRLOCK_NOT_ENABLED_IN_WORKSPACE = "Airlock is not enabled in this workspace."
 AIRLOCK_NO_RESEARCHER_EMAIL = "There are no Workspace Researchers with an email address."
-AIRLOCK_NO_OWNER_EMAIL = "There are no Workspace Owners with an email address."
+AIRLOCK_NO_AIRLOCK_MANAGER_EMAIL = "There are no Airlock Managers with an email address."
+
+# Airlock Actions
+AIRLOCK_ACTION_REVIEW = "review"
+AIRLOCK_ACTION_CANCEL = "cancel"
+AIRLOCK_ACTION_SUBMIT = "submit"
 
 # Deployments
 RESOURCE_STATUS_AWAITING_DEPLOYMENT_MESSAGE = "This resource is waiting to be deployed"

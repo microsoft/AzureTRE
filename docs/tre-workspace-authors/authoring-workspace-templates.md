@@ -129,7 +129,7 @@ Templates authors need to make sure that underling Azure resources are tagged wi
 !!! Notes
     Main Azure Container Registry and Storage Account are not be tagged as those resources are used to spin up more than one Azure TRE Instance.
 
-[![Resource tagging example](../assets/resource-tagging-example.png)](../../assets/resource-tagging-example.png)
+[![Resource tagging example](../assets/resource-tagging-example.png)](../assets/resource-tagging-example.png)
 
 ## Versioning
 

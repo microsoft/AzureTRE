@@ -24,15 +24,15 @@ if [[ "${1:-?}" == *"auth"* ]]; then
   if [ -z "${USE_ENV_VARS_NOT_FILES:-}" ]; then
     # We only do this for local builds
     echo -e "\n\e[96mChecking for Auth setup\e[0m..."
-    if [ ! -f "$DIR"/../auth.env ]; then
+    if [ ! -f "devops/auth.env" ]; then
       echo -e "\e[31m»»» ⚠️ Auth has not been setup! 😥 Please run make auth"
       exit 1
     fi
     set -a
     # shellcheck disable=SC1091
-    . "$DIR/load_env.sh" "$DIR/../auth.env"
+    . "$DIR/load_env.sh" "devops/auth.env"
     # shellcheck disable=SC1091
-    . "$DIR/load_terraform_env.sh" "$DIR/../auth.env"
+    . "$DIR/load_terraform_env.sh" "devops/auth.env"
   fi
 fi
 
@@ -40,22 +40,22 @@ if [[ "${1:-?}" == *"env"* ]]; then
   if [ -z "${USE_ENV_VARS_NOT_FILES:-}" ]; then
     # We only do this for local builds
     echo -e "\n\e[96mLoading local environment variables\e[0m..."
-    if [ ! -f "$DIR"/../.env ]; then
+    if [ ! -f "devops/.env" ]; then
       echo -e "\e[31m»»» ⚠️ Your devops environment has not been setup! 😥 Please create a ./devops/.env file."
       exit 1
     fi
-    if [ ! -f "$DIR"/../../templates/core/.env ]; then
+    if [ ! -f "templates/core/.env" ]; then
       echo -e "\e[31m»»» ⚠️ Your template environment has not been setup! 😥 Please create a ./templates/core/.env file."
       exit 1
     fi
     # shellcheck disable=SC1091
-    . "$DIR/load_env.sh" "$DIR/../.env"
+    . "$DIR/load_env.sh" "devops/.env"
     # shellcheck disable=SC1091
-    . "$DIR/load_terraform_env.sh" "$DIR/../.env"
+    . "$DIR/load_terraform_env.sh" "devops/.env"
     # shellcheck disable=SC1091
-    . "$DIR/load_env.sh" "$DIR/../../templates/core/.env"
+    . "$DIR/load_env.sh" "templates/core/.env"
     # shellcheck disable=SC1091
-    . "$DIR/load_terraform_env.sh" "$DIR/../../templates/core/.env"
+    . "$DIR/load_terraform_env.sh" "templates/core/.env"
   fi
 fi
 

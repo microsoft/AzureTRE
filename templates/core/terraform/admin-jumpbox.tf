@@ -29,7 +29,7 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
   resource_group_name        = azurerm_resource_group.core.name
   location                   = azurerm_resource_group.core.location
   network_interface_ids      = [azurerm_network_interface.jumpbox_nic.id]
-  size                       = "Standard_B2s"
+  size                       = var.admin_jumpbox_vm_sku
   allow_extension_operations = true
   admin_username             = "adminuser"
   admin_password             = random_password.password.result
@@ -78,4 +78,17 @@ SETTINGS
 
 data "template_file" "vm_config" {
   template = file("${path.module}/admin-jumpbox-configure.ps1")
+}
+
+resource "azurerm_virtual_machine_extension" "antimalware" {
+  virtual_machine_id         = azurerm_windows_virtual_machine.jumpbox.id
+  name                       = "${azurerm_windows_virtual_machine.jumpbox.name}-AntimalwareExtension"
+  publisher                  = "Microsoft.Azure.Security"
+  type                       = "IaaSAntimalware"
+  type_handler_version       = "1.3"
+  auto_upgrade_minor_version = true
+
+  settings = jsonencode({
+    "AntimalwareEnabled" = true
+  })
 }

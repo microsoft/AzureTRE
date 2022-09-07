@@ -154,7 +154,8 @@ for index in "${!property_names[@]}"; do
   additional_props="$additional_props, \"$name\": \"$value\""
 done
 
-payload="{ \"templateName\": \"""${template_name}""\", \"properties\": { \"display_name\": \"Shared service ""${template_name}""\", \"description\": \"Automatically deployed ""${template_name}""\"${additional_props} } }"
+display_name="${template_name#tre-shared-service-}"
+payload="{ \"templateName\": \"""${template_name}""\", \"properties\": { \"display_name\": \"""${display_name}""\", \"description\": \"Automatically deployed ""${template_name}""\"${additional_props} } }"
 deploy_result=$(curl -i "${curl_settings[@]}" -X "POST" "${tre_url}/api/shared-services" \
                 -H "accept: application/json" \
                 -H "Content-Type: application/json" \

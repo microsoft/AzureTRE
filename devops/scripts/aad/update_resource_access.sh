@@ -1,7 +1,6 @@
 #!/bin/bash
-set -euo pipefail
-# Use this for debug only
-# set -o xtrace
+
+# This script is designed to be `source`d to create reusable helper functions
 
 # Utility function that retrieves all of the 'requiredResourceAccess' from an application,
 # it then removes any access for a given `resourceAppId`, merges in a new element into the

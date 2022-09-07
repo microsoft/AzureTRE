@@ -1,10 +1,12 @@
 import logging
 
 import azure.functions as func
+import datetime
 import os
+import uuid
 import json
 
-from azure.mgmt.storage import StorageManagementClient
+from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
 
 from shared_code import blob_operations, constants
 from pydantic import BaseModel, parse_obj_as
@@ -19,39 +21,34 @@ class RequestProperties(BaseModel):
 
 class ContainersCopyMetadata:
     source_account_name: str
-    source_account_key: str
-    sa_source_connection_string: str
-    sa_dest_connection_string: str
-    sa_dest_account_name: str
-    sa_dest_resource_group: str
+    dest_account_name: str
 
-    def __init__(self, source_account_name: str, source_account_key: str, sa_source_connection_string: str,
-                 sa_dest_connection_string: str, sa_dest_account_name: str, sa_dest_resource_group: str):
+    def __init__(self, source_account_name: str, dest_account_name: str):
         self.source_account_name = source_account_name
-        self.source_account_key = source_account_key
-        self.sa_source_connection_string = sa_source_connection_string
-        self.sa_dest_connection_string = sa_dest_connection_string
-        self.sa_dest_account_name = sa_dest_account_name
-        self.sa_dest_resource_group = sa_dest_resource_group
+        self.dest_account_name = dest_account_name
 
 
-def main(msg: func.ServiceBusMessage):
-    body = msg.get_body().decode('utf-8')
-    logging.info('Python ServiceBus queue trigger processed message: %s', body)
-    storage_client = blob_operations.get_storage_management_client()
-
+def main(msg: func.ServiceBusMessage, outputEvent: func.Out[func.EventGridOutputEvent]):
     try:
-        request_properties = extract_properties(body)
+        request_properties = extract_properties(msg)
+        request_files = get_request_files(request_properties) if request_properties.status == constants.STAGE_SUBMITTED else None
+        handle_status_changed(request_properties, outputEvent, request_files)
 
-        new_status = request_properties.status
-        req_id = request_properties.request_id
-        ws_id = request_properties.workspace_id
-        request_type = request_properties.type
-    except Exception as e:
-        logging.error(f'Failed processing request - invalid message: {body}, exc: {e}')
-        raise
+    except NoFilesInRequestException:
+        set_output_event_to_report_failure(outputEvent, request_properties, failure_reason=constants.NO_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
+    except TooManyFilesInRequestException:
+        set_output_event_to_report_failure(outputEvent, request_properties, failure_reason=constants.TOO_MANY_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
+    except Exception:
+        set_output_event_to_report_failure(outputEvent, request_properties, failure_reason=constants.UNKNOWN_REASON_MESSAGE, request_files=request_files)
 
-    logging.info('Processing request with id %s. new status is "%s", type is "%s"', req_id, new_status, type)
+
+def handle_status_changed(request_properties: RequestProperties, outputEvent: func.Out[func.EventGridOutputEvent], request_files):
+    new_status = request_properties.status
+    req_id = request_properties.request_id
+    ws_id = request_properties.workspace_id
+    request_type = request_properties.type
+
+    logging.info('Processing request with id %s. new status is "%s", type is "%s"', req_id, new_status, request_type)
 
     try:
         tre_id = os.environ["TRE_ID"]
@@ -61,31 +58,32 @@ def main(msg: func.ServiceBusMessage):
 
     if new_status == constants.STAGE_DRAFT and request_type == constants.IMPORT_TYPE:
         account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL + tre_id
-        account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
-        blob_operations.create_container(account_rg, account_name, req_id, storage_client)
+        blob_operations.create_container(account_name, req_id)
         return
 
     if new_status == constants.STAGE_DRAFT and request_type == constants.EXPORT_TYPE:
         account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + ws_id
-        account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, ws_id)
-        blob_operations.create_container(account_rg, account_name, req_id, storage_client)
+        blob_operations.create_container(account_name, req_id)
         return
+
+    if new_status == constants.STAGE_SUBMITTED:
+        set_output_event_to_report_request_files(outputEvent, request_properties, request_files)
 
     if (is_require_data_copy(new_status)):
         logging.info('Request with id %s. requires data copy between storage accounts', req_id)
-        containers_metadata = get_source_dest_env_vars(new_status, request_type, ws_id, storage_client)
-        blob_operations.create_container(containers_metadata.sa_dest_resource_group,
-                                         containers_metadata.sa_dest_account_name, req_id, storage_client)
-        blob_operations.copy_data(containers_metadata.source_account_name, containers_metadata.source_account_key,
-                                  containers_metadata.sa_source_connection_string,
-                                  containers_metadata.sa_dest_connection_string, req_id)
+        containers_metadata = get_source_dest_for_copy(new_status, request_type, ws_id)
+        blob_operations.create_container(containers_metadata.dest_account_name, req_id)
+        blob_operations.copy_data(containers_metadata.source_account_name,
+                                  containers_metadata.dest_account_name, req_id)
         return
 
     # Other statuses which do not require data copy are dismissed as we don't need to do anything...
 
 
-def extract_properties(body: str) -> RequestProperties:
+def extract_properties(msg: func.ServiceBusMessage) -> RequestProperties:
     try:
+        body = msg.get_body().decode('utf-8')
+        logging.info('Python ServiceBus queue trigger processed message: %s', body)
         json_body = json.loads(body)
         result = parse_obj_as(RequestProperties, json_body["data"])
         if not result:
@@ -106,8 +104,7 @@ def is_require_data_copy(new_status: str):
     return False
 
 
-def get_source_dest_env_vars(new_status: str, request_type: str, short_workspace_id: str,
-                             storage_client: StorageManagementClient) -> ContainersCopyMetadata:
+def get_source_dest_for_copy(new_status: str, request_type: str, short_workspace_id: str) -> ContainersCopyMetadata:
     # sanity
     if is_require_data_copy(new_status) is False:
         raise Exception("Given new status is not supported")
@@ -129,54 +126,56 @@ def get_source_dest_env_vars(new_status: str, request_type: str, short_workspace
         if new_status == constants.STAGE_SUBMITTED:
             source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL + tre_id
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
-            source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
-            dest_account_rg = source_account_rg
         elif new_status == constants.STAGE_APPROVAL_INPROGRESS:
             source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED + short_workspace_id
-            source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
-            dest_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
         elif new_status == constants.STAGE_REJECTION_INPROGRESS:
             source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED + tre_id
-            source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
-            dest_account_rg = source_account_rg
         elif new_status == constants.STAGE_BLOCKING_INPROGRESS:
             source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_BLOCKED + tre_id
-            source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
-            dest_account_rg = source_account_rg
     else:
         if new_status == constants.STAGE_SUBMITTED:
             source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + short_workspace_id
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
-            source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
-            dest_account_rg = source_account_rg
         elif new_status == constants.STAGE_APPROVAL_INPROGRESS:
             source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED + tre_id
-            source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
-            dest_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
         elif new_status == constants.STAGE_REJECTION_INPROGRESS:
             source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED + short_workspace_id
-            source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
-            dest_account_rg = source_account_rg
         elif new_status == constants.STAGE_BLOCKING_INPROGRESS:
             source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED + short_workspace_id
-            source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
-            dest_account_rg = source_account_rg
 
-    logging.info("source [account: '%s', rg: '%s']. dest [account: '%s', rg: '%s']", source_account_name,
-                 source_account_rg, dest_account_name, dest_account_rg)
+    return ContainersCopyMetadata(source_account_name, dest_account_name)
 
-    sa_source = blob_operations.get_storage_connection_string(source_account_name, source_account_rg, storage_client)
-    sa_dest = blob_operations.get_storage_connection_string(dest_account_name, dest_account_rg, storage_client)
 
-    return ContainersCopyMetadata(sa_source.account_name,
-                                  sa_source.account_key,
-                                  sa_source.connection_string,
-                                  sa_dest.connection_string,
-                                  sa_dest.account_name,
-                                  dest_account_rg)
+def set_output_event_to_report_failure(outputEvent, request_properties, failure_reason, request_files):
+    logging.exception(f"Failed processing Airlock request with ID: '{request_properties.request_id}', changing request status to '{constants.STAGE_FAILED}'.")
+    outputEvent.set(
+        func.EventGridOutputEvent(
+            id=str(uuid.uuid4()),
+            data={"completed_step": request_properties.status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id, "request_files": request_files, "error_message": failure_reason},
+            subject=request_properties.request_id,
+            event_type="Airlock.StepResult",
+            event_time=datetime.datetime.utcnow(),
+            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+
+
+def set_output_event_to_report_request_files(outputEvent, request_properties, request_files):
+    outputEvent.set(
+        func.EventGridOutputEvent(
+            id=str(uuid.uuid4()),
+            data={"completed_step": request_properties.status, "request_id": request_properties.request_id, "request_files": request_files},
+            subject=request_properties.request_id,
+            event_type="Airlock.StepResult",
+            event_time=datetime.datetime.utcnow(),
+            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+
+
+def get_request_files(request_properties):
+    containers_metadata = get_source_dest_for_copy(request_properties.status, request_properties.type, request_properties.workspace_id)
+    storage_account_name = containers_metadata.source_account_name
+    return blob_operations.get_request_files(account_name=storage_account_name, request_id=request_properties.request_id)

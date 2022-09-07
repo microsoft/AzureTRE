@@ -24,19 +24,28 @@ code {
   width: 70%;
 }
 
-#root {}
-
-.tre-root {}
-
 .tre-top-nav {
   box-shadow: 0 1px 2px 0px #033d68;
   z-index: 100;
+}
+
+.ms-CommandBar {
+  background-color: transparent;
+  padding-left: 0px;
+
+  .ms-Button {
+    background-color: transparent;
+  }
 }
 
 .tre-notifications-button {
   position: relative;
   top: 7px;
   color: #fff;
+
+  i {
+    font-size: 20px !important;
+  }
 }
 
 .tre-notifications-button i {
@@ -81,12 +90,20 @@ ul.tre-notifications-steps-list li {
   font-size:1.2rem;
 }
 
-.tre-user-menu .ms-Persona-primaryText:hover {
-  color: #fff;
-}
+.tre-user-menu {
+  margin-top: 2px;
 
-.ms-Persona-primaryText {
-  color: #fff;
+  .ms-Persona-primaryText:hover {
+    color: #fff;
+  }
+
+  .ms-Persona-primaryText {
+    color: #fff;
+  }
+
+  .ms-Icon {
+    margin-top: 3px;
+  }
 }
 
 .tre-hide-chevron i[data-icon-name=ChevronDown] {
@@ -130,14 +147,21 @@ ul.tre-notifications-steps-list li {
 }
 
 .tre-panel {
+  margin: 10px 15px 10px 10px;
+  padding: 10px;
+}
+
+.tre-resource-panel {
   box-shadow: 1px 0px 5px 0px #ccc;
   margin: 10px 15px 10px 10px;
   padding: 10px;
   background-color: #fff;
 }
 
-.ms-CommandBar {
-  padding-left: 0;
+.tre-table-rows-align-centre {
+  .ms-DetailsRow-cell {
+    align-self: baseline;
+  }
 }
 
 .ms-Pivot {

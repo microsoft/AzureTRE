@@ -24,6 +24,7 @@ resource "azurerm_linux_web_app" "api" {
   service_plan_id                 = azurerm_service_plan.core.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.id.id
+  virtual_network_subnet_id       = module.network.web_app_subnet_id
   tags                            = local.tre_core_tags
 
   app_settings = {
@@ -61,9 +62,6 @@ resource "azurerm_linux_web_app" "api" {
   lifecycle {
     ignore_changes = [
       tags,
-
-      # Required since we're setting with azurerm_app_service_virtual_network_swift_connection below.
-      virtual_network_subnet_id,
     ]
   }
 
@@ -126,32 +124,19 @@ resource "azurerm_private_endpoint" "api_private_endpoint" {
   }
 }
 
-# Kept to be backward compatible with existing deployments despite the ability
-# to set through azurerm_linux_web_app.virtual_network_subnet_id
-resource "azurerm_app_service_virtual_network_swift_connection" "api_integrated_vnet" {
-  app_service_id = azurerm_linux_web_app.api.id
-  subnet_id      = module.network.web_app_subnet_id
-}
-
-moved {
-  from = azurerm_app_service_virtual_network_swift_connection.api-integrated-vnet
-  to   = azurerm_app_service_virtual_network_swift_connection.api_integrated_vnet
-}
-
 resource "azurerm_monitor_diagnostic_setting" "webapp_api" {
   name                       = "diag-${var.tre_id}"
   target_resource_id         = azurerm_linux_web_app.api.id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
 
   dynamic "log" {
-    for_each = toset(["AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
-    "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"])
+    for_each = data.azurerm_monitor_diagnostic_categories.api.logs
     content {
       category = log.value
-      enabled  = true
+      enabled  = contains(local.api_diagnostic_categories_enabled, log.value) ? true : false
 
       retention_policy {
-        enabled = true
+        enabled = contains(local.api_diagnostic_categories_enabled, log.value) ? true : false
         days    = 365
       }
     }

@@ -62,6 +62,12 @@ def create_workspace_researcher_user() -> User:
     return user
 
 
+def create_workspace_airlock_manager_user() -> User:
+    user = create_test_user()
+    user.roles = ["AirlockManager"]
+    return user
+
+
 def override_get_user():
     user = create_test_user()
     user.roles = []
@@ -94,6 +100,13 @@ def owner_user():
 def researcher_user():
     def inner():
         return create_workspace_researcher_user()
+    return inner
+
+
+@pytest.fixture(scope='module')
+def airlock_manager_user():
+    def inner():
+        return create_workspace_airlock_manager_user()
     return inner
 
 

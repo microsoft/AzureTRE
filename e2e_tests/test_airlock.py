@@ -1,6 +1,12 @@
+import os
 import pytest
+import asyncio
 import logging
 import config
+
+from azure.core.exceptions import ResourceNotFoundError
+from azure.storage.blob import ContainerClient
+
 from resources.workspace import get_workspace_auth_details
 from resources.resource import disable_and_delete_resource, post_resource
 from resources import strings as resource_strings
@@ -10,31 +16,40 @@ from airlock import strings as airlock_strings
 
 pytestmark = pytest.mark.asyncio
 LOGGER = logging.getLogger(__name__)
+BLOB_FILE_PATH = "./test_airlock_sample.txt"
+BLOB_NAME = os.path.basename(BLOB_FILE_PATH)
 
 
 @pytest.mark.airlock
-@pytest.mark.timeout(1200)
+@pytest.mark.extended
+@pytest.mark.timeout(2000)
 async def test_airlock_import_flow(admin_token, verify) -> None:
 
-    # 1. create workspace
-    payload = {
-        "templateName": "tre-workspace-base",
-        "properties": {
-            "display_name": "E2E test airlock flow",
-            "description": "workspace for E2E airlock flow",
-            "address_space_size": "small",
-            "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
-            "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}",
+    if config.TEST_AIRLOCK_WORKSPACE_ID != "":
+        workspace_id = config.TEST_AIRLOCK_WORKSPACE_ID
+        workspace_path = f"/workspaces/{workspace_id}"
+    else:
+        # 1. create workspace
+        LOGGER.info("Creating workspace")
+        payload = {
+            "templateName": resource_strings.BASE_WORKSPACE,
+            "properties": {
+                "display_name": "E2E test airlock flow",
+                "description": "workspace for E2E airlock flow",
+                "address_space_size": "small",
+                "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
+                "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}",
+            }
         }
-    }
 
-    if config.TEST_WORKSPACE_APP_PLAN != "":
-        payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
+        if config.TEST_WORKSPACE_APP_PLAN != "":
+            payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
-    workspace_path, workspace_id = await post_resource(payload, resource_strings.API_WORKSPACES, access_token=admin_token, verify=verify)
+        workspace_path, workspace_id = await post_resource(payload, resource_strings.API_WORKSPACES, access_token=admin_token, verify=verify)
     workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
     # 2. create airlock request
+    LOGGER.info("Creating airlock request")
     payload = {
         "requestType": airlock_strings.IMPORT,
         "businessJustification": "some business justification"
@@ -49,27 +64,65 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
     request_id = request_result["airlockRequest"]["id"]
 
     # 3. get container link
+    LOGGER.info("Getting airlock request container URL")
     request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
-    containerUrl = request_result["containerUrl"]
+    container_url = request_result["containerUrl"]
 
     # 4. upload blob
-    await upload_blob_using_sas('./test_airlock_sample.txt', containerUrl)
+
+    # currenly there's no elegant way to check if the container was created yet becasue its an asyc process
+    # it would be better to create another draft_improgress step and wait for the request to change to draft state before
+    # uploading the blob
+
+    i = 1
+    blob_uploaded = False
+    wait_time = 30
+    while not blob_uploaded:
+        LOGGER.info(f"try #{i} to upload a blob to container [{container_url}]")
+        upload_response = await upload_blob_using_sas(BLOB_FILE_PATH, container_url)
+
+        if upload_response.status_code == 404:
+            i += 1
+            LOGGER.info(f"sleeping for {wait_time} sec until container would be created")
+            await asyncio.sleep(wait_time)
+        else:
+            assert upload_response.status_code == 201
+            LOGGER.info("upload blob succeeded")
+            blob_uploaded = True
 
     # 5. submit request
+    LOGGER.info("Submitting airlock request")
     request_result = await post_request(None, f'/api{workspace_path}/requests/{request_id}/submit', workspace_owner_token, verify, 200)
     assert request_result["airlockRequest"]["status"] == airlock_strings.SUBMITTED_STATUS
 
     await wait_for_status(airlock_strings.IN_REVIEW_STATUS, workspace_owner_token, workspace_path, request_id, verify)
 
     # 6. approve request
+    LOGGER.info("Approving airlock request")
     payload = {
         "approval": "True",
         "decisionExplanation": "the reason why this request was approved/rejected"
     }
-    request_result = await post_request(payload, f'/api{workspace_path}/requests/{request_id}/reviews', workspace_owner_token, verify, 200)
-    assert request_result["airlock_review"]["decisionExplanation"] == "the reason why this request was approved/rejected"
+    request_result = await post_request(payload, f'/api{workspace_path}/requests/{request_id}/review', workspace_owner_token, verify, 200)
+    assert request_result["airlockRequest"]["reviews"][0]["decisionExplanation"] == "the reason why this request was approved/rejected"
 
     await wait_for_status(airlock_strings.APPROVED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
 
-    # 7. delete workspace
-    await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
+    # 7. check the file has been deleted from the source
+    # NOTE: We should really be checking that the file is deleted from in progress location too,
+    # but doing that will require setting up network access to in-progress storage account
+    try:
+        container_client = ContainerClient.from_container_url(container_url=container_url)
+        # We expect the container to eventually be deleted too, but sometimes this async operation takes some time.
+        # Checking that at least there are no blobs within the container
+        for _ in container_client.list_blobs():
+            container_url_without_sas = container_url.split("?")[0]
+            assert False, f"The source blob in container {container_url_without_sas} should be deleted"
+    except ResourceNotFoundError:
+        # Expecting this exception
+        pass
+
+    if config.TEST_AIRLOCK_WORKSPACE_ID == "":
+        # 8. delete workspace
+        LOGGER.info("Deleting workspace")
+        await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)

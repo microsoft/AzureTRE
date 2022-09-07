@@ -16,7 +16,7 @@ interface ResourceBodyProps {
 export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: ResourceBodyProps) => {
 
   return (
-    <Pivot aria-label="Resource Menu" className='tre-panel'>
+    <Pivot aria-label="Resource Menu" className='tre-resource-panel'>
       <PivotItem
         headerText="Overview"
         headerButtonProps={{

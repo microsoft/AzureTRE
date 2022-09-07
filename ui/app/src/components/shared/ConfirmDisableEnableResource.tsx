@@ -3,7 +3,7 @@ import React, { useContext, useState } from 'react';
 import { Resource } from '../../models/resource';
 import { HttpMethod, ResultType, useAuthApiCall } from '../../hooks/useAuthApiCall';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
-import { NotificationsContext } from '../../contexts/NotificationsContext';
+import { OperationsContext } from '../../contexts/OperationsContext';
 import { ResourceType } from '../../models/resourceType';
 
 interface ConfirmDisableEnableResourceProps {
@@ -17,7 +17,7 @@ export const ConfirmDisableEnableResource: React.FunctionComponent<ConfirmDisabl
   const apiCall = useAuthApiCall();
   const [isSending, setIsSending] = useState(false);
   const workspaceCtx = useContext(WorkspaceContext);
-  const opsCtx = useContext(NotificationsContext);
+  const opsCtx = useContext(OperationsContext);
 
   const disableProps = {
     type: DialogType.normal,

@@ -15,8 +15,12 @@ variable "app_insights_connection_string" {}
 variable "key_vault_name" {}
 variable "key_vault_id" {}
 variable "resource_processor_number_processes_per_instance" {}
+variable "resource_processor_vmss_sku" {}
 variable "subscription_id" {
   description = "The subscription id to create the resource processor permission/role. If not supplied will use the TF context."
   type        = string
   default     = ""
 }
+
+variable "log_analytics_workspace_workspace_id" {}
+variable "log_analytics_workspace_primary_key" {}

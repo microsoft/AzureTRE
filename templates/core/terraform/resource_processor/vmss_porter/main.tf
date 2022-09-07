@@ -55,7 +55,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
   name                            = "vmss-rp-porter-${var.tre_id}"
   location                        = var.location
   resource_group_name             = var.resource_group_name
-  sku                             = "Standard_B2s"
+  sku                             = var.resource_processor_vmss_sku
   instances                       = 1
   admin_username                  = "adminuser"
   disable_password_authentication = false
@@ -66,11 +66,14 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
   tags                            = local.tre_core_tags
 
   extension {
-    auto_upgrade_minor_version = false
+    auto_upgrade_minor_version = true
     automatic_upgrade_enabled  = false
     name                       = "healthRepairExtension"
     provision_after_extensions = []
     publisher                  = "Microsoft.ManagedServices"
+    type                       = "ApplicationHealthLinux"
+    type_handler_version       = "1.0"
+
     settings = jsonencode(
       {
         port        = 8080
@@ -78,8 +81,25 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
         requestPath = "/health"
       }
     )
-    type                 = "ApplicationHealthLinux"
-    type_handler_version = "1.0"
+  }
+
+  extension {
+    auto_upgrade_minor_version = true
+    automatic_upgrade_enabled  = false
+    name                       = "OmsAgentForLinux"
+    publisher                  = "Microsoft.EnterpriseCloud.Monitoring"
+    type                       = "OmsAgentForLinux"
+    type_handler_version       = "1.0"
+
+    protected_settings = jsonencode({
+      "workspaceKey" = "${var.log_analytics_workspace_primary_key}"
+    })
+
+    settings = jsonencode({
+      "workspaceId"               = "${var.log_analytics_workspace_workspace_id}",
+      "stopOnMultipleConnections" = false
+      "skipDockerProviderInstall" = true
+    })
   }
 
   automatic_os_upgrade_policy {
@@ -115,6 +135,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
   os_disk {
     storage_account_type = "Standard_LRS"
     caching              = "ReadWrite"
+    disk_size_gb         = 64
   }
 
   network_interface {

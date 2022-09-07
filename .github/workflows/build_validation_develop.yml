@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           # Full git history is needed to get a proper list of
           # changed files within `super-linter`
@@ -58,7 +58,7 @@ jobs:
         # the slim image is 2GB smaller and we don't use the extra stuff
         # Moved this after the Terraform checks above due something similar to this issue:
         # https://github.com/github/super-linter/issues/2433
-        uses: github/super-linter/slim@v4.9.4
+        uses: github/super-linter/slim@v4.9.5
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
