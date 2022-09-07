@@ -53,6 +53,10 @@ async def update_and_publish_event_airlock_request(airlock_request: AirlockReque
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
+    if not new_status:
+        logging.debug(f"Skipping sending 'status changed' event for airlock request item: {airlock_request.id} - there is no status change")
+        return updated_airlock_request
+
     try:
         logging.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
         await send_status_changed_event(updated_airlock_request)

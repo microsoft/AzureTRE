@@ -95,8 +95,12 @@ async def wait_for_status(
             200,
         )
         current_status = request_result[strings.AIRLOCK_REQUEST][strings.AIRLOCK_REQUEST_STATUS]
-        if (current_status == request_status):
+        if (current_status == request_status or is_final_status(current_status)):
             break
 
         LOGGER.info(f"Waiting for request status: {request_status}, current status is {current_status}")
         await asyncio.sleep(2)
+
+
+def is_final_status(status):
+    return status in [strings.APPROVED_STATUS, strings.REJECTED_STATUS, strings.CANCELLED_STATUS, strings.BLOCKED_STATUS, strings.FAILED_STATUS]
