@@ -5,7 +5,15 @@
   "title": "Azure Machine Learning",
   "description": "Installs Azure Machine Learning. Please be aware this template opens up additional firewall rules to enable Azure ML to function.",
   "required": [],
-  "properties": {},
+  "properties": {
+    "is_exposed_externally": {
+      "$id": "#/properties/is_exposed_externally",
+      "type": "boolean",
+      "title": "Expose externally",
+      "description": "Is the Azure ML workspace accessible from  outside of the workspace network",
+      "default": false
+    }
+  },
   "pipeline": {
     "install": [
       {
