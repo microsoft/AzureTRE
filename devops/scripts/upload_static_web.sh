@@ -1,27 +1,19 @@
 #!/bin/bash
-set -e
+set -o errexit
+set -o pipefail
+set -o nounset
+# Uncomment this line to see each command for debugging (careful: this will show secrets!)
+# set -o xtrace
 
-if [[ -z ${STORAGE_ACCOUNT} ]]; then
+if [[ -z ${STORAGE_ACCOUNT:-} ]]; then
   echo "STORAGE_ACCOUNT not set"
   exit 1
 fi
 
-if [[ -z ${PUBLIC_DEPLOYMENT_IP_ADDRESS:-} ]]; then
-  IPADDR=$(curl ipecho.net/plain; echo)
-else
-  IPADDR=${PUBLIC_DEPLOYMENT_IP_ADDRESS}
-fi
-
 # The storage account is protected by network rules
-# The rules need to be temporarily lifted so that the index.html file, if required, and certificate can be uploaded
-echo "Creating network rule on storage account ${STORAGE_ACCOUNT} for $IPADDR"
-az storage account network-rule add \
-  --account-name "${STORAGE_ACCOUNT}" \
-  --resource-group "${RESOURCE_GROUP_NAME}" \
-  --ip-address "${IPADDR}"
-echo "Waiting for network rule to take effect"
-sleep 30s
-echo "Created network rule on storage account"
+echo "Enabling public access to storage account..."
+az storage account update --default-action Allow --name "${STORAGE_ACCOUNT}"
+sleep 10
 
 echo "Uploading ${CONTENT_DIR} to static web storage"
 
@@ -35,9 +27,5 @@ az storage blob upload-batch \
     --only-show-errors \
     --overwrite
 
-echo "Removing network rule on storage account"
-az storage account network-rule remove \
-  --account-name "${STORAGE_ACCOUNT}" \
-  --resource-group "${RESOURCE_GROUP_NAME}" \
-  --ip-address "${IPADDR}"
-echo "Removed network rule on storage account"
+echo "Disabling public access to storage account..."
+az storage account update --default-action Deny --name "${STORAGE_ACCOUNT}"
