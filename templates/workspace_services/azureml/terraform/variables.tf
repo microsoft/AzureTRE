@@ -9,3 +9,16 @@ variable "arm_client_id" {}
 variable "arm_client_secret" {}
 variable "display_name" {}
 variable "description" {}
+
+variable "auth_tenant_id" {
+  type        = string
+  description = "Used to authenticate into the AAD Tenant to get app role members"
+}
+variable "auth_client_id" {
+  type        = string
+  description = "Used to authenticate into the AAD Tenant to get app role members"
+}
+variable "auth_client_secret" {
+  type        = string
+  description = "Used to authenticate into the AAD Tenant to get app role members"
+}
