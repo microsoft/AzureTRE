@@ -26,6 +26,12 @@
       "title": "Shared Service Overview",
       "description": "Long form description of the shared service, in markdown syntax",
       "updateable": true
+    },
+    "connection_uri": {
+      "type": "string",
+      "title": "Shared Service Connection URL",
+      "description": "Connection URL of the shared service",
+      "updateable": true
     }
   }
 }
