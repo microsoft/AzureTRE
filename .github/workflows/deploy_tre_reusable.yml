@@ -679,11 +679,59 @@ jobs:
           TF_VAR_stateful_resources_locked:
             "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
+  deploy_ui:
+    name: Deploy UI
+    runs-on: ubuntu-latest
+    needs: [deploy_tre]
+    environment: ${{ inputs.environmentName }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
+          ref: ${{ inputs.prRef }}
+      - name: Deploy UI
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make build-and-deploy-ui"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
+          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
+          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          LOCATION: ${{ secrets.LOCATION }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
+          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
+          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
+          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
+          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
+          TF_VAR_application_admin_client_id: "${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}"
+          TF_VAR_application_admin_client_secret: "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}"
+          TF_VAR_stateful_resources_locked:
+            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"
     runs-on: ubuntu-latest
     environment: ${{ inputs.environmentName }}
-    needs: [deploy_shared_services, register_bundles]
+    needs: [deploy_shared_services, register_bundles, deploy_ui]
     timeout-minutes: 10
     steps:
       - name: Checkout

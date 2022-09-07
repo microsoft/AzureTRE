@@ -198,6 +198,7 @@ runs:
           -e TF_VAR_application_admin_client_id \
           -e TF_VAR_application_admin_client_secret \
           -e TF_VAR_arm_subscription_id="${{ inputs.ARM_SUBSCRIPTION_ID }}" \
+          -e SWAGGER_UI_CLIENT_ID="${{ inputs.TF_VAR_swagger_ui_client_id }}" \
           -e TF_VAR_swagger_ui_client_id \
           -e TF_VAR_core_address_space \
           -e TF_VAR_tre_address_space \

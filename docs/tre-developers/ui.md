@@ -49,7 +49,7 @@ Hooks are used throughout the project, and a couple of custom hooks were written
 - `useComponentManager`: This hook subscribes to changes broadcast from the Notifications panel, via the context. A component can simply add this hook to start subscribing to changes and react accordingly.
 
 ## Deployment
-The UI is deployed as part of the `tre-deploy` make target, as long as you have set `DEPLOY_UI=true` in your `./templates/core/.env` file.
+The UI is deployed as part of the `tre-deploy` make target (unless you set `DEPLOY_UI=false` in your `./templates/core/.env` file).
 
 To re-deploy _just_ the UI (after an initial deploy), run `make build-and-deploy-ui` from the root of the dev container. This will:
 - Use the environment variables from your deployment to create a `config.json` file for the UI

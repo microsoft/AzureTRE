@@ -106,7 +106,7 @@ elif [[ "$1" == *"stop"* ]]; then
 
   # deallocating all VMs in workspaces
   # RG is in uppercase here (which is odd). Checking both cases for future compatability.
-  az vm list --query "[?(starts_with(resourceGroup,'${core_rg_name}-ws') || starts_with(resourceGroup,'${core_rg_name^^}-WS')) && powerState=='VM running'][name, resourceGroup]" -o tsv |
+  az vm list -d --query "[?(starts_with(resourceGroup,'${core_rg_name}-ws') || starts_with(resourceGroup,'${core_rg_name^^}-WS')) && powerState=='VM running'][name, resourceGroup]" -o tsv |
   while read -r vm_name rg_name; do
     echo "Deallocating VM ${vm_name} in ${rg_name}"
     az vm deallocate --resource-group "${rg_name}" --name "${vm_name}" &
