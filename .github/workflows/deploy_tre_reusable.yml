@@ -692,16 +692,10 @@ jobs:
           # if the following values are missing (i.e. not triggered via comment workflow)
           # then the default checkout will apply
           ref: ${{ inputs.prRef }}
-      - name: Show inputs
-        run: |
-          curl ipecho.net/plain; echo
-      - name: Public IP
-        id: ip
-        uses: haythem/public-ip@v1.2
       - name: Deploy UI
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "PUBLIC_DEPLOYMENT_IP_ADDRESS=${{ steps.ip.outputs.ipv4 }} make build-and-deploy-ui"
+          COMMAND: "make build-and-deploy-ui"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
