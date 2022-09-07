@@ -8,6 +8,13 @@ This service installs the following resources into an existing virtual network w
 
 Any users with the role of `Workspace Researcher` will be assigned the `AzureML Data Scientist` role within the AML workspace.
 
+## Properties
+
+- `display_name` - The name of the Azure Machine Learning workspace.
+- `description` - The description of the Azure Machine Learning workspace.
+- `is_exposed_externally` - If `True`, the Azure Machine Learning workspace is accessible from outside of the worksapce virtual network.
+
+
 ## Firewall Rules
 
 Please be aware that the following outbound Firewall rules are opened for the workspace when this service is deployed, including to Azure Storage. This does open the possibility to extract data from a workspace if the user is determined to do so. Work is ongoing to remove some of these requirements:
