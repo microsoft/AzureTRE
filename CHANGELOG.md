@@ -21,6 +21,7 @@ ENHANCEMENTS:
 * UI - Operations and notifications stability improvements ([[#2530](https://github.com/microsoft/AzureTRE/pull/2530))
 * UI - Initial implemetation of Workspace Airlock Request View ([#2512](https://github.com/microsoft/AzureTRE/pull/2512))
 * Azure ML workspace service assigns Azure ML Data Scientist role to Workspace Researchers ([#2539](https://github.com/microsoft/AzureTRE/pull/2539))
+* UI is deployed by default ([#2554](https://github.com/microsoft/AzureTRE/pull/2554))
 
 BUG FIXES:
 
