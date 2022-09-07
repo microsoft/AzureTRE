@@ -16,6 +16,8 @@ import { SharedService } from '../../models/sharedService';
 import { SharedServices } from '../shared/SharedServices';
 import { SharedServiceItem } from '../shared/SharedServiceItem';
 import { Airlock } from '../shared/airlock/Airlock';
+import { SecuredByRole } from '../shared/SecuredByRole';
+import { RoleName, WorkspaceRoleName } from '../../models/roleNames';
 
 export const WorkspaceProvider: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
@@ -126,11 +128,11 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                         updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws)}
                         removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws)} />
                     } />
-                    <Route path="shared-services" element={
-                      <SharedServices readonly={true} />
+                   <Route path="shared-services" element={
+                      <SecuredByRole element={<SharedServices />} allowedRoles={[RoleName.TREAdmin,WorkspaceRoleName.WorkspaceOwner]} errorString={"You must be a TRE Admin to access this area"}/>
                     } />
-                    <Route path="shared-services/:sharedServiceId/*" element={
-                      <SharedServiceItem readonly={true} />
+                   <Route path="shared-services/:sharedServiceId/*" element={
+                      <SecuredByRole element={<SharedServiceItem />} allowedRoles={[RoleName.TREAdmin,WorkspaceRoleName.WorkspaceOwner]} errorString={"You must be a TRE Admin to access this area"}/>
                     } />
                     <Route path="requests/*" element={
                       <Airlock/>
