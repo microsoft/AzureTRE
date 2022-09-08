@@ -4,13 +4,13 @@ import logging
 from resources.resource import disable_and_delete_resource, post_resource
 from helpers import get_shared_service_id_by_name
 from resources import strings
-
+from conftest import admin_token
 
 LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.shared_services
-async def test_patch_firewall(admin_token, verify):
+async def test_patch_firewall(verify):
     template_name = strings.FIREWALL_SHARED_SERVICE
 
     patch_payload = {
@@ -70,8 +70,9 @@ async def test_patch_firewall(admin_token, verify):
         "templateName": template_name,
     }
 
+    admin_tkn = admin_token(verify)
     shared_service_firewall = await get_shared_service_id_by_name(
-        template_name, verify, admin_token
+        template_name, verify, admin_tkn
     )
     shared_service_path = f'/shared-services/{shared_service_firewall["id"]}'
 
@@ -93,10 +94,11 @@ shared_service_templates_to_create = [
 @pytest.mark.shared_services
 @pytest.mark.timeout(65 * 60)
 @pytest.mark.parametrize("template_name", shared_service_templates_to_create)
-async def test_create_shared_service(template_name, admin_token, verify) -> None:
+async def test_create_shared_service(template_name, verify) -> None:
+    admin_tkn = admin_token(verify)
     # Check that the shared service hasn't already been created
     shared_service = await get_shared_service_id_by_name(
-        template_name, verify, admin_token
+        template_name, verify, admin_tkn
     )
     if shared_service:
         id = shared_service["id"]
@@ -104,7 +106,7 @@ async def test_create_shared_service(template_name, admin_token, verify) -> None
             f"Shared service {template_name} already exists (id {id}), deleting it first..."
         )
         await disable_and_delete_resource(
-            f"/api/shared-services/{id}", admin_token, verify
+            f"/api/shared-services/{id}", admin_tkn, verify
         )
 
     post_payload = {
@@ -118,10 +120,11 @@ async def test_create_shared_service(template_name, admin_token, verify) -> None
     shared_service_path, _ = await post_resource(
         payload=post_payload,
         endpoint="/api/shared-services",
-        access_token=admin_token,
+        access_token=admin_tkn,
         verify=verify,
     )
 
+    admin_tkn = admin_token(verify)
     await disable_and_delete_resource(
-        f"/api{shared_service_path}", admin_token, verify
+        f"/api{shared_service_path}", admin_tkn, verify
     )

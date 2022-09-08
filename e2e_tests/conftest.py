@@ -21,7 +21,6 @@ def verify(pytestconfig):
         return False
 
 
-@pytest.fixture
 async def admin_token(verify) -> str:
     async with AsyncClient(verify=verify) as client:
         responseJson = ""
