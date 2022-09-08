@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "=2.97.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~>3.3.0"
+    }
   }
   backend "azurerm" {
   }
@@ -34,9 +38,4 @@ data "azurerm_subnet" "services" {
   name                 = "ServicesSubnet"
   virtual_network_name = data.azurerm_virtual_network.ws.name
   resource_group_name  = data.azurerm_virtual_network.ws.resource_group_name
-}
-
-data "azurerm_network_security_group" "ws" {
-  name                = "nsg-ws"
-  resource_group_name = data.azurerm_virtual_network.ws.resource_group_name
 }

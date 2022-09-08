@@ -5,6 +5,14 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "=3.5.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~>3.3.0"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.2.0"
+    }
   }
 
   backend "azurerm" {}
@@ -26,8 +34,6 @@ provider "azurerm" {
     }
   }
 }
-
-data "azurerm_client_config" "current" {}
 
 data "azurerm_resource_group" "ws" {
   name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
@@ -65,11 +71,6 @@ data "azurerm_private_dns_zone" "azurewebsites" {
   resource_group_name = local.core_resource_group_name
 }
 
-data "azurerm_private_dns_zone" "vaultcore" {
-  name                = "privatelink.vaultcore.azure.net"
-  resource_group_name = local.core_resource_group_name
-}
-
 data "azurerm_container_registry" "mgmt_acr" {
   name                = var.mgmt_acr_name
   resource_group_name = var.mgmt_resource_group_name
@@ -80,31 +81,16 @@ data "azurerm_log_analytics_workspace" "tre" {
   resource_group_name = local.core_resource_group_name
 }
 
-data "azurerm_network_security_group" "ws" {
-  name                = "nsg-ws"
-  resource_group_name = data.azurerm_virtual_network.ws.resource_group_name
-}
-
 data "azurerm_private_dns_zone" "mysql" {
   name                = "privatelink.mysql.database.azure.com"
   resource_group_name = local.core_resource_group_name
 }
-
 
 data "azurerm_private_dns_zone" "filecore" {
   name                = "privatelink.file.core.windows.net"
   resource_group_name = local.core_resource_group_name
 }
 
-data "azurerm_app_service" "api_core" {
-  name                = "api-${var.tre_id}"
-  resource_group_name = "rg-${var.tre_id}"
-}
-
 data "local_file" "version" {
   filename = "${path.module}/../version.txt"
-}
-
-output "connection_uri" {
-  value = "https://${azurerm_app_service.gitea.default_site_hostname}/"
 }
