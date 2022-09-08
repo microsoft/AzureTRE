@@ -5,12 +5,14 @@ from resources.workspace import get_workspace_auth_details
 from resources.resource import disable_and_delete_resource, post_resource
 from resources import strings
 
+from conftest import admin_token
+
 pytestmark = pytest.mark.asyncio
 
 
 @pytest.mark.performance
 @pytest.mark.timeout(3000)
-async def test_parallel_resource_creations(admin_token, verify) -> None:
+async def test_parallel_resource_creations(verify) -> None:
     """Creates N workspaces in parallel, and creates a workspace service in each, in parallel"""
 
     number_workspaces = 2
@@ -28,7 +30,8 @@ async def test_parallel_resource_creations(admin_token, verify) -> None:
             }
         }
 
-        task = asyncio.create_task(post_resource(payload=payload, endpoint=strings.API_WORKSPACES, access_token=admin_token, verify=verify))
+        admin_tkn = admin_token(verify)
+        task = asyncio.create_task(post_resource(payload=payload, endpoint=strings.API_WORKSPACES, access_token=admin_tkn, verify=verify))
         tasks.append(task)
 
     resource_paths = await asyncio.gather(*tasks)
@@ -36,7 +39,7 @@ async def test_parallel_resource_creations(admin_token, verify) -> None:
     # Now disable + delete them all in parallel
     tasks = []
     for workspace_path, _ in resource_paths:
-        task = asyncio.create_task(disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify))
+        task = asyncio.create_task(disable_and_delete_resource(f'/api{workspace_path}', admin_tkn, verify))
         tasks.append(task)
 
     await asyncio.gather(*tasks)
@@ -45,7 +48,7 @@ async def test_parallel_resource_creations(admin_token, verify) -> None:
 @pytest.mark.skip
 @pytest.mark.performance
 @pytest.mark.timeout(3000)
-async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_token, verify) -> None:
+async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) -> None:
     """Optionally creates a workspace and workspace service,
     then creates N number of VMs in parallel, patches each, and deletes them"""
 
@@ -69,11 +72,12 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_toke
             }
         }
 
-        workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, admin_token, verify)
+        admin_tkn = admin_token(verify)
+        workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, admin_tkn, verify)
     else:
         workspace_path = f"/workspaces/{config.PERF_TEST_WORKSPACE_ID}"
 
-    workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
+    workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_tkn, workspace_id=workspace_id, verify=verify)
 
     if config.PERF_TEST_WORKSPACE_SERVICE_ID == "":
         # create a guac service
@@ -140,8 +144,9 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_toke
 
     await asyncio.gather(*tasks)
 
+    admin_tkn = admin_token(verify)
     # clear up workspace + service (if we created them)
     if config.PERF_TEST_WORKSPACE_SERVICE_ID == "":
         await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
     if config.PERF_TEST_WORKSPACE_ID == "":
-        await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
+        await disable_and_delete_resource(f'/api{workspace_path}', admin_tkn, verify)
