@@ -66,23 +66,26 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       let r = [] as Array<string>;
       let wsAuth = false;
       switch (props.resource.resourceType) {
-
         case ResourceType.SharedService:
           r = [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner];
           break;
         case ResourceType.WorkspaceService:
-        case ResourceType.UserResource:
-        case ResourceType.Workspace:
-          setWsAuth(true);
+          r = [WorkspaceRoleName.WorkspaceOwner]
           wsAuth = true;
-          r = [WorkspaceRoleName.WorkspaceOwner];
+          break;
+        case ResourceType.UserResource:
+          r = [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher];
+          wsAuth = true;
+          break;
+        case ResourceType.Workspace:
+          r = [RoleName.TREAdmin];
           break;
       }
+      setWsAuth(wsAuth);
       setRoles(r);
 
-      // check if the user is in a role to get the template (which drives showing custom actions)
+      // should we bother getting the template? if the user isn't in the right role they won't see the menu at all.
       const userRoles = wsAuth ? workspaceCtx.roles : appRoles.roles;
-      console.warn(props.resource.resourceType, userRoles);
       if (userRoles && r.filter(x => userRoles.includes(x)).length > 0) {
         const template = await apiCall(`${templatesPath}/${props.resource.templateName}`, HttpMethod.Get);
         setResourceTemplate(template);
@@ -191,7 +194,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
         <CommandBar
           items={menuItems}
           ariaLabel="Resource actions"
-      />
+        />
         :
         <IconButton iconProps={{ iconName: 'More' }} menuProps={menuProps} className="tre-hide-chevron" disabled={props.componentAction === ComponentAction.Lock} />
       } />
