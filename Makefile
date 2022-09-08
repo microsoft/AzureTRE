@@ -263,6 +263,14 @@ shared_service_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
 user_resource_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
 	DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
 
+deploy-shared-service:
+	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
+	$(call target_title, "Deploying ${DIR} shared service") \
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env,auth \
+	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
+	&& cd ${DIR} \
+	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" $${PROPS}
+
 firewall-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
 	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
