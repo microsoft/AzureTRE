@@ -1,4 +1,4 @@
-import { MessageBar, MessageBarType, Spinner, SpinnerSize } from "@fluentui/react";
+import { Spinner, SpinnerSize } from "@fluentui/react";
 import { useEffect, useState } from "react";
 import { LoadingState } from "../../../models/loadingState";
 import { HttpMethod, ResultType, useAuthApiCall } from "../../../hooks/useAuthApiCall";
@@ -22,7 +22,6 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
   const [template, setTemplate] = useState<any | null>(null);
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(LoadingState.Loading as LoadingState);
-  const [deployError, setDeployError] = useState(false);
   const [sendingData, setSendingData] = useState(false);
   const apiCall = useAuthApiCall();
   const [apiError, setApiError] = useState({} as APIError);
@@ -58,30 +57,32 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
   }, [apiCall, props.templatePath, template, props.updateResource]);
 
   const createUpdateResource = async (formData: any) => {
-    setDeployError(false);
     setSendingData(true);
     let response;
-    if (props.updateResource) {
-      // only send the properties we're allowed to send
-      let d: any = {}
-      for (let prop in template.properties) {
-        if (!template.properties[prop].readOnly) d[prop] = formData[prop];
+    try
+    {
+      if (props.updateResource) {
+        // only send the properties we're allowed to send
+        let d: any = {}
+        for (let prop in template.properties) {
+          if (!template.properties[prop].readOnly) d[prop] = formData[prop];
+        }
+        console.log("patching resource", d);
+        let wsAuth = props.updateResource.resourceType === ResourceType.WorkspaceService || props.updateResource.resourceType === ResourceType.UserResource;
+        response = await apiCall(props.updateResource.resourcePath, HttpMethod.Patch, wsAuth ? props.workspaceApplicationIdURI : undefined, { properties: d }, ResultType.JSON, undefined, undefined, props.updateResource._etag);
+      } else {
+        const resource = { templateName: props.templateName, properties: formData };
+        console.log(resource);
+        response = await apiCall(props.resourcePath, HttpMethod.Post, props.workspaceApplicationIdURI, resource, ResultType.JSON);
       }
-      console.log("patching resource", d);
-      let wsAuth = props.updateResource.resourceType === ResourceType.WorkspaceService || props.updateResource.resourceType === ResourceType.UserResource;
-      response = await apiCall(props.updateResource.resourcePath, HttpMethod.Patch, wsAuth ? props.workspaceApplicationIdURI : undefined, { properties: d }, ResultType.JSON, undefined, undefined, props.updateResource._etag);
-    } else {
-      const resource = { templateName: props.templateName, properties: formData };
-      console.log(resource);
-      response = await apiCall(props.resourcePath, HttpMethod.Post, props.workspaceApplicationIdURI, resource, ResultType.JSON);
-    }
 
-    setSendingData(false);
-    if (response) {
       props.onCreateResource(response.operation);
-    } else {
-      setDeployError(true);
+    } catch (err: any) {
+      err.userMessage = 'Error sending create / update request';
+      setApiError(err);
+      setLoading(LoadingState.Error);
     }
+    setSendingData(false);
   }
 
   // use the supplied uiSchema or create a blank one, and set the overview field to textarea manually.
@@ -110,12 +111,6 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
               <Spinner label="Sending request" ariaLive="assertive" labelPosition="bottom" size={SpinnerSize.large} />
               :
               <Form schema={template} formData={formData} uiSchema={uiSchema} onSubmit={(e: any) => createUpdateResource(e.formData)} />
-          }
-          {
-            deployError &&
-            <MessageBar messageBarType={MessageBarType.error}>
-              <p>The API returned an error. Check the console for details or retry.</p>
-            </MessageBar>
           }
         </div>
       )

@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { CommandBarButton, DetailsList, getTheme, IColumn, MessageBar, MessageBarType, Persona, PersonaSize, SelectionMode, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { CommandBarButton, DetailsList, getTheme, IColumn, Persona, PersonaSize, SelectionMode, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { HttpMethod, useAuthApiCall } from '../../../hooks/useAuthApiCall';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
 import { WorkspaceContext } from '../../../contexts/WorkspaceContext';
@@ -8,6 +8,8 @@ import moment from 'moment';
 import { Route, Routes, useNavigate } from 'react-router-dom';
 import { AirlockViewRequest } from './AirlockViewRequest';
 import { LoadingState } from '../../../models/loadingState';
+import { APIError } from '../../../models/exceptions';
+import { ExceptionLayout } from '../ExceptionLayout';
 
 interface AirlockProps {
 }
@@ -18,6 +20,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
+  const [apiError, setApiError] = useState({} as APIError);
   const theme = getTheme();
   const navigate = useNavigate();
 
@@ -41,7 +44,9 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
         requests.sort((a, b) => a.updatedWhen < b.updatedWhen ? 1 : -1);
         setAirlockRequests(requests);
         setLoadingState(LoadingState.Ok);
-      } catch (error) {
+      } catch (err: any) {
+        err.userMessage = 'Error fetching airlock requests';
+        setApiError(err);
         setLoadingState(LoadingState.Error);
       }
     }
@@ -173,13 +178,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
       break;
     case LoadingState.Error:
       requestsList = (
-        <MessageBar
-          messageBarType={MessageBarType.error}
-          isMultiline={true}
-        >
-          <h3>Error fetching airlock requests</h3>
-          <p>There was an error fetching the airlock requests. Please see the browser console for details.</p>
-        </MessageBar>
+        <ExceptionLayout e={apiError} />
       ); break;
     default:
       requestsList = (
