@@ -135,4 +135,4 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, v
     short_workspace_service_id = workspace_service_id[-4:]
     endpoint = f"https://guacamole-{config.TRE_ID}-ws-{short_workspace_id}-svc-{short_workspace_service_id}.azurewebsites.net/guacamole"
 
-    await check_aad_auth_redirect(endpoint)
+    await check_aad_auth_redirect(endpoint, verify)

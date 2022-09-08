@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-cyclecloud
-version: 0.2.4
+version: 0.2.5
 description: "An Azure TRE Shared Service Template for Azure Cyclecloud"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
