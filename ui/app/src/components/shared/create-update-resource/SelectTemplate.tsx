@@ -2,6 +2,8 @@ import { DefaultButton, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack 
 import { useEffect, useState } from "react";
 import { LoadingState } from "../../../models/loadingState";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
+import { APIError } from "../../../models/exceptions";
+import { ExceptionLayout } from "../ExceptionLayout";
 
 interface SelectTemplateProps {
     templatesPath: string,
@@ -12,6 +14,7 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (pro
     const [templates, setTemplates] = useState<any[] | null>(null);
     const [loading, setLoading] = useState(LoadingState.Loading as LoadingState);
     const apiCall = useAuthApiCall();
+    const [apiError, setApiError] = useState({} as APIError);
 
     useEffect(() => {
         const getTemplates = async () => {
@@ -20,7 +23,9 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (pro
                 const templatesResponse = await apiCall(props.templatesPath, HttpMethod.Get);
                 setTemplates(templatesResponse.templates);
                 setLoading(LoadingState.Ok);
-            } catch {
+            } catch (err: any){
+                err.userMessage = 'Error retrieving templates';
+                setApiError(err);
                 setLoading(LoadingState.Error);
             }
         };
@@ -29,7 +34,7 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (pro
         if (!templates) {
             getTemplates();
         }
-    });
+    }, [apiCall, props.templatesPath, templates]);
 
     switch (loading) {
         case LoadingState.Ok:
@@ -56,13 +61,7 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (pro
             )
         case LoadingState.Error:
             return (
-                <MessageBar
-                    messageBarType={MessageBarType.error}
-                    isMultiline={true}
-                >
-                    <h3>Error retrieving templates</h3>
-                    <p>There was an error retrieving resource templates. Please see the browser console for details.</p>
-                </MessageBar>
+                <ExceptionLayout e={apiError} />
             );
         default:
             return (

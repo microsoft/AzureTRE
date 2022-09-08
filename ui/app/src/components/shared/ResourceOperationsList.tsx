@@ -1,4 +1,4 @@
-import { IStackStyles, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from "@fluentui/react";
+import { IStackStyles, Spinner, SpinnerSize, Stack } from "@fluentui/react";
 import React, { useEffect, useContext, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { HttpMethod, useAuthApiCall } from '../../hooks/useAuthApiCall';
@@ -9,6 +9,9 @@ import { ResourceOperationListItem } from './ResourceOperationListItem';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import config from '../../config.json';
 import moment from "moment";
+import { APIError } from "../../models/exceptions";
+import { LoadingState } from "../../models/loadingState";
+import { ExceptionLayout } from "./ExceptionLayout";
 
 
 interface ResourceOperationsListProps {
@@ -17,6 +20,7 @@ interface ResourceOperationsListProps {
 
 export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsListProps> = (props: ResourceOperationsListProps) => {
   const apiCall = useAuthApiCall();
+  const [apiError, setApiError] = useState({} as APIError);
   const workspaceCtx = useContext(WorkspaceContext);
   const { resourceId } = useParams();
   const [resourceOperations, setResourceOperations] = useState([] as Array<Operation>)
@@ -29,9 +33,11 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
         const ops = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.Operations}`, HttpMethod.Get, workspaceCtx.workspaceApplicationIdURI);
         config.debug && console.log(`Got resource operations, for resource:${props.resource.id}: ${ops.operations}`);
         setResourceOperations(ops.operations.reverse());
-        setLoadingState(ops && ops.operations.length > 0 ? 'ok' : 'error');
-      } catch {
-        setLoadingState('error');
+        setLoadingState(ops && ops.operations.length > 0 ? LoadingState.Ok : LoadingState.Error);
+      } catch (err: any) {
+        err.userMessage = "Error retrieving resource operations"
+        setApiError(err);
+        setLoadingState(LoadingState.Error);
       }
     };
     getOperations();
@@ -46,7 +52,7 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
   };
 
   switch (loadingState) {
-    case 'ok':
+    case LoadingState.Ok:
       return (
         <>
           {
@@ -70,15 +76,9 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
           }
         </>
       );
-    case 'error':
+    case LoadingState.Error:
       return (
-        <MessageBar
-          messageBarType={MessageBarType.error}
-          isMultiline={true}
-        >
-          <h3>Error retrieving resource operations</h3>
-          <p>There was an error retrieving this resource operations. Please see the browser console for details.</p>
-        </MessageBar>
+        <ExceptionLayout e={apiError} />
       )
     default:
       return (
