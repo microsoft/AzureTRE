@@ -11,17 +11,12 @@ LINTER_REGEX_INCLUDE?=all # regular expression used to specify which files to in
 target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
 
 all: bootstrap mgmt-deploy images tre-deploy
-tre-deploy: deploy-core build-and-deploy-ui deploy-shared-services db-migrate show-core-output
+tre-deploy: deploy-core build-and-deploy-ui firewall-install db-migrate show-core-output
 
 images: build-and-push-api build-and-push-resource-processor build-and-push-airlock-processor
 build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-airlock-processor: build-airlock-processor push-airlock-processor
-
-deploy-shared-services: firewall-install
-	. ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
-	&& if [ "$${DEPLOY_GITEA}" == "true" ]; then $(MAKE) gitea-install; fi \
-	&& if [ "$${DEPLOY_NEXUS}" == "true" ]; then $(MAKE) nexus-install; fi
 
 # to move your environment from the single 'core' deployment (which includes the firewall)
 # toward the shared services model, where it is split out - run the following make target before a tre-deploy
@@ -107,7 +102,10 @@ prepare-tf-state:
 deploy-core: tre-start
 	$(call target_title, "Deploying TRE") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env,auth \
-	&& if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${MAKEFILE_DIR}/templates/core/terraform/ && ./deploy.sh 1>/dev/null 2>/dev/null; else cd ${MAKEFILE_DIR}/templates/core/terraform/ && ./deploy.sh; fi;
+	&& if [[ "$${TF_LOG}" == "DEBUG" ]]; \
+		then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${MAKEFILE_DIR}/templates/core/terraform/ \
+			&& ./deploy.sh 1>/dev/null 2>/dev/null; \
+		else cd ${MAKEFILE_DIR}/templates/core/terraform/ && ./deploy.sh; fi;
 
 letsencrypt:
 	$(call target_title, "Requesting LetsEncrypt SSL certificate") \
@@ -249,7 +247,9 @@ bundle-register:
 	&& az acr login --name $${ACR_NAME}	\
 	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
 	&& cd ${DIR} \
-	&& ${MAKEFILE_DIR}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify --workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
+	&& ${MAKEFILE_DIR}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" \
+		--current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify \
+		--workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
 workspace_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
 	DIR="${MAKEFILE_DIR}/templates/workspaces/$(1)" BUNDLE_TYPE=workspace
@@ -263,29 +263,9 @@ shared_service_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
 user_resource_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
 	DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
 
-deploy-shared-service:
-	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
-	$(call target_title, "Deploying ${DIR} shared service") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
-	&& cd ${DIR} \
-	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" $${PROPS}
-
 firewall-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
 	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
-
-nexus-install:
-	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
-	DIR="${MAKEFILE_DIR}/templates/shared_services/certs" BUNDLE_TYPE=shared_service PROPS="--domain_prefix nexus --cert_name nexus-ssl" \
-	&& $(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
-	DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus-vm/ BUNDLE_TYPE=shared_service PROPS="--ssl_cert_name nexus-ssl"
-
-gitea-install:
-	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
-
-temp-do-upload:
-	$(MAKE) static-web-upload DIR=${MAKEFILE_DIR}/dummy
 
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
