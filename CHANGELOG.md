@@ -20,12 +20,17 @@ ENHANCEMENTS:
 * Airlock requests contain a field with information about the files that were submitted ([#2504](https://github.com/microsoft/AzureTRE/pull/2504))
 * UI - Operations and notifications stability improvements ([[#2530](https://github.com/microsoft/AzureTRE/pull/2530))
 * UI - Initial implemetation of Workspace Airlock Request View ([#2512](https://github.com/microsoft/AzureTRE/pull/2512))
+* Add `is_expsed_externally` option to Azure ML Workspace Service ([#2548](https://github.com/microsoft/AzureTRE/pull2548))
+* Azure ML workspace service assigns Azure ML Data Scientist role to Workspace Researchers ([#2539](https://github.com/microsoft/AzureTRE/pull/2539))
+* UI is deployed by default ([#2554](https://github.com/microsoft/AzureTRE/pull/2554))
+
 
 BUG FIXES:
 
 * API health check is also returned by accessing the root path at / ([#2469](https://github.com/microsoft/AzureTRE/pull/2469))
 * Temporary disable AppInsight's private endpoint in base workspace ([#2543](https://github.com/microsoft/AzureTRE/pull/2543))
 * Resource Processor execution optimization (`porter show`) for long-standing services ([#2542](https://github.com/microsoft/AzureTRE/pull/2542))
+* Move AML Compute deployment to use AzApi Terraform Provider {[#2555]((https://github.com/microsoft/AzureTRE/pull/2555))
 
 ## 0.4.2 (August 23, 2022)
 
