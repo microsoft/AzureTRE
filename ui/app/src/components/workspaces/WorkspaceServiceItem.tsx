@@ -4,7 +4,7 @@ import { ApiEndpoint } from '../../models/apiEndpoints';
 import { useAuthApiCall, HttpMethod } from '../../hooks/useAuthApiCall';
 import { UserResource } from '../../models/userResource';
 import { WorkspaceService } from '../../models/workspaceService';
-import { MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { ComponentAction, Resource } from '../../models/resource';
 import { ResourceCardList } from '../shared/ResourceCardList';
 import { LoadingState } from '../../models/loadingState';
@@ -18,6 +18,8 @@ import { UserResourceItem } from './UserResourceItem';
 import { ResourceBody } from '../shared/ResourceBody';
 import { SecuredByRole } from '../shared/SecuredByRole';
 import { WorkspaceRoleName } from '../../models/roleNames';
+import { APIError } from '../../models/exceptions';
+import { ExceptionLayout } from '../shared/ExceptionLayout';
 
 interface WorkspaceServiceItemProps {
   workspaceService?: WorkspaceService,
@@ -36,6 +38,8 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
   const createFormCtx = useContext(CreateUpdateResourceContext);
   const navigate = useNavigate();
   const apiCall = useAuthApiCall();
+  const [apiError, setApiError] = useState({} as APIError);
+
   const latestUpdate = useComponentManager(
     workspaceService,
     (r: Resource) => { props.updateWorkspaceService(r as WorkspaceService); setWorkspaceService(r as WorkspaceService) },
@@ -64,7 +68,9 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
         setHasUserResourceTemplates(ut && ut.templates && ut.templates.length > 0);
         setUserResources(u.userResources);
         setLoadingState(LoadingState.Ok);
-      } catch {
+      } catch (err: any) {
+        err.userMessage = "Error retrieving resources";
+        setApiError(err);
         setLoadingState(LoadingState.Error);
       }
     };
@@ -100,15 +106,16 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
               <>
                 <ResourceHeader resource={workspaceService} latestUpdate={latestUpdate} />
                 <ResourceBody resource={workspaceService} />
-
                 {
                   hasUserResourceTemplates &&
                   <Stack className="tre-panel">
                     <Stack.Item>
                       <Stack horizontal horizontalAlign="space-between">
-                        <h1>User Resources</h1>
+                        <h1>Resources</h1>
                         <SecuredByRole allowedRoles={[WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher]} workspaceAuth={true} element={
-                          <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" disabled={!workspaceService.isEnabled || latestUpdate.componentAction === ComponentAction.Lock || successStates.indexOf(workspaceService.deploymentStatus) === -1} title={!workspaceService.isEnabled ? 'Service must be enabled first' : 'Create a User Resource'}
+                          <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new"
+                            disabled={!workspaceService.isEnabled || latestUpdate.componentAction === ComponentAction.Lock || successStates.indexOf(workspaceService.deploymentStatus) === -1}
+                            title={(!workspaceService.isEnabled || latestUpdate.componentAction === ComponentAction.Lock || successStates.indexOf(workspaceService.deploymentStatus) === -1) ? 'Service must be enabled, successfully deployed, and not locked' : 'Create a User Resource'}
                             onClick={() => {
                               createFormCtx.openCreateForm({
                                 resourceType: ResourceType.UserResource,
@@ -148,13 +155,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
       );
     case LoadingState.Error:
       return (
-        <MessageBar
-          messageBarType={MessageBarType.error}
-          isMultiline={true}
-        >
-          <h3>Error retrieving workspace</h3>
-          <p>There was an error retrieving this workspace. Please see the browser console for details.</p>
-        </MessageBar>
+        <ExceptionLayout e={apiError} />
       );
     default:
       return (

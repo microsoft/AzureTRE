@@ -8,4 +8,4 @@ set -o nounset
 # Find all terraform folders and create/upgrade lock files.
 # Run from root folder
 
-find . -type d -name terraform -not -path "*/.cnab/*" -exec terraform -chdir={} init -upgrade=true -backend=false \;
+find . -type d -name terraform -not -path "*/.cnab/*" -exec echo In Dir: {} \; -exec terraform -chdir={} init -upgrade=true -backend=false \;

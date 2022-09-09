@@ -24,6 +24,7 @@ ENHANCEMENTS:
 * Add `is_expsed_externally` option to Azure ML Workspace Service ([#2548](https://github.com/microsoft/AzureTRE/pull2548))
 * Azure ML workspace service assigns Azure ML Data Scientist role to Workspace Researchers ([#2539](https://github.com/microsoft/AzureTRE/pull/2539))
 * UI is deployed by default ([#2554](https://github.com/microsoft/AzureTRE/pull/2554))
+* Remove manual/makefile option to install Gitea/Nexus ([#2573](https://github.com/microsoft/AzureTRE/pull/2573))
 
 
 BUG FIXES:
