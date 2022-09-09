@@ -78,7 +78,7 @@ def test_enrich_template_combines_properties(original, extra1, extra2, expected,
     original_template = basic_resource_template
     original_template.properties = original
 
-    template = services.schema_service.enrich_template(original_template, [([], extra1), ([], extra2)])
+    template = services.schema_service.enrich_template([([], extra1), ([], extra2)], original_template)
 
     assert template['properties'] == expected
 
