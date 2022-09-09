@@ -5,6 +5,9 @@ import { HttpMethod, ResultType, useAuthApiCall } from '../../hooks/useAuthApiCa
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { OperationsContext } from '../../contexts/OperationsContext';
 import { ResourceType } from '../../models/resourceType';
+import { LoadingState } from '../../models/loadingState';
+import { APIError } from '../../models/exceptions';
+import { ExceptionLayout } from './ExceptionLayout';
 
 interface ConfirmDisableEnableResourceProps {
   resource: Resource,
@@ -15,7 +18,8 @@ interface ConfirmDisableEnableResourceProps {
 // show a 'are you sure' modal, and then send a patch if the user confirms
 export const ConfirmDisableEnableResource: React.FunctionComponent<ConfirmDisableEnableResourceProps> = (props: ConfirmDisableEnableResourceProps) => {
   const apiCall = useAuthApiCall();
-  const [isSending, setIsSending] = useState(false);
+  const [loading, setLoading] = useState(LoadingState.Ok);
+  const [apiError, setApiError] = useState({} as APIError);
   const workspaceCtx = useContext(WorkspaceContext);
   const opsCtx = useContext(OperationsContext);
 
@@ -44,35 +48,46 @@ export const ConfirmDisableEnableResource: React.FunctionComponent<ConfirmDisabl
   const wsAuth = (props.resource.resourceType === ResourceType.WorkspaceService || props.resource.resourceType === ResourceType.UserResource);
 
   const toggleDisableCall = async () => {
-    setIsSending(true);
-    let body = { isEnabled: props.isEnabled }
-    let op = await apiCall(props.resource.resourcePath, HttpMethod.Patch, wsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined, body, ResultType.JSON, undefined, undefined, props.resource._etag);
-    opsCtx.addOperations([op.operation]);
-    setIsSending(false);
-    props.onDismiss();
+    setLoading(LoadingState.Loading);
+    try {
+      let body = { isEnabled: props.isEnabled }
+      let op = await apiCall(props.resource.resourcePath, HttpMethod.Patch, wsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined, body, ResultType.JSON, undefined, undefined, props.resource._etag);
+      opsCtx.addOperations([op.operation]);
+      props.onDismiss();
+    } catch (err: any) {
+      err.userMessage = 'Failed to enable/disable resource';
+      setApiError(err);
+      setLoading(LoadingState.Error);
+    }
   }
 
   return (
-  <>
-    <Dialog
-      hidden={false}
-      onDismiss={() => props.onDismiss()}
-      dialogContentProps={props.isEnabled ? enableProps : disableProps}
-      modalProps={modalProps}
-    >
-      {!isSending ?
-        <DialogFooter>
-          {props.isEnabled ?
-            <PrimaryButton text="Enable" onClick={() => toggleDisableCall()} />
-            :
-            <PrimaryButton text="Disable" onClick={() => toggleDisableCall()} />
-          }
-          <DefaultButton text="Cancel" onClick={() => props.onDismiss()} />
-
-        </DialogFooter>
-        :
-        <Spinner label="Sending request..." ariaLive="assertive" labelPosition="right" />
-      }
-    </Dialog>
-  </>);
+    <>
+      <Dialog
+        hidden={false}
+        onDismiss={() => props.onDismiss()}
+        dialogContentProps={props.isEnabled ? enableProps : disableProps}
+        modalProps={modalProps}
+      >
+        {
+          loading === LoadingState.Ok &&
+          <DialogFooter>
+            {props.isEnabled ?
+              <PrimaryButton text="Enable" onClick={() => toggleDisableCall()} />
+              :
+              <PrimaryButton text="Disable" onClick={() => toggleDisableCall()} />
+            }
+            <DefaultButton text="Cancel" onClick={() => props.onDismiss()} />
+          </DialogFooter>
+        }
+        {
+          loading === LoadingState.Loading &&
+          <Spinner label="Sending request..." ariaLive="assertive" labelPosition="right" />
+        }
+        {
+          loading === LoadingState.Error &&
+          <ExceptionLayout e={apiError} />
+        }
+      </Dialog>
+    </>);
 };
