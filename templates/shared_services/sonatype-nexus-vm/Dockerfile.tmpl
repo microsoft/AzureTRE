@@ -20,9 +20,6 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY . $BUNDLE_DIR
 
-# Disable Terraform checkpoint
-ENV CHECKPOINT_DISABLE=1
-
 # Mirror plugins to prevent network access at runtime
 # Remove when available from https://github.com/getporter/terraform-mixin/issues/90
 WORKDIR $BUNDLE_DIR/terraform
