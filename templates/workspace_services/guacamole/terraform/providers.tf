@@ -6,7 +6,7 @@ terraform {
     }
     local = {
       source  = "hashicorp/local"
-      version = "~>2.2.0"
+      version = "=2.2.3"
     }
   }
   backend "azurerm" {

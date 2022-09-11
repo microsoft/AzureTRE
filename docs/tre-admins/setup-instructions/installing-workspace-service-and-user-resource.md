@@ -117,7 +117,7 @@ Once the workspace service has been created, we can use the workspace API to cre
     }
     ```
 
-    > Note: You can also specify "Windows 10" in "os_image" for a standard Windows 10 image. The "nexus_version" property also accepts "V1" if you have a V1 Nexus shared service deployed instead of the V2 service described in [Configuring shared services](./configuring-shared-services.md).
+    > Note: You can also specify "Windows 10" in "os_image" for a standard Windows 10 image.
 
 The API will return an `operation` object with a `Location` header to query the operation status, as well as the `resourceId` and `resourcePath` properties to query the resource under creation.
 
