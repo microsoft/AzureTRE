@@ -81,6 +81,6 @@ def main(msg: func.ServiceBusMessage,
             subject=request_id,
             event_type="Airlock.ToDelete",
             event_time=datetime.datetime.utcnow(),
-            data_version="1.0"
+            data_version=constants.TO_DELETE_EVENT_DATA_VERSION
         )
     )
