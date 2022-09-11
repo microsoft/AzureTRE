@@ -48,7 +48,7 @@ async def disable_and_delete_resource(endpoint, access_token, verify):
         # disable
         payload = {"isEnabled": False}
         response = await client.patch(full_endpoint, headers=auth_headers, json=payload, timeout=TIMEOUT)
-        LOGGER.info(f'sRESPONSE Status code: {response.status_code} Content: {response.content}')
+        LOGGER.info(f'RESPONSE Status code: {response.status_code} Content: {response.content}')
         assert (response.status_code == status.HTTP_202_ACCEPTED), "Disable resource failed"
         operation_endpoint = response.headers["Location"]
         await wait_for(patch_done, client, operation_endpoint, auth_headers, [strings.RESOURCE_STATUS_UPDATING_FAILED])
@@ -70,6 +70,7 @@ async def wait_for(func, client, operation_endpoint, headers, failure_states: li
     LOGGER.info(f'WAITING FOR OP: {operation_endpoint}')
     while not done:
         await asyncio.sleep(30)
+
         done, done_state, message = await func(client, operation_endpoint, headers)
         LOGGER.info(f"{done}, {done_state}, {message}")
     try:
