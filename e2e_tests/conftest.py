@@ -1,10 +1,4 @@
-from json import JSONDecodeError
 import pytest
-
-from httpx import AsyncClient
-from starlette import status
-
-import config
 
 pytestmark = pytest.mark.asyncio
 

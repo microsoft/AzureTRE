@@ -1,3 +1,5 @@
+from json import JSONDecodeError
+
 import asyncio
 from typing import Optional
 from contextlib import asynccontextmanager
