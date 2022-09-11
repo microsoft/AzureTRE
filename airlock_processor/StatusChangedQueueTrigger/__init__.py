@@ -53,26 +53,13 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
 
     logging.info('Processing request with id %s. new status is "%s", type is "%s"', req_id, new_status, request_type)
 
-    try:
-        tre_id = os.environ["TRE_ID"]
-    except KeyError as e:
-        logging.error(f'Missing environment variable: {e}')
-        raise
-
-    if new_status == constants.STAGE_DRAFT and request_type == constants.IMPORT_TYPE:
-        account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL + tre_id
-        blob_operations.create_container(account_name, req_id)
-        return
-
-    if new_status == constants.STAGE_DRAFT and request_type == constants.EXPORT_TYPE:
-        account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + ws_id
+    if new_status == constants.STAGE_DRAFT:
+        account_name = get_storage_account(status=constants.STAGE_DRAFT, request_type=request_type, short_workspace_id=ws_id)
         blob_operations.create_container(account_name, req_id)
         return
 
     if new_status == constants.STAGE_CANCELLED:
-        storage_account_name = get_storage_account(previous_status, request_type, ws_id)
-        container_url = blob_operations.get_blob_url(account_name=storage_account_name, container_name=req_id)
-        set_output_event_to_trigger_blob_deletion(toDeleteEvent, request_properties, blob_url=container_url)
+        delete_request_files(request_properties, toDeleteEvent)
         return
 
     if new_status == constants.STAGE_SUBMITTED:
@@ -231,6 +218,12 @@ def set_output_event_to_trigger_blob_deletion(toDeleteEvent, request_properties,
 def get_request_files(request_properties: RequestProperties):
     storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.workspace_id)
     return blob_operations.get_request_files(account_name=storage_account_name, request_id=request_properties.request_id)
+
+
+def delete_request_files(request_properties: RequestProperties, toDeleteEvent: func.Out[func.EventGridOutputEvent]):
+    storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.workspace_id)
+    container_url = blob_operations.get_blob_url(account_name=storage_account_name, container_name=request_properties.request_id)
+    set_output_event_to_trigger_blob_deletion(toDeleteEvent, request_properties, blob_url=container_url)
 
 
 def _get_tre_id():
