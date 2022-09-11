@@ -57,12 +57,6 @@ parameters:
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
-  - name: nexus_version
-    type: string
-    default: "V2"
-    description: >-
-      "Which Nexus proxy service to use, i.e. V1 for the App Service-based
-      Nexus or V2 for the VM-based service"
 
 outputs:
   - name: ip
@@ -107,7 +101,6 @@ install:
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
-        nexus_version: "{{ bundle.parameters.nexus_version }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -135,7 +128,6 @@ upgrade:
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
-        nexus_version: "{{ bundle.parameters.nexus_version }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -172,7 +164,6 @@ uninstall:
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
-        nexus_version: "{{ bundle.parameters.nexus_version }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
