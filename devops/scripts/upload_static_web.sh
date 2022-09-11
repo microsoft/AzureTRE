@@ -13,7 +13,7 @@ fi
 # The storage account is protected by network rules
 echo "Enabling public access to storage account..."
 az storage account update --default-action Allow --name "${STORAGE_ACCOUNT}"
-sleep 10
+sleep 30
 
 echo "Uploading ${CONTENT_DIR} to static web storage"
 

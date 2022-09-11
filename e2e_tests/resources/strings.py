@@ -18,7 +18,7 @@ GITEA_SERVICE = "tre-workspace-service-gitea"
 
 FIREWALL_SHARED_SERVICE = "tre-shared-service-firewall"
 GITEA_SHARED_SERVICE = "tre-shared-service-gitea"
-NEXUS_SHARED_SERVICE = "tre-shared-service-nexus"
+NEXUS_SHARED_SERVICE = "tre-shared-service-sonatype-nexus"
 
 GUACAMOLE_WINDOWS_USER_RESOURCE = "tre-service-guacamole-windowsvm"
 GUACAMOLE_LINUX_USER_RESOURCE = "tre-service-guacamole-linuxvm"
