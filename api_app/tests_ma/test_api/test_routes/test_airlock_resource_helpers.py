@@ -44,7 +44,7 @@ def sample_airlock_request(status=AirlockRequestStatus.Draft):
 def sample_status_changed_event(status="draft"):
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, status=status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:]).__dict__,
+        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:]).__dict__,
         subject=f"{AIRLOCK_REQUEST_ID}/statusChanged",
         data_version="2.0"
     )
