@@ -5,7 +5,7 @@ from helpers import check_aad_auth_redirect
 from resources.workspace import get_workspace_auth_details
 from resources.resource import disable_and_delete_resource, post_resource
 from resources import strings
-from conftest import admin_token
+from helpers import get_admin_token
 
 pytestmark = pytest.mark.asyncio
 
@@ -27,9 +27,9 @@ async def test_create_guacamole_service_into_base_workspace(verify) -> None:
     if config.TEST_WORKSPACE_APP_PLAN != "":
         payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
-    admin_tkn = admin_token(verify)
-    workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, access_token=admin_tkn, verify=verify)
-    workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_tkn, workspace_id=workspace_id, verify=verify)
+    admin_token = await get_admin_token(verify)
+    workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, access_token=admin_token, verify=verify)
+    workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
     service_payload = {
         "templateName": strings.GUACAMOLE_SERVICE,
@@ -68,8 +68,8 @@ async def test_create_guacamole_service_into_base_workspace(verify) -> None:
 
     await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
 
-    admin_tkn = admin_token(verify)
-    await disable_and_delete_resource(f'/api{workspace_path}', admin_tkn, verify)
+    admin_token = await get_admin_token(verify)
+    await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
 
 
 @pytest.mark.extended_aad
@@ -89,9 +89,9 @@ async def test_create_guacamole_service_into_aad_workspace(verify) -> None:
     if config.TEST_WORKSPACE_APP_PLAN != "":
         payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
-    admin_tkn = admin_token(verify)
-    workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, access_token=admin_tkn, verify=verify)
-    workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_tkn, workspace_id=workspace_id, verify=verify)
+    admin_token = await get_admin_token(verify)
+    workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, access_token=admin_token, verify=verify)
+    workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
     service_payload = {
         "templateName": strings.GUACAMOLE_SERVICE,
@@ -130,8 +130,8 @@ async def test_create_guacamole_service_into_aad_workspace(verify) -> None:
 
     await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
 
-    admin_tkn = admin_token(verify)
-    await disable_and_delete_resource(f'/api{workspace_path}', admin_tkn, verify)
+    admin_token = await get_admin_token(verify)
+    await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
 
 
 async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, verify) -> None:

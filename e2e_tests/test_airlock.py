@@ -13,7 +13,7 @@ from resources import strings as resource_strings
 from airlock.request import post_request, get_request, upload_blob_using_sas, wait_for_status
 from airlock import strings as airlock_strings
 
-from conftest import admin_token
+from helpers import get_admin_token
 
 pytestmark = pytest.mark.asyncio
 LOGGER = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ BLOB_NAME = os.path.basename(BLOB_FILE_PATH)
 @pytest.mark.timeout(2000)
 async def test_airlock_import_flow(verify) -> None:
 
-    admin_tkn = admin_token(verify)
+    admin_token = await get_admin_token(verify)
     if config.TEST_AIRLOCK_WORKSPACE_ID != "":
         workspace_id = config.TEST_AIRLOCK_WORKSPACE_ID
         workspace_path = f"/workspaces/{workspace_id}"
@@ -47,8 +47,8 @@ async def test_airlock_import_flow(verify) -> None:
         if config.TEST_WORKSPACE_APP_PLAN != "":
             payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
-        workspace_path, workspace_id = await post_resource(payload, resource_strings.API_WORKSPACES, access_token=admin_tkn, verify=verify)
-    workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_tkn, workspace_id=workspace_id, verify=verify)
+        workspace_path, workspace_id = await post_resource(payload, resource_strings.API_WORKSPACES, access_token=admin_token, verify=verify)
+    workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
     # 2. create airlock request
     LOGGER.info("Creating airlock request")
@@ -127,5 +127,5 @@ async def test_airlock_import_flow(verify) -> None:
     if config.TEST_AIRLOCK_WORKSPACE_ID == "":
         # 8. delete workspace
         LOGGER.info("Deleting workspace")
-        admin_tkn = admin_token(verify)
-        await disable_and_delete_resource(f'/api{workspace_path}', admin_tkn, verify)
+        admin_token = await get_admin_token(verify)
+        await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
