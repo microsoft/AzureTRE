@@ -68,14 +68,14 @@ class AzureADAuthorization(AccessService):
                 decoded_token = self._decode_token(token, config.API_AUDIENCE)
             except jwt.exceptions.InvalidSignatureError:
                 logging.debug("Failed to decode using TRE API app registration (Invalid Signatrue)")
-                pass
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.INVALID_SIGNATURE)
             except jwt.exceptions.ExpiredSignatureError:
                 logging.debug("Failed to decode using TRE API app registration (Expired Signature)")
-                pass
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.EXPIRED_SIGNATURE)
             except jwt.exceptions.InvalidTokenError:
                 # any other token validation exception, we want to catch all of these...
                 logging.debug("Failed to decode using TRE API app registration (Invalid token)")
-                pass
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.INVALID_TOKEN)
             except Exception as e:
                 # Unexpected token decoding/validation exception. making sure we are not crashing (with 500)
                 logging.debug(e)
