@@ -30,21 +30,21 @@ class ContainersCopyMetadata:
         self.dest_account_name = dest_account_name
 
 
-def main(msg: func.ServiceBusMessage, step_result_event: func.Out[func.EventGridOutputEvent], to_delete_event: func.Out[func.EventGridOutputEvent]):
+def main(msg: func.ServiceBusMessage, stepResultEvent: func.Out[func.EventGridOutputEvent], toDeleteEvent: func.Out[func.EventGridOutputEvent]):
     try:
         request_properties = extract_properties(msg)
         request_files = get_request_files(request_properties) if request_properties.new_status == constants.STAGE_SUBMITTED else None
-        handle_status_changed(request_properties, step_result_event, to_delete_event, request_files)
+        handle_status_changed(request_properties, stepResultEvent, toDeleteEvent, request_files)
 
     except NoFilesInRequestException:
-        set_output_event_to_report_failure(step_result_event, request_properties, failure_reason=constants.NO_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
+        set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.NO_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
     except TooManyFilesInRequestException:
-        set_output_event_to_report_failure(step_result_event, request_properties, failure_reason=constants.TOO_MANY_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
+        set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.TOO_MANY_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
     except Exception:
-        set_output_event_to_report_failure(step_result_event, request_properties, failure_reason=constants.UNKNOWN_REASON_MESSAGE, request_files=request_files)
+        set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.UNKNOWN_REASON_MESSAGE, request_files=request_files)
 
 
-def handle_status_changed(request_properties: RequestProperties, step_result_event: func.Out[func.EventGridOutputEvent], to_delete_event: func.Out[func.EventGridOutputEvent], request_files):
+def handle_status_changed(request_properties: RequestProperties, stepResultEvent: func.Out[func.EventGridOutputEvent], toDeleteEvent: func.Out[func.EventGridOutputEvent], request_files):
     new_status = request_properties.new_status
     previous_status = request_properties.previous_status
     req_id = request_properties.request_id
@@ -72,11 +72,11 @@ def handle_status_changed(request_properties: RequestProperties, step_result_eve
     if new_status == constants.STAGE_CANCELLED:
         storage_account_name = get_storage_account(previous_status, request_type, ws_id)
         container_url = blob_operations.get_blob_url(account_name=storage_account_name, container_name=req_id)
-        set_output_event_to_trigger_blob_deletion(to_delete_event, request_properties, blob_url=container_url)
+        set_output_event_to_trigger_blob_deletion(toDeleteEvent, request_properties, blob_url=container_url)
         return
 
     if new_status == constants.STAGE_SUBMITTED:
-        set_output_event_to_report_request_files(step_result_event, request_properties, request_files)
+        set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files)
 
     if (is_require_data_copy(new_status)):
         logging.info('Request with id %s. requires data copy between storage accounts', req_id)
@@ -190,9 +190,9 @@ def get_storage_account_destination_for_copy(new_status: str, request_type: str,
     raise Exception(error_message)
 
 
-def set_output_event_to_report_failure(step_result_event, request_properties, failure_reason, request_files):
+def set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason, request_files):
     logging.exception(f"Failed processing Airlock request with ID: '{request_properties.request_id}', changing request status to '{constants.STAGE_FAILED}'.")
-    step_result_event.set(
+    stepResultEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
             data={"completed_step": request_properties.new_status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id, "request_files": request_files, "error_message": failure_reason},
@@ -202,9 +202,9 @@ def set_output_event_to_report_failure(step_result_event, request_properties, fa
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
 
-def set_output_event_to_report_request_files(step_result_event, request_properties, request_files):
+def set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files):
     logging.info(f'Sending file enumeration result for request with ID: {request_properties.request_id} result: {request_files}')
-    step_result_event.set(
+    stepResultEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
             data={"completed_step": request_properties.new_status, "request_id": request_properties.request_id, "request_files": request_files},
@@ -214,9 +214,9 @@ def set_output_event_to_report_request_files(step_result_event, request_properti
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
 
-def set_output_event_to_trigger_blob_deletion(to_delete_event, request_properties, blob_url):
+def set_output_event_to_trigger_blob_deletion(toDeleteEvent, request_properties, blob_url):
     logging.info(f'Sending deletion event to delete container of request with ID: {request_properties.request_id}. container URL: {blob_url}')
-    to_delete_event.set(
+    toDeleteEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
             data={"blob_to_delete": blob_url},
