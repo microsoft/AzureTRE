@@ -312,9 +312,9 @@ def get_sample_group_response(principal_id, mail):
     headers = '{"Cache-Control":"no-cache","x-ms-resource-unit":"1","OData-Version":"4.0","Content-Type":"application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8"}'
     user_odata = '@odata.context":"https://graph.microsoft.com/v1.0/$metadata#users(mail,id)/$entity'
     group_response_body = {"id": "1",
-                          "status": 200,
-                          "headers": headers,
-                          "body": {"@odata.context": user_odata, "mail": mail, "id": principal_id}}
+                           "status": 200,
+                           "headers": headers,
+                           "body": {"@odata.context": user_odata, "mail": mail, "id": principal_id}}
     return group_response_body
 
 
