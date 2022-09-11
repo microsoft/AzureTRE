@@ -1,0 +1,179 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/base/template_schema.json",
+  "type": "object",
+  "title": "Unrestricted Workspace",
+  "description": "Workspace with unrestricted access to the Internet",
+  "required": [],
+  "properties": {
+    "shared_storage_quota": {
+      "$id": "#/properties/shared_storage_quota",
+      "type": "integer",
+      "title": "Shared Storage Quota",
+      "description": "Quota (in GB) to set for the VM Shared Storage."
+    },
+    "aad_redirect_uris": {
+      "$id": "#/properties/aad_redirect_uris",
+      "type": "array",
+      "title": "AAD Redirect URIs",
+      "description": "Redirect URIs for the AAD app in auto_create mode",
+      "updateable": true,
+      "default": [],
+      "items": {
+        "title": "items",
+        "type": "object",
+        "required": [
+          "name",
+          "value"
+        ],
+        "properties": {
+          "name": {
+            "title": "name",
+            "type": "string",
+            "description": "Redirect URI Name",
+            "examples": [
+              "My Redirect URI"
+            ],
+            "pattern": "^.*$"
+          },
+          "value": {
+            "title": "value",
+            "type": "string",
+            "description": "Redirect URI Value",
+            "examples": [
+              "https://a-domain-name.com/oauth/"
+            ]
+          }
+        }
+      }
+    },
+    "app_service_plan_sku": {
+      "$id": "#/properties/app_service_plan_sku",
+      "type": "string",
+      "enum": [
+        "P1v3",
+        "P1v2",
+        "S1"
+      ],
+      "default": "P1v3",
+      "title": "App Service Plan SKU",
+      "description": "The SKU that will be used when deploying an Azure App Service Plan."
+    }
+  },
+  "uiSchema": {
+    "aad_redirect_uris": {
+      "classNames": "tre-hidden"
+    }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "260421b3-7308-491f-b531-e007cdc0ff46",
+        "stepTitle": "Add network firewall rules for to allow all internt access",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_workspace_{{ resource.id }}",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AllowAll",
+                  "description": "Unrestricted Access",
+                  "source_addresses": [
+                    "{{ resource.properties.address_space }}"
+                  ],
+                  "destination_addresses": [
+                    "*"
+                  ],
+                  "destination_ports": [
+                    "*"
+                  ],
+                  "protocols": [
+                    "TCP",
+                    "UDP"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "260421b3-7308-491f-b531-e007cdc0ff46",
+        "stepTitle": "Add network firewall rules for to allow all internt access",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_workspace_{{ resource.id }}",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AllowAll",
+                  "description": "Unrestricted Access",
+                  "source_addresses": [
+                    "{{ resource.properties.address_space }}"
+                  ],
+                  "destination_addresses": [
+                    "*"
+                  ],
+                  "destination_ports": [
+                    "*"
+                  ],
+                  "protocols": [
+                    "TCP",
+                    "UDP"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "260421b3-7308-491f-b531-e007cdc0ff48",
+        "stepTitle": "remove network firewall rules",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_workspace_{{ resource.id }}"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ]
+  }
+}

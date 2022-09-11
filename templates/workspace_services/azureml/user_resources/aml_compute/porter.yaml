@@ -1,6 +1,6 @@
 ---
 name: tre-user-resource-aml-compute-instance
-version: 0.3.1
+version: 0.3.2
 description: "Azure Machine Learning Compute Instance"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -53,7 +53,7 @@ mixins:
   - exec
   - az
   - terraform:
-      clientVersion: 1.2.6
+      clientVersion: 1.2.8
 
 install:
   - terraform:
@@ -77,8 +77,22 @@ install:
         key: "tre-user-resource-aml-compute-instance-{{ bundle.parameters.id }}"
 
 uninstall:
-  - exec:
-      description: "Delete AML Compute Instance"
-      command: echo
-      arguments:
-        - "This service does not implement uninstall action"
+  - terraform:
+      description: "Uninstall service"
+      vars:
+        workspace_id: "{{ bundle.parameters.workspace_id }}"
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        parent_service_id: "{{ bundle.parameters.parent_service_id }}"
+        vm_size_sku: "{{ bundle.parameters.vm_size }}"
+        auth_tenant_id: "{{ bundle.parameters.auth_tenant_id }}"
+        user_object_id: "{{ bundle.parameters.user_object_id }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "tre-user-resource-aml-compute-instance-{{ bundle.parameters.id }}"

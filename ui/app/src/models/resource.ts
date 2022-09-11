@@ -35,8 +35,7 @@ export enum ComponentAction {
 }
 
 export interface ResourceUpdate {
-    resourceId: string,
-    operation?: Operation,
+    operation: Operation,
     componentAction: ComponentAction
 }
 

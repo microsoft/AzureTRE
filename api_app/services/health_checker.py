@@ -70,7 +70,6 @@ async def create_resource_processor_status(credential) -> Tuple[StatusEnum, str]
         async with ComputeManagementClient(credential=credential, subscription_id=config.SUBSCRIPTION_ID) as compute_client:
             vmss_list = compute_client.virtual_machine_scale_set_vms.list(config.RESOURCE_GROUP_NAME, vmss_name)
             async for vm in vmss_list:
-                print(compute_client.virtual_machine_scale_set_vms._client)
                 instance_view = await compute_client.virtual_machine_scale_set_vms.get_instance_view(config.RESOURCE_GROUP_NAME, vmss_name, vm.instance_id)
                 health_status = instance_view.vm_health.status.code
                 if health_status != strings.RESOURCE_PROCESSOR_HEALTHY_MESSAGE:

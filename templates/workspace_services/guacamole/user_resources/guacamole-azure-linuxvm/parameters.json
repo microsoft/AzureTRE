@@ -47,12 +47,6 @@
       }
     },
     {
-      "name": "nexus_version",
-      "source": {
-        "env": "NEXUS_VERSION"
-      }
-    },
-    {
       "name": "os_image",
       "source": {
         "env": "OS_IMAGE"
