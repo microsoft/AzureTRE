@@ -24,4 +24,5 @@ COPY . $BUNDLE_DIR
 # Remove when available from https://github.com/getporter/terraform-mixin/issues/90
 WORKDIR $BUNDLE_DIR/terraform
 RUN terraform init -backend=false \
+  && rm -fr $BUNDLE_DIR/terraform/.terraform/providers \
   && terraform providers mirror /usr/local/share/terraform/plugins

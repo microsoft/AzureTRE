@@ -187,6 +187,24 @@ async def test_update_and_publish_event_airlock_request_updates_item(_, event_gr
     assert actual_airlock_notification_event.data == airlock_notification_event_mock.data
 
 
+@patch("api.routes.airlock_resource_helpers.send_status_changed_event")
+@patch("api.routes.airlock_resource_helpers.send_airlock_notification_event")
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details")
+async def test_update_and_publish_event_airlock_request_sends_status_changed_event(_, send_airlock_notification_event_mock, send_status_changed_event_mock, airlock_request_repo_mock):
+    new_status = AirlockRequestStatus.Submitted
+    airlock_request_repo_mock.update_airlock_request = MagicMock()
+
+    await update_and_publish_event_airlock_request(
+        airlock_request=sample_airlock_request(),
+        airlock_request_repo=airlock_request_repo_mock,
+        user=create_test_user(),
+        new_status=new_status,
+        workspace=sample_workspace())
+
+    assert send_status_changed_event_mock.call_count == 1
+    assert send_airlock_notification_event_mock.call_count == 1
+
+
 @patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"WorkspaceResearcher": ["researcher@outlook.com"], "WorkspaceOwner": ["owner@outlook.com"], "AirlockManager": ["manager@outlook.com"]})
 async def test_update_and_publish_event_airlock_request_raises_400_if_status_update_invalid(_, airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
@@ -220,6 +238,24 @@ async def test_update_and_publish_event_airlock_request_raises_503_if_publish_ev
             new_status=AirlockRequestStatus.Submitted,
             workspace=sample_workspace())
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@patch("api.routes.airlock_resource_helpers.send_status_changed_event")
+@patch("api.routes.airlock_resource_helpers.send_airlock_notification_event")
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details")
+async def test_update_and_publish_event_airlock_request_without_status_change_should_not_send_status_changed_event(_, send_airlock_notification_event_mock, send_status_changed_event_mock, airlock_request_repo_mock):
+    new_status = None
+    airlock_request_repo_mock.update_airlock_request = MagicMock()
+
+    await update_and_publish_event_airlock_request(
+        airlock_request=sample_airlock_request(),
+        airlock_request_repo=airlock_request_repo_mock,
+        user=create_test_user(),
+        new_status=new_status,
+        workspace=sample_workspace())
+
+    assert send_status_changed_event_mock.call_count == 0
+    assert send_airlock_notification_event_mock.call_count == 0
 
 
 async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_current_user_review_and_status_arguments_should_ignore_status(airlock_request_repo_mock):

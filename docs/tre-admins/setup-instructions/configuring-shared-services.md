@@ -1,16 +1,8 @@
 # Configuring Shared Services
 
-## Deploy/configure Nexus manually
+In general, a shared service should be installed by using the UI or API directly once its bundle has been registered on the system.
 
-Setting `DEPLOY_NEXUS=true` in your `.env` and running `make all` will install and configure certs & Nexus automatically. You can also
-do this by running `make nexus-install`.
-
-If you're deploying a brand new environment and you didn't flag Nexus to be installed automatically, you should deploy the VM-based (V2) service manually (read section `A`). If you wish to migrate from an existing App Service Nexus service (V1) to the VM-based service, first manually deploy the new service (section `A`) then proceed to section `B`.
-
-!!! info
-    Guacamole user resources of version `0.3.6` or higher target Nexus V2 by default, but have the option to manually specify V1 as a `nexus_version` parameter if you have an instance of the Nexus V1 service that you wish to use. When you're readu to migrate to the new service, you can do so manually by following section `B`.
-
-### A. Deploy & configure V2 Nexus service (hosted on VM)
+## Deploy & configure V2 Nexus service (hosted on VM)
 
 !!! caution
     Before deploying the V2 Nexus service, you will need workspaces of version `0.3.2` or above due to a dependency on a DNS zone link for the workspace(s) to connect to the Nexus VM.
@@ -84,9 +76,9 @@ You can optionally go to the Nexus web interface by visiting `https://nexus-{TRE
 
 Just bear in mind that if this service is redeployed any changes made in the Nexus UI won't be persisted. If you wish to permanently add new repositories or alter existing ones, modify the JSON files within the `./nexus_repos_config` directory and redeploy.
 
-### B. Migrate from an existing V1 Nexus service (hosted on App Service)
+### Migrate from an existing V1 Nexus service (hosted on App Service)
 
-Once you've created the new V2 (VM-based) Nexus service by following section `A`, you can migrate from the V1 Nexus service by following these steps:
+Once you've created the new V2 (VM-based) Nexus service by following the previous section, you can migrate from the V1 Nexus service by following these steps:
 
 1. Identify any existing Guacamole user resources that are using the old proxy URL (`https://nexus-{TRE_ID}.azurewebsites.net/`). These will be any VMs with bundle versions < `0.3.2`.
 
