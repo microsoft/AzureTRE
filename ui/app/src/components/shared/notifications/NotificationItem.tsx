@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Icon, ProgressIndicator, Link as FluentLink, Stack, DefaultPalette, Shimmer, ShimmerElementType, MessageBar, MessageBarType } from '@fluentui/react';
+import { Icon, ProgressIndicator, Link as FluentLink, Stack, DefaultPalette, Shimmer, ShimmerElementType } from '@fluentui/react';
 import { TRENotification } from '../../../models/treNotification';
 import { awaitingStates, completedStates, failedStates, inProgressStates, Operation, OperationStep } from '../../../models/operation';
 import { Link } from 'react-router-dom';
@@ -10,6 +10,8 @@ import { ApiEndpoint } from '../../../models/apiEndpoints';
 import { getResourceFromResult, Resource } from '../../../models/resource';
 import { NotificationPoller } from './NotificationPoller';
 import { OperationsContext } from '../../../contexts/OperationsContext';
+import { APIError } from '../../../models/exceptions';
+import { ExceptionLayout } from '../ExceptionLayout';
 
 interface NotificationItemProps {
   operation: Operation,
@@ -25,6 +27,7 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
   const opsCtx = useContext(OperationsContext);
 
   const apiCall = useAuthApiCall();
+  const [apiError, setApiError] = useState({} as APIError);
 
   const getRelativeTime = (createdWhen: number) => {
     return (moment.utc(moment.unix(createdWhen))).from(now);
@@ -60,6 +63,8 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
         }
         setNotification({ operation: op, resource: resource, workspace: ws });
       } catch (err: any) {
+        err.userMessage = `Error retrieving operation details for ${props.operation.id}`
+        setApiError(err);
         setErrorNotification(true);
       }
       setLoadingNotification(false);
@@ -104,13 +109,7 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
             :
             errorNotification ?
               <li>
-                <MessageBar
-                  messageBarType={MessageBarType.error}
-                  isMultiline={true}
-                >
-                  <h3>Error retrieving operation details</h3>
-                  <p>We were unable to get more information about the operation {props.operation.id}. This might be because the associated resource has been deleted. Please investigate with your administrators to get the data cleaned up.</p>
-                </MessageBar>
+                <ExceptionLayout e={apiError} />
               </li>
               :
               <li className="tre-notification-item">

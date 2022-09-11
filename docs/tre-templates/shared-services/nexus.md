@@ -6,7 +6,7 @@ Documentation on Nexus can be found here: [https://help.sonatype.com/repomanager
 
 ## Deploy
 
-To deploy set `DEPLOY_NEXUS=true` in `templates/core/.env`.
+To deploy this service use the UI or API directly and choose the nexus template.
 
 Nexus will be deployed as part of the main TRE terraform deployment. A configuration script needs to be run once the deployment is done. The script will:
 

@@ -1,6 +1,6 @@
 ---
 name: tre-service-innereye
-version: 0.3.3
+version: 0.3.4
 description: "An Azure TRE service for InnerEye Deep Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl

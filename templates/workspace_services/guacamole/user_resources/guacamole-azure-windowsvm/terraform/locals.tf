@@ -14,10 +14,7 @@ locals {
     tre_workspace_service_id = var.parent_service_id
     tre_user_resource_id     = var.tre_resource_id
   }
-  nexus_proxy_url = {
-    "V1" = "https://nexus-${var.tre_id}.azurewebsites.net",
-    "V2" = "https://nexus-${var.tre_id}.${data.azurerm_resource_group.core.location}.cloudapp.azure.com"
-  }
+  nexus_proxy_url = "https://nexus-${var.tre_id}.${data.azurerm_resource_group.core.location}.cloudapp.azure.com"
   vm_size = {
     "2 CPU | 8GB RAM"   = { value = "Standard_D2s_v5" },
     "4 CPU | 16GB RAM"  = { value = "Standard_D4s_v5" },

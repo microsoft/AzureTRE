@@ -6,7 +6,7 @@ Documentation on Gitea can be found here: [https://docs.gitea.io/](https://docs.
 
 ## Deploy
 
-To deploy set `DEPLOY_GITEA=true` in `templates/core/.env`
+To deploy this shared service you should use the UI (or the API) to issue a request. If you don't see the option available for this specifc template make sure it has been built, published and registered by the TRE Admin.
 
 ## Getting Started
 

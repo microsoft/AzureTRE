@@ -11,7 +11,7 @@ class SharedServiceMigration(SharedServiceRepository):
         super().__init__(client)
 
     def deleteDuplicatedSharedServices(self) -> bool:
-        template_names = ['tre-shared-service-firewall', 'tre-shared-service-nexus', 'tre-shared-service-gitea']
+        template_names = ['tre-shared-service-firewall', 'tre-shared-service-sonatype-nexus', 'tre-shared-service-gitea']
 
         migrated = False
         for template_name in template_names:
