@@ -28,7 +28,8 @@ async def create_state_store_status(credential) -> Tuple[StatusEnum, str]:
     debug = True if config.DEBUG == "true" else False
     try:
         primary_master_key = await get_store_key(credential)
-        async with CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key, connection_verify=debug) as cosmos_client:
+        cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key, connection_verify=debug)
+        async with cosmos_client:
             list_databases_response = cosmos_client.list_databases()
             [database async for database in list_databases_response]
     except exceptions.ServiceRequestError:
@@ -47,8 +48,10 @@ async def create_service_bus_status(credential) -> Tuple[StatusEnum, str]:
     status = StatusEnum.ok
     message = ""
     try:
-        async with ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential, retry_total=0) as service_bus_client:
-            async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE):
+        service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential, retry_total=0)
+        async with service_bus_client:
+            receiver = service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE)
+            async with receiver:
                 pass
     except ServiceBusConnectionError:
         status = StatusEnum.not_ok
@@ -56,7 +59,7 @@ async def create_service_bus_status(credential) -> Tuple[StatusEnum, str]:
     except ServiceBusAuthenticationError:
         status = StatusEnum.not_ok
         message = strings.SERVICE_BUS_AUTHENTICATION_ERROR
-    except:   # noqa: E722 flake8 - no bare excepts
+    except:  # noqa: E722 flake8 - no bare excepts
         status = StatusEnum.not_ok
         message = strings.UNSPECIFIED_ERROR
     return status, message
@@ -67,7 +70,8 @@ async def create_resource_processor_status(credential) -> Tuple[StatusEnum, str]
     message = ""
     try:
         vmss_name = f"vmss-rp-porter-{config.TRE_ID}"
-        async with ComputeManagementClient(credential=credential, subscription_id=config.SUBSCRIPTION_ID) as compute_client:
+        compute_client = ComputeManagementClient(credential=credential, subscription_id=config.SUBSCRIPTION_ID)
+        async with compute_client:
             vmss_list = compute_client.virtual_machine_scale_set_vms.list(config.RESOURCE_GROUP_NAME, vmss_name)
             async for vm in vmss_list:
                 instance_view = await compute_client.virtual_machine_scale_set_vms.get_instance_view(config.RESOURCE_GROUP_NAME, vmss_name, vm.instance_id)
@@ -76,5 +80,6 @@ async def create_resource_processor_status(credential) -> Tuple[StatusEnum, str]
                     status = StatusEnum.not_ok
                     message = strings.RESOURCE_PROCESSOR_GENERAL_ERROR_MESSAGE
     except:   # noqa: E722 flake8 - no bare excepts
+        status = StatusEnum.not_ok
         message = strings.UNSPECIFIED_ERROR
     return status, message
