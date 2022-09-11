@@ -271,7 +271,7 @@ def get_sample_user_response(principal_id, mail):
 
 
 def get_sample_role_response(principal_ids, role_ids, types):
-    odata_context = f'@odata.context":"https://graph.microsoft.com/v1.0/$metadata#servicePrincipals(workspace-client-id))/appRoleAssignedTo(appRoleId,principalId,principalType)'
+    odata_context = '@odata.context":"https://graph.microsoft.com/v1.0/$metadata#servicePrincipals(workspace-client-id))/appRoleAssignedTo(appRoleId,principalId,principalType)'
     response = {"@odata.context": odata_context, "value": []}
     for principal_id, role_id, principal_type in zip(principal_ids, role_ids, types):
         response["value"].append({"appRoleId": role_id, "principalId": principal_id, "principalType": principal_type})
