@@ -210,29 +210,38 @@ class AzureADAuthorization(AccessService):
         graph_data = requests.get(sp_endpoint, headers=self._get_auth_header(msgraph_token)).json()
         return graph_data
 
-    def _get_user_emails_with_role_asssignment(self, client_id):
-        msgraph_token = self._get_msgraph_token()
+    def _get_user_role_assignments(self, client_id, msgraph_token):
         sp_roles_endpoint = self._get_service_principal_assigned_roles_endpoint(client_id)
-        roles_graph_data = requests.get(sp_roles_endpoint, headers=self._get_auth_header(msgraph_token)).json()
+        return requests.get(sp_roles_endpoint, headers=self._get_auth_header(msgraph_token)).json()
 
+    def _get_user_emails(self, roles_graph_data, msgraph_token):
         batch_endpoint = self._get_batch_endpoint()
         batch_request_body = self._get_batch_users_by_role_assignments_body(roles_graph_data)
         headers = self._get_auth_header(msgraph_token)
         headers["Content-type"] = "application/json"
         users_graph_data = requests.post(batch_endpoint, json=batch_request_body, headers=headers).json()
+        return users_graph_data
 
-        return roles_graph_data, users_graph_data
+    def _get_user_emails_from_response(self, users_graph_data):
+        user_emails = {}
+        for user_data in users_graph_data["responses"]:
+            if "users" in user_data["body"]["@odata.context"] and user_data["body"]["mail"] is not None:
+                user_emails[user_data["body"]["id"]] = user_data["body"]["mail"]
+            if "directoryObjects" in user_data["body"]["@odata.context"]:
+                for group_member in user_data["body"]["value"]:
+                    if group_member["mail"] is not None:
+                        user_emails[group_member["id"]] = group_member["mail"]
+        return user_emails
 
     def get_workspace_role_assignment_details(self, workspace: Workspace):
+        msgraph_token = self._get_msgraph_token()
         app_role_ids = {role_name: workspace.properties[role_id] for role_name, role_id in self.WORKSPACE_ROLES_DICT.items()}
         inverted_app_role_ids = {role_id: role_name for role_name, role_id in app_role_ids.items()}
 
         sp_id = workspace.properties["sp_id"]
-        roles_graph_data, users_graph_data = self._get_user_emails_with_role_asssignment(sp_id)
-        user_emails = {}
-        for user_data in users_graph_data["responses"]:
-            if user_data["body"]["mail"] is not None:
-                user_emails[user_data["body"]["id"]] = user_data["body"]["mail"]
+        roles_graph_data = self._get_user_role_assignments(sp_id, msgraph_token)
+        users_graph_data = self._get_user_emails(roles_graph_data, msgraph_token)
+        user_emails = self._get_user_emails_from_response(users_graph_data)
 
         workspace_role_assignments_details = defaultdict(list)
         for role_assignment in roles_graph_data["value"]:
