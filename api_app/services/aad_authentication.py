@@ -225,8 +225,10 @@ class AzureADAuthorization(AccessService):
     def _get_user_emails_from_response(self, users_graph_data):
         user_emails = {}
         for user_data in users_graph_data["responses"]:
+            # Handle user endpoint response
             if "users" in user_data["body"]["@odata.context"] and user_data["body"]["mail"] is not None:
                 user_emails[user_data["body"]["id"]] = user_data["body"]["mail"]
+            # Handle group endpoint response
             if "directoryObjects" in user_data["body"]["@odata.context"]:
                 for group_member in user_data["body"]["value"]:
                     if group_member["mail"] is not None:

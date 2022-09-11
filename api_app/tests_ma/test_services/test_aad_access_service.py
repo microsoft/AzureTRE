@@ -253,6 +253,44 @@ def test_get_workspace_role_assignment_details_with_only_groups_assigned_are_not
     assert len(role_assignment_details) == 0
 
 
+@patch("services.aad_authentication.AzureADAuthorization._get_user_role_assignments")
+@patch("services.aad_authentication.AzureADAuthorization._get_user_emails")
+@patch("services.aad_authentication.AzureADAuthorization._get_msgraph_token", return_value="token")
+def test_get_workspace_role_assignment_details_with_groups_with_multiple_users_assigned_returned_as_expected(_, users_and_groups, roles):
+    access_service = AzureADAuthorization()
+
+    # Build group response
+    group_principal_id = "group_principal_id"
+
+    user_principal_id1 = "user_principal_id1"
+    user_email1 = "test_user1@email.com"
+
+    user_principal_id2 = "user_principal_id2"
+    user_email2 = "test_user2@email.com"
+
+    user_response = get_batch_response([user_principal_id1, user_principal_id2, group_principal_id], [user_email1, user_email2, "group@email.com"])
+    users_and_groups.return_value = user_response
+
+    # Build user role assignment response
+    workspace_owner_role_id = "1234"
+    roles_response = get_sample_role_response([group_principal_id, user_principal_id1, user_principal_id2],
+                                              [workspace_owner_role_id],
+                                              ["Group", "User", "User"])
+    roles.return_value = roles_response
+
+    # Act
+    role_assignment_details = access_service.get_workspace_role_assignment_details(Workspace(
+        id="id",
+        templateName="tre-workspace-base",
+        templateVersion="0.1.0",
+        etag="",
+        properties={'sp_id': 'ab123', 'app_role_id_workspace_owner': workspace_owner_role_id,
+                    'app_role_id_workspace_researcher': 'ab125', 'app_role_id_workspace_airlock_manager': 'ab130'}
+    ))
+
+    assert len(role_assignment_details) == 0
+
+
 def get_batch_response(principal_ids, mails):
     response_body = {"responses": []}
     for principal_id, mail in zip(principal_ids, mails):
@@ -268,6 +306,16 @@ def get_sample_user_response(principal_id, mail):
                           "headers": headers,
                           "body": {"@odata.context": user_odata, "mail": mail, "id": principal_id}}
     return user_response_body
+
+
+def get_sample_group_response(principal_id, mail):
+    headers = '{"Cache-Control":"no-cache","x-ms-resource-unit":"1","OData-Version":"4.0","Content-Type":"application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8"}'
+    user_odata = '@odata.context":"https://graph.microsoft.com/v1.0/$metadata#users(mail,id)/$entity'
+    group_response_body = {"id": "1",
+                          "status": 200,
+                          "headers": headers,
+                          "body": {"@odata.context": user_odata, "mail": mail, "id": principal_id}}
+    return group_response_body
 
 
 def get_sample_role_response(principal_ids, role_ids, types):
