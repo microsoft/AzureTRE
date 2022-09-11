@@ -74,7 +74,7 @@ class TestFileEnumeration(unittest.TestCase):
     def test_get_request_files_should_be_called_on_submit_stage(self, _, mock_get_request_files, mock_set_output_event_to_report_request_files):
         message_body = "{ \"data\": { \"request_id\":\"123\",\"status\":\"submitted\" , \"type\":\"import\", \"workspace_id\":\"ws1\"  }}"
         message = _mock_service_bus_message(body=message_body)
-        main(msg=message, outputEvent=MagicMock())
+        main(msg=message, stepResultEvent=MagicMock())
         self.assertTrue(mock_get_request_files.called)
         self.assertTrue(mock_set_output_event_to_report_request_files.called)
 
@@ -84,7 +84,7 @@ class TestFileEnumeration(unittest.TestCase):
     def test_get_request_files_should_not_be_called_if_new_status_is_not_submit(self, _, mock_get_request_files, mock_set_output_event_to_report_failure):
         message_body = "{ \"data\": { \"request_id\":\"123\",\"status\":\"fake-status\" , \"type\":\"import\", \"workspace_id\":\"ws1\"  }}"
         message = _mock_service_bus_message(body=message_body)
-        main(msg=message, outputEvent=MagicMock())
+        main(msg=message, stepResultEvent=MagicMock())
         self.assertFalse(mock_get_request_files.called)
         self.assertFalse(mock_set_output_event_to_report_failure.called)
 
@@ -94,7 +94,7 @@ class TestFileEnumeration(unittest.TestCase):
     def test_get_request_files_should_be_called_when_failing_during_submit_stage(self, _, mock_get_request_files, mock_set_output_event_to_report_failure):
         message_body = "{ \"data\": { \"request_id\":\"123\",\"status\":\"submitted\" , \"type\":\"import\", \"workspace_id\":\"ws1\"  }}"
         message = _mock_service_bus_message(body=message_body)
-        main(msg=message, outputEvent=MagicMock())
+        main(msg=message, stepResultEvent=MagicMock())
         self.assertTrue(mock_get_request_files.called)
         self.assertTrue(mock_set_output_event_to_report_failure.called)
 
