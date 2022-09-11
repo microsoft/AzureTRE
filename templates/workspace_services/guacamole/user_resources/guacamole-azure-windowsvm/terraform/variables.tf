@@ -6,4 +6,3 @@ variable "image" {}
 variable "vm_size" {}
 variable "shared_storage_access" {}
 variable "shared_storage_name" {}
-variable "nexus_version" {}

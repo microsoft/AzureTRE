@@ -79,7 +79,7 @@ Cost API is based on [Azure Cost Management](https://docs.microsoft.com/en-us/az
 
 Cost and usage data is typically available in Cost Management within 8-24 hours.
 
-Tags aren't applied to historical data, template authors need to make sure all relavent [Azure resources of a TRE resource are tagged as instructed](../tre-workspace-authors/authoring-workspace-templates.md#azure-resources-tagging).
+Tags aren't applied to historical data, template authors need to make sure all relevant [Azure resources of a TRE resource are tagged as instructed](../tre-workspace-authors/authoring-workspace-templates.md#azure-resources-tagging).
 
 Cost records might include [multiple currencies](https://azure.microsoft.com/en-us/blog/azure-cost-management-updates-july-2019/#currency) for the same date and TRE resource.
 
