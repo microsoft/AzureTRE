@@ -66,8 +66,13 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
               name: 'Shared Services',
               key: ApiEndpoint.SharedServices,
               url: ApiEndpoint.SharedServices,
-              isExpanded: true,
+              isExpanded: false,
               links: sharedServiceLinkArray
+            },
+            {
+              name: 'Airlock',
+              key: ApiEndpoint.AirlockRequests,
+              url: ApiEndpoint.AirlockRequests
             }
           ]
         }

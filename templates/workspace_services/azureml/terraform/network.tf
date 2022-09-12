@@ -5,6 +5,31 @@ data "azurerm_network_security_group" "ws" {
 }
 
 
+resource "null_resource" "az_login_sp" {
+
+  count = var.arm_use_msi == true ? 0 : 1
+  provisioner "local-exec" {
+    command = "az login --service-principal --username ${var.arm_client_id} --password ${var.arm_client_secret} --tenant ${var.arm_tenant_id}"
+  }
+
+  triggers = {
+    timestamp = timestamp()
+  }
+
+}
+
+resource "null_resource" "az_login_msi" {
+
+  count = var.arm_use_msi == true ? 1 : 0
+  provisioner "local-exec" {
+    command = "az login --identity -u '${data.azurerm_client_config.current.client_id}'"
+  }
+
+  triggers = {
+    timestamp = timestamp()
+  }
+}
+
 data "external" "nsg_rule_priorities_inbound" {
   program = ["bash", "-c", "./get_nsg_priorities.sh"]
 
@@ -38,7 +63,7 @@ data "external" "nsg_rule_priorities_outbound" {
 }
 
 
-resource "azurerm_network_security_rule" "allow-aml-inbound" {
+resource "azurerm_network_security_rule" "allow_aml_inbound" {
   access                      = "Allow"
   destination_port_ranges     = ["29877", "29876", "44224"]
   destination_address_prefix  = "VirtualNetwork"
@@ -53,7 +78,7 @@ resource "azurerm_network_security_rule" "allow-aml-inbound" {
 }
 
 
-resource "azurerm_network_security_rule" "allow-Outbound_Storage_445" {
+resource "azurerm_network_security_rule" "allow_outbound_storage_445" {
   access                      = "Allow"
   destination_port_range      = "445"
   destination_address_prefix  = "Storage"

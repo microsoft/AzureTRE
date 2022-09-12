@@ -6,7 +6,7 @@ from typing import List
 from fastapi import HTTPException
 from starlette import status
 from db.repositories.airlock_requests import AirlockRequestRepository
-from models.domain.airlock_request import AirlockActions, AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReview
+from models.domain.airlock_request import AirlockActions, AirlockFile, AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReview
 from event_grid.event_sender import send_status_changed_event, send_airlock_notification_event
 from models.domain.authentication import User
 from models.domain.workspace import Workspace
@@ -42,16 +42,20 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_GENERAL_ERROR_MESSAGE)
 
 
-async def update_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, new_status: AirlockRequestStatus, workspace: Workspace, error_message: str = None, airlock_review: AirlockReview = None):
+async def update_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, new_status: AirlockRequestStatus, workspace: Workspace, request_files: List[AirlockFile] = None, error_message: str = None, airlock_review: AirlockReview = None):
     try:
         logging.debug(f"Updating airlock request item: {airlock_request.id}")
-        updated_airlock_request = airlock_request_repo.update_airlock_request(airlock_request=airlock_request, new_status=new_status, user=user, error_message=error_message, airlock_review=airlock_review)
+        updated_airlock_request = airlock_request_repo.update_airlock_request(original_request=airlock_request, user=user, new_status=new_status, request_files=request_files, error_message=error_message, airlock_review=airlock_review)
     except Exception as e:
         logging.error(f'Failed updating airlock_request item {airlock_request}: {e}')
         # If the validation failed, the error was not related to the saving itself
         if e.status_code == 400:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+
+    if not new_status:
+        logging.debug(f"Skipping sending 'status changed' event for airlock request item: {airlock_request.id} - there is no status change")
+        return updated_airlock_request
 
     try:
         logging.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")

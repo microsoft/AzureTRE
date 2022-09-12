@@ -15,7 +15,7 @@ resource "random_string" "username" {
   length      = 4
   upper       = true
   lower       = true
-  number      = true
+  numeric     = true
   min_numeric = 1
   min_lower   = 1
   special     = false
@@ -27,7 +27,7 @@ resource "random_password" "password" {
   min_lower        = 1
   upper            = true
   min_upper        = 1
-  number           = true
+  numeric          = true
   min_numeric      = 1
   special          = true
   min_special      = 1
@@ -91,7 +91,7 @@ resource "azurerm_key_vault_secret" "windowsvm_password" {
 data "template_file" "vm_config" {
   template = file("${path.module}/vm_config.ps1")
   vars = {
-    nexus_proxy_url     = local.nexus_proxy_url[var.nexus_version]
+    nexus_proxy_url     = local.nexus_proxy_url
     SharedStorageAccess = tobool(var.shared_storage_access) ? 1 : 0
     StorageAccountName  = data.azurerm_storage_account.stg.name
     StorageAccountKey   = data.azurerm_storage_account.stg.primary_access_key

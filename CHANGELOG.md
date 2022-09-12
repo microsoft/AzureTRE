@@ -5,7 +5,7 @@
 
 **BREAKING CHANGES & MIGRATIONS**:
 
-*
+* Remove support for Nexus V1 ([#2580](https://github.com/microsoft/AzureTRE/pull/2580)). Please migrate to the newer version as described [here](https://microsoft.github.io/AzureTRE/tre-admins/setup-instructions/configuring-shared-services/).
 
 FEATURES:
 
@@ -13,11 +13,27 @@ FEATURES:
 
 ENHANCEMENTS:
 
-*
+* Adding Log Analytics & Antimalware VM extensions ([#2520](https://github.com/microsoft/AzureTRE/pull/2520))
+* Block anonymous access to 2 storage accounts ([#2524](https://github.com/microsoft/AzureTRE/pull/2524))
+* Gitea shared service support app-service standard SKUs ([#2523](https://github.com/microsoft/AzureTRE/pull/2523))
+* Keyvault diagnostic settings in base workspace ([#2521](https://github.com/microsoft/AzureTRE/pull/2521))
+* Airlock requests contain a field with information about the files that were submitted ([#2504](https://github.com/microsoft/AzureTRE/pull/2504))
+* UI - Operations and notifications stability improvements ([[#2530](https://github.com/microsoft/AzureTRE/pull/2530))
+* UI - Initial implemetation of Workspace Airlock Request View ([#2512](https://github.com/microsoft/AzureTRE/pull/2512))
+* Add `is_expsed_externally` option to Azure ML Workspace Service ([#2548](https://github.com/microsoft/AzureTRE/pull2548))
+* Azure ML workspace service assigns Azure ML Data Scientist role to Workspace Researchers ([#2539](https://github.com/microsoft/AzureTRE/pull/2539))
+* UI is deployed by default ([#2554](https://github.com/microsoft/AzureTRE/pull/2554))
+* Remove manual/makefile option to install Gitea/Nexus ([#2573](https://github.com/microsoft/AzureTRE/pull/2573))
+* Exact Terraform provider versions in bundles ([#2579](https://github.com/microsoft/AzureTRE/pull/2579))
+* Stabilize E2E tests by issuing the access token prior using it, hence, reducing the change of expired token ([#2572](https://github.com/microsoft/AzureTRE/pull/2572))
 
 BUG FIXES:
 
-*
+* API health check is also returned by accessing the root path at / ([#2469](https://github.com/microsoft/AzureTRE/pull/2469))
+* Temporary disable AppInsight's private endpoint in base workspace ([#2543](https://github.com/microsoft/AzureTRE/pull/2543))
+* Resource Processor execution optimization (`porter show`) for long-standing services ([#2542](https://github.com/microsoft/AzureTRE/pull/2542))
+* Move AML Compute deployment to use AzApi Terraform Provider {[#2555]((https://github.com/microsoft/AzureTRE/pull/2555))
+* Invalid token exceptions in the API app are catched, throwing 401 instead of 500 Internal server error ([#2572](https://github.com/microsoft/AzureTRE/pull/2572))
 
 ## 0.4.2 (August 23, 2022)
 

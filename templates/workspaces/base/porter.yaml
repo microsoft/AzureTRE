@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.3.25
+version: 0.3.28
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -134,7 +134,7 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.2.6
+      clientVersion: 1.2.8
   - az
 
 install:
