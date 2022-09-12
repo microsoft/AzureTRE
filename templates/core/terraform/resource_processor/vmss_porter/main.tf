@@ -212,13 +212,17 @@ resource "azurerm_key_vault_access_policy" "resource_processor" {
   certificate_permissions = ["Get", "Recover", "Import", "Delete", "Purge"]
 }
 
+data "azurerm_monitor_diagnostic_categories" "vmss_diag_categories" {
+  resource_id = azurerm_linux_virtual_machine_scale_set.vm_linux.id
+}
+
 resource "azurerm_monitor_diagnostic_setting" "vmss" {
   name                       = "diagnostics-vmss-${var.tre_id}"
   target_resource_id         = azurerm_linux_virtual_machine_scale_set.vm_linux.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
 
   dynamic "log" {
-    for_each = toset(["AuditEvent", "AzurePolicyEvaluationDetails"])
+    for_each = data.azurerm_monitor_diagnostic_categories.vmss.logs
     content {
       category = log.value
       enabled  = true
