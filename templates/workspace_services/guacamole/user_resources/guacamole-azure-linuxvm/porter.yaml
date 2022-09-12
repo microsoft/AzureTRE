@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-linuxvm
-version: 0.4.13
+version: 0.4.14
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -92,10 +92,6 @@ install:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         parent_service_id: "{{ bundle.parameters.parent_service_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
@@ -119,10 +115,6 @@ upgrade:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         parent_service_id: "{{ bundle.parameters.parent_service_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
@@ -155,10 +147,6 @@ uninstall:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         parent_service_id: "{{ bundle.parameters.parent_service_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
