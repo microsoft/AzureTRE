@@ -212,7 +212,7 @@ resource "azurerm_key_vault_access_policy" "resource_processor" {
   certificate_permissions = ["Get", "Recover", "Import", "Delete", "Purge"]
 }
 
-data "azurerm_monitor_diagnostic_categories" "vmss_diag_categories" {
+data "azurerm_monitor_diagnostic_categories" "vmss" {
   resource_id = azurerm_linux_virtual_machine_scale_set.vm_linux.id
 }
 
@@ -234,13 +234,16 @@ resource "azurerm_monitor_diagnostic_setting" "vmss" {
     }
   }
 
-  metric {
-    category = "AllMetrics"
-    enabled  = true
+  dynamic "metric" {
+    for_each = data.azurerm_monitor_diagnostic_categories.vmss.metrics
+    content {
+      category = log.value
+      enabled  = true
 
-    retention_policy {
-      enabled = true
-      days    = 365
+      retention_policy {
+        enabled = true
+        days    = 365
+      }
     }
   }
 }
