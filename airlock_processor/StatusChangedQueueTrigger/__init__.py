@@ -59,7 +59,9 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
         return
 
     if new_status == constants.STAGE_CANCELLED:
-        delete_request_files(request_properties, toDeleteEvent)
+        storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.workspace_id)
+        container_to_delete_url = blob_operations.get_blob_url(account_name=storage_account_name, container_name=request_properties.request_id)
+        set_output_event_to_trigger_container_deletion(toDeleteEvent, request_properties, container_url=container_to_delete_url)
         return
 
     if new_status == constants.STAGE_SUBMITTED:
@@ -201,12 +203,12 @@ def set_output_event_to_report_request_files(stepResultEvent, request_properties
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
 
-def set_output_event_to_trigger_blob_deletion(toDeleteEvent, request_properties, blob_url):
-    logging.info(f'Sending deletion event to delete container of request with ID: {request_properties.request_id}. container URL: {blob_url}')
+def set_output_event_to_trigger_container_deletion(toDeleteEvent, request_properties, container_url):
+    logging.info(f'Sending deletion event to delete container of request with ID: {request_properties.request_id}. container URL: {container_url}')
     toDeleteEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
-            data={"blob_to_delete": blob_url},
+            data={"blob_to_delete": container_url},
             subject=request_properties.request_id,
             event_type="Airlock.ToDelete",
             event_time=datetime.datetime.utcnow(),
@@ -218,12 +220,6 @@ def set_output_event_to_trigger_blob_deletion(toDeleteEvent, request_properties,
 def get_request_files(request_properties: RequestProperties):
     storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.workspace_id)
     return blob_operations.get_request_files(account_name=storage_account_name, request_id=request_properties.request_id)
-
-
-def delete_request_files(request_properties: RequestProperties, toDeleteEvent: func.Out[func.EventGridOutputEvent]):
-    storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.workspace_id)
-    container_url = blob_operations.get_blob_url(account_name=storage_account_name, container_name=request_properties.request_id)
-    set_output_event_to_trigger_blob_deletion(toDeleteEvent, request_properties, blob_url=container_url)
 
 
 def _get_tre_id():

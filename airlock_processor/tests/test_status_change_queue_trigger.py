@@ -110,6 +110,16 @@ class TestFileEnumeration(unittest.TestCase):
         mock_get_request_files.assert_called_with(account_name=source_storage_account_for_submitted_stage, request_id=request_properties.request_id)
 
 
+class TestFilesDeletion(unittest.TestCase):
+    @patch("StatusChangedQueueTrigger.set_output_event_to_trigger_container_deletion")
+    @mock.patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
+    def test_delete_request_files_should_be_called_on_cancel_stage(self, mock_set_output_event_to_trigger_container_deletion):
+        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"cancelled\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
+        message = _mock_service_bus_message(body=message_body)
+        main(msg=message, stepResultEvent=MagicMock(), toDeleteEvent=MagicMock())
+        self.assertTrue(mock_set_output_event_to_trigger_container_deletion.called)
+
+
 def _mock_service_bus_message(body: str):
     encoded_body = str.encode(body, "utf-8")
     message = ServiceBusMessage(body=encoded_body, message_id="123", user_properties={})
