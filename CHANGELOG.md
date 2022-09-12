@@ -5,7 +5,7 @@
 
 **BREAKING CHANGES & MIGRATIONS**:
 
-*
+* Firewall now blocks terraform/hasicorp domains. See the PR for details and migration steps: ([#TBD](https://github.com/microsoft/AzureTRE/pull/TBD)).
 
 FEATURES:
 
