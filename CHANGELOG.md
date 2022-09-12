@@ -5,7 +5,7 @@
 
 **BREAKING CHANGES & MIGRATIONS**:
 
-* Firewall now blocks terraform/hasicorp domains. See the PR for details and migration steps: ([#TBD](https://github.com/microsoft/AzureTRE/pull/TBD)).
+* Firewall now blocks terraform/hasicorp domains ([#TBD](https://github.com/microsoft/AzureTRE/pull/TBD)). **Migration** is manual - update the templateVersion of `tre-shared-service-firewall` resource in Cosmos to `0.5.0`.
 
 FEATURES:
 
