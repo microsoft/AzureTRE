@@ -59,8 +59,8 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
         return
 
     if new_status == constants.STAGE_CANCELLED:
-        storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.workspace_id)
-        container_to_delete_url = blob_operations.get_blob_url(account_name=storage_account_name, container_name=request_properties.request_id)
+        storage_account_name = get_storage_account(previous_status, request_type, ws_id)
+        container_to_delete_url = blob_operations.get_blob_url(account_name=storage_account_name, container_name=req_id)
         set_output_event_to_trigger_container_deletion(toDeleteEvent, request_properties, container_url=container_to_delete_url)
         return
 
