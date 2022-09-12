@@ -41,10 +41,10 @@ def sample_airlock_request(status=AirlockRequestStatus.Draft):
     return airlock_request
 
 
-def sample_status_changed_event(status="draft"):
+def sample_status_changed_event(new_status="draft", previous_status=None):
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:]).__dict__,
+        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=new_status, previous_status=previous_status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:]).__dict__,
         subject=f"{AIRLOCK_REQUEST_ID}/statusChanged",
         data_version="2.0"
     )
@@ -163,7 +163,7 @@ async def test_update_and_publish_event_airlock_request_updates_item(_, event_gr
                                                                      airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
-    status_changed_event_mock = sample_status_changed_event(status="submitted")
+    status_changed_event_mock = sample_status_changed_event(new_status="submitted", previous_status="draft")
     airlock_notification_event_mock = sample_airlock_notification_event(status="submitted")
     airlock_request_repo_mock.update_airlock_request = MagicMock(return_value=updated_airlock_request_mock)
     event_grid_sender_client_mock = event_grid_publisher_client_mock.return_value
