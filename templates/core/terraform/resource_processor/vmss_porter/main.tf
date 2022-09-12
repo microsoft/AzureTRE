@@ -237,7 +237,7 @@ resource "azurerm_monitor_diagnostic_setting" "vmss" {
   dynamic "metric" {
     for_each = data.azurerm_monitor_diagnostic_categories.vmss.metrics
     content {
-      category = log.value
+      category = metric.value
       enabled  = true
 
       retention_policy {
