@@ -5,17 +5,15 @@ ARG BUNDLE_DIR
 
 ARG AZURE_TRE_VERSION="0.4.2"
 
-# Install jq
-RUN apt-get update && \
-    apt-get install -y jq="1.5+dfsg-2+b1" --no-install-recommends && \
-    apt-get clean -y && rm -rf /var/lib/apt/lists/*
+RUN  apt-get update \
+  && apt-get install --no-install-recommends jq ca-certificates curl patch -y \
+  && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 WORKDIR $BUNDLE_DIR
 
 # Copy all files from base workspace (note: some of them will be overwritten with the following COPY command)
 RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/refs/tags/v${AZURE_TRE_VERSION}.tar.gz" \
   && tar -xzf azuretre.tar.gz "AzureTRE-${AZURE_TRE_VERSION}/templates/workspaces/base"  --strip-components=4 --skip-old-files \
-  && patch TODO
   && rm -rf azuretre.tar.gz
 
 # This is a template Dockerfile for the bundle's invocation image
@@ -33,6 +31,8 @@ RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/r
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY . $BUNDLE_DIR
+
+RUN patch -l terraform/airlock/storage_accounts.tf $BUNDLE_DIR/workspace_base.diff
 
 # Mirror plugins to prevent network access at runtime
 # Remove when available from https://github.com/getporter/terraform-mixin/issues/90
