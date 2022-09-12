@@ -24,3 +24,4 @@ variable "subscription_id" {
 
 variable "log_analytics_workspace_workspace_id" {}
 variable "log_analytics_workspace_primary_key" {}
+variable "log_analytics_workspace_id" {}

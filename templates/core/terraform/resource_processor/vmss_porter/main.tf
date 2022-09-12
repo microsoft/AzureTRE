@@ -215,7 +215,7 @@ resource "azurerm_key_vault_access_policy" "resource_processor" {
 resource "azurerm_monitor_diagnostic_setting" "vmss" {
   name                       = "diagnostics-vmss-${var.tre_id}"
   target_resource_id         = azurerm_linux_virtual_machine_scale_set.vm_linux.id
-  log_analytics_workspace_id = var.log_analytics_workspace_workspace_id
+  log_analytics_workspace_id = var.log_analytics_workspace_id
 
   dynamic "log" {
     for_each = toset(["AuditEvent", "AzurePolicyEvaluationDetails"])
