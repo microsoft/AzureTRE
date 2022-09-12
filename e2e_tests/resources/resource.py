@@ -67,8 +67,8 @@ async def disable_and_delete_resource(endpoint, access_token, verify):
 
 async def wait_for(func, client, operation_endpoint, headers, failure_states: list):
     done, done_state, message = await func(client, operation_endpoint, headers)
+    LOGGER.info(f'WAITING FOR OP: {operation_endpoint}')
     while not done:
-        LOGGER.info(f'WAITING FOR OP: {operation_endpoint}')
         await asyncio.sleep(30)
 
         done, done_state, message = await func(client, operation_endpoint, headers)
