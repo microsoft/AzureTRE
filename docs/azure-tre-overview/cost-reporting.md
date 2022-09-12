@@ -141,7 +141,7 @@ Templates authors need to make sure that underling Azure resources are tagged wi
 
 ## Cost management query API
 
-Cost management query API API, which Azure TRE Cost APIs are based upon, returns a flat result of all cost with every tag combination which exists on the filtered resources by the provided tag, meaning that a resource which has tre_id, tre_core_service_id, tre_workspace_id, tre_workspace_service_id, and tre_user_resource_id will get be summarized by all those tags.
+Cost management query API, which Azure TRE Cost APIs are based upon, returns a flat result of all cost with every tag combination which exists on the filtered resources by the provided tag, meaning that a resource which has tre_id, tre_core_service_id, tre_workspace_id, tre_workspace_service_id, and tre_user_resource_id will get be summarized by all those tags.
 
 Group costs by tag name and filter only resources which have this tag, if filtered resources have more tags, the tags will appear in the result.
 
