@@ -25,6 +25,7 @@ ENHANCEMENTS:
 * UI is deployed by default ([#2554](https://github.com/microsoft/AzureTRE/pull/2554))
 * Remove manual/makefile option to install Gitea/Nexus ([#2573](https://github.com/microsoft/AzureTRE/pull/2573))
 * Exact Terraform provider versions in bundles ([#2579](https://github.com/microsoft/AzureTRE/pull/2579))
+* Stabilize E2E tests by issuing the access token prior using it, hence, reducing the change of expired token ([#2572](https://github.com/microsoft/AzureTRE/pull/2572))
 
 BUG FIXES:
 
@@ -32,6 +33,7 @@ BUG FIXES:
 * Temporary disable AppInsight's private endpoint in base workspace ([#2543](https://github.com/microsoft/AzureTRE/pull/2543))
 * Resource Processor execution optimization (`porter show`) for long-standing services ([#2542](https://github.com/microsoft/AzureTRE/pull/2542))
 * Move AML Compute deployment to use AzApi Terraform Provider {[#2555]((https://github.com/microsoft/AzureTRE/pull/2555))
+* Invalid token exceptions in the API app are catched, throwing 401 instead of 500 Internal server error ([#2572](https://github.com/microsoft/AzureTRE/pull/2572))
 
 ## 0.4.2 (August 23, 2022)
 
