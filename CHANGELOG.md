@@ -13,7 +13,7 @@ FEATURES:
 
 ENHANCEMENTS:
 
-*
+* Cancelling an Airlock request triggers deletion of the request container and files ([#2584](https://github.com/microsoft/AzureTRE/pull/2584))
 
 BUG FIXES:
 
