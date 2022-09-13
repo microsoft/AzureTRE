@@ -34,7 +34,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 
     try:
         logging.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
-        await send_status_changed_event(airlock_request)
+        await send_status_changed_event(airlock_request=airlock_request, previous_status=None)
         await send_airlock_notification_event(airlock_request, role_assignment_details)
     except Exception as e:
         airlock_request_repo.delete_item(airlock_request.id)
@@ -59,7 +59,7 @@ async def update_and_publish_event_airlock_request(airlock_request: AirlockReque
 
     try:
         logging.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
-        await send_status_changed_event(updated_airlock_request)
+        await send_status_changed_event(airlock_request=updated_airlock_request, previous_status=airlock_request.status)
         access_service = get_access_service()
         role_assignment_details = access_service.get_workspace_role_assignment_details(workspace)
         await send_airlock_notification_event(updated_airlock_request, role_assignment_details)

@@ -79,8 +79,8 @@ def main(msg: func.ServiceBusMessage,
             id=str(uuid.uuid4()),
             data={"blob_to_delete": copied_from[-1]},  # last container in copied_from is the one we just copied from
             subject=request_id,
-            event_type="Airlock.ToDelete",
+            event_type="Airlock.DataDeletion",
             event_time=datetime.datetime.utcnow(),
-            data_version="1.0"
+            data_version=constants.DATA_DELETION_EVENT_DATA_VERSION
         )
     )
