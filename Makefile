@@ -11,12 +11,17 @@ LINTER_REGEX_INCLUDE?=all # regular expression used to specify which files to in
 target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
 
 all: bootstrap mgmt-deploy images tre-deploy
-tre-deploy: deploy-core build-and-deploy-ui firewall-install db-migrate show-core-output
+tre-deploy: deploy-core build-and-deploy-ui deploy-shared-services db-migrate show-core-output
 
 images: build-and-push-api build-and-push-resource-processor build-and-push-airlock-processor
 build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-airlock-processor: build-airlock-processor push-airlock-processor
+
+deploy-shared-services: firewall-install
+	. ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& if [ "$${DEPLOY_GITEA}" == "true" ]; then $(MAKE) gitea-install; fi \
+	&& if [ "$${DEPLOY_NEXUS}" == "true" ]; then $(MAKE) nexus-install; fi
 
 # to move your environment from the single 'core' deployment (which includes the firewall)
 # toward the shared services model, where it is split out - run the following make target before a tre-deploy
@@ -102,10 +107,7 @@ prepare-tf-state:
 deploy-core: tre-start
 	$(call target_title, "Deploying TRE") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env,auth \
-	&& if [[ "$${TF_LOG}" == "DEBUG" ]]; \
-		then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${MAKEFILE_DIR}/templates/core/terraform/ \
-			&& ./deploy.sh 1>/dev/null 2>/dev/null; \
-		else cd ${MAKEFILE_DIR}/templates/core/terraform/ && ./deploy.sh; fi;
+	&& if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${MAKEFILE_DIR}/templates/core/terraform/ && ./deploy.sh 1>/dev/null 2>/dev/null; else cd ${MAKEFILE_DIR}/templates/core/terraform/ && ./deploy.sh; fi;
 
 letsencrypt:
 	$(call target_title, "Requesting LetsEncrypt SSL certificate") \
@@ -166,11 +168,9 @@ lint:
 		-e VALIDATE_BASH_EXEC=true \
 		-e VALIDATE_GITHUB_ACTIONS=true \
 		-e VALIDATE_DOCKERFILE_HADOLINT=true \
-		-e VALIDATE_TSX=true \
-    -e VALIDATE_TYPESCRIPT_ES=true \
 		-e FILTER_REGEX_INCLUDE=${LINTER_REGEX_INCLUDE} \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
-		github/super-linter:slim-v4.9.6
+		github/super-linter:slim-v4.9.5
 
 lint-docs:
 	LINTER_REGEX_INCLUDE='./docs/.*\|./mkdocs.yml' $(MAKE) lint
@@ -247,9 +247,7 @@ bundle-register:
 	&& az acr login --name $${ACR_NAME}	\
 	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
 	&& cd ${DIR} \
-	&& ${MAKEFILE_DIR}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" \
-		--current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify \
-		--workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
+	&& ${MAKEFILE_DIR}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify --workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
 workspace_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
 	DIR="${MAKEFILE_DIR}/templates/workspaces/$(1)" BUNDLE_TYPE=workspace
@@ -275,6 +273,18 @@ firewall-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
 	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
+nexus-install:
+	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
+	DIR="${MAKEFILE_DIR}/templates/shared_services/certs" BUNDLE_TYPE=shared_service PROPS="--domain_prefix nexus --cert_name nexus-ssl" \
+	&& $(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
+	DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus-vm/ BUNDLE_TYPE=shared_service PROPS="--ssl_cert_name nexus-ssl"
+
+gitea-install:
+	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
+
+temp-do-upload:
+	$(MAKE) static-web-upload DIR=${MAKEFILE_DIR}/dummy
+
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env,auth \
@@ -287,10 +297,14 @@ build-and-deploy-ui:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env,auth \
 	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
-	&& if [ "$${DEPLOY_UI}" != "false" ]; then ${MAKEFILE_DIR}/devops/scripts/build_deploy_ui.sh; else echo "UI Deploy skipped as DEPLOY_UI is false"; fi \
+	&& if [ "$${DEPLOY_UI}" == "true" ]; then ${MAKEFILE_DIR}/devops/scripts/build_deploy_ui.sh; else echo "UI Deploy skipped as DEPLOY_UI not true"; fi \
 
 prepare-for-e2e:
-	$(call workspace_bundle,airlock_manager)
+	$(call workspace_bundle,base) \
+	&& $(call workspace_service_bundle,guacamole) \
+	&& $(call shared_service_bundle,gitea) \
+	&& $(call user_resource_bundle,guacamole,guacamole-azure-windowsvm) \
+	&& $(call user_resource_bundle,guacamole,guacamole-azure-linuxvm)
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
