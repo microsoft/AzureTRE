@@ -204,7 +204,7 @@ def set_output_event_to_report_request_files(stepResultEvent, request_properties
 
 
 def set_output_event_to_trigger_container_deletion(toDeleteEvent, request_properties, container_url):
-    logging.info(f'Sending deletion event to delete container of request with ID: {request_properties.request_id}. container URL: {container_url}')
+    logging.info(f'Sending container deletion event for request ID: {request_properties.request_id}. container URL: {container_url}')
     toDeleteEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
