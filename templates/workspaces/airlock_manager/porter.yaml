@@ -49,9 +49,6 @@ parameters:
   - name: arm_use_msi
     type: boolean
     default: false
-  - name: shared_storage_quota
-    type: integer
-    default: 50
   - name: enable_local_debugging
     type: boolean
     default: false
@@ -145,7 +142,6 @@ install:
         tre_resource_id: "{{ bundle.parameters.id }}"
         location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
-        shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
         enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
         register_aad_application: "{{ bundle.parameters.register_aad_application }}"
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
@@ -184,7 +180,6 @@ upgrade:
   #       tre_resource_id: "{{ bundle.parameters.id }}"
   #       location: "{{ bundle.parameters.azure_location }}"
   #       address_space: "{{ bundle.parameters.address_space }}"
-  #       shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
   #       enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
   #       register_aad_application: "{{ bundle.parameters.register_aad_application }}"
   #       auth_client_id: "{{ bundle.credentials.auth_client_id }}"
@@ -238,7 +233,6 @@ uninstall:
         tre_resource_id: "{{ bundle.parameters.id }}"
         location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
-        shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
         enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
         register_aad_application: "{{ bundle.parameters.register_aad_application }}"
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
