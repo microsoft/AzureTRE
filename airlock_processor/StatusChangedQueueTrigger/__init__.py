@@ -30,11 +30,11 @@ class ContainersCopyMetadata:
         self.dest_account_name = dest_account_name
 
 
-def main(msg: func.ServiceBusMessage, stepResultEvent: func.Out[func.EventGridOutputEvent], toDeleteEvent: func.Out[func.EventGridOutputEvent]):
+def main(msg: func.ServiceBusMessage, stepResultEvent: func.Out[func.EventGridOutputEvent], dataDeletionEvent: func.Out[func.EventGridOutputEvent]):
     try:
         request_properties = extract_properties(msg)
         request_files = get_request_files(request_properties) if request_properties.new_status == constants.STAGE_SUBMITTED else None
-        handle_status_changed(request_properties, stepResultEvent, toDeleteEvent, request_files)
+        handle_status_changed(request_properties, stepResultEvent, dataDeletionEvent, request_files)
 
     except NoFilesInRequestException:
         set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.NO_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
@@ -44,7 +44,7 @@ def main(msg: func.ServiceBusMessage, stepResultEvent: func.Out[func.EventGridOu
         set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.UNKNOWN_REASON_MESSAGE, request_files=request_files)
 
 
-def handle_status_changed(request_properties: RequestProperties, stepResultEvent: func.Out[func.EventGridOutputEvent], toDeleteEvent: func.Out[func.EventGridOutputEvent], request_files):
+def handle_status_changed(request_properties: RequestProperties, stepResultEvent: func.Out[func.EventGridOutputEvent], dataDeletionEvent: func.Out[func.EventGridOutputEvent], request_files):
     new_status = request_properties.new_status
     previous_status = request_properties.previous_status
     req_id = request_properties.request_id
@@ -61,7 +61,7 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
     if new_status == constants.STAGE_CANCELLED:
         storage_account_name = get_storage_account(previous_status, request_type, ws_id)
         container_to_delete_url = blob_operations.get_blob_url(account_name=storage_account_name, container_name=req_id)
-        set_output_event_to_trigger_container_deletion(toDeleteEvent, request_properties, container_url=container_to_delete_url)
+        set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_properties, container_url=container_to_delete_url)
         return
 
     if new_status == constants.STAGE_SUBMITTED:
@@ -203,16 +203,16 @@ def set_output_event_to_report_request_files(stepResultEvent, request_properties
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
 
-def set_output_event_to_trigger_container_deletion(toDeleteEvent, request_properties, container_url):
+def set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_properties, container_url):
     logging.info(f'Sending container deletion event for request ID: {request_properties.request_id}. container URL: {container_url}')
-    toDeleteEvent.set(
+    dataDeletionEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
             data={"blob_to_delete": container_url},
             subject=request_properties.request_id,
             event_type="Airlock.ToDelete",
             event_time=datetime.datetime.utcnow(),
-            data_version=constants.TO_DELETE_EVENT_DATA_VERSION
+            data_version=constants.DATA_DELETION_EVENT_DATA_VERSION
         )
     )
 

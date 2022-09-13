@@ -75,7 +75,7 @@ class TestFileEnumeration(unittest.TestCase):
     def test_get_request_files_should_be_called_on_submit_stage(self, _, mock_get_request_files, mock_set_output_event_to_report_request_files):
         message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"submitted\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
         message = _mock_service_bus_message(body=message_body)
-        main(msg=message, stepResultEvent=MagicMock(), toDeleteEvent=MagicMock())
+        main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
         self.assertTrue(mock_get_request_files.called)
         self.assertTrue(mock_set_output_event_to_report_request_files.called)
 
@@ -85,7 +85,7 @@ class TestFileEnumeration(unittest.TestCase):
     def test_get_request_files_should_not_be_called_if_new_status_is_not_submit(self, _, mock_get_request_files, mock_set_output_event_to_report_failure):
         message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"fake-status\" ,\"previous_status\":\"None\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
         message = _mock_service_bus_message(body=message_body)
-        main(msg=message, stepResultEvent=MagicMock(), toDeleteEvent=MagicMock())
+        main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
         self.assertFalse(mock_get_request_files.called)
         self.assertFalse(mock_set_output_event_to_report_failure.called)
 
@@ -95,7 +95,7 @@ class TestFileEnumeration(unittest.TestCase):
     def test_get_request_files_should_be_called_when_failing_during_submit_stage(self, _, mock_get_request_files, mock_set_output_event_to_report_failure):
         message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"submitted\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
         message = _mock_service_bus_message(body=message_body)
-        main(msg=message, stepResultEvent=MagicMock(), toDeleteEvent=MagicMock())
+        main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
         self.assertTrue(mock_get_request_files.called)
         self.assertTrue(mock_set_output_event_to_report_failure.called)
 
@@ -116,7 +116,7 @@ class TestFilesDeletion(unittest.TestCase):
     def test_delete_request_files_should_be_called_on_cancel_stage(self, mock_set_output_event_to_trigger_container_deletion):
         message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"cancelled\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
         message = _mock_service_bus_message(body=message_body)
-        main(msg=message, stepResultEvent=MagicMock(), toDeleteEvent=MagicMock())
+        main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
         self.assertTrue(mock_set_output_event_to_trigger_container_deletion.called)
 
 
