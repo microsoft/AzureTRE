@@ -21,7 +21,7 @@ def delete_blob_and_container_if_last_blob(blob_url: str):
         return
 
     # If it's the only blob in the container, we need to delete the container too
-    # Check how many blobs are in the container (note: this exausts the generator)
+    # Check how many blobs are in the container (note: this exhausts the generator)
     blobs_num = sum(1 for _ in container_client.list_blobs())
     logging.info(f'Found {blobs_num} blobs in the container')
 
