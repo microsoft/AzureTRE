@@ -47,7 +47,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   }
 
   app_settings = {
-    "SB_CONNECTION_STRING"                     = var.airlock_servicebus.default_primary_connection_string
+    "SB_CONNECTION_STRING"                       = var.airlock_servicebus.default_primary_connection_string
     "BLOB_CREATED_TOPIC_NAME"                    = azurerm_servicebus_topic.blob_created.name
     "TOPIC_SUBSCRIPTION_NAME"                    = azurerm_servicebus_subscription.airlock_processor.name
     "EVENT_GRID_STEP_RESULT_TOPIC_URI_SETTING"   = azurerm_eventgrid_topic.step_result.endpoint
