@@ -49,6 +49,7 @@ nav:
           - Network Architecture: azure-tre-overview/networking.md
           - Azure Resources: azure-tre-overview/tre-resources-breakdown.md
           - Airlock: azure-tre-overview/airlock.md
+          - Cost Reporting: azure-tre-overview/cost-reporting.md
       - Compliance: azure-tre-overview/compliance-info.md
 
   - QuickStart: # Setup steps for anyone performing an initial deployment of the AzureTRE for eval purposes
