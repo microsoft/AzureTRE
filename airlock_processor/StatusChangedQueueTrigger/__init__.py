@@ -210,7 +210,7 @@ def set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_pr
             id=str(uuid.uuid4()),
             data={"blob_to_delete": container_url},
             subject=request_properties.request_id,
-            event_type="Airlock.ToDelete",
+            event_type="Airlock.DataDeletion",
             event_time=datetime.datetime.utcnow(),
             data_version=constants.DATA_DELETION_EVENT_DATA_VERSION
         )
