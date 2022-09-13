@@ -141,7 +141,7 @@ resource "azurerm_role_assignment" "servicebus_sender_data_deletion" {
 }
 
 resource "azurerm_private_endpoint" "eg_data_deletion" {
-  name                = "pe-eg-data_deletion-${var.tre_id}"
+  name                = "pe-eg-data-deletion-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.airlock_events_subnet_id
