@@ -3,7 +3,7 @@ import json
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_info_from_blob_url, copy_data
+from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_info_from_blob_url, copy_data, get_blob_url
 from exceptions import TooManyFilesInRequestException, NoFilesInRequestException
 
 
@@ -75,3 +75,18 @@ class TestBlobOperations(TestCase):
 
             # Check that copied_from field was set correctly in the metadata
             dest_blob_client_mock.start_copy_from_url.assert_called_with(f"{source_url}?sas", metadata=dest_metadata)
+
+    def test_get_blob_url_should_return_blob_url(self):
+        account_name = "account"
+        container_name = "container"
+        blob_name = "blob"
+
+        blob_url = get_blob_url(account_name, container_name, blob_name)
+        self.assertEqual(blob_url, f"https://{account_name}.blob.core.windows.net/{container_name}/{blob_name}")
+
+    def test_get_blob_url_without_blob_name_should_return_container_url(self):
+        account_name = "account"
+        container_name = "container"
+
+        blob_url = get_blob_url(account_name, container_name)
+        self.assertEqual(blob_url, f"https://{account_name}.blob.core.windows.net/{container_name}/")

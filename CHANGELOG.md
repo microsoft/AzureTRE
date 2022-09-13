@@ -13,6 +13,24 @@ FEATURES:
 
 ENHANCEMENTS:
 
+* Cancelling an Airlock request triggers deletion of the request container and files ([#2584](https://github.com/microsoft/AzureTRE/pull/2584))
+
+BUG FIXES:
+
+*
+
+## 0.4.3 (September 12, 2022)
+
+**BREAKING CHANGES & MIGRATIONS**:
+
+* Remove support for Nexus V1 ([#2580](https://github.com/microsoft/AzureTRE/pull/2580)). Please migrate to the newer version as described [here](https://microsoft.github.io/AzureTRE/tre-admins/setup-instructions/configuring-shared-services/).
+
+FEATURES:
+
+*
+
+ENHANCEMENTS:
+
 * Adding Log Analytics & Antimalware VM extensions ([#2520](https://github.com/microsoft/AzureTRE/pull/2520))
 * Block anonymous access to 2 storage accounts ([#2524](https://github.com/microsoft/AzureTRE/pull/2524))
 * Gitea shared service support app-service standard SKUs ([#2523](https://github.com/microsoft/AzureTRE/pull/2523))
@@ -25,7 +43,8 @@ ENHANCEMENTS:
 * Azure ML workspace service assigns Azure ML Data Scientist role to Workspace Researchers ([#2539](https://github.com/microsoft/AzureTRE/pull/2539))
 * UI is deployed by default ([#2554](https://github.com/microsoft/AzureTRE/pull/2554))
 * Remove manual/makefile option to install Gitea/Nexus ([#2573](https://github.com/microsoft/AzureTRE/pull/2573))
-
+* Exact Terraform provider versions in bundles ([#2579](https://github.com/microsoft/AzureTRE/pull/2579))
+* Stabilize E2E tests by issuing the access token prior using it, hence, reducing the change of expired token ([#2572](https://github.com/microsoft/AzureTRE/pull/2572))
 
 BUG FIXES:
 
@@ -33,6 +52,31 @@ BUG FIXES:
 * Temporary disable AppInsight's private endpoint in base workspace ([#2543](https://github.com/microsoft/AzureTRE/pull/2543))
 * Resource Processor execution optimization (`porter show`) for long-standing services ([#2542](https://github.com/microsoft/AzureTRE/pull/2542))
 * Move AML Compute deployment to use AzApi Terraform Provider {[#2555]((https://github.com/microsoft/AzureTRE/pull/2555))
+* Invalid token exceptions in the API app are catched, throwing 401 instead of 500 Internal server error ([#2572](https://github.com/microsoft/AzureTRE/pull/2572))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.4.0 |
+| core | 0.4.23 |
+| tre-workspace-base | 0.3.28 |
+| tre-workspace-unrestricted | 0.1.9 |
+| tre-service-mlflow | 0.3.7 |
+| tre-service-innereye | 0.3.5 |
+| tre-workspace-service-gitea | 0.3.8 |
+| tre-workspace-service-mysql | 0.1.2 |
+| tre-service-guacamole-linuxvm | 0.4.14 |
+| tre-service-guacamole-windowsvm | 0.4.8 |
+| tre-service-guacamole | 0.4.5 |
+| tre-user-resource-aml-compute-instance | 0.3.2 |
+| tre-service-azureml | 0.4.8 |
+| tre-shared-service-cyclecloud | 0.2.6 |
+| tre-shared-service-gitea | 0.3.14 |
+| tre-shared-service-airlock-notifier | 0.1.2 |
+| tre-shared-service-certs | 0.1.3 |
+| tre-shared-service-sonatype-nexus | 2.1.6 |
+| tre-shared-service-firewall | 0.4.3 |
 
 ## 0.4.2 (August 23, 2022)
 
@@ -68,7 +112,6 @@ COMPONENTS:
 | ----- | ----- |
 | devops | 0.4.0 |
 | core | 0.4.18 |
-| tre-workspace-base | 0.3.19 |
 | tre-workspace-base | 0.3.25 |
 | tre-service-mlflow | 0.3.5 |
 | tre-service-innereye | 0.3.3 |

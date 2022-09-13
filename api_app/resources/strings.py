@@ -71,11 +71,13 @@ OK = "OK"
 NOT_OK = "Not OK"
 COSMOS_DB = "Cosmos DB"
 STATE_STORE_ENDPOINT_NOT_RESPONDING = "State Store endpoint is not responding"
+STATE_STORE_ENDPOINT_NOT_ACCESSIBLE = "State Store endpoint is not accessible"
 UNSPECIFIED_ERROR = "Unspecified error"
 
 # Service bus status
 SERVICE_BUS = "Service Bus"
 SERVICE_BUS_NOT_RESPONDING = "Service Bus is not responding"
+SERVICE_BUS_AUTHENTICATION_ERROR = "Cannot authenticate Service Bus"
 
 # Resource processor status
 RESOURCE_PROCESSOR = "Resource Processor"
@@ -99,6 +101,9 @@ AUTH_COULD_NOT_VALIDATE_CREDENTIALS = "Could not validate credentials"
 AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE = "Auth configuration not available for workspace"
 AUTH_UNABLE_TO_VALIDATE_TOKEN = "Unable to decode or validate token"
 INVALID_AUTH_PROVIDER = "Invalid authentication provider"
+INVALID_SIGNATURE = "Invalid token signature"
+EXPIRED_SIGNATURE = "Expired token signature"
+INVALID_TOKEN = "Invalid token"
 
 UNABLE_TO_REPLACE_CURRENT_TEMPLATE = "Unable to replace the existing 'current' template with this name"
 UNABLE_TO_PROCESS_REQUEST = "Unable to process request"
