@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-linuxvm
-version: 0.5.0
+version: 0.5.1
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -24,6 +24,10 @@ parameters:
     type: string
     description: "Resource group containing the shared ACR"
     env: PARENT_SERVICE_ID
+  - name: image_gallery_id
+    type: string
+    description: Azure resource ID for the compute image gallery to pull images from (if specifying custom images by name)
+    default: ""
 
   # the following are added automatically by the resource processor
   - name: id
@@ -97,6 +101,7 @@ install:
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
+        image_gallery_id: "{{ bundle.parameters.image_gallery_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -120,6 +125,7 @@ upgrade:
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
+        image_gallery_id: "{{ bundle.parameters.image_gallery_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -152,6 +158,7 @@ uninstall:
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
+        image_gallery_id: "{{ bundle.parameters.image_gallery_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"

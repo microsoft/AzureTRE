@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-windowsvm
-version: 0.5.0
+version: 0.5.1
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -24,6 +24,10 @@ parameters:
     type: string
     description: "Resource group containing the shared ACR"
     env: PARENT_SERVICE_ID
+  - name: image_gallery_id
+    type: string
+    description: Azure resource ID for the compute image gallery to pull images from (if specifying custom images by name)
+    default: ""
   - name: id
     type: string
     description: "An Id for this installation"

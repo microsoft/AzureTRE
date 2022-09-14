@@ -15,26 +15,14 @@ locals {
     tre_user_resource_id     = var.tre_resource_id
   }
   nexus_proxy_url = "https://nexus-${var.tre_id}.${data.azurerm_resource_group.core.location}.cloudapp.azure.com"
-  vm_size = {
-    "2 CPU | 8GB RAM"   = { value = "Standard_D2s_v5" },
-    "4 CPU | 16GB RAM"  = { value = "Standard_D4s_v5" },
-    "8 CPU | 32GB RAM"  = { value = "Standard_D8s_v5" },
-    "16 CPU | 64GB RAM" = { value = "Standard_D16s_v5" }
-  }
-  image_ref = {
-    "Windows 10" = {
-      "publisher"    = "MicrosoftWindowsDesktop"
-      "offer"        = "windows-10"
-      "sku"          = "20h2-pro-g2"
-      "version"      = "latest"
-      "conda_config" = false
-    },
-    "Server 2019 Data Science VM" = {
-      "publisher"    = "microsoft-dsvm"
-      "offer"        = "dsvm-win-2019"
-      "sku"          = "server-2019"
-      "version"      = "latest"
-      "conda_config" = true
-    }
-  }
+
+  # Load VM SKU/image details from JSON files
+  vm_sizes      = jsondecode(file("${path.module}/vm_sizes.json"))
+  image_details = jsondecode(file("${path.module}/image_details.json"))
+
+  # Create local variables to support the VM resource
+  selected_image = local.image_details[var.image]
+  # selected_image_source_refs is an array to enable easy use of a dynamic block
+  selected_image_source_refs = local.selected_image.source_image_reference == null ? [] : [local.selected_image.source_image_reference]
+  selected_image_source_id   = local.selected_image.source_image_name == null ? null : "${var.image_gallery_id}/images/${local.selected_image.source_image_name}"
 }

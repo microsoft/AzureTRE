@@ -1,0 +1,14 @@
+{
+  "2 CPU | 8GB RAM": {
+    "value": "Standard_D2s_v5"
+  },
+  "4 CPU | 16GB RAM": {
+    "value": "Standard_D4s_v5"
+  },
+  "8 CPU | 32GB RAM": {
+    "value": "Standard_D8s_v5"
+  },
+  "16 CPU | 64GB RAM": {
+    "value": "Standard_D16s_v5"
+  }
+}
