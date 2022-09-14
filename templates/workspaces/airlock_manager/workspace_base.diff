@@ -1,11 +1,13 @@
 diff -Naur ../base/terraform/airlock/storage_accounts.tf terraform/airlock/storage_accounts.tf
 --- ../base/terraform/airlock/storage_accounts.tf	2022-08-17 12:09:06.000000000 +0100
-+++ terraform/airlock/storage_accounts.tf	2022-09-12 17:42:55.000000000 +0100
-@@ -77,13 +76,34 @@
-   lifecycle { ignore_changes = [tags] }
++++ terraform/airlock/storage_accounts.tf	2022-09-14 17:42:52.000000000 +0100
+@@ -48,6 +48,30 @@
+   }
  }
-
-+resource "azurerm_private_endpoint" "stg_import_inprogress_pe" {
+ 
++# 'In progress' storage account
++
++resource "azurerm_private_endpoint" "sa_import_inprogress_pe" {
 +  name                = "stg-ip-import-blob-${var.tre_id}-ws-${var.short_workspace_id}"
 +  location            = var.location
 +  resource_group_name = var.ws_resource_group_name
@@ -27,7 +29,10 @@ diff -Naur ../base/terraform/airlock/storage_accounts.tf terraform/airlock/stora
 +
 +  tags = var.tre_workspace_tags
 +}
-@@ -259,19 +259,59 @@
+ 
+ # 'Drop' location for export
+ resource "azurerm_storage_account" "sa_export_internal" {
+@@ -259,19 +283,59 @@
    }
  }
  
@@ -39,6 +44,13 @@ diff -Naur ../base/terraform/airlock/storage_accounts.tf terraform/airlock/stora
 +resource "azurerm_role_assignment" "sa_import_approved" {
 +  scope                = azurerm_storage_account.sa_import_approved.id
 +  role_definition_name = "Contributor"
++  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
++}
++
++
++resource "azurerm_role_assignment" "sa_export_internal" {
++  scope                = azurerm_storage_account.sa_export_internal.id
++  role_definition_name = "Contributor"
    principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
  }
  
@@ -48,13 +60,6 @@ diff -Naur ../base/terraform/airlock/storage_accounts.tf terraform/airlock/stora
 -  count                = length(local.api_sa_data_contributor)
 -  scope                = local.api_sa_data_contributor[count.index]
 -  role_definition_name = "Storage Blob Data Contributor"
-+
-+resource "azurerm_role_assignment" "sa_export_internal" {
-+  scope                = azurerm_storage_account.sa_export_internal.id
-+  role_definition_name = "Contributor"
-+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
-+}
-+
 +resource "azurerm_role_assignment" "sa_export_inprogress" {
 +  scope                = azurerm_storage_account.sa_export_inprogress.id
 +  role_definition_name = "Contributor"
@@ -100,7 +105,7 @@ diff -Naur ../base/terraform/airlock/storage_accounts.tf terraform/airlock/stora
  }
 diff -Naur ../base/terraform/storage.tf terraform/storage.tf
 --- ../base/terraform/storage.tf	2022-08-10 10:15:54.000000000 +0100
-+++ terraform/storage.tf	2022-09-12 17:42:55.000000000 +0100
++++ terraform/storage.tf	2022-09-14 17:11:00.000000000 +0100
 @@ -9,17 +9,6 @@
    lifecycle { ignore_changes = [tags] }
  }
@@ -121,7 +126,7 @@ diff -Naur ../base/terraform/storage.tf terraform/storage.tf
  
 diff -Naur ../base/terraform/variables.tf terraform/variables.tf
 --- ../base/terraform/variables.tf	2022-08-12 19:02:29.000000000 +0100
-+++ terraform/variables.tf	2022-09-12 17:42:55.000000000 +0100
++++ terraform/variables.tf	2022-09-14 17:11:00.000000000 +0100
 @@ -8,12 +8,6 @@
    description = "Resource ID"
  }
