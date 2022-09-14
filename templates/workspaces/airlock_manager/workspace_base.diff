@@ -1,6 +1,18 @@
+diff -Naur ../base/terraform/airlock/data.tf terraform/airlock/data.tf
+--- ../base/terraform/airlock/data.tf	2022-08-10 10:15:54.000000000 +0100
++++ terraform/airlock/data.tf	2022-09-14 22:19:06.000000000 +0100
+@@ -23,3 +23,8 @@
+   resource_group_name = local.core_resource_group_name
+   namespace_name      = data.azurerm_servicebus_namespace.airlock_sb.name
+ }
++
++data "azurerm_storage_account" "sa_import_inprogress" {
++  name                = local.import_in_progress_storage_name
++  resource_group_name = local.core_resource_group_name
++}
 diff -Naur ../base/terraform/airlock/storage_accounts.tf terraform/airlock/storage_accounts.tf
 --- ../base/terraform/airlock/storage_accounts.tf	2022-08-17 12:09:06.000000000 +0100
-+++ terraform/airlock/storage_accounts.tf	2022-09-14 17:42:52.000000000 +0100
++++ terraform/airlock/storage_accounts.tf	2022-09-14 22:18:19.000000000 +0100
 @@ -48,6 +48,30 @@
    }
  }
@@ -105,7 +117,7 @@ diff -Naur ../base/terraform/airlock/storage_accounts.tf terraform/airlock/stora
  }
 diff -Naur ../base/terraform/storage.tf terraform/storage.tf
 --- ../base/terraform/storage.tf	2022-08-10 10:15:54.000000000 +0100
-+++ terraform/storage.tf	2022-09-14 17:11:00.000000000 +0100
++++ terraform/storage.tf	2022-09-14 22:18:19.000000000 +0100
 @@ -9,17 +9,6 @@
    lifecycle { ignore_changes = [tags] }
  }
@@ -126,7 +138,7 @@ diff -Naur ../base/terraform/storage.tf terraform/storage.tf
  
 diff -Naur ../base/terraform/variables.tf terraform/variables.tf
 --- ../base/terraform/variables.tf	2022-08-12 19:02:29.000000000 +0100
-+++ terraform/variables.tf	2022-09-14 17:11:00.000000000 +0100
++++ terraform/variables.tf	2022-09-14 22:18:19.000000000 +0100
 @@ -8,12 +8,6 @@
    description = "Resource ID"
  }
