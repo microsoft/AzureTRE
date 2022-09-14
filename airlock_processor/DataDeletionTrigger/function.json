@@ -6,7 +6,7 @@
       "name": "msg",
       "type": "serviceBusTrigger",
       "direction": "in",
-      "queueName": "%AIRLOCK_TO_DELETE_QUEUE_NAME%",
+      "queueName": "%AIRLOCK_DATA_DELETION_QUEUE_NAME%",
       "connection": "SB_CONNECTION_STRING"
     }
   ]

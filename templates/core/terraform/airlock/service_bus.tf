@@ -20,8 +20,8 @@ resource "azurerm_servicebus_queue" "scan_result" {
   enable_partitioning = false
 }
 
-resource "azurerm_servicebus_queue" "to_delete" {
-  name         = local.to_delete_queue_name
+resource "azurerm_servicebus_queue" "data_deletion" {
+  name         = local.data_deletion_queue_name
   namespace_id = var.airlock_servicebus.id
 
   enable_partitioning = false
