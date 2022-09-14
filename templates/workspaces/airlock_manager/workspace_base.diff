@@ -1,6 +1,6 @@
 diff -Naur ../base/terraform/airlock/data.tf terraform/airlock/data.tf
 --- ../base/terraform/airlock/data.tf	2022-08-10 10:15:54.000000000 +0100
-+++ terraform/airlock/data.tf	2022-09-14 22:19:06.000000000 +0100
++++ terraform/airlock/data.tf	2022-09-14 23:46:54.000000000 +0100
 @@ -23,3 +23,8 @@
    resource_group_name = local.core_resource_group_name
    namespace_name      = data.azurerm_servicebus_namespace.airlock_sb.name
@@ -10,9 +10,46 @@ diff -Naur ../base/terraform/airlock/data.tf terraform/airlock/data.tf
 +  name                = local.import_in_progress_storage_name
 +  resource_group_name = local.core_resource_group_name
 +}
+diff -Naur ../base/terraform/airlock/locals.tf terraform/airlock/locals.tf
+--- ../base/terraform/airlock/locals.tf	2022-08-17 12:09:06.000000000 +0100
++++ terraform/airlock/locals.tf	2022-09-14 23:46:54.000000000 +0100
+@@ -1,4 +1,5 @@
+ locals {
++  core_vnet                      = "vnet-${var.tre_id}"
+   core_resource_group_name       = "rg-${var.tre_id}"
+   workspace_resource_name_suffix = "${var.tre_id}-ws-${var.short_workspace_id}"
+ 
+@@ -11,6 +12,8 @@
+ 
+   # STorage AirLock IMport APProved
+   import_approved_storage_name = lower(replace("stalimapp${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
++  # STorage AirLock IMport InProgress
++  import_in_progress_storage_name = lower(replace("stalimip${var.tre_id}", "-", ""))
+   # STorage AirLock EXport INTernal
+   export_internal_storage_name = lower(replace("stalexint${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
+   # STorage AirLock EXport InProgress
+@@ -19,18 +22,4 @@
+   export_rejected_storage_name = lower(replace("stalexrej${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
+   # STorage AirLock EXport BLOCKED
+   export_blocked_storage_name = lower(replace("stalexblocked${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
+-
+-  airlock_blob_data_contributor = [
+-    azurerm_storage_account.sa_import_approved.id,
+-    azurerm_storage_account.sa_export_internal.id,
+-    azurerm_storage_account.sa_export_inprogress.id,
+-    azurerm_storage_account.sa_export_rejected.id,
+-    azurerm_storage_account.sa_export_blocked.id
+-  ]
+-
+-  api_sa_data_contributor = [
+-    azurerm_storage_account.sa_import_approved.id,
+-    azurerm_storage_account.sa_export_internal.id,
+-    azurerm_storage_account.sa_export_inprogress.id
+-  ]
+ }
 diff -Naur ../base/terraform/airlock/storage_accounts.tf terraform/airlock/storage_accounts.tf
 --- ../base/terraform/airlock/storage_accounts.tf	2022-08-17 12:09:06.000000000 +0100
-+++ terraform/airlock/storage_accounts.tf	2022-09-14 22:18:19.000000000 +0100
++++ terraform/airlock/storage_accounts.tf	2022-09-14 23:46:54.000000000 +0100
 @@ -48,6 +48,30 @@
    }
  }
@@ -117,7 +154,7 @@ diff -Naur ../base/terraform/airlock/storage_accounts.tf terraform/airlock/stora
  }
 diff -Naur ../base/terraform/storage.tf terraform/storage.tf
 --- ../base/terraform/storage.tf	2022-08-10 10:15:54.000000000 +0100
-+++ terraform/storage.tf	2022-09-14 22:18:19.000000000 +0100
++++ terraform/storage.tf	2022-09-14 23:46:54.000000000 +0100
 @@ -9,17 +9,6 @@
    lifecycle { ignore_changes = [tags] }
  }
@@ -138,7 +175,7 @@ diff -Naur ../base/terraform/storage.tf terraform/storage.tf
  
 diff -Naur ../base/terraform/variables.tf terraform/variables.tf
 --- ../base/terraform/variables.tf	2022-08-12 19:02:29.000000000 +0100
-+++ terraform/variables.tf	2022-09-14 22:18:19.000000000 +0100
++++ terraform/variables.tf	2022-09-14 23:46:54.000000000 +0100
 @@ -8,12 +8,6 @@
    description = "Resource ID"
  }
