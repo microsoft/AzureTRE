@@ -1,6 +1,32 @@
 diff -Naur ../base/terraform/airlock/storage_accounts.tf terraform/airlock/storage_accounts.tf
 --- ../base/terraform/airlock/storage_accounts.tf	2022-08-17 12:09:06.000000000 +0100
 +++ terraform/airlock/storage_accounts.tf	2022-09-12 17:42:55.000000000 +0100
+@@ -77,13 +76,34 @@
+   lifecycle { ignore_changes = [tags] }
+ }
+
++resource "azurerm_private_endpoint" "stg_import_inprogress_pe" {
++  name                = "stg-ip-import-blob-${var.tre_id}-ws-${var.short_workspace_id}"
++  location            = var.location
++  resource_group_name = var.ws_resource_group_name
++  subnet_id           = var.services_subnet_id
++
++  lifecycle { ignore_changes = [tags] }
++
++  private_dns_zone_group {
++    name                 = "private-dns-zone-group-stg-import-ip"
++    private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
++  }
++
++  private_service_connection {
++    name                           = "psc-stgipimport-${var.tre_id}"
++    private_connection_resource_id = data.azurerm_storage_account.sa_import_inprogress.id
++    is_manual_connection           = false
++    subresource_names              = ["Blob"]
++  }
++
++  tags = var.tre_workspace_tags
++}
 @@ -259,19 +259,59 @@
    }
  }
