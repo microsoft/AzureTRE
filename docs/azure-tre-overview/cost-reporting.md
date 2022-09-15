@@ -109,7 +109,7 @@ GET /api/workspaces/{workspace_id}/costs
 
 * Cost and usage data is typically available in Cost Management within 8-24 hours.
 
-* Tags aren't applied to historical data, template authors need to make sure all relavent [Azure resources of a TRE resource are tagged as instructed](#azure-resources-tagging).
+* Tags aren't applied to historical data, template authors need to make sure all relevant [Azure resources of a TRE resource are tagged as instructed](#azure-resources-tagging).
 
 * Cost records might include [multiple currencies](https://azure.microsoft.com/en-us/blog/azure-cost-management-updates-july-2019/#currency) for the same date and TRE resource.
 
