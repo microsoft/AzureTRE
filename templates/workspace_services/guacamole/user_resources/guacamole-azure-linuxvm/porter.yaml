@@ -52,8 +52,8 @@ parameters:
     type: string
     default: "2 CPU | 8GB RAM"
   - name: shared_storage_access
-    type: string
-    default: "true"
+    type: boolean
+    default: true
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
