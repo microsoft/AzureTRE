@@ -18,3 +18,8 @@ The process follows these steps:
     1. Include a final line with a link to the full changelog similar to this:
     <!-- markdownlint-disable-next-line MD034 -->
           **Full Changelog**: https://github.com/microsoft/AzureTRE/compare/v0.9.1...v0.9.2
+1. Update [AzureTRE-Deployment](https://github.com/microsoft/AzureTRE-Deployment). The procedure may vary depending on the level of changes introduced in the new version but should include the following steps:
+    1. Update the tag used in [devcontainer.json](https://github.com/microsoft/AzureTRE-Deployment/blob/main/.devcontainer/devcontainer.json).
+    1. Rebuild the container.
+    1. Compare both `.devcontainer` and `.github` folders of the new release with the ones in the repo and make required updates so that only required difference exist.
+    The comapre can be done with VSCode [Compare Folders extension](https://marketplace.visualstudio.com/items?itemName=moshfeu.compare-folders) as you have both the old version (under to root folder) and the "new" one inside the _AzureTRE_ symlink.
