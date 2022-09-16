@@ -27,7 +27,7 @@ BUG FIXES:
 
 FEATURES:
 
-*
+* Add External URI Shared service template ([#2553](https://github.com/microsoft/AzureTRE/pull/2553))
 
 ENHANCEMENTS:
 

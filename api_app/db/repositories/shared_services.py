@@ -60,13 +60,17 @@ class SharedServiceRepository(ResourceRepository):
     def create_shared_service_item(self, shared_service_input: SharedServiceTemplateInCreate) -> Tuple[SharedService, ResourceTemplate]:
         shared_service_id = str(uuid.uuid4())
 
-        existing_shared_services = self.query(self.operating_shared_service_with_template_name_query(shared_service_input.templateName))
+        # for certain shared services, restrict to one instance
+        multi_instance_allowed = ["tre-shared-service-external-uri"]
 
-        # Duplicate is same template (=id), same version and deployed
-        if existing_shared_services:
-            if len(existing_shared_services) > 1:
-                raise InternalError(f"More than one active shared service exists with the same id {shared_service_id}")
-            raise DuplicateEntity
+        if shared_service_input.templateName not in multi_instance_allowed:
+            existing_shared_services = self.query(self.operating_shared_service_with_template_name_query(shared_service_input.templateName))
+
+            # Duplicate is same template (=id), same version and deployed
+            if existing_shared_services:
+                if len(existing_shared_services) > 1:
+                    raise InternalError(f"More than one active shared service exists with the same id {shared_service_id}")
+                raise DuplicateEntity
 
         template = self.validate_input_against_template(shared_service_input.templateName, shared_service_input, ResourceType.SharedService)
 

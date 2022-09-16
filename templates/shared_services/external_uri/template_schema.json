@@ -12,7 +12,8 @@
       "$id": "#/properties/connection_uri",
       "type": "string",
       "title": "External URL",
-      "description": "The external URL for the service"
+      "description": "The external URL for the service",
+      "updateable": true
     }
   }
 }
