@@ -97,6 +97,7 @@ class ResourceTemplateRepository(BaseRepository):
             "resourceType": resource_type,
             "current": template_input.current,
             "required": template_input.json_schema["required"],
+            "requiredRoles": template_input.json_schema["requiredRoles"],
             "properties": template_input.json_schema["properties"],
             "customActions": template_input.customActions
         }

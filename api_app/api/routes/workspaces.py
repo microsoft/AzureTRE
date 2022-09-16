@@ -7,6 +7,7 @@ from jsonschema.exceptions import ValidationError
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_operation_by_id_from_path, get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_user_resource_by_id_from_path
 
+from db.errors import UserNotAuthorizedToUseTemplate
 from db.repositories.operations import OperationRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.user_resources import UserResourceRepository
@@ -92,6 +93,9 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed to create workspace model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except UserNotAuthorizedToUseTemplate as e:
+        logging.error(f"User not authorized to use template: {e}")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
     operation = await save_and_deploy_resource(
         resource=workspace,
@@ -194,6 +198,9 @@ async def create_workspace_service(response: Response, workspace_service_input: 
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed create workspace service model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except UserNotAuthorizedToUseTemplate as e:
+        logging.error(f"User not authorized to use template: {e}")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
     operation = await save_and_deploy_resource(
         resource=workspace_service,
@@ -321,6 +328,9 @@ async def create_user_resource(
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed create user resource model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except UserNotAuthorizedToUseTemplate as e:
+        logging.error(f"User not authorized to use template: {e}")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
     operation = await save_and_deploy_resource(
         resource=user_resource,
