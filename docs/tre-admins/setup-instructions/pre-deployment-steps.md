@@ -48,7 +48,7 @@ Next, you will set the configuration variables for the specific Azure TRE instan
 1. Open the `/templates/core/.env.sample` file and then save it without the .sample extension. You should now have a file called `.env` located in the `/templates/core` folder.
 1. Decide on a name for your `TRE_ID`, which is an alphanumeric (with underscores and hyphens allowed) ID for the Azure TRE instance. The value will be used in various Azure resources, and **needs to be globally unique and less than 12 characters in length**. Use only lowercase letters. Choose wisely!
 1. Once you have decided on which AD Tenant paradigm, then you should be able to set `AAD_TENANT_ID`
-1. Choose whether or not to deploy the built-in web UI (`./ui`). By default this will _not_ be deployed. To deploy the UI, ensure you set `DEPLOY_UI=true` in the .env file.
+1. If you want to disable the built-in web UI (`./ui`) ensure you set `DEPLOY_UI=false` in the .env file.
 1. Your AAD Tenant Admin can now use the terminal window in Visual Studio Code to execute the following script from within the development container to create all the AAD Applications that are used for TRE. The details of the script are covered in the [auth document](../auth.md).
 
    ```bash

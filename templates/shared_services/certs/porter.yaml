@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-certs
-version: 0.1.2
+version: 0.1.3
 description: "An Azure TRE shared service to generate certificates for a specified internal domain using Letsencrypt"
 registry: azuretre
 dockerfile: Dockerfile.tmpl

@@ -121,3 +121,7 @@ def get_blob_info_from_topic_and_subject(topic: str, subject: str):
 def get_blob_info_from_blob_url(blob_url: str) -> Tuple[str, str, str]:
     # Example of blob url: https://stalimappws663d.blob.core.windows.net/50866a82-d13a-4fd5-936f-deafdf1022ce/test_blob.txt
     return re.search(r'https://(.*?).blob.core.windows.net/(.*?)/(.*?)$', blob_url).groups()
+
+
+def get_blob_url(account_name: str, container_name: str, blob_name='') -> str:
+    return f'{get_account_url(account_name)}{container_name}/{blob_name}'

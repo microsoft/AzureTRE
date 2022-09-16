@@ -16,6 +16,7 @@ import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResource
 import { Workspace } from '../../models/workspace';
 import { WorkspaceService } from '../../models/workspaceService';
 import { actionsDisabledStates } from '../../models/operation';
+import { AppRolesContext } from '../../contexts/AppRolesContext';
 
 interface ResourceContextMenuProps {
   resource: Resource,
@@ -32,6 +33,10 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   const createFormCtx = useContext(CreateUpdateResourceContext);
   const opsWriteContext = useRef(useContext(OperationsContext)); // useRef to avoid re-running a hook on context write
   const [parentResource, setParentResource] = useState({} as WorkspaceService | Workspace);
+  const [roles, setRoles] = useState([] as Array<string>);
+  const [wsAuth, setWsAuth] = useState(false);
+  const appRoles = useContext(AppRolesContext); // the user is in these roles which apply across the app
+
 
   // get the resource template
   useEffect(() => {
@@ -57,11 +62,37 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
         default:
           throw Error('Unsupported resource type.');
       }
-      const template = await apiCall(`${templatesPath}/${props.resource.templateName}`, HttpMethod.Get);
-      setResourceTemplate(template);
+
+      let r = [] as Array<string>;
+      let wsAuth = false;
+      switch (props.resource.resourceType) {
+        case ResourceType.SharedService:
+          r = [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner];
+          break;
+        case ResourceType.WorkspaceService:
+          r = [WorkspaceRoleName.WorkspaceOwner]
+          wsAuth = true;
+          break;
+        case ResourceType.UserResource:
+          r = [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher];
+          wsAuth = true;
+          break;
+        case ResourceType.Workspace:
+          r = [RoleName.TREAdmin];
+          break;
+      }
+      setWsAuth(wsAuth);
+      setRoles(r);
+
+      // should we bother getting the template? if the user isn't in the right role they won't see the menu at all.
+      const userRoles = wsAuth ? workspaceCtx.roles : appRoles.roles;
+      if (userRoles && r.filter(x => userRoles.includes(x)).length > 0) {
+        const template = await apiCall(`${templatesPath}/${props.resource.templateName}`, HttpMethod.Get);
+        setResourceTemplate(template);
+      }
     };
     getTemplate();
-  }, [apiCall, props.resource, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI]);
+  }, [apiCall, props.resource, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI, appRoles.roles, workspaceCtx.roles]);
 
   const doAction = async (actionName: string) => {
     const action = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.InvokeAction}?action=${actionName}`, HttpMethod.Post, workspaceCtx.workspaceApplicationIdURI);
@@ -70,8 +101,6 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
 
   // context menu
   let menuItems: Array<any> = [];
-  let roles: Array<string> = [];
-  let wsAuth = false;
 
   menuItems = [
     {
@@ -153,18 +182,6 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
     });
   }
 
-  switch (props.resource.resourceType) {
-    case ResourceType.Workspace:
-    case ResourceType.SharedService:
-      roles = [RoleName.TREAdmin];
-      break;
-    case ResourceType.WorkspaceService:
-    case ResourceType.UserResource:
-      wsAuth = true;
-      roles = [WorkspaceRoleName.WorkspaceOwner];
-      break;
-  }
-
   const menuProps: IContextualMenuProps = {
     shouldFocusOnMount: true,
     items: menuItems
@@ -177,7 +194,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
         <CommandBar
           items={menuItems}
           ariaLabel="Resource actions"
-      />
+        />
         :
         <IconButton iconProps={{ iconName: 'More' }} menuProps={menuProps} className="tre-hide-chevron" disabled={props.componentAction === ComponentAction.Lock} />
       } />

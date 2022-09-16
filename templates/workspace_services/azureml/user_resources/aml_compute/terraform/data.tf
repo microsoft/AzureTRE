@@ -1,20 +1,3 @@
-# Azure Provider source and version being used
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "=2.97.0"
-    }
-  }
-  backend "azurerm" {
-  }
-}
-
-
-provider "azurerm" {
-  features {}
-}
-
 data "azurerm_resource_group" "ws" {
   name = "rg-${local.workspace_resource_name_suffix}"
 }
@@ -28,4 +11,9 @@ data "azurerm_subnet" "services" {
   name                 = "ServicesSubnet"
   virtual_network_name = data.azurerm_virtual_network.ws.name
   resource_group_name  = data.azurerm_virtual_network.ws.resource_group_name
+}
+
+data "azurerm_machine_learning_workspace" "workspace" {
+  name                = local.aml_workspace_name
+  resource_group_name = data.azurerm_resource_group.ws.name
 }

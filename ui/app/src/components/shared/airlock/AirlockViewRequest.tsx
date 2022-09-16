@@ -1,4 +1,4 @@
-import { DefaultButton, Dialog, DialogFooter, IStackItemStyles, IStackStyles, MessageBar, MessageBarType, Panel, PanelType, Persona, PersonaSize, PrimaryButton, Spinner, SpinnerSize, Stack, TextField, useTheme } from "@fluentui/react";
+import { DefaultButton, Dialog, DialogFooter, IStackItemStyles, IStackStyles, MessageBar, Panel, PanelType, Persona, PersonaSize, PrimaryButton, Spinner, SpinnerSize, Stack, TextField, useTheme } from "@fluentui/react";
 import moment from "moment";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -6,6 +6,8 @@ import { WorkspaceContext } from "../../../contexts/WorkspaceContext";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
 import { AirlockRequest, AirlockRequestStatus } from "../../../models/airlock";
 import { ApiEndpoint } from "../../../models/apiEndpoints";
+import { APIError } from "../../../models/exceptions";
+import { ExceptionLayout } from "../ExceptionLayout";
 
 interface AirlockViewRequestProps {
   requests: AirlockRequest[];
@@ -40,6 +42,9 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
   const [hideCancelDialog, setHideCancelDialog] = useState(true);
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
+  const [apiFilesLinkError, setApiFilesLinkError] = useState({} as APIError);
+  const [apiSubmitError, setApiSubmitError] = useState({} as APIError);
+  const [apiCancelError, setApiCancelError] = useState({} as APIError);
   const navigate = useNavigate();
   const theme = useTheme();
 
@@ -68,7 +73,9 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           workspaceCtx.workspaceApplicationIdURI
         );
         setFilesLink(linkObject.containerUrl);
-      } catch (error) {
+      } catch (err: any) {
+        err.userMessage = 'Error retrieving storage link';
+        setApiFilesLinkError(err);
         setFilesLinkError(true);
       }
     }
@@ -89,7 +96,9 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
         );
         props.updateRequest(response.airlockRequest);
         setHideSubmitDialog(true);
-      } catch (error) {
+      } catch (err: any) {
+        err.userMessage = 'Error submitting airlock request';
+        setApiSubmitError(err);
         setSubmitError(true);
       }
       setSubmitting(false);
@@ -109,8 +118,11 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
         );
         props.updateRequest(response.airlockRequest);
         setHideCancelDialog(true);
-      } catch (error) {
+      } catch (err: any) {
+        err.userMessage = 'Error cancelling airlock request';
+        setApiCancelError(err);
         setCancelError(true);
+
       }
       setCancelling(false);
     }
@@ -129,10 +141,10 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
         }
         <div style={{textAlign: 'end'}}>
           {
-            request.status !== AirlockRequestStatus.Cancelled && <DefaultButton onClick={() => setHideCancelDialog(false)} styles={cancelButtonStyles}>Cancel Request</DefaultButton>
+            request.status !== AirlockRequestStatus.Cancelled && <DefaultButton onClick={() => {setCancelError(false); setHideCancelDialog(false)}} styles={cancelButtonStyles}>Cancel Request</DefaultButton>
           }
           {
-            request.status === AirlockRequestStatus.Draft && <PrimaryButton onClick={() => setHideSubmitDialog(false)}>Submit</PrimaryButton>
+            request.status === AirlockRequestStatus.Draft && <PrimaryButton onClick={() => {setSubmitError(false); setHideSubmitDialog(false)}}>Submit</PrimaryButton>
           }
         </div>
       </>
@@ -236,14 +248,12 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
                     iconProps={{iconName: 'copy'}}
                     styles={{root: {minWidth: '40px'}}}
                     onClick={() => {navigator.clipboard.writeText(filesLink)}}
-                  /> : <PrimaryButton onClick={generateFilesLink}>Generate</PrimaryButton>
+                  /> : <PrimaryButton onClick={() => {setFilesLinkError(false); generateFilesLink()}}>Generate</PrimaryButton>
                 }
               </Stack>
             </Stack.Item>
             {
-              filesLinkError && <MessageBar messageBarType={MessageBarType.error}>
-                Error retrieving storage link. Check console.
-              </MessageBar>
+              filesLinkError && <ExceptionLayout e={apiFilesLinkError} />
             }
           </Stack>
         </>
@@ -260,7 +270,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           }}
         >
           {
-            submitError && <MessageBar messageBarType={MessageBarType.error}>Error submitting request. Check the console for details.</MessageBar>
+            submitError && <ExceptionLayout e={apiSubmitError} />
           }
           {
             submitting
@@ -281,7 +291,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           }}
         >
           {
-            cancelError && <MessageBar messageBarType={MessageBarType.error}>Error cancelling request. Check the console for details.</MessageBar>
+            cancelError && <ExceptionLayout e={apiCancelError} />
           }
           {
             cancelling

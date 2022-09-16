@@ -113,8 +113,8 @@ resource "azurerm_private_endpoint" "eg_status_changed" {
   }
 }
 
-resource "azurerm_eventgrid_topic" "to_delete" {
-  name                          = local.to_delete_topic_name
+resource "azurerm_eventgrid_topic" "data_deletion" {
+  name                          = local.data_deletion_topic_name
   location                      = var.location
   resource_group_name           = var.resource_group_name
   public_network_access_enabled = var.enable_local_debugging
@@ -130,18 +130,18 @@ resource "azurerm_eventgrid_topic" "to_delete" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_role_assignment" "servicebus_sender_to_delete" {
+resource "azurerm_role_assignment" "servicebus_sender_data_deletion" {
   scope                = var.airlock_servicebus.id
   role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_topic.to_delete.identity.0.principal_id
+  principal_id         = azurerm_eventgrid_topic.data_deletion.identity.0.principal_id
 
   depends_on = [
-    azurerm_eventgrid_topic.to_delete
+    azurerm_eventgrid_topic.data_deletion
   ]
 }
 
-resource "azurerm_private_endpoint" "eg_to_delete" {
-  name                = "pe-eg-to-delete-${var.tre_id}"
+resource "azurerm_private_endpoint" "eg_data_deletion" {
+  name                = "pe-eg-data-deletion-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.airlock_events_subnet_id
@@ -155,7 +155,7 @@ resource "azurerm_private_endpoint" "eg_to_delete" {
 
   private_service_connection {
     name                           = "psc-eg-${var.tre_id}"
-    private_connection_resource_id = azurerm_eventgrid_topic.to_delete.id
+    private_connection_resource_id = azurerm_eventgrid_topic.data_deletion.id
     is_manual_connection           = false
     subresource_names              = ["topic"]
   }
@@ -379,19 +379,19 @@ resource "azurerm_eventgrid_event_subscription" "status_changed" {
   ]
 }
 
-resource "azurerm_eventgrid_event_subscription" "to_delete" {
-  name  = local.to_delete_eventgrid_subscription_name
-  scope = azurerm_eventgrid_topic.to_delete.id
+resource "azurerm_eventgrid_event_subscription" "data_deletion" {
+  name  = local.data_deletion_eventgrid_subscription_name
+  scope = azurerm_eventgrid_topic.data_deletion.id
 
-  service_bus_queue_endpoint_id = azurerm_servicebus_queue.to_delete.id
+  service_bus_queue_endpoint_id = azurerm_servicebus_queue.data_deletion.id
 
   delivery_identity {
     type = "SystemAssigned"
   }
 
   depends_on = [
-    azurerm_eventgrid_topic.to_delete,
-    azurerm_role_assignment.servicebus_sender_to_delete
+    azurerm_eventgrid_topic.data_deletion,
+    azurerm_role_assignment.servicebus_sender_data_deletion
   ]
 }
 

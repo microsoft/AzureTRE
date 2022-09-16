@@ -98,8 +98,8 @@ data "template_file" "vm_config" {
     STORAGE_ACCOUNT_NAME  = data.azurerm_storage_account.stg.name
     STORAGE_ACCOUNT_KEY   = data.azurerm_storage_account.stg.primary_access_key
     HTTP_ENDPOINT         = data.azurerm_storage_account.stg.primary_file_endpoint
-    FILESHARE_NAME        = data.azurerm_storage_share.shared_storage.name
-    NEXUS_PROXY_URL       = local.nexus_proxy_url[var.nexus_version]
+    FILESHARE_NAME        = var.shared_storage_access ? data.azurerm_storage_share.shared_storage[0].name : ""
+    NEXUS_PROXY_URL       = local.nexus_proxy_url
     CONDA_CONFIG          = local.image_ref[var.image].conda_config ? 1 : 0
   }
 }
@@ -107,21 +107,21 @@ data "template_file" "vm_config" {
 data "template_file" "get_apt_keys" {
   template = file("${path.module}/get_apt_keys.sh")
   vars = {
-    NEXUS_PROXY_URL = local.nexus_proxy_url[var.nexus_version]
+    NEXUS_PROXY_URL = local.nexus_proxy_url
   }
 }
 
 data "template_file" "pypi_sources_config" {
   template = file("${path.module}/pypi_sources_config.sh")
   vars = {
-    nexus_proxy_url = local.nexus_proxy_url[var.nexus_version]
+    nexus_proxy_url = local.nexus_proxy_url
   }
 }
 
 data "template_file" "apt_sources_config" {
   template = file("${path.module}/apt_sources_config.yml")
   vars = {
-    nexus_proxy_url = local.nexus_proxy_url[var.nexus_version]
+    nexus_proxy_url = local.nexus_proxy_url
   }
 }
 
@@ -137,6 +137,7 @@ data "azurerm_storage_account" "stg" {
 }
 
 data "azurerm_storage_share" "shared_storage" {
+  count                = var.shared_storage_access ? 1 : 0
   name                 = var.shared_storage_name
   storage_account_name = data.azurerm_storage_account.stg.name
 }

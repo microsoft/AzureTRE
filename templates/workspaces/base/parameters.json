@@ -65,6 +65,12 @@
       }
     },
     {
+      "name": "create_aad_groups",
+      "source": {
+        "env": "CREATE_AAD_GROUPS"
+      }
+    },
+    {
       "name": "client_id",
       "source": {
         "env": "CLIENT_ID"

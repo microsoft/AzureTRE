@@ -30,16 +30,12 @@
       ],
       "updateable": true
     },
-    "nexus_version": {
-      "$id": "#/properties/nexus_version",
-      "type": "string",
-      "title": "Nexus",
-      "description": "Which Nexus proxy service to use, i.e. V1 for the App Service-based Nexus or V2 for the VM-based service",
-      "enum": [
-        "V1",
-        "V2"
-      ],
-      "default": "V2"
+    "shared_storage_access": {
+      "$id": "#/properties/shared_storage_access",
+      "type": "boolean",
+      "title": "Shared storage",
+      "default": true,
+      "description": "Enable access to shared storage"
     }
   }
 }
