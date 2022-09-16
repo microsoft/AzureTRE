@@ -88,7 +88,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
     try:
         # TODO: This requires Directory.ReadAll ( Application.Read.All ) to be enabled in the Azure AD application to enable a users workspaces to be listed. This should be made optional.
         auth_info = extract_auth_information(workspace_create.properties)
-        workspace, resource_template = workspace_repo.create_workspace_item(workspace_create, auth_info, user.id)
+        workspace, resource_template = workspace_repo.create_workspace_item(workspace_create, auth_info, user.id, user.roles)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed to create workspace model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -306,10 +306,18 @@ async def retrieve_user_resource_by_id(user_resource=Depends(get_user_resource_b
 
 
 @user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_USER_RESOURCE)
-async def create_user_resource(response: Response, user_resource_create: UserResourceInCreate, user_resource_repo=Depends(get_repository(UserResourceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), user=Depends(get_current_workspace_owner_or_researcher_user), workspace=Depends(get_deployed_workspace_by_id_from_path), workspace_service=Depends(get_deployed_workspace_service_by_id_from_path)) -> OperationInResponse:
+async def create_user_resource(
+        response: Response,
+        user_resource_create: UserResourceInCreate,
+        user_resource_repo=Depends(get_repository(UserResourceRepository)),
+        resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
+        operations_repo=Depends(get_repository(OperationRepository)),
+        user=Depends(get_current_workspace_owner_or_researcher_user),
+        workspace=Depends(get_deployed_workspace_by_id_from_path),
+        workspace_service=Depends(get_deployed_workspace_service_by_id_from_path)) -> OperationInResponse:
 
     try:
-        user_resource, resource_template = user_resource_repo.create_user_resource_item(user_resource_create, workspace.id, workspace_service.id, workspace_service.templateName, user.id)
+        user_resource, resource_template = user_resource_repo.create_user_resource_item(user_resource_create, workspace.id, workspace_service.id, workspace_service.templateName, user.id, user.roles)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed create user resource model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

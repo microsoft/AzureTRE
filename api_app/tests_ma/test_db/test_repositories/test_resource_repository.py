@@ -7,7 +7,7 @@ from jsonschema.exceptions import ValidationError
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP
 from tests_ma.test_api.conftest import create_test_user
 
-from db.errors import EntityDoesNotExist
+from db.errors import EntityDoesNotExist, UserNotAuthorizedToUseTemplate
 from db.repositories.resources import ResourceRepository
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from models.domain.resource import Resource, ResourceHistoryItem
@@ -60,6 +60,7 @@ def sample_resource_template() -> ResourceTemplate:
                             resourceType=ResourceType.UserResource,
                             current=True,
                             required=['os_image', 'title'],
+                            requiredRoles=[],
                             properties={
                                 'title': {
                                     'type': 'string',
@@ -141,7 +142,7 @@ def test_validate_input_against_template_returns_template_version_if_template_is
                                                            properties={},
                                                            customActions=[]).dict()
 
-    template = resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace)
+    template = resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, [])
 
     assert template.version == "0.1.0"
 
@@ -151,7 +152,7 @@ def test_validate_input_against_template_raises_value_error_if_template_does_not
     enriched_template_mock.side_effect = EntityDoesNotExist
 
     with pytest.raises(ValueError):
-        resource_repo.validate_input_against_template("template_name", workspace_input, ResourceType.Workspace)
+        resource_repo.validate_input_against_template("template_name", workspace_input, ResourceType.Workspace, [])
 
 
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
@@ -159,11 +160,11 @@ def test_validate_input_against_template_raises_value_error_if_the_user_resource
     enriched_template_mock.side_effect = EntityDoesNotExist
 
     with pytest.raises(ValueError):
-        resource_repo.validate_input_against_template("template_name", workspace_input, ResourceType.UserResource, "parent_template_name")
+        resource_repo.validate_input_against_template("template_name", workspace_input, ResourceType.UserResource, [], "parent_template_name")
 
 
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
-def test_validate_input_against_template_raises_value_error_if_payload_is_invalid(enriched_template_mock, resource_repo):
+def test_validate_input_against_template_raises_value_error_if_payload_is_invalid(enriched_template_mock, resource_repo, workspace_input):
     enriched_template_mock.return_value = ResourceTemplate(id="123",
                                                            name="template1",
                                                            description="description",
@@ -177,7 +178,43 @@ def test_validate_input_against_template_raises_value_error_if_payload_is_invali
     workspace_input = WorkspaceInCreate(templateName="template1")
 
     with pytest.raises(ValidationError):
-        resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace)
+        resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, [])
+
+
+@patch("db.repositories.resources.ResourceRepository._get_enriched_template")
+def test_validate_input_against_template_raises_if_user_does_not_have_required_role(enriched_template_mock, resource_repo, workspace_input):
+    enriched_template_mock.return_value = ResourceTemplate(id="123",
+                                                           name="template1",
+                                                           description="description",
+                                                           version="0.1.0",
+                                                           resourceType=ResourceType.Workspace,
+                                                           current=True,
+                                                           required=[],
+                                                           requiredRoles=["missing_role"],
+                                                           properties={},
+                                                           customActions=[]).dict()
+
+    with pytest.raises(UserNotAuthorizedToUseTemplate):
+        _ = resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_role"])
+
+
+@patch("db.repositories.resources.ResourceRepository._get_enriched_template")
+@patch("db.repositories.resources.ResourceRepository._validate_resource_parameters", return_value=None)
+def test_validate_input_against_template_valid_if_required_roles_set_is_empty(_, enriched_template_mock, resource_repo, workspace_input):
+    enriched_template_mock.return_value = ResourceTemplate(id="123",
+                                                           name="template1",
+                                                           description="description",
+                                                           version="0.1.0",
+                                                           resourceType=ResourceType.Workspace,
+                                                           current=True,
+                                                           required=[],
+                                                           properties={},
+                                                           customActions=[]).dict()
+
+    template = resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_user_role"])
+
+    # does not throw
+    assert template.version == "0.1.0"
 
 
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")

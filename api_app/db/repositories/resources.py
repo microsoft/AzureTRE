@@ -1,11 +1,11 @@
 import copy
 from datetime import datetime
-from typing import Tuple
+from typing import Tuple, List
 
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from core import config
-from db.errors import EntityDoesNotExist
+from db.errors import EntityDoesNotExist, UserNotAuthorizedToUseTemplate
 from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from jsonschema import validate
@@ -77,7 +77,7 @@ class ResourceRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Resource, resources[0])
 
-    def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, parent_template_name: str = "") -> ResourceTemplate:
+    def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, user_roles: List[str] = None, parent_template_name: str = "") -> ResourceTemplate:
         try:
             template = self._get_enriched_template(template_name, resource_type, parent_template_name)
         except EntityDoesNotExist:
@@ -85,6 +85,12 @@ class ResourceRepository(BaseRepository):
                 raise ValueError(f'The template "{template_name}" does not exist or is not valid for the workspace service type "{parent_template_name}"')
             else:
                 raise ValueError(f'The template "{template_name}" does not exist')
+
+        # If template["requiredRoles"] is empty, template is available to all users
+        # If template["requiredRoles"] is not empty, the user is required to have at least one of requiredRoles
+        # TODO: should it be a required field?
+        if "requiredRoles" in template and template["requiredRoles"] and not any(required_role in set(user_roles) for required_role in template["requiredRoles"]):
+            raise UserNotAuthorizedToUseTemplate
 
         self._validate_resource_parameters(resource_input.dict(), template)
 

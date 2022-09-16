@@ -18,6 +18,7 @@ def get_sample_user_resource_template_object(template_name: str = "guacamole-vm"
         current=True,
         type="object",
         required=["display_name", "description"],
+        requiredRoles=[],
         properties={
             "display_name": Property(type="string"),
             "description": Property(type="string")

@@ -14,6 +14,7 @@ def get_sample_workspace_service_template_object(template_name: str = "tre-works
         current=True,
         type="object",
         required=["display_name", "description"],
+        requiredRoles=[],
         properties={
             "display_name": Property(type="string"),
             "description": Property(type="string")
