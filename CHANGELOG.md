@@ -17,7 +17,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
-*
+* Resource processor error on deploying user-resource: TypeError: 'NoneType' object is not iterable ([#2569](https://github.com/microsoft/AzureTRE/issues/2569))
 
 ## 0.4.3 (September 12, 2022)
 
