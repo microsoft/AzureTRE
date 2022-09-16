@@ -195,7 +195,27 @@ def test_validate_input_against_template_raises_if_user_does_not_have_required_r
                                                            customActions=[]).dict()
 
     with pytest.raises(UserNotAuthorizedToUseTemplate):
-        _ = resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_role"])
+        _ = resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_role", "another_role"])
+
+
+@patch("db.repositories.resources.ResourceRepository._get_enriched_template")
+@patch("db.repositories.resources.ResourceRepository._validate_resource_parameters", return_value=None)
+def test_validate_input_against_template_valid_if_user_has_only_one_role(_, enriched_template_mock, resource_repo, workspace_input):
+    enriched_template_mock.return_value = ResourceTemplate(id="123",
+                                                           name="template1",
+                                                           description="description",
+                                                           version="0.1.0",
+                                                           resourceType=ResourceType.Workspace,
+                                                           current=True,
+                                                           required=[],
+                                                           requiredRoles=["test_role", "missing_role"],
+                                                           properties={},
+                                                           customActions=[]).dict()
+
+    template = resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_role", "another_role"])
+
+    # does not throw
+    assert template.version == "0.1.0"
 
 
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
