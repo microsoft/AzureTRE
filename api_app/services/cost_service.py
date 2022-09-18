@@ -1,4 +1,3 @@
-from ast import operator
 from datetime import datetime, date
 from enum import Enum
 from typing import Dict, Optional
@@ -148,7 +147,6 @@ class CostService:
 
         # convert to list of rows
         return df.values.tolist()
-
 
     def __get_resource_name(self, resource: Resource):
         key = "display_name"
