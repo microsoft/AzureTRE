@@ -140,35 +140,6 @@ runs:
 
     - name: Run command in DevContainer
       shell: bash
-      env:
-        ARM_TENANT_ID: "${{ inputs.ARM_TENANT_ID }}"
-        ARM_CLIENT_ID: "${{ inputs.ARM_CLIENT_ID }}"
-        ARM_CLIENT_SECRET: "${{ inputs.ARM_CLIENT_SECRET }}"
-        ARM_SUBSCRIPTION_ID: "${{ inputs.ARM_SUBSCRIPTION_ID }}"
-        API_CLIENT_ID: "${{ inputs.API_CLIENT_ID }}"
-        AAD_TENANT_ID: "${{ inputs.AAD_TENANT_ID }}"
-        TEST_WORKSPACE_APP_ID: "${{ inputs.TEST_WORKSPACE_APP_ID }}"
-        TEST_WORKSPACE_APP_SECRET: "${{ inputs.TEST_WORKSPACE_APP_SECRET }}"
-        TEST_APP_ID: "${{ inputs.TEST_APP_ID }}"
-        TEST_ACCOUNT_CLIENT_ID: "${{ inputs.TEST_ACCOUNT_CLIENT_ID }}"
-        TEST_ACCOUNT_CLIENT_SECRET: "${{ inputs.TEST_ACCOUNT_CLIENT_SECRET }}"
-        ACR_NAME: ${{ inputs.ACR_NAME }}
-        TRE_URL: "https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com"
-        TRE_ID: "${{ inputs.TRE_ID }}"
-        TF_VAR_tre_id: "${{ inputs.TRE_ID }}"
-        TF_VAR_terraform_state_container_name: "${{ inputs.TF_VAR_terraform_state_container_name }}"
-        TF_VAR_mgmt_resource_group_name: "${{ inputs.TF_VAR_mgmt_resource_group_name }}"
-        TF_VAR_mgmt_storage_account_name: "${{ inputs.TF_VAR_mgmt_storage_account_name }}"
-        TF_VAR_core_address_space: "${{ inputs.TF_VAR_core_address_space }}"
-        TF_VAR_tre_address_space: "${{ inputs.TF_VAR_tre_address_space }}"
-        TF_VAR_swagger_ui_client_id: "${{ inputs.TF_VAR_swagger_ui_client_id }}"
-        TF_VAR_aad_tenant_id: "${{ inputs.AAD_TENANT_ID }}"
-        TF_VAR_api_client_id: "${{ inputs.TF_VAR_api_client_id }}"
-        TF_VAR_api_client_secret: "${{ inputs.TF_VAR_api_client_secret }}"
-        TF_VAR_application_admin_client_id: "${{ inputs.TF_VAR_application_admin_client_id }}"
-        TF_VAR_application_admin_client_secret: "${{ inputs.TF_VAR_application_admin_client_secret }}"
-        TF_VAR_acr_name: ${{ inputs.ACR_NAME }}
-        IS_API_SECURED: ${{ inputs.IS_API_SECURED }}
       run: |
         docker run --rm --mount \
           "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
@@ -183,36 +154,36 @@ runs:
           -e LOCATION="${{ inputs.LOCATION }}" \
           -e TF_VAR_location="${{ inputs.LOCATION }}" \
           -e RESOURCE_LOCATION="${{ inputs.LOCATION }}" \
-          -e ARM_CLIENT_ID \
-          -e ARM_CLIENT_SECRET \
-          -e ARM_TENANT_ID \
-          -e ARM_SUBSCRIPTION_ID \
-          -e TF_VAR_terraform_state_container_name \
-          -e TF_VAR_mgmt_storage_account_name \
-          -e TF_VAR_mgmt_resource_group_name \
-          -e ACR_NAME \
-          -e TF_VAR_acr_name \
-          -e TF_VAR_aad_tenant_id \
-          -e TF_VAR_api_client_id \
-          -e TF_VAR_api_client_secret \
-          -e TF_VAR_application_admin_client_id \
-          -e TF_VAR_application_admin_client_secret \
+          -e ARM_CLIENT_ID="${{ inputs.ARM_CLIENT_ID }}" \
+          -e ARM_CLIENT_SECRET="${{ inputs.ARM_CLIENT_SECRET }}" \
+          -e ARM_TENANT_ID="${{ inputs.ARM_TENANT_ID }}" \
+          -e ARM_SUBSCRIPTION_ID="${{ inputs.ARM_SUBSCRIPTION_ID }}" \
+          -e TF_VAR_terraform_state_container_name="${{ inputs.TF_VAR_terraform_state_container_name }}" \
+          -e TF_VAR_mgmt_storage_account_name="${{ inputs.TF_VAR_mgmt_storage_account_name }}" \
+          -e TF_VAR_mgmt_resource_group_name="${{ inputs.TF_VAR_mgmt_resource_group_name }}" \
+          -e ACR_NAME=${{ inputs.ACR_NAME }} \
+          -e TF_VAR_acr_name=${{ inputs.ACR_NAME }} \
+          -e TF_VAR_aad_tenant_id="${{ inputs.AAD_TENANT_ID }}" \
+          -e TF_VAR_api_client_id="${{ inputs.TF_VAR_api_client_id }}" \
+          -e TF_VAR_api_client_secret="${{ inputs.TF_VAR_api_client_secret }}" \
+          -e TF_VAR_application_admin_client_id="${{ inputs.TF_VAR_application_admin_client_id }}" \
+          -e TF_VAR_application_admin_client_secret="${{ inputs.TF_VAR_application_admin_client_secret }}" \
           -e TF_VAR_arm_subscription_id="${{ inputs.ARM_SUBSCRIPTION_ID }}" \
           -e SWAGGER_UI_CLIENT_ID="${{ inputs.TF_VAR_swagger_ui_client_id }}" \
-          -e TF_VAR_swagger_ui_client_id \
-          -e TF_VAR_core_address_space \
-          -e TF_VAR_tre_address_space \
-          -e API_CLIENT_ID \
-          -e AAD_TENANT_ID \
-          -e TRE_ID \
-          -e TF_VAR_tre_id \
-          -e TRE_URL \
-          -e TEST_WORKSPACE_APP_ID \
-          -e TEST_WORKSPACE_APP_SECRET \
-          -e TEST_APP_ID \
-          -e TEST_ACCOUNT_CLIENT_ID \
-          -e TEST_ACCOUNT_CLIENT_SECRET \
-          -e IS_API_SECURED \
+          -e TF_VAR_swagger_ui_client_id="${{ inputs.TF_VAR_swagger_ui_client_id }}" \
+          -e TF_VAR_core_address_space="${{ inputs.TF_VAR_core_address_space }}" \
+          -e TF_VAR_tre_address_space="${{ inputs.TF_VAR_tre_address_space }}" \
+          -e API_CLIENT_ID="${{ inputs.API_CLIENT_ID }}" \
+          -e AAD_TENANT_ID="${{ inputs.AAD_TENANT_ID }}" \
+          -e TRE_ID="${{ inputs.TRE_ID }}" \
+          -e TF_VAR_tre_id="${{ inputs.TRE_ID }}" \
+          -e TRE_URL="https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com" \
+          -e TEST_WORKSPACE_APP_ID="${{ inputs.TEST_WORKSPACE_APP_ID }}" \
+          -e TEST_WORKSPACE_APP_SECRET="${{ inputs.TEST_WORKSPACE_APP_SECRET }}" \
+          -e TEST_APP_ID="${{ inputs.TEST_APP_ID }}" \
+          -e TEST_ACCOUNT_CLIENT_ID="${{ inputs.TEST_ACCOUNT_CLIENT_ID }}" \
+          -e TEST_ACCOUNT_CLIENT_SECRET="${{ inputs.TEST_ACCOUNT_CLIENT_SECRET }}" \
+          -e IS_API_SECURED=${{ inputs.IS_API_SECURED }} \
           -e DOCKER_BUILDKIT=1 \
           -e TF_VAR_stateful_resources_locked=${{ inputs.TF_VAR_stateful_resources_locked }} \
           -e TF_VAR_enable_airlock_malware_scanning=${{ inputs.TF_VAR_enable_airlock_malware_scanning }} \
