@@ -208,7 +208,6 @@ jobs:
           CORE_ADDRESS_SPACE: ${{ secrets.CORE_ADDRESS_SPACE }}
           TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
           SWAGGER_UI_CLIENT_ID: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
-          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           API_CLIENT_SECRET: "${{ secrets.API_CLIENT_SECRET }}"
 
       - name: Push cached devcontainer
