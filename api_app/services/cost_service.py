@@ -118,6 +118,9 @@ class CostService:
         return {resouce_group.name: self.extract_resource_group_tag(resouce_group.tags) for resouce_group in resource_groups}
 
     def summerize_untagged(self, query_result: QueryResult, granularity: GranularityEnum, resource_groups_dict: dict) -> list:
+        if len(query_result.rows) == 0:
+            return []
+
         # convert to pandas DataFrame
         df = pd.DataFrame.from_records(query_result.rows)
         columns = []
