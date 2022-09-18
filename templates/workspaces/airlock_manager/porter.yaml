@@ -1,7 +1,7 @@
 ---
-name: tre-workspace-base
-version: 0.3.30
-description: "A base Azure TRE workspace"
+name: tre-workspace-airlock-manager
+version: 0.3.29
+description: "An Airlock Manager workspace for Azure TRE"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
 
@@ -49,9 +49,6 @@ parameters:
   - name: arm_use_msi
     type: boolean
     default: false
-  - name: shared_storage_quota
-    type: integer
-    default: 50
   - name: enable_local_debugging
     type: boolean
     default: false
@@ -59,10 +56,6 @@ parameters:
     type: boolean
     default: false
     description: "Whether this bundle should register the workspace in AAD"
-  - name: create_aad_groups
-    type: boolean
-    default: false
-    description: "Whether this bundle should create AAD groups for the workspace app roles"
   - name: workspace_owner_object_id
     type: string
     description: "The object id of the user that will be granted WorkspaceOwner after it is created."
@@ -138,7 +131,7 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.2.8
+      clientVersion: 1.2.6
   - az
 
 install:
@@ -149,10 +142,8 @@ install:
         tre_resource_id: "{{ bundle.parameters.id }}"
         location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
-        shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
         enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
         register_aad_application: "{{ bundle.parameters.register_aad_application }}"
-        create_aad_groups: "{{ bundle.parameters.create_aad_groups }}"
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
         auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
@@ -189,7 +180,6 @@ upgrade:
   #       tre_resource_id: "{{ bundle.parameters.id }}"
   #       location: "{{ bundle.parameters.azure_location }}"
   #       address_space: "{{ bundle.parameters.address_space }}"
-  #       shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
   #       enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
   #       register_aad_application: "{{ bundle.parameters.register_aad_application }}"
   #       auth_client_id: "{{ bundle.credentials.auth_client_id }}"
@@ -243,10 +233,8 @@ uninstall:
         tre_resource_id: "{{ bundle.parameters.id }}"
         location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
-        shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
         enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
         register_aad_application: "{{ bundle.parameters.register_aad_application }}"
-        create_aad_groups: "{{ bundle.parameters.create_aad_groups }}"
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
         auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"

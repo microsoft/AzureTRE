@@ -29,6 +29,10 @@ if [ "${AUTO_WORKSPACE_APP_REGISTRATION:-}" == true ]; then
   APPLICATION_PERMISSION="Application.ReadWrite.All"
 fi
 
+if [ "${AUTO_WORKSPACE_GROUP_CREATION:-}" == true ]; then
+  APPLICATION_PERMISSION="Application.ReadWrite.All,Directory.Read.All,Group.ReadWrite.All"
+fi
+
 # Create the identity that is able to administer other applications
 "$DIR/aad/create_application_administrator.sh" \
   --name "${TRE_ID}" \

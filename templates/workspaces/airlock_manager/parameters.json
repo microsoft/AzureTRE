@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0-DRAFT+TODO",
-  "name": "base",
+  "name": "airlock_manager",
   "created": "2021-06-04T13:37:29.5071039+03:00",
   "modified": "2021-06-04T13:37:29.5071039+03:00",
   "parameters": [
@@ -47,12 +47,6 @@
       }
     },
     {
-      "name": "shared_storage_quota",
-      "source": {
-        "env": "SHARED_STORAGE_QUOTA"
-      }
-    },
-    {
       "name": "enable_local_debugging",
       "source": {
         "env": "ENABLE_LOCAL_DEBUGGING"
@@ -62,12 +56,6 @@
       "name": "register_aad_application",
       "source": {
         "env": "REGISTER_AAD_APPLICATION"
-      }
-    },
-    {
-      "name": "create_aad_groups",
-      "source": {
-        "env": "CREATE_AAD_GROUPS"
       }
     },
     {

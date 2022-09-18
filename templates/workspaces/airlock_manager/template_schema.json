@@ -1,17 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/base/template_schema.json",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/airlock_manager/template_schema.json",
   "type": "object",
-  "title": "Base Workspace",
-  "description": "This workspace template is the foundation for TRE workspaces and workspace services.",
+  "title": "Airlock Manager Workspace",
+  "description": "This workspace template is intended to conduct Airlock Data Import reviews from.",
   "required": [],
   "properties": {
-    "shared_storage_quota": {
-      "$id": "#/properties/shared_storage_quota",
-      "type": "integer",
-      "title": "Shared Storage Quota",
-      "description": "Quota (in GB) to set for the VM Shared Storage."
-    },
     "aad_redirect_uris": {
       "$id": "#/properties/aad_redirect_uris",
       "type": "array",
@@ -65,12 +59,6 @@
       "default": true,
       "title": "Enable Airlock",
       "description": "If enabled, allows imports and exports for the workspace."
-    },
-    "create_aad_groups": {
-      "type": "boolean",
-      "title": "Create AAD Groups for each workspace role",
-      "description": "Create AAD Groups for the workspace roles, requires `auto_create`. If this is set to true, the workspace will create new AAD Groups.",
-      "default": false
     }
   },
   "uiSchema": {

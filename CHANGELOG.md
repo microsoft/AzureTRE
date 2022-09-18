@@ -5,7 +5,7 @@
 
 **BREAKING CHANGES & MIGRATIONS**:
 
-*
+* Firewall now blocks terraform/hasicorp domains ([#2590](https://github.com/microsoft/AzureTRE/pull/2590)). **Migration** is manual - update the templateVersion of `tre-shared-service-firewall` resource in Cosmos to `0.5.0`. Check the PR for more details.
 
 FEATURES:
 
@@ -13,11 +13,11 @@ FEATURES:
 
 ENHANCEMENTS:
 
-*
+* Cancelling an Airlock request triggers deletion of the request container and files ([#2584](https://github.com/microsoft/AzureTRE/pull/2584))
 
 BUG FIXES:
 
-*
+* Resource processor error on deploying user-resource: TypeError: 'NoneType' object is not iterable ([#2569](https://github.com/microsoft/AzureTRE/issues/2569))
 
 ## 0.4.3 (September 12, 2022)
 
@@ -38,6 +38,7 @@ ENHANCEMENTS:
 * Airlock requests contain a field with information about the files that were submitted ([#2504](https://github.com/microsoft/AzureTRE/pull/2504))
 * UI - Operations and notifications stability improvements ([[#2530](https://github.com/microsoft/AzureTRE/pull/2530))
 * UI - Initial implemetation of Workspace Airlock Request View ([#2512](https://github.com/microsoft/AzureTRE/pull/2512))
+* Add ability to automatically create Azure AD groups for each application role. Requires API version 0.4.30 or later ([#2532](https://github.com/microsoft/AzureTRE/pull/2532))
 * Add `is_expsed_externally` option to Azure ML Workspace Service ([#2548](https://github.com/microsoft/AzureTRE/pull2548))
 * Azure ML workspace service assigns Azure ML Data Scientist role to Workspace Researchers ([#2539](https://github.com/microsoft/AzureTRE/pull/2539))
 * UI is deployed by default ([#2554](https://github.com/microsoft/AzureTRE/pull/2554))
