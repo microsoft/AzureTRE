@@ -65,34 +65,31 @@ inputs:
   TRE_ID:
     description: "The TRE Id."
     required: false
-  TF_VAR_terraform_state_container_name:
+  TERRAFORM_STATE_CONTAINER_NAME:
     description: "The name of the container to store the Terraform state."
     required: false
-  TF_VAR_mgmt_resource_group_name:
+  MGMT_RESOURCE_GROUP_NAME:
     description: "The resource group used to store the Terraform state."
     required: false
-  TF_VAR_mgmt_storage_account_name:
+  MGMT_STORAGE_ACCOUNT_NAME:
     description: "The storage account used to store the Terraform state."
     required: false
-  TF_VAR_core_address_space:
+  CORE_ADDRESS_SPACE:
     description: "Core address space."
     required: false
-  TF_VAR_tre_address_space:
+  TRE_ADDRESS_SPACE:
     description: "TRE address apace."
     required: false
-  TF_VAR_swagger_ui_client_id:
+  SWAGGER_UI_CLIENT_ID:
     description: "The Swagger UI Client ID."
     required: false
-  TF_VAR_api_client_id:
-    description: "The API Client Id. (Same as Resource)"
-    required: false
-  TF_VAR_api_client_secret:
+  API_CLIENT_SECRET:
     description: "The API Client Secret."
     required: false
-  TF_VAR_application_admin_client_id:
+  APPLICATION_ADMIN_CLIENT_ID:
     description: "The Client ID of an identity that can manage the AAD Applications."
     required: false
-  TF_VAR_application_admin_client_secret:
+  APPLICATION_ADMIN_CLIENT_SECRET:
     description: "The Client secret of an identity that can manage the AAD Applications."
     required: false
   ACR_NAME:
@@ -111,11 +108,11 @@ inputs:
     description: "Indicates if the API endpoint has valid TLS certificate and if we validate it during E2E."
     required: false
     default: "true"
-  TF_VAR_stateful_resources_locked:
+  STATEFUL_RESOURCES_LOCKED:
     description: "A value indicating if resources with state will be protected with locks."
     required: false
     default: "true"
-  TF_VAR_enable_airlock_malware_scanning:
+  ENABLE_AIRLOCK_MALWARE_SCANNING:
     description: "If False, Airlock requests will skip the malware scanning stage."
     required: false
     default: "false"
@@ -140,35 +137,6 @@ runs:
 
     - name: Run command in DevContainer
       shell: bash
-      env:
-        ARM_TENANT_ID: "${{ inputs.ARM_TENANT_ID }}"
-        ARM_CLIENT_ID: "${{ inputs.ARM_CLIENT_ID }}"
-        ARM_CLIENT_SECRET: "${{ inputs.ARM_CLIENT_SECRET }}"
-        ARM_SUBSCRIPTION_ID: "${{ inputs.ARM_SUBSCRIPTION_ID }}"
-        API_CLIENT_ID: "${{ inputs.API_CLIENT_ID }}"
-        AAD_TENANT_ID: "${{ inputs.AAD_TENANT_ID }}"
-        TEST_WORKSPACE_APP_ID: "${{ inputs.TEST_WORKSPACE_APP_ID }}"
-        TEST_WORKSPACE_APP_SECRET: "${{ inputs.TEST_WORKSPACE_APP_SECRET }}"
-        TEST_APP_ID: "${{ inputs.TEST_APP_ID }}"
-        TEST_ACCOUNT_CLIENT_ID: "${{ inputs.TEST_ACCOUNT_CLIENT_ID }}"
-        TEST_ACCOUNT_CLIENT_SECRET: "${{ inputs.TEST_ACCOUNT_CLIENT_SECRET }}"
-        ACR_NAME: ${{ inputs.ACR_NAME }}
-        TRE_URL: "https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com"
-        TRE_ID: "${{ inputs.TRE_ID }}"
-        TF_VAR_tre_id: "${{ inputs.TRE_ID }}"
-        TF_VAR_terraform_state_container_name: "${{ inputs.TF_VAR_terraform_state_container_name }}"
-        TF_VAR_mgmt_resource_group_name: "${{ inputs.TF_VAR_mgmt_resource_group_name }}"
-        TF_VAR_mgmt_storage_account_name: "${{ inputs.TF_VAR_mgmt_storage_account_name }}"
-        TF_VAR_core_address_space: "${{ inputs.TF_VAR_core_address_space }}"
-        TF_VAR_tre_address_space: "${{ inputs.TF_VAR_tre_address_space }}"
-        TF_VAR_swagger_ui_client_id: "${{ inputs.TF_VAR_swagger_ui_client_id }}"
-        TF_VAR_aad_tenant_id: "${{ inputs.AAD_TENANT_ID }}"
-        TF_VAR_api_client_id: "${{ inputs.TF_VAR_api_client_id }}"
-        TF_VAR_api_client_secret: "${{ inputs.TF_VAR_api_client_secret }}"
-        TF_VAR_application_admin_client_id: "${{ inputs.TF_VAR_application_admin_client_id }}"
-        TF_VAR_application_admin_client_secret: "${{ inputs.TF_VAR_application_admin_client_secret }}"
-        TF_VAR_acr_name: ${{ inputs.ACR_NAME }}
-        IS_API_SECURED: ${{ inputs.IS_API_SECURED }}
       run: |
         docker run --rm --mount \
           "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
@@ -183,39 +151,39 @@ runs:
           -e LOCATION="${{ inputs.LOCATION }}" \
           -e TF_VAR_location="${{ inputs.LOCATION }}" \
           -e RESOURCE_LOCATION="${{ inputs.LOCATION }}" \
-          -e ARM_CLIENT_ID \
-          -e ARM_CLIENT_SECRET \
-          -e ARM_TENANT_ID \
-          -e ARM_SUBSCRIPTION_ID \
-          -e TF_VAR_terraform_state_container_name \
-          -e TF_VAR_mgmt_storage_account_name \
-          -e TF_VAR_mgmt_resource_group_name \
-          -e ACR_NAME \
-          -e TF_VAR_acr_name \
-          -e TF_VAR_aad_tenant_id \
-          -e TF_VAR_api_client_id \
-          -e TF_VAR_api_client_secret \
-          -e TF_VAR_application_admin_client_id \
-          -e TF_VAR_application_admin_client_secret \
+          -e ARM_CLIENT_ID="${{ inputs.ARM_CLIENT_ID }}" \
+          -e ARM_CLIENT_SECRET="${{ inputs.ARM_CLIENT_SECRET }}" \
+          -e ARM_TENANT_ID="${{ inputs.ARM_TENANT_ID }}" \
+          -e ARM_SUBSCRIPTION_ID="${{ inputs.ARM_SUBSCRIPTION_ID }}" \
+          -e TF_VAR_terraform_state_container_name="${{ inputs.TERRAFORM_STATE_CONTAINER_NAME }}" \
+          -e TF_VAR_mgmt_storage_account_name="${{ inputs.MGMT_STORAGE_ACCOUNT_NAME }}" \
+          -e TF_VAR_mgmt_resource_group_name="${{ inputs.MGMT_RESOURCE_GROUP_NAME }}" \
+          -e ACR_NAME=${{ inputs.ACR_NAME }} \
+          -e TF_VAR_acr_name=${{ inputs.ACR_NAME }} \
+          -e TF_VAR_aad_tenant_id="${{ inputs.AAD_TENANT_ID }}" \
+          -e TF_VAR_api_client_id="${{ inputs.API_CLIENT_ID }}" \
+          -e TF_VAR_api_client_secret="${{ inputs.API_CLIENT_SECRET }}" \
+          -e TF_VAR_application_admin_client_id="${{ inputs.APPLICATION_ADMIN_CLIENT_ID }}" \
+          -e TF_VAR_application_admin_client_secret="${{ inputs.APPLICATION_ADMIN_CLIENT_SECRET }}" \
           -e TF_VAR_arm_subscription_id="${{ inputs.ARM_SUBSCRIPTION_ID }}" \
-          -e SWAGGER_UI_CLIENT_ID="${{ inputs.TF_VAR_swagger_ui_client_id }}" \
-          -e TF_VAR_swagger_ui_client_id \
-          -e TF_VAR_core_address_space \
-          -e TF_VAR_tre_address_space \
-          -e API_CLIENT_ID \
-          -e AAD_TENANT_ID \
-          -e TRE_ID \
-          -e TF_VAR_tre_id \
-          -e TRE_URL \
-          -e TEST_WORKSPACE_APP_ID \
-          -e TEST_WORKSPACE_APP_SECRET \
-          -e TEST_APP_ID \
-          -e TEST_ACCOUNT_CLIENT_ID \
-          -e TEST_ACCOUNT_CLIENT_SECRET \
-          -e IS_API_SECURED \
+          -e SWAGGER_UI_CLIENT_ID="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
+          -e TF_VAR_swagger_ui_client_id="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
+          -e TF_VAR_core_address_space="${{ inputs.core_address_space }}" \
+          -e TF_VAR_tre_address_space="${{ inputs.tre_address_space }}" \
+          -e API_CLIENT_ID="${{ inputs.API_CLIENT_ID }}" \
+          -e AAD_TENANT_ID="${{ inputs.AAD_TENANT_ID }}" \
+          -e TRE_ID="${{ inputs.TRE_ID }}" \
+          -e TF_VAR_tre_id="${{ inputs.TRE_ID }}" \
+          -e TRE_URL="https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com" \
+          -e TEST_WORKSPACE_APP_ID="${{ inputs.TEST_WORKSPACE_APP_ID }}" \
+          -e TEST_WORKSPACE_APP_SECRET="${{ inputs.TEST_WORKSPACE_APP_SECRET }}" \
+          -e TEST_APP_ID="${{ inputs.TEST_APP_ID }}" \
+          -e TEST_ACCOUNT_CLIENT_ID="${{ inputs.TEST_ACCOUNT_CLIENT_ID }}" \
+          -e TEST_ACCOUNT_CLIENT_SECRET="${{ inputs.TEST_ACCOUNT_CLIENT_SECRET }}" \
+          -e IS_API_SECURED=${{ inputs.IS_API_SECURED }} \
           -e DOCKER_BUILDKIT=1 \
-          -e TF_VAR_stateful_resources_locked=${{ inputs.TF_VAR_stateful_resources_locked }} \
-          -e TF_VAR_enable_airlock_malware_scanning=${{ inputs.TF_VAR_enable_airlock_malware_scanning }} \
+          -e TF_VAR_stateful_resources_locked=${{ inputs.STATEFUL_RESOURCES_LOCKED }} \
+          -e TF_VAR_enable_airlock_malware_scanning=${{ inputs.ENABLE_AIRLOCK_MALWARE_SCANNING }} \
           -e CI_CACHE_ACR_NAME="${{ inputs.CI_CACHE_ACR_NAME }}" \
           '${{ inputs.ACTIONS_ACR_URI }}tredev:${{ inputs.ACTIONS_DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"
