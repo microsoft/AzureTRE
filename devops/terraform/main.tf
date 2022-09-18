@@ -30,14 +30,6 @@ resource "azurerm_storage_account" "state_storage" {
   lifecycle { ignore_changes = [tags] }
 }
 
-# Storage container for Porter data
-# See https://github.com/getporter/azure-plugins#storage
-resource "azurerm_storage_container" "porter_container" {
-  name                  = "porter"
-  storage_account_name  = azurerm_storage_account.state_storage.name
-  container_access_type = "private"
-}
-
 # Shared container registry
 resource "azurerm_container_registry" "shared_acr" {
   name                = var.acr_name
