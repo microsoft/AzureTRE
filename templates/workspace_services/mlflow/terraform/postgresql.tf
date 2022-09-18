@@ -64,7 +64,7 @@ resource "azurerm_postgresql_database" "mlflow" {
   collation           = "English_United States.1252"
 }
 
-resource "azurerm_private_endpoint" "private-endpoint" {
+resource "azurerm_private_endpoint" "private_endpoint" {
   name                = "pe-${azurerm_postgresql_server.mlflow.name}-postgres"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
