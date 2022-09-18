@@ -2,8 +2,6 @@ provider "azurerm" {
   features {}
 }
 
-data "azurerm_client_config" "current" {}
-
 # Resource group for TRE core management
 resource "azurerm_resource_group" "mgmt" {
   name     = var.mgmt_resource_group_name
