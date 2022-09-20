@@ -1,6 +1,27 @@
 #!/bin/bash
 set -e
 
+# validate environment variables are set
+if [ -z "$ARM_SUBSCRIPTION_ID" ]; then
+  echo "ARM_SUBSCRIPTION_ID is not set"
+  exit 1
+fi
+
+if [ -z "$TF_VAR_mgmt_resource_group_name" ]; then
+  echo "TF_VAR_mgmt_resource_group_name is not set"
+  exit 1
+fi
+
+if [ -z "$TF_VAR_mgmt_storage_account_name" ]; then
+  echo "TF_VAR_mgmt_storage_account_name is not set"
+  exit 1
+fi
+
+if [ -z "$TF_VAR_terraform_state_container_name" ]; then
+  echo "TF_VAR_terraform_state_container_name is not set"
+  exit 1
+fi
+
 # Baseline Azure resources
 echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e[0m..."
 # shellcheck disable=SC2154
