@@ -33,9 +33,12 @@ class ResourceTemplateRepository(BaseRepository):
         else:
             return enrich_user_resource_template(template, is_update=is_update)
 
-    def get_templates_information(self, resource_type: ResourceType, user_roles: List[str], parent_service_name: str = "") -> List[ResourceTemplateInformation]:
+    def get_templates_information(self, resource_type: ResourceType, user_roles: List[str] = None, parent_service_name: str = "") -> List[ResourceTemplateInformation]:
         """
         Returns name/title/description for all current resource_type templates
+
+        :param user_roles: If not none, only return templates that the user is authorized to use.
+                           template.authorizedRoles should contain at least one of user_roles
         """
         query = f'SELECT c.name, c.title, c.description, c.requiredRoles FROM c WHERE c.resourceType = "{resource_type}" AND c.current = true'
         if resource_type == ResourceType.UserResource:
@@ -43,6 +46,8 @@ class ResourceTemplateRepository(BaseRepository):
         template_infos = self.query(query=query)
         templates = [parse_obj_as(ResourceTemplateInformation, info) for info in template_infos]
 
+        if not user_roles:
+            return templates
         # User can view template if they have at least one of requiredRoles
         return [t for t in templates if not t.requiredRoles or len(set(t.requiredRoles).intersection(set(user_roles))) > 0]
 

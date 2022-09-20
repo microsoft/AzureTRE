@@ -17,8 +17,8 @@ workspace_templates_admin_router = APIRouter(dependencies=[Depends(get_current_a
 
 
 @workspace_templates_admin_router.get("/workspace-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_TEMPLATES)
-async def get_workspace_templates(template_repo=Depends(get_repository(ResourceTemplateRepository)), user=Depends(get_current_admin_user)) -> ResourceTemplateInformationInList:
-    templates_infos = template_repo.get_templates_information(ResourceType.Workspace, user.roles)
+async def get_workspace_templates(authorized_only: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository)), user=Depends(get_current_admin_user)) -> ResourceTemplateInformationInList:
+    templates_infos = template_repo.get_templates_information(ResourceType.Workspace, user.roles if authorized_only else None)
     return ResourceTemplateInformationInList(templates=templates_infos)
 
 

@@ -96,7 +96,7 @@ def test_get_templates_information_returns_unique_template_names(query_mock, res
         {"name": "template2", "title": "title2", "description": "description2"}
     ]
 
-    result = resource_template_repo.get_templates_information(ResourceType.Workspace, [])
+    result = resource_template_repo.get_templates_information(ResourceType.Workspace)
 
     assert len(result) == 2
     assert result[0].name == "template1"
