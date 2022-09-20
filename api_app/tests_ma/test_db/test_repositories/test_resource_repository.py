@@ -60,7 +60,7 @@ def sample_resource_template() -> ResourceTemplate:
                             resourceType=ResourceType.UserResource,
                             current=True,
                             required=['os_image', 'title'],
-                            requiredRoles=[],
+                            authorizedRoles=[],
                             properties={
                                 'title': {
                                     'type': 'string',
@@ -190,7 +190,7 @@ def test_validate_input_against_template_raises_if_user_does_not_have_required_r
                                                            resourceType=ResourceType.Workspace,
                                                            current=True,
                                                            required=[],
-                                                           requiredRoles=["missing_role"],
+                                                           authorizedRoles=["missing_role"],
                                                            properties={},
                                                            customActions=[]).dict()
 
@@ -208,7 +208,7 @@ def test_validate_input_against_template_valid_if_user_has_only_one_role(_, enri
                                                            resourceType=ResourceType.Workspace,
                                                            current=True,
                                                            required=[],
-                                                           requiredRoles=["test_role", "missing_role"],
+                                                           authorizedRoles=["test_role", "missing_role"],
                                                            properties={},
                                                            customActions=[]).dict()
 

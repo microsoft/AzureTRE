@@ -86,10 +86,10 @@ class ResourceRepository(BaseRepository):
             else:
                 raise ValueError(f'The template "{template_name}" does not exist')
 
-        # If requiredRoles is empty, template is available to all users
-        if "requiredRoles" in template and template["requiredRoles"]:
-            # If requiredRoles is not empty, the user is required to have at least one of requiredRoles
-            if len(set(template["requiredRoles"]).intersection(set(user_roles))) == 0:
+        # If authorizedRoles is empty, template is available to all users
+        if "authorizedRoles" in template and template["authorizedRoles"]:
+            # If authorizedRoles is not empty, the user is required to have at least one of authorizedRoles
+            if len(set(template["authorizedRoles"]).intersection(set(user_roles))) == 0:
                 raise UserNotAuthorizedToUseTemplate(f"User not authorized to use template {template_name}")
 
         self._validate_resource_parameters(resource_input.dict(), template)

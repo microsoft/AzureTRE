@@ -107,11 +107,11 @@ def test_get_templates_information_returns_unique_template_names(query_mock, res
 def test_get_templates_information_returns_only_templates_user_can_access(query_mock, resource_template_repo):
     query_mock.return_value = [
         # Will get filtered out as don't have admin role
-        {"name": "template1", "title": "title1", "description": "description1", "requiredRoles": ["admin"]},
-        # Will get included as requiredRoles=[] means any role is accepted
-        {"name": "template2", "title": "title2", "description": "description2", "requiredRoles": []},
+        {"name": "template1", "title": "title1", "description": "description1", "authorizedRoles": ["admin"]},
+        # Will get included as authorizedRoles=[] means any role is accepted
+        {"name": "template2", "title": "title2", "description": "description2", "authorizedRoles": []},
         # Will get included as have test role
-        {"name": "template3", "title": "title3", "description": "description3", "requiredRoles": ["test"]}
+        {"name": "template3", "title": "title3", "description": "description3", "authorizedRoles": ["test"]}
     ]
 
     result = resource_template_repo.get_templates_information(ResourceType.Workspace, ["test"])

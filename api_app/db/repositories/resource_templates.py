@@ -40,7 +40,7 @@ class ResourceTemplateRepository(BaseRepository):
         :param user_roles: If not none, only return templates that the user is authorized to use.
                            template.authorizedRoles should contain at least one of user_roles
         """
-        query = f'SELECT c.name, c.title, c.description, c.requiredRoles FROM c WHERE c.resourceType = "{resource_type}" AND c.current = true'
+        query = f'SELECT c.name, c.title, c.description, c.authorizedRoles FROM c WHERE c.resourceType = "{resource_type}" AND c.current = true'
         if resource_type == ResourceType.UserResource:
             query += f' AND c.parentWorkspaceService = "{parent_service_name}"'
         template_infos = self.query(query=query)
@@ -48,8 +48,8 @@ class ResourceTemplateRepository(BaseRepository):
 
         if not user_roles:
             return templates
-        # User can view template if they have at least one of requiredRoles
-        return [t for t in templates if not t.requiredRoles or len(set(t.requiredRoles).intersection(set(user_roles))) > 0]
+        # User can view template if they have at least one of authorizedRoles
+        return [t for t in templates if not t.authorizedRoles or len(set(t.authorizedRoles).intersection(set(user_roles))) > 0]
 
     def get_current_template(self, template_name: str, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
         """
@@ -105,7 +105,7 @@ class ResourceTemplateRepository(BaseRepository):
             "resourceType": resource_type,
             "current": template_input.current,
             "required": template_input.json_schema["required"],
-            "requiredRoles": template_input.json_schema["requiredRoles"] if "requiredRoles" in template_input.json_schema else [],
+            "authorizedRoles": template_input.json_schema["authorizedRoles"] if "authorizedRoles" in template_input.json_schema else [],
             "properties": template_input.json_schema["properties"],
             "customActions": template_input.customActions
         }

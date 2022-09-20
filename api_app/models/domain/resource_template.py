@@ -65,7 +65,7 @@ class ResourceTemplate(AzureTREModel):
     current: bool = Field(title="Is this the current version of this template")
     type: str = "object"
     required: List[str] = Field(title="List of properties which must be provided")
-    requiredRoles: List[str] = Field(default=[], title="If not empty, the user is required to have one of these roles to install the template")
+    authorizedRoles: List[str] = Field(default=[], title="If not empty, the user is required to have one of these roles to install the template")
     properties: Dict[str, Property] = Field(title="Template properties")
     actions: List[CustomAction] = Field(default=[], title="Template actions")
     customActions: List[CustomAction] = Field(default=[], title="Template custom actions")

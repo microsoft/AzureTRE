@@ -58,7 +58,7 @@ class WorkspaceTemplateInCreate(ResourceTemplateInCreate):
                         "vm_size",
                         "no_of_vms"
                     ],
-                    "requiredRoles": [],
+                    "authorizedRoles": [],
                     "properties": {
                         "display_name": {
                             "type": "string",
