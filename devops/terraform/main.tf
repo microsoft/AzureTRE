@@ -2,8 +2,6 @@ provider "azurerm" {
   features {}
 }
 
-data "azurerm_client_config" "current" {}
-
 # Resource group for TRE core management
 resource "azurerm_resource_group" "mgmt" {
   name     = var.mgmt_resource_group_name
@@ -28,14 +26,6 @@ resource "azurerm_storage_account" "state_storage" {
   allow_nested_items_to_be_public = false
 
   lifecycle { ignore_changes = [tags] }
-}
-
-# Storage container for Porter data
-# See https://github.com/getporter/azure-plugins#storage
-resource "azurerm_storage_container" "porter_container" {
-  name                  = "porter"
-  storage_account_name  = azurerm_storage_account.state_storage.name
-  container_access_type = "private"
 }
 
 # Shared container registry
