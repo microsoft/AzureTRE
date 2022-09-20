@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -21,7 +21,7 @@ class ResourceTemplateInformation(BaseModel):
     name: str = Field(title="Template name")
     title: str = Field(title="Template title", default="")
     description: str = Field(title="Template description", default="")
-    requiredRoles: List[str] = Field(title="Roles that user is required to have at least one of", default=[])
+    requiredRoles: Optional[List[str]] = Field(title="Roles that user is required to have at least one of", default=[])
 
 
 class ResourceTemplateInformationInList(BaseModel):

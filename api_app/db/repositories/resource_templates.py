@@ -37,7 +37,7 @@ class ResourceTemplateRepository(BaseRepository):
         """
         Returns name/title/description for all current resource_type templates
         """
-        query = f'SELECT c.name, c.title, c.description FROM c WHERE c.resourceType = "{resource_type}" AND c.current = true'
+        query = f'SELECT c.name, c.title, c.description, c.requiredRoles FROM c WHERE c.resourceType = "{resource_type}" AND c.current = true'
         if resource_type == ResourceType.UserResource:
             query += f' AND c.parentWorkspaceService = "{parent_service_name}"'
         template_infos = self.query(query=query)
@@ -100,7 +100,7 @@ class ResourceTemplateRepository(BaseRepository):
             "resourceType": resource_type,
             "current": template_input.current,
             "required": template_input.json_schema["required"],
-            "requiredRoles": template_input.json_schema["requiredRoles"],
+            "requiredRoles": template_input.json_schema["requiredRoles"] if "requiredRoles" in template_input.json_schema else [],
             "properties": template_input.json_schema["properties"],
             "customActions": template_input.customActions
         }

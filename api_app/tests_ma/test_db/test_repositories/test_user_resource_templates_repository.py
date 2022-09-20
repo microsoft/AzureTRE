@@ -105,7 +105,7 @@ def test_create_user_resource_template_item_calls_create_item_with_the_correct_p
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 def test_get_template_infos_for_user_resources_queries_db(query_mock, resource_template_repo):
-    expected_query = 'SELECT c.name, c.title, c.description FROM c WHERE c.resourceType = "user-resource" AND c.current = true AND c.parentWorkspaceService = "parent_service"'
+    expected_query = 'SELECT c.name, c.title, c.description, c.requiredRoles FROM c WHERE c.resourceType = "user-resource" AND c.current = true AND c.parentWorkspaceService = "parent_service"'
     query_mock.return_value = [sample_user_resource_template_as_dict(name="test", version="1.0")]
 
     resource_template_repo.get_templates_information(ResourceType.UserResource, user_roles=[], parent_service_name="parent_service")

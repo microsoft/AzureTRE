@@ -29,7 +29,6 @@ def input_workspace_template():
             "title": "My Workspace Template",
             "description": "This is a test workspace template schema.",
             "required": [],
-            "requiredRoles": [],
             "properties": {
                 "updateable_property": {
                     "type": "string",
@@ -69,7 +68,6 @@ def input_workspace_service_template():
             "title": "My Workspace Service Template",
             "description": "This is a test workspace service template schema.",
             "required": [],
-            "requiredRoles": [],
             "properties": {}
         },
         customActions=[
@@ -93,7 +91,6 @@ def input_user_resource_template():
             "title": "My User Resource Template",
             "description": "These is a test user resource template schema",
             "required": [],
-            "requiredRoles": [],
             "properties": {}
         },
         customActions=[
@@ -117,7 +114,6 @@ def input_shared_service_template():
             "title": "My Shared Service Template",
             "description": "This is a test shared service template schema.",
             "required": [],
-            "requiredRoles": [],
             "properties": {}
         }
     )
@@ -133,7 +129,7 @@ def basic_resource_template(input_workspace_template):
         resourceType=ResourceType.Workspace,
         current=True,
         required=input_workspace_template.json_schema["required"],
-        requiredRoles=input_workspace_template.json_schema["requiredRoles"],
+        requiredRoles=input_workspace_template.json_schema["requiredRoles"] if "requiredRoles" in input_workspace_template.json_schema else [],
         properties=input_workspace_template.json_schema["properties"],
         customActions=input_workspace_template.customActions
     )
@@ -149,7 +145,7 @@ def basic_workspace_service_template(input_workspace_template):
         resourceType=ResourceType.WorkspaceService,
         current=True,
         required=input_workspace_template.json_schema["required"],
-        requiredRoles=input_workspace_template.json_schema["requiredRoles"],
+        requiredRoles=input_workspace_template.json_schema["requiredRoles"] if "requiredRoles" in input_workspace_template.json_schema else [],
         properties=input_workspace_template.json_schema["properties"],
         customActions=input_workspace_template.customActions
     )
@@ -166,7 +162,7 @@ def basic_user_resource_template(input_user_resource_template):
         resourceType=ResourceType.UserResource,
         current=True,
         required=input_user_resource_template.json_schema["required"],
-        requiredRoles=input_user_resource_template.json_schema["requiredRoles"],
+        requiredRoles=input_user_resource_template.json_schema["requiredRoles"] if "requiredRoles" in input_user_resource_template.json_schema else [],
         properties=input_user_resource_template.json_schema["properties"],
         customActions=input_user_resource_template.customActions
     )
@@ -182,7 +178,7 @@ def basic_shared_service_template(input_shared_service_template):
         resourceType=ResourceType.SharedService,
         current=True,
         required=input_shared_service_template.json_schema["required"],
-        requiredRoles=input_shared_service_template.json_schema["requiredRoles"],
+        requiredRoles=input_shared_service_template.json_schema["requiredRoles"] if "requiredRoles" in input_shared_service_template.json_schema else [],
         properties=input_shared_service_template.json_schema["properties"],
         actions=input_shared_service_template.customActions
     )
@@ -199,7 +195,7 @@ def user_resource_template_in_response(input_user_resource_template):
         resourceType=ResourceType.UserResource,
         current=True,
         required=input_user_resource_template.json_schema["required"],
-        requiredRoles=input_user_resource_template.json_schema["requiredRoles"],
+        requiredRoles=input_user_resource_template.json_schema["requiredRoles"] if "requiredRoles" in input_user_resource_template.json_schema else [],
         properties=input_user_resource_template.json_schema["properties"],
         customActions=input_user_resource_template.customActions,
         system_properties={}
