@@ -14,7 +14,6 @@ def get_sample_workspace_service_template_object(template_name: str = "tre-works
         current=True,
         type="object",
         required=["display_name", "description"],
-        requiredRoles=[],
         properties={
             "display_name": Property(type="string"),
             "description": Property(type="string")
@@ -52,6 +51,7 @@ class WorkspaceServiceTemplateInCreate(ResourceTemplateInCreate):
                     "title": "My Workspace Service Template",
                     "description": "These is a test workspace service resource template schema",
                     "required": [],
+                    "requiredRoles": [],
                     "properties": {}
                 },
                 "customActions": [
