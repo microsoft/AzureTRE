@@ -50,7 +50,7 @@ nav:
           - Azure Resources: azure-tre-overview/tre-resources-breakdown.md
           - Airlock: azure-tre-overview/airlock.md
           - Cost Reporting: azure-tre-overview/cost-reporting.md
-      - Compliance: azure-tre-overview/compliance-info.md
+      #- Compliance: azure-tre-overview/compliance-info.md
 
   - QuickStart: # Setup steps for anyone performing an initial deployment of the AzureTRE for eval purposes
       - tre-admins/setup-instructions/index.md
@@ -62,11 +62,9 @@ nav:
       - 6. Installing Base Workspace: tre-admins/setup-instructions/installing-base-workspace.md
       - 7. Installing Workspace Service and User Resource: tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md
 
-  - Using the TRE for Research: # Documentation for users of the TRE
+  - Using the Azure TRE: # Documentation for users of the TRE
       - Introduction: using-tre/index.md
       - Terms and Definitions: using-tre/terms-definitions.md
-      - Local Development: using-tre/local-development/index.md
-      - CI/CD pipelines: using-tre/pipelines/index.md
       - Custom Templates: using-tre/templates/index.md
       - Workspaces:
           - using-tre/wks/index.md # Documentation describing what a workspace is
@@ -134,6 +132,9 @@ nav:
                   - Azure DevOps: coming-soon.md
 
           - Releases: tre-developers/release.md
+
+      - Local Development: using-tre/local-development/index.md
+      - CI/CD pipelines: using-tre/pipelines/index.md
 
       - Troubleshooting FAQ: # General Troubleshooting Section for Development
           - troubleshooting-faq/index.md

@@ -14,6 +14,7 @@ While we have defined 8 different user roles for the Azure TRE solution, not all
 | TRE administrator | Administer the TRE | ✔ |
 | TRE workspace owner | Own a workspace | ✔ |
 | Researcher | Perform research on the data | ✔ |
+| Airlock Manager | Approves data import & export | ✔ |
 | TRE service integrator | Integrate additional workspace services | |
 | Azure TRE developer | Extend the TRE OSS solution | |
 | Data engineer | Move data to and potentially from the TRE | |
@@ -89,6 +90,16 @@ Expected skills:
 - Python, R
 - Git
 - Linux
+
+## Airlock Manager
+
+Approves (and reviews in some instances) the data that is being imported to and exported from a TRE Workspace
+
+Example tasks:
+
+- Approve Airlock import requests
+- Approve Airlock export requests
+- Review the data being improted to and exported from a TRE Workspace
 
 ## TRE service integrator
 
