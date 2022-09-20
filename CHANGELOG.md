@@ -7,6 +7,7 @@
 
 * Firewall now blocks terraform/hasicorp domains ([#2590](https://github.com/microsoft/AzureTRE/pull/2590)). **Migration** is manual - update the templateVersion of `tre-shared-service-firewall` resource in Cosmos to `0.5.0`. Check the PR for more details.
 * Add Airlock Manager Workspace ([#2505](https://github.com/microsoft/AzureTRE/pull/2505))
+* Restrict resource templates to specific roles ([#2623](https://github.com/microsoft/AzureTRE/pull/2623/))
 
 FEATURES:
 
