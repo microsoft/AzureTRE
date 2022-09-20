@@ -130,10 +130,10 @@ nav:
               - Build Runners:
                   - GitHub Actions: tre-admins/setup-instructions/workflows.md
                   - Azure DevOps: coming-soon.md
+           - Local Development: using-tre/local-development/index.md       
 
           - Releases: tre-developers/release.md
 
-      - Local Development: using-tre/local-development/index.md
       - CI/CD pipelines: using-tre/pipelines/index.md
 
       - Troubleshooting FAQ: # General Troubleshooting Section for Development
