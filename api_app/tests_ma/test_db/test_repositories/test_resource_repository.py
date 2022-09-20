@@ -60,7 +60,6 @@ def sample_resource_template() -> ResourceTemplate:
                             resourceType=ResourceType.UserResource,
                             current=True,
                             required=['os_image', 'title'],
-                            authorizedRoles=[],
                             properties={
                                 'title': {
                                     'type': 'string',
