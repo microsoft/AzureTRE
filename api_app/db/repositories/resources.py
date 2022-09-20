@@ -87,9 +87,10 @@ class ResourceRepository(BaseRepository):
                 raise ValueError(f'The template "{template_name}" does not exist')
 
         # If requiredRoles is empty, template is available to all users
-        # If requiredRoles is not empty, the user is required to have at least one of requiredRoles
-        if "requiredRoles" in template and template["requiredRoles"] and not any(required_role in set(user_roles) for required_role in template["requiredRoles"]):
-            raise UserNotAuthorizedToUseTemplate(f"User not authorized to use template {template_name}")
+        if "requiredRoles" in template and template["requiredRoles"]:
+            # If requiredRoles is not empty, the user is required to have at least one of requiredRoles
+            if len(set(template["requiredRoles"]).intersection(set(user_roles))) == 0:
+                raise UserNotAuthorizedToUseTemplate(f"User not authorized to use template {template_name}")
 
         self._validate_resource_parameters(resource_input.dict(), template)
 
@@ -133,7 +134,7 @@ class ResourceRepository(BaseRepository):
         update_template["required"] = []
         update_template["properties"] = {}
         for prop_name, prop in enriched_template["properties"].items():
-            if("updateable" in prop.keys() and prop["updateable"] is True):
+            if ("updateable" in prop.keys() and prop["updateable"] is True):
                 update_template["properties"][prop_name] = prop
 
         self._validate_resource_parameters(resource_patch.dict(), update_template)

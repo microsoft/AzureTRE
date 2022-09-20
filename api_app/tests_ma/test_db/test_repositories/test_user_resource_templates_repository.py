@@ -14,7 +14,17 @@ def resource_template_repo():
 
 
 def sample_user_resource_template_as_dict(name: str, version: str = "1.0") -> dict:
-    template = UserResourceTemplate(id="123", name=name, description="", version=version, current=True, required=[], properties={}, customActions=[], parentWorkspaceService="parent_service")
+    template = UserResourceTemplate(
+        id="123",
+        name=name,
+        description="",
+        version=version,
+        current=True,
+        required=[],
+        requiredRoles=[],
+        properties={},
+        customActions=[],
+        parentWorkspaceService="parent_service")
     return template.dict()
 
 
@@ -98,6 +108,6 @@ def test_get_template_infos_for_user_resources_queries_db(query_mock, resource_t
     expected_query = 'SELECT c.name, c.title, c.description FROM c WHERE c.resourceType = "user-resource" AND c.current = true AND c.parentWorkspaceService = "parent_service"'
     query_mock.return_value = [sample_user_resource_template_as_dict(name="test", version="1.0")]
 
-    resource_template_repo.get_templates_information(ResourceType.UserResource, parent_service_name="parent_service")
+    resource_template_repo.get_templates_information(ResourceType.UserResource, user_roles=[], parent_service_name="parent_service")
 
     query_mock.assert_called_once_with(query=expected_query)

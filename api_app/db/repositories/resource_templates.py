@@ -33,7 +33,7 @@ class ResourceTemplateRepository(BaseRepository):
         else:
             return enrich_user_resource_template(template, is_update=is_update)
 
-    def get_templates_information(self, resource_type: ResourceType, parent_service_name: str = "") -> List[ResourceTemplateInformation]:
+    def get_templates_information(self, resource_type: ResourceType, user_roles: List[str], parent_service_name: str = "") -> List[ResourceTemplateInformation]:
         """
         Returns name/title/description for all current resource_type templates
         """
@@ -41,7 +41,10 @@ class ResourceTemplateRepository(BaseRepository):
         if resource_type == ResourceType.UserResource:
             query += f' AND c.parentWorkspaceService = "{parent_service_name}"'
         template_infos = self.query(query=query)
-        return [parse_obj_as(ResourceTemplateInformation, info) for info in template_infos]
+        templates = [parse_obj_as(ResourceTemplateInformation, info) for info in template_infos]
+
+        # User can view template if they have at least one of requiredRoles
+        return [t for t in templates if not t.requiredRoles or len(set(t.requiredRoles).intersection(set(user_roles))) > 0]
 
     def get_current_template(self, template_name: str, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
         """

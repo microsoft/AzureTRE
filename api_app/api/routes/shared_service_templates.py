@@ -15,9 +15,9 @@ from .resource_helpers import get_current_template_by_name
 shared_service_templates_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 
 
-@shared_service_templates_core_router.get("/shared-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_SHARED_SERVICE_TEMPLATES, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
-async def get_shared_service_templates(template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInformationInList:
-    templates_infos = template_repo.get_templates_information(ResourceType.SharedService)
+@shared_service_templates_core_router.get("/shared-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_SHARED_SERVICE_TEMPLATES)
+async def get_shared_service_templates(template_repo=Depends(get_repository(ResourceTemplateRepository)), user=Depends(get_current_tre_user_or_tre_admin)) -> ResourceTemplateInformationInList:
+    templates_infos = template_repo.get_templates_information(ResourceType.SharedService, user.roles)
     return ResourceTemplateInformationInList(templates=templates_infos)
 
 

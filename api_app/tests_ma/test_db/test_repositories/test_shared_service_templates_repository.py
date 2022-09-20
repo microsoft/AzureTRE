@@ -42,6 +42,6 @@ def test_get_templates_for_shared_services_queries_db(query_mock, resource_templ
     expected_query = 'SELECT c.name, c.title, c.description FROM c WHERE c.resourceType = "shared-service" AND c.current = true'
     query_mock.return_value = [sample_resource_template_as_dict(name="test", version="1.0", resource_type=ResourceType.SharedService)]
 
-    resource_template_repo.get_templates_information(ResourceType.SharedService, parent_service_name="parent_service")
+    resource_template_repo.get_templates_information(ResourceType.SharedService, user_roles=[], parent_service_name="parent_service")
 
     query_mock.assert_called_once_with(query=expected_query)
