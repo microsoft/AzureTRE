@@ -14,7 +14,7 @@ FEATURES:
 ENHANCEMENTS:
 
 * Cancelling an Airlock request triggers deletion of the request container and files ([#2584](https://github.com/microsoft/AzureTRE/pull/2584))
-* Move admin-vm from core to a shared service ([#TBD](https://github.com/microsoft/AzureTRE/pull/TBD))
+* Move admin-vm from core to a shared service ([#2624](https://github.com/microsoft/AzureTRE/pull/2624))
 
 BUG FIXES:
 
