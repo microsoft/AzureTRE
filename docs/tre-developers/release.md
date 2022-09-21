@@ -23,3 +23,4 @@ The process follows these steps:
     1. Rebuild the container.
     1. Compare both `.devcontainer` and `.github` folders of the new release with the ones in the repo and make required updates so that only required difference exist.
     The comapre can be done with VSCode [Compare Folders extension](https://marketplace.visualstudio.com/items?itemName=moshfeu.compare-folders) as you have both the old version (under to root folder) and the "new" one inside the _AzureTRE_ symlink.
+    1. With all changes made, rebuild the container to verify it's working and that AzureTRE folder has been populated correctly.
