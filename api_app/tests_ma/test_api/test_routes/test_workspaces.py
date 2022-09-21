@@ -329,6 +329,19 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert workspaces_from_response[1]["id"] == valid_ws_2.id
         assert workspaces_from_response[2]["id"] == valid_ws_3.id
 
+        # [GET] /workspaces/{workspace_id}
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.get_identity_role_assignments")
+    async def test_get_workspace_by_id_as_tre_admin(self, access_service_mock, get_workspace_mock, app, client):
+        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'app_role_id_workspace_owner': 'ab124', 'app_role_id_workspace_researcher': 'ab125', 'app_role_id_workspace_airlock_manager': 'ab130'}
+        workspace = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
+        get_workspace_mock.return_value = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
+        access_service_mock.return_value = [RoleAssignment('ab123', 'ab124')]
+
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
+        actual_resource = response.json()["workspace"]
+        assert actual_resource["id"] == workspace.id
+
     # [POST] /workspaces/
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
     @ patch("api.routes.resource_helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
