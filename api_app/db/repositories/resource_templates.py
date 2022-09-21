@@ -37,7 +37,7 @@ class ResourceTemplateRepository(BaseRepository):
         """
         Returns name/title/description for all current resource_type templates
 
-        :param user_roles: If not none, only return templates that the user is authorized to use.
+        :param user_roles: If set, only return templates that the user is authorized to use.
                            template.authorizedRoles should contain at least one of user_roles
         """
         query = f'SELECT c.name, c.title, c.description, c.authorizedRoles FROM c WHERE c.resourceType = "{resource_type}" AND c.current = true'

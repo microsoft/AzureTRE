@@ -212,7 +212,6 @@ def multi_step_resource_template(basic_shared_service_template) -> ResourceTempl
         resourceType=ResourceType.Workspace,
         current=True,
         required=[],
-        authorizedRoles=[],
         properties={},
         customActions=[],
         pipeline=Pipeline(

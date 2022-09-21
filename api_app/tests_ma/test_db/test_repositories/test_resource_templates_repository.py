@@ -120,6 +120,7 @@ def test_get_templates_information_returns_only_templates_user_can_access(query_
     assert result[0].name == "template2"
     assert result[1].name == "template3"
 
+
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
 @patch('uuid.uuid4')
 def test_create_workspace_template_item_calls_create_item_with_the_correct_parameters(uuid_mock, save_item_mock, resource_template_repo, input_workspace_template):
