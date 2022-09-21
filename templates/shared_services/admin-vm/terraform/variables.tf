@@ -9,5 +9,5 @@ variable "tre_resource_id" {
 }
 
 variable "admin_jumpbox_vm_sku" {
-  type        = string
+  type = string
 }
