@@ -9,3 +9,7 @@ output "authentication_callback_uri" {
 output "web_apps_addresses" {
   value = jsonencode(data.azurerm_subnet.web_apps.address_prefixes)
 }
+
+output "services_addresses" {
+  value = jsonencode(data.azurerm_subnet.services.address_prefixes)
+}

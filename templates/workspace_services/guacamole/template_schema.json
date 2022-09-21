@@ -88,6 +88,14 @@
                   "destination_addresses": ["AzureActiveDirectory"],
                   "destination_ports": ["*"],
                   "protocols": ["TCP"]
+                },
+                {
+                  "name": "AzureLoginRule",
+                  "description": "ARM access for reviwing airlock requests",
+                  "source_addresses": "{{ resource.properties.services_addresses }}",
+                  "destination_addresses": ["AzureResourceManager"],
+                  "destination_ports": ["443"],
+                  "protocols": ["TCP"]
                 }
               ]
             }

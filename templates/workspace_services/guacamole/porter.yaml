@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole
-version: 0.4.5
+version: 0.4.6
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -109,6 +109,11 @@ outputs:
     type: string
     applyTo:
       - install
+  - name: services_addresses
+    type: string
+    applyTo:
+      - install
+
 
 mixins:
   - exec
@@ -142,6 +147,7 @@ install:
         - name: connection_uri
         - name: authentication_callback_uri
         - name: web_apps_addresses
+        - name: services_addresses
 
 upgrade:
   # When/if TF will be called here, there might be an issue caused by switching from azurerm_app_service to
