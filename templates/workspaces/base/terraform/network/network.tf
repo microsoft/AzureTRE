@@ -14,8 +14,8 @@ resource "azurerm_subnet" "services" {
   resource_group_name  = var.ws_resource_group_name
   address_prefixes     = [local.services_subnet_address_prefix]
   # notice that private endpoints do not adhere to NSG rules
-  enforce_private_link_endpoint_network_policies = true
-  enforce_private_link_service_network_policies  = true
+  private_endpoint_network_policies_enabled     = true
+  private_link_service_network_policies_enabled = true
 
   # Eventgrid CAN'T send messages over private endpoints, hence we need to allow service endpoints to the service bus
   # We are using service endpoints + managed identity to send these messaages
@@ -29,8 +29,8 @@ resource "azurerm_subnet" "webapps" {
   resource_group_name  = var.ws_resource_group_name
   address_prefixes     = [local.webapps_subnet_address_prefix]
   # notice that private endpoints do not adhere to NSG rules
-  enforce_private_link_endpoint_network_policies = true
-  enforce_private_link_service_network_policies  = true
+  private_endpoint_network_policies_enabled     = true
+  private_link_service_network_policies_enabled = true
 
   delegation {
     name = "delegation"
