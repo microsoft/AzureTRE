@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-admin-vm
-version: 0.1.1
+version: 0.1.0
 description: "An admin vm shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -71,9 +71,6 @@ upgrade:
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-shared-service-admin-vm"
-      outputs:
-        - name: gitea_allowed_fqdns_list
-        - name: address_prefixes
 
 uninstall:
   - terraform:
