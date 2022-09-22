@@ -19,13 +19,16 @@ async def health_check() -> HealthCheck:
             create_service_bus_status(credential),
             create_resource_processor_status(credential)
         )
-    if cosmos[0] == StatusEnum.not_ok or sb[0] == StatusEnum.not_ok or rp[0] == StatusEnum.not_ok:
-        logging.error(f'Cosmos Status: {cosmos[0]}, message: {cosmos[1]}')
-        logging.error(f'Service Bus Status: {sb[0]}, message: {sb[1]}')
-        logging.error(f'Resource Processor Status: {rp[0]}, message: {rp[1]}')
+    cosmos_status, cosmos_message = cosmos
+    sb_status, sb_message = sb
+    rp_status, rp_message = rp
+    if cosmos_status == StatusEnum.not_ok or sb_status == StatusEnum.not_ok or rp_status == StatusEnum.not_ok:
+        logging.error(f'Cosmos Status: {cosmos_status}, message: {cosmos_message}')
+        logging.error(f'Service Bus Status: {sb_status}, message: {sb_message}')
+        logging.error(f'Resource Processor Status: {rp_status}, message: {rp_message}')
 
-    services = [ServiceStatus(service=strings.COSMOS_DB, status=StatusEnum.ok, message=""),
-                ServiceStatus(service=strings.SERVICE_BUS, status=StatusEnum.ok, message=""),
-                ServiceStatus(service=strings.RESOURCE_PROCESSOR, status=StatusEnum.ok, message="")]
+    services = [ServiceStatus(service=strings.COSMOS_DB, status=cosmos_status, message=cosmos_message),
+                ServiceStatus(service=strings.SERVICE_BUS, status=sb_status, message=sb_message),
+                ServiceStatus(service=strings.RESOURCE_PROCESSOR, status=rp_status, message=rp_message)]
 
     return HealthCheck(services=services)
