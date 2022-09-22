@@ -6,6 +6,7 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 * Firewall now blocks terraform/hasicorp domains ([#2590](https://github.com/microsoft/AzureTRE/pull/2590)). **Migration** is manual - update the templateVersion of `tre-shared-service-firewall` resource in Cosmos to `0.5.0`. Check the PR for more details.
+* Add workspace creator as an owner of the workspace enterprise application ([#2627](https://github.com/microsoft/AzureTRE/pull/2627)). **Migration** if the `AUTO_WORKSPACE_APP_REGISTRATION` is set, the `Directory.Read.All` MS Graph API permission permission needs granting to the Application Registration identified by `APPLICATION_ADMIN_CLIENT_ID`.
 
 FEATURES:
 
@@ -14,7 +15,6 @@ FEATURES:
 ENHANCEMENTS:
 
 * Cancelling an Airlock request triggers deletion of the request container and files ([#2584](https://github.com/microsoft/AzureTRE/pull/2584))
-* Add workspace creator as an owner of the workspace enterprise application ([#2627](https://github.com/microsoft/AzureTRE/pull/2627))
 
 BUG FIXES:
 
