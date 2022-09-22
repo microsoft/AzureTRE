@@ -192,4 +192,3 @@ stop:
         - deallocate
       flags:
         ids: "{{ bundle.outputs.azure_resource_id }}"
-

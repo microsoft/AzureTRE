@@ -6,7 +6,6 @@ locals {
   service_resource_name_suffix   = "${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_service_id}"
   vm_name                        = "windowsvm${local.short_service_id}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
-  storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   vm_password_secret_name        = "${local.vm_name}-admin-credentials"
   tre_user_resources_tags = {
     tre_id                   = var.tre_id
@@ -16,11 +15,11 @@ locals {
   }
   vm_size = "Standard_D2s_v5"
   image_ref = {
-      "publisher"    = "microsoft-dsvm"
-      "offer"        = "dsvm-win-2019"
-      "sku"          = "server-2019"
-      "version"      = "latest"
-      "conda_config" = true
-    }
+    "publisher"    = "microsoft-dsvm"
+    "offer"        = "dsvm-win-2019"
+    "sku"          = "server-2019"
+    "version"      = "latest"
+    "conda_config" = true
+  }
   import_in_progress_storage_name = lower(replace("stalimip${var.tre_id}", "-", ""))
 }
