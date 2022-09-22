@@ -280,13 +280,15 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not_valid"))
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.ResourceTemplateRepository.get_templates_information", return_value=[ResourceTemplateInformation(name="test")])
-    async def test_get_workspace_service_templates_returns_templates(self, _, app, client):
+    async def test_get_workspace_service_templates_returns_templates(self, _, __, app, client):
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE, workspace_id=WORKSPACE_ID))
         assert response.status_code == status.HTTP_200_OK
 
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.ResourceTemplateRepository.get_templates_information", return_value=[ResourceTemplateInformation(name="test")])
-    async def test_get_user_resource_templates_returns_templates(self, _, app, client):
+    async def test_get_user_resource_templates_returns_templates(self, _, __, app, client):
         response = await client.get(app.url_path_for(strings.API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE, workspace_id=WORKSPACE_ID, service_template_name="guacamole"))
         assert response.status_code == status.HTTP_200_OK
 
