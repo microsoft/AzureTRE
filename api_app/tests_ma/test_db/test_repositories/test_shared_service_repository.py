@@ -92,7 +92,7 @@ def test_create_shared_service_item_creates_a_shared_with_the_right_values(valid
     shared_service_to_create = basic_shared_service_request
     validate_input_mock.return_value = basic_shared_service_template
 
-    shared_service, _ = shared_service_repo.create_shared_service_item(shared_service_to_create)
+    shared_service, _ = shared_service_repo.create_shared_service_item(shared_service_to_create, [])
 
     assert shared_service.templateName == basic_shared_service_request.templateName
     assert shared_service.resourceType == ResourceType.SharedService
@@ -107,14 +107,14 @@ def test_create_shared_service_item_creates_a_shared_with_the_right_values(valid
 def test_create_shared_service_item_with_the_same_name_twice_fails(validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template):
     validate_input_mock.return_value = basic_shared_service_template
 
-    shared_service, _ = shared_service_repo.create_shared_service_item(basic_shared_service_request)
+    shared_service, _ = shared_service_repo.create_shared_service_item(basic_shared_service_request, [])
     shared_service_repo.save_item(shared_service)
 
     shared_service_repo.query = MagicMock()
     shared_service_repo.query.return_value = [shared_service.__dict__]
 
     with pytest.raises(DuplicateEntity):
-        shared_service = shared_service_repo.create_shared_service_item(basic_shared_service_request)
+        shared_service = shared_service_repo.create_shared_service_item(basic_shared_service_request, [])
 
 
 @patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template', side_effect=ValueError)
@@ -122,4 +122,4 @@ def test_create_shared_item_raises_value_error_if_template_is_invalid(_, shared_
     shared_service_to_create = basic_shared_service_request
 
     with pytest.raises(ValueError):
-        shared_service_repo.create_shared_service_item(shared_service_to_create)
+        shared_service_repo.create_shared_service_item(shared_service_to_create, [])
