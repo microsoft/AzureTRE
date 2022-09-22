@@ -54,7 +54,7 @@ RUN apt-get update && apt-get install -y python3 python3-venv libaugeas0 --no-in
 # Not using the script from https://cdn.porter.sh/latest/install-linux.sh
 # as it installs things we don't need and duplicates the binary.
 ARG PORTER_MIRROR=https://cdn.porter.sh
-ARG PORTER_PERMALINK=v0.38.12
+ARG PORTER_PERMALINK=v0.38.13
 ARG PORTER_PKG_PERMALINK=latest
 ARG PORTER_HOME=/home/$USERNAME/.porter/
 COPY .devcontainer/scripts/porter.sh /tmp/
@@ -62,6 +62,7 @@ RUN export PORTER_MIRROR=${PORTER_MIRROR} \
     PORTER_PERMALINK=${PORTER_PERMALINK} \
     PORTER_PKG_PERMALINK=${PORTER_PKG_PERMALINK} \
     PORTER_HOME=${PORTER_HOME} \
+    && porter mixin install terraform --version v1.0.0-rc.1
     && /tmp/porter.sh
 
 ENV PATH ${PORTER_HOME}:$PATH
