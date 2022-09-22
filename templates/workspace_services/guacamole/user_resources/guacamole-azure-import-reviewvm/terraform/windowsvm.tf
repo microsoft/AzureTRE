@@ -92,7 +92,7 @@ data "template_file" "vm_config" {
   template = file("${path.module}/download_container.ps1")
   vars = {
     import_in_progress_storage = local.import_in_progress_storage_name
-    container_name = var.airlock_request_id
+    container_name             = var.airlock_request_id
   }
 }
 

@@ -16,11 +16,11 @@ locals {
   }
   vm_size = "Standard_D2s_v5"
   image_ref = {
-      "publisher"    = "microsoft-dsvm"
-      "offer"        = "dsvm-win-2019"
-      "sku"          = "server-2019"
-      "version"      = "latest"
-      "conda_config" = true
-    }
+    "publisher"    = "microsoft-dsvm"
+    "offer"        = "dsvm-win-2019"
+    "sku"          = "server-2019"
+    "version"      = "latest"
+    "conda_config" = true
+  }
   import_in_progress_storage_name = lower(replace("stalimip${var.tre_id}", "-", ""))
 }
