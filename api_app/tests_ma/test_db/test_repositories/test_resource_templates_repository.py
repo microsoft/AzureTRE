@@ -103,6 +103,24 @@ def test_get_templates_information_returns_unique_template_names(query_mock, res
     assert result[1].name == "template2"
 
 
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+def test_get_templates_information_returns_only_templates_user_can_access(query_mock, resource_template_repo):
+    query_mock.return_value = [
+        # Will get filtered out as don't have admin role
+        {"name": "template1", "title": "title1", "description": "description1", "authorizedRoles": ["admin"]},
+        # Will get included as authorizedRoles=[] means any role is accepted
+        {"name": "template2", "title": "title2", "description": "description2", "authorizedRoles": []},
+        # Will get included as have test role
+        {"name": "template3", "title": "title3", "description": "description3", "authorizedRoles": ["test"]}
+    ]
+
+    result = resource_template_repo.get_templates_information(ResourceType.Workspace, ["test"])
+
+    assert len(result) == 2
+    assert result[0].name == "template2"
+    assert result[1].name == "template3"
+
+
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
 @patch('uuid.uuid4')
 def test_create_workspace_template_item_calls_create_item_with_the_correct_parameters(uuid_mock, save_item_mock, resource_template_repo, input_workspace_template):
