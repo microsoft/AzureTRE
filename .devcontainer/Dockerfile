@@ -61,8 +61,8 @@ COPY .devcontainer/scripts/porter.sh /tmp/
 RUN export PORTER_MIRROR=${PORTER_MIRROR} \
     PORTER_PERMALINK=${PORTER_PERMALINK} \
     PORTER_PKG_PERMALINK=${PORTER_PKG_PERMALINK} \
+    PORTER_TERRAFORM_MIXIN_PKG_PERMALINK="v1.0.0-rc.1" \
     PORTER_HOME=${PORTER_HOME} \
-    && porter mixin install terraform --version v1.0.0-rc.1
     && /tmp/porter.sh
 
 ENV PATH ${PORTER_HOME}:$PATH
