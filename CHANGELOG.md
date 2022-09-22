@@ -21,6 +21,7 @@ ENHANCEMENTS:
 BUG FIXES:
 
 * Resource processor error on deploying user-resource: TypeError: 'NoneType' object is not iterable ([#2569](https://github.com/microsoft/AzureTRE/issues/2569))
+* Update Porter and Terraform mixin versions ([#2639](https://github.com/microsoft/AzureTRE/issues/2639))
 
 ## 0.4.3 (September 12, 2022)
 
