@@ -15,9 +15,9 @@ from services.authentication import get_current_admin_user, get_current_tre_user
 workspace_service_templates_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 
 
-@workspace_service_templates_core_router.get("/workspace-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES)
-async def get_workspace_service_templates(authorized_only: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository)), user=Depends(get_current_tre_user_or_tre_admin)) -> ResourceTemplateInformationInList:
-    templates_infos = template_repo.get_templates_information(ResourceType.WorkspaceService, user.roles if authorized_only else None)
+@workspace_service_templates_core_router.get("/workspace-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
+async def get_workspace_service_templates(template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInformationInList:
+    templates_infos = template_repo.get_templates_information(ResourceType.WorkspaceService)
     return ResourceTemplateInformationInList(templates=templates_infos)
 
 
