@@ -1,12 +1,12 @@
 resource "azurerm_network_interface" "jumpbox_nic" {
   name                = "nic-vm-${var.tre_id}"
-  resource_group_name = azurerm_resource_group.core.name
-  location            = azurerm_resource_group.core.location
-  tags                = local.tre_core_tags
+  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.rg.location
+  tags                = local.tre_shared_service_tags
 
   ip_configuration {
     name                          = "internalIPConfig"
-    subnet_id                     = module.network.shared_subnet_id
+    subnet_id                     = data.azurerm_subnet.shared.id
     private_ip_address_allocation = "Dynamic"
   }
 }
@@ -26,16 +26,14 @@ resource "random_password" "password" {
 
 resource "azurerm_windows_virtual_machine" "jumpbox" {
   name                       = "vm-${var.tre_id}"
-  resource_group_name        = azurerm_resource_group.core.name
-  location                   = azurerm_resource_group.core.location
+  resource_group_name        = data.azurerm_resource_group.rg.name
+  location                   = data.azurerm_resource_group.rg.location
   network_interface_ids      = [azurerm_network_interface.jumpbox_nic.id]
   size                       = var.admin_jumpbox_vm_sku
   allow_extension_operations = true
   admin_username             = "adminuser"
   admin_password             = random_password.password.result
-  tags                       = local.tre_core_tags
-
-  custom_data = base64encode(data.template_file.vm_config.rendered)
+  tags                       = local.tre_shared_service_tags
 
   source_image_reference {
     publisher = "MicrosoftWindowsDesktop"
@@ -43,41 +41,18 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
     sku       = "win10-21h2-pro-g2"
     version   = "latest"
   }
+
   os_disk {
     name                 = "vm-dsk-${var.tre_id}"
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
-  }
-
-  identity {
-    type = "SystemAssigned"
   }
 }
 
 resource "azurerm_key_vault_secret" "jumpbox_credentials" {
   name         = "${azurerm_windows_virtual_machine.jumpbox.name}-jumpbox-password"
   value        = random_password.password.result
-  key_vault_id = azurerm_key_vault.kv.id
-  depends_on = [
-    azurerm_key_vault_access_policy.deployer
-  ]
-}
-resource "azurerm_virtual_machine_extension" "config_script" {
-  name                 = "${azurerm_windows_virtual_machine.jumpbox.name}-vmextension"
-  virtual_machine_id   = azurerm_windows_virtual_machine.jumpbox.id
-  publisher            = "Microsoft.Compute"
-  type                 = "CustomScriptExtension"
-  type_handler_version = "1.10"
-
-  settings = <<SETTINGS
-    {
-      "commandToExecute": "powershell -ExecutionPolicy Unrestricted -NoProfile -NonInteractive -command \"cp c:/azuredata/customdata.bin c:/azuredata/configure.ps1; c:/azuredata/configure.ps1 \""
-    }
-SETTINGS
-}
-
-data "template_file" "vm_config" {
-  template = file("${path.module}/admin-jumpbox-configure.ps1")
+  key_vault_id = data.azurerm_key_vault.keyvault.id
 }
 
 resource "azurerm_virtual_machine_extension" "antimalware" {
