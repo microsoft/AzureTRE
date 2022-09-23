@@ -64,7 +64,9 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
         const u = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}/${ApiEndpoint.UserResources}`, HttpMethod.Get, workspaceCtx.workspaceApplicationIdURI)
 
         // get user resource templates - to check
-        const ut = await apiCall(`${ApiEndpoint.WorkspaceServiceTemplates}/${svc.templateName}/${ApiEndpoint.UserResourceTemplates}`, HttpMethod.Get);
+        // TODO(tanya): here need to change this
+        // const ut = await apiCall(`${ApiEndpoint.WorkspaceServiceTemplates}/${svc.templateName}/${ApiEndpoint.UserResourceTemplates}`, HttpMethod.Get);
+        const ut = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServiceTemplates}/${svc.templateName}/${ApiEndpoint.UserResourceTemplates}`, HttpMethod.Get);
         setHasUserResourceTemplates(ut && ut.templates && ut.templates.length > 0);
         setUserResources(u.userResources);
         setLoadingState(LoadingState.Ok);
