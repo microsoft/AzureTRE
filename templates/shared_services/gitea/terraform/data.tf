@@ -3,7 +3,7 @@ data "azurerm_log_analytics_workspace" "tre" {
   resource_group_name = local.core_resource_group_name
 }
 
-data "azurerm_app_service_plan" "core" {
+data "azurerm_service_plan" "core" {
   name                = "plan-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
 }
@@ -51,4 +51,11 @@ data "azurerm_key_vault" "keyvault" {
 
 data "azurerm_resource_group" "rg" {
   name = local.core_resource_group_name
+}
+
+data "azurerm_monitor_diagnostic_categories" "webapp" {
+  resource_id = data.azurerm_service_plan.core.id
+  depends_on = [
+    azurerm_linux_web_app.gitea,
+  ]
 }

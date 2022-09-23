@@ -14,7 +14,7 @@ from shared_code.blob_operations import get_blob_info_from_topic_and_subject, ge
 
 def main(msg: func.ServiceBusMessage,
          stepResultEvent: func.Out[func.EventGridOutputEvent],
-         toDeleteEvent: func.Out[func.EventGridOutputEvent]):
+         dataDeletionEvent: func.Out[func.EventGridOutputEvent]):
 
     logging.info("Python ServiceBus topic trigger processed message - A new blob was created!.")
     body = msg.get_body().decode('utf-8')
@@ -74,13 +74,13 @@ def main(msg: func.ServiceBusMessage,
     logging.info(f"copied from history: {copied_from}")
 
     # signal that the container where we copied from can now be deleted
-    toDeleteEvent.set(
+    dataDeletionEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
             data={"blob_to_delete": copied_from[-1]},  # last container in copied_from is the one we just copied from
             subject=request_id,
-            event_type="Airlock.ToDelete",
+            event_type="Airlock.DataDeletion",
             event_time=datetime.datetime.utcnow(),
-            data_version="1.0"
+            data_version=constants.DATA_DELETION_EVENT_DATA_VERSION
         )
     )

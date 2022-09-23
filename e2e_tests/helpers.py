@@ -1,3 +1,5 @@
+from json import JSONDecodeError
+
 import asyncio
 from typing import Optional
 from contextlib import asynccontextmanager
@@ -70,10 +72,8 @@ async def get_shared_service_id_by_name(template_name: str, verify, token) -> Op
         return matching_shared_service
 
 
-async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, verify) -> None:
-    short_workspace_id = workspace_id[-4:]
-    short_workspace_service_id = workspace_service_id[-4:]
-    endpoint = f"https://guacamole-{config.TRE_ID}-ws-{short_workspace_id}-svc-{short_workspace_service_id}.azurewebsites.net/guacamole"
+async def check_aad_auth_redirect(endpoint, verify) -> None:
+    LOGGER.info(f"Checking AAD AuthN redirect on: {endpoint}")
 
     terminal_http_status = [status.HTTP_200_OK,
                             status.HTTP_401_UNAUTHORIZED,
@@ -85,7 +85,7 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, v
         while (True):
             try:
                 response = await client.get(url=endpoint, timeout=TIMEOUT)
-                LOGGER.info(f"GUAC RESPONSE: {response}")
+                LOGGER.info(f"Endpoint Response: {response}")
 
                 if response.status_code in terminal_http_status:
                     break
@@ -93,7 +93,7 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, v
                 await asyncio.sleep(30)
 
             except Exception:
-                LOGGER.exception("Generic execption in ping.")
+                LOGGER.exception("Generic execption in http request.")
 
         assert (response.status_code == status.HTTP_302_FOUND)
         assert response.has_redirect_location
@@ -103,3 +103,29 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, v
 
         valid_redirection_contains = ["login", "microsoftonline", "oauth2", "authorize"]
         assert all(word in location for word in valid_redirection_contains), "Redirect URL doesn't apper to be valid"
+
+
+async def get_admin_token(verify) -> str:
+    async with AsyncClient(verify=verify) as client:
+        responseJson = ""
+        headers = {'Content-Type': "application/x-www-form-urlencoded"}
+        if config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != "":
+            # Use Client Credentials flow
+            payload = f"grant_type=client_credentials&client_id={config.TEST_ACCOUNT_CLIENT_ID}&client_secret={config.TEST_ACCOUNT_CLIENT_SECRET}&scope=api://{config.API_CLIENT_ID}/.default"
+            url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/v2.0/token"
+
+        else:
+            # Use Resource Owner Password Credentials flow
+            payload = f"grant_type=password&resource={config.API_CLIENT_ID}&username={config.TEST_USER_NAME}&password={config.TEST_USER_PASSWORD}&scope=api://{config.API_CLIENT_ID}/user_impersonation&client_id={config.TEST_APP_ID}"
+            url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/token"
+
+        response = await client.post(url, headers=headers, content=payload)
+        try:
+            responseJson = response.json()
+        except JSONDecodeError:
+            assert False, "Failed to parse response as JSON: {}".format(response.content)
+
+        assert "access_token" in responseJson, "Failed to get access_token: {}".format(response.content)
+        token = responseJson["access_token"]
+        assert token is not None, "Token not returned"
+        return token if (response.status_code == status.HTTP_200_OK) else None

@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-windowsvm
-version: 0.4.4
+version: 0.4.14
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -24,8 +24,6 @@ parameters:
     type: string
     description: "Resource group containing the shared ACR"
     env: PARENT_SERVICE_ID
-
-  # the following are added automatically by the resource processor
   - name: id
     type: string
     description: "An Id for this installation"
@@ -52,17 +50,11 @@ parameters:
     type: string
     default: "2 CPU | 8GB RAM"
   - name: shared_storage_access
-    type: string
-    default: "true"
+    type: boolean
+    default: true
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
-  - name: nexus_version
-    type: string
-    default: "V2"
-    description: >-
-      "Which Nexus proxy service to use, i.e. V1 for the App Service-based
-      Nexus or V2 for the VM-based service"
 
 outputs:
   - name: ip
@@ -88,7 +80,7 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.2.6
+      clientVersion: 1.2.8
   - az
 
 install:
@@ -98,16 +90,11 @@ install:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         parent_service_id: "{{ bundle.parameters.parent_service_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
-        nexus_version: "{{ bundle.parameters.nexus_version }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -126,16 +113,11 @@ upgrade:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         parent_service_id: "{{ bundle.parameters.parent_service_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
-        nexus_version: "{{ bundle.parameters.nexus_version }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -163,16 +145,11 @@ uninstall:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         parent_service_id: "{{ bundle.parameters.parent_service_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
-        nexus_version: "{{ bundle.parameters.nexus_version }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"

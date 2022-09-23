@@ -56,15 +56,16 @@ async def update_status_in_database(airlock_request_repo: AirlockRequestReposito
         step_result_data = step_result_message.data
         airlock_request_id = step_result_data.request_id
         current_status = step_result_data.completed_step
-        new_status = AirlockRequestStatus(step_result_data.new_status)
+        new_status = AirlockRequestStatus(step_result_data.new_status) if step_result_data.new_status else None
         error_message = step_result_data.error_message
+        request_files = step_result_data.request_files
         # Find the airlock request by id
         airlock_request = await get_airlock_request_by_id_from_path(airlock_request_id=airlock_request_id, airlock_request_repo=airlock_request_repo)
         # Validate that the airlock request status is the same as current status
         if airlock_request.status == current_status:
             workspace = workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
             # update to new status and send to event grid
-            await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=airlock_request.user, new_status=new_status, workspace=workspace, error_message=error_message)
+            await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=airlock_request.user, new_status=new_status, workspace=workspace, request_files=request_files, error_message=error_message)
             result = True
         else:
             error_string = strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, current_status, airlock_request.status)

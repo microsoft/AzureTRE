@@ -1,10 +1,11 @@
 resource "azurerm_storage_account" "stg" {
-  name                     = lower(replace("stg-${var.tre_id}", "-", ""))
-  resource_group_name      = azurerm_resource_group.core.name
-  location                 = azurerm_resource_group.core.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-  tags                     = local.tre_core_tags
+  name                            = lower(replace("stg-${var.tre_id}", "-", ""))
+  resource_group_name             = azurerm_resource_group.core.name
+  location                        = azurerm_resource_group.core.location
+  account_tier                    = "Standard"
+  account_replication_type        = "LRS"
+  allow_nested_items_to_be_public = false
+  tags                            = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 }
 

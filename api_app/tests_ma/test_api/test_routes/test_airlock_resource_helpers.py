@@ -41,10 +41,10 @@ def sample_airlock_request(status=AirlockRequestStatus.Draft):
     return airlock_request
 
 
-def sample_status_changed_event(status="draft"):
+def sample_status_changed_event(new_status="draft", previous_status=None):
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, status=status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:]).__dict__,
+        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=new_status, previous_status=previous_status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:]).__dict__,
         subject=f"{AIRLOCK_REQUEST_ID}/statusChanged",
         data_version="2.0"
     )
@@ -163,7 +163,7 @@ async def test_update_and_publish_event_airlock_request_updates_item(_, event_gr
                                                                      airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
-    status_changed_event_mock = sample_status_changed_event(status="submitted")
+    status_changed_event_mock = sample_status_changed_event(new_status="submitted", previous_status="draft")
     airlock_notification_event_mock = sample_airlock_notification_event(status="submitted")
     airlock_request_repo_mock.update_airlock_request = MagicMock(return_value=updated_airlock_request_mock)
     event_grid_sender_client_mock = event_grid_publisher_client_mock.return_value
@@ -185,6 +185,24 @@ async def test_update_and_publish_event_airlock_request_updates_item(_, event_gr
     assert actual_status_changed_event.data == status_changed_event_mock.data
     actual_airlock_notification_event = event_grid_sender_client_mock.send.await_args_list[1].args[0][0]
     assert actual_airlock_notification_event.data == airlock_notification_event_mock.data
+
+
+@patch("api.routes.airlock_resource_helpers.send_status_changed_event")
+@patch("api.routes.airlock_resource_helpers.send_airlock_notification_event")
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details")
+async def test_update_and_publish_event_airlock_request_sends_status_changed_event(_, send_airlock_notification_event_mock, send_status_changed_event_mock, airlock_request_repo_mock):
+    new_status = AirlockRequestStatus.Submitted
+    airlock_request_repo_mock.update_airlock_request = MagicMock()
+
+    await update_and_publish_event_airlock_request(
+        airlock_request=sample_airlock_request(),
+        airlock_request_repo=airlock_request_repo_mock,
+        user=create_test_user(),
+        new_status=new_status,
+        workspace=sample_workspace())
+
+    assert send_status_changed_event_mock.call_count == 1
+    assert send_airlock_notification_event_mock.call_count == 1
 
 
 @patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"WorkspaceResearcher": ["researcher@outlook.com"], "WorkspaceOwner": ["owner@outlook.com"], "AirlockManager": ["manager@outlook.com"]})
@@ -220,6 +238,24 @@ async def test_update_and_publish_event_airlock_request_raises_503_if_publish_ev
             new_status=AirlockRequestStatus.Submitted,
             workspace=sample_workspace())
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@patch("api.routes.airlock_resource_helpers.send_status_changed_event")
+@patch("api.routes.airlock_resource_helpers.send_airlock_notification_event")
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details")
+async def test_update_and_publish_event_airlock_request_without_status_change_should_not_send_status_changed_event(_, send_airlock_notification_event_mock, send_status_changed_event_mock, airlock_request_repo_mock):
+    new_status = None
+    airlock_request_repo_mock.update_airlock_request = MagicMock()
+
+    await update_and_publish_event_airlock_request(
+        airlock_request=sample_airlock_request(),
+        airlock_request_repo=airlock_request_repo_mock,
+        user=create_test_user(),
+        new_status=new_status,
+        workspace=sample_workspace())
+
+    assert send_status_changed_event_mock.call_count == 0
+    assert send_airlock_notification_event_mock.call_count == 0
 
 
 async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_current_user_review_and_status_arguments_should_ignore_status(airlock_request_repo_mock):

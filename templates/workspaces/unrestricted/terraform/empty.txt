@@ -1,0 +1,1 @@
+The porter terraform mixin requires this directory to exist in the local build context.
