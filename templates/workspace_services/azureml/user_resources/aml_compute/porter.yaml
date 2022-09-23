@@ -1,6 +1,6 @@
 ---
 name: tre-user-resource-aml-compute-instance
-version: 0.3.3
+version: 0.3.4
 description: "Azure Machine Learning Compute Instance"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
