@@ -1,4 +1,4 @@
-# Using TRE for Research
+# Using the Azure TRE
 
 This documentation part will cover how to use AzureTRE, extend it with your custom images and deploy it.
 

@@ -73,7 +73,6 @@ nav:
       - FAQ: using-tre/faq.md # FAQ section (to allow easy contribution)
 
   - Templates and Services: # Docs to highlight and illustrate workspaces, workspace services etc
-      - tre-templates/index.md
       - Workspaces:
           - Base: tre-templates/workspaces/base.md
           - Unrestricted: tre-templates/workspaces/unrestricted.md
@@ -127,7 +126,7 @@ nav:
                   - Overview: tre-templates/pipeline-templates/overview.md
                   - Pipeline Schema: tre-templates/pipeline-templates/pipeline-schema.md
 
-      - Deploying the AzureTRE using CI/CD: using-tre/pipelines/index.md
+      - Deploying the AzureTRE using CI/CD: using-tre/pipelines/pipelines.md
 
       - Troubleshooting FAQ: # General Troubleshooting Section for Development
           - troubleshooting-faq/index.md
