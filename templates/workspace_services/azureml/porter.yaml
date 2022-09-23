@@ -1,6 +1,6 @@
 ---
 name: tre-service-azureml
-version: 0.4.8
+version: 0.4.9
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
