@@ -18,6 +18,7 @@ from models.domain.resource import ResourceHistoryItem, ResourceType
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
+from models.schemas.resource_template import ResourceTemplateInformation
 from resources import strings
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_or_researcher_user_or_tre_admin
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
@@ -214,6 +215,7 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
     def log_in_with_non_admin_user(self, app, non_admin_user):
         with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=non_admin_user()):
             app.dependency_overrides[get_current_tre_user_or_tre_admin] = non_admin_user
+            app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_tre_admin] = non_admin_user
             yield
             app.dependency_overrides = {}
 
@@ -277,6 +279,18 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
         access_service_mock.return_value = [RoleAssignment('ab123', 'ab124')]
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not_valid"))
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.ResourceTemplateRepository.get_templates_information", return_value=[ResourceTemplateInformation(name="test")])
+    async def test_get_workspace_service_templates_returns_templates(self, _, __, app, client):
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE, workspace_id=WORKSPACE_ID))
+        assert response.status_code == status.HTTP_200_OK
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.ResourceTemplateRepository.get_templates_information", return_value=[ResourceTemplateInformation(name="test")])
+    async def test_get_user_resource_templates_returns_templates(self, _, __, app, client):
+        response = await client.get(app.url_path_for(strings.API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE, workspace_id=WORKSPACE_ID, service_template_name="guacamole"))
+        assert response.status_code == status.HTTP_200_OK
 
 
 class TestWorkspaceRoutesThatRequireAdminRights:
