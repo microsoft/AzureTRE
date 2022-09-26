@@ -7,6 +7,7 @@ from jsonschema.exceptions import ValidationError
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_operation_by_id_from_path, get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_user_resource_by_id_from_path
 
+from db.errors import UserNotAuthorizedToUseTemplate
 from db.repositories.operations import OperationRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.user_resources import UserResourceRepository
@@ -19,6 +20,7 @@ from models.schemas.user_resource import UserResourceInResponse, UserResourceInC
 from models.schemas.workspace import WorkspaceInCreate, WorkspacesInList, WorkspaceInResponse
 from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse
 from models.schemas.resource import ResourcePatch
+from models.schemas.resource_template import ResourceTemplateInformationInList
 from resources import strings
 from services.access_service import AuthConfigValidationError
 from services.authentication import get_current_admin_user, \
@@ -32,7 +34,6 @@ from models.domain.request_action import RequestAction
 
 workspaces_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 workspaces_shared_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_tre_admin)])
-workspaces_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
 workspace_services_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
 user_resources_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
 
@@ -82,10 +83,13 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
     try:
         # TODO: This requires Directory.ReadAll ( Application.Read.All ) to be enabled in the Azure AD application to enable a users workspaces to be listed. This should be made optional.
         auth_info = extract_auth_information(workspace_create.properties)
-        workspace, resource_template = workspace_repo.create_workspace_item(workspace_create, auth_info, user.id)
+        workspace, resource_template = workspace_repo.create_workspace_item(workspace_create, auth_info, user.id, user.roles)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed to create workspace model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except UserNotAuthorizedToUseTemplate as e:
+        logging.error(f"User not authorized to use template: {e}")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
     operation = await save_and_deploy_resource(
         resource=workspace,
@@ -158,6 +162,20 @@ async def invoke_action_on_workspace(response: Response, action: str, user=Depen
 
 
 # workspace operations
+# This method only returns templates that the authenticated user is authorized to use
+@workspaces_shared_router.get("/workspace/{workspace_id}/workspace-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE)
+async def get_workspace_service_templates(workspace=Depends(get_workspace_by_id_from_path), template_repo=Depends(get_repository(ResourceTemplateRepository)), user=Depends(get_current_workspace_owner_or_researcher_user_or_tre_admin)) -> ResourceTemplateInformationInList:
+    template_infos = template_repo.get_templates_information(ResourceType.WorkspaceService, user.roles)
+    return ResourceTemplateInformationInList(templates=template_infos)
+
+
+# This method only returns templates that the authenticated user is authorized to use
+@workspaces_shared_router.get("/workspace/{workspace_id}/workspace-service-templates/{service_template_name}/user-resource-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE)
+async def get_user_resource_templates(service_template_name: str, workspace=Depends(get_workspace_by_id_from_path), template_repo=Depends(get_repository(ResourceTemplateRepository)), user=Depends(get_current_workspace_owner_or_researcher_user_or_tre_admin)) -> ResourceTemplateInformationInList:
+    template_infos = template_repo.get_templates_information(ResourceType.UserResource, user.roles, service_template_name)
+    return ResourceTemplateInformationInList(templates=template_infos)
+
+
 @workspaces_shared_router.get("/workspaces/{workspace_id}/operations", response_model=OperationInList, name=strings.API_GET_RESOURCE_OPERATIONS, dependencies=[Depends(get_current_workspace_owner_or_tre_admin)])
 async def retrieve_workspace_operations_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInList:
     return OperationInList(operations=operations_repo.get_operations_by_resource_id(resource_id=workspace.id))
@@ -188,6 +206,9 @@ async def create_workspace_service(response: Response, workspace_service_input: 
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed create workspace service model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except UserNotAuthorizedToUseTemplate as e:
+        logging.error(f"User not authorized to use template: {e}")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
     operation = await save_and_deploy_resource(
         resource=workspace_service,
@@ -300,13 +321,24 @@ async def retrieve_user_resource_by_id(user_resource=Depends(get_user_resource_b
 
 
 @user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_USER_RESOURCE)
-async def create_user_resource(response: Response, user_resource_create: UserResourceInCreate, user_resource_repo=Depends(get_repository(UserResourceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), user=Depends(get_current_workspace_owner_or_researcher_user), workspace=Depends(get_deployed_workspace_by_id_from_path), workspace_service=Depends(get_deployed_workspace_service_by_id_from_path)) -> OperationInResponse:
+async def create_user_resource(
+        response: Response,
+        user_resource_create: UserResourceInCreate,
+        user_resource_repo=Depends(get_repository(UserResourceRepository)),
+        resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
+        operations_repo=Depends(get_repository(OperationRepository)),
+        user=Depends(get_current_workspace_owner_or_researcher_user),
+        workspace=Depends(get_deployed_workspace_by_id_from_path),
+        workspace_service=Depends(get_deployed_workspace_service_by_id_from_path)) -> OperationInResponse:
 
     try:
-        user_resource, resource_template = user_resource_repo.create_user_resource_item(user_resource_create, workspace.id, workspace_service.id, workspace_service.templateName, user.id)
+        user_resource, resource_template = user_resource_repo.create_user_resource_item(user_resource_create, workspace.id, workspace_service.id, workspace_service.templateName, user.id, user.roles)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed create user resource model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except UserNotAuthorizedToUseTemplate as e:
+        logging.error(f"User not authorized to use template: {e}")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
     operation = await save_and_deploy_resource(
         resource=user_resource,

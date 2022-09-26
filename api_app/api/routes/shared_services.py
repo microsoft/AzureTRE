@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header, status, Response
 from jsonschema.exceptions import ValidationError
 
 from db.repositories.operations import OperationRepository
-from db.errors import DuplicateEntity
+from db.errors import DuplicateEntity, UserNotAuthorizedToUseTemplate
 from api.dependencies.database import get_repository
 from api.dependencies.shared_services import get_shared_service_by_id_from_path, get_operation_by_id_from_path
 from db.repositories.resource_templates import ResourceTemplateRepository
@@ -47,13 +47,16 @@ async def retrieve_shared_service_by_id(shared_service=Depends(get_shared_servic
 @shared_services_router.post("/shared-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
 async def create_shared_service(response: Response, shared_service_input: SharedServiceInCreate, user=Depends(get_current_admin_user), shared_services_repo=Depends(get_repository(SharedServiceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
     try:
-        shared_service, resource_template = shared_services_repo.create_shared_service_item(shared_service_input)
+        shared_service, resource_template = shared_services_repo.create_shared_service_item(shared_service_input, user.roles)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed create shared service model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except DuplicateEntity as e:
         logging.error(f"Shared service already exists: {e}")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+    except UserNotAuthorizedToUseTemplate as e:
+        logging.error(f"User not authorized to use template: {e}")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
     operation = await save_and_deploy_resource(
         resource=shared_service,
