@@ -19,7 +19,7 @@ user_resource_templates_core_router = APIRouter(dependencies=[Depends(get_curren
 
 @user_resource_templates_core_router.get("/workspace-service-templates/{service_template_name}/user-resource-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_USER_RESOURCE_TEMPLATES, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 async def get_user_resource_templates_for_service_template(service_template_name: str, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInformationInList:
-    template_infos = template_repo.get_templates_information(ResourceType.UserResource, service_template_name)
+    template_infos = template_repo.get_templates_information(ResourceType.UserResource, parent_service_name=service_template_name)
     return ResourceTemplateInformationInList(templates=template_infos)
 
 
