@@ -24,3 +24,8 @@ export enum AirlockRequestStatus {
   Submitted = 'submitted',
   Cancelled = 'cancelled'
 }
+
+export interface NewAirlockRequest {
+  requestType: AirlockRequestType;
+  businessJustification: string;
+}
