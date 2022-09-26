@@ -59,7 +59,7 @@ async def receive_message(service_bus_client, logger_adapter: logging.LoggerAdap
             logger_adapter.info("Looking for new session...")
             # max_wait_time=1 -> don't hold the session open after processing of the message has finished
             async with service_bus_client.get_queue_receiver(queue_name=q_name, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
-                logger_adapter.info("Got a session containing messages")
+                logger_adapter.info(f"Got a session containing messages: {receiver.session.session_id}")
                 async with AutoLockRenewer() as renewer:
                     # allow a session to be auto lock renewed for up to an hour - if it's processing a message
                     renewer.register(receiver, receiver.session, max_lock_renewal_duration=3600)
@@ -84,7 +84,7 @@ async def receive_message(service_bus_client, logger_adapter: logging.LoggerAdap
                         logger_adapter.info(f"Message for resource_id={message['id']}, operation_id={message['operationId']} processed as {result} and marked complete.")
                         await receiver.complete_message(msg)
 
-                    logger_adapter.info("Closing session")
+                    logger_adapter.info(f"Closing session: {receiver.session.session_id}")
                     await renewer.close()
 
         except OperationTimeoutError:
