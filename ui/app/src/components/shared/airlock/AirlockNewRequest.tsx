@@ -12,53 +12,6 @@ interface AirlockNewRequestProps {
   onCreateRequest: (request: AirlockRequest) => void;
 }
 
-const stackTokens: IStackTokens = { childrenGap: 20 };
-const { palette, fonts } = getTheme();
-
-const importPreviewGraphic: IDocumentCardPreviewProps = {
-  previewImages: [
-    {
-      previewIconProps: {
-        iconName: 'ReleaseGate',
-        styles: {
-          root: {
-            fontSize: fonts.superLarge.fontSize,
-            color: '#0078d7',
-            backgroundColor: palette.neutralLighterAlt,
-          },
-        },
-      },
-      width: 144,
-    },
-  ],
-  styles: {
-    previewIcon: { backgroundColor: palette.neutralLighterAlt },
-  },
-};
-
-const exportPreviewGraphic: IDocumentCardPreviewProps = {
-  previewImages: [
-    {
-      previewIconProps: {
-        iconName: 'Leave',
-        styles: {
-          root: {
-            fontSize: fonts.superLarge.fontSize,
-            color: '#0078d7',
-            backgroundColor: palette.neutralLighterAlt,
-          },
-        },
-      },
-      width: 144,
-    },
-  ],
-  styles: {
-    previewIcon: { backgroundColor: palette.neutralLighterAlt },
-  },
-};
-
-const cardTitleStyles = { root: { fontWeight: '600', paddingTop: 15 } };
-
 export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> = (props: AirlockNewRequestProps) => {
   const [newRequest, setNewRequest] = useState<NewAirlockRequest>({} as NewAirlockRequest);
   const [requestValid, setRequestValid] = useState(false);
@@ -112,8 +65,21 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
 
   const dismissPanel = useCallback(() => navigate('../'), [navigate]);
 
-  let title;
-  let currentStep;
+  const renderFooter = useCallback(() => {
+    let footer = <></>
+    if (newRequest.requestType) {
+      footer = <>
+        <div style={{textAlign: 'end'}}>
+          <DefaultButton onClick={() => setNewRequest({} as NewAirlockRequest)} styles={{root:{marginRight: 8}}}>Back</DefaultButton>
+          <PrimaryButton onClick={() => setHideCreateDialog(false)} disabled={!requestValid}>Create</PrimaryButton>
+        </div>
+      </>
+    }
+    return footer;
+  }, [newRequest, setNewRequest, setHideCreateDialog, requestValid]);
+
+  let title: string;
+  let currentStep = <></>;
 
   // Render current step depending on whether requestType has been selected
   if (!newRequest.requestType) {
@@ -164,19 +130,6 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
     </Stack>;
   }
 
-  const renderFooter = useCallback(() => {
-    let footer = <></>
-    if (newRequest.requestType) {
-      footer = <>
-        <div style={{textAlign: 'end'}}>
-          <DefaultButton onClick={() => setNewRequest({} as NewAirlockRequest)} styles={{root:{marginRight: 8}}}>Back</DefaultButton>
-          <PrimaryButton onClick={() => setHideCreateDialog(false)} disabled={!requestValid}>Create</PrimaryButton>
-        </div>
-      </>
-    }
-    return footer;
-  }, [newRequest, setNewRequest, setHideCreateDialog, requestValid]);
-
   return (
     <Panel
       headerText={title}
@@ -217,3 +170,50 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
     </Panel>
   )
 }
+
+const stackTokens: IStackTokens = { childrenGap: 20 };
+const { palette, fonts } = getTheme();
+
+const importPreviewGraphic: IDocumentCardPreviewProps = {
+  previewImages: [
+    {
+      previewIconProps: {
+        iconName: 'ReleaseGate',
+        styles: {
+          root: {
+            fontSize: fonts.superLarge.fontSize,
+            color: '#0078d7',
+            backgroundColor: palette.neutralLighterAlt,
+          },
+        },
+      },
+      width: 144,
+    },
+  ],
+  styles: {
+    previewIcon: { backgroundColor: palette.neutralLighterAlt },
+  },
+};
+
+const exportPreviewGraphic: IDocumentCardPreviewProps = {
+  previewImages: [
+    {
+      previewIconProps: {
+        iconName: 'Leave',
+        styles: {
+          root: {
+            fontSize: fonts.superLarge.fontSize,
+            color: '#0078d7',
+            backgroundColor: palette.neutralLighterAlt,
+          },
+        },
+      },
+      width: 144,
+    },
+  ],
+  styles: {
+    previewIcon: { backgroundColor: palette.neutralLighterAlt },
+  },
+};
+
+const cardTitleStyles = { root: { fontWeight: '600', paddingTop: 15 } };

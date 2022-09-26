@@ -72,7 +72,6 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
             newCol.isSortedDescending = true;
           }
         });
-        console.log(columns);
         return orderedColumns;
       });
 
