@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-azure-importreview-vm/template_schema.json",
+    "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm/template_schema.json",
     "type": "object",
     "title": "Import review Virtual Machine",
     "description": "Windows virtual machine for import review",
@@ -16,7 +16,7 @@
         "title": "Windows image",
         "description": "Select Windows image to use for VM",
         "enum": [
-          "Windows 10"
+          "Server 2019 Data Science VM"
         ]
       },
       "vm_size": {
