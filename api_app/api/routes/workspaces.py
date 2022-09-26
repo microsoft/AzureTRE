@@ -25,7 +25,7 @@ from resources import strings
 from services.access_service import AuthConfigValidationError
 from services.authentication import get_current_admin_user, \
     get_access_service, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_tre_user_or_tre_admin, \
-    get_current_workspace_owner_or_researcher_user_or_tre_admin, get_current_workspace_owner_or_tre_admin, \
+    get_current_workspace_owner_or_tre_admin, \
     get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
     get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin
 from services.authentication import extract_auth_information

@@ -23,7 +23,6 @@ from resources import strings
 from services.authentication import get_current_admin_user, \
     get_current_tre_user_or_tre_admin, get_current_workspace_owner_user, \
     get_current_workspace_owner_or_researcher_user, \
-    get_current_workspace_owner_or_researcher_user_or_tre_admin, \
     get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
     get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
@@ -220,7 +219,6 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
     def log_in_with_non_admin_user(self, app, non_admin_user):
         with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=non_admin_user()):
             app.dependency_overrides[get_current_tre_user_or_tre_admin] = non_admin_user
-            app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_tre_admin] = non_admin_user
             app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = non_admin_user
             app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin] = non_admin_user
             yield
@@ -735,7 +733,6 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_researcher_user(self, app, researcher_user):
         # The following ws services requires the WS app registration
-        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_tre_admin] = researcher_user
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = researcher_user
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = researcher_user
         yield
