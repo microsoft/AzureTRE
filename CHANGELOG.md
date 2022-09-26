@@ -6,6 +6,8 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 * Firewall now blocks terraform/hasicorp domains ([#2590](https://github.com/microsoft/AzureTRE/pull/2590)). **Migration** is manual - update the templateVersion of `tre-shared-service-firewall` resource in Cosmos to `0.5.0`. Check the PR for more details.
+* Add Airlock Manager Workspace ([#2505](https://github.com/microsoft/AzureTRE/pull/2505))
+* Restrict resource templates to specific roles ([#2623](https://github.com/microsoft/AzureTRE/pull/2623/))
 
 FEATURES:
 
@@ -14,10 +16,12 @@ FEATURES:
 ENHANCEMENTS:
 
 * Cancelling an Airlock request triggers deletion of the request container and files ([#2584](https://github.com/microsoft/AzureTRE/pull/2584))
+* Move admin-vm from core to a shared service ([#2624](https://github.com/microsoft/AzureTRE/pull/2624))
 
 BUG FIXES:
 
 * Resource processor error on deploying user-resource: TypeError: 'NoneType' object is not iterable ([#2569](https://github.com/microsoft/AzureTRE/issues/2569))
+* Update Porter and Terraform mixin versions ([#2639](https://github.com/microsoft/AzureTRE/issues/2639))
 
 ## 0.4.3 (September 12, 2022)
 
