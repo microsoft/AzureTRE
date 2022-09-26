@@ -1,7 +1,7 @@
 ---
 name: tre-service-guacamole-import-reviewvm
-version: 0.0.7
-description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
+version: 0.0.1
+description: "An Azure TRE User Resource Template for reviewing Airlock import requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
 
