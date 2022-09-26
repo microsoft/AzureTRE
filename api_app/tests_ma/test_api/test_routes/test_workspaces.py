@@ -666,7 +666,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
-    @ patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @ patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
@@ -957,7 +957,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         assert response.text == strings.WORKSPACE_SERVICE_IS_NOT_DEPLOYED
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
-    @ patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @ patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -1004,7 +1004,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
-    @ patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @ patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
@@ -1032,7 +1032,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
-    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     async def test_delete_user_resource_raises_400_if_user_resource_is_enabled(self, _, get_user_resource_mock, ___, ____, resource_template_repo, app, client, basic_user_resource_template):
         user_resource = sample_user_resource_object()
         get_user_resource_mock.return_value = user_resource
@@ -1047,7 +1047,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=disabled_user_resource())
-    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @patch("api.routes.workspaces.send_uninstall_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     async def test_delete_user_resource_sends_uninstall_message(self, send_uninstall_mock, __, ___, ____, _____, resource_template_repo, app, client, basic_user_resource_template):
         resource_template_repo.return_value = basic_user_resource_template
@@ -1058,7 +1058,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
-    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @patch("api.routes.workspaces.send_uninstall_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     async def test_delete_user_resource_returns_resource_id(self, __, ___, get_user_resource_mock, ____, _____, resource_template_repo, app, client, basic_user_resource_template):
         user_resource = disabled_user_resource()
