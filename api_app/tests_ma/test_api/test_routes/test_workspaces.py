@@ -21,8 +21,11 @@ from models.domain.workspace_service import WorkspaceService
 from models.schemas.resource_template import ResourceTemplateInformation
 from resources import strings
 from services.authentication import get_current_admin_user, \
-    get_current_tre_user_or_tre_admin, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, \
-    get_current_workspace_owner_or_researcher_user_or_tre_admin, get_current_workspace_owner_or_researcher_user_or_airlock_manager
+    get_current_tre_user_or_tre_admin, get_current_workspace_owner_user, \
+    get_current_workspace_owner_or_researcher_user, \
+    get_current_workspace_owner_or_researcher_user_or_tre_admin, \
+    get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
+    get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 
@@ -219,6 +222,7 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
             app.dependency_overrides[get_current_tre_user_or_tre_admin] = non_admin_user
             app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_tre_admin] = non_admin_user
             app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = non_admin_user
+            app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin] = non_admin_user
             yield
             app.dependency_overrides = {}
 

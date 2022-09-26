@@ -26,7 +26,8 @@ from services.access_service import AuthConfigValidationError
 from services.authentication import get_current_admin_user, \
     get_access_service, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_tre_user_or_tre_admin, \
     get_current_workspace_owner_or_researcher_user_or_tre_admin, get_current_workspace_owner_or_tre_admin, \
-    get_current_workspace_owner_or_researcher_user_or_airlock_manager
+    get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
+    get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin
 from services.authentication import extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
@@ -35,7 +36,7 @@ from .resource_helpers import get_identity_role_assignments, save_and_deploy_res
 from models.domain.request_action import RequestAction
 
 workspaces_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
-workspaces_shared_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_tre_admin)])
+workspaces_shared_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin)])
 workspace_services_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 user_resources_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 
@@ -172,14 +173,21 @@ async def invoke_action_on_workspace(response: Response, action: str, user=Depen
 # workspace operations
 # This method only returns templates that the authenticated user is authorized to use
 @workspaces_shared_router.get("/workspace/{workspace_id}/workspace-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE)
-async def get_workspace_service_templates(workspace=Depends(get_workspace_by_id_from_path), template_repo=Depends(get_repository(ResourceTemplateRepository)), user=Depends(get_current_workspace_owner_or_researcher_user_or_tre_admin)) -> ResourceTemplateInformationInList:
+async def get_workspace_service_templates(
+        workspace=Depends(get_workspace_by_id_from_path),
+        template_repo=Depends(get_repository(ResourceTemplateRepository)),
+        user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin)) -> ResourceTemplateInformationInList:
     template_infos = template_repo.get_templates_information(ResourceType.WorkspaceService, user.roles)
     return ResourceTemplateInformationInList(templates=template_infos)
 
 
 # This method only returns templates that the authenticated user is authorized to use
 @workspaces_shared_router.get("/workspace/{workspace_id}/workspace-service-templates/{service_template_name}/user-resource-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE)
-async def get_user_resource_templates(service_template_name: str, workspace=Depends(get_workspace_by_id_from_path), template_repo=Depends(get_repository(ResourceTemplateRepository)), user=Depends(get_current_workspace_owner_or_researcher_user_or_tre_admin)) -> ResourceTemplateInformationInList:
+async def get_user_resource_templates(
+        service_template_name: str,
+        workspace=Depends(get_workspace_by_id_from_path),
+        template_repo=Depends(get_repository(ResourceTemplateRepository)),
+        user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin)) -> ResourceTemplateInformationInList:
     template_infos = template_repo.get_templates_information(ResourceType.UserResource, user.roles, service_template_name)
     return ResourceTemplateInformationInList(templates=template_infos)
 
