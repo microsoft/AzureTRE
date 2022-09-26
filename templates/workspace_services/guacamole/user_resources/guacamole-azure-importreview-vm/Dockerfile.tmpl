@@ -5,7 +5,7 @@ ARG BUNDLE_DIR
 ARG AZURE_TRE_VERSION="0.4.3"
 
 RUN  apt-get update \
-  && apt-get install --no-install-recommends jq ca-certificates curl -y \
+  && apt-get install --no-install-recommends jq ca-certificates curl patch -y \
   && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 WORKDIR $BUNDLE_DIR
@@ -29,6 +29,9 @@ RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/r
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY . $BUNDLE_DIR
+
+# Apply patch with the difference from the base workspace
+RUN patch -p0 < $BUNDLE_DIR/windowsvm.diff
 
 # Mirror plugins to prevent network access at runtime
 # Remove when available from https://github.com/getporter/terraform-mixin/issues/90

@@ -29,13 +29,6 @@
           "4 CPU | 16GB RAM"
         ],
         "updateable": true
-      },
-      "shared_storage_access": {
-        "$id": "#/properties/shared_storage_access",
-        "type": "boolean",
-        "title": "Shared storage",
-        "default": true,
-        "description": "Enable access to shared storage"
       }
     }
 }

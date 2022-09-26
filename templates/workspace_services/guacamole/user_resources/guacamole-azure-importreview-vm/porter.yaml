@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-importreview-vm
-version: 0.0.4
+version: 0.0.5
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -51,7 +51,7 @@ parameters:
     default: "2 CPU | 8GB RAM"
   - name: shared_storage_access
     type: boolean
-    default: true
+    default: false
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
