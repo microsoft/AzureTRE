@@ -1,5 +1,5 @@
 #!/bin/bash
-set -o errexit
+# set -o errexit
 set -o pipefail
 set -o nounset
 # set -o xtrace
@@ -10,9 +10,16 @@ if [ ! -f "$1" ]; then
     #exit
   fi
 else
-  # doesn't work with quotes
-  # shellcheck disable=SC2046
-  export $(grep -v -e '^[[:space:]]*$' -e '^#' "$1" | xargs)
+  while read -r line
+  do
+    name=$(echo $line | cut -d= -f1)
+    value=$(echo $line | cut -d= -f2)
+    if [[ ("${value:0:1}" == "'" &&  "${value: -1:1}" == "'") || (("${value:0:1}" == "\"" &&  "${value: -1:1}" == "\"")) ]]; then
+      value=${value:1:-1}
+    fi
+    declare -g $name="$value"
+    export "${name?}"
+  done < <(grep -v -e '^[[:space:]]*$' -e '^#' "$1" ) # feed in via Process Substition to avoid bash subshell (http://mywiki.wooledge.org/ProcessSubstitution)
 fi
 
 set +o nounset
