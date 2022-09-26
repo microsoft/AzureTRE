@@ -49,9 +49,6 @@ parameters:
   - name: vm_size
     type: string
     default: "2 CPU | 8GB RAM"
-  - name: shared_storage_name
-    type: string
-    default: "vm-shared-storage"
 
 outputs:
   - name: ip
@@ -91,7 +88,7 @@ install:
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "false"
-        shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
+        shared_storage_name: "unused"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -114,7 +111,7 @@ upgrade:
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "false"
-        shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
+        shared_storage_name: "unused"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -145,8 +142,8 @@ uninstall:
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
-        shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
-        shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
+        shared_storage_access: "false"
+        shared_storage_name: "unused"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"

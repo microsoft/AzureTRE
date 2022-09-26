@@ -53,12 +53,6 @@
       }
     },
     {
-      "name": "shared_storage_name",
-      "source": {
-        "env": "SHARED_STORAGE_NAME"
-      }
-    },
-    {
       "name": "vm_size",
       "source": {
         "env": "VM_SIZE"
