@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-import-reviewvm
-version: 0.0.1
+version: 0.0.2
 description: "An Azure TRE User Resource Template for reviewing Airlock import requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -49,9 +49,6 @@ parameters:
   - name: vm_size
     type: string
     default: "2 CPU | 8GB RAM"
-  - name: shared_storage_access
-    type: boolean
-    default: false
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
@@ -93,7 +90,7 @@ install:
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
-        shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
+        shared_storage_access: "false"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -116,7 +113,7 @@ upgrade:
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
-        shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
+        shared_storage_access: "false"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
