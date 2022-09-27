@@ -132,19 +132,19 @@ tre-destroy:
 terraform-deploy:
 	$(call target_title, "Deploying ${DIR} with Terraform") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ${DIR}/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env "TERRAFORM" \
 	&& cd ${DIR}/terraform/ && ./deploy.sh
 
 terraform-import:
 	$(call target_title, "Importing ${DIR} with Terraform") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ${DIR}/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env "TERRAFORM" \
 	&& cd ${DIR}/terraform/ && ./import.sh
 
 terraform-destroy:
 	$(call target_title, "Destroying ${DIR} Service") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ${DIR}/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env "TERRAFORM" \
 	&& cd ${DIR}/terraform/ && ./destroy.sh
 
 # This will validate all files, not only the changed ones as the CI version does.
