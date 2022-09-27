@@ -19,6 +19,7 @@ from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
 from resources import strings
+from models.schemas.resource_template import ResourceTemplateInformation
 from services.authentication import get_current_admin_user, \
     get_current_tre_user_or_tre_admin, get_current_workspace_owner_user, \
     get_current_workspace_owner_or_researcher_user, \
@@ -738,6 +739,18 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     async def test_get_workspace_by_id_get_as_workspace_researcher(self, _, app, client):
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
+        assert response.status_code == status.HTTP_200_OK
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.ResourceTemplateRepository.get_templates_information", return_value=[ResourceTemplateInformation(name="test")])
+    async def test_get_workspace_service_templates_returns_templates(self, _, __, app, client):
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE, workspace_id=WORKSPACE_ID))
+        assert response.status_code == status.HTTP_200_OK
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.ResourceTemplateRepository.get_templates_information", return_value=[ResourceTemplateInformation(name="test")])
+    async def test_get_user_resource_templates_returns_templates(self, _, __, app, client):
+        response = await client.get(app.url_path_for(strings.API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE, workspace_id=WORKSPACE_ID, service_template_name="guacamole"))
         assert response.status_code == status.HTTP_200_OK
 
     # [GET] /workspaces/{workspace_id}/workspace-services
