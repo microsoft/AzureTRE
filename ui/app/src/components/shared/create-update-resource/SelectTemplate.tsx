@@ -20,7 +20,7 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (pro
     useEffect(() => {
         const getTemplates = async () => {
             try {
-                let templatesResponse = await apiCall(props.templatesPath, HttpMethod.Get, props.workspaceApplicationIdURI);
+                const templatesResponse = await apiCall(props.templatesPath, HttpMethod.Get, props.workspaceApplicationIdURI);
                 setTemplates(templatesResponse.templates);
                 setLoading(LoadingState.Ok);
             } catch (err: any){

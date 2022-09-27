@@ -65,6 +65,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
 
   // Construct API paths for templates of specified resourceType
   let templateListPath;
+  // Usually, the GET path would be `${templateGetPath}/${selectedTemplate}`, but there's an exception for user resources
   let templateGetPath;
 
   let workspaceApplicationIdURI = undefined
