@@ -67,9 +67,11 @@ public class AuthenticationProviderService {
 
             List<String> rolesList = roles.asList(String.class);
             if (rolesList.stream().noneMatch(x -> x.equalsIgnoreCase("WorkspaceOwner")
-                || x.equalsIgnoreCase("WorkspaceResearcher"))) {
+                || x.equalsIgnoreCase("WorkspaceResearcher")
+                || x.equalsIgnoreCase("AirlockManager"))) {
                 throw new GuacamoleInvalidCredentialsException(
-                    "User must have a workspace owner or workspace researcher role", CredentialsInfo.USERNAME_PASSWORD);
+                    "User must have a workspace owner or workspace researcher or Airlock Manager role",
+                    CredentialsInfo.USERNAME_PASSWORD);
             }
         } catch (final Exception ex) {
             LOGGER.error("Could not validate token", ex);
