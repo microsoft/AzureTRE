@@ -290,7 +290,11 @@ build-and-deploy-ui:
 	&& if [ "$${DEPLOY_UI}" != "false" ]; then ${MAKEFILE_DIR}/devops/scripts/build_deploy_ui.sh; else echo "UI Deploy skipped as DEPLOY_UI is false"; fi \
 
 prepare-for-e2e:
-	$(call user_resource_bundle,guacamole,guacamole-azure-importreview-vm)
+	$(call workspace_bundle,base) \
+	&& $(call workspace_service_bundle,guacamole) \
+	&& $(call shared_service_bundle,gitea) \
+	&& $(call user_resource_bundle,guacamole,guacamole-azure-windowsvm) \
+	&& $(call user_resource_bundle,guacamole,guacamole-azure-linuxvm)
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
