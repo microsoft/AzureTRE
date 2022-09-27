@@ -166,7 +166,7 @@ async def invoke_action_on_workspace(response: Response, action: str, user=Depen
 
 # workspace operations
 # This method only returns templates that the authenticated user is authorized to use
-@workspaces_shared_router.get("/workspace/{workspace_id}/workspace-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE)
+@workspaces_shared_router.get("/workspaces/{workspace_id}/workspace-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE)
 async def get_workspace_service_templates(
         workspace=Depends(get_workspace_by_id_from_path),
         template_repo=Depends(get_repository(ResourceTemplateRepository)),
@@ -176,7 +176,7 @@ async def get_workspace_service_templates(
 
 
 # This method only returns templates that the authenticated user is authorized to use
-@workspaces_shared_router.get("/workspace/{workspace_id}/workspace-service-templates/{service_template_name}/user-resource-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE)
+@workspaces_shared_router.get("/workspaces/{workspace_id}/workspace-service-templates/{service_template_name}/user-resource-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE)
 async def get_user_resource_templates(
         service_template_name: str,
         workspace=Depends(get_workspace_by_id_from_path),
