@@ -166,6 +166,8 @@ Workspace:
 > * The (import) rejected storage account (`stalimrej`) is bound to the TRE CORE vnet
 > * The (import) approved storage account (`stalimapp`) is bound to the workspace vnet
 
+[![Airlock networking](../assets/airlock-networking.png)](../assets/airlock-networking.png)
+
 In the TRE Core, the TRE API will provide the airlock API endpoints allowing to advance the process. The TRE API will expose the following methods:
 
 | Method | Endpoint | Description |
