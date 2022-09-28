@@ -32,9 +32,6 @@ Before you can run the `deploy_tre.yml` pipeline there are some one-time configu
   az account set --subscription <subscription ID>
   ```
 
-  !!! caution
-      When running locally the credentials of the logged-in user will be used to deploy the infrastructure. Hence, it is essential that the user has enough permissions to deploy all resources.
-
   See [Sign in with Azure CLI](https://docs.microsoft.com/cli/azure/authenticate-azure-cli) for more details.
 
 1. Create a service principal
@@ -44,20 +41,21 @@ Before you can run the `deploy_tre.yml` pipeline there are some one-time configu
   Create a main service principal with "**Owner**" role:
 
   ```cmd
-  az ad sp create-for-rbac --name "sp-aztre-core" --role Owner --scopes /subscriptions/<subscription_id> --sdk-auth
+  az ad sp create-for-rbac --name "sp-aztre-cicd" --role Owner --scopes /subscriptions/<subscription_id> --sdk-auth
   ```
 
   !!! caution
       Save the JSON output locally - as you will need it later for setting secrets in the build
 
-1. Configure the repository secrets. These values will be in the JSON file from the previous step.
-
-  | <div style="width: 230px">Secret name</div> | Description |
-  | ----------- | ----------- |
-  | `ARM_SUBSCRIPTION_ID` | The Azure subscription to deploy to  |
-  | `ARM_TENANT_ID` | The Azure tenant to deploy to  |
-  | `ARM_CLIENT_ID` | The Azure Client Id (user)  |
-  | `ARM_CLIENT_SECRET` | The Azure Client Secret (password)  |
+1. Create a repository secret named `AZURE_CREDENTIALS` and use the JSON output from the previous step as its value. Note it should look similar to this:
+```json
+{
+  "clientId": "",
+  "clientSecret": "",
+  "subscriptionId": "",
+  "tenantId": ""
+}
+```
 
 ### Decide on a TRE ID and Azure resources location
 
