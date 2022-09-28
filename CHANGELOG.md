@@ -6,6 +6,7 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 * Firewall now blocks terraform/hasicorp domains ([#2590](https://github.com/microsoft/AzureTRE/pull/2590)). **Migration** is manual - update the templateVersion of `tre-shared-service-firewall` resource in Cosmos to `0.5.0`. Check the PR for more details.
+* Github Actions deployments use a single ACR instead of two. Github secrets might need updating, see PR for details. ([#2654](https://github.com/microsoft/AzureTRE/pull/2654))
 
 FEATURES:
 
@@ -19,7 +20,6 @@ ENHANCEMENTS:
 
 * Cancelling an Airlock request triggers deletion of the request container and files ([#2584](https://github.com/microsoft/AzureTRE/pull/2584))
 * Move admin-vm from core to a shared service ([#2624](https://github.com/microsoft/AzureTRE/pull/2624))
-* Github Actions deployments use a single ACR instead of two ([#2624](https://github.com/microsoft/AzureTRE/pull/2624))
 
 BUG FIXES:
 
