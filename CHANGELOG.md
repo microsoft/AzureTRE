@@ -20,7 +20,6 @@ ENHANCEMENTS:
 
 * Cancelling an Airlock request triggers deletion of the request container and files ([#2584](https://github.com/microsoft/AzureTRE/pull/2584))
 * Move admin-vm from core to a shared service ([#2624](https://github.com/microsoft/AzureTRE/pull/2624))
-* Github Actions deployments use a single ACR instead of two ([#2624](https://github.com/microsoft/AzureTRE/pull/2624))
 
 BUG FIXES:
 
