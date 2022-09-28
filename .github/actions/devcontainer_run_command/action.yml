@@ -2,18 +2,6 @@
 name: "run_command"
 description: "Run a command in a devcontainer"
 inputs:
-  USE_ENV_VARS_NOT_FILES:
-    description: "Use ENV variables rather than a file."
-    required: false
-    default: "true"
-  TF_INPUT:
-    description: "Make Terraform fail if missing variables."
-    required: false
-    default: "0"
-  TF_IN_AUTOMATION:
-    description: "Terraform should not provide hints in the console."
-    required: false
-    default: "1"
   COMMAND:
     description: "The command you want to run in the Devcontainer."
     required: true
@@ -50,6 +38,7 @@ inputs:
   TERRAFORM_STATE_CONTAINER_NAME:
     description: "The name of the container to store the Terraform state."
     required: false
+    default: ""
   MGMT_RESOURCE_GROUP_NAME:
     description: "The resource group used to store the Terraform state."
     required: false
@@ -130,9 +119,9 @@ runs:
           -v /var/run/docker.sock:/var/run/docker.sock \
           --workdir /workspaces/tre \
           --user vscode \
-          -e TF_INPUT="${{ inputs.TF_INPUT }}" \
-          -e TF_IN_AUTOMATION="${{ inputs.TF_IN_AUTOMATION }}" \
-          -e USE_ENV_VARS_NOT_FILES="${{ inputs.USE_ENV_VARS_NOT_FILES }}" \
+          -e TF_INPUT="0" \
+          -e TF_IN_AUTOMATION="1" \
+          -e USE_ENV_VARS_NOT_FILES="true" \
           -e BUNDLE_TYPE="${{ inputs.BUNDLE_TYPE }}" \
           -e WORKSPACE_SERVICE_NAME="${{ inputs.WORKSPACE_SERVICE_NAME }}" \
           -e LOCATION="${{ inputs.LOCATION }}" \
@@ -142,7 +131,8 @@ runs:
           -e ARM_CLIENT_SECRET="${{ fromJSON(inputs.AZURE_CREDENTIALS).clientSecret }}" \
           -e ARM_TENANT_ID="${{ fromJSON(inputs.AZURE_CREDENTIALS).tenantId }}" \
           -e ARM_SUBSCRIPTION_ID="${{ fromJSON(inputs.AZURE_CREDENTIALS).subscriptionId }}" \
-          -e TF_VAR_terraform_state_container_name="${{ inputs.TERRAFORM_STATE_CONTAINER_NAME }}" \
+          -e TF_VAR_terraform_state_container_name="${{ (inputs.TERRAFORM_STATE_CONTAINER_NAME != ''
+            && inputs.TERRAFORM_STATE_CONTAINER_NAME) || 'tfstate' }}" \
           -e TF_VAR_mgmt_storage_account_name="${{ inputs.MGMT_STORAGE_ACCOUNT_NAME }}" \
           -e TF_VAR_mgmt_resource_group_name="${{ inputs.MGMT_RESOURCE_GROUP_NAME }}" \
           -e ACR_NAME=${{ inputs.ACR_NAME }} \
