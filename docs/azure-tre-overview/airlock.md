@@ -141,13 +141,15 @@ graph LR
 
 
 TRE:
+
 * `stalimex` - storage (st) airlock (al) import (im) external (ex)
 * `stalimip` - storage (st) airlock (al) import (im) in-progress (ip)
 * `stalimrej` - storage (st) airlock (al) import (im) rejected (rej)
 * `stalimblocked` - storage (st) airlock (al) import (im) blocked
 * `stalexapp` - storage (st) airlock (al) export (ex) approved (app)
 
-Workspace
+Workspace:
+
 * `stalimapp` - workspace storage (st) airlock (al) import (im) approved (app)
 * `stalexint` - workspace storage (st) airlock (al) export (ex) internal (int)
 * `stalexip` - workspace storage (st) airlock (al) export (ex) in-progress (ip)
