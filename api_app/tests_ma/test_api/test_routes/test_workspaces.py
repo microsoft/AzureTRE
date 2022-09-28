@@ -19,7 +19,12 @@ from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
 from resources import strings
-from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_or_researcher_user_or_tre_admin
+from models.schemas.resource_template import ResourceTemplateInformation
+from services.authentication import get_current_admin_user, \
+    get_current_tre_user_or_tre_admin, get_current_workspace_owner_user, \
+    get_current_workspace_owner_or_researcher_user, \
+    get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
+    get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 
@@ -213,9 +218,7 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_admin_user(self, app, non_admin_user):
         with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=non_admin_user()):
-            app.dependency_overrides[get_current_tre_user_or_tre_admin] = non_admin_user
             yield
-            app.dependency_overrides = {}
 
     # [GET] /workspaces
     @patch("api.routes.workspaces.WorkspaceRepository.get_active_workspaces")
@@ -252,15 +255,13 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
     # [GET] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.get_identity_role_assignments")
-    async def test_get_workspace_by_id_get_returns_workspace_if_found(self, access_service_mock, get_workspace_mock, app, client):
-        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'app_role_id_workspace_owner': 'ab124', 'app_role_id_workspace_researcher': 'ab125', 'app_role_id_workspace_airlock_manager': 'ab130'}
-        workspace = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
+    async def test_get_workspace_by_id_get_as_tre_user_returns_403(self, access_service_mock, get_workspace_mock, app, client):
+        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'client_id': 'cl123', 'app_role_id_workspace_owner': 'ab124', 'app_role_id_workspace_researcher': 'ab125', 'app_role_id_workspace_airlock_manager': 'ab130'}
         get_workspace_mock.return_value = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
         access_service_mock.return_value = [RoleAssignment('ab123', 'ab124')]
 
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
-        actual_resource = response.json()["workspace"]
-        assert actual_resource["id"] == workspace.id
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     # [GET] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
@@ -270,20 +271,14 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    # [GET] /workspaces/{workspace_id}
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    @patch("api.routes.workspaces.get_identity_role_assignments")
-    async def test_get_workspace_by_id_get_returns_422_if_workspace_id_is_not_a_uuid(self, access_service_mock, _, app, client):
-        access_service_mock.return_value = [RoleAssignment('ab123', 'ab124')]
-        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not_valid"))
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
 
 class TestWorkspaceRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
         with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=admin_user()):
+            app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin] = admin_user
             app.dependency_overrides[get_current_tre_user_or_tre_admin] = admin_user
+            app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = admin_user
             app.dependency_overrides[get_current_admin_user] = admin_user
             yield
             app.dependency_overrides = {}
@@ -308,6 +303,27 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert workspaces_from_response[0]["id"] == valid_ws_1.id
         assert workspaces_from_response[1]["id"] == valid_ws_2.id
         assert workspaces_from_response[2]["id"] == valid_ws_3.id
+
+    # [GET] /workspaces/{workspace_id}
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.get_identity_role_assignments")
+    async def test_get_workspace_by_id_as_tre_admin(self, access_service_mock, get_workspace_mock, app, client):
+        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'client_id': 'cl123', 'app_role_id_workspace_owner': 'ab124', 'app_role_id_workspace_researcher': 'ab125', 'app_role_id_workspace_airlock_manager': 'ab130'}
+        workspace = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
+        get_workspace_mock.return_value = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
+        access_service_mock.return_value = [RoleAssignment('ab123', 'ab124')]
+
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
+        actual_resource = response.json()["workspace"]
+        assert actual_resource["id"] == workspace.id
+
+    # [GET] /workspaces/{workspace_id}
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.get_identity_role_assignments")
+    async def test_get_workspace_by_id_get_returns_422_if_workspace_id_is_not_a_uuid(self, access_service_mock, _, app, client):
+        access_service_mock.return_value = [RoleAssignment('ab123', 'ab124')]
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not_valid"))
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     # [POST] /workspaces/
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
@@ -489,6 +505,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     def log_in_with_owner_user(self, app, owner_user):
         # The following ws services requires the WS app registration
         app.dependency_overrides[get_current_workspace_owner_user] = owner_user
+        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = owner_user
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = owner_user
         yield
         app.dependency_overrides = {}
@@ -647,7 +664,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
-    @ patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @ patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
@@ -712,10 +729,29 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_researcher_user(self, app, researcher_user):
         # The following ws services requires the WS app registration
-        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_tre_admin] = researcher_user
+        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = researcher_user
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = researcher_user
+        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin] = researcher_user
         yield
         app.dependency_overrides = {}
+
+    # [GET] /workspaces/{workspace_id}
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    async def test_get_workspace_by_id_get_as_workspace_researcher(self, _, app, client):
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
+        assert response.status_code == status.HTTP_200_OK
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.ResourceTemplateRepository.get_templates_information", return_value=[ResourceTemplateInformation(name="test")])
+    async def test_get_workspace_service_templates_returns_templates(self, _, __, app, client):
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE, workspace_id=WORKSPACE_ID))
+        assert response.status_code == status.HTTP_200_OK
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.ResourceTemplateRepository.get_templates_information", return_value=[ResourceTemplateInformation(name="test")])
+    async def test_get_user_resource_templates_returns_templates(self, _, __, app, client):
+        response = await client.get(app.url_path_for(strings.API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE, workspace_id=WORKSPACE_ID, service_template_name="guacamole"))
+        assert response.status_code == status.HTTP_200_OK
 
     # [GET] /workspaces/{workspace_id}/workspace-services
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -937,7 +973,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         assert response.text == strings.WORKSPACE_SERVICE_IS_NOT_DEPLOYED
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
-    @ patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @ patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -984,7 +1020,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
-    @ patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @ patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
@@ -1012,7 +1048,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
-    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     async def test_delete_user_resource_raises_400_if_user_resource_is_enabled(self, _, get_user_resource_mock, ___, ____, resource_template_repo, app, client, basic_user_resource_template):
         user_resource = sample_user_resource_object()
         get_user_resource_mock.return_value = user_resource
@@ -1027,7 +1063,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=disabled_user_resource())
-    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @patch("api.routes.workspaces.send_uninstall_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     async def test_delete_user_resource_sends_uninstall_message(self, send_uninstall_mock, __, ___, ____, _____, resource_template_repo, app, client, basic_user_resource_template):
         resource_template_repo.return_value = basic_user_resource_template
@@ -1038,7 +1074,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
-    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @patch("api.routes.workspaces.send_uninstall_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     async def test_delete_user_resource_returns_resource_id(self, __, ___, get_user_resource_mock, ____, _____, resource_template_repo, app, client, basic_user_resource_template):
         user_resource = disabled_user_resource()

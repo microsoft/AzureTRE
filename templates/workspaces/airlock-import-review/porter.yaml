@@ -1,7 +1,7 @@
 ---
-name: tre-workspace-airlock-manager
-version: 0.3.29
-description: "An Airlock Manager workspace for Azure TRE"
+name: tre-workspace-airlock-import-review
+version: 0.3.30
+description: "A workspace to do Airlock Data Import Reviews for Azure TRE"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
 

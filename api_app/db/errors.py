@@ -20,3 +20,7 @@ class ResourceIsNotDeployed(Exception):
 
 class InvalidInput(Exception):
     """Raised when invalid input is received when creating an entity."""
+
+
+class UserNotAuthorizedToUseTemplate(Exception):
+    """Raised when user attempts to use a template they aren't authorized to use"""

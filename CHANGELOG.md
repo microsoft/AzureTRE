@@ -9,7 +9,11 @@
 
 FEATURES:
 
-*
+* Add Import Review Workspace ([#2498](https://github.com/microsoft/AzureTRE/issues/2498))
+* Restrict resource templates to specific roles ([#2600](https://github.com/microsoft/AzureTRE/issues/2600))
+* Import review user resource template ([#2601](https://github.com/microsoft/AzureTRE/issues/2601))
+* Airlock Manager can use user resources ([#2499](https://github.com/microsoft/AzureTRE/issues/2499))
+* Users only see templates they are authorized to use ([#2640](https://github.com/microsoft/AzureTRE/issues/2640))
 
 ENHANCEMENTS:
 
@@ -19,6 +23,8 @@ ENHANCEMENTS:
 BUG FIXES:
 
 * Resource processor error on deploying user-resource: TypeError: 'NoneType' object is not iterable ([#2569](https://github.com/microsoft/AzureTRE/issues/2569))
+* Update Porter and Terraform mixin versions ([#2639](https://github.com/microsoft/AzureTRE/issues/2639))
+* Airlock Manager should have permissions to get SAS token ([#2502](https://github.com/microsoft/AzureTRE/issues/2502))
 
 ## 0.4.3 (September 12, 2022)
 

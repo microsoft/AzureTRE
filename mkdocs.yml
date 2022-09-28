@@ -50,7 +50,7 @@ nav:
           - Azure Resources: azure-tre-overview/tre-resources-breakdown.md
           - Airlock: azure-tre-overview/airlock.md
           - Cost Reporting: azure-tre-overview/cost-reporting.md
-      - Compliance: azure-tre-overview/compliance-info.md
+      #- Compliance: azure-tre-overview/compliance-info.md
 
   - QuickStart: # Setup steps for anyone performing an initial deployment of the AzureTRE for eval purposes
       - tre-admins/setup-instructions/index.md
@@ -62,11 +62,9 @@ nav:
       - 6. Installing Base Workspace: tre-admins/setup-instructions/installing-base-workspace.md
       - 7. Installing Workspace Service and User Resource: tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md
 
-  - Using the TRE for Research: # Documentation for users of the TRE
+  - Using the Azure TRE: # Documentation for users of the TRE
       - Introduction: using-tre/index.md
       - Terms and Definitions: using-tre/terms-definitions.md
-      - Local Development: using-tre/local-development/index.md
-      - CI/CD pipelines: using-tre/pipelines/index.md
       - Custom Templates: using-tre/templates/index.md
       - Workspaces:
           - using-tre/wks/index.md # Documentation describing what a workspace is
@@ -75,7 +73,6 @@ nav:
       - FAQ: using-tre/faq.md # FAQ section (to allow easy contribution)
 
   - Templates and Services: # Docs to highlight and illustrate workspaces, workspace services etc
-      - tre-templates/index.md
       - Workspaces:
           - Base: tre-templates/workspaces/base.md
           - Unrestricted: tre-templates/workspaces/unrestricted.md
@@ -111,6 +108,7 @@ nav:
           - Registring Templates: tre-admins/registering-templates.md
 
       - Development: # Docs related to the developing code for the AzureTRE
+          - Local Development: using-tre/local-development/index.md
           - Contributing to AzureTRE: # Docs aimed at OSS developers, committing code to the AzureTRE repo
               - Introduction: tre-developers/index.md
               - API: tre-developers/api.md
@@ -118,6 +116,8 @@ nav:
               - Resource Processor: tre-developers/resource-processor.md
               - End to End Tests: tre-developers/end-to-end-tests.md
               - Letsencrypt: tre-developers/letsencrypt.md
+              - Releases: tre-developers/release.md
+              - GitHub Actions: tre-admins/setup-instructions/workflows.md
 
           - Developing Workspace Templates: # Docs aimed at developers creating workspace templates
               - Authoring Workspace Templates: tre-workspace-authors/authoring-workspace-templates.md
@@ -126,14 +126,7 @@ nav:
                   - Overview: tre-templates/pipeline-templates/overview.md
                   - Pipeline Schema: tre-templates/pipeline-templates/pipeline-schema.md
 
-          - Deploying the AzureTRE using CI/CD: # Docs related to DevOps engineers deploying the AzureTRE
-              - Using the DevContainer in your Build Pipeline: coming-soon.md
-              - Setting up Secrets: coming-soon.md
-              - Build Runners:
-                  - GitHub Actions: tre-admins/setup-instructions/workflows.md
-                  - Azure DevOps: coming-soon.md
-
-          - Releases: tre-developers/release.md
+      - Deploying the AzureTRE using CI/CD: using-tre/pipelines/pipelines.md
 
       - Troubleshooting FAQ: # General Troubleshooting Section for Development
           - troubleshooting-faq/index.md
