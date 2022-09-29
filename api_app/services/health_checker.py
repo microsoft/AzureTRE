@@ -50,7 +50,7 @@ async def create_service_bus_status(credential) -> Tuple[StatusEnum, str]:
     try:
         service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential, retry_total=0)
         async with service_bus_client:
-            receiver = service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE)
+            receiver = service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_STEP_RESULT_QUEUE)
             async with receiver:
                 pass
     except ServiceBusConnectionError:
