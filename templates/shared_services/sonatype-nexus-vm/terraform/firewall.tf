@@ -19,4 +19,19 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet_sonatype_
     target_fqdns     = local.nexus_allowed_fqdns_list
     source_addresses = data.azurerm_subnet.shared.address_prefixes
   }
+
+  rule {
+    name = "windows-vm-crl"
+    protocol {
+      port = "443"
+      type = "Https"
+    }
+    protocol {
+      port = "80"
+      type = "Http"
+    }
+
+    target_fqdns = local.windows_nexus_allowed_fqdns_list
+    source_addresses = data.azurerm_subnet.services.address_prefixes
+  }
 }
