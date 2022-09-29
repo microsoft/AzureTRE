@@ -90,3 +90,6 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plu
 jq -n --arg proxy "${NEXUS_PROXY_URL}:8083" '{"registry-mirrors": [$proxy]}' > /etc/docker/daemon.json
 sudo systemctl daemon-reload
 sudo systemctl restart docker
+
+# R config
+sudo sed '1i\local({\n    r <- getOption("repos")\n    r["Nexus"] <- "https://nexus-prodtre03.uksouth.cloudapp.azure.com/repository/r-proxy/"\n    options(repos = r)\n})' /etc/R/Rprofile.site
