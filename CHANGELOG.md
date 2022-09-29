@@ -12,7 +12,6 @@
 
 FEATURES:
 
-* Add Airlock Manager Workspace ([#2505](https://github.com/microsoft/AzureTRE/pull/2505))
 * Add Import Review Workspace ([#2498](https://github.com/microsoft/AzureTRE/issues/2498))
 * Restrict resource templates to specific roles ([#2600](https://github.com/microsoft/AzureTRE/issues/2600))
 * Import review user resource template ([#2601](https://github.com/microsoft/AzureTRE/issues/2601))
