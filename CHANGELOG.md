@@ -11,6 +11,13 @@
 FEATURES:
 
 * Add Airlock Manager Workspace ([#2505](https://github.com/microsoft/AzureTRE/pull/2505))
+* Github Actions deployments use a single ACR instead of two. Github secrets might need updating, see PR for details. ([#2654](https://github.com/microsoft/AzureTRE/pull/2654))
+* Align Github Action secret names. Existing Github environments must be updated, see PR for details. ([#2655](https://github.com/microsoft/AzureTRE/pull/2655))
+* Add Import Review Workspace ([#2498](https://github.com/microsoft/AzureTRE/issues/2498))
+* Restrict resource templates to specific roles ([#2600](https://github.com/microsoft/AzureTRE/issues/2600))
+* Import review user resource template ([#2601](https://github.com/microsoft/AzureTRE/issues/2601))
+* Airlock Manager can use user resources ([#2499](https://github.com/microsoft/AzureTRE/issues/2499))
+* Users only see templates they are authorized to use ([#2640](https://github.com/microsoft/AzureTRE/issues/2640))
 
 ENHANCEMENTS:
 
@@ -22,6 +29,7 @@ BUG FIXES:
 
 * Resource processor error on deploying user-resource: TypeError: 'NoneType' object is not iterable ([#2569](https://github.com/microsoft/AzureTRE/issues/2569))
 * Update Porter and Terraform mixin versions ([#2639](https://github.com/microsoft/AzureTRE/issues/2639))
+* Airlock Manager should have permissions to get SAS token ([#2502](https://github.com/microsoft/AzureTRE/issues/2502))
 
 ## 0.4.3 (September 12, 2022)
 

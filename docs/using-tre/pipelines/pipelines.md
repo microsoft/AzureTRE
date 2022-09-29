@@ -15,20 +15,8 @@ The workflows are using Github environment to source its environment variables. 
 
 The following environment variables should be defined in your github environment:
 
-1. [Auth env vars](auth.md##create_authentication_assets)
-1. [Core and Devops env vars](docs/tre-admins/environment-variables.md)
-1. Setup Azure Container Registry (ACR) to hold the devcontainer images:
-    1. Create ACR to hold the devcontainer images following [this guide](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-portal?tabs=azure-cli).
-    1. [Enable Admin Account](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-authentication?tabs=azure-cli#admin-account)
-    1. Having setup the previous steps, add the created ACR info to your Github Actions environment:
-
-    | <div style="width: 330px">Environment variable name</div> | Description                                                                       |
-    | --------------------------------------------------------- | --------------------------------------------------------------------------------- |
-    | `ACTIONS_ACR_NAME`                                        | The Azure Container registry name that the devcontainer is stored in.             |
-    | `ACTIONS_ACR_URI`                                         | The full uri of the Azure Container Registry where the devcontainer is stored in. |
-    | `ACTIONS_ACR_PASSWORD`                                    | The Azure Container registry password for the devcontainer.                       |
-    | `ACTIONS_DEVCONTAINER_TAG`                                | The container label to use when running the command.                              |
-
+1. [Auth env vars](../../tre-admins/auth.md##create_authentication_assets)
+1. [Core and Devops env vars](../../tre-admins/environment-variables.md)
 
 Having all the environment variables set in the Github environment the next step will be to use it in your pipelines:
 
