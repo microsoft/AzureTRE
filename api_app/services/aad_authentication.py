@@ -57,6 +57,8 @@ class AzureADAuthorization(AccessService):
             try:
                 app_reg_id = self._fetch_ws_app_reg_id_from_ws_id(request)
                 decoded_token = self._decode_token(token, app_reg_id)
+            except HTTPException as h:
+                raise h
             except Exception as e:
                 logging.debug(e)
                 logging.debug("Failed to decode using workspace_id, trying with TRE API app registration")
