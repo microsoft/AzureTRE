@@ -13,6 +13,7 @@
 FEATURES:
 
 * Add Import Review Workspace ([#2498](https://github.com/microsoft/AzureTRE/issues/2498))
+* Restrict resource templates to specific roles ([#2623](https://github.com/microsoft/AzureTRE/pull/2623/))
 * Import review user resource template ([#2601](https://github.com/microsoft/AzureTRE/issues/2601))
 * Airlock Manager can use user resources ([#2499](https://github.com/microsoft/AzureTRE/issues/2499))
 * Users only see templates they are authorized to use ([#2640](https://github.com/microsoft/AzureTRE/issues/2640))
@@ -21,7 +22,6 @@ ENHANCEMENTS:
 
 * Cancelling an Airlock request triggers deletion of the request container and files ([#2584](https://github.com/microsoft/AzureTRE/pull/2584))
 * Move admin-vm from core to a shared service ([#2624](https://github.com/microsoft/AzureTRE/pull/2624))
-* Restrict resource templates to specific roles ([#2623](https://github.com/microsoft/AzureTRE/pull/2623/))
 
 BUG FIXES:
 
