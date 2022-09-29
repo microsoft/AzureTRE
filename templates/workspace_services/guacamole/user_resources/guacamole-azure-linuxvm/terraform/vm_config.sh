@@ -92,4 +92,8 @@ sudo systemctl daemon-reload
 sudo systemctl restart docker
 
 # R config
-sudo sed '1i\local({\n    r <- getOption("repos")\n    r["Nexus"] <- "https://nexus-prodtre03.uksouth.cloudapp.azure.com/repository/r-proxy/"\n    options(repos = r)\n})' /etc/R/Rprofile.site
+sudo echo "local({
+    r <- getOption("repos")
+    r["Nexus"] <- "https://nexus-prodtre03.uksouth.cloudapp.azure.com/repository/r-proxy/"
+    options(repos = r)
+})" >> /etc/R/Rprofile.site
