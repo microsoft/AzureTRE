@@ -10,7 +10,7 @@ This application does not have any roles defined.
 | Name | Type* | Admin consent required |  TRE usage |
 | --- | -- | -----| --------- |
 | Application.ReadWrite.OwnedBy | Application | Yes | This user has `Application.ReadWrite.OwnedBy` as a minimum permission for it to function. If the tenant is managed by a customer administrator, then this user must be added to the **Owners** of every workspace that is created. This will allow TRE to manage the AAD Application. This will be a manual process for the Tenant Admin. |
-| Application.ReadWrite.All | Application | Yes | This permission is required to create workspace applications and administer any applications in the tenant. IThis is needed if the AAD Administrator has delegated AAD administrative operations to the TRE. There will be no need for the Tenant Admin to manually create workspace applications in the Tenant. |
+| Application.ReadWrite.All | Application | Yes | This permission is required to create workspace applications and administer any applications in the tenant. This is needed if the AAD Administrator has delegated AAD administrative operations to the TRE. There will be no need for the Tenant Admin to manually create workspace applications in the Tenant. |
 | Directory.Read.All | Application | Yes | This permission is required to read User details from Azure Active Directory. This is needed if the AAD Administrator has delegated AAD administrative operations to the TRE. |
 | Group.ReadWrite.All | Application | Yes | This permission is required to create and update Azure AD groups. This is requried if Azure AD groups are to be created automatically by the TRE. |
 
