@@ -7,17 +7,19 @@ from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
 from services.cost_service import CostService
 from datetime import date, datetime, timedelta
-from azure.mgmt.costmanagement.models import QueryResult, TimeframeType, QueryDefinition
+from azure.mgmt.costmanagement.models import QueryResult, TimeframeType, QueryDefinition, QueryColumn
 
 
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
-def test_query_tre_costs_with_granularity_none_returns_correct_cost_report(client_mock, shared_service_repo_mock,
-                                                                           workspace_repo_mock):
+@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+def test_query_tre_costs_with_granularity_none_returns_correct_cost_report(get_resource_groups_by_tag_mock, client_mock,
+                                                                           shared_service_repo_mock, workspace_repo_mock):
     client_mock.return_value.query.usage.return_value = __get_cost_management_query_result()
     __set_shared_service_repo_mock_return_value(shared_service_repo_mock)
     __set_workspace_repo_mock_get_active_workspaces_return_value(workspace_repo_mock)
+    __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
     cost_report = cost_service.query_tre_costs(
@@ -43,20 +45,22 @@ def test_query_tre_costs_with_granularity_none_returns_correct_cost_report(clien
     assert cost_report.workspaces[1].id == "d680d6b7-d1d9-411c-9101-0793da980c81"
     assert cost_report.workspaces[1].name == "the workspace display name2"
     assert len(cost_report.workspaces[1].costs) == 2
-    assert cost_report.workspaces[1].costs[0].cost == 2.8
-    assert cost_report.workspaces[1].costs[0].currency == "USD"
-    assert cost_report.workspaces[1].costs[1].cost == 5.8
-    assert cost_report.workspaces[1].costs[1].currency == "ILS"
+    assert cost_report.workspaces[1].costs[0].cost == 5.8
+    assert cost_report.workspaces[1].costs[0].currency == "ILS"
+    assert cost_report.workspaces[1].costs[1].cost == 2.8
+    assert cost_report.workspaces[1].costs[1].currency == "USD"
 
 
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
-def test_query_tre_costs_with_granularity_daily_returns_correct_cost_report(client_mock, shared_service_repo_mock,
-                                                                            workspace_repo_mock):
+@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+def test_query_tre_costs_with_granularity_daily_returns_correct_cost_report(
+        get_resource_groups_by_tag_mock, client_mock, shared_service_repo_mock, workspace_repo_mock):
     client_mock.return_value.query.usage.return_value = __set_cost_management_client_mock_query_result()
     __set_shared_service_repo_mock_return_value(shared_service_repo_mock)
     __set_workspace_repo_mock_get_active_workspaces_return_value(workspace_repo_mock)
+    __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
     cost_report = cost_service.query_tre_costs(
@@ -101,12 +105,20 @@ def test_query_tre_costs_with_granularity_daily_returns_correct_cost_report(clie
     assert cost_report.workspaces[1].costs[0].date == date(2022, 5, 1)
     assert cost_report.workspaces[1].costs[1].cost == 5.8
     assert cost_report.workspaces[1].costs[1].date == date(2022, 5, 2)
-    assert cost_report.workspaces[1].costs[2].cost == 6.8
+    assert cost_report.workspaces[1].costs[2].cost == 16.8
     assert cost_report.workspaces[1].costs[2].date == date(2022, 5, 3)
-    assert cost_report.workspaces[1].costs[2].currency == "USD"
-    assert cost_report.workspaces[1].costs[3].cost == 16.8
+    assert cost_report.workspaces[1].costs[2].currency == "ILS"
+    assert cost_report.workspaces[1].costs[3].cost == 6.8
     assert cost_report.workspaces[1].costs[3].date == date(2022, 5, 3)
-    assert cost_report.workspaces[1].costs[3].currency == "ILS"
+    assert cost_report.workspaces[1].costs[3].currency == "USD"
+
+
+def __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock):
+    get_resource_groups_by_tag_mock.return_value = {
+        'rg-guy22': '"tre_id":"guy22"',
+        'rg-guy22-ws-11a6': '"tre_workspace_id":"19b7ce24-aa35-438c-adf6-37e6762911a6"',
+        'rg-guy22-ws-0c81': '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"'
+    }
 
 
 def __get_daily_cost_management_query_result():
@@ -143,17 +155,24 @@ def __get_daily_cost_management_query_result():
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
-def test_query_tre_costs_with_granularity_none_and_missing_costs_data_returns_empty_cost_report(client_mock,
+@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+def test_query_tre_costs_with_granularity_none_and_missing_costs_data_returns_empty_cost_report(get_resource_groups_by_tag_mock,
+                                                                                                client_mock,
                                                                                                 shared_service_repo_mock,
                                                                                                 workspace_repo_mock):
     query_result = QueryResult()
     query_result.rows = [
     ]
+    query_result.columns = [QueryColumn(name="PreTaxCost", type="Number"),
+                            QueryColumn(name="ResourceGroup", type="String"),
+                            QueryColumn(name="Tag", type="String"),
+                            QueryColumn(name="Currency", type="String")]
 
     client_mock.return_value.query.usage.return_value = query_result
 
     __set_shared_service_repo_mock_return_value(shared_service_repo_mock)
     __set_workspace_repo_mock_get_active_workspaces_return_value(workspace_repo_mock)
+    __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
     cost_report = cost_service.query_tre_costs(
@@ -171,17 +190,26 @@ def test_query_tre_costs_with_granularity_none_and_missing_costs_data_returns_em
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
-def test_query_tre_costs_with_granularity_daily_and_missing_costs_data_returns_empty_cost_report(client_mock,
+@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+def test_query_tre_costs_with_granularity_daily_and_missing_costs_data_returns_empty_cost_report(get_resource_groups_by_tag_mock,
+                                                                                                 client_mock,
                                                                                                  shared_service_repo_mock,
                                                                                                  workspace_repo_mock):
     query_result = QueryResult()
     query_result.rows = [
     ]
 
+    query_result.columns = [QueryColumn(name="PreTaxCost", type="Number"),
+                            QueryColumn(name="UsageDate", type="DateTime"),
+                            QueryColumn(name="ResourceGroup", type="String"),
+                            QueryColumn(name="Tag", type="String"),
+                            QueryColumn(name="Currency", type="String")]
+
     client_mock.return_value.query.usage.return_value = query_result
 
     __set_shared_service_repo_mock_return_value(shared_service_repo_mock)
     __set_workspace_repo_mock_get_active_workspaces_return_value(workspace_repo_mock)
+    __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
     cost_report = cost_service.query_tre_costs(
@@ -199,12 +227,15 @@ def test_query_tre_costs_with_granularity_daily_and_missing_costs_data_returns_e
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
-def test_query_tre_costs_with_granularity_none_and_display_name_data_returns_template_name_in_cost_report(client_mock,
+@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+def test_query_tre_costs_with_granularity_none_and_display_name_data_returns_template_name_in_cost_report(get_resource_groups_by_tag_mock,
+                                                                                                          client_mock,
                                                                                                           shared_service_repo_mock,
                                                                                                           workspace_repo_mock):
     client_mock.return_value.query.usage.return_value = __get_cost_management_query_result()
     __set_shared_service_repo_mock_return_value_without_display_name(shared_service_repo_mock)
     __set_workspace_repo_mock_get_active_workspaces_return_value_without_display_name(workspace_repo_mock)
+    __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
     cost_report = cost_service.query_tre_costs(
@@ -229,21 +260,24 @@ def test_query_tre_costs_with_granularity_none_and_display_name_data_returns_tem
     assert cost_report.workspaces[0].costs[0].cost == 1.8
     assert cost_report.workspaces[1].id == "d680d6b7-d1d9-411c-9101-0793da980c81"
     assert cost_report.workspaces[1].name == "tre-workspace-base"
-    assert cost_report.workspaces[1].costs[0].cost == 2.8
-    assert cost_report.workspaces[1].costs[0].currency == "USD"
-    assert cost_report.workspaces[1].costs[1].cost == 5.8
-    assert cost_report.workspaces[1].costs[1].currency == "ILS"
+    assert cost_report.workspaces[1].costs[0].cost == 5.8
+    assert cost_report.workspaces[1].costs[0].currency == "ILS"
+    assert cost_report.workspaces[1].costs[1].cost == 2.8
+    assert cost_report.workspaces[1].costs[1].currency == "USD"
 
 
 @pytest.mark.parametrize("from_date,to_date", [(None, datetime.now()), (datetime.now(), None), (None, None)])
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
-def test_query_tre_costs_with_dates_set_as_none_calls_client_with_month_to_date(client_mock, shared_service_repo_mock,
+@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+def test_query_tre_costs_with_dates_set_as_none_calls_client_with_month_to_date(get_resource_groups_by_tag_mock,
+                                                                                client_mock, shared_service_repo_mock,
                                                                                 workspace_repo_mock, from_date,
                                                                                 to_date):
     __set_shared_service_repo_mock_return_value(shared_service_repo_mock)
     __set_workspace_repo_mock_get_active_workspaces_return_value(workspace_repo_mock)
+    __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
     cost_service.query_tre_costs(
@@ -256,10 +290,13 @@ def test_query_tre_costs_with_dates_set_as_none_calls_client_with_month_to_date(
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
-def test_query_tre_costs_with_dates_set_as_none_calls_client_with_custom_dates(client_mock, shared_service_repo_mock,
+@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+def test_query_tre_costs_with_dates_set_as_none_calls_client_with_custom_dates(get_resource_groups_by_tag_mock,
+                                                                               client_mock, shared_service_repo_mock,
                                                                                workspace_repo_mock):
     __set_shared_service_repo_mock_return_value(shared_service_repo_mock)
     __set_workspace_repo_mock_get_active_workspaces_return_value(workspace_repo_mock)
+    __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     from_date = datetime.now() - timedelta(days=10)
     to_date = datetime.now()
@@ -362,7 +399,9 @@ def __set_user_resource_repo_mock_return_value(user_resource_repo_mock):
 @patch('db.repositories.workspace_services.WorkspaceServiceRepository')
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('services.cost_service.CostManagementClient')
-def test_query_tre_workspace_costs_with_granularity_none_returns_correct_workspace_cost_report(client_mock,
+@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+def test_query_tre_workspace_costs_with_granularity_none_returns_correct_workspace_cost_report(get_resource_groups_by_tag_mock,
+                                                                                               client_mock,
                                                                                                workspace_repo_mock,
                                                                                                workspace_services_repo_mock,
                                                                                                user_resource_repo_mock):
@@ -370,6 +409,7 @@ def test_query_tre_workspace_costs_with_granularity_none_returns_correct_workspa
     __set_workspace_repo_mock_get_workspace_by_id_return_value(workspace_repo_mock)
     __set_workspace_service_repo_mock_return_value(workspace_services_repo_mock)
     __set_user_resource_repo_mock_return_value(user_resource_repo_mock)
+    __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
     workspace_cost_report = cost_service.query_tre_workspace_costs(
@@ -413,7 +453,9 @@ def test_query_tre_workspace_costs_with_granularity_none_returns_correct_workspa
 @patch('db.repositories.workspace_services.WorkspaceServiceRepository')
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('services.cost_service.CostManagementClient')
-def test_query_tre_workspace_costs_with_granularity_daily_returns_correct_workspace_cost_report(client_mock,
+@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+def test_query_tre_workspace_costs_with_granularity_daily_returns_correct_workspace_cost_report(get_resource_groups_by_tag_mock,
+                                                                                                client_mock,
                                                                                                 workspace_repo_mock,
                                                                                                 workspace_services_repo_mock,
                                                                                                 user_resource_repo_mock):
@@ -421,6 +463,7 @@ def test_query_tre_workspace_costs_with_granularity_daily_returns_correct_worksp
     __set_workspace_repo_mock_get_workspace_by_id_return_value(workspace_repo_mock)
     __set_workspace_service_repo_mock_return_value(workspace_services_repo_mock)
     __set_user_resource_repo_mock_return_value(user_resource_repo_mock)
+    __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
     workspace_cost_report = cost_service.query_tre_workspace_costs(
@@ -441,10 +484,11 @@ def test_query_tre_workspace_costs_with_granularity_daily_returns_correct_worksp
     assert len(workspace_cost_report.workspace_services[0].user_resources[0].costs) == 4
     assert workspace_cost_report.workspace_services[0].user_resources[0].costs[0].cost == 114.8
     assert workspace_cost_report.workspace_services[0].user_resources[0].costs[1].cost == 115.8
-    assert workspace_cost_report.workspace_services[0].user_resources[0].costs[2].cost == 116.8
-    assert workspace_cost_report.workspace_services[0].user_resources[0].costs[2].currency == "USD"
-    assert workspace_cost_report.workspace_services[0].user_resources[0].costs[3].cost == 216.8
-    assert workspace_cost_report.workspace_services[0].user_resources[0].costs[3].currency == "ILS"
+    assert workspace_cost_report.workspace_services[0].user_resources[0].costs[2].cost == 216.8
+    assert workspace_cost_report.workspace_services[0].user_resources[0].costs[2].currency == "ILS"
+    assert workspace_cost_report.workspace_services[0].user_resources[0].costs[3].cost == 116.8
+    assert workspace_cost_report.workspace_services[0].user_resources[0].costs[3].currency == "USD"
+
     assert workspace_cost_report.workspace_services[0].user_resources[1].id == "8ce4a294-95ae-45a9-8d48-6525ce84eb5a"
     assert workspace_cost_report.workspace_services[0].user_resources[1].name == "VM2"
     assert len(workspace_cost_report.workspace_services[0].user_resources[1].costs) == 3
@@ -468,74 +512,85 @@ def test_query_tre_workspace_costs_with_granularity_daily_returns_correct_worksp
 def __get_cost_management_query_result():
     query_result = QueryResult()
     query_result.rows = [
-        [37.6, '"tre_core_service_id":"guy22"', 'USD'],
-        [44.5, '"tre_id":"guy22"', 'USD'],
-        [6.8, '"tre_shared_service_id":"848e8eb5-0df6-4d0f-9162-afd9a3fa0631"', 'USD'],
-        [4.8, '"tre_shared_service_id":"f16d0324-9027-4448-b69b-2d48d925e6c0"', 'USD'],
-        [1.8, '"tre_workspace_id":"19b7ce24-aa35-438c-adf6-37e6762911a6"', 'USD'],
-        [2.8, '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"', 'USD'],
-        [5.8, '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"', 'ILS'],
-        [6.6, '"tre_workspace_service_id":"f8cac589-c497-4896-9fac-58e65685a20c"', 'USD'],
-        [9.3, '"tre_workspace_service_id":"9ad6e5d8-0bef-4b9f-91d6-ae33884883a1"', 'USD'],
-        [1.3, '"tre_user_resource_id":"09ed3e6e-fee5-41d0-937e-89644575e78c"', 'USD'],
-        [2.3, '"tre_user_resource_id":"8ce4a294-95ae-45a9-8d48-6525ce84eb5a"', 'USD'],
-        [5.2, '"tre_user_resource_id":"6ede6dc0-a1e1-40bd-92d7-3b3adcbec66d"', 'USD'],
-        [4.1, '"tre_user_resource_id":"915760d8-cf09-4cdb-b73b-815e6bfaef6f"', 'USD'],
+        [37.6, 'rg-guy22', '"tre_core_service_id":"guy22"', 'USD'],
+        [44.5, 'rg-guy22', '"tre_id":"guy22"', 'USD'],
+        [6.8, 'rg-guy22', '"tre_shared_service_id":"848e8eb5-0df6-4d0f-9162-afd9a3fa0631"', 'USD'],
+        [4.8, 'rg-guy22', '"tre_shared_service_id":"f16d0324-9027-4448-b69b-2d48d925e6c0"', 'USD'],
+        [1.8, 'rg-guy22-ws-11a6', '"tre_workspace_id":"19b7ce24-aa35-438c-adf6-37e6762911a6"', 'USD'],
+        [2.8, 'rg-guy22-ws-0c81', '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"', 'USD'],
+        [5.8, 'rg-guy22-ws-0c81', '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"', 'ILS'],
+        [6.6, 'rg-guy22-ws-11a6', '"tre_workspace_service_id":"f8cac589-c497-4896-9fac-58e65685a20c"', 'USD'],
+        [9.3, 'rg-guy22-ws-0c81', '"tre_workspace_service_id":"9ad6e5d8-0bef-4b9f-91d6-ae33884883a1"', 'USD'],
+        [1.3, 'rg-guy22-ws-11a6', '"tre_user_resource_id":"09ed3e6e-fee5-41d0-937e-89644575e78c"', 'USD'],
+        [2.3, 'rg-guy22-ws-0c81', '"tre_user_resource_id":"8ce4a294-95ae-45a9-8d48-6525ce84eb5a"', 'USD'],
+        [5.2, 'rg-guy22-ws-11a6', '"tre_user_resource_id":"6ede6dc0-a1e1-40bd-92d7-3b3adcbec66d"', 'USD'],
+        [4.1, 'rg-guy22-ws-11a6', '"tre_user_resource_id":"915760d8-cf09-4cdb-b73b-815e6bfaef6f"', 'USD'],
     ]
+    query_result.columns = [QueryColumn(name="PreTaxCost", type="Number"),
+                            QueryColumn(name="ResourceGroup", type="String"),
+                            QueryColumn(name="Tag", type="String"),
+                            QueryColumn(name="Currency", type="String")]
     return query_result
 
 
 def __set_cost_management_client_mock_query_result():
     query_result = QueryResult()
     query_result.rows = [
-        [31.6, 20220501, '"tre_core_service_id":"guy22"', 'USD'],
-        [32.6, 20220502, '"tre_core_service_id":"guy22"', 'USD'],
-        [33.6, 20220503, '"tre_core_service_id":"guy22"', 'USD'],
+        [31.6, 20220501, 'rg-guy22', '"tre_core_service_id":"guy22"', 'USD'],
+        [32.6, 20220502, 'rg-guy22', '"tre_core_service_id":"guy22"', 'USD'],
+        [33.6, 20220503, 'rg-guy22', '"tre_core_service_id":"guy22"', 'USD'],
 
-        [44.5, 20220501, '"tre_id":"guy22"', 'USD'],
-        [44.5, 20220502, '"tre_id":"guy22"', 'USD'],
-        [44.5, 20220503, '"tre_id":"guy22"', 'USD'],
+        [44.5, 20220501, 'rg-guy22', '"tre_id":"guy22"', 'USD'],
+        [44.5, 20220502, 'rg-guy22', '"tre_id":"guy22"', 'USD'],
+        [44.5, 20220503, 'rg-guy22', '"tre_id":"guy22"', 'USD'],
 
-        [3.8, 20220501, '"tre_shared_service_id":"848e8eb5-0df6-4d0f-9162-afd9a3fa0631"', 'USD'],
-        [4.8, 20220502, '"tre_shared_service_id":"848e8eb5-0df6-4d0f-9162-afd9a3fa0631"', 'USD'],
-        [5.8, 20220503, '"tre_shared_service_id":"848e8eb5-0df6-4d0f-9162-afd9a3fa0631"', 'USD'],
+        [3.8, 20220501, 'rg-guy22', '"tre_shared_service_id":"848e8eb5-0df6-4d0f-9162-afd9a3fa0631"', 'USD'],
+        [4.8, 20220502, 'rg-guy22', '"tre_shared_service_id":"848e8eb5-0df6-4d0f-9162-afd9a3fa0631"', 'USD'],
+        [5.8, 20220503, 'rg-guy22', '"tre_shared_service_id":"848e8eb5-0df6-4d0f-9162-afd9a3fa0631"', 'USD'],
 
-        [2.8, 20220501, '"tre_shared_service_id":"f16d0324-9027-4448-b69b-2d48d925e6c0"', 'USD'],
-        [3.8, 20220502, '"tre_shared_service_id":"f16d0324-9027-4448-b69b-2d48d925e6c0"', 'USD'],
-        [4.8, 20220503, '"tre_shared_service_id":"f16d0324-9027-4448-b69b-2d48d925e6c0"', 'USD'],
+        [2.8, 20220501, 'rg-guy22', '"tre_shared_service_id":"f16d0324-9027-4448-b69b-2d48d925e6c0"', 'USD'],
+        [3.8, 20220502, 'rg-guy22', '"tre_shared_service_id":"f16d0324-9027-4448-b69b-2d48d925e6c0"', 'USD'],
+        [4.8, 20220503, 'rg-guy22', '"tre_shared_service_id":"f16d0324-9027-4448-b69b-2d48d925e6c0"', 'USD'],
 
-        [1.8, 20220501, '"tre_workspace_id":"19b7ce24-aa35-438c-adf6-37e6762911a6"', 'USD'],
-        [2.8, 20220502, '"tre_workspace_id":"19b7ce24-aa35-438c-adf6-37e6762911a6"', 'USD'],
-        [3.8, 20220503, '"tre_workspace_id":"19b7ce24-aa35-438c-adf6-37e6762911a6"', 'USD'],
+        [1.8, 20220501, 'rg-guy22-ws-11a6', '"tre_workspace_id":"19b7ce24-aa35-438c-adf6-37e6762911a6"', 'USD'],
+        [2.8, 20220502, 'rg-guy22-ws-11a6', '"tre_workspace_id":"19b7ce24-aa35-438c-adf6-37e6762911a6"', 'USD'],
+        [3.8, 20220503, 'rg-guy22-ws-11a6', '"tre_workspace_id":"19b7ce24-aa35-438c-adf6-37e6762911a6"', 'USD'],
 
-        [4.8, 20220501, '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"', 'USD'],
-        [5.8, 20220502, '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"', 'USD'],
-        [6.8, 20220503, '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"', 'USD'],
-        [16.8, 20220503, '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"', 'ILS'],
+        [4.8, 20220501, 'rg-guy22-ws-0c81', '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"', 'USD'],
+        [5.8, 20220502, 'rg-guy22-ws-0c81', '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"', 'USD'],
+        [6.8, 20220503, 'rg-guy22-ws-0c81', '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"', 'USD'],
+        [16.8, 20220503, 'rg-guy22-ws-0c81', '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"', 'ILS'],
 
-        [14.8, 20220501, '"tre_workspace_service_id":"f8cac589-c497-4896-9fac-58e65685a20c"', 'USD'],
-        [15.8, 20220502, '"tre_workspace_service_id":"f8cac589-c497-4896-9fac-58e65685a20c"', 'USD'],
-        [16.8, 20220503, '"tre_workspace_service_id":"f8cac589-c497-4896-9fac-58e65685a20c"', 'USD'],
+        [14.8, 20220501, 'rg-guy22-ws-11a6', '"tre_workspace_service_id":"f8cac589-c497-4896-9fac-58e65685a20c"', 'USD'],
+        [15.8, 20220502, 'rg-guy22-ws-11a6', '"tre_workspace_service_id":"f8cac589-c497-4896-9fac-58e65685a20c"', 'USD'],
+        [16.8, 20220503, 'rg-guy22-ws-11a6', '"tre_workspace_service_id":"f8cac589-c497-4896-9fac-58e65685a20c"', 'USD'],
 
-        [24.8, 20220501, '"tre_workspace_service_id":"9ad6e5d8-0bef-4b9f-91d6-ae33884883a1"', 'USD'],
-        [25.8, 20220502, '"tre_workspace_service_id":"9ad6e5d8-0bef-4b9f-91d6-ae33884883a1"', 'USD'],
-        [26.8, 20220503, '"tre_workspace_service_id":"9ad6e5d8-0bef-4b9f-91d6-ae33884883a1"', 'USD'],
+        [24.8, 20220501, 'rg-guy22-ws-0c81', '"tre_workspace_service_id":"9ad6e5d8-0bef-4b9f-91d6-ae33884883a1"', 'USD'],
+        [25.8, 20220502, 'rg-guy22-ws-0c81', '"tre_workspace_service_id":"9ad6e5d8-0bef-4b9f-91d6-ae33884883a1"', 'USD'],
+        [26.8, 20220503, 'rg-guy22-ws-0c81', '"tre_workspace_service_id":"9ad6e5d8-0bef-4b9f-91d6-ae33884883a1"', 'USD'],
 
-        [114.8, 20220501, '"tre_user_resource_id":"09ed3e6e-fee5-41d0-937e-89644575e78c"', 'USD'],
-        [115.8, 20220502, '"tre_user_resource_id":"09ed3e6e-fee5-41d0-937e-89644575e78c"', 'USD'],
-        [116.8, 20220503, '"tre_user_resource_id":"09ed3e6e-fee5-41d0-937e-89644575e78c"', 'USD'],
-        [216.8, 20220503, '"tre_user_resource_id":"09ed3e6e-fee5-41d0-937e-89644575e78c"', 'ILS'],
+        [114.8, 20220501, 'rg-guy22-ws-11a6', '"tre_user_resource_id":"09ed3e6e-fee5-41d0-937e-89644575e78c"', 'USD'],
+        [115.8, 20220502, 'rg-guy22-ws-11a6', '"tre_user_resource_id":"09ed3e6e-fee5-41d0-937e-89644575e78c"', 'USD'],
+        [116.8, 20220503, 'rg-guy22-ws-11a6', '"tre_user_resource_id":"09ed3e6e-fee5-41d0-937e-89644575e78c"', 'USD'],
+        [216.8, 20220503, 'rg-guy22-ws-11a6', '"tre_user_resource_id":"09ed3e6e-fee5-41d0-937e-89644575e78c"', 'ILS'],
 
-        [164.8, 20220501, '"tre_user_resource_id":"8ce4a294-95ae-45a9-8d48-6525ce84eb5a"', 'USD'],
-        [165.8, 20220502, '"tre_user_resource_id":"8ce4a294-95ae-45a9-8d48-6525ce84eb5a"', 'USD'],
-        [166.8, 20220503, '"tre_user_resource_id":"8ce4a294-95ae-45a9-8d48-6525ce84eb5a"', 'USD'],
+        [164.8, 20220501, 'rg-guy22-ws-0c81', '"tre_user_resource_id":"8ce4a294-95ae-45a9-8d48-6525ce84eb5a"', 'USD'],
+        [165.8, 20220502, 'rg-guy22-ws-0c81', '"tre_user_resource_id":"8ce4a294-95ae-45a9-8d48-6525ce84eb5a"', 'USD'],
+        [166.8, 20220503, 'rg-guy22-ws-0c81', '"tre_user_resource_id":"8ce4a294-95ae-45a9-8d48-6525ce84eb5a"', 'USD'],
 
-        [164.8, 20220501, '"tre_user_resource_id":"6ede6dc0-a1e1-40bd-92d7-3b3adcbec66d"', 'USD'],
-        [165.8, 20220502, '"tre_user_resource_id":"6ede6dc0-a1e1-40bd-92d7-3b3adcbec66d"', 'USD'],
-        [166.8, 20220503, '"tre_user_resource_id":"6ede6dc0-a1e1-40bd-92d7-3b3adcbec66d"', 'USD'],
+        [164.8, 20220501, 'rg-guy22-ws-0c81', '"tre_user_resource_id":"6ede6dc0-a1e1-40bd-92d7-3b3adcbec66d"', 'USD'],
+        [165.8, 20220502, 'rg-guy22-ws-0c81', '"tre_user_resource_id":"6ede6dc0-a1e1-40bd-92d7-3b3adcbec66d"', 'USD'],
+        [166.8, 20220503, 'rg-guy22-ws-0c81', '"tre_user_resource_id":"6ede6dc0-a1e1-40bd-92d7-3b3adcbec66d"', 'USD'],
 
-        [168.8, 20220501, '"tre_user_resource_id":"915760d8-cf09-4cdb-b73b-815e6bfaef6f"', 'USD'],
-        [168.8, 20220502, '"tre_user_resource_id":"915760d8-cf09-4cdb-b73b-815e6bfaef6f"', 'USD'],
-        [168.8, 20220503, '"tre_user_resource_id":"915760d8-cf09-4cdb-b73b-815e6bfaef6f"', 'USD']
+        [168.8, 20220501, 'rg-guy22-ws-0c81', '"tre_user_resource_id":"915760d8-cf09-4cdb-b73b-815e6bfaef6f"', 'USD'],
+        [168.8, 20220502, 'rg-guy22-ws-0c81', '"tre_user_resource_id":"915760d8-cf09-4cdb-b73b-815e6bfaef6f"', 'USD'],
+        [168.8, 20220503, 'rg-guy22-ws-0c81', '"tre_user_resource_id":"915760d8-cf09-4cdb-b73b-815e6bfaef6f"', 'USD']
     ]
+
+    query_result.columns = [QueryColumn(name="PreTaxCost", type="Number"),
+                            QueryColumn(name="UsageDate", type="DateTime"),
+                            QueryColumn(name="ResourceGroup", type="String"),
+                            QueryColumn(name="Tag", type="String"),
+                            QueryColumn(name="Currency", type="String")]
+
     return query_result
