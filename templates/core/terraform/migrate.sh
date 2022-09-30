@@ -15,7 +15,7 @@ terraform init -input=false -backend=true -reconfigure \
 
 echo "*** Migrating TF Resources... ***"
 # terraform show might fail if provider schema has changed. Since we don't call apply at this stage a refresh is needed
-terraform refresh -target=module.resource_processor_vmss_porter[0].random_password.password # When moving to 3.4.*
+terraform refresh
 
 # 1. Check we have a root_module in state
 # 2. Grab the Resource ID
