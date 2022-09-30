@@ -1,10 +1,10 @@
-import { DefaultButton, Dialog, DialogFooter, IStackItemStyles, IStackStyles, MessageBar, Panel, PanelType, Persona, PersonaSize, PrimaryButton, Spinner, SpinnerSize, Stack, TextField, useTheme } from "@fluentui/react";
+import { DefaultButton, Dialog, DialogFooter, DialogType, getTheme, IStackItemStyles, IStackStyles, MessageBar, MessageBarType, Panel, PanelType, Persona, PersonaSize, PrimaryButton, Spinner, SpinnerSize, Stack, TextField, useTheme } from "@fluentui/react";
 import moment from "moment";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { WorkspaceContext } from "../../../contexts/WorkspaceContext";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
-import { AirlockRequest, AirlockRequestStatus } from "../../../models/airlock";
+import { AirlockFilesLinkInvalidStatus, AirlockRequest, AirlockRequestAction, AirlockRequestStatus, NewAirlockRequest } from "../../../models/airlock";
 import { ApiEndpoint } from "../../../models/apiEndpoints";
 import { APIError } from "../../../models/exceptions";
 import { ExceptionLayout } from "../ExceptionLayout";
@@ -14,21 +14,6 @@ interface AirlockViewRequestProps {
   onUpdateRequest: (requests: AirlockRequest) => void;
 }
 
-const underlineStackStyles: IStackStyles = {
-  root: {
-    borderBottom: '#f2f2f2 solid 1px'
-  },
-};
-
-const stackItemStyles: IStackItemStyles = {
-  root: {
-    alignItems: 'center',
-    display: 'flex',
-    height: 50,
-    margin: '0px 5px'
-  },
-};
-
 export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps> = (props: AirlockViewRequestProps) => {
   const {requestId} = useParams();
   const [request, setRequest] = useState<AirlockRequest>();
@@ -37,25 +22,14 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
   const [hideSubmitDialog, setHideSubmitDialog] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
-  const [cancelError, setCancelError] = useState(false);
   const [hideCancelDialog, setHideCancelDialog] = useState(true);
+  const [hideReviewDialog, setHideReviewDialog] = useState(true);
+  const [reviewExplanation, setReviewExplanation] = useState('');
+  const [apiFilesLinkError, setApiFilesLinkError] = useState({} as APIError);
+  const [apiError, setApiError] = useState({} as APIError);
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
-  const [apiFilesLinkError, setApiFilesLinkError] = useState({} as APIError);
-  const [apiSubmitError, setApiSubmitError] = useState({} as APIError);
-  const [apiCancelError, setApiCancelError] = useState({} as APIError);
   const navigate = useNavigate();
-  const theme = useTheme();
-
-  const cancelButtonStyles = useMemo(() => ({
-    root: {
-      marginRight: 8,
-      background: theme.palette.red,
-      color: theme.palette.white,
-      borderColor: theme.palette.red
-    }
-  }), [theme]);
 
   useEffect(() => {
     // Get the selected request from the router param and find in the requests prop
@@ -83,8 +57,8 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
 
   const dismissPanel = useCallback(() => navigate('../'), [navigate]);
 
+  // Submit an airlock request
   const submitRequest = useCallback(async () => {
-    // Submit an airlock request
     if (request && request.workspaceId) {
       setSubmitting(true);
       setSubmitError(false);
@@ -98,18 +72,18 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
         setHideSubmitDialog(true);
       } catch (err: any) {
         err.userMessage = 'Error submitting airlock request';
-        setApiSubmitError(err);
+        setApiError(err);
         setSubmitError(true);
       }
       setSubmitting(false);
     }
   }, [apiCall, request, props, workspaceCtx.workspaceApplicationIdURI]);
 
+  // Cancel an airlock request
   const cancelRequest = useCallback(async () => {
-    // Cancel an airlock request
     if (request && request.workspaceId) {
-      setCancelling(true);
-      setCancelError(false);
+      setSubmitting(true);
+      setSubmitError(false);
       try {
         const response = await apiCall(
           `${ApiEndpoint.Workspaces}/${request.workspaceId}/${ApiEndpoint.AirlockRequests}/${request.id}/${ApiEndpoint.AirlockCancel}`,
@@ -120,13 +94,41 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
         setHideCancelDialog(true);
       } catch (err: any) {
         err.userMessage = 'Error cancelling airlock request';
-        setApiCancelError(err);
-        setCancelError(true);
+        setApiError(err);
+        setSubmitError(true);
       }
-      setCancelling(false);
+      setSubmitting(false);
     }
   }, [apiCall, request, props, workspaceCtx.workspaceApplicationIdURI]);
 
+  // Review an airlock request
+  const reviewRequest = useCallback(async (isApproved: boolean) => {
+    if (request && reviewExplanation) {
+      setSubmitting(true);
+      setSubmitError(false);
+      try {
+        const review = {
+          approval: isApproved,
+          decisionExplanation: reviewExplanation
+        };
+        const response = await apiCall(
+          `${ApiEndpoint.Workspaces}/${request.workspaceId}/${ApiEndpoint.AirlockRequests}/${request.id}/${ApiEndpoint.AirlockReview}`,
+          HttpMethod.Post,
+          workspaceCtx.workspaceApplicationIdURI,
+          review
+        );
+        props.onUpdateRequest(response.airlockRequest);
+        setHideReviewDialog(true);
+      } catch (err: any) {
+        err.userMessage = 'Error reviewing airlock request';
+        setApiError(err);
+        setSubmitError(true);
+      }
+      setSubmitting(false);
+    }
+  }, [apiCall, request, props, workspaceCtx.workspaceApplicationIdURI]);
+
+  // Render the panel footer along with buttons that the signed-in user is allowed to see according to the API
   const renderFooter = useCallback(() => {
     let footer = <></>
     if (request) {
@@ -138,18 +140,29 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
             </MessageBar>
           </div>
         }
+        {
+          request.errorMessage && <div style={{marginTop: '10px', marginBottom: '10px'}}>
+            <MessageBar messageBarType={MessageBarType.error}>{request.errorMessage}</MessageBar>
+          </div>
+        }
         <div style={{textAlign: 'end'}}>
           {
-            request.status !== AirlockRequestStatus.Cancelled && <DefaultButton onClick={() => {setCancelError(false); setHideCancelDialog(false)}} styles={cancelButtonStyles}>Cancel Request</DefaultButton>
+            request.allowed_user_actions?.includes(AirlockRequestAction.Cancel) &&
+              <DefaultButton onClick={() => {setSubmitError(false); setHideCancelDialog(false)}} styles={destructiveButtonStyles}>Cancel request</DefaultButton>
           }
           {
-            request.status === AirlockRequestStatus.Draft && <PrimaryButton onClick={() => {setSubmitError(false); setHideSubmitDialog(false)}}>Submit</PrimaryButton>
+            request.allowed_user_actions?.includes(AirlockRequestAction.Submit) &&
+              <PrimaryButton onClick={() => {setSubmitError(false); setHideSubmitDialog(false)}}>Submit</PrimaryButton>
+          }
+          {
+            request.allowed_user_actions?.includes(AirlockRequestAction.Review) &&
+              <PrimaryButton onClick={() => {setSubmitError(false); setHideReviewDialog(false)}}>Review</PrimaryButton>
           }
         </div>
       </>
     }
     return footer;
-  }, [request, cancelButtonStyles]);
+  }, [request, destructiveButtonStyles]);
 
   return (
     <>
@@ -230,31 +243,35 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
             </Stack.Item>
           </Stack>
 
-          <Stack style={{marginTop: '20px'}} styles={underlineStackStyles}>
-            <Stack.Item styles={stackItemStyles}>
-              <b>Files</b>
-            </Stack.Item>
-          </Stack>
-          <Stack>
-            <Stack.Item style={{paddingTop: '10px', paddingBottom: '10px'}}>
-              <small>Generate a storage container SAS URL to view/modify the request file(s).</small>
-              <Stack horizontal styles={{root: {alignItems: 'center', paddingTop: '7px'}}}>
-                <Stack.Item grow>
-                  <TextField readOnly value={filesLink} defaultValue="Click generate to create a link" />
+          {
+            !AirlockFilesLinkInvalidStatus.includes(request.status) && <>
+              <Stack style={{marginTop: '20px'}} styles={underlineStackStyles}>
+                <Stack.Item styles={stackItemStyles}>
+                  <b>Files</b>
+                </Stack.Item>
+              </Stack>
+              <Stack>
+                <Stack.Item style={{paddingTop: '10px', paddingBottom: '10px'}}>
+                  <small>Generate a storage container SAS URL to view/modify the request file(s).</small>
+                  <Stack horizontal styles={{root: {alignItems: 'center', paddingTop: '7px'}}}>
+                    <Stack.Item grow>
+                      <TextField readOnly value={filesLink} defaultValue="Click generate to create a link" />
+                    </Stack.Item>
+                    {
+                      filesLink ? <PrimaryButton
+                        iconProps={{iconName: 'copy'}}
+                        styles={{root: {minWidth: '40px'}}}
+                        onClick={() => {navigator.clipboard.writeText(filesLink)}}
+                      /> : <PrimaryButton onClick={() => {setFilesLinkError(false); generateFilesLink()}}>Generate</PrimaryButton>
+                    }
+                  </Stack>
                 </Stack.Item>
                 {
-                  filesLink ? <PrimaryButton
-                    iconProps={{iconName: 'copy'}}
-                    styles={{root: {minWidth: '40px'}}}
-                    onClick={() => {navigator.clipboard.writeText(filesLink)}}
-                  /> : <PrimaryButton onClick={() => {setFilesLinkError(false); generateFilesLink()}}>Generate</PrimaryButton>
+                  filesLinkError && <ExceptionLayout e={apiFilesLinkError} />
                 }
               </Stack>
-            </Stack.Item>
-            {
-              filesLinkError && <ExceptionLayout e={apiFilesLinkError} />
-            }
-          </Stack>
+            </>
+          }
         </>
         : <div style={{ marginTop: '70px' }}>
           <Spinner label="Loading..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
@@ -269,7 +286,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           }}
         >
           {
-            submitError && <ExceptionLayout e={apiSubmitError} />
+            submitError && <ExceptionLayout e={apiError} />
           }
           {
             submitting
@@ -290,18 +307,111 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           }}
         >
           {
-            cancelError && <ExceptionLayout e={apiCancelError} />
+            submitError && <ExceptionLayout e={apiError} />
           }
           {
-            cancelling
+            submitting
             ? <Spinner label="Cancelling..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
             : <DialogFooter>
-              <PrimaryButton onClick={cancelRequest} text="Cancel Request" styles={cancelButtonStyles} />
+              <DefaultButton onClick={cancelRequest} text="Cancel Request" styles={destructiveButtonStyles} />
               <DefaultButton onClick={() => setHideCancelDialog(true)} text="Back" />
+            </DialogFooter>
+          }
+        </Dialog>
+
+        <Dialog
+          hidden={hideReviewDialog}
+          onDismiss={() => setHideReviewDialog(true)}
+          dialogContentProps={{
+            title: 'Review request',
+            subText: 'Select whether you\'d like to approve or reject this request.',
+            type: DialogType.close
+          }}
+        >
+          <TextField
+            label="Reason for decision"
+            placeholder="Please provide a brief explanation of your decision."
+            value={reviewExplanation}
+            onChange={(e: React.FormEvent, newValue?: string) => setReviewExplanation(newValue || '')}
+            multiline
+            rows={6}
+            required
+          />
+          {
+            submitError && <ExceptionLayout e={apiError} />
+          }
+          {
+            submitting
+            ? <Spinner label="Submitting review..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
+            : <DialogFooter>
+              <DefaultButton
+                iconProps={{iconName: 'Cancel'}}
+                onClick={() => reviewRequest(false)} text="Reject"
+                styles={destructiveButtonStyles}
+                disabled={reviewExplanation.length <= 0}
+              />
+              <DefaultButton
+                iconProps={{iconName: 'Accept'}}
+                onClick={() => reviewRequest(true)}
+                text="Approve"
+                styles={successButtonStyles}
+                disabled={reviewExplanation.length <= 0}
+              />
             </DialogFooter>
           }
         </Dialog>
       </Panel>
     </>
   )
+}
+
+const { palette } = getTheme();
+
+const underlineStackStyles: IStackStyles = {
+  root: {
+    borderBottom: '#f2f2f2 solid 1px'
+  },
+};
+
+const stackItemStyles: IStackItemStyles = {
+  root: {
+    alignItems: 'center',
+    display: 'flex',
+    height: 50,
+    margin: '0px 5px'
+  },
+};
+
+const successButtonStyles = {
+  root: {
+    background: palette.green,
+    color: palette.white,
+    borderColor: palette.green
+  },
+  rootDisabled: {
+    background: 'rgb(16 124 16 / 60%)',
+    color: palette.white,
+    borderColor: palette.green,
+    iconColor: palette.white
+  },
+  iconDisabled: {
+    color: palette.white
+  }
+}
+
+const destructiveButtonStyles = {
+  root: {
+    marginRight: 5,
+    background: palette.red,
+    color: palette.white,
+    borderColor: palette.red
+  },
+  rootDisabled: {
+    background: 'rgb(232 17 35 / 60%)',
+    color: palette.white,
+    borderColor: palette.red
+  },
+  iconDisabled: {
+    color: palette.white
+  }
 }
