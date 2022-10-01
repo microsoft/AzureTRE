@@ -5,5 +5,6 @@ export enum RoleName {
 
 export enum WorkspaceRoleName {
     WorkspaceOwner = "WorkspaceOwner",
-    WorkspaceResearcher = "WorkspaceResearcher"
+    WorkspaceResearcher = "WorkspaceResearcher",
+    AirlockManager = "AirlockManager"
 }

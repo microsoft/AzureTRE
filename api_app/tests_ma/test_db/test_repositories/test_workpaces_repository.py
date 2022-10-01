@@ -96,7 +96,7 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
     validate_input_mock.return_value = basic_resource_template
     new_cidr_mock.return_value = "1.2.3.4/24"
 
-    workspace, _ = workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id")
+    workspace, _ = workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
 
     assert workspace.templateName == workspace_to_create.templateName
     assert workspace.resourceType == ResourceType.Workspace
@@ -155,7 +155,7 @@ def test_create_workspace_item_creates_a_workspace_with_custom_address_space(val
     workspace_to_create.properties["address_space"] = "10.2.4.0/24"
     validate_input_mock.return_value = basic_resource_template
 
-    workspace, _ = workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id")
+    workspace, _ = workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
 
     assert workspace.properties["address_space"] == workspace_to_create.properties["address_space"]
 
@@ -172,7 +172,7 @@ def test_create_workspace_item_throws_exception_with_bad_custom_address_space(va
     validate_input_mock.return_value = basic_resource_template
 
     with pytest.raises(InvalidInput):
-        workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id")
+        workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
 
 
 def test_get_address_space_based_on_size_with_custom_address_space_and_missing_address(workspace_repo, basic_workspace_request):
@@ -190,7 +190,7 @@ def test_create_workspace_item_raises_value_error_if_template_is_invalid(validat
     validate_input_mock.side_effect = ValueError
 
     with pytest.raises(ValueError):
-        workspace_repo.create_workspace_item(workspace_input, {}, "test_object_id")
+        workspace_repo.create_workspace_item(workspace_input, {}, "test_object_id", ["test_role"])
 
 
 def test_automatically_create_application_registration_returns_true(workspace_repo):

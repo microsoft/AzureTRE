@@ -63,18 +63,27 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
     creating: ''
   }
 
-  // Construct API path for templates of specified resourceType
-  let templatesPath;
+  // Construct API paths for templates of specified resourceType
+  let templateListPath;
+  // Usually, the GET path would be `${templateGetPath}/${selectedTemplate}`, but there's an exception for user resources
+  let templateGetPath;
+
+  let workspaceApplicationIdURI = undefined
   switch (props.resourceType) {
     case ResourceType.Workspace:
-      templatesPath = ApiEndpoint.WorkspaceTemplates; break;
+      templateListPath = ApiEndpoint.WorkspaceTemplates; templateGetPath = templateListPath; break;
     case ResourceType.WorkspaceService:
-      templatesPath = ApiEndpoint.WorkspaceServiceTemplates; break;
+      templateListPath = ApiEndpoint.WorkspaceServiceTemplates; templateGetPath = templateListPath; break;
     case ResourceType.SharedService:
-      templatesPath = ApiEndpoint.SharedServiceTemplates; break;
+      templateListPath = ApiEndpoint.SharedServiceTemplates; templateGetPath = templateListPath; break;
     case ResourceType.UserResource:
       if (props.parentResource) {
-        templatesPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${props.parentResource.templateName}/${ApiEndpoint.UserResourceTemplates}`; break;
+        // If we are creating a user resource, parent resource must have a workspaceId
+        const workspaceId = (props.parentResource as WorkspaceService).workspaceId
+        templateListPath = `${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.WorkspaceServiceTemplates}/${props.parentResource.templateName}/${ApiEndpoint.UserResourceTemplates}`;
+        templateGetPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${props.parentResource.templateName}/${ApiEndpoint.UserResourceTemplates}`
+        workspaceApplicationIdURI = props.workspaceApplicationIdURI
+        break;
       } else {
         throw Error('Parent workspace service must be passed as prop when creating user resource.');
       }
@@ -118,11 +127,11 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
   let currentPage;
   switch (page) {
     case 'selectTemplate':
-      currentPage = <SelectTemplate templatesPath={templatesPath} onSelectTemplate={selectTemplate} />; break;
+      currentPage = <SelectTemplate templatesPath={templateListPath} workspaceApplicationIdURI={workspaceApplicationIdURI} onSelectTemplate={selectTemplate} />; break;
     case 'resourceForm':
       currentPage = <ResourceForm
         templateName={selectedTemplate}
-        templatePath={`${templatesPath}/${selectedTemplate}`}
+        templatePath={`${templateGetPath}/${selectedTemplate}`}
         resourcePath={resourcePath}
         onCreateResource={resourceCreating}
         workspaceApplicationIdURI={props.workspaceApplicationIdURI}

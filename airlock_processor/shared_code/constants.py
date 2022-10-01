@@ -38,5 +38,6 @@ UNKNOWN_REASON_MESSAGE = "Unknown reason."
 
 # Event Grid
 STEP_RESULT_EVENT_DATA_VERSION = "1.0"
+DATA_DELETION_EVENT_DATA_VERSION = "1.0"
 
 NO_THREATS = "No threats found"
