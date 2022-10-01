@@ -90,8 +90,6 @@ async def patch_shared_service(shared_service_patch: ResourcePatch, response: Re
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
-    except ValueError as v:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(v))
 
 
 @shared_services_router.delete("/shared-services/{shared_service_id}", response_model=OperationInResponse, name=strings.API_DELETE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
