@@ -1,10 +1,10 @@
-import { DefaultButton, Dialog, DialogFooter, DialogType, getTheme, IStackItemStyles, IStackStyles, MessageBar, MessageBarType, Panel, PanelType, Persona, PersonaSize, PrimaryButton, Spinner, SpinnerSize, Stack, TextField, useTheme } from "@fluentui/react";
+import { DefaultButton, Dialog, DialogFooter, DialogType, DocumentCard, DocumentCardActivity, DocumentCardDetails, DocumentCardTitle, DocumentCardType, FontIcon, getTheme, IStackItemStyles, IStackStyles, IStackTokens, mergeStyles, MessageBar, MessageBarType, Panel, PanelType, Persona, PersonaSize, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from "@fluentui/react";
 import moment from "moment";
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { WorkspaceContext } from "../../../contexts/WorkspaceContext";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
-import { AirlockFilesLinkInvalidStatus, AirlockRequest, AirlockRequestAction, AirlockRequestStatus, NewAirlockRequest } from "../../../models/airlock";
+import { AirlockFilesLinkInvalidStatus, AirlockRequest, AirlockRequestAction, AirlockRequestStatus, AirlockReviewDecision } from "../../../models/airlock";
 import { ApiEndpoint } from "../../../models/apiEndpoints";
 import { APIError } from "../../../models/exceptions";
 import { ExceptionLayout } from "../ExceptionLayout";
@@ -126,7 +126,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
       }
       setSubmitting(false);
     }
-  }, [apiCall, request, props, workspaceCtx.workspaceApplicationIdURI]);
+  }, [apiCall, request, props, workspaceCtx.workspaceApplicationIdURI, reviewExplanation]);
 
   // Render the panel footer along with buttons that the signed-in user is allowed to see according to the API
   const renderFooter = useCallback(() => {
@@ -162,7 +162,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
       </>
     }
     return footer;
-  }, [request, destructiveButtonStyles]);
+  }, [request]);
 
   return (
     <>
@@ -272,6 +272,51 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
               </Stack>
             </>
           }
+          {
+            request.reviews.length > 0 && <>
+              <Stack style={{marginTop: '20px', marginBottom: '20px'}} styles={underlineStackStyles}>
+                <Stack.Item styles={stackItemStyles}>
+                  <b>Reviews</b>
+                </Stack.Item>
+              </Stack>
+              <Stack tokens={stackTokens}>
+                {
+                  request.reviews.map((review, i) => {
+                    return <DocumentCard
+                      key={i}
+                      aria-label="Review"
+                      type={DocumentCardType.compact}>
+                      <DocumentCardDetails>
+                        <DocumentCardActivity
+                          activity={moment.unix(review.dateCreated).fromNow()}
+                          people={[{name: review.reviewer.name, profileImageSrc: ''}]}
+                        />
+                        <DocumentCardTitle
+                          title={review.decisionExplanation}
+                          shouldTruncate
+                          showAsSecondaryTitle
+                        />
+                      </DocumentCardDetails>
+                      <div style={{margin:10}}>
+                        {
+                          review.reviewDecision === AirlockReviewDecision.Approved && <>
+                            <FontIcon aria-label="Approved" iconName="Completed" className={approvedIcon} />
+                            Approved
+                          </>
+                        }
+                        {
+                          review.reviewDecision === AirlockReviewDecision.Rejected && <>
+                            <FontIcon aria-label="Rejected" iconName="ErrorBadge" className={rejectedIcon} />
+                            Rejected
+                          </>
+                        }
+                      </div>
+                    </DocumentCard>
+                  })
+                }
+              </Stack>
+            </>
+          }
         </>
         : <div style={{ marginTop: '70px' }}>
           <Spinner label="Loading..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
@@ -282,7 +327,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           onDismiss={() => setHideSubmitDialog(true)}
           dialogContentProps={{
             title: 'Submit request?',
-            subText: 'Are you sure you want to submit this request for review?',
+            subText: 'Make sure you have uploaded your file(s) to the request\'s storage account before submitting.',
           }}
         >
           {
@@ -292,8 +337,8 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
             submitting
             ? <Spinner label="Submitting..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
             : <DialogFooter>
-              <PrimaryButton onClick={submitRequest} text="Submit" />
               <DefaultButton onClick={() => setHideSubmitDialog(true)} text="Cancel" />
+              <PrimaryButton onClick={submitRequest} text="Submit" />
             </DialogFooter>
           }
         </Dialog>
@@ -346,7 +391,8 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
             : <DialogFooter>
               <DefaultButton
                 iconProps={{iconName: 'Cancel'}}
-                onClick={() => reviewRequest(false)} text="Reject"
+                onClick={() => reviewRequest(false)}
+                text="Reject"
                 styles={destructiveButtonStyles}
                 disabled={reviewExplanation.length <= 0}
               />
@@ -366,6 +412,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
 }
 
 const { palette } = getTheme();
+const stackTokens: IStackTokens = { childrenGap: 20 };
 
 const underlineStackStyles: IStackStyles = {
   root: {
@@ -415,3 +462,15 @@ const destructiveButtonStyles = {
     color: palette.white
   }
 }
+
+const approvedIcon = mergeStyles({
+  color: palette.green,
+  marginRight: 5,
+  fontSize: 12
+});
+
+const rejectedIcon = mergeStyles({
+  color: palette.red,
+  marginRight: 5,
+  fontSize: 12
+});

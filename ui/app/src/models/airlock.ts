@@ -9,6 +9,7 @@ export interface AirlockRequest extends Resource {
   errorMessage: null | string;
   status: AirlockRequestStatus;
   creationTime: number;
+  reviews: Array<AirlockReview>;
   allowed_user_actions: Array<AirlockRequestAction>;
 }
 
@@ -48,10 +49,15 @@ export const AirlockFilesLinkInvalidStatus = [
   AirlockRequestStatus.Failed
 ]
 
+export enum AirlockReviewDecision {
+  Approved = 'approved',
+  Rejected = 'rejected'
+}
+
 export interface AirlockReview {
-  reviewId: string,
+  id: string,
   dateCreated: number,
-  reviewDecision: string,
+  reviewDecision: AirlockReviewDecision,
   decisionExplanation: string,
   reviewer: User
 }
