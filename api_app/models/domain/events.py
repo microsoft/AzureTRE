@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 from models.domain.azuretremodel import AzureTREModel
 
 
@@ -12,6 +12,7 @@ class AirlockNotificationData(AzureTREModel):
 
 class StatusChangedData(AzureTREModel):
     request_id: str
-    status: str
+    new_status: str
+    previous_status: Optional[str]
     type: str
     workspace_id: str

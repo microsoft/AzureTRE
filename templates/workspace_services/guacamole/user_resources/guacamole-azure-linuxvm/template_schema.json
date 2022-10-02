@@ -6,6 +6,9 @@
   "description": "Linux virtual machine.",
   "required": [
   ],
+  "authorizedRoles": [
+    "WorkspaceOwner", "WorkspaceResearcher"
+  ],
   "properties": {
     "os_image": {
       "$id": "#/properties/os_image",
@@ -29,6 +32,13 @@
         "16 CPU | 64GB RAM"
       ],
       "updateable": true
+    },
+    "shared_storage_access": {
+      "$id": "#/properties/shared_storage_access",
+      "type": "boolean",
+      "title": "Shared storage",
+      "default": true,
+      "description": "Enable access to shared storage"
     }
   }
 }

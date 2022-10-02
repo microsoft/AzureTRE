@@ -14,7 +14,7 @@ resource "random_string" "username" {
   length      = 4
   upper       = true
   lower       = true
-  number      = true
+  numeric     = true
   min_numeric = 1
   min_lower   = 1
   special     = false
@@ -26,7 +26,7 @@ resource "random_password" "password" {
   min_lower        = 1
   upper            = true
   min_upper        = 1
-  number           = true
+  numeric          = true
   min_numeric      = 1
   special          = true
   min_special      = 1
@@ -98,7 +98,7 @@ data "template_file" "vm_config" {
     STORAGE_ACCOUNT_NAME  = data.azurerm_storage_account.stg.name
     STORAGE_ACCOUNT_KEY   = data.azurerm_storage_account.stg.primary_access_key
     HTTP_ENDPOINT         = data.azurerm_storage_account.stg.primary_file_endpoint
-    FILESHARE_NAME        = data.azurerm_storage_share.shared_storage.name
+    FILESHARE_NAME        = var.shared_storage_access ? data.azurerm_storage_share.shared_storage[0].name : ""
     NEXUS_PROXY_URL       = local.nexus_proxy_url
     CONDA_CONFIG          = local.image_ref[var.image].conda_config ? 1 : 0
   }
@@ -137,6 +137,7 @@ data "azurerm_storage_account" "stg" {
 }
 
 data "azurerm_storage_share" "shared_storage" {
+  count                = var.shared_storage_access ? 1 : 0
   name                 = var.shared_storage_name
   storage_account_name = data.azurerm_storage_account.stg.name
 }
