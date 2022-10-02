@@ -25,7 +25,6 @@ resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
   account_tier                    = "Standard"
   account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
-  public_network_access_enabled   = false
   tags                            = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
@@ -41,6 +40,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   storage_account_name      = azurerm_storage_account.sa_airlock_processor_func_app.name
   # consider moving to a managed identity here
   storage_account_access_key = azurerm_storage_account.sa_airlock_processor_func_app.primary_access_key
+  version = "~4"
   tags                       = var.tre_core_tags
 
   identity {
