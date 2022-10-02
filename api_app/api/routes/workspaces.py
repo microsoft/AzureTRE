@@ -123,6 +123,8 @@ async def patch_workspace(workspace_patch: ResourcePatch, response: Response, us
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
+    except ValueError as v:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(v))
 
 
 @workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
@@ -225,6 +227,8 @@ async def patch_workspace_service(workspace_service_patch: ResourcePatch, respon
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
+    except ValueError as v:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(v))
 
 
 @workspace_services_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
@@ -370,6 +374,8 @@ async def patch_user_resource(user_resource_patch: ResourcePatch, response: Resp
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
+    except ValueError as v:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(v))
 
 
 # user resource actions

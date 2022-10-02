@@ -267,7 +267,8 @@ def test_patch_resource_preserves_property_history(_, __, resource_repo):
             resourceVersion=0,
             updatedWhen=FAKE_CREATE_TIMESTAMP,
             properties={'display_name': 'initial display name', 'description': 'initial description', 'computed_prop': 'computed_val'},
-            user=user)]
+            user=user,
+            templateVersion=resource.templateVersion)]
     expected_resource.properties['display_name'] = 'updated name'
     expected_resource.resourceVersion = 1
     expected_resource.user = user
@@ -285,7 +286,8 @@ def test_patch_resource_preserves_property_history(_, __, resource_repo):
             resourceVersion=1,
             updatedWhen=FAKE_UPDATE_TIMESTAMP,
             properties={'display_name': 'updated name', 'description': 'initial description', 'computed_prop': 'computed_val'},
-            user=user
+            user=user,
+            templateVersion=resource.templateVersion
         )
     )
 

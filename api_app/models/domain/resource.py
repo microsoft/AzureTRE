@@ -25,6 +25,7 @@ class ResourceHistoryItem(AzureTREModel):
     resourceVersion: int
     updatedWhen: float
     user: dict = {}
+    templateVersion: Optional[str]
 
 
 class Resource(AzureTREModel):

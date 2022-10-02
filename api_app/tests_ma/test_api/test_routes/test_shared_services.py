@@ -163,7 +163,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
 
         modified_shared_service = sample_shared_service()
         modified_shared_service.isEnabled = False
-        modified_shared_service.history = [ResourceHistoryItem(properties=copy.deepcopy(modified_shared_service.properties), isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
+        modified_shared_service.history = [ResourceHistoryItem(properties=copy.deepcopy(modified_shared_service.properties), isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user(), templateVersion=modified_shared_service.templateVersion)]
         modified_shared_service.resourceVersion = 1
         modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
         modified_shared_service.user = create_admin_user()

@@ -402,7 +402,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
         modified_workspace = sample_workspace()
         modified_workspace.isEnabled = False
-        modified_workspace.history = [ResourceHistoryItem(properties={'client_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
+        modified_workspace.history = [ResourceHistoryItem(properties={'client_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user(), templateVersion=modified_workspace.templateVersion)]
         modified_workspace.resourceVersion = 1
         modified_workspace.user = create_admin_user()
         modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP
@@ -422,7 +422,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         etag = "some-etag-value"
         modified_workspace = sample_workspace()
         modified_workspace.isEnabled = False
-        modified_workspace.history = [ResourceHistoryItem(properties={'client_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
+        modified_workspace.history = [ResourceHistoryItem(properties={'client_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user(), templateVersion=modified_workspace.templateVersion)]
         modified_workspace.resourceVersion = 1
         modified_workspace.user = create_admin_user()
         modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP
@@ -659,7 +659,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
         modified_user_resource = sample_user_resource_object()
         modified_user_resource.isEnabled = False
-        modified_user_resource.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_workspace_researcher_user())]
+        modified_user_resource.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_workspace_researcher_user(), templateVersion=modified_user_resource.templateVersion)]
         modified_user_resource.resourceVersion = 1
         modified_user_resource.updatedWhen = FAKE_UPDATE_TIMESTAMP
         modified_user_resource.user = create_workspace_owner_user()
@@ -683,7 +683,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
         modified_resource = sample_user_resource_object()
         modified_resource.isEnabled = False
-        modified_resource.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_workspace_researcher_user())]
+        modified_resource.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_workspace_researcher_user(), templateVersion=modified_resource.templateVersion)]
         modified_resource.resourceVersion = 1
         modified_resource.properties["vm_size"] = "large"
         modified_resource.updatedWhen = FAKE_UPDATE_TIMESTAMP
@@ -826,7 +826,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
 
         modified_workspace_service = sample_workspace_service()
         modified_workspace_service.isEnabled = False
-        modified_workspace_service.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_workspace_owner_user())]
+        modified_workspace_service.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_workspace_owner_user(), templateVersion=modified_workspace_service.templateVersion)]
         modified_workspace_service.resourceVersion = 1
         modified_workspace_service.user = create_workspace_researcher_user()
         modified_workspace_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
@@ -996,7 +996,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
 
         modified_user_resource = sample_user_resource_object()
         modified_user_resource.isEnabled = False
-        modified_user_resource.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_workspace_researcher_user())]
+        modified_user_resource.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_workspace_researcher_user(), templateVersion=modified_user_resource.templateVersion)]
         modified_user_resource.resourceVersion = 1
         modified_user_resource.updatedWhen = FAKE_UPDATE_TIMESTAMP
         modified_user_resource.user = create_workspace_researcher_user()
