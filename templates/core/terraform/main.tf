@@ -105,7 +105,7 @@ module "airlock_resources" {
   resource_group_name                   = azurerm_resource_group.core.name
   airlock_storage_subnet_id             = module.network.airlock_storage_subnet_id
   airlock_events_subnet_id              = module.network.airlock_events_subnet_id
-  docker_registry_server                = var.docker_registry_server
+  docker_registry_server                = local.docker_registry_server
   mgmt_resource_group_name              = var.mgmt_resource_group_name
   mgmt_acr_name                         = var.acr_name
   api_principal_id                      = azurerm_user_assigned_identity.id.principal_id
@@ -135,7 +135,7 @@ module "resource_processor_vmss_porter" {
   acr_id                                           = data.azurerm_container_registry.mgmt_acr.id
   app_insights_connection_string                   = module.azure_monitor.app_insights_connection_string
   resource_processor_subnet_id                     = module.network.resource_processor_subnet_id
-  docker_registry_server                           = var.docker_registry_server
+  docker_registry_server                           = local.docker_registry_server
   resource_processor_vmss_porter_image_repository  = var.resource_processor_vmss_porter_image_repository
   service_bus_namespace_id                         = azurerm_servicebus_namespace.sb.id
   service_bus_resource_request_queue               = azurerm_servicebus_queue.workspacequeue.name

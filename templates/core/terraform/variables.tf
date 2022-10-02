@@ -65,11 +65,6 @@ variable "resource_processor_number_processes_per_instance" {
   description = "The number of CPU processes to run the RP on per VM instance"
 }
 
-variable "docker_registry_server" {
-  type        = string
-  description = "Docker registry server"
-}
-
 variable "swagger_ui_client_id" {
   type        = string
   description = "The client id (app id) of the registration in Azure AD for the Swagger UI"
