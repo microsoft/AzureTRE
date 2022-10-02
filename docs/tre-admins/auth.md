@@ -67,3 +67,18 @@ App registrations (represented by service principals) define the various access 
 Some of the applications require **admin consent** to allow them to validate users against the AAD. Check the Microsoft Docs on [Configure the admin consent workflow](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/configure-admin-consent-workflow) on how to request admin consent and handle admin consent requests.
 
 We strongly recommend that you use `make auth` to create the AAD assets as this has been tested extensively. Should you wish to create these manually via the [Azure Portal](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app); more information can be found [here](./identities/auth-manual.md).
+
+### Enabling users
+
+For a user to gain access to the system, they have to:
+
+1. Have an identity in Azure AD
+1. Be linked with an app registration and assigned a role
+
+When these requirements are met, the user can sign-in using their credentials and use their privileges to use the API, login to workspace environment etc. based on their specific roles.
+
+![User linked with app registrations](../../assets/aad-user-linked-with-app-regs.png)
+
+The users can also be linked via the Enterprise application view:
+
+![Adding users to Enterprise application](../../assets/adding-users-to-enterprise-application.png)
