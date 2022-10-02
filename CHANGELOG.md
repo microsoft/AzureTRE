@@ -25,6 +25,7 @@ ENHANCEMENTS:
 * Move admin-vm from core to a shared service ([#2624](https://github.com/microsoft/AzureTRE/pull/2624))
 * Remove obsolete docker environment variables ([#2675](https://github.com/microsoft/AzureTRE/pull/2675))
 * Using Porter's Terrform mixin 1.0.0-rc.1 where mirror in done internally ([#2677](https://github.com/microsoft/AzureTRE/pull/2677))
+* Airlock function internal storage is accessed with private endpoints ([#TBD](https://github.com/microsoft/AzureTRE/pull/TBD))
 
 BUG FIXES:
 
