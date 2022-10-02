@@ -40,7 +40,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   storage_account_name      = azurerm_storage_account.sa_airlock_processor_func_app.name
   # consider moving to a managed identity here
   storage_account_access_key = azurerm_storage_account.sa_airlock_processor_func_app.primary_access_key
-  version = "~4"
+  version                    = "~4"
   tags                       = var.tre_core_tags
 
   identity {
