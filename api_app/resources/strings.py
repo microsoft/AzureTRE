@@ -42,6 +42,7 @@ API_GET_WORKSPACE_TEMPLATE_BY_NAME = "Get workspace template by name"
 
 API_CREATE_WORKSPACE_SERVICE_TEMPLATES = "Register workspace service template"
 API_GET_WORKSPACE_SERVICE_TEMPLATES = "Get workspace service templates"
+API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE = "Get workspace service templates (on workspace level)"  # only returns templates that the authenticated user is authorized to use
 API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME = "Get workspace service template by name"
 
 API_CREATE_SHARED_SERVICE_TEMPLATES = "Register shared service template"
@@ -57,6 +58,7 @@ API_INVOKE_ACTION_ON_SHARED_SERVICE = "Invoke action on a shared service"
 
 API_CREATE_USER_RESOURCE_TEMPLATES = "Register user resource template"
 API_GET_USER_RESOURCE_TEMPLATES = "Get user resource templates applicable to the workspace service template"
+API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE = "Get user resource templates applicable to the workspace service template (on workspace level)"  # only returns templates that the authenticated user is authorized to use
 API_GET_USER_RESOURCE_TEMPLATE_BY_NAME = "Get user resource template by name and workspace service"
 
 # cost report
@@ -71,11 +73,13 @@ OK = "OK"
 NOT_OK = "Not OK"
 COSMOS_DB = "Cosmos DB"
 STATE_STORE_ENDPOINT_NOT_RESPONDING = "State Store endpoint is not responding"
+STATE_STORE_ENDPOINT_NOT_ACCESSIBLE = "State Store endpoint is not accessible"
 UNSPECIFIED_ERROR = "Unspecified error"
 
 # Service bus status
 SERVICE_BUS = "Service Bus"
 SERVICE_BUS_NOT_RESPONDING = "Service Bus is not responding"
+SERVICE_BUS_AUTHENTICATION_ERROR = "Cannot authenticate Service Bus"
 
 # Resource processor status
 RESOURCE_PROCESSOR = "Resource Processor"

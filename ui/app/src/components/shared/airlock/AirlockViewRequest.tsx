@@ -11,7 +11,7 @@ import { ExceptionLayout } from "../ExceptionLayout";
 
 interface AirlockViewRequestProps {
   requests: AirlockRequest[];
-  updateRequest: (requests: AirlockRequest) => void;
+  onUpdateRequest: (requests: AirlockRequest) => void;
 }
 
 const underlineStackStyles: IStackStyles = {
@@ -94,7 +94,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           HttpMethod.Post,
           workspaceCtx.workspaceApplicationIdURI
         );
-        props.updateRequest(response.airlockRequest);
+        props.onUpdateRequest(response.airlockRequest);
         setHideSubmitDialog(true);
       } catch (err: any) {
         err.userMessage = 'Error submitting airlock request';
@@ -116,13 +116,12 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           HttpMethod.Post,
           workspaceCtx.workspaceApplicationIdURI
         );
-        props.updateRequest(response.airlockRequest);
+        props.onUpdateRequest(response.airlockRequest);
         setHideCancelDialog(true);
       } catch (err: any) {
         err.userMessage = 'Error cancelling airlock request';
         setApiCancelError(err);
         setCancelError(true);
-
       }
       setCancelling(false);
     }

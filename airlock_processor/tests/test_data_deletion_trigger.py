@@ -1,11 +1,11 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from ToDeleteTrigger import delete_blob_and_container_if_last_blob
+from DataDeletionTrigger import delete_blob_and_container_if_last_blob
 
 
-class TestToDeleteTrigger(TestCase):
-    @patch("ToDeleteTrigger.BlobServiceClient")
+class TestDataDeletionTrigger(TestCase):
+    @patch("DataDeletionTrigger.BlobServiceClient")
     def test_delete_blob_and_container_if_last_blob_deletes_container(self, mock_blob_service_client):
         blob_url = "https://stalimextest.blob.core.windows.net/c144728c-3c69-4a58-afec-48c2ec8bfd45/test_dataset.txt"
 
@@ -15,7 +15,7 @@ class TestToDeleteTrigger(TestCase):
 
         mock_blob_service_client().get_container_client().delete_container.assert_called_once()
 
-    @patch("ToDeleteTrigger.BlobServiceClient")
+    @patch("DataDeletionTrigger.BlobServiceClient")
     def test_delete_blob_and_container_if_last_blob_doesnt_delete_container(self, mock_blob_service_client):
         blob_url = "https://stalimextest.blob.core.windows.net/c144728c-3c69-4a58-afec-48c2ec8bfd45/test_dataset.txt"
 
@@ -24,3 +24,9 @@ class TestToDeleteTrigger(TestCase):
         delete_blob_and_container_if_last_blob(blob_url)
 
         mock_blob_service_client().get_container_client().delete_container.assert_not_called()
+
+    @patch("DataDeletionTrigger.BlobServiceClient")
+    def test_delete_blob_and_container_if_last_blob_deletes_container_if_no_blob_specified(self, mock_blob_service_client):
+        blob_url = "https://stalimextest.blob.core.windows.net/c144728c-3c69-4a58-afec-48c2ec8bfd45/"
+        delete_blob_and_container_if_last_blob(blob_url)
+        mock_blob_service_client().get_container_client().delete_container.assert_called_once()

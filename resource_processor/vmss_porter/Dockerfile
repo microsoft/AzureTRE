@@ -10,7 +10,7 @@ RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
 
 # Install Porter
 ARG PORTER_MIRROR=https://cdn.porter.sh
-ARG PORTER_PERMALINK=v0.38.12
+ARG PORTER_PERMALINK=v0.38.13
 ARG PORTER_PKG_PERMALINK=latest
 ARG PORTER_HOME=/root/.porter/
 COPY scripts/porter.sh /tmp/

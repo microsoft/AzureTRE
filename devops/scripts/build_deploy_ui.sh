@@ -13,7 +13,8 @@ jq --arg rootClientId "${SWAGGER_UI_CLIENT_ID}" \
   --arg rootTenantId "${AAD_TENANT_ID}" \
   --arg treApplicationId "api://${API_CLIENT_ID}" \
   --arg treUrl "https://${FQDN}/api" \
-  '.rootClientId = $rootClientId | .rootTenantId = $rootTenantId | .treApplicationId = $treApplicationId | .treUrl = $treUrl' ./src/config.source.json > ./src/config.json
+  --arg treId "${TRE_ID}" \
+  '.rootClientId = $rootClientId | .rootTenantId = $rootTenantId | .treApplicationId = $treApplicationId | .treUrl = $treUrl | .treId = $treId' ./src/config.source.json > ./src/config.json
 
 # build and deploy the app
 yarn install

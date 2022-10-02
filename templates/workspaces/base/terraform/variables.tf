@@ -47,6 +47,12 @@ variable "register_aad_application" {
   description = "Create an AAD application automatically for the Workspace."
 }
 
+variable "create_aad_groups" {
+  type        = bool
+  default     = false
+  description = "Create AAD groups automatically for the Workspace Application Roles."
+}
+
 variable "enable_airlock" {
   type        = bool
   description = "Controls the deployment of Airlock resources in the workspace."
