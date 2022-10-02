@@ -28,12 +28,6 @@ variable "mgmt_acr_name" {
   description = "Management ACR name"
 }
 
-variable "arm_subscription_id" {
-  description = "The TRE subscription id."
-  type        = string
-  default     = ""
-}
-
 variable "airlock_app_service_plan_sku_size" {
   type    = string
   default = "P1v3"
