@@ -24,6 +24,7 @@ ENHANCEMENTS:
 * Airlock requests with status "blocked_by_scan" have the reason for being blocked by the malware scanner in the status_message field ([#2666](https://github.com/microsoft/AzureTRE/pull/2666))
 * Move admin-vm from core to a shared service ([#2624](https://github.com/microsoft/AzureTRE/pull/2624))
 * Remove obsolete docker environment variables ([#2675](https://github.com/microsoft/AzureTRE/pull/2675))
+* Using Porter's Terrform mixin 1.0.0-rc.1 where mirror in done internally ([#2677](https://github.com/microsoft/AzureTRE/pull/2677))
 
 BUG FIXES:
 
