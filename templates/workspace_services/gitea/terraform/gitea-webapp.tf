@@ -16,24 +16,24 @@ resource "azurerm_user_assigned_identity" "gitea_id" {
   lifecycle { ignore_changes = [tags] }
 }
 
-data "azurerm_app_service_plan" "workspace" {
+data "azurerm_service_plan" "workspace" {
   name                = "plan-${var.workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
-resource "azurerm_app_service" "gitea" {
+resource "azurerm_linux_web_app" "gitea" {
   name                            = local.webapp_name
   location                        = data.azurerm_resource_group.ws.location
   resource_group_name             = data.azurerm_resource_group.ws.name
-  app_service_plan_id             = data.azurerm_app_service_plan.workspace.id
+  service_plan_id                 = data.azurerm_service_plan.workspace.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.gitea_id.id
+  virtual_network_subnet_id       = data.azurerm_subnet.web_apps.id
   tags                            = local.workspace_service_tags
 
   app_settings = {
     WEBSITES_PORT                                    = "3000"
     WEBSITES_ENABLE_APP_SERVICE_STORAGE              = true
-    WEBSITE_DNS_SERVER                               = "168.63.129.16"
     GITEA_USERNAME                                   = "giteaadmin"
     GITEA_PASSWD                                     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
     GITEA_EMAIL                                      = "giteaadmin@azuretre.com"
@@ -69,14 +69,17 @@ resource "azurerm_app_service" "gitea" {
   }
 
   site_config {
-    linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/gitea-workspace-service:${local.version}"
-    acr_use_managed_identity_credentials = true
-    acr_user_managed_identity_client_id  = azurerm_user_assigned_identity.gitea_id.client_id
-    always_on                            = true
-    min_tls_version                      = "1.2"
-    vnet_route_all_enabled               = true
-    websockets_enabled                   = false
-    ftps_state                           = "Disabled"
+    container_registry_use_managed_identity       = true
+    container_registry_managed_identity_client_id = azurerm_user_assigned_identity.gitea_id.client_id
+    ftps_state                                    = "Disabled"
+    always_on                                     = true
+    minimum_tls_version                           = "1.2"
+    vnet_route_all_enabled                        = true
+
+    application_stack {
+      docker_image     = "${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/gitea-workspace-service"
+      docker_image_tag = local.version
+    }
   }
 
   storage_account {
@@ -114,7 +117,7 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   tags                = local.workspace_service_tags
 
   private_service_connection {
-    private_connection_resource_id = azurerm_app_service.gitea.id
+    private_connection_resource_id = azurerm_linux_web_app.gitea.id
     name                           = "psc-${local.webapp_name}"
     subresource_names              = ["sites"]
     is_manual_connection           = false
@@ -128,14 +131,9 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_app_service_virtual_network_swift_connection" "gitea-integrated-vnet" {
-  app_service_id = azurerm_app_service.gitea.id
-  subnet_id      = data.azurerm_subnet.web_apps.id
-}
-
 resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
   name                       = "diag-${local.service_resource_name_suffix}"
-  target_resource_id         = azurerm_app_service.gitea.id
+  target_resource_id         = azurerm_linux_web_app.gitea.id
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
   log {

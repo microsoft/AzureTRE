@@ -64,7 +64,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
         const u = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}/${ApiEndpoint.UserResources}`, HttpMethod.Get, workspaceCtx.workspaceApplicationIdURI)
 
         // get user resource templates - to check
-        const ut = await apiCall(`${ApiEndpoint.WorkspaceServiceTemplates}/${svc.templateName}/${ApiEndpoint.UserResourceTemplates}`, HttpMethod.Get);
+        const ut = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServiceTemplates}/${svc.templateName}/${ApiEndpoint.UserResourceTemplates}`, HttpMethod.Get, workspaceCtx.workspaceApplicationIdURI);
         setHasUserResourceTemplates(ut && ut.templates && ut.templates.length > 0);
         setUserResources(u.userResources);
         setLoadingState(LoadingState.Ok);
@@ -112,7 +112,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
                     <Stack.Item>
                       <Stack horizontal horizontalAlign="space-between">
                         <h1>Resources</h1>
-                        <SecuredByRole allowedRoles={[WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher]} workspaceAuth={true} element={
+                        <SecuredByRole allowedRoles={[WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher, WorkspaceRoleName.AirlockManager]} workspaceAuth={true} element={
                           <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new"
                             disabled={!workspaceService.isEnabled || latestUpdate.componentAction === ComponentAction.Lock || successStates.indexOf(workspaceService.deploymentStatus) === -1}
                             title={(!workspaceService.isEnabled || latestUpdate.componentAction === ComponentAction.Lock || successStates.indexOf(workspaceService.deploymentStatus) === -1) ? 'Service must be enabled, successfully deployed, and not locked' : 'Create a User Resource'}
