@@ -22,7 +22,7 @@ See [template authoring guide](../../tre-workspace-authors/authoring-workspace-t
 
 - Deployment requirements:
 
-    1. Add your template under relevant folder (For example: if you are adding a new workspace template then place it under /templates/workspaces folder).  
+    1. Add your template under relevant folder (For example: if you are adding a new workspace template then place it under `/templates/workspaces` folder).  
     2. Use existing templates in AzureTRE as a reference.  
     3. Add porter configuration - AzureTRE uses [Porter](https://porter.sh/) as a solution for implementing and deploying workspaces and workspace, learn more about how it is used in AzureTRE [here](https://microsoft.github.io/AzureTRE/tre-developers/resource-processor/#porter).  
     4. Add terraform scripts to setup your deployment plan.
