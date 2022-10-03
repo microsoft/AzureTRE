@@ -20,11 +20,6 @@ resource "azurerm_storage_account" "sa_import_external" {
   lifecycle { ignore_changes = [tags] }
 }
 
-data "azurerm_private_dns_zone" "blobcore" {
-  name                = "privatelink.blob.core.windows.net"
-  resource_group_name = var.resource_group_name
-}
-
 resource "azurerm_private_endpoint" "stg_import_external_pe" {
   name                = "stg-ex-import-blob-${var.tre_id}"
   location            = var.location
@@ -36,7 +31,7 @@ resource "azurerm_private_endpoint" "stg_import_external_pe" {
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-stg-export-app"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
+    private_dns_zone_ids = [var.blob_core_dns_zone_id]
   }
 
   private_service_connection {
@@ -80,7 +75,7 @@ resource "azurerm_private_endpoint" "stg_export_approved_pe" {
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-stg-export-app"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
+    private_dns_zone_ids = [var.blob_core_dns_zone_id]
   }
 
   private_service_connection {
@@ -127,7 +122,7 @@ resource "azurerm_private_endpoint" "stg_import_inprogress_pe" {
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-stg-import-ip"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
+    private_dns_zone_ids = [var.blob_core_dns_zone_id]
   }
 
   private_service_connection {
@@ -172,7 +167,7 @@ resource "azurerm_private_endpoint" "stg_import_rejected_pe" {
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-stg-import-rej"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
+    private_dns_zone_ids = [var.blob_core_dns_zone_id]
   }
 
   private_service_connection {
@@ -220,7 +215,7 @@ resource "azurerm_private_endpoint" "stg_import_blocked_pe" {
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-stg-import-blocked"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
+    private_dns_zone_ids = [var.blob_core_dns_zone_id]
   }
 
   private_service_connection {

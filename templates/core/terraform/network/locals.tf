@@ -22,4 +22,9 @@ locals {
     tre_id              = var.tre_id
     tre_core_service_id = var.tre_id
   }
+
+  private_dns_zone_names = toset([
+    "privatelink.queue.core.windows.net",
+    "privatelink.table.core.windows.net",
+  ])
 }

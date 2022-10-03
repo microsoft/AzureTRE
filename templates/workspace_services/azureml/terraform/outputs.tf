@@ -27,6 +27,7 @@ data "azurerm_network_service_tags" "storage_tag" {
   service         = "Storage"
   location_filter = azurerm_storage_account.aml.location
 }
+
 output "storage_tag" {
   value = data.azurerm_network_service_tags.storage_tag.id
 }

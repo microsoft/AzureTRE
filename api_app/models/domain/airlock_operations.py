@@ -11,7 +11,7 @@ class EventGridMessageData(AzureTREModel):
     new_status: Optional[str] = Field(title="", description="")
     request_id: str = Field(title="", description="")
     request_files: Optional[List[AirlockFile]] = Field(title="", description="")
-    error_message: Optional[str] = Field(title="", description="")
+    status_message: Optional[str] = Field(title="", description="")
 
 
 class StepResultStatusUpdateMessage(AzureTREModel):
