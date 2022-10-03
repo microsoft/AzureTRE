@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.19.1"
+      version = "=3.22.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -116,6 +116,10 @@ module "airlock_resources" {
   enable_malware_scanning               = var.enable_airlock_malware_scanning
   tre_core_tags                         = local.tre_core_tags
   log_analytics_workspace_id            = module.azure_monitor.log_analytics_workspace_id
+  blob_core_dns_zone_id                 = module.network.blob_core_dns_zone_id
+  file_core_dns_zone_id                 = module.network.file_core_dns_zone_id
+  queue_core_dns_zone_id                = module.network.queue_core_dns_zone_id
+  table_core_dns_zone_id                = module.network.table_core_dns_zone_id
 
   enable_local_debugging = var.enable_local_debugging
   myip                   = local.myip
