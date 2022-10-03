@@ -24,7 +24,8 @@ ARG NODE_VERSION="lts/*"
 RUN su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"
 
 # Install terraform
-ARG TERRAFORM_VERSION="1.2.7"
+# version 1.3.0/1 has issues with keep recreating certificate
+ARG TERRAFORM_VERSION="1.2.9"
 COPY .devcontainer/scripts/terraform.sh /tmp/
 RUN bash /tmp/terraform.sh "${TERRAFORM_VERSION}" /usr/bin
 
@@ -40,15 +41,13 @@ RUN apt-get update && apt-get install -y ca-certificates curl gnupg lsb-release 
     && apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io --no-install-recommends \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
-# Install nekos act - run GitHub workflows locally https://github.com/nektos/act
-RUN if [ "${INTERACTIVE}" = "true" ]; then curl https://raw.githubusercontent.com/nektos/act/master/install.sh | bash; fi
-
 # Install Certbot
-RUN apt-get update && apt-get install -y python3 python3-venv libaugeas0 --no-install-recommends \
+RUN if [ "${INTERACTIVE}" = "true" ]; then \
+    apt-get update && apt-get install -y python3 python3-venv libaugeas0 --no-install-recommends \
     && python3 -m venv /opt/certbot/ \
     && /opt/certbot/bin/pip install --no-cache-dir --upgrade pip \
     && /opt/certbot/bin/pip install --no-cache-dir certbot \
-    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+    && apt-get clean -y && rm -rf /var/lib/apt/lists/* ; fi
 
 # Install Porter
 # Not using the script from https://cdn.porter.sh/latest/install-linux.sh
