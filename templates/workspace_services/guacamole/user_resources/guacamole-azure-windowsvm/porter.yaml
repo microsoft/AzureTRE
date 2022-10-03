@@ -29,7 +29,6 @@ custom:
       conda_config: true
     "Custom Image From Gallery":
       source_image_name: sltestwin1
-      source_image_reference: null,
       conda_config: true
 
 credentials:

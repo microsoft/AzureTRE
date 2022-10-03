@@ -24,6 +24,6 @@ locals {
   # Create local variables to support the VM resource
   selected_image = local.image_details[var.image]
   # selected_image_source_refs is an array to enable easy use of a dynamic block
-  selected_image_source_refs = local.selected_image.source_image_reference == null ? [] : [local.selected_image.source_image_reference]
-  selected_image_source_id   = local.selected_image.source_image_name == null ? null : "${var.image_gallery_id}/images/${local.selected_image.source_image_name}"
+  selected_image_source_refs = lookup(local.selected_image, "source_image_reference", null) == null ? [] : [local.selected_image.source_image_reference]
+  selected_image_source_id   = lookup(local.selected_image, "source_image_name", null) == null ? null : "${var.image_gallery_id}/images/${local.selected_image.source_image_name}"
 }
