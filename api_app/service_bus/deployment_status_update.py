@@ -13,7 +13,7 @@ from db.repositories.resource_templates import ResourceTemplateRepository
 from service_bus.helpers import send_deployment_message, update_resource_for_step
 from azure.servicebus import NEXT_AVAILABLE_SESSION
 from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
-from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer, ServiceBusReceiver
+from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from db.repositories.operations import OperationRepository
 from core import config, credentials
 from db.errors import EntityDoesNotExist
