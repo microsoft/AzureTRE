@@ -4,7 +4,7 @@ diff -Naur ../guacamole-azure-windowsvm/terraform/data.tf terraform/data.tf
 @@ -17,6 +17,12 @@
    resource_group_name  = data.azurerm_resource_group.ws.name
  }
- 
+
 +data "azurerm_subnet" "webapps" {
 +  name                 = "WebAppsSubnet"
 +  virtual_network_name = data.azurerm_virtual_network.ws.name
@@ -23,11 +23,6 @@ diff -Naur ../guacamole-azure-windowsvm/terraform/data.tf terraform/data.tf
 +  name                = "pe-sa-ip-export-blob-${local.short_workspace_id}"
 +  resource_group_name = data.azurerm_resource_group.ws.name
 +}
-diff -Naur ../guacamole-azure-windowsvm/terraform/empty.txt terraform/empty.txt
---- ../guacamole-azure-windowsvm/terraform/empty.txt	1970-01-01 01:00:00.000000000 +0100
-+++ terraform/empty.txt	2022-10-03 16:30:11.000000000 +0100
-@@ -0,0 +1 @@
-+The porter terraform mixin requires this directory to exist in the local build context.
 diff -Naur ../guacamole-azure-windowsvm/terraform/variables.tf terraform/variables.tf
 --- ../guacamole-azure-windowsvm/terraform/variables.tf	2022-10-03 16:28:13.000000000 +0100
 +++ terraform/variables.tf	2022-10-03 16:30:11.000000000 +0100
@@ -46,7 +41,7 @@ diff -Naur ../guacamole-azure-windowsvm/terraform/windowsvm.tf terraform/windows
 @@ -11,6 +11,83 @@
    }
  }
- 
+
 +resource "azurerm_network_security_group" "vm_nsg" {
 +  name                = "vm-nsg-${local.service_resource_name_suffix}"
 +  location            = data.azurerm_resource_group.ws.location
@@ -142,7 +137,7 @@ diff -Naur ../guacamole-azure-windowsvm/terraform/windowsvm.tf terraform/windows
  }
 @@ -106,6 +183,7 @@
  }
- 
+
  data "azurerm_storage_share" "shared_storage" {
 +  count                = var.shared_storage_access ? 1 : 0
    name                 = var.shared_storage_name
