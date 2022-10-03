@@ -96,20 +96,14 @@ foreach ($Group in $ResourceGroups)
   foreach ($item in $VMSS)
   {
     Write-Output "Stopping $($item.Name)"
-    # Native command will generate an error when run in automation
-    # Stop-AzVmss -ResourceGroupName $item.ResourceGroupName -VMScaleSetName $item.Name
-    $restUri='https://management.azure.com/subscriptions/'+$azContext.Subscription.Id+'/resourceGroups/'+$Group.ResourceGroupName+'/providers/Microsoft.Compute/virtualMachineScaleSets/'+$item.Name+'/deallocate?api-version=2022-03-01'
-    $response = Invoke-RestMethod -Uri $restUri -Method POST -Headers $authHeader
+    Stop-AzVmss -ResourceGroupName $item.ResourceGroupName -VMScaleSetName $item.Name -Force
   }
 
   $VM = Get-AzVM -ResourceGroupName $Group.ResourceGroupName
   foreach ($item in $VM)
   {
     Write-Output "Stopping $($item.Name)"
-    # Native command will generate an error when run in automation
-    # Stop-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name
-    $restUri='https://management.azure.com/subscriptions/'+$azContext.Subscription.Id+'/resourceGroups/'+$Group.ResourceGroupName+'/providers/Microsoft.Compute/virtualMachines/'+$item.Name+'/deallocate?api-version=2022-03-01'
-    $response = Invoke-RestMethod -Uri $restUri -Method POST -Headers $authHeader
+    Stop-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name -Force
   }
 
   $WorkspaceResourceGroups = Get-AzResourceGroup -Name "$($Group.ResourceGroupName)-ws-*"
@@ -119,10 +113,7 @@ foreach ($Group in $ResourceGroups)
     foreach ($item in $VM)
     {
       Write-Output "Stopping $($item.Name)"
-      # Native command will generate an error when run in automation
-      # Stop-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name
-      $restUri='https://management.azure.com/subscriptions/'+$azContext.Subscription.Id+'/resourceGroups/'+$Group.ResourceGroupName+'/providers/Microsoft.Compute/virtualMachines/'+$item.Name+'/deallocate?api-version=2022-03-01'
-      $response = Invoke-RestMethod -Uri $restUri -Method POST -Headers $authHeader
+      Stop-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name -Force
     }
   }
 }
