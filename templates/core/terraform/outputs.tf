@@ -69,7 +69,7 @@ output "terraform_state_container_name" {
 }
 
 output "registry_server" {
-  value = var.docker_registry_server
+  value = local.docker_registry_server
 }
 
 output "event_grid_status_changed_topic_endpoint" {
