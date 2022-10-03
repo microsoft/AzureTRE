@@ -3,15 +3,11 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.19.1"
+      version = "=3.22.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.3.0"
-    }
-    template = {
-      source  = "hashicorp/template"
-      version = "~> 2.2.0"
+      version = "~> 3.4.0"
     }
     local = {
       source  = "hashicorp/local"
@@ -19,7 +15,7 @@ terraform {
     }
     http = {
       source  = "hashicorp/http"
-      version = "~> 3.0.0"
+      version = "~> 3.1.0"
     }
   }
 
@@ -109,7 +105,7 @@ module "airlock_resources" {
   resource_group_name                   = azurerm_resource_group.core.name
   airlock_storage_subnet_id             = module.network.airlock_storage_subnet_id
   airlock_events_subnet_id              = module.network.airlock_events_subnet_id
-  docker_registry_server                = var.docker_registry_server
+  docker_registry_server                = local.docker_registry_server
   mgmt_resource_group_name              = var.mgmt_resource_group_name
   mgmt_acr_name                         = var.acr_name
   api_principal_id                      = azurerm_user_assigned_identity.id.principal_id
@@ -120,6 +116,10 @@ module "airlock_resources" {
   enable_malware_scanning               = var.enable_airlock_malware_scanning
   tre_core_tags                         = local.tre_core_tags
   log_analytics_workspace_id            = module.azure_monitor.log_analytics_workspace_id
+  blob_core_dns_zone_id                 = module.network.blob_core_dns_zone_id
+  file_core_dns_zone_id                 = module.network.file_core_dns_zone_id
+  queue_core_dns_zone_id                = module.network.queue_core_dns_zone_id
+  table_core_dns_zone_id                = module.network.table_core_dns_zone_id
 
   enable_local_debugging = var.enable_local_debugging
   myip                   = local.myip
@@ -139,7 +139,7 @@ module "resource_processor_vmss_porter" {
   acr_id                                           = data.azurerm_container_registry.mgmt_acr.id
   app_insights_connection_string                   = module.azure_monitor.app_insights_connection_string
   resource_processor_subnet_id                     = module.network.resource_processor_subnet_id
-  docker_registry_server                           = var.docker_registry_server
+  docker_registry_server                           = local.docker_registry_server
   resource_processor_vmss_porter_image_repository  = var.resource_processor_vmss_porter_image_repository
   service_bus_namespace_id                         = azurerm_servicebus_namespace.sb.id
   service_bus_resource_request_queue               = azurerm_servicebus_queue.workspacequeue.name
