@@ -28,7 +28,7 @@ variable "mgmt_acr_name" {
   description = "Management ACR name"
 }
 
-variable "airlock_app_service_plan_sku_size" {
+variable "airlock_app_service_plan_sku" {
   type    = string
   default = "P1v3"
 }
