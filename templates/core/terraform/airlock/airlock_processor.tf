@@ -11,7 +11,7 @@ resource "azurerm_service_plan" "airlock_plan" {
   resource_group_name = var.resource_group_name
   location            = var.location
   os_type             = "Linux"
-  sku_name            = var.airlock_app_service_plan_sku_size
+  sku_name            = var.airlock_app_service_plan_sku
   tags                = var.tre_core_tags
   worker_count        = 1
 
@@ -31,13 +31,14 @@ resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
 }
 
 resource "azurerm_linux_function_app" "airlock_function_app" {
-  name                       = local.airlock_function_app_name
-  resource_group_name        = var.resource_group_name
-  location                   = var.location
-  https_only                 = true
-  virtual_network_subnet_id  = var.airlock_processor_subnet_id
-  service_plan_id            = azurerm_service_plan.airlock_plan.id
-  storage_account_name       = azurerm_storage_account.sa_airlock_processor_func_app.name
+  name                      = local.airlock_function_app_name
+  resource_group_name       = var.resource_group_name
+  location                  = var.location
+  https_only                = true
+  virtual_network_subnet_id = var.airlock_processor_subnet_id
+  service_plan_id           = azurerm_service_plan.airlock_plan.id
+  storage_account_name      = azurerm_storage_account.sa_airlock_processor_func_app.name
+  # consider moving to a managed identity here
   storage_account_access_key = azurerm_storage_account.sa_airlock_processor_func_app.primary_access_key
   tags                       = var.tre_core_tags
 
@@ -110,5 +111,33 @@ resource "azurerm_monitor_diagnostic_setting" "airlock_function_app" {
       enabled = true
       days    = 365
     }
+  }
+}
+
+resource "azurerm_private_endpoint" "function_storage" {
+  for_each = {
+    Blob  = var.blob_core_dns_zone_id
+    File  = var.file_core_dns_zone_id
+    Queue = var.queue_core_dns_zone_id
+    Table = var.table_core_dns_zone_id
+  }
+  name                = "pe-${local.airlock_function_sa_name}-${lower(each.key)}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  subnet_id           = var.airlock_storage_subnet_id
+  tags                = var.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "private-dns-zone-group-${local.airlock_function_sa_name}"
+    private_dns_zone_ids = [each.value]
+  }
+
+  private_service_connection {
+    name                           = "psc-${local.airlock_function_sa_name}"
+    private_connection_resource_id = azurerm_storage_account.sa_import_in_progress.id
+    is_manual_connection           = false
+    subresource_names              = [each.key]
   }
 }
