@@ -27,6 +27,6 @@
       "useTrustStore": false
     }
   },
-  "baseType": "conda",
+  "baseType": "r",
   "repoType": "proxy"
 }
