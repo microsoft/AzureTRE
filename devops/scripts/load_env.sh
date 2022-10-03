@@ -1,12 +1,11 @@
 #!/bin/bash
-# not setting script options as we're sourcing this script
-# so options set here end up affecting the caller's context
-
+set -o errexit
+set -o pipefail
+set -o nounset
+# set -o xtrace
 #
 # Usage:
-#    load_env.sh <.env file> [TERRAFORM]
-#
-# If TERRAFORM is specfied then env var names are converted to lower case and prefixed with TF_VAR_
+#    load_env.sh <.env file>
 #
 
 if [ ! -f "$1" ]; then
@@ -23,11 +22,8 @@ else
     # split the line into name/value
     name=$(echo $line | cut -d= -f1)
     value=$(echo $line | cut -d= -f2)
-
-    if [[ "$2" == "TERRAFORM" ]]; then
-      # If TERRAFORM is specified the convert FOO=BAR to TF_VAR_foo=BAR
-      name="TF_VAR_$(echo "$name" | tr '[:upper:]' '[:lower:]')"
-    fi
+    # Create the Terraform var name form, i.e. convert FOO=BAR to TF_VAR_foo=BAR
+    tf_name="TF_VAR_$(echo "$name" | tr '[:upper:]' '[:lower:]')"
 
     # if the value is quote-delimited then strip that as we quote in the declare statement
     if [[ ("${value:0:1}" == "'" &&  "${value: -1:1}" == "'") || (("${value:0:1}" == "\"" &&  "${value: -1:1}" == "\"")) ]]; then
@@ -37,5 +33,10 @@ else
     # declare the variable and export to the caller's context
     declare -g $name="$value"
     export "${name?}"
+    declare -g $tf_name="$value"
+    export "${tf_name?}"
   done < <(grep -v -e '^[[:space:]]*$' -e '^#' "$1" ) # feed in via Process Substition to avoid bash subshell (http://mywiki.wooledge.org/ProcessSubstitution)
 fi
+
+
+set +o nounset
