@@ -119,6 +119,14 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
     title = `New airlock ${newRequest.requestType} request`;
     currentStep = <Stack style={{marginTop: '40px'}} tokens={stackTokens}>
       <TextField
+        label="Title"
+        placeholder="Enter a request title."
+        // value={newRequest.requestTitle}
+        // onChange={onChangeRequestTitle}
+        rows={1}
+        required
+      />
+      <TextField
         label="Business Justification"
         placeholder="Enter a justification for your request."
         value={newRequest.businessJustification}
