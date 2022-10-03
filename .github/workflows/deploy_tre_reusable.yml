@@ -294,7 +294,7 @@ jobs:
           APPLICATION_ADMIN_CLIENT_ID: "${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}"
           APPLICATION_ADMIN_CLIENT_SECRET: "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}"
           STATEFUL_RESOURCES_LOCKED: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
-          CORE_APP_SERVICE_PLAN_SKU: ${{ inputs.CORE_APP_SERVICE_PLAN_SKU }}
+          CORE_APP_SERVICE_PLAN_SKU: ${{ secrets.CORE_APP_SERVICE_PLAN_SKU }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
@@ -617,7 +617,7 @@ jobs:
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
-          WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ inputs.WORKSPACE_APP_SERVICE_PLAN_SKU }}
+          WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ secrets.WORKSPACE_APP_SERVICE_PLAN_SKU }}
 
       - name: Upload Test Results
         if: always()
@@ -665,7 +665,7 @@ jobs:
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
-          WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ inputs.WORKSPACE_APP_SERVICE_PLAN_SKU }}
+          WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ secrets.WORKSPACE_APP_SERVICE_PLAN_SKU }}
 
       - name: Upload Test Results
         if: always()
