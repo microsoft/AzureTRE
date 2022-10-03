@@ -17,7 +17,7 @@ locals {
   nexus_proxy_url = "https://nexus-${var.tre_id}.${data.azurerm_resource_group.core.location}.cloudapp.azure.com"
 
   # Load VM SKU/image details from porter.yaml
-  porter_yaml = yamldecode(file("${path.module}/../porter.yaml"))
+  porter_yaml   = yamldecode(file("${path.module}/../porter.yaml"))
   vm_sizes      = local.porter_yaml["custom"]["vm_sizes"]
   image_details = local.porter_yaml["custom"]["image_options"]
 
