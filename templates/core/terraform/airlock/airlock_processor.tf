@@ -11,7 +11,7 @@ resource "azurerm_service_plan" "airlock_plan" {
   resource_group_name = var.resource_group_name
   location            = var.location
   os_type             = "Linux"
-  sku_name            = var.airlock_app_service_plan_sku_size
+  sku_name            = var.airlock_app_service_plan_sku
   tags                = var.tre_core_tags
   worker_count        = 1
 

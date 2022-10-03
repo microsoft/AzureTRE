@@ -34,3 +34,5 @@
 | `ENABLE_LOCAL_DEBUGGING` | Set to `false` by default. Setting this to `true` will ensure that Azure resources are accessible from your local development machine. (e.g. ServiceBus and Cosmos) |
 | `PUBLIC_DEPLOYMENT_IP_ADDRESS` | The public IP address of the machine that is deploying TRE. (Your desktop or the build agents). In certain locations a dynamic script to retrieve this from [https://ipecho.net/plain](https://ipecho.net/plain) does not work. If this is the case, then you can 'hardcode' your IP. |
 | `RESOURCE_PROCESSOR_VMSS_SKU` | The SKU of the VMMS to use for the resource processing VM. |
+| `CORE_APP_SERVICE_PLAN_SKU` | The SKU of AppService plans created for the core infrastructure. |
+| `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests unless otherwise specified. Default value is `P1v2`. |
