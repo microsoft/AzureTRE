@@ -39,7 +39,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   location                   = data.azurerm_resource_group.ws.location
   resource_group_name        = data.azurerm_resource_group.ws.name
   network_interface_ids      = [azurerm_network_interface.internal.id]
-  size                       = local.vm_sizes[var.vm_size].value
+  size                       = local.vm_sizes[var.vm_size]
   allow_extension_operations = true
   admin_username             = random_string.username.result
   admin_password             = random_password.password.result
