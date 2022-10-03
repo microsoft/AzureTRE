@@ -15,6 +15,7 @@ def main(msg: func.ServiceBusMessage,
     logging.info("Python ServiceBus queue trigger processed message - Malware scan result arrived!")
     body = msg.get_body().decode('utf-8')
     logging.info('Python ServiceBus queue trigger processed message: %s', body)
+    status_message = None
 
     try:
         enable_malware_scanning = strtobool(os.environ["ENABLE_MALWARE_SCANNING"])
@@ -50,12 +51,13 @@ def main(msg: func.ServiceBusMessage,
     else:
         logging.info('Malware was found in request id %s, moving to %s stage', request_id, constants.STAGE_BLOCKING_INPROGRESS)
         new_status = constants.STAGE_BLOCKING_INPROGRESS
+        status_message = verdict
 
     # Send the event to indicate this step is done (and to request a new status change)
     outputEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
-            data={"completed_step": completed_step, "new_status": new_status, "request_id": request_id},
+            data={"completed_step": completed_step, "new_status": new_status, "request_id": request_id, "status_message": status_message},
             subject=request_id,
             event_type="Airlock.StepResult",
             event_time=datetime.datetime.utcnow(),
