@@ -31,7 +31,7 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet_sonatype_
       type = "Http"
     }
 
-    target_fqdns = local.windows_nexus_allowed_fqdns_list
+    target_fqdns = local.workspace_vm_allowed_fqdns_list
     source_addresses = data.azurerm_subnet.services.address_prefixes
   }
 }
