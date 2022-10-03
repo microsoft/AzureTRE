@@ -3,7 +3,7 @@ import { CommandBarButton, DetailsList, getTheme, IColumn, Persona, PersonaSize,
 import { HttpMethod, useAuthApiCall } from '../../../hooks/useAuthApiCall';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
 import { WorkspaceContext } from '../../../contexts/WorkspaceContext';
-import { AirlockRequest } from '../../../models/airlock';
+import { AirlockRequest, AirlockRequestAction } from '../../../models/airlock';
 import moment from 'moment';
 import { Route, Routes, useNavigate } from 'react-router-dom';
 import { AirlockViewRequest } from './AirlockViewRequest';
@@ -37,7 +37,14 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
             HttpMethod.Get,
             workspaceCtx.workspaceApplicationIdURI
           );
-          requests = result.airlockRequests.map((r: { airlockRequest: AirlockRequest }) => r.airlockRequest);
+          requests = result.airlockRequests.map((r: {
+            airlockRequest: AirlockRequest,
+            allowed_user_actions: Array<AirlockRequestAction>
+          }) => {
+            const request = r.airlockRequest;
+            request.allowed_user_actions = r.allowed_user_actions;
+            return request;
+          });
         } else {
           // TODO: Get all requests across workspaces
           requests = [];
@@ -56,7 +63,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
   }, [apiCall, workspaceCtx.workspace, workspaceCtx.workspaceApplicationIdURI]);
 
   // Order data by selected column
-  const reorderRequests = useCallback((orderByColumn) => {
+  const reorderRequests = useCallback((orderByColumn, invert = true) => {
     if (orderByColumn) {
       setOrderBy(orderByColumn);
       // Reset sorting on other columns and invert selected column if already sorted asc/desc
@@ -65,7 +72,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
         const selectedColumn: IColumn = orderedColumns.filter(selCol => orderByColumn.key === selCol.key)[0];
         orderedColumns.forEach((newCol: IColumn) => {
           if (newCol === selectedColumn) {
-            selectedColumn.isSortedDescending = !selectedColumn.isSortedDescending;
+            if (invert) selectedColumn.isSortedDescending = !selectedColumn.isSortedDescending;
             selectedColumn.isSorted = true;
           } else {
             newCol.isSorted = false;
@@ -209,12 +216,12 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
       return updatedRequests;
     });
     // Trigger re-ordering to ensure request appears in the right order
-    reorderRequests(orderBy);
+    reorderRequests(orderBy, false);
   };
 
   const handleNewRequest = (newRequest: AirlockRequest) => {
     setAirlockRequests(requests => [...requests, newRequest]);
-    reorderRequests(orderBy);
+    reorderRequests(orderBy, false);
     navigate(newRequest.id);
   };
 
