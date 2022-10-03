@@ -1,8 +1,40 @@
 # Azure Trusted Research Environment
 
-[Full documentation](https://microsoft.github.io/AzureTRE/)
+**Azure TRE documentation site**: <https://microsoft.github.io/AzureTRE/>
 
-## Project Status
+## Background
+<img align="right" src="./docs/assets/azure-tre-logo.svg" width="33%" />
+
+Across the health industry, be it a pharmaceutical company interrogating clinical trial results, or a public health provider analyzing electronic health records, there is the need to enable researchers, analysts, and developers to work with sensitive data sets.
+
+Trusted Research Environments (TREs) enable organisations to provide research teams secure access to these data sets alongside appropriate tooling to ensure researchers can remain efficient and productive despite the security controls in place.
+
+Further information on TREs in general can be found in many places, one good resource is [HDR UK's website](https://www.hdruk.ac.uk/access-to-health-data/trusted-research-environments/).
+
+The Azure Trusted Research Environment project is an accelerator to assist Microsoft customers and partners who want to build out Trusted Research environments on Azure. This project enables authorized users to deploy and configure secure workspaces and researcher tooling without a dependency on IT teams.
+
+This project is typically implemented alongside a data platform that provides research ready datasets to TRE workspaces.
+
+TREs are not “one size fits all”, hence although the Azure TRE has a number of out of the box features, the project has been built be extensible, and hence tooling and data platform agnostic.
+
+Core features include:
+- Self-service workspace management for TRE administrators
+- Self-service provisioning of research tooling for research teams
+- Package and repository mirroring - PyPi, R-CRAN, Apt and more.
+- Extensible architecture - build your own service templates as required
+- Azure Active Directory integration
+- Airlock - import and export
+- Cost reporting
+- Ready to workspace templates including:  
+  - Restricted with data exfiltration control
+  - Unrestricted for open data
+- Ready to go workspace service templates including:
+  - Virtual Desktops: Windows, Linux
+  - AzureML (Jupyter, R Studio, VS Code)
+  - ML Flow
+  - Gitea
+
+## Project Status and Support
 
 ***This project's code base is still under development and breaking changes will happen. Whilst the maintainers will do our best to minimise disruption to existing deployments, this may not always be possible. Stable releases will be published when the project is more mature.***
 
@@ -11,20 +43,6 @@ The aim is to bring together learnings from past customer engagements where TREs
 This project does not have a dedicated team of maintainers but relies on you and the community to maintain and enhance the solution. Microsoft will on project-to-project basis continue to extend the solution in collaboration with customers and partners. No guarantees can be offered as to response times on issues, feature requests, or to the long term road map for the project.
 
 It is important before deployment of the solution that the [Support Policy](SUPPORT.md) is read and understood.
-
-## Background
-
-Across the health industry, be it a pharmaceutical company interrogating clinical trial results, or a public health provider analyzing electronic health records, there is the need to enable researchers, analysts, and developers to work with sensitive data sets.
-
-Trusted Research Environments (TREs) enforce a secure boundary around distinct workspaces to enable information governance controls to be enforced. Each workspace is accessible by a set of authorized users, prevents the exfiltration of sensitive data, and has access to one or more datasets provided by the data platform.
-
-Workspaces can be configured with a variety of tools to enable tasks such as the development of machine learning models, data engineering, data analysis, and software development. Authorized users should be able to deploy and configure their tools without a dependency on IT teams.
-
-A successful Trusted Research Environments enables users to be as productive, if not more productive than they would be working in environments without strict information governance controls.
-
-## Support
-
-For details of support expectations, please review our [Support Policy](./SUPPORT.md).
 
 ## Contributing
 
