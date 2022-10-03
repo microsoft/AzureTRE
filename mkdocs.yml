@@ -108,7 +108,7 @@ nav:
           - Registring Templates: tre-admins/registering-templates.md
 
       - Development: # Docs related to the developing code for the AzureTRE
-          - Local Development: using-tre/local-development/index.md
+          - Local Development: using-tre/local-development/local-development.md
           - Contributing to AzureTRE: # Docs aimed at OSS developers, committing code to the AzureTRE repo
               - Introduction: tre-developers/index.md
               - API: tre-developers/api.md
