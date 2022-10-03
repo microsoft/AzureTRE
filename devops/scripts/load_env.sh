@@ -20,8 +20,8 @@ else
   while read -r line
   do
     # split the line into name/value
-    name=$(echo $line | cut -d= -f1)
-    value=$(echo $line | cut -d= -f2)
+    name=$(echo "$line" | cut -d= -f1)
+    value=$(echo "$line" | cut -d= -f2)
     # Create the Terraform var name form, i.e. convert FOO=BAR to TF_VAR_foo=BAR
     tf_name="TF_VAR_$(echo "$name" | tr '[:upper:]' '[:lower:]')"
 
@@ -31,8 +31,10 @@ else
     fi
 
     # declare the variable and export to the caller's context
+    # shellcheck disable=SC2086
     declare -g $name="$value"
     export "${name?}"
+    # shellcheck disable=SC2086
     declare -g $tf_name="$value"
     export "${tf_name?}"
   done < <(grep -v -e '^[[:space:]]*$' -e '^#' "$1" ) # feed in via Process Substition to avoid bash subshell (http://mywiki.wooledge.org/ProcessSubstitution)
