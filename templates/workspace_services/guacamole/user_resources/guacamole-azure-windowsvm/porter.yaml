@@ -27,9 +27,9 @@ custom:
         sku: server-2019
         version: latest
       conda_config: true
-    "Custom Image From Gallery":
-      source_image_name: sltestwin1
-      conda_config: true
+    # "Custom Image From Gallery":
+    #   source_image_name: your-image
+    #   conda_config: true
 
 credentials:
   - name: azure_tenant_id

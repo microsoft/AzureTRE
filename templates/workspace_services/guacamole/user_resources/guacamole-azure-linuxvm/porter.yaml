@@ -29,10 +29,10 @@ custom:
         version: latest
       install_ui: false
       conda_config: true
-    "Custom Image From Gallery":
-      source_image_name: sltest1
-      install_ui: true
-      conda_config: true
+    # "Custom Image From Gallery":
+    #   source_image_name: your-image
+    #   install_ui: true
+    #   conda_config: true
 
 
 credentials:
