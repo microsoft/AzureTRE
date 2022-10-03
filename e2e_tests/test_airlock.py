@@ -23,7 +23,7 @@ BLOB_NAME = os.path.basename(BLOB_FILE_PATH)
 
 @pytest.mark.airlock
 @pytest.mark.extended
-@pytest.mark.timeout(2000)
+@pytest.mark.timeout(30 * 60)
 async def test_airlock_import_flow(verify) -> None:
 
     admin_token = await get_admin_token(verify)
