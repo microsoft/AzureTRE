@@ -63,13 +63,13 @@ data "external" "nsg_rule_priorities_outbound" {
 }
 
 
-resource "azurerm_network_security_rule" "allow_aml_inbound" {
+resource "azurerm_network_security_rule" "allow_batch_inbound" {
   access                      = "Allow"
-  destination_port_ranges     = ["29877", "29876", "44224"]
+  destination_port_ranges     = ["29876"]
   destination_address_prefix  = "VirtualNetwork"
-  source_address_prefix       = "VirtualNetwork"
+  source_address_prefix       = "BatchNodeManagement"
   direction                   = "Inbound"
-  name                        = "${local.short_service_id}-aml-inbound"
+  name                        = "${local.short_service_id}-batch-inbound-29876"
   network_security_group_name = data.azurerm_network_security_group.ws.name
   priority                    = tonumber(data.external.nsg_rule_priorities_inbound.result.nsg_rule_priority)
   protocol                    = "Tcp"
@@ -77,8 +77,38 @@ resource "azurerm_network_security_rule" "allow_aml_inbound" {
   source_port_range           = "*"
 }
 
+resource "azurerm_network_security_rule" "allow_batch_inbound_29877" {
+  count                       = var.is_exposed_externally ? 1 : 0
+  access                      = "Allow"
+  destination_port_ranges     = ["29877"]
+  destination_address_prefix  = "VirtualNetwork"
+  source_address_prefix       = "BatchNodeManagement"
+  direction                   = "Inbound"
+  name                        = "${local.short_service_id}-batch-inbound-29877"
+  network_security_group_name = data.azurerm_network_security_group.ws.name
+  priority                    = tonumber(data.external.nsg_rule_priorities_inbound.result.nsg_rule_priority) + 1
+  protocol                    = "Tcp"
+  resource_group_name         = data.azurerm_resource_group.ws.name
+  source_port_range           = "*"
+}
+
+resource "azurerm_network_security_rule" "allow_aml_inbound" {
+  count                       = var.is_exposed_externally ? 1 : 0
+  access                      = "Allow"
+  destination_port_ranges     = ["44224"]
+  destination_address_prefix  = "VirtualNetwork"
+  source_address_prefix       = "AzureMachineLearning"
+  direction                   = "Inbound"
+  name                        = "${local.short_service_id}-aml-inbound"
+  network_security_group_name = data.azurerm_network_security_group.ws.name
+  priority                    = tonumber(data.external.nsg_rule_priorities_inbound.result.nsg_rule_priority) + 2
+  protocol                    = "Tcp"
+  resource_group_name         = data.azurerm_resource_group.ws.name
+  source_port_range           = "*"
+}
 
 resource "azurerm_network_security_rule" "allow_outbound_storage_445" {
+  count                       = var.is_exposed_externally ? 1 : 0
   access                      = "Allow"
   destination_port_range      = "445"
   destination_address_prefix  = "Storage"
