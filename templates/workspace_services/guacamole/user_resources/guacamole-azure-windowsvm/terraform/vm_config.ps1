@@ -40,3 +40,7 @@ $DaemonConfig = @"
 }
 "@
 $DaemonConfig | Out-File -Encoding Ascii ( New-Item -Path $env:ProgramData\docker\config\daemon.json -Force )
+
+# R config
+$RconfigFilePathWindows = C:/ProgramFiles/R/R-4.2.1/etc/Rprofile.site
+echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- ""${NEXUS_PROXY_URL}\"/repository/r-proxy/\"\n    options(repos = r)\n})" > $RconfigFilePathWindows
