@@ -7,6 +7,7 @@ export enum ApiEndpoint {
     AirlockLink = 'link',
     AirlockSubmit = 'submit',
     AirlockCancel = 'cancel',
+    AirlockReview = 'review',
     WorkspaceTemplates = 'workspace-templates',
     WorkspaceServiceTemplates = 'workspace-service-templates',
     UserResourceTemplates = 'user-resource-templates',
