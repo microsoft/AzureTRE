@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-service-mysql
-version: 0.1.2
+version: 0.2.0
 description: "A MySQL workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl

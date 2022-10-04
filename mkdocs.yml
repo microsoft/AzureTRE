@@ -64,13 +64,13 @@ nav:
 
   - Using the Azure TRE: # Documentation for users of the TRE
       - Introduction: using-tre/index.md
-      - Terms and Definitions: using-tre/terms-definitions.md
+      # - Terms and Definitions: using-tre/terms-definitions.md
       - Custom Templates: using-tre/templates/index.md
-      - Workspaces:
-          - using-tre/wks/index.md # Documentation describing what a workspace is
-          - Using Workspaces: using-tre/wks/using-wks.md # Interacting with workspaces (via the UI)
-          - The Workspace Owner: using-tre/wks/wks-owner.md # Workspace Owners. The concept, and tasks
-      - FAQ: using-tre/faq.md # FAQ section (to allow easy contribution)
+      # - Workspaces:
+      #    - using-tre/wks/index.md # Documentation describing what a workspace is
+      #    - Using Workspaces: using-tre/wks/using-wks.md # Interacting with workspaces (via the UI)
+      #    - The Workspace Owner: using-tre/wks/wks-owner.md # Workspace Owners. The concept, and tasks
+      # - FAQ: using-tre/faq.md # FAQ section (to allow easy contribution)
 
   - Templates and Services: # Docs to highlight and illustrate workspaces, workspace services etc
       - Workspaces:
@@ -108,7 +108,7 @@ nav:
           - Registring Templates: tre-admins/registering-templates.md
 
       - Development: # Docs related to the developing code for the AzureTRE
-          - Local Development: using-tre/local-development/index.md
+          - Local Development: using-tre/local-development/local-development.md
           - Contributing to AzureTRE: # Docs aimed at OSS developers, committing code to the AzureTRE repo
               - Introduction: tre-developers/index.md
               - API: tre-developers/api.md

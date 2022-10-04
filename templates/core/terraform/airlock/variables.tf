@@ -28,13 +28,7 @@ variable "mgmt_acr_name" {
   description = "Management ACR name"
 }
 
-variable "arm_subscription_id" {
-  description = "The TRE subscription id."
-  type        = string
-  default     = ""
-}
-
-variable "airlock_app_service_plan_sku_size" {
+variable "airlock_app_service_plan_sku" {
   type    = string
   default = "P1v3"
 }
@@ -51,3 +45,8 @@ variable "enable_malware_scanning" {
 }
 
 variable "log_analytics_workspace_id" {}
+
+variable "blob_core_dns_zone_id" {}
+variable "file_core_dns_zone_id" {}
+variable "queue_core_dns_zone_id" {}
+variable "table_core_dns_zone_id" {}

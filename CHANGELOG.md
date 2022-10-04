@@ -8,6 +8,8 @@
 * Firewall now blocks terraform/hasicorp domains ([#2590](https://github.com/microsoft/AzureTRE/pull/2590)). **Migration** is manual - update the templateVersion of `tre-shared-service-firewall` resource in Cosmos to `0.5.0`. Check the PR for more details.
 * Github Actions deployments use a single ACR instead of two. Github secrets might need updating, see PR for details. ([#2654](https://github.com/microsoft/AzureTRE/pull/2654))
 * Align Github Action secret names. Existing Github environments must be updated, see PR for details. ([#2655](https://github.com/microsoft/AzureTRE/pull/2655))
+* Add workspace creator as an owner of the workspace enterprise application ([#2627](https://github.com/microsoft/AzureTRE/pull/2627)). **Migration** if the `AUTO_WORKSPACE_APP_REGISTRATION` is set, the `Directory.Read.All` MS Graph API permission permission needs granting to the Application Registration identified by `APPLICATION_ADMIN_CLIENT_ID`.
+* Add support for setting AppService plan SKU in GitHub Actions. Previous environment variable names of `API_APP_SERVICE_PLAN_SKU_SIZE` and `APP_SERVICE_PLAN_SKU` have been renamed to `CORE_APP_SERVICE_PLAN_SKU` and `WORKSPACE_APP_SERVICE_PLAN_SKU` ([#2684](https://github.com/microsoft/AzureTRE/pull/2684))
 
 FEATURES:
 
@@ -20,13 +22,18 @@ FEATURES:
 ENHANCEMENTS:
 
 * Cancelling an Airlock request triggers deletion of the request container and files ([#2584](https://github.com/microsoft/AzureTRE/pull/2584))
+* Airlock requests with status "blocked_by_scan" have the reason for being blocked by the malware scanner in the status_message field ([#2666](https://github.com/microsoft/AzureTRE/pull/2666))
 * Move admin-vm from core to a shared service ([#2624](https://github.com/microsoft/AzureTRE/pull/2624))
+* Remove obsolete docker environment variables ([#2675](https://github.com/microsoft/AzureTRE/pull/2675))
+* Using Porter's Terrform mixin 1.0.0-rc.1 where mirror in done internally ([#2677](https://github.com/microsoft/AzureTRE/pull/2677))
+* Airlock function internal storage is accessed with private endpoints ([#2679](https://github.com/microsoft/AzureTRE/pull/2679))
 
 BUG FIXES:
 
 * Resource processor error on deploying user-resource: TypeError: 'NoneType' object is not iterable ([#2569](https://github.com/microsoft/AzureTRE/issues/2569))
 * Update Porter and Terraform mixin versions ([#2639](https://github.com/microsoft/AzureTRE/issues/2639))
 * Airlock Manager should have permissions to get SAS token ([#2502](https://github.com/microsoft/AzureTRE/issues/2502))
+* Terraform unmarshal errors in `migrate.sh` ([#2673](https://github.com/microsoft/AzureTRE/issues/2673))
 
 ## 0.4.3 (September 12, 2022)
 
