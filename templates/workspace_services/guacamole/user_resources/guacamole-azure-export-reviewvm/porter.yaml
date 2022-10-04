@@ -134,7 +134,7 @@ uninstall:
         - "{{ bundle.parameters.id }}"
 
   - terraform:
-      description: "Delete the Guacamole User Resource Service"
+      description: "Delete the Guacamole User Resource Service (Reviewer VM)"
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
