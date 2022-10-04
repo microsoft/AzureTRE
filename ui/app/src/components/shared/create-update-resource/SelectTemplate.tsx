@@ -34,7 +34,7 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (pro
         if (!templates) {
             getTemplates();
         }
-    }, [apiCall, props.templatesPath, templates]);
+    }, [apiCall, props.templatesPath, templates, props.workspaceApplicationIdURI]);
 
     switch (loading) {
         case LoadingState.Ok:
