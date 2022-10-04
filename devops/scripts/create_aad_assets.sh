@@ -26,7 +26,7 @@ fi
 
 APPLICATION_PERMISSION="Application.ReadWrite.OwnedBy"
 if [ "${AUTO_WORKSPACE_APP_REGISTRATION:-}" == true ]; then
-  APPLICATION_PERMISSION="Application.ReadWrite.All"
+  APPLICATION_PERMISSION="Application.ReadWrite.All,Directory.Read.All"
 fi
 
 if [ "${AUTO_WORKSPACE_GROUP_CREATION:-}" == true ]; then

@@ -76,15 +76,9 @@ async def retrieve_users_active_workspaces(request: Request, user=Depends(get_cu
         return WorkspacesInList(workspaces=user_workspaces)
 
 
-@workspaces_core_router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID)
-async def retrieve_workspace_by_workspace_id(user=Depends(get_current_tre_user_or_tre_admin), workspace=Depends(get_workspace_by_id_from_path)) -> WorkspaceInResponse:
-    access_service = get_access_service()
-    user_role_assignments = get_identity_role_assignments(user)
-    if access_service.get_workspace_role(user, workspace, user_role_assignments) != WorkspaceRole.NoRole:
-        return WorkspaceInResponse(workspace=workspace)
-    else:
-        logging.debug("User doesn't have roles in workspace.")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)
+@workspaces_shared_router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID)
+async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path)) -> WorkspaceInResponse:
+    return WorkspaceInResponse(workspace=workspace)
 
 
 @workspaces_core_router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
@@ -172,7 +166,7 @@ async def invoke_action_on_workspace(response: Response, action: str, user=Depen
 
 # workspace operations
 # This method only returns templates that the authenticated user is authorized to use
-@workspaces_shared_router.get("/workspace/{workspace_id}/workspace-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE)
+@workspaces_shared_router.get("/workspaces/{workspace_id}/workspace-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE)
 async def get_workspace_service_templates(
         workspace=Depends(get_workspace_by_id_from_path),
         template_repo=Depends(get_repository(ResourceTemplateRepository)),
@@ -182,7 +176,7 @@ async def get_workspace_service_templates(
 
 
 # This method only returns templates that the authenticated user is authorized to use
-@workspaces_shared_router.get("/workspace/{workspace_id}/workspace-service-templates/{service_template_name}/user-resource-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE)
+@workspaces_shared_router.get("/workspaces/{workspace_id}/workspace-service-templates/{service_template_name}/user-resource-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE)
 async def get_user_resource_templates(
         service_template_name: str,
         workspace=Depends(get_workspace_by_id_from_path),

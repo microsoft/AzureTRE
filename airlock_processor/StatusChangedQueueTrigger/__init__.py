@@ -184,7 +184,7 @@ def set_output_event_to_report_failure(stepResultEvent, request_properties, fail
     stepResultEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
-            data={"completed_step": request_properties.new_status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id, "request_files": request_files, "error_message": failure_reason},
+            data={"completed_step": request_properties.new_status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id, "request_files": request_files, "status_message": failure_reason},
             subject=request_properties.request_id,
             event_type="Airlock.StepResult",
             event_time=datetime.datetime.utcnow(),

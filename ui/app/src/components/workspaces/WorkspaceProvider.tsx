@@ -36,12 +36,18 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
     const getWorkspace = async () => {
       try {
         // get the workspace
-        const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get)).workspace;
+        // for this call, we infer the scope_id for the aad app to authenticate against
+        // {TRE-ID}-ws-{last-4-chars-of-workspace-id}
+        // following this, we set the workspace in the context and all other calls use the context values
+        console.log('Fetching workspace token');
+        let inferredScopeId = `api://${config.treId}-ws-${workspaceId?.substring(workspaceId.length-4)}`;
+        const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, inferredScopeId)).workspace;
         workspaceCtx.current.setWorkspace(ws);
         const ws_application_id_uri = ws.properties.scope_id;
 
         // use the client ID to get a token against the workspace (tokenOnly), and set the workspace roles in the context
         let wsRoles: Array<string> = [];
+        console.log('Getting workspace');
         await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, ws_application_id_uri, undefined, ResultType.JSON, (roles: Array<string>) => {
           config.debug && console.log(`Workspace roles for ${workspaceId}`, roles);
           workspaceCtx.current.setRoles(roles);

@@ -141,13 +141,15 @@ graph LR
 
 
 TRE:
+
 * `stalimex` - storage (st) airlock (al) import (im) external (ex)
 * `stalimip` - storage (st) airlock (al) import (im) in-progress (ip)
 * `stalimrej` - storage (st) airlock (al) import (im) rejected (rej)
 * `stalimblocked` - storage (st) airlock (al) import (im) blocked
 * `stalexapp` - storage (st) airlock (al) export (ex) approved (app)
 
-Workspace
+Workspace:
+
 * `stalimapp` - workspace storage (st) airlock (al) import (im) approved (app)
 * `stalexint` - workspace storage (st) airlock (al) export (ex) internal (int)
 * `stalexip` - workspace storage (st) airlock (al) export (ex) in-progress (ip)
@@ -163,6 +165,8 @@ Workspace
 > * The (import) blocked storage account (`stalimblocked`) is bound to the TRE CORE vnet
 > * The (import) rejected storage account (`stalimrej`) is bound to the TRE CORE vnet
 > * The (import) approved storage account (`stalimapp`) is bound to the workspace vnet
+
+[![Airlock networking](../assets/airlock-networking.png)](../assets/airlock-networking.png)
 
 In the TRE Core, the TRE API will provide the airlock API endpoints allowing to advance the process. The TRE API will expose the following methods:
 

@@ -41,7 +41,7 @@ locals {
   export_approved_eventgrid_subscription_name   = "evgs-airlock-export-approved-blob-created"
 
   airlock_function_app_name = "func-airlock-processor-${var.tre_id}"
-  airlock_function_sa_name  = lower(replace("saairlockp${var.tre_id}", "-", ""))
+  airlock_function_sa_name  = lower(replace("stairlockp${var.tre_id}", "-", ""))
 
   airlock_sa_blob_data_contributor = [
     azurerm_storage_account.sa_import_external.id,

@@ -2,44 +2,14 @@
 name: "run_command"
 description: "Run a command in a devcontainer"
 inputs:
-  USE_ENV_VARS_NOT_FILES:
-    description: "Use ENV variables rather than a file."
-    required: false
-    default: "true"
-  TF_INPUT:
-    description: "Make Terraform fail if missing variables."
-    required: false
-    default: "0"
-  TF_IN_AUTOMATION:
-    description: "Terraform should not provide hints in the console."
-    required: false
-    default: "1"
   COMMAND:
     description: "The command you want to run in the Devcontainer."
     required: true
-  ACTIONS_ACR_NAME:
-    description: "The Azure Container registry name that the devcontainer is stored in."
-    required: true
-  ACTIONS_ACR_URI:
-    description: "The full uri of the Azure Container Registry where the devcontainer is stored in."
-    required: true
-  ACTIONS_ACR_PASSWORD:
-    description: "The Azure Container registry password for the devcontainer."
-    required: true
-  ACTIONS_DEVCONTAINER_TAG:
+  DEVCONTAINER_TAG:
     description: "The container label to use when running the command."
     required: true
-  ARM_TENANT_ID:
-    description: "Azure Tenant Id."
-    required: true
-  ARM_CLIENT_ID:
-    description: "Azure user Id. This user needs User Access Administrator permission as minimum."
-    required: true
-  ARM_CLIENT_SECRET:
-    description: "Azure user password."
-    required: true
-  ARM_SUBSCRIPTION_ID:
-    description: "Azure Subscription Id."
+  AZURE_CREDENTIALS:
+    description: "Credentials to access Azure."
     required: true
   API_CLIENT_ID:
     description: "The API Client Id."
@@ -68,6 +38,7 @@ inputs:
   TERRAFORM_STATE_CONTAINER_NAME:
     description: "The name of the container to store the Terraform state."
     required: false
+    default: ""
   MGMT_RESOURCE_GROUP_NAME:
     description: "The resource group used to store the Terraform state."
     required: false
@@ -118,22 +89,35 @@ inputs:
     default: "false"
   CI_CACHE_ACR_NAME:
     description: "A secondary ACR used for caching in CI environments"
-    required: false
+    required: true
     default: ""
   TF_LOG:
     description: "Log level for terraform - values are blank | DEBUG | TRACE"
+    required: false
+    default: ""
+  CORE_APP_SERVICE_PLAN_SKU:
+    description: "The AppService plan sku used in core resources"
+    required: false
+    default: ""
+  WORKSPACE_APP_SERVICE_PLAN_SKU:
+    description: "The AppService plan sku used by tests"
     required: false
     default: ""
 
 runs:
   using: composite
   steps:
-    - name: Login to Container Registry
-      uses: docker/login-action@v1
+    - name: Azure Login
+      uses: azure/login@v1
+      if: contains(inputs.COMMAND, 'bootstrap') != true
       with:
-        registry: ${{ inputs.ACTIONS_ACR_URI }}
-        username: ${{ inputs.ACTIONS_ACR_NAME }}
-        password: ${{ inputs.ACTIONS_ACR_PASSWORD }}
+        creds: ${{ inputs.AZURE_CREDENTIALS }}
+
+    - name: ACR Login
+      shell: bash
+      if: contains(inputs.COMMAND, 'bootstrap') != true
+      run: |
+        az acr login --name "${{ inputs.CI_CACHE_ACR_NAME }}"
 
     - name: Run command in DevContainer
       shell: bash
@@ -143,19 +127,20 @@ runs:
           -v /var/run/docker.sock:/var/run/docker.sock \
           --workdir /workspaces/tre \
           --user vscode \
-          -e TF_INPUT="${{ inputs.TF_INPUT }}" \
-          -e TF_IN_AUTOMATION="${{ inputs.TF_IN_AUTOMATION }}" \
-          -e USE_ENV_VARS_NOT_FILES="${{ inputs.USE_ENV_VARS_NOT_FILES }}" \
+          -e TF_INPUT="0" \
+          -e TF_IN_AUTOMATION="1" \
+          -e USE_ENV_VARS_NOT_FILES="true" \
           -e BUNDLE_TYPE="${{ inputs.BUNDLE_TYPE }}" \
           -e WORKSPACE_SERVICE_NAME="${{ inputs.WORKSPACE_SERVICE_NAME }}" \
           -e LOCATION="${{ inputs.LOCATION }}" \
           -e TF_VAR_location="${{ inputs.LOCATION }}" \
           -e RESOURCE_LOCATION="${{ inputs.LOCATION }}" \
-          -e ARM_CLIENT_ID="${{ inputs.ARM_CLIENT_ID }}" \
-          -e ARM_CLIENT_SECRET="${{ inputs.ARM_CLIENT_SECRET }}" \
-          -e ARM_TENANT_ID="${{ inputs.ARM_TENANT_ID }}" \
-          -e ARM_SUBSCRIPTION_ID="${{ inputs.ARM_SUBSCRIPTION_ID }}" \
-          -e TF_VAR_terraform_state_container_name="${{ inputs.TERRAFORM_STATE_CONTAINER_NAME }}" \
+          -e ARM_CLIENT_ID="${{ fromJSON(inputs.AZURE_CREDENTIALS).clientId }}" \
+          -e ARM_CLIENT_SECRET="${{ fromJSON(inputs.AZURE_CREDENTIALS).clientSecret }}" \
+          -e ARM_TENANT_ID="${{ fromJSON(inputs.AZURE_CREDENTIALS).tenantId }}" \
+          -e ARM_SUBSCRIPTION_ID="${{ fromJSON(inputs.AZURE_CREDENTIALS).subscriptionId }}" \
+          -e TF_VAR_terraform_state_container_name="${{ (inputs.TERRAFORM_STATE_CONTAINER_NAME != ''
+            && inputs.TERRAFORM_STATE_CONTAINER_NAME) || 'tfstate' }}" \
           -e TF_VAR_mgmt_storage_account_name="${{ inputs.MGMT_STORAGE_ACCOUNT_NAME }}" \
           -e TF_VAR_mgmt_resource_group_name="${{ inputs.MGMT_RESOURCE_GROUP_NAME }}" \
           -e ACR_NAME=${{ inputs.ACR_NAME }} \
@@ -165,7 +150,7 @@ runs:
           -e TF_VAR_api_client_secret="${{ inputs.API_CLIENT_SECRET }}" \
           -e TF_VAR_application_admin_client_id="${{ inputs.APPLICATION_ADMIN_CLIENT_ID }}" \
           -e TF_VAR_application_admin_client_secret="${{ inputs.APPLICATION_ADMIN_CLIENT_SECRET }}" \
-          -e TF_VAR_arm_subscription_id="${{ inputs.ARM_SUBSCRIPTION_ID }}" \
+          -e TF_VAR_arm_subscription_id="${{ fromJSON(inputs.AZURE_CREDENTIALS).subscriptionId }}" \
           -e SWAGGER_UI_CLIENT_ID="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
           -e TF_VAR_swagger_ui_client_id="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
           -e TF_VAR_core_address_space="${{ inputs.core_address_space }}" \
@@ -185,5 +170,9 @@ runs:
           -e TF_VAR_stateful_resources_locked=${{ inputs.STATEFUL_RESOURCES_LOCKED }} \
           -e TF_VAR_enable_airlock_malware_scanning=${{ inputs.ENABLE_AIRLOCK_MALWARE_SCANNING }} \
           -e CI_CACHE_ACR_NAME="${{ inputs.CI_CACHE_ACR_NAME }}" \
-          '${{ inputs.ACTIONS_ACR_URI }}tredev:${{ inputs.ACTIONS_DEVCONTAINER_TAG }}' \
+          -e TF_VAR_core_app_service_plan_sku="${{ (inputs.CORE_APP_SERVICE_PLAN_SKU != ''
+            && inputs.CORE_APP_SERVICE_PLAN_SKU) || 'P1v2' }}" \
+          -e WORKSPACE_APP_SERVICE_PLAN_SKU="${{ (inputs.WORKSPACE_APP_SERVICE_PLAN_SKU != ''
+            && inputs.WORKSPACE_APP_SERVICE_PLAN_SKU) || 'P1v2' }}" \
+          '${{ inputs.CI_CACHE_ACR_NAME }}.azurecr.io/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"

@@ -4,6 +4,7 @@ import uvicorn
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi_utils.tasks import repeat_every
 from service_bus.airlock_request_status_update import receive_step_result_message_and_update_status
 
@@ -45,6 +46,15 @@ def get_application() -> FastAPI:
         logging.error(f"Failed to add RequestTracerMiddleware: {e}")
 
     application.add_middleware(ServerErrorMiddleware, handler=generic_error_handler)
+    # Allow local UI debugging with local API
+    if config.ENABLE_LOCAL_DEBUGGING:
+        application.add_middleware(
+            CORSMiddleware,
+            allow_origins=["http://localhost:3000"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"])
+
     application.add_exception_handler(HTTPException, http_error_handler)
     application.add_exception_handler(RequestValidationError, http422_error_handler)
 

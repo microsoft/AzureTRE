@@ -7,6 +7,7 @@ import { ExceptionLayout } from "../ExceptionLayout";
 
 interface SelectTemplateProps {
     templatesPath: string,
+    workspaceApplicationIdURI?: string | undefined,
     onSelectTemplate: (templateName: string) => void
 }
 
@@ -19,8 +20,7 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (pro
     useEffect(() => {
         const getTemplates = async () => {
             try {
-                // Get the templates from the API
-                const templatesResponse = await apiCall(props.templatesPath, HttpMethod.Get);
+                const templatesResponse = await apiCall(props.templatesPath, HttpMethod.Get, props.workspaceApplicationIdURI);
                 setTemplates(templatesResponse.templates);
                 setLoading(LoadingState.Ok);
             } catch (err: any){
@@ -34,7 +34,7 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (pro
         if (!templates) {
             getTemplates();
         }
-    }, [apiCall, props.templatesPath, templates]);
+    }, [apiCall, props.templatesPath, templates, props.workspaceApplicationIdURI]);
 
     switch (loading) {
         case LoadingState.Ok:
