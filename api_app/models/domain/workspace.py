@@ -1,5 +1,6 @@
 from enum import Enum
 from pydantic import Field
+from models.domain.azuretremodel import AzureTREModel
 from models.domain.resource import Resource, ResourceType
 
 
@@ -18,5 +19,5 @@ class Workspace(Resource):
     resourceType = ResourceType.Workspace
 
 
-class WorkspaceAuth():
+class WorkspaceAuth(AzureTREModel):
     scopeId: str = Field("", title="Scope ID", description="The Workspace App Scope Id to use for auth")

@@ -81,10 +81,11 @@ async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_
     return WorkspaceInResponse(workspace=workspace)
 
 
-@workspaces_core_router.get("/workspaces/{workspace_id}/scopeid", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_SCOPE_ID_BY_WORKSPACE_ID)
+@workspaces_core_router.get("/workspaces/{workspace_id}/scopeid", response_model=WorkspaceAuthInResponse, name=strings.API_GET_WORKSPACE_SCOPE_ID_BY_WORKSPACE_ID)
 async def retrieve_workspace_scope_id_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path)) -> WorkspaceAuthInResponse:
     wsAuth = WorkspaceAuth()
-    wsAuth.scopeId = workspace["properties"]["scope_id"]
+    if "scope_id" in workspace.properties:
+        wsAuth.scopeId = workspace.properties["scope_id"]
     return WorkspaceAuthInResponse(workspaceAuth=wsAuth)
 
 
