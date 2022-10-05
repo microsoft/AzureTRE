@@ -10,3 +10,7 @@ variable "tre_resource_id" {
 variable "ssl_cert_name" {
   type = string
 }
+
+variable "workspace_id" {
+  type = string
+}

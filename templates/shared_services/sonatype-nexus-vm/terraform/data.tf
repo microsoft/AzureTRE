@@ -14,6 +14,12 @@ data "azurerm_subnet" "shared" {
   name                 = "SharedSubnet"
 }
 
+data "azurerm_subnet" "services" {
+  name                 = "ServicesSubnet"
+  virtual_network_name = data.azurerm_virtual_network.ws.name
+  resource_group_name  = data.azurerm_virtual_network.ws.resource_group_name
+}
+
 data "azurerm_firewall" "fw" {
   name                = "fw-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
@@ -46,4 +52,13 @@ data "azurerm_resource_group" "rg" {
 data "azurerm_private_dns_zone" "nexus" {
   name                = "nexus-${var.tre_id}.${data.azurerm_resource_group.rg.location}.cloudapp.azure.com"
   resource_group_name = local.core_resource_group_name
+}
+
+data "azurerm_virtual_network" "ws" {
+  name                = "vnet-${var.tre_id}-ws-${local.short_workspace_id}"
+  resource_group_name = data.azurerm_resource_group.ws.name
+}
+
+data "azurerm_resource_group" "ws" {
+  name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
 }
