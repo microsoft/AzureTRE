@@ -9,7 +9,7 @@ This folder contains user resources that can be deployed with the Guacamole work
 ## Customising the user resources
 
 The `guacamole-azure-linuxvm` and `guacamole-azure-windowsvm` folders follow a consistent layout.
-To create a template To update one of these templates (or to create a new template based on these folders) to use different image details or VM sizes, there are a few files that need to be updated:
+To update one of these templates (or to create a new template based on these folders) to use different image details or VM sizes, there are a few files that need to be updated:
 
 | File                   | Description                                                                                                                                                                                                                                                                        |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
