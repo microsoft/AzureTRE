@@ -17,8 +17,7 @@
         "description": "Select Windows image to use for VM",
         "enum": [
           "Windows 10",
-          "Server 2019 Data Science VM",
-          "Custom Image From Gallery"
+          "Server 2019 Data Science VM"
         ]
       },
       "vm_size": {

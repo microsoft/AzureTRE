@@ -17,8 +17,7 @@
       "description": "Select Linux image to use for VM",
       "enum": [
         "Ubuntu 18.04",
-        "Ubuntu 18.04 Data Science VM",
-        "Custom Image From Gallery"
+        "Ubuntu 18.04 Data Science VM"
       ]
     },
     "vm_size": {
