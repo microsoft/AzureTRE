@@ -22,12 +22,13 @@ from models.domain.operation import DeploymentStatusUpdateMessage, Operation, Op
 from resources import strings
 
 
-class DeploymentStatusUpdate(threading.Thread):
+class DeploymentStatusUpdater(threading.Thread):
     def __init__(self, app):
         self.app = app
         self.operations_repo = OperationRepository(get_db_client(self.app))
         self.resource_repo = ResourceRepository(get_db_client(self.app))
         self.resource_template_repo = ResourceTemplateRepository(get_db_client(self.app))
+        super().daemon = True
         super().__init__()
 
     def run(self, *args, **kwargs):

@@ -13,7 +13,7 @@ from db.errors import EntityDoesNotExist
 from models.domain.workspace import Workspace
 from models.domain.operation import Operation, OperationStep, Status
 from resources import strings
-from service_bus.deployment_status_update import DeploymentStatusUpdate
+from service_bus.deployment_status_updater import DeploymentStatusUpdater
 
 
 pytestmark = pytest.mark.asyncio
@@ -114,7 +114,7 @@ def create_sample_operation(resource_id, request_action):
 async def test_receiving_bad_json_logs_error(app, logging_mock, payload):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(payload)
 
-    status_updater = DeploymentStatusUpdate(app)
+    status_updater = DeploymentStatusUpdater(app)
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
     # bad message data will fail, but we will complete the message as it will never be useful
@@ -136,7 +136,7 @@ async def test_receiving_good_message(app, logging_mock, repo, operation_repo):
     operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
     operation_repo().get_operation_by_id.return_value = operation
 
-    status_updater = DeploymentStatusUpdate(app)
+    status_updater = DeploymentStatusUpdater(app)
     complete_message = await status_updater.process_message(ServiceBusReceivedMessageMock(test_sb_message))
 
     assert complete_message is True
@@ -155,7 +155,7 @@ async def test_when_updating_non_existent_workspace_error_is_logged(app, logging
     operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
     operation_repo().get_operation_by_id.return_value = operation
 
-    status_updater = DeploymentStatusUpdate(app)
+    status_updater = DeploymentStatusUpdater(app)
     complete_message = await status_updater.process_message(ServiceBusReceivedMessageMock(test_sb_message))
 
     assert complete_message is True
@@ -173,7 +173,7 @@ async def test_when_updating_and_state_store_exception(app, logging_mock, repo, 
     operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
     operation_repo().get_operation_by_id.return_value = operation
 
-    status_updater = DeploymentStatusUpdate(app)
+    status_updater = DeploymentStatusUpdater(app)
     complete_message = await status_updater.process_message(ServiceBusReceivedMessageMock(test_sb_message))
 
     logging_mock.assert_called_once_with(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING + " ")
@@ -203,7 +203,7 @@ async def test_state_transitions_from_deployed_to_deleted(app, repo, operations_
     expected_operation.status = Status.Deleted
     expected_operation.message = updated_message["message"]
 
-    status_updater = DeploymentStatusUpdate(app)
+    status_updater = DeploymentStatusUpdater(app)
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True
@@ -230,7 +230,7 @@ async def test_outputs_are_added_to_resource_item(app, repo, operations_repo):
     operation = create_sample_operation(resource.id, RequestAction.UnInstall)
     operations_repo().get_operation_by_id.return_value = operation
 
-    status_updater = DeploymentStatusUpdate(app)
+    status_updater = DeploymentStatusUpdater(app)
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True
@@ -254,7 +254,7 @@ async def test_properties_dont_change_with_no_outputs(app, repo, operations_repo
 
     expected_resource = resource
 
-    status_updater = DeploymentStatusUpdate(app)
+    status_updater = DeploymentStatusUpdater(app)
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True
@@ -284,7 +284,7 @@ async def test_multi_step_operation_sends_next_step(app, sb_sender_client, repo,
     operations_repo().get_operation_by_id.return_value = multi_step_operation
     update_resource_for_step.return_value = user_resource_multi
 
-    status_updater = DeploymentStatusUpdate(app)
+    status_updater = DeploymentStatusUpdater(app)
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True
@@ -343,7 +343,7 @@ async def test_multi_step_operation_ends_at_last_step(app, sb_sender_client, rep
 
     operations_repo().get_operation_by_id.return_value = in_flight_op
 
-    status_updater = DeploymentStatusUpdate(app)
+    status_updater = DeploymentStatusUpdater(app)
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
     assert complete_message is True
 
