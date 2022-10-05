@@ -28,8 +28,7 @@ class DeploymentStatusUpdater(threading.Thread):
         self.operations_repo = OperationRepository(get_db_client(self.app))
         self.resource_repo = ResourceRepository(get_db_client(self.app))
         self.resource_template_repo = ResourceTemplateRepository(get_db_client(self.app))
-        super().daemon = True
-        super().__init__()
+        super().__init__(daemon=True)
 
     def run(self, *args, **kwargs):
         asyncio.run(self.receive_messages())
