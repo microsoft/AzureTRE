@@ -14,10 +14,10 @@ from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.resource import ResourceType
-from models.domain.workspace import WorkspaceRole
+from models.domain.workspace import WorkspaceAuth, WorkspaceRole
 from models.schemas.operation import OperationInList, OperationInResponse
 from models.schemas.user_resource import UserResourceInResponse, UserResourceInCreate, UserResourcesInList
-from models.schemas.workspace import WorkspaceInCreate, WorkspacesInList, WorkspaceInResponse
+from models.schemas.workspace import WorkspaceAuthInResponse, WorkspaceInCreate, WorkspacesInList, WorkspaceInResponse
 from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse
 from models.schemas.resource import ResourcePatch
 from models.schemas.resource_template import ResourceTemplateInformationInList
@@ -79,6 +79,13 @@ async def retrieve_users_active_workspaces(request: Request, user=Depends(get_cu
 @workspaces_shared_router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID)
 async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path)) -> WorkspaceInResponse:
     return WorkspaceInResponse(workspace=workspace)
+
+
+@workspaces_core_router.get("/workspaces/{workspace_id}/scopeid", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_SCOPE_ID_BY_WORKSPACE_ID)
+async def retrieve_workspace_scope_id_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path)) -> WorkspaceAuthInResponse:
+    wsAuth = WorkspaceAuth()
+    wsAuth.scopeId = workspace["properties"]["scope_id"]
+    return WorkspaceAuthInResponse(workspaceAuth=wsAuth)
 
 
 @workspaces_core_router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])

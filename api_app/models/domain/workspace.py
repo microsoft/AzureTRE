@@ -16,3 +16,7 @@ class Workspace(Resource):
     """
     workspaceURL: str = Field("", title="Workspace URL", description="Main endpoint for workspace users")
     resourceType = ResourceType.Workspace
+
+
+class WorkspaceAuth():
+    scopeId: str = Field("", title="Scope ID", description="The Workspace App Scope Id to use for auth")
