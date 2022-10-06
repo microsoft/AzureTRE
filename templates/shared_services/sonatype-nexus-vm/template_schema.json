@@ -13,5 +13,114 @@
       "title": "SSL certificate name",
       "description": "The name of the certificate to use (located in the core KeyVault) for configuring Nexus SSL"
     }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "42024559-3a88-4518-b1ea-713aebc91cfd",
+        "stepTitle": "Add crl rule collection to firewall",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc-workspace_vm_crl_{{resource.id}}",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "vm-crl-{{resource.id}}",
+                  "description": "CRLs for workspaces",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    },
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    }
+                  ],
+                  "target_fqdns": "{{ resource.properties.workspace_vm_allowed_fqdns_list }}",
+                  "source_addresses": "{{ resource.properties.address_prefixes }}"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "a794e818-0807-4012-90be-3e78f530383c",
+        "stepTitle": "Update crl rule collection in firewall",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_workspace_vm_crl_{{resource.id}}",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "vm-crl-{{resource.id}}",
+                  "description": "CRLs for workspaces",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    },
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    }
+                  ],
+                  "target_fqdns": "{{ resource.properties.workspace_vm_allowed_fqdns_list }}",
+                  "source_addresses": "{{ resource.properties.address_prefixes }}"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "c3f95f9f-d125-4937-9403-84e4957a26b8",
+        "stepTitle": "Remove crl rule collection from firewall",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_workspace_vm_crl_{{resource.id}}"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ]
   }
 }

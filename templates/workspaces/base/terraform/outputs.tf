@@ -32,7 +32,3 @@ output "scope_id" {
 output "address_prefixes" {
   value = jsonencode(module.network.services_subnet_address_prefix)
 }
-
-output "workspace_vm_allowed_fqdns_list" {
-  value = jsonencode(local.workspace_vm_allowed_fqdns_list)
-}
