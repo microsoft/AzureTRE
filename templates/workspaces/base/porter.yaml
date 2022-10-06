@@ -191,6 +191,8 @@ install:
         - name: client_id
         - name: scope_id
         - name: sp_id
+        - name: workspace_allowed_fqdns_list
+        - name: address_prefixes
 
 upgrade:
   # TODO: fix with https://github.com/microsoft/AzureTRE/issues/2114

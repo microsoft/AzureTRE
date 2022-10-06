@@ -33,3 +33,7 @@ output "azure_monitor_ods_opinsights_dns_zone_id" {
 output "azure_monitor_agentsvc_dns_zone_id" {
   value = azurerm_private_dns_zone.azure_monitor_agentsvc.id
 }
+
+output "services_subnet_address_prefix" {
+  value = local.services_subnet_address_prefix
+}
