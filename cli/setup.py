@@ -7,7 +7,7 @@ PROJECT = 'tre'
 VERSION = '0.1.1'
 
 try:
-    long_description = open('README.md', 'rt').read()  # TODO: add long description
+    long_description = open('README.md', 'rt').read()
 except IOError:
     long_description = ''
 

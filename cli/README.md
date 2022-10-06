@@ -4,7 +4,7 @@
 
 ## Installation
 
-Currently, I've only tested installation in the dev container. In this context, `make install-cli` should work
+Currently, installation has only been tested within the dev container. In this context, `make install-cli` should work
 
 ## Shell completion
 

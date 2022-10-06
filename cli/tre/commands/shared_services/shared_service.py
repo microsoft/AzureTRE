@@ -32,10 +32,8 @@ def shared_service_show(shared_service_context: SharedServiceContext, output_for
     response = client.call_api(log, 'GET', f'/api/shared-services/{shared_service_id}', )
     output(response.text, output_format=output_format, query=query, default_table_query=r"sharedServices[].{id:id,name:templateName, version:templateVersion, is_enabled:isEnabled, status: deploymentStatus}")
 
-#
-# TODO - add PATCH (and ?set-enabled)
-#
 
+# TODO - add PATCH (and ?set-enabled)
 # TODO - invoke action
 
 
