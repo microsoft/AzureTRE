@@ -20,6 +20,7 @@ def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> di
         "status": "draft",
         "requestType": "import",
         "files": [],
+        "requestTitle": "a request title",
         "businessJustification": "some business justification",
         "creationTime": datetime.utcnow().timestamp(),
         "reviews": [
