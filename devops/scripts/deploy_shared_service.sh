@@ -72,12 +72,21 @@ for index in "${!property_names[@]}"; do
   additional_props="$additional_props, \"$name\": \"$value\""
 done
 
-payload="{ \"templateName\": \"""${template_name}""\", \"properties\": { \"display_name\": \"Shared service ""${template_name}""\", \"description\": \"Automatically deployed ""${template_name}""\"${additional_props} } }"
-deploy_result=$(tre shared-services new --definition "$payload")
+echo "Not currently deployed - deploying..."
+deploy_result=$(cat << EOF | tre shared-services new --definition-file -
+{
+    "templateName": "${template_name}",
+    "properties": {
+        "display_name": "Shared service "${template_name}",
+        "description": "Automatically deployed "${template_name}"
+        ${additional_props}
+    }
+}
+EOF
+)
 if [[ "$last_result" != 0 ]]; then
   echo "Failed to deploy shared service:"
   echo "${deploy_result}"
   exit 1
 fi
 echo "Deployed shared service ""${template_name}"""
-
