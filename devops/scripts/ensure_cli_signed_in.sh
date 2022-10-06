@@ -18,7 +18,8 @@ else
       --client-id "$TEST_ACCOUNT_CLIENT_ID" \
       --client-secret "$TEST_ACCOUNT_CLIENT_SECRET" \
       --aad-tenant-id "$AAD_TENANT_ID" \
-      --api-scope "api://${API_CLIENT_ID}"
+      --api-scope "api://${API_CLIENT_ID}" \
+      --no-verify  # skip SSL verification in case certs aren't set up
   else
     # Use resource owner password credentials flow with USERNAME/PASSWORD
     echo "tre CLI not already signed in and missing one of TEST_ACCOUNT_CLIENT_ID, TEST_ACCOUNT_CLIENT_SECRET, AAD_TENANT_ID or API_CLIENT_ID"
