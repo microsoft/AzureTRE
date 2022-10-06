@@ -11,6 +11,7 @@
 * Add workspace creator as an owner of the workspace enterprise application ([#2627](https://github.com/microsoft/AzureTRE/pull/2627)). **Migration** if the `AUTO_WORKSPACE_APP_REGISTRATION` is set, the `Directory.Read.All` MS Graph API permission permission needs granting to the Application Registration identified by `APPLICATION_ADMIN_CLIENT_ID`.
 * Add support for setting AppService plan SKU in GitHub Actions. Previous environment variable names of `API_APP_SERVICE_PLAN_SKU_SIZE` and `APP_SERVICE_PLAN_SKU` have been renamed to `CORE_APP_SERVICE_PLAN_SKU` and `WORKSPACE_APP_SERVICE_PLAN_SKU` ([#2684](https://github.com/microsoft/AzureTRE/pull/2684))
 * Reworked how status update messages are handled by the API, to enforce ordering and run the queue subscription in a dedicated thread. Since sessions are now enabled for the status update queue, a `tre-deploy` is required, which will re-create the queue. ([#2700](https://github.com/microsoft/AzureTRE/pull/2700))
+* Guacamole user-resource templates have been updated. VM SKU and image details are now specified in `porter.yaml`. See `README.md` in the guacamole `user-resources` folder for details.
 
 FEATURES:
 
@@ -19,6 +20,7 @@ FEATURES:
 * Import review user resource template ([#2601](https://github.com/microsoft/AzureTRE/issues/2601))
 * Airlock Manager can use user resources ([#2499](https://github.com/microsoft/AzureTRE/issues/2499))
 * Users only see templates they are authorized to use ([#2640](https://github.com/microsoft/AzureTRE/issues/2640))
+* Guacamole user-resource templates now have support for custom VM images from image galleries ([#2634](https://github.com/microsoft/AzureTRE/pull/2634))
 
 ENHANCEMENTS:
 
