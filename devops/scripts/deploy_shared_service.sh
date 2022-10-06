@@ -40,7 +40,7 @@ template_version=$(yq eval '.version' porter.yaml)
 echo "Deploying shared service ${template_name} of version ${template_version}"
 
 # Get shared services and determine if the given shared service has already been deployed
-get_shared_services_result=$(tre shared-services --output json)
+get_shared_services_result=$(tre shared-services list --output json)
 last_result=$?
 if [[ "$last_result" != 0 ]]; then
   echo "Failed to get shared services ${template_name}"
@@ -77,8 +77,8 @@ if ! deploy_result=$(cat << EOF | tre shared-services new --definition-file -
 {
     "templateName": "${template_name}",
     "properties": {
-        "display_name": "Shared service "${template_name}",
-        "description": "Automatically deployed "${template_name}"
+        "display_name": "Shared service '${template_name}'",
+        "description": "Automatically deployed '${template_name}'"
         ${additional_props}
     }
 }
