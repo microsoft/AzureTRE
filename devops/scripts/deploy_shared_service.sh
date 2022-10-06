@@ -73,7 +73,7 @@ for index in "${!property_names[@]}"; do
 done
 
 echo "Not currently deployed - deploying..."
-deploy_result=$(cat << EOF | tre shared-services new --definition-file -
+if ! deploy_result=$(cat << EOF | tre shared-services new --definition-file -
 {
     "templateName": "${template_name}",
     "properties": {
@@ -83,8 +83,7 @@ deploy_result=$(cat << EOF | tre shared-services new --definition-file -
     }
 }
 EOF
-)
-if [[ "$?" != 0 ]]; then
+); then
   echo "Failed to deploy shared service:"
   echo "${deploy_result}"
   exit 1
