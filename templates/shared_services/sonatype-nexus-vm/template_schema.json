@@ -21,7 +21,7 @@
       },
       {
         "stepId": "42024559-3a88-4518-b1ea-713aebc91cfd",
-        "stepTitle": "Add crl rule collection to firewall",
+        "stepTitle": "Add Nexus rule collection to firewall",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
         "resourceAction": "upgrade",
@@ -32,7 +32,7 @@
             "arraySubstitutionAction": "replace",
             "arrayMatchField": "name",
             "value": {
-              "name": "arc-workspace_vm_crl_{{resource.id}}",
+              "name": "shared_subnet_sonatype_nexus",
               "action": "Allow",
               "rules": [
                 {
@@ -49,6 +49,22 @@
                     }
                   ],
                   "target_fqdns": "{{ resource.properties.workspace_vm_allowed_fqdns_list }}",
+                  "source_addresses": "*"
+                },
+                {
+                  "name": "nexus-package-sources",
+                  "description": "Nexus Package Sources",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    },
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    }
+                  ],
+                  "target_fqdns": "{{ resource.properties.nexus_allowed_fqdns_list }}",
                   "source_addresses": "{{ resource.properties.address_prefixes }}"
                 }
               ]
@@ -63,7 +79,7 @@
       },
       {
         "stepId": "a794e818-0807-4012-90be-3e78f530383c",
-        "stepTitle": "Update crl rule collection in firewall",
+        "stepTitle": "Update Nexus rule collection in firewall",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
         "resourceAction": "upgrade",
@@ -74,7 +90,7 @@
             "arraySubstitutionAction": "replace",
             "arrayMatchField": "name",
             "value": {
-              "name": "arc_workspace_vm_crl_{{resource.id}}",
+              "name": "shared_subnet_sonatype_nexus",
               "action": "Allow",
               "rules": [
                 {
@@ -91,6 +107,22 @@
                     }
                   ],
                   "target_fqdns": "{{ resource.properties.workspace_vm_allowed_fqdns_list }}",
+                  "source_addresses": "*"
+                },
+                {
+                  "name": "nexus-package-sources",
+                  "description": "Nexus Package Sources",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    },
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    }
+                  ],
+                  "target_fqdns": "{{ resource.properties.nexus_allowed_fqdns_list }}",
                   "source_addresses": "{{ resource.properties.address_prefixes }}"
                 }
               ]
@@ -102,7 +134,7 @@
     "uninstall": [
       {
         "stepId": "c3f95f9f-d125-4937-9403-84e4957a26b8",
-        "stepTitle": "Remove crl rule collection from firewall",
+        "stepTitle": "Remove Nexus rule collection from firewall",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
         "resourceAction": "upgrade",
@@ -113,7 +145,7 @@
             "arraySubstitutionAction": "remove",
             "arrayMatchField": "name",
             "value": {
-              "name": "arc_workspace_vm_crl_{{resource.id}}"
+              "name": "shared_subnet_sonatype_nexus"
             }
           }
         ]

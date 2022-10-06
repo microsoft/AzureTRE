@@ -29,6 +29,3 @@ output "scope_id" {
   value = var.register_aad_application ? module.aad[0].scope_id : var.scope_id
 }
 
-output "address_prefixes" {
-  value = jsonencode(module.network.services_subnet_address_prefix)
-}

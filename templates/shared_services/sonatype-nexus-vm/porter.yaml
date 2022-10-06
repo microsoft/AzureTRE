@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-sonatype-nexus
-version: 2.2.0
+version: 2.2.7
 description: "A Sonatype Nexus shared service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -39,6 +39,15 @@ parameters:
     type: string
     default: "nexus-ssl"
     description: "Name of the certificate for configuring Nexus SSL with (stored in the core KeyVault)"
+outputs:
+  - name: workspace_vm_allowed_fqdns_list
+    type: string
+    applyTo:
+      - install
+  - name: address_prefixes
+    type: string
+    applyTo:
+      - install
 
 mixins:
   - exec
@@ -59,6 +68,10 @@ install:
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus-vm"
+      outputs:
+        - name: workspace_vm_allowed_fqdns_list
+        - name: address_prefixes
+
 upgrade:
   - exec:
       description: "Upgrade shared service"
