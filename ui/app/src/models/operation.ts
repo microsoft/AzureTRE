@@ -31,7 +31,8 @@ export interface OperationStep {
 export const awaitingStates = [
   "awaiting_deployment",
   "awaiting_update",
-  "awaiting_deletion"
+  "awaiting_deletion",
+  "awaiting_action"
 ]
 
 export const completedStates = [
