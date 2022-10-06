@@ -260,9 +260,9 @@ deploy-shared-service:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Deploying ${DIR} shared service") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
-	&& cd ${DIR} \
-	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" $${PROPS}
+	&& . ${MAKEFILE_DIR}/devops/scripts/ensure_cli_signed_in.sh TRE_URL="$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" \
+	# && cd ${DIR} \
+	# && ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh $${PROPS}
 
 firewall-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
