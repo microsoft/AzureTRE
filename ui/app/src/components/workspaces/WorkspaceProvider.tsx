@@ -35,13 +35,13 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
   useEffect(() => {
     const getWorkspace = async () => {
       try {
-        // get the workspace
-        // for this call, we infer the scope_id for the aad app to authenticate against
-        // {TRE-ID}-ws-{last-4-chars-of-workspace-id}
-        // following this, we set the workspace in the context and all other calls use the context values
-        console.log('Fetching workspace token');
-        let inferredScopeId = `api://${config.treId}-ws-${workspaceId?.substring(workspaceId.length-4)}`;
-        const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, inferredScopeId)).workspace;
+        // get the workspace - first we get the scope_id so we can auth against the right aad app
+        let scopeId = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}/scopeid`, HttpMethod.Get)).workspaceAuth.scopeId;
+        if (scopeId === "") {
+          console.error("Unable to get scope_id from workspace - authentication not set up.");
+        }
+
+        const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, scopeId)).workspace;
         workspaceCtx.current.setWorkspace(ws);
         const ws_application_id_uri = ws.properties.scope_id;
 
