@@ -72,6 +72,7 @@ class AirlockRequestWithAllowedUserActionsInList(BaseModel):
 
 class AirlockRequestInCreate(BaseModel):
     requestType: AirlockRequestType = Field("", title="Airlock request type", description="Specifies if this is an import or an export request")
+    requestTitle: str = Field("RequestTitle", title="Brief title for the request")
     businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
     properties: dict = Field({}, title="Airlock request parameters", description="Values for the parameters required by the Airlock request specification")
 
@@ -79,6 +80,7 @@ class AirlockRequestInCreate(BaseModel):
         schema_extra = {
             "example": {
                 "requestType": "import",
+                "requestTitle": "a request title",
                 "businessJustification": "some business justification"
             }
         }

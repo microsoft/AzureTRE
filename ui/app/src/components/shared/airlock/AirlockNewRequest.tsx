@@ -48,7 +48,10 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
   );
 
   useEffect(
-    () => setRequestValid(newRequest.businessJustification?.length > 0),
+    () => setRequestValid(
+      newRequest.requestTitle.length > 0 &&
+      newRequest.businessJustification?.length > 0
+    ),
     [newRequest, setRequestValid]
   );
 

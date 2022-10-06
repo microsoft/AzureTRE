@@ -154,7 +154,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
   return (
     <>
       <Panel
-        headerText="View Airlock Request"
+        headerText={request && request.requestTitle ? request.requestTitle : "View airlock request"}
         isOpen={true}
         isLightDismiss={true}
         onDismiss={dismissPanel}
