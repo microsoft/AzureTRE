@@ -73,7 +73,7 @@ for index in "${!property_names[@]}"; do
 done
 
 payload="{ \"templateName\": \"""${template_name}""\", \"properties\": { \"display_name\": \"Shared service ""${template_name}""\", \"description\": \"Automatically deployed ""${template_name}""\"${additional_props} } }"
-deploy_result=$(tre shared-services new --definition "$payload" --wait-for-completion)
+deploy_result=$(tre shared-services new --definition "$payload")
 if [[ "$last_result" != 0 ]]; then
   echo "Failed to deploy shared service:"
   echo "${deploy_result}"
