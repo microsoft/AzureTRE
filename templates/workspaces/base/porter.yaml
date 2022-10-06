@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.4.3
+version: 0.4.4
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -134,6 +134,18 @@ outputs:
     type: string
     applyTo:
       - install
+  - name: workspace_allowed_fqdns_list
+    type: string
+    default: ""
+    applyTo:
+      - install
+      - upgrade
+  - name: address_prefixes
+    type: string
+    default: ""
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
   - exec
