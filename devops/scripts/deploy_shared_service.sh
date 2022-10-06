@@ -84,7 +84,7 @@ deploy_result=$(cat << EOF | tre shared-services new --definition-file -
 }
 EOF
 )
-if [[ "$last_result" != 0 ]]; then
+if [[ "$?" != 0 ]]; then
   echo "Failed to deploy shared service:"
   echo "${deploy_result}"
   exit 1
