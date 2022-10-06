@@ -13,10 +13,3 @@ resource "azurerm_role_assignment" "api_vm_contributor" {
   role_definition_name = "Virtual Machine Contributor"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
 }
-
-resource "azuread_app_role_assignment" "workspace_airlock_managers_group" {
-  count               = var.create_aad_groups ? 1 : 0
-  app_role_id         = azuread_service_principal.workspace.app_role_ids["AirlockManager"]
-  principal_object_id = azuread_group.workspace_airlock_managers[count.index].id
-  resource_object_id  = azuread_service_principal.workspace.object_id
-}

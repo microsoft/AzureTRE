@@ -42,15 +42,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_GENERAL_ERROR_MESSAGE)
 
 
-async def update_and_publish_event_airlock_request(
-        airlock_request: AirlockRequest,
-        airlock_request_repo: AirlockRequestRepository,
-        user: User,
-        new_status: AirlockRequestStatus,
-        workspace: Workspace,
-        request_files: List[AirlockFile] = None,
-        status_message: str = None,
-        airlock_review: AirlockReview = None):
+async def update_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, new_status: AirlockRequestStatus, workspace: Workspace, request_files: List[AirlockFile] = None, status_message: str = None, airlock_review: AirlockReview = None):
     try:
         logging.debug(f"Updating airlock request item: {airlock_request.id}")
         updated_airlock_request = airlock_request_repo.update_airlock_request(original_request=airlock_request, user=user, new_status=new_status, request_files=request_files, status_message=status_message, airlock_review=airlock_review)

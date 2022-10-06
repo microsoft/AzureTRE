@@ -172,15 +172,3 @@ resource "azuread_app_role_assignment" "workspace_airlock_managers_group" {
   principal_object_id = azuread_group.workspace_airlock_managers[count.index].id
   resource_object_id  = azuread_service_principal.workspace.object_id
 }
-
-# TODO: HACKS
-data "azurerm_user_assigned_identity" "airlock_processor_id" {
-  name                = "id-airlock-${var.tre_id}"
-  resource_group_name = "rg-${var.tre_id}"
-}
-
-resource "azuread_app_role_assignment" "airlock_processor_is_airlock_manager" {
-  app_role_id         = azuread_service_principal.workspace.app_role_ids["AirlockManager"]
-  principal_object_id = azurerm_user_assigned_identity.airlock_processor_id.principal_id
-  resource_object_id  = azuread_service_principal.workspace.object_id
-}
