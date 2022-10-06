@@ -60,6 +60,38 @@ BUG FIXES:
 * Airlock Manager should have permissions to get SAS token ([#2502](https://github.com/microsoft/AzureTRE/issues/2502))
 * Terraform unmarshal errors in `migrate.sh` ([#2673](https://github.com/microsoft/AzureTRE/issues/2673))
 
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.4.2 |
+| core | 0.4.36 |
+| porter-hello | 0.1.0 |
+| tre-workspace-base-sl-test | 0.3.19 |
+| tre-workspace-base | 0.4.0 |
+| tre-workspace-unrestricted | 0.2.0 |
+| tre-workspace-airlock-import-review | 0.4.0 |
+| tre-service-mlflow | 0.4.0 |
+| tre-service-innereye | 0.4.0 |
+| tre-workspace-service-gitea | 0.5.0 |
+| tre-workspace-service-mysql | 0.2.0 |
+| tre-service-guacamole-linuxvm | 0.5.1 |
+| tre-service-guacamole-export-reviewvm | 0.0.4 |
+| tre-service-guacamole-windowsvm | 0.5.1 |
+| tre-service-guacamole-import-reviewvm | 0.1.1 |
+| tre-service-guacamole | 0.5.0 |
+| tre-user-resource-aml-compute-instance | 0.4.1 |
+| tre-service-azureml | 0.5.1 |
+| tre-shared-service-cyclecloud | 0.3.0 |
+| tre-shared-service-gitea | 0.4.0 |
+| tre-shared-service-airlock-notifier | 0.2.0 |
+| tre-shared-service-admin-vm | 0.2.0 |
+| tre-shared-service-certs | 0.2.0 |
+| tre-shared-service-sonatype-nexus | 2.2.0 |
+| tre-shared-service-firewall | 0.6.0 |
+
+
+
 ## 0.4.3 (September 12, 2022)
 
 **BREAKING CHANGES & MIGRATIONS**:
