@@ -27,6 +27,7 @@ custom:
         sku: server-2019
         version: latest
       conda_config: true
+    # For information on using custom images, see README.me in the guacamole/user-resources folder
     # "Custom Image From Gallery":
     #   source_image_name: your-image
     #   conda_config: true

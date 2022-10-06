@@ -29,6 +29,7 @@ custom:
         version: latest
       install_ui: false
       conda_config: true
+    # For information on using custom images, see README.me in the guacamole/user-resources folder
     # "Custom Image From Gallery":
     #   source_image_name: your-image
     #   install_ui: true
