@@ -16,7 +16,7 @@ from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReques
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_airlock_manager, get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user
 
-from .airlock_resource_helpers import save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace
+from .airlock.resource_helpers import save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace
 
 from services.airlock import validate_user_allowed_to_access_storage_account, \
     get_account_by_request, get_airlock_request_container_sas_token, validate_request_status
@@ -87,6 +87,8 @@ async def create_airlock_review(airlock_review_input: AirlockReviewInCreate, air
         review_status = AirlockRequestStatus.ApprovalInProgress
     elif airlock_review.reviewDecision.value == AirlockReviewDecision.Rejected:
         review_status = AirlockRequestStatus.RejectionInProgress
+
+    # If there was a VM created for the request, clean it up as it will no longer be needed
 
     updated_airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=user, new_status=review_status, workspace=workspace, airlock_review=airlock_review)
     return AirlockRequestInResponse(airlockRequest=updated_airlock_request)
