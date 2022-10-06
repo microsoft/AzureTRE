@@ -26,6 +26,7 @@ resource "azurerm_servicebus_queue" "service_bus_deployment_status_update_queue"
   max_message_size_in_kilobytes = 2048 # default=1024
 
   enable_partitioning = false
+  requires_session    = true
 }
 
 resource "azurerm_private_dns_zone" "servicebus" {

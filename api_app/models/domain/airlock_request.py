@@ -41,8 +41,8 @@ class AirlockFile(AzureTREModel):
 
 
 class AirlockReviewDecision(str, Enum):
-    Approved = strings.AIRLOCK_RESOURCE_STATUS_APPROVAL_INPROGRESS
-    Rejected = strings.AIRLOCK_RESOURCE_STATUS_REJECTION_INPROGRESS
+    Approved = strings.AIRLOCK_REVIEW_DECISION_APPROVED
+    Rejected = strings.AIRLOCK_REVIEW_DECISION_REJECTED
 
 
 class AirlockReview(AzureTREModel):

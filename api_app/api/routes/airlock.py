@@ -7,7 +7,7 @@ from jsonschema.exceptions import ValidationError
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
-from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
+from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType, AirlockReviewDecision
 
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 
@@ -83,7 +83,11 @@ async def create_airlock_review(airlock_review_input: AirlockReviewInCreate, air
         logging.error(f"Failed creating airlock review model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     # Store review with new status in cosmos, and send status_changed event
-    review_status = AirlockRequestStatus(airlock_review.reviewDecision.value)
+    if airlock_review.reviewDecision.value == AirlockReviewDecision.Approved:
+        review_status = AirlockRequestStatus.ApprovalInProgress
+    elif airlock_review.reviewDecision.value == AirlockReviewDecision.Rejected:
+        review_status = AirlockRequestStatus.RejectionInProgress
+
     updated_airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=user, new_status=review_status, workspace=workspace, airlock_review=airlock_review)
     return AirlockRequestInResponse(airlockRequest=updated_airlock_request)
 

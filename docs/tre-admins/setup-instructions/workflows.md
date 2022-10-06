@@ -6,7 +6,7 @@ Deployment is done using the `/.github/workflows/deploy_tre.yml` workflow. This 
 
 ## Setup instructions
 
-Before you can run the `deploy_tre.yml` pipeline there are some one-time configuration steps that we need to do, similar to the Pre-deployment steps for manual deployment.
+Before you can run the `deploy_tre.yml` workflow there are some one-time configuration steps that we need to do, similar to the Pre-deployment steps for manual deployment.
 
 !!! tip
     In some of the steps below, you are asked to configure repository secrets. Follow the [GitHub guide](https://docs.github.com/en/actions/security-guides/encrypted-secrets) on creating repository secrets if you are unfamiliar with this step.
@@ -107,7 +107,7 @@ Configure the TEST_WORKSPACE_APP_ID repository secret
 The `deploy_tre.yml` workflow sends a notification to a Microsoft Teams channel when it finishes running.
 
 !!! note
-    If you don't want to notify a channel, you can also remove the **Notify dedicated teams channel** steps in the pipeline
+    If you don't want to notify a channel, you can also remove the **Notify dedicated teams channel** steps in the workflow
 
 1. Follow the [Microsoft Docs](https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook) to create a webhook for your channel
 
@@ -119,7 +119,7 @@ The `deploy_tre.yml` workflow sends a notification to a Microsoft Teams channel 
 
 ### Configure repository secrets
 
-Configure additional repository secrets used in the deployment pipeline
+Configure additional repository secrets used in the deployment workflow
 
 | <div style="width: 230px">Secret name</div> | Description |
 | ----------- | ----------- |
@@ -129,6 +129,8 @@ Configure additional repository secrets used in the deployment pipeline
 | `CORE_ADDRESS_SPACE` |  The address space for the Azure TRE core virtual network. E.g. `10.1.0.0/22`. Recommended `/22` or larger.  |
 | `TRE_ADDRESS_SPACE` | The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). E.g. `10.0.0.0/12`|
 | `TERRAFORM_STATE_CONTAINER_NAME` | Optional. The name of the blob container to hold the Terraform state. Default value is `tfstate`. |
+| `CORE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan for core infrastructure. Default value is `P1v2`. |
+| `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests. Default value is `P1v2`. |
 
 ### Deploy the TRE using the workflow
 
