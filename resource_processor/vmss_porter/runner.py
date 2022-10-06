@@ -156,7 +156,8 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, mess
 
     # post an update message to set the status to an 'in progress' one
     resource_request_message = service_bus_message_generator(msg_body, statuses.in_progress_status_string_for[action], "Job starting")
-    await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
+    await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]))
+    message_logger_adapter.info(f'Sent status message for {installation_id} - {statuses.in_progress_status_string_for[action]} - Job starting')
 
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
@@ -171,7 +172,7 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, mess
         resource_request_message = service_bus_message_generator(msg_body, statuses.failed_status_string_for[action], error_message)
 
         # Post message on sb queue to notify receivers of action failure
-        await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
+        await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]))
         message_logger_adapter.info(f"{installation_id}: Porter action failed with error = {error_message}")
         return False
 
@@ -183,8 +184,8 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, mess
         success_message = f"{action} action completed successfully."
         resource_request_message = service_bus_message_generator(msg_body, statuses.pass_status_string_for[action], success_message, outputs)
 
-        await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
-        message_logger_adapter.info(f"{installation_id}: {success_message}")
+        await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]))
+        message_logger_adapter.info(f"Sent status message for {installation_id}: {success_message}")
         return True
 
 
