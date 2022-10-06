@@ -23,6 +23,18 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
 
+  const onChangeRequestTitle = useCallback(
+    (event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => {
+      setNewRequest(request => {
+        return {
+          ...request,
+          requestTitle: newValue || ''
+        }
+      });
+    },
+    [setNewRequest]
+  );
+
   const onChangeBusinessJustification = useCallback(
     (event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => {
       setNewRequest(request => {
@@ -121,8 +133,8 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
       <TextField
         label="Title"
         placeholder="Enter a request title."
-        // value={newRequest.requestTitle}
-        // onChange={onChangeRequestTitle}
+        value={newRequest.requestTitle}
+        onChange={onChangeRequestTitle}
         rows={1}
         required
       />
