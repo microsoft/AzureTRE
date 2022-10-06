@@ -34,6 +34,8 @@ You can specify `--no-verify` to disable SSL cert verification.
 
 NOTE: the api scope is usually of the form  `api://<API_CLIENT_ID>/user_impersonation`
 
+NOTE 2: When using device code flow, you need to ensure that the app registrations for the root API and any workspaces you access have device code flow enabled. (Automating this is tracked in [#2709](https://github.com/microsoft/AzureTRE/issues/2709) )
+
 #### Workspace authentication
 
 Since the api scope for each workspace is different, the token returned when authenticating against the root API isn't valid against a workspace.
