@@ -1,7 +1,27 @@
 <!-- markdownlint-disable MD041 -->
 <!-- line format short be: change short description (#pr_numer) -->
 
-## 0.5.0 (Unreleased)
+## 0.5.1 (Unreleased)
+
+**BREAKING CHANGES & MIGRATIONS**:
+
+*
+
+FEATURES:
+
+*
+
+ENHANCEMENTS:
+
+*
+
+BUG FIXES:
+
+*
+
+
+
+## 0.5.0 (October 7, 2022)
 
 **BREAKING CHANGES & MIGRATIONS**:
 
