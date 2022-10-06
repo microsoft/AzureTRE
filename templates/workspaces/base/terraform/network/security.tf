@@ -129,6 +129,7 @@ resource "azurerm_network_security_rule" "allow_outbound_from_subnet" {
   access                       = "Allow"
   destination_port_range       = "80"
   source_address_prefixes      = azurerm_subnet.services.address_prefixes
+  destination_address_prefix   = "INTERNET"
   direction                    = "Outbound"
   name                         = "outbound-workspace-subnets-to-internet-for-crl"
   network_security_group_name  = azurerm_network_security_group.ws.name

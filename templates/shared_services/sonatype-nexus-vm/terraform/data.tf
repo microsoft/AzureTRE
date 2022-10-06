@@ -8,6 +8,15 @@ data "azurerm_virtual_network" "core" {
   resource_group_name = local.core_resource_group_name
 }
 
+data "azurerm_resource_group" "ws" {
+  name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
+}
+
+data "azurerm_virtual_network" "ws" {
+  name                = "vnet-${var.tre_id}-ws-${local.short_workspace_id}"
+  resource_group_name = data.azurerm_resource_group.ws.name
+}
+
 data "azurerm_subnet" "shared" {
   resource_group_name  = local.core_resource_group_name
   virtual_network_name = local.core_vnet
@@ -54,11 +63,3 @@ data "azurerm_private_dns_zone" "nexus" {
   resource_group_name = local.core_resource_group_name
 }
 
-data "azurerm_virtual_network" "ws" {
-  name                = "vnet-${var.tre_id}-ws-${local.short_workspace_id}"
-  resource_group_name = data.azurerm_resource_group.ws.name
-}
-
-data "azurerm_resource_group" "ws" {
-  name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
-}
