@@ -4,6 +4,7 @@ export interface AirlockRequest extends Resource {
   workspaceId: string;
   requestType: AirlockRequestType;
   files: Array<string>;
+  requestTitle: string;
   businessJustification: string;
   errorMessage: null | string;
   status: AirlockRequestStatus;
@@ -27,5 +28,6 @@ export enum AirlockRequestStatus {
 
 export interface NewAirlockRequest {
   requestType: AirlockRequestType;
+  requestTitle: string;
   businessJustification: string;
 }
