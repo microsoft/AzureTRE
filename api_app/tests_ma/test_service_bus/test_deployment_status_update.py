@@ -125,8 +125,8 @@ async def test_receiving_bad_json_logs_error(app, logging_mock, payload):
     assert error_message.startswith(strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT)
 
 
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('service_bus.deployment_status_updater.OperationRepository')
+@patch('service_bus.deployment_status_updater.ResourceRepository')
 @patch('logging.error')
 @patch('fastapi.FastAPI')
 async def test_receiving_good_message(app, logging_mock, repo, operation_repo):
@@ -145,8 +145,8 @@ async def test_receiving_good_message(app, logging_mock, repo, operation_repo):
     logging_mock.assert_not_called()
 
 
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('service_bus.deployment_status_updater.OperationRepository')
+@patch('service_bus.deployment_status_updater.ResourceRepository')
 @patch('logging.error')
 @patch('fastapi.FastAPI')
 async def test_when_updating_non_existent_workspace_error_is_logged(app, logging_mock, repo, operation_repo):
@@ -163,8 +163,8 @@ async def test_when_updating_non_existent_workspace_error_is_logged(app, logging
     logging_mock.assert_called_once_with(expected_error_message)
 
 
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('service_bus.deployment_status_updater.OperationRepository')
+@patch('service_bus.deployment_status_updater.ResourceRepository')
 @patch('logging.error')
 @patch('fastapi.FastAPI')
 async def test_when_updating_and_state_store_exception(app, logging_mock, repo, operation_repo):
@@ -180,9 +180,9 @@ async def test_when_updating_and_state_store_exception(app, logging_mock, repo, 
     assert complete_message is False
 
 
-@patch("service_bus.deployment_status_update.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch("service_bus.deployment_status_updater.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+@patch('service_bus.deployment_status_updater.OperationRepository')
+@patch('service_bus.deployment_status_updater.ResourceRepository')
 @patch('fastapi.FastAPI')
 async def test_state_transitions_from_deployed_to_deleted(app, repo, operations_repo_mock, _):
     updated_message = test_sb_message
@@ -210,8 +210,8 @@ async def test_state_transitions_from_deployed_to_deleted(app, repo, operations_
     operations_repo_mock().update_item.assert_called_once_with(expected_operation)
 
 
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('service_bus.deployment_status_updater.OperationRepository')
+@patch('service_bus.deployment_status_updater.ResourceRepository')
 @patch('fastapi.FastAPI')
 async def test_outputs_are_added_to_resource_item(app, repo, operations_repo):
     received_message = test_sb_message_with_outputs
@@ -237,8 +237,8 @@ async def test_outputs_are_added_to_resource_item(app, repo, operations_repo):
     repo().update_item_dict.assert_called_once_with(expected_resource)
 
 
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('service_bus.deployment_status_updater.OperationRepository')
+@patch('service_bus.deployment_status_updater.ResourceRepository')
 @patch('fastapi.FastAPI')
 async def test_properties_dont_change_with_no_outputs(app, repo, operations_repo):
     received_message = test_sb_message
@@ -261,9 +261,9 @@ async def test_properties_dont_change_with_no_outputs(app, repo, operations_repo
     repo().update_item_dict.assert_called_once_with(expected_resource.dict())
 
 
-@patch('service_bus.deployment_status_update.update_resource_for_step')
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('service_bus.deployment_status_updater.update_resource_for_step')
+@patch('service_bus.deployment_status_updater.OperationRepository')
+@patch('service_bus.deployment_status_updater.ResourceRepository')
 @patch('service_bus.helpers.ServiceBusClient')
 @patch('fastapi.FastAPI')
 async def test_multi_step_operation_sends_next_step(app, sb_sender_client, repo, operations_repo, update_resource_for_step, multi_step_operation, user_resource_multi, basic_shared_service):
@@ -312,8 +312,8 @@ async def test_multi_step_operation_sends_next_step(app, sb_sender_client, repo,
     sb_sender_client().get_queue_sender().send_messages.assert_called_once()
 
 
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('service_bus.deployment_status_updater.OperationRepository')
+@patch('service_bus.deployment_status_updater.ResourceRepository')
 @patch('service_bus.helpers.ServiceBusClient')
 @patch('fastapi.FastAPI')
 async def test_multi_step_operation_ends_at_last_step(app, sb_sender_client, repo, operations_repo, multi_step_operation, user_resource_multi, basic_shared_service):
