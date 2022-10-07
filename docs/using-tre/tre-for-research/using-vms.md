@@ -11,6 +11,7 @@ This document will talk you through how to deploy a Virtual Machine and access i
 5. Choose the template you’d like to base your VM on, at the moment the choice will be between a Windows or Linux VM.
   a. Fill in all of the details to your requirements.
 6. Once the resource is deployed, you should be able to choose Connect and view your VM in a browser.
+
 7. You may see a pop-up asking for guacamole to have permission to use your clipboard, please allow that.
 8. You should now be in the VM.
 9. At this stage you may want to access any data that has been approved via the Airlock mechanism. To do this, copy the Generated URL from the UI and navigate to the Storage Explorer application within the VM.
