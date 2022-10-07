@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-sonatype-nexus
-version: 0.0.2
+version: 0.0.4
 description: "A Sonatype Nexus shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -44,6 +44,11 @@ parameters:
     description: "Name of the certificate for configuring Nexus SSL with (stored in the core KeyVault)"
 outputs:
   - name: workspace_vm_allowed_fqdns_list
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: nexus_allowed_fqdns_list
     type: string
     applyTo:
       - install

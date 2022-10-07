@@ -36,7 +36,7 @@
               "action": "Allow",
               "rules": [
                 {
-                  "name": "vm-crl-{{resource.id}}",
+                  "name": "vm-crl",
                   "description": "CRLs for workspaces",
                   "protocols": [
                     {
@@ -49,7 +49,7 @@
                     }
                   ],
                   "target_fqdns": "{{ resource.properties.workspace_vm_allowed_fqdns_list }}",
-                  "source_addresses": "*"
+                  "source_addresses": ["*"]
                 },
                 {
                   "name": "nexus-package-sources",
@@ -94,7 +94,7 @@
               "action": "Allow",
               "rules": [
                 {
-                  "name": "vm-crl-{{resource.id}}",
+                  "name": "vm-crl",
                   "description": "CRLs for workspaces",
                   "protocols": [
                     {
@@ -107,7 +107,7 @@
                     }
                   ],
                   "target_fqdns": "{{ resource.properties.workspace_vm_allowed_fqdns_list }}",
-                  "source_addresses": "*"
+                  "source_addresses": ["*"]
                 },
                 {
                   "name": "nexus-package-sources",
