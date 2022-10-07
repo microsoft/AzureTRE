@@ -155,6 +155,7 @@ module "resource_processor_vmss_porter" {
   resource_processor_vmss_sku                      = var.resource_processor_vmss_sku
   log_analytics_workspace_workspace_id             = module.azure_monitor.log_analytics_workspace_workspace_id
   log_analytics_workspace_primary_key              = module.azure_monitor.log_analytics_workspace_primary_key
+  rp_bundle_values                                 = var.rp_bundle_values
 
   depends_on = [
     module.network,

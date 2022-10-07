@@ -118,3 +118,5 @@ def get_special_porter_param_value(config, parameter_name: str, msg_body):
         return msg_body.get("workspaceId")  # not included in all messages
     if parameter_name == "parent_service_id":
         return msg_body.get("parentWorkspaceServiceId")  # not included in all messages
+    if (value := config["bundle_params"].get(parameter_name.lower())) is not None:
+        return value
