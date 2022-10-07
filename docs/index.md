@@ -1,8 +1,16 @@
 # Azure TRE Overview
 
+## What is Azure TRE?
+
+Across the health industry, be it a pharmaceutical company interrogating clinical trial results, or a public health provider analyzing electronic health records, there is the need to enable researchers, analysts, and developers to work with sensitive data sets.  
+
+Trusted Research Environments (TREs) enable organisations to provide research teams secure access to these data sets along side tooling to ensure a researchers can be productive. Further information on TREs in general can be found in many places, one good resource is [HDR UK](https://www.hdruk.ac.uk/access-to-health-data/trusted-research-environments/).
+
+The Azure Trusted Research Environment project is an accelerator to assist Microsoft customers and partners who want to build out Trusted Research environments on Azure. This project enables authorized users to deploy and configure secure workspaces and researcher tooling without a dependency on IT teams.  
+
 Trusted Research Environments (TRE) enforce a secure boundary around distinct workspaces to enable information governance controls to be enforced.
 
-![Concepts](assets/treconcepts.png)
+![Concepts](assets/treconcepts_updated.png)
 
 A Trusted Research Environment (typically one per organization, or one per department in large organizations) consist of:
 
