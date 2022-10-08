@@ -132,19 +132,16 @@ tre-destroy:
 terraform-deploy:
 	$(call target_title, "Deploying ${DIR} with Terraform") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./deploy.sh
 
 terraform-import:
 	$(call target_title, "Importing ${DIR} with Terraform") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./import.sh
 
 terraform-destroy:
 	$(call target_title, "Destroying ${DIR} Service") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./destroy.sh
 
 # This will validate all files, not only the changed ones as the CI version does.
@@ -180,7 +177,6 @@ lint-docs:
 bundle-build:
 	$(call target_title, "Building ${DIR} bundle with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 	&& cd ${DIR} \
 	&& if [ -d terraform ]; then terraform -chdir=terraform init -backend=false; terraform -chdir=terraform validate; fi \
@@ -192,7 +188,6 @@ bundle-build:
 bundle-install: bundle-check-params
 	$(call target_title, "Deploying ${DIR} with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter install -p ./parameters.json \
 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
@@ -215,7 +210,6 @@ bundle-check-params:
 bundle-uninstall:
 	$(call target_title, "Uninstalling ${DIR} with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter uninstall -p ./parameters.json \
 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
@@ -224,7 +218,6 @@ bundle-uninstall:
 bundle-custom-action:
  	$(call target_title, "Performing:${ACTION} ${DIR} with Porter") \
  	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env,auth \
- 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
  	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json \
  		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
  		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
@@ -267,9 +260,9 @@ deploy-shared-service:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Deploying ${DIR} shared service") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
+	&& ${MAKEFILE_DIR}/devops/scripts/ensure_cli_signed_in.sh TRE_URL="$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" \
 	&& cd ${DIR} \
-	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" $${PROPS}
+	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh $${PROPS}
 
 firewall-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
