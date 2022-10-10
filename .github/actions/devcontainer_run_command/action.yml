@@ -175,4 +175,6 @@ runs:
           -e WORKSPACE_APP_SERVICE_PLAN_SKU="${{ (inputs.WORKSPACE_APP_SERVICE_PLAN_SKU != ''
             && inputs.WORKSPACE_APP_SERVICE_PLAN_SKU) || 'P1v2' }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}.azurecr.io/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
-        bash -c "${{ inputs.COMMAND }}"
+        bash -c "(cd cli/ && make install-cli) && ${{ inputs.COMMAND }}"
+        # Above command installs tre CLI (done via postCreateCommand in VS Code)
+        # If we switch to https://github.com/devcontainers/ci this would no longer be needed

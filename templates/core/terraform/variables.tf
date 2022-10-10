@@ -152,3 +152,9 @@ variable "enable_airlock_malware_scanning" {
   default     = false
   description = "If False, Airlock requests will skip the malware scanning stage"
 }
+
+variable "rp_bundle_values" {
+  description = "Additional environment values to set on the resource processor that can be supplied to template bundles"
+  type        = map(string)
+  default     = {}
+}
