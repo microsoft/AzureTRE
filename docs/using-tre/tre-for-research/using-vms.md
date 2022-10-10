@@ -23,7 +23,6 @@ This document will talk you through how to deploy a Virtual Machine via the Guac
 6. Once the resource is deployed, you should be able to choose Connect and view your VM in a browser.
 
 
-
 [![Connect to VM](../../assets/using-tre/vm-access.png)](../../assets/using-tre/vm-access.png)
 
 
@@ -31,22 +30,7 @@ This document will talk you through how to deploy a Virtual Machine via the Guac
 
 
 ## Accessing Data
-At this stage you may want to access any data that has been approved via the Airlock mechanism.
-
-To do this, copy the Generated URL from the UI and navigate to the Storage Explorer application within the VM.
-
-1. Connect to the Storage account using the container URL from the previous step.
-   1. Open storage explorer
-   2. Right click on Storage Accounts and choose Connect to Azure Storage
-   3. Choose Blob Container
-   4. Select Shared access Signature URL (SAS)
-   5. Paste in the Container URL
-   6. Connect
-
-2. Download any files to the VM to a destination of your choice. No other researchers can access this VM so feel free to save it where ever you'd like.
-   1. To unzip the files in Windows > Right click and Extract all.
-   2. To unzip the files in Linux > run unzip /folder_location.zip
-
+You may have data pre-provisioned into your workspace, or you may import data via the airlock.
 
 
 ## Starting and Stopping your VM
@@ -60,6 +44,9 @@ The same steps can be followed to Start your VM.
 
 [![Start and Stop VM](../../assets/using-tre/vm-start-stop.png)](../../assets/using-tre/vm-access.png)
 
+[![Deallocated VM](../../assets/using-tre/deallocated-vm.png)](../../assets/using-tre/deallocated-vm.png)
+
+
 
 ## Deleting your VM
 If you no longer wish to use the VM you have created there is an option to delete it. First you'll need to disable the VM, similar to above when stopping it:
@@ -67,11 +54,20 @@ If you no longer wish to use the VM you have created there is an option to delet
 1. Click on the three small dots in the top right and choose Disable.
 2. Once it is disabled (this can take a few minutes), click on the three dots again and you should then have the option to delete it.
 
+[![Disable VM](../../assets/using-tre/disable-vm.png)](../../assets/using-tre/disable-vm.png)
+
+
+[![Delete VM](../../assets/using-tre/delete-vm.png)](../../assets/using-tre/delete-vm.png)
+
+
+## VM Actions
+
+Whilst the VM is currently updating due to an invoked action it will display a message similar to the one below. This will occur any time a service or user resource is deployed, disabled, deleted etc.
+
+[![Update VM](../../assets/using-tre/updating-vm.png)](../../assets/using-tre/updating-vm.png)
+
+You can also view any current operations by clicking on the bell in the top right hand corner of the screen.
+
 
 ## How to Contribute to our Documentation
-If you have any comments or suggestions about our documentation then you can visit our GitHub project and either raise a new issue, or comment on one of the existing ones.
-You can find our existing documentation issues on GitHub by clicking on the link below:
-[Existing Documentation Issues](https://github.com/microsoft/AzureTRE/issues?q=is%3Aissue+is%3Aopen+label%3Adocumentation)
-Or, you can raise a new issue by clicking on this link:
-[Report an Issue or Make a Suggestion](https://github.com/microsoft/AzureTRE/issues/new/choose)
-**Thank you for your patience and support!**
+[Contribute to Documentation](https://microsoft.github.io/AzureTRE/coming-soon/)
