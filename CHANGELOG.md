@@ -21,7 +21,7 @@ BUG FIXES:
 
 
 
-## 0.5.0 (October 7, 2022)
+## 0.5.0 (October 10, 2022)
 
 **BREAKING CHANGES & MIGRATIONS**:
 
