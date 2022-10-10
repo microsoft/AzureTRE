@@ -10,7 +10,8 @@ def remove_review_vm(request_id: str) -> OperationInResponse:
     # - request ID property
     # - this request ID as property
     # Issue a delete operation
-    review_vm = resource_repo.query
+    review_vm = resource_repo.query(f"SELECT * FROM c WHERE c.templateName = '{template_name}' \
+        AND c.properties"
 
     pass
     # How to watch an operation
