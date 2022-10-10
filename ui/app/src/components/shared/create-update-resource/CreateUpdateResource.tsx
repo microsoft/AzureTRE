@@ -1,16 +1,17 @@
 import { Icon, mergeStyles, Panel, PanelType, PrimaryButton } from '@fluentui/react';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
 import { Operation } from '../../../models/operation';
 import { ResourceType } from '../../../models/resourceType';
 import { Workspace } from '../../../models/workspace';
 import { WorkspaceService } from '../../../models/workspaceService';
-import { OperationsContext } from '../../../contexts/OperationsContext';
 import { ResourceForm } from './ResourceForm';
 import { SelectTemplate } from './SelectTemplate';
 import { getResourceFromResult, Resource } from '../../../models/resource';
 import { HttpMethod, useAuthApiCall } from '../../../hooks/useAuthApiCall';
+import { useAppDispatch } from '../../../hooks/customReduxHooks';
+import { addUpdateOperation } from '../../shared/notifications/operationsSlice';
 
 interface CreateUpdateResourceProps {
   isOpen: boolean,
@@ -41,9 +42,9 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
   const [page, setPage] = useState('selectTemplate' as keyof PageTitle);
   const [selectedTemplate, setTemplate] = useState(props.updateResource?.templateName || '');
   const [deployOperation, setDeployOperation] = useState({} as Operation);
-  const opsContext = useContext(OperationsContext);
   const navigate = useNavigate();
   const apiCall = useAuthApiCall();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     const clearState = () => {
@@ -114,7 +115,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
     setDeployOperation(operation);
     setPage('creating');
     // Add deployment operation to notifications operation poller
-    opsContext.addOperations([operation]);
+    dispatch(addUpdateOperation(operation));
 
     // if an onAdd callback has been given, get the resource we just created and pass it back
     if (props.onAddResource) {
