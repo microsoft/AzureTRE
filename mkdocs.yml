@@ -50,6 +50,7 @@ nav:
           - Azure Resources: azure-tre-overview/tre-resources-breakdown.md
           - Airlock: azure-tre-overview/airlock.md
           - Cost Reporting: azure-tre-overview/cost-reporting.md
+      - Terms and Definitions: using-tre/terms-definitions.md
       #- Compliance: azure-tre-overview/compliance-info.md
 
   - QuickStart: # Setup steps for anyone performing an initial deployment of the AzureTRE for eval purposes
@@ -64,7 +65,6 @@ nav:
 
   - Using the Azure TRE: # Documentation for users of the TRE
       - Introduction: using-tre/index.md
-      # - Terms and Definitions: using-tre/terms-definitions.md
       - Custom Templates: using-tre/templates/index.md
       # - Workspaces:
       #    - using-tre/wks/index.md # Documentation describing what a workspace is
