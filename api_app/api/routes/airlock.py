@@ -47,10 +47,12 @@ async def get_all_airlock_requests_by_workspace(
         airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
         workspace=Depends(get_deployed_workspace_by_id_from_path),
         user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager),
-        creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, awaiting_current_user_review: bool = None) -> AirlockRequestWithAllowedUserActionsInList:
+        creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None,
+        awaiting_current_user_review: bool = None, order_by: str = None, order_ascending: bool = True) -> AirlockRequestWithAllowedUserActionsInList:
     try:
         airlock_requests = get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo,
-                                                                      creator_user_id=creator_user_id, type=type, status=status, awaiting_current_user_review=awaiting_current_user_review)
+                                                                      creator_user_id=creator_user_id, type=type, status=status, awaiting_current_user_review=awaiting_current_user_review,
+                                                                      order_by=order_by, order_ascending=order_ascending)
         airlock_requests_with_allowed_user_actions = enrich_requests_with_allowed_actions(airlock_requests, user, airlock_request_repo)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed retrieving all the airlock requests for a workspace: {e}")

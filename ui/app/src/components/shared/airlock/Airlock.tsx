@@ -1,9 +1,9 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { CommandBarButton, DetailsList, getTheme, IColumn, Persona, PersonaSize, SelectionMode, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { ColumnActionsMode, CommandBarButton, ContextualMenu, DirectionalHint, getTheme, IColumn, IContextualMenuItem, IContextualMenuProps, Persona, PersonaSize, SelectionMode, ShimmeredDetailsList, Stack } from '@fluentui/react';
 import { HttpMethod, useAuthApiCall } from '../../../hooks/useAuthApiCall';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
 import { WorkspaceContext } from '../../../contexts/WorkspaceContext';
-import { AirlockRequest, AirlockRequestAction } from '../../../models/airlock';
+import { AirlockRequest, AirlockRequestAction, AirlockRequestStatus, AirlockRequestType } from '../../../models/airlock';
 import moment from 'moment';
 import { Route, Routes, useNavigate } from 'react-router-dom';
 import { AirlockViewRequest } from './AirlockViewRequest';
@@ -18,25 +18,47 @@ interface AirlockProps {
 export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockProps) => {
   const [airlockRequests, setAirlockRequests] = useState([] as AirlockRequest[]);
   const [requestColumns, setRequestColumns] = useState([] as IColumn[]);
-  const [orderBy, setOrderBy] = useState<IColumn>();
+  const [orderBy, setOrderBy] = useState('updatedWhen');
+  const [orderAscending, setOrderAscending] = useState(false);
+  const [filters, setFilters] = useState(new Map<string, string>());
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
+  const [contextMenuProps, setContextMenuProps] = useState<IContextualMenuProps>();
+  const [apiError, setApiError] = useState<APIError>();
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
-  const [apiError, setApiError] = useState({} as APIError);
   const theme = getTheme();
   const navigate = useNavigate();
 
+  // Get the airlock request data from API
   useEffect(() => {
+    console.log('Getting airlock requests');
     const getAirlockRequests = async () => {
-      let requests: AirlockRequest[];
+      setApiError(undefined);
+      setLoadingState(LoadingState.Loading);
 
       try {
+        let requests: AirlockRequest[];
         if (workspaceCtx.workspace) {
+
+          // Add any selected filters and orderBy
+          let query = '?';
+          filters.forEach((value, key) => {
+            query += `${key}=${value}&`;
+          });
+          if (orderBy) {
+            query += `order_by=${orderBy}&order_ascending=${orderAscending}&`;
+          }
+
+          // Call the Airlock requests API
+          console.log(`Calling ${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}${query.slice(0, -1)}`);
           const result = await apiCall(
-            `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}`,
+            `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}${query.slice(0, -1)}`,
             HttpMethod.Get,
             workspaceCtx.workspaceApplicationIdURI
           );
+          console.log('Got requests', result);
+
+          // Map the inner requests and the allowed user actions to state
           requests = result.airlockRequests.map((r: {
             airlockRequest: AirlockRequest,
             allowed_user_actions: Array<AirlockRequestAction>
@@ -49,8 +71,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
           // TODO: Get all requests across workspaces
           requests = [];
         }
-        // Order by updatedWhen for initial view
-        requests.sort((a, b) => a.updatedWhen < b.updatedWhen ? 1 : -1);
+
         setAirlockRequests(requests);
         setLoadingState(LoadingState.Ok);
       } catch (err: any) {
@@ -60,44 +81,72 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
       }
     }
     getAirlockRequests();
-  }, [apiCall, workspaceCtx.workspace, workspaceCtx.workspaceApplicationIdURI]);
+  }, [apiCall, workspaceCtx.workspace, workspaceCtx.workspaceApplicationIdURI, filters, orderBy, orderAscending]);
 
-  // Order data by selected column
-  const reorderRequests = useCallback((orderByColumn, invert = true) => {
-    if (orderByColumn) {
-      setOrderBy(orderByColumn);
-      // Reset sorting on other columns and invert selected column if already sorted asc/desc
-      setRequestColumns(columns => {
-        const orderedColumns: IColumn[] = columns.slice();
-        const selectedColumn: IColumn = orderedColumns.filter(selCol => orderByColumn.key === selCol.key)[0];
-        orderedColumns.forEach((newCol: IColumn) => {
-          if (newCol === selectedColumn) {
-            if (invert) selectedColumn.isSortedDescending = !selectedColumn.isSortedDescending;
-            selectedColumn.isSorted = true;
-          } else {
-            newCol.isSorted = false;
-            newCol.isSortedDescending = true;
-          }
-        });
-        return orderedColumns;
-      });
+  const orderRequests = (column: IColumn) => {
+    setOrderBy((o) => {
+      // If already selected, invert ordering
+      if (o === column.key) {
+        setOrderAscending((previous) => !previous);
+        return column.key;
+      }
+      return column.key;
+    });
+  };
 
-      // Re-order airlock requests
-      setAirlockRequests(requests => {
-        const key = orderByColumn.fieldName! as keyof AirlockRequest;
-        return requests
-          .slice(0)
-          .sort((a: AirlockRequest, b: AirlockRequest) => (
-            (orderByColumn.isSortedDescending ? a[key] < b[key] : a[key] > b[key]) ? 1 : -1)
-          );
-      });
-    }
-  }, []);
+  // Open a context menu in the requests list for filtering and sorting
+  const openContextMenu = useCallback((column: IColumn, ev: React.MouseEvent<HTMLElement>, options: Array<string>) => {
+    const filterOptions = options.map(option => {
+      return {
+        key: option,
+        name: option,
+        canCheck: true,
+        checked: filters?.has(column.key) && filters.get(column.key) === option,
+        onClick: () => {
+          // Set filter or unset if already selected
+          setFilters((f) => {
+            if (f.get(column.key) === option) {
+              f.delete(column.key);
+            } else {
+              f.set(column.key, option);
+            }
+            // Return as a new map to trigger re-rendering
+            return new Map(f);
+          });
+        }
+      }
+    });
+
+    const items: IContextualMenuItem[] = [
+      {
+          key: 'sort',
+          name: 'Sort',
+          iconProps: { iconName: 'Sort' },
+          onClick: () => orderRequests(column)
+      },
+      {
+        key: 'filter',
+        name: 'Filter',
+        iconProps: { iconName: 'Filter' },
+        subMenuProps: {
+          items: filterOptions,
+        }
+      }
+    ];
+
+    setContextMenuProps({
+        items: items,
+        target: ev.currentTarget as HTMLElement,
+        directionalHint: DirectionalHint.bottomCenter,
+        gapSpace: 0,
+        onDismiss: () => setContextMenuProps(undefined),
+    });
+  }, [filters]);
 
   // Set the columns on initial render
   useEffect(() => {
     const orderByColumn = (ev: React.MouseEvent<HTMLElement>, column: IColumn) => {
-      reorderRequests(column);
+      orderRequests(column);
     };
 
     const columns: IColumn[] = [
@@ -118,18 +167,23 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
         minWidth: 150,
         maxWidth: 200,
         isResizable: true,
-        onRender: (request: AirlockRequest) => request.user?.name,
-        onColumnClick: orderByColumn
+        onRender: (request: AirlockRequest) => request.user?.name
       },
       {
-        key: 'type',
+        key: 'requestType',
         name: 'Type',
         ariaLabel: 'Whether the request is import or export',
         minWidth: 70,
         maxWidth: 100,
         isResizable: true,
         fieldName: 'requestType',
-        onColumnClick: orderByColumn
+        columnActionsMode: ColumnActionsMode.hasDropdown,
+        isSorted: orderBy === 'requestType',
+        isSortedDescending: !orderAscending,
+        onColumnClick: (ev, column) => openContextMenu(column, ev, Object.values(AirlockRequestType)),
+        onColumnContextMenu: (column, ev) =>
+          (column && ev) && openContextMenu(column, ev, Object.values(AirlockRequestType)),
+        isFiltered: filters.has('requestType')
       },
       {
         key: 'status',
@@ -138,31 +192,39 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
         minWidth: 70,
         isResizable: true,
         fieldName: 'status',
-        onColumnClick: orderByColumn
+        columnActionsMode: ColumnActionsMode.hasDropdown,
+        isSorted: orderBy === 'status',
+        isSortedDescending: !orderAscending,
+        onColumnClick: (ev, column) => openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
+        onColumnContextMenu: (column, ev) =>
+          (column && ev) && openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
+        isFiltered: filters.has('status')
       },
       {
-        key: 'created',
+        key: 'createdTime',
         name: 'Created',
         ariaLabel: 'When the request was created',
         minWidth: 120,
         data: 'number',
         isResizable: true,
         fieldName: 'createdTime',
+        isSorted: orderBy === 'createdTime',
+        isSortedDescending: !orderAscending,
         onRender: (request: AirlockRequest) => {
           return <span>{ moment.unix(request.creationTime).format('DD/MM/YYYY') }</span>;
         },
         onColumnClick: orderByColumn
       },
       {
-        key: 'updated',
+        key: 'updatedWhen',
         name: 'Updated',
         ariaLabel: 'When the request was last updated',
         minWidth: 120,
         data: 'number',
         isResizable: true,
         fieldName: 'updatedWhen',
-        isSorted: false,
-        isSortedDescending: true,
+        isSorted: orderBy === 'updatedWhen',
+        isSortedDescending: !orderAscending,
         onRender: (request: AirlockRequest) => {
           return <span>{ moment.unix(request.updatedWhen).fromNow() }</span>;
         },
@@ -170,43 +232,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
       }
     ];
     setRequestColumns(columns);
-    reorderRequests(columns[5]);
-  }, [reorderRequests]);
-
-  let requestsList;
-  switch (loadingState) {
-    case LoadingState.Ok:
-      if (airlockRequests.length > 0) {
-        requestsList = (
-          <DetailsList
-            items={airlockRequests}
-            columns={requestColumns}
-            selectionMode={SelectionMode.none}
-            getKey={(item) => item.id}
-            onItemInvoked={(item) => navigate(item.id)}
-            className="tre-table-rows-align-centre"
-          />
-        );
-      } else {
-        requestsList = (
-          <div style={{textAlign: 'center', padding: '50px'}}>
-            <h4>No requests found</h4>
-            <small>Looks like there are no airlock requests yet. Create a new request to get started.</small>
-          </div>
-        )
-      }
-      break;
-    case LoadingState.Error:
-      requestsList = (
-        <ExceptionLayout e={apiError} />
-      ); break;
-    default:
-      requestsList = (
-        <div style={{ padding: '50px' }}>
-          <Spinner label="Loading airlock requests" ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
-        </div>
-      ); break;
-  }
+  }, [openContextMenu, filters, orderAscending, orderBy]);
 
   const updateRequest = (updatedRequest: AirlockRequest) => {
     setAirlockRequests(requests => {
@@ -215,13 +241,10 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
       updatedRequests[i] = updatedRequest;
       return updatedRequests;
     });
-    // Trigger re-ordering to ensure request appears in the right order
-    reorderRequests(orderBy, false);
   };
 
   const handleNewRequest = (newRequest: AirlockRequest) => {
     setAirlockRequests(requests => [...requests, newRequest]);
-    reorderRequests(orderBy, false);
     navigate(newRequest.id);
   };
 
@@ -240,9 +263,32 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
           </Stack>
         </Stack.Item>
       </Stack>
-
+      {
+        apiError && <ExceptionLayout e={apiError} />
+      }
       <div className="tre-resource-panel" style={{padding: '0px'}}>
-        { requestsList }
+        <ShimmeredDetailsList
+          items={airlockRequests}
+          columns={requestColumns}
+          selectionMode={SelectionMode.none}
+          getKey={(item) => item?.id}
+          onItemInvoked={(item) => navigate(item.id)}
+          className="tre-table-rows-align-centre"
+          enableShimmer={loadingState === LoadingState.Loading}
+        />
+        {
+          contextMenuProps && <ContextualMenu {...contextMenuProps}/>
+        }
+        {
+          airlockRequests.length === 0 && loadingState !== LoadingState.Loading && <div style={{textAlign: 'center', padding: '50px 10px 100px 10px'}}>
+            <h4>No requests found</h4>
+            {
+              filters.size > 0
+                ? <small>There are no requests matching your selected filter(s).</small>
+                : <small>Looks like there are no airlock requests yet. Create a new request to get started.</small>
+            }
+          </div>
+        }
       </div>
 
       <Routes>
