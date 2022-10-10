@@ -12,10 +12,7 @@ import { APIError } from '../../../models/exceptions';
 import { ExceptionLayout } from '../ExceptionLayout';
 import { AirlockNewRequest } from './AirlockNewRequest';
 
-interface AirlockProps {
-}
-
-export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockProps) => {
+export const Airlock: React.FunctionComponent = () => {
   const [airlockRequests, setAirlockRequests] = useState([] as AirlockRequest[]);
   const [requestColumns, setRequestColumns] = useState([] as IColumn[]);
   const [orderBy, setOrderBy] = useState('updatedWhen');
@@ -30,58 +27,60 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
   const navigate = useNavigate();
 
   // Get the airlock request data from API
-  useEffect(() => {
-    console.log('Getting airlock requests');
-    const getAirlockRequests = async () => {
-      setApiError(undefined);
-      setLoadingState(LoadingState.Loading);
+  const getAirlockRequests = useCallback(async () => {
+    setApiError(undefined);
+    setLoadingState(LoadingState.Loading);
 
-      try {
-        let requests: AirlockRequest[];
-        if (workspaceCtx.workspace) {
+    try {
+      let requests: AirlockRequest[];
+      if (workspaceCtx.workspace) {
 
-          // Add any selected filters and orderBy
-          let query = '?';
-          filters.forEach((value, key) => {
-            query += `${key}=${value}&`;
-          });
-          if (orderBy) {
-            query += `order_by=${orderBy}&order_ascending=${orderAscending}&`;
-          }
-
-          // Call the Airlock requests API
-          console.log(`Calling ${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}${query.slice(0, -1)}`);
-          const result = await apiCall(
-            `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}${query.slice(0, -1)}`,
-            HttpMethod.Get,
-            workspaceCtx.workspaceApplicationIdURI
-          );
-          console.log('Got requests', result);
-
-          // Map the inner requests and the allowed user actions to state
-          requests = result.airlockRequests.map((r: {
-            airlockRequest: AirlockRequest,
-            allowed_user_actions: Array<AirlockRequestAction>
-          }) => {
-            const request = r.airlockRequest;
-            request.allowed_user_actions = r.allowed_user_actions;
-            return request;
-          });
-        } else {
-          // TODO: Get all requests across workspaces
-          requests = [];
+        // Add any selected filters and orderBy
+        let query = '?';
+        filters.forEach((value, key) => {
+          query += `${key}=${value}&`;
+        });
+        if (orderBy) {
+          query += `order_by=${orderBy}&order_ascending=${orderAscending}&`;
         }
 
-        setAirlockRequests(requests);
-        setLoadingState(LoadingState.Ok);
-      } catch (err: any) {
-        err.userMessage = 'Error fetching airlock requests';
-        setApiError(err);
-        setLoadingState(LoadingState.Error);
+        // Call the Airlock requests API
+        console.log(`Calling ${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}${query.slice(0, -1)}`);
+        const result = await apiCall(
+          `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}${query.slice(0, -1)}`,
+          HttpMethod.Get,
+          workspaceCtx.workspaceApplicationIdURI
+        );
+        console.log('Got requests', result);
+
+        // Map the inner requests and the allowed user actions to state
+        requests = result.airlockRequests.map((r: {
+          airlockRequest: AirlockRequest,
+          allowed_user_actions: Array<AirlockRequestAction>
+        }) => {
+          const request = r.airlockRequest;
+          request.allowed_user_actions = r.allowed_user_actions;
+          return request;
+        });
+      } else {
+        // TODO: Get all requests across workspaces
+        requests = [];
       }
+
+      setAirlockRequests(requests);
+      setLoadingState(LoadingState.Ok);
+    } catch (err: any) {
+      err.userMessage = 'Error fetching airlock requests';
+      setApiError(err);
+      setLoadingState(LoadingState.Error);
     }
-    getAirlockRequests();
   }, [apiCall, workspaceCtx.workspace, workspaceCtx.workspaceApplicationIdURI, filters, orderBy, orderAscending]);
+
+  // Fetch new requests on first load and whenever filters/orderBy selection changes
+  useEffect(() => {
+    console.log('Getting airlock requests');
+    getAirlockRequests();
+  }, [filters, orderBy, orderAscending]);
 
   const orderRequests = (column: IColumn) => {
     setOrderBy((o) => {
@@ -234,17 +233,8 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
     setRequestColumns(columns);
   }, [openContextMenu, filters, orderAscending, orderBy]);
 
-  const updateRequest = (updatedRequest: AirlockRequest) => {
-    setAirlockRequests(requests => {
-      const i = requests.findIndex(r => r.id === updatedRequest.id);
-      const updatedRequests = [...requests];
-      updatedRequests[i] = updatedRequest;
-      return updatedRequests;
-    });
-  };
-
-  const handleNewRequest = (newRequest: AirlockRequest) => {
-    setAirlockRequests(requests => [...requests, newRequest]);
+  const handleNewRequest = async (newRequest: AirlockRequest) => {
+    await getAirlockRequests();
     navigate(newRequest.id);
   };
 
@@ -296,7 +286,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
           <AirlockNewRequest onCreateRequest={handleNewRequest}/>
         } />
         <Route path=":requestId" element={
-          <AirlockViewRequest requests={airlockRequests} onUpdateRequest={updateRequest}/>
+          <AirlockViewRequest requests={airlockRequests} onUpdateRequest={getAirlockRequests}/>
         } />
       </Routes>
     </>

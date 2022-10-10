@@ -33,9 +33,19 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
 
   useEffect(() => {
     // Get the selected request from the router param and find in the requests prop
-    const req = props.requests.find(r => r.id === requestId) as AirlockRequest;
-    setRequest(req);
-  }, [requestId, props.requests]);
+    let req = props.requests.find(r => r.id === requestId) as AirlockRequest;
+
+    // If not found, fetch it from the API
+    if (!req) {
+      apiCall(
+        `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}/${requestId}`,
+        HttpMethod.Get,
+        workspaceCtx.workspaceApplicationIdURI
+      ).then((result) => setRequest(result.airlockRequest));
+    } else {
+      setRequest(req);
+    }
+  }, [apiCall, requestId, props.requests]);
 
   const generateFilesLink = useCallback(async () => {
     // Retrieve a link to view/edit the airlock files
@@ -141,8 +151,8 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           </div>
         }
         {
-          request.errorMessage && <div style={{marginTop: '10px', marginBottom: '10px'}}>
-            <MessageBar messageBarType={MessageBarType.error}>{request.errorMessage}</MessageBar>
+          request.statusMessage && <div style={{marginTop: '10px', marginBottom: '10px'}}>
+            <MessageBar messageBarType={MessageBarType.error}>{request.statusMessage}</MessageBar>
           </div>
         }
         <div style={{textAlign: 'end'}}>
@@ -387,7 +397,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           }
           {
             submitting
-            ? <Spinner label="Submitting review..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
+            ? <Spinner label="Submitting review..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} style={{marginTop:20}} />
             : <DialogFooter>
               <DefaultButton
                 iconProps={{iconName: 'Cancel'}}
