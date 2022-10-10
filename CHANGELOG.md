@@ -32,6 +32,7 @@ BUG FIXES:
 * Reworked how status update messages are handled by the API, to enforce ordering and run the queue subscription in a dedicated thread. Since sessions are now enabled for the status update queue, a `tre-deploy` is required, which will re-create the queue. ([#2700](https://github.com/microsoft/AzureTRE/pull/2700))
 * Guacamole user-resource templates have been updated. VM SKU and image details are now specified in `porter.yaml`. See `README.md` in the guacamole `user-resources` folder for details.
 * `deploy_shared_services.sh` now uses the `tre` CLI. Ensure that your CI/CD environment installs the CLI (`(cd cli && make install-cli)`)
+* UI: Moved from React Context API to React-Redux (with Redux Toolkit) to manage the global operations (notifications) state
 
 FEATURES:
 

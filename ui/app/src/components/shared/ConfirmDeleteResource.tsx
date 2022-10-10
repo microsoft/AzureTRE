@@ -3,11 +3,12 @@ import React, { useContext, useState } from 'react';
 import { Resource } from '../../models/resource';
 import { HttpMethod, ResultType, useAuthApiCall } from '../../hooks/useAuthApiCall';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
-import { OperationsContext } from '../../contexts/OperationsContext';
 import { ResourceType } from '../../models/resourceType';
 import { APIError } from '../../models/exceptions';
 import { LoadingState } from '../../models/loadingState';
 import { ExceptionLayout } from './ExceptionLayout';
+import { useAppDispatch } from '../../hooks/customReduxHooks';
+import { addUpdateOperation } from '../shared/notifications/operationsSlice';
 
 interface ConfirmDeleteProps {
   resource: Resource,
@@ -20,7 +21,7 @@ export const ConfirmDeleteResource: React.FunctionComponent<ConfirmDeleteProps> 
   const [apiError, setApiError] = useState({} as APIError);
   const [loading, setLoading] = useState(LoadingState.Ok);
   const workspaceCtx = useContext(WorkspaceContext);
-  const opsCtx = useContext(OperationsContext);
+  const dispatch = useAppDispatch();
 
   const deleteProps = {
     type: DialogType.normal,
@@ -43,7 +44,7 @@ export const ConfirmDeleteResource: React.FunctionComponent<ConfirmDeleteProps> 
     setLoading(LoadingState.Loading);
     try {
       let op = await apiCall(props.resource.resourcePath, HttpMethod.Delete, wsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined, undefined, ResultType.JSON);
-      opsCtx.addOperations([op.operation]);
+      dispatch(addUpdateOperation(op.operation));
       props.onDismiss();
     } catch (err: any) {
       err.userMessage = 'Failed to delete resource';
