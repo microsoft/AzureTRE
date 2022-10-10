@@ -21,7 +21,7 @@ from api.errors.generic_error import generic_error_handler
 from core import config
 from core.events import create_start_app_handler, create_stop_app_handler
 from services.logging import disable_unwanted_loggers, initialize_logging, telemetry_processor_callback_function
-from service_bus.deployment_status_update import receive_message_and_update_deployment
+from service_bus.deployment_status_updater import DeploymentStatusUpdater
 
 
 def get_application() -> FastAPI:
@@ -76,9 +76,10 @@ async def initialize_logging_on_startup():
 
 
 @app.on_event("startup")
-@repeat_every(seconds=20, wait_first=True, logger=logging.getLogger())
-async def update_deployment_status() -> None:
-    await receive_message_and_update_deployment(app)
+async def watch_deployment_status() -> None:
+    logging.info("Starting deployment status watcher thread")
+    statusWatcher = DeploymentStatusUpdater(app)
+    statusWatcher.start()
 
 
 @app.on_event("startup")
