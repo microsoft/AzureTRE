@@ -88,7 +88,7 @@ COMPONENTS:
 | tre-shared-service-admin-vm | 0.2.0 |
 | tre-shared-service-certs | 0.2.0 |
 | tre-shared-service-sonatype-nexus | 2.2.0 |
-| tre-shared-service-firewall | 0.6.0 |
+| tre-shared-service-firewall | 0.6.1 |
 
 
 
