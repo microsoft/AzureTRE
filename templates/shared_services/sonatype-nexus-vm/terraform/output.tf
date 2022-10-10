@@ -6,7 +6,7 @@ output "nexus_allowed_fqdns_list" {
   value = jsonencode(local.nexus_allowed_fqdns_list)
 }
 
-output "address_prefixes" {
+output "shared_address_prefixes" {
   value = jsonencode(data.azurerm_subnet.shared.address_prefixes)
 }
 

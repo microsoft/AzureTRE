@@ -65,7 +65,7 @@
                     }
                   ],
                   "target_fqdns": "{{ resource.properties.nexus_allowed_fqdns_list }}",
-                  "source_addresses": "{{ resource.properties.address_prefixes }}"
+                  "source_addresses": "{{ resource.properties.shared_address_prefixes }}"
                 }
               ]
             }
@@ -123,7 +123,7 @@
                     }
                   ],
                   "target_fqdns": "{{ resource.properties.nexus_allowed_fqdns_list }}",
-                  "source_addresses": "{{ resource.properties.address_prefixes }}"
+                  "source_addresses": "{{ resource.properties.shared_address_prefixes }}"
                 }
               ]
             }

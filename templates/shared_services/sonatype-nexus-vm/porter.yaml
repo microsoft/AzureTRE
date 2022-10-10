@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-sonatype-nexus
-version: 2.2.1
+version: 0.1.4
 description: "A Sonatype Nexus shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -53,8 +53,7 @@ outputs:
     applyTo:
       - install
       - upgrade
-  - name: address_prefixes
-    type: string
+  - name: shared_address_prefixes
     applyTo:
       - install
       - upgrade
@@ -84,7 +83,7 @@ install:
       outputs:
         - name: workspace_vm_allowed_fqdns_list
         - name: nexus_allowed_fqdns_list
-        - name: address_prefixes
+        - name: shared_address_prefixes
 
 upgrade:
   - terraform:
@@ -103,7 +102,7 @@ upgrade:
       outputs:
         - name: workspace_vm_allowed_fqdns_list
         - name: nexus_allowed_fqdns_list
-        - name: address_prefixes
+        - name: shared_address_prefixes
 uninstall:
   - terraform:
       description: "Tear down shared service"
