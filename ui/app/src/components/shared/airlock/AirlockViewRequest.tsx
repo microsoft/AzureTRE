@@ -190,6 +190,15 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
         request ? <>
           <Stack horizontal horizontalAlign="space-between" style={{marginTop: '40px'}} styles={underlineStackStyles}>
             <Stack.Item styles={stackItemStyles}>
+              <b>Id</b>
+            </Stack.Item>
+            <Stack.Item styles={stackItemStyles}>
+            <p>{request.id}</p>
+            </Stack.Item>
+          </Stack>
+
+          <Stack horizontal horizontalAlign="space-between" styles={underlineStackStyles}>
+            <Stack.Item styles={stackItemStyles}>
               <b>Initiator</b>
             </Stack.Item>
             <Stack.Item styles={stackItemStyles}>
@@ -252,7 +261,6 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
               <p>{request.businessJustification}</p>
             </Stack.Item>
           </Stack>
-
           {
             !AirlockFilesLinkInvalidStatus.includes(request.status) && <>
               <Stack style={{marginTop: '20px'}} styles={underlineStackStyles}>
@@ -262,7 +270,11 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
               </Stack>
               <Stack>
                 <Stack.Item style={{paddingTop: '10px', paddingBottom: '10px'}}>
-                  <small>Generate a storage container SAS URL to view/modify the request file(s).</small>
+                  {
+                    request.status === AirlockRequestStatus.Draft
+                      ? <small>Generate a storage container SAS URL to upload your request file.</small>
+                      : <small>Generate a storage container SAS URL to view the request file.</small>
+                  }
                   <Stack horizontal styles={{root: {alignItems: 'center', paddingTop: '7px'}}}>
                     <Stack.Item grow>
                       <TextField readOnly value={filesLink} defaultValue="Click generate to create a link" />
@@ -276,6 +288,11 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
                     }
                   </Stack>
                 </Stack.Item>
+                {
+                  request.status === AirlockRequestStatus.Draft && <MessageBar messageBarType={MessageBarType.info}>
+                    Please upload a single file. Only single-file imports (including zip files) are supported.
+                  </MessageBar>
+                }
                 {
                   filesLinkError && <ExceptionLayout e={apiFilesLinkError} />
                 }
@@ -337,7 +354,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           onDismiss={() => setHideSubmitDialog(true)}
           dialogContentProps={{
             title: 'Submit request?',
-            subText: 'Make sure you have uploaded your file(s) to the request\'s storage account before submitting.',
+            subText: 'Make sure you have uploaded your file to the request\'s storage account before submitting.',
           }}
         >
           {
