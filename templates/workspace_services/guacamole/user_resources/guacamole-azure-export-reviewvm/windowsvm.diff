@@ -23,18 +23,6 @@ diff -Naur ../guacamole-azure-windowsvm/terraform/data.tf terraform/data.tf
 +  name                = "pe-sa-ip-export-blob-${local.short_workspace_id}"
 +  resource_group_name = data.azurerm_resource_group.ws.name
 +}
-diff -Naur ../guacamole-azure-windowsvm/terraform/variables.tf terraform/variables.tf
---- ../guacamole-azure-windowsvm/terraform/variables.tf	2022-10-03 16:28:13.000000000 +0100
-+++ terraform/variables.tf	2022-10-03 16:30:11.000000000 +0100
-@@ -4,5 +4,7 @@
- variable "tre_resource_id" {}
- variable "image" {}
- variable "vm_size" {}
--variable "shared_storage_access" {}
-+variable "shared_storage_access" {
-+  type = bool
-+}
- variable "shared_storage_name" {}
 diff -Naur ../guacamole-azure-windowsvm/terraform/windowsvm.tf terraform/windowsvm.tf
 --- ../guacamole-azure-windowsvm/terraform/windowsvm.tf	2022-10-03 16:28:13.000000000 +0100
 +++ terraform/windowsvm.tf	2022-10-03 16:30:11.000000000 +0100
@@ -122,24 +110,3 @@ diff -Naur ../guacamole-azure-windowsvm/terraform/windowsvm.tf terraform/windows
  resource "random_string" "username" {
    length      = 4
    upper       = true
-@@ -92,10 +169,10 @@
-   template = file("${path.module}/vm_config.ps1")
-   vars = {
-     nexus_proxy_url     = local.nexus_proxy_url
--    SharedStorageAccess = tobool(var.shared_storage_access) ? 1 : 0
-+    SharedStorageAccess = var.shared_storage_access ? 1 : 0
-     StorageAccountName  = data.azurerm_storage_account.stg.name
-     StorageAccountKey   = data.azurerm_storage_account.stg.primary_access_key
--    FileShareName       = data.azurerm_storage_share.shared_storage.name
-+    FileShareName       = var.shared_storage_access ? data.azurerm_storage_share.shared_storage[0].name : ""
-     CondaConfig         = local.image_ref[var.image].conda_config ? 1 : 0
-   }
- }
-@@ -106,6 +183,7 @@
- }
-
- data "azurerm_storage_share" "shared_storage" {
-+  count                = var.shared_storage_access ? 1 : 0
-   name                 = var.shared_storage_name
-   storage_account_name = data.azurerm_storage_account.stg.name
- }

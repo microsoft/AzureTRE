@@ -8,5 +8,7 @@ variable "shared_storage_access" {
   type = bool
 }
 variable "shared_storage_name" {}
+variable "image_gallery_id" {
+  default = ""
+}
 variable "airlock_request_sas_url" {}
-
