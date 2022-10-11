@@ -121,7 +121,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   admin_username             = random_string.username.result
   admin_password             = random_password.password.result
 
-  custom_data = base64encode(data.template_file.vm_config.rendered)
+  custom_data = base64encode(data.template_file.download_review_data_script.rendered)
 
   source_image_reference {
     publisher = local.image_ref[var.image].publisher
@@ -165,18 +165,6 @@ resource "azurerm_key_vault_secret" "windowsvm_password" {
   tags         = local.tre_user_resources_tags
 }
 
-data "template_file" "vm_config" {
-  template = file("${path.module}/vm_config.ps1")
-  vars = {
-    nexus_proxy_url     = local.nexus_proxy_url
-    SharedStorageAccess = var.shared_storage_access ? 1 : 0
-    StorageAccountName  = data.azurerm_storage_account.stg.name
-    StorageAccountKey   = data.azurerm_storage_account.stg.primary_access_key
-    FileShareName       = var.shared_storage_access ? data.azurerm_storage_share.shared_storage[0].name : ""
-    CondaConfig         = local.image_ref[var.image].conda_config ? 1 : 0
-  }
-}
-
 data "azurerm_storage_account" "stg" {
   name                = local.storage_name
   resource_group_name = data.azurerm_resource_group.ws.name
@@ -188,7 +176,7 @@ data "azurerm_storage_share" "shared_storage" {
   storage_account_name = data.azurerm_storage_account.stg.name
 }
 
-data "airlock_request_sas_url" "vm_config" {
+data "template_file" "download_review_data_script" {
   template = file("${path.module}/download_review_data.ps1")
   vars = {
     airlock_request_sas_url = var.airlock_request_sas_url
