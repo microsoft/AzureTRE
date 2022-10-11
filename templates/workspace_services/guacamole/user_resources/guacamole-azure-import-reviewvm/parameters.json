@@ -57,6 +57,12 @@
       "source": {
         "env": "VM_SIZE"
       }
+    },
+    {
+      "name": "image_gallery_id",
+      "source": {
+        "env": "IMAGE_GALLERY_ID"
+      }
     }
   ]
 }

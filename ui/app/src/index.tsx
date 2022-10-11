@@ -5,6 +5,8 @@ import reportWebVitals from './reportWebVitals';
 import { BrowserRouter } from 'react-router-dom';
 import { pca } from './authConfig'
 import { MsalProvider } from '@azure/msal-react';
+import { Provider } from 'react-redux';
+import { store } from './store/store';
 
 
 // Inject some global styles
@@ -19,7 +21,9 @@ mergeStyles({
 ReactDOM.render(
   <MsalProvider instance={pca}>
     <BrowserRouter>
-      <App />
+      <Provider store={store}>
+        <App />
+      </Provider>
     </BrowserRouter>
   </MsalProvider>, document.getElementById('root'));
 

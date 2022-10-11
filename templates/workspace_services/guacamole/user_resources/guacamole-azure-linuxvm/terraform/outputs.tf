@@ -25,3 +25,4 @@ output "vm_password_secret_name" {
 output "keyvault_name" {
   value = local.keyvault_name
 }
+

@@ -4,22 +4,24 @@ These tables specify each endpoint that exists today in TRE API and the permissi
 ## Workspace API  
 | Endpoints                                                                                                                 | Researcher | Workspace Owner | Airlock Manager |
 | ------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------- | --------------- |
-| GET /workspaces/{workspace\_id}/workspace-services                                                                        | V          | V               |                 |
+| GET /workspaces/{workspace\_id}/workspace-services                                                                        | V          | V               | V               |
+| GET /workspaces/{workspace\_id}/workspace-service-templates                                                               | V          | V               | V               |
+| GET /workspaces/{workspace\_id}/workspace-service-templates/{service_template_name}/user-resource-templates               | V          | V               | V               |
 | GET /workspaces/{workspace\_id}/workspace-services/{service\_id}                                                          | V          | V               |                 |
 | POST /workspaces/{workspace\_id}/workspace-services                                                                       | X          | V               |                 |
 | PATCH /workspaces/{workspace\_id}/workspace-services/{service\_id}                                                        | V          | V               |                 |
 | DELETE /workspaces/{workspace\_id}/workspace-services/{service\_id}                                                       | X          | V               |                 |
 | POST /workspaces/{workspace\_id}/workspace-services/{service\_id}/invoke-action                                           | X          | V               |                 |
-| GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/operations                                               | V          | V               |                 |
-| GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/operations/{operation\_id}                               | V          | V               |                 |
-| GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources                                           | V          | V               |                 |
-| GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources/{resource\_id}                            | V          | V               |                 |
-| POST /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources                                          | V          | V               |                 |
-| PATCH /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources/{resource\_id}                          | V          | V               |                 |
-| DELETE /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources/{resource\_id}                         | V          | V               |                 |
-| POST /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources/{resource\_id}/invoke-action             | V          | V               |                 |
-| GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources/{resource\_id}/operations                 | V          | V               |                 |
-| GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources/{resource\_id}/operations/{operation\_id} | V          | V               |                 |
+| GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/operations                                               | V          | V               | V               |
+| GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/operations/{operation\_id}                               | V          | V               | V               |
+| GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources                                           | V          | V               | V               |
+| GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources/{resource\_id}                            | V          | V               | V               |
+| POST /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources                                          | V          | V               | V               |
+| PATCH /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources/{resource\_id}                          | V          | V               | V               |
+| DELETE /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources/{resource\_id}                         | V          | V               | V               |
+| POST /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources/{resource\_id}/invoke-action             | V          | V               | V               |
+| GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources/{resource\_id}/operations                 | V          | V               | V               |
+| GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources/{resource\_id}/operations/{operation\_id} | V          | V               | V               |
 | GET /workspaces/{workspace\_id}/requests                                                                                  | V          | V               | V               |
 | GET /workspaces/{workspace\_id}/requests/{airlock\_request\_id}                                                           | V          | V               | X               |
 | POST /workspaces/{workspace\_id}/requests                                                                                 | V          | V               | X               |
