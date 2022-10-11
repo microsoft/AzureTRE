@@ -258,32 +258,6 @@ async def test_update_and_publish_event_airlock_request_without_status_change_sh
     assert send_airlock_notification_event_mock.call_count == 0
 
 
-async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_current_user_review_and_status_arguments_should_ignore_status(airlock_request_repo_mock):
-    workspace = sample_workspace()
-    user = create_workspace_airlock_manager_user()
-    airlock_request_repo_mock.get_airlock_requests = MagicMock()
-
-    get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo_mock,
-                                               status=AirlockRequestStatus.Approved, awaiting_current_user_review=True)
-
-    airlock_request_repo_mock.get_airlock_requests.assert_called_once_with(workspace_id=workspace.id, user_id=None, type=None, status=AirlockRequestStatus.InReview)
-
-
-async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_current_user_review_argument_by_non_airlock_manger_should_return_empty_list(airlock_request_repo_mock):
-    user = create_test_user()
-    airlock_requests = get_airlock_requests_by_user_and_workspace(user=user, workspace=sample_workspace(), airlock_request_repo=airlock_request_repo_mock, awaiting_current_user_review=True)
-    assert airlock_requests == []
-
-
-@pytest.mark.parametrize("role", get_required_roles(endpoint=create_airlock_review))
-async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_current_user_review_argument_requires_same_roles_as_review_endpoint(role, airlock_request_repo_mock):
-    airlock_request_repo_mock.get_airlock_requests = MagicMock()
-    user = create_test_user()
-    user.roles = [role]
-    get_airlock_requests_by_user_and_workspace(user=user, workspace=sample_workspace(), airlock_request_repo=airlock_request_repo_mock, awaiting_current_user_review=True)
-    airlock_request_repo_mock.get_airlock_requests.assert_called_once()
-
-
 @pytest.mark.parametrize("action, required_roles, airlock_request_repo_mock", [
     (AirlockActions.Review, get_required_roles(endpoint=create_airlock_review), airlock_request_repo_mock),
     (AirlockActions.Cancel, get_required_roles(endpoint=create_cancel_request), airlock_request_repo_mock),
