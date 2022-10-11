@@ -244,17 +244,21 @@ bundle-register:
 		--current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify \
 		--workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
-workspace_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
-	DIR="${MAKEFILE_DIR}/templates/workspaces/$(1)" BUNDLE_TYPE=workspace
+workspace_bundle:
+	$(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/workspaces/${BUNDLE}" BUNDLE_TYPE=workspace
 
-workspace_service_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
-	DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
+workspace_service_bundle:
+	$(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/workspace_services/${BUNDLE}" BUNDLE_TYPE=workspace_service
 
-shared_service_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
-	DIR="${MAKEFILE_DIR}/templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
+shared_service_bundle:
+	$(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/shared_services/${BUNDLE}" BUNDLE_TYPE=shared_service
 
-user_resource_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
-	DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
+user_resource_bundle:
+	$(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/workspace_services/${WORKSPACE_SERVICE}/user_resources/${BUNDLE}" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-${WORKSPACE_SERVICE}
 
 deploy-shared-service:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
@@ -283,11 +287,11 @@ build-and-deploy-ui:
 	&& if [ "$${DEPLOY_UI}" != "false" ]; then ${MAKEFILE_DIR}/devops/scripts/build_deploy_ui.sh; else echo "UI Deploy skipped as DEPLOY_UI is false"; fi \
 
 prepare-for-e2e:
-	$(call workspace_bundle,base) \
-	&& $(call workspace_service_bundle,guacamole) \
-	&& $(call shared_service_bundle,gitea) \
-	&& $(call user_resource_bundle,guacamole,guacamole-azure-windowsvm) \
-	&& $(call user_resource_bundle,guacamole,guacamole-azure-linuxvm)
+	$(MAKE) workspace_bundle BUNDLE=base \
+	&& $(MAKE) workspace_service_bundle BUNDLE=guacamole \
+	&& $(MAKE) shared_service_bundle BUNDLE=gitea \
+	&& $(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-windowsvm \
+	&& $(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-linuxvm
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \

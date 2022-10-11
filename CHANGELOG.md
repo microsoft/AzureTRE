@@ -1,11 +1,30 @@
 <!-- markdownlint-disable MD041 -->
 <!-- line format short be: change short description (#pr_numer) -->
 
-## 0.5.0 (Unreleased)
+## 0.5.1 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
 
-* Firewall now blocks terraform/hasicorp domains ([#2590](https://github.com/microsoft/AzureTRE/pull/2590)). **Migration** is manual - update the templateVersion of `tre-shared-service-firewall` resource in Cosmos to `0.5.0`. Check the PR for more details.
+*
+
+FEATURES:
+
+*
+
+ENHANCEMENTS:
+
+*
+
+BUG FIXES:
+
+*
+
+
+
+## 0.5.0 (October 10, 2022)
+
+**BREAKING CHANGES & MIGRATIONS**:
+
 * Github Actions deployments use a single ACR instead of two. Github secrets might need updating, see PR for details. ([#2654](https://github.com/microsoft/AzureTRE/pull/2654))
 * Align Github Action secret names. Existing Github environments must be updated, see PR for details. ([#2655](https://github.com/microsoft/AzureTRE/pull/2655))
 * Add workspace creator as an owner of the workspace enterprise application ([#2627](https://github.com/microsoft/AzureTRE/pull/2627)). **Migration** if the `AUTO_WORKSPACE_APP_REGISTRATION` is set, the `Directory.Read.All` MS Graph API permission permission needs granting to the Application Registration identified by `APPLICATION_ADMIN_CLIENT_ID`.
@@ -13,12 +32,14 @@
 * Reworked how status update messages are handled by the API, to enforce ordering and run the queue subscription in a dedicated thread. Since sessions are now enabled for the status update queue, a `tre-deploy` is required, which will re-create the queue. ([#2700](https://github.com/microsoft/AzureTRE/pull/2700))
 * Guacamole user-resource templates have been updated. VM SKU and image details are now specified in `porter.yaml`. See `README.md` in the guacamole `user-resources` folder for details.
 * `deploy_shared_services.sh` now uses the `tre` CLI. Ensure that your CI/CD environment installs the CLI (`(cd cli && make install-cli)`)
+* UI: Moved from React Context API to React-Redux (with Redux Toolkit) to manage the global operations (notifications) state
 
 FEATURES:
 
 * Add Import Review Workspace ([#2498](https://github.com/microsoft/AzureTRE/issues/2498))
 * Restrict resource templates to specific roles ([#2600](https://github.com/microsoft/AzureTRE/issues/2600))
 * Import review user resource template ([#2601](https://github.com/microsoft/AzureTRE/issues/2601))
+* Export review user resource template ([#2602](https://github.com/microsoft/AzureTRE/issues/2602))
 * Airlock Manager can use user resources ([#2499](https://github.com/microsoft/AzureTRE/issues/2499))
 * Users only see templates they are authorized to use ([#2640](https://github.com/microsoft/AzureTRE/issues/2640))
 * Guacamole user-resource templates now have support for custom VM images from image galleries ([#2634](https://github.com/microsoft/AzureTRE/pull/2634))
@@ -39,6 +60,38 @@ BUG FIXES:
 * Update Porter and Terraform mixin versions ([#2639](https://github.com/microsoft/AzureTRE/issues/2639))
 * Airlock Manager should have permissions to get SAS token ([#2502](https://github.com/microsoft/AzureTRE/issues/2502))
 * Terraform unmarshal errors in `migrate.sh` ([#2673](https://github.com/microsoft/AzureTRE/issues/2673))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.4.2 |
+| core | 0.4.36 |
+| porter-hello | 0.1.0 |
+| tre-workspace-base-sl-test | 0.3.19 |
+| tre-workspace-base | 0.4.0 |
+| tre-workspace-unrestricted | 0.2.0 |
+| tre-workspace-airlock-import-review | 0.4.0 |
+| tre-service-mlflow | 0.4.0 |
+| tre-service-innereye | 0.4.0 |
+| tre-workspace-service-gitea | 0.5.0 |
+| tre-workspace-service-mysql | 0.2.0 |
+| tre-service-guacamole-linuxvm | 0.5.1 |
+| tre-service-guacamole-export-reviewvm | 0.0.4 |
+| tre-service-guacamole-windowsvm | 0.5.1 |
+| tre-service-guacamole-import-reviewvm | 0.1.1 |
+| tre-service-guacamole | 0.5.0 |
+| tre-user-resource-aml-compute-instance | 0.4.1 |
+| tre-service-azureml | 0.5.1 |
+| tre-shared-service-cyclecloud | 0.3.0 |
+| tre-shared-service-gitea | 0.4.0 |
+| tre-shared-service-airlock-notifier | 0.2.0 |
+| tre-shared-service-admin-vm | 0.2.0 |
+| tre-shared-service-certs | 0.2.0 |
+| tre-shared-service-sonatype-nexus | 2.2.0 |
+| tre-shared-service-firewall | 0.6.1 |
+
+
 
 ## 0.4.3 (September 12, 2022)
 
