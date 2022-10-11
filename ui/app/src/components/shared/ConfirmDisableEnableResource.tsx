@@ -3,11 +3,12 @@ import React, { useContext, useState } from 'react';
 import { Resource } from '../../models/resource';
 import { HttpMethod, ResultType, useAuthApiCall } from '../../hooks/useAuthApiCall';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
-import { OperationsContext } from '../../contexts/OperationsContext';
 import { ResourceType } from '../../models/resourceType';
 import { LoadingState } from '../../models/loadingState';
 import { APIError } from '../../models/exceptions';
 import { ExceptionLayout } from './ExceptionLayout';
+import { useAppDispatch } from '../../hooks/customReduxHooks';
+import { addUpdateOperation } from '../shared/notifications/operationsSlice';
 
 interface ConfirmDisableEnableResourceProps {
   resource: Resource,
@@ -21,7 +22,7 @@ export const ConfirmDisableEnableResource: React.FunctionComponent<ConfirmDisabl
   const [loading, setLoading] = useState(LoadingState.Ok);
   const [apiError, setApiError] = useState({} as APIError);
   const workspaceCtx = useContext(WorkspaceContext);
-  const opsCtx = useContext(OperationsContext);
+  const dispatch = useAppDispatch();
 
   const disableProps = {
     type: DialogType.normal,
@@ -52,7 +53,7 @@ export const ConfirmDisableEnableResource: React.FunctionComponent<ConfirmDisabl
     try {
       let body = { isEnabled: props.isEnabled }
       let op = await apiCall(props.resource.resourcePath, HttpMethod.Patch, wsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined, body, ResultType.JSON, undefined, undefined, props.resource._etag);
-      opsCtx.addOperations([op.operation]);
+      dispatch(addUpdateOperation(op.operation));
       props.onDismiss();
     } catch (err: any) {
       err.userMessage = 'Failed to enable/disable resource';
