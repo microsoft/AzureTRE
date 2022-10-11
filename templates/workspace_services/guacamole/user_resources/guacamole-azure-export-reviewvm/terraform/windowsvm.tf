@@ -181,5 +181,6 @@ data "template_file" "download_review_data_script" {
   vars = {
     airlock_request_sas_url = var.airlock_request_sas_url
     username                = random_string.username.result
+    hostname                = local.vm_name
   }
 }
