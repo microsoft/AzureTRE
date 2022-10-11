@@ -121,7 +121,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   admin_username             = random_string.username.result
   admin_password             = random_password.password.result
 
-  custom_data = base64encode(data.template_file.vm_config.rendered)
+  custom_data = base64encode(data.template_file.download_review_data.rendered)
 
   source_image_reference {
     publisher = local.image_ref[var.image].publisher
@@ -188,10 +188,10 @@ data "azurerm_storage_share" "shared_storage" {
   storage_account_name = data.azurerm_storage_account.stg.name
 }
 
-data "airlock_request_sas_url" "vm_config" {
+data "template_file" "download_review_data" {
   template = file("${path.module}/download_review_data.ps1")
   vars = {
     airlock_request_sas_url = var.airlock_request_sas_url
-    username = random_string.username.result
+    username                = random_string.username.result
   }
 }
