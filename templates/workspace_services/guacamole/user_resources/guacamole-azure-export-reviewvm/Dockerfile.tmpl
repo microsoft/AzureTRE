@@ -2,7 +2,7 @@ FROM debian:buster-slim
 
 ARG BUNDLE_DIR
 
-ARG AZURE_TRE_VERSION="0.4.3"
+ARG AZURE_TRE_VERSION="0.5.0"
 
 RUN  apt-get update \
   && apt-get install --no-install-recommends jq ca-certificates curl patch -y \
@@ -31,4 +31,4 @@ RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/r
 COPY . $BUNDLE_DIR
 
 # Apply patch with the difference from the base workspace
-# RUN patch -p0 < $BUNDLE_DIR/windowsvm.diff
+RUN patch -p0 < $BUNDLE_DIR/windowsvm.diff
