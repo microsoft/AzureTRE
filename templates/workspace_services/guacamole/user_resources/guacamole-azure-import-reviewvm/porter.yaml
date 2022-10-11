@@ -81,6 +81,10 @@ parameters:
   - name: vm_size
     type: string
     default: "2 CPU | 8GB RAM"
+  - name: airlock_request_sas_url
+    type: string
+    description: "A SAS token to access storage resource in workspace under review"
+    env: airlock_request_sas_url
 
 outputs:
   - name: ip
@@ -122,6 +126,7 @@ install:
         shared_storage_access: "false"
         shared_storage_name: "unused"
         image_gallery_id: "{{ bundle.parameters.image_gallery_id }}"
+        airlock_request_sas_url: "{{ bundle.parameters.airlock_request_sas_url }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -146,6 +151,7 @@ upgrade:
         shared_storage_access: "false"
         shared_storage_name: "unused"
         image_gallery_id: "{{ bundle.parameters.image_gallery_id }}"
+        airlock_request_sas_url: "unused"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -179,6 +185,7 @@ uninstall:
         shared_storage_access: "false"
         shared_storage_name: "unused"
         image_gallery_id: "{{ bundle.parameters.image_gallery_id }}"
+        airlock_request_sas_url: "unused"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
