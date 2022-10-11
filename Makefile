@@ -289,9 +289,6 @@ prepare-for-e2e:
 	&& $(call user_resource_bundle,guacamole,guacamole-azure-windowsvm) \
 	&& $(call user_resource_bundle,guacamole,guacamole-azure-linuxvm)
 
-test:
-	$(call user_resource_bundle,guacamole,guacamole-azure-export-reviewvm)
-
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
 	cd e2e_tests && \
