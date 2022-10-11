@@ -180,6 +180,6 @@ data "template_file" "download_review_data_script" {
   template = file("${path.module}/download_review_data.ps1")
   vars = {
     airlock_request_sas_url = var.airlock_request_sas_url
-    username = random_string.username.result
+    username                = random_string.username.result
   }
 }
