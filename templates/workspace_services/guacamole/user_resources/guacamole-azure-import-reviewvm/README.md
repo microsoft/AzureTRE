@@ -1,4 +1,4 @@
-## How to work with this template
+# How to work with this template
 
 This template is based off another user resource template, [guacamole-azure-windowsvm](../guacamole-azure-windowsvm/).
 
@@ -6,7 +6,7 @@ They share much of terraform configuration. Instead of copying the terraform con
 
 Note that the patch is applied only to files in terraform directory. All the other files that don't already exist in this template are borrowed from the reference template as-is.
 
-### How to make a change to terraform configuration
+## How to make a change to terraform configuration
 
 Follow this set of steps:
 
