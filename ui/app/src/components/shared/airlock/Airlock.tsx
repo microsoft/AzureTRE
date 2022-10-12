@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { ColumnActionsMode, CommandBar, CommandBarButton, ContextualMenu, DirectionalHint, getTheme, IColumn, ICommandBarItemProps, IContextualMenuItem, IContextualMenuProps, Label, Persona, PersonaSize, SelectionMode, ShimmeredDetailsList, Stack } from '@fluentui/react';
+import { ColumnActionsMode, CommandBar, CommandBarButton, ContextualMenu, DirectionalHint, getTheme, IColumn, ICommandBarItemProps, Icon, IContextualMenuItem, IContextualMenuProps, Label, Persona, PersonaSize, SelectionMode, ShimmeredDetailsList, Stack } from '@fluentui/react';
 import { HttpMethod, useAuthApiCall } from '../../../hooks/useAuthApiCall';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
 import { WorkspaceContext } from '../../../contexts/WorkspaceContext';
@@ -13,6 +13,7 @@ import { ExceptionLayout } from '../ExceptionLayout';
 import { AirlockNewRequest } from './AirlockNewRequest';
 import { WorkspaceRoleName } from '../../../models/roleNames';
 import { useAccount, useMsal } from '@azure/msal-react';
+import { getFileTypeIconProps } from '@fluentui/react-file-type-icons';
 
 export const Airlock: React.FunctionComponent = () => {
   const [airlockRequests, setAirlockRequests] = useState([] as AirlockRequest[]);
@@ -151,14 +152,30 @@ export const Airlock: React.FunctionComponent = () => {
 
     const columns: IColumn[] = [
       {
-        key: 'avatar',
-        name: '',
+        key: 'fileIcon',
+        name: 'fileIcon',
         minWidth: 16,
         maxWidth: 16,
         isIconOnly: true,
         onRender: (request: AirlockRequest) => {
-          return <Persona size={ PersonaSize.size24 } text={ request.user?.name } />
+          if (request.status === AirlockRequestStatus.Draft) {
+            return <Icon iconName="FolderOpen" style={{verticalAlign:'bottom', fontSize: 14}} />
+          } else if (request.files?.length > 0 && request.files[0].name) {
+            const fileType = request.files[0].name.split('.').pop();
+            return <Icon {...getFileTypeIconProps({ extension: fileType })} style={{verticalAlign:'bottom'}} />
+          } else {
+            return <Icon iconName="Page" style={{verticalAlign:'bottom', fontSize: 14}} />
+          }
         }
+      },
+      {
+        key: 'title',
+        name: 'Title',
+        ariaLabel: 'Title of the airlock request',
+        minWidth: 150,
+        maxWidth: 300,
+        isResizable: true,
+        fieldName: 'requestTitle'
       },
       {
         key: 'creator_user_id',
@@ -168,7 +185,7 @@ export const Airlock: React.FunctionComponent = () => {
         maxWidth: 200,
         isResizable: true,
         fieldName: 'initiator',
-        onRender: (request: AirlockRequest) => request.user?.name,
+        onRender: (request: AirlockRequest) => <Persona size={ PersonaSize.size24 } text={ request.user?.name } />,
         isFiltered: filters.has('creator_user_id')
       },
       {
@@ -310,7 +327,7 @@ export const Airlock: React.FunctionComponent = () => {
           selectionMode={SelectionMode.none}
           getKey={(item) => item?.id}
           onItemInvoked={(item) => navigate(item.id)}
-          className="tre-table-rows-align-centre"
+          className="tre-table"
           enableShimmer={loadingState === LoadingState.Loading}
         />
         {

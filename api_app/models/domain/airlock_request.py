@@ -78,7 +78,7 @@ class AirlockRequest(AzureTREModel):
     workspaceId: str = Field("", title="Workspace ID", description="Service target Workspace id")
     requestType: AirlockRequestType = Field("", title="Airlock request type")
     files: List[AirlockFile] = Field([], title="Files of the request")
-    requestTitle: str = Field("RequestTitle", title="Brief title for the request")
+    requestTitle: str = Field("Airlock Request", title="Brief title for the request")
     businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
     status = AirlockRequestStatus.Draft
     creationTime: float = Field(None, title="Creation time of the request")
