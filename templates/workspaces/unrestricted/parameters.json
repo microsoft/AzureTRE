@@ -121,7 +121,7 @@
     {
       "name": "app_service_plan_sku",
       "source": {
-        "env": "APP_SERVICE_PLAN_SKU"
+        "env": "WORKSPACE_APP_SERVICE_PLAN_SKU"
       }
     },
     {
