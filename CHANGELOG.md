@@ -3,21 +3,9 @@
 
 ## 0.5.1 (Unreleased)
 
-**BREAKING CHANGES & MIGRATIONS**:
-
-*
-
-FEATURES:
-
-*
-
-ENHANCEMENTS:
-
-*
-
 BUG FIXES:
 
-*
+* Fix shared service 409 installation issue when in status other than deployed ([#2725](https://github.com/microsoft/AzureTRE/pull/2725))
 
 
 
