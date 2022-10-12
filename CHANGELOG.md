@@ -5,6 +5,7 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 FEATURES:
+* Added filtering and sorting to Airlock UI ([#2511](https://github.com/microsoft/AzureTRE/issues/2511))
 
 ENHANCEMENTS:
 
