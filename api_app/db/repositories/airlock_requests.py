@@ -102,7 +102,7 @@ class AirlockRequestRepository(BaseRepository):
 
         return airlock_request
 
-    def get_airlock_requests(self, workspace_id: str, user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None) -> List[AirlockRequest]:
+    def get_airlock_requests(self, workspace_id: str, user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
         query = self.airlock_requests_query() + f' where c.workspaceId = "{workspace_id}"'
 
         # optional filters
@@ -112,6 +112,11 @@ class AirlockRequestRepository(BaseRepository):
             query += ' AND c.status=@status'
         if type:
             query += ' AND c.requestType=@type'
+
+        # optional sorting
+        if order_by:
+            query += ' ORDER BY c.' + order_by
+            query += ' ASC' if order_ascending else ' DESC'
 
         parameters = [
             {"name": "@user_id", "value": user_id},

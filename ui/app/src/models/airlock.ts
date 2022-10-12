@@ -7,7 +7,7 @@ export interface AirlockRequest extends Resource {
   files: Array<string>;
   requestTitle: string;
   businessJustification: string;
-  errorMessage: null | string;
+  statusMessage: null | string;
   status: AirlockRequestStatus;
   creationTime: number;
   reviews: Array<AirlockReview>;
