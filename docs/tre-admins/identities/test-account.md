@@ -88,18 +88,3 @@ On the "Application permissions" section, select "TRE Administrators".
 Back on the main permissions page, click on "Grant admin consent". Once done, you should see "Granted" in the "Status" column, as shown below.
 
 ![Screenshot of Azure portal showing admin consent granted](../../assets/tre-automation-admin-consent-granted.png)
-
-### Enabling users
-
-For a user to gain access to the system, they have to:
-
-1. Have an identity in Azure AD
-1. Be linked with an app registration and assigned a role
-
-When these requirements are met, the user can sign-in using their credentials and use their privileges to use the API, login to workspace environment etc. based on their specific roles.
-
-![User linked with app registrations](../../assets/aad-user-linked-with-app-regs.png)
-
-The users can also be linked via the Enterprise application view:
-
-![Adding users to Enterprise application](../../assets/adding-users-to-enterprise-application.png)
