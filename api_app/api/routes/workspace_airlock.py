@@ -11,15 +11,21 @@ from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestTy
 
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 
+from db.repositories.user_resources import UserResourceRepository
+from db.repositories.workspace_services import WorkspaceServiceRepository
+from db.repositories.operations import OperationRepository
+from db.repositories.resource_templates import ResourceTemplateRepository
+
 from db.repositories.airlock_requests import AirlockRequestRepository
 from models.schemas.airlock_request import AirlockRequestInCreate, AirlockRequestInResponse, AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_airlock_manager, get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user
 
-from airlock.resource_helpers import save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace
+from .airlock.resource_helpers import save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace
 
 from services.airlock import validate_user_allowed_to_access_storage_account, \
     get_account_by_request, get_airlock_request_container_sas_token, validate_request_status
+from .airlock.review_vm import remove_review_vms
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 
@@ -76,22 +82,42 @@ async def create_cancel_request(airlock_request=Depends(get_airlock_request_by_i
 
 
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/review", status_code=status.HTTP_200_OK, response_model=AirlockRequestInResponse, name=strings.API_REVIEW_AIRLOCK_REQUEST, dependencies=[Depends(get_current_airlock_manager_user), Depends(get_workspace_by_id_from_path)])
-async def create_airlock_review(airlock_review_input: AirlockReviewInCreate, airlock_request=Depends(get_airlock_request_by_id_from_path), user=Depends(get_current_airlock_manager_user), airlock_request_repo=Depends(get_repository(AirlockRequestRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> AirlockRequestInResponse:
-    try:
-        airlock_review = airlock_request_repo.create_airlock_review_item(airlock_review_input, user)
-    except (ValidationError, ValueError) as e:
-        logging.error(f"Failed creating airlock review model instance: {e}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    # Store review with new status in cosmos, and send status_changed event
-    if airlock_review.reviewDecision.value == AirlockReviewDecision.Approved:
-        review_status = AirlockRequestStatus.ApprovalInProgress
-    elif airlock_review.reviewDecision.value == AirlockReviewDecision.Rejected:
-        review_status = AirlockRequestStatus.RejectionInProgress
+async def create_airlock_review(
+        airlock_review_input: AirlockReviewInCreate,
+        airlock_request=Depends(get_airlock_request_by_id_from_path),
+        user=Depends(get_current_airlock_manager_user),
+        workspace=Depends(get_deployed_workspace_by_id_from_path),
+        airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
+        user_resource_repo=Depends(get_repository(UserResourceRepository)),
+        workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)),
+        operation_repo=Depends(get_repository(OperationRepository)),
+        resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> AirlockRequestInResponse:
 
-    # If there was a VM created for the request, clean it up as it will no longer be needed
+    operations = await remove_review_vms(
+        request_id=airlock_request.id,
+        user_resource_repo=user_resource_repo,
+        workspace_service_repo=workspace_service_repo,
+        resource_template_repo=resource_template_repo,
+        operations_repo=operation_repo,
+        user=user
+    )
+    logging.warn(f"operations: {operations}")
 
-    updated_airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=user, new_status=review_status, workspace=workspace, airlock_review=airlock_review)
-    return AirlockRequestInResponse(airlockRequest=updated_airlock_request)
+    # try:
+    #     airlock_review = airlock_request_repo.create_airlock_review_item(airlock_review_input, user)
+    # except (ValidationError, ValueError) as e:
+    #     logging.error(f"Failed creating airlock review model instance: {e}")
+    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    # # Store review with new status in cosmos, and send status_changed event
+    # if airlock_review.reviewDecision.value == AirlockReviewDecision.Approved:
+    #     review_status = AirlockRequestStatus.ApprovalInProgress
+    # elif airlock_review.reviewDecision.value == AirlockReviewDecision.Rejected:
+    #     review_status = AirlockRequestStatus.RejectionInProgress
+
+    # # If there was a VM created for the request, clean it up as it will no longer be needed
+    # updated_airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=user, new_status=review_status, workspace=workspace, airlock_review=airlock_review)
+    # return AirlockRequestInResponse(airlockRequest=updated_airlock_request)
+    return AirlockRequestInResponse(airlockRequest=airlock_request)
 
 
 @airlock_workspace_router.get("/workspaces/{workspace_id}/requests/{airlock_request_id}/link",
