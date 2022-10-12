@@ -6,6 +6,9 @@
     "description": "Windows virtual machine.",
     "required": [
     ],
+    "authorizedRoles": [
+      "WorkspaceOwner", "WorkspaceResearcher"
+    ],
     "properties": {
       "os_image": {
         "$id": "#/properties/os_image",

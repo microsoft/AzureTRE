@@ -3,20 +3,22 @@ FROM python:3.8-slim-buster
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install Azure CLI
-ARG AZURE_CLI_VERSION=2.39.0-1~buster
+ARG AZURE_CLI_VERSION=2.40.0-1~buster
 COPY scripts/azure-cli.sh /tmp/
 RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh
 
 # Install Porter
 ARG PORTER_MIRROR=https://cdn.porter.sh
-ARG PORTER_PERMALINK=v0.38.12
+ARG PORTER_PERMALINK=v0.38.13
 ARG PORTER_PKG_PERMALINK=latest
+ARG PORTER_TERRAFORM_MIXIN_PKG_PERMALINK="v1.0.0-rc.1"
 ARG PORTER_HOME=/root/.porter/
 COPY scripts/porter.sh /tmp/
 RUN export PORTER_MIRROR=${PORTER_MIRROR} \
     PORTER_PERMALINK=${PORTER_PERMALINK} \
     PORTER_PKG_PERMALINK=${PORTER_PKG_PERMALINK} \
+    PORTER_TERRAFORM_MIXIN_PKG_PERMALINK=${PORTER_TERRAFORM_MIXIN_PKG_PERMALINK} \
     PORTER_HOME=${PORTER_HOME} \
     && /tmp/porter.sh
 

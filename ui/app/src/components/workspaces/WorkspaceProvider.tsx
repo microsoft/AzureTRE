@@ -35,13 +35,19 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
   useEffect(() => {
     const getWorkspace = async () => {
       try {
-        // get the workspace
-        const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get)).workspace;
+        // get the workspace - first we get the scope_id so we can auth against the right aad app
+        let scopeId = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}/scopeid`, HttpMethod.Get)).workspaceAuth.scopeId;
+        if (scopeId === "") {
+          console.error("Unable to get scope_id from workspace - authentication not set up.");
+        }
+
+        const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, scopeId)).workspace;
         workspaceCtx.current.setWorkspace(ws);
         const ws_application_id_uri = ws.properties.scope_id;
 
         // use the client ID to get a token against the workspace (tokenOnly), and set the workspace roles in the context
         let wsRoles: Array<string> = [];
+        console.log('Getting workspace');
         await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, ws_application_id_uri, undefined, ResultType.JSON, (roles: Array<string>) => {
           config.debug && console.log(`Workspace roles for ${workspaceId}`, roles);
           workspaceCtx.current.setRoles(roles);

@@ -239,7 +239,7 @@ if [[ $grantAdminConsent -eq 1 ]]; then
 fi
 
 # Create the UX App Registration
-redirectUris="\"http://localhost:8000/api/docs/oauth2-redirect\""
+redirectUris="\"http://localhost:8000/api/docs/oauth2-redirect\", \"http://localhost:3000\""
 if [[ -n ${treUrl} ]]; then
     echo "Adding reply/redirect URL \"${treUrl}\" to \"${appName}\""
     redirectUris="${redirectUris}, \"${treUrl}\", \"${treUrl}/api/docs/oauth2-redirect\""

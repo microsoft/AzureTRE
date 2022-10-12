@@ -100,7 +100,7 @@ GET /api/workspaces/{workspace_id}/costs
 
 ## Sequence Diagram
 
-[source](https://swimlanes.io/u/JlMQKbGqd?rev=4)
+[source](https://swimlanes.io/u/D8oktWo4j?rev=4)
 
 [![Sequence Diagram](../assets/cost-reporting-sequence-diagram.png)](../assets/cost-reporting-sequence-diagram.png)
 
@@ -109,7 +109,7 @@ GET /api/workspaces/{workspace_id}/costs
 
 * Cost and usage data is typically available in Cost Management within 8-24 hours.
 
-* Tags aren't applied to historical data, template authors need to make sure all relavent [Azure resources of a TRE resource are tagged as instructed](#azure-resources-tagging).
+* Tags aren't applied to historical data, template authors need to make sure all relevant [Azure resources of a TRE resource are tagged as instructed](#azure-resources-tagging).
 
 * Cost records might include [multiple currencies](https://azure.microsoft.com/en-us/blog/azure-cost-management-updates-july-2019/#currency) for the same date and TRE resource.
 
@@ -134,26 +134,29 @@ Templates authors need to make sure that underling Azure resources are tagged wi
 | `user_resource_id` | The user resoruce unique ID | User Resources |
 
 !!! Notes
-    Main Azure Container Registry and Storage Account are not be tagged as those resources are used to spin up more than one Azure TRE Instance.
+    - Main Azure Container Registry and Storage Account are not be tagged as those resources are used to spin up more than one Azure TRE Instance.
+    - There are some cases in which azure resources cannot get tagged by template author due to different reasons, for example services get deployed outside of TRE (Example being Cyclecloud or Cromwell on Azure), or services which doesn't support tagging for cost management (for example Azure ML compute). [for the full list of tag support of Azure see this article](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/tag-support).
 
 [![Resource tagging example](../assets/resource-tagging-example.png)](../assets/resource-tagging-example.png)
 
 
-## Cost management query API
+## TRE Cost API Logic
 
 Cost management query API, which Azure TRE Cost APIs are based upon, returns a flat result of all cost with every tag combination which exists on the filtered resources by the provided tag, meaning that a resource which has tre_id, tre_core_service_id, tre_workspace_id, tre_workspace_service_id, and tre_user_resource_id will get be summarized by all those tags.
+if filtered resources have more tags, those tags will appear in the result.
 
-Group costs by tag name and filter only resources which have this tag, if filtered resources have more tags, the tags will appear in the result.
+To rollup untagged resources into workspace costs Azure TRE cost API first calls Azure Resource Manager to get all resource group names which are tagged with the workspace_id and passes those names into Azure Cost Management Query API as a filter and group by resource group along with the tag name.
+untagged costs results will apear in with an empty tag name and get aggregated using the resource group and relevent the workspace id.
 
 Azure TRE Cost API joins this response with the hierarchical structure of the requested report.
 
-**Request example**
+**Cost management query API Request example**
 
 ```text
 @SUBSCRIPTION = FILL_YOUR_SUBSCRIPTION_ID
 @COST_API_URI = https://management.azure.com/subscriptions/{{SUBSCRIPTION}}/providers/Microsoft.CostManagement
 @COST_API_VERSION = 2021-10-01
-@TRE_ID = FILL_TRE_ID
+@TRE_ID = mytre
 @TIME_FROM = MM/DD/YYYY
 @TIME_TO = MM/DD/YYYY
 
@@ -165,30 +168,45 @@ Content-Type: application/json
 Payload
 ```json
 {
-    "type": "Usage",
+    "type": "ActualCost",
     "timeframe": "Custom", // can be also BillingMonthToDate|MonthToDate|TheLastBillingMonth|TheLastMonth|WeekToDate according to input
     "timePeriod": {
         "from": "{{TIME_FROM}}",
         "to": "{{TIME_TO}}"
     },
     "dataset": {
-        "granularity": "Daily", // can be also "None" for total costs
+        "granularity": "None", // can be also "Daily" for total costs
         "aggregation": {
             "totalCost": {
                 "name": "PreTaxCost", // can be also 'UsageQuantity','Cost','CostUSD','PreTaxCostUSD' (up to two aggregations)
                 "function": "Sum"
             }
         },
-        "filter": {
-            "tags": {
-            "name": "tre_id",
-            "operator": "In",
-            "values" : [
-                "{{TRE_ID}}",
-                ]
-            }
+       "filter": {
+            "or": [
+                {
+                    "dimensions": {
+                        "name": "ResourceGroup",
+                        "operator": "In",
+                        "values": ["{{RG_NAME}}"]
+                }
+                },
+                {
+                    "tags": {
+                        "name": "{{TAG_KEY}}",
+                        "operator": "In",
+                        "values" : [
+                            "{{TAG_VALUE}}",
+                            ]
+                    }
+                }
+            ]
         },
         "grouping": [
+            {
+                "type": "Dimension",
+                "name": "ResourceGroup"
+            },
             {
                 "type": "Tag",
             }
@@ -215,6 +233,10 @@ Response
         "type": "Number"
       },
       {
+        "name": "ResourceGroup",
+        "type": "String"
+      },
+      {
         "name": "Tag",
         "type": "String"
       },
@@ -225,67 +247,92 @@ Response
     ],
      "rows": [
       [
+        0.00055748658857886549,
+        "rg-mytre",
+        "",
+        "USD"
+      ],
+      [
         3.9306515711531222,
+        "rg-mytre",
         "\"tre_core_service\":\"mytre\"",
         "USD"
       ],
       [
         11.66335497490112,
+        "rg-mytre",
         "\"tre_id\":\"mytre\"",
         "USD"
       ],
       [
         0.033,
+        "rg-mytre",
         "\"tre_shared_service\":\"2fea\"",
         "USD"
       ],
       [
         3.62175702964083,
+        "rg-mytre",
         "\"tre_shared_service\":\"4a5b\"",
         "USD"
       ],
       [
         0.093523886643774659,
+        "rg-mytre-ws-5e86",
         "\"tre_user_resource_id\":\"126d\"",
         "USD"
       ],
       [
         0.078465743393993009,
+        "rg-mytre-ws-5e86",
         "\"tre_user_resource_id\":\"2627\"",
         "USD"
       ],
       [
         0.20275980676694544,
+        "rg-mytre-ws-5e86",
         "\"tre_user_resource_id\":\"319e\"",
         "USD"
       ],
       [
         0.17165788614506686,
+        "rg-mytre-ws-af30",
         "\"tre_user_resource_id\":\"3370\"",
         "USD"
       ],
       [
         0.17518017912599823,
+        "rg-mytre-ws-af30",
         "\"tre_user_resource_id\":\"b2be\"",
         "USD"
       ],
       [
+        0.00015748658857886549,
+        "rg-mytre-ws-5e86",
+        "",
+        "USD"
+      ],
+      [
         0.39905729127776768,
+        "rg-mytre-ws-5e86",
         "\"tre_workspace_id\":\"5e86\"",
         "USD"
       ],
       [
         0.98272254462049369,
+        "rg-mytre-ws-af30",
         "\"tre_workspace_id\":\"af30\"",
         "USD"
       ],
       [
         0.17198963003776765,
+        "rg-mytre-ws-5e86",
         "\"tre_workspace_service\":\"8d0a\"",
         "USD"
       ],
       [
         0.54959787203801058,
+        "rg-mytre-ws-af30",
         "\"tre_workspace_service\":\"e70d\"",
         "USD"
       ]

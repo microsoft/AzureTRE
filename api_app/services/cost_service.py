@@ -1,10 +1,13 @@
 from datetime import datetime, date
 from enum import Enum
 from typing import Dict, Optional
+import pandas as pd
 
 from azure.mgmt.costmanagement import CostManagementClient
 from azure.mgmt.costmanagement.models import QueryGrouping, QueryAggregation, QueryDataset, QueryDefinition, \
     TimeframeType, ExportType, QueryTimePeriod, QueryFilter, QueryComparisonExpression, QueryResult
+
+from azure.mgmt.resource import ResourceManagementClient
 
 from core import config, credentials
 from db.errors import EntityDoesNotExist
@@ -20,14 +23,16 @@ from models.domain.resource import Resource
 class ResultColumnDaily(Enum):
     Cost = 0
     Date = 1
-    Tag = 2
-    Currency = 3
+    ResourceGroup = 2
+    Tag = 3
+    Currency = 4
 
 
 class ResultColumn(Enum):
     Cost = 0
-    Tag = 1
-    Currency = 2
+    ResourceGroup = 1
+    Tag = 2
+    Currency = 3
 
 
 class WorkspaceDoesNotExist(Exception):
@@ -43,17 +48,24 @@ class CostService:
     TRE_SHARED_SERVICE_ID_TAG: str = "tre_shared_service_id"
     TRE_WORKSPACE_SERVICE_ID_TAG: str = "tre_workspace_service_id"
     TRE_USER_RESOURCE_ID_TAG: str = "tre_user_resource_id"
+    TRE_UNTAGGED: str = ""
 
     def __init__(self):
         self.scope = "/subscriptions/{}".format(config.SUBSCRIPTION_ID)
         self.client = CostManagementClient(credential=credentials.get_credential())
+        self.resource_client = ResourceManagementClient(credentials.get_credential(), config.SUBSCRIPTION_ID)
 
     def query_tre_costs(self, tre_id, granularity: GranularityEnum, from_date: datetime, to_date: datetime,
                         workspace_repo: WorkspaceRepository,
                         shared_services_repo: SharedServiceRepository) -> CostReport:
 
-        query_result = self.query_costs(CostService.TRE_ID_TAG, tre_id, granularity, from_date, to_date)
-        query_result_dict = self.__query_result_to_dict(query_result, granularity)
+        resource_groups_dict = self.get_resource_groups_by_tag(self.TRE_ID_TAG, tre_id)
+
+        query_result = self.query_costs(CostService.TRE_ID_TAG, tre_id, granularity, from_date, to_date, list(resource_groups_dict.keys()))
+
+        summerized_result = self.summerize_untagged(query_result, granularity, resource_groups_dict)
+
+        query_result_dict = self.__query_result_to_dict(summerized_result, granularity)
 
         cost_report = CostReport(core_services=[], shared_services=[], workspaces=[])
 
@@ -73,8 +85,10 @@ class CostService:
                                   workspace_services_repo: WorkspaceServiceRepository,
                                   user_resource_repo) -> WorkspaceCostReport:
 
-        query_result = self.query_costs(CostService.TRE_WORKSPACE_ID_TAG, workspace_id, granularity, from_date, to_date)
-        query_result_dict = self.__query_result_to_dict(query_result, granularity)
+        resource_groups_dict = self.get_resource_groups_by_tag(self.TRE_WORKSPACE_ID_TAG, workspace_id)
+        query_result = self.query_costs(CostService.TRE_WORKSPACE_ID_TAG, workspace_id, granularity, from_date, to_date, list(resource_groups_dict.keys()))
+        summerized_result = self.summerize_untagged(query_result, granularity, resource_groups_dict)
+        query_result_dict = self.__query_result_to_dict(summerized_result, granularity)
 
         try:
             workspace = workspace_repo.get_workspace_by_id(workspace_id)
@@ -91,6 +105,48 @@ class CostService:
             return workspace_cost_report
         except EntityDoesNotExist:
             raise WorkspaceDoesNotExist(f"workspace_id [{workspace_id}] does not exist")
+
+    def extract_resource_group_tag(self, tags):
+        if self.TRE_WORKSPACE_ID_TAG in tags:
+            return f'"{self.TRE_WORKSPACE_ID_TAG}":"{tags[self.TRE_WORKSPACE_ID_TAG]}"'
+        else:
+            return f'"{self.TRE_ID_TAG}":"{tags[self.TRE_ID_TAG]}"'
+
+    def get_resource_groups_by_tag(self, tag_name, tag_value) -> dict:
+        resource_groups = self.resource_client.resource_groups.list(filter=f"tagName eq '{tag_name}' and tagValue eq '{tag_value}'")
+        return {resouce_group.name: self.extract_resource_group_tag(resouce_group.tags) for resouce_group in resource_groups}
+
+    def summerize_untagged(self, query_result: QueryResult, granularity: GranularityEnum, resource_groups_dict: dict) -> list:
+        if len(query_result.rows) == 0:
+            return []
+
+        # convert to pandas DataFrame
+        df = pd.DataFrame.from_records(query_result.rows)
+        columns = []
+        for i in range(len(query_result.columns)):
+            columns.append(query_result.columns[i].name)
+        df.columns = columns
+
+        # fill tags for untagged
+        untagged_resource_groups = list(df.loc[df["Tag"] == "", "ResourceGroup"].unique())
+        for rg in untagged_resource_groups:
+            df.loc[(df["Tag"] == "") & (df["ResourceGroup"] == rg), "Tag"] = resource_groups_dict[rg]
+
+        # group by
+        if granularity == GranularityEnum.none:
+            c = ["ResourceGroup", "Tag", "Currency"]
+        else:
+            c = ["UsageDate", "ResourceGroup", "Tag", "Currency"]
+
+        df = df.groupby(c).agg({'PreTaxCost': sum})
+
+        # reset index and reorder columns
+        df.reset_index(inplace=True)
+        c.insert(0, "PreTaxCost")
+        df = df[c]
+
+        # convert to list of rows
+        return df.values.tolist()
 
     def __get_resource_name(self, resource: Resource):
         key = "display_name"
@@ -165,21 +221,29 @@ class CostService:
 
     def query_costs(self, tag_name: str, tag_value: str,
                     granularity: GranularityEnum, from_date: Optional[datetime],
-                    to_date: Optional[datetime]) -> QueryResult:
-        query_definition = self.build_query_definition(granularity, from_date, to_date, tag_name, tag_value)
+                    to_date: Optional[datetime],
+                    resource_groups: list) -> QueryResult:
+        query_definition = self.build_query_definition(granularity, from_date, to_date, tag_name, tag_value, resource_groups)
 
         return self.client.query.usage(self.scope, query_definition)
 
     def build_query_definition(self, granularity: GranularityEnum, from_date: Optional[datetime],
-                               to_date: Optional[datetime], tag_name: str, tag_value: str):
-        query_grouping: QueryGrouping = QueryGrouping(name=None, type="Tag")
+                               to_date: Optional[datetime], tag_name: str, tag_value: str, resource_groups: list):
+        tag_query_grouping: QueryGrouping = QueryGrouping(name=None, type="Tag")
+        rg_query_grouping: QueryGrouping = QueryGrouping(name="ResourceGroup", type="Dimension")
+
         query_aggregation: QueryAggregation = QueryAggregation(name="PreTaxCost", function="Sum")
         query_aggregation_dict: Dict[str, QueryAggregation] = dict()
         query_aggregation_dict["totalCost"] = query_aggregation
-        query_filter: QueryFilter = QueryFilter(
+        tag_query_filter: QueryFilter = QueryFilter(
             tags=QueryComparisonExpression(name=tag_name, operator="In", values=[tag_value]))
+        rg_query_filter: QueryFilter = QueryFilter(
+            dimensions=QueryComparisonExpression(name="ResourceGroup", operator="In", values=resource_groups)
+        )
+        query_filter: QueryFilter = QueryFilter(or_property=[tag_query_filter, rg_query_filter])
         query_grouping_list = list()
-        query_grouping_list.append(query_grouping)
+        query_grouping_list.append(rg_query_grouping)
+        query_grouping_list.append(tag_query_grouping)
         query_dataset: QueryDataset = QueryDataset(
             granularity=granularity, aggregation=query_aggregation_dict,
             grouping=query_grouping_list, filter=query_filter)
@@ -194,11 +258,12 @@ class CostService:
                 time_period=query_time_period, dataset=query_dataset)
         return query_definition
 
-    def __query_result_to_dict(self, query_result: QueryResult, granularity: GranularityEnum):
+    def __query_result_to_dict(self, query_result: list, granularity: GranularityEnum):
         query_result_dict = dict()
 
-        for row in query_result.rows:
+        for row in query_result:
             tag = row[ResultColumnDaily.Tag.value if granularity == GranularityEnum.daily else ResultColumn.Tag.value]
+
             if tag in query_result_dict.keys():
                 query_result_dict[tag].append(row)
             else:

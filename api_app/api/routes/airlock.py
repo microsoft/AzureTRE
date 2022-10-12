@@ -7,7 +7,7 @@ from jsonschema.exceptions import ValidationError
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
-from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
+from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType, AirlockReviewDecision
 
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 
@@ -47,10 +47,12 @@ async def get_all_airlock_requests_by_workspace(
         airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
         workspace=Depends(get_deployed_workspace_by_id_from_path),
         user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager),
-        creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, awaiting_current_user_review: bool = None) -> AirlockRequestWithAllowedUserActionsInList:
+        creator_user_id: str = None, requestType: AirlockRequestType = None, status: AirlockRequestStatus = None,
+        order_by: str = None, order_ascending: bool = True) -> AirlockRequestWithAllowedUserActionsInList:
     try:
         airlock_requests = get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo,
-                                                                      creator_user_id=creator_user_id, type=type, status=status, awaiting_current_user_review=awaiting_current_user_review)
+                                                                      creator_user_id=creator_user_id, type=requestType, status=status,
+                                                                      order_by=order_by, order_ascending=order_ascending)
         airlock_requests_with_allowed_user_actions = enrich_requests_with_allowed_actions(airlock_requests, user, airlock_request_repo)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed retrieving all the airlock requests for a workspace: {e}")
@@ -83,7 +85,11 @@ async def create_airlock_review(airlock_review_input: AirlockReviewInCreate, air
         logging.error(f"Failed creating airlock review model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     # Store review with new status in cosmos, and send status_changed event
-    review_status = AirlockRequestStatus(airlock_review.reviewDecision.value)
+    if airlock_review.reviewDecision.value == AirlockReviewDecision.Approved:
+        review_status = AirlockRequestStatus.ApprovalInProgress
+    elif airlock_review.reviewDecision.value == AirlockReviewDecision.Rejected:
+        review_status = AirlockRequestStatus.RejectionInProgress
+
     updated_airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=user, new_status=review_status, workspace=workspace, airlock_review=airlock_review)
     return AirlockRequestInResponse(airlockRequest=updated_airlock_request)
 

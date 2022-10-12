@@ -42,10 +42,10 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_GENERAL_ERROR_MESSAGE)
 
 
-async def update_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, new_status: AirlockRequestStatus, workspace: Workspace, request_files: List[AirlockFile] = None, error_message: str = None, airlock_review: AirlockReview = None):
+async def update_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, new_status: AirlockRequestStatus, workspace: Workspace, request_files: List[AirlockFile] = None, status_message: str = None, airlock_review: AirlockReview = None):
     try:
         logging.debug(f"Updating airlock request item: {airlock_request.id}")
-        updated_airlock_request = airlock_request_repo.update_airlock_request(original_request=airlock_request, user=user, new_status=new_status, request_files=request_files, error_message=error_message, airlock_review=airlock_review)
+        updated_airlock_request = airlock_request_repo.update_airlock_request(original_request=airlock_request, user=user, new_status=new_status, request_files=request_files, status_message=status_message, airlock_review=airlock_review)
     except Exception as e:
         logging.error(f'Failed updating airlock_request item {airlock_request}: {e}')
         # If the validation failed, the error was not related to the saving itself
@@ -83,13 +83,10 @@ def check_email_exists(role_assignment_details: defaultdict(list)):
 
 
 def get_airlock_requests_by_user_and_workspace(user: User, workspace: Workspace, airlock_request_repo: AirlockRequestRepository,
-                                               creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, awaiting_current_user_review: bool = None) -> List[AirlockRequest]:
-    if awaiting_current_user_review:
-        if "AirlockManager" not in user.roles:
-            return []
-        status = AirlockRequestStatus.InReview
-
-    return airlock_request_repo.get_airlock_requests(workspace_id=workspace.id, user_id=creator_user_id, type=type, status=status)
+                                               creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None,
+                                               order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
+    return airlock_request_repo.get_airlock_requests(workspace_id=workspace.id, user_id=creator_user_id, type=type, status=status,
+                                                     order_by=order_by, order_ascending=order_ascending)
 
 
 def get_allowed_actions(request: AirlockRequest, user: User, airlock_request_repo: AirlockRequestRepository) -> AirlockRequestWithAllowedUserActions:

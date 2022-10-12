@@ -41,6 +41,16 @@ export const useAuthApiCall = () => {
     tokenOnly?: boolean,
     etag?: string) => {
 
+    config.debug && console.log("API call", {
+      endpoint: endpoint,
+      method: method,
+      workspaceApplicationIdURI: workspaceApplicationIdURI,
+      body: body,
+      resultType: resultType,
+      tokenOnly: tokenOnly,
+      etag: etag
+    });
+
     if (!account) {
       console.error("No account object found, please refresh.");
       return;

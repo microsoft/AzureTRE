@@ -33,15 +33,23 @@ class ResourceTemplateRepository(BaseRepository):
         else:
             return enrich_user_resource_template(template, is_update=is_update)
 
-    def get_templates_information(self, resource_type: ResourceType, parent_service_name: str = "") -> List[ResourceTemplateInformation]:
+    def get_templates_information(self, resource_type: ResourceType, user_roles: List[str] = None, parent_service_name: str = "") -> List[ResourceTemplateInformation]:
         """
         Returns name/title/description for all current resource_type templates
+
+        :param user_roles: If set, only return templates that the user is authorized to use.
+                           template.authorizedRoles should contain at least one of user_roles
         """
-        query = f'SELECT c.name, c.title, c.description FROM c WHERE c.resourceType = "{resource_type}" AND c.current = true'
+        query = f'SELECT c.name, c.title, c.description, c.authorizedRoles FROM c WHERE c.resourceType = "{resource_type}" AND c.current = true'
         if resource_type == ResourceType.UserResource:
             query += f' AND c.parentWorkspaceService = "{parent_service_name}"'
         template_infos = self.query(query=query)
-        return [parse_obj_as(ResourceTemplateInformation, info) for info in template_infos]
+        templates = [parse_obj_as(ResourceTemplateInformation, info) for info in template_infos]
+
+        if not user_roles:
+            return templates
+        # User can view template if they have at least one of authorizedRoles
+        return [t for t in templates if not t.authorizedRoles or len(set(t.authorizedRoles).intersection(set(user_roles))) > 0]
 
     def get_current_template(self, template_name: str, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
         """
@@ -97,6 +105,7 @@ class ResourceTemplateRepository(BaseRepository):
             "resourceType": resource_type,
             "current": template_input.current,
             "required": template_input.json_schema["required"],
+            "authorizedRoles": template_input.json_schema["authorizedRoles"] if "authorizedRoles" in template_input.json_schema else [],
             "properties": template_input.json_schema["properties"],
             "customActions": template_input.customActions
         }

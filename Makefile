@@ -132,19 +132,16 @@ tre-destroy:
 terraform-deploy:
 	$(call target_title, "Deploying ${DIR} with Terraform") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./deploy.sh
 
 terraform-import:
 	$(call target_title, "Importing ${DIR} with Terraform") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./import.sh
 
 terraform-destroy:
 	$(call target_title, "Destroying ${DIR} Service") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./destroy.sh
 
 # This will validate all files, not only the changed ones as the CI version does.
@@ -180,7 +177,6 @@ lint-docs:
 bundle-build:
 	$(call target_title, "Building ${DIR} bundle with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 	&& cd ${DIR} \
 	&& if [ -d terraform ]; then terraform -chdir=terraform init -backend=false; terraform -chdir=terraform validate; fi \
@@ -192,7 +188,6 @@ bundle-build:
 bundle-install: bundle-check-params
 	$(call target_title, "Deploying ${DIR} with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter install -p ./parameters.json \
 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
@@ -215,7 +210,6 @@ bundle-check-params:
 bundle-uninstall:
 	$(call target_title, "Uninstalling ${DIR} with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter uninstall -p ./parameters.json \
 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
@@ -224,7 +218,6 @@ bundle-uninstall:
 bundle-custom-action:
  	$(call target_title, "Performing:${ACTION} ${DIR} with Porter") \
  	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env,auth \
- 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
  	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json \
  		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
  		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
@@ -251,25 +244,29 @@ bundle-register:
 		--current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify \
 		--workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
-workspace_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
-	DIR="${MAKEFILE_DIR}/templates/workspaces/$(1)" BUNDLE_TYPE=workspace
+workspace_bundle:
+	$(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/workspaces/${BUNDLE}" BUNDLE_TYPE=workspace
 
-workspace_service_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
-	DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
+workspace_service_bundle:
+	$(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/workspace_services/${BUNDLE}" BUNDLE_TYPE=workspace_service
 
-shared_service_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
-	DIR="${MAKEFILE_DIR}/templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
+shared_service_bundle:
+	$(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/shared_services/${BUNDLE}" BUNDLE_TYPE=shared_service
 
-user_resource_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
-	DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
+user_resource_bundle:
+	$(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/workspace_services/${WORKSPACE_SERVICE}/user_resources/${BUNDLE}" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-${WORKSPACE_SERVICE}
 
 deploy-shared-service:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Deploying ${DIR} shared service") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
+	&& ${MAKEFILE_DIR}/devops/scripts/ensure_cli_signed_in.sh TRE_URL="$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" \
 	&& cd ${DIR} \
-	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" $${PROPS}
+	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh $${PROPS}
 
 firewall-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
@@ -290,11 +287,11 @@ build-and-deploy-ui:
 	&& if [ "$${DEPLOY_UI}" != "false" ]; then ${MAKEFILE_DIR}/devops/scripts/build_deploy_ui.sh; else echo "UI Deploy skipped as DEPLOY_UI is false"; fi \
 
 prepare-for-e2e:
-	$(call workspace_bundle,base) \
-	&& $(call workspace_service_bundle,guacamole) \
-	&& $(call shared_service_bundle,gitea) \
-	&& $(call user_resource_bundle,guacamole,guacamole-azure-windowsvm) \
-	&& $(call user_resource_bundle,guacamole,guacamole-azure-linuxvm)
+	$(MAKE) workspace_bundle BUNDLE=base \
+	&& $(MAKE) workspace_service_bundle BUNDLE=guacamole \
+	&& $(MAKE) shared_service_bundle BUNDLE=gitea \
+	&& $(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-windowsvm \
+	&& $(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-linuxvm
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \

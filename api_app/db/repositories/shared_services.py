@@ -57,7 +57,7 @@ class SharedServiceRepository(ResourceRepository):
     def get_shared_service_spec_params(self):
         return self.get_resource_base_spec_params()
 
-    def create_shared_service_item(self, shared_service_input: SharedServiceTemplateInCreate) -> Tuple[SharedService, ResourceTemplate]:
+    def create_shared_service_item(self, shared_service_input: SharedServiceTemplateInCreate, user_roles: List[str]) -> Tuple[SharedService, ResourceTemplate]:
         shared_service_id = str(uuid.uuid4())
 
         # for certain shared services, restrict to one instance
@@ -72,7 +72,7 @@ class SharedServiceRepository(ResourceRepository):
                     raise InternalError(f"More than one active shared service exists with the same id {shared_service_id}")
                 raise DuplicateEntity
 
-        template = self.validate_input_against_template(shared_service_input.templateName, shared_service_input, ResourceType.SharedService)
+        template = self.validate_input_against_template(shared_service_input.templateName, shared_service_input, ResourceType.SharedService, user_roles)
 
         resource_spec_parameters = {**shared_service_input.properties, **self.get_shared_service_spec_params()}
 

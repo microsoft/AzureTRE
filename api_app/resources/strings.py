@@ -7,6 +7,7 @@ API_MIGRATE_DATABASE = "Migrate documents in the database"
 API_GET_MY_OPERATIONS = "Get Operations that the current user has initiated"
 API_GET_ALL_WORKSPACES = "Get all workspaces"
 API_GET_WORKSPACE_BY_ID = "Get workspace by Id"
+API_GET_WORKSPACE_SCOPE_ID_BY_WORKSPACE_ID = "Get workspace Scope Id by workspace Id"
 API_CREATE_WORKSPACE = "Create a workspace"
 API_DELETE_WORKSPACE = "Delete workspace"
 API_UPDATE_WORKSPACE = "Update an existing workspace"
@@ -42,6 +43,7 @@ API_GET_WORKSPACE_TEMPLATE_BY_NAME = "Get workspace template by name"
 
 API_CREATE_WORKSPACE_SERVICE_TEMPLATES = "Register workspace service template"
 API_GET_WORKSPACE_SERVICE_TEMPLATES = "Get workspace service templates"
+API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE = "Get workspace service templates (on workspace level)"  # only returns templates that the authenticated user is authorized to use
 API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME = "Get workspace service template by name"
 
 API_CREATE_SHARED_SERVICE_TEMPLATES = "Register shared service template"
@@ -57,6 +59,7 @@ API_INVOKE_ACTION_ON_SHARED_SERVICE = "Invoke action on a shared service"
 
 API_CREATE_USER_RESOURCE_TEMPLATES = "Register user resource template"
 API_GET_USER_RESOURCE_TEMPLATES = "Get user resource templates applicable to the workspace service template"
+API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE = "Get user resource templates applicable to the workspace service template (on workspace level)"  # only returns templates that the authenticated user is authorized to use
 API_GET_USER_RESOURCE_TEMPLATE_BY_NAME = "Get user resource template by name and workspace service"
 
 # cost report
@@ -207,6 +210,10 @@ AIRLOCK_NO_AIRLOCK_MANAGER_EMAIL = "There are no Airlock Managers with an email 
 AIRLOCK_ACTION_REVIEW = "review"
 AIRLOCK_ACTION_CANCEL = "cancel"
 AIRLOCK_ACTION_SUBMIT = "submit"
+
+# Airlock Review Decisions
+AIRLOCK_REVIEW_DECISION_APPROVED = "approved"
+AIRLOCK_REVIEW_DECISION_REJECTED = "rejected"
 
 # Deployments
 RESOURCE_STATUS_AWAITING_DEPLOYMENT_MESSAGE = "This resource is waiting to be deployed"

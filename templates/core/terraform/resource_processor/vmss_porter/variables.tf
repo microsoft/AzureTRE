@@ -24,3 +24,11 @@ variable "subscription_id" {
 
 variable "log_analytics_workspace_workspace_id" {}
 variable "log_analytics_workspace_primary_key" {}
+
+variable "rp_bundle_values" {
+  type = map(string)
+}
+
+locals {
+  rp_bundle_values_formatted = join("\n", [for key in keys(var.rp_bundle_values) : "RP_BUNDLE_${key}=${var.rp_bundle_values[key]}"])
+}
