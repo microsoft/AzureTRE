@@ -6,6 +6,7 @@
 
 FEATURES:
 * Added filtering and sorting to Airlock UI ([#2511](https://github.com/microsoft/AzureTRE/issues/2511))
+* Added title field to Airlock requests ([#2731](https://github.com/microsoft/AzureTRE/pull/2731))
 
 ENHANCEMENTS:
 
