@@ -1,6 +1,14 @@
+diff -Naur ../guacamole-azure-windowsvm/terraform/variables.tf terraform/variables.tf
+--- ../guacamole-azure-windowsvm/terraform/variables.tf	2022-10-10 09:55:40.000000000 +0100
++++ terraform/variables.tf	2022-10-12 08:21:55.000000000 +0100
+@@ -11,3 +11,4 @@
+ variable "image_gallery_id" {
+   default = ""
+ }
++variable "airlock_request_sas_url" {}
 diff -Naur ../guacamole-azure-windowsvm/terraform/windowsvm.tf terraform/windowsvm.tf
 --- ../guacamole-azure-windowsvm/terraform/windowsvm.tf	2022-10-10 09:55:40.000000000 +0100
-+++ terraform/windowsvm.tf	2022-10-11 23:50:04.000000000 +0100
++++ terraform/windowsvm.tf	2022-10-12 08:21:16.000000000 +0100
 @@ -44,7 +44,7 @@
    admin_username             = random_string.username.result
    admin_password             = random_password.password.result
