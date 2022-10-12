@@ -45,7 +45,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
     } else {
       setRequest(req);
     }
-  }, [apiCall, requestId, props.requests]);
+  }, [apiCall, requestId, props.requests, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI]);
 
   const generateFilesLink = useCallback(async () => {
     // Retrieve a link to view/edit the airlock files

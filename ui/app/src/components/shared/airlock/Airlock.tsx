@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { ColumnActionsMode, CommandBar, CommandBarButton, ContextualMenu, DirectionalHint, getTheme, IColumn, ICommandBarItemProps, Icon, IContextualMenuItem, IContextualMenuProps, Label, Persona, PersonaSize, SelectionMode, ShimmeredDetailsList, Stack } from '@fluentui/react';
+import { ColumnActionsMode, CommandBar, CommandBarButton, ContextualMenu, DirectionalHint, getTheme, IColumn, ICommandBarItemProps, Icon, IContextualMenuItem, IContextualMenuProps, Persona, PersonaSize, SelectionMode, ShimmeredDetailsList, Stack } from '@fluentui/react';
 import { HttpMethod, useAuthApiCall } from '../../../hooks/useAuthApiCall';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
 import { WorkspaceContext } from '../../../contexts/WorkspaceContext';
@@ -28,7 +28,7 @@ export const Airlock: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
   const theme = getTheme();
   const navigate = useNavigate();
-  const { instance, accounts } = useMsal();
+  const { accounts } = useMsal();
   const account = useAccount(accounts[0] || {});
 
   // Get the airlock request data from API
