@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version of TRE to use as reference
-AZURE_TRE_VERSION="0.5.0"
+AZURE_TRE_VERSION="0.5.1"
 
 # Download the reference template locally
 # and unpack the templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm into local directory
