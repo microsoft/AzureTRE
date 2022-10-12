@@ -77,8 +77,8 @@ For a user to gain access to the system, they have to:
 
 When these requirements are met, the user can sign-in using their credentials and use their privileges to use the API, login to workspace environment etc. based on their specific roles.
 
-![User linked with app registrations](../../assets/aad-user-linked-with-app-regs.png)
+![User linked with app registrations](../assets/aad-user-linked-with-app-regs.png)
 
 The users can also be linked via the Enterprise application view:
 
-![Adding users to Enterprise application](../../assets/adding-users-to-enterprise-application.png)
+![Adding users to Enterprise application](../assets/adding-users-to-enterprise-application.png)
