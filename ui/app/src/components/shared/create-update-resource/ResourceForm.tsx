@@ -76,13 +76,14 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
         response = await apiCall(props.resourcePath, HttpMethod.Post, props.workspaceApplicationIdURI, resource, ResultType.JSON);
       }
 
+      setSendingData(false);
       props.onCreateResource(response.operation);
     } catch (err: any) {
       err.userMessage = 'Error sending create / update request';
       setApiError(err);
       setLoading(LoadingState.Error);
+      setSendingData(false);
     }
-    setSendingData(false);
   }
 
   // use the supplied uiSchema or create a blank one, and set the overview field to textarea manually.

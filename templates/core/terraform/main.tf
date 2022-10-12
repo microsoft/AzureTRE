@@ -94,7 +94,8 @@ module "appgateway" {
   depends_on = [
     module.network,
     azurerm_key_vault.kv,
-    azurerm_key_vault_access_policy.deployer
+    azurerm_key_vault_access_policy.deployer,
+    azurerm_private_endpoint.api_private_endpoint
   ]
 }
 
@@ -109,7 +110,7 @@ module "airlock_resources" {
   mgmt_resource_group_name              = var.mgmt_resource_group_name
   mgmt_acr_name                         = var.acr_name
   api_principal_id                      = azurerm_user_assigned_identity.id.principal_id
-  airlock_app_service_plan_sku_size     = var.api_app_service_plan_sku_size
+  airlock_app_service_plan_sku          = var.core_app_service_plan_sku
   airlock_processor_subnet_id           = module.network.airlock_processor_subnet_id
   airlock_servicebus                    = azurerm_servicebus_namespace.sb
   applicationinsights_connection_string = module.azure_monitor.app_insights_connection_string
@@ -154,6 +155,7 @@ module "resource_processor_vmss_porter" {
   resource_processor_vmss_sku                      = var.resource_processor_vmss_sku
   log_analytics_workspace_workspace_id             = module.azure_monitor.log_analytics_workspace_workspace_id
   log_analytics_workspace_primary_key              = module.azure_monitor.log_analytics_workspace_primary_key
+  rp_bundle_values                                 = var.rp_bundle_values
 
   depends_on = [
     module.network,

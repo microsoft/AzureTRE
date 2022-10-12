@@ -1,29 +1,30 @@
 import { Callout, DirectionalHint, FontWeights, Icon, Link, mergeStyleSets, MessageBar, MessageBarType, Panel, ProgressIndicator, Text } from '@fluentui/react';
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { completedStates, inProgressStates, Operation, successStates } from '../../../models/operation';
-import { OperationsContext } from '../../../contexts/OperationsContext';
 import { NotificationItem } from './NotificationItem';
 import { IconButton } from '@fluentui/react/lib/Button';
 import { HttpMethod, useAuthApiCall } from '../../../hooks/useAuthApiCall';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
 import { Resource } from '../../../models/resource';
+import { useAppDispatch, useAppSelector } from '../../../hooks/customReduxHooks';
+import { setInitialOperations, dismissCompleted } from '../../shared/notifications/operationsSlice';
 
 export const NotificationPanel: React.FunctionComponent = () => {
-  const opsContext = useContext(OperationsContext);
-  const opsWriteContext = useRef(useContext(OperationsContext));
   const [isOpen, setIsOpen] = useState(false);
   const [showCallout, setShowCallout] = useState(false);
   const [calloutDetails, setCalloutDetails] = useState({ title: '', text: '', success: true });
   const apiCall = useAuthApiCall();
+  const operations = useAppSelector((state) => state.operations);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     const loadAllOps = async () => {
       let opsToAdd = (await apiCall(`${ApiEndpoint.Operations}`, HttpMethod.Get)).operations as Array<Operation>;
-      opsWriteContext.current.addOperations(opsToAdd);
+      dispatch(setInitialOperations(opsToAdd));
     };
 
     loadAllOps();
-  }, [apiCall])
+  }, [apiCall, dispatch])
 
   const callout = (o: Operation, r: Resource) => {
     if (successStates.includes(o.status)) {
@@ -48,7 +49,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
       <IconButton id="tre-notification-btn" className='tre-notifications-button' iconProps={{ iconName: 'Ringer' }} onClick={() => setIsOpen(true)} title="Notifications" ariaLabel="Notifications" />
 
       {
-        opsContext.operations && opsContext.operations.filter((o: Operation) => inProgressStates.includes(o.status)).length > 0 &&
+        operations.items && operations.items.filter((o: Operation) => inProgressStates.includes(o.status)).length > 0 &&
         <span style={{ marginTop: -15, display: 'block' }}>
           <ProgressIndicator barHeight={2} />
         </span>
@@ -92,12 +93,12 @@ export const NotificationPanel: React.FunctionComponent = () => {
         closeButtonAriaLabel="Close Notifications"
       >
         <div className="tre-notifications-dismiss">
-          <Link href="#" onClick={(e) => { opsContext.dismissCompleted(); return false; }} disabled={
-            opsContext.operations.filter((o: Operation) => o.dismiss !== true && completedStates.includes(o.status)).length === 0
+          <Link href="#" onClick={(e) => { dispatch(dismissCompleted()); return false; }} disabled={
+            operations.items.filter((o: Operation) => o.dismiss !== true && completedStates.includes(o.status)).length === 0
           }>Dismiss Completed</Link>
         </div>
         {
-          opsContext.operations.length === 0 &&
+          operations.items.length === 0 &&
           <div style={{ marginTop: '20px' }}>
             <MessageBar
               messageBarType={MessageBarType.success}
@@ -109,7 +110,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
         }
         <ul className="tre-notifications-list">
           {
-            opsContext.operations.map((o: Operation, i: number) => {
+            operations.items.map((o: Operation, i: number) => {
               return (
                 <NotificationItem operation={o} key={i} showCallout={(o: Operation, r: Resource) => callout(o, r)} />
               )

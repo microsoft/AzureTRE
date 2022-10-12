@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Icon, ProgressIndicator, Link as FluentLink, Stack, DefaultPalette, Shimmer, ShimmerElementType } from '@fluentui/react';
 import { TRENotification } from '../../../models/treNotification';
 import { awaitingStates, completedStates, failedStates, inProgressStates, Operation, OperationStep } from '../../../models/operation';
@@ -9,9 +9,10 @@ import { HttpMethod, useAuthApiCall } from '../../../hooks/useAuthApiCall';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
 import { getResourceFromResult, Resource } from '../../../models/resource';
 import { NotificationPoller } from './NotificationPoller';
-import { OperationsContext } from '../../../contexts/OperationsContext';
 import { APIError } from '../../../models/exceptions';
 import { ExceptionLayout } from '../ExceptionLayout';
+import { addUpdateOperation } from './operationsSlice';
+import { useAppDispatch } from '../../../hooks/customReduxHooks';
 
 interface NotificationItemProps {
   operation: Operation,
@@ -24,7 +25,7 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
   const [notification, setNotification] = useState({} as TRENotification);
   const [loadingNotification, setLoadingNotification] = useState(true);
   const [errorNotification, setErrorNotification] = useState(false);
-  const opsCtx = useContext(OperationsContext);
+  const dispatch = useAppDispatch();
 
   const apiCall = useAuthApiCall();
   const [apiError, setApiError] = useState({} as APIError);
@@ -87,7 +88,7 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
   }
 
   const updateOperation = (operation: Operation) => {
-    opsCtx.addOperations([operation]);
+    dispatch(addUpdateOperation(operation));
     if (completedStates.includes(operation.status)) {
       props.showCallout(operation, notification.resource);
     }
