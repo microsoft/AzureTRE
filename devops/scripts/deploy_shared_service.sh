@@ -49,7 +49,7 @@ if [[ "$last_result" != 0 ]]; then
 fi
 
 deployed_shared_service=$(echo "${get_shared_services_result}" \
-  | jq -r ".sharedServices[] | select(.templateName == \"${template_name}\")")
+  | jq -r ".sharedServices[] | select(.templateName == \"${template_name}\" and (.deploymentStatus != \"deleted\" or .deploymentStatus != \"deploymentFailed\"))")
 
 if [[ -n "${deployed_shared_service}" ]]; then
   # Get template version of the service already deployed
