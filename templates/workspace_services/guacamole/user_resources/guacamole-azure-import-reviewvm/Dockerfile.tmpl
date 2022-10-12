@@ -10,9 +10,11 @@ RUN  apt-get update \
 
 WORKDIR $BUNDLE_DIR
 
-RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/refs/tags/v${AZURE_TRE_VERSION}.tar.gz" \
-  && tar -xzf azuretre.tar.gz "AzureTRE-${AZURE_TRE_VERSION}/templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"  --strip-components=6 --skip-old-files \
-  && rm -rf azuretre.tar.gz
+# Use the BUNDLE_DIR build argument to copy files into the bundle
+COPY . $BUNDLE_DIR
+
+# Apply patch with the difference from the base workspace
+RUN $BUNDLE_DIR/apply_patch.sh
 
 # This is a template Dockerfile for the bundle's invocation image
 # You can customize it to use different base images, install tools and copy configuration files.
@@ -27,8 +29,3 @@ RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/r
 # another location in this file. If you remove that line, the mixins generated content is appended to this file.
 # PORTER_MIXINS
 
-# Use the BUNDLE_DIR build argument to copy files into the bundle
-COPY . $BUNDLE_DIR
-
-# Apply patch with the difference from the base workspace
-RUN patch -p0 < $BUNDLE_DIR/windowsvm.diff

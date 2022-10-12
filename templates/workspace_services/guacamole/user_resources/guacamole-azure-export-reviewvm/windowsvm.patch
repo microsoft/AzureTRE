@@ -1,10 +1,10 @@
-diff -Naur ../guacamole-azure-windowsvm/terraform/data.tf terraform/data.tf
---- ../guacamole-azure-windowsvm/terraform/data.tf	2022-09-23 15:04:16.000000000 +0100
-+++ terraform/data.tf	2022-10-11 23:57:53.000000000 +0100
+diff -Naur guacamole-azure-windowsvm/terraform/data.tf terraform/data.tf
+--- guacamole-azure-windowsvm/terraform/data.tf	2022-10-10 18:35:19.000000000 +0000
++++ terraform/data.tf	2022-10-12 14:10:58.040828727 +0000
 @@ -17,6 +17,12 @@
    resource_group_name  = data.azurerm_resource_group.ws.name
  }
-
+ 
 +data "azurerm_subnet" "webapps" {
 +  name                 = "WebAppsSubnet"
 +  virtual_network_name = data.azurerm_virtual_network.ws.name
@@ -23,21 +23,28 @@ diff -Naur ../guacamole-azure-windowsvm/terraform/data.tf terraform/data.tf
 +  name                = "pe-sa-ip-export-blob-${local.short_workspace_id}"
 +  resource_group_name = data.azurerm_resource_group.ws.name
 +}
-diff -Naur ../guacamole-azure-windowsvm/terraform/variables.tf terraform/variables.tf
---- ../guacamole-azure-windowsvm/terraform/variables.tf	2022-10-10 09:55:40.000000000 +0100
-+++ terraform/variables.tf	2022-10-11 23:57:54.000000000 +0100
+diff -Naur guacamole-azure-windowsvm/terraform/download_review_data.ps1 terraform/download_review_data.ps1
+--- guacamole-azure-windowsvm/terraform/download_review_data.ps1	1970-01-01 00:00:00.000000000 +0000
++++ terraform/download_review_data.ps1	2022-10-12 14:10:58.065344479 +0000
+@@ -0,0 +1,3 @@
++$DownloadPath = $env:Public + "\Desktop\ReviewData"
++mkdir $DownloadPath
++az storage blob download-batch -d $DownloadPath -s '"${airlock_request_sas_url}"'
+diff -Naur guacamole-azure-windowsvm/terraform/variables.tf terraform/variables.tf
+--- guacamole-azure-windowsvm/terraform/variables.tf	2022-10-10 18:35:19.000000000 +0000
++++ terraform/variables.tf	2022-10-12 14:11:09.387663241 +0000
 @@ -11,3 +11,4 @@
  variable "image_gallery_id" {
    default = ""
  }
 +variable "airlock_request_sas_url" {}
-diff -Naur ../guacamole-azure-windowsvm/terraform/windowsvm.tf terraform/windowsvm.tf
---- ../guacamole-azure-windowsvm/terraform/windowsvm.tf	2022-10-10 09:55:40.000000000 +0100
-+++ terraform/windowsvm.tf	2022-10-11 23:59:49.000000000 +0100
+diff -Naur guacamole-azure-windowsvm/terraform/windowsvm.tf terraform/windowsvm.tf
+--- guacamole-azure-windowsvm/terraform/windowsvm.tf	2022-10-10 18:35:19.000000000 +0000
++++ terraform/windowsvm.tf	2022-10-12 14:10:58.296706557 +0000
 @@ -11,6 +11,83 @@
    }
  }
-
+ 
 +resource "azurerm_network_security_group" "vm_nsg" {
 +  name                = "vm-nsg-${local.service_resource_name_suffix}"
 +  location            = data.azurerm_resource_group.ws.location
@@ -121,16 +128,16 @@ diff -Naur ../guacamole-azure-windowsvm/terraform/windowsvm.tf terraform/windows
 @@ -44,7 +121,7 @@
    admin_username             = random_string.username.result
    admin_password             = random_password.password.result
-
+ 
 -  custom_data = base64encode(data.template_file.vm_config.rendered)
 +  custom_data = base64encode(data.template_file.download_review_data_script.rendered)
-
+ 
    # set source_image_id/reference depending on the config for the selected image
    source_image_id = local.selected_image_source_id
 @@ -93,15 +170,10 @@
    tags         = local.tre_user_resources_tags
  }
-
+ 
 -data "template_file" "vm_config" {
 -  template = file("${path.module}/vm_config.ps1")
 +data "template_file" "download_review_data_script" {
@@ -145,4 +152,4 @@ diff -Naur ../guacamole-azure-windowsvm/terraform/windowsvm.tf terraform/windows
 +    airlock_request_sas_url = var.airlock_request_sas_url
    }
  }
-
+ 
