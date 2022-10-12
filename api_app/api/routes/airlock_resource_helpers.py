@@ -83,13 +83,10 @@ def check_email_exists(role_assignment_details: defaultdict(list)):
 
 
 def get_airlock_requests_by_user_and_workspace(user: User, workspace: Workspace, airlock_request_repo: AirlockRequestRepository,
-                                               creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, awaiting_current_user_review: bool = None) -> List[AirlockRequest]:
-    if awaiting_current_user_review:
-        if "AirlockManager" not in user.roles:
-            return []
-        status = AirlockRequestStatus.InReview
-
-    return airlock_request_repo.get_airlock_requests(workspace_id=workspace.id, user_id=creator_user_id, type=type, status=status)
+                                               creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None,
+                                               order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
+    return airlock_request_repo.get_airlock_requests(workspace_id=workspace.id, user_id=creator_user_id, type=type, status=status,
+                                                     order_by=order_by, order_ascending=order_ascending)
 
 
 def get_allowed_actions(request: AirlockRequest, user: User, airlock_request_repo: AirlockRequestRepository) -> AirlockRequestWithAllowedUserActions:
