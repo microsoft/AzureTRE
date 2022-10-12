@@ -59,7 +59,7 @@ async def receive_message(service_bus_client, logger_adapter: logging.LoggerAdap
             logger_adapter.info("Looking for new session...")
             # max_wait_time=1 -> don't hold the session open after processing of the message has finished
             async with service_bus_client.get_queue_receiver(queue_name=q_name, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
-                logger_adapter.info("Got a session containing messages")
+                logger_adapter.info(f"Got a session containing messages: {receiver.session.session_id}")
                 async with AutoLockRenewer() as renewer:
                     # allow a session to be auto lock renewed for up to an hour - if it's processing a message
                     renewer.register(receiver, receiver.session, max_lock_renewal_duration=3600)
@@ -84,7 +84,7 @@ async def receive_message(service_bus_client, logger_adapter: logging.LoggerAdap
                         logger_adapter.info(f"Message for resource_id={message['id']}, operation_id={message['operationId']} processed as {result} and marked complete.")
                         await receiver.complete_message(msg)
 
-                    logger_adapter.info("Closing session")
+                    logger_adapter.info(f"Closing session: {receiver.session.session_id}")
                     await renewer.close()
 
         except OperationTimeoutError:
@@ -156,7 +156,8 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, mess
 
     # post an update message to set the status to an 'in progress' one
     resource_request_message = service_bus_message_generator(msg_body, statuses.in_progress_status_string_for[action], "Job starting")
-    await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
+    await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]))
+    message_logger_adapter.info(f'Sent status message for {installation_id} - {statuses.in_progress_status_string_for[action]} - Job starting')
 
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
@@ -171,7 +172,7 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, mess
         resource_request_message = service_bus_message_generator(msg_body, statuses.failed_status_string_for[action], error_message)
 
         # Post message on sb queue to notify receivers of action failure
-        await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
+        await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]))
         message_logger_adapter.info(f"{installation_id}: Porter action failed with error = {error_message}")
         return False
 
@@ -183,8 +184,8 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, mess
         success_message = f"{action} action completed successfully."
         resource_request_message = service_bus_message_generator(msg_body, statuses.pass_status_string_for[action], success_message, outputs)
 
-        await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
-        message_logger_adapter.info(f"{installation_id}: {success_message}")
+        await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]))
+        message_logger_adapter.info(f"Sent status message for {installation_id}: {success_message}")
         return True
 
 

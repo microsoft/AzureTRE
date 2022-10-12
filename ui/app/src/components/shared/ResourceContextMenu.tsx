@@ -1,10 +1,9 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { ComponentAction, VMPowerStates, Resource } from '../../models/resource';
 import { CommandBar, IconButton, IContextualMenuItem, IContextualMenuProps } from '@fluentui/react';
 import { RoleName, WorkspaceRoleName } from '../../models/roleNames';
 import { SecuredByRole } from './SecuredByRole';
 import { ResourceType } from '../../models/resourceType';
-import { OperationsContext } from '../../contexts/OperationsContext';
 import { HttpMethod, useAuthApiCall } from '../../hooks/useAuthApiCall';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { ApiEndpoint } from '../../models/apiEndpoints';
@@ -17,6 +16,8 @@ import { Workspace } from '../../models/workspace';
 import { WorkspaceService } from '../../models/workspaceService';
 import { actionsDisabledStates } from '../../models/operation';
 import { AppRolesContext } from '../../contexts/AppRolesContext';
+import { useAppDispatch } from '../../hooks/customReduxHooks';
+import { addUpdateOperation } from '../shared/notifications/operationsSlice';
 
 interface ResourceContextMenuProps {
   resource: Resource,
@@ -31,12 +32,11 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   const [showDelete, setShowDelete] = useState(false);
   const [resourceTemplate, setResourceTemplate] = useState({} as ResourceTemplate);
   const createFormCtx = useContext(CreateUpdateResourceContext);
-  const opsWriteContext = useRef(useContext(OperationsContext)); // useRef to avoid re-running a hook on context write
   const [parentResource, setParentResource] = useState({} as WorkspaceService | Workspace);
   const [roles, setRoles] = useState([] as Array<string>);
   const [wsAuth, setWsAuth] = useState(false);
   const appRoles = useContext(AppRolesContext); // the user is in these roles which apply across the app
-
+  const dispatch = useAppDispatch();
 
   // get the resource template
   useEffect(() => {
@@ -96,7 +96,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
 
   const doAction = async (actionName: string) => {
     const action = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.InvokeAction}?action=${actionName}`, HttpMethod.Post, workspaceCtx.workspaceApplicationIdURI);
-    action && action.operation && opsWriteContext.current.addOperations([action.operation]);
+    action && action.operation && dispatch(addUpdateOperation(action.operation));
   }
 
   // context menu
