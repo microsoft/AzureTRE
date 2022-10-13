@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-firewall
-version: 0.6.0
+version: 0.6.1
 description: "An Azure TRE Firewall shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
