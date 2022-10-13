@@ -92,6 +92,7 @@ class AirlockRequestRepository(BaseRepository):
         airlock_request = AirlockRequest(
             id=full_airlock_request_id,
             workspaceId=workspace_id,
+            requestTitle=airlock_request_input.requestTitle,
             businessJustification=airlock_request_input.businessJustification,
             requestType=airlock_request_input.requestType,
             creationTime=datetime.utcnow().timestamp(),
