@@ -19,18 +19,18 @@ resource "azurerm_network_security_group" "vm_nsg" {
 }
 
 resource "azurerm_network_security_rule" "allow_outbound_airlock_exip_storage_pe" {
-  access                        = "Allow"
+  access = "Allow"
   # Should this be a list?
-  destination_address_prefixes  = [for pe in data.azurerm_private_endpoint_connection.airlock_export_inprogress_pe.private_service_connection: pe.private_ip_address]
-  destination_port_range        = "*"
-  direction                     = "Outbound"
-  name                          = "allow-airlock-exip-storage-pe"
-  network_security_group_name   = azurerm_network_security_group.vm_nsg.name
-  priority                      = 101
-  protocol                      = "*"
-  resource_group_name           = data.azurerm_resource_group.ws.name
-  source_address_prefixes       = azurerm_windows_virtual_machine.windowsvm.private_ip_addresses
-  source_port_range             = "*"
+  destination_address_prefixes = [for pe in data.azurerm_private_endpoint_connection.airlock_export_inprogress_pe.private_service_connection : pe.private_ip_address]
+  destination_port_range       = "*"
+  direction                    = "Outbound"
+  name                         = "allow-airlock-exip-storage-pe"
+  network_security_group_name  = azurerm_network_security_group.vm_nsg.name
+  priority                     = 101
+  protocol                     = "*"
+  resource_group_name          = data.azurerm_resource_group.ws.name
+  source_address_prefixes      = azurerm_windows_virtual_machine.windowsvm.private_ip_addresses
+  source_port_range            = "*"
 }
 
 // Outbound traffic gets routed to the firewall
@@ -84,7 +84,7 @@ resource "azurerm_network_security_rule" "deny_outbound_override" {
 }
 
 resource "azurerm_network_interface_security_group_association" "nsg_association" {
-  network_interface_id = azurerm_network_interface.internal.id
+  network_interface_id      = azurerm_network_interface.internal.id
   network_security_group_id = azurerm_network_security_group.vm_nsg.id
 }
 
