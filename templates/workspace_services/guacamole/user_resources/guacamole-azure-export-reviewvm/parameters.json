@@ -57,6 +57,12 @@
       "source": {
         "env": "VM_SIZE"
       }
+    },
+    {
+      "name": "airlock_request_sas_url",
+      "source": {
+        "env": "airlock_request_sas_url"
+      }
     }
   ]
 }
