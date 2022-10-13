@@ -106,6 +106,17 @@ ul.tre-notifications-steps-list li {
   }
 }
 
+.tre-table {
+  .ms-Persona-primaryText {
+    font-size: 12px;
+    color: rgb(108, 108, 108);
+  }
+
+  .ms-DetailsRow-cell {
+    align-self: baseline;
+  }
+}
+
 .tre-hide-chevron i[data-icon-name=ChevronDown] {
   display: none;
 }
@@ -156,12 +167,6 @@ ul.tre-notifications-steps-list li {
   margin: 10px 15px 10px 10px;
   padding: 10px;
   background-color: #fff;
-}
-
-.tre-table-rows-align-centre {
-  .ms-DetailsRow-cell {
-    align-self: baseline;
-  }
 }
 
 .ms-Pivot {
