@@ -12,6 +12,78 @@
       "title": "Shared Storage Quota",
       "description": "Quota (in GB) to set for the VM Shared Storage."
     },
+    "airlock_review_config": {
+      "$id": "#properties/airlock_review_config",
+      "type": "object",
+      "title": "Airlock Review Config",
+      "description": "Configuration for Airlock Review feature. Needs to be set up after workspace creation",
+      "updateable": true,
+      "default": {},
+      "properties": {
+        "import": {
+          "title": "Airlock Import Review configuration",
+          "type": "object",
+          "description": "Configure Airlock Review for Import Request",
+          "items": {
+            "title": "items",
+            "type": "object",
+            "required": [
+              "workspace_id",
+              "workspace_service_id",
+              "user_resource_template_name"
+            ],
+            "properties": {
+              "workspace_id": {
+                "title": "workspace_id",
+                "type": "string",
+                "description": "ID for Import Review workspace"
+              },
+              "workspace_service_id": {
+                "title": "workspace_service_id",
+                "type": "string",
+                "description": "ID for Workspace Service ID where to deploy Review user resources"
+              },
+              "user_resource_template_name": {
+                "title": "user_resource_template_name",
+                "type": "string",
+                "description": "Template Name for User Resource for reviewing Import Requests",
+                "examples": [
+                  "tre-service-guacamole-import-reviewvm"
+                ]
+              }
+            }
+          }
+        },
+        "export": {
+          "title": "Airlock Export Review configuration",
+          "type": "object",
+          "description": "Configure Airlock Review for Export Request",
+          "items": {
+            "title": "items",
+            "type": "object",
+            "required": [
+              "workspace_service_id",
+              "user_resource_template_name"
+            ],
+            "properties": {
+              "workspace_service_id": {
+                "title": "workspace_service_id",
+                "type": "string",
+                "description": "ID for Workspace Service ID where to deploy Review user resources"
+              },
+              "user_resource_template_name": {
+                "title": "user_resource_template_name",
+                "type": "string",
+                "description": "Template Name for User Resource for reviewing Export Requests",
+                "examples": [
+                  "tre-service-guacamole-export-reviewvm"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
     "aad_redirect_uris": {
       "$id": "#/properties/aad_redirect_uris",
       "type": "array",
