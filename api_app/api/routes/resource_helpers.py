@@ -2,7 +2,6 @@ from datetime import datetime
 import logging
 from copy import deepcopy
 from typing import Dict, Any
-from jsonschema.exceptions import ValidationError
 
 from fastapi import HTTPException
 from starlette import status
@@ -11,7 +10,6 @@ from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 
 from db.errors import DuplicateEntity, EntityDoesNotExist
-from db.errors import UserNotAuthorizedToUseTemplate
 from db.repositories.operations import OperationRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType, Resource

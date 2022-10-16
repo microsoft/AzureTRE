@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-export-reviewvm
-version: 0.0.601
+version: 0.0.6
 description: "An Azure TRE User Resource Template for reviewing Airlock export requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre

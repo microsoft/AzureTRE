@@ -96,7 +96,7 @@ def sample_workspace(workspace_id=WORKSPACE_ID, workspace_properties: dict = {})
         templateVersion="0.1.0",
         etag="",
         properties=workspace_properties,
-        resourcePath=f'/workspaces/{workspace_id}',
+        resourcePath=f'/workspaces/{workspace_id}'
     )
     return workspace
 

@@ -22,7 +22,6 @@ from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReques
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_airlock_manager, get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user
 
-
 from .airlock_resource_helpers import save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, enrich_requests_with_allowed_actions, \
     get_airlock_requests_by_user_and_workspace, delete_review_user_resources
 from .resource_helpers import save_and_deploy_resource, construct_location_header
@@ -205,6 +204,8 @@ async def create_airlock_review(
         review_status = AirlockRequestStatus.RejectionInProgress
 
     # If there was a VM created for the request, clean it up as it will no longer be needed
+    # In this request, we aren't returning the operations for clean up of VMs,
+    # however the operations still will be saved in the DB and displayed on the UI as normal.
     _ = await delete_review_user_resources(
         airlock_request=airlock_request,
         user_resource_repo=user_resource_repo,

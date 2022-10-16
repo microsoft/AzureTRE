@@ -71,7 +71,7 @@ async def update_and_publish_event_airlock_request(
             airlock_review=airlock_review,
             review_user_resource=review_user_resource)
     except Exception as e:
-        logging.error(f'Failed updating airlock_request item : {e}')
+        logging.error(f'Failed updating airlock_request item {airlock_request}: {e}')
         # If the validation failed, the error was not related to the saving itself
         if e.status_code == 400:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
