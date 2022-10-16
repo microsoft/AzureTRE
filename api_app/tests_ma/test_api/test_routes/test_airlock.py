@@ -346,10 +346,31 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
     @patch("api.routes.airlock.get_airlock_container_link", return_value="http://test-sas")
     @patch("api.routes.airlock.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=WorkspaceService(id=WORKSPACE_SERVICE_ID, templateName="test", templateVersion="0.0.1", _etag="123"))
     @patch("api.routes.airlock.UserResourceRepository.create_user_resource_item", return_value=(UserResource(id=USER_RESOURCE_ID, templateName="test", templateVersion="0.0.1", _etag="123"), "test"))
-    @patch("api.routes.airlock.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=WorkspaceService(id=WORKSPACE_SERVICE_ID, templateName="test", templateVersion="0.0.1", _etag="123"))
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview, review_user_resource=True))
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id", return_value=sample_workspace(workspace_properties=sample_airlock_review_config()))
-    async def test_post_create_review_user_resource_returns_200(self, _, __, ___, ____, _____, ______, _______, ________, app, client):
+    async def test_post_create_review_user_resource_returns_200(self, _, __, ___, ____, _____, ______, _______, app, client):
         # Check the Airlock Request has been updated with VM information
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_202_ACCEPTED
+
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview, review_user_resource=True))
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id", return_value=sample_workspace(workspace_properties={"airlock_review_config": "invalid_configuration"}))
+    async def test_post_create_review_user_resource_returns_422_if_configuration_invalid(self, _, __, app, client):
+        # Check the Airlock Request has been updated with VM information
+        response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @patch("api.routes.airlock.WorkspaceServiceRepository.get_workspace_service_by_id", side_effect=EntityDoesNotExist)
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview, review_user_resource=True))
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id", return_value=sample_workspace(workspace_properties={"airlock_review_config": "invalid_configuration"}))
+    async def test_post_create_review_user_resource_returns_422_if_cannot_find_workspace_service(self, _, __, ___, app, client):
+        # Check the Airlock Request has been updated with VM information
+        response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Draft))
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id", return_value=sample_workspace())
+    async def test_post_create_review_user_resource_returns_400_if_request_is_not_in_review(self, _, __, app, client):
+        # Check the Airlock Request has been updated with VM information
+        response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_400_BAD_REQUEST

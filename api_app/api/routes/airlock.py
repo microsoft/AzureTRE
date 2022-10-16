@@ -9,7 +9,7 @@ from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.operations import OperationRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.airlock_requests import AirlockRequestRepository
-from db.errors import UserNotAuthorizedToUseTemplate
+from db.errors import EntityDoesNotExist, UserNotAuthorizedToUseTemplate
 
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path
@@ -98,24 +98,42 @@ async def create_review_user_resource(
         airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
         resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> OperationInResponse:
 
-    # Getting the right configuration
-    if airlock_request.requestType == AirlockRequestType.Import:
-        config = workspace.properties["airlock_review_config"]["import"]
-        workspace_id = config["workspace_id"]
-    else:
-        assert airlock_request.requestType == AirlockRequestType.Export
-        config = workspace.properties["airlock_review_config"]["export"]
-        workspace_id = workspace.id
-    workspace_service_id = config["workspace_service_id"]
-    user_resource_template_name = config["user_resource_template_name"]
+    if airlock_request.status != AirlockRequestStatus.InReview:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Airlock request must be in 'in_review' status to create a Review User Resource")
 
-    logging.info(f"Going to create a user resource in {workspace_id} {workspace_service_id} {user_resource_template_name}")
+    try:
+        # Getting the right configuration
+        if airlock_request.requestType == AirlockRequestType.Import:
+            config = workspace.properties["airlock_review_config"]["import"]
+            workspace_id = config["workspace_id"]
+        else:
+            assert airlock_request.requestType == AirlockRequestType.Export
+            config = workspace.properties["airlock_review_config"]["export"]
+            workspace_id = workspace.id
+        workspace_service_id = config["workspace_service_id"]
+        user_resource_template_name = config["user_resource_template_name"]
+
+        logging.info(f"Going to create a user resource in {workspace_id} {workspace_service_id} {user_resource_template_name}")
+    except (KeyError, TypeError) as e:
+        logging.error(f"Failed to parse configuration: {e}")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            detail=f"Failed to retrive Airlock Review configuration for workspace {workspace.id}.\
+                            Please ask your TRE administrator to check the configuration. Details: {str(e)}")
+
+    # Find workspace service to create user resource in
+    try:
+        workspace_service = workspace_service_repo.get_workspace_service_by_id(workspace_id=workspace_id, service_id=workspace_service_id)
+    except EntityDoesNotExist as e:
+        logging.error(f"Failed to get workspace serivce {workspace_service_id} for workspace {workspace_id}: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            detail=f"Failed to retrive Airlock Review configuration for workspace {workspace.id}.\
+                            Please ask your TRE administrator to check the configuration. Details: {str(e)}")
 
     # Getting the SAS URL
     airlock_request_sas_url = get_airlock_container_link(airlock_request, user, workspace)
 
-    # Create a user resource object to create
-    workspace_service = workspace_service_repo.get_workspace_service_by_id(workspace_id=workspace_id, service_id=workspace_service_id)
+    # Now have all components for user resource, create an object for it
     user_resource_create = UserResourceInCreate(
         templateName=user_resource_template_name,
         properties={
@@ -129,6 +147,11 @@ async def create_review_user_resource(
     try:
         user_resource, resource_template = user_resource_repo.create_user_resource_item(
             user_resource_create, workspace_id, workspace_service_id, workspace_service.templateName, user.id, user.roles)
+    except (ValidationError, ValueError) as e:
+        logging.error(f"Failed create user resource model instance due to validation error: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Invalid configuration for creating user resource. Please contact your TRE administrator. \
+                            Details: {str(e)}")
     except UserNotAuthorizedToUseTemplate as e:
         logging.error(f"User not authorized to use template: {e}")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
