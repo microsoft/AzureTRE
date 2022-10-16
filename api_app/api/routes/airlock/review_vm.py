@@ -29,13 +29,16 @@ async def remove_review_vms(request_id: str, user_resource_repo, workspace_servi
             ResourceType.UserResource,
             workspace_service.templateName)
 
-        operations.append = await send_uninstall_message(
+        logging.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")
+        operations.append(await send_uninstall_message(
             resource=user_resource,
             resource_repo=user_resource_repo,
             operations_repo=operations_repo,
             resource_type=ResourceType.UserResource,
             resource_template_repo=resource_template_repo,
             user=user,
-            resource_template=resource_template)
+            resource_template=resource_template))
+        logging.info(f"Started operation {operations[-1]}")
 
+    logging.info(f"Started {len(operations)} operations on deleting user resources")
     return operations
