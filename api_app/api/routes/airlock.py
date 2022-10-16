@@ -97,6 +97,7 @@ async def create_review_user_resource(
         operation_repo=Depends(get_repository(OperationRepository)),
         airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
         resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> OperationInResponse:
+
     # Getting the right configuration
     if airlock_request.requestType == AirlockRequestType.Import:
         config = workspace.properties["airlock_review_config"]["import"]

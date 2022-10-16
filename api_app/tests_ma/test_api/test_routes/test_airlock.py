@@ -1,3 +1,4 @@
+import time
 import pytest
 from mock import patch
 from fastapi import status
@@ -10,12 +11,14 @@ from models.domain.user_resource import UserResource
 from models.domain.resource_template import ResourceTemplate
 from models.domain.workspace_service import WorkspaceService
 from models.domain.workspace import Workspace
+from models.domain.operation import Operation
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_or_researcher_user_or_airlock_manager, get_current_airlock_manager_user
 pytestmark = pytest.mark.asyncio
 
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
+IMPORT_WORKSPACE_ID = "cba000d3-13da-58fc-b6e9-9a7853ef753e"
 WORKSPACE_SERVICE_ID = "ca8fec6b-3d90-4ad3-a003-77daddfc2d64"
 USER_RESOURCE_ID = "a6489dfe-625e-4e8e-a3dc-8eda79f0f081"
 
@@ -93,9 +96,25 @@ def sample_workspace(workspace_id=WORKSPACE_ID, workspace_properties: dict = {})
         templateVersion="0.1.0",
         etag="",
         properties=workspace_properties,
-        resourcePath=f'/workspaces/{workspace_id}'
+        resourcePath=f'/workspaces/{workspace_id}',
     )
     return workspace
+
+
+def sample_airlock_review_config() -> dict:
+    return {
+        "airlock_review_config": {
+            "import": {
+                "workspace_id": IMPORT_WORKSPACE_ID,
+                "workspace_service_id": WORKSPACE_SERVICE_ID,
+                "user_resource_template_name": "tre-service-guacamole-import-reviewvm"
+            },
+            "export": {
+                "workspace_service_id": WORKSPACE_SERVICE_ID,
+                "user_resource_template_name": "tre-service-guacamole-export-reviewvm"
+            }
+        }
+    }
 
 
 class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
@@ -321,3 +340,16 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
         response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_with_user_resources)
         assert response.status_code == status.HTTP_200_OK
         assert send_uninstall_message_mock.call_count == 1
+
+    @patch("api.routes.airlock.save_and_deploy_resource", return_value=Operation(id="123", resourceId=USER_RESOURCE_ID, resourcePath="a/b", action="install", createdWhen=time.time(), updatedWhen=time.time()))
+    @patch("api.routes.airlock.update_and_publish_event_airlock_request")
+    @patch("api.routes.airlock.get_airlock_container_link", return_value="http://test-sas")
+    @patch("api.routes.airlock.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=WorkspaceService(id=WORKSPACE_SERVICE_ID, templateName="test", templateVersion="0.0.1", _etag="123"))
+    @patch("api.routes.airlock.UserResourceRepository.create_user_resource_item", return_value=(UserResource(id=USER_RESOURCE_ID, templateName="test", templateVersion="0.0.1", _etag="123"), "test"))
+    @patch("api.routes.airlock.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=WorkspaceService(id=WORKSPACE_SERVICE_ID, templateName="test", templateVersion="0.0.1", _etag="123"))
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview, review_user_resource=True))
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id", return_value=sample_workspace(workspace_properties=sample_airlock_review_config()))
+    async def test_post_create_review_user_resource_returns_200(self, _, __, ___, ____, _____, ______, _______, ________, app, client):
+        # Check the Airlock Request has been updated with VM information
+        response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_202_ACCEPTED
