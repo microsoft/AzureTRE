@@ -28,7 +28,7 @@ from .resource_helpers import save_and_deploy_resource, construct_location_heade
 
 from services.airlock import validate_user_allowed_to_access_storage_account, \
     get_account_by_request, get_airlock_request_container_sas_token, validate_request_status
-from .airlock.review_vm import remove_review_vms
+from .airlock.review_user_resource import remove_review_user_resource
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 
@@ -111,17 +111,15 @@ async def create_review_user_resource(
     logging.info(f"Going to create a user resource in {workspace_id} {workspace_service_id} {user_resource_template_name}")
 
     # Getting the SAS URL
-    # airlock_request_sas_url = get_airlock_container_link(airlock_request, user, workspace)
-    # TODO: debugging
-    airlock_request_sas_url = "https://stalexipws26fe.blob.core.windows.net/45e1d9d8-f669-47bf-b0eb-a11bb34aa456?se=2022-10-16T12%3A49%3A48Z&sp=rl&sv=2021-06-08&sr=c&skoid=5272f538-69ee-4d5c-bf0a-83f362fcc58f&sktid=72f988bf-86f1-41af-91ab-2d7cd011db47&skt=2022-10-16T11%3A49%3A48Z&ske=2022-10-16T12%3A49%3A48Z&sks=b&skv=2021-06-08&sig=ZYT83Jd/6fBBLq6IZkqwB0LVN0sigUB%2BBLfhxzADcNc%3D"
+    airlock_request_sas_url = get_airlock_container_link(airlock_request, user, workspace)
 
     # Create a user resource object to create
     workspace_service = workspace_service_repo.get_workspace_service_by_id(workspace_id=workspace_id, service_id=workspace_service_id)
     user_resource_create = UserResourceInCreate(
         templateName=user_resource_template_name,
         properties={
-            "display_name": "stuff",
-            "description": "TODO but say something about the request",
+            "display_name": "Review VM",
+            "description": f"Review VM for request {airlock_request.requestTitle} (ID {airlock_request.id})",
             "airlock_request_sas_url": airlock_request_sas_url
         }
     )
@@ -183,7 +181,7 @@ async def create_airlock_review(
         review_status = AirlockRequestStatus.RejectionInProgress
 
     # If there was a VM created for the request, clean it up as it will no longer be needed
-    _ = await remove_review_vms(
+    _ = await remove_review_user_resource(
         airlock_request=airlock_request,
         user_resource_repo=user_resource_repo,
         workspace_service_repo=workspace_service_repo,

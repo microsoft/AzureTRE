@@ -1,26 +1,31 @@
 from typing import List
 import logging
-from pydantic import parse_obj_as
 
 from models.domain.airlock_request import AirlockRequest
-from models.domain.user_resource import UserResource
 from models.domain.resource import ResourceType
 from models.domain.operation import Operation
+from models.domain.authentication import User
 from api.routes.resource_helpers import send_uninstall_message
+from db.repositories.resource_templates import ResourceTemplateRepository
+from db.repositories.user_resources import UserResourceRepository
+from db.repositories.workspace_services import WorkspaceServiceRepository
+from db.repositories.operations import OperationRepository
 
 
-async def remove_review_vms(airlock_request: AirlockRequest, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, user) -> List[Operation]:
-    # review_vms = user_resource_repo.query(f"SELECT * FROM c WHERE IS_DEFINED(c.properties.airlock_request_id) \
-    #     AND c.properties.airlock_request_id = '{request_id}'")
-    review_vms = user_resource_repo.query(f"SELECT * FROM c where is_defined(c.properties.airlock_request_sas_url) \
-        and contains(c.properties.airlock_request_sas_url, '{airlock_request.id}')")
-
-    if len(review_vms) == 0:
-        logging.warning(f"There are no user resources with airlock_request_id = {airlock_request.id}")
-
+async def remove_review_user_resource(
+        airlock_request: AirlockRequest,
+        user_resource_repo: UserResourceRepository,
+        workspace_service_repo: WorkspaceServiceRepository,
+        resource_template_repo: ResourceTemplateRepository,
+        operations_repo: OperationRepository,
+        user: User) -> List[Operation]:
     operations: List[Operation] = []
-    for review_vm in review_vms:
-        user_resource = parse_obj_as(UserResource, review_vm)
+    for review_ur in airlock_request.reviewUserResources:
+        user_resource = user_resource_repo.get_user_resource_by_id(
+            workspace_id=review_ur.workspaceId,
+            service_id=review_ur.workspaceServiceId,
+            resource_id=review_ur.userResourceId
+        )
 
         workspace_service = workspace_service_repo.get_workspace_service_by_id(workspace_id=user_resource.workspaceId, service_id=user_resource.parentWorkspaceServiceId)
 
