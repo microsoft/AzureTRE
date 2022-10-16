@@ -9,13 +9,12 @@ from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.operations import OperationRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.airlock_requests import AirlockRequestRepository
-from models.domain.airlock_request import AirlockRequest
 from db.errors import UserNotAuthorizedToUseTemplate
 
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
-from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType, AirlockReviewDecision
+from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReviewDecision, AirlockReviewUserResource
 from models.schemas.operation import OperationInResponse
 from models.schemas.user_resource import UserResourceInCreate
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
@@ -77,13 +76,13 @@ async def retrieve_airlock_request_by_id(airlock_request=Depends(get_airlock_req
 
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/submit", status_code=status.HTTP_200_OK, response_model=AirlockRequestInResponse, name=strings.API_SUBMIT_AIRLOCK_REQUEST, dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
 async def create_submit_request(airlock_request=Depends(get_airlock_request_by_id_from_path), user=Depends(get_current_workspace_owner_or_researcher_user), airlock_request_repo=Depends(get_repository(AirlockRequestRepository)), workspace=Depends(get_workspace_by_id_from_path)) -> AirlockRequestInResponse:
-    updated_resource = await update_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, AirlockRequestStatus.Submitted, workspace)
+    updated_resource = await update_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace, new_status=AirlockRequestStatus.Submitted)
     return AirlockRequestInResponse(airlockRequest=updated_resource)
 
 
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/cancel", status_code=status.HTTP_200_OK, response_model=AirlockRequestInResponse, name=strings.API_CANCEL_AIRLOCK_REQUEST, dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
 async def create_cancel_request(airlock_request=Depends(get_airlock_request_by_id_from_path), user=Depends(get_current_workspace_owner_or_researcher_user), airlock_request_repo=Depends(get_repository(AirlockRequestRepository)), workspace=Depends(get_workspace_by_id_from_path)) -> AirlockRequestInResponse:
-    updated_resource = await update_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, AirlockRequestStatus.Cancelled, workspace)
+    updated_resource = await update_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace, new_status=AirlockRequestStatus.Cancelled)
     return AirlockRequestInResponse(airlockRequest=updated_resource)
 
 
@@ -96,6 +95,7 @@ async def create_review_user_resource(
         user_resource_repo=Depends(get_repository(UserResourceRepository)),
         workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)),
         operation_repo=Depends(get_repository(OperationRepository)),
+        airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
         resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> OperationInResponse:
     # Getting the right configuration
     if airlock_request.requestType == AirlockRequestType.Import:
@@ -111,7 +111,9 @@ async def create_review_user_resource(
     logging.info(f"Going to create a user resource in {workspace_id} {workspace_service_id} {user_resource_template_name}")
 
     # Getting the SAS URL
-    airlock_request_sas_url = get_airlock_container_link(airlock_request, user, workspace)
+    # airlock_request_sas_url = get_airlock_container_link(airlock_request, user, workspace)
+    # TODO: debugging
+    airlock_request_sas_url = "https://stalexipws26fe.blob.core.windows.net/45e1d9d8-f669-47bf-b0eb-a11bb34aa456?se=2022-10-16T12%3A49%3A48Z&sp=rl&sv=2021-06-08&sr=c&skoid=5272f538-69ee-4d5c-bf0a-83f362fcc58f&sktid=72f988bf-86f1-41af-91ab-2d7cd011db47&skt=2022-10-16T11%3A49%3A48Z&ske=2022-10-16T12%3A49%3A48Z&sks=b&skv=2021-06-08&sig=ZYT83Jd/6fBBLq6IZkqwB0LVN0sigUB%2BBLfhxzADcNc%3D"
 
     # Create a user resource object to create
     workspace_service = workspace_service_repo.get_workspace_service_by_id(workspace_id=workspace_id, service_id=workspace_service_id)
@@ -140,7 +142,18 @@ async def create_review_user_resource(
         user=user,
         resource_template=resource_template)
 
-    # TODO: update the Airlock Request with the information on the VM
+    # Update the Airlock Request with the information on the VM
+    updated_resource = await update_and_publish_event_airlock_request(
+        airlock_request,
+        airlock_request_repo,
+        user,
+        workspace,
+        review_user_resource=AirlockReviewUserResource(
+            workspaceId=workspace_id,
+            workspaceServiceId=workspace_service_id,
+            userResourceId=user_resource.id
+        ))
+    logging.info(f"Airlock Request {updated_resource.id} updated to include {updated_resource.reviewUserResources}")
 
     response.headers["Location"] = construct_location_header(operation)
     return OperationInResponse(operation=operation)
@@ -171,7 +184,7 @@ async def create_airlock_review(
 
     # If there was a VM created for the request, clean it up as it will no longer be needed
     _ = await remove_review_vms(
-        request_id=airlock_request.id,
+        airlock_request=airlock_request,
         user_resource_repo=user_resource_repo,
         workspace_service_repo=workspace_service_repo,
         resource_template_repo=resource_template_repo,
@@ -179,7 +192,7 @@ async def create_airlock_review(
         user=user
     )
 
-    updated_airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=user, new_status=review_status, workspace=workspace, airlock_review=airlock_review)
+    updated_airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=user, workspace=workspace, new_status=review_status, airlock_review=airlock_review)
     return AirlockRequestInResponse(airlockRequest=updated_airlock_request)
 
 

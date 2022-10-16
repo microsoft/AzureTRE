@@ -2,20 +2,21 @@ from typing import List
 import logging
 from pydantic import parse_obj_as
 
+from models.domain.airlock_request import AirlockRequest
 from models.domain.user_resource import UserResource
 from models.domain.resource import ResourceType
 from models.domain.operation import Operation
 from api.routes.resource_helpers import send_uninstall_message
 
 
-async def remove_review_vms(request_id: str, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, user) -> List[Operation]:
+async def remove_review_vms(airlock_request: AirlockRequest, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, user) -> List[Operation]:
     # review_vms = user_resource_repo.query(f"SELECT * FROM c WHERE IS_DEFINED(c.properties.airlock_request_id) \
     #     AND c.properties.airlock_request_id = '{request_id}'")
     review_vms = user_resource_repo.query(f"SELECT * FROM c where is_defined(c.properties.airlock_request_sas_url) \
-        and contains(c.properties.airlock_request_sas_url, '{request_id}')")
+        and contains(c.properties.airlock_request_sas_url, '{airlock_request.id}')")
 
     if len(review_vms) == 0:
-        logging.warning(f"There are no user resources with airlock_request_id = {request_id}")
+        logging.warning(f"There are no user resources with airlock_request_id = {airlock_request.id}")
 
     operations: List[Operation] = []
     for review_vm in review_vms:
