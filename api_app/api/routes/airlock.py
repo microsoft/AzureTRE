@@ -23,12 +23,12 @@ from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_airlock_manager, get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user
 
 
-from .airlock.resource_helpers import save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace
+from .airlock_resource_helpers import save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, enrich_requests_with_allowed_actions, \
+    get_airlock_requests_by_user_and_workspace, delete_review_user_resources
 from .resource_helpers import save_and_deploy_resource, construct_location_header
 
 from services.airlock import validate_user_allowed_to_access_storage_account, \
     get_account_by_request, get_airlock_request_container_sas_token, validate_request_status
-from .airlock.review_user_resources import delete_review_user_resources
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 

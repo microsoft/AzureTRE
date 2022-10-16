@@ -3,14 +3,14 @@ import pytest
 from mock import AsyncMock, patch, MagicMock
 
 from models.domain.events import AirlockNotificationData, StatusChangedData
-from api.routes.airlock.resource_helpers import save_and_publish_event_airlock_request, \
+from api.routes.airlock_resource_helpers import save_and_publish_event_airlock_request, \
     update_and_publish_event_airlock_request, get_airlock_requests_by_user_and_workspace, get_allowed_actions
 from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.workspace import Workspace
 from tests_ma.test_api.conftest import create_test_user, create_workspace_airlock_manager_user
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReview, AirlockReviewDecision, AirlockActions
 from azure.eventgrid import EventGridEvent
-from api.routes.workspace_airlock import create_airlock_review, create_cancel_request, create_submit_request
+from api.routes.airlock import create_airlock_review, create_cancel_request, create_submit_request
 
 pytestmark = pytest.mark.asyncio
 
@@ -187,8 +187,8 @@ async def test_update_and_publish_event_airlock_request_updates_item(_, event_gr
     assert actual_airlock_notification_event.data == airlock_notification_event_mock.data
 
 
-@patch("api.routes.airlock.resource_helpers.send_status_changed_event")
-@patch("api.routes.airlock.resource_helpers.send_airlock_notification_event")
+@patch("api.routes.airlock_resource_helpers.send_status_changed_event")
+@patch("api.routes.airlock_resource_helpers.send_airlock_notification_event")
 @patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details")
 async def test_update_and_publish_event_airlock_request_sends_status_changed_event(_, send_airlock_notification_event_mock, send_status_changed_event_mock, airlock_request_repo_mock):
     new_status = AirlockRequestStatus.Submitted
@@ -240,8 +240,8 @@ async def test_update_and_publish_event_airlock_request_raises_503_if_publish_ev
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
 
-@patch("api.routes.airlock.resource_helpers.send_status_changed_event")
-@patch("api.routes.airlock.resource_helpers.send_airlock_notification_event")
+@patch("api.routes.airlock_resource_helpers.send_status_changed_event")
+@patch("api.routes.airlock_resource_helpers.send_airlock_notification_event")
 @patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details")
 async def test_update_and_publish_event_airlock_request_without_status_change_should_not_send_status_changed_event(_, send_airlock_notification_event_mock, send_status_changed_event_mock, airlock_request_repo_mock):
     new_status = None

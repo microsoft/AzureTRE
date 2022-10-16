@@ -8,7 +8,7 @@ from fastapi.openapi.utils import get_openapi
 from api.dependencies.database import get_repository
 from db.repositories.workspaces import WorkspaceRepository
 from api.routes import health, workspaces, workspace_templates, workspace_service_templates, user_resource_templates, \
-    shared_services, shared_service_templates, migrations, costs, workspace_airlock, operations
+    shared_services, shared_service_templates, migrations, costs, airlock, operations
 from core import config
 
 core_tags_metadata = [
@@ -95,7 +95,7 @@ workspace_router.include_router(workspaces.workspaces_shared_router, tags=["work
 workspace_router.include_router(workspaces.workspace_services_workspace_router, tags=["workspace services"])
 workspace_router.include_router(workspaces.user_resources_workspace_router, tags=["user resources"])
 workspace_router.include_router(costs.costs_workspace_router, tags=["workspace costs"])
-workspace_router.include_router(workspace_airlock.airlock_workspace_router, tags=["airlock"])
+workspace_router.include_router(airlock.airlock_workspace_router, tags=["airlock"])
 
 workspace_swagger_router = APIRouter()
 
