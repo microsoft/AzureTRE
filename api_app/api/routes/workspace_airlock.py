@@ -28,7 +28,7 @@ from .resource_helpers import save_and_deploy_resource, construct_location_heade
 
 from services.airlock import validate_user_allowed_to_access_storage_account, \
     get_account_by_request, get_airlock_request_container_sas_token, validate_request_status
-from .airlock.review_user_resource import remove_review_user_resource
+from .airlock.review_user_resources import delete_review_user_resources
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 
@@ -181,7 +181,7 @@ async def create_airlock_review(
         review_status = AirlockRequestStatus.RejectionInProgress
 
     # If there was a VM created for the request, clean it up as it will no longer be needed
-    _ = await remove_review_user_resource(
+    _ = await delete_review_user_resources(
         airlock_request=airlock_request,
         user_resource_repo=user_resource_repo,
         workspace_service_repo=workspace_service_repo,

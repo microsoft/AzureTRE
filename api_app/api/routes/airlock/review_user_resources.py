@@ -12,7 +12,7 @@ from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.operations import OperationRepository
 
 
-async def remove_review_user_resource(
+async def delete_review_user_resources(
         airlock_request: AirlockRequest,
         user_resource_repo: UserResourceRepository,
         workspace_service_repo: WorkspaceServiceRepository,
