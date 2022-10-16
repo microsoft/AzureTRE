@@ -194,8 +194,6 @@ async def create_airlock_review(
     return AirlockRequestInResponse(airlockRequest=updated_airlock_request)
 
 
-# TODO: better name?
-# TODO: type hints
 def get_airlock_container_link(airlock_request: AirlockRequest, user, workspace):
     validate_user_allowed_to_access_storage_account(user, airlock_request)
     validate_request_status(airlock_request)
