@@ -45,7 +45,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
     } else {
       setRequest(req);
     }
-  }, [apiCall, requestId, props.requests]);
+  }, [apiCall, requestId, props.requests, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI]);
 
   const generateFilesLink = useCallback(async () => {
     // Retrieve a link to view/edit the airlock files
@@ -177,7 +177,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
   return (
     <>
       <Panel
-        headerText="View Airlock Request"
+        headerText={request && request.requestTitle ? request.requestTitle : "View airlock request"}
         isOpen={true}
         isLightDismiss={true}
         onDismiss={dismissPanel}
