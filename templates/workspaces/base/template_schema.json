@@ -12,6 +12,25 @@
       "title": "Shared Storage Quota",
       "description": "Quota (in GB) to set for the VM Shared Storage."
     },
+    "app_service_plan_sku": {
+      "$id": "#/properties/app_service_plan_sku",
+      "type": "string",
+      "enum": [
+        "P1v3",
+        "P1v2",
+        "S1"
+      ],
+      "default": "P1v3",
+      "title": "App Service Plan SKU",
+      "description": "The SKU that will be used when deploying an Azure App Service Plan."
+    },
+    "enable_airlock": {
+      "$id": "#/properties/enable_airlock",
+      "type": "boolean",
+      "default": true,
+      "title": "Enable Airlock",
+      "description": "If enabled, allows imports and exports for the workspace."
+    },
     "airlock_review_config": {
       "$id": "#properties/airlock_review_config",
       "type": "object",
@@ -110,25 +129,6 @@
           }
         }
       }
-    },
-    "app_service_plan_sku": {
-      "$id": "#/properties/app_service_plan_sku",
-      "type": "string",
-      "enum": [
-        "P1v3",
-        "P1v2",
-        "S1"
-      ],
-      "default": "P1v3",
-      "title": "App Service Plan SKU",
-      "description": "The SKU that will be used when deploying an Azure App Service Plan."
-    },
-    "enable_airlock": {
-      "$id": "#/properties/enable_airlock",
-      "type": "boolean",
-      "default": true,
-      "title": "Enable Airlock",
-      "description": "If enabled, allows imports and exports for the workspace."
     },
     "create_aad_groups": {
       "type": "boolean",
