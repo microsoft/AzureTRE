@@ -102,7 +102,7 @@ async def create_review_user_resource(
                             detail="Airlock request must be in 'in_review' status to create a Review User Resource")
 
     try:
-        # Getting the right configuration
+        # Getting the review configuration from the airlock request's workspace properties
         if airlock_request.requestType == AirlockRequestType.Import:
             config = workspace.properties["airlock_review_config"]["import"]
             workspace_id = config["workspace_id"]
@@ -117,27 +117,27 @@ async def create_review_user_resource(
     except (KeyError, TypeError) as e:
         logging.error(f"Failed to parse configuration: {e}")
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                            detail=f"Failed to retrive Airlock Review configuration for workspace {workspace.id}.\
+                            detail=f"Failed to retrieve Airlock Review configuration for workspace {workspace.id}.\
                             Please ask your TRE administrator to check the configuration. Details: {str(e)}")
 
     # Find workspace service to create user resource in
     try:
         workspace_service = workspace_service_repo.get_workspace_service_by_id(workspace_id=workspace_id, service_id=workspace_service_id)
     except EntityDoesNotExist as e:
-        logging.error(f"Failed to get workspace serivce {workspace_service_id} for workspace {workspace_id}: {str(e)}")
+        logging.error(f"Failed to get workspace service {workspace_service_id} for workspace {workspace_id}: {str(e)}")
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                             detail=f"Failed to retrive Airlock Review configuration for workspace {workspace.id}.\
                             Please ask your TRE administrator to check the configuration. Details: {str(e)}")
 
-    # Getting the SAS URL
+    # Getting the SAS URL (this function raises HTTPException in case of error)
     airlock_request_sas_url = get_airlock_container_link(airlock_request, user, workspace)
 
     # Now have all components for user resource, create an object for it
     user_resource_create = UserResourceInCreate(
         templateName=user_resource_template_name,
         properties={
-            "display_name": "Review VM",
-            "description": f"Review VM for request {airlock_request.requestTitle} (ID {airlock_request.id})",
+            "display_name": "Airlock Review VM",
+            "description": f"Airlock Review VM for request {airlock_request.requestTitle} (ID {airlock_request.id})",
             "airlock_request_sas_url": airlock_request_sas_url
         }
     )
@@ -203,6 +203,8 @@ async def create_airlock_review(
     elif airlock_review.reviewDecision.value == AirlockReviewDecision.Rejected:
         review_status = AirlockRequestStatus.RejectionInProgress
 
+    updated_airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=user, workspace=workspace, new_status=review_status, airlock_review=airlock_review)
+
     # If there was a VM created for the request, clean it up as it will no longer be needed
     # In this request, we aren't returning the operations for clean up of VMs,
     # however the operations still will be saved in the DB and displayed on the UI as normal.
@@ -215,7 +217,6 @@ async def create_airlock_review(
         user=user
     )
 
-    updated_airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=user, workspace=workspace, new_status=review_status, airlock_review=airlock_review)
     return AirlockRequestInResponse(airlockRequest=updated_airlock_request)
 
 
