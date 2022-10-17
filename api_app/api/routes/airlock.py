@@ -126,7 +126,7 @@ async def create_review_user_resource(
     except EntityDoesNotExist as e:
         logging.error(f"Failed to get workspace service {workspace_service_id} for workspace {workspace_id}: {str(e)}")
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                            detail=f"Failed to retrive Airlock Review configuration for workspace {workspace.id}.\
+                            detail=f"Failed to retrieve Airlock Review configuration for workspace {workspace.id}.\
                             Please ask your TRE administrator to check the configuration. Details: {str(e)}")
 
     # Getting the SAS URL (this function raises HTTPException in case of error)
