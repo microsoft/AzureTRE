@@ -8,6 +8,7 @@ import { Resource } from "../../../models/resource";
 import { ResourceType } from "../../../models/resourceType";
 import { APIError } from "../../../models/exceptions";
 import { ExceptionLayout } from "../ExceptionLayout";
+import { ResourceTemplate, sanitiseTemplateForRJSF } from "../../../models/resourceTemplate";
 
 interface ResourceFormProps {
   templateName: string,
@@ -30,7 +31,9 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
     const getFullTemplate = async () => {
       try {
         // Get the full resource template containing the required parameters
-        const templateResponse = await apiCall(props.updateResource ? `${props.templatePath}?is_update=true` : props.templatePath, HttpMethod.Get);
+        const templateResponse = (await apiCall(props.updateResource ? `${props.templatePath}?is_update=true` : props.templatePath, HttpMethod.Get)) as ResourceTemplate;
+
+        console.log("raw", templateResponse);
 
         // if it's an update, populate the form with the props that are available in the template
         if (props.updateResource) {
@@ -41,7 +44,9 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
           setFormData(d);
         }
 
-        setTemplate(templateResponse);
+        const sanitisedTemplate = sanitiseTemplateForRJSF(templateResponse);
+        console.log("sanitised", sanitisedTemplate);
+        setTemplate(sanitisedTemplate);
         setLoading(LoadingState.Ok);
       } catch (err: any){
         err.userMessage = "Error retrieving resource template";
