@@ -25,6 +25,7 @@ class Property(AzureTREModel):
     sensitive: Optional[bool] = Field(None, title="Indicates that the field is a sensitive value")
     readOnly: Optional[bool] = Field(None, title="Indicates the field is read-only")
     items: Optional[dict] = None  # items can contain sub-properties
+    properties: Optional[dict] = None
 
 
 class CustomAction(AzureTREModel):
