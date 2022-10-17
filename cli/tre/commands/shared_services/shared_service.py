@@ -43,8 +43,6 @@ def shared_service_show(shared_service_context: SharedServiceContext, output_for
 
 
 # TODO - add PATCH (and ?set-enabled)
-# TODO - invoke action
-
 
 @click.command(name="invoke-action", help="Invoke an action on a shared_service")
 @click.argument('action-name', required=True)
