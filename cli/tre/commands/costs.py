@@ -41,10 +41,12 @@ def costs_overall(from_date, to_date, granularity, output_format, query):
         url = url + "?" + query_string
 
     response = client.call_api(log, 'GET', url)
-    # TODO - default table format
     output(
         response.text,
         output_format=output_format,
+        # To properly flatten the costs structure for table rendering, we need `let`
+        # as per https://jmespath.site/#wiki-lexical-scopes. For now:
+        default_table_query="[{category: 'core_services', id: null, name: null, costs: core_services}, shared_services[].{category:'shared_service', id:id, name:name, costs:costs}, workspaces[].{category:'workspace', id:id, name:name, costs:costs}] | []",
         query=query)
     return response.text
 
