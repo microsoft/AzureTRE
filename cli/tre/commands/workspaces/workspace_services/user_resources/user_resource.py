@@ -312,11 +312,60 @@ def user_resource_delete(
         )
 
 
+@click.command(name="invoke-action", help="Invoke an action on a user resource")
+@click.argument("action-name", required=True)
+@click.option("--no-wait", flag_value=True, default=False)
+@output_option()
+@query_option()
+@pass_user_resource_context
+def user_resource_invoke_action(
+    user_resource_context: UserResourceContext,
+    action_name,
+    no_wait,
+    output_format,
+    query,
+):
+    log = logging.getLogger(__name__)
+
+    workspace_id = user_resource_context.workspace_id
+    if workspace_id is None:
+        raise click.UsageError("Missing workspace ID")
+    workspace_service_id = user_resource_context.workspace_service_id
+    if workspace_service_id is None:
+        raise click.UsageError("Missing workspace service ID")
+    user_resource_id = user_resource_context.user_resource_id
+    if user_resource_id is None:
+        raise click.UsageError("Missing user resource ID")
+
+    client = ApiClient.get_api_client_from_config()
+    workspace_scope = client.get_workspace_scope(log, workspace_id)
+
+    click.echo(f"Invoking action {action_name}...\n", err=True)
+    response = client.call_api(
+        log,
+        "POST",
+        f"/api/workspaces/{workspace_id}/workspace-services/{workspace_service_id}/user-resources/{user_resource_id}/invoke-action",
+        scope_id=workspace_scope,
+        params={"action": action_name},
+    )
+    if no_wait:
+        output(response.text, output_format=output_format, query=query)
+    else:
+        operation_url = response.headers["location"]
+        operation_show(
+            log,
+            operation_url,
+            no_wait=False,
+            output_format=output_format,
+            query=query,
+            scope_id=workspace_scope,
+        )
+
+
 user_resource.add_command(user_resource_show)
 user_resource.add_command(user_resource_update)
 user_resource.add_command(user_resource_set_enabled)
 user_resource.add_command(user_resource_delete)
 user_resource.add_command(user_resource_operation)
 user_resource.add_command(user_resource_operations)
-
-# TODO - invoke action
+user_resource.add_command(user_resource_invoke_action)

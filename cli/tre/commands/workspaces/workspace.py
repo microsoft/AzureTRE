@@ -177,7 +177,46 @@ def workspace_delete(workspace_context: WorkspaceContext, ctx: click.Context, ye
         operation_url = response.headers['location']
         operation_show(log, operation_url, no_wait, output_format=output_format, query=query)
 
-# TODO - invoke action
+
+@click.command(name="invoke-action", help="Invoke an action on a workspace")
+@click.argument("action-name", required=True)
+@click.option("--no-wait", flag_value=True, default=False)
+@output_option()
+@query_option()
+@pass_workspace_context
+def workspace_service_invoke_action(
+    workspace_context: WorkspaceContext,
+    action_name,
+    no_wait,
+    output_format,
+    query,
+):
+    log = logging.getLogger(__name__)
+
+    workspace_id = workspace_context.workspace_id
+    if workspace_id is None:
+        raise click.UsageError('Missing workspace ID')
+
+    client = ApiClient.get_api_client_from_config()
+
+    click.echo(f"Invoking action {action_name}...\n", err=True)
+    response = client.call_api(
+        log,
+        "POST",
+        f"/api/workspaces/{workspace_id}/invoke-action",
+        params={"action": action_name},
+    )
+    if no_wait:
+        output(response.text, output_format=output_format, query=query)
+    else:
+        operation_url = response.headers["location"]
+        operation_show(
+            log,
+            operation_url,
+            no_wait=False,
+            output_format=output_format,
+            query=query,
+        )
 
 
 workspace.add_command(workspace_show)

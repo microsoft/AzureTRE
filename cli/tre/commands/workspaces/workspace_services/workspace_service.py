@@ -158,15 +158,61 @@ def workspace_service_set_enabled(workspace_service_context: WorkspaceServiceCon
             scope_id=workspace_scope)
 
 
+@click.command(name="invoke-action", help="Invoke an action on a workspace service")
+@click.argument("action-name", required=True)
+@click.option("--no-wait", flag_value=True, default=False)
+@output_option()
+@query_option()
+@pass_workspace_service_context
+def workspace_service_invoke_action(
+    workspace_service_context: WorkspaceServiceContext,
+    action_name,
+    no_wait,
+    output_format,
+    query,
+):
+    log = logging.getLogger(__name__)
+
+    workspace_id = workspace_service_context.workspace_id
+    if workspace_id is None:
+        raise click.UsageError('Missing workspace ID')
+    workspace_service_id = workspace_service_context.workspace_service_id
+    if workspace_service_id is None:
+        raise click.UsageError('Missing service ID')
+
+    client = ApiClient.get_api_client_from_config()
+    workspace_scope = client.get_workspace_scope(log, workspace_id)
+
+    click.echo(f"Invoking action {action_name}...\n", err=True)
+    response = client.call_api(
+        log,
+        "POST",
+        f"/api/workspaces/{workspace_id}/workspace-services/{workspace_service_id}/invoke-action",
+        scope_id=workspace_scope,
+        params={"action": action_name},
+    )
+    if no_wait:
+        output(response.text, output_format=output_format, query=query)
+    else:
+        operation_url = response.headers["location"]
+        operation_show(
+            log,
+            operation_url,
+            no_wait=False,
+            output_format=output_format,
+            query=query,
+            scope_id=workspace_scope,
+        )
+
+
 workspace_service.add_command(workspace_service_show)
 workspace_service.add_command(workspace_service_update)
 workspace_service.add_command(workspace_service_set_enabled)
 workspace_service.add_command(workspace_service_operation)
 workspace_service.add_command(workspace_service_operations)
+workspace_service.add_command(workspace_service_invoke_action)
 workspace_service.add_command(user_resource)
 workspace_service.add_command(user_resources)
 
 
 # TODO delete
-
-# TODO - invoke action
