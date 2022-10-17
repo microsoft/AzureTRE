@@ -10,8 +10,17 @@ from .operation import shared_service_operation
 from .operations import shared_service_operations
 
 
+def shared_service_id_completion(ctx, param, incomplete):
+    log = logging.getLogger(__name__)
+    client = ApiClient.get_api_client_from_config()
+    response = client.call_api(log, 'GET', '/api/shared-services')
+    if response.is_success:
+        ids = [shared_service["id"] for shared_service in response.json()["sharedServices"]]
+        return [id for id in ids if id.startswith(incomplete)]
+
+
 @click.group(invoke_without_command=True, help="Perform actions on an individual shared_service")
-@click.argument('shared_service_id', required=True, type=click.UUID)
+@click.argument('shared_service_id', required=True, type=click.UUID, shell_complete=shared_service_id_completion)
 @click.pass_context
 def shared_service(ctx: click.Context, shared_service_id: str) -> None:
     ctx.obj = SharedServiceContext(shared_service_id)
