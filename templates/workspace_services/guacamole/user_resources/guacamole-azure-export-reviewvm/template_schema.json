@@ -29,6 +29,14 @@
           "4 CPU | 16GB RAM"
         ],
         "updateable": true
+      },
+      "airlock_request_sas_url": {
+        "$id": "#/properties/airlock_request_sas_url",
+        "type": "string",
+        "title": "Airlock request SAS Token",
+        "description": "SAS Token for airlock request",
+        "updateable": false,
+        "sensitive": true
       }
     }
 }

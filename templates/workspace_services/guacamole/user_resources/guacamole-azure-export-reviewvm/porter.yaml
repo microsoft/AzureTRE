@@ -1,9 +1,32 @@
 ---
 name: tre-service-guacamole-export-reviewvm
-version: 0.0.4
+version: 0.0.5
 description: "An Azure TRE User Resource Template for reviewing Airlock export requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
+
+custom:
+  # For information on vm_sizes and image_options, see README.me in the guacamole/user-resources folder
+  vm_sizes:
+    "2 CPU | 8GB RAM": Standard_D2s_v5
+    "4 CPU | 16GB RAM": Standard_D4s_v5
+    "8 CPU | 32GB RAM": Standard_D8s_v5
+    "16 CPU | 64GB RAM": Standard_D16s_v5
+  image_options:
+    "Windows 10":
+      source_image_reference:
+        publisher: MicrosoftWindowsDesktop
+        offer: windows-10
+        sku: 20h2-pro-g2
+        version: latest
+      conda_config: false
+    "Server 2019 Data Science VM":
+      source_image_reference:
+        publisher: microsoft-dsvm
+        offer: dsvm-win-2019
+        sku: server-2019
+        version: latest
+      conda_config: true
 
 credentials:
   - name: azure_tenant_id
@@ -49,6 +72,10 @@ parameters:
   - name: vm_size
     type: string
     default: "2 CPU | 8GB RAM"
+  - name: airlock_request_sas_url
+    type: string
+    description: "A SAS token to access storage resource in workspace under review"
+    env: airlock_request_sas_url
 
 outputs:
   - name: ip
@@ -87,8 +114,7 @@ install:
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
-        shared_storage_access: "false"
-        shared_storage_name: "unused"
+        airlock_request_sas_url: "{{ bundle.parameters.airlock_request_sas_url }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -110,8 +136,7 @@ upgrade:
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
-        shared_storage_access: "false"
-        shared_storage_name: "unused"
+        airlock_request_sas_url: "unused"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -142,8 +167,7 @@ uninstall:
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
-        shared_storage_access: "false"
-        shared_storage_name: "unused"
+        airlock_request_sas_url: "unused"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"

@@ -57,6 +57,18 @@
       "source": {
         "env": "VM_SIZE"
       }
+    },
+    {
+      "name": "image_gallery_id",
+      "source": {
+        "env": "IMAGE_GALLERY_ID"
+      }
+    },
+    {
+      "name": "airlock_request_sas_url",
+      "source": {
+        "env": "airlock_request_sas_url"
+      }
     }
   ]
 }

@@ -83,7 +83,8 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspa
         templateVersion="0.1.0",
         etag="",
         properties={
-            "client_id": "12345"
+            "client_id": "12345",
+            "scope_id": "test_scope_id"
         },
         resourcePath=f'/workspaces/{workspace_id}',
         updatedWhen=FAKE_CREATE_TIMESTAMP,
@@ -271,6 +272,39 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    # [GET] /workspaces/{workspace_id}/scopeid
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    async def test_get_workspaces_scope_id_returns_no_other_properties(self, _, app, client) -> None:
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SCOPE_ID_BY_WORKSPACE_ID, workspace_id=WORKSPACE_ID))
+        assert response.json() == {"workspaceAuth": {"scopeId": "test_scope_id"}}
+
+    # [GET] /workspaces/{workspace_id}/scopeid
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
+    async def test_get_workspaces_scope_id_returns_404_if_no_workspace_found(self, _, app, client) -> None:
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SCOPE_ID_BY_WORKSPACE_ID, workspace_id=WORKSPACE_ID))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    # [GET] /workspaces/{workspace_id}/scopeid
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_get_workspaces_scope_id_returns_empty_if_no_scope_id(self, workspace_mock, app, client) -> None:
+        no_scope_id_workspace = Workspace(
+            id=WORKSPACE_ID,
+            templateName="tre-workspace-base",
+            templateVersion="0.1.0",
+            etag="",
+            properties={
+                "client_id": "12345",
+            },
+            resourcePath=f'/workspaces/{WORKSPACE_ID}',
+            updatedWhen=FAKE_CREATE_TIMESTAMP,
+            user=create_admin_user()
+        )
+
+        workspace_mock.return_value = no_scope_id_workspace
+
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SCOPE_ID_BY_WORKSPACE_ID, workspace_id=WORKSPACE_ID))
+        assert response.json() == {"workspaceAuth": {"scopeId": ""}}
+
 
 class TestWorkspaceRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
@@ -418,7 +452,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
         modified_workspace = sample_workspace()
         modified_workspace.isEnabled = False
-        modified_workspace.history = [ResourceHistoryItem(properties={'client_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
+        modified_workspace.history = [ResourceHistoryItem(properties={'client_id': '12345', 'scope_id': 'test_scope_id'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
         modified_workspace.resourceVersion = 1
         modified_workspace.user = create_admin_user()
         modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP
@@ -438,7 +472,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         etag = "some-etag-value"
         modified_workspace = sample_workspace()
         modified_workspace.isEnabled = False
-        modified_workspace.history = [ResourceHistoryItem(properties={'client_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
+        modified_workspace.history = [ResourceHistoryItem(properties={'client_id': '12345', 'scope_id': 'test_scope_id'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
         modified_workspace.resourceVersion = 1
         modified_workspace.user = create_admin_user()
         modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP

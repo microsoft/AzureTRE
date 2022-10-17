@@ -23,6 +23,18 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
 
+  const onChangeRequestTitle = useCallback(
+    (event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => {
+      setNewRequest(request => {
+        return {
+          ...request,
+          requestTitle: newValue || ''
+        }
+      });
+    },
+    [setNewRequest]
+  );
+
   const onChangeBusinessJustification = useCallback(
     (event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => {
       setNewRequest(request => {
@@ -36,7 +48,10 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
   );
 
   useEffect(
-    () => setRequestValid(newRequest.businessJustification?.length > 0),
+    () => setRequestValid(
+      newRequest.requestTitle?.length > 0 &&
+      newRequest.businessJustification?.length > 0
+    ),
     [newRequest, setRequestValid]
   );
 
@@ -118,6 +133,14 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
   } else {
     title = `New airlock ${newRequest.requestType} request`;
     currentStep = <Stack style={{marginTop: '40px'}} tokens={stackTokens}>
+      <TextField
+        label="Title"
+        placeholder="Enter a request title."
+        value={newRequest.requestTitle}
+        onChange={onChangeRequestTitle}
+        rows={1}
+        required
+      />
       <TextField
         label="Business Justification"
         placeholder="Enter a justification for your request."
