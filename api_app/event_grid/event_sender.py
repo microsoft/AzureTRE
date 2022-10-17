@@ -29,11 +29,10 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, email
     request_id = airlock_request.id
     status = airlock_request.status.value
     workspace_id = airlock_request.workspaceId
-    short_workspace_id = workspace_id[-4:]
     snake_case_emails = {re.sub(r'(?<!^)(?=[A-Z])', '_', role_name).lower(): role_id for role_name, role_id in emails.items()}
 
-    tre_url = f"http://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com"
-    request_url = f"{tre_url}/{workspace_id}/requests/{request_id}"
+    tre_url = f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com"
+    request_url = f"{tre_url}/workspaces/{workspace_id}/requests/{request_id}"
 
     airlock_notification = EventGridEvent(
         event_type="airlockNotification",
@@ -43,8 +42,6 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, email
             event_value=status,
             emails=snake_case_emails,
             workspace_id=workspace_id,
-            short_workspace_id=short_workspace_id,
-            tre_url=tre_url,
             request_url=request_url).__dict__,
         subject=f"{request_id}/airlockNotification",
         data_version="2.0"

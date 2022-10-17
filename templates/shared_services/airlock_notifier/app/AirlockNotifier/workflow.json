@@ -72,7 +72,10 @@
                             }
                         }
                     }
-                },
+                  },
+                  "request_url": {
+                    "type": "string"
+                  },
                   "workspace_id": {
                     "type": "string"
                   }
@@ -89,7 +92,7 @@
       "Send_Email_with_SMTP": {
         "inputs": {
           "body": {
-            "Body": "<p>Airlock request id: @{body('Parse_JSON')?['data']?['request_id']}<br>\nWorkspace id: @{body('Parse_JSON')?['data']?['workspace_id']}</p>",
+            "Body": "<a href=\"@{body('Parse_JSON')?['data']?['request_url']}\">View the request</a>",
             "From": "@parameters('smtp_from_email')",
             "Subject": "@variables('message')",
             "To": "@{join(variables('recipients'), ';')}"
