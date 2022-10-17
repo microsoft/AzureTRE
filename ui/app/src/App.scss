@@ -249,7 +249,7 @@ input[readonly]{
 .rjsf > .ms-Grid-col{
   margin-top: -25px;
 }
-.rjsf > .ms-Grid-col > span:first-child {
+.rjsf > .ms-Grid-col > span:first-of-type {
   display:block;
   background-color: #efefef;
   padding:10px;
@@ -276,9 +276,9 @@ input[readonly]{
 }
 
 /* remove secondary template description at the bottom of each template + sub blocks */
-.rjsf > .ms-Grid-col > span:last-child,
-.rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > span:last-child,
-.rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > .ms-Grid > .ms-Grid-row > .ms-Grid-col > span:last-child
+.rjsf > .ms-Grid-col > span:last-of-type,
+.rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > span:last-of-type,
+.rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > .ms-Grid > .ms-Grid-row > .ms-Grid-col > span:last-of-type
 {
   display:none;
 }
