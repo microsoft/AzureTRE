@@ -2,18 +2,6 @@ FROM debian:buster-slim
 
 ARG BUNDLE_DIR
 
-ARG AZURE_TRE_VERSION="0.4.3"
-
-RUN  apt-get update \
-  && apt-get install --no-install-recommends jq ca-certificates curl patch -y \
-  && apt-get clean -y && rm -rf /var/lib/apt/lists/*
-
-WORKDIR $BUNDLE_DIR
-
-RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/refs/tags/v${AZURE_TRE_VERSION}.tar.gz" \
-  && tar -xzf azuretre.tar.gz "AzureTRE-${AZURE_TRE_VERSION}/templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"  --strip-components=6 --skip-old-files \
-  && rm -rf azuretre.tar.gz
-
 # This is a template Dockerfile for the bundle's invocation image
 # You can customize it to use different base images, install tools and copy configuration files.
 #
@@ -29,13 +17,3 @@ RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/r
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY . $BUNDLE_DIR
-
-# Apply patch with the difference from the base workspace
-RUN patch -p0 < $BUNDLE_DIR/windowsvm.diff
-
-# Mirror plugins to prevent network access at runtime
-# Remove when available from https://github.com/getporter/terraform-mixin/issues/90
-WORKDIR $BUNDLE_DIR/terraform
-RUN terraform init -backend=false \
-  && rm -fr $BUNDLE_DIR/terraform/.terraform/providers \
-  && terraform providers mirror /usr/local/share/terraform/plugins

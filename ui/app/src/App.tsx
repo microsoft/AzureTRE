@@ -17,6 +17,7 @@ import { CreateUpdateResource } from './components/shared/create-update-resource
 import { CreateUpdateResourceContext } from './contexts/CreateUpdateResourceContext';
 import { CreateFormResource, ResourceType } from './models/resourceType';
 import { Footer } from './components/shared/Footer';
+import { initializeFileTypeIcons } from '@fluentui/react-file-type-icons';
 
 export const App: React.FunctionComponent = () => {
   const [appRoles, setAppRoles] = useState([] as Array<string>);
@@ -37,6 +38,9 @@ export const App: React.FunctionComponent = () => {
     };
     setAppRolesOnLoad();
   }, [apiCall]);
+
+  // initiliase filetype icons
+  useEffect(() => initializeFileTypeIcons(), []);
 
   return (
     <>
