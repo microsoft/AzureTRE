@@ -16,7 +16,7 @@ def airlock_id_completion(ctx: click.Context, param, incomplete):
     workspace_scope = client.get_workspace_scope(log, workspace_id)
     response = client.call_api(log, 'GET', f'/api/workspaces/{workspace_id}/requests', scope_id=workspace_scope)
     if response.is_success:
-        ids = [workspace["id"] for workspace in response.json()["airlockRequests"]]
+        ids = [request["airlockRequest"]["id"] for request in response.json()["airlockRequests"]]
         return [id for id in ids if id.startswith(incomplete)]
 
 
