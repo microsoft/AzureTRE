@@ -12,12 +12,13 @@ class OutputFormat(Enum):
     Json = 'json'
     JsonC = 'jsonc'
     Table = 'table'
+    Raw = 'raw'
 
 
 def output_option(*param_decls: str, **kwargs: t.Any):
     param_decls = ('--output', '-o', 'output_format')
     kwargs.setdefault("default", 'table')
-    kwargs.setdefault("type", click.Choice(['table', 'json', 'jsonc', 'none']))
+    kwargs.setdefault("type", click.Choice(['table', 'json', 'jsonc', 'raw', 'none']))
     kwargs.setdefault("envvar", "TRECLI_OUTPUT")
     kwargs.setdefault("help", "Output format")
     return click.option(*param_decls, **kwargs)
@@ -50,6 +51,9 @@ def output(result_json, output_format: OutputFormat = OutputFormat.Json, query: 
         formatted_json = json.dumps(json.loads(output_json), sort_keys=False, indent=2)
         jsonc = highlight(formatted_json, lexers.JsonLexer(), formatters.TerminalFormatter())
         click.echo(jsonc)
+    elif output_format == OutputFormat.Raw.value:
+        value = json.loads(output_json)
+        click.echo(value)
     elif output_format == OutputFormat.Table.value:
         content = json.loads(output_json)
         if content is not None:

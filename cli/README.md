@@ -144,7 +144,15 @@ The commands corresponding to these asynchronous operations will poll this resul
 
 ### Output formats
 
-Most commands support formatting output as `json` (default), `table`, or `none` via the `--output` option. This can also be controlled using the `TRECLI_OUTPUT` environment variable, i.e. set `TRECLI_OUTPUT` to `table` to default to the table output format.
+Most commands support formatting output as `table` (default), `json`, `jsonc`, `raw`, or `none` via the `--output` option. This can also be controlled using the `TRECLI_OUTPUT` environment variable, i.e. set `TRECLI_OUTPUT` to `table` to default to the table output format.
+
+| Option  | Description                                                                   |
+| ------- | ----------------------------------------------------------------------------- |
+| `table` | Works well for interactive use                                                |
+| `json`  | Plain JSON output, ideal for parsing via `jq` or other tools                  |
+| `jsonc` | Coloured, formatted JSON                                                      |
+| `raw`   | Results are output as-is. Useful with `--query` when capturing a single value |
+| `none`  | No output                                                                     |
 
 ### Querying output
 
