@@ -109,7 +109,7 @@ def airlock_submit(airlock_context: WorkspaceAirlockContext, output_format, quer
         response.text,
         output_format=output_format,
         query=query,
-        default_table_query="airlockRequest.{id:id,workspace_id:workspaceId,type:requestType, title:requestTitle,status:status,business_justification:businessJustification}")
+        default_table_query=_default_table_query_item)
 
 
 @click.command(name="review", help="Provide a review response for an airlock request")
@@ -146,12 +146,42 @@ def airlock_review(airlock_context: WorkspaceAirlockContext, approve, reason, ou
         response.text,
         output_format=output_format,
         query=query,
-        default_table_query="airlockRequest.{id:id,workspace_id:workspaceId,type:requestType, title:requestTitle,status:status,business_justification:businessJustification}")
+        default_table_query=_default_table_query_item)
 
 
-# TODO cancel
+@click.command(name="cancel", help="Cancel an airlock request")
+@output_option()
+@query_option()
+@pass_workspace_airlock_context
+def airlock_cancel(airlock_context: WorkspaceAirlockContext, output_format, query) -> None:
+    log = logging.getLogger(__name__)
+
+    workspace_id = airlock_context.workspace_id
+    if workspace_id is None:
+        raise click.UsageError('Missing workspace ID')
+    airlock_id = airlock_context.airlock_id
+    if airlock_id is None:
+        raise click.UsageError('Missing airlock request ID')
+
+    client = ApiClient.get_api_client_from_config()
+    workspace_scope = client.get_workspace_scope(log, workspace_id)
+
+    response = client.call_api(
+        log,
+        'POST',
+        f'/api/workspaces/{workspace_id}/requests/{airlock_id}/cancel',
+        scope_id=workspace_scope,
+    )
+
+    output(
+        response.text,
+        output_format=output_format,
+        query=query,
+        default_table_query=_default_table_query_item)
+
 
 airlock.add_command(airlock_show)
 airlock.add_command(airlock_get_url)
 airlock.add_command(airlock_submit)
 airlock.add_command(airlock_review)
+airlock.add_command(airlock_cancel)
