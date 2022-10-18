@@ -27,3 +27,5 @@ def shared_service_templates_list(output_format, query):
 
 
 shared_service_templates.add_command(shared_service_templates_list)
+
+# TODO register shared service template

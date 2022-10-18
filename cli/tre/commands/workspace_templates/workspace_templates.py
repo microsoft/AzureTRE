@@ -27,3 +27,6 @@ def workspace_templates_list(output_format, query):
 
 
 workspace_templates.add_command(workspace_templates_list)
+
+
+# TODO register workspace template
