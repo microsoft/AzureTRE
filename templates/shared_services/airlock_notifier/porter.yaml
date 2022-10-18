@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-airlock-notifier
-version: 0.2.102
+version: 0.2.109
 description: "A shared service notifying on Airlock Operations"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -21,7 +21,8 @@ parameters:
     description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
   - name: tre_url
     type: string
-    description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
+    description: "The URL of the parent TRE instance, e.g. https://mytre-dev-3142.uksouth.cloudapp.com"
+    default: ""
   - name: id
     type: string
     description: "Resource ID"

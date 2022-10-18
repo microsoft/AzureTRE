@@ -89,7 +89,7 @@
       "Send_Email_with_SMTP": {
         "inputs": {
           "body": {
-            "Body": "<p>Airlock request id: @{body('Parse_JSON')?['data']?['request_id']}<br>\nWorkspace id: @{body('Parse_JSON')?['data']?['workspace_id']}<br>\nTRE URL: @parameters('tre_url')</p>",
+            "Body": "<a href=\"@{parameters('tre_url')}/workspaces/@{body('Parse_JSON')?['data']?['workspace_id']}/requests/@{body('Parse_JSON')?['data']?['request_id']}\">View the request</a>",
             "From": "@parameters('smtp_from_email')",
             "Subject": "@variables('message')",
             "To": "@{join(variables('recipients'), ';')}"
