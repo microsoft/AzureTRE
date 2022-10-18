@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-airlock-notifier
-version: 0.2.0
+version: 0.2.102
 description: "A shared service notifying on Airlock Operations"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -17,6 +17,9 @@ credentials:
 
 parameters:
   - name: tre_id
+    type: string
+    description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
+  - name: tre_url
     type: string
     description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
   - name: id
@@ -63,6 +66,7 @@ install:
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
+        tre_url: "{{ bundle.parameters.tre_url }}"
         smtp_server_address: "{{ bundle.parameters.smtp_server_address }}"
         smtp_username: "{{ bundle.parameters.smtp_username }}"
         smtp_password: "{{ bundle.parameters.smtp_password }}"
@@ -113,6 +117,7 @@ uninstall:
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
+        tre_url: "{{ bundle.parameters.tre_url }}"
         smtp_server_address: "{{ bundle.parameters.smtp_server_address }}"
         smtp_username: "{{ bundle.parameters.smtp_username }}"
         smtp_password: "{{ bundle.parameters.smtp_password }}"

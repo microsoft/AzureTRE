@@ -94,6 +94,7 @@ resource "azurerm_logic_app_standard" "logic_app" {
     "resource_group"                        = data.azurerm_resource_group.core.name
     "smtp_connection_runtime_url"           = jsondecode(azurerm_resource_group_template_deployment.smtp_api_connection.output_content).connectionRuntimeUrl.value
     "smtp_from_email"                       = var.smtp_from_email
+    "tre_url"                               = try(var.tre_url, local.default_tre_url)
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = data.azurerm_application_insights.core.connection_string
   }
   site_config {
