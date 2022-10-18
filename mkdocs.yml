@@ -66,6 +66,9 @@ nav:
   - Using the Azure TRE: # Documentation for users of the TRE
       - Introduction: using-tre/index.md
       - Custom Templates: using-tre/templates/index.md
+      - Using AzureTRE for Research:
+          - Introduction: using-tre/tre-for-research/index.md
+          - Set up of a Virtual Machine: using-tre/tre-for-research/using-vms.md
       # - Workspaces:
       #    - using-tre/wks/index.md # Documentation describing what a workspace is
       #    - Using Workspaces: using-tre/wks/using-wks.md # Interacting with workspaces (via the UI)

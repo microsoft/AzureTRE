@@ -4,9 +4,10 @@ import { User } from "./user";
 export interface AirlockRequest extends Resource {
   workspaceId: string;
   requestType: AirlockRequestType;
-  files: Array<string>;
+  files: Array<{name: string, size: number}>;
+  requestTitle: string;
   businessJustification: string;
-  errorMessage: null | string;
+  statusMessage: null | string;
   status: AirlockRequestStatus;
   creationTime: number;
   reviews: Array<AirlockReview>;
@@ -34,6 +35,7 @@ export enum AirlockRequestStatus {
 
 export interface NewAirlockRequest {
   requestType: AirlockRequestType;
+  requestTitle: string;
   businessJustification: string;
 }
 

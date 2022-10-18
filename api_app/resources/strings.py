@@ -36,6 +36,7 @@ API_SUBMIT_AIRLOCK_REQUEST = "Submit an airlock request"
 API_CANCEL_AIRLOCK_REQUEST = "Cancel an airlock request"
 API_REVIEW_AIRLOCK_REQUEST = "Review an airlock request"
 API_AIRLOCK_REQUEST_LINK = "Get a token to access airlock request"
+API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE = "Create an Airlock Review User Resource"
 
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"
