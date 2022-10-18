@@ -136,7 +136,7 @@ def airlock_review(airlock_context: WorkspaceAirlockContext, approve, reason, ou
     response = client.call_api(
         log,
         'POST',
-        f'/api/workspaces/{workspace_id}/requests/{airlock_id}/reviews',
+        f'/api/workspaces/{workspace_id}/requests/{airlock_id}/review',
         json_data={
             "approval": approve,
             "decisionExplanation": reason,
