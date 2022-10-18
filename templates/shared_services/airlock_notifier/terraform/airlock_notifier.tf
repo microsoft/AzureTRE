@@ -97,8 +97,8 @@ resource "azurerm_logic_app_standard" "logic_app" {
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = data.azurerm_application_insights.core.connection_string
   }
   site_config {
-    ftps_state             = "Disabled"
-    vnet_route_all_enabled = true
+    ftps_state               = "Disabled"
+    vnet_route_all_enabled   = true
     elastic_instance_minimum = 1
   }
   identity {
