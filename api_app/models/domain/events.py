@@ -8,7 +8,6 @@ class AirlockNotificationData(AzureTREModel):
     event_value: str
     emails: Dict
     workspace_id: str
-    request_url: str
 
 
 class StatusChangedData(AzureTREModel):

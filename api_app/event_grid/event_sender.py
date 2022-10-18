@@ -28,21 +28,12 @@ async def send_status_changed_event(airlock_request: AirlockRequest, previous_st
 async def send_airlock_notification_event(airlock_request: AirlockRequest, emails: Dict):
     request_id = airlock_request.id
     status = airlock_request.status.value
-    workspace_id = airlock_request.workspaceId
+    short_workspace_id = airlock_request.workspaceId[-4:]
     snake_case_emails = {re.sub(r'(?<!^)(?=[A-Z])', '_', role_name).lower(): role_id for role_name, role_id in emails.items()}
-
-    tre_url = f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com"
-    request_url = f"{tre_url}/workspaces/{workspace_id}/requests/{request_id}"
 
     airlock_notification = EventGridEvent(
         event_type="airlockNotification",
-        data=AirlockNotificationData(
-            request_id=request_id,
-            event_type="status_changed",
-            event_value=status,
-            emails=snake_case_emails,
-            workspace_id=workspace_id,
-            request_url=request_url).__dict__,
+        data=AirlockNotificationData(request_id=request_id, event_type="status_changed", event_value=status, emails=snake_case_emails, workspace_id=short_workspace_id).__dict__,
         subject=f"{request_id}/airlockNotification",
         data_version="2.0"
     )
