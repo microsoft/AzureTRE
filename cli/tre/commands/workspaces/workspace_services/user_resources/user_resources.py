@@ -37,7 +37,7 @@ def user_resources_list(workspace_service_context: WorkspaceServiceContext, outp
         f'/api/workspaces/{workspace_id}/workspace-services/{workspace_service_id}/user-resources',
         scope_id=workspace_scope,
     )
-    output(response.text, output_format=output_format, query=query, default_table_query=r"userResources[].{id:id, template_name:templateName, template_version:templateVersion, display_name:properties.display_name, owner:user.name}")
+    output(response, output_format=output_format, query=query, default_table_query=r"userResources[].{id:id, template_name:templateName, template_version:templateVersion, display_name:properties.display_name, owner:user.name}")
 
 
 @click.command(name="new", help="Create a new user resource")
@@ -78,7 +78,7 @@ def user_resouce_create(workspace_service_context: WorkspaceServiceContext, defi
     )
 
     if no_wait:
-        output(response.text, output_format=output_format, query=query)
+        output(response, output_format=output_format, query=query)
         return response.text
     else:
         operation_url = response.headers['location']

@@ -30,7 +30,7 @@ def user_resource_templates_list(workspace_service_template_context: WorkspaceSe
         'GET',
         f'/api/workspace-service-templates/{template_name}/user-resource-templates',
     )
-    output(response.text, output_format=output_format, query=query, default_table_query=r"templates[].{name:name, title: title, description:description}")
+    output(response, output_format=output_format, query=query, default_table_query=r"templates[].{name:name, title: title, description:description}")
 
 
 user_resource_templates.add_command(user_resource_templates_list)

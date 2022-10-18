@@ -1,3 +1,4 @@
+import sys
 import click
 import jmespath
 import json
@@ -5,6 +6,7 @@ import typing as t
 from tabulate import tabulate
 from pygments import highlight, lexers, formatters
 from enum import Enum
+from httpx import Response
 
 
 class OutputFormat(Enum):
@@ -31,9 +33,14 @@ def query_option(*param_decls: str, **kwargs: t.Any):
     return click.option(*param_decls, **kwargs)
 
 
-def output(result_json, output_format: OutputFormat = OutputFormat.Json, query: str = None, default_table_query: str = None) -> None:
+def output(response: Response, output_format: OutputFormat = OutputFormat.Json, query: str = None, default_table_query: str = None) -> None:
+
     if output_format == OutputFormat.Suppress.value:
+        if not response.is_success:
+            sys.exit(1)
         return
+
+    result_json = response.text
 
     if query is None and output_format == OutputFormat.Table.value:
         query = default_table_query
@@ -84,3 +91,6 @@ def output(result_json, output_format: OutputFormat = OutputFormat.Json, query: 
             click.echo(tabulate(rows, columns))
     else:
         raise click.ClickException(f"Unhandled output format: '{output_format}'")
+
+    if not response.is_success:
+        sys.exit(1)

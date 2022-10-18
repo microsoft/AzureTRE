@@ -78,7 +78,7 @@ def user_resource_show(
     )
 
     output(
-        response.text,
+        response,
         output_format=output_format,
         query=query,
         default_table_query=r"userResource.{id:id, template_name:templateName, template_version:templateVersion, display_name:properties.display_name, owner:user.name}",
@@ -145,7 +145,7 @@ def user_resource_update(
 
     if no_wait:
         output(
-            response.text,
+            response,
             output_format=output_format,
             query=query,
             default_table_query=default_operation_table_query_single(),
@@ -205,9 +205,9 @@ def user_resource_set_enabled(
     )
 
     if no_wait:
-        if not suppress_output:
+        if not suppress_output or not response.is_success:
             output(
-                response.text,
+                response,
                 output_format=output_format,
                 query=query,
                 default_table_query=default_operation_table_query_single(),
@@ -295,7 +295,7 @@ def user_resource_delete(
 
     if no_wait:
         output(
-            response.text,
+            response,
             output_format=output_format,
             query=query,
             default_table_query=default_operation_table_query_single(),
@@ -349,7 +349,7 @@ def user_resource_invoke_action(
         params={"action": action_name},
     )
     if no_wait:
-        output(response.text, output_format=output_format, query=query)
+        output(response, output_format=output_format, query=query)
     else:
         operation_url = response.headers["location"]
         operation_show(

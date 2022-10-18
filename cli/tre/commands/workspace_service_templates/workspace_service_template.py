@@ -44,7 +44,7 @@ def workspace_service_template_show(workspace_service_template_context: Workspac
         f'/api/workspace-service-templates/{template_name}',
     )
 
-    output(response.text, output_format=output_format, query=query, default_table_query=r"{id: id, name:name, title: title, version:version, description:description}")
+    output(response, output_format=output_format, query=query, default_table_query=r"{id: id, name:name, title: title, version:version, description:description}")
 
 
 workspace_service_template.add_command(workspace_service_template_show)

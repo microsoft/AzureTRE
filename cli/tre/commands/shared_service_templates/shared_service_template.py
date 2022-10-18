@@ -41,7 +41,7 @@ def shared_service_template_show(shared_service_template_context: SharedServiceT
         f'/api/shared-service-templates/{template_name}',
     )
 
-    output(response.text, output_format=output_format, query=query, default_table_query=r"{id: id, name:name, title: title, version:version, description:description}")
+    output(response, output_format=output_format, query=query, default_table_query=r"{id: id, name:name, title: title, version:version, description:description}")
 
 
 shared_service_template.add_command(shared_service_template_show)

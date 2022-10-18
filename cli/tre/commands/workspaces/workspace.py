@@ -1,4 +1,5 @@
 import json
+import sys
 import click
 import logging
 
@@ -46,7 +47,7 @@ def workspace_show(workspace_context: WorkspaceContext, output_format, query):
     response = client.call_api(log, 'GET', f'/api/workspaces/{workspace_id}', )
 
     output(
-        response.text,
+        response,
         output_format=output_format,
         query=query,
         default_table_query=r"workspace.{id:id, display_name:properties.display_name, deployment_status:deploymentStatus, workspace_url:workspaceURL}")
@@ -89,7 +90,9 @@ def workspace_update(workspace_context: WorkspaceContext, ctx: click.Context, et
         json_data=definition_dict)
 
     if no_wait:
-        output(response.text, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
+        output(response, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
+        if not response.is_success:
+            sys.exit(1)
     else:
         operation_url = response.headers['location']
         operation_show(log, operation_url, no_wait=False, output_format=output_format, query=query, suppress_output=suppress_output)
@@ -123,8 +126,8 @@ def workspace_set_enabled(workspace_context: WorkspaceContext, etag, enable, no_
         json_data={'isEnabled': enable})
 
     if no_wait:
-        if not suppress_output:
-            output(response.text, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
+        if not suppress_output or not response.is_success:
+            output(response, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
     else:
         operation_url = response.headers['location']
         operation_show(log, operation_url, no_wait=False, output_format=output_format, query=query, suppress_output=suppress_output)
@@ -172,7 +175,9 @@ def workspace_delete(workspace_context: WorkspaceContext, ctx: click.Context, ye
     response = client.call_api(log, 'DELETE', f'/api/workspaces/{workspace_id}')
 
     if no_wait:
-        output(response.text, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
+        output(response, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
+        if not response.is_success:
+            sys.exit(1)
     else:
         operation_url = response.headers['location']
         operation_show(log, operation_url, no_wait, output_format=output_format, query=query)
@@ -207,7 +212,9 @@ def workspace_service_invoke_action(
         params={"action": action_name},
     )
     if no_wait:
-        output(response.text, output_format=output_format, query=query)
+        output(response, output_format=output_format, query=query)
+        if not response.is_success:
+            sys.exit(1)
     else:
         operation_url = response.headers["location"]
         operation_show(

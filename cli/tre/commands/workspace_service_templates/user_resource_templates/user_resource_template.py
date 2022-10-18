@@ -46,7 +46,7 @@ def user_resource_template_show(user_resource_template_context: UserResourceTemp
         f'/api/workspace-service-templates/{workspace_service_name}/user-resource-templates/{template_name}',
     )
 
-    output(response.text, output_format=output_format, query=query, default_table_query=r"{id: id, name:name, title: title, version:version, description:description}")
+    output(response, output_format=output_format, query=query, default_table_query=r"{id: id, name:name, title: title, version:version, description:description}")
 
 
 user_resource_template.add_command(user_resource_template_show)

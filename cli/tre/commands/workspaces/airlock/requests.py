@@ -34,7 +34,7 @@ def airlocks_list(workspace_context, output_format, query):
         f'/api/workspaces/{workspace_id}/requests',
         scope_id=workspace_scope,
     )
-    output(response.text, output_format=output_format, query=query, default_table_query=_default_table_query_list)
+    output(response, output_format=output_format, query=query, default_table_query=_default_table_query_list)
 
 
 @click.command(name="new", help="Create a new airlock request")
@@ -66,7 +66,7 @@ def airlock_create(workspace_context, request_type, title, justification, output
         },
         scope_id=workspace_scope)
 
-    output(response.text, output_format=output_format, query=query, default_table_query=_default_table_query_item)
+    output(response, output_format=output_format, query=query, default_table_query=_default_table_query_item)
     return response.text
 
 

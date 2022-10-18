@@ -41,7 +41,7 @@ def workspace_template_show(workspace_template_context: WorkspaceTemplateContext
         f'/api/workspace-templates/{template_name}',
     )
 
-    output(response.text, output_format=output_format, query=query, default_table_query=r"{id: id, name:name, title: title, version:version, description:description}")
+    output(response, output_format=output_format, query=query, default_table_query=r"{id: id, name:name, title: title, version:version, description:description}")
 
 
 workspace_template.add_command(workspace_template_show)

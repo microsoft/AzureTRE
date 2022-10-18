@@ -51,7 +51,7 @@ def airlock_show(airlock_context: WorkspaceAirlockContext, output_format, query)
         scope_id=workspace_scope,
     )
 
-    output(response.text, output_format=output_format, query=query, default_table_query=_default_table_query_item)
+    output(response, output_format=output_format, query=query, default_table_query=_default_table_query_item)
 
 
 @click.command(name="get-url", help="Get URL to access airlock request")
@@ -78,7 +78,7 @@ def airlock_get_url(airlock_context: WorkspaceAirlockContext, output_format, que
         scope_id=workspace_scope,
     )
 
-    output(response.text, output_format=output_format, query=query, default_table_query=r"{container_url:containerUrl}")
+    output(response, output_format=output_format, query=query, default_table_query=r"{container_url:containerUrl}")
 
 
 @click.command(name="submit", help="Submit an airlock request (after uploading content)")
@@ -106,7 +106,7 @@ def airlock_submit(airlock_context: WorkspaceAirlockContext, output_format, quer
     )
 
     output(
-        response.text,
+        response,
         output_format=output_format,
         query=query,
         default_table_query=_default_table_query_item)
@@ -143,7 +143,7 @@ def airlock_review(airlock_context: WorkspaceAirlockContext, approve, reason, ou
     )
 
     output(
-        response.text,
+        response,
         output_format=output_format,
         query=query,
         default_table_query=_default_table_query_item)
@@ -174,7 +174,7 @@ def airlock_cancel(airlock_context: WorkspaceAirlockContext, output_format, quer
     )
 
     output(
-        response.text,
+        response,
         output_format=output_format,
         query=query,
         default_table_query=_default_table_query_item)

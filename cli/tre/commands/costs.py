@@ -42,7 +42,7 @@ def costs_overall(from_date, to_date, granularity, output_format, query):
 
     response = client.call_api(log, 'GET', url)
     output(
-        response.text,
+        response,
         output_format=output_format,
         # To properly flatten the costs structure for table rendering, we need `let`
         # as per https://jmespath.site/#wiki-lexical-scopes. For now:
@@ -84,7 +84,7 @@ def workspace_costs(workspace_id, from_date, to_date, granularity, output_format
     response = client.call_api(log, 'GET', url)
     # TODO - default table format (needs JMESPath let, as per https://jmespath.site/#wiki-lexical-scopes)
     output(
-        response.text,
+        response,
         output_format=output_format,
         query=query)
     return response.text

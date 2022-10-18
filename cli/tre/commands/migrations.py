@@ -15,7 +15,7 @@ def migrations(output_format, query) -> None:
     client = ApiClient.get_api_client_from_config()
     response = client.call_api(log, 'POST', '/api/migrations')
     output(
-        response.text,
+        response,
         output_format=output_format,
         query=query,
         default_table_query="migrations")

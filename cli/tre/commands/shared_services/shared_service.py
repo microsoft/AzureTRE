@@ -39,7 +39,7 @@ def shared_service_show(shared_service_context: SharedServiceContext, output_for
 
     client = ApiClient.get_api_client_from_config()
     response = client.call_api(log, 'GET', f'/api/shared-services/{shared_service_id}', )
-    output(response.text, output_format=output_format, query=query, default_table_query=r"sharedServices[].{id:id,name:templateName, version:templateVersion, is_enabled:isEnabled, status: deploymentStatus}")
+    output(response, output_format=output_format, query=query, default_table_query=r"sharedServices[].{id:id,name:templateName, version:templateVersion, is_enabled:isEnabled, status: deploymentStatus}")
 
 
 # TODO - add PATCH (and ?set-enabled)
@@ -68,7 +68,7 @@ def shared_service_invoke_action(shared_service_context: SharedServiceContext, c
         f'/api/shared-services/{shared_service_id}/invoke-action?action={action_name}'
     )
     if no_wait:
-        output(response.text, output_format=output_format, query=query)
+        output(response, output_format=output_format, query=query)
     else:
         operation_url = response.headers['location']
         operation_show(log, operation_url, no_wait=False, output_format=output_format, query=query)
@@ -97,7 +97,7 @@ def shared_service_delete(shared_service_context: SharedServiceContext, ctx: cli
     click.echo("Deleting shared_service...\n", err=True)
     response = client.call_api(log, 'DELETE', f'/api/shared-services/{shared_service_id}')
     if no_wait:
-        output(response.text, output_format=output_format, query=query)
+        output(response, output_format=output_format, query=query)
     else:
         operation_url = response.headers['location']
         operation_show(log, operation_url, no_wait=False, output_format=output_format, query=query)

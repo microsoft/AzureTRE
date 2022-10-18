@@ -55,7 +55,7 @@ def workspace_service_show(workspace_service_context: WorkspaceServiceContext, o
         scope_id=workspace_scope,
     )
 
-    output(response.text, output_format=output_format, query=query, default_table_query=r"workspaceService.{id:id,template_name:templateName,template_version:templateVersion,sdeployment_status:deploymentStatus}")
+    output(response, output_format=output_format, query=query, default_table_query=r"workspaceService.{id:id,template_name:templateName,template_version:templateVersion,sdeployment_status:deploymentStatus}")
 
 
 @click.command(name="update", help="Update a workspace service")
@@ -98,7 +98,7 @@ def workspace_service_update(workspace_service_context: WorkspaceServiceContext,
         scope_id=workspace_scope)
 
     if no_wait:
-        output(response.text, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
+        output(response, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
     else:
         operation_url = response.headers['location']
         operation_show(
@@ -144,8 +144,8 @@ def workspace_service_set_enabled(workspace_service_context: WorkspaceServiceCon
         scope_id=workspace_scope)
 
     if no_wait:
-        if not suppress_output:
-            output(response.text, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
+        if not suppress_output or not response.is_success:
+            output(response, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
     else:
         operation_url = response.headers['location']
         operation_show(
@@ -212,7 +212,7 @@ def workspace_service_delete(workspace_service_context: WorkspaceServiceContext,
         scope_id=workspace_scope)
 
     if no_wait:
-        output(response.text, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
+        output(response, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
     else:
         operation_url = response.headers['location']
         operation_show(log, operation_url, no_wait, output_format=output_format, query=query, scope_id=workspace_scope)
@@ -252,7 +252,7 @@ def workspace_service_invoke_action(
         params={"action": action_name},
     )
     if no_wait:
-        output(response.text, output_format=output_format, query=query)
+        output(response, output_format=output_format, query=query)
     else:
         operation_url = response.headers["location"]
         operation_show(
@@ -274,4 +274,3 @@ workspace_service.add_command(workspace_service_delete)
 workspace_service.add_command(workspace_service_invoke_action)
 workspace_service.add_command(user_resource)
 workspace_service.add_command(user_resources)
-
