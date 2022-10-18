@@ -34,3 +34,5 @@ def user_resource_templates_list(workspace_service_template_context: WorkspaceSe
 
 
 user_resource_templates.add_command(user_resource_templates_list)
+
+# TODO register user resource template

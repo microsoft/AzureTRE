@@ -82,7 +82,7 @@ def workspace_costs(workspace_id, from_date, to_date, granularity, output_format
         url = url + "?" + query_string
 
     response = client.call_api(log, 'GET', url)
-    # TODO - default table format
+    # TODO - default table format (needs JMESPath let, as per https://jmespath.site/#wiki-lexical-scopes)
     output(
         response.text,
         output_format=output_format,
