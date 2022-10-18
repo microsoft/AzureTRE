@@ -46,7 +46,7 @@ jobs:
           echo "github ref: ${GITHUB_REF}"
           REFID=$(echo "${GITHUB_REF}" | shasum | cut -c1-8)
           echo "using id of: ${REFID} for GitHub Ref: ${GITHUB_REF}"
-          echo "::set-output name=refid::${REFID}"
+          echo "refid=${REFID}" >> $GITHUB_OUTPUT
 
   run-deploy-tre-not-main:
     name: "Deploy PR"
