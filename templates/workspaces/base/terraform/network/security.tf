@@ -126,17 +126,17 @@ resource "azurerm_network_security_rule" "allow_outbound_from_webapp_to_core_web
 }
 
 resource "azurerm_network_security_rule" "allow_outbound_from_subnet" {
-  access                       = "Allow"
-  destination_port_range       = "80"
-  source_address_prefixes      = azurerm_subnet.services.address_prefixes
-  destination_address_prefix   = "INTERNET"
-  direction                    = "Outbound"
-  name                         = "outbound-workspace-subnets-to-internet-for-crl"
-  network_security_group_name  = azurerm_network_security_group.ws.name
-  priority                     = 101
-  protocol                     = "Tcp"
-  resource_group_name          = var.ws_resource_group_name
-  source_port_range            = "*"
+  access                      = "Allow"
+  destination_port_range      = "80"
+  source_address_prefixes     = azurerm_subnet.services.address_prefixes
+  destination_address_prefix  = "INTERNET"
+  direction                   = "Outbound"
+  name                        = "outbound-workspace-subnets-to-internet-for-crl"
+  network_security_group_name = azurerm_network_security_group.ws.name
+  priority                    = 101
+  protocol                    = "Tcp"
+  resource_group_name         = var.ws_resource_group_name
+  source_port_range           = "*"
 }
 
 resource "azurerm_network_security_rule" "allow_outbound_webapps_to_services" {
