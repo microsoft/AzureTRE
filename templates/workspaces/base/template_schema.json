@@ -12,89 +12,6 @@
       "title": "Shared Storage Quota",
       "description": "Quota (in GB) to set for the VM Shared Storage."
     },
-    "app_service_plan_sku": {
-      "$id": "#/properties/app_service_plan_sku",
-      "type": "string",
-      "enum": [
-        "P1v3",
-        "P1v2",
-        "S1"
-      ],
-      "default": "P1v3",
-      "title": "App Service Plan SKU",
-      "description": "The SKU that will be used when deploying an Azure App Service Plan."
-    },
-    "enable_airlock": {
-      "$id": "#/properties/enable_airlock",
-      "type": "boolean",
-      "default": true,
-      "title": "Enable Airlock",
-      "description": "If enabled, allows imports and exports for the workspace."
-    },
-    "airlock_review_config": {
-      "$id": "#properties/airlock_review_config",
-      "type": "object",
-      "title": "Airlock Review Config",
-      "description": "Configuration for Airlock Review feature. Needs to be set up after workspace creation",
-      "updateable": true,
-      "properties": {
-        "import": {
-          "$id": "#/properties/airlock_review_config/import",
-          "title": "Airlock Import Review configuration",
-          "type": "object",
-          "description": "Configure Airlock Review for Import Request",
-          "required": [
-            "workspace_id",
-            "workspace_service_id",
-            "user_resource_template_name"
-          ],
-          "properties": {
-            "workspace_id": {
-              "title": "workspace_id",
-              "type": "string",
-              "description": "ID for Import Review workspace"
-            },
-            "workspace_service_id": {
-              "title": "workspace_service_id",
-              "type": "string",
-              "description": "ID for Workspace Service ID where to deploy Review user resources"
-            },
-            "user_resource_template_name": {
-              "title": "user_resource_template_name",
-              "type": "string",
-              "description": "Template Name for User Resource for reviewing Import Requests",
-              "examples": [
-                "tre-service-guacamole-import-reviewvm"
-              ]
-            }
-          }
-        },
-        "export": {
-          "title": "Airlock Export Review configuration",
-          "type": "object",
-          "description": "Configure Airlock Review for Export Request",
-          "required": [
-            "workspace_service_id",
-            "user_resource_template_name"
-          ],
-          "properties": {
-            "workspace_service_id": {
-              "title": "workspace_service_id",
-              "type": "string",
-              "description": "ID for Workspace Service ID where to deploy Review user resources"
-            },
-            "user_resource_template_name": {
-              "title": "user_resource_template_name",
-              "type": "string",
-              "description": "Template Name for User Resource for reviewing Export Requests",
-              "examples": [
-                "tre-service-guacamole-export-reviewvm"
-              ]
-            }
-          }
-        }
-      }
-    },
     "aad_redirect_uris": {
       "$id": "#/properties/aad_redirect_uris",
       "type": "array",
@@ -129,6 +46,25 @@
           }
         }
       }
+    },
+    "app_service_plan_sku": {
+      "$id": "#/properties/app_service_plan_sku",
+      "type": "string",
+      "enum": [
+        "P1v3",
+        "P1v2",
+        "S1"
+      ],
+      "default": "P1v3",
+      "title": "App Service Plan SKU",
+      "description": "The SKU that will be used when deploying an Azure App Service Plan."
+    },
+    "enable_airlock": {
+      "$id": "#/properties/enable_airlock",
+      "type": "boolean",
+      "default": true,
+      "title": "Enable Airlock",
+      "description": "If enabled, allows imports and exports for the workspace."
     },
     "create_aad_groups": {
       "type": "boolean",
