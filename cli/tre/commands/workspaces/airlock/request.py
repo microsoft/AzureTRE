@@ -106,7 +106,11 @@ def airlock_submit(airlock_context: WorkspaceAirlockContext, output_format, quer
         scope_id=workspace_scope,
     )
 
-    output(response.text, output_format=output_format, query=query)
+    output(
+        response.text,
+        output_format=output_format,
+        query=query,
+        default_table_query="airlockRequest.{id:id,workspace_id:workspaceId,type:requestType, title:requestTitle,status:status,business_justification:businessJustification}")
 
 
 # TODO table output default
