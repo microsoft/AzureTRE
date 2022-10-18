@@ -9,7 +9,7 @@ _default_table_query_list = r"airlockRequests[].{id:id,workspace_id:workspaceId,
 _default_table_query_item = r"airlockRequest.{id:id,workspace_id:workspaceId,type:requestType,status:status,business_justification:businessJustification}"
 
 
-@click.group(help="List/add airlocks")
+@click.group(name="airlock-requests", help="List/add airlock requests")
 def airlocks() -> None:
     pass
 

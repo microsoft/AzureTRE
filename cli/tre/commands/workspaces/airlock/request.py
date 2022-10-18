@@ -20,7 +20,7 @@ def airlock_id_completion(ctx: click.Context, param, incomplete):
         return [id for id in ids if id.startswith(incomplete)]
 
 
-@click.group(invoke_without_command=True, help="Perform actions on an airlock request")
+@click.group(name="airlock-request", invoke_without_command=True, help="Perform actions on an airlock request")
 @click.argument('airlock_id', required=True, type=click.UUID, shell_complete=airlock_id_completion)
 @click.pass_context
 def airlock(ctx: click.Context, airlock_id: str) -> None:
@@ -39,7 +39,7 @@ def airlock_show(airlock_context: WorkspaceAirlockContext, output_format, query)
         raise click.UsageError('Missing workspace ID')
     airlock_id = airlock_context.airlock_id
     if airlock_id is None:
-        raise click.UsageError('Missing service ID')
+        raise click.UsageError('Missing airlock request ID')
 
     client = ApiClient.get_api_client_from_config()
     workspace_scope = client.get_workspace_scope(log, workspace_id)
@@ -94,7 +94,7 @@ def airlock_submit(airlock_context: WorkspaceAirlockContext, output_format, quer
         raise click.UsageError('Missing workspace ID')
     airlock_id = airlock_context.airlock_id
     if airlock_id is None:
-        raise click.UsageError('Missing service ID')
+        raise click.UsageError('Missing airlock request ID')
 
     client = ApiClient.get_api_client_from_config()
     workspace_scope = client.get_workspace_scope(log, workspace_id)
@@ -124,7 +124,7 @@ def airlock_review(airlock_context: WorkspaceAirlockContext, approve, reason, ou
         raise click.UsageError('Missing workspace ID')
     airlock_id = airlock_context.airlock_id
     if airlock_id is None:
-        raise click.UsageError('Missing service ID')
+        raise click.UsageError('Missing airlock request ID')
 
     client = ApiClient.get_api_client_from_config()
     workspace_scope = client.get_workspace_scope(log, workspace_id)
