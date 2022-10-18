@@ -66,6 +66,15 @@ class AirlockRequestHistoryItem(AzureTREModel):
     properties: dict = {}
 
 
+class AirlockReviewUserResource(AzureTREModel):
+    """
+    User resource created for Airlock Review
+    """
+    workspaceId: str = Field(title="Workspace ID")
+    workspaceServiceId: str = Field(title="Workspace Service ID")
+    userResourceId: str = Field(title="User Resource ID")
+
+
 class AirlockRequest(AzureTREModel):
     """
     Airlock request
@@ -85,6 +94,7 @@ class AirlockRequest(AzureTREModel):
     statusMessage: Optional[str] = Field(title="Optional - contains additional information about the current status.")
     reviews: Optional[List[AirlockReview]]
     etag: Optional[str] = Field(title="_etag", alias="_etag")
+    reviewUserResources: List[AirlockReviewUserResource] = Field([], title="User resources created for Airlock Reviews")
 
     # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931
     @validator("etag", pre=True)
