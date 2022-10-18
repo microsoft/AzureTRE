@@ -158,6 +158,66 @@ def workspace_service_set_enabled(workspace_service_context: WorkspaceServiceCon
             scope_id=workspace_scope)
 
 
+@click.command(name="delete", help="Delete a workspace service")
+@click.option('--yes', is_flag=True, default=False)
+@click.option('--no-wait',
+              flag_value=True,
+              default=False)
+@click.option('--ensure-disabled',
+              help="Disable before deleting if not currently enabled",
+              flag_value=True,
+              default=False)
+@output_option()
+@query_option()
+@click.pass_context
+@pass_workspace_service_context
+def workspace_service_delete(workspace_service_context: WorkspaceServiceContext, ctx: click.Context, yes, no_wait, ensure_disabled, output_format, query):
+    log = logging.getLogger(__name__)
+
+    workspace_id = workspace_service_context.workspace_id
+    if workspace_id is None:
+        raise click.UsageError('Missing workspace ID')
+    workspace_service_id = workspace_service_context.workspace_service_id
+    if workspace_service_id is None:
+        raise click.UsageError('Missing service ID')
+
+    if not yes:
+        click.confirm("Are you sure you want to delete this workspace service?", err=True, abort=True)
+
+    client = ApiClient.get_api_client_from_config()
+    workspace_scope = client.get_workspace_scope(log, workspace_id)
+
+    if ensure_disabled:
+        response = client.call_api(
+            log,
+            'GET',
+            f'/api/workspaces/{workspace_id}/workspace-services/{workspace_service_id}',
+            scope_id=workspace_scope)
+        workspace_service_json = response.json()
+        if workspace_service_json['workspaceService']['isEnabled']:
+            etag = workspace_service_json['workspaceService']['_etag']
+            ctx.invoke(
+                workspace_service_set_enabled,
+                etag=etag,
+                enable=False,
+                no_wait=False,
+                suppress_output=True
+            )
+
+    click.echo("Deleting workspace service...", err=True)
+    response = client.call_api(
+        log,
+        'DELETE',
+        f'/api/workspaces/{workspace_id}/workspace-services/{workspace_service_id}',
+        scope_id=workspace_scope)
+
+    if no_wait:
+        output(response.text, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
+    else:
+        operation_url = response.headers['location']
+        operation_show(log, operation_url, no_wait, output_format=output_format, query=query, scope_id=workspace_scope)
+
+
 @click.command(name="invoke-action", help="Invoke an action on a workspace service")
 @click.argument("action-name", required=True)
 @click.option("--no-wait", flag_value=True, default=False)
@@ -210,9 +270,8 @@ workspace_service.add_command(workspace_service_update)
 workspace_service.add_command(workspace_service_set_enabled)
 workspace_service.add_command(workspace_service_operation)
 workspace_service.add_command(workspace_service_operations)
+workspace_service.add_command(workspace_service_delete)
 workspace_service.add_command(workspace_service_invoke_action)
 workspace_service.add_command(user_resource)
 workspace_service.add_command(user_resources)
 
-
-# TODO delete
