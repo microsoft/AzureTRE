@@ -39,11 +39,12 @@ def airlocks_list(workspace_context, output_format, query):
 
 @click.command(name="new", help="Create a new airlock request")
 @click.option('--type', "request_type", help='The type of request', required=True, type=click.Choice(['import', 'export']))
+@click.option('--title', help='Title for the request', required=True)
 @click.option('--justification', help='Business justification for the request', required=True)
 @output_option()
 @query_option()
 @pass_workspace_context
-def airlock_create(workspace_context, request_type, justification, output_format, query):
+def airlock_create(workspace_context, request_type, title, justification, output_format, query):
     log = logging.getLogger(__name__)
 
     workspace_id = workspace_context.workspace_id
@@ -60,6 +61,7 @@ def airlock_create(workspace_context, request_type, justification, output_format
         f'/api/workspaces/{workspace_id}/requests',
         json_data={
             "requestType": request_type,
+            "requestTitle": title,
             "businessJustification": justification
         },
         scope_id=workspace_scope)

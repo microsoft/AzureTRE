@@ -5,7 +5,7 @@ from tre.api_client import ApiClient
 from tre.commands.workspaces.airlock.contexts import WorkspaceAirlockContext, pass_workspace_airlock_context
 from tre.output import output, output_option, query_option
 
-_default_table_query_item = r"airlockRequest.{id:id,workspace_id:workspaceId,type:requestType,status:status,business_justification:businessJustification}"
+_default_table_query_item = r"airlockRequest.{id:id,workspace_id:workspaceId,type:requestType, title:requestTitle,status:status,business_justification:businessJustification}"
 
 
 def airlock_id_completion(ctx: click.Context, param, incomplete):
