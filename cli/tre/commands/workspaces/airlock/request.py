@@ -81,7 +81,6 @@ def airlock_get_url(airlock_context: WorkspaceAirlockContext, output_format, que
     output(response.text, output_format=output_format, query=query, default_table_query=r"{container_url:containerUrl}")
 
 
-# TODO table output default
 @click.command(name="submit", help="Submit an airlock request (after uploading content)")
 @output_option()
 @query_option()
@@ -113,7 +112,6 @@ def airlock_submit(airlock_context: WorkspaceAirlockContext, output_format, quer
         default_table_query="airlockRequest.{id:id,workspace_id:workspaceId,type:requestType, title:requestTitle,status:status,business_justification:businessJustification}")
 
 
-# TODO table output default
 @click.command(name="review", help="Provide a review response for an airlock request")
 @click.option('--approve/--reject', 'approve', required=True, help="Approved/rejected")
 @click.option('--reason', required=True, help="Reason for approval/rejection")
@@ -144,7 +142,11 @@ def airlock_review(airlock_context: WorkspaceAirlockContext, approve, reason, ou
         scope_id=workspace_scope,
     )
 
-    output(response.text, output_format=output_format, query=query)
+    output(
+        response.text,
+        output_format=output_format,
+        query=query,
+        default_table_query="airlockRequest.{id:id,workspace_id:workspaceId,type:requestType, title:requestTitle,status:status,business_justification:businessJustification}")
 
 
 # TODO cancel
