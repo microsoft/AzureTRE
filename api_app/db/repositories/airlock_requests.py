@@ -11,7 +11,8 @@ from fastapi import HTTPException
 from pydantic import parse_obj_as
 from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
-from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType
+from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, \
+    AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType, AirlockReviewUserResource
 from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate
 from core import config
 from resources import strings
@@ -133,8 +134,22 @@ class AirlockRequestRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(AirlockRequest, airlock_requests)
 
-    def update_airlock_request(self, original_request: AirlockRequest, user: User, new_status: AirlockRequestStatus = None, request_files: List[AirlockFile] = None, status_message: str = None, airlock_review: AirlockReview = None) -> AirlockRequest:
-        updated_request = self._build_updated_request(original_request=original_request, new_status=new_status, request_files=request_files, status_message=status_message, airlock_review=airlock_review)
+    def update_airlock_request(
+            self,
+            original_request: AirlockRequest,
+            user: User,
+            new_status: AirlockRequestStatus = None,
+            request_files: List[AirlockFile] = None,
+            status_message: str = None,
+            airlock_review: AirlockReview = None,
+            review_user_resource: AirlockReviewUserResource = None) -> AirlockRequest:
+        updated_request = self._build_updated_request(
+            original_request=original_request,
+            new_status=new_status,
+            request_files=request_files,
+            status_message=status_message,
+            airlock_review=airlock_review,
+            review_user_resource=review_user_resource)
         try:
             db_response = self.update_airlock_request_item(original_request, updated_request, user, {"previousStatus": original_request.status})
         except CosmosAccessConditionFailedError:
@@ -162,7 +177,14 @@ class AirlockRequestRepository(BaseRepository):
 
         return airlock_review
 
-    def _build_updated_request(self, original_request: AirlockRequest, new_status: AirlockRequestStatus = None, request_files: List[AirlockFile] = None, status_message: str = None, airlock_review: AirlockReview = None) -> AirlockRequest:
+    def _build_updated_request(
+            self,
+            original_request: AirlockRequest,
+            new_status: AirlockRequestStatus = None,
+            request_files: List[AirlockFile] = None,
+            status_message: str = None,
+            airlock_review: AirlockReview = None,
+            review_user_resource: AirlockReviewUserResource = None) -> AirlockRequest:
         updated_request = copy.deepcopy(original_request)
 
         if new_status is not None:
@@ -180,6 +202,12 @@ class AirlockRequestRepository(BaseRepository):
                 updated_request.reviews = [airlock_review]
             else:
                 updated_request.reviews.append(airlock_review)
+
+        if review_user_resource is not None:
+            if updated_request.reviewUserResources is None:
+                updated_request.reviewUserResources = [review_user_resource]
+            else:
+                updated_request.reviewUserResources.append(review_user_resource)
 
         return updated_request
 

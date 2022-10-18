@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-export-reviewvm
-version: 0.0.5
+version: 0.0.6
 description: "An Azure TRE User Resource Template for reviewing Airlock export requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -9,17 +9,7 @@ custom:
   # For information on vm_sizes and image_options, see README.me in the guacamole/user-resources folder
   vm_sizes:
     "2 CPU | 8GB RAM": Standard_D2s_v5
-    "4 CPU | 16GB RAM": Standard_D4s_v5
-    "8 CPU | 32GB RAM": Standard_D8s_v5
-    "16 CPU | 64GB RAM": Standard_D16s_v5
   image_options:
-    "Windows 10":
-      source_image_reference:
-        publisher: MicrosoftWindowsDesktop
-        offer: windows-10
-        sku: 20h2-pro-g2
-        version: latest
-      conda_config: false
     "Server 2019 Data Science VM":
       source_image_reference:
         publisher: microsoft-dsvm
@@ -68,7 +58,7 @@ parameters:
     default: false
   - name: os_image
     type: string
-    default: "Windows 10"
+    default: "Server 2019 Data Science VM"
   - name: vm_size
     type: string
     default: "2 CPU | 8GB RAM"
