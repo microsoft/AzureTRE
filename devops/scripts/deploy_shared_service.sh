@@ -73,11 +73,12 @@ for index in "${!property_names[@]}"; do
 done
 
 echo "Not currently deployed - deploying..."
+display_name="${template_name#tre-shared-service-}"
 if ! deploy_result=$(cat << EOF | tre shared-services new --definition-file -
 {
     "templateName": "${template_name}",
     "properties": {
-        "display_name": "Shared service '${template_name}'",
+        "display_name": "${display_name}",
         "description": "Automatically deployed '${template_name}'"
         ${additional_props}
     }
