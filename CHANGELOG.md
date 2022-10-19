@@ -5,11 +5,12 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 FEATURES:
-* Added filtering and sorting to Airlock UI ([#2511](https://github.com/microsoft/AzureTRE/issues/2511))
+* Added filtering and sorting to Airlock UI ([#2511](https://github.com/microsoft/AzureTRE/pull/2730))
 * Added title field to Airlock requests ([#2731](https://github.com/microsoft/AzureTRE/pull/2731))
 
 ENHANCEMENTS:
 * Add cran supprt to nexus, open port 80 for the workspace nsg and update the firewall config to allow let's encrypt CRLs ([#2694](https://github.com/microsoft/AzureTRE/pull/2694))
+* Upgrade Github Actions versions ([#2731](https://github.com/microsoft/AzureTRE/pull/2744))
 
 BUG FIXES:
 

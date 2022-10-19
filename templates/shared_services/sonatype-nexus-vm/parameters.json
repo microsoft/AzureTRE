@@ -17,6 +17,12 @@
       }
     },
     {
+      "name": "mgmt_acr_name",
+      "source": {
+        "env": "ACR_NAME"
+      }
+    },
+    {
       "name": "tfstate_container_name",
       "source": {
         "env": "TERRAFORM_STATE_CONTAINER_NAME"
