@@ -25,7 +25,7 @@ RUN su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install 
 
 # Install terraform
 # version 1.3.0/1 has issues with keep recreating certificate
-ARG TERRAFORM_VERSION="1.2.9"
+ARG TERRAFORM_VERSION="1.3.2"
 COPY .devcontainer/scripts/terraform.sh /tmp/
 RUN bash /tmp/terraform.sh "${TERRAFORM_VERSION}" /usr/bin
 
