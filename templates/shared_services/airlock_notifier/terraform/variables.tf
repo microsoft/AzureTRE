@@ -9,9 +9,9 @@ variable "tre_resource_id" {
 }
 
 variable "tre_url" {
-  type = string
+  type        = string
   description = "TRE URL"
-  default = ""
+  default     = ""
 }
 
 variable "smtp_server_address" {
