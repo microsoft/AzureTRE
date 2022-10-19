@@ -128,7 +128,7 @@ jobs:
 
       - name: Report check status start
         if: inputs.prHeadSha != ''
-        uses: LouisBrunner/checks-action@v1.1.1
+        uses: LouisBrunner/checks-action@v1.5.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sha: ${{ inputs.prHeadSha }}
@@ -145,7 +145,7 @@ jobs:
           ref: ${{ inputs.prRef }}
 
       - name: Set up Docker BuildKit
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
       - name: Azure Login
         uses: azure/login@v1
@@ -621,16 +621,10 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: E2E Test (Smoke) Results
           path: "./e2e_tests/pytest_e2e_smoke.xml"
-
-      - name: Publish Test Results
-        if: always()
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        with:
-          files: "./e2e_tests/pytest_e2e_smoke.xml"
 
   e2e_tests_custom:
     name: "Run E2E Tests"
@@ -669,16 +663,10 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: E2E Test Results
           path: "./e2e_tests/pytest_e2e_custom.xml"
-
-      - name: Publish Test Results
-        if: always()
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        with:
-          files: "./e2e_tests/pytest_e2e_custom.xml"
 
   summary:
     name: Summary
@@ -687,14 +675,14 @@ jobs:
     if: always()
     environment: ${{ inputs.environmentName }}
     steps:
-      - uses: technote-space/workflow-conclusion-action@v2
+      - uses: technote-space/workflow-conclusion-action@v3
 
       # For PR builds triggered from comment builds, the GITHUB_REF is set to main
       # so the checks aren't automatically associated with the PR
       # If prHeadSha is specified then explicity mark the checks for that SHA
       - name: Report check status
         if: inputs.prHeadSha != ''
-        uses: LouisBrunner/checks-action@v1.1.1
+        uses: LouisBrunner/checks-action@v1.5.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # the name must be identical to the one received by the real job
@@ -719,3 +707,14 @@ jobs:
           notification-summary: "Failed to deploy from main"
           notification-color: dc3545
           timezone: Europe/Zurich
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+
+      - name: Publish E2E Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          junit_files: "artifacts/**/*.xml"
+          check_name: "E2E Test Results"
