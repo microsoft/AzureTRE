@@ -97,3 +97,8 @@ RUN echo "export HISTFILE=$HOME/commandhistory/.bash_history" >> "$HOME/.bashrc"
 # Install github-cli
 COPY ./.devcontainer/scripts/gh.sh /tmp/
 RUN if [ "${INTERACTIVE}" = "true" ]; then /tmp/gh.sh; fi
+
+# Install tre-cli
+COPY ./cli /tmp/cli
+WORKDIR /tmp/cli
+RUN make install-cli
