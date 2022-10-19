@@ -40,7 +40,11 @@
       "type": "string",
       "title": "TRE URL",
       "description": "If your TRE URL is different from ${TRE_ID}.${LOCATION}.cloudapp.azure.com, please enter it here",
-      "updateable": false
+      "updateable": false,
+      "pattern": "^(https:|http:|www\\.)\\S*",
+      "examples": [
+        "https://mytre.westeurope.cloudapp.azure.com"
+      ]
     }
   },
   "pipeline": {
