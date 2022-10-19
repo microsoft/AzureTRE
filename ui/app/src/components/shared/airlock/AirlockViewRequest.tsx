@@ -374,7 +374,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           <AirlockReviewRequest
             request={request}
             onUpdateRequest={props.onUpdateRequest}
-            onReviewRequest={props.onUpdateRequest}
+            onReviewRequest={(request) => {props.onUpdateRequest(request); setReviewIsOpen(false)}}
             onClose={() => setReviewIsOpen(false)}
           />
         </Modal>
