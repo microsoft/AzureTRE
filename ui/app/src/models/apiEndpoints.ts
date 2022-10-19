@@ -8,6 +8,7 @@ export enum ApiEndpoint {
     AirlockSubmit = 'submit',
     AirlockCancel = 'cancel',
     AirlockReview = 'review',
+    AirlockCreateReviewResource = 'review-user-resource',
     WorkspaceTemplates = 'workspace-templates',
     WorkspaceServiceTemplates = 'workspace-service-templates',
     UserResourceTemplates = 'user-resource-templates',
