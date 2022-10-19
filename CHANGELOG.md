@@ -9,6 +9,7 @@ FEATURES:
 * Added title field to Airlock requests ([#2731](https://github.com/microsoft/AzureTRE/pull/2731))
 
 ENHANCEMENTS:
+* Add cran support to nexus, open port 80 for the workspace nsg and update the firewall config to allow let's encrypt CRLs ([#2694](https://github.com/microsoft/AzureTRE/pull/2694))
 * Upgrade Github Actions versions ([#2731](https://github.com/microsoft/AzureTRE/pull/2744))
 
 BUG FIXES:
