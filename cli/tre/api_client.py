@@ -6,7 +6,6 @@ import msal
 import os
 
 from httpx import Client, Response
-from httpx._types import QueryParamTypes
 from logging import Logger
 from pathlib import Path
 
@@ -82,7 +81,7 @@ class ApiClient:
         json_data=None,
         scope_id: str = None,
         throw_on_error: bool = True,
-        params: Union[QueryParamTypes, None] = None
+        params: "Union[dict[str, str], None]" = None
     ) -> Response:
         with Client(verify=self.verify) as client:
             headers = headers.copy()
