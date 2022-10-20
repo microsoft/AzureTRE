@@ -104,7 +104,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
     } else if (request && request.reviewUserResources?.length === 0) {
       setReviewResourceStatus('notCreated');
     }
-  }, [latestUpdate.operation, reviewResource.deploymentStatus, request?.reviewUserResources])
+  }, [latestUpdate.operation, reviewResource.deploymentStatus, request])
 
   // Create a review resource
   const createReviewResource = useCallback(async () => {
@@ -125,7 +125,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       setReviewResourceError(true);
       setReviewResourceStatus('notCreated');
     }
-  }, [apiCall, workspaceCtx.workspaceApplicationIdURI, request?.id, workspaceCtx.workspace.id, dispatch])
+  }, [apiCall, workspaceCtx.workspaceApplicationIdURI, request?.id, workspaceCtx.workspace.id, dispatch, props])
 
   // Review an airlock request
   const reviewRequest = useCallback(async (isApproved: boolean) => {
