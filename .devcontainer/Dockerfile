@@ -24,8 +24,7 @@ ARG NODE_VERSION="lts/*"
 RUN su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"
 
 # Install terraform
-# version 1.3.0/1 has issues with keep recreating certificate
-ARG TERRAFORM_VERSION="1.2.9"
+ARG TERRAFORM_VERSION="1.3.2"
 COPY .devcontainer/scripts/terraform.sh /tmp/
 RUN bash /tmp/terraform.sh "${TERRAFORM_VERSION}" /usr/bin
 
@@ -97,3 +96,8 @@ RUN echo "export HISTFILE=$HOME/commandhistory/.bash_history" >> "$HOME/.bashrc"
 # Install github-cli
 COPY ./.devcontainer/scripts/gh.sh /tmp/
 RUN if [ "${INTERACTIVE}" = "true" ]; then /tmp/gh.sh; fi
+
+# Install tre-cli
+COPY ./cli /tmp/cli
+WORKDIR /tmp/cli
+RUN make install-cli && echo -e "\n# Set up tre completion\nsource <(_TRE_COMPLETE=bash_source tre)" >> ~/.bashrc

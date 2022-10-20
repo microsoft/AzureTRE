@@ -49,7 +49,6 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
         let wsRoles: Array<string> = [];
         console.log('Getting workspace');
         await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, ws_application_id_uri, undefined, ResultType.JSON, (roles: Array<string>) => {
-          config.debug && console.log(`Workspace roles for ${workspaceId}`, roles);
           workspaceCtx.current.setRoles(roles);
           wsRoles = roles;
         }, true);
