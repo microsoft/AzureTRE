@@ -26,7 +26,6 @@ export const RootLayout: React.FunctionComponent = () => {
   const [apiError, setApiError] = useState({} as APIError);
   const [costApiError, setCostApiError] = useState({} as APIError);
   const apiCall = useAuthApiCall();
-  //const costsCtx = useContext(CostsContext);
   const costsWriteCtx = useRef(useContext(CostsContext));
 
   useEffect(() => {
