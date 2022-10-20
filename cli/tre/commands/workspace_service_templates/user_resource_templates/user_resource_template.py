@@ -6,7 +6,7 @@ from tre.output import output, output_option, query_option
 from .contexts import UserResourceTemplateContext, pass_user_resource_template_context
 
 
-def template_name_completion(ctx, param, incomplete):
+def template_name_completion(ctx: click.Context, param: click.Parameter, incomplete: str):
     log = logging.getLogger(__name__)
     parent_ctx = ctx.parent
     workspace_service_name = parent_ctx.params["template_name"]

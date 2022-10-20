@@ -8,7 +8,7 @@ from tre.output import output, output_option, query_option
 _default_table_query_item = r"airlockRequest.{id:id,workspace_id:workspaceId,type:requestType, title:requestTitle,status:status,business_justification:businessJustification}"
 
 
-def airlock_id_completion(ctx: click.Context, param, incomplete):
+def airlock_id_completion(ctx: click.Context, param: click.Parameter, incomplete: str):
     log = logging.getLogger(__name__)
     parent_ctx = ctx.parent
     workspace_id = parent_ctx.params["workspace_id"]

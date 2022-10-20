@@ -9,7 +9,7 @@ from .user_resource_templates.user_resource_templates import user_resource_templ
 from .user_resource_templates.user_resource_template import user_resource_template
 
 
-def template_name_completion(ctx, param, incomplete):
+def template_name_completion(ctx: click.Context, param: click.Parameter, incomplete: str):
     log = logging.getLogger(__name__)
     client = ApiClient.get_api_client_from_config()
     response = client.call_api(log, 'GET', '/api/workspace-service-templates')

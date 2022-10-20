@@ -1,3 +1,4 @@
+from logging import Logger
 import sys
 from time import sleep
 
@@ -6,7 +7,7 @@ from tre.api_client import ApiClient
 from tre.output import output
 
 
-def get_operation_id_completion(ctx, log, list_url, param, incomplete, scope_id: str = None):
+def get_operation_id_completion(ctx: click.Context, log: Logger, list_url: str, param: click.Parameter, incomplete: str, scope_id: str = None):
     client = ApiClient.get_api_client_from_config()
     response = client.call_api(log, 'GET', list_url, scope_id=scope_id)
     if response.is_success:

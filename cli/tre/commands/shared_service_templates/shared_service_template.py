@@ -6,7 +6,7 @@ from tre.output import output, output_option, query_option
 from .contexts import SharedServiceTemplateContext, pass_shared_service_template_context
 
 
-def template_name_completion(ctx, param, incomplete):
+def template_name_completion(ctx: click.Context, param: click.Parameter, incomplete: str):
     log = logging.getLogger(__name__)
     client = ApiClient.get_api_client_from_config()
     response = client.call_api(log, 'GET', '/api/shared-service-templates')

@@ -10,7 +10,7 @@ from .operation import shared_service_operation
 from .operations import shared_service_operations
 
 
-def shared_service_id_completion(ctx, param, incomplete):
+def shared_service_id_completion(ctx: click.Context, param: click.Parameter, incomplete: str):
     log = logging.getLogger(__name__)
     client = ApiClient.get_api_client_from_config()
     response = client.call_api(log, 'GET', '/api/shared-services')

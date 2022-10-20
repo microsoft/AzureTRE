@@ -16,7 +16,7 @@ from .airlock.requests import airlocks
 from .airlock.request import airlock
 
 
-def workspace_id_completion(ctx, param, incomplete):
+def workspace_id_completion(ctx: click.Context, param: click.Parameter, incomplete: str):
     log = logging.getLogger(__name__)
     client = ApiClient.get_api_client_from_config()
     response = client.call_api(log, 'GET', '/api/workspaces')

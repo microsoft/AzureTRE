@@ -12,7 +12,7 @@ from .user_resources.user_resource import user_resource
 from .user_resources.user_resources import user_resources
 
 
-def workspace_service_id_completion(ctx: click.Context, param, incomplete):
+def workspace_service_id_completion(ctx: click.Context, param: click.Parameter, incomplete: str):
     log = logging.getLogger(__name__)
     parent_ctx = ctx.parent
     workspace_id = parent_ctx.params["workspace_id"]
