@@ -8,7 +8,7 @@ import { APIError } from "../../../models/exceptions";
 import { destructiveButtonStyles, successButtonStyles } from "../../../styles";
 import { ExceptionLayout } from "../ExceptionLayout";
 import { UserResource } from '../../../models/userResource';
-import vmImage from "../../../assets/Virtual-Machine.png";
+import vmImage from "../../../assets/virtual_machine.svg";
 import { PowerStateBadge } from "../PowerStateBadge";
 import { useComponentManager } from "../../../hooks/useComponentManager";
 import { ComponentAction, Resource, VMPowerStates } from "../../../models/resource";
@@ -202,7 +202,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
     {
       !reviewResourceError ? <Stack horizontal horizontalAlign="space-between" styles={reviewVMStyles}>
         <Stack.Item styles={reviewVMItemStyles}>
-          <img src={vmImage} alt="Virtual machine" />
+          <img src={vmImage} alt="Virtual machine" width="50" />
           <div style={{marginLeft:20}}>
             <h3 style={{marginTop:0, marginBottom:2}}>Review VM</h3>
             { statusBadge }
