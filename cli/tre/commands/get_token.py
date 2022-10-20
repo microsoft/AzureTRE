@@ -2,7 +2,7 @@ import click
 import logging
 
 from tre.api_client import ApiClient
-
+from tre.commands.workspaces.workspace import workspace_id_completion
 
 @click.command(name="get-token", help="Get an access token")
 @click.option('--scope',
@@ -10,7 +10,8 @@ from tre.api_client import ApiClient
               help='The scope to get the token for (defaults to root scope)')
 @click.option('--workspace',
               required=False,
-              help='The workspace to the token for (cannot be used with --scope)')
+              help='The workspace to the token for (cannot be used with --scope)',
+              shell_complete=workspace_id_completion)
 def get_token(scope, workspace):
     log = logging.getLogger(__name__)
 
