@@ -1,6 +1,7 @@
 import { Operation } from "./operation";
 import { ResourceType } from "./resourceType";
 import { User } from "./user";
+import { CostItem } from "./costs";
 
 export interface Resource {
     id: string,
@@ -15,7 +16,7 @@ export interface Resource {
     user: User,
     history: Array<HistoryItem>,
     _etag: string,
-    properties: any
+    properties: any,
     azureStatus?: any
 }
 
@@ -54,3 +55,4 @@ export const getResourceFromResult = (r: any) => {
     if (r['workspace']) return r.workspace;
     if (r['sharedService']) return r.sharedService;
 }
+

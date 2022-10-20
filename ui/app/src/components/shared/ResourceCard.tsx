@@ -10,6 +10,7 @@ import { actionsDisabledStates } from '../../models/operation';
 import { PowerStateBadge } from './PowerStateBadge';
 import { ResourceType } from '../../models/resourceType';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
+import { CostsContext } from '../../contexts/CostsContext';
 
 interface ResourceCardProps {
   resource: Resource,
@@ -24,6 +25,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   const [loading] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const workspaceCtx = useContext(WorkspaceContext);
+  const costsCtx = useContext(CostsContext);
   const latestUpdate = useComponentManager(
     props.resource,
     (r: Resource) => { props.onUpdate(r) },
@@ -37,6 +39,10 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
       || !props.resource.isEnabled
       || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== VMPowerStates.Running)
   }
+
+  const resourceCosts = costsCtx?.costs?.find((resourceCost) => {
+    return resourceCost.id === props.resource.id;
+  });
 
   let resourceUrl = ""
   switch(props.resource.resourceType) {
@@ -110,13 +116,20 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
               </Stack.Item>
             }
             <Stack.Item style={footerStyles}>
+              { latestUpdate.componentAction === ComponentAction.None &&
+              <Stack horizontal>
+                <Stack.Item style={costStyles}>
+                {resourceCosts?.costs[0].currency} {resourceCosts?.costs[0].cost.toFixed(2)}
+                </Stack.Item>
+              </Stack>
+              }
               <Stack horizontal>
                 <Stack.Item grow={1} align="center">
                   {
                     latestUpdate.componentAction === ComponentAction.Lock &&
                     <ProgressIndicator
                       barHeight={4}
-                      description='Resource is locked for changes whilst it updates.' />
+                      description='Resource is locked for changes while it updates.' />
                   }
                   {
                     (props.resource.azureStatus?.powerState && latestUpdate.componentAction !== ComponentAction.Lock) &&
@@ -202,6 +215,10 @@ const footerStyles: React.CSSProperties = {
   padding: '5px 7px',
   minHeight: '30px',
   borderTop: '1px #ccc solid',
+}
+
+const costStyles: React.CSSProperties = {
+  fontSize: '0.8rem',
 }
 
 const calloutKeyStyles: React.CSSProperties = {
