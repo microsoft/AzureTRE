@@ -15,6 +15,7 @@ ENHANCEMENTS:
 * Upgrade Terraform to 1.3.2 ([#2758](https://github.com/microsoft/AzureTRE/pull/2758))
 
 BUG FIXES:
+* Pin Porter's plugin/mixin versions used ([#TBD](https://github.com/microsoft/AzureTRE/pull/TBD))
 
 COMPONENTS:
 
