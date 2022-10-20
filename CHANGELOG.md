@@ -14,6 +14,7 @@ ENHANCEMENTS:
 * Install TRE CLI inside the devcontainer image (rather than via a post-create step) ([#2757](https://github.com/microsoft/AzureTRE/pull/2757))
 
 BUG FIXES:
+* Fix issues iwth AML workspace service dployment) ([#2768](https://github.com/microsoft/AzureTRE/pull/2768))
 
 COMPONENTS:
 
