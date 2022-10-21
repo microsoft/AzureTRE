@@ -16,7 +16,7 @@ ENHANCEMENTS:
 * `tre` CLI: added `raw` output option, improved `airlock-requests` handling, more consistent exit codes on error, added examples to CLI README.md
 
 BUG FIXES:
-* Fix issues iwth AML workspace service dployment) ([#2768](https://github.com/microsoft/AzureTRE/pull/2768))
+* Fix issues with AML workspace service deployment ([#2768](https://github.com/microsoft/AzureTRE/pull/2768))
 
 COMPONENTS:
 
