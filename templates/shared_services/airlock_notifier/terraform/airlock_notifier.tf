@@ -119,10 +119,10 @@ resource "azurerm_resource_group_template_deployment" "smtp_api_connection_acces
 
   parameters_content = jsonencode({
     "servicePrincipalId" = {
-      value = azurerm_logic_app_standard.logic_app.identity.0.principal_id
+      value = azurerm_logic_app_standard.logic_app.identity[0].principal_id
     },
     "servicePrincipalTenantId" = {
-      value = azurerm_logic_app_standard.logic_app.identity.0.tenant_id
+      value = azurerm_logic_app_standard.logic_app.identity[0].tenant_id
     }
   })
 
