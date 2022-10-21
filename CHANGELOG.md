@@ -13,6 +13,7 @@ ENHANCEMENTS:
 * Upgrade Github Actions versions ([#2731](https://github.com/microsoft/AzureTRE/pull/2744))
 * Install TRE CLI inside the devcontainer image (rather than via a post-create step) ([#2757](https://github.com/microsoft/AzureTRE/pull/2757))
 * Upgrade Terraform to 1.3.2 ([#2758](https://github.com/microsoft/AzureTRE/pull/2758))
+* `tre` CLI: added `raw` output option, improved `airlock-requests` handling, more consistent exit codes on error, added examples to CLI README.md
 
 BUG FIXES:
 
