@@ -10,8 +10,17 @@ from .operation import shared_service_operation
 from .operations import shared_service_operations
 
 
+def shared_service_id_completion(ctx: click.Context, param: click.Parameter, incomplete: str):
+    log = logging.getLogger(__name__)
+    client = ApiClient.get_api_client_from_config()
+    response = client.call_api(log, 'GET', '/api/shared-services')
+    if response.is_success:
+        ids = [shared_service["id"] for shared_service in response.json()["sharedServices"]]
+        return [id for id in ids if id.startswith(incomplete)]
+
+
 @click.group(invoke_without_command=True, help="Perform actions on an individual shared_service")
-@click.argument('shared_service_id', required=True, type=click.UUID)
+@click.argument('shared_service_id', required=True, type=click.UUID, shell_complete=shared_service_id_completion)
 @click.pass_context
 def shared_service(ctx: click.Context, shared_service_id: str) -> None:
     ctx.obj = SharedServiceContext(shared_service_id)
@@ -30,12 +39,10 @@ def shared_service_show(shared_service_context: SharedServiceContext, output_for
 
     client = ApiClient.get_api_client_from_config()
     response = client.call_api(log, 'GET', f'/api/shared-services/{shared_service_id}', )
-    output(response.text, output_format=output_format, query=query, default_table_query=r"sharedServices[].{id:id,name:templateName, version:templateVersion, is_enabled:isEnabled, status: deploymentStatus}")
+    output(response, output_format=output_format, query=query, default_table_query=r"sharedServices[].{id:id,name:templateName, version:templateVersion, is_enabled:isEnabled, status: deploymentStatus}")
 
 
 # TODO - add PATCH (and ?set-enabled)
-# TODO - invoke action
-
 
 @click.command(name="invoke-action", help="Invoke an action on a shared_service")
 @click.argument('action-name', required=True)
@@ -61,7 +68,7 @@ def shared_service_invoke_action(shared_service_context: SharedServiceContext, c
         f'/api/shared-services/{shared_service_id}/invoke-action?action={action_name}'
     )
     if no_wait:
-        output(response.text, output_format=output_format, query=query)
+        output(response, output_format=output_format, query=query)
     else:
         operation_url = response.headers['location']
         operation_show(log, operation_url, no_wait=False, output_format=output_format, query=query)
@@ -90,7 +97,7 @@ def shared_service_delete(shared_service_context: SharedServiceContext, ctx: cli
     click.echo("Deleting shared_service...\n", err=True)
     response = client.call_api(log, 'DELETE', f'/api/shared-services/{shared_service_id}')
     if no_wait:
-        output(response.text, output_format=output_format, query=query)
+        output(response, output_format=output_format, query=query)
     else:
         operation_url = response.headers['location']
         operation_show(log, operation_url, no_wait=False, output_format=output_format, query=query)
