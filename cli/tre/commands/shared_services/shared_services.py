@@ -20,7 +20,7 @@ def shared_services_list(output_format, query):
 
     client = ApiClient.get_api_client_from_config()
     response = client.call_api(log, 'GET', '/api/shared-services')
-    output(response.text, output_format=output_format, query=query, default_table_query=r"sharedServices[].{id:id,name:templateName, version:templateVersion, is_enabled:isEnabled, status: deploymentStatus}")
+    output(response, output_format=output_format, query=query, default_table_query=r"sharedServices[].{id:id,name:templateName, version:templateVersion, is_enabled:isEnabled, status: deploymentStatus}")
 
 
 @click.command(name="new", help="Create a new shared_service")
@@ -47,7 +47,7 @@ def shared_services_create(ctx, definition, definition_file, no_wait, output_for
     response = client.call_api(log, 'POST', '/api/shared-services', json_data=definition_dict)
 
     if no_wait:
-        output(response.text, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
+        output(response, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
     else:
         operation_url = response.headers['location']
         operation_show(log, operation_url, no_wait=False, output_format=output_format, query=query)

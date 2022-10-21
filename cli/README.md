@@ -144,7 +144,15 @@ The commands corresponding to these asynchronous operations will poll this resul
 
 ### Output formats
 
-Most commands support formatting output as `json` (default), `table`, or `none` via the `--output` option. This can also be controlled using the `TRECLI_OUTPUT` environment variable, i.e. set `TRECLI_OUTPUT` to `table` to default to the table output format.
+Most commands support formatting output as `table` (default), `json`, `jsonc`, `raw`, or `none` via the `--output` option. This can also be controlled using the `TRECLI_OUTPUT` environment variable, i.e. set `TRECLI_OUTPUT` to `table` to default to the table output format.
+
+| Option  | Description                                                                   |
+| ------- | ----------------------------------------------------------------------------- |
+| `table` | Works well for interactive use                                                |
+| `json`  | Plain JSON output, ideal for parsing via `jq` or other tools                  |
+| `jsonc` | Coloured, formatted JSON                                                      |
+| `raw`   | Results are output as-is. Useful with `--query` when capturing a single value |
+| `none`  | No output                                                                     |
 
 ### Querying output
 
@@ -211,3 +219,27 @@ Or you can load the content from a file that contains embedded environment varia
 When you run `tre login` you specify the base URL for the API, but when you are developing AzureTRE you may want to make calls against the locally running API.
 
 To support this, you can set the `TRECLI_BASE_URL` environment variable and that will override the API endpoint used by the CLI.
+
+
+## Example usage
+
+### Creating an import airlock request
+
+```bash
+# Set the ID of the workspace to create the import request for
+WORKSPACE_ID=__ADD_ID_HERE__
+
+# Create the airlock request - change the justification as appropriate
+request=$(tre workspace $WORKSPACE_ID airlock-requests new --type import --title "Ant" --justification "It's import-ant" --output json)
+request_id=$(echo $request | jq -r .airlockRequest.id)
+
+# Get the storage upload URL
+upload_url=$(tre workspace $WORKSPACE_ID airlock-request $request_id get-url --query containerUrl --output raw)
+
+# Use the az CLI to upload ant.txt from the current directory (change as required)
+az storage blob upload-batch --source . --pattern ant.txt --destination $upload_url
+
+# Submit the request for review
+tre workspace $WORKSPACE_ID airlock-request $request_id submit
+
+```

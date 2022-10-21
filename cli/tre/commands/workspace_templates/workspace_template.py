@@ -6,7 +6,7 @@ from tre.output import output, output_option, query_option
 from .contexts import WorkspaceTemplateContext, pass_workspace_template_context
 
 
-def template_name_completion(ctx, param, incomplete):
+def template_name_completion(ctx: click.Context, param: click.Parameter, incomplete: str):
     log = logging.getLogger(__name__)
     client = ApiClient.get_api_client_from_config()
     response = client.call_api(log, 'GET', '/api/workspace-templates')
@@ -41,7 +41,7 @@ def workspace_template_show(workspace_template_context: WorkspaceTemplateContext
         f'/api/workspace-templates/{template_name}',
     )
 
-    output(response.text, output_format=output_format, query=query, default_table_query=r"{id: id, name:name, title: title, version:version, description:description}")
+    output(response, output_format=output_format, query=query, default_table_query=r"{id: id, name:name, title: title, version:version, description:description}")
 
 
 workspace_template.add_command(workspace_template_show)
