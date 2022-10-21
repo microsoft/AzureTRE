@@ -23,7 +23,9 @@ def shared_service_templates_list(output_format, query):
         'GET',
         '/api/shared-service-templates',
     )
-    output(response.text, output_format=output_format, query=query, default_table_query=r"templates[].{name:name, title: title, description:description}")
+    output(response, output_format=output_format, query=query, default_table_query=r"templates[].{name:name, title: title, description:description}")
 
 
 shared_service_templates.add_command(shared_service_templates_list)
+
+# TODO register shared service template

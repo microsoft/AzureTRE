@@ -9,7 +9,7 @@ from .user_resource_templates.user_resource_templates import user_resource_templ
 from .user_resource_templates.user_resource_template import user_resource_template
 
 
-def template_name_completion(ctx, param, incomplete):
+def template_name_completion(ctx: click.Context, param: click.Parameter, incomplete: str):
     log = logging.getLogger(__name__)
     client = ApiClient.get_api_client_from_config()
     response = client.call_api(log, 'GET', '/api/workspace-service-templates')
@@ -44,7 +44,7 @@ def workspace_service_template_show(workspace_service_template_context: Workspac
         f'/api/workspace-service-templates/{template_name}',
     )
 
-    output(response.text, output_format=output_format, query=query, default_table_query=r"{id: id, name:name, title: title, version:version, description:description}")
+    output(response, output_format=output_format, query=query, default_table_query=r"{id: id, name:name, title: title, version:version, description:description}")
 
 
 workspace_service_template.add_command(workspace_service_template_show)
