@@ -342,7 +342,7 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
         assert send_uninstall_message_mock.call_count == 1
 
     @patch("api.routes.airlock.save_and_deploy_resource", return_value=Operation(id="123", resourceId=USER_RESOURCE_ID, resourcePath="a/b", action="install", createdWhen=time.time(), updatedWhen=time.time()))
-    @patch("api.routes.airlock.update_and_publish_event_airlock_request")
+    @patch("api.routes.airlock.update_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview, review_user_resource=True))
     @patch("api.routes.airlock.get_airlock_container_link", return_value="http://test-sas")
     @patch("api.routes.airlock.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=WorkspaceService(id=WORKSPACE_SERVICE_ID, templateName="test", templateVersion="0.0.1", _etag="123"))
     @patch("api.routes.airlock.UserResourceRepository.create_user_resource_item", return_value=(UserResource(id=USER_RESOURCE_ID, templateName="test", templateVersion="0.0.1", _etag="123"), "test"))

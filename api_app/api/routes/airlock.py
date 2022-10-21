@@ -18,7 +18,7 @@ from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, 
 from models.schemas.operation import OperationInResponse
 from models.schemas.user_resource import UserResourceInCreate
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
-from models.schemas.airlock_request import AirlockRequestInCreate, AirlockRequestInResponse, AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate
+from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestInResponse, AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_airlock_manager, get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user
 
@@ -85,7 +85,7 @@ async def create_cancel_request(airlock_request=Depends(get_airlock_request_by_i
     return AirlockRequestInResponse(airlockRequest=updated_resource)
 
 
-@airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/review-user-resource", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE, dependencies=[Depends(get_current_airlock_manager_user), Depends(get_workspace_by_id_from_path)])
+@airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/review-user-resource", status_code=status.HTTP_202_ACCEPTED, response_model=AirlockRequestAndOperationInResponse, name=strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE, dependencies=[Depends(get_current_airlock_manager_user), Depends(get_workspace_by_id_from_path)])
 async def create_review_user_resource(
         response: Response,
         airlock_request=Depends(get_airlock_request_by_id_from_path),
@@ -177,7 +177,7 @@ async def create_review_user_resource(
     logging.info(f"Airlock Request {updated_resource.id} updated to include {updated_resource.reviewUserResources}")
 
     response.headers["Location"] = construct_location_header(operation)
-    return OperationInResponse(operation=operation)
+    return AirlockRequestAndOperationInResponse(airlockRequest=updated_resource, operation=operation)
 
 
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/review", status_code=status.HTTP_200_OK, response_model=AirlockRequestInResponse, name=strings.API_REVIEW_AIRLOCK_REQUEST, dependencies=[Depends(get_current_airlock_manager_user), Depends(get_workspace_by_id_from_path)])
