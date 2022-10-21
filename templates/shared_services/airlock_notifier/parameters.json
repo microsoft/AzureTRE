@@ -11,6 +11,12 @@
       }
     },
     {
+      "name": "tre_url",
+      "source": {
+        "env": "TRE_URL"
+      }
+    },
+    {
       "name": "id",
       "source": {
         "env": "ID"
