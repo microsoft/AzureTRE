@@ -275,10 +275,7 @@ export const Airlock: React.FunctionComponent = () => {
       iconProps: { iconName: 'EditContact' },
       onClick: () => {
         const userId = account.localAccountId.split('.')[0];
-        setFilters((f) => {
-          f.set('creator_user_id', userId);
-          return new Map(f);
-        });
+        setFilters(new Map([['creator_user_id', userId]]));
       }
     });
   }
@@ -289,13 +286,8 @@ export const Airlock: React.FunctionComponent = () => {
       key: 'awaitingMyReview',
       text: 'Awaiting my review',
       iconProps: { iconName: 'TemporaryUser' },
-      onClick: () => {
-        setFilters((f) => {
-          // Currently we don't have assigned reviewers so this will be all requests in review status
-          f.set('status', 'in_review');
-          return new Map(f);
-        });
-      }
+      // Currently we don't have assigned reviewers so this will be all requests in review status
+      onClick: () => setFilters(new Map([['status', 'in_review']]))
     });
   }
 

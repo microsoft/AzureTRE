@@ -1,4 +1,4 @@
-import { DefaultButton, Dialog, DialogFooter, DialogType, DocumentCard, DocumentCardActivity, DocumentCardDetails, DocumentCardTitle, DocumentCardType, FontIcon, getTheme, IStackItemStyles, IStackStyles, IStackTokens, mergeStyles, MessageBar, MessageBarType, Panel, PanelType, Persona, PersonaSize, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from "@fluentui/react";
+import { DefaultButton, Dialog, DialogFooter, DialogType, DocumentCard, DocumentCardActivity, DocumentCardDetails, DocumentCardTitle, DocumentCardType, FontIcon, getTheme, IStackItemStyles, IStackStyles, IStackTokens, mergeStyles, MessageBar, MessageBarType, Modal, Panel, PanelType, Persona, PersonaSize, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from "@fluentui/react";
 import moment from "moment";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -7,7 +7,9 @@ import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
 import { AirlockFilesLinkInvalidStatus, AirlockRequest, AirlockRequestAction, AirlockRequestStatus, AirlockReviewDecision } from "../../../models/airlock";
 import { ApiEndpoint } from "../../../models/apiEndpoints";
 import { APIError } from "../../../models/exceptions";
+import { destructiveButtonStyles } from "../../../styles";
 import { ExceptionLayout } from "../ExceptionLayout";
+import { AirlockReviewRequest } from "./AirlockReviewRequest";
 
 interface AirlockViewRequestProps {
   requests: AirlockRequest[];
@@ -20,11 +22,10 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
   const [filesLink, setFilesLink] = useState<string>();
   const [filesLinkError, setFilesLinkError] = useState(false);
   const [hideSubmitDialog, setHideSubmitDialog] = useState(true);
+  const [reviewIsOpen, setReviewIsOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const [hideCancelDialog, setHideCancelDialog] = useState(true);
-  const [hideReviewDialog, setHideReviewDialog] = useState(true);
-  const [reviewExplanation, setReviewExplanation] = useState('');
   const [apiFilesLinkError, setApiFilesLinkError] = useState({} as APIError);
   const [apiError, setApiError] = useState({} as APIError);
   const workspaceCtx = useContext(WorkspaceContext);
@@ -47,8 +48,8 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
     }
   }, [apiCall, requestId, props.requests, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI]);
 
+  // Retrieve a link to view/edit the airlock files
   const generateFilesLink = useCallback(async () => {
-    // Retrieve a link to view/edit the airlock files
     if (request && request.workspaceId) {
       try {
         const linkObject = await apiCall(
@@ -111,33 +112,6 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
     }
   }, [apiCall, request, props, workspaceCtx.workspaceApplicationIdURI]);
 
-  // Review an airlock request
-  const reviewRequest = useCallback(async (isApproved: boolean) => {
-    if (request && reviewExplanation) {
-      setSubmitting(true);
-      setSubmitError(false);
-      try {
-        const review = {
-          approval: isApproved,
-          decisionExplanation: reviewExplanation
-        };
-        const response = await apiCall(
-          `${ApiEndpoint.Workspaces}/${request.workspaceId}/${ApiEndpoint.AirlockRequests}/${request.id}/${ApiEndpoint.AirlockReview}`,
-          HttpMethod.Post,
-          workspaceCtx.workspaceApplicationIdURI,
-          review
-        );
-        props.onUpdateRequest(response.airlockRequest);
-        setHideReviewDialog(true);
-      } catch (err: any) {
-        err.userMessage = 'Error reviewing airlock request';
-        setApiError(err);
-        setSubmitError(true);
-      }
-      setSubmitting(false);
-    }
-  }, [apiCall, request, props, workspaceCtx.workspaceApplicationIdURI, reviewExplanation]);
-
   // Render the panel footer along with buttons that the signed-in user is allowed to see according to the API
   const renderFooter = useCallback(() => {
     let footer = <></>
@@ -166,7 +140,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           }
           {
             request.allowed_user_actions?.includes(AirlockRequestAction.Review) &&
-              <PrimaryButton onClick={() => {setSubmitError(false); setHideReviewDialog(false)}}>Review</PrimaryButton>
+              <PrimaryButton onClick={() => setReviewIsOpen(true)}>Review</PrimaryButton>
           }
         </div>
       </>
@@ -391,48 +365,19 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           }
         </Dialog>
 
-        <Dialog
-          hidden={hideReviewDialog}
-          onDismiss={() => setHideReviewDialog(true)}
-          dialogContentProps={{
-            title: 'Review request',
-            subText: 'Select whether you\'d like to approve or reject this request.',
-            type: DialogType.close
-          }}
+        <Modal
+          titleAriaId={`title-${request?.id}`}
+          isOpen={reviewIsOpen}
+          onDismiss={() => setReviewIsOpen(false)}
+          containerClassName={modalStyles}
         >
-          <TextField
-            label="Reason for decision"
-            placeholder="Please provide a brief explanation of your decision."
-            value={reviewExplanation}
-            onChange={(e: React.FormEvent, newValue?: string) => setReviewExplanation(newValue || '')}
-            multiline
-            rows={6}
-            required
+          <AirlockReviewRequest
+            request={request}
+            onUpdateRequest={props.onUpdateRequest}
+            onReviewRequest={(request) => {props.onUpdateRequest(request); setReviewIsOpen(false)}}
+            onClose={() => setReviewIsOpen(false)}
           />
-          {
-            submitError && <ExceptionLayout e={apiError} />
-          }
-          {
-            submitting
-            ? <Spinner label="Submitting review..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} style={{marginTop:20}} />
-            : <DialogFooter>
-              <DefaultButton
-                iconProps={{iconName: 'Cancel'}}
-                onClick={() => reviewRequest(false)}
-                text="Reject"
-                styles={destructiveButtonStyles}
-                disabled={reviewExplanation.length <= 0}
-              />
-              <DefaultButton
-                iconProps={{iconName: 'Accept'}}
-                onClick={() => reviewRequest(true)}
-                text="Approve"
-                styles={successButtonStyles}
-                disabled={reviewExplanation.length <= 0}
-              />
-            </DialogFooter>
-          }
-        </Dialog>
+        </Modal>
       </Panel>
     </>
   )
@@ -456,40 +401,6 @@ const stackItemStyles: IStackItemStyles = {
   },
 };
 
-const successButtonStyles = {
-  root: {
-    background: palette.green,
-    color: palette.white,
-    borderColor: palette.green
-  },
-  rootDisabled: {
-    background: 'rgb(16 124 16 / 60%)',
-    color: palette.white,
-    borderColor: palette.green,
-    iconColor: palette.white
-  },
-  iconDisabled: {
-    color: palette.white
-  }
-}
-
-const destructiveButtonStyles = {
-  root: {
-    marginRight: 5,
-    background: palette.red,
-    color: palette.white,
-    borderColor: palette.red
-  },
-  rootDisabled: {
-    background: 'rgb(232 17 35 / 60%)',
-    color: palette.white,
-    borderColor: palette.red
-  },
-  iconDisabled: {
-    color: palette.white
-  }
-}
-
 const approvedIcon = mergeStyles({
   color: palette.green,
   marginRight: 5,
@@ -500,4 +411,10 @@ const rejectedIcon = mergeStyles({
   color: palette.red,
   marginRight: 5,
   fontSize: 12
+});
+
+const modalStyles = mergeStyles({
+  display: 'flex',
+  flexFlow: 'column nowrap',
+  alignItems: 'stretch',
 });

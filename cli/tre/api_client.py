@@ -1,4 +1,5 @@
 import sys
+from typing import Union
 import click
 import json
 import msal
@@ -80,11 +81,12 @@ class ApiClient:
         json_data=None,
         scope_id: str = None,
         throw_on_error: bool = True,
+        params: "Union[dict[str, str], None]" = None
     ) -> Response:
         with Client(verify=self.verify) as client:
             headers = headers.copy()
             headers['Authorization'] = f"Bearer {self.get_auth_token(log, scope_id)}"
-            response = client.request(method, f'{self.base_url}{url}', headers=headers, json=json_data)
+            response = client.request(method, f'{self.base_url}{url}', headers=headers, json=json_data, params=params)
             if throw_on_error and response.is_error:
                 error_info = {
                     'status_code': response.status_code,

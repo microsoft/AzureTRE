@@ -6,16 +6,19 @@
 
 FEATURES:
 * Added filtering and sorting to Airlock UI ([#2511](https://github.com/microsoft/AzureTRE/pull/2730))
-* Added title field to Airlock requests ([#2731](https://github.com/microsoft/AzureTRE/pull/2731))
+* Added title field to Airlock requests ([#2503](https://github.com/microsoft/AzureTRE/pull/2731))
+* New Create Review VM functionality for Airlock Reviews ([#2738](https://github.com/microsoft/AzureTRE/pull/2759) & [#2737](https://github.com/microsoft/AzureTRE/pull/2740))
 
 ENHANCEMENTS:
 * Add cran support to nexus, open port 80 for the workspace nsg and update the firewall config to allow let's encrypt CRLs ([#2694](https://github.com/microsoft/AzureTRE/pull/2694))
 * Upgrade Github Actions versions ([#2731](https://github.com/microsoft/AzureTRE/pull/2744))
 * Install TRE CLI inside the devcontainer image (rather than via a post-create step) ([#2757](https://github.com/microsoft/AzureTRE/pull/2757))
 * Upgrade Terraform to 1.3.2 ([#2758](https://github.com/microsoft/AzureTRE/pull/2758))
+* `tre` CLI: added `raw` output option, improved `airlock-requests` handling, more consistent exit codes on error, added examples to CLI README.md
 
 BUG FIXES:
 * Pin Porter's plugin/mixin versions used ([#2762](https://github.com/microsoft/AzureTRE/pull/2762))
+* Fix issues with AML workspace service deployment ([#2768](https://github.com/microsoft/AzureTRE/pull/2768))
 
 COMPONENTS:
 

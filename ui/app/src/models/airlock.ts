@@ -11,6 +11,7 @@ export interface AirlockRequest extends Resource {
   status: AirlockRequestStatus;
   creationTime: number;
   reviews: Array<AirlockReview>;
+  reviewUserResources: Array<AirlockReviewUserResource>;
   allowed_user_actions: Array<AirlockRequestAction>;
 }
 
@@ -62,4 +63,10 @@ export interface AirlockReview {
   reviewDecision: AirlockReviewDecision,
   decisionExplanation: string,
   reviewer: User
+}
+
+export interface AirlockReviewUserResource {
+  workspaceId: string,
+  workspaceServiceId: string,
+  userResourceId: string
 }
