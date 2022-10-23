@@ -116,10 +116,18 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
               </Stack.Item>
             }
             <Stack.Item style={footerStyles}>
-              { latestUpdate.componentAction === ComponentAction.None &&
+              { latestUpdate.componentAction === ComponentAction.None && resourceCosts && resourceCosts?.costs.length > 0 &&
               <Stack horizontal>
                 <Stack.Item style={costStyles}>
                 {resourceCosts?.costs[0].currency} {resourceCosts?.costs[0].cost.toFixed(2)}
+
+                {resourceCosts?.costs.length > 1 &&
+                  <>
+                    ,&nbsp;
+                    {resourceCosts?.costs[1].currency} {resourceCosts?.costs[1].cost.toFixed(2)}
+                  </>
+                }
+
                 </Stack.Item>
               </Stack>
               }
