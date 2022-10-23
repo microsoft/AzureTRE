@@ -11,7 +11,7 @@ AzureTRE referenced as an external folder in [AzureTRE deployment repository](ht
 
 Select AzureTRE version:
 1. In AzureTRE go to releases:
-    ![Go to AzureTRE releases](../../assets/using-tre/select_release.png)
+    ![Go to AzureTRE releases](../assets/using-tre/select_release.png)
 1. Choose a release version
 
 To upgrade AzureTRE version inside [AzureTRE deployment repository](https://github.com/microsoft/AzureTRE-Deployment):
