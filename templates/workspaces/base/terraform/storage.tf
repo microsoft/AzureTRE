@@ -4,7 +4,6 @@ resource "azurerm_storage_account" "stg" {
   location                 = azurerm_resource_group.ws.location
   account_tier             = "Standard"
   account_replication_type = "GRS"
-  tags                     = local.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
