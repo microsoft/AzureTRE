@@ -29,7 +29,7 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
   resource_group_name        = data.azurerm_resource_group.rg.name
   location                   = data.azurerm_resource_group.rg.location
   network_interface_ids      = [azurerm_network_interface.jumpbox_nic.id]
-  size                       = var.admin_jumpbox_vm_sku
+  size                       = "XXX"
   allow_extension_operations = true
   admin_username             = "adminuser"
   admin_password             = random_password.password.result
@@ -53,6 +53,7 @@ resource "azurerm_key_vault_secret" "jumpbox_credentials" {
   name         = "${azurerm_windows_virtual_machine.jumpbox.name}-jumpbox-password"
   value        = random_password.password.result
   key_vault_id = data.azurerm_key_vault.keyvault.id
+  tags         = local.tre_shared_service_tags
 }
 
 resource "azurerm_virtual_machine_extension" "antimalware" {
@@ -62,6 +63,7 @@ resource "azurerm_virtual_machine_extension" "antimalware" {
   type                       = "IaaSAntimalware"
   type_handler_version       = "1.3"
   auto_upgrade_minor_version = true
+  tags                       = local.tre_shared_service_tags
 
   settings = jsonencode({
     "AntimalwareEnabled" = true
