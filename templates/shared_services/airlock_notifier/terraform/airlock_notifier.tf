@@ -94,11 +94,13 @@ resource "azurerm_logic_app_standard" "logic_app" {
     "resource_group"                        = data.azurerm_resource_group.core.name
     "smtp_connection_runtime_url"           = jsondecode(azurerm_resource_group_template_deployment.smtp_api_connection.output_content).connectionRuntimeUrl.value
     "smtp_from_email"                       = var.smtp_from_email
+    "tre_url"                               = var.tre_url != "" ? var.tre_url : local.default_tre_url
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = data.azurerm_application_insights.core.connection_string
   }
   site_config {
-    ftps_state             = "Disabled"
-    vnet_route_all_enabled = true
+    ftps_state               = "Disabled"
+    vnet_route_all_enabled   = true
+    elastic_instance_minimum = 1
   }
   identity {
     type = "SystemAssigned"
@@ -117,10 +119,10 @@ resource "azurerm_resource_group_template_deployment" "smtp_api_connection_acces
 
   parameters_content = jsonencode({
     "servicePrincipalId" = {
-      value = azurerm_logic_app_standard.logic_app.identity.0.principal_id
+      value = azurerm_logic_app_standard.logic_app.identity[0].principal_id
     },
     "servicePrincipalTenantId" = {
-      value = azurerm_logic_app_standard.logic_app.identity.0.tenant_id
+      value = azurerm_logic_app_standard.logic_app.identity[0].tenant_id
     }
   })
 

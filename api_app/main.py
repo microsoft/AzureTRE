@@ -4,6 +4,7 @@ import uvicorn
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi_utils.tasks import repeat_every
 from service_bus.airlock_request_status_update import receive_step_result_message_and_update_status
 
@@ -20,7 +21,7 @@ from api.errors.generic_error import generic_error_handler
 from core import config
 from core.events import create_start_app_handler, create_stop_app_handler
 from services.logging import disable_unwanted_loggers, initialize_logging, telemetry_processor_callback_function
-from service_bus.deployment_status_update import receive_message_and_update_deployment
+from service_bus.deployment_status_updater import DeploymentStatusUpdater
 
 
 def get_application() -> FastAPI:
@@ -45,6 +46,15 @@ def get_application() -> FastAPI:
         logging.error(f"Failed to add RequestTracerMiddleware: {e}")
 
     application.add_middleware(ServerErrorMiddleware, handler=generic_error_handler)
+    # Allow local UI debugging with local API
+    if config.ENABLE_LOCAL_DEBUGGING:
+        application.add_middleware(
+            CORSMiddleware,
+            allow_origins=["http://localhost:3000"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"])
+
     application.add_exception_handler(HTTPException, http_error_handler)
     application.add_exception_handler(RequestValidationError, http422_error_handler)
 
@@ -66,9 +76,10 @@ async def initialize_logging_on_startup():
 
 
 @app.on_event("startup")
-@repeat_every(seconds=20, wait_first=True, logger=logging.getLogger())
-async def update_deployment_status() -> None:
-    await receive_message_and_update_deployment(app)
+async def watch_deployment_status() -> None:
+    logging.info("Starting deployment status watcher thread")
+    statusWatcher = DeploymentStatusUpdater(app)
+    statusWatcher.start()
 
 
 @app.on_event("startup")

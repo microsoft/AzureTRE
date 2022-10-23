@@ -35,6 +35,8 @@ jobs:
               - 'templates/core/**/*'
             core_version:
               - 'templates/core/version.txt'
+            docs:
+              - 'docs/**/*'
 
       - name: Terraform format check
         if: ${{ steps.filter.outputs.terraform == 'true' }}
@@ -58,7 +60,7 @@ jobs:
         # the slim image is 2GB smaller and we don't use the extra stuff
         # Moved this after the Terraform checks above due something similar to this issue:
         # https://github.com/github/super-linter/issues/2433
-        uses: github/super-linter/slim@v4.9.5
+        uses: github/super-linter/slim@v4.9.7
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
@@ -75,3 +77,9 @@ jobs:
           VALIDATE_DOCKERFILE_HADOLINT: true
           VALIDATE_TSX: true
           VALIDATE_TYPESCRIPT_ES: true
+
+      - name: Docs validation
+        if: ${{ steps.filter.outputs.docs == 'true' }}
+        run: |
+          pip install -r docs/requirements.txt
+          mkdocs build --strict

@@ -54,7 +54,7 @@ def sample_status_changed_event(new_status="draft", previous_status=None):
 def sample_airlock_notification_event(status="draft"):
     status_changed_event = EventGridEvent(
         event_type="airlockNotification",
-        data=AirlockNotificationData(request_id=AIRLOCK_REQUEST_ID, event_type="status_changed", event_value=status, emails={"workspace_researcher": ["researcher@outlook.com"], "workspace_owner": ["owner@outlook.com"], "airlock_manager": ["manager@outlook.com"]}, workspace_id=WORKSPACE_ID[-4:]).__dict__,
+        data=AirlockNotificationData(request_id=AIRLOCK_REQUEST_ID, event_type="status_changed", event_value=status, emails={"workspace_researcher": ["researcher@outlook.com"], "workspace_owner": ["owner@outlook.com"], "airlock_manager": ["manager@outlook.com"]}, workspace_id=WORKSPACE_ID).__dict__,
         subject=f"{AIRLOCK_REQUEST_ID}/airlockNotification",
         data_version="2.0"
     )
@@ -258,30 +258,16 @@ async def test_update_and_publish_event_airlock_request_without_status_change_sh
     assert send_airlock_notification_event_mock.call_count == 0
 
 
-async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_current_user_review_and_status_arguments_should_ignore_status(airlock_request_repo_mock):
+async def test_get_airlock_requests_by_user_and_workspace_with_status_filter_calls_repo(airlock_request_repo_mock):
     workspace = sample_workspace()
     user = create_workspace_airlock_manager_user()
     airlock_request_repo_mock.get_airlock_requests = MagicMock()
 
     get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo_mock,
-                                               status=AirlockRequestStatus.Approved, awaiting_current_user_review=True)
+                                               status=AirlockRequestStatus.InReview)
 
-    airlock_request_repo_mock.get_airlock_requests.assert_called_once_with(workspace_id=workspace.id, user_id=None, type=None, status=AirlockRequestStatus.InReview)
-
-
-async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_current_user_review_argument_by_non_airlock_manger_should_return_empty_list(airlock_request_repo_mock):
-    user = create_test_user()
-    airlock_requests = get_airlock_requests_by_user_and_workspace(user=user, workspace=sample_workspace(), airlock_request_repo=airlock_request_repo_mock, awaiting_current_user_review=True)
-    assert airlock_requests == []
-
-
-@pytest.mark.parametrize("role", get_required_roles(endpoint=create_airlock_review))
-async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_current_user_review_argument_requires_same_roles_as_review_endpoint(role, airlock_request_repo_mock):
-    airlock_request_repo_mock.get_airlock_requests = MagicMock()
-    user = create_test_user()
-    user.roles = [role]
-    get_airlock_requests_by_user_and_workspace(user=user, workspace=sample_workspace(), airlock_request_repo=airlock_request_repo_mock, awaiting_current_user_review=True)
-    airlock_request_repo_mock.get_airlock_requests.assert_called_once()
+    airlock_request_repo_mock.get_airlock_requests.assert_called_once_with(workspace_id=workspace.id, user_id=None, type=None,
+                                                                           status=AirlockRequestStatus.InReview, order_by=None, order_ascending=True)
 
 
 @pytest.mark.parametrize("action, required_roles, airlock_request_repo_mock", [

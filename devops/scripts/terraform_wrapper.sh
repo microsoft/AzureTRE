@@ -91,7 +91,7 @@ if [[ -z ${tf_logfile+x} ]]; then
     echo -e "No logfile provided, using ${tf_logfile}\n"
 fi
 
-terraform init -input=false -backend=true -reconfigure -upgrade \
+terraform init -input=false -backend=true -reconfigure \
     -backend-config="resource_group_name=${mgmt_resource_group_name}" \
     -backend-config="storage_account_name=${mgmt_storage_account_name}" \
     -backend-config="container_name=${container_name}" \

@@ -156,6 +156,26 @@ resource "azurerm_firewall_application_rule_collection" "resource_processor_subn
     source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
   }
 
+  # TODO: remove this rule when all bundles have mirrored their plugins
+  # https://github.com/microsoft/AzureTRE/issues/2445
+  rule {
+    name = "terraform-sources"
+    protocol {
+      port = "443"
+      type = "Https"
+    }
+    protocol {
+      port = "80"
+      type = "Http"
+    }
+
+    target_fqdns = [
+      "registry.terraform.io",
+      "releases.hashicorp.com",
+    ]
+    source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
+  }
+
   depends_on = [
     azurerm_firewall_application_rule_collection.shared_subnet
   ]

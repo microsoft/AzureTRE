@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.3.32
+version: 0.4.2
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre

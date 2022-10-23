@@ -7,6 +7,7 @@ API_MIGRATE_DATABASE = "Migrate documents in the database"
 API_GET_MY_OPERATIONS = "Get Operations that the current user has initiated"
 API_GET_ALL_WORKSPACES = "Get all workspaces"
 API_GET_WORKSPACE_BY_ID = "Get workspace by Id"
+API_GET_WORKSPACE_SCOPE_ID_BY_WORKSPACE_ID = "Get workspace Scope Id by workspace Id"
 API_CREATE_WORKSPACE = "Create a workspace"
 API_DELETE_WORKSPACE = "Delete workspace"
 API_UPDATE_WORKSPACE = "Update an existing workspace"
@@ -35,6 +36,7 @@ API_SUBMIT_AIRLOCK_REQUEST = "Submit an airlock request"
 API_CANCEL_AIRLOCK_REQUEST = "Cancel an airlock request"
 API_REVIEW_AIRLOCK_REQUEST = "Review an airlock request"
 API_AIRLOCK_REQUEST_LINK = "Get a token to access airlock request"
+API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE = "Create an Airlock Review User Resource"
 
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"
@@ -209,6 +211,10 @@ AIRLOCK_NO_AIRLOCK_MANAGER_EMAIL = "There are no Airlock Managers with an email 
 AIRLOCK_ACTION_REVIEW = "review"
 AIRLOCK_ACTION_CANCEL = "cancel"
 AIRLOCK_ACTION_SUBMIT = "submit"
+
+# Airlock Review Decisions
+AIRLOCK_REVIEW_DECISION_APPROVED = "approved"
+AIRLOCK_REVIEW_DECISION_REJECTED = "rejected"
 
 # Deployments
 RESOURCE_STATUS_AWAITING_DEPLOYMENT_MESSAGE = "This resource is waiting to be deployed"

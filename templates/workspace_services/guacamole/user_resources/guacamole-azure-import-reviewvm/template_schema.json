@@ -25,10 +25,17 @@
         "title": "VM Size",
         "description": "Select size of VM",
         "enum": [
-          "2 CPU | 8GB RAM",
-          "4 CPU | 16GB RAM"
+          "2 CPU | 8GB RAM"
         ],
         "updateable": true
+      },
+      "airlock_request_sas_url": {
+        "$id": "#/properties/airlock_request_sas_url",
+        "type": "string",
+        "title": "Airlock request SAS Token",
+        "description": "SAS Token for airlock request",
+        "updateable": false,
+        "sensitive": true
       }
     }
 }
