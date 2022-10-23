@@ -7,7 +7,7 @@ from tre.output import output_option, query_option
 from .contexts import pass_shared_service_operation_context, SharedServiceOperationContext
 
 
-def operation_id_completion(ctx, param, incomplete):
+def operation_id_completion(ctx: click.Context, param: click.Parameter, incomplete: str):
     log = logging.getLogger(__name__)
     parent_ctx = ctx.parent
     workspace_id = parent_ctx.params["workspace_id"]

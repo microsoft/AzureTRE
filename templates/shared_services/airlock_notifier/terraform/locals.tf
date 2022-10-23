@@ -9,4 +9,5 @@ locals {
     tre_id                = var.tre_id
     tre_shared_service_id = var.tre_resource_id
   }
+  default_tre_url = "https://${var.tre_id}.${data.azurerm_resource_group.core.location}.cloudapp.azure.com"
 }

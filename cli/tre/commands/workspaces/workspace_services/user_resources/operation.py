@@ -7,7 +7,7 @@ from tre.api_client import ApiClient
 from .contexts import pass_user_resource_operation_context, UserResourceOperationContext
 
 
-def operation_id_completion(ctx: click.Context, param, incomplete):
+def operation_id_completion(ctx: click.Context, param: click.Parameter, incomplete: str):
     log = logging.getLogger(__name__)
     parent_ctx = ctx.parent
     user_resource_id = parent_ctx.params["user_resource_id"]

@@ -2,6 +2,8 @@ import uuid
 from datetime import datetime
 from typing import List
 from pydantic import BaseModel, Field
+from models.domain.operation import Operation
+from models.schemas.operation import get_sample_operation
 from models.domain.airlock_request import AirlockActions, AirlockRequest, AirlockRequestType
 
 
@@ -43,6 +45,19 @@ class AirlockRequestInResponse(BaseModel):
         schema_extra = {
             "example": {
                 "airlock_request": get_sample_airlock_request("933ad738-7265-4b5f-9eae-a1a62928772e", "121e921f-a4aa-44b3-90a9-e8da030495ef")
+            }
+        }
+
+
+class AirlockRequestAndOperationInResponse(BaseModel):
+    airlockRequest: AirlockRequest
+    operation: Operation
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "airlockRequest": get_sample_airlock_request("933ad738-7265-4b5f-9eae-a1a62928772e", "121e921f-a4aa-44b3-90a9-e8da030495ef"),
+                "operation": get_sample_operation("121e921f-a4aa-44b3-90a9-e8da030495ef")
             }
         }
 

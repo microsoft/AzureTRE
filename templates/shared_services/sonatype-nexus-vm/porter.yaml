@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-sonatype-nexus
-version: 2.2.1
+version: 2.2.2
 description: "A Sonatype Nexus shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -72,9 +72,6 @@ install:
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         ssl_cert_name: "{{ bundle.parameters.ssl_cert_name }}"
-        mgmt_resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
-
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -92,8 +89,7 @@ upgrade:
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
-        mgmt_resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
+        ssl_cert_name: "{{ bundle.parameters.ssl_cert_name }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -111,8 +107,6 @@ uninstall:
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         ssl_cert_name: "{{ bundle.parameters.ssl_cert_name }}"
-        mgmt_resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"

@@ -34,7 +34,7 @@ def workspace_services_list(workspace_context, output_format, query):
         f'/api/workspaces/{workspace_id}/workspace-services',
         scope_id=workspace_scope,
     )
-    output(response.text, output_format=output_format, query=query, default_table_query=r"workspaceServices[].{id:id,template_name:templateName,template_version:templateVersion,sdeployment_status:deploymentStatus}")
+    output(response, output_format=output_format, query=query, default_table_query=r"workspaceServices[].{id:id,template_name:templateName,template_version:templateVersion,sdeployment_status:deploymentStatus}")
 
 
 @click.command(name="new", help="Create a new workspace-service")
@@ -72,7 +72,7 @@ def workspace_services_create(workspace_context: WorkspaceContext, definition, d
     )
 
     if no_wait:
-        output(response.text, output_format=output_format, query=query)
+        output(response, output_format=output_format, query=query)
         return response.text
     else:
         operation_url = response.headers['location']

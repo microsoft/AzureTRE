@@ -6,7 +6,7 @@ from tre.output import output, output_option, query_option
 from .contexts import SharedServiceTemplateContext, pass_shared_service_template_context
 
 
-def template_name_completion(ctx, param, incomplete):
+def template_name_completion(ctx: click.Context, param: click.Parameter, incomplete: str):
     log = logging.getLogger(__name__)
     client = ApiClient.get_api_client_from_config()
     response = client.call_api(log, 'GET', '/api/shared-service-templates')
@@ -41,7 +41,7 @@ def shared_service_template_show(shared_service_template_context: SharedServiceT
         f'/api/shared-service-templates/{template_name}',
     )
 
-    output(response.text, output_format=output_format, query=query, default_table_query=r"{id: id, name:name, title: title, version:version, description:description}")
+    output(response, output_format=output_format, query=query, default_table_query=r"{id: id, name:name, title: title, version:version, description:description}")
 
 
 shared_service_template.add_command(shared_service_template_show)
