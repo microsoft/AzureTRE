@@ -157,4 +157,7 @@ async def test_airlock_flow(verify) -> None:
         # 11. delete workspace (cleanup)
         LOGGER.info("Deleting workspace")
         admin_token = await get_admin_token(verify)
-        await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
+        # we don't really care if the workspace is deleted successfully, so not waiting for it.
+        disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
+        # but still need to wait a bit for the delete request to be issued to the API.
+        await asyncio.sleep(30)
