@@ -19,33 +19,7 @@ The files for the dev container are located in `/.devcontainer/` folder.
 !!! tip
     An alternative of running the development container locally is to use [GitHub Codespaces](https://docs.github.com/en/codespaces).
 
-## Clone the Azure TRE Git repository
-
-!!! tip
-    If using Windows please clone the repository to a Linux file system, i.e. to `/xxx` rather than `c:\`, for example within Windows Subsytem for Linux. If you clone the repository to a Windows file system you will likely hit issues with file permissions as described in this issue: <https://github.com/microsoft/AzureTRE/issues/1395>
-
-  ```cmd
-  git clone https://github.com/microsoft/AzureTRE.git
-  ```
-
-  The Git repository will host some basic configuration for the TRE instances that are deployed from a given repository. Create a new branch for the instance that you are about to deploy.
-
-  ```cmd
-  cd AzureTRE
-  git checkout -b quickstartenv
-  ```
-
-1. Open the cloned repository in Visual Studio Code and connect to the development container.
-
-  ```cmd
-  code .
-  ```
-
-!!! tip
-    Visual Studio Code should recognize the available development container and ask you to open the folder using it. For additional details on connecting to remote containers, please see the [Open an existing folder in a container](https://code.visualstudio.com/docs/remote/containers#_quick-start-open-an-existing-folder-in-a-container) quickstart.
-
-When you start the development container for the first time, the container will be built. This usually takes a few minutes.
 
 ## Next steps
 
-* [AD Tenant Choices](./ad-tenant-choices.md)
+* [AzureTRE Deployment Repository](./deployment-repo.md)
