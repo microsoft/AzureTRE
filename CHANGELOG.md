@@ -1,6 +1,6 @@
 <!-- markdownlint-disable MD041 -->
 <!-- line format short be: change short description (#pr_numer) -->
-## 0.7.0 (Unreleased)
+## 0.6.1 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
 
@@ -9,6 +9,7 @@ FEATURES:
 ENHANCEMENTS:
 
 BUG FIXES:
+* Show the correct initiator of airlock requests in UI and in API queries ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
 
 COMPONENTS:
 
