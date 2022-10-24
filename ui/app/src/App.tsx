@@ -18,12 +18,14 @@ import { CreateUpdateResourceContext } from './contexts/CreateUpdateResourceCont
 import { CreateFormResource, ResourceType } from './models/resourceType';
 import { Footer } from './components/shared/Footer';
 import { initializeFileTypeIcons } from '@fluentui/react-file-type-icons';
+import { CostResource } from './models/costs';
+import { CostsContext } from './contexts/CostsContext';
 
 export const App: React.FunctionComponent = () => {
   const [appRoles, setAppRoles] = useState([] as Array<string>);
   const [selectedWorkspace, setSelectedWorkspace] = useState({} as Workspace);
   const [workspaceRoles, setWorkspaceRoles] = useState([] as Array<string>);
-
+  const [costs, setCosts] = useState([] as Array<CostResource>);
   const [createFormOpen, setCreateFormOpen] = useState(false);
   const [createFormResource, setCreateFormResource] = useState({ resourceType: ResourceType.Workspace } as CreateFormResource);
 
@@ -73,6 +75,10 @@ export const App: React.FunctionComponent = () => {
                   </Stack.Item>
                   <Stack.Item grow={100} className='tre-body'>
                     <GenericErrorBoundary>
+                    <CostsContext.Provider value={{
+                           costs: costs,
+                           setCosts: (costs: Array<CostResource>) => { setCosts(costs)},
+                        }}>
                       <Routes>
                         <Route path="*" element={<RootLayout />} />
                         <Route path="/workspaces/:workspaceId//*" element={
@@ -87,6 +93,7 @@ export const App: React.FunctionComponent = () => {
                           </WorkspaceContext.Provider>
                         } />
                       </Routes>
+                      </CostsContext.Provider>
                     </GenericErrorBoundary>
                   </Stack.Item>
                   <Stack.Item grow>
