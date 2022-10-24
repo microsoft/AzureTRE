@@ -1,7 +1,6 @@
 import { Operation } from "./operation";
 import { ResourceType } from "./resourceType";
 import { User } from "./user";
-import { CostItem } from "./costs";
 
 export interface Resource {
     id: string,
