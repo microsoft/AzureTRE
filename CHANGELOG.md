@@ -1,8 +1,18 @@
 <!-- markdownlint-disable MD041 -->
 <!-- line format short be: change short description (#pr_numer) -->
-## 0.6.0 (Unreleased)
+## 0.7.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
+
+FEATURES:
+
+ENHANCEMENTS:
+
+BUG FIXES:
+
+COMPONENTS:
+
+## 0.6.0 (October 24, 2022)
 
 FEATURES:
 * Added filtering and sorting to Airlock UI ([#2511](https://github.com/microsoft/AzureTRE/pull/2730))
@@ -17,10 +27,35 @@ ENHANCEMENTS:
 * `tre` CLI: added `raw` output option, improved `airlock-requests` handling, more consistent exit codes on error, added examples to CLI README.md
 
 BUG FIXES:
+* Pin Porter's plugin/mixin versions used ([#2762](https://github.com/microsoft/AzureTRE/pull/2762))
 * Fix issues with AML workspace service deployment ([#2768](https://github.com/microsoft/AzureTRE/pull/2768))
 
 COMPONENTS:
-
+| name | version |
+| ----- | ----- |
+| devops | 0.4.2 |
+| core | 0.4.37 |
+| tre-workspace-base | 0.4.2 |
+| tre-workspace-unrestricted | 0.2.0 |
+| tre-workspace-airlock-import-review | 0.4.0 |
+| tre-service-mlflow | 0.4.0 |
+| tre-service-innereye | 0.4.0 |
+| tre-workspace-service-gitea | 0.5.0 |
+| tre-workspace-service-mysql | 0.2.0 |
+| tre-service-guacamole-linuxvm | 0.5.2 |
+| tre-service-guacamole-export-reviewvm | 0.0.6 |
+| tre-service-guacamole-windowsvm | 0.5.2 |
+| tre-service-guacamole-import-reviewvm | 0.1.3 |
+| tre-service-guacamole | 0.5.0 |
+| tre-user-resource-aml-compute-instance | 0.4.1 |
+| tre-service-azureml | 0.5.6 |
+| tre-shared-service-cyclecloud | 0.3.0 |
+| tre-shared-service-gitea | 0.4.0 |
+| tre-shared-service-airlock-notifier | 0.2.2 |
+| tre-shared-service-admin-vm | 0.2.0 |
+| tre-shared-service-certs | 0.2.0 |
+| tre-shared-service-sonatype-nexus | 2.2.2 |
+| tre-shared-service-firewall | 0.6.1 |
 
 ## 0.5.1 (October 12, 2022)
 
