@@ -20,4 +20,4 @@ Follow [this guide](https://learn.microsoft.com/en-us/azure/active-directory/fun
 
 ## Next steps
 
-* [Pre-deployment steps](./pre-deployment-steps.md)
+* [Setup Auth configuration](./setup-auth-entities.md)

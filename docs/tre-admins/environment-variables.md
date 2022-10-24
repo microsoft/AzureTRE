@@ -25,10 +25,10 @@
 | `TRE_URL`| This will be generated for you by populating your `TRE_ID`. This is used so that you can automatically register bundles |
 | `CORE_ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. `/22` or larger. |
 | `TRE_ADDRESS_SPACE` | The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). E.g. `10.0.0.0/12`|
-| `SWAGGER_UI_CLIENT_ID` | Generated when following [pre-deployment steps](./setup-instructions/pre-deployment-steps.md) guide. Client ID for swagger client to make requests. |
-| `AAD_TENANT_ID` | Generated when following [pre-deployment steps](./setup-instructions/pre-deployment-steps.md) guide. Tenant id against which auth is performed. |
-| `API_CLIENT_ID` | Generated when following [pre-deployment steps](./setup-instructions/pre-deployment-steps.md) guide. Client id of the "TRE API". |
-| `API_CLIENT_SECRET` | Generated when following [pre-deployment steps](./setup-instructions/pre-deployment-steps.md) guide. Client secret of the "TRE API". |
+| `SWAGGER_UI_CLIENT_ID` | Generated when following [pre-deployment steps](./setup-instructions/setup-auth-entities.md) guide. Client ID for swagger client to make requests. |
+| `AAD_TENANT_ID` | Generated when following [pre-deployment steps](./setup-instructions/setup-auth-entities.md) guide. Tenant id against which auth is performed. |
+| `API_CLIENT_ID` | Generated when following [pre-deployment steps](./setup-instructions/setup-auth-entities.md) guide. Client id of the "TRE API". |
+| `API_CLIENT_SECRET` | Generated when following [pre-deployment steps](./setup-instructions/setup-auth-entities.md) guide. Client secret of the "TRE API". |
 | `STATEFUL_RESOURCES_LOCKED` | If set to `false` locks on stateful resources won't be created. A recommended setting for developers. |
 | `ENABLE_AIRLOCK_MALWARE_SCANNING` | If False, Airlock requests will skip the malware scanning stage. If set to True, Setting up a scanner manually is required! |
 | `ENABLE_LOCAL_DEBUGGING` | Set to `false` by default. Setting this to `true` will ensure that Azure resources are accessible from your local development machine. (e.g. ServiceBus and Cosmos) |
@@ -52,8 +52,7 @@
   | `WORKSPACE_API_CLIENT_SECRET` | Each workspace is secured behind it's own AD Application. This is the secret for that application.|
 
 ## For CI/CD pipelines in github environment secrets
-
   | Variable | Description |
   | -------- | ----------- |
-  | `AZURE_CREDENTIALS`| Credentials used to authorize CI/CD workflows to provision resources for the TRE workspaces and workspace services. This is basically your ARM client creentials in json format. Read more about how to create it and its format [here](tre-admins/setup-instructions/workflows.md##create-a-service principal-for-provisioning-resources)|
+  | `AZURE_CREDENTIALS`| Credentials used to authorize CI/CD workflows to provision resources for the TRE workspaces and workspace services. This is basically your ARM client creentials in json format. Read more about how to create it and its format [here](./setup-instructions/workflows.md##create-a-service principal-for-provisioning-resources)|
   | `MS_TEAMS_WEBHOOK_URI` | URI for the Teams channel webhook |

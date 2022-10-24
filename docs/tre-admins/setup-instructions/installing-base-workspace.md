@@ -9,7 +9,7 @@ Run the following in a terminal: -
   make bundle-register DIR=AzureTRE/templates/workspaces/base BUNDLE_TYPE=workspace
   ```
 
-If you have setup the TEST_ACCOUNT_CLIENT_ID in the [Pre-deployment steps](./pre-deployment-steps.md), then your bundle will automatically publish and you can skip to 'Creating a base workspace'. Otherwise continue with these steps: -
+If you have setup the TEST_ACCOUNT_CLIENT_ID in the [Setup Auth configuration](setup-auth-entities.md), then your bundle will automatically publish and you can skip to 'Creating a base workspace'. Otherwise continue with these steps: -
 
 1. Copy the resulting JSON payload.
 
@@ -44,7 +44,7 @@ As explained in the [auth guide](../auth.md), every workspace has a correspondin
 ```
 
 !!! caution
-    If you're using a separate tenant for AAD app registrations to the one where you've deployed the TRE infrastructure resources, ensure you've signed into that tenant in the `az cli` before running the above command. See **Using a separate Azure Active Directory tenant** in [Pre-deployment steps](./pre-deployment-steps.md) for more details.
+    If you're using a separate tenant for AAD app registrations to the one where you've deployed the TRE infrastructure resources, ensure you've signed into that tenant in the `az cli` before running the above command. See **Using a separate Azure Active Directory tenant** in [Setup Auth configuration](setup-auth-entities.md) for more details.
 
 Running the script will report `WORKSPACE_API_CLIENT_ID` and `WORKSPACE_API_CLIENT_SECRET` for the generated app. Copy these into `/templates/core/.env` so that automated testing will work. You also need to use `WORKSPACE_API_CLIENT_ID` in the POST body below.
 

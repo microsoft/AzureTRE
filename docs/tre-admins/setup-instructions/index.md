@@ -6,7 +6,7 @@ This section provide the guidelines for any engineer to deploy AzureTRE. This ho
 
 1. [AD Tenant](ad-tenant-choices.md)
 
-1. [Pre-deployment Steps](pre-deployment-steps.md)
+1. [Setup Auth configuration](setup-auth-entities.md)
 
 1. [Deploying Azure TRE](deploying-azure-tre.md)
 
