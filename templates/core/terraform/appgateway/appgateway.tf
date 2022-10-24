@@ -113,9 +113,9 @@ resource "azurerm_application_gateway" "agw" {
     # in the event of a component being unavailable
     # It also avoids incurring the Azure Management API calls to resource processor
     # when not needed (which can cause throttling)
-    path                                      = "/api/ping"
-    timeout                                   = "30"
-    unhealthy_threshold                       = "3"
+    path                = "/api/ping"
+    timeout             = "30"
+    unhealthy_threshold = "3"
   }
 
   # Public HTTPS listener
