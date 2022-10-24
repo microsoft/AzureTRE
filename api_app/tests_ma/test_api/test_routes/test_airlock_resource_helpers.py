@@ -266,7 +266,7 @@ async def test_get_airlock_requests_by_user_and_workspace_with_status_filter_cal
     get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo_mock,
                                                status=AirlockRequestStatus.InReview)
 
-    airlock_request_repo_mock.get_airlock_requests.assert_called_once_with(workspace_id=workspace.id, user_id=None, type=None,
+    airlock_request_repo_mock.get_airlock_requests.assert_called_once_with(workspace_id=workspace.id, initiator_user_id=None, type=None,
                                                                            status=AirlockRequestStatus.InReview, order_by=None, order_ascending=True)
 
 

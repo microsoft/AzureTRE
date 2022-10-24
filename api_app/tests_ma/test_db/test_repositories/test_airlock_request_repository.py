@@ -137,7 +137,7 @@ def test_update_airlock_request_should_retry_update_when_etag_is_not_up_to_date(
 
 def test_get_airlock_requests_queries_db(airlock_request_repo):
     airlock_request_repo.container.query_items = MagicMock()
-    expected_query = airlock_request_repo.airlock_requests_query() + f' where c.workspaceId = "{WORKSPACE_ID}"'
+    expected_query = airlock_request_repo.airlock_requests_query() + f' WHERE c.workspaceId = "{WORKSPACE_ID}"'
     expected_parameters = [
         {"name": "@user_id", "value": None},
         {"name": "@status", "value": None},
