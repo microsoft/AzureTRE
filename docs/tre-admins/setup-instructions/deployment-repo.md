@@ -15,7 +15,7 @@ To get started with AzureTRE follow the next steps:
 1. Go to [AzureTRE Deployment repository](https://github.com/microsoft/AzureTRE-Deployment)
 1. Click on use this template to set up your project from this template:
 
-[![Use AzureTRE Deployment template](../../assets/using-tre/use_template.png)](../../assets/using-tre/use_template.png)
+    [![Use AzureTRE Deployment template](../../assets/using-tre/use_template.png)](../../assets/using-tre/use_template.png)
 
 1. Follow the steps in this [Github templates guide](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template) to set up the repo.
 

@@ -8,7 +8,7 @@ This section provide the guidelines for any engineer to deploy AzureTRE. This ho
 
 1. [Setup Auth](setup-auth-entities.md)
 
-1. [Deployment](deploying-azure-tre.md)
+1. [Deployment](manual-deployment.md)
 
 1. [Configure Shared Services](configuring-shared-services.md)
 

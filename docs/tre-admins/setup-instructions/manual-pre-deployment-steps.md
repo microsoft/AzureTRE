@@ -45,4 +45,4 @@ DEBUG="false"
 
 ## Next steps
 
-* [Deploying Azure TRE](deploying-azure-tre.md)
+* [Deploying Azure TRE](manual-deployment.md)

@@ -2,14 +2,14 @@
 
 ## Publishing and registering the base workspace bundle
 
-Run the following in a terminal: -
+Run the following in a terminal:
 
   ```cmd
-  make bundle-publish DIR=AzureTRE/templates/workspaces/base
-  make bundle-register DIR=AzureTRE/templates/workspaces/base BUNDLE_TYPE=workspace
+   make bundle-publish DIR=$AZURETRE_HOME/templates/workspaces/base
+  make bundle-register DIR=$AZURETRE_HOME/templates/workspaces/base BUNDLE_TYPE=workspace
   ```
 
-If you have setup the TEST_ACCOUNT_CLIENT_ID in the [Setup Auth configuration](setup-auth-entities.md), then your bundle will automatically publish and you can skip to 'Creating a base workspace'. Otherwise continue with these steps: -
+If you have setup the TEST_ACCOUNT_CLIENT_ID in the [Setup Auth configuration](setup-auth-entities.md), then your bundle will automatically publish and you can skip to 'Creating a base workspace'. Otherwise continue with these steps:
 
 1. Copy the resulting JSON payload.
 

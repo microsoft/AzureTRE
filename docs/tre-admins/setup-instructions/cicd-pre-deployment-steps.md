@@ -1,8 +1,5 @@
 # Pre-deployment steps
 
-!!! info
-    See [Environment variables](../environment-variables.md) for full details of the deployment related variables.
-
 ## Setup Github Environment
 
 The workflows are using Github environment to source its environment variables. Follow [this guide](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#creating-an-environment) to define it in your github repository and provide it as an input for the workflows.
@@ -62,20 +59,28 @@ Before you can run the `deploy_tre.yml` workflow there are some one-time configu
 }
 ```
 
-### Decide on a TRE ID and Azure resources location
+### Configure Core Secrets
 
-Configure the TRE ID and LOCATION repository secrets
+Configure the following secrets in your github environment -
 
 | <div style="width: 230px">Secret name</div> | Description |
 | ----------- | ----------- |
 | `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `tre-dev-42` will result in a resource group name for Azure TRE instance of `rg-tre-dev-42`. This must be less than 12 characters. Allowed characters: Alphanumeric, underscores, and hyphens. |
 | `LOCATION` | The Azure location (region) for all resources. E.g. `westeurope` |
+| `MGMT_RESOURCE_GROUP_NAME` | The name of the shared resource group for all Azure TRE core resources. |
+| `MGMT_STORAGE_ACCOUNT_NAME` | The name of the storage account to hold the Terraform state and other deployment artifacts. E.g. `mystorageaccount`. |
+| `ACR_NAME` | A globally unique name for the Azure Container Registry (ACR) that will be created to store deployment images. |
+| `CORE_ADDRESS_SPACE` |  The address space for the Azure TRE core virtual network. E.g. `10.1.0.0/22`. Recommended `/22` or larger.  |
+| `TRE_ADDRESS_SPACE` | The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). E.g. `10.0.0.0/12`|
+| `TERRAFORM_STATE_CONTAINER_NAME` | Optional. The name of the blob container to hold the Terraform state. Default value is `tfstate`. |
+| `CORE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan for core infrastructure. Default value is `P1v2`. |
+| `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests. Default value is `P1v2`. |
 
 ### Create app registrations for API authentication
 
 In a previous [Setup Auth configuration](./setup-auth-entities.md) step a new env file was created : /devops/auth.env go to this file and add those env vars to your github environment. Use the values for TRE ID and LOCATION from above.
 
-The contents of your `/devops/auth.env` file should contain : -
+The contents of your `/devops/auth.env` file should contain :
 
   | Variable | Description |
   | -------- | ----------- |
@@ -104,20 +109,9 @@ The `deploy_tre.yml` workflow sends a notification to a Microsoft Teams channel 
   | ----------- | ----------- |
   | `MS_TEAMS_WEBHOOK_URI` | URI for the Teams channel webhook |
 
-### Configure repository secrets
 
-Configure additional repository secrets used in the deployment workflow
-
-| <div style="width: 230px">Secret name</div> | Description |
-| ----------- | ----------- |
-| `MGMT_RESOURCE_GROUP_NAME` | The name of the shared resource group for all Azure TRE core resources. |
-| `MGMT_STORAGE_ACCOUNT_NAME` | The name of the storage account to hold the Terraform state and other deployment artifacts. E.g. `mystorageaccount`. |
-| `ACR_NAME` | A globally unique name for the Azure Container Registry (ACR) that will be created to store deployment images. |
-| `CORE_ADDRESS_SPACE` |  The address space for the Azure TRE core virtual network. E.g. `10.1.0.0/22`. Recommended `/22` or larger.  |
-| `TRE_ADDRESS_SPACE` | The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). E.g. `10.0.0.0/12`|
-| `TERRAFORM_STATE_CONTAINER_NAME` | Optional. The name of the blob container to hold the Terraform state. Default value is `tfstate`. |
-| `CORE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan for core infrastructure. Default value is `P1v2`. |
-| `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests. Default value is `P1v2`. |
+!!! info
+    See [Environment variables](../environment-variables.md) for full details of the deployment related variables.
 
 ### Setup Github env in workflow
 
@@ -131,4 +125,4 @@ With all the repository secrets set, you can trigger a workflow run by pushing t
 
 ## Next steps
 
-* [Deploying Azure TRE in Pipelines](deploying-azure-tre-cicd.md)
+* [Deploying Azure TRE in Pipelines](cicd-deplyment.md)
