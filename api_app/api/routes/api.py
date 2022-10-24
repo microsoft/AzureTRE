@@ -34,6 +34,7 @@ router.include_router(ping.router, tags=["health"])
 # Core API
 core_router = APIRouter(prefix=config.API_PREFIX)
 core_router.include_router(health.router, tags=["health"])
+core_router.include_router(ping.router, tags=["health"])
 core_router.include_router(workspace_templates.workspace_templates_admin_router, tags=["workspace templates"])
 core_router.include_router(workspace_service_templates.workspace_service_templates_core_router, tags=["workspace service templates"])
 core_router.include_router(user_resource_templates.user_resource_templates_core_router, tags=["user resource templates"])
