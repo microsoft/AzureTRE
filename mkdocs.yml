@@ -56,18 +56,19 @@ nav:
   - QuickStart: # Setup steps for anyone performing an initial deployment of the AzureTRE for eval purposes
       - tre-admins/setup-instructions/index.md
       - 1. Prerequisites: tre-admins/setup-instructions/prerequisites.md
-      - 2. AzureTRE Deployment Repository: tre-admins/setup-instructions/deployment-repo.md
+      - 2. Deployment Repository: tre-admins/setup-instructions/deployment-repo.md
       - 3. AD Tenant: tre-admins/setup-instructions/ad-tenant-choices.md
-      - 4. Deploying Azure TRE:
-          - Manual Deployment:
+      - 4. Setup Auth: tre-admins/setup-instructions/setup-auth-entities.md
+      - 5. Deployment:
+          - Manual:
               - Pre-deployment Steps: tre-admins/setup-instructions/manual-pre-deployment-steps.md
               - Deployment Steps: tre-admins/setup-instructions/deploying-azure-tre.md
-          - CI/CD Deployment:
+          - CI/CD:
               - Pre-deployment Steps: tre-admins/setup-instructions/cicd-pre-deployment-steps.md
               - Deployment Steps: tre-admins/setup-instructions/deploying-azure-tre-cicd.md
-      - 5. Configuring Shared Services: tre-admins/setup-instructions/configuring-shared-services.md
-      - 6. Installing Base Workspace: tre-admins/setup-instructions/installing-base-workspace.md
-      - 7. Installing Workspace Service and User Resource: tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md
+      - 6. Configure Shared Services: tre-admins/setup-instructions/configuring-shared-services.md
+      - 7. Install Base Workspace: tre-admins/setup-instructions/installing-base-workspace.md
+      - 8. Install Workspace Service and User Resource: tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md
 
   - Using the Azure TRE: # Documentation for users of the TRE
       - Introduction: using-tre/index.md
