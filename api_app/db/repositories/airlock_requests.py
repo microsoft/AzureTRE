@@ -103,12 +103,13 @@ class AirlockRequestRepository(BaseRepository):
 
         return airlock_request
 
-    def get_airlock_requests(self, workspace_id: str, user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
-        query = self.airlock_requests_query() + f' where c.workspaceId = "{workspace_id}"'
+    def get_airlock_requests(self, workspace_id: str, initiator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
+        query = self.airlock_requests_query() + f' WHERE c.workspaceId = "{workspace_id}"'
 
         # optional filters
-        if user_id:
-            query += ' AND c.user.id=@user_id'
+        if initiator_user_id:
+            # If the resource has history, get the first user object (initiator)
+            query += ' AND (ARRAY_LENGTH(c.history) > 0? c.history[0].user.id=@user_id: c.user.id=@user_id)'
         if status:
             query += ' AND c.status=@status'
         if type:
@@ -120,7 +121,7 @@ class AirlockRequestRepository(BaseRepository):
             query += ' ASC' if order_ascending else ' DESC'
 
         parameters = [
-            {"name": "@user_id", "value": user_id},
+            {"name": "@user_id", "value": initiator_user_id},
             {"name": "@status", "value": status},
             {"name": "@type", "value": type},
         ]

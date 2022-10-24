@@ -1,4 +1,4 @@
-import { DefaultButton, Dialog, DialogFooter, DialogType, DocumentCard, DocumentCardActivity, DocumentCardDetails, DocumentCardTitle, DocumentCardType, FontIcon, getTheme, IStackItemStyles, IStackStyles, IStackTokens, mergeStyles, MessageBar, MessageBarType, Modal, Panel, PanelType, Persona, PersonaSize, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from "@fluentui/react";
+import { DefaultButton, Dialog, DialogFooter, DocumentCard, DocumentCardActivity, DocumentCardDetails, DocumentCardTitle, DocumentCardType, FontIcon, getTheme, IStackItemStyles, IStackStyles, IStackTokens, mergeStyles, MessageBar, MessageBarType, Modal, Panel, PanelType, Persona, PersonaSize, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from "@fluentui/react";
 import moment from "moment";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -176,7 +176,11 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
               <b>Initiator</b>
             </Stack.Item>
             <Stack.Item styles={stackItemStyles}>
-              <Persona text={request.user.name} size={PersonaSize.size32} />
+              <Persona size={PersonaSize.size32} text={
+                request.history?.length > 0
+                  ? request.history[0].user.name
+                  : request.user.name
+              } />
             </Stack.Item>
           </Stack>
 

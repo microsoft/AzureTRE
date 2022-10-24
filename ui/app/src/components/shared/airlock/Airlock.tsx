@@ -178,15 +178,18 @@ export const Airlock: React.FunctionComponent = () => {
         fieldName: 'requestTitle'
       },
       {
-        key: 'creator_user_id',
+        key: 'initiator',
         name: 'Initiator',
         ariaLabel: 'Creator of the airlock request',
         minWidth: 150,
         maxWidth: 200,
         isResizable: true,
-        fieldName: 'initiator',
-        onRender: (request: AirlockRequest) => <Persona size={ PersonaSize.size24 } text={ request.user?.name } />,
-        isFiltered: filters.has('creator_user_id')
+        onRender: (request: AirlockRequest) => <Persona size={ PersonaSize.size24 } text={
+          request.history?.length > 0
+            ? request.history[0].user.name
+            : request.user.name
+        } />,
+        isFiltered: filters.has('initiator_user_id')
       },
       {
         key: 'requestType',
@@ -275,7 +278,7 @@ export const Airlock: React.FunctionComponent = () => {
       iconProps: { iconName: 'EditContact' },
       onClick: () => {
         const userId = account.localAccountId.split('.')[0];
-        setFilters(new Map([['creator_user_id', userId]]));
+        setFilters(new Map([['initiator_user_id', userId]]));
       }
     });
   }
