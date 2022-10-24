@@ -1,3 +1,4 @@
+import logging
 from typing import Tuple
 from azure.core import exceptions
 from azure.cosmos.aio import CosmosClient
@@ -38,7 +39,8 @@ async def create_state_store_status(credential) -> Tuple[StatusEnum, str]:
     except CosmosHttpResponseError:
         status = StatusEnum.not_ok
         message = strings.STATE_STORE_ENDPOINT_NOT_ACCESSIBLE
-    except:  # noqa: E722 flake8 - no bare excepts
+    except Exception as e:
+        logging.error("Failed to query cosmos db status", exc_info=e)
         status = StatusEnum.not_ok
         message = strings.UNSPECIFIED_ERROR
     return status, message
@@ -59,7 +61,8 @@ async def create_service_bus_status(credential) -> Tuple[StatusEnum, str]:
     except ServiceBusAuthenticationError:
         status = StatusEnum.not_ok
         message = strings.SERVICE_BUS_AUTHENTICATION_ERROR
-    except:  # noqa: E722 flake8 - no bare excepts
+    except Exception as e:
+        logging.error("Failed to query service bus status", exc_info=e)
         status = StatusEnum.not_ok
         message = strings.UNSPECIFIED_ERROR
     return status, message
@@ -79,7 +82,8 @@ async def create_resource_processor_status(credential) -> Tuple[StatusEnum, str]
                 if health_status != strings.RESOURCE_PROCESSOR_HEALTHY_MESSAGE:
                     status = StatusEnum.not_ok
                     message = strings.RESOURCE_PROCESSOR_GENERAL_ERROR_MESSAGE
-    except:   # noqa: E722 flake8 - no bare excepts
+    except Exception as e:
+        logging.error("Failed to query resource processor status", exc_info=e)
         status = StatusEnum.not_ok
         message = strings.UNSPECIFIED_ERROR
     return status, message

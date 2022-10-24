@@ -11,8 +11,10 @@ router = APIRouter()
 
 
 @router.get("/health", name=strings.API_GET_HEALTH_STATUS)
-@router.get("/", name=strings.API_GET_HEALTH_STATUS)
 async def health_check() -> HealthCheck:
+    # The health endpoint checks the status of key components of the system.
+    # Note that Resource Processor checks incur Azure management calls, so
+    # calling this endpoint frequently may result in API throttling.
     async with credentials.get_credential_async() as credential:
         cosmos, sb, rp = await asyncio.gather(
             create_state_store_status(credential),
