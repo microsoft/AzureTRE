@@ -5,8 +5,8 @@
 Run the following in a terminal: -
 
   ```cmd
-  make bundle-publish DIR=./templates/workspaces/base
-  make bundle-register DIR=./templates/workspaces/base BUNDLE_TYPE=workspace
+  make bundle-publish DIR=AzureTRE/templates/workspaces/base
+  make bundle-register DIR=AzureTRE/templates/workspaces/base BUNDLE_TYPE=workspace
   ```
 
 If you have setup the TEST_ACCOUNT_CLIENT_ID in the [Pre-deployment steps](./pre-deployment-steps.md), then your bundle will automatically publish and you can skip to 'Creating a base workspace'. Otherwise continue with these steps: -

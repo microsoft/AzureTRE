@@ -36,3 +36,24 @@
 | `RESOURCE_PROCESSOR_VMSS_SKU` | The SKU of the VMMS to use for the resource processing VM. |
 | `CORE_APP_SERVICE_PLAN_SKU` | The SKU of AppService plans created for the core infrastructure. |
 | `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests unless otherwise specified. Default value is `P1v2`. |
+
+## For authentication in `/devops/.env`
+
+  | Variable | Description |
+  | -------- | ----------- |
+  | `APPLICATION_ADMIN_CLIENT_ID`| This client will administer AAD Applications for TRE |
+  | `APPLICATION_ADMIN_CLIENT_SECRET`| This client will administer AAD Applications for TRE |
+  | `TEST_ACCOUNT_CLIENT_ID`| This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
+  | `TEST_ACCOUNT_CLIENT_SECRET` | This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
+  | `API_CLIENT_ID` | API application (client) ID. |
+  | `API_CLIENT_SECRET` | API application client secret. |
+  | `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
+  | `WORKSPACE_API_CLIENT_ID` | Each workspace is secured behind it's own AD Application|
+  | `WORKSPACE_API_CLIENT_SECRET` | Each workspace is secured behind it's own AD Application. This is the secret for that application.|
+
+## For CI/CD pipelines in github environment secrets
+
+  | Variable | Description |
+  | -------- | ----------- |
+  | `AZURE_CREDENTIALS`| Credentials used to authorize CI/CD workflows to provision resources for the TRE workspaces and workspace services. This is basically your ARM client creentials in json format. Read more about how to create it and its format [here](tre-admins/setup-instructions/workflows.md##create-a-service principal-for-provisioning-resources)|
+  | `MS_TEAMS_WEBHOOK_URI` | URI for the Teams channel webhook |
