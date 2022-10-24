@@ -76,11 +76,9 @@ Configure the following secrets in your github environment -
 | `CORE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan for core infrastructure. Default value is `P1v2`. |
 | `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests. Default value is `P1v2`. |
 
-### Create app registrations for API authentication
+### Configure Authentication Secrets
 
-In a previous [Setup Auth configuration](./setup-auth-entities.md) step a new env file was created : /devops/auth.env go to this file and add those env vars to your github environment. Use the values for TRE ID and LOCATION from above.
-
-The contents of your `/devops/auth.env` file should contain :
+In a previous [Setup Auth configuration](./setup-auth-entities.md) step a new `/devops/auth.env` env file was created. Go to this file and add those env vars to your github environment:
 
   | Variable | Description |
   | -------- | ----------- |
