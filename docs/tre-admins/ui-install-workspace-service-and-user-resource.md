@@ -2,7 +2,7 @@
 
 ## Publish and register a workspace service template
 
-We will use the [Guacamole workspace service bundle](../../tre-templates/workspace-services/guacamole.md) for the purposes of this tutorial. These steps can be repeated for any workspace service template.
+We will use the [Guacamole workspace service bundle](../tre-templates/workspace-services/guacamole.md) for the purposes of this tutorial. These steps can be repeated for any workspace service template.
 
 Run:
 
