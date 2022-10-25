@@ -758,7 +758,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-       # [PATCH] /workspaces/{workspace_id}/services/{service_id}
+    # [PATCH] /workspaces/{workspace_id}/services/{service_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", side_effect=EntityDoesNotExist)
     async def test_patch_workspace_service_returns_404_if_workspace_service_does_not_exist(self, _, __, app, client):
@@ -905,7 +905,6 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
             app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_BY_ID, workspace_id=WORKSPACE_ID,
                              service_id=SERVICE_ID))
         assert response.status_code == status.HTTP_404_NOT_FOUND
-
 
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service")
