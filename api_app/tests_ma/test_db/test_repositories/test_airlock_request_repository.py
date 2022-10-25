@@ -131,7 +131,7 @@ def test_update_airlock_request_should_retry_update_when_etag_is_not_up_to_date(
     expected_update_attempts = 2
     user = create_test_user()
     mock_existing_request = airlock_request_mock(status=DRAFT)
-    airlock_request_repo.update_airlock_request(original_request=mock_existing_request, user=user, new_status=SUBMITTED)
+    airlock_request_repo.update_airlock_request(original_request=mock_existing_request, updated_by=user, new_status=SUBMITTED)
     assert update_airlock_request_item_mock.call_count == expected_update_attempts
 
 
