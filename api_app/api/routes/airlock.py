@@ -203,7 +203,7 @@ async def create_airlock_review(
     elif airlock_review.reviewDecision.value == AirlockReviewDecision.Rejected:
         review_status = AirlockRequestStatus.RejectionInProgress
 
-    updated_airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=user, workspace=workspace, new_status=review_status, airlock_review=airlock_review)
+    updated_airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, updated_by=user, workspace=workspace, new_status=review_status, airlock_review=airlock_review)
 
     # If there was a VM created for the request, clean it up as it will no longer be needed
     # In this request, we aren't returning the operations for clean up of VMs,
