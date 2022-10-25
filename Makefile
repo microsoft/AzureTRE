@@ -238,10 +238,10 @@ bundle-register:
 	$(call target_title, "Registering ${DIR} bundle") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env,auth \
 	&& az acr login --name $${ACR_NAME}	\
-	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
+	&& ${MAKEFILE_DIR}/devops/scripts/ensure_cli_signed_in.sh TRE_URL="$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" \
 	&& cd ${DIR} \
 	&& ${MAKEFILE_DIR}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" \
-		--current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify \
+		--current --verify \
 		--workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
 workspace_bundle:
