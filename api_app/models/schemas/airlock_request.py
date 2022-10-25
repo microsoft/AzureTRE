@@ -24,6 +24,10 @@ def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> di
         "files": [],
         "title": "a request title",
         "businessJustification": "some business justification",
+        "createdBy": {
+            "id": "a user id",
+            "name": "a user name"
+        },
         "createdWhen": datetime.utcnow().timestamp(),
         "reviews": [
             get_sample_airlock_review("29990431-5451-40e7-a58a-02e2b7c3d7c8"),
@@ -78,7 +82,7 @@ class AirlockRequestWithAllowedUserActionsInList(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "airlock_requests": [
+                "airlockRequests": [
                     get_sample_airlock_request_with_allowed_user_actions("933ad738-7265-4b5f-9eae-a1a62928772e"),
                     get_sample_airlock_request_with_allowed_user_actions("933ad738-7265-4b5f-9eae-a1a62928772e")
                 ]

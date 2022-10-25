@@ -56,6 +56,8 @@ export const Airlock: React.FunctionComponent = () => {
           workspaceCtx.workspaceApplicationIdURI
         );
 
+        console.log(result);
+
         // Map the inner requests and the allowed user actions to state
         requests = result.airlockRequests.map((r: {
           airlockRequest: AirlockRequest,

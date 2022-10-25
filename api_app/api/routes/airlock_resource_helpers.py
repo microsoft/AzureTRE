@@ -136,7 +136,7 @@ def enrich_requests_with_allowed_actions(requests: List[AirlockRequest], user: U
     enriched_requests = []
     for request in requests:
         allowed_actions = get_allowed_actions(request, user, airlock_request_repo)
-        enriched_requests.append(AirlockRequestWithAllowedUserActions(airlockRequest=request, allowed_user_actions=allowed_actions))
+        enriched_requests.append(AirlockRequestWithAllowedUserActions(airlockRequest=request, allowedUserActions=allowed_actions))
     return enriched_requests
 
 

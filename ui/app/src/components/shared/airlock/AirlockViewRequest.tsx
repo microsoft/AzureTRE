@@ -42,10 +42,15 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
         `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}/${requestId}`,
         HttpMethod.Get,
         workspaceCtx.workspaceApplicationIdURI
-      ).then((result) => setRequest(result.airlockRequest));
+      ).then((result) => {
+        const request = result.airlockRequest as AirlockRequest;
+        request.allowedUserActions = result.allowedUserActions;
+        setRequest(request);
+      });
     } else {
       setRequest(req);
     }
+    console.log(req);
   }, [apiCall, requestId, props.requests, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI]);
 
   // Retrieve a link to view/edit the airlock files
