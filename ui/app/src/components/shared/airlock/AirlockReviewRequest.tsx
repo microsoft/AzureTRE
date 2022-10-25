@@ -260,7 +260,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
   return (
     <>
       <div className={contentStyles.header}>
-        <span id={`title-${request?.id}`}>Review: {request?.requestTitle}</span>
+        <span id={`title-${request?.id}`}>Review: {request?.title}</span>
         <IconButton
           styles={iconButtonStyles}
           iconProps={cancelIcon}

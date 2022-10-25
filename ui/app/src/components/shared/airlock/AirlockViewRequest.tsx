@@ -131,15 +131,15 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
         }
         <div style={{textAlign: 'end'}}>
           {
-            request.allowed_user_actions?.includes(AirlockRequestAction.Cancel) &&
+            request.allowedUserActions?.includes(AirlockRequestAction.Cancel) &&
               <DefaultButton onClick={() => {setSubmitError(false); setHideCancelDialog(false)}} styles={destructiveButtonStyles}>Cancel request</DefaultButton>
           }
           {
-            request.allowed_user_actions?.includes(AirlockRequestAction.Submit) &&
+            request.allowedUserActions?.includes(AirlockRequestAction.Submit) &&
               <PrimaryButton onClick={() => {setSubmitError(false); setHideSubmitDialog(false)}}>Submit</PrimaryButton>
           }
           {
-            request.allowed_user_actions?.includes(AirlockRequestAction.Review) &&
+            request.allowedUserActions?.includes(AirlockRequestAction.Review) &&
               <PrimaryButton onClick={() => setReviewIsOpen(true)}>Review</PrimaryButton>
           }
         </div>
@@ -151,7 +151,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
   return (
     <>
       <Panel
-        headerText={request && request.requestTitle ? request.requestTitle : "View airlock request"}
+        headerText={request && request.title ? request.title : "View airlock request"}
         isOpen={true}
         isLightDismiss={true}
         onDismiss={dismissPanel}
@@ -173,14 +173,10 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
 
           <Stack horizontal horizontalAlign="space-between" styles={underlineStackStyles}>
             <Stack.Item styles={stackItemStyles}>
-              <b>Initiator</b>
+              <b>Creator</b>
             </Stack.Item>
             <Stack.Item styles={stackItemStyles}>
-              <Persona size={PersonaSize.size32} text={
-                request.history?.length > 0
-                  ? request.history[0].user.name
-                  : request.user.name
-              } />
+              <Persona size={PersonaSize.size32} text={request.createdBy?.name} />
             </Stack.Item>
           </Stack>
 
@@ -189,7 +185,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
               <b>Type</b>
             </Stack.Item>
             <Stack.Item styles={stackItemStyles}>
-              <p>{request.requestType}</p>
+              <p>{request.type}</p>
             </Stack.Item>
           </Stack>
 
@@ -216,7 +212,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
               <b>Created</b>
             </Stack.Item>
             <Stack.Item styles={stackItemStyles}>
-              <p>{moment.unix(request.creationTime).format('DD/MM/YYYY')}</p>
+              <p>{moment.unix(request.createdWhen).format('DD/MM/YYYY')}</p>
             </Stack.Item>
           </Stack>
 
@@ -278,7 +274,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
             </>
           }
           {
-            request.reviews.length > 0 && <>
+            request.reviews && request.reviews.length > 0 && <>
               <Stack style={{marginTop: '20px', marginBottom: '20px'}} styles={underlineStackStyles}>
                 <Stack.Item styles={stackItemStyles}>
                   <b>Reviews</b>

@@ -12,7 +12,7 @@ async def send_status_changed_event(airlock_request: AirlockRequest, previous_st
     request_id = airlock_request.id
     new_status = airlock_request.status.value
     previous_status = previous_status.value if previous_status else None
-    request_type = airlock_request.requestType.value
+    request_type = airlock_request.type.value
     short_workspace_id = airlock_request.workspaceId[-4:]
 
     status_changed_event = EventGridEvent(

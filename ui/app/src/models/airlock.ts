@@ -1,18 +1,31 @@
-import { Resource } from "./resource";
 import { User } from "./user";
 
-export interface AirlockRequest extends Resource {
+export interface AirlockRequest {
+  id: string;
+  resourceVersion: number;
+  createdBy: User;
+  createdWhen: number;
+  updatedBy: User;
+  updatedWhen: number;
+  history: Array<AirlockRequestHistoryItem>;
   workspaceId: string;
-  requestType: AirlockRequestType;
+  type: AirlockRequestType;
   files: Array<{name: string, size: number}>;
-  requestTitle: string;
+  title: string;
   businessJustification: string;
-  statusMessage: null | string;
   status: AirlockRequestStatus;
-  creationTime: number;
-  reviews: Array<AirlockReview>;
   reviewUserResources: Array<AirlockReviewUserResource>;
-  allowed_user_actions: Array<AirlockRequestAction>;
+  allowedUserActions: Array<AirlockRequestAction>;
+  reviews?: Array<AirlockReview>;
+  statusMessage?: string;
+  etag?: string
+}
+
+export interface AirlockRequestHistoryItem {
+  resourceVersion: number;
+  updatedWhen: number;
+  updatedBy: User;
+  properties: {};
 }
 
 export enum AirlockRequestType {
@@ -23,20 +36,20 @@ export enum AirlockRequestType {
 export enum AirlockRequestStatus {
   Draft = 'draft',
   InReview = 'in_review',
-  InProgress = 'in_progress',
   Approved = 'approved',
   ApprovalInProgress = 'approval_in_progress',
   RejectionInProgress = 'rejection_in_progress',
   Rejected = 'rejected',
   Blocked = 'blocked',
+  BlockingInProgress = 'blocking_in_progress',
   Submitted = 'submitted',
   Cancelled = 'cancelled',
   Failed = 'failed'
 }
 
 export interface NewAirlockRequest {
-  requestType: AirlockRequestType;
-  requestTitle: string;
+  type: AirlockRequestType;
+  title: string;
   businessJustification: string;
 }
 

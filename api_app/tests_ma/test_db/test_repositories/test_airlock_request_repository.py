@@ -49,7 +49,7 @@ def airlock_request_repo():
 
 @pytest.fixture
 def sample_airlock_request_input():
-    return AirlockRequestInCreate(requestType=AirlockRequestType.Import, businessJustification="Some business justification")
+    return AirlockRequestInCreate(type=AirlockRequestType.Import, businessJustification="Some business justification")
 
 
 @pytest.fixture
@@ -63,7 +63,7 @@ def airlock_request_mock(status=AirlockRequestStatus.Draft):
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
         workspaceId=WORKSPACE_ID,
-        requestType=AirlockRequestType.Import,
+        type=AirlockRequestType.Import,
         files=[],
         businessJustification="some test reason",
         status=status,

@@ -31,18 +31,18 @@ class AirlockRequestRepository(BaseRepository):
     def get_timestamp(self) -> float:
         return datetime.utcnow().timestamp()
 
-    def update_airlock_request_item(self, original_request: AirlockRequest, new_request: AirlockRequest, user: User, request_properties: dict) -> AirlockRequest:
+    def update_airlock_request_item(self, original_request: AirlockRequest, new_request: AirlockRequest, updated_by: User, request_properties: dict) -> AirlockRequest:
         history_item = AirlockRequestHistoryItem(
             resourceVersion=original_request.resourceVersion,
             updatedWhen=original_request.updatedWhen,
-            user=original_request.user,
+            updatedBy=original_request.updatedBy,
             properties=request_properties
         )
         new_request.history.append(history_item)
 
         # now update the request props
         new_request.resourceVersion = new_request.resourceVersion + 1
-        new_request.user = user
+        new_request.updatedBy = updated_by
         new_request.updatedWhen = self.get_timestamp()
 
         self.upsert_item_with_etag(new_request, new_request.etag)
@@ -93,27 +93,26 @@ class AirlockRequestRepository(BaseRepository):
         airlock_request = AirlockRequest(
             id=full_airlock_request_id,
             workspaceId=workspace_id,
-            requestTitle=airlock_request_input.requestTitle,
+            title=airlock_request_input.title,
             businessJustification=airlock_request_input.businessJustification,
-            requestType=airlock_request_input.requestType,
-            creationTime=datetime.utcnow().timestamp(),
+            type=airlock_request_input.type,
+            createdWhen=datetime.utcnow().timestamp(),
             properties=resource_spec_parameters,
             reviews=[]
         )
 
         return airlock_request
 
-    def get_airlock_requests(self, workspace_id: str, initiator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
+    def get_airlock_requests(self, workspace_id: str, creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
         query = self.airlock_requests_query() + f' WHERE c.workspaceId = "{workspace_id}"'
 
         # optional filters
-        if initiator_user_id:
-            # If the resource has history, get the first user object (initiator)
-            query += ' AND (ARRAY_LENGTH(c.history) > 0? c.history[0].user.id=@user_id: c.user.id=@user_id)'
+        if creator_user_id:
+            query += ' AND c.createdBy.id=@user_id'
         if status:
             query += ' AND c.status=@status'
         if type:
-            query += ' AND c.requestType=@type'
+            query += ' AND c.type=@type'
 
         # optional sorting
         if order_by:
@@ -121,7 +120,7 @@ class AirlockRequestRepository(BaseRepository):
             query += ' ASC' if order_ascending else ' DESC'
 
         parameters = [
-            {"name": "@user_id", "value": initiator_user_id},
+            {"name": "@user_id", "value": creator_user_id},
             {"name": "@status", "value": status},
             {"name": "@type", "value": type},
         ]
@@ -138,7 +137,7 @@ class AirlockRequestRepository(BaseRepository):
     def update_airlock_request(
             self,
             original_request: AirlockRequest,
-            user: User,
+            updated_by: User,
             new_status: AirlockRequestStatus = None,
             request_files: List[AirlockFile] = None,
             status_message: str = None,
@@ -152,12 +151,12 @@ class AirlockRequestRepository(BaseRepository):
             airlock_review=airlock_review,
             review_user_resource=review_user_resource)
         try:
-            db_response = self.update_airlock_request_item(original_request, updated_request, user, {"previousStatus": original_request.status})
+            db_response = self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
         except CosmosAccessConditionFailedError:
             logging.warning(f"ETag mismatch for request ID: '{original_request.id}'. Retrying.")
             original_request = self.get_airlock_request_by_id(original_request.id)
             updated_request = self._build_updated_request(original_request=original_request, new_status=new_status, request_files=request_files, status_message=status_message, airlock_review=airlock_review)
-            db_response = self.update_airlock_request_item(original_request, updated_request, user, {"previousStatus": original_request.status})
+            db_response = self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
 
         return db_response
 

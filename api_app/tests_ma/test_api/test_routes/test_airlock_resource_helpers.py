@@ -33,7 +33,7 @@ def sample_airlock_request(status=AirlockRequestStatus.Draft):
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
         workspaceId=WORKSPACE_ID,
-        requestType=AirlockRequestType.Import,
+        type=AirlockRequestType.Import,
         files=[],
         businessJustification="some test reason",
         status=status
@@ -266,7 +266,7 @@ async def test_get_airlock_requests_by_user_and_workspace_with_status_filter_cal
     get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo_mock,
                                                status=AirlockRequestStatus.InReview)
 
-    airlock_request_repo_mock.get_airlock_requests.assert_called_once_with(workspace_id=workspace.id, initiator_user_id=None, type=None,
+    airlock_request_repo_mock.get_airlock_requests.assert_called_once_with(workspace_id=workspace.id, creator_user_id=None, type=None,
                                                                            status=AirlockRequestStatus.InReview, order_by=None, order_ascending=True)
 
 

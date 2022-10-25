@@ -9,9 +9,10 @@ FEATURES:
 * Automatically validate all resources have tre_id tag via TFLint [#2774](https://github.com/microsoft/AzureTRE/pull/2774)
 
 ENHANCEMENTS:
+* Renamed several airlock fields to make them more descriptive and added a createdBy field. Included migration for backwards compatibility ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
 
 BUG FIXES:
-* Show the correct initiator of airlock requests in UI and in API queries ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
+* Show the correct createdBy value for airlock requests in UI and in API queries ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
 
 COMPONENTS:
 

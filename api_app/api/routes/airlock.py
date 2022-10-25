@@ -55,11 +55,11 @@ async def get_all_airlock_requests_by_workspace(
         airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
         workspace=Depends(get_deployed_workspace_by_id_from_path),
         user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager),
-        initiator_user_id: str = None, requestType: AirlockRequestType = None, status: AirlockRequestStatus = None,
+        creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None,
         order_by: str = None, order_ascending: bool = True) -> AirlockRequestWithAllowedUserActionsInList:
     try:
         airlock_requests = get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo,
-                                                                      initiator_user_id=initiator_user_id, type=requestType, status=status,
+                                                                      creator_user_id=creator_user_id, type=type, status=status,
                                                                       order_by=order_by, order_ascending=order_ascending)
         airlock_requests_with_allowed_user_actions = enrich_requests_with_allowed_actions(airlock_requests, user, airlock_request_repo)
     except (ValidationError, ValueError) as e:
@@ -103,11 +103,11 @@ async def create_review_user_resource(
 
     try:
         # Getting the review configuration from the airlock request's workspace properties
-        if airlock_request.requestType == AirlockRequestType.Import:
+        if airlock_request.type == AirlockRequestType.Import:
             config = workspace.properties["airlock_review_config"]["import"]
             workspace_id = config["workspace_id"]
         else:
-            assert airlock_request.requestType == AirlockRequestType.Export
+            assert airlock_request.type == AirlockRequestType.Export
             config = workspace.properties["airlock_review_config"]["export"]
             workspace_id = workspace.id
         workspace_service_id = config["workspace_service_id"]
@@ -137,7 +137,7 @@ async def create_review_user_resource(
         templateName=user_resource_template_name,
         properties={
             "display_name": "Airlock Review VM",
-            "description": f"Airlock Review VM for request {airlock_request.requestTitle} (ID {airlock_request.id})",
+            "description": f"Airlock Review VM for request {airlock_request.title} (ID {airlock_request.id})",
             "airlock_request_sas_url": airlock_request_sas_url
         }
     )

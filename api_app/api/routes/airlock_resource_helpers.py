@@ -33,7 +33,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 
     try:
         logging.debug(f"Saving airlock request item: {airlock_request.id}")
-        airlock_request.user = user
+        airlock_request.updatedBy = user
         airlock_request.updatedWhen = get_timestamp()
         airlock_request_repo.save_item(airlock_request)
     except Exception as e:
@@ -53,7 +53,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 async def update_and_publish_event_airlock_request(
         airlock_request: AirlockRequest,
         airlock_request_repo: AirlockRequestRepository,
-        user: User,
+        updated_by: User,
         workspace: Workspace,
         new_status: AirlockRequestStatus = None,
         request_files: List[AirlockFile] = None,
@@ -64,7 +64,7 @@ async def update_and_publish_event_airlock_request(
         logging.debug(f"Updating airlock request item: {airlock_request.id}")
         updated_airlock_request = airlock_request_repo.update_airlock_request(
             original_request=airlock_request,
-            user=user,
+            updated_by=updated_by,
             new_status=new_status,
             request_files=request_files,
             status_message=status_message,
@@ -107,9 +107,9 @@ def check_email_exists(role_assignment_details: defaultdict(list)):
 
 
 def get_airlock_requests_by_user_and_workspace(user: User, workspace: Workspace, airlock_request_repo: AirlockRequestRepository,
-                                               initiator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None,
+                                               creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None,
                                                order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
-    return airlock_request_repo.get_airlock_requests(workspace_id=workspace.id, initiator_user_id=initiator_user_id, type=type, status=status,
+    return airlock_request_repo.get_airlock_requests(workspace_id=workspace.id, creator_user_id=creator_user_id, type=type, status=status,
                                                      order_by=order_by, order_ascending=order_ascending)
 
 
