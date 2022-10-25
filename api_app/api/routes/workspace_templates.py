@@ -9,15 +9,15 @@ from models.domain.resource import ResourceType
 from models.schemas.resource_template import ResourceTemplateInResponse, ResourceTemplateInformationInList
 from models.schemas.workspace_template import WorkspaceTemplateInCreate, WorkspaceTemplateInResponse
 from resources import strings
-from services.authentication import get_current_admin_user
+from services.authentication import get_current_tre_user_or_tre_admin
 from .resource_helpers import get_current_template_by_name
 
 
-workspace_templates_admin_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
+workspace_templates_admin_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 
 
 @workspace_templates_admin_router.get("/workspace-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_TEMPLATES)
-async def get_workspace_templates(authorized_only: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository)), user=Depends(get_current_admin_user)) -> ResourceTemplateInformationInList:
+async def get_workspace_templates(authorized_only: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository)), user=Depends(get_current_tre_user_or_tre_admin)) -> ResourceTemplateInformationInList:
     templates_infos = template_repo.get_templates_information(ResourceType.Workspace, user.roles if authorized_only else None)
     return ResourceTemplateInformationInList(templates=templates_infos)
 
