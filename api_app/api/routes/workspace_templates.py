@@ -9,7 +9,7 @@ from models.domain.resource import ResourceType
 from models.schemas.resource_template import ResourceTemplateInResponse, ResourceTemplateInformationInList
 from models.schemas.workspace_template import WorkspaceTemplateInCreate, WorkspaceTemplateInResponse
 from resources import strings
-from services.authentication import get_current_tre_user_or_tre_admin
+from services.authentication import get_current_tre_user_or_tre_admin, get_current_admin_user
 from .resource_helpers import get_current_template_by_name
 
 
@@ -23,13 +23,13 @@ async def get_workspace_templates(authorized_only: bool = False, template_repo=D
 
 
 @workspace_templates_admin_router.get("/workspace-templates/{workspace_template_name}", response_model=WorkspaceTemplateInResponse, name=strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, response_model_exclude_none=True)
-async def get_current_workspace_template_by_name(workspace_template_name: str, is_update: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceTemplateInResponse:
+async def get_current_workspace_template_by_name(workspace_template_name: str, is_update: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository)), user=Depends(get_current_tre_user_or_tre_admin)) -> WorkspaceTemplateInResponse:
     template = get_current_template_by_name(workspace_template_name, template_repo, ResourceType.Workspace, is_update=is_update)
     return parse_obj_as(WorkspaceTemplateInResponse, template)
 
 
 @workspace_templates_admin_router.post("/workspace-templates", status_code=status.HTTP_201_CREATED, response_model=WorkspaceTemplateInResponse, response_model_exclude_none=True, name=strings.API_CREATE_WORKSPACE_TEMPLATES)
-async def register_workspace_template(template_input: WorkspaceTemplateInCreate, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInResponse:
+async def register_workspace_template(template_input: WorkspaceTemplateInCreate, template_repo=Depends(get_repository(ResourceTemplateRepository)), user=Depends(get_current_admin_user)) -> ResourceTemplateInResponse:
     try:
         return template_repo.create_and_validate_template(template_input, ResourceType.Workspace)
     except EntityVersionExist:
