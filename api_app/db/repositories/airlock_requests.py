@@ -85,7 +85,7 @@ class AirlockRequestRepository(BaseRepository):
 
         return approved_condition and rejected_condition and blocked_condition and (approved_in_progress_condition or rejected_in_progress_condition or blocking_in_progress_condition or draft_condition or submit_condition or in_review_condition or cancel_condition or failed_condition)
 
-    def create_airlock_request_item(self, airlock_request_input: AirlockRequestInCreate, workspace_id: str) -> AirlockRequest:
+    def create_airlock_request_item(self, airlock_request_input: AirlockRequestInCreate, workspace_id: str, user) -> AirlockRequest:
         full_airlock_request_id = str(uuid.uuid4())
 
         resource_spec_parameters = {**self.get_airlock_request_spec_params()}
@@ -96,6 +96,7 @@ class AirlockRequestRepository(BaseRepository):
             title=airlock_request_input.title,
             businessJustification=airlock_request_input.businessJustification,
             type=airlock_request_input.type,
+            createdBy=user,
             createdWhen=datetime.utcnow().timestamp(),
             properties=resource_spec_parameters,
             reviews=[]

@@ -38,7 +38,7 @@ async def create_draft_request(airlock_request_input: AirlockRequestInCreate, us
     if workspace.properties.get("enable_airlock") is False:
         raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail=strings.AIRLOCK_NOT_ENABLED_IN_WORKSPACE)
     try:
-        airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_input, workspace.id)
+        airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_input, workspace.id, user)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed creating airlock request model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
