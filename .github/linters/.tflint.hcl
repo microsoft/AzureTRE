@@ -30,3 +30,8 @@ rule "terraform_naming_convention" {
 rule "terraform_standard_module_structure" {
   enabled = true
 }
+
+rule "azurerm_resource_missing_tags" {
+  enabled = true
+  tags = ["tre_id"]
+}
