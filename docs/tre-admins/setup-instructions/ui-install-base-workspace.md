@@ -15,11 +15,11 @@ Workspace can be easily created via AzureTRE UI. Open a browser and navigate to:
 
 1. Select Workspaces -> Create New:
 
-    ![Create workspace main](../assets/create-workspace-main.png)
+    ![Create workspace main](../../assets/create-workspace-main.png)
 
 1. Click on Create under Base Workspace:
 
-    ![Create workspace](../assets/create-workspace.png)
+    ![Create workspace](../../assets/create-workspace.png)
 
 1. Fill in the details for your workspace:
 
@@ -29,22 +29,22 @@ Workspace can be easily created via AzureTRE UI. Open a browser and navigate to:
 
     After filling the details press submit.
 
-    ![Create workspace - Fill Details](../assets/create-workspace-fill-details.png)
+    ![Create workspace - Fill Details](../../assets/create-workspace-fill-details.png)
 
 1. Select go to resource to see its status:
 
-    ![Create Workspace In Progress](../assets/create-workspace-in-progress.png)
+    ![Create Workspace In Progress](../../assets/create-workspace-in-progress.png)
 
 1. Navigate to Operation and wait till changed to deployed:
 
-    ![Create Workspace Status](../assets/create-workspace-status.png)
+    ![Create Workspace Status](../../assets/create-workspace-status.png)
 
 Workspace is now ready to use.
 
 
 ## Creating an Application Client for base workspace
 
-As explained in the [auth guide](auth.md), every workspace has a corresponding app registration which if you haven't run `make auth`; can be created using the helper script `./devops/scripts/aad/create_workspace_application.sh`. For example:
+As explained in the [auth guide](../auth.md), every workspace has a corresponding app registration which if you haven't run `make auth`; can be created using the helper script `./devops/scripts/aad/create_workspace_application.sh`. For example:
 
 ```bash
   ./devops/scripts/aad/create_workspace_application.sh \
@@ -56,10 +56,10 @@ As explained in the [auth guide](auth.md), every workspace has a corresponding a
 ```
 
 !!! caution
-    If you're using a separate tenant for AAD app registrations to the one where you've deployed the TRE infrastructure resources, ensure you've signed into that tenant in the `az cli` before running the above command. See **Using a separate Azure Active Directory tenant** in [Setup Auth configuration](./setup-instructions/setup-auth-entities.md) for more details.
+    If you're using a separate tenant for AAD app registrations to the one where you've deployed the TRE infrastructure resources, ensure you've signed into that tenant in the `az cli` before running the above command. See **Using a separate Azure Active Directory tenant** in [Setup Auth configuration](./setup-auth-entities.md) for more details.
 
 Running the script will report `WORKSPACE_API_CLIENT_ID` and `WORKSPACE_API_CLIENT_SECRET` for the generated app. Copy these into `/templates/core/.env` so that automated testing will work. You also need to use `WORKSPACE_API_CLIENT_ID` and `WORKSPACE_API_CLIENT_SECRET` in the form.
 
 ## Next steps
 
-* [Installing a workspace service & user resources](./ui-install-workspace-service-and-user-resource.md)
+* [Installing a workspace service & user resources](./ui-install-ws-and-ur.md)
