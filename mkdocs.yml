@@ -118,6 +118,7 @@ nav:
                   - Workspaces: tre-admins/identities/workspace.md
           - Registring Templates: tre-admins/registering-templates.md
           - Upgrading AzureTRE version: tre-admins/upgrading-tre.md
+          - Configuring Airlock Reviews: tre-admins/configure-airlock-review.md
 
       - Development: # Docs related to the developing code for the AzureTRE
           - Local Development: using-tre/local-development/local-development.md
