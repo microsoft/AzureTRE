@@ -98,6 +98,8 @@ class AirlockRequestRepository(BaseRepository):
             type=airlock_request_input.type,
             createdBy=user,
             createdWhen=datetime.utcnow().timestamp(),
+            updatedBy=user,
+            updatedWhen=datetime.utcnow().timestamp(),
             properties=resource_spec_parameters,
             reviews=[]
         )
