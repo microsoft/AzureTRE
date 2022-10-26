@@ -11,7 +11,7 @@ class AirlockMigration(AirlockRequestRepository):
         for request in self.container.read_all_items():
             # Only migrate if createdBy isn't present
             if 'createdBy' in request:
-                break
+                continue
 
             # For each request, check if it has history
             if len(request['history']) > 0:
