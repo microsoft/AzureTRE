@@ -3,6 +3,15 @@
 ## 0.6.1 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
+* The airlock request object has changed. Make sure you have ran the db migration step after deploying the new API image and UI (which runs automatically in `make all`/`make tre-deploy` but can be manually invoked with `make db-migrate`) so that existing requests in your DB are migrated to the new model.
+* Also the model for creating new airlock requests with the API has changed slightly; this is updated in the UI and CLI but if you have written custom tools ensure you are POSTing to `/requests` with the following model:
+```json
+{
+    "type": "'import' or 'export'",
+    "title": "a request title",
+    "businessJustification": "some business justification"
+}
+```
 
 FEATURES:
 * Display workspace and shared services total costs for admin role in UI [#2738](https://github.com/microsoft/AzureTRE/pull/2772)
