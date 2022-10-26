@@ -76,11 +76,11 @@ nav:
       - Using AzureTRE for Research:
           - Introduction: using-tre/tre-for-research/index.md
           - Set up of a Virtual Machine: using-tre/tre-for-research/using-vms.md
-    # - Workspaces:
-    #    - using-tre/wks/index.md # Documentation describing what a workspace is
-    #    - Using Workspaces: using-tre/wks/using-wks.md # Interacting with workspaces (via the UI)
-    #    - The Workspace Owner: using-tre/wks/wks-owner.md # Workspace Owners. The concept, and tasks
-    # - FAQ: using-tre/faq.md # FAQ section (to allow easy contribution)
+      # - Workspaces:
+      #    - using-tre/wks/index.md # Documentation describing what a workspace is
+      #    - Using Workspaces: using-tre/wks/using-wks.md # Interacting with workspaces (via the UI)
+      #    - The Workspace Owner: using-tre/wks/wks-owner.md # Workspace Owners. The concept, and tasks
+      # - FAQ: using-tre/faq.md # FAQ section (to allow easy contribution)
 
   - Templates and Services: # Docs to highlight and illustrate workspaces, workspace services etc
       - Workspaces:

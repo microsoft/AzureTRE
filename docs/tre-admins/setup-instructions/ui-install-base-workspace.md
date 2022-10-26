@@ -25,7 +25,7 @@ Workspace can be easily created via AzureTRE UI. Open a browser and navigate to:
 
     - Fill in general information such as name and description
     - [Optional] Update values for Shared Storage Quota, App Service Plan (SKU) and Address space if needed
-    - Application (Client ID) - is the AAD Application representing the workspace. You can auto create one by setting it to `auto_create` or provide an existing one. In case of providing a specific client id make sure to fill in the Application (Client) Secret field too. To read about how to create it manually read the [Creating an Application Client for base workspace](#creating-an-application-client-for-base-workspace) section below
+    - Application (Client ID) - is the AAD Application representing the workspace. You can auto create one by setting it to `auto_create` or provide an existing one. To read about how to create it manually read the [Creating an Application Client for base workspace](#creating-an-application-client-for-base-workspace) section below.
 
     After filling the details press submit.
 

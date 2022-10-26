@@ -16,11 +16,12 @@ Run:
 
 The Guacamole workspace service also has user resources, there are the VMs that researchers will deploy. These steps can be repeated for any user resource template.
 
-1. Run:
-        ```cmd
-        make bundle-publish DIR=$AZURETRE_HOME/templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm BUNDLE_TYPE=user_resource
-        make bundle-register DIR=$AZURETRE_HOME/templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-guacamole
-        ```
+Run:
+
+    ```cmd
+    make bundle-publish DIR=$AZURETRE_HOME/templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm BUNDLE_TYPE=user_resource
+    make bundle-register DIR=$AZURETRE_HOME/templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-guacamole
+    ```
 
 ## Creating a workspace service
 
