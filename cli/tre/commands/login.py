@@ -1,3 +1,4 @@
+import sys
 import click
 import json
 import logging
@@ -12,6 +13,25 @@ from tre.api_client import ApiClient
 from typing import List
 
 
+def all_or_none(values: "list(bool)") -> bool:
+    """Returns:
+       True if all set
+       False if all unset
+       None otherwise
+    """
+
+    if len(values) == 0:
+        return None
+
+    first_value = True if values[0] else False  # convert to truthy
+    for value in values[1:]:
+        current_value = True if value else False
+        if first_value is not current_value:
+            # value doesn't match first version
+            return None
+    return first_value
+
+
 @click.group(name="login", help="Set the TRE credentials and base URL")
 def login():
     pass
@@ -23,14 +43,14 @@ def login():
               help='The TRE base URL, e.g. '
               + 'https://<id>.<location>.cloudapp.azure.com/')
 @click.option('--client-id',
-              required=True,
-              help='The Client ID of the Azure AD application for the API')
+              required=False,
+              help='The Client ID of the Azure AD application for the API (optional for API versions >= v0.5.6)')
 @click.option('--aad-tenant-id',
-              required=True,
-              help='The Tenant ID for the AAD tenant to authenticate with')
+              required=False,
+              help='The Tenant ID for the AAD tenant to authenticate with (optional for API versions >= v0.5.6)')
 @click.option('--api-scope',
-              required=True,
-              help='The API scope for the base API')
+              required=False,
+              help='The API scope for the base API (optional for API versions >= v0.5.6)')
 @click.option('--verify/--no-verify',
               help='Enable/disable SSL verification',
               default=True)
@@ -49,6 +69,21 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
     if workspaces is not None and len(workspaces) > 0:
         if all_workspaces:
             raise click.ClickException("Cannot use `--all-workspaces and --workspace")
+
+    have_aad_tenant_etc = all_or_none([client_id, aad_tenant_id, api_scope])
+    if have_aad_tenant_etc is None:
+        click.echo("Either all or none of --client-id, --aad-tenant-id and --api-scope must be specified")
+        sys.exit(1)
+
+    # Load metadata from API if required
+    if not have_aad_tenant_etc:
+        metadata = ApiClient.get_api_metadata(base_url)
+        if not metadata:
+            click.echo("Unable to query API metadata endpoint - please pass --aad-tenant-id and --api-scope")
+            sys.exit(1)
+        client_id = metadata["api_client_id"]
+        aad_tenant_id = metadata["aad_tenant_id"]
+        api_scope = metadata["api_root_scope"]
 
     # Set up token cache
     Path('~/.config/tre').expanduser().mkdir(parents=True, exist_ok=True)
@@ -126,7 +161,7 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
 
 @click.command(
     name="client-credentials",
-    help="Use client credentials flow (client ID + secret) to authenticate",
+    help="Use client credentials flow (client ID + secret) to authenticate.",
 )
 @click.option(
     "--base-url",
@@ -141,10 +176,10 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
 )
 @click.option(
     "--aad-tenant-id",
-    required=True,
-    help="The Tenant ID for the AAD tenant to authenticate with",
+    required=False,
+    help="The Tenant ID for the AAD tenant to authenticate with (optional for API versions >= v0.5.6)",
 )
-@click.option("--api-scope", required=True, help="The API scope for the base API")
+@click.option("--api-scope", required=False, help="The API scope for the base API (optional for API versions >= v0.5.6)")
 @click.option(
     "--verify/--no-verify", help="Enable/disable SSL verification", default=True
 )
@@ -157,6 +192,25 @@ def login_client_credentials(
     verify: bool,
 ):
     log = logging.getLogger(__name__)
+
+    have_aad_tenant_etc = all_or_none([aad_tenant_id, api_scope])
+    if have_aad_tenant_etc is None:
+        click.echo("Either both or none of --aad-tenant-id and --api-scope must be specified")
+        sys.exit(1)
+
+    # Load metadata from API if required
+    if not have_aad_tenant_etc:
+        metadata = ApiClient.get_api_metadata(base_url)
+        if not metadata:
+            click.echo("Unable to query API metadata endpoint - please pass --aad-tenant-id and --api-scope")
+            sys.exit(1)
+        aad_tenant_id = metadata["aad_tenant_id"]
+        api_scope = metadata["api_root_scope"]
+
+    # metadata includes /user_impersonation which works for device_code flow but not client credentials
+    if api_scope.endswith("/user_impersonation"):
+        api_scope = api_scope[:-1 * len("/user_impersonation")]
+
     # Test the auth succeeds
     try:
         log.info("Attempting sign-in...")
