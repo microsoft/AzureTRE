@@ -2,16 +2,20 @@ from typing import Dict, List, Optional
 
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.airlock_request import AirlockFile, AirlockRequestStatus, AirlockRequestType
-from models.domain.authentication import User
+
+
+class AirlockNotificationUserData(AzureTREModel):
+    name: str
+    email: str
 
 
 class AirlockNotificationRequestData(AzureTREModel):
     id: str
     created_when: float
-    created_by: User
+    created_by: AirlockNotificationUserData
     updated_when: float
-    updated_by: User
-    type: AirlockRequestType
+    updated_by: AirlockNotificationUserData
+    requestType: AirlockRequestType
     files: List[AirlockFile]
     status: AirlockRequestStatus
     business_justification: str
