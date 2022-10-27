@@ -1,19 +1,76 @@
 <!-- markdownlint-disable MD041 -->
 <!-- line format short be: change short description (#pr_numer) -->
-## 0.6.0 (Unreleased)
+## 0.6.1 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
+* The airlock request object has changed. Make sure you have ran the db migration step after deploying the new API image and UI (which runs automatically in `make all`/`make tre-deploy` but can be manually invoked with `make db-migrate`) so that existing requests in your DB are migrated to the new model.
+* Also the model for creating new airlock requests with the API has changed slightly; this is updated in the UI and CLI but if you have written custom tools ensure you are POSTing to `/requests` with the following model:
+```json
+{
+    "type": "'import' or 'export'",
+    "title": "a request title",
+    "businessJustification": "some business justification"
+}
+```
 
 FEATURES:
-* Added filtering and sorting to Airlock UI ([#2511](https://github.com/microsoft/AzureTRE/issues/2511))
-* Added title field to Airlock requests ([#2731](https://github.com/microsoft/AzureTRE/pull/2731))
+* Display workspace and shared services total costs for admin role in UI [#2738](https://github.com/microsoft/AzureTRE/pull/2772)
+* Automatically validate all resources have tre_id tag via TFLint [#2774](https://github.com/microsoft/AzureTRE/pull/2774)
 
 ENHANCEMENTS:
+* Renamed several airlock fields to make them more descriptive and added a createdBy field. Included migration for backwards compatibility ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
 
 BUG FIXES:
+* Show the correct createdBy value for airlock requests in UI and in API queries ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
 
 COMPONENTS:
 
+## 0.6.0 (October 24, 2022)
+
+FEATURES:
+* Added filtering and sorting to Airlock UI ([#2511](https://github.com/microsoft/AzureTRE/pull/2730))
+* Added title field to Airlock requests ([#2503](https://github.com/microsoft/AzureTRE/pull/2731))
+* New Create Review VM functionality for Airlock Reviews ([#2738](https://github.com/microsoft/AzureTRE/pull/2759) & [#2737](https://github.com/microsoft/AzureTRE/pull/2740))
+
+
+
+ENHANCEMENTS:
+* Add cran support to nexus, open port 80 for the workspace nsg and update the firewall config to allow let's encrypt CRLs ([#2694](https://github.com/microsoft/AzureTRE/pull/2694))
+* Upgrade Github Actions versions ([#2731](https://github.com/microsoft/AzureTRE/pull/2744))
+* Install TRE CLI inside the devcontainer image (rather than via a post-create step) ([#2757](https://github.com/microsoft/AzureTRE/pull/2757))
+* Upgrade Terraform to 1.3.2 ([#2758](https://github.com/microsoft/AzureTRE/pull/2758))
+* `tre` CLI: added `raw` output option, improved `airlock-requests` handling, more consistent exit codes on error, added examples to CLI README.md
+
+BUG FIXES:
+* Pin Porter's plugin/mixin versions used ([#2762](https://github.com/microsoft/AzureTRE/pull/2762))
+* Fix issues with AML workspace service deployment ([#2768](https://github.com/microsoft/AzureTRE/pull/2768))
+
+COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.4.2 |
+| core | 0.4.37 |
+| tre-workspace-base | 0.4.2 |
+| tre-workspace-unrestricted | 0.2.0 |
+| tre-workspace-airlock-import-review | 0.4.0 |
+| tre-service-mlflow | 0.4.0 |
+| tre-service-innereye | 0.4.0 |
+| tre-workspace-service-gitea | 0.5.0 |
+| tre-workspace-service-mysql | 0.2.0 |
+| tre-service-guacamole-linuxvm | 0.5.2 |
+| tre-service-guacamole-export-reviewvm | 0.0.6 |
+| tre-service-guacamole-windowsvm | 0.5.2 |
+| tre-service-guacamole-import-reviewvm | 0.1.3 |
+| tre-service-guacamole | 0.5.0 |
+| tre-user-resource-aml-compute-instance | 0.4.1 |
+| tre-service-azureml | 0.5.6 |
+| tre-shared-service-cyclecloud | 0.3.0 |
+| tre-shared-service-gitea | 0.4.0 |
+| tre-shared-service-airlock-notifier | 0.2.2 |
+| tre-shared-service-admin-vm | 0.2.0 |
+| tre-shared-service-certs | 0.2.0 |
+| tre-shared-service-sonatype-nexus | 2.2.2 |
+| tre-shared-service-firewall | 0.6.1 |
 
 ## 0.5.1 (October 12, 2022)
 

@@ -49,7 +49,7 @@ def airlock_request_repo():
 
 @pytest.fixture
 def sample_airlock_request_input():
-    return AirlockRequestInCreate(requestType=AirlockRequestType.Import, businessJustification="Some business justification")
+    return AirlockRequestInCreate(type=AirlockRequestType.Import, businessJustification="Some business justification")
 
 
 @pytest.fixture
@@ -63,7 +63,7 @@ def airlock_request_mock(status=AirlockRequestStatus.Draft):
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
         workspaceId=WORKSPACE_ID,
-        requestType=AirlockRequestType.Import,
+        type=AirlockRequestType.Import,
         files=[],
         businessJustification="some test reason",
         status=status,
@@ -104,9 +104,11 @@ def test_get_airlock_request_by_id_raises_entity_does_not_exist_if_no_such_reque
 
 def test_create_airlock_request_item_creates_an_airlock_request_with_the_right_values(sample_airlock_request_input, airlock_request_repo):
     airlock_request_item_to_create = sample_airlock_request_input
-    airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_item_to_create, WORKSPACE_ID)
+    created_by_user = {'id': 'test_user_id'}
+    airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_item_to_create, WORKSPACE_ID, created_by_user)
 
     assert airlock_request.workspaceId == WORKSPACE_ID
+    assert airlock_request.createdBy['id'] == 'test_user_id'
 
 
 @pytest.mark.parametrize("current_status, new_status", get_allowed_status_changes())
@@ -131,13 +133,13 @@ def test_update_airlock_request_should_retry_update_when_etag_is_not_up_to_date(
     expected_update_attempts = 2
     user = create_test_user()
     mock_existing_request = airlock_request_mock(status=DRAFT)
-    airlock_request_repo.update_airlock_request(original_request=mock_existing_request, user=user, new_status=SUBMITTED)
+    airlock_request_repo.update_airlock_request(original_request=mock_existing_request, updated_by=user, new_status=SUBMITTED)
     assert update_airlock_request_item_mock.call_count == expected_update_attempts
 
 
 def test_get_airlock_requests_queries_db(airlock_request_repo):
     airlock_request_repo.container.query_items = MagicMock()
-    expected_query = airlock_request_repo.airlock_requests_query() + f' where c.workspaceId = "{WORKSPACE_ID}"'
+    expected_query = airlock_request_repo.airlock_requests_query() + f' WHERE c.workspaceId = "{WORKSPACE_ID}"'
     expected_parameters = [
         {"name": "@user_id", "value": None},
         {"name": "@status", "value": None},

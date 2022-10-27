@@ -1,6 +1,7 @@
 import click
 from .commands.costs import costs
 from .commands.health import health
+from .commands.migrations import migrations
 
 from tre.commands.get_token import get_token
 from tre.commands.login import login
@@ -43,7 +44,7 @@ cli.add_command(costs)
 
 cli.add_command(health)
 
-# TODO - migrations?
+cli.add_command(migrations)
 
 if __name__ == "__main__":
     cli()

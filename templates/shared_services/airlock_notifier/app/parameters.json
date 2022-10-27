@@ -2,5 +2,9 @@
   "smtp_from_email": {
     "type": "String",
     "value": "@appsetting('smtp_from_email')"
+  },
+  "tre_url": {
+    "type": "String",
+    "value": "@appsetting('tre_url')"
   }
 }

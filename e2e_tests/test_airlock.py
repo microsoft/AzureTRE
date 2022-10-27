@@ -23,8 +23,8 @@ BLOB_NAME = os.path.basename(BLOB_FILE_PATH)
 
 @pytest.mark.airlock
 @pytest.mark.extended
-@pytest.mark.timeout(30 * 60)
-async def test_airlock_import_flow(verify) -> None:
+@pytest.mark.timeout(35 * 60)
+async def test_airlock_flow(verify) -> None:
 
     admin_token = await get_admin_token(verify)
     if config.TEST_AIRLOCK_WORKSPACE_ID != "":
@@ -51,15 +51,15 @@ async def test_airlock_import_flow(verify) -> None:
     workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
     # 2. create airlock request
-    LOGGER.info("Creating airlock request")
+    LOGGER.info("Creating airlock import request")
     payload = {
-        "requestType": airlock_strings.IMPORT,
+        "type": airlock_strings.IMPORT,
         "businessJustification": "some business justification"
     }
 
     request_result = await post_request(payload, f'/api{workspace_path}/requests', workspace_owner_token, verify, 201)
 
-    assert request_result["airlockRequest"]["requestType"] == airlock_strings.IMPORT
+    assert request_result["airlockRequest"]["type"] == airlock_strings.IMPORT
     assert request_result["airlockRequest"]["businessJustification"] == "some business justification"
     assert request_result["airlockRequest"]["status"] == airlock_strings.DRAFT_STATUS
 
@@ -124,8 +124,40 @@ async def test_airlock_import_flow(verify) -> None:
         # Expecting this exception
         pass
 
+    # 8. get a link to the blob in the approved location.
+    # For a full E2E we should try to download it, but can't without special networking setup.
+    # So at the very least we check that we get the link for it.
+    request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
+    container_url = request_result["containerUrl"]
+
+    # 9. create airlock export request
+    LOGGER.info("Creating airlock export request")
+    justification = "another business justification"
+    payload = {
+        "type": airlock_strings.EXPORT,
+        "businessJustification": justification
+    }
+
+    request_result = await post_request(payload, f'/api{workspace_path}/requests', workspace_owner_token, verify, 201)
+
+    assert request_result["airlockRequest"]["type"] == airlock_strings.EXPORT
+    assert request_result["airlockRequest"]["businessJustification"] == justification
+    assert request_result["airlockRequest"]["status"] == airlock_strings.DRAFT_STATUS
+
+    request_id = request_result["airlockRequest"]["id"]
+
+    # 10. get container link
+    LOGGER.info("Getting airlock request container URL")
+    request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
+    container_url = request_result["containerUrl"]
+    # we can't test any more the export flow since we don't have the network
+    # access to upload the file from within the workspace.
+
     if config.TEST_AIRLOCK_WORKSPACE_ID == "":
-        # 8. delete workspace
+        # 11. delete workspace (cleanup)
         LOGGER.info("Deleting workspace")
         admin_token = await get_admin_token(verify)
-        await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
+        # we don't really care if the workspace is deleted successfully, so not waiting for it.
+        disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
+        # but still need to wait a bit for the delete request to be issued to the API.
+        await asyncio.sleep(30)

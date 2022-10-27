@@ -238,61 +238,63 @@ input[readonly]{
   }
 }
 
+/* hide fields explicitly */
+.tre-hidden {
+  display: none;
+}
+
 /* create form overrides */
 /* panel header */
-.ms-Panel-commands{
-  background:#fff;
+.ms-Panel-commands {
+  background: #fff;
   border-bottom: 1px #ccc solid;
   padding-bottom: 10px;
 }
 
 /* template description at top of panel */
-.rjsf > .ms-Grid-col{
+.rjsf > .ms-Grid-col {
   margin-top: -25px;
 }
+
 .rjsf > .ms-Grid-col > span:first-of-type {
-  display:block;
+  display: block;
   background-color: #efefef;
-  padding:10px;
+  padding: 10px;
   margin-bottom: 15px;
   font-style: normal;
 }
 
 /* border around sub-blocks */
 .ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object,
-.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array{
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array {
   border: 1px #ccc dashed;
-  padding:10px;
+  padding: 10px;
   background-color: #fcfcfc;
 }
 
 /* sub titles and sub-sub titles */
 .ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > label.ms-Label,
-.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array > label.ms-Label{
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array > label.ms-Label {
   font-size: 20px;
 }
+
 .ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > .ms-Grid > .ms-Grid-row > .ms-Grid-col > label.ms-Label,
-.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array > .ms-Grid > .ms-Grid-row > .ms-Grid-col > label.ms-Label{
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array > .ms-Grid > .ms-Grid-row > .ms-Grid-col > label.ms-Label {
   font-size: 16px;
 }
 
 /* remove secondary template description at the bottom of each template + sub blocks */
 .rjsf > .ms-Grid-col > span:last-of-type,
 .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > span:last-of-type,
-.rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > .ms-Grid > .ms-Grid-row > .ms-Grid-col > span:last-of-type
-{
-  display:none;
+.rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > .ms-Grid > .ms-Grid-row > .ms-Grid-col > span:last-of-type {
+  display: none;
 }
 
 /* make descriptive text italic */
-.field span{
+.field span {
   font-style: italic;
 }
+
 .field span.ms-Checkbox-text {
   font-style: normal;
-}
-
-/* hide fields explicitly */
-.tre-hidden{
-  display:none;
 }

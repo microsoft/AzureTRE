@@ -33,7 +33,7 @@ def sample_airlock_request(status=AirlockRequestStatus.Draft):
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
         workspaceId=WORKSPACE_ID,
-        requestType=AirlockRequestType.Import,
+        type=AirlockRequestType.Import,
         files=[],
         businessJustification="some test reason",
         status=status
@@ -54,7 +54,7 @@ def sample_status_changed_event(new_status="draft", previous_status=None):
 def sample_airlock_notification_event(status="draft"):
     status_changed_event = EventGridEvent(
         event_type="airlockNotification",
-        data=AirlockNotificationData(request_id=AIRLOCK_REQUEST_ID, event_type="status_changed", event_value=status, emails={"workspace_researcher": ["researcher@outlook.com"], "workspace_owner": ["owner@outlook.com"], "airlock_manager": ["manager@outlook.com"]}, workspace_id=WORKSPACE_ID[-4:]).__dict__,
+        data=AirlockNotificationData(request_id=AIRLOCK_REQUEST_ID, event_type="status_changed", event_value=status, emails={"workspace_researcher": ["researcher@outlook.com"], "workspace_owner": ["owner@outlook.com"], "airlock_manager": ["manager@outlook.com"]}, workspace_id=WORKSPACE_ID).__dict__,
         subject=f"{AIRLOCK_REQUEST_ID}/airlockNotification",
         data_version="2.0"
     )
@@ -172,7 +172,7 @@ async def test_update_and_publish_event_airlock_request_updates_item(_, event_gr
     actual_updated_airlock_request = await update_and_publish_event_airlock_request(
         airlock_request=airlock_request_mock,
         airlock_request_repo=airlock_request_repo_mock,
-        user=create_test_user(),
+        updated_by=create_test_user(),
         new_status=AirlockRequestStatus.Submitted,
         workspace=sample_workspace())
 
@@ -197,7 +197,7 @@ async def test_update_and_publish_event_airlock_request_sends_status_changed_eve
     await update_and_publish_event_airlock_request(
         airlock_request=sample_airlock_request(),
         airlock_request_repo=airlock_request_repo_mock,
-        user=create_test_user(),
+        updated_by=create_test_user(),
         new_status=new_status,
         workspace=sample_workspace())
 
@@ -213,7 +213,7 @@ async def test_update_and_publish_event_airlock_request_raises_400_if_status_upd
         await update_and_publish_event_airlock_request(
             airlock_request=airlock_request_mock,
             airlock_request_repo=airlock_request_repo_mock,
-            user=create_test_user(),
+            updated_by=create_test_user(),
             new_status=AirlockRequestStatus.Approved,
             workspace=sample_workspace())
 
@@ -234,7 +234,7 @@ async def test_update_and_publish_event_airlock_request_raises_503_if_publish_ev
         await update_and_publish_event_airlock_request(
             airlock_request=airlock_request_mock,
             airlock_request_repo=airlock_request_repo_mock,
-            user=create_test_user(),
+            updated_by=create_test_user(),
             new_status=AirlockRequestStatus.Submitted,
             workspace=sample_workspace())
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
@@ -250,7 +250,7 @@ async def test_update_and_publish_event_airlock_request_without_status_change_sh
     await update_and_publish_event_airlock_request(
         airlock_request=sample_airlock_request(),
         airlock_request_repo=airlock_request_repo_mock,
-        user=create_test_user(),
+        updated_by=create_test_user(),
         new_status=new_status,
         workspace=sample_workspace())
 
@@ -266,7 +266,7 @@ async def test_get_airlock_requests_by_user_and_workspace_with_status_filter_cal
     get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo_mock,
                                                status=AirlockRequestStatus.InReview)
 
-    airlock_request_repo_mock.get_airlock_requests.assert_called_once_with(workspace_id=workspace.id, user_id=None, type=None,
+    airlock_request_repo_mock.get_airlock_requests.assert_called_once_with(workspace_id=workspace.id, creator_user_id=None, type=None,
                                                                            status=AirlockRequestStatus.InReview, order_by=None, order_ascending=True)
 
 

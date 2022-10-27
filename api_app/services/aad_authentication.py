@@ -271,7 +271,7 @@ class AzureADAuthorization(AccessService):
 
             if principal_type == "User" and principal_id in user_emails:
                 app_role_id = role_assignment["appRoleId"]
-                app_role_name = inverted_app_role_ids[app_role_id]
+                app_role_name = inverted_app_role_ids.get(app_role_id)
 
                 if app_role_name:
                     workspace_role_assignments_details[app_role_name].append(user_emails[principal_id])

@@ -21,7 +21,7 @@ def workspaces_list(output_format, query):
     client = ApiClient.get_api_client_from_config()
     response = client.call_api(log, 'GET', '/api/workspaces')
     output(
-        response.text,
+        response,
         output_format=output_format,
         query=query,
         default_table_query=r"workspaces[].{id:id, display_name:properties.display_name, deployment_status:deploymentStatus, workspace_url:workspaceURL}")
@@ -52,7 +52,7 @@ def workspaces_create(ctx, definition, definition_file, no_wait, output_format, 
     response = client.call_api(log, 'POST', '/api/workspaces', json_data=definition_dict)
 
     if no_wait:
-        output(response.text, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
+        output(response, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())
         return response.text
     else:
         operation_url = response.headers['location']

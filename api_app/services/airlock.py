@@ -13,7 +13,7 @@ from resources import strings, constants
 def get_account_by_request(airlock_request: AirlockRequest, workspace: Workspace) -> str:
     tre_id = config.TRE_ID
     short_workspace_id = workspace.id[-4:]
-    if airlock_request.requestType == constants.IMPORT_TYPE:
+    if airlock_request.type == constants.IMPORT_TYPE:
         if airlock_request.status == AirlockRequestStatus.Draft:
             return constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL.format(tre_id)
         elif airlock_request.status == AirlockRequestStatus.Submitted:
