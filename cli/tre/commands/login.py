@@ -44,13 +44,13 @@ def login():
               + 'https://<id>.<location>.cloudapp.azure.com/')
 @click.option('--client-id',
               required=False,
-              help='The Client ID of the Azure AD application for the API (optional for API versions >= v0.5.6)')
+              help='The Client ID of the Azure AD application for the API (optional for API versions >= v0.5.7)')
 @click.option('--aad-tenant-id',
               required=False,
-              help='The Tenant ID for the AAD tenant to authenticate with (optional for API versions >= v0.5.6)')
+              help='The Tenant ID for the AAD tenant to authenticate with (optional for API versions >= v0.5.7)')
 @click.option('--api-scope',
               required=False,
-              help='The API scope for the base API (optional for API versions >= v0.5.6)')
+              help='The API scope for the base API (optional for API versions >= v0.5.7)')
 @click.option('--verify/--no-verify',
               help='Enable/disable SSL verification',
               default=True)
@@ -177,9 +177,9 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
 @click.option(
     "--aad-tenant-id",
     required=False,
-    help="The Tenant ID for the AAD tenant to authenticate with (optional for API versions >= v0.5.6)",
+    help="The Tenant ID for the AAD tenant to authenticate with (optional for API versions >= v0.5.7)",
 )
-@click.option("--api-scope", required=False, help="The API scope for the base API (optional for API versions >= v0.5.6)")
+@click.option("--api-scope", required=False, help="The API scope for the base API (optional for API versions >= v0.5.7)")
 @click.option(
     "--verify/--no-verify", help="Enable/disable SSL verification", default=True
 )

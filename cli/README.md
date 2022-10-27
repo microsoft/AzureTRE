@@ -28,7 +28,7 @@ This will prompt you to copy a device code and nagivate to <https://microsoft.co
 
 You can specify `--no-verify` to disable SSL cert verification.
 
-On versions of the API prior to '0.5.6', you will need to pass some additional parameters:
+On versions of the API prior to '0.5.7', you will need to pass some additional parameters:
 
 ```bash
 tre login device-code \
@@ -63,7 +63,7 @@ tre login client-credentials \
 
 You can specify `--no-verify` to disable SSL cert verification.
 
-On versions of the API prior to '0.5.6', you will need to pass some additional parameters:
+On versions of the API prior to '0.5.7', you will need to pass some additional parameters:
 
 ```bash
 tre login client-credentials \
