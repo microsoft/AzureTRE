@@ -105,13 +105,15 @@ async def create_review_user_resource(
         # Getting the review configuration from the airlock request's workspace properties
         if airlock_request.requestType == AirlockRequestType.Import:
             config = workspace.properties["airlock_review_config"]["import"]
-            workspace_id = config["workspace_id"]
+            workspace_id = config["import_vm_workspace_id"]
+            workspace_service_id = config["import_vm_workspace_service_id"]
+            user_resource_template_name = config["import_vm_user_resource_template_name"]
         else:
             assert airlock_request.requestType == AirlockRequestType.Export
             config = workspace.properties["airlock_review_config"]["export"]
             workspace_id = workspace.id
-        workspace_service_id = config["workspace_service_id"]
-        user_resource_template_name = config["user_resource_template_name"]
+            workspace_service_id = config["export_vm_orkspace_service_id"]
+            user_resource_template_name = config["export_vm_user_resource_template_name"]
 
         logging.info(f"Going to create a user resource in {workspace_id} {workspace_service_id} {user_resource_template_name}")
     except (KeyError, TypeError) as e:
