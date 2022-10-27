@@ -45,7 +45,7 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
                 created_by=airlock_request.createdBy,
                 updated_when=airlock_request.updatedWhen,
                 updated_by=airlock_request.updatedBy,
-                type=airlock_request.type,
+                request_type=airlock_request.type,
                 files=airlock_request.files,
                 status=airlock_request.status.value,
                 business_justification=airlock_request.businessJustification),

@@ -15,7 +15,7 @@ class AirlockNotificationRequestData(AzureTREModel):
     created_by: AirlockNotificationUserData
     updated_when: float
     updated_by: AirlockNotificationUserData
-    requestType: AirlockRequestType
+    request_type: AirlockRequestType
     files: List[AirlockFile]
     status: AirlockRequestStatus
     business_justification: str
