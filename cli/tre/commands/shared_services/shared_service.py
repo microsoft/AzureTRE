@@ -156,7 +156,7 @@ def shared_service_set_enabled(shared_service_context: SharedServiceContext, eta
               flag_value=True,
               default=False)
 @click.option('--ensure-disabled',
-              help="Disable before deleting if not currently enabled",
+              help="Disable before deleting if not currently disabled (required to delete)",
               flag_value=True,
               default=False)
 @click.pass_context
