@@ -13,9 +13,6 @@ Deployment is done using the `/.github/workflows/deploy_tre.yml` workflow. This 
 
 Before you can run the `deploy_tre.yml` workflow there are some one-time configuration steps that we need to do, similar to the Pre-deployment steps for manual deployment.
 
-!!! tip
-    In some of the steps below, you are asked to configure repository secrets. Follow the [GitHub guide](https://docs.github.com/en/actions/security-guides/encrypted-secrets) on creating repository secrets if you are unfamiliar with this step.
-
 1. Create a service principal for the subscription so that the workflow can provision Azure resources.
 1. Decide on a TRE ID and the location for the Azure resources
 1. Create a Teams WebHook for deployment notifications
@@ -49,7 +46,7 @@ Before you can run the `deploy_tre.yml` workflow there are some one-time configu
   !!! caution
       Save the JSON output locally - as you will need it later for setting secrets in the build
 
-1. Create a repository secret named `AZURE_CREDENTIALS` and use the JSON output from the previous step as its value. Note it should look similar to this:
+1. Create a secret in your github environment named `AZURE_CREDENTIALS` and use the JSON output from the previous step as its value. Note it should look similar to this:
 ```json
 {
   "clientId": "",
@@ -82,6 +79,7 @@ In a previous [Setup Auth configuration](./setup-auth-entities.md) step a new `/
 
   | Variable | Description |
   | -------- | ----------- |
+  | `AAD_TENANT_ID` | Tenant id against which auth is performed. |
   | `APPLICATION_ADMIN_CLIENT_ID`| This client will administer AAD Applications for TRE |
   | `APPLICATION_ADMIN_CLIENT_SECRET`| This client will administer AAD Applications for TRE |
   | `TEST_ACCOUNT_CLIENT_ID`| This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
@@ -89,8 +87,8 @@ In a previous [Setup Auth configuration](./setup-auth-entities.md) step a new `/
   | `API_CLIENT_ID` | API application (client) ID. |
   | `API_CLIENT_SECRET` | API application client secret. |
   | `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
-  | `WORKSPACE_API_CLIENT_ID` | Each workspace is secured behind it's own AD Application|
-  | `WORKSPACE_API_CLIENT_SECRET` | Each workspace is secured behind it's own AD Application. This is the secret for that application.|
+  | `TEST_WORKSPACE_APP_ID`| Each workspace is secured behind it's own AD Application. Use the value of `WORKSPACE_API_CLIENT_ID` created in the `/devops/auth.env` env file |
+  | `TEST_WORKSPACE_APP_SECRET`| Each workspace is secured behind it's own AD Application. This is the secret for that application. Use the value of `WORKSPACE_API_CLIENT_SECRET` created in the `/devops/auth.env` env file|
 
 ### Create a Teams Webhook for deployment notifications
 
