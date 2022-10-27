@@ -45,7 +45,6 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
 
   // Check if Review Resources are configured for the current workspace
   useEffect(() => {
-    console.log('Workspace', workspaceCtx.workspace);
     if (
       request
       && workspaceCtx.workspace?.properties.airlock_review_config
