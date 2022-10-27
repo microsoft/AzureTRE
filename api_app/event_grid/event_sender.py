@@ -2,10 +2,11 @@ import logging
 import re
 from typing import Dict, Optional
 from azure.eventgrid import EventGridEvent
-from models.domain.events import StatusChangedData, AirlockNotificationData
+from models.domain.events import AirlockNotificationRequestData, AirlockNotificationWorkspaceData, StatusChangedData, AirlockNotificationData
 from event_grid.helpers import publish_event
 from core import config
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus
+from models.domain.workspace import Workspace
 
 
 async def send_status_changed_event(airlock_request: AirlockRequest, previous_status: Optional[AirlockRequestStatus]):
@@ -25,17 +26,37 @@ async def send_status_changed_event(airlock_request: AirlockRequest, previous_st
     await publish_event(status_changed_event, config.EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT)
 
 
-async def send_airlock_notification_event(airlock_request: AirlockRequest, emails: Dict):
+async def send_airlock_notification_event(airlock_request: AirlockRequest, workspace: Workspace, role_assignment_details: Dict[str, str]):
+    def to_snake_case(string: str):
+        return re.sub(r'(?<!^)(?=[A-Z])', '_', string).lower()
+
     request_id = airlock_request.id
     status = airlock_request.status.value
-    workspace_id = airlock_request.workspaceId
-    snake_case_emails = {re.sub(r'(?<!^)(?=[A-Z])', '_', role_name).lower(): role_id for role_name, role_id in emails.items()}
+    recipient_emails_by_role = {to_snake_case(role_name): role_id for role_name, role_id in role_assignment_details.items()}
 
     airlock_notification = EventGridEvent(
         event_type="airlockNotification",
-        data=AirlockNotificationData(request_id=request_id, event_type="status_changed", event_value=status, emails=snake_case_emails, workspace_id=workspace_id).__dict__,
+        data=AirlockNotificationData(
+            event_type="status_changed",
+            recipient_emails_by_role=recipient_emails_by_role,
+            request=AirlockNotificationRequestData(
+                id=request_id,
+                created_when=airlock_request.createdWhen,
+                created_by=airlock_request.createdBy,
+                updated_when=airlock_request.updatedWhen,
+                updated_by=airlock_request.updatedBy,
+                type=airlock_request.type,
+                files=airlock_request.files,
+                status=airlock_request.status.value,
+                business_justification=airlock_request.businessJustification),
+            workspace=AirlockNotificationWorkspaceData(
+                id=workspace.id,
+                display_name=workspace.properties["display_name"],
+                description=workspace.properties["description"]),
+        ).__dict__,
         subject=f"{request_id}/airlockNotification",
-        data_version="3.0"
+        data_version="4.0"
     )
+
     logging.info(f"Sending airlock notification event with request ID {request_id}, status: {status}")
     await publish_event(airlock_notification, config.EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT)
