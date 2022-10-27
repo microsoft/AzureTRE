@@ -164,7 +164,7 @@ def workspace_service_set_enabled(workspace_service_context: WorkspaceServiceCon
               flag_value=True,
               default=False)
 @click.option('--ensure-disabled',
-              help="Disable before deleting if not currently disabled (required to delete)",
+              help="Ensure disabled before deleting (resources are required to be disabled before deleting)",
               flag_value=True,
               default=False)
 @output_option()

@@ -139,7 +139,7 @@ def workspace_set_enabled(workspace_context: WorkspaceContext, etag, enable, no_
               flag_value=True,
               default=False)
 @click.option('--ensure-disabled',
-              help="Disable before deleting if not currently disabled (required to delete)",
+              help="Ensure disabled before deleting (resources are required to be disabled before deleting)",
               flag_value=True,
               default=False)
 @output_option()
