@@ -137,7 +137,7 @@ if [[ -n "$(echo "$get_result" | jq -r .id)" ]]; then
   fi
 else
   error_code=$(echo "$get_result" | jq -r .status_code)
-  if [[  "$error_code" = "404" ]]; then
+  if [[  "$error_code" != "404" ]]; then
     echo "Error checking for existing template: $get_result"
     exit 1
   fi
