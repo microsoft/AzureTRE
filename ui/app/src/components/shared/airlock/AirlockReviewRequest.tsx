@@ -1,4 +1,4 @@
-import { DefaultButton, DialogFooter, FontWeights, getTheme, IButtonStyles, IconButton, IIconProps, IStackItemStyles, IStackStyles, mergeStyleSets, PrimaryButton, Shimmer, Spinner, SpinnerSize, Stack, TextField } from "@fluentui/react";
+import { DefaultButton, DialogFooter, FontWeights, getTheme, IButtonStyles, IconButton, IIconProps, IStackItemStyles, IStackStyles, mergeStyleSets, MessageBar, MessageBarType, PrimaryButton, Shimmer, Spinner, SpinnerSize, Stack, TextField } from "@fluentui/react";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { WorkspaceContext } from "../../../contexts/WorkspaceContext";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
@@ -8,7 +8,6 @@ import { APIError } from "../../../models/exceptions";
 import { destructiveButtonStyles, successButtonStyles } from "../../../styles";
 import { ExceptionLayout } from "../ExceptionLayout";
 import { UserResource } from '../../../models/userResource';
-import vmImage from "../../../assets/virtual_machine.svg";
 import { PowerStateBadge } from "../PowerStateBadge";
 import { useComponentManager } from "../../../hooks/useComponentManager";
 import { ComponentAction, Resource, VMPowerStates } from "../../../models/resource";
@@ -16,6 +15,8 @@ import { actionsDisabledStates, failedStates, inProgressStates, successStates } 
 import { useAppDispatch } from "../../../hooks/customReduxHooks";
 import { addUpdateOperation } from "../notifications/operationsSlice";
 import { StatusBadge } from "../StatusBadge";
+import vmImage from "../../../assets/virtual_machine.svg";
+import warningImage from "../../../assets/warning.svg";
 
 interface AirlockReviewRequestProps {
   request: AirlockRequest | undefined,
@@ -29,6 +30,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
   const [reviewExplanation, setReviewExplanation] = useState('');
   const [reviewing, setReviewing] = useState(false);
   const [reviewError, setReviewError] = useState(false);
+  const [reviewResourcesConfigured, setReviewResourcesConfigured] = useState(false);
   const [reviewResourceStatus, setReviewResourceStatus] = useState<'notCreated' | 'creating' | 'created'>();
   const [reviewResourceError, setReviewResourceError] = useState(false);
   const [apiError, setApiError] = useState({} as APIError);
@@ -40,6 +42,21 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
   const dispatch = useAppDispatch();
 
   useEffect(() => setRequest(props.request), [props.request]);
+
+  // Check if Review Resources are configured for the current workspace
+  useEffect(() => {
+    console.log('Workspace', workspaceCtx.workspace);
+    if (
+      request
+      && workspaceCtx.workspace?.properties.airlock_review_config
+      && workspaceCtx.workspace?.properties.airlock_review_config[request.type]
+    ) {
+      console.log('Setting review resources configured');
+      setReviewResourcesConfigured(true);
+    } else {
+      setReviewResourcesConfigured(false);
+    }
+  }, [request, workspaceCtx]);
 
   // Get the review user resource if present in the airlock request
   useEffect(() => {
@@ -76,10 +93,10 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         setReviewResourceError(true);
       }
     };
-    if (request?.reviewUserResources && request?.reviewUserResources.length > 0) {
+    if (reviewResourcesConfigured && request?.reviewUserResources && request?.reviewUserResources.length > 0) {
       getReviewUserResource();
     }
-  }, [apiCall, request, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI]);
+  }, [apiCall, request, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI, reviewResourcesConfigured]);
 
   // Get the latest updates to the review resource to track deployment
   const latestUpdate = useComponentManager(
@@ -116,7 +133,6 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         HttpMethod.Post,
         workspaceCtx.workspaceApplicationIdURI
       );
-      console.log(response);
       dispatch(addUpdateOperation(response.operation));
       props.onUpdateRequest(response.airlockRequest);
     } catch (err: any) {
@@ -200,18 +216,24 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       automatically downloaded onto it. Once you've viewed the data, click "Proceed to review" to make your decision.
     </p>
     {
-      !reviewResourceError ? <Stack horizontal horizontalAlign="space-between" styles={reviewVMStyles}>
-        <Stack.Item styles={reviewVMItemStyles}>
-          <img src={vmImage} alt="Virtual machine" width="50" />
-          <div style={{marginLeft:20}}>
-            <h3 style={{marginTop:0, marginBottom:2}}>Review VM</h3>
-            { statusBadge }
-          </div>
-        </Stack.Item>
-        <Stack.Item styles={reviewVMItemStyles}>
-          { action }
-        </Stack.Item>
-      </Stack> : <ExceptionLayout e={apiError} />
+      reviewResourcesConfigured ? <> {
+        !reviewResourceError ? <Stack horizontal horizontalAlign="space-between" styles={reviewVMStyles}>
+          <Stack.Item styles={reviewVMItemStyles}>
+            <img src={vmImage} alt="Virtual machine" width="50" />
+            <div style={{marginLeft:20}}>
+              <h3 style={{marginTop:0, marginBottom:2}}>Review VM</h3>
+              { statusBadge }
+            </div>
+          </Stack.Item>
+          <Stack.Item styles={reviewVMItemStyles}>
+            { action }
+          </Stack.Item>
+        </Stack> : <ExceptionLayout e={apiError} />
+      } </> : <>
+        <MessageBar messageBarType={MessageBarType.severeWarning}>
+          It looks like review VMs aren't set up in your workspace. Please contact your workspace owner.
+        </MessageBar>
+      </>
     }
     <DialogFooter>
       <DefaultButton onClick={props.onClose} text="Cancel" />
