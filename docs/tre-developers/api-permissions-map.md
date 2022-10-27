@@ -56,7 +56,7 @@ These tables specify each endpoint that exists today in TRE API and the permissi
 | GET /shared-service/{shared\_service\_id}                                                                           | V         | V        |          |
 | POST /shared-service                                                                                                | V         | X        |          |
 | PATCH /shared-service/{shared\_service\_id}                                                                         | V         | X        |          |
-| DELETE /shared-service/{shared\_service\_id}                                                                        | V         | X        |          |
+| DELETE /shared-service/{shared\_service\_id}                                                                        | V         | X        |          |****
 | POST /shared-service/{shared\_service\_id}/invoke-action                                                            | V         | X        |          |
 | GET /shared-service/{shared\_service\_id}/operations                                                                | V         | X        |          |
 | GET /shared-service/{shared\_service\_id}/operations/{operation\_id}                                                | V         | X        |          |
@@ -64,3 +64,5 @@ These tables specify each endpoint that exists today in TRE API and the permissi
 | GET /costs                                                                                                          | V         | X        | X        |
 | GET /workspaces/{workspace\_id}/costs                                                                               | V         | X        | V        |
 | GET /health                                                                                                         | \-        | \-       | \-       |
+| GET /ping                                                                                                           | \-        | \-       | \-       |
+| GET /.metadata                                                                                                      | \-        | \-       | \-       |

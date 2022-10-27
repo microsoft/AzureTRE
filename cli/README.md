@@ -21,6 +21,16 @@ The CLI allows you to log in using either a device code flow or client credentia
 To log in using device code flow, run:
 
 ```bash
+tre login device-code --base-url https://mytre.westeurope.cloudapp.azure.com/ 
+```
+
+This will prompt you to copy a device code and nagivate to <https://microsoft.com/devicelogin> to complete the login flow interactively.
+
+You can specify `--no-verify` to disable SSL cert verification.
+
+On versions of the API prior to '0.5.7', you will need to pass some additional parameters:
+
+```bash
 tre login device-code \
   --base-url https://mytre.westeurope.cloudapp.azure.com/ \
   --client-id <API_CLIENT_ID> \
@@ -28,9 +38,6 @@ tre login device-code \
   --api-scope <ROOT_API_SCOPE>
 ```
 
-This will prompt you to copy a device code and nagivate to <https://microsoft.com/devicelogin> to complete the login flow interactively.
-
-You can specify `--no-verify` to disable SSL cert verification.
 
 NOTE: the api scope is usually of the form  `api://<API_CLIENT_ID>/user_impersonation`
 
@@ -51,12 +58,21 @@ To log in using client credentials flow (for a service principal), run:
 tre login client-credentials \
   --base-url https://mytre.westeurope.cloudapp.azure.com/ \
   --client-id <SERVICE_PRINICPAL_CLIENT_ID> \
+  --client-secret <SERVICE_PRINCIPAL_CLIENT_SECRET>
+```
+
+You can specify `--no-verify` to disable SSL cert verification.
+
+On versions of the API prior to '0.5.7', you will need to pass some additional parameters:
+
+```bash
+tre login client-credentials \
+  --base-url https://mytre.westeurope.cloudapp.azure.com/ \
+  --client-id <SERVICE_PRINICPAL_CLIENT_ID> \
   --client-secret <SERVICE_PRINCIPAL_CLIENT_SECRET> \
   --aad-tenant-id <AAD_TENANT_ID> \
   --api-scope <ROOT_API_SCOPE>
 ```
-
-You can specify `--no-verify` to disable SSL cert verification.
 
 NOTE: the api scope is usually of the form  `api://<API_CLIENT_ID>/user_impersonation`
 
