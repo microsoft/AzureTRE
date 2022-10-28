@@ -137,6 +137,8 @@ if [[ -n "$(echo "$get_result" | jq -r .id)" ]]; then
   fi
 else
   error_code=$(echo "$get_result" | jq -r .status_code)
+  # 404 Not Found error at this point is fine => we want to continue to register the template
+  # For other errors, show the error and exit with non-zero result
   if [[  "$error_code" != "404" ]]; then
     echo "Error checking for existing template: $get_result"
     exit 1
