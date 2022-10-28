@@ -4,6 +4,13 @@ name: cli-package
 on:
   push:
     branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: The environment to run this workflow in
+        type: environment
+        default: CICD
+        required: true
 
 jobs:
   build:
@@ -13,18 +20,19 @@ jobs:
       - name: Checkout (GitHub)
         uses: actions/checkout@v2
 
-      - name: Login to Container Registry
-        uses: docker/login-action@v1
-        if: github.ref == 'refs/heads/main'
+      - name: Azure Login
+        uses: azure/login@v1
         with:
-          registry: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/
-          username: ${{ secrets.ACTIONS_ACR_NAME }}
-          password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: ACR Login
+        id: ci_cache_cr_login
+        run: az acr login --name "${{ secrets.ACR_NAME }}"
 
       - name: Build and run dev container task
         uses: devcontainers/ci@v0.2
         with:
-          imageName: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
+          imageName: ${{ secrets.ACR_NAME }}.azurecr.io/tredev:latest
           runCmd: |
             # Validate installation and showing help output
             cd cli
@@ -36,7 +44,7 @@ jobs:
       - name: Build and run dev container task
         uses: devcontainers/ci@v0.2
         with:
-          imageName: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
+          imageName: ${{ secrets.ACR_NAME }}.azurecr.io/tredev:latest
           runCmd: |
             # Create the python wheel
             cd cli
