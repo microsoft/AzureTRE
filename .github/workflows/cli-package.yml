@@ -42,7 +42,7 @@ jobs:
           COMMAND: |
             # Create the python wheel
             cd cli
-            make build-package
+            sudo make build-package
           DEVCONTAINER_TAG: latest
           CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
