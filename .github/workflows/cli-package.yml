@@ -23,37 +23,29 @@ jobs:
       - name: Checkout (GitHub)
         uses: actions/checkout@v2
 
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: ACR Login
-        id: ci_cache_cr_login
-        run: az acr login --name "${{ secrets.ACR_NAME }}"
-
       - name: Build and run dev container task
-        uses: devcontainers/ci@3dcee0e5dada9275fbd8e4d76ee9de43998be886
+        uses: ./.github/actions/devcontainer_run_command
         with:
-          imageName: ${{ secrets.ACR_NAME }}.azurecr.io/tredev
-          runCmd: |
+          COMMAND: |
             # Validate installation and showing help output
             cd cli
             make pip-install install-cli
             source <(_TRE_COMPLETE=bash_source tre)
             tre --help
-          push: never
+          DEVCONTAINER_TAG: latest
+          CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Create the CLI package
-        uses: devcontainers/ci@3dcee0e5dada9275fbd8e4d76ee9de43998be886
+        uses: ./.github/actions/devcontainer_run_command
         with:
-          imageName: ${{ secrets.ACR_NAME }}.azurecr.io/tredev
-          runCmd: |
+          COMMAND: |
             # Create the python wheel
             cd cli
             make build-package
-          push: never
-
+          DEVCONTAINER_TAG: latest
+          CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Upload Wheel as artifact
         uses: actions/upload-artifact@v3
