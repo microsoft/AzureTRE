@@ -15,6 +15,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # environment is used to access the secrets for Azure credentials
+    # to sign in to a container registry to re-use a dev container image as a build cache
+    environment: ${{ inputs.environmentName || 'CICD'}}
 
     steps:
       - name: Checkout (GitHub)
@@ -30,9 +33,9 @@ jobs:
         run: az acr login --name "${{ secrets.ACR_NAME }}"
 
       - name: Build and run dev container task
-        uses: devcontainers/ci@v0.2
+        uses: devcontainers/ci@3dcee0e5dada9275fbd8e4d76ee9de43998be886
         with:
-          imageName: ${{ secrets.ACR_NAME }}.azurecr.io/tredev:latest
+          imageName: ${{ secrets.ACR_NAME }}.azurecr.io/tredev
           runCmd: |
             # Validate installation and showing help output
             cd cli
@@ -41,10 +44,10 @@ jobs:
             tre --help
           push: never
 
-      - name: Build and run dev container task
-        uses: devcontainers/ci@v0.2
+      - name: Create the CLI package
+        uses: devcontainers/ci@3dcee0e5dada9275fbd8e4d76ee9de43998be886
         with:
-          imageName: ${{ secrets.ACR_NAME }}.azurecr.io/tredev:latest
+          imageName: ${{ secrets.ACR_NAME }}.azurecr.io/tredev
           runCmd: |
             # Create the python wheel
             cd cli
