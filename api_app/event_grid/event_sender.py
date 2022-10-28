@@ -1,5 +1,7 @@
 import logging
 import re
+import json
+
 from typing import Dict, Optional
 from azure.eventgrid import EventGridEvent
 from models.domain.events import AirlockNotificationRequestData, AirlockNotificationWorkspaceData, StatusChangedData, AirlockNotificationData
@@ -34,26 +36,33 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
     status = airlock_request.status.value
     recipient_emails_by_role = {to_snake_case(role_name): role_id for role_name, role_id in role_assignment_details.items()}
 
+    data = json.loads(AirlockNotificationData(
+        event_type="status_changed",
+        recipient_emails_by_role=recipient_emails_by_role,
+        request=AirlockNotificationRequestData(
+            id=request_id,
+            created_when=airlock_request.createdWhen,
+            created_by=airlock_request.createdBy,
+            updated_when=airlock_request.updatedWhen,
+            updated_by=airlock_request.updatedBy,
+            request_type=airlock_request.type,
+            files=airlock_request.files,
+            status=airlock_request.status.value,
+            business_justification=airlock_request.businessJustification),
+        workspace=AirlockNotificationWorkspaceData(
+            id=workspace.id,
+            display_name=workspace.properties["display_name"],
+            description=workspace.properties["description"]),
+    ).json())
+
+    # For EventGridEvent, data should be a Dict[str, object]
+    # Becuase data has nested objects, they all need to be recursively converted to dict
+    # To do that, we use a json() method implemented for all objects in AzureTREModel, and convert it back from json
+    data_dict = json.loads(data.json())
+
     airlock_notification = EventGridEvent(
         event_type="airlockNotification",
-        data=AirlockNotificationData(
-            event_type="status_changed",
-            recipient_emails_by_role=recipient_emails_by_role,
-            request=AirlockNotificationRequestData(
-                id=request_id,
-                created_when=airlock_request.createdWhen,
-                created_by=airlock_request.createdBy,
-                updated_when=airlock_request.updatedWhen,
-                updated_by=airlock_request.updatedBy,
-                request_type=airlock_request.type,
-                files=airlock_request.files,
-                status=airlock_request.status.value,
-                business_justification=airlock_request.businessJustification),
-            workspace=AirlockNotificationWorkspaceData(
-                id=workspace.id,
-                display_name=workspace.properties["display_name"],
-                description=workspace.properties["description"]),
-        ).__dict__,
+        data=data_dict,
         subject=f"{request_id}/airlockNotification",
         data_version="4.0"
     )
