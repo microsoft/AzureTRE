@@ -32,7 +32,6 @@ class AirlockNotificationData(AzureTREModel):
     recipient_emails_by_role: Dict[str, str]
     request: AirlockNotificationRequestData
     workspace: AirlockNotificationWorkspaceData
-    workspace_id: str
 
 
 class StatusChangedData(AzureTREModel):

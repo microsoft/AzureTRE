@@ -93,10 +93,10 @@
                         }
                       },
                       "status": {
-                        "type": "str"
+                        "type": "string"
                       },
                       "business_justification": {
-                        "type": "str"
+                        "type": "string"
                       }
                     }
                   },
