@@ -29,7 +29,7 @@ class AirlockNotificationWorkspaceData(AzureTREModel):
 
 class AirlockNotificationData(AzureTREModel):
     event_type: str
-    recipient_emails_by_role: Dict[str, str]
+    recipient_emails_by_role: Dict[str, List[str]]
     request: AirlockNotificationRequestData
     workspace: AirlockNotificationWorkspaceData
 
