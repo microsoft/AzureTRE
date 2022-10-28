@@ -230,7 +230,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         </Stack> : <ExceptionLayout e={apiError} />
       } </> : <>
         <MessageBar messageBarType={MessageBarType.severeWarning}>
-          It looks like review VMs aren't set up in your workspace. Please contact your workspace owner.
+          It looks like review VMs aren't set up in your workspace. Please contact your Workspace Owner.
         </MessageBar>
       </>
     }
