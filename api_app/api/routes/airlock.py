@@ -78,7 +78,7 @@ async def get_all_airlock_requests_by_workspace(
 
 @airlock_workspace_router.get("/workspaces/{workspace_id}/requests/{airlock_request_id}", status_code=status_code.HTTP_200_OK,
                               response_model=AirlockRequestInResponse, name=strings.API_GET_AIRLOCK_REQUEST,
-                              dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
+                              dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager), Depends(get_workspace_by_id_from_path)])
 async def retrieve_airlock_request_by_id(airlock_request=Depends(get_airlock_request_by_id_from_path)) -> AirlockRequestInResponse:
     return AirlockRequestInResponse(airlockRequest=airlock_request)
 
