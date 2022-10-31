@@ -52,7 +52,7 @@ RUN if [ "${INTERACTIVE}" = "true" ]; then \
 # Not using the script from https://cdn.porter.sh/latest/install-linux.sh
 # as it installs things we don't need and duplicates the binary.
 ARG PORTER_MIRROR=https://cdn.porter.sh
-ARG PORTER_VERSION=v0.38.13
+ARG PORTER_VERSION=v0.38.12
 ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.0-rc.1
 ARG PORTER_AZ_MIXIN_VERSION=v0.7.3
 ARG PORTER_DOCKER_MIXIN_VERSION=v0.3.0
