@@ -49,7 +49,7 @@ def update_resource_for_step(operation_step: OperationStep, resource_repo: Resou
     if primary_resource.resourceType == ResourceType.UserResource:
         primary_parent_workspace_service = resource_repo.get_resource_by_id(primary_resource.parentWorkspaceServiceId)
         primary_parent_service_name = primary_parent_workspace_service.templateName
-    primary_template = resource_template_repo.get_template_by_name_and_version(primary_resource.templateName, primary_resource.templateVersion, primary_resource.resourceType, primary_parent_service_name)
+    primary_template = resource_template_repo.get_current_template(primary_resource.templateName, primary_resource.resourceType, primary_parent_service_name)
 
     # get the template step
     template_step = None
@@ -117,7 +117,7 @@ def try_upgrade(resource_repo: ResourceRepository, resource_template_repo: Resou
     if resource_to_update.resourceType == ResourceType.UserResource:
         parent_service_name = resource_to_update["parentWorkspaceServiceId"]
 
-    resource_template_to_send = resource_template_repo.get_template_by_name_and_version(resource_to_update.templateName, resource_to_update.templateVersion, resource_to_update.resourceType, parent_service_name)
+    resource_template_to_send = resource_template_repo.get_current_template(resource_to_update.templateName, resource_to_update.resourceType, parent_service_name)
 
     # create the patch
     patch = ResourcePatch(

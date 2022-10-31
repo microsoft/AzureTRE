@@ -125,16 +125,5 @@ def get_current_template_by_name(template_name: str, template_repo: ResourceTemp
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
 
-def get_template_by_name_and_version(template_name: str, version: str, template_repo: ResourceTemplateRepository, resource_type: ResourceType, parent_service_template_name: str = "", is_update: bool = False) -> dict:
-    try:
-        template = template_repo.get_template_by_name_and_version(template_name, version, resource_type, parent_service_template_name)
-        return template_repo.enrich_template(template, is_update=is_update)
-    except EntityDoesNotExist:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.TEMPLATE_VERSION_DOES_NOT_EXIST)
-    except Exception as e:
-        logging.debug(e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
-
-
 def get_timestamp() -> float:
     return datetime.utcnow().timestamp()

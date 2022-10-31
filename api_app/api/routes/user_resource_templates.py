@@ -4,7 +4,7 @@ from pydantic import parse_obj_as
 
 from api.dependencies.database import get_repository
 from api.dependencies.workspace_service_templates import get_workspace_service_template_by_name_from_path
-from api.routes.resource_helpers import get_current_template_by_name, get_template_by_name_and_version
+from api.routes.workspace_templates import get_current_template_by_name
 from db.errors import EntityVersionExist
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
@@ -26,12 +26,6 @@ async def get_user_resource_templates_for_service_template(service_template_name
 @user_resource_templates_core_router.get("/workspace-service-templates/{service_template_name}/user-resource-templates/{user_resource_template_name}", response_model=UserResourceTemplateInResponse, response_model_exclude_none=True, name=strings.API_GET_USER_RESOURCE_TEMPLATE_BY_NAME, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 async def get_current_user_resource_template_by_name(service_template_name: str, user_resource_template_name: str, is_update: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> UserResourceTemplateInResponse:
     template = get_current_template_by_name(user_resource_template_name, template_repo, ResourceType.UserResource, service_template_name, is_update=is_update)
-    return parse_obj_as(UserResourceTemplateInResponse, template)
-
-
-@user_resource_templates_core_router.get("/workspace-service-templates/{service_template_name}/user-resource-templates/{user_resource_template_name}/{version}", response_model=UserResourceTemplateInResponse, response_model_exclude_none=True, name=strings.API_GET_USER_RESOURCE_TEMPLATE_BY_NAME_AND_VERSION, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
-async def get_user_resource_template_by_name_and_version(service_template_name: str, user_resource_template_name: str, version, is_update: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> UserResourceTemplateInResponse:
-    template = get_template_by_name_and_version(user_resource_template_name, version, template_repo, ResourceType.UserResource, service_template_name, is_update=is_update)
     return parse_obj_as(UserResourceTemplateInResponse, template)
 
 
