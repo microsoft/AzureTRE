@@ -16,9 +16,12 @@
 FEATURES:
 * Display workspace and shared services total costs for admin role in UI [#2738](https://github.com/microsoft/AzureTRE/pull/2772)
 * Automatically validate all resources have tre_id tag via TFLint [#2774](https://github.com/microsoft/AzureTRE/pull/2774)
+* Add metadata endpoint and simplify `tre` CLI login (also adds API version to UI) (#2794)
 
 ENHANCEMENTS:
 * Renamed several airlock fields to make them more descriptive and added a createdBy field. Included migration for backwards compatibility ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
+* Show error message when Review VMs are not configured in the current workspace
+* CLI: Add missing endpoints and minor bug fixes (#2784)
 
 BUG FIXES:
 * Show the correct createdBy value for airlock requests in UI and in API queries ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))

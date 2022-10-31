@@ -72,6 +72,18 @@ class ApiClient:
         else:
             raise click.ClickException(f"Unhandled login method: {login_method}")
 
+    @staticmethod
+    def get_api_metadata(api_base_url: str) -> "Union[dict[str, str], None]":
+        with Client() as client:
+            url = f"{api_base_url}/api/.metadata"
+
+            response = client.get(url)
+            if response.status_code == 200:
+                response_json = response.json()
+                return response_json
+            else:
+                return None
+
     def call_api(
         self,
         log: Logger,
