@@ -36,7 +36,7 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
     status = airlock_request.status.value
     recipient_emails_by_role = {to_snake_case(role_name): role_id for role_name, role_id in role_assignment_details.items()}
 
-    data = json.loads(AirlockNotificationData(
+    data = AirlockNotificationData(
         event_type="status_changed",
         recipient_emails_by_role=recipient_emails_by_role,
         request=AirlockNotificationRequestData(
@@ -53,7 +53,7 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
             id=workspace.id,
             display_name=workspace.properties["display_name"],
             description=workspace.properties["description"]),
-    ).json())
+    )
 
     # For EventGridEvent, data should be a Dict[str, object]
     # Becuase data has nested objects, they all need to be recursively converted to dict
