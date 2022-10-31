@@ -1,6 +1,4 @@
 import time
-import json
-from tkinter import CURRENT
 from fastapi import HTTPException, status
 import pytest
 from mock import AsyncMock, patch, MagicMock

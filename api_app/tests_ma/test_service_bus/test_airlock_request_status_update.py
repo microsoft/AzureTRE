@@ -1,8 +1,10 @@
 import json
 from fastapi import HTTPException, status
 import pytest
+import time
 
 from mock import AsyncMock, patch
+from models.domain.events import AirlockNotificationUserData, AirlockFile
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
 from models.domain.workspace import Workspace
 from service_bus.airlock_request_status_update import receive_step_result_message_and_update_status
@@ -12,10 +14,21 @@ from resources import strings
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 AIRLOCK_REQUEST_ID = "5dbc15ae-40e1-49a5-834b-595f59d626b7"
 EVENT_ID = "0000c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+CURRENT_TIME = time.time()
 
 
 def sample_workspace():
-    return Workspace(id=WORKSPACE_ID, templateName='template name', templateVersion='1.0', etag='', properties={"client_id": "12345"}, resourcePath="test")
+    return Workspace(
+        id=WORKSPACE_ID,
+        templateName='template name',
+        templateVersion='1.0',
+        etag='',
+        properties={
+            "display_name": "research workspace",
+            "description": "research workspace",
+            "client_id": "12345"
+        },
+        resourcePath="test")
 
 
 pytestmark = pytest.mark.asyncio
@@ -62,10 +75,22 @@ def sample_airlock_request(status=AirlockRequestStatus.Submitted):
         id=AIRLOCK_REQUEST_ID,
         workspaceId=WORKSPACE_ID,
         type=AirlockRequestType.Import,
-        files=[],
+        files=[AirlockFile(
+            name="data.txt",
+            size=5
+        )],
         businessJustification="some test reason",
         status=status,
-        reviews=[]
+        createdWhen=CURRENT_TIME,
+        createdBy=AirlockNotificationUserData(
+            name="John Doe",
+            email="john@example.com"
+        ),
+        updatedWhen=CURRENT_TIME,
+        updatedBy=AirlockNotificationUserData(
+            name="Test User",
+            email="test@user.com"
+        )
     )
     return airlock_request
 
@@ -99,7 +124,14 @@ async def test_receiving_good_message(_, app, sb_client, logging_mock, workspace
     await receive_step_result_message_and_update_status(app)
 
     airlock_request_repo().get_airlock_request_by_id.assert_called_once_with(test_sb_step_result_message["data"]["request_id"])
-    airlock_request_repo().update_airlock_request.assert_called_once_with(original_request=expected_airlock_request, updated_by=expected_airlock_request.updatedBy, new_status=test_sb_step_result_message["data"]["new_status"], request_files=None, status_message=None, airlock_review=None, review_user_resource=None)
+    airlock_request_repo().update_airlock_request.assert_called_once_with(
+        original_request=expected_airlock_request,
+        updated_by=expected_airlock_request.updatedBy,
+        new_status=test_sb_step_result_message["data"]["new_status"],
+        request_files=None,
+        status_message=None,
+        airlock_review=None,
+        review_user_resource=None)
     assert eg_client().send.call_count == 2
     logging_mock.assert_not_called()
     sb_client().get_queue_receiver().complete_message.assert_called_once_with(service_bus_received_message_mock)
