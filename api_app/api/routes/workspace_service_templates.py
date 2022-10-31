@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import parse_obj_as
 
 from api.dependencies.database import get_repository
-from api.routes.workspace_templates import get_current_template_by_name
+from api.routes.resource_helpers import get_current_template_by_name, get_template_by_name_and_version
 from db.errors import EntityVersionExist
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
@@ -24,6 +24,12 @@ async def get_workspace_service_templates(template_repo=Depends(get_repository(R
 @workspace_service_templates_core_router.get("/workspace-service-templates/{service_template_name}", response_model=WorkspaceServiceTemplateInResponse, response_model_exclude_none=True, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 async def get_current_workspace_service_template_by_name(service_template_name: str, is_update: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceServiceTemplateInResponse:
     template = get_current_template_by_name(service_template_name, template_repo, ResourceType.WorkspaceService, is_update=is_update)
+    return parse_obj_as(WorkspaceServiceTemplateInResponse, template)
+
+
+@workspace_service_templates_core_router.get("/workspace-service-templates/{service_template_name}/{version}", response_model=WorkspaceServiceTemplateInResponse, response_model_exclude_none=True, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME_AND_VERSION, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
+async def get_workspace_service_template_by_name_and_version(service_template_name: str, version, is_update: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceServiceTemplateInResponse:
+    template = get_template_by_name_and_version(service_template_name, version, template_repo, ResourceType.WorkspaceService, is_update=is_update)
     return parse_obj_as(WorkspaceServiceTemplateInResponse, template)
 
 

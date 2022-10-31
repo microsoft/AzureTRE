@@ -3,7 +3,6 @@ PONG = "pong"
 # API Descriptions
 API_GET_HEALTH_STATUS = "Get health status"
 API_GET_PING = "Simple endpoint to test calling the API"
-API_GET_METADATA = "Get public API metadata (e.g. to support the UI and CLI)"
 API_MIGRATE_DATABASE = "Migrate documents in the database"
 
 API_GET_MY_OPERATIONS = "Get Operations that the current user has initiated"
@@ -43,15 +42,18 @@ API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE = "Create an Airlock Review User Resourc
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"
 API_GET_WORKSPACE_TEMPLATE_BY_NAME = "Get workspace template by name"
+API_GET_WORKSPACE_TEMPLATE_BY_NAME_AND_VERSION = "Get workspace template by name and version"
 
 API_CREATE_WORKSPACE_SERVICE_TEMPLATES = "Register workspace service template"
 API_GET_WORKSPACE_SERVICE_TEMPLATES = "Get workspace service templates"
 API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE = "Get workspace service templates (on workspace level)"  # only returns templates that the authenticated user is authorized to use
 API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME = "Get workspace service template by name"
+API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME_AND_VERSION = "Get workspace service template by name and version"
 
 API_CREATE_SHARED_SERVICE_TEMPLATES = "Register shared service template"
 API_GET_SHARED_SERVICE_TEMPLATES = "Get shared service templates"
 API_GET_SHARED_SERVICE_TEMPLATE_BY_NAME = "Get shared service template by name"
+API_GET_SHARED_SERVICE_TEMPLATE_BY_NAME_AND_VERSION = "Get shared service template by name and version"
 
 API_GET_ALL_SHARED_SERVICES = "Get all shared services"
 API_GET_SHARED_SERVICE_BY_ID = "Get shared service by ID"
@@ -64,6 +66,7 @@ API_CREATE_USER_RESOURCE_TEMPLATES = "Register user resource template"
 API_GET_USER_RESOURCE_TEMPLATES = "Get user resource templates applicable to the workspace service template"
 API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE = "Get user resource templates applicable to the workspace service template (on workspace level)"  # only returns templates that the authenticated user is authorized to use
 API_GET_USER_RESOURCE_TEMPLATE_BY_NAME = "Get user resource template by name and workspace service"
+API_GET_USER_RESOURCE_TEMPLATE_BY_NAME_AND_VERSION = "Get user resource template by name and version and workspace service"
 
 # cost report
 API_GET_COSTS = "Get overall costs"
@@ -133,6 +136,7 @@ CUSTOM_ACTIONS_DO_NOT_EXIST = "The resource being targeted does not implement an
 
 WORKSPACE_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace service template specified"
 TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this name"
+TEMPLATE_VERSION_DOES_NOT_EXIST = "Could not retrieve the template with this name and version"
 NO_UNIQUE_CURRENT_FOR_TEMPLATE = "The template has multiple 'current' versions"
 
 SHARED_SERVICE_DOES_NOT_EXIST = "Shared service does not exist"

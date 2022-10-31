@@ -8,7 +8,7 @@ from fastapi.openapi.utils import get_openapi
 from api.dependencies.database import get_repository
 from db.repositories.workspaces import WorkspaceRepository
 from api.routes import health, ping, workspaces, workspace_templates, workspace_service_templates, user_resource_templates, \
-    shared_services, shared_service_templates, migrations, costs, airlock, operations, metadata
+    shared_services, shared_service_templates, migrations, costs, airlock, operations
 from core import config
 
 core_tags_metadata = [
@@ -30,16 +30,17 @@ workspace_tags_metadata = [
 router = APIRouter()
 router.include_router(health.router, tags=["health"])
 router.include_router(ping.router, tags=["health"])
-router.include_router(metadata.router, tags=["metadata"])
 
 # Core API
 core_router = APIRouter(prefix=config.API_PREFIX)
 core_router.include_router(health.router, tags=["health"])
 core_router.include_router(ping.router, tags=["health"])
-core_router.include_router(metadata.router, tags=["metadata"])
 core_router.include_router(workspace_templates.workspace_templates_admin_router, tags=["workspace templates"])
-core_router.include_router(workspace_service_templates.workspace_service_templates_core_router, tags=["workspace service templates"])
+
+# NOTE: User Resource Templates need to be registered before workspace service templates for the endpoint `/{service_template_name}/user-resources`,
+# else when you call `/{service_template_name}/user-resources` it will call the workspace service endpoint, interpreting the string "user-resouces" as the version number.
 core_router.include_router(user_resource_templates.user_resource_templates_core_router, tags=["user resource templates"])
+core_router.include_router(workspace_service_templates.workspace_service_templates_core_router, tags=["workspace service templates"])
 core_router.include_router(shared_service_templates.shared_service_templates_core_router, tags=["shared service templates"])
 core_router.include_router(shared_services.shared_services_router, tags=["shared services"])
 core_router.include_router(operations.operations_router, tags=["operations"])
@@ -79,7 +80,7 @@ async def get_swagger(request: Request):
         init_oauth={
             "usePkceWithAuthorizationCodeGrant": True,
             "clientId": config.SWAGGER_UI_CLIENT_ID,
-            "scopes": ["openid", "offline_access", config.API_ROOT_SCOPE]
+            "scopes": ["openid", "offline_access", f"api://{config.API_CLIENT_ID}/user_impersonation"]
         }
     )
 
