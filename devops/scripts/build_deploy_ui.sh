@@ -3,14 +3,18 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-pushd ./ui/app
+# Get the directory that this script is in
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+pushd "$DIR/../../ui/app"
 
 # replace the values in the config file
 jq --arg rootClientId "${SWAGGER_UI_CLIENT_ID}" \
   --arg rootTenantId "${AAD_TENANT_ID}" \
   --arg treApplicationId "api://${API_CLIENT_ID}" \
   --arg treUrl "https://${FQDN}/api" \
-  '.rootClientId = $rootClientId | .rootTenantId = $rootTenantId | .treApplicationId = $treApplicationId | .treUrl = $treUrl' ./src/config.source.json > ./src/config.json
+  --arg treId "${TRE_ID}" \
+  '.rootClientId = $rootClientId | .rootTenantId = $rootTenantId | .treApplicationId = $treApplicationId | .treUrl = $treUrl | .treId = $treId' ./src/config.source.json > ./src/config.json
 
 # build and deploy the app
 yarn install
@@ -18,4 +22,4 @@ yarn build
 
 popd
 
-DIR=./ui/app/build ./devops/scripts/upload_static_web.sh
+CONTENT_DIR="$DIR/../../ui/app/build" "$DIR/upload_static_web.sh"

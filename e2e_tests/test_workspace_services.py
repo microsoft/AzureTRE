@@ -1,20 +1,21 @@
 import pytest
 
 import config
+from helpers import check_aad_auth_redirect
 from resources.workspace import get_workspace_auth_details
 from resources.resource import disable_and_delete_resource, post_resource
 from resources import strings
-
+from helpers import get_admin_token
 
 pytestmark = pytest.mark.asyncio
 
 
 @pytest.mark.extended
-@pytest.mark.timeout(3300)
-async def test_create_guacamole_service_into_base_workspace(admin_token, verify) -> None:
+@pytest.mark.timeout(75 * 60)
+async def test_create_guacamole_service_into_base_workspace(verify) -> None:
 
     payload = {
-        "templateName": "tre-workspace-base",
+        "templateName": strings.BASE_WORKSPACE,
         "properties": {
             "display_name": "E2E test guacamole service",
             "description": "workspace for E2E",
@@ -26,11 +27,12 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
     if config.TEST_WORKSPACE_APP_PLAN != "":
         payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
+    admin_token = await get_admin_token(verify)
     workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, access_token=admin_token, verify=verify)
     workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
     service_payload = {
-        "templateName": "tre-service-guacamole",
+        "templateName": strings.GUACAMOLE_SERVICE,
         "properties": {
             "display_name": "Workspace service test",
             "description": "Workspace service for E2E test"
@@ -39,8 +41,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
 
     workspace_service_path, workspace_service_id = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
 
-    # TODO: uncomment after fixing https://github.com/microsoft/AzureTRE/issues/1602
-    # await ping_guacamole_workspace_service(workspace_id, workspace_service_id, workspace_owner_token, verify)
+    await ping_guacamole_workspace_service(workspace_id, workspace_service_id, verify)
 
     # patch the guac service. we'll just update the display_name but this will still force a full deployment run
     # and essentially terraform no-op
@@ -53,7 +54,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
     await post_resource(patch_payload, f'/api{workspace_service_path}', workspace_owner_token, verify, method="PATCH")
 
     user_resource_payload = {
-        "templateName": "tre-service-guacamole-windowsvm",
+        "templateName": strings.GUACAMOLE_WINDOWS_USER_RESOURCE,
         "properties": {
             "display_name": "My VM",
             "description": "Will be using this VM for my research",
@@ -67,16 +68,17 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
 
     await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
 
+    admin_token = await get_admin_token(verify)
     await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
 
 
 @pytest.mark.extended_aad
-@pytest.mark.timeout(3300)
-async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) -> None:
+@pytest.mark.timeout(75 * 60)
+async def test_create_guacamole_service_into_aad_workspace(verify) -> None:
     """This test will create a Guacamole service but will create a workspace and automatically register the AAD Application"""
 
     payload = {
-        "templateName": "tre-workspace-base",
+        "templateName": strings.BASE_WORKSPACE,
         "properties": {
             "display_name": "E2E test guacamole service",
             "description": "workspace for E2E AAD",
@@ -87,11 +89,12 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
     if config.TEST_WORKSPACE_APP_PLAN != "":
         payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
+    admin_token = await get_admin_token(verify)
     workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, access_token=admin_token, verify=verify)
     workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
     service_payload = {
-        "templateName": "tre-service-guacamole",
+        "templateName": strings.GUACAMOLE_SERVICE,
         "properties": {
             "display_name": "Workspace service test",
             "description": "Workspace service for E2E test"
@@ -100,8 +103,7 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
 
     workspace_service_path, workspace_service_id = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
 
-    # TODO: uncomment after fixing https://github.com/microsoft/AzureTRE/issues/1602
-    # await ping_guacamole_workspace_service(workspace_id, workspace_service_id, workspace_owner_token, verify)
+    await ping_guacamole_workspace_service(workspace_id, workspace_service_id, verify)
 
     # patch the guac service. we'll just update the display_name but this will still force a full deployment run
     # and essentially terraform no-op
@@ -114,7 +116,7 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
     await post_resource(patch_payload, f'/api{workspace_service_path}', workspace_owner_token, verify, method="PATCH")
 
     user_resource_payload = {
-        "templateName": "tre-service-guacamole-linuxvm",
+        "templateName": strings.GUACAMOLE_LINUX_USER_RESOURCE,
         "properties": {
             "display_name": "Linux VM",
             "description": "Extended Tests for Linux",
@@ -128,4 +130,13 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
 
     await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
 
+    admin_token = await get_admin_token(verify)
     await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
+
+
+async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, verify) -> None:
+    short_workspace_id = workspace_id[-4:]
+    short_workspace_service_id = workspace_service_id[-4:]
+    endpoint = f"https://guacamole-{config.TRE_ID}-ws-{short_workspace_id}-svc-{short_workspace_service_id}.azurewebsites.net/guacamole"
+
+    await check_aad_auth_redirect(endpoint, verify)

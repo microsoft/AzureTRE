@@ -1,4 +1,4 @@
-import { MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Route, Routes, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
@@ -8,13 +8,16 @@ import { WorkspaceHeader } from './WorkspaceHeader';
 import { WorkspaceItem } from './WorkspaceItem';
 import { WorkspaceLeftNav } from './WorkspaceLeftNav';
 import { WorkspaceServiceItem } from './WorkspaceServiceItem';
-import config from '../../config.json';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { WorkspaceServices } from './WorkspaceServices';
 import { Workspace } from '../../models/workspace';
 import { SharedService } from '../../models/sharedService';
 import { SharedServices } from '../shared/SharedServices';
 import { SharedServiceItem } from '../shared/SharedServiceItem';
+import { Airlock } from '../shared/airlock/Airlock';
+import { APIError } from '../../models/exceptions';
+import { LoadingState } from '../../models/loadingState';
+import { ExceptionLayout } from '../shared/ExceptionLayout';
 
 export const WorkspaceProvider: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
@@ -22,22 +25,29 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
   const [workspaceServices, setWorkspaceServices] = useState([] as Array<WorkspaceService>)
   const [sharedServices, setSharedServices] = useState([] as Array<SharedService>)
   const workspaceCtx = useRef(useContext(WorkspaceContext));
-  const [loadingState, setLoadingState] = useState('loading');
+  const [loadingState, setLoadingState] = useState(LoadingState.Loading);
+  const [ apiError, setApiError ] = useState({} as APIError);
   const { workspaceId } = useParams();
+
 
   // set workspace context from url
   useEffect(() => {
     const getWorkspace = async () => {
       try {
-        // get the workspace
-        const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get)).workspace;
+        // get the workspace - first we get the scope_id so we can auth against the right aad app
+        let scopeId = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}/scopeid`, HttpMethod.Get)).workspaceAuth.scopeId;
+        if (scopeId === "") {
+          console.error("Unable to get scope_id from workspace - authentication not set up.");
+        }
+
+        const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, scopeId)).workspace;
         workspaceCtx.current.setWorkspace(ws);
         const ws_application_id_uri = ws.properties.scope_id;
 
         // use the client ID to get a token against the workspace (tokenOnly), and set the workspace roles in the context
         let wsRoles: Array<string> = [];
+        console.log('Getting workspace');
         await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, ws_application_id_uri, undefined, ResultType.JSON, (roles: Array<string>) => {
-          config.debug && console.log(`Workspace roles for ${workspaceId}`, roles);
           workspaceCtx.current.setRoles(roles);
           wsRoles = roles;
         }, true);
@@ -45,14 +55,16 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
         // get workspace services to pass to nav + ws services page
         const workspaceServices = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, ws_application_id_uri);
         setWorkspaceServices(workspaceServices.workspaceServices);
-        setLoadingState(wsRoles && wsRoles.length > 0 ? 'ok' : 'denied');
+        setLoadingState(wsRoles && wsRoles.length > 0 ? LoadingState.Ok : LoadingState.AccessDenied);
 
         // get shared services to pass to nav shared services pages
         const sharedServices = await apiCall(ApiEndpoint.SharedServices, HttpMethod.Get);
         setSharedServices(sharedServices.sharedServices);
 
-      } catch {
-        setLoadingState('error');
+      } catch (e: any){
+        e.userMessage = 'Error retrieving workspace';
+        setApiError(e);
+        setLoadingState(LoadingState.Error);
       }
     };
     getWorkspace();
@@ -88,7 +100,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
   }
 
   switch (loadingState) {
-    case 'ok':
+    case LoadingState.Ok:
       return (
         <>
           <WorkspaceHeader />
@@ -131,6 +143,9 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                     <Route path="shared-services/:sharedServiceId/*" element={
                       <SharedServiceItem readonly={true} />
                     } />
+                    <Route path="requests/*" element={
+                      <Airlock/>
+                    } />
                   </Routes>
                 </Stack.Item>
               </Stack>
@@ -138,27 +153,9 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
           </Stack>
         </>
       );
-    case 'denied':
+    case LoadingState.Error:
       return (
-        <MessageBar
-          messageBarType={MessageBarType.warning}
-          isMultiline={true}
-        >
-          <h3>Access Denied</h3>
-          <p>
-            You do not have access to this Workspace. If you feel you should have access, please speak to your TRE Administrator. <br />
-            If you have recently been given access, you may need to clear you browser local storage and refresh.</p>
-        </MessageBar>
-      );
-    case 'error':
-      return (
-        <MessageBar
-          messageBarType={MessageBarType.error}
-          isMultiline={true}
-        >
-          <h3>Error retrieving workspace</h3>
-          <p>There was an error retrieving this workspace. Please see the browser console for details.</p>
-        </MessageBar>
+        <ExceptionLayout e={apiError} />
       )
     default:
       return (

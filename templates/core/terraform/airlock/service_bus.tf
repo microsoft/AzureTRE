@@ -20,6 +20,13 @@ resource "azurerm_servicebus_queue" "scan_result" {
   enable_partitioning = false
 }
 
+resource "azurerm_servicebus_queue" "data_deletion" {
+  name         = local.data_deletion_queue_name
+  namespace_id = var.airlock_servicebus.id
+
+  enable_partitioning = false
+}
+
 resource "azurerm_servicebus_topic" "blob_created" {
   name         = local.blob_created_topic_name
   namespace_id = var.airlock_servicebus.id

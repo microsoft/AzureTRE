@@ -14,17 +14,29 @@ The automation utilises a `make` command, which reads a few environment variable
 |TRE_ID|This is used to build up the name of the identities|
 |AAD_TENANT_ID|The tenant id of where your AAD identities will be placed. This can be different to the tenant where your Azure resources are created.|
 | LOCATION | Where your Azure assets will be provisioned (eg. westeurope). This is used to add a redirect URI from the Swagger UI to the API Application.
-|AUTO_WORKSPACE_APP_REGISTRATION| Default of `false`. Setting this to true grants the `Application.ReadWrite.All` permission to the *Application Admin* identity. This identity is used to manage other AAD applications that it owns, e.g. Workspaces. If you do not set this, the identity will have `Application.ReadWrite.OwnedBy`. Further information can be found [here](./identities/application_admin.md).
+|AUTO_WORKSPACE_APP_REGISTRATION| Default of `false`. Setting this to true grants the `Application.ReadWrite.All` and `Directory.Read.All` permission to the *Application Admin* identity. This identity is used to manage other AAD applications that it owns, e.g. Workspaces. If you do not set this, the identity will have `Application.ReadWrite.OwnedBy`. Further information can be found [here](./identities/application_admin.md).
+|AUTO_WORKSPACE_GROUP_CREATION| Default of `false`. Setting this to true grants the `Group.ReadWrite.All` permission to the *Application Admin* identity. This identity can then create security groups aligned to each applciation role. Active Directory licencing implications need to be considered as Group assignment is a [premium feature](https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/app-roles#roles-using-azure-ad-app-roles).
 
 ## Create Authentication assets
 You can build all of the Identity assets by running the following at the command line
 ```bash
 make auth
 ```
-Follow the instructions and prompts in the script. This script will require manual confirmations at various stages, and cannot be run unattended. This will create the five identities outlined below, and if succesful you will not need to do anything apart from copy credential values into `/templates/core/.env` when told to do so.
+This will create five identities, and if successful will write a new file; `/devops/auth.env`. If you are building locally, these values will be used when building your TRE. If you are setting this up for CI/CD, then these values will be needed by your Build Orchestrator.
 
-!!! note
-    Please note that if you do not copy values to the .env when instructed, the creation process could fail. The details below are for your understanding.
+The contents of your `/devops/auth.env` file should contain : -
+
+  | Variable | Description |
+  | -------- | ----------- |
+  | `APPLICATION_ADMIN_CLIENT_ID`| This client will administer AAD Applications for TRE |
+  | `APPLICATION_ADMIN_CLIENT_SECRET`| This client will administer AAD Applications for TRE |
+  | `TEST_ACCOUNT_CLIENT_ID`| This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
+  | `TEST_ACCOUNT_CLIENT_SECRET` | This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
+  | `API_CLIENT_ID` | API application (client) ID. |
+  | `API_CLIENT_SECRET` | API application client secret. |
+  | `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
+  | `WORKSPACE_API_CLIENT_ID` | Each workspace is secured behind it's own AD Application|
+  | `WORKSPACE_API_CLIENT_SECRET` | Each workspace is secured behind it's own AD Application. This is the secret for that application.|
 
 ### Using a separate Azure Active Directory tenant
 
@@ -46,8 +58,8 @@ App registrations (represented by service principals) define the various access 
 
 | AAD Application | Description |
 | ----------- | ----------- |
-| TRE API application | This is the main application and used to auhtorize access to the [TRE API](../tre-developers/api.md). |
-| TRE Swagger UI | This is used to authenticate identities who wish to use the Swagger UI or other clients. |
+| TRE API application | This is the main application and used to secure access to the [TRE API](../tre-developers/api.md). |
+| TRE UX | This is the client application that will authenticate to the TRE/Workspace APIs. |
 | Application Admin | There are times when workspace services need to update the AAD Application. For example, Guacamole needs to add a redirect URI to the Workspace AAD Application. This identity is used to manage AAD Applications.
 | Automation App | This application is created so that you can run the tests or any CI/CD capability without the need to divulge a user password. This is particularly important if your tenant is MFA enabled. |
 | Workspace API | Typically you would have an application securing one or more workspaces that are created by TRE. |
@@ -55,3 +67,18 @@ App registrations (represented by service principals) define the various access 
 Some of the applications require **admin consent** to allow them to validate users against the AAD. Check the Microsoft Docs on [Configure the admin consent workflow](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/configure-admin-consent-workflow) on how to request admin consent and handle admin consent requests.
 
 We strongly recommend that you use `make auth` to create the AAD assets as this has been tested extensively. Should you wish to create these manually via the [Azure Portal](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app); more information can be found [here](./identities/auth-manual.md).
+
+### Enabling users
+
+For a user to gain access to the system, they have to:
+
+1. Have an identity in Azure AD
+1. Be linked with an app registration and assigned a role
+
+When these requirements are met, the user can sign-in using their credentials and use their privileges to use the API, login to workspace environment etc. based on their specific roles.
+
+![User linked with app registrations](../assets/aad-user-linked-with-app-regs.png)
+
+The users can also be linked via the Enterprise application view:
+
+![Adding users to Enterprise application](../assets/adding-users-to-enterprise-application.png)

@@ -34,7 +34,7 @@ resource "random_password" "nexus_vm_password" {
   min_lower        = 1
   upper            = true
   min_upper        = 1
-  number           = true
+  numeric          = true
   min_numeric      = 1
   special          = true
   min_special      = 1
@@ -47,7 +47,7 @@ resource "random_password" "nexus_admin_password" {
   min_lower        = 1
   upper            = true
   min_upper        = 1
-  number           = true
+  numeric          = true
   min_numeric      = 1
   special          = true
   min_special      = 1
@@ -122,8 +122,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   }
 
   depends_on = [
-    azurerm_key_vault_access_policy.nexus_msi,
-    azurerm_firewall_application_rule_collection.shared_subnet_sonatype_nexus
+    azurerm_key_vault_access_policy.nexus_msi
   ]
 
   connection {

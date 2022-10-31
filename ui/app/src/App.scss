@@ -24,19 +24,28 @@ code {
   width: 70%;
 }
 
-#root {}
-
-.tre-root {}
-
 .tre-top-nav {
   box-shadow: 0 1px 2px 0px #033d68;
   z-index: 100;
+}
+
+.ms-CommandBar {
+  background-color: transparent;
+  padding-left: 0px;
+
+  .ms-Button {
+    background-color: transparent;
+  }
 }
 
 .tre-notifications-button {
   position: relative;
   top: 7px;
   color: #fff;
+
+  i {
+    font-size: 20px !important;
+  }
 }
 
 .tre-notifications-button i {
@@ -81,12 +90,31 @@ ul.tre-notifications-steps-list li {
   font-size:1.2rem;
 }
 
-.tre-user-menu .ms-Persona-primaryText:hover {
-  color: #fff;
+.tre-user-menu {
+  margin-top: 2px;
+
+  .ms-Persona-primaryText:hover {
+    color: #fff;
+  }
+
+  .ms-Persona-primaryText {
+    color: #fff;
+  }
+
+  .ms-Icon {
+    margin-top: 3px;
+  }
 }
 
-.ms-Persona-primaryText {
-  color: #fff;
+.tre-table {
+  .ms-Persona-primaryText {
+    font-size: 12px;
+    color: rgb(108, 108, 108);
+  }
+
+  .ms-DetailsRow-cell {
+    align-self: baseline;
+  }
 }
 
 .tre-hide-chevron i[data-icon-name=ChevronDown] {
@@ -130,14 +158,15 @@ ul.tre-notifications-steps-list li {
 }
 
 .tre-panel {
+  margin: 10px 15px 10px 10px;
+  padding: 10px;
+}
+
+.tre-resource-panel {
   box-shadow: 1px 0px 5px 0px #ccc;
   margin: 10px 15px 10px 10px;
   padding: 10px;
   background-color: #fff;
-}
-
-.ms-CommandBar {
-  padding-left: 0;
 }
 
 .ms-Pivot {
@@ -207,6 +236,64 @@ input[readonly]{
     background-color: #990000;
   }
 }
-.tre-hidden{
-  display:none;
+
+/* hide fields explicitly */
+.tre-hidden {
+  display: none;
+}
+
+/* create form overrides */
+/* panel header */
+.ms-Panel-commands {
+  background: #fff;
+  border-bottom: 1px #ccc solid;
+  padding-bottom: 10px;
+}
+
+/* template description at top of panel */
+.rjsf > .ms-Grid-col {
+  margin-top: -25px;
+}
+
+.rjsf > .ms-Grid-col > span:first-of-type {
+  display: block;
+  background-color: #efefef;
+  padding: 10px;
+  margin-bottom: 15px;
+  font-style: normal;
+}
+
+/* border around sub-blocks */
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object,
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array {
+  border: 1px #ccc dashed;
+  padding: 10px;
+  background-color: #fcfcfc;
+}
+
+/* sub titles and sub-sub titles */
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > label.ms-Label,
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array > label.ms-Label {
+  font-size: 20px;
+}
+
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > .ms-Grid > .ms-Grid-row > .ms-Grid-col > label.ms-Label,
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array > .ms-Grid > .ms-Grid-row > .ms-Grid-col > label.ms-Label {
+  font-size: 16px;
+}
+
+/* remove secondary template description at the bottom of each template + sub blocks */
+.rjsf > .ms-Grid-col > span:last-of-type,
+.rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > span:last-of-type,
+.rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > .ms-Grid > .ms-Grid-row > .ms-Grid-col > span:last-of-type {
+  display: none;
+}
+
+/* make descriptive text italic */
+.field span {
+  font-style: italic;
+}
+
+.field span.ms-Checkbox-text {
+  font-style: normal;
 }

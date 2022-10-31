@@ -15,7 +15,7 @@ export interface Resource {
     user: User,
     history: Array<HistoryItem>,
     _etag: string,
-    properties: any
+    properties: any,
     azureStatus?: any
 }
 
@@ -35,8 +35,7 @@ export enum ComponentAction {
 }
 
 export interface ResourceUpdate {
-    resourceId: string,
-    operation?: Operation,
+    operation: Operation,
     componentAction: ComponentAction
 }
 
@@ -55,3 +54,4 @@ export const getResourceFromResult = (r: any) => {
     if (r['workspace']) return r.workspace;
     if (r['sharedService']) return r.sharedService;
 }
+

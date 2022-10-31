@@ -5,6 +5,9 @@ set -euo pipefail
 
 : "${AAD_TENANT_ID?'You have not set your AAD_TENANT_ID in ./templates/core/.env'}"
 
+# Get the directory that this script is in
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 CHANGED_TENANT=0
 LOGGED_IN_TENANT_ID=$(az account show --query tenantId -o tsv)
 
@@ -23,18 +26,22 @@ fi
 
 APPLICATION_PERMISSION="Application.ReadWrite.OwnedBy"
 if [ "${AUTO_WORKSPACE_APP_REGISTRATION:-}" == true ]; then
-  APPLICATION_PERMISSION="Application.ReadWrite.All"
+  APPLICATION_PERMISSION="Application.ReadWrite.All,Directory.Read.All"
+fi
+
+if [ "${AUTO_WORKSPACE_GROUP_CREATION:-}" == true ]; then
+  APPLICATION_PERMISSION="Application.ReadWrite.All,Directory.Read.All,Group.ReadWrite.All"
 fi
 
 # Create the identity that is able to administer other applications
-./devops/scripts/aad/create_application_administrator.sh \
+"$DIR/aad/create_application_administrator.sh" \
   --name "${TRE_ID}" \
   --admin-consent \
   --application-permission "${APPLICATION_PERMISSION}" \
   --reset-password $RESET_PASSWORDS
 
 # Create the identity that is able to automate the testing
-./devops/scripts/aad/create_automation_administrator.sh \
+"$DIR/aad/create_automation_administrator.sh" \
   --name "${TRE_ID}" \
   --reset-password $RESET_PASSWORDS
 
@@ -47,7 +54,7 @@ set -a
 . ./devops/auth.env
 
 # Then register an App for the TRE Core.
-./devops/scripts/aad/create_api_application.sh \
+"$DIR/aad/create_api_application.sh" \
   --name "${TRE_ID}" \
   --tre-url "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com" \
   --admin-consent --automation-clientid "${TEST_ACCOUNT_CLIENT_ID}" \
@@ -62,7 +69,7 @@ if [ "${AUTO_WORKSPACE_APP_REGISTRATION:=false}" == false ]; then
   # shellcheck disable=SC1091
   . ./devops/auth.env
 
-  ./devops/scripts/aad/create_workspace_application.sh \
+  "$DIR/aad/create_workspace_application.sh" \
     --name "${TRE_ID} - workspace 1" \
     --admin-consent \
     --ux-clientid "${SWAGGER_UI_CLIENT_ID}" \

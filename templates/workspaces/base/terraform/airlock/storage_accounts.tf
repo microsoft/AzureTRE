@@ -4,7 +4,7 @@ resource "azurerm_storage_account" "sa_import_approved" {
   location                        = var.location
   resource_group_name             = var.ws_resource_group_name
   account_tier                    = "Standard"
-  account_replication_type        = "GRS"
+  account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
@@ -55,7 +55,7 @@ resource "azurerm_storage_account" "sa_export_internal" {
   location                        = var.location
   resource_group_name             = var.ws_resource_group_name
   account_tier                    = "Standard"
-  account_replication_type        = "GRS"
+  account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
@@ -106,7 +106,7 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
   location                        = var.location
   resource_group_name             = var.ws_resource_group_name
   account_tier                    = "Standard"
-  account_replication_type        = "GRS"
+  account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
@@ -163,7 +163,7 @@ resource "azurerm_storage_account" "sa_export_rejected" {
   location                        = var.location
   resource_group_name             = var.ws_resource_group_name
   account_tier                    = "Standard"
-  account_replication_type        = "GRS"
+  account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
@@ -214,7 +214,7 @@ resource "azurerm_storage_account" "sa_export_blocked" {
   location                        = var.location
   resource_group_name             = var.ws_resource_group_name
   account_tier                    = "Standard"
-  account_replication_type        = "GRS"
+  account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
@@ -259,59 +259,19 @@ resource "azurerm_private_endpoint" "export_blocked_pe" {
   }
 }
 
-resource "azurerm_role_assignment" "sa_import_approved" {
-  scope                = azurerm_storage_account.sa_import_approved.id
-  role_definition_name = "Contributor"
+# we can't use for_each due to the data object
+resource "azurerm_role_assignment" "airlock_blob_data_contributor" {
+  count                = length(local.airlock_blob_data_contributor)
+  scope                = local.airlock_blob_data_contributor[count.index]
+  role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
-
-resource "azurerm_role_assignment" "sa_export_internal" {
-  scope                = azurerm_storage_account.sa_export_internal.id
-  role_definition_name = "Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-resource "azurerm_role_assignment" "sa_export_inprogress" {
-  scope                = azurerm_storage_account.sa_export_inprogress.id
-  role_definition_name = "Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-resource "azurerm_role_assignment" "sa_export_rejected" {
-  scope                = azurerm_storage_account.sa_export_rejected.id
-  role_definition_name = "Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-resource "azurerm_role_assignment" "sa_export_blocked" {
-  scope                = azurerm_storage_account.sa_export_blocked.id
-  role_definition_name = "Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-
-resource "azurerm_role_assignment" "sa_import_approved_reader" {
-  scope                = azurerm_storage_account.sa_import_approved.id
-  role_definition_name = "Reader and Data Access"
-  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-}
-
-
-resource "azurerm_role_assignment" "sa_export_internal_reader" {
-  scope                = azurerm_storage_account.sa_export_internal.id
-  role_definition_name = "Reader and Data Access"
-  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-}
-
-resource "azurerm_role_assignment" "sa_export_inprogress_reader" {
-  scope                = azurerm_storage_account.sa_export_inprogress.id
-  role_definition_name = "Reader and Data Access"
-  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-}
-
-resource "azurerm_role_assignment" "sa_export_rejected_reader" {
-  scope                = azurerm_storage_account.sa_export_rejected.id
-  role_definition_name = "Reader and Data Access"
+# This might be considered redundent since we give Virtual Machine Contributor
+# at the subscription level, but best to be explicit.
+resource "azurerm_role_assignment" "api_sa_data_contributor" {
+  count                = length(local.api_sa_data_contributor)
+  scope                = local.api_sa_data_contributor[count.index]
+  role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
 }

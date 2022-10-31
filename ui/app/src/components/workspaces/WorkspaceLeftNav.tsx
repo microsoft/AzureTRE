@@ -46,7 +46,7 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
           });
       });
 
-      const seviceNavLinks: INavLinkGroup[] = [
+      const serviceNavLinks: INavLinkGroup[] = [
         {
           links: [
             {
@@ -66,14 +66,23 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
               name: 'Shared Services',
               key: ApiEndpoint.SharedServices,
               url: ApiEndpoint.SharedServices,
-              isExpanded: true,
+              isExpanded: false,
               links: sharedServiceLinkArray
             }
           ]
         }
       ];
 
-      setServiceLinks(seviceNavLinks);
+      // Only show airlock link if enabled for workspace
+      if (workspaceCtx.workspace.properties.enable_airlock) {
+        serviceNavLinks[0].links.push({
+          name: 'Airlock',
+          key: ApiEndpoint.AirlockRequests,
+          url: ApiEndpoint.AirlockRequests
+        });
+      }
+
+      setServiceLinks(serviceNavLinks);
     };
     getWorkspaceServices();
   }, [props.workspaceServices, props.sharedServices, workspaceCtx.workspace]);

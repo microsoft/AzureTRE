@@ -52,7 +52,8 @@
       "type": "string",
       "enum": [
         "P1v3",
-        "P1v2"
+        "P1v2",
+        "S1"
       ],
       "default": "P1v3",
       "title": "App Service Plan SKU",
@@ -64,6 +65,12 @@
       "default": true,
       "title": "Enable Airlock",
       "description": "If enabled, allows imports and exports for the workspace."
+    },
+    "create_aad_groups": {
+      "type": "boolean",
+      "title": "Create AAD Groups for each workspace role",
+      "description": "Create AAD Groups for the workspace roles, requires `auto_create`. If this is set to true, the workspace will create new AAD Groups.",
+      "default": false
     }
   },
   "uiSchema": {

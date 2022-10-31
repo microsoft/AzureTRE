@@ -13,7 +13,7 @@ from db.errors import EntityDoesNotExist
 from models.domain.workspace import Workspace
 from models.domain.operation import Operation, OperationStep, Status
 from resources import strings
-from service_bus.deployment_status_update import receive_message_and_update_deployment
+from service_bus.deployment_status_updater import DeploymentStatusUpdater
 
 
 pytestmark = pytest.mark.asyncio
@@ -30,7 +30,8 @@ test_sb_message = {
     "stepId": "main",
     "id": "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
     "status": Status.Deployed,
-    "message": "test message"
+    "message": "test message",
+    "correlation_id": "test_correlation_id"
 }
 
 test_sb_message_with_outputs = {
@@ -66,6 +67,7 @@ class ServiceBusReceivedMessageMock:
     def __init__(self, message: dict):
         self.message = json.dumps(message)
         self.correlation_id = "test_correlation_id"
+        self.session_id = "test_session_id"
 
     def __str__(self):
         return self.message
@@ -108,102 +110,85 @@ def create_sample_operation(resource_id, request_action):
 
 @pytest.mark.parametrize("payload", test_data)
 @patch('logging.error')
-@patch('service_bus.deployment_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
-async def test_receiving_bad_json_logs_error(app, sb_client, logging_mock, payload):
+async def test_receiving_bad_json_logs_error(app, logging_mock, payload):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(payload)
 
-    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
-    sb_client().get_queue_receiver().complete_message = AsyncMock()
+    status_updater = DeploymentStatusUpdater(app)
+    complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
-    await receive_message_and_update_deployment(app)
+    # bad message data will fail, but we will complete the message as it will never be useful
+    assert complete_message is True
 
+    # check we logged the error
     error_message = logging_mock.call_args.args[0]
     assert error_message.startswith(strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT)
-    sb_client().get_queue_receiver().complete_message.assert_called_once_with(service_bus_received_message_mock)
 
 
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('service_bus.deployment_status_updater.OperationRepository')
+@patch('service_bus.deployment_status_updater.ResourceRepository')
 @patch('logging.error')
-@patch('service_bus.deployment_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
-async def test_receiving_good_message(app, sb_client, logging_mock, repo, operation_repo):
-    service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_message)
-
-    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
-    sb_client().get_queue_receiver().complete_message = AsyncMock()
+async def test_receiving_good_message(app, logging_mock, repo, operation_repo):
     expected_workspace = create_sample_workspace_object(test_sb_message["id"])
     repo().get_resource_dict_by_id.return_value = expected_workspace.dict()
 
     operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
     operation_repo().get_operation_by_id.return_value = operation
 
-    await receive_message_and_update_deployment(app)
+    status_updater = DeploymentStatusUpdater(app)
+    complete_message = await status_updater.process_message(ServiceBusReceivedMessageMock(test_sb_message))
 
+    assert complete_message is True
     repo().get_resource_dict_by_id.assert_called_once_with(uuid.UUID(test_sb_message["id"]))
     repo().update_item_dict.assert_called_once_with(expected_workspace.dict())
     logging_mock.assert_not_called()
-    sb_client().get_queue_receiver().complete_message.assert_called_once_with(service_bus_received_message_mock)
 
 
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('service_bus.deployment_status_updater.OperationRepository')
+@patch('service_bus.deployment_status_updater.ResourceRepository')
 @patch('logging.error')
-@patch('service_bus.deployment_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
-async def test_when_updating_non_existent_workspace_error_is_logged(app, sb_client, logging_mock, repo, operation_repo):
-    service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_message)
-
-    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
-    sb_client().get_queue_receiver().complete_message = AsyncMock()
+async def test_when_updating_non_existent_workspace_error_is_logged(app, logging_mock, repo, operation_repo):
     repo().get_resource_dict_by_id.side_effect = EntityDoesNotExist
 
     operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
     operation_repo().get_operation_by_id.return_value = operation
 
-    await receive_message_and_update_deployment(app)
+    status_updater = DeploymentStatusUpdater(app)
+    complete_message = await status_updater.process_message(ServiceBusReceivedMessageMock(test_sb_message))
 
+    assert complete_message is True
     expected_error_message = strings.DEPLOYMENT_STATUS_ID_NOT_FOUND.format(test_sb_message["id"])
     logging_mock.assert_called_once_with(expected_error_message)
-    sb_client().get_queue_receiver().complete_message.assert_called_once_with(service_bus_received_message_mock)
 
 
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('service_bus.deployment_status_updater.OperationRepository')
+@patch('service_bus.deployment_status_updater.ResourceRepository')
 @patch('logging.error')
-@patch('service_bus.deployment_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
-async def test_when_updating_and_state_store_exception(app, sb_client, logging_mock, repo, operation_repo):
-    service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_message)
-
-    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
-    sb_client().get_queue_receiver().complete_message = AsyncMock()
+async def test_when_updating_and_state_store_exception(app, logging_mock, repo, operation_repo):
     repo().get_resource_dict_by_id.side_effect = Exception
 
     operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
     operation_repo().get_operation_by_id.return_value = operation
 
-    await receive_message_and_update_deployment(app)
+    status_updater = DeploymentStatusUpdater(app)
+    complete_message = await status_updater.process_message(ServiceBusReceivedMessageMock(test_sb_message))
 
     logging_mock.assert_called_once_with(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING + " ")
-    sb_client().get_queue_receiver().complete_message.assert_not_called()
+    assert complete_message is False
 
 
-@patch("service_bus.deployment_status_update.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
-@patch('logging.error')
-@patch('service_bus.deployment_status_update.ServiceBusClient')
+@patch("service_bus.deployment_status_updater.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+@patch('service_bus.deployment_status_updater.OperationRepository')
+@patch('service_bus.deployment_status_updater.ResourceRepository')
 @patch('fastapi.FastAPI')
-async def test_state_transitions_from_deployed_to_deleted(app, sb_client, logging_mock, repo, operations_repo_mock, _):
+async def test_state_transitions_from_deployed_to_deleted(app, repo, operations_repo_mock, _):
     updated_message = test_sb_message
     updated_message["status"] = Status.Deleted
     updated_message["message"] = "Has been deleted"
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(updated_message)
-
-    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
-    sb_client().get_queue_receiver().complete_message = AsyncMock()
 
     workspace = create_sample_workspace_object(test_sb_message["id"])
     repo().get_resource_dict_by_id.return_value = workspace.dict()
@@ -218,23 +203,20 @@ async def test_state_transitions_from_deployed_to_deleted(app, sb_client, loggin
     expected_operation.status = Status.Deleted
     expected_operation.message = updated_message["message"]
 
-    await receive_message_and_update_deployment(app)
+    status_updater = DeploymentStatusUpdater(app)
+    complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
+    assert complete_message is True
     operations_repo_mock().update_item.assert_called_once_with(expected_operation)
 
 
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
-@patch('logging.error')
-@patch('service_bus.deployment_status_update.ServiceBusClient')
+@patch('service_bus.deployment_status_updater.OperationRepository')
+@patch('service_bus.deployment_status_updater.ResourceRepository')
 @patch('fastapi.FastAPI')
-async def test_outputs_are_added_to_resource_item(app, sb_client, logging_mock, repo, operations_repo):
+async def test_outputs_are_added_to_resource_item(app, repo, operations_repo):
     received_message = test_sb_message_with_outputs
     received_message["status"] = Status.Deployed
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
-
-    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
-    sb_client().get_queue_receiver().complete_message = AsyncMock()
 
     resource = create_sample_workspace_object(received_message["id"])
     resource.properties = {"exitingName": "exitingValue"}
@@ -248,23 +230,20 @@ async def test_outputs_are_added_to_resource_item(app, sb_client, logging_mock, 
     operation = create_sample_operation(resource.id, RequestAction.UnInstall)
     operations_repo().get_operation_by_id.return_value = operation
 
-    await receive_message_and_update_deployment(app)
+    status_updater = DeploymentStatusUpdater(app)
+    complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
+    assert complete_message is True
     repo().update_item_dict.assert_called_once_with(expected_resource)
 
 
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
-@patch('logging.error')
-@patch('service_bus.deployment_status_update.ServiceBusClient')
+@patch('service_bus.deployment_status_updater.OperationRepository')
+@patch('service_bus.deployment_status_updater.ResourceRepository')
 @patch('fastapi.FastAPI')
-async def test_properties_dont_change_with_no_outputs(app, sb_client, logging_mock, repo, operations_repo):
+async def test_properties_dont_change_with_no_outputs(app, repo, operations_repo):
     received_message = test_sb_message
     received_message["status"] = Status.Deployed
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
-
-    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
-    sb_client().get_queue_receiver().complete_message = AsyncMock()
 
     resource = create_sample_workspace_object(received_message["id"])
     resource.properties = {"exitingName": "exitingValue"}
@@ -275,23 +254,22 @@ async def test_properties_dont_change_with_no_outputs(app, sb_client, logging_mo
 
     expected_resource = resource
 
-    await receive_message_and_update_deployment(app)
+    status_updater = DeploymentStatusUpdater(app)
+    complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
+    assert complete_message is True
     repo().update_item_dict.assert_called_once_with(expected_resource.dict())
 
 
-@patch('service_bus.deployment_status_update.update_resource_for_step')
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('service_bus.deployment_status_updater.update_resource_for_step')
+@patch('service_bus.deployment_status_updater.OperationRepository')
+@patch('service_bus.deployment_status_updater.ResourceRepository')
 @patch('service_bus.helpers.ServiceBusClient')
-@patch('service_bus.deployment_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
-async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_client, repo, operations_repo, update_resource_for_step, multi_step_operation, user_resource_multi, basic_shared_service):
+async def test_multi_step_operation_sends_next_step(app, sb_sender_client, repo, operations_repo, update_resource_for_step, multi_step_operation, user_resource_multi, basic_shared_service):
     received_message = test_sb_message_multi_step_1_complete
     received_message["status"] = Status.Updated
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
-    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
-    sb_client().get_queue_receiver().complete_message = AsyncMock()
     sb_sender_client().get_queue_sender().send_messages = AsyncMock()
 
     # step 1 resource
@@ -306,7 +284,10 @@ async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_cl
     operations_repo().get_operation_by_id.return_value = multi_step_operation
     update_resource_for_step.return_value = user_resource_multi
 
-    await receive_message_and_update_deployment(app)
+    status_updater = DeploymentStatusUpdater(app)
+    complete_message = await status_updater.process_message(service_bus_received_message_mock)
+
+    assert complete_message is True
 
     # check the resource is updated as expected
     update_resource_for_step.assert_called_once_with(
@@ -331,17 +312,14 @@ async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_cl
     sb_sender_client().get_queue_sender().send_messages.assert_called_once()
 
 
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('service_bus.deployment_status_updater.OperationRepository')
+@patch('service_bus.deployment_status_updater.ResourceRepository')
 @patch('service_bus.helpers.ServiceBusClient')
-@patch('service_bus.deployment_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
-async def test_multi_step_operation_ends_at_last_step(app, sb_client, sb_sender_client, repo, operations_repo, multi_step_operation, user_resource_multi, basic_shared_service):
+async def test_multi_step_operation_ends_at_last_step(app, sb_sender_client, repo, operations_repo, multi_step_operation, user_resource_multi, basic_shared_service):
     received_message = test_sb_message_multi_step_3_complete
     received_message["status"] = Status.Updated
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
-    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
-    sb_client().get_queue_receiver().complete_message = AsyncMock()
     sb_sender_client().get_queue_sender().send_messages = AsyncMock()
 
     # step 2 resource
@@ -364,7 +342,10 @@ async def test_multi_step_operation_ends_at_last_step(app, sb_client, sb_sender_
     in_flight_op.steps[2].status = Status.Updating
 
     operations_repo().get_operation_by_id.return_value = in_flight_op
-    await receive_message_and_update_deployment(app)
+
+    status_updater = DeploymentStatusUpdater(app)
+    complete_message = await status_updater.process_message(service_bus_received_message_mock)
+    assert complete_message is True
 
     # check the operation is updated as expected - both step and overall status
     expected_operation = copy.deepcopy(in_flight_op)

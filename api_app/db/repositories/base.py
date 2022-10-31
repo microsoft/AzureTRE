@@ -28,8 +28,8 @@ class BaseRepository:
         except Exception:
             raise UnableToAccessDatabase
 
-    def query(self, query: str):
-        return list(self.container.query_items(query=query, enable_cross_partition_query=True))
+    def query(self, query: str, parameters: dict = None):
+        return list(self.container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
 
     def read_item_by_id(self, item_id: str) -> dict:
         return self.container.read_item(item=item_id, partition_key=item_id)
@@ -43,6 +43,9 @@ class BaseRepository:
     def update_item_with_etag(self, item: BaseModel, etag: str) -> BaseModel:
         self.container.replace_item(item=item.id, body=item.dict(), etag=etag, match_condition=MatchConditions.IfNotModified)
         return self.read_item_by_id(item.id)
+
+    def upsert_item_with_etag(self, item: BaseModel, etag: str) -> BaseModel:
+        return self.container.upsert_item(body=item.dict(), etag=etag, match_condition=MatchConditions.IfNotModified)
 
     def update_item_dict(self, item_dict: dict):
         self.container.upsert_item(body=item_dict)

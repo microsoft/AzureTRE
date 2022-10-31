@@ -10,11 +10,19 @@ resource "azurerm_network_security_group" "ws" {
 resource "azurerm_subnet_network_security_group_association" "services" {
   network_security_group_id = azurerm_network_security_group.ws.id
   subnet_id                 = azurerm_subnet.services.id
+  depends_on = [
+    # meant to resolve AnotherOperation errors with one operation in the vnet at a time
+    azurerm_subnet_route_table_association.rt_webapps_subnet_association
+  ]
 }
 
 resource "azurerm_subnet_network_security_group_association" "webapps" {
   network_security_group_id = azurerm_network_security_group.ws.id
   subnet_id                 = azurerm_subnet.webapps.id
+  depends_on = [
+    # meant to resolve AnotherOperation errors with one operation in the vnet at a time
+    azurerm_subnet_network_security_group_association.webapps
+  ]
 }
 
 resource "azurerm_network_security_rule" "deny_outbound_override" {
@@ -115,6 +123,20 @@ resource "azurerm_network_security_rule" "allow_outbound_from_webapp_to_core_web
   protocol                     = "Tcp"
   resource_group_name          = var.ws_resource_group_name
   source_port_range            = "*"
+}
+
+resource "azurerm_network_security_rule" "allow_outbound_from_subnet" {
+  access                      = "Allow"
+  destination_port_range      = "80"
+  source_address_prefixes     = azurerm_subnet.services.address_prefixes
+  destination_address_prefix  = "INTERNET"
+  direction                   = "Outbound"
+  name                        = "outbound-workspace-subnets-to-internet-for-crl"
+  network_security_group_name = azurerm_network_security_group.ws.name
+  priority                    = 101
+  protocol                    = "Tcp"
+  resource_group_name         = var.ws_resource_group_name
+  source_port_range           = "*"
 }
 
 resource "azurerm_network_security_rule" "allow_outbound_webapps_to_services" {

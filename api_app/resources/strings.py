@@ -2,10 +2,14 @@ PONG = "pong"
 
 # API Descriptions
 API_GET_HEALTH_STATUS = "Get health status"
+API_GET_PING = "Simple endpoint to test calling the API"
+API_GET_METADATA = "Get public API metadata (e.g. to support the UI and CLI)"
 API_MIGRATE_DATABASE = "Migrate documents in the database"
 
+API_GET_MY_OPERATIONS = "Get Operations that the current user has initiated"
 API_GET_ALL_WORKSPACES = "Get all workspaces"
 API_GET_WORKSPACE_BY_ID = "Get workspace by Id"
+API_GET_WORKSPACE_SCOPE_ID_BY_WORKSPACE_ID = "Get workspace Scope Id by workspace Id"
 API_CREATE_WORKSPACE = "Create a workspace"
 API_DELETE_WORKSPACE = "Delete workspace"
 API_UPDATE_WORKSPACE = "Update an existing workspace"
@@ -29,10 +33,12 @@ API_INVOKE_ACTION_ON_USER_RESOURCE = "Invoke action on a user resource"
 
 API_CREATE_AIRLOCK_REQUEST = "Create an airlock request"
 API_GET_AIRLOCK_REQUEST = "Get an airlock request"
+API_LIST_AIRLOCK_REQUESTS = "Get all airlock requests for a workspace"
 API_SUBMIT_AIRLOCK_REQUEST = "Submit an airlock request"
 API_CANCEL_AIRLOCK_REQUEST = "Cancel an airlock request"
 API_REVIEW_AIRLOCK_REQUEST = "Review an airlock request"
 API_AIRLOCK_REQUEST_LINK = "Get a token to access airlock request"
+API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE = "Create an Airlock Review User Resource"
 
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"
@@ -40,6 +46,7 @@ API_GET_WORKSPACE_TEMPLATE_BY_NAME = "Get workspace template by name"
 
 API_CREATE_WORKSPACE_SERVICE_TEMPLATES = "Register workspace service template"
 API_GET_WORKSPACE_SERVICE_TEMPLATES = "Get workspace service templates"
+API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE = "Get workspace service templates (on workspace level)"  # only returns templates that the authenticated user is authorized to use
 API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME = "Get workspace service template by name"
 
 API_CREATE_SHARED_SERVICE_TEMPLATES = "Register shared service template"
@@ -55,6 +62,7 @@ API_INVOKE_ACTION_ON_SHARED_SERVICE = "Invoke action on a shared service"
 
 API_CREATE_USER_RESOURCE_TEMPLATES = "Register user resource template"
 API_GET_USER_RESOURCE_TEMPLATES = "Get user resource templates applicable to the workspace service template"
+API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE = "Get user resource templates applicable to the workspace service template (on workspace level)"  # only returns templates that the authenticated user is authorized to use
 API_GET_USER_RESOURCE_TEMPLATE_BY_NAME = "Get user resource template by name and workspace service"
 
 # cost report
@@ -69,11 +77,13 @@ OK = "OK"
 NOT_OK = "Not OK"
 COSMOS_DB = "Cosmos DB"
 STATE_STORE_ENDPOINT_NOT_RESPONDING = "State Store endpoint is not responding"
+STATE_STORE_ENDPOINT_NOT_ACCESSIBLE = "State Store endpoint is not accessible"
 UNSPECIFIED_ERROR = "Unspecified error"
 
 # Service bus status
 SERVICE_BUS = "Service Bus"
 SERVICE_BUS_NOT_RESPONDING = "Service Bus is not responding"
+SERVICE_BUS_AUTHENTICATION_ERROR = "Cannot authenticate Service Bus"
 
 # Resource processor status
 RESOURCE_PROCESSOR = "Resource Processor"
@@ -85,6 +95,8 @@ ACCESS_APP_IS_MISSING_ROLE = "The App is missing role"
 ACCESS_PLEASE_SUPPLY_CLIENT_ID = "Please supply the client_id for the AAD application"
 ACCESS_UNABLE_TO_GET_INFO_FOR_APP = "Unable to get app info for app:"
 ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER = "Unable to get role assignments for user"
+ACCESS_UNABLE_TO_GET_ACCOUNT_TYPE = "Unable to look up account type"
+ACCESS_UNHANDLED_ACCOUNT_TYPE = "Unhandled account type"
 
 ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER = "Workspace Researcher or Owner rights are required"
 ACCESS_USER_IS_NOT_OWNER = "Workspace Owner rights are required"
@@ -95,6 +107,9 @@ AUTH_COULD_NOT_VALIDATE_CREDENTIALS = "Could not validate credentials"
 AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE = "Auth configuration not available for workspace"
 AUTH_UNABLE_TO_VALIDATE_TOKEN = "Unable to decode or validate token"
 INVALID_AUTH_PROVIDER = "Invalid authentication provider"
+INVALID_SIGNATURE = "Invalid token signature"
+EXPIRED_SIGNATURE = "Expired token signature"
+INVALID_TOKEN = "Invalid token"
 
 UNABLE_TO_REPLACE_CURRENT_TEMPLATE = "Unable to replace the existing 'current' template with this name"
 UNABLE_TO_PROCESS_REQUEST = "Unable to process request"
@@ -176,6 +191,7 @@ AIRLOCK_RESOURCE_STATUS_REJECTED = "rejected"
 AIRLOCK_RESOURCE_STATUS_CANCELLED = "cancelled"
 AIRLOCK_RESOURCE_STATUS_BLOCKING_INPROGRESS = "blocking_in_progress"
 AIRLOCK_RESOURCE_STATUS_BLOCKED = "blocked_by_scan"
+AIRLOCK_RESOURCE_STATUS_FAILED = "failed"
 
 # Airlock Request Types
 AIRLOCK_REQUEST_TYPE_IMPORT = "import"
@@ -186,9 +202,21 @@ AIRLOCK_REQUEST_DOES_NOT_EXIST = "Airlock request does not exist"
 AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE = "Airlock request status change was illegal"
 AIRLOCK_REQUEST_IN_PROGRESS = "Airlock request is being processed, please try again later."
 AIRLOCK_REQUEST_IS_CANCELED = "Airlock request was cancelled."
+AIRLOCK_REQUEST_UNACCESSIBLE = "Airlock request is in invalid status: rejected, blocked or failed."
 AIRLOCK_REQUEST_INVALID_STATUS = "Airlock request status is unknown."
 AIRLOCK_UNAUTHORIZED_TO_SA = "User is unauthorized to access airlock request files in its current status."
 AIRLOCK_NOT_ENABLED_IN_WORKSPACE = "Airlock is not enabled in this workspace."
+AIRLOCK_NO_RESEARCHER_EMAIL = "There are no Workspace Researchers with an email address."
+AIRLOCK_NO_AIRLOCK_MANAGER_EMAIL = "There are no Airlock Managers with an email address."
+
+# Airlock Actions
+AIRLOCK_ACTION_REVIEW = "review"
+AIRLOCK_ACTION_CANCEL = "cancel"
+AIRLOCK_ACTION_SUBMIT = "submit"
+
+# Airlock Review Decisions
+AIRLOCK_REVIEW_DECISION_APPROVED = "approved"
+AIRLOCK_REVIEW_DECISION_REJECTED = "rejected"
 
 # Deployments
 RESOURCE_STATUS_AWAITING_DEPLOYMENT_MESSAGE = "This resource is waiting to be deployed"

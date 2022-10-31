@@ -110,8 +110,17 @@ fi
 msGraphAppId="00000003-0000-0000-c000-000000000000"
 msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "id" --output tsv --only-show-errors)
 
-applicationPermissionId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='${applicationPermission}'].id" --output tsv --only-show-errors)
-roleApplicationPermission=$(get_msgraph_role "${applicationPermission}")
+# split permissions into array
+IFS=',' read -ra applicationPermissions <<< "${applicationPermission}"
+
+applicationPermissionIds=()
+roleApplicationPermissions=()
+for permission in "${applicationPermissions[@]}"; do   # access each element of array
+    applicationPermissionIds+=("$(az ad sp show --id "${msGraphAppId}" --query "appRoles[?value=='${permission}'].id" --output tsv --only-show-errors)")
+    roleApplicationPermissions+=("$(get_msgraph_role "${permission}")")
+done
+
+printf -v roleApplicationPermissionsJson '%s,' "${roleApplicationPermissions[@]}"
 
 appDefinition=$(jq -c . << JSON
 {
@@ -121,7 +130,7 @@ appDefinition=$(jq -c . << JSON
     {
         "resourceAppId": "${msGraphAppId}",
         "resourceAccess": [
-            ${roleApplicationPermission}
+            ${roleApplicationPermissionsJson%,}
         ]
     }]
 }
@@ -153,11 +162,13 @@ spId=$(az ad sp list --filter "appId eq '${appId}'" --query '[0].id' --output ts
 if [[ $grantAdminConsent -eq 1 ]]; then
     echo "Granting admin consent for '${appName}' app (service principal ID ${spId}) - NOTE: Directory admin privileges required for this step"
     wait_for_new_service_principal "${spId}"
-    grant_admin_consent "${spId}" "$msGraphObjectId" "${applicationPermissionId}"
+    for applicationPermissionId in "${applicationPermissionIds[@]}"; do   # access each element of array
+      grant_admin_consent "${spId}" "$msGraphObjectId" "${applicationPermissionId}"
+    done
 fi
 
-echo "APPLICATION_ADMIN_CLIENT_ID=\"${appId}\"" > "$DIR"/../../auth.env
-echo "APPLICATION_ADMIN_CLIENT_SECRET=\"${spPassword}\"" >> "$DIR"/../../auth.env
+echo "APPLICATION_ADMIN_CLIENT_ID=\"${appId}\"" > "devops/auth.env"
+echo "APPLICATION_ADMIN_CLIENT_SECRET=\"${spPassword}\"" >> "devops/auth.env"
 
 if [[ $grantAdminConsent -eq 0 ]]; then
     echo "NOTE: Make sure the API permissions of the app registrations have admin consent granted."

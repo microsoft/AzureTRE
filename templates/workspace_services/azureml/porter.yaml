@@ -1,11 +1,19 @@
 ---
 name: tre-service-azureml
-version: 0.4.2
+version: 0.5.6
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
 
 credentials:
+  # Credentials for interacting with the AAD Auth tenant
+  - name: auth_client_id
+    env: AUTH_CLIENT_ID
+  - name: auth_client_secret
+    env: AUTH_CLIENT_SECRET
+  - name: auth_tenant_id
+    env: AUTH_TENANT_ID
+  # Credentials for interacting with Azure
   - name: azure_tenant_id
     env: ARM_TENANT_ID
   - name: azure_subscription_id
@@ -27,6 +35,11 @@ parameters:
     description: "Display name for the workspace"
   - name: description
     description: "Description for the workspace"
+  - name: is_exposed_externally
+    type: boolean
+    default: false
+    env: IS_EXPOSED_EXTERNALLY
+    description: "Determines if the AML workspace will be available over public/internet"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -46,17 +59,43 @@ parameters:
 outputs:
   - name: azureml_workspace_name
     type: string
+    applyTo:
+      - install
+      - upgrade
   - name: azureml_acr_id
     type: string
+    applyTo:
+      - install
+      - upgrade
   - name: azureml_storage_account_id
     type: string
+    applyTo:
+      - install
+      - upgrade
   - name: connection_uri
     type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: internal_connection_uri
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: workspace_services_subnet_address_prefix
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: storage_tag
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
-  - exec
   - terraform:
-      clientVersion: 1.0.5
+      clientVersion: 1.3.3
 
 install:
   - terraform:
@@ -67,10 +106,14 @@ install:
         tre_resource_id: "{{ bundle.parameters.id }}"
         display_name: "{{ bundle.parameters.display_name }}"
         description: "{{ bundle.parameters.description }}"
+        is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        auth_client_id: "{{ bundle.credentials.auth_client_id }}"
+        auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
+        auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -81,6 +124,9 @@ install:
         - name: azureml_acr_id
         - name: azureml_storage_account_id
         - name: connection_uri
+        - name: internal_connection_uri
+        - name: workspace_services_subnet_address_prefix
+        - name: storage_tag
 
 upgrade:
   - terraform:
@@ -91,10 +137,14 @@ upgrade:
         tre_resource_id: "{{ bundle.parameters.id }}"
         display_name: "{{ bundle.parameters.display_name }}"
         description: "{{ bundle.parameters.description }}"
+        is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        auth_client_id: "{{ bundle.credentials.auth_client_id }}"
+        auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
+        auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -105,6 +155,9 @@ upgrade:
         - name: azureml_acr_id
         - name: azureml_storage_account_id
         - name: connection_uri
+        - name: internal_connection_uri
+        - name: workspace_services_subnet_address_prefix
+        - name: storage_tag
 
 uninstall:
   - terraform:
@@ -115,10 +168,14 @@ uninstall:
         tre_resource_id: "{{ bundle.parameters.id }}"
         display_name: "{{ bundle.parameters.display_name }}"
         description: "{{ bundle.parameters.description }}"
+        is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        auth_client_id: "{{ bundle.credentials.auth_client_id }}"
+        auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
+        auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"

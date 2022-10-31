@@ -45,61 +45,24 @@ DEBUG="false"
 
 Next, you will set the configuration variables for the specific Azure TRE instance:
 
-1. Use the terminal window in Visual Studio Code to execute the following script from within the development container:
+1. Open the `/templates/core/.env.sample` file and then save it without the .sample extension. You should now have a file called `.env` located in the `/templates/core` folder.
+1. Decide on a name for your `TRE_ID`, which is an alphanumeric (with underscores and hyphens allowed) ID for the Azure TRE instance. The value will be used in various Azure resources, and **needs to be globally unique and less than 12 characters in length**. Use only lowercase letters. Choose wisely!
+1. Once you have decided on which AD Tenant paradigm, then you should be able to set `AAD_TENANT_ID`
+1. If you want to disable the built-in web UI (`./ui`) ensure you set `DEPLOY_UI=false` in the .env file.
+1. Your AAD Tenant Admin can now use the terminal window in Visual Studio Code to execute the following script from within the development container to create all the AAD Applications that are used for TRE. The details of the script are covered in the [auth document](../auth.md).
 
    ```bash
-   az login
+   make auth
    ```
 
   !!! note
       In case you have several subscriptions and would like to change your default subscription use `az account set --subscription <desired subscription ID>`
 
-1. Open the `/templates/core/.env.sample` file and then save it without the .sample extension. You should now have a file called `.env` located in the `/templates/core` folder.
-1. Set the first one of the variables, `TRE_ID`, which is the alphanumeric, with underscores and hyphens allowed, ID for the Azure TRE instance. The value will be used in various Azure resources, and **needs to be globally unique and less than 12 characters in length**. Use only lowercase letters. Choose wisely!
-1. Choose whether or not to deploy the built-in web UI (`./ui`). By default this will _not_ be deployed. To deploy the UI, ensure you set `DEPLOY_UI=true` in the .env file.
-1. Run `make auth` script to create 4 different AAD Applications that are used for TRE. The details of the script are covered in the [auth document](../auth.md).
-
   !!! note
       The full functionality of the script requires directory admin privileges. You may need to contact your friendly Azure Active Directory admin to complete this step. The app registrations can be created manually in Azure Portal too. For more information, see [Authentication and authorization](../auth.md).
   
-  With the output of the script, you can now provide the required auth related values for the following variables in the `/templates/core/.env` configuration file:
 
-  | Variable | Description |
-  | -------- | ----------- |
-  | `AAD_TENANT_ID` | The Azure AD Tenant ID. |
-  | `API_CLIENT_ID` | API application (client) ID. |
-  | `API_CLIENT_SECRET` | API application client secret. |
-  | `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
-  | `TEST_ACCOUNT_CLIENT_ID`| If you supplied `--automation-account` in the above command, this is the user that will run the tests for you |
-  | `TEST_ACCOUNT_CLIENT_SECRET` | If you supplied `--automation-account` in the above command, this is the password of the user that will run the tests for you. |
-  | `WORKSPACE_API_CLIENT_ID` | Each workspace is secured behind it's own AD Application|
-  | `WORKSPACE_API_CLIENT_SECRET` | Each workspace is secured behind it's own AD Application. This is the secret for that application.|
-
-All other variables can have their default values for now. You should now have a `.env` file that looks similar to below:
-
-```plaintext
-# Used for TRE deployment
-TRE_ID=mytre
-TRE_URL="https://${TRE_ID}.westurope.cloudapp.azure.com"
-CORE_ADDRESS_SPACE="10.1.0.0/22"
-TRE_ADDRESS_SPACE="10.0.0.0/12"
-DEPLOY_GITEA=true
-DEPLOY_NEXUS=true
-RESOURCE_PROCESSOR_TYPE="vmss_porter"
-
-# Auth configuration
-AAD_TENANT_ID=72e...45
-API_CLIENT_ID=af6...dc
-API_CLIENT_SECRET=abc...12
-SWAGGER_UI_CLIENT_ID=d87...12
-
-TEST_ACCOUNT_CLIENT_ID=4e...40
-TEST_ACCOUNT_CLIENT_SECRET=sp...7c
-
-WORKSPACE_API_CLIENT_ID=3e...40
-WORKSPACE_API_CLIENT_SECRET=rp...7c
-
-```
+All other variables can have their default values for now.
 
 ## Add admin user
 

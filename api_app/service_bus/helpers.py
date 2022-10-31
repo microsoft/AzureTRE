@@ -1,7 +1,5 @@
-from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
-from contextlib import asynccontextmanager
 from pydantic import parse_obj_as
 from service_bus.substitutions import substitute_properties
 from models.domain.resource_template import PipelineStep
@@ -11,19 +9,9 @@ from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.authentication import User
 from models.schemas.resource import ResourcePatch
 from db.repositories.resources import ResourceRepository
-from core import config
+from core import config, credentials
 import logging
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
-
-
-@asynccontextmanager
-async def default_credentials():
-    """
-    Yields the default credentials.
-    """
-    credential = DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID)
-    yield credential
-    await credential.close()
 
 
 async def _send_message(message: ServiceBusMessage, queue: str):
@@ -35,7 +23,7 @@ async def _send_message(message: ServiceBusMessage, queue: str):
     :param queue: The Service Bus queue to send the message to.
     :type queue: str
     """
-    async with default_credentials() as credential:
+    async with credentials.get_credential_async() as credential:
         service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
 
         async with service_bus_client:
@@ -102,7 +90,7 @@ def try_upgrade_with_retries(num_retries: int, attempt_count: int, resource_repo
             primary_resource=primary_resource
         )
     except CosmosAccessConditionFailedError as e:
-        logging.warn(f"Etag mismatch for {resource_to_update_id}. Retrying.")
+        logging.warning(f"Etag mismatch for {resource_to_update_id}. Retrying.")
         if attempt_count < num_retries:
             try_upgrade_with_retries(
                 num_retries=num_retries,

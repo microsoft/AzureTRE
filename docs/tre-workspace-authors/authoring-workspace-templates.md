@@ -114,22 +114,7 @@ The mandatory parameters for User Resources are:
 ## Azure Resources Tagging
 
 TRE Cost Reporting is based on Azure tagging to be able to generate cost report for core services, shared services, workspace, workspace services and user resources.
-Templates authors need to make sure that underling Azure resources are tagged with the following tags:
-
-
-| <div style="width:160px">Tag</div> | Value | Applies to |
-| ---------------------------------- | ----- | ---------- |
-| `tre_id` | Unique ID of the TRE instance | All resources of a TRE instance |
-| `tre_core_service_id` | Unique ID of the TRE instance | All TRE core azure resources |
-| `shared_service_id` | The shared service unique ID | Shared Services |
-| `workspace_id` | The workspace unique ID | Workspaces, Workspace Services and User Resources |
-| `workspace_service_id` | The workspace service unique ID | Workspace Services and User Resources |
-| `user_resource_id` | The user resoruce unique ID | User Resources |
-
-!!! Notes
-    Main Azure Container Registry and Storage Account are not be tagged as those resources are used to spin up more than one Azure TRE Instance.
-
-[![Resource tagging example](../assets/resource-tagging-example.png)](../../assets/resource-tagging-example.png)
+Templates authors need to make sure that underling Azure resources are tagged with the relevent tags, for more information see [cost reporting](../azure-tre-overview/cost-reporting.md#azure-resources-tagging):
 
 ## Versioning
 

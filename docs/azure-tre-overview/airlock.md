@@ -5,12 +5,19 @@ This constitutes the mechanism focused in preventing data exfiltration and secur
 The airlock feature brings several actions: ingress/egress Mechanism; Data movement; Security gates; Approval mechanism and Notifications. As part of TRE's Safe settings all activity must be tracked for auditiing purpose.
 
 The Airlock feature aims to address these goals:
+
 * Prevent unauthorised data import or export.
+
 * Provide a process to allow approved data to be imported through the security boundary of a TRE Workspace.
+
 * TRE provides functionality to track requests and decisions, supporting cycle of revision, approval or rejection.
+
 * Data being imported with an airlock import process can be automatically scanned for security issues.
+
 * Data being exported or imported must be manually reviewed by the Airlock Manager.
+
 * Notify the requesting researcher of the process progress and/or required actions.
+
 * All steps within the airlock process are audited.
 
 Typically in a TRE, the Airlock feature would be used to allow a researcher to export outputs of a research project such as summary results. With the airlock, data to export must go though a human review, typically done by a data governance team.
@@ -134,13 +141,15 @@ graph LR
 
 
 TRE:
+
 * `stalimex` - storage (st) airlock (al) import (im) external (ex)
 * `stalimip` - storage (st) airlock (al) import (im) in-progress (ip)
 * `stalimrej` - storage (st) airlock (al) import (im) rejected (rej)
 * `stalimblocked` - storage (st) airlock (al) import (im) blocked
 * `stalexapp` - storage (st) airlock (al) export (ex) approved (app)
 
-Workspace
+Workspace:
+
 * `stalimapp` - workspace storage (st) airlock (al) import (im) approved (app)
 * `stalexint` - workspace storage (st) airlock (al) export (ex) internal (int)
 * `stalexip` - workspace storage (st) airlock (al) export (ex) in-progress (ip)
@@ -157,13 +166,15 @@ Workspace
 > * The (import) rejected storage account (`stalimrej`) is bound to the TRE CORE vnet
 > * The (import) approved storage account (`stalimapp`) is bound to the workspace vnet
 
+[![Airlock networking](../assets/airlock-networking.png)](../assets/airlock-networking.png)
+
 In the TRE Core, the TRE API will provide the airlock API endpoints allowing to advance the process. The TRE API will expose the following methods:
 
 | Method | Endpoint | Description |
 |---|---|---|
 | `POST` | `/api/workspaces/{workspace_id}/requests` | Create an Airlock request (in **Draft**) |
 | `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/link` | Get the url and token to acccess Airlock Request | `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/submit` | Submits an Airlock request |
-| `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/reviews` | Reviews an Airlock request |
+| `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/review` | Reviews an Airlock request |
 | `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/cancel` | Cancels an Airlock request |
 container |
 

@@ -5,9 +5,8 @@ import azure.functions as func
 import datetime
 import uuid
 import json
-import re
 import os
-from shared_code import constants
+from shared_code import constants, blob_operations
 
 
 def main(msg: func.ServiceBusMessage,
@@ -16,6 +15,7 @@ def main(msg: func.ServiceBusMessage,
     logging.info("Python ServiceBus queue trigger processed message - Malware scan result arrived!")
     body = msg.get_body().decode('utf-8')
     logging.info('Python ServiceBus queue trigger processed message: %s', body)
+    status_message = None
 
     try:
         enable_malware_scanning = strtobool(os.environ["ENABLE_MALWARE_SCANNING"])
@@ -40,8 +40,7 @@ def main(msg: func.ServiceBusMessage,
         raise e
 
     # Extract request id
-    regex = re.search(r'https://(.*?).blob.core.windows.net/(.*?)/(.*?)', blob_uri)
-    request_id = regex.group(2)
+    _, request_id, _ = blob_operations.get_blob_info_from_blob_url(blob_url=blob_uri)
 
     # If clean, we can continue and move the request to the review stage
     # Otherwise, move the request to the blocked stage
@@ -52,13 +51,14 @@ def main(msg: func.ServiceBusMessage,
     else:
         logging.info('Malware was found in request id %s, moving to %s stage', request_id, constants.STAGE_BLOCKING_INPROGRESS)
         new_status = constants.STAGE_BLOCKING_INPROGRESS
+        status_message = verdict
 
     # Send the event to indicate this step is done (and to request a new status change)
     outputEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
-            data={"completed_step": completed_step, "new_status": new_status, "request_id": request_id},
+            data={"completed_step": completed_step, "new_status": new_status, "request_id": request_id, "status_message": status_message},
             subject=request_id,
             event_type="Airlock.StepResult",
             event_time=datetime.datetime.utcnow(),
-            data_version="1.0"))
+            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))

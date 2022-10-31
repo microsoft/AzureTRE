@@ -13,6 +13,10 @@ output "app_role_id_workspace_researcher" {
   value = var.register_aad_application ? module.aad[0].app_role_workspace_researcher_id : var.app_role_id_workspace_researcher
 }
 
+output "app_role_id_workspace_airlock_manager" {
+  value = var.register_aad_application ? module.aad[0].app_role_workspace_airlock_manager_id : var.app_role_id_workspace_airlock_manager
+}
+
 output "client_id" {
   value = var.register_aad_application ? module.aad[0].client_id : var.client_id
 }
@@ -24,3 +28,4 @@ output "sp_id" {
 output "scope_id" {
   value = var.register_aad_application ? module.aad[0].scope_id : var.scope_id
 }
+

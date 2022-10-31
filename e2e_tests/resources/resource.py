@@ -55,6 +55,7 @@ async def disable_and_delete_resource(endpoint, access_token, verify):
 
         # delete
         response = await client.delete(full_endpoint, headers=auth_headers, timeout=TIMEOUT)
+        LOGGER.info(f'RESPONSE Status code: {response.status_code} Content: {response.content}')
         assert (response.status_code == status.HTTP_200_OK), "The resource couldn't be deleted"
 
         resource_id = response.json()["operation"]["resourceId"]
@@ -66,8 +67,8 @@ async def disable_and_delete_resource(endpoint, access_token, verify):
 
 async def wait_for(func, client, operation_endpoint, headers, failure_states: list):
     done, done_state, message = await func(client, operation_endpoint, headers)
+    LOGGER.info(f'WAITING FOR OP: {operation_endpoint}')
     while not done:
-        LOGGER.info(f'WAITING FOR OP: {operation_endpoint}')
         await asyncio.sleep(30)
 
         done, done_state, message = await func(client, operation_endpoint, headers)

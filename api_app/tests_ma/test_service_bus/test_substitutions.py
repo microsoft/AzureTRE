@@ -1,9 +1,6 @@
 import copy
-import pytest
 from models.domain.resource_template import PipelineStep, PipelineStepProperty
 from service_bus.substitutions import substitute_properties, substitute_value
-
-pytestmark = pytest.mark.asyncio
 
 
 def test_substitution(primary_resource):

@@ -1,10 +1,13 @@
 import logging
+from typing import Optional
 
 import azure.functions as func
+import datetime
 import os
+import uuid
 import json
 
-from azure.mgmt.storage import StorageManagementClient
+from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
 
 from shared_code import blob_operations, constants
 from pydantic import BaseModel, parse_obj_as
@@ -12,80 +15,73 @@ from pydantic import BaseModel, parse_obj_as
 
 class RequestProperties(BaseModel):
     request_id: str
-    status: str
+    new_status: str
+    previous_status: Optional[str]
     type: str
     workspace_id: str
 
 
 class ContainersCopyMetadata:
     source_account_name: str
-    source_account_key: str
-    sa_source_connection_string: str
-    sa_dest_connection_string: str
-    sa_dest_account_name: str
-    sa_dest_resource_group: str
+    dest_account_name: str
 
-    def __init__(self, source_account_name: str, source_account_key: str, sa_source_connection_string: str,
-                 sa_dest_connection_string: str, sa_dest_account_name: str, sa_dest_resource_group: str):
+    def __init__(self, source_account_name: str, dest_account_name: str):
         self.source_account_name = source_account_name
-        self.source_account_key = source_account_key
-        self.sa_source_connection_string = sa_source_connection_string
-        self.sa_dest_connection_string = sa_dest_connection_string
-        self.sa_dest_account_name = sa_dest_account_name
-        self.sa_dest_resource_group = sa_dest_resource_group
+        self.dest_account_name = dest_account_name
 
 
-def main(msg: func.ServiceBusMessage):
-    body = msg.get_body().decode('utf-8')
-    logging.info('Python ServiceBus queue trigger processed message: %s', body)
-    storage_client = blob_operations.get_storage_management_client()
-
+def main(msg: func.ServiceBusMessage, stepResultEvent: func.Out[func.EventGridOutputEvent], dataDeletionEvent: func.Out[func.EventGridOutputEvent]):
     try:
-        request_properties = extract_properties(body)
+        request_properties = extract_properties(msg)
+        request_files = get_request_files(request_properties) if request_properties.new_status == constants.STAGE_SUBMITTED else None
+        handle_status_changed(request_properties, stepResultEvent, dataDeletionEvent, request_files)
 
-        new_status = request_properties.status
-        req_id = request_properties.request_id
-        ws_id = request_properties.workspace_id
-        request_type = request_properties.type
-    except Exception as e:
-        logging.error(f'Failed processing request - invalid message: {body}, exc: {e}')
-        raise
+    except NoFilesInRequestException:
+        set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.NO_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
+    except TooManyFilesInRequestException:
+        set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.TOO_MANY_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
+    except Exception:
+        set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.UNKNOWN_REASON_MESSAGE, request_files=request_files)
 
-    logging.info('Processing request with id %s. new status is "%s", type is "%s"', req_id, new_status, type)
 
-    try:
-        tre_id = os.environ["TRE_ID"]
-    except KeyError as e:
-        logging.error(f'Missing environment variable: {e}')
-        raise
+def handle_status_changed(request_properties: RequestProperties, stepResultEvent: func.Out[func.EventGridOutputEvent], dataDeletionEvent: func.Out[func.EventGridOutputEvent], request_files):
+    new_status = request_properties.new_status
+    previous_status = request_properties.previous_status
+    req_id = request_properties.request_id
+    ws_id = request_properties.workspace_id
+    request_type = request_properties.type
 
-    if new_status == constants.STAGE_DRAFT and request_type == constants.IMPORT_TYPE:
-        account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL + tre_id
-        account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
-        blob_operations.create_container(account_rg, account_name, req_id, storage_client)
+    logging.info('Processing request with id %s. new status is "%s", type is "%s"', req_id, new_status, request_type)
+
+    if new_status == constants.STAGE_DRAFT:
+        account_name = get_storage_account(status=constants.STAGE_DRAFT, request_type=request_type, short_workspace_id=ws_id)
+        blob_operations.create_container(account_name, req_id)
         return
 
-    if new_status == constants.STAGE_DRAFT and request_type == constants.EXPORT_TYPE:
-        account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + ws_id
-        account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, ws_id)
-        blob_operations.create_container(account_rg, account_name, req_id, storage_client)
+    if new_status == constants.STAGE_CANCELLED:
+        storage_account_name = get_storage_account(previous_status, request_type, ws_id)
+        container_to_delete_url = blob_operations.get_blob_url(account_name=storage_account_name, container_name=req_id)
+        set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_properties, container_url=container_to_delete_url)
         return
+
+    if new_status == constants.STAGE_SUBMITTED:
+        set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files)
 
     if (is_require_data_copy(new_status)):
         logging.info('Request with id %s. requires data copy between storage accounts', req_id)
-        containers_metadata = get_source_dest_env_vars(new_status, request_type, ws_id, storage_client)
-        blob_operations.create_container(containers_metadata.sa_dest_resource_group,
-                                         containers_metadata.sa_dest_account_name, req_id, storage_client)
-        blob_operations.copy_data(containers_metadata.source_account_name, containers_metadata.source_account_key,
-                                  containers_metadata.sa_source_connection_string,
-                                  containers_metadata.sa_dest_connection_string, req_id)
+        containers_metadata = get_source_dest_for_copy(new_status=new_status, previous_status=previous_status, request_type=request_type, short_workspace_id=ws_id)
+        blob_operations.create_container(containers_metadata.dest_account_name, req_id)
+        blob_operations.copy_data(containers_metadata.source_account_name,
+                                  containers_metadata.dest_account_name, req_id)
         return
 
     # Other statuses which do not require data copy are dismissed as we don't need to do anything...
 
 
-def extract_properties(body: str) -> RequestProperties:
+def extract_properties(msg: func.ServiceBusMessage) -> RequestProperties:
     try:
+        body = msg.get_body().decode('utf-8')
+        logging.info('Python ServiceBus queue trigger processed message: %s', body)
         json_body = json.loads(body)
         result = parse_obj_as(RequestProperties, json_body["data"])
         if not result:
@@ -106,17 +102,10 @@ def is_require_data_copy(new_status: str):
     return False
 
 
-def get_source_dest_env_vars(new_status: str, request_type: str, short_workspace_id: str,
-                             storage_client: StorageManagementClient) -> ContainersCopyMetadata:
+def get_source_dest_for_copy(new_status: str, previous_status: str, request_type: str, short_workspace_id: str) -> ContainersCopyMetadata:
     # sanity
     if is_require_data_copy(new_status) is False:
         raise Exception("Given new status is not supported")
-
-    try:
-        tre_id = os.environ["TRE_ID"]
-    except KeyError as e:
-        logging.error(f'Missing environment variable: {e}')
-        raise
 
     request_type = request_type.lower()
     if request_type != constants.IMPORT_TYPE and request_type != constants.EXPORT_TYPE:
@@ -125,58 +114,118 @@ def get_source_dest_env_vars(new_status: str, request_type: str, short_workspace
         logging.error(msg)
         raise Exception(msg)
 
+    source_account_name = get_storage_account(previous_status, request_type, short_workspace_id)
+    dest_account_name = get_storage_account_destination_for_copy(new_status, request_type, short_workspace_id)
+    return ContainersCopyMetadata(source_account_name, dest_account_name)
+
+
+def get_storage_account(status: str, request_type: str, short_workspace_id: str) -> str:
+    tre_id = _get_tre_id()
+
+    if request_type == constants.IMPORT_TYPE:
+        if status == constants.STAGE_DRAFT:
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL + tre_id
+        elif status == constants.STAGE_APPROVED:
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED + short_workspace_id
+        elif status == constants.STAGE_REJECTED:
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED + tre_id
+        elif status == constants.STAGE_BLOCKED_BY_SCAN:
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_BLOCKED + tre_id
+        elif status in [constants.STAGE_IN_REVIEW, constants.STAGE_SUBMITTED, constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
+
+    if request_type == constants.EXPORT_TYPE:
+        if status == constants.STAGE_DRAFT:
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + short_workspace_id
+        elif status == constants.STAGE_APPROVED:
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED + tre_id
+        elif status == constants.STAGE_REJECTED:
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED + short_workspace_id
+        elif status == constants.STAGE_BLOCKED_BY_SCAN:
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED + short_workspace_id
+        elif status in [constants.STAGE_IN_REVIEW, constants.STAGE_SUBMITTED, constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
+
+    error_message = f"Missing current storage account definition for status '{status}' and request type '{request_type}'."
+    logging.error(error_message)
+    raise Exception(error_message)
+
+
+def get_storage_account_destination_for_copy(new_status: str, request_type: str, short_workspace_id: str) -> str:
+    tre_id = _get_tre_id()
+
     if request_type == constants.IMPORT_TYPE:
         if new_status == constants.STAGE_SUBMITTED:
-            source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL + tre_id
-            dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
-            source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
-            dest_account_rg = source_account_rg
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
         elif new_status == constants.STAGE_APPROVAL_INPROGRESS:
-            source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
-            dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED + short_workspace_id
-            source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
-            dest_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED + short_workspace_id
         elif new_status == constants.STAGE_REJECTION_INPROGRESS:
-            source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
-            dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED + tre_id
-            source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
-            dest_account_rg = source_account_rg
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED + tre_id
         elif new_status == constants.STAGE_BLOCKING_INPROGRESS:
-            source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
-            dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_BLOCKED + tre_id
-            source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
-            dest_account_rg = source_account_rg
-    else:
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_BLOCKED + tre_id
+
+    if request_type == constants.EXPORT_TYPE:
         if new_status == constants.STAGE_SUBMITTED:
-            source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + short_workspace_id
-            dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
-            source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
-            dest_account_rg = source_account_rg
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
         elif new_status == constants.STAGE_APPROVAL_INPROGRESS:
-            source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
-            dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED + tre_id
-            source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
-            dest_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED + tre_id
         elif new_status == constants.STAGE_REJECTION_INPROGRESS:
-            source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
-            dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED + short_workspace_id
-            source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
-            dest_account_rg = source_account_rg
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED + short_workspace_id
         elif new_status == constants.STAGE_BLOCKING_INPROGRESS:
-            source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
-            dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED + short_workspace_id
-            source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
-            dest_account_rg = source_account_rg
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED + short_workspace_id
 
-    logging.info("source [account: '%s', rg: '%s']. dest [account: '%s', rg: '%s']", source_account_name,
-                 source_account_rg, dest_account_name, dest_account_rg)
+    error_message = f"Missing copy destination storage account definition for status '{new_status}' and request type '{request_type}'."
+    logging.error(error_message)
+    raise Exception(error_message)
 
-    sa_source = blob_operations.get_storage_connection_string(source_account_name, source_account_rg, storage_client)
-    sa_dest = blob_operations.get_storage_connection_string(dest_account_name, dest_account_rg, storage_client)
 
-    return ContainersCopyMetadata(sa_source.account_name,
-                                  sa_source.account_key,
-                                  sa_source.connection_string,
-                                  sa_dest.connection_string,
-                                  sa_dest.account_name,
-                                  dest_account_rg)
+def set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason, request_files):
+    logging.exception(f"Failed processing Airlock request with ID: '{request_properties.request_id}', changing request status to '{constants.STAGE_FAILED}'.")
+    stepResultEvent.set(
+        func.EventGridOutputEvent(
+            id=str(uuid.uuid4()),
+            data={"completed_step": request_properties.new_status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id, "request_files": request_files, "status_message": failure_reason},
+            subject=request_properties.request_id,
+            event_type="Airlock.StepResult",
+            event_time=datetime.datetime.utcnow(),
+            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+
+
+def set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files):
+    logging.info(f'Sending file enumeration result for request with ID: {request_properties.request_id} result: {request_files}')
+    stepResultEvent.set(
+        func.EventGridOutputEvent(
+            id=str(uuid.uuid4()),
+            data={"completed_step": request_properties.new_status, "request_id": request_properties.request_id, "request_files": request_files},
+            subject=request_properties.request_id,
+            event_type="Airlock.StepResult",
+            event_time=datetime.datetime.utcnow(),
+            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+
+
+def set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_properties, container_url):
+    logging.info(f'Sending container deletion event for request ID: {request_properties.request_id}. container URL: {container_url}')
+    dataDeletionEvent.set(
+        func.EventGridOutputEvent(
+            id=str(uuid.uuid4()),
+            data={"blob_to_delete": container_url},
+            subject=request_properties.request_id,
+            event_type="Airlock.DataDeletion",
+            event_time=datetime.datetime.utcnow(),
+            data_version=constants.DATA_DELETION_EVENT_DATA_VERSION
+        )
+    )
+
+
+def get_request_files(request_properties: RequestProperties):
+    storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.workspace_id)
+    return blob_operations.get_request_files(account_name=storage_account_name, request_id=request_properties.request_id)
+
+
+def _get_tre_id():
+    try:
+        tre_id = os.environ["TRE_ID"]
+    except KeyError as e:
+        logging.error(f'Missing environment variable: {e}')
+        raise
+    return tre_id

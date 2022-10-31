@@ -34,16 +34,7 @@ on:  # yamllint disable-line rule:truthy
       ACR_NAME:
         description: ""
         required: true
-      ACTIONS_ACR_NAME:
-        description: ""
-        required: true
-      ACTIONS_ACR_URI:
-        description: ""
-        required: true
-      ACTIONS_ACR_PASSWORD:
-        description: ""
-        required: true
-      ACTIONS_DEVCONTAINER_TAG:
+      DEVCONTAINER_TAG:
         description: ""
         required: true
       API_CLIENT_ID:
@@ -58,31 +49,19 @@ on:  # yamllint disable-line rule:truthy
       APPLICATION_ADMIN_CLIENT_SECRET:
         description: ""
         required: true
-      ARM_CLIENT_ID:
-        description: ""
-        required: true
-      ARM_CLIENT_SECRET:
-        description: ""
-        required: true
-      ARM_SUBSCRIPTION_ID:
-        description: ""
-        required: true
-      ARM_TENANT_ID:
-        description: ""
-        required: true
       CORE_ADDRESS_SPACE:
         description: ""
         required: true
       LOCATION:
         description: ""
         required: true
-      MGMT_RESOURCE_GROUP:
+      MGMT_RESOURCE_GROUP_NAME:
         description: ""
         required: true
       MS_TEAMS_WEBHOOK_URI:
         description: ""
         required: true
-      STATE_STORAGE_ACCOUNT_NAME:
+      MGMT_STORAGE_ACCOUNT_NAME:
         description: ""
         required: true
       SWAGGER_UI_CLIENT_ID:
@@ -103,9 +82,9 @@ on:  # yamllint disable-line rule:truthy
       TEST_ACCOUNT_CLIENT_SECRET:
         description: ""
         required: true
-      TF_STATE_CONTAINER:
+      TERRAFORM_STATE_CONTAINER_NAME:
         description: ""
-        required: true
+        required: false
       TRE_ADDRESS_SPACE:
         description: ""
         required: true
@@ -116,6 +95,15 @@ on:  # yamllint disable-line rule:truthy
         description: ""
         required: false
       TF_LOG:
+        description: ""
+        required: false
+      AZURE_CREDENTIALS:
+        description: ""
+        required: true
+      CORE_APP_SERVICE_PLAN_SKU:
+        description: ""
+        required: false
+      WORKSPACE_APP_SERVICE_PLAN_SKU:
         description: ""
         required: false
 
@@ -138,8 +126,18 @@ jobs:
           echo "ciGitRef    : ${{ inputs.ciGitRef }}"
           echo "environment : ${{ inputs.environmentName }}"
 
+      - name: Report check status start
+        if: inputs.prHeadSha != ''
+        uses: LouisBrunner/checks-action@v1.5.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          sha: ${{ inputs.prHeadSha }}
+          name: "Deploy PR / Run E2E Tests (Smoke)"
+          status: "in_progress"
+          details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -147,67 +145,66 @@ jobs:
           ref: ${{ inputs.prRef }}
 
       - name: Set up Docker BuildKit
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
-      - name: Login to Container Registry
-        uses: docker/login-action@v1
+      - name: Azure Login
+        uses: azure/login@v1
         with:
-          registry: ${{ secrets.ACTIONS_ACR_URI }}
-          username: ${{ secrets.ACTIONS_ACR_NAME }}
-          password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: ACR Login
+        id: ci_cache_cr_login
+        # will fail if this is a new env which is expected
+        continue-on-error: true
+        run: az acr login --name "${{ secrets.CI_CACHE_ACR_NAME }}"
 
       - name: Build new devcontainer
-        shell: bash
         env:
           DOCKER_BUILDKIT: 1
         run: |
           set -e
+
           USER_UID=$(id -u)
           USER_GID=$(id -g)
-          docker build . \
-            -t 'tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}' \
-            -f '.devcontainer/Dockerfile' \
-            --cache-from ${{ secrets.ACTIONS_ACR_URI }}tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }} \
-            --cache-from ${{ secrets.ACTIONS_ACR_URI }}tredev:latest \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --build-arg USER_UID="${USER_UID}" \
-            --build-arg USER_GID="${USER_GID}"
-          docker image tag tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }} \
-            ${{ secrets.ACTIONS_ACR_URI }}tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          CI_CACHE_ACR_URI=${{ secrets.CI_CACHE_ACR_NAME }}.azurecr.io
+          echo "CI_CACHE_ACR_URI=$CI_CACHE_ACR_URI" >> "$GITHUB_ENV"
+
+          docker_cache=()
+          if [ "${{ steps.ci_cache_cr_login.outcome }}" = "success" ]; then
+            docker_cache+=(--cache-from "$CI_CACHE_ACR_URI/tredev:${{ secrets.DEVCONTAINER_TAG }}")
+            docker_cache+=(--cache-from "$CI_CACHE_ACR_URI/tredev:latest")
+          fi
+
+          docker build . "${docker_cache[@]}" \
+            -t "tredev:${{ secrets.DEVCONTAINER_TAG }}" -f ".devcontainer/Dockerfile" \
+            --build-arg BUILDKIT_INLINE_CACHE=1 --build-arg USER_UID="${USER_UID}" --build-arg USER_GID="${USER_GID}"
+
+          docker image tag tredev:${{ secrets.DEVCONTAINER_TAG }} \
+            $CI_CACHE_ACR_URI/tredev:${{ secrets.DEVCONTAINER_TAG }}
 
       - name: Deploy management
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make bootstrap mgmt-deploy"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
-          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: "${{ secrets.MGMT_RESOURCE_GROUP }}"
-          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
-          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
-          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
-          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
-          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
+          TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME }}
+          MGMT_RESOURCE_GROUP_NAME: "${{ secrets.MGMT_RESOURCE_GROUP_NAME }}"
+          MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
+
+      - name: ACR Login
+        # failure in the first attempt indicates a new ACR, so we need to try again after it's been created
+        if: steps.ci_cache_cr_login.outcome != 'success'
+        run: |
+          # shellcheck disable=SC2034,SC2015
+          for i in {1..3}; do az acr login --name "${{ secrets.CI_CACHE_ACR_NAME }}" && break || sleep 10; done
 
       - name: Push cached devcontainer
-        if: ${{ success() }}
-        shell: bash
-        run: |
-          set -e
-          docker image push \
-            ${{ secrets.ACTIONS_ACR_URI }}tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+        run: docker image push ${{ env.CI_CACHE_ACR_URI }}/tredev:${{ secrets.DEVCONTAINER_TAG }}
 
   build_core_images:
     # used to build images used by core infrastructure
@@ -222,7 +219,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -233,16 +230,10 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make ${{ matrix.target }}"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ secrets.ACR_NAME }}
+          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
 
   start_tre:
     name: Start TRE
@@ -251,7 +242,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -262,34 +253,10 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make tre-start"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
-          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
-          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
-          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
-          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
+          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
-          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
-          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
-          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
-          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_stateful_resources_locked:
-            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
   deploy_tre:
     name: Deploy TRE
@@ -298,7 +265,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -309,69 +276,35 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "TF_VAR_ci_git_ref=${{ inputs.ciGitRef }} TF_LOG=${{ secrets.TF_LOG }} make deploy-core"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
-          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
-          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
-          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
-          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
-          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
-          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
-          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_application_admin_client_id: "${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}"
-          TF_VAR_application_admin_client_secret: "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}"
-          TF_VAR_stateful_resources_locked:
-            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME }}
+          MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
+          MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
+          CORE_ADDRESS_SPACE: ${{ secrets.CORE_ADDRESS_SPACE }}
+          TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
+          SWAGGER_UI_CLIENT_ID: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
+          API_CLIENT_SECRET: "${{ secrets.API_CLIENT_SECRET }}"
+          APPLICATION_ADMIN_CLIENT_ID: "${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}"
+          APPLICATION_ADMIN_CLIENT_SECRET: "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}"
+          STATEFUL_RESOURCES_LOCKED: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          CORE_APP_SERVICE_PLAN_SKU: ${{ secrets.CORE_APP_SERVICE_PLAN_SKU }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make api-healthcheck"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
-          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
-          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
-          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
-          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
+          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
-          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
-          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
-          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
-          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_stateful_resources_locked:
-            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
   publish_bundles:
     name: Publish Bundles
@@ -399,7 +332,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -410,15 +343,12 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           # Although porter publish will build automatically, our makefile build target includes logic that should run
-          COMMAND: "make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }}"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          COMMAND: >-
+            for i in {1..3}; do make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }}
+            && break || sleep 30; done
+          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           ACR_NAME: ${{ secrets.ACR_NAME }}
 
   publish_shared_bundles:
@@ -431,13 +361,11 @@ jobs:
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/firewall/"}
           - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/sonatype-nexus/"}
-          - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea/"}
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -448,15 +376,12 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           # Although porter publish will build automatically, our makefile build target includes logic that should run
-          COMMAND: "make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }}"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          COMMAND: >-
+            for i in {1..3}; do make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }}
+            && break || sleep 30; done
+          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           ACR_NAME: ${{ secrets.ACR_NAME }}
 
   register_shared_bundles:
@@ -469,13 +394,11 @@ jobs:
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/firewall"}
           - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/sonatype-nexus"}
-          - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea"}
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -485,14 +408,9 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make bundle-register DIR=${{ matrix.BUNDLE_DIR }}"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
@@ -527,7 +445,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -537,14 +455,9 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make bundle-register DIR=${{ matrix.BUNDLE_DIR }}"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
@@ -572,7 +485,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -582,14 +495,9 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make bundle-register DIR=${{ matrix.BUNDLE_DIR }}"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
@@ -608,7 +516,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -619,15 +527,9 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make deploy-shared-service DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ secrets.ACR_NAME }}
+          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
@@ -640,44 +542,58 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make db-migrate"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
-          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
-          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
-          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
-          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
-          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_stateful_resources_locked:
-            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME }}
+          MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
+          MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
+
+  deploy_ui:
+    name: Deploy UI
+    runs-on: ubuntu-latest
+    needs: [deploy_tre]
+    environment: ${{ inputs.environmentName }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
+          ref: ${{ inputs.prRef }}
+      - name: Deploy UI
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make build-and-deploy-ui"
+          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          LOCATION: ${{ secrets.LOCATION }}
+          TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME }}
+          MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
+          MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
+          SWAGGER_UI_CLIENT_ID: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
 
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"
     runs-on: ubuntu-latest
     environment: ${{ inputs.environmentName }}
-    needs: [deploy_shared_services, register_bundles]
+    needs: [deploy_shared_services, register_bundles, deploy_ui]
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -688,14 +604,9 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make test-e2e-smoke"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           LOCATION: "${{ secrets.LOCATION }}"
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
@@ -706,19 +617,14 @@ jobs:
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
+          WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ secrets.WORKSPACE_APP_SERVICE_PLAN_SKU }}
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: E2E Test (Smoke) Results
           path: "./e2e_tests/pytest_e2e_smoke.xml"
-
-      - name: Publish Test Results
-        if: always()
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        with:
-          files: "./e2e_tests/pytest_e2e_smoke.xml"
 
   e2e_tests_custom:
     name: "Run E2E Tests"
@@ -726,10 +632,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environmentName }}
     needs: [deploy_shared_services, register_bundles, register_user_resource_bundles]
-    timeout-minutes: 180
+    timeout-minutes: 240
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -740,14 +646,9 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make test-e2e-custom SELECTOR='${{ inputs.e2eTestsCustomSelector }}'"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           LOCATION: "${{ secrets.LOCATION }}"
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
@@ -758,19 +659,14 @@ jobs:
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
+          WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ secrets.WORKSPACE_APP_SERVICE_PLAN_SKU }}
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: E2E Test Results
           path: "./e2e_tests/pytest_e2e_custom.xml"
-
-      - name: Publish Test Results
-        if: always()
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        with:
-          files: "./e2e_tests/pytest_e2e_custom.xml"
 
   summary:
     name: Summary
@@ -779,25 +675,31 @@ jobs:
     if: always()
     environment: ${{ inputs.environmentName }}
     steps:
-      - uses: technote-space/workflow-conclusion-action@v2
+      - uses: technote-space/workflow-conclusion-action@v3
 
       # For PR builds triggered from comment builds, the GITHUB_REF is set to main
       # so the checks aren't automatically associated with the PR
       # If prHeadSha is specified then explicity mark the checks for that SHA
       - name: Report check status
-        if: env.WORKFLOW_CONCLUSION == 'success' && inputs.prHeadSha != ''
-        uses: LouisBrunner/checks-action@v1.1.1
+        if: inputs.prHeadSha != ''
+        uses: LouisBrunner/checks-action@v1.5.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # the name must be identical to the one received by the real job
           sha: ${{ inputs.prHeadSha }}
           name: "Deploy PR / Run E2E Tests (Smoke)"
           status: "completed"
-          conclusion: "success"
+          conclusion: ${{ env.WORKFLOW_CONCLUSION }}
+          details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Notify teams channel
+        env:
+          MS_TEAMS_WEBHOOK_URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
         # notify only if failure
-        if: env.WORKFLOW_CONCLUSION == 'failure' && (github.ref == 'refs/heads/main' && inputs.prRef == '')
+        if: |
+          env.WORKFLOW_CONCLUSION == 'failure' &&
+          env.MS_TEAMS_WEBHOOK_URI != '' &&
+          (github.ref == 'refs/heads/main' && inputs.prRef == '')
         uses: sachinkundu/ms-teams-notification@1.4
         with:
           github-token: ${{ github.token }}
@@ -805,3 +707,14 @@ jobs:
           notification-summary: "Failed to deploy from main"
           notification-color: dc3545
           timezone: Europe/Zurich
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+
+      - name: Publish E2E Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          junit_files: "artifacts/**/*.xml"
+          check_name: "E2E Test Results"

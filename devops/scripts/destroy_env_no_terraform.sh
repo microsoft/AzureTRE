@@ -75,8 +75,11 @@ fi
 locks=$(az group lock list -g "${core_tre_rg}" --query [].id -o tsv | tr -d \')
 if [ -n "${locks:-}" ]
 then
-  echo "Deleting locks..."
-  az resource lock delete --ids "${locks}"
+  for lock in $locks
+  do
+    echo "Deleting lock ${lock}..."
+    az resource lock delete --ids "${lock}"
+  done
 fi
 
 delete_resource_diagnostic() {
@@ -95,37 +98,24 @@ echo "Looking for diagnostic settings..."
 # using xargs to run in parallel.
 az resource list --resource-group "${core_tre_rg}" --query '[].[id]' -o tsv | xargs -P 10 -I {} bash -c 'delete_resource_diagnostic "{}"'
 
+tre_id=${core_tre_rg#"rg-"}
 
 # purge keyvault if possible (makes it possible to reuse the same tre_id later)
 # this has to be done before we delete the resource group since we might not wait for it to complete
-
-# DEBUG START
-# This section is to aid debugging an issue where keyvaults aren't being deleted and purged
-echo "keyvault properties:"
-az keyvault list --resource-group "${core_tre_rg}" --query "[].properties"
-echo "keyvault purge protection evaluation result:"
-az keyvault list --resource-group "${core_tre_rg}" --query "[?properties.enablePurgeProtection==``null``] | length (@)"
-
-if [[ -n ${SHOW_KEYVAULT_DEBUG_ON_DESTROY:-} ]]; then
-  az keyvault list --resource-group "${core_tre_rg}" --query "[].properties" --debug
-fi
-# DEBUG END
-
-tre_id=${core_tre_rg#"rg-"}
 keyvault_name="kv-${tre_id}"
-keyvault=$(az keyvault show --name "${keyvault_name}" --resource-group "${core_tre_rg}" || echo 0)
+keyvault=$(az keyvault show --name "${keyvault_name}" --resource-group "${core_tre_rg}" -o json || echo 0)
 if [ "${keyvault}" != "0" ]; then
-  secrets=$(az keyvault secret list --vault-name "${keyvault_name}" | jq -r '.[].id')
+  secrets=$(az keyvault secret list --vault-name "${keyvault_name}" -o json | jq -r '.[].id')
   for secret_id in ${secrets}; do
     az keyvault secret delete --id "${secret_id}"
   done
 
-  keys=$(az keyvault key list --vault-name "${keyvault_name}" | jq -r '.[].id')
+  keys=$(az keyvault key list --vault-name "${keyvault_name}" -o json | jq -r '.[].id')
   for key_id in ${keys}; do
     az keyvault key delete --id "${key_id}"
   done
 
-  certificates=$(az keyvault certificate list --vault-name "${keyvault_name}" | jq -r '.[].id')
+  certificates=$(az keyvault certificate list --vault-name "${keyvault_name}" -o json | jq -r '.[].id')
   for certificate_id in ${certificates}; do
     az keyvault certificate delete --id "${certificate_id}"
   done
@@ -140,7 +130,7 @@ if [ "${keyvault}" != "0" ]; then
 fi
 
 # Delete the vault if purge protection is not on.
-if [[ $(az keyvault list --resource-group "${core_tre_rg}" --query "[?properties.enablePurgeProtection==``null``] | length (@)") != 0 ]]; then
+if [[ $(az keyvault list --resource-group "${core_tre_rg}" --query "[?properties.enablePurgeProtection==``null``] | length (@)" -o tsv) != 0 ]]; then
   echo "Deleting keyvault: ${keyvault_name}"
   az keyvault delete --name "${keyvault_name}" --resource-group "${core_tre_rg}"
 
@@ -148,6 +138,14 @@ if [[ $(az keyvault list --resource-group "${core_tre_rg}" --query "[?properties
   az keyvault purge --name "${keyvault_name}" ${no_wait_option}
 else
   echo "Resource group ${core_tre_rg} doesn't have a keyvault without purge protection."
+fi
+
+# linked storage accounts don't get deleted with the workspace
+workspace_name="log-${tre_id}"
+workspace=$(az monitor log-analytics workspace show --workspace-name "${workspace_name}" --resource-group "${core_tre_rg}" || echo 0)
+if [ "${workspace}" != "0" ]; then
+  az monitor log-analytics workspace linked-storage list -g "${core_tre_rg}" --workspace-name "${workspace_name}" -o tsv --query '[].id' \
+  | xargs -P 10 -I {} az rest --method delete --uri "{}?api-version=2020-08-01"
 fi
 
 # this will find the mgmt, core resource groups as well as any workspace ones

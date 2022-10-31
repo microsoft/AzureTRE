@@ -50,6 +50,7 @@ write_files:
       APPLICATIONINSIGHTS_CONNECTION_STRING=${app_insights_connection_string}
       NUMBER_PROCESSES=${resource_processor_number_processes_per_instance}
       KEY_VAULT_NAME=${key_vault_name}
+      ${rp_bundle_values}
   - path: /etc/cron.hourly/docker-prune
     # An hourly cron job to have docker free disk space. Running this frquently
     # since disk might get full fast, but we prune only when free space is low.
@@ -58,7 +59,7 @@ write_files:
       set -o errexit
       used_percent=$(df / --output=pcent | tail -1 | sed 's/[^0-9]//g')
       echo "Used disk space percent: $${used_percent}"
-      if (( used_percent > 60 )); then
+      if (( used_percent > 70 )); then
         echo "Free space too low, pruning..."
         docker system prune -f
       fi

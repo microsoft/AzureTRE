@@ -32,7 +32,7 @@ class AzureADAuthorization(AccessService):
     require_one_of_roles = None
 
     TRE_CORE_ROLES = ['TREAdmin', 'TREUser']
-    WORKSPACE_ROLES_DICT = {'WorkspaceOwner': 'app_role_id_workspace_owner', 'WorkspaceResearcher': 'app_role_id_workspace_researcher'}
+    WORKSPACE_ROLES_DICT = {'WorkspaceOwner': 'app_role_id_workspace_owner', 'WorkspaceResearcher': 'app_role_id_workspace_researcher', 'AirlockManager': 'app_role_id_workspace_airlock_manager'}
 
     def __init__(self, auto_error: bool = True, require_one_of_roles: list = None):
         super(AzureADAuthorization, self).__init__(
@@ -57,6 +57,8 @@ class AzureADAuthorization(AccessService):
             try:
                 app_reg_id = self._fetch_ws_app_reg_id_from_ws_id(request)
                 decoded_token = self._decode_token(token, app_reg_id)
+            except HTTPException as h:
+                raise h
             except Exception as e:
                 logging.debug(e)
                 logging.debug("Failed to decode using workspace_id, trying with TRE API app registration")
@@ -67,7 +69,18 @@ class AzureADAuthorization(AccessService):
             try:
                 decoded_token = self._decode_token(token, config.API_AUDIENCE)
             except jwt.exceptions.InvalidSignatureError:
-                logging.debug("Failed to decode using TRE API app registration")
+                logging.debug("Failed to decode using TRE API app registration (Invalid Signatrue)")
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.INVALID_SIGNATURE)
+            except jwt.exceptions.ExpiredSignatureError:
+                logging.debug("Failed to decode using TRE API app registration (Expired Signature)")
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.EXPIRED_SIGNATURE)
+            except jwt.exceptions.InvalidTokenError:
+                # any other token validation exception, we want to catch all of these...
+                logging.debug("Failed to decode using TRE API app registration (Invalid token)")
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.INVALID_TOKEN)
+            except Exception as e:
+                # Unexpected token decoding/validation exception. making sure we are not crashing (with 500)
+                logging.debug(e)
                 pass
 
         # Failed to decode token using either app registration
@@ -171,7 +184,7 @@ class AzureADAuthorization(AccessService):
         app = ConfidentialClientApplication(client_id=config.API_CLIENT_ID, client_credential=config.API_CLIENT_SECRET, authority=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}")
         result = app.acquire_token_silent(scopes=scopes, account=None)
         if not result:
-            logging.info('No suitable token exists in cache, getting a new one from AAD')
+            logging.debug('No suitable token exists in cache, getting a new one from AAD')
             result = app.acquire_token_for_client(scopes=scopes)
         if "access_token" not in result:
             logging.debug(result.get('error'))
@@ -210,36 +223,52 @@ class AzureADAuthorization(AccessService):
         graph_data = requests.get(sp_endpoint, headers=self._get_auth_header(msgraph_token)).json()
         return graph_data
 
-    def _get_user_emails_with_role_asssignment(self, client_id):
-        msgraph_token = self._get_msgraph_token()
+    def _get_user_role_assignments(self, client_id, msgraph_token):
         sp_roles_endpoint = self._get_service_principal_assigned_roles_endpoint(client_id)
-        roles_graph_data = requests.get(sp_roles_endpoint, headers=self._get_auth_header(msgraph_token)).json()
+        return requests.get(sp_roles_endpoint, headers=self._get_auth_header(msgraph_token)).json()
 
+    def _get_user_emails(self, roles_graph_data, msgraph_token):
         batch_endpoint = self._get_batch_endpoint()
         batch_request_body = self._get_batch_users_by_role_assignments_body(roles_graph_data)
         headers = self._get_auth_header(msgraph_token)
         headers["Content-type"] = "application/json"
         users_graph_data = requests.post(batch_endpoint, json=batch_request_body, headers=headers).json()
+        return users_graph_data
 
-        return roles_graph_data, users_graph_data
-
-    def get_workspace_role_assignment_details(self, workspace: Workspace):
-        researcher_app_role_id = workspace.properties["app_role_id_workspace_researcher"]
-        owner_app_role_id = workspace.properties["app_role_id_workspace_owner"]
-        sp_id = workspace.properties["sp_id"]
-        roles_graph_data, users_graph_data = self._get_user_emails_with_role_asssignment(sp_id)
+    def _get_user_emails_from_response(self, users_graph_data):
         user_emails = {}
         for user_data in users_graph_data["responses"]:
-            if user_data["body"]["mail"] is not None:
+            # Handle user endpoint response
+            if "users" in user_data["body"]["@odata.context"] and user_data["body"]["mail"] is not None:
                 user_emails[user_data["body"]["id"]] = user_data["body"]["mail"]
+            # Handle group endpoint response
+            if "directoryObjects" in user_data["body"]["@odata.context"]:
+                for group_member in user_data["body"]["value"]:
+                    if group_member["mail"] is not None:
+                        user_emails[group_member["id"]] = group_member["mail"]
+        return user_emails
+
+    def get_workspace_role_assignment_details(self, workspace: Workspace):
+        msgraph_token = self._get_msgraph_token()
+        app_role_ids = {role_name: workspace.properties[role_id] for role_name, role_id in self.WORKSPACE_ROLES_DICT.items()}
+        inverted_app_role_ids = {role_id: role_name for role_name, role_id in app_role_ids.items()}
+
+        sp_id = workspace.properties["sp_id"]
+        roles_graph_data = self._get_user_role_assignments(sp_id, msgraph_token)
+        users_graph_data = self._get_user_emails(roles_graph_data, msgraph_token)
+        user_emails = self._get_user_emails_from_response(users_graph_data)
 
         workspace_role_assignments_details = defaultdict(list)
         for role_assignment in roles_graph_data["value"]:
-            if role_assignment["principalType"] == "User":
-                if role_assignment["appRoleId"] == researcher_app_role_id:
-                    workspace_role_assignments_details["researcher_emails"].append(user_emails[role_assignment["principalId"]])
-                elif role_assignment["appRoleId"] == owner_app_role_id:
-                    workspace_role_assignments_details["owner_emails"].append(user_emails[role_assignment["principalId"]])
+            principal_id = role_assignment["principalId"]
+            principal_type = role_assignment["principalType"]
+
+            if principal_type == "User" and principal_id in user_emails:
+                app_role_id = role_assignment["appRoleId"]
+                app_role_name = inverted_app_role_ids.get(app_role_id)
+
+                if app_role_name:
+                    workspace_role_assignments_details[app_role_name].append(user_emails[principal_id])
 
         return workspace_role_assignments_details
 
@@ -282,11 +311,56 @@ class AzureADAuthorization(AccessService):
 
         return authInfo
 
-    def _get_role_assignment_graph_data(self, user_id: str) -> dict:
+    def _ms_graph_query(self, url: str, http_method: str, json=None) -> dict:
         msgraph_token = self._get_msgraph_token()
-        user_endpoint = f"https://graph.microsoft.com/v1.0/users/{user_id}/appRoleAssignments"
-        graph_data = requests.get(user_endpoint, headers=self._get_auth_header(msgraph_token)).json()
+        auth_headers = self._get_auth_header(msgraph_token)
+        graph_data = {}
+        while True:
+            if not url:
+                break
+            logging.debug(f"Making request to: {url}")
+            if json:
+                response = requests.request(method=http_method, url=url, json=json, headers=auth_headers)
+            else:
+                response = requests.request(method=http_method, url=url, headers=auth_headers)
+            url = ""
+            if response.status_code == 200:
+                json_response = response.json()
+                graph_data = merge_dict(graph_data, json_response)
+                if '@odata.nextLink' in json_response:
+                    url = json_response['@odata.nextLink']
+            else:
+                logging.error(f"MS Graph query to: {url} failed with status code {response.status_code}")
+                logging.error(f"Full response: {response}")
         return graph_data
+
+    def _get_role_assignment_graph_data_for_user(self, user_id: str) -> dict:
+        user_endpoint = f"https://graph.microsoft.com/v1.0/users/{user_id}/appRoleAssignments"
+        graph_data = self._ms_graph_query(user_endpoint, "GET")
+        return graph_data
+
+    def _get_role_assignment_graph_data_for_service_principal(self, principal_id: str) -> dict:
+        svc_principal_endpoint = f"https://graph.microsoft.com/v1.0/servicePrincipals/{principal_id}/appRoleAssignments"
+        graph_data = self._ms_graph_query(svc_principal_endpoint, "GET")
+        return graph_data
+
+    def _get_identity_type(self, id: str) -> str:
+        objects_endpoint = "https://graph.microsoft.com/v1.0/directoryObjects/getByIds"
+        request_body = {"ids": [id], "types": ["user", "servicePrincipal"]}
+        graph_data = self._ms_graph_query(objects_endpoint, "POST", json=request_body)
+
+        logging.debug(graph_data)
+
+        if "value" not in graph_data or len(graph_data["value"]) != 1:
+            logging.debug(graph_data)
+            raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ACCOUNT_TYPE} {id}")
+
+        object_info = graph_data["value"][0]
+        if "@odata.type" not in object_info:
+            logging.debug(object_info)
+            raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ACCOUNT_TYPE} {id}")
+
+        return object_info["@odata.type"]
 
     def extract_workspace_auth_information(self, data: dict) -> dict:
         if "client_id" not in data:
@@ -305,12 +379,20 @@ class AzureADAuthorization(AccessService):
 
         return auth_info
 
-    def get_user_role_assignments(self, user_id: str) -> List[RoleAssignment]:
-        graph_data = self._get_role_assignment_graph_data(user_id)
+    def get_identity_role_assignments(self, user_id: str) -> List[RoleAssignment]:
+        identity_type = self._get_identity_type(user_id)
+        if identity_type == "#microsoft.graph.user":
+            graph_data = self._get_role_assignment_graph_data_for_user(user_id)
+        elif identity_type == "#microsoft.graph.servicePrincipal":
+            graph_data = self._get_role_assignment_graph_data_for_service_principal(user_id)
+        else:
+            raise AuthConfigValidationError(f"{strings.ACCESS_UNHANDLED_ACCOUNT_TYPE} {identity_type}")
 
         if 'value' not in graph_data:
             logging.debug(graph_data)
             raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER} {user_id}")
+
+        logging.debug(graph_data)
 
         return [RoleAssignment(role_assignment['resourceId'], role_assignment['appRoleId']) for role_assignment in graph_data['value']]
 
@@ -328,4 +410,18 @@ class AzureADAuthorization(AccessService):
             return WorkspaceRole.Owner
         if RoleAssignment(resource_id=workspace_sp_id, role_id=workspace.properties['app_role_id_workspace_researcher']) in user_role_assignments:
             return WorkspaceRole.Researcher
+        if RoleAssignment(resource_id=workspace_sp_id, role_id=workspace.properties['app_role_id_workspace_airlock_manager']) in user_role_assignments:
+            return WorkspaceRole.AirlockManager
         return WorkspaceRole.NoRole
+
+
+def merge_dict(d1, d2):
+    dd = defaultdict(list)
+
+    for d in (d1, d2):
+        for key, value in d.items():
+            if isinstance(value, list):
+                dd[key].extend(value)
+            else:
+                dd[key].append(value)
+    return dict(dd)

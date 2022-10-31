@@ -1,5 +1,5 @@
-import { MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from '@fluentui/react';
-import React, { useEffect, useState } from 'react';
+import { Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Admin } from '../../App';
 import { ApiEndpoint } from '../../models/apiEndpoints';
@@ -12,27 +12,70 @@ import { SharedServices } from '../shared/SharedServices';
 import { SharedServiceItem } from '../shared/SharedServiceItem';
 import { SecuredByRole } from '../shared/SecuredByRole';
 import { RoleName } from '../../models/roleNames';
+import { APIError } from '../../models/exceptions';
+import { ExceptionLayout } from '../shared/ExceptionLayout';
+import { AppRolesContext } from '../../contexts/AppRolesContext';
+import { CostsContext } from '../../contexts/CostsContext';
 
 export const RootLayout: React.FunctionComponent = () => {
   const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
+  const appRolesCtx = useContext(AppRolesContext)
+
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
+  const [loadingCostState, setLoadingCostState] = useState(LoadingState.Loading);
+  const [apiError, setApiError] = useState({} as APIError);
+  const [costApiError, setCostApiError] = useState({} as APIError);
   const apiCall = useAuthApiCall();
+  const costsWriteCtx = useRef(useContext(CostsContext));
 
   useEffect(() => {
     const getWorkspaces = async () => {
       try {
-        const r = await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get, undefined, undefined, ResultType.JSON, (roles: Array<string>) => {
-          setLoadingState(roles && roles.length > 0 ? LoadingState.Ok : LoadingState.AccessDenied);
-        });
-
+        const r = await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get, undefined, undefined, ResultType.JSON);
+        setLoadingState(LoadingState.Ok);
         r && r.workspaces && setWorkspaces(r.workspaces);
-      } catch {
+      } catch (e:any) {
+        e.userMessage = 'Error retrieving resources';
+        setApiError(e);
         setLoadingState(LoadingState.Error);
       }
-
     };
+
     getWorkspaces();
+
   }, [apiCall]);
+
+
+  useEffect(() => {
+    const getCosts = async () => {
+      try {
+        const r = await apiCall(ApiEndpoint.Costs, HttpMethod.Get, undefined, undefined, ResultType.JSON);
+
+        costsWriteCtx.current.setCosts([
+          ...r.workspaces,
+          ...r.shared_services]
+          );
+
+        setLoadingCostState(LoadingState.Ok);
+      }
+      catch (e:any) {
+        e.userMessage = 'Error retrieving costs';
+        setCostApiError(e);
+        setLoadingCostState(LoadingState.Error);
+      }
+    };
+
+    if (appRolesCtx.roles.includes(RoleName.TREAdmin)) {
+      getCosts();
+    }
+
+    let ctx = costsWriteCtx.current;
+
+    // run this on onmount - to clear the context
+    return (() => {
+      ctx.setCosts([]);
+    });
+  }, [apiCall, appRolesCtx.roles]);
 
   const addWorkspace = (w: Workspace) => {
     let ws = [...workspaces]
@@ -58,6 +101,11 @@ export const RootLayout: React.FunctionComponent = () => {
 
     case LoadingState.Ok:
       return (
+        <>
+        {
+        loadingCostState === LoadingState.Error &&
+        <ExceptionLayout e={costApiError} />
+        }
         <Stack horizontal className='tre-body-inner'>
           <Stack.Item className='tre-left-nav' style={{marginTop:2}}>
             <LeftNav />
@@ -80,28 +128,11 @@ export const RootLayout: React.FunctionComponent = () => {
             </Routes>
           </Stack.Item>
         </Stack>
-      );
-    case LoadingState.AccessDenied:
-      return (
-        <MessageBar
-          messageBarType={MessageBarType.warning}
-          isMultiline={true}
-        >
-          <h3>Access Denied</h3>
-          <p>
-            You do not have access to this application. If you feel you should have access, please speak to your TRE Administrator. <br />
-            If you have recently been given access, you may need to clear you browser local storage and refresh.</p>
-        </MessageBar>
+        </>
       );
     case LoadingState.Error:
       return (
-        <MessageBar
-          messageBarType={MessageBarType.error}
-          isMultiline={true}
-        >
-          <h3>Error retrieving workspaces</h3>
-          <p>We were unable to fetch the workspace list. Please see browser console for details.</p>
-        </MessageBar>
+        <ExceptionLayout e={apiError} />
       );
     default:
       return (
@@ -110,4 +141,5 @@ export const RootLayout: React.FunctionComponent = () => {
         </div>
       );
   }
+
 };

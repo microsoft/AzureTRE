@@ -34,6 +34,8 @@ module "aad" {
   workspace_resource_name_suffix = local.workspace_resource_name_suffix
   workspace_owner_object_id      = var.workspace_owner_object_id
   aad_redirect_uris_b64          = var.aad_redirect_uris_b64
+  create_aad_groups              = var.create_aad_groups
+
   depends_on = [
     azurerm_key_vault_access_policy.deployer,
     azurerm_key_vault_access_policy.resource_processor,
@@ -71,7 +73,9 @@ module "azure_monitor" {
   azure_monitor_ods_opinsights_dns_zone_id = module.network.azure_monitor_ods_opinsights_dns_zone_id
   azure_monitor_agentsvc_dns_zone_id       = module.network.azure_monitor_agentsvc_dns_zone_id
   blob_core_dns_zone_id                    = module.network.blobcore_zone_id
+  enable_local_debugging                   = var.enable_local_debugging
   depends_on = [
     module.network,
+    module.airlock, # shouldn't be required, related to: https://github.com/microsoft/AzureTRE/issues/2357
   ]
 }

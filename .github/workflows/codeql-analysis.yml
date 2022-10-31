@@ -38,11 +38,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ['python']
+        language: ['python', 'java', 'javascript']
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
 
@@ -51,5 +51,12 @@ jobs:
         with:
           languages: ${{ matrix.language }}
 
+      - if: matrix.language == 'java'
+        name: Build Java
+        working-directory: templates/workspace_services/guacamole/guacamole-server/guacamole-auth-azure
+        run: mvn package
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:${{matrix.language}}"

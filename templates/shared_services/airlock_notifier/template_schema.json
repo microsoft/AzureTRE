@@ -25,7 +25,8 @@
       "type": "string",
       "title": "SMTP Password",
       "description": "SMTP Password",
-      "updateable": false
+      "updateable": false,
+      "sensitive": true
     },
     "smtp_from_email": {
       "$id": "#/properties/smtp_from_email",
@@ -33,6 +34,17 @@
       "title": "SMTP From Email",
       "description": "SMTP From Email",
       "updateable": false
+    },
+    "tre_url": {
+      "$id": "#/properties/tre_url",
+      "type": "string",
+      "title": "TRE URL",
+      "description": "If your TRE URL is different from ${TRE_ID}.${LOCATION}.cloudapp.azure.com, please enter it here",
+      "updateable": false,
+      "pattern": "^(https:|http:|www\\.)\\S*",
+      "examples": [
+        "https://mytre.westeurope.cloudapp.azure.com"
+      ]
     }
   },
   "pipeline": {

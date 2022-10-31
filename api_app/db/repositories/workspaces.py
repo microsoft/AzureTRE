@@ -62,10 +62,10 @@ class WorkspaceRepository(ResourceRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Workspace, workspaces[0])
 
-    def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str) -> Tuple[Workspace, ResourceTemplate]:
+    def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str, user_roles: List[str]) -> Tuple[Workspace, ResourceTemplate]:
         full_workspace_id = str(uuid.uuid4())
 
-        template = self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace)
+        template = self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
 
         address_space_param = {"address_space": self.get_address_space_based_on_size(workspace_input.properties)}
         auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}

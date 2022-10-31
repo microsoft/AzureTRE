@@ -239,7 +239,7 @@ if [[ $grantAdminConsent -eq 1 ]]; then
 fi
 
 # Create the UX App Registration
-redirectUris="\"http://localhost:8000/api/docs/oauth2-redirect\""
+redirectUris="\"http://localhost:8000/api/docs/oauth2-redirect\", \"http://localhost:3000\""
 if [[ -n ${treUrl} ]]; then
     echo "Adding reply/redirect URL \"${treUrl}\" to \"${appName}\""
     redirectUris="${redirectUris}, \"${treUrl}\", \"${treUrl}/api/docs/oauth2-redirect\""
@@ -356,7 +356,7 @@ fi
   echo "API_CLIENT_ID=\"${appId}\""
   echo "API_CLIENT_SECRET=\"${spPassword}\""
   echo "SWAGGER_UI_CLIENT_ID=\"${uxAppId}\""
-} >> "$DIR"/../../auth.env
+} >> "devops/auth.env"
 
 if [[ $grantAdminConsent -eq 0 ]]; then
     echo -e "\e[96mNOTE: Make sure the API permissions of the app registrations have admin consent granted."

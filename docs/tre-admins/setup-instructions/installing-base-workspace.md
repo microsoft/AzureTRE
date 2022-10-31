@@ -48,6 +48,7 @@ As explained in the [auth guide](../auth.md), every workspace has a correspondin
 
 Running the script will report `WORKSPACE_API_CLIENT_ID` and `WORKSPACE_API_CLIENT_SECRET` for the generated app. Copy these into `/templates/core/.env` so that automated testing will work. You also need to use `WORKSPACE_API_CLIENT_ID` in the POST body below.
 
+### Create workspace using the API
 Go to `https://<azure_tre_fqdn>/api/docs` and use POST `/api/workspaces` with the sample body to create a base workspace.
 
 ```json
@@ -71,5 +72,4 @@ Workspace level operations can now be carried out using the workspace API, at `/
 
 ## Next steps
 
-* [Configuring shared services](./configuring-shared-services.md)
 * [Installing a workspace service & user resources](./installing-workspace-service-and-user-resource.md)

@@ -7,7 +7,7 @@ set -o pipefail
 # set -o xtrace
 
 # Remove apt sources not included in sources.list file
-sudo rm /etc/apt/sources.list.d/*
+sudo rm -f /etc/apt/sources.list.d/*
 
 # Update apt packages from configured Nexus sources
 sudo apt-get update
@@ -15,14 +15,6 @@ sudo apt-get update
 # Install xrdp so Guacamole can connect via RDP
 sudo apt-get install xrdp -y
 sudo adduser xrdp ssl-cert
-
-# Required packages for Docker installation
-sudo apt-get install ca-certificates curl gnupg lsb-release
-# Get Docker Public key from Nexus
-curl -fsSL "${NEXUS_PROXY_URL}"/repository/docker-public-key/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/docker-archive-keyring.gpg
-
-# Get Microsoft Public key from Nexus
-curl -fsSL "${NEXUS_PROXY_URL}"/repository/microsoft-keys/microsoft.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/microsoft.gpg
 
 # Install desktop environment if image doesn't have one already
 if [ "${INSTALL_UI}" -eq 1 ]; then
@@ -38,7 +30,7 @@ sudo systemctl enable xrdp
 
 if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   # Install required packages
-  sudo apt-get install autofs
+  sudo apt-get install autofs -y
 
   # Pass in required variables
   storageAccountName="${STORAGE_ACCOUNT_NAME}"
@@ -92,7 +84,12 @@ if [ "${CONDA_CONFIG}" -eq 1 ]; then
   conda config --set channel_alias "${NEXUS_PROXY_URL}"/repository/conda/  --system
 fi
 
-# Docker proxy config
+# Docker install and config
+sudo apt-get install -y ca-certificates curl gnupg lsb-release
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin jq
 jq -n --arg proxy "${NEXUS_PROXY_URL}:8083" '{"registry-mirrors": [$proxy]}' > /etc/docker/daemon.json
 sudo systemctl daemon-reload
 sudo systemctl restart docker
+
+# R config
+sudo echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- \"""${NEXUS_PROXY_URL}\"/repository/r-proxy/\"\n    options(repos = r)\n})" | sudo tee /etc/R/Rprofile.site

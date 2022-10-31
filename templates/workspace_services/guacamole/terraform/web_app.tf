@@ -46,6 +46,9 @@ resource "azurerm_linux_web_app" "guacamole" {
     WORKSPACE_ID               = var.workspace_id
     MANAGED_IDENTITY_CLIENT_ID = azurerm_user_assigned_identity.guacamole_id.client_id
 
+    APPLICATIONINSIGHTS_CONNECTION_STRING             = data.azurerm_application_insights.ws.connection_string
+    APPLICATIONINSIGHTS_INSTRUMENTATION_LOGGING_LEVEL = "INFO"
+
     # Guacmole configuration
     GUAC_DISABLE_COPY     = var.guac_disable_copy
     GUAC_DISABLE_PASTE    = var.guac_disable_paste
@@ -96,14 +99,13 @@ resource "azurerm_monitor_diagnostic_setting" "guacamole" {
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
   dynamic "log" {
-    for_each = toset(["AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
-    "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"])
+    for_each = data.azurerm_monitor_diagnostic_categories.guacamole.logs
     content {
       category = log.value
-      enabled  = true
+      enabled  = contains(local.guacamole_diagnostic_categories_enabled, log.value) ? true : false
 
       retention_policy {
-        enabled = true
+        enabled = contains(local.guacamole_diagnostic_categories_enabled, log.value) ? true : false
         days    = 365
       }
     }

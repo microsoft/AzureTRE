@@ -96,14 +96,14 @@ foreach ($Group in $ResourceGroups)
   foreach ($item in $VMSS)
   {
     Write-Output "Stopping $($item.Name)"
-    Stop-AzVmss -ResourceGroupName $item.ResourceGroupName -VMScaleSetName $item.Name
+    Stop-AzVmss -ResourceGroupName $item.ResourceGroupName -VMScaleSetName $item.Name -Force
   }
 
   $VM = Get-AzVM -ResourceGroupName $Group.ResourceGroupName
   foreach ($item in $VM)
   {
     Write-Output "Stopping $($item.Name)"
-    Stop-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name
+    Stop-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name -Force
   }
 
   $WorkspaceResourceGroups = Get-AzResourceGroup -Name "$($Group.ResourceGroupName)-ws-*"
@@ -113,7 +113,7 @@ foreach ($Group in $ResourceGroups)
     foreach ($item in $VM)
     {
       Write-Output "Stopping $($item.Name)"
-      Stop-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name
+      Stop-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name -Force
     }
   }
 }

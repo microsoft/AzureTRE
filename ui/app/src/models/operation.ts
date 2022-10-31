@@ -12,7 +12,8 @@ export interface Operation {
     createdWhen: number,
     updatedWhen: number,
     user: User,
-    steps?: Array<OperationStep>
+    steps?: Array<OperationStep>,
+    dismiss?: Boolean // UI-only prop, not fed from the API
 }
 
 export interface OperationStep {
@@ -30,7 +31,8 @@ export interface OperationStep {
 export const awaitingStates = [
   "awaiting_deployment",
   "awaiting_update",
-  "awaiting_deletion"
+  "awaiting_deletion",
+  "awaiting_action"
 ]
 
 export const completedStates = [

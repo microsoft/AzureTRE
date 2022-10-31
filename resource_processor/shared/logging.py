@@ -127,11 +127,20 @@ def shell_output_logger(console_output: str, prefix_item: str, logger: logging.L
     """
     Logs the shell output (stdout/err) a line at a time with an option to remove ANSI control chars.
     """
-    logger.log(logging_level, prefix_item)
-
     if not console_output:
+        logging.debug("shell console output is empty.")
         return
 
+    console_output = console_output.strip()
+
+    if (logging_level != logging.INFO
+            and len(console_output) < 200
+            and console_output.startswith("Unable to find image '")
+            and console_output.endswith("' locally")):
+        logging.debug("Image not present locally, setting log to INFO.")
+        logging_level = logging.INFO
+
+    logger.log(logging_level, prefix_item)
     logger.log(logging_level, console_output)
 
 

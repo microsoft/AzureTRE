@@ -47,6 +47,12 @@ variable "register_aad_application" {
   description = "Create an AAD application automatically for the Workspace."
 }
 
+variable "create_aad_groups" {
+  type        = bool
+  default     = false
+  description = "Create AAD groups automatically for the Workspace Application Roles."
+}
+
 variable "enable_airlock" {
   type        = bool
   description = "Controls the deployment of Airlock resources in the workspace."
@@ -81,6 +87,11 @@ variable "app_role_id_workspace_researcher" {
   type        = string
   default     = ""
   description = "The id of the application role WorkspaceResearcher in the identity provider, this is passed in so that we may return it as an output."
+}
+variable "app_role_id_workspace_airlock_manager" {
+  type        = string
+  default     = ""
+  description = "The id of the application role AirlockManager in the identity provider, this is passed in so that we may return it as an output."
 }
 variable "client_id" {
   type        = string
