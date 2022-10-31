@@ -4,45 +4,48 @@ name: cli-package
 on:
   push:
     branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: The environment to run this workflow in
+        type: environment
+        default: CICD
+        required: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    # environment is used to access the secrets for Azure credentials
+    # to sign in to a container registry to re-use a dev container image as a build cache
+    environment: ${{ inputs.environment || 'CICD'}}
 
     steps:
       - name: Checkout (GitHub)
         uses: actions/checkout@v2
 
-      - name: Login to Container Registry
-        uses: docker/login-action@v1
-        if: github.ref == 'refs/heads/main'
-        with:
-          registry: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/
-          username: ${{ secrets.ACTIONS_ACR_NAME }}
-          password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-
       - name: Build and run dev container task
-        uses: devcontainers/ci@v0.2
+        uses: ./.github/actions/devcontainer_run_command
         with:
-          imageName: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
-          runCmd: |
+          COMMAND: |
             # Validate installation and showing help output
             cd cli
             make pip-install install-cli
             source <(_TRE_COMPLETE=bash_source tre)
             tre --help
-          push: never
+          DEVCONTAINER_TAG: latest
+          CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Build and run dev container task
-        uses: devcontainers/ci@v0.2
+      - name: Create the CLI package
+        uses: ./.github/actions/devcontainer_run_command
         with:
-          imageName: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
-          runCmd: |
+          COMMAND: |
             # Create the python wheel
             cd cli
-            make build-package
-          push: never
-
+            sudo make build-package
+          DEVCONTAINER_TAG: latest
+          CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Upload Wheel as artifact
         uses: actions/upload-artifact@v3
