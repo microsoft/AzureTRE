@@ -5,3 +5,4 @@ variable "tre_workspace_tags" {}
 variable "aad_redirect_uris_b64" {
   type = string # list of objects like [{"name": "my uri 1", "value": "https://..."}, {}]
 }
+variable "create_aad_groups" {}

@@ -25,6 +25,7 @@ class Property(AzureTREModel):
     sensitive: Optional[bool] = Field(None, title="Indicates that the field is a sensitive value")
     readOnly: Optional[bool] = Field(None, title="Indicates the field is read-only")
     items: Optional[dict] = None  # items can contain sub-properties
+    properties: Optional[dict] = None
 
 
 class CustomAction(AzureTREModel):
@@ -65,6 +66,7 @@ class ResourceTemplate(AzureTREModel):
     current: bool = Field(title="Is this the current version of this template")
     type: str = "object"
     required: List[str] = Field(title="List of properties which must be provided")
+    authorizedRoles: Optional[List[str]] = Field(default=[], title="If not empty, the user is required to have one of these roles to install the template")
     properties: Dict[str, Property] = Field(title="Template properties")
     actions: List[CustomAction] = Field(default=[], title="Template actions")
     customActions: List[CustomAction] = Field(default=[], title="Template custom actions")

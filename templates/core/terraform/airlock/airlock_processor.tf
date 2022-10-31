@@ -11,7 +11,7 @@ resource "azurerm_service_plan" "airlock_plan" {
   resource_group_name = var.resource_group_name
   location            = var.location
   os_type             = "Linux"
-  sku_name            = var.airlock_app_service_plan_sku_size
+  sku_name            = var.airlock_app_service_plan_sku
   tags                = var.tre_core_tags
   worker_count        = 1
 
@@ -31,13 +31,14 @@ resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
 }
 
 resource "azurerm_linux_function_app" "airlock_function_app" {
-  name                       = local.airlock_function_app_name
-  resource_group_name        = var.resource_group_name
-  location                   = var.location
-  https_only                 = true
-  virtual_network_subnet_id  = var.airlock_processor_subnet_id
-  service_plan_id            = azurerm_service_plan.airlock_plan.id
-  storage_account_name       = azurerm_storage_account.sa_airlock_processor_func_app.name
+  name                      = local.airlock_function_app_name
+  resource_group_name       = var.resource_group_name
+  location                  = var.location
+  https_only                = true
+  virtual_network_subnet_id = var.airlock_processor_subnet_id
+  service_plan_id           = azurerm_service_plan.airlock_plan.id
+  storage_account_name      = azurerm_storage_account.sa_airlock_processor_func_app.name
+  # consider moving to a managed identity here
   storage_account_access_key = azurerm_storage_account.sa_airlock_processor_func_app.primary_access_key
   tags                       = var.tre_core_tags
 
@@ -47,21 +48,21 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   }
 
   app_settings = {
-    "SB_CONNECTION_STRING"                     = var.airlock_servicebus.default_primary_connection_string
-    "BLOB_CREATED_TOPIC_NAME"                  = azurerm_servicebus_topic.blob_created.name
-    "TOPIC_SUBSCRIPTION_NAME"                  = azurerm_servicebus_subscription.airlock_processor.name
-    "EVENT_GRID_STEP_RESULT_TOPIC_URI_SETTING" = azurerm_eventgrid_topic.step_result.endpoint
-    "EVENT_GRID_STEP_RESULT_TOPIC_KEY_SETTING" = azurerm_eventgrid_topic.step_result.primary_access_key
-    "EVENT_GRID_TO_DELETE_TOPIC_URI_SETTING"   = azurerm_eventgrid_topic.to_delete.endpoint
-    "EVENT_GRID_TO_DELETE_TOPIC_KEY_SETTING"   = azurerm_eventgrid_topic.to_delete.primary_access_key
-    "WEBSITES_ENABLE_APP_SERVICE_STORAGE"      = false
-    "AIRLOCK_STATUS_CHANGED_QUEUE_NAME"        = local.status_changed_queue_name
-    "AIRLOCK_SCAN_RESULT_QUEUE_NAME"           = local.scan_result_queue_name
-    "AIRLOCK_TO_DELETE_QUEUE_NAME"             = local.to_delete_queue_name
-    "ENABLE_MALWARE_SCANNING"                  = var.enable_malware_scanning
-    "MANAGED_IDENTITY_CLIENT_ID"               = azurerm_user_assigned_identity.airlock_id.client_id
-    "TRE_ID"                                   = var.tre_id
-    "WEBSITE_CONTENTOVERVNET"                  = 1
+    "SB_CONNECTION_STRING"                       = var.airlock_servicebus.default_primary_connection_string
+    "BLOB_CREATED_TOPIC_NAME"                    = azurerm_servicebus_topic.blob_created.name
+    "TOPIC_SUBSCRIPTION_NAME"                    = azurerm_servicebus_subscription.airlock_processor.name
+    "EVENT_GRID_STEP_RESULT_TOPIC_URI_SETTING"   = azurerm_eventgrid_topic.step_result.endpoint
+    "EVENT_GRID_STEP_RESULT_TOPIC_KEY_SETTING"   = azurerm_eventgrid_topic.step_result.primary_access_key
+    "EVENT_GRID_DATA_DELETION_TOPIC_URI_SETTING" = azurerm_eventgrid_topic.data_deletion.endpoint
+    "EVENT_GRID_DATA_DELETION_TOPIC_KEY_SETTING" = azurerm_eventgrid_topic.data_deletion.primary_access_key
+    "WEBSITES_ENABLE_APP_SERVICE_STORAGE"        = false
+    "AIRLOCK_STATUS_CHANGED_QUEUE_NAME"          = local.status_changed_queue_name
+    "AIRLOCK_SCAN_RESULT_QUEUE_NAME"             = local.scan_result_queue_name
+    "AIRLOCK_DATA_DELETION_QUEUE_NAME"           = local.data_deletion_queue_name
+    "ENABLE_MALWARE_SCANNING"                    = var.enable_malware_scanning
+    "MANAGED_IDENTITY_CLIENT_ID"                 = azurerm_user_assigned_identity.airlock_id.client_id
+    "TRE_ID"                                     = var.tre_id
+    "WEBSITE_CONTENTOVERVNET"                    = 1
   }
 
   site_config {
@@ -110,5 +111,33 @@ resource "azurerm_monitor_diagnostic_setting" "airlock_function_app" {
       enabled = true
       days    = 365
     }
+  }
+}
+
+resource "azurerm_private_endpoint" "function_storage" {
+  for_each = {
+    Blob  = var.blob_core_dns_zone_id
+    File  = var.file_core_dns_zone_id
+    Queue = var.queue_core_dns_zone_id
+    Table = var.table_core_dns_zone_id
+  }
+  name                = "pe-${local.airlock_function_sa_name}-${lower(each.key)}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  subnet_id           = var.airlock_storage_subnet_id
+  tags                = var.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "private-dns-zone-group-${local.airlock_function_sa_name}"
+    private_dns_zone_ids = [each.value]
+  }
+
+  private_service_connection {
+    name                           = "psc-${local.airlock_function_sa_name}"
+    private_connection_resource_id = azurerm_storage_account.sa_import_in_progress.id
+    is_manual_connection           = false
+    subresource_names              = [each.key]
   }
 }

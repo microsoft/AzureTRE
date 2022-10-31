@@ -13,7 +13,7 @@ from resources import strings, constants
 def get_account_by_request(airlock_request: AirlockRequest, workspace: Workspace) -> str:
     tre_id = config.TRE_ID
     short_workspace_id = workspace.id[-4:]
-    if airlock_request.requestType == constants.IMPORT_TYPE:
+    if airlock_request.type == constants.IMPORT_TYPE:
         if airlock_request.status == AirlockRequestStatus.Draft:
             return constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL.format(tre_id)
         elif airlock_request.status == AirlockRequestStatus.Submitted:
@@ -45,7 +45,7 @@ def validate_user_allowed_to_access_storage_account(user: User, airlock_request:
     if "WorkspaceResearcher" not in user.roles and airlock_request.status != AirlockRequestStatus.InReview:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AIRLOCK_UNAUTHORIZED_TO_SA)
 
-    if "WorkspaceOwner" not in user.roles and airlock_request.status == AirlockRequestStatus.InReview:
+    if "WorkspaceOwner" not in user.roles and "AirlockManager" not in user.roles and airlock_request.status == AirlockRequestStatus.InReview:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AIRLOCK_UNAUTHORIZED_TO_SA)
     return
 

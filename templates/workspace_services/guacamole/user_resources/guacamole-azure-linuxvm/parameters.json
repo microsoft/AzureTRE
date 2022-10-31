@@ -47,12 +47,6 @@
       }
     },
     {
-      "name": "nexus_version",
-      "source": {
-        "env": "NEXUS_VERSION"
-      }
-    },
-    {
       "name": "os_image",
       "source": {
         "env": "OS_IMAGE"
@@ -74,6 +68,12 @@
       "name": "vm_size",
       "source": {
         "env": "VM_SIZE"
+      }
+    },
+    {
+      "name": "image_gallery_id",
+      "source": {
+        "env": "IMAGE_GALLERY_ID"
       }
     }
   ]

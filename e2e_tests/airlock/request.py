@@ -99,7 +99,7 @@ async def wait_for_status(
             break
 
         LOGGER.info(f"Waiting for request status: {request_status}, current status is {current_status}")
-        await asyncio.sleep(2)
+        await asyncio.sleep(5)
 
 
 def is_final_status(status):

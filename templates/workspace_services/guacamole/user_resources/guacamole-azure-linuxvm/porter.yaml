@@ -1,9 +1,40 @@
 ---
 name: tre-service-guacamole-linuxvm
-version: 0.4.12
+version: 0.5.2
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
+
+custom:
+  # For information on vm_sizes and image_options, see README.me in the guacamole/user-resources folder
+  vm_sizes:
+    "2 CPU | 8GB RAM": Standard_D2s_v5
+    "4 CPU | 16GB RAM": Standard_D4s_v5
+    "8 CPU | 32GB RAM": Standard_D8s_v5
+    "16 CPU | 64GB RAM": Standard_D16s_v5
+  image_options:
+    "Ubuntu 18.04":
+      source_image_reference:
+        publisher: canonical
+        offer: ubuntuserver
+        sku: 18_04-lts-gen2
+        version: latest
+      install_ui: true
+      conda_config: false
+    "Ubuntu 18.04 Data Science VM":
+      source_image_reference:
+        publisher: microsoft-dsvm
+        offer: ubuntu-1804
+        sku: 1804-gen2
+        version: latest
+      install_ui: false
+      conda_config: true
+    # For information on using custom images, see README.me in the guacamole/user-resources folder
+    # "Custom Image From Gallery":
+    #   source_image_name: your-image
+    #   install_ui: true
+    #   conda_config: true
+
 
 credentials:
   - name: azure_tenant_id
@@ -24,6 +55,10 @@ parameters:
     type: string
     description: "Resource group containing the shared ACR"
     env: PARENT_SERVICE_ID
+  - name: image_gallery_id
+    type: string
+    description: Azure resource ID for the compute image gallery to pull images from (if specifying custom images by name)
+    default: ""
 
   # the following are added automatically by the resource processor
   - name: id
@@ -52,17 +87,11 @@ parameters:
     type: string
     default: "2 CPU | 8GB RAM"
   - name: shared_storage_access
-    type: string
-    default: "true"
+    type: boolean
+    default: true
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
-  - name: nexus_version
-    type: string
-    default: "V2"
-    description: >-
-      "Which Nexus proxy service to use, i.e. V1 for the App Service-based
-      Nexus or V2 for the VM-based service"
 
 outputs:
   - name: ip
@@ -98,16 +127,12 @@ install:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         parent_service_id: "{{ bundle.parameters.parent_service_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
-        nexus_version: "{{ bundle.parameters.nexus_version }}"
+        image_gallery_id: "{{ bundle.parameters.image_gallery_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -126,16 +151,12 @@ upgrade:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         parent_service_id: "{{ bundle.parameters.parent_service_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
-        nexus_version: "{{ bundle.parameters.nexus_version }}"
+        image_gallery_id: "{{ bundle.parameters.image_gallery_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -163,16 +184,12 @@ uninstall:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         parent_service_id: "{{ bundle.parameters.parent_service_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
-        nexus_version: "{{ bundle.parameters.nexus_version }}"
+        image_gallery_id: "{{ bundle.parameters.image_gallery_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"

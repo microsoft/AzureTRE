@@ -7,10 +7,14 @@ export enum ApiEndpoint {
     AirlockLink = 'link',
     AirlockSubmit = 'submit',
     AirlockCancel = 'cancel',
+    AirlockReview = 'review',
+    AirlockCreateReviewResource = 'review-user-resource',
     WorkspaceTemplates = 'workspace-templates',
     WorkspaceServiceTemplates = 'workspace-service-templates',
     UserResourceTemplates = 'user-resource-templates',
     SharedServiceTemplates = 'shared-service-templates',
     Operations = 'operations',
-    InvokeAction = 'invoke-action'
+    InvokeAction = 'invoke-action',
+    Costs = 'costs',
+    Metadata = ".metadata"
 }

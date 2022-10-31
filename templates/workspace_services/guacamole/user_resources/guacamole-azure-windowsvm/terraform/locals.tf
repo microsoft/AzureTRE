@@ -14,30 +14,16 @@ locals {
     tre_workspace_service_id = var.parent_service_id
     tre_user_resource_id     = var.tre_resource_id
   }
-  nexus_proxy_url = {
-    "V1" = "https://nexus-${var.tre_id}.azurewebsites.net",
-    "V2" = "https://nexus-${var.tre_id}.${data.azurerm_resource_group.core.location}.cloudapp.azure.com"
-  }
-  vm_size = {
-    "2 CPU | 8GB RAM"   = { value = "Standard_D2s_v5" },
-    "4 CPU | 16GB RAM"  = { value = "Standard_D4s_v5" },
-    "8 CPU | 32GB RAM"  = { value = "Standard_D8s_v5" },
-    "16 CPU | 64GB RAM" = { value = "Standard_D16s_v5" }
-  }
-  image_ref = {
-    "Windows 10" = {
-      "publisher"    = "MicrosoftWindowsDesktop"
-      "offer"        = "windows-10"
-      "sku"          = "20h2-pro-g2"
-      "version"      = "latest"
-      "conda_config" = false
-    },
-    "Server 2019 Data Science VM" = {
-      "publisher"    = "microsoft-dsvm"
-      "offer"        = "dsvm-win-2019"
-      "sku"          = "server-2019"
-      "version"      = "latest"
-      "conda_config" = true
-    }
-  }
+  nexus_proxy_url = "https://nexus-${var.tre_id}.${data.azurerm_resource_group.core.location}.cloudapp.azure.com"
+
+  # Load VM SKU/image details from porter.yaml
+  porter_yaml   = yamldecode(file("${path.module}/../porter.yaml"))
+  vm_sizes      = local.porter_yaml["custom"]["vm_sizes"]
+  image_details = local.porter_yaml["custom"]["image_options"]
+
+  # Create local variables to support the VM resource
+  selected_image = local.image_details[var.image]
+  # selected_image_source_refs is an array to enable easy use of a dynamic block
+  selected_image_source_refs = lookup(local.selected_image, "source_image_reference", null) == null ? [] : [local.selected_image.source_image_reference]
+  selected_image_source_id   = lookup(local.selected_image, "source_image_name", null) == null ? null : "${var.image_gallery_id}/images/${local.selected_image.source_image_name}"
 }

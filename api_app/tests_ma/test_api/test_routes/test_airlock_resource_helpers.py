@@ -33,7 +33,7 @@ def sample_airlock_request(status=AirlockRequestStatus.Draft):
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
         workspaceId=WORKSPACE_ID,
-        requestType=AirlockRequestType.Import,
+        type=AirlockRequestType.Import,
         files=[],
         businessJustification="some test reason",
         status=status
@@ -41,10 +41,10 @@ def sample_airlock_request(status=AirlockRequestStatus.Draft):
     return airlock_request
 
 
-def sample_status_changed_event(status="draft"):
+def sample_status_changed_event(new_status="draft", previous_status=None):
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, status=status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:]).__dict__,
+        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=new_status, previous_status=previous_status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:]).__dict__,
         subject=f"{AIRLOCK_REQUEST_ID}/statusChanged",
         data_version="2.0"
     )
@@ -54,7 +54,7 @@ def sample_status_changed_event(status="draft"):
 def sample_airlock_notification_event(status="draft"):
     status_changed_event = EventGridEvent(
         event_type="airlockNotification",
-        data=AirlockNotificationData(request_id=AIRLOCK_REQUEST_ID, event_type="status_changed", event_value=status, emails={"workspace_researcher": ["researcher@outlook.com"], "workspace_owner": ["owner@outlook.com"], "airlock_manager": ["manager@outlook.com"]}, workspace_id=WORKSPACE_ID[-4:]).__dict__,
+        data=AirlockNotificationData(request_id=AIRLOCK_REQUEST_ID, event_type="status_changed", event_value=status, emails={"workspace_researcher": ["researcher@outlook.com"], "workspace_owner": ["owner@outlook.com"], "airlock_manager": ["manager@outlook.com"]}, workspace_id=WORKSPACE_ID).__dict__,
         subject=f"{AIRLOCK_REQUEST_ID}/airlockNotification",
         data_version="2.0"
     )
@@ -163,7 +163,7 @@ async def test_update_and_publish_event_airlock_request_updates_item(_, event_gr
                                                                      airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
-    status_changed_event_mock = sample_status_changed_event(status="submitted")
+    status_changed_event_mock = sample_status_changed_event(new_status="submitted", previous_status="draft")
     airlock_notification_event_mock = sample_airlock_notification_event(status="submitted")
     airlock_request_repo_mock.update_airlock_request = MagicMock(return_value=updated_airlock_request_mock)
     event_grid_sender_client_mock = event_grid_publisher_client_mock.return_value
@@ -172,7 +172,7 @@ async def test_update_and_publish_event_airlock_request_updates_item(_, event_gr
     actual_updated_airlock_request = await update_and_publish_event_airlock_request(
         airlock_request=airlock_request_mock,
         airlock_request_repo=airlock_request_repo_mock,
-        user=create_test_user(),
+        updated_by=create_test_user(),
         new_status=AirlockRequestStatus.Submitted,
         workspace=sample_workspace())
 
@@ -197,7 +197,7 @@ async def test_update_and_publish_event_airlock_request_sends_status_changed_eve
     await update_and_publish_event_airlock_request(
         airlock_request=sample_airlock_request(),
         airlock_request_repo=airlock_request_repo_mock,
-        user=create_test_user(),
+        updated_by=create_test_user(),
         new_status=new_status,
         workspace=sample_workspace())
 
@@ -213,7 +213,7 @@ async def test_update_and_publish_event_airlock_request_raises_400_if_status_upd
         await update_and_publish_event_airlock_request(
             airlock_request=airlock_request_mock,
             airlock_request_repo=airlock_request_repo_mock,
-            user=create_test_user(),
+            updated_by=create_test_user(),
             new_status=AirlockRequestStatus.Approved,
             workspace=sample_workspace())
 
@@ -234,7 +234,7 @@ async def test_update_and_publish_event_airlock_request_raises_503_if_publish_ev
         await update_and_publish_event_airlock_request(
             airlock_request=airlock_request_mock,
             airlock_request_repo=airlock_request_repo_mock,
-            user=create_test_user(),
+            updated_by=create_test_user(),
             new_status=AirlockRequestStatus.Submitted,
             workspace=sample_workspace())
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
@@ -250,7 +250,7 @@ async def test_update_and_publish_event_airlock_request_without_status_change_sh
     await update_and_publish_event_airlock_request(
         airlock_request=sample_airlock_request(),
         airlock_request_repo=airlock_request_repo_mock,
-        user=create_test_user(),
+        updated_by=create_test_user(),
         new_status=new_status,
         workspace=sample_workspace())
 
@@ -258,30 +258,16 @@ async def test_update_and_publish_event_airlock_request_without_status_change_sh
     assert send_airlock_notification_event_mock.call_count == 0
 
 
-async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_current_user_review_and_status_arguments_should_ignore_status(airlock_request_repo_mock):
+async def test_get_airlock_requests_by_user_and_workspace_with_status_filter_calls_repo(airlock_request_repo_mock):
     workspace = sample_workspace()
     user = create_workspace_airlock_manager_user()
     airlock_request_repo_mock.get_airlock_requests = MagicMock()
 
     get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo_mock,
-                                               status=AirlockRequestStatus.Approved, awaiting_current_user_review=True)
+                                               status=AirlockRequestStatus.InReview)
 
-    airlock_request_repo_mock.get_airlock_requests.assert_called_once_with(workspace_id=workspace.id, user_id=None, type=None, status=AirlockRequestStatus.InReview)
-
-
-async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_current_user_review_argument_by_non_airlock_manger_should_return_empty_list(airlock_request_repo_mock):
-    user = create_test_user()
-    airlock_requests = get_airlock_requests_by_user_and_workspace(user=user, workspace=sample_workspace(), airlock_request_repo=airlock_request_repo_mock, awaiting_current_user_review=True)
-    assert airlock_requests == []
-
-
-@pytest.mark.parametrize("role", get_required_roles(endpoint=create_airlock_review))
-async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_current_user_review_argument_requires_same_roles_as_review_endpoint(role, airlock_request_repo_mock):
-    airlock_request_repo_mock.get_airlock_requests = MagicMock()
-    user = create_test_user()
-    user.roles = [role]
-    get_airlock_requests_by_user_and_workspace(user=user, workspace=sample_workspace(), airlock_request_repo=airlock_request_repo_mock, awaiting_current_user_review=True)
-    airlock_request_repo_mock.get_airlock_requests.assert_called_once()
+    airlock_request_repo_mock.get_airlock_requests.assert_called_once_with(workspace_id=workspace.id, creator_user_id=None, type=None,
+                                                                           status=AirlockRequestStatus.InReview, order_by=None, order_ascending=True)
 
 
 @pytest.mark.parametrize("action, required_roles, airlock_request_repo_mock", [

@@ -22,26 +22,26 @@ locals {
   step_result_topic_name    = "evgt-airlock-step-result-${local.topic_name_suffix}"
   status_changed_topic_name = "evgt-airlock-status-changed-${local.topic_name_suffix}"
   notification_topic_name   = "evgt-airlock-notification-${local.topic_name_suffix}"
-  to_delete_topic_name      = "evgt-airlock-to-delete-${local.topic_name_suffix}"
+  data_deletion_topic_name  = "evgt-airlock-data-deletion-${local.topic_name_suffix}"
 
   step_result_queue_name    = "airlock-step-result"
   status_changed_queue_name = "airlock-status-changed"
   scan_result_queue_name    = "airlock-scan-result"
-  to_delete_queue_name      = "airlock-to-delete"
+  data_deletion_queue_name  = "airlock-data-deletion"
   blob_created_topic_name   = "airlock-blob-created"
 
   blob_created_al_processor_subscription_name = "airlock-blob-created-airlock-processor"
 
   step_result_eventgrid_subscription_name       = "evgs-airlock-update-status"
   status_changed_eventgrid_subscription_name    = "evgs-airlock-status-changed"
-  to_delete_eventgrid_subscription_name         = "evgs-airlock-to-delete"
+  data_deletion_eventgrid_subscription_name     = "evgs-airlock-data-deletion"
   import_inprogress_eventgrid_subscription_name = "evgs-airlock-import-in-progress-blob-created"
   import_rejected_eventgrid_subscription_name   = "evgs-airlock-import-rejected-blob-created"
   import_blocked_eventgrid_subscription_name    = "evgs-airlock-import-blocked-blob-created"
   export_approved_eventgrid_subscription_name   = "evgs-airlock-export-approved-blob-created"
 
   airlock_function_app_name = "func-airlock-processor-${var.tre_id}"
-  airlock_function_sa_name  = "saairlockp${var.tre_id}"
+  airlock_function_sa_name  = lower(replace("stairlockp${var.tre_id}", "-", ""))
 
   airlock_sa_blob_data_contributor = [
     azurerm_storage_account.sa_import_external.id,

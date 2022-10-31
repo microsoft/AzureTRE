@@ -256,3 +256,23 @@ resource "azurerm_private_dns_zone_virtual_network_link" "eventgridlink" {
 
   lifecycle { ignore_changes = [tags] }
 }
+
+resource "azurerm_private_dns_zone" "private_dns_zones" {
+  for_each            = local.private_dns_zone_names
+  name                = each.key
+  resource_group_name = var.resource_group_name
+  tags                = local.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "private_dns_zone_links" {
+  for_each              = azurerm_private_dns_zone.private_dns_zones
+  name                  = each.value.name
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = each.value.name
+  virtual_network_id    = azurerm_virtual_network.core.id
+  tags                  = local.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+}

@@ -1,16 +1,17 @@
 import { Icon, mergeStyles, Panel, PanelType, PrimaryButton } from '@fluentui/react';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
 import { Operation } from '../../../models/operation';
 import { ResourceType } from '../../../models/resourceType';
 import { Workspace } from '../../../models/workspace';
 import { WorkspaceService } from '../../../models/workspaceService';
-import { OperationsContext } from '../../../contexts/OperationsContext';
 import { ResourceForm } from './ResourceForm';
 import { SelectTemplate } from './SelectTemplate';
 import { getResourceFromResult, Resource } from '../../../models/resource';
 import { HttpMethod, useAuthApiCall } from '../../../hooks/useAuthApiCall';
+import { useAppDispatch } from '../../../hooks/customReduxHooks';
+import { addUpdateOperation } from '../../shared/notifications/operationsSlice';
 
 interface CreateUpdateResourceProps {
   isOpen: boolean,
@@ -41,9 +42,9 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
   const [page, setPage] = useState('selectTemplate' as keyof PageTitle);
   const [selectedTemplate, setTemplate] = useState(props.updateResource?.templateName || '');
   const [deployOperation, setDeployOperation] = useState({} as Operation);
-  const opsContext = useContext(OperationsContext);
   const navigate = useNavigate();
   const apiCall = useAuthApiCall();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     const clearState = () => {
@@ -63,18 +64,27 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
     creating: ''
   }
 
-  // Construct API path for templates of specified resourceType
-  let templatesPath;
+  // Construct API paths for templates of specified resourceType
+  let templateListPath;
+  // Usually, the GET path would be `${templateGetPath}/${selectedTemplate}`, but there's an exception for user resources
+  let templateGetPath;
+
+  let workspaceApplicationIdURI = undefined
   switch (props.resourceType) {
     case ResourceType.Workspace:
-      templatesPath = ApiEndpoint.WorkspaceTemplates; break;
+      templateListPath = ApiEndpoint.WorkspaceTemplates; templateGetPath = templateListPath; break;
     case ResourceType.WorkspaceService:
-      templatesPath = ApiEndpoint.WorkspaceServiceTemplates; break;
+      templateListPath = ApiEndpoint.WorkspaceServiceTemplates; templateGetPath = templateListPath; break;
     case ResourceType.SharedService:
-      templatesPath = ApiEndpoint.SharedServiceTemplates; break;
+      templateListPath = ApiEndpoint.SharedServiceTemplates; templateGetPath = templateListPath; break;
     case ResourceType.UserResource:
       if (props.parentResource) {
-        templatesPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${props.parentResource.templateName}/${ApiEndpoint.UserResourceTemplates}`; break;
+        // If we are creating a user resource, parent resource must have a workspaceId
+        const workspaceId = (props.parentResource as WorkspaceService).workspaceId
+        templateListPath = `${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.WorkspaceServiceTemplates}/${props.parentResource.templateName}/${ApiEndpoint.UserResourceTemplates}`;
+        templateGetPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${props.parentResource.templateName}/${ApiEndpoint.UserResourceTemplates}`
+        workspaceApplicationIdURI = props.workspaceApplicationIdURI
+        break;
       } else {
         throw Error('Parent workspace service must be passed as prop when creating user resource.');
       }
@@ -105,7 +115,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
     setDeployOperation(operation);
     setPage('creating');
     // Add deployment operation to notifications operation poller
-    opsContext.addOperations([operation]);
+    dispatch(addUpdateOperation(operation));
 
     // if an onAdd callback has been given, get the resource we just created and pass it back
     if (props.onAddResource) {
@@ -118,11 +128,11 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
   let currentPage;
   switch (page) {
     case 'selectTemplate':
-      currentPage = <SelectTemplate templatesPath={templatesPath} onSelectTemplate={selectTemplate} />; break;
+      currentPage = <SelectTemplate templatesPath={templateListPath} workspaceApplicationIdURI={workspaceApplicationIdURI} onSelectTemplate={selectTemplate} />; break;
     case 'resourceForm':
       currentPage = <ResourceForm
         templateName={selectedTemplate}
-        templatePath={`${templatesPath}/${selectedTemplate}`}
+        templatePath={`${templateGetPath}/${selectedTemplate}`}
         resourcePath={resourcePath}
         onCreateResource={resourceCreating}
         workspaceApplicationIdURI={props.workspaceApplicationIdURI}
