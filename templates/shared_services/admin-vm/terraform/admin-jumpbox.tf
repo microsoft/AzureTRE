@@ -29,7 +29,7 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
   resource_group_name        = data.azurerm_resource_group.rg.name
   location                   = data.azurerm_resource_group.rg.location
   network_interface_ids      = [azurerm_network_interface.jumpbox_nic.id]
-  size                       = "XXX"
+  size                       = var.admin_jumpbox_vm_sku
   allow_extension_operations = true
   admin_username             = "adminuser"
   admin_password             = random_password.password.result
