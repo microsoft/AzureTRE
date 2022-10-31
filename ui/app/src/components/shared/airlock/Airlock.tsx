@@ -56,8 +56,6 @@ export const Airlock: React.FunctionComponent = () => {
           workspaceCtx.workspaceApplicationIdURI
         );
 
-        console.log(result);
-
         // Map the inner requests and the allowed user actions to state
         requests = result.airlockRequests.map((r: {
           airlockRequest: AirlockRequest,
@@ -301,6 +299,12 @@ export const Airlock: React.FunctionComponent = () => {
             <Stack.Item grow>
               <CommandBar items={quickFilters} ariaLabel="Quick filters" />
             </Stack.Item>
+            <CommandBarButton
+              iconProps={{ iconName: 'refresh' }}
+              text="Refresh"
+              style={{ background: 'none', color: theme.palette.themePrimary }}
+              onClick={() => getAirlockRequests()}
+            />
             <CommandBarButton
               iconProps={{ iconName: 'add' }}
               text="New request"

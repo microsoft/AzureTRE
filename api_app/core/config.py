@@ -54,3 +54,5 @@ AAD_INSTANCE: str = config("AAD_INSTANCE", default="https://login.microsoftonlin
 API_AUDIENCE: str = config("API_AUDIENCE", default=API_CLIENT_ID)
 
 AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS: int = config("AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS", default=1)
+
+API_ROOT_SCOPE: str = f"api://{API_CLIENT_ID}/user_impersonation"

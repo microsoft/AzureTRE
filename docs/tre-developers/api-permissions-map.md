@@ -9,11 +9,11 @@ These tables specify each endpoint that exists today in TRE API and the permissi
 | GET /workspaces/{workspace\_id}/workspace-service-templates/{service_template_name}/user-resource-templates               | V          | V               | V               |
 | GET /workspaces/{workspace\_id}/workspace-services/{service\_id}                                                          | V          | V               |                 |
 | POST /workspaces/{workspace\_id}/workspace-services                                                                       | X          | V               |                 |
-| PATCH /workspaces/{workspace\_id}/workspace-services/{service\_id}                                                        | V          | V               |                 |
+| PATCH /workspaces/{workspace\_id}/workspace-services/{service\_id}                                                        | X          | V               |                 |
 | DELETE /workspaces/{workspace\_id}/workspace-services/{service\_id}                                                       | X          | V               |                 |
 | POST /workspaces/{workspace\_id}/workspace-services/{service\_id}/invoke-action                                           | X          | V               |                 |
-| GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/operations                                               | V          | V               | V               |
-| GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/operations/{operation\_id}                               | V          | V               | V               |
+| GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/operations                                               | X          | V               | V               |
+| GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/operations/{operation\_id}                               | X          | V               | V               |
 | GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources                                           | V          | V               | V               |
 | GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources/{resource\_id}                            | V          | V               | V               |
 | POST /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources                                          | V          | V               | V               |
@@ -23,7 +23,7 @@ These tables specify each endpoint that exists today in TRE API and the permissi
 | GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources/{resource\_id}/operations                 | V          | V               | V               |
 | GET /workspaces/{workspace\_id}/workspace-services/{service\_id}/user-resources/{resource\_id}/operations/{operation\_id} | V          | V               | V               |
 | GET /workspaces/{workspace\_id}/requests                                                                                  | V          | V               | V               |
-| GET /workspaces/{workspace\_id}/requests/{airlock\_request\_id}                                                           | V          | V               | X               |
+| GET /workspaces/{workspace\_id}/requests/{airlock\_request\_id}                                                           | V          | V               | V               |
 | POST /workspaces/{workspace\_id}/requests                                                                                 | V          | V               | X               |
 | POST /workspaces/{workspace\_id}/requests/{airlock\_request\_id}/submit                                                   | V          | V               | X               |
 | POST /workspaces/{workspace\_id}/requests/{airlock\_request\_id}/cancel                                                   | V          | V               | X               |
@@ -32,8 +32,8 @@ These tables specify each endpoint that exists today in TRE API and the permissi
 ## Core API  
 | Endpoints                                                                                                           | TRE Admin | TRE User | WS Owner |
 | ------------------------------------------------------------------------------------------------------------------- | --------- | -------- | -------- |
-| GET /workspace-templates                                                                                            | V         | X        |          |
-| GET /workspace-templates/{workspace\_template\_name}                                                                | V         | X        |          |
+| GET /workspace-templates                                                                                            | V         | V        |          |
+| GET /workspace-templates/{workspace\_template\_name}                                                                | V         | V        |          |
 | POST /workspace-templates                                                                                           | V         | X        |          |
 | GET /workspace-service-templates                                                                                    | V         | V        |          |
 | GET /workspace-service-templates/{workspace\_service\_template\_name}                                               | V         | V        |          |
@@ -56,7 +56,7 @@ These tables specify each endpoint that exists today in TRE API and the permissi
 | GET /shared-service/{shared\_service\_id}                                                                           | V         | V        |          |
 | POST /shared-service                                                                                                | V         | X        |          |
 | PATCH /shared-service/{shared\_service\_id}                                                                         | V         | X        |          |
-| DELETE /shared-service/{shared\_service\_id}                                                                        | V         | X        |          |
+| DELETE /shared-service/{shared\_service\_id}                                                                        | V         | X        |          |****
 | POST /shared-service/{shared\_service\_id}/invoke-action                                                            | V         | X        |          |
 | GET /shared-service/{shared\_service\_id}/operations                                                                | V         | X        |          |
 | GET /shared-service/{shared\_service\_id}/operations/{operation\_id}                                                | V         | X        |          |
@@ -64,3 +64,5 @@ These tables specify each endpoint that exists today in TRE API and the permissi
 | GET /costs                                                                                                          | V         | X        | X        |
 | GET /workspaces/{workspace\_id}/costs                                                                               | V         | X        | V        |
 | GET /health                                                                                                         | \-        | \-       | \-       |
+| GET /ping                                                                                                           | \-        | \-       | \-       |
+| GET /.metadata                                                                                                      | \-        | \-       | \-       |
