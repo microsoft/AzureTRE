@@ -1,9 +1,9 @@
 PONG = "pong"
 
 # API Descriptions
-API_GET_METADATA = "Get public API metadata (e.g. to support the UI and CLI)"
 API_GET_HEALTH_STATUS = "Get health status"
 API_GET_PING = "Simple endpoint to test calling the API"
+API_GET_METADATA = "Get public API metadata (e.g. to support the UI and CLI)"
 API_MIGRATE_DATABASE = "Migrate documents in the database"
 
 API_GET_MY_OPERATIONS = "Get Operations that the current user has initiated"
