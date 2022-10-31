@@ -31,7 +31,7 @@ resource "azurerm_eventgrid_topic" "step_result" {
 resource "azurerm_role_assignment" "servicebus_sender_step_result" {
   scope                = var.airlock_servicebus.id
   role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_topic.step_resultidentity[0].principal_id
+  principal_id         = azurerm_eventgrid_topic.step_result.identity[0].principal_id
 
   depends_on = [
     azurerm_eventgrid_topic.step_result
@@ -85,7 +85,7 @@ resource "azurerm_eventgrid_topic" "status_changed" {
 resource "azurerm_role_assignment" "servicebus_sender_status_changed" {
   scope                = var.airlock_servicebus.id
   role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_topic.status_changedidentity[0].principal_id
+  principal_id         = azurerm_eventgrid_topic.status_changed.identity[0].principal_id
 
   depends_on = [
     azurerm_eventgrid_topic.status_changed
@@ -133,7 +133,7 @@ resource "azurerm_eventgrid_topic" "data_deletion" {
 resource "azurerm_role_assignment" "servicebus_sender_data_deletion" {
   scope                = var.airlock_servicebus.id
   role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_topic.data_deletionidentity[0].principal_id
+  principal_id         = azurerm_eventgrid_topic.data_deletion.identity[0].principal_id
 
   depends_on = [
     azurerm_eventgrid_topic.data_deletion
@@ -187,7 +187,7 @@ resource "azurerm_eventgrid_system_topic" "import_inprogress_blob_created" {
 resource "azurerm_role_assignment" "servicebus_sender_import_inprogress_blob_created" {
   scope                = var.airlock_servicebus.id
   role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_system_topic.import_inprogress_blob_createdidentity[0].principal_id
+  principal_id         = azurerm_eventgrid_system_topic.import_inprogress_blob_created.identity[0].principal_id
 
   depends_on = [
     azurerm_eventgrid_system_topic.import_inprogress_blob_created
@@ -220,7 +220,7 @@ resource "azurerm_eventgrid_system_topic" "import_rejected_blob_created" {
 resource "azurerm_role_assignment" "servicebus_sender_import_rejected_blob_created" {
   scope                = var.airlock_servicebus.id
   role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_system_topic.import_rejected_blob_createdidentity[0].principal_id
+  principal_id         = azurerm_eventgrid_system_topic.import_rejected_blob_created.identity[0].principal_id
 
   depends_on = [
     azurerm_eventgrid_system_topic.import_rejected_blob_created
@@ -252,7 +252,7 @@ resource "azurerm_eventgrid_system_topic" "import_blocked_blob_created" {
 resource "azurerm_role_assignment" "servicebus_sender_import_blocked_blob_created" {
   scope                = var.airlock_servicebus.id
   role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_system_topic.import_blocked_blob_createdidentity[0].principal_id
+  principal_id         = azurerm_eventgrid_system_topic.import_blocked_blob_created.identity[0].principal_id
 
   depends_on = [
     azurerm_eventgrid_system_topic.import_blocked_blob_created
@@ -285,7 +285,7 @@ resource "azurerm_eventgrid_system_topic" "export_approved_blob_created" {
 resource "azurerm_role_assignment" "servicebus_sender_export_approved_blob_created" {
   scope                = var.airlock_servicebus.id
   role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_system_topic.export_approved_blob_createdidentity[0].principal_id
+  principal_id         = azurerm_eventgrid_system_topic.export_approved_blob_created.identity[0].principal_id
 
   depends_on = [
     azurerm_eventgrid_system_topic.export_approved_blob_created
@@ -318,7 +318,7 @@ resource "azurerm_eventgrid_topic" "airlock_notification" {
 resource "azurerm_role_assignment" "servicebus_sender_airlock_notification" {
   scope                = var.airlock_servicebus.id
   role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_topic.airlock_notificationidentity[0].principal_id
+  principal_id         = azurerm_eventgrid_topic.airlock_notification.identity[0].principal_id
 
   depends_on = [
     azurerm_eventgrid_topic.airlock_notification
