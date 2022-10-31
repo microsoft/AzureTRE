@@ -33,14 +33,7 @@ def query_option(*param_decls: str, **kwargs: t.Any):
     return click.option(*param_decls, **kwargs)
 
 
-def output(response: Response, output_format: OutputFormat = OutputFormat.Json, query: str = None, default_table_query: str = None) -> None:
-
-    if output_format == OutputFormat.Suppress.value:
-        if not response.is_success:
-            sys.exit(1)
-        return
-
-    result_json = response.text
+def output_result(result_json: str, output_format: OutputFormat = OutputFormat.Json, query: str = None, default_table_query: str = None) -> None:
 
     if query is None and output_format == OutputFormat.Table.value:
         query = default_table_query
@@ -91,6 +84,18 @@ def output(response: Response, output_format: OutputFormat = OutputFormat.Json, 
             click.echo(tabulate(rows, columns))
     else:
         raise click.ClickException(f"Unhandled output format: '{output_format}'")
+
+
+def output(response: Response, output_format: OutputFormat = OutputFormat.Json, query: str = None, default_table_query: str = None) -> None:
+
+    if output_format == OutputFormat.Suppress.value:
+        if not response.is_success:
+            sys.exit(1)
+        return
+
+    result_json = response.text
+
+    output_result(result_json, output_format, query, default_table_query)
 
     if not response.is_success:
         sys.exit(1)
