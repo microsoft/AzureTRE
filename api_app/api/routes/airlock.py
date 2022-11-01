@@ -137,7 +137,7 @@ async def create_review_user_resource(
             assert airlock_request.type == AirlockRequestType.Export
             config = workspace.properties["airlock_review_config"]["export"]
             workspace_id = workspace.id
-            workspace_service_id = config["export_vm_orkspace_service_id"]
+            workspace_service_id = config["export_vm_workspace_service_id"]
             user_resource_template_name = config["export_vm_user_resource_template_name"]
 
         logging.info(f"Going to create a user resource in {workspace_id} {workspace_service_id} {user_resource_template_name}")
