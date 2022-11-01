@@ -23,6 +23,7 @@ ENHANCEMENTS:
 * Show error message when Review VMs are not configured in the current workspace
 * CLI: Add missing endpoints and minor bug fixes (#2784)
 * Added optional parameter to allow a client to retrieve a template by name and version ([#2802](https://github.com/microsoft/AzureTRE/pull/2802))
+* Added support for `allOf` usage in Resource Templates - both across the API and the UI. This allows a template author to specify certain fields as being conditionally present / conditionally required, and means we can tidy up some of the resource creation forms substantially. ([#2795](https://github.com/microsoft/AzureTRE/pull/2795))
 
 BUG FIXES:
 * Show the correct createdBy value for airlock requests in UI and in API queries ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))

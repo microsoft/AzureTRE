@@ -31,7 +31,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
     const getFullTemplate = async () => {
       try {
         // Get the full resource template containing the required parameters
-        const templateResponse = (await apiCall(props.updateResource ? `${props.templatePath}/${props.updateResource.templateVersion}?is_update=true` : props.templatePath, HttpMethod.Get)) as ResourceTemplate;
+        const templateResponse = (await apiCall(props.updateResource ? `${props.templatePath}?is_update=true&version=${props.updateResource.templateVersion}` : props.templatePath, HttpMethod.Get)) as ResourceTemplate;
 
         // if it's an update, populate the form with the props that are available in the template
         if (props.updateResource) {
