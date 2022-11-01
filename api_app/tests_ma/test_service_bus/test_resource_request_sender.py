@@ -105,7 +105,7 @@ async def test_multi_step_document_sends_first_step(
         temp_workspace_service,
         basic_shared_service,
     ]
-    resource_template_repo.get_current_template.side_effect = [
+    resource_template_repo.get_template_by_name_and_version.side_effect = [
         multi_step_resource_template,
         basic_shared_service_template,
     ]
