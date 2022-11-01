@@ -132,7 +132,7 @@ CUSTOM_ACTION_NOT_DEFINED = "The specified custom action isn't defined in the ta
 CUSTOM_ACTIONS_DO_NOT_EXIST = "The resource being targeted does not implement any custom actions."
 
 WORKSPACE_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace service template specified"
-TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this name"
+TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the template with this name, or name-version pair"
 NO_UNIQUE_CURRENT_FOR_TEMPLATE = "The template has multiple 'current' versions"
 
 SHARED_SERVICE_DOES_NOT_EXIST = "Shared service does not exist"
