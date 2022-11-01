@@ -22,6 +22,7 @@ ENHANCEMENTS:
 * Renamed several airlock fields to make them more descriptive and added a createdBy field. Included migration for backwards compatibility ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
 * Show error message when Review VMs are not configured in the current workspace
 * CLI: Add missing endpoints and minor bug fixes (#2784)
+* Added optional parameter to allow a client to retrieve a template by name and version ([#2802](https://github.com/microsoft/AzureTRE/pull/2802))
 
 BUG FIXES:
 * Show the correct createdBy value for airlock requests in UI and in API queries ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
