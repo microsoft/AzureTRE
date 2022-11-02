@@ -43,7 +43,7 @@ To bring in external data to a secure TRE workspace so you can use it for your r
 !!! warning
     Airlock only supports single files per request. If you need to import multiple files, please zip them before uploading to the request's storage container.
 
-1. Once you've uploaded your data, head back to the TRE UI and click *Submit* on your draft request. This will submit your request for approval.
+4. Once you've uploaded your data, head back to the TRE UI and click *Submit* on your draft request. This will submit your request for approval.
 
 ### Step 3: Get your approved data
 
