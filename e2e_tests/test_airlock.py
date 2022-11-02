@@ -2,18 +2,14 @@ import os
 import pytest
 import asyncio
 import logging
-import config
 
 from azure.core.exceptions import ResourceNotFoundError
 from azure.storage.blob import ContainerClient
 
 from resources.workspace import get_workspace_auth_details
-from resources.resource import disable_and_delete_resource, post_resource
-from resources import strings as resource_strings
 from airlock.request import post_request, get_request, upload_blob_using_sas, wait_for_status
 from airlock import strings as airlock_strings
 
-from helpers import get_admin_token
 
 pytestmark = pytest.mark.asyncio
 LOGGER = logging.getLogger(__name__)
@@ -24,31 +20,9 @@ BLOB_NAME = os.path.basename(BLOB_FILE_PATH)
 @pytest.mark.airlock
 @pytest.mark.extended
 @pytest.mark.timeout(35 * 60)
-async def test_airlock_flow(verify) -> None:
-
-    admin_token = await get_admin_token(verify)
-    if config.TEST_AIRLOCK_WORKSPACE_ID != "":
-        workspace_id = config.TEST_AIRLOCK_WORKSPACE_ID
-        workspace_path = f"/workspaces/{workspace_id}"
-    else:
-        # 1. create workspace
-        LOGGER.info("Creating workspace")
-        payload = {
-            "templateName": resource_strings.BASE_WORKSPACE,
-            "properties": {
-                "display_name": "E2E test airlock flow",
-                "description": "workspace for E2E airlock flow",
-                "address_space_size": "small",
-                "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
-                "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}",
-            }
-        }
-
-        if config.TEST_WORKSPACE_APP_PLAN != "":
-            payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
-
-        workspace_path, workspace_id = await post_resource(payload, resource_strings.API_WORKSPACES, access_token=admin_token, verify=verify)
-    workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
+async def test_airlock_flow(verify, workspace, admin_token) -> None:
+    workspace_id, workspace_path, workspace_owner_token = workspace
+    workspace_owner_token, = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
     # 2. create airlock request
     LOGGER.info("Creating airlock import request")
@@ -152,12 +126,3 @@ async def test_airlock_flow(verify) -> None:
     container_url = request_result["containerUrl"]
     # we can't test any more the export flow since we don't have the network
     # access to upload the file from within the workspace.
-
-    if config.TEST_AIRLOCK_WORKSPACE_ID == "":
-        # 11. delete workspace (cleanup)
-        LOGGER.info("Deleting workspace")
-        admin_token = await get_admin_token(verify)
-        # we don't really care if the workspace is deleted successfully, so not waiting for it.
-        disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
-        # but still need to wait a bit for the delete request to be issued to the API.
-        await asyncio.sleep(30)

@@ -5,14 +5,13 @@ from resources.workspace import get_workspace_auth_details
 from resources.resource import disable_and_delete_resource, post_resource
 from resources import strings
 
-from helpers import get_admin_token
 
 pytestmark = pytest.mark.asyncio
 
 
 @pytest.mark.performance
 @pytest.mark.timeout(3000)
-async def test_parallel_resource_creations(verify) -> None:
+async def test_parallel_resource_creations(verify, admin_token) -> None:
     """Creates N workspaces in parallel, and creates a workspace service in each, in parallel"""
 
     number_workspaces = 2
@@ -30,7 +29,6 @@ async def test_parallel_resource_creations(verify) -> None:
             }
         }
 
-        admin_token = await get_admin_token(verify)
         task = asyncio.create_task(post_resource(payload=payload, endpoint=strings.API_WORKSPACES, access_token=admin_token, verify=verify))
         tasks.append(task)
 
@@ -48,7 +46,7 @@ async def test_parallel_resource_creations(verify) -> None:
 @pytest.mark.skip
 @pytest.mark.performance
 @pytest.mark.timeout(3000)
-async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) -> None:
+async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify, admin_token) -> None:
     """Optionally creates a workspace and workspace service,
     then creates N number of VMs in parallel, patches each, and deletes them"""
 
@@ -72,7 +70,6 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
             }
         }
 
-        admin_token = await get_admin_token(verify)
         workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, admin_token, verify)
     else:
         workspace_path = f"/workspaces/{config.PERF_TEST_WORKSPACE_ID}"
@@ -144,7 +141,6 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
 
     await asyncio.gather(*tasks)
 
-    admin_token = await get_admin_token(verify)
     # clear up workspace + service (if we created them)
     if config.PERF_TEST_WORKSPACE_SERVICE_ID == "":
         await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
