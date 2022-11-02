@@ -10,10 +10,14 @@ Users from your corporate tenant can be guested into this new TRE tenant.
 
 ## Corporate Tenant
 
-It is possible to use your corporate tenant for TRE. This does have the advantage of only managing a single tenant, but your AAD Tenant Admin must be aware of what TRE brings to your organisation and must be prepared to carry out some admin tasks, like creating an AAD Application everytime a new Workspace is created.
+It is possible to use your corporate tenant for TRE. This does have the advantage of only managing a single tenant, but your AAD Tenant Admin must be aware of what TRE brings to your organization and must be prepared to carry out some admin tasks, like creating an AAD Application every time a new Workspace is created.
 
 [![TRE Tenant](../../assets/corp-tenant.png)](../../assets/corp-tenant.png)
 
+## Create Dedicated Azure Active Directory Tenant
+
+Follow [this guide](https://learn.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-access-create-new-tenant) to create new dedicated tenant.
+
 ## Next steps
 
-* [Pre-deployment steps](./pre-deployment-steps.md)
+* [Setup Auth configuration](./setup-auth-entities.md)
