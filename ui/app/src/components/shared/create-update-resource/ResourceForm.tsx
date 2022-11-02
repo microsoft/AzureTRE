@@ -93,7 +93,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
     let response;
     try {
       if (props.updateResource) {
-        let wsAuth =
+        const wsAuth =
           props.updateResource.resourceType === ResourceType.WorkspaceService
           || props.updateResource.resourceType === ResourceType.UserResource;
         response = await apiCall(
