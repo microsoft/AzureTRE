@@ -53,6 +53,10 @@ def enrich_template(original_template, extra_properties, is_update: bool = False
             if "updateable" not in prop.keys() or prop["updateable"] is not True:
                 prop["readOnly"] = True
 
+    # if there is an 'allOf' property which is empty, the validator fails - so remove the key
+    if "allOf" in template and template["allOf"] is None:
+        template.pop("allOf")
+
     if is_workspace_scope:
         id_field = "workspace_id"
     else:

@@ -39,6 +39,7 @@ async def test_airlock_flow(verify) -> None:
                 "display_name": "E2E test airlock flow",
                 "description": "workspace for E2E airlock flow",
                 "address_space_size": "small",
+                "auth_type": "Manual",
                 "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
                 "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}",
             }
