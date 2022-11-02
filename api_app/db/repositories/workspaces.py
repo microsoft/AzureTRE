@@ -98,7 +98,7 @@ class WorkspaceRepository(ResourceRepository):
         return workspace_owner_object_id if user_defined_workspace_owner_object_id is None else user_defined_workspace_owner_object_id
 
     def automatically_create_application_registration(self, workspace_properties: dict) -> bool:
-        return True if workspace_properties["client_id"] == "auto_create" else False
+        return True if ("auth_type" in workspace_properties and workspace_properties["auth_type"] == "Automatic") else False
 
     def get_address_space_based_on_size(self, workspace_properties: dict):
         # Default the address space to 'small' if not supplied.
