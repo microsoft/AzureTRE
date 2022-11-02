@@ -105,27 +105,33 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
       }
     }
 
-    console.log("Sending payload", data)
+
     return data;
   }
 
   const createUpdateResource = async (formData: any) => {
 
+    console.log(`current formData`, formData);
+
     let data = manuallyParseDataPayload(formData, template);
+
+    console.log("Parsed data", data)
+
+
 
     setSendingData(true);
     let response;
     try {
       if (props.updateResource) {
         let wsAuth = props.updateResource.resourceType === ResourceType.WorkspaceService || props.updateResource.resourceType === ResourceType.UserResource;
-        response = await apiCall(props.updateResource.resourcePath, HttpMethod.Patch, wsAuth ? props.workspaceApplicationIdURI : undefined, { properties: data }, ResultType.JSON, undefined, undefined, props.updateResource._etag);
+  //      response = await apiCall(props.updateResource.resourcePath, HttpMethod.Patch, wsAuth ? props.workspaceApplicationIdURI : undefined, { properties: data }, ResultType.JSON, undefined, undefined, props.updateResource._etag);
       } else {
         const resource = { templateName: props.templateName, properties: data };
-        response = await apiCall(props.resourcePath, HttpMethod.Post, props.workspaceApplicationIdURI, resource, ResultType.JSON);
+  //      response = await apiCall(props.resourcePath, HttpMethod.Post, props.workspaceApplicationIdURI, resource, ResultType.JSON);
       }
 
       setSendingData(false);
-      props.onCreateResource(response.operation);
+  //    props.onCreateResource(response.operation);
     } catch (err: any) {
       err.userMessage = 'Error sending create / update request';
       setApiError(err);
