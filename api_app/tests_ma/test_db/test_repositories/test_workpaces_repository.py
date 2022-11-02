@@ -186,6 +186,7 @@ def test_get_address_space_based_on_size_with_custom_address_space_and_missing_a
     with pytest.raises(InvalidInput):
         workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
 
+
 @patch('db.repositories.workspaces.WorkspaceRepository.get_workspaces')
 @patch('core.config.RESOURCE_LOCATION', "useast2")
 @patch('core.config.TRE_ID', "9876")
