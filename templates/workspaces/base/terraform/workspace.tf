@@ -20,7 +20,7 @@ module "network" {
   source                 = "./network"
   location               = var.location
   tre_id                 = var.tre_id
-  address_space          = var.address_space
+  address_spaces         = var.address_spaces
   ws_resource_group_name = azurerm_resource_group.ws.name
   tre_resource_id        = var.tre_resource_id
   tre_workspace_tags     = local.tre_workspace_tags

@@ -92,6 +92,7 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
     workspace_to_create = basic_workspace_request
     # make sure the input has 'None' for values that we expect to be set
     workspace_to_create.properties.pop("address_space", None)
+    workspace_to_create.properties.pop("address_spaces", None)
     workspace_to_create.properties.pop("workspace_owner_object_id", None)
 
     validate_input_mock.return_value = basic_resource_template
@@ -110,6 +111,7 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
     assert workspace.properties["tre_id"] != workspace_to_create.properties["tre_id"]
     # a new CIDR was allocated
     assert workspace.properties["address_space"] == "1.2.3.4/24"
+    assert workspace.properties["address_spaces"] == ["1.2.3.4/24"]
     assert workspace.properties["workspace_owner_object_id"] == "test_object_id"
 
 
