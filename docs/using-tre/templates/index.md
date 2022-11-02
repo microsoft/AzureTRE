@@ -32,7 +32,7 @@ See [template authoring guide](../../tre-workspace-authors/authoring-workspace-t
 
 ## Publish and Register Custom templates in the CI/CD
 
-See the [pipelines documentation](../../tre-admins/setup-instructions/deploying-azure-tre-cicd.md) to learn more about publishing and registering your custom templates as part of the CI/CD/
+See the [pipelines documentation](../../tre-admins/setup-instructions/cicd-deplyment.md) to learn more about publishing and registering your custom templates as part of the CI/CD/
 
 ## How to Contribute to our Documentation
 
