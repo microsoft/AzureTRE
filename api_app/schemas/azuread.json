@@ -5,19 +5,8 @@
     "title": "Azure AD Authorisation Schema",
     "default": {},
     "required": [
-        "client_id"
     ],
     "properties": {
-        "client_id": {
-            "type": "string",
-            "title": "Application (Client) ID",
-            "description": "The AAD Application Registration ID for the workspace. Use 'auto_create' if you wish TRE to create this."
-        },
-        "client_secret": {
-          "type": "string",
-          "title": "Application (Client) Secret",
-          "description": "The AAD Application Registration secret for the workspace. Leave blank if using `auto_create` above. This value will be stored in the Workspace Key Vault.",
-          "sensitive": true
-      }
+
     }
 }

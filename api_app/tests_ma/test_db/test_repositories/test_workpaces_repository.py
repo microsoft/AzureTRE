@@ -194,7 +194,7 @@ def test_create_workspace_item_raises_value_error_if_template_is_invalid(validat
 
 
 def test_automatically_create_application_registration_returns_true(workspace_repo):
-    dictToTest = {"client_id": "auto_create"}
+    dictToTest = {"auth_type": "Automatic"}
 
     assert workspace_repo.automatically_create_application_registration(dictToTest) is True
 

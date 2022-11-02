@@ -80,7 +80,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
             <Stack horizontal>
               <Stack.Item grow={5} style={headerStyles}>
                 {
-                  props.resource.resourceType === ResourceType.Workspace && props.resource.properties.client_id === "auto_create" ?
+                  props.resource.resourceType === ResourceType.Workspace && !props.resource.properties.scope_id ? // no scope id? no auth has been setup.
                     <span title="Authentication has not yet been provisioned">{props.resource.properties.display_name}</span>
                     :
                     <Link to={resourceUrl} onClick={() => { props.selectResource && props.selectResource(props.resource); return false }} style={headerLinkStyles}>{props.resource.properties.display_name}</Link>
