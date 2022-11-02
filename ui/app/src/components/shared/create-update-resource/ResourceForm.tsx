@@ -58,7 +58,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
     }
   }, [apiCall, props.templatePath, template, props.updateResource]);
 
-  const manuallyParseDataPayload = (data: any, template: ResourceTemplate): any => {
+  const removeReadOnlyProps = (data: any, template: ResourceTemplate): any => {
 
     // flatten all the nested properties from across the template into a basic array we can iterate easily
     let allProps = {} as any;
@@ -78,60 +78,34 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
 
     recurseTemplate(template);
 
-    // strip out the properties that are not on-screen at time of sending.
-    // if the properties aren't on the screen it means they're in conditional parts of the template and shouldn't be being sent
-    let onScreenPropLabelElements = document.getElementsByClassName('rjsf')[0].getElementsByClassName('ms-Label');
-    let checkBoxes = document.getElementsByClassName('rjsf')[0].getElementsByClassName('ms-Checkbox-text');
-    let labels: Array<string> = []
-    for (let i = 0; i < onScreenPropLabelElements.length; i++) {
-      labels.push((onScreenPropLabelElements[i] as any)['outerText']);
-    }
-    for (let i = 0; i < checkBoxes.length; i++) {
-      labels.push((checkBoxes[i] as any)['outerText']);
-    }
-
     // iterate the data payload
     for (let prop in data) {
       // if the prop isn't in the template, or it's readOnly, delete it
       if (!allProps[prop] || allProps[prop].readOnly === true) {
         delete data[prop];
-        continue;
-      }
-
-      // if it's not onscreen, delete it
-      let title = allProps[prop].title || prop;
-      if (!labels.includes(title)){
-        delete data[prop]
       }
     }
-
 
     return data;
   }
 
   const createUpdateResource = async (formData: any) => {
-
-    console.log(`current formData`, formData);
-
-    let data = manuallyParseDataPayload(formData, template);
-
-    console.log("Parsed data", data)
-
-
+    let data = removeReadOnlyProps(formData, template);
+    console.log("parsed payload to send", data);
 
     setSendingData(true);
     let response;
     try {
       if (props.updateResource) {
         let wsAuth = props.updateResource.resourceType === ResourceType.WorkspaceService || props.updateResource.resourceType === ResourceType.UserResource;
-  //      response = await apiCall(props.updateResource.resourcePath, HttpMethod.Patch, wsAuth ? props.workspaceApplicationIdURI : undefined, { properties: data }, ResultType.JSON, undefined, undefined, props.updateResource._etag);
+        response = await apiCall(props.updateResource.resourcePath, HttpMethod.Patch, wsAuth ? props.workspaceApplicationIdURI : undefined, { properties: data }, ResultType.JSON, undefined, undefined, props.updateResource._etag);
       } else {
         const resource = { templateName: props.templateName, properties: data };
-  //      response = await apiCall(props.resourcePath, HttpMethod.Post, props.workspaceApplicationIdURI, resource, ResultType.JSON);
+        response = await apiCall(props.resourcePath, HttpMethod.Post, props.workspaceApplicationIdURI, resource, ResultType.JSON);
       }
 
       setSendingData(false);
-  //    props.onCreateResource(response.operation);
+      props.onCreateResource(response.operation);
     } catch (err: any) {
       err.userMessage = 'Error sending create / update request';
       setApiError(err);
@@ -165,7 +139,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
             sendingData ?
               <Spinner label="Sending request" ariaLive="assertive" labelPosition="bottom" size={SpinnerSize.large} />
               :
-              <Form schema={template} formData={formData} uiSchema={uiSchema} onSubmit={(e: any) => createUpdateResource(e.formData)} />
+              <Form omitExtraData={true} schema={template} formData={formData} uiSchema={uiSchema} onSubmit={(e: any) => createUpdateResource(e.formData)} />
           }
         </div>
       )
