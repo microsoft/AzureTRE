@@ -35,10 +35,6 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
 
         // if it's an update, populate the form with the props that are available in the template
         if (props.updateResource) {
-          let d: any = {};
-          for (let prop in templateResponse.properties) {
-            d[prop] = props.updateResource?.properties[prop];
-          }
           setFormData(props.updateResource.properties);
         }
 
@@ -97,11 +93,24 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
     let response;
     try {
       if (props.updateResource) {
-        let wsAuth = props.updateResource.resourceType === ResourceType.WorkspaceService || props.updateResource.resourceType === ResourceType.UserResource;
-        response = await apiCall(props.updateResource.resourcePath, HttpMethod.Patch, wsAuth ? props.workspaceApplicationIdURI : undefined, { properties: data }, ResultType.JSON, undefined, undefined, props.updateResource._etag);
+        let wsAuth =
+          props.updateResource.resourceType === ResourceType.WorkspaceService
+          || props.updateResource.resourceType === ResourceType.UserResource;
+        response = await apiCall(
+          props.updateResource.resourcePath,
+          HttpMethod.Patch,
+          wsAuth ? props.workspaceApplicationIdURI : undefined,
+          { properties: data },
+          ResultType.JSON,
+          undefined, undefined, props.updateResource._etag);
       } else {
         const resource = { templateName: props.templateName, properties: data };
-        response = await apiCall(props.resourcePath, HttpMethod.Post, props.workspaceApplicationIdURI, resource, ResultType.JSON);
+        response = await apiCall(
+          props.resourcePath,
+          HttpMethod.Post,
+          props.workspaceApplicationIdURI,
+          resource,
+          ResultType.JSON);
       }
 
       setSendingData(false);
