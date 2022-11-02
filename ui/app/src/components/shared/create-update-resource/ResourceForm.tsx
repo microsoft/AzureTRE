@@ -97,7 +97,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
     let response;
     try {
       if (props.updateResource) {
-        let wsAuth = props.updateResource.resourceType === ResourceType.WorkspaceService || props.updateResource.resourceType === ResourceType.UserResource;
+        const wsAuth = props.updateResource.resourceType === ResourceType.WorkspaceService || props.updateResource.resourceType === ResourceType.UserResource;
         response = await apiCall(props.updateResource.resourcePath, HttpMethod.Patch, wsAuth ? props.workspaceApplicationIdURI : undefined, { properties: data }, ResultType.JSON, undefined, undefined, props.updateResource._etag);
       } else {
         const resource = { templateName: props.templateName, properties: data };
