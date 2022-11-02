@@ -124,7 +124,10 @@ class WorkspaceRepository(ResourceRepository):
         return is_network_available(allocated_networks, address_space)
 
     def get_new_address_space(self, cidr_netmask: int = 24):
-        networks = [x.properties["address_space"] for x in self.get_workspaces()]
+        workspaces = self.get_workspaces()
+        networks = [[x.properties.get("address_space")] for x in workspaces]
+        networks = networks + [x.properties.get("address_spaces", []) for x in workspaces]
+        networks = [i for s in networks for i in s if i is not None]
 
         new_address_space = generate_new_cidr(networks, cidr_netmask)
         return new_address_space
