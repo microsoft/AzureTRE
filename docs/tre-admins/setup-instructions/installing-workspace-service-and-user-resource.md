@@ -7,8 +7,8 @@ We will use the [Guacamole workspace service bundle](../../tre-templates/workspa
 1. Run:
 
     ```cmd
-    make bundle-publish DIR=./templates/workspace_services/guacamole BUNDLE_TYPE=workspace_service
-    make bundle-register DIR=./templates/workspace_services/guacamole BUNDLE_TYPE=workspace_service
+    make bundle-publish DIR=$AZURETRE_HOME/templates/workspace_services/guacamole BUNDLE_TYPE=workspace_service
+    make bundle-register DIR=$AZURETRE_HOME/templates/workspace_services/guacamole BUNDLE_TYPE=workspace_service
     ```
 
     Copy the resulting JSON payload.
