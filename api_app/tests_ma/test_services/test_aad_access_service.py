@@ -10,7 +10,7 @@ from services.access_service import AuthConfigValidationError
 def test_extract_workspace__raises_error_if_client_id_not_available():
     access_service = AzureADAuthorization()
     with pytest.raises(AuthConfigValidationError):
-        access_service.extract_workspace_auth_information(data={})
+        access_service.extract_workspace_auth_information(data={"auth_type": "Manual"})
 
 
 @patch("services.aad_authentication.AzureADAuthorization._get_app_auth_info",
@@ -62,7 +62,7 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
     }
 
     access_service = AzureADAuthorization()
-    actual_auth_info = access_service.extract_workspace_auth_information(data={"client_id": "1234"})
+    actual_auth_info = access_service.extract_workspace_auth_information(data={"auth_type": "Manual", "client_id": "1234"})
 
     assert actual_auth_info == expected_auth_info
 
