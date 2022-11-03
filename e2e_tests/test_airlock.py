@@ -6,7 +6,6 @@ import logging
 from azure.core.exceptions import ResourceNotFoundError
 from azure.storage.blob import ContainerClient
 
-from resources.workspace import get_workspace_auth_details
 from airlock.request import post_request, get_request, upload_blob_using_sas, wait_for_status
 from airlock import strings as airlock_strings
 
@@ -20,9 +19,8 @@ BLOB_NAME = os.path.basename(BLOB_FILE_PATH)
 @pytest.mark.airlock
 @pytest.mark.extended
 @pytest.mark.timeout(35 * 60)
-async def test_airlock_flow(verify, workspace, admin_token) -> None:
-    workspace_id, workspace_path, workspace_owner_token = workspace
-    workspace_owner_token, = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
+async def test_airlock_flow(verify, setup_test_workspace) -> None:
+    workspace_id, workspace_path, workspace_owner_token = setup_test_workspace
 
     # 2. create airlock request
     LOGGER.info("Creating airlock import request")
