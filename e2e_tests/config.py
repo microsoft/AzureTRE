@@ -24,4 +24,4 @@ PERF_TEST_WORKSPACE_ID: str = config("PERF_TEST_WORKSPACE_ID", default="")
 PERF_TEST_WORKSPACE_SERVICE_ID: str = config("PERF_TEST_WORKSPACE_SERVICE_ID", default="")
 
 # Set workspace id of an existing workspace to skip creation of a workspace during E2E tests
-TEST_AIRLOCK_WORKSPACE_ID: str = config("TEST_AIRLOCK_WORKSPACE_ID", default="")
+TEST_WORKSPACE_ID: str = config("TEST_WORKSPACE_ID", default="")

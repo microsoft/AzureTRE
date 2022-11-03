@@ -37,6 +37,7 @@ async def create_test_workspace(client_id: str, client_secret: str, verify: bool
             "client_secret": client_secret,
         }
     }
+    LOGGER.info(f"Payload {payload}")
 
     if config.TEST_WORKSPACE_APP_PLAN != "":
         payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
@@ -49,11 +50,11 @@ async def create_test_workspace(client_id: str, client_secret: str, verify: bool
 @pytest.fixture
 async def setup_test_workspace(verify) -> Tuple[str, str, str]:
     # Set up
-    if config.TEST_AIRLOCK_WORKSPACE_ID == "":
+    if config.TEST_WORKSPACE_ID == "":
         workspace_path, workspace_id = await create_test_workspace(
-            client_id=config.TEST_WORKSPACE_APP_ID, client_secret=config.TEST_ACCOUNT_CLIENT_SECRET, verify=verify)
+            client_id=config.TEST_WORKSPACE_APP_ID, client_secret=config.TEST_WORKSPACE_APP_SECRET, verify=verify)
     else:
-        workspace_id = config.TEST_AIRLOCK_WORKSPACE_ID
+        workspace_id = config.TEST_WORKSPACE_ID
         workspace_path = f"/workspaces/{workspace_id}"
 
     admin_token = await get_admin_token(verify=verify)
@@ -61,7 +62,7 @@ async def setup_test_workspace(verify) -> Tuple[str, str, str]:
     yield workspace_path, workspace_id, workspace_owner_token
 
     # Tear-down
-    if config.TEST_AIRLOCK_WORKSPACE_ID == "":
+    if config.TEST_WORKSPACE_ID == "":
         LOGGER.info("Deleting workspace")
         admin_token = await get_admin_token(verify=verify)
         await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
