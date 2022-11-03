@@ -61,7 +61,7 @@ async def create_test_workspace(auth_type: str, verify: bool, client_id: str = "
 
 
 @pytest.fixture
-async def setup_test_workspace(verify) -> Tuple[str, str, str]:
+async def setup_test_workspace(verify, scope="session") -> Tuple[str, str, str]:
     # Set up
     if config.TEST_WORKSPACE_ID == "":
         workspace_path, workspace_id = await create_test_workspace(
@@ -82,7 +82,7 @@ async def setup_test_workspace(verify) -> Tuple[str, str, str]:
 
 
 @pytest.fixture
-async def setup_test_aad_workspace(verify) -> Tuple[str, str, str]:
+async def setup_test_aad_workspace(verify, scope="session") -> Tuple[str, str, str]:
     workspace_path, workspace_id = await create_test_workspace(auth_type="Automatic", client_id="auto_create", client_secret="", verify=verify)
     admin_token = await get_admin_token(verify=verify)
     workspace_owner_token, _ = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
