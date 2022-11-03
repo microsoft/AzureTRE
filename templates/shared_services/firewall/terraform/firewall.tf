@@ -109,6 +109,28 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
 
     source_addresses = data.azurerm_subnet.shared.address_prefixes
   }
+
+  rule {
+    name = "nexus-bootstrap"
+
+    protocol {
+      port = "443"
+      type = "Https"
+    }
+
+    protocol {
+      port = "80"
+      type = "Http"
+    }
+
+    target_fqdns = [
+      "keyserver.ubuntu.com",
+      "packages.microsoft.com",
+      "download.docker.com"
+    ]
+
+    source_addresses = data.azurerm_subnet.shared.address_prefixes
+  }
 }
 
 resource "azurerm_firewall_application_rule_collection" "resource_processor_subnet" {
