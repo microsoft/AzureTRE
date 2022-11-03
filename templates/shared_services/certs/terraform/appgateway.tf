@@ -27,6 +27,7 @@ resource "azurerm_public_ip" "appgwpip" {
   allocation_method   = "Static"
   sku                 = "Standard"
   domain_name_label   = "${var.domain_prefix}-${var.tre_id}"
+  tags                = local.tre_shared_service_tags
 
   lifecycle { ignore_changes = [tags, zones] }
 }
@@ -35,6 +36,7 @@ resource "azurerm_user_assigned_identity" "agw_id" {
   resource_group_name = data.azurerm_resource_group.rg.name
   location            = data.azurerm_resource_group.rg.location
   name                = "id-agw-certs-${var.tre_id}"
+  tags                = local.tre_shared_service_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -43,6 +45,7 @@ resource "azurerm_application_gateway" "agw" {
   name                = "agw-certs-${var.tre_id}"
   resource_group_name = data.azurerm_resource_group.rg.name
   location            = data.azurerm_resource_group.rg.location
+  tags                = local.tre_shared_service_tags
 
   sku {
     name     = "Standard_v2"

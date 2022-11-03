@@ -164,15 +164,22 @@ def test_validate_input_against_template_raises_value_error_if_the_user_resource
 
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
 def test_validate_input_against_template_raises_value_error_if_payload_is_invalid(enriched_template_mock, resource_repo, workspace_input):
-    enriched_template_mock.return_value = ResourceTemplate(id="123",
-                                                           name="template1",
-                                                           description="description",
-                                                           version="0.1.0",
-                                                           resourceType=ResourceType.Workspace,
-                                                           current=True,
-                                                           required=["display_name"],
-                                                           properties={},
-                                                           customActions=[]).dict()
+    template_dict = ResourceTemplate(
+        id="123",
+        name="template1",
+        description="description",
+        version="0.1.0",
+        resourceType=ResourceType.Workspace,
+        current=True,
+        required=["display_name"],
+        properties={},
+        customActions=[]).dict()
+
+    # the enrich template method does this
+    template_dict.pop("allOf")
+
+    enriched_template_mock.return_value = template_dict
+
     # missing display name
     workspace_input = WorkspaceInCreate(templateName="template1")
 

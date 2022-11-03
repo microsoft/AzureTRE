@@ -41,6 +41,7 @@ resource "azurerm_key_vault_secret" "resource_processor_vmss_password" {
   name         = "resource-processor-vmss-password"
   value        = random_password.password.result
   key_vault_id = var.key_vault_id
+  tags         = local.tre_core_tags
 }
 
 resource "azurerm_user_assigned_identity" "vmss_msi" {
@@ -92,11 +93,11 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
     type_handler_version       = "1.0"
 
     protected_settings = jsonencode({
-      "workspaceKey" = "${var.log_analytics_workspace_primary_key}"
+      "workspaceKey" = var.log_analytics_workspace_primary_key
     })
 
     settings = jsonencode({
-      "workspaceId"               = "${var.log_analytics_workspace_workspace_id}",
+      "workspaceId"               = var.log_analytics_workspace_workspace_id
       "stopOnMultipleConnections" = false
       "skipDockerProviderInstall" = true
     })

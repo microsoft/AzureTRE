@@ -105,13 +105,13 @@ def sample_airlock_review_config() -> dict:
     return {
         "airlock_review_config": {
             "import": {
-                "workspace_id": IMPORT_WORKSPACE_ID,
-                "workspace_service_id": WORKSPACE_SERVICE_ID,
-                "user_resource_template_name": "tre-service-guacamole-import-reviewvm"
+                "import_vm_workspace_id": IMPORT_WORKSPACE_ID,
+                "import_vm_workspace_service_id": WORKSPACE_SERVICE_ID,
+                "import_vm_user_resource_template_name": "tre-service-guacamole-import-reviewvm"
             },
             "export": {
-                "workspace_service_id": WORKSPACE_SERVICE_ID,
-                "user_resource_template_name": "tre-service-guacamole-export-reviewvm"
+                "export_vm_workspace_service_id": WORKSPACE_SERVICE_ID,
+                "export_vm_user_resource_template_name": "tre-service-guacamole-export-reviewvm"
             }
         }
     }

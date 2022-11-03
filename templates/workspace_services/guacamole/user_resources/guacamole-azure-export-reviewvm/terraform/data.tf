@@ -30,6 +30,6 @@ data "azurerm_linux_web_app" "guacamole" {
 }
 
 data "azurerm_private_endpoint_connection" "airlock_export_inprogress_pe" {
-  name                = "pe-sa-ip-export-blob-${local.short_workspace_id}"
+  name                = "pe-sa-export-ip-blob-${local.short_workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
