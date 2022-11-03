@@ -118,6 +118,7 @@ resource "azurerm_monitor_action_group" "failure_anomalies" {
   name                = "${azurerm_application_insights.workspace.name}-failure-anomalies-action-group"
   resource_group_name = var.resource_group_name
   short_name          = "Failures"
+  tags                = var.tre_workspace_tags
 }
 
 # We don't really need this, but if not present the RG will not be empty and won't be destroyed
@@ -129,6 +130,7 @@ resource "azurerm_monitor_smart_detector_alert_rule" "failure_anomalies" {
   scope_resource_ids  = [azurerm_application_insights.workspace.id]
   frequency           = "PT1M"
   detector_type       = "FailureAnomaliesDetector"
+  tags                = var.tre_workspace_tags
 
   action_group {
     ids = [azurerm_monitor_action_group.failure_anomalies.id]

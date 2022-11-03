@@ -136,7 +136,7 @@ resource "azurerm_storage_account_network_rules" "sa_export_inprogress_rules" {
 
 
 resource "azurerm_private_endpoint" "export_inprogress_pe" {
-  name                = "pe-sa-ip-export-blob-${var.short_workspace_id}"
+  name                = "pe-sa-export-ip-blob-${var.short_workspace_id}"
   location            = var.location
   resource_group_name = var.ws_resource_group_name
   subnet_id           = var.services_subnet_id
