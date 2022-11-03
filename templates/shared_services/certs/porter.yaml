@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-certs
-version: 0.2.0
+version: 0.2.1
 description: "An Azure TRE shared service to generate certificates for a specified internal domain using Letsencrypt"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -39,6 +39,9 @@ parameters:
   - name: cert_name
     type: string
     description: "What to call the certificate exported to KeyVault (alphanumeric and '-' only)"
+  - name: id
+    type: string
+    description: "Resource ID"
 
 mixins:
   - exec
@@ -58,6 +61,7 @@ install:
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         domain_prefix: "{{ bundle.parameters.domain_prefix }}"
         cert_name: "{{ bundle.parameters.cert_name }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -108,6 +112,7 @@ uninstall:
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         domain_prefix: "{{ bundle.parameters.domain_prefix }}"
         cert_name: "{{ bundle.parameters.cert_name }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -124,6 +129,7 @@ renew:
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-shared-service-certs"
+        tre_resource_id: "{{ bundle.parameters.id }}"
       outputs:
         - name: fqdn
         - name: application_gateway_name
