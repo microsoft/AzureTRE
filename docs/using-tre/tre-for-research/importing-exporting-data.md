@@ -41,7 +41,7 @@ To bring in external data to a secure TRE workspace so you can use it for your r
     - With the Azure CLI, you can run `az storage blob upload -f /path/to/file --blob-url SAS_URL`. [More info](https://learn.microsoft.com/en-us/cli/azure/storage/blob?view=azure-cli-latest#az-storage-blob-upload)
 
 !!! warning
-    Airlock only supports single files per request. If you need to import multiple files, please zip them before uploading to the request's storage container.
+    Airlock only supports a single file per request. If you need to import multiple files, please zip them before uploading to the request's storage container.
 
 4. Once you've uploaded your data, head back to the TRE UI and click *Submit* on your draft request. This will submit your request for approval.
 
@@ -81,7 +81,7 @@ Exporting data from a secure TRE workspace to the outside world involves similar
 
 4. Once the draft request pop-out opens, click *Generate* in the **Files** section to generate a Storage SAS URL to use for uploading your data.
 
-5. You now need to head into your Workspace VM/resource containing the data you wish to export, and paste in the SAS URL you've just generated. Use your preferred storage tool to upload the data to the request container. See Step 2 in the [Importing data](#importing-data-to-a-workspace) section for more details on examples of these tools
+5. You now need to head into your Workspace VM/resource containing the data you wish to export, and paste in the SAS URL you've just generated. Use your preferred storage tool to upload the data to the request container. See Step 2 in the [Importing data](#importing-data-to-a-workspace) section for more details on using these tools
 
 6. Once you've uploaded your data, head back to the TRE UI in your host and click *Submit* on your draft request. This will submit your request for approval.
 
