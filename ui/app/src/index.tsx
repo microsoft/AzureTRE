@@ -11,7 +11,7 @@ import { store } from './store/store';
 
 // Inject some global styles
 mergeStyles({
-  ':global(body,html,#root)': {
+  ':global(body,html)': {
     margin: 0,
     padding: 0,
     height: '100vh',
