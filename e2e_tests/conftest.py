@@ -33,7 +33,6 @@ def verify(pytestconfig):
 
 async def create_test_workspace(auth_type: str, verify: bool, client_id: str = "", client_secret: str = "") -> Tuple[str, str]:
     LOGGER.info("Creating workspace")
-    # TODO: is there an enum?
     if auth_type == "Automatic":
         payload = {
             "templateName": resource_strings.BASE_WORKSPACE,
