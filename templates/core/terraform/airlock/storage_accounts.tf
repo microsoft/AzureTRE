@@ -5,7 +5,15 @@ resource "azurerm_storage_account" "sa_import_external" {
   resource_group_name      = var.resource_group_name
   account_tier             = "Standard"
   account_replication_type = "LRS"
-
+  blob_properties {
+    cors_rule {
+      allowed_headers    = ["*"]
+      allowed_methods    = ["DELETE", "GET", "HEAD", "MERGE", "POST", "OPTIONS", "PUT"]
+      allowed_origins    = ["*"]
+      exposed_headers    = ["*"]
+      max_age_in_seconds = 86400
+    }
+  }
   # Don't allow anonymous access (unrelated to the 'public' networking rules)
   allow_nested_items_to_be_public = false
 
