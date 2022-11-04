@@ -1,4 +1,5 @@
 import pytest
+import asyncio
 from typing import Tuple
 import config
 import logging
@@ -17,7 +18,12 @@ def pytest_addoption(parser):
     parser.addoption("--verify", action="store", default="true")
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
+def event_loop():
+    return asyncio.get_event_loop()
+
+
+@pytest.fixture(scope="session")
 def verify(pytestconfig):
     if pytestconfig.getoption("verify").lower() == "true":
         return True
@@ -32,8 +38,8 @@ async def create_test_workspace(auth_type: str, verify: bool, client_id: str = "
         payload = {
             "templateName": resource_strings.BASE_WORKSPACE,
             "properties": {
-                "display_name": "E2E test airlock flow",
-                "description": "workspace for E2E airlock flow",
+                "display_name": "E2E test workspace",
+                "description": "workspace for E2E tests",
                 "address_space_size": "small",
                 "auth_type": "Automatic"
             }
@@ -42,8 +48,8 @@ async def create_test_workspace(auth_type: str, verify: bool, client_id: str = "
         payload = {
             "templateName": resource_strings.BASE_WORKSPACE,
             "properties": {
-                "display_name": "E2E test airlock flow",
-                "description": "workspace for E2E airlock flow",
+                "display_name": "E2E test workspace",
+                "description": "workspace for E2E tests",
                 "address_space_size": "small",
                 "auth_type": "Manual",
                 "client_id": client_id,
@@ -60,8 +66,8 @@ async def create_test_workspace(auth_type: str, verify: bool, client_id: str = "
     return workspace_path, workspace_id
 
 
-@pytest.fixture
-async def setup_test_workspace(verify, scope="session") -> Tuple[str, str, str]:
+@pytest.fixture(scope="session")
+async def setup_test_workspace(verify) -> Tuple[str, str, str]:
     # Set up
     if config.TEST_WORKSPACE_ID == "":
         workspace_path, workspace_id = await create_test_workspace(
@@ -74,15 +80,15 @@ async def setup_test_workspace(verify, scope="session") -> Tuple[str, str, str]:
     workspace_owner_token, _ = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
     yield workspace_path, workspace_id, workspace_owner_token
 
-    # Tear-down
-    if config.TEST_WORKSPACE_ID == "":
-        LOGGER.info("Deleting workspace")
-        admin_token = await get_admin_token(verify=verify)
-        await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
+    # # Tear-down
+    # if config.TEST_WORKSPACE_ID == "":
+    #     LOGGER.info("Deleting workspace")
+    #     admin_token = await get_admin_token(verify=verify)
+    #     await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
 
 
-@pytest.fixture
-async def setup_test_aad_workspace(verify, scope="session") -> Tuple[str, str, str]:
+@pytest.fixture(scope="session")
+async def setup_test_aad_workspace(verify) -> Tuple[str, str, str]:
     workspace_path, workspace_id = await create_test_workspace(auth_type="Automatic", client_id="auto_create", client_secret="", verify=verify)
     admin_token = await get_admin_token(verify=verify)
     workspace_owner_token, _ = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
@@ -90,5 +96,5 @@ async def setup_test_aad_workspace(verify, scope="session") -> Tuple[str, str, s
     yield workspace_path, workspace_id, workspace_owner_token
 
     # Tear-down
-    LOGGER.info("Deleting workspace")
-    await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
+    # LOGGER.info("Deleting workspace")
+    # await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)

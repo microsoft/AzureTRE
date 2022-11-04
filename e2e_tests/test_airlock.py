@@ -20,7 +20,7 @@ BLOB_NAME = os.path.basename(BLOB_FILE_PATH)
 @pytest.mark.extended
 @pytest.mark.timeout(35 * 60)
 async def test_airlock_flow(verify, setup_test_workspace) -> None:
-    workspace_id, workspace_path, workspace_owner_token = setup_test_workspace
+    workspace_path, workspace_id, workspace_owner_token = setup_test_workspace
 
     # 2. create airlock request
     LOGGER.info("Creating airlock import request")
