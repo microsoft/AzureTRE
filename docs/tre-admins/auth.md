@@ -24,7 +24,7 @@ make auth
 ```
 This will create five identities, and if successful will write a new file; `/devops/auth.env`. If you are building locally, these values will be used when building your TRE. If you are setting this up for CI/CD, then these values will be needed by your Build Orchestrator.
 
-The contents of your `/devops/auth.env` file should contain : -
+The contents of your `/devops/auth.env` file should contain :
 
   | Variable | Description |
   | -------- | ----------- |

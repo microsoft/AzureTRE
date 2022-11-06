@@ -35,15 +35,23 @@ export const awaitingStates = [
   "awaiting_action"
 ]
 
-export const completedStates = [
+export const successStates = [
   "deployed",
-  "deleted",
   "updated",
-  "failed",
+  "deleted",
+  "action_succeeded"
+]
+
+export const failedStates = [
+  "deployment_failed",
   "deleting_failed",
   "updating_failed",
-  "action_succeeded",
-  "action_failed"
+  "action_failed",
+]
+
+export const completedStates = [
+  ...failedStates,
+  ...successStates
 ]
 
 export const inProgressStates = [
@@ -55,19 +63,7 @@ export const inProgressStates = [
   "pipeline_running"
 ]
 
-export const failedStates = [
-  "deployment_failed",
-  "deleting_failed",
-  "updating_failed",
-  "action_failed",
-]
 
-export const successStates = [
-  "deployed",
-  "updated",
-  "deleted",
-  "action_succeeded"
-]
 
 export const actionsDisabledStates = [
   ...inProgressStates,
