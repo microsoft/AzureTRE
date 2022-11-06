@@ -26,6 +26,8 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Show the correct createdBy value for airlock requests in UI and in API queries ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
+* handle unsupported azure subscriptions in cost reporting ([#2823](https://github.com/microsoft/AzureTRE/pull/2823))
+
 
 COMPONENTS:
 
