@@ -103,6 +103,7 @@ nav:
           - Guacamole Linux VM: tre-templates/user-resources/guacamole-linux-vm.md
 
   - Technical Guide: # All Technical Documentation (Admin, Development)
+
       - Administration: # Docs related to the deployment and operation of AzureTRE infrastructure
           - Starting and Stopping Azure TRE Services: tre-admins/start-stop.md
           - Environment Variables: tre-admins/environment-variables.md
@@ -140,6 +141,8 @@ nav:
               - Pipeline Templates:
                   - Overview: tre-templates/pipeline-templates/overview.md
                   - Pipeline Schema: tre-templates/pipeline-templates/pipeline-schema.md
+
+      - AzureTRE CLI: tre-developers/CLI.md
 
       - Troubleshooting FAQ: # General Troubleshooting Section for Development
           - troubleshooting-faq/index.md
