@@ -29,7 +29,7 @@ locals {
     "privatelink.purview.azure.com",
     "privatelink.purviewstudio.azure.com",
     "privatelink.sql.azuresynapse.net",
-    "dev.azuresynapse.net",
+    "privatelink.dev.azuresynapse.net",
     "privatelink.azuresynapse.net",
     "privatelink.dfs.core.windows.net",
     "privatelink.azurehealthcareapis.com",
