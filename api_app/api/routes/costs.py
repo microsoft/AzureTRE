@@ -15,7 +15,7 @@ from db.repositories.workspaces import WorkspaceRepository
 from models.domain.costs import CostReport, GranularityEnum, WorkspaceCostReport
 from resources import strings
 from services.authentication import get_current_admin_user, get_current_workspace_owner_or_tre_admin
-from services.cost_service import CostService, WorkspaceDoesNotExist
+from services.cost_service import CostService, SubscriptionNotSupported, WorkspaceDoesNotExist
 
 costs_core_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 costs_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_tre_admin)])
@@ -57,8 +57,11 @@ async def costs(
         shared_services_repo=Depends(get_repository(SharedServiceRepository))) -> CostReport:
 
     validate_report_period(params.from_date, params.to_date)
-    return cost_service.query_tre_costs(
-        config.TRE_ID, params.granularity, params.from_date, params.to_date, workspace_repo, shared_services_repo)
+    try:
+        return cost_service.query_tre_costs(
+            config.TRE_ID, params.granularity, params.from_date, params.to_date, workspace_repo, shared_services_repo)
+    except SubscriptionNotSupported:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.API_GET_COSTS_SUBSCRIPTION_NOT_SUPPORTED)
 
 
 @costs_workspace_router.get("/workspaces/{workspace_id}/costs", response_model=WorkspaceCostReport,
@@ -78,3 +81,5 @@ async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depend
             workspace_repo, workspace_services_repo, user_resource_repo)
     except WorkspaceDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_DOES_NOT_EXIST)
+    except SubscriptionNotSupported:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.API_GET_COSTS_SUBSCRIPTION_NOT_SUPPORTED)
