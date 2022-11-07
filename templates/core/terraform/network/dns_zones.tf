@@ -365,7 +365,7 @@ resource "azurerm_private_dns_zone" "hds" {
 
 resource "azurerm_private_dns_zone_virtual_network_link" "hds" {
   name                  = "hdslink"
-   resource_group_name   = var.resource_group_name
+  resource_group_name   = var.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.hds.name
   virtual_network_id    = azurerm_virtual_network.core.id
   tags                  = local.tre_core_tags
@@ -383,7 +383,7 @@ resource "azurerm_private_dns_zone" "hds_dicom" {
 
 resource "azurerm_private_dns_zone_virtual_network_link" "hds_dicom" {
   name                  = "hdsdicomlink"
-   resource_group_name   = var.resource_group_name
+  resource_group_name   = var.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.hds_dicom.name
   virtual_network_id    = azurerm_virtual_network.core.id
   tags                  = local.tre_core_tags
