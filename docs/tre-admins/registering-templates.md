@@ -29,7 +29,7 @@ Porter bundles can also be registered interactively using the Swagger UI. For th
 1. Use the utility script to generate the payload. The script needs to be executed from within the bundle directory, for example `/templates/workspaces/base/`
 
    ```cmd
-   ../../../devops/scripts/register_bundle_with_api.sh -r <acr_name> -i -t workspace
+   ../../../devops/scripts/register_bundle_with_api.sh -r <acr_name> -t workspace --dry-run
    ```
 
    Copy the resulting JSON payload.
@@ -50,16 +50,13 @@ To use the script to automatically register the template, you must create a user
 The script needs to be executed from within the bundle directory, for example `/templates/workspaces/base/`
 
 ```cmd
-Usage: ../../../devops/scripts/register_bundle_with_api.sh [-u --tre_url]  [-c --current] [-i --insecure]
+Usage: ../../../devops/scripts/register_bundle_with_api.sh  [-c --current]
 
 Options:
    -r, --acr-name                Azure Container Registry Name
    -t, --bundle-type             Bundle type: workspace, workspace_service, user_resource or shared_service
    -w, --workspace-service-name  The template name of the user resource (if registering a user_resource)
    -c, --current                 Make this the currently deployed version of this template
-   -i, --insecure                Bypass SSL certificate checks
-   -u, --tre_url                 URL for the TRE (required for automatic registration)
-   -a, --access-token            Azure access token to automatically post to the API (required for automatic registration)
    -v, --verify                  Verify registration with the API
 ```
 

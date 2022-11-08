@@ -33,7 +33,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 
     try:
         logging.debug(f"Saving airlock request item: {airlock_request.id}")
-        airlock_request.user = user
+        airlock_request.updatedBy = user
         airlock_request.updatedWhen = get_timestamp()
         airlock_request_repo.save_item(airlock_request)
     except Exception as e:
@@ -43,7 +43,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
     try:
         logging.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
         await send_status_changed_event(airlock_request=airlock_request, previous_status=None)
-        await send_airlock_notification_event(airlock_request, role_assignment_details)
+        await send_airlock_notification_event(airlock_request, workspace, role_assignment_details)
     except Exception as e:
         airlock_request_repo.delete_item(airlock_request.id)
         logging.error(f"Failed sending status_changed message: {e}")
@@ -53,7 +53,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 async def update_and_publish_event_airlock_request(
         airlock_request: AirlockRequest,
         airlock_request_repo: AirlockRequestRepository,
-        user: User,
+        updated_by: User,
         workspace: Workspace,
         new_status: AirlockRequestStatus = None,
         request_files: List[AirlockFile] = None,
@@ -64,7 +64,7 @@ async def update_and_publish_event_airlock_request(
         logging.debug(f"Updating airlock request item: {airlock_request.id}")
         updated_airlock_request = airlock_request_repo.update_airlock_request(
             original_request=airlock_request,
-            user=user,
+            updated_by=updated_by,
             new_status=new_status,
             request_files=request_files,
             status_message=status_message,
@@ -86,7 +86,7 @@ async def update_and_publish_event_airlock_request(
         await send_status_changed_event(airlock_request=updated_airlock_request, previous_status=airlock_request.status)
         access_service = get_access_service()
         role_assignment_details = access_service.get_workspace_role_assignment_details(workspace)
-        await send_airlock_notification_event(updated_airlock_request, role_assignment_details)
+        await send_airlock_notification_event(updated_airlock_request, workspace, role_assignment_details)
         return updated_airlock_request
     except Exception as e:
         logging.error(f"Failed sending status_changed message: {e}")
@@ -109,7 +109,7 @@ def check_email_exists(role_assignment_details: defaultdict(list)):
 def get_airlock_requests_by_user_and_workspace(user: User, workspace: Workspace, airlock_request_repo: AirlockRequestRepository,
                                                creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None,
                                                order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
-    return airlock_request_repo.get_airlock_requests(workspace_id=workspace.id, user_id=creator_user_id, type=type, status=status,
+    return airlock_request_repo.get_airlock_requests(workspace_id=workspace.id, creator_user_id=creator_user_id, type=type, status=status,
                                                      order_by=order_by, order_ascending=order_ascending)
 
 
@@ -136,7 +136,7 @@ def enrich_requests_with_allowed_actions(requests: List[AirlockRequest], user: U
     enriched_requests = []
     for request in requests:
         allowed_actions = get_allowed_actions(request, user, airlock_request_repo)
-        enriched_requests.append(AirlockRequestWithAllowedUserActions(airlockRequest=request, allowed_user_actions=allowed_actions))
+        enriched_requests.append(AirlockRequestWithAllowedUserActions(airlockRequest=request, allowedUserActions=allowed_actions))
     return enriched_requests
 
 

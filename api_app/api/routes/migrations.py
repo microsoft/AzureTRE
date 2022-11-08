@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from db.migrations.airlock import AirlockMigration
 from db.migrations.resources import ResourceMigration
 from db.repositories.operations import OperationRepository
 from services.authentication import get_current_admin_user
@@ -24,7 +25,8 @@ async def migrate_database(resources_repo=Depends(get_repository(ResourceReposit
                            operations_repo=Depends(get_repository(OperationRepository)),
                            shared_services_migration=Depends(get_repository(SharedServiceMigration)),
                            workspace_migration=Depends(get_repository(WorkspaceMigration)),
-                           resource_migration=Depends(get_repository(ResourceMigration))):
+                           resource_migration=Depends(get_repository(ResourceMigration)),
+                           airlock_migration=Depends(get_repository(AirlockMigration))):
     try:
         migrations = list()
         logging.info("PR 1030")
@@ -54,6 +56,14 @@ async def migrate_database(resources_repo=Depends(get_repository(ResourceReposit
         logging.info("PR 2371 - Validate min firewall version")
         shared_services_migration.checkMinFirewallVersion()
         migrations.append(Migration(issueNumber="2371", status='Firewall version meets requirement'))
+
+        logging.info("PR 2779 - Restructure Airlock requests & add createdBy field")
+        airlock_migration.rename_field_name('requestType', 'type')
+        airlock_migration.rename_field_name('requestTitle', 'title')
+        airlock_migration.rename_field_name('user', 'updatedBy')
+        airlock_migration.rename_field_name('creationTime', 'createdWhen')
+        num_updated = airlock_migration.add_created_by_and_rename_in_history()
+        migrations.append(Migration(issueNumber="2779", status=f'Renamed fields & updated {num_updated} airlock requests with createdBy'))
 
         return MigrationOutList(migrations=migrations)
     except Exception as e:

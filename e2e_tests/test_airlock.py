@@ -39,6 +39,7 @@ async def test_airlock_flow(verify) -> None:
                 "display_name": "E2E test airlock flow",
                 "description": "workspace for E2E airlock flow",
                 "address_space_size": "small",
+                "auth_type": "Manual",
                 "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
                 "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}",
             }
@@ -53,13 +54,13 @@ async def test_airlock_flow(verify) -> None:
     # 2. create airlock request
     LOGGER.info("Creating airlock import request")
     payload = {
-        "requestType": airlock_strings.IMPORT,
+        "type": airlock_strings.IMPORT,
         "businessJustification": "some business justification"
     }
 
     request_result = await post_request(payload, f'/api{workspace_path}/requests', workspace_owner_token, verify, 201)
 
-    assert request_result["airlockRequest"]["requestType"] == airlock_strings.IMPORT
+    assert request_result["airlockRequest"]["type"] == airlock_strings.IMPORT
     assert request_result["airlockRequest"]["businessJustification"] == "some business justification"
     assert request_result["airlockRequest"]["status"] == airlock_strings.DRAFT_STATUS
 
@@ -134,13 +135,13 @@ async def test_airlock_flow(verify) -> None:
     LOGGER.info("Creating airlock export request")
     justification = "another business justification"
     payload = {
-        "requestType": airlock_strings.EXPORT,
+        "type": airlock_strings.EXPORT,
         "businessJustification": justification
     }
 
     request_result = await post_request(payload, f'/api{workspace_path}/requests', workspace_owner_token, verify, 201)
 
-    assert request_result["airlockRequest"]["requestType"] == airlock_strings.EXPORT
+    assert request_result["airlockRequest"]["type"] == airlock_strings.EXPORT
     assert request_result["airlockRequest"]["businessJustification"] == justification
     assert request_result["airlockRequest"]["status"] == airlock_strings.DRAFT_STATUS
 

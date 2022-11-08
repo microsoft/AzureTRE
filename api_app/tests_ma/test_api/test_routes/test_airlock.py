@@ -29,7 +29,7 @@ AIRLOCK_REVIEW_ID = "11bd2526-054b-4305-a7f9-63a2d6d2a80c"
 @pytest.fixture
 def sample_airlock_request_input_data():
     return {
-        "requestType": "import",
+        "type": "import",
         "businessJustification": "some business justification"
     }
 
@@ -45,7 +45,7 @@ def sample_airlock_review_input_data():
 @pytest.fixture
 def sample_airlock_review_with_user_resources():
     return {
-        "requestType": "import",
+        "type": "import",
         "businessJustification": "some business justification",
         "reviewUserResources": [
             {
@@ -61,9 +61,9 @@ def sample_airlock_request_object(status=AirlockRequestStatus.Draft, airlock_req
     airlock_request = AirlockRequest(
         id=airlock_request_id,
         workspaceId=workspace_id,
-        requestTitle="test title",
+        title="test title",
         businessJustification="test business justification",
-        requestType="import",
+        type="import",
         status=status,
         reviews=[sample_airlock_review_object()] if reviews else None,
         reviewUserResources=[sample_airlock_user_resource_object()] if review_user_resource else []
@@ -105,13 +105,13 @@ def sample_airlock_review_config() -> dict:
     return {
         "airlock_review_config": {
             "import": {
-                "workspace_id": IMPORT_WORKSPACE_ID,
-                "workspace_service_id": WORKSPACE_SERVICE_ID,
-                "user_resource_template_name": "tre-service-guacamole-import-reviewvm"
+                "import_vm_workspace_id": IMPORT_WORKSPACE_ID,
+                "import_vm_workspace_service_id": WORKSPACE_SERVICE_ID,
+                "import_vm_user_resource_template_name": "tre-service-guacamole-import-reviewvm"
             },
             "export": {
-                "workspace_service_id": WORKSPACE_SERVICE_ID,
-                "user_resource_template_name": "tre-service-guacamole-export-reviewvm"
+                "export_vm_workspace_service_id": WORKSPACE_SERVICE_ID,
+                "export_vm_user_resource_template_name": "tre-service-guacamole-export-reviewvm"
             }
         }
     }
