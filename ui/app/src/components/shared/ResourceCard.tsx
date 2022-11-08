@@ -70,11 +70,12 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   if (
     latestUpdate.componentAction !== ComponentAction.Lock &&
     props.resource.azureStatus?.powerState &&
-    successStates.includes(resourceStatus)
+    successStates.includes(resourceStatus) &&
+    props.resource.isEnabled
   ) {
     headerBadge = <PowerStateBadge state={props.resource.azureStatus.powerState} />
   } else {
-    headerBadge = <StatusBadge resourceId={props.resource.id} status={resourceStatus} />
+    headerBadge = <StatusBadge resource={props.resource} status={resourceStatus} />
   }
 
   return (
@@ -113,7 +114,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                     onClick={(e) => {
                       // Stop onClick triggering parent handler
                       e.stopPropagation();
-                      setShowInfo(!showInfo)
+                      setShowInfo(!showInfo);
                     }}
                   />
                 </Stack.Item>
@@ -151,16 +152,20 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
           setInitialFocus
         >
           <Text block variant="xLarge" className={styles.title} id={`item-${props.itemId}-label`}>
-            {props.resource.templateName} - ({props.resource.templateVersion})
+            {props.resource.templateName} ({props.resource.templateVersion})
           </Text>
           <Text block variant="small" id={`item-${props.itemId}-description`}>
             <Stack>
               <Stack.Item>
-                <Stack horizontal tokens={{ childrenGap: 5 }}>
+                <Stack horizontal tokens={{childrenGap: 5}}>
+                  <Stack.Item style={calloutKeyStyles}>Resource Id:</Stack.Item>
+                  <Stack.Item style={calloutValueStyles}>{props.resource.id}</Stack.Item>
+                </Stack>
+                <Stack horizontal tokens={{childrenGap: 5}}>
                   <Stack.Item style={calloutKeyStyles}>Last Modified By:</Stack.Item>
                   <Stack.Item style={calloutValueStyles}>{props.resource.user.name}</Stack.Item>
                 </Stack>
-                <Stack horizontal tokens={{ childrenGap: 5 }}>
+                <Stack horizontal tokens={{childrenGap: 5}}>
                   <Stack.Item style={calloutKeyStyles}>Last Updated:</Stack.Item>
                   <Stack.Item style={calloutValueStyles}>{moment.unix(props.resource.updatedWhen).toDate().toDateString()}</Stack.Item>
                 </Stack>
@@ -182,7 +187,7 @@ const cardStyles: IStackStyles = {
     padding: 10,
     "&:hover": {
       transition: 'all .2s ease-in-out',
-      transform: 'scale(1.03)',
+      transform: 'scale(1.02)',
       cursor: 'pointer'
     }
   }

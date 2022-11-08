@@ -189,7 +189,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
   switch (reviewResourceStatus) {
     case 'creating':
       statusBadge = <StatusBadge
-        resourceId={reviewResource.id}
+        resource={reviewResource}
         status={latestUpdate.operation?.status}
       />;
       break;
