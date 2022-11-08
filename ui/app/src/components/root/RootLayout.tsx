@@ -16,6 +16,7 @@ import { APIError } from '../../models/exceptions';
 import { ExceptionLayout } from '../shared/ExceptionLayout';
 import { AppRolesContext } from '../../contexts/AppRolesContext';
 import { CostsContext } from '../../contexts/CostsContext';
+import config from "../../config.json";
 
 export const RootLayout: React.FunctionComponent = () => {
   const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
@@ -59,9 +60,16 @@ export const RootLayout: React.FunctionComponent = () => {
         setLoadingCostState(LoadingState.Ok);
       }
       catch (e:any) {
-        e.userMessage = 'Error retrieving costs';
+        if (e instanceof APIError && e.status === 404) {
+          config.debug && console.warn(e.message);
+          setLoadingCostState(LoadingState.NotSupported);
+        }
+        else {
+          e.userMessage = 'Error retrieving costs';
+          setLoadingCostState(LoadingState.Error);
+        }
+
         setCostApiError(e);
-        setLoadingCostState(LoadingState.Error);
       }
     };
 
