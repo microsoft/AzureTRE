@@ -5,9 +5,10 @@ from models.domain.shared_service import SharedService, ResourceType
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
-from services.cost_service import CostService
+from services.cost_service import CostService, SubscriptionNotSupported
 from datetime import date, datetime, timedelta
 from azure.mgmt.costmanagement.models import QueryResult, TimeframeType, QueryDefinition, QueryColumn
+from azure.core.exceptions import ResourceNotFoundError
 
 
 @patch('db.repositories.workspaces.WorkspaceRepository')
@@ -185,6 +186,33 @@ def test_query_tre_costs_with_granularity_none_and_missing_costs_data_returns_em
     assert len(cost_report.workspaces) == 2
     assert len(cost_report.workspaces[0].costs) == 0
     assert len(cost_report.workspaces[1].costs) == 0
+
+
+@patch('db.repositories.workspaces.WorkspaceRepository')
+@patch('db.repositories.shared_services.SharedServiceRepository')
+@patch('services.cost_service.CostManagementClient')
+@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+def test_query_tre_costs_for_unsupported_subscription_raises_subscription_not_supported_exception(get_resource_groups_by_tag_mock,
+                                                                                                  client_mock,
+                                                                                                  shared_service_repo_mock,
+                                                                                                  workspace_repo_mock):
+
+    client_mock.return_value.query.usage.side_effect = ResourceNotFoundError({
+        "error": {
+            "code": "NotFound",
+            "message": "Given subscription xxx doesn't have valid WebDirect/AIRS offer type. (Request ID: 12daa3b6-8a53-4759-97ba-511ece1ac95b)"
+        }
+    })
+
+    __set_shared_service_repo_mock_return_value(shared_service_repo_mock)
+    __set_workspace_repo_mock_get_active_workspaces_return_value(workspace_repo_mock)
+    __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
+
+    cost_service = CostService()
+
+    with pytest.raises(SubscriptionNotSupported):
+        cost_service.query_tre_costs(
+            "guy22", GranularityEnum.none, datetime.now(), datetime.now(), workspace_repo_mock, shared_service_repo_mock)
 
 
 @patch('db.repositories.workspaces.WorkspaceRepository')
