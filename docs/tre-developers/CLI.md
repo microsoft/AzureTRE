@@ -2,6 +2,8 @@
 
 **WARNING - this CLI is currently experimental**
 
+This guide will cover various components of AzureTRE CLI such as installation, login, general command structure and other components that enable operating the CLI.
+
 ## Installation
 
 Currently, installation has only been tested within the dev container. In this context, `make install-cli` should work
