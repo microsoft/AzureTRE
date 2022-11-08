@@ -31,7 +31,10 @@ def verify(pytestconfig):
         return False
 
 
-async def create_test_workspace(auth_type: str, verify: bool, client_id: str = "", client_secret: str = "") -> Tuple[str, str]:
+async def create_or_get_test_workspace(auth_type: str, verify: bool, pre_created_workspace_id: str = "", client_id: str = "", client_secret: str = "") -> Tuple[str, str]:
+    if pre_created_workspace_id != "":
+        return f"/workspaces/{pre_created_workspace_id}", pre_created_workspace_id
+
     LOGGER.info("Creating workspace")
     if auth_type == "Automatic":
         payload = {
@@ -65,43 +68,38 @@ async def create_test_workspace(auth_type: str, verify: bool, client_id: str = "
     return workspace_path, workspace_id
 
 
+async def clean_up_test_workspace(pre_created_workspace_id: str, workspace_path: str, verify: bool):
+    # Only delete the workspace if it wasn't pre-created
+    if pre_created_workspace_id == "":
+        LOGGER.info("Deleting workspace")
+        admin_token = await get_admin_token(verify=verify)
+        await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
+
+
 @pytest.fixture(scope="session")
 async def setup_test_workspace(verify) -> Tuple[str, str, str]:
+    pre_created_workspace_id = config.TEST_WORKSPACE_ID
     # Set up
-    if config.TEST_WORKSPACE_ID == "":
-        workspace_path, workspace_id = await create_test_workspace(
-            auth_type="Manual", client_id=config.TEST_WORKSPACE_APP_ID, client_secret=config.TEST_WORKSPACE_APP_SECRET, verify=verify)
-    else:
-        workspace_id = config.TEST_WORKSPACE_ID
-        workspace_path = f"/workspaces/{workspace_id}"
+    workspace_path, workspace_id = await create_or_get_test_workspace(
+        auth_type="Manual", verify=verify, pre_created_workspace_id=pre_created_workspace_id, client_id=config.TEST_WORKSPACE_APP_ID, client_secret=config.TEST_WORKSPACE_APP_SECRET)
 
     admin_token = await get_admin_token(verify=verify)
     workspace_owner_token, _ = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
     yield workspace_path, workspace_id, workspace_owner_token
 
     # Tear-down
-    if config.TEST_WORKSPACE_ID == "":
-        LOGGER.info("Deleting workspace")
-        admin_token = await get_admin_token(verify=verify)
-        await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
+    clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
 
 
 @pytest.fixture(scope="session")
 async def setup_test_aad_workspace(verify) -> Tuple[str, str, str]:
+    pre_created_workspace_id = config.TEST_WORKSPACE_AAD_ID
     # Set up
-    if config.TEST_WORKSPACE_AAD_ID == "":
-        workspace_path, workspace_id = await create_test_workspace(auth_type="Automatic", verify=verify)
-    else:
-        workspace_id = config.TEST_WORKSPACE_AAD_ID
-        workspace_path = f"/workspaces/{workspace_id}"
+    workspace_path, workspace_id = await create_or_get_test_workspace(auth_type="Automatic", verify=verify, pre_created_workspace_id=pre_created_workspace_id)
 
     admin_token = await get_admin_token(verify=verify)
     workspace_owner_token, _ = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
-
     yield workspace_path, workspace_id, workspace_owner_token
 
     # Tear-down
-    if config.TEST_WORKSPACE_AAD_ID == "":
-        LOGGER.info("Deleting workspace")
-        admin_token = await get_admin_token(verify=verify)
-        await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
+    clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
