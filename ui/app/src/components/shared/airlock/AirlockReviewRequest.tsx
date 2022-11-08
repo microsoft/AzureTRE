@@ -16,7 +16,6 @@ import { useAppDispatch } from "../../../hooks/customReduxHooks";
 import { addUpdateOperation } from "../notifications/operationsSlice";
 import { StatusBadge } from "../StatusBadge";
 import vmImage from "../../../assets/virtual_machine.svg";
-import warningImage from "../../../assets/warning.svg";
 
 interface AirlockReviewRequestProps {
   request: AirlockRequest | undefined,
