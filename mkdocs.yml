@@ -76,6 +76,7 @@ nav:
       - Using AzureTRE for Research:
           - Introduction: using-tre/tre-for-research/index.md
           - Set up of a Virtual Machine: using-tre/tre-for-research/using-vms.md
+          - Importing/exporting data with Airlock: using-tre/tre-for-research/importing-exporting-data-airlock.md
       # - Workspaces:
       #    - using-tre/wks/index.md # Documentation describing what a workspace is
       #    - Using Workspaces: using-tre/wks/using-wks.md # Interacting with workspaces (via the UI)

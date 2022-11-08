@@ -1,8 +1,11 @@
 
-# Importing and exporting data
+# Importing and exporting data with Airlock
 
 This guide will take you through the process of importing data into a TRE workspace, and exporting data from a workspace to the outside world, using the Airlock feature.
-This feature ensures that when you import or export data, all the appropriate approvals and procedures configured by your organisation take place.
+
+The Airlock feature is intended for ad-hoc use when you need to bring in and export out files that you need for your research, and it ensures that when you import or export this data, all the appropriate approvals and procedures configured by your organisation take place.
+
+You can read more about the Airock feature in the [Airlock documentation](../../azure-tre-overview/airlock.md).
 
 ## Importing data to a workspace
 

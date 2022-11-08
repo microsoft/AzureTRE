@@ -2,10 +2,12 @@ from datetime import datetime, date
 from enum import Enum
 from typing import Dict, Optional
 import pandas as pd
+import logging
 
 from azure.mgmt.costmanagement import CostManagementClient
 from azure.mgmt.costmanagement.models import QueryGrouping, QueryAggregation, QueryDataset, QueryDefinition, \
     TimeframeType, ExportType, QueryTimePeriod, QueryFilter, QueryComparisonExpression, QueryResult
+from azure.core.exceptions import ResourceNotFoundError
 
 from azure.mgmt.resource import ResourceManagementClient
 
@@ -39,6 +41,10 @@ class WorkspaceDoesNotExist(Exception):
     """Raised when the workspace is not found by provided id"""
 
 
+class SubscriptionNotSupported(Exception):
+    """Raised when subscription does not support cost management"""
+
+
 class CostService:
     scope: str
     client: CostManagementClient
@@ -52,7 +58,7 @@ class CostService:
 
     def __init__(self):
         self.scope = "/subscriptions/{}".format(config.SUBSCRIPTION_ID)
-        self.client = CostManagementClient(credential=credentials.get_credential())
+        self.client = CostManagementClient(credential=credentials.get_credential(), base_url="https://7b51abd8-dca0-4c5e-9f07-36ff74023532.mock.pstmn.io")
         self.resource_client = ResourceManagementClient(credentials.get_credential(), config.SUBSCRIPTION_ID)
 
     def query_tre_costs(self, tre_id, granularity: GranularityEnum, from_date: datetime, to_date: datetime,
@@ -225,7 +231,17 @@ class CostService:
                     resource_groups: list) -> QueryResult:
         query_definition = self.build_query_definition(granularity, from_date, to_date, tag_name, tag_value, resource_groups)
 
-        return self.client.query.usage(self.scope, query_definition)
+        try:
+            return self.client.query.usage(self.scope, query_definition)
+        except ResourceNotFoundError as e:
+            # when cost management API returns 404 with an message:
+            # Given subscription {subscription_id} doesn't have valid WebDirect/AIRS offer type.
+            # it means that the Azure subscription deosn't support cost management
+            if "doesn't have valid WebDirect/AIRS" in e.message:
+                logging.error("Subscription doesn't support cost mangement", exc_info=e)
+                raise SubscriptionNotSupported(e)
+            else:
+                raise e
 
     def build_query_definition(self, granularity: GranularityEnum, from_date: Optional[datetime],
                                to_date: Optional[datetime], tag_name: str, tag_value: str, resource_groups: list):
