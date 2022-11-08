@@ -93,7 +93,7 @@ async def setup_test_workspace(verify) -> Tuple[str, str, str]:
 
 @pytest.fixture(scope="session")
 async def setup_test_aad_workspace(verify) -> Tuple[str, str, str]:
-    pre_created_workspace_id = config.TEST_WORKSPACE_AAD_ID
+    pre_created_workspace_id = config.TEST_AAD_WORKSPACE_ID
     # Set up
     workspace_path, workspace_id = await create_or_get_test_workspace(auth_type="Automatic", verify=verify, pre_created_workspace_id=pre_created_workspace_id)
 
