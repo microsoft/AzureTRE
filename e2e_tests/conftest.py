@@ -41,7 +41,7 @@ async def create_or_get_test_workspace(auth_type: str, verify: bool, pre_created
             "templateName": resource_strings.BASE_WORKSPACE,
             "properties": {
                 "display_name": "E2E test workspace",
-                "description": "workspace for E2E tests",
+                "description": "Test workspace for E2E tests",
                 "address_space_size": "small",
                 "auth_type": "Automatic"
             }
@@ -50,15 +50,14 @@ async def create_or_get_test_workspace(auth_type: str, verify: bool, pre_created
         payload = {
             "templateName": resource_strings.BASE_WORKSPACE,
             "properties": {
-                "display_name": "E2E test workspace",
-                "description": "workspace for E2E tests",
+                "display_name": "E2E test AAD workspace",
+                "description": "Test workspace for E2E tests with AAD created automatically",
                 "address_space_size": "small",
                 "auth_type": "Manual",
                 "client_id": client_id,
                 "client_secret": client_secret
             }
         }
-    LOGGER.info(f"Payload {payload}")
 
     if config.TEST_WORKSPACE_APP_PLAN != "":
         payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
