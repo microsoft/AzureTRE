@@ -4,7 +4,7 @@ Airlock Review feature allows to setup a process for manually reviewing Airlock 
 
 For information on Airlock feature, please refer to the [overview page](../azure-tre-overview/airlock.md).
 
-For documentation on how to review an Airlock request, please refer to the [user guide](../using-tre/tre-for-airlock-reviewer/review-airlock-request.md).
+For documentation on how to review an Airlock request, please refer to the [user guide](../using-tre/tre-for-research/review-airlock-request.md).
 
 ## Pre-requisites
 
