@@ -17,7 +17,8 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (props: CostsTag
       style: 'currency',
       currency: resourceCosts?.costs[0].currency,
       currencyDisplay: 'narrowSymbol',
-      maximumSignificantDigits: 4
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     }).format(resourceCosts?.costs[0].cost);
     costBadge = <Stack.Item style={{maxHeight: 18}} className="tre-badge">{formattedCost}</Stack.Item>
   }
