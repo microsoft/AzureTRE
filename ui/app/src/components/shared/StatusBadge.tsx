@@ -65,7 +65,7 @@ export const StatusBadge: React.FunctionComponent<StatusBadgeProps> = (props: St
             <FontIcon
               aria-label="Disabled"
               aria-describedby={`item-${props.resource?.id}-disabled`}
-              iconName="CirclePauseSolid"
+              iconName="Blocked2Solid"
               className={disabledIcon}
             />
           </TooltipHost>
