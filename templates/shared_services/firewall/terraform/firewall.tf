@@ -45,7 +45,7 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
   log_analytics_destination_type = "AzureDiagnostics"
 
   dynamic "log" {
-    for_each = data.azurerm_monitor_diagnostic_categories.firewall.log_category_types
+    for_each = data.azurerm_monitor_diagnostic_categories.firewall.logs
     content {
       category = log.value
       enabled  = contains(local.firewall_diagnostic_categories_enabled, log.value) ? true : false
