@@ -2,7 +2,7 @@ import pytest
 
 import config
 from helpers import check_aad_auth_redirect
-from resources.resource import disable_and_delete_resource, post_resource, get_resource
+from resources.resource import disable_and_delete_resource, post_resource
 from resources import strings
 
 pytestmark = pytest.mark.asyncio
