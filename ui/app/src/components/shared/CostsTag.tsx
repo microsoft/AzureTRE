@@ -12,7 +12,7 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (props: CostsTag
     return resourceCost.id === props.resourceId;
   });
   let costBadge = <></>;
-  if (resourceCosts) {
+  if (resourceCosts && resourceCosts.costs.length > 0) {
     const formattedCost = new Intl.NumberFormat(undefined, {
       style: 'currency',
       currency: resourceCosts?.costs[0].currency,
