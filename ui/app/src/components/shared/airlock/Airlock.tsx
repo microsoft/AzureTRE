@@ -216,7 +216,8 @@ export const Airlock: React.FunctionComponent = () => {
         onColumnClick: (ev, column) => openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
         onColumnContextMenu: (column, ev) =>
           (column && ev) && openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
-        isFiltered: filters.has('status')
+        isFiltered: filters.has('status'),
+        onRender: (request: AirlockRequest) => request.status.replace("_", " ")
       },
       {
         key: 'createdTime',

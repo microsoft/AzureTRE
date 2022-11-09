@@ -63,8 +63,6 @@ export const inProgressStates = [
   "pipeline_running"
 ]
 
-
-
 export const actionsDisabledStates = [
   ...inProgressStates,
   "deployment_failed",
