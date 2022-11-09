@@ -95,7 +95,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blobcore" {
   lifecycle { ignore_changes = [tags] }
 }
 
-
 resource "azurerm_private_dns_zone" "azurewebsites" {
   name                = "privatelink.azurewebsites.net"
   resource_group_name = var.resource_group_name
@@ -112,7 +111,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
   tags                  = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 }
-
 
 resource "azurerm_private_dns_zone" "mysql" {
   name                = "privatelink.mysql.database.azure.com"
@@ -131,7 +129,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "mysql" {
   lifecycle { ignore_changes = [tags] }
 }
 
-
 resource "azurerm_private_dns_zone" "static_web" {
   name                = "privatelink.web.core.windows.net"
   resource_group_name = var.resource_group_name
@@ -147,7 +144,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "webcorelink" {
   tags                  = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 }
-
 
 resource "azurerm_private_dns_zone" "filecore" {
   name                = "privatelink.file.core.windows.net"
@@ -165,7 +161,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "filecorelink" {
   lifecycle { ignore_changes = [tags] }
 }
 
-
 resource "azurerm_private_dns_zone" "vaultcore" {
   name                = "privatelink.vaultcore.azure.net"
   resource_group_name = var.resource_group_name
@@ -181,7 +176,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "vaultcore" {
   tags                  = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 }
-
 
 resource "azurerm_private_dns_zone" "azurecr" {
   name                = "privatelink.azurecr.io"
@@ -199,7 +193,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "acrlink" {
   lifecycle { ignore_changes = [tags] }
 }
 
-
 resource "azurerm_private_dns_zone" "azureml" {
   name                = "privatelink.api.azureml.ms"
   resource_group_name = var.resource_group_name
@@ -207,14 +200,12 @@ resource "azurerm_private_dns_zone" "azureml" {
   lifecycle { ignore_changes = [tags] }
 }
 
-
 resource "azurerm_private_dns_zone" "azuremlcert" {
   name                = "privatelink.cert.api.azureml.ms"
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 }
-
 
 resource "azurerm_private_dns_zone" "notebooks" {
   name                = "privatelink.notebooks.azure.net"
@@ -245,7 +236,6 @@ resource "azurerm_private_dns_zone" "eventgrid" {
 
   lifecycle { ignore_changes = [tags] }
 }
-
 
 resource "azurerm_private_dns_zone_virtual_network_link" "eventgridlink" {
   name                  = "eventgrid-link"
