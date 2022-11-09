@@ -20,13 +20,12 @@ import config from "../../config.json";
 
 export const RootLayout: React.FunctionComponent = () => {
   const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
-  const appRolesCtx = useContext(AppRolesContext)
-
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const [loadingCostState, setLoadingCostState] = useState(LoadingState.Loading);
   const [apiError, setApiError] = useState({} as APIError);
   const [costApiError, setCostApiError] = useState({} as APIError);
   const apiCall = useAuthApiCall();
+  const appRolesCtx = useContext(AppRolesContext);
   const costsWriteCtx = useRef(useContext(CostsContext));
 
   useEffect(() => {
@@ -43,7 +42,6 @@ export const RootLayout: React.FunctionComponent = () => {
     };
 
     getWorkspaces();
-
   }, [apiCall]);
 
 
@@ -54,8 +52,8 @@ export const RootLayout: React.FunctionComponent = () => {
 
         costsWriteCtx.current.setCosts([
           ...r.workspaces,
-          ...r.shared_services]
-          );
+          ...r.shared_services
+        ]);
 
         setLoadingCostState(LoadingState.Ok);
       }
@@ -77,36 +75,33 @@ export const RootLayout: React.FunctionComponent = () => {
       getCosts();
     }
 
-    let ctx = costsWriteCtx.current;
+    const ctx = costsWriteCtx.current;
 
-    // run this on onmount - to clear the context
-    return (() => {
-      ctx.setCosts([]);
-    });
+    // run this on unmount - to clear the context
+    return (() => ctx.setCosts([]));
   }, [apiCall, appRolesCtx.roles]);
 
   const addWorkspace = (w: Workspace) => {
-    let ws = [...workspaces]
+    const ws = [...workspaces]
     ws.push(w);
     setWorkspaces(ws);
   }
 
   const updateWorkspace = (w: Workspace) => {
-    let i = workspaces.findIndex((f: Workspace) => f.id === w.id);
-    let ws = [...workspaces]
+    const i = workspaces.findIndex((f: Workspace) => f.id === w.id);
+    const ws = [...workspaces]
     ws.splice(i, 1, w);
     setWorkspaces(ws);
   }
 
   const removeWorkspace = (w: Workspace) => {
-    let i = workspaces.findIndex((f: Workspace) => f.id === w.id);
-    let ws = [...workspaces];
+    const i = workspaces.findIndex((f: Workspace) => f.id === w.id);
+    const ws = [...workspaces];
     ws.splice(i, 1);
     setWorkspaces(ws);
   }
 
   switch (loadingState) {
-
     case LoadingState.Ok:
       return (
         <>
