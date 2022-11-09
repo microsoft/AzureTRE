@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AnimationClassNames, Callout, IconButton, FontWeights, Stack, Text, getTheme, mergeStyles, mergeStyleSets, StackItem } from '@fluentui/react';
 import { HttpMethod, useAuthApiCall } from '../../hooks/useAuthApiCall';
 import { ApiEndpoint } from '../../models/apiEndpoints';
+import config from "../../config.json";
 
 // TODO:
 // - change text to link
@@ -49,6 +50,10 @@ export const Footer: React.FunctionComponent = () => {
                 <Stack horizontal tokens={{ childrenGap: 5 }}>
                   <Stack.Item style={calloutKeyStyles}>API Version:</Stack.Item>
                   <Stack.Item style={calloutValueStyles}>{apiMetadata.api_version}</Stack.Item>
+                </Stack>
+                <Stack horizontal tokens={{ childrenGap: 5 }}>
+                  <Stack.Item style={calloutKeyStyles}>UI Version:</Stack.Item>
+                  <Stack.Item style={calloutValueStyles}>{config.version}</Stack.Item>
                 </Stack>
               </Stack.Item>
             </Stack>
