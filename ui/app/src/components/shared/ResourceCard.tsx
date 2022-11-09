@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useState } from 'react';
 import { ComponentAction, VMPowerStates, Resource } from '../../models/resource';
-import { Callout, DefaultPalette, FontWeights, IconButton, IStackStyles, mergeStyleSets, PrimaryButton, Shimmer, Stack, Text } from '@fluentui/react';
+import { Callout, DefaultPalette, FontWeights, IconButton, IStackStyles, IStyle, mergeStyles, mergeStyleSets, PrimaryButton, Shimmer, Stack, Text, TooltipHost } from '@fluentui/react';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import { ResourceContextMenu } from './ResourceContextMenu';
@@ -53,12 +53,8 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
         break;
     }
 
-    if (props.resource.resourceType === ResourceType.Workspace && !props.resource.properties.scope_id) {
-      // TODO: alert that auth is not provisioned
-    } else {
-      props.selectResource && props.selectResource(props.resource);
-      navigate(resourceUrl);
-    }
+    props.selectResource && props.selectResource(props.resource);
+    navigate(resourceUrl);
   }, [navigate, props, workspaceCtx.workspace]);
 
   const resourceStatus = latestUpdate.operation?.status
@@ -78,10 +74,13 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
     headerBadge = <StatusBadge resource={props.resource} status={resourceStatus} />
   }
 
+  const authNotProvisioned = props.resource.resourceType === ResourceType.Workspace && !props.resource.properties.scope_id;
+  const cardStyles = authNotProvisioned ? noNavCardStyles : clickableCardStyles;
+
   return (
     <>
       {
-        loading ? <Stack styles={cardStyles}>
+        loading ? <Stack styles={noNavCardStyles}>
           <Stack.Item style={headerStyles}>
             <Shimmer width="70%" />
           </Stack.Item>
@@ -94,51 +93,60 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
           <Stack.Item style={footerStyles}>
             <Shimmer />
           </Stack.Item>
-        </Stack> : <Stack styles={cardStyles} onClick={() => goToResource()}>
-          <Stack horizontal>
-            <Stack.Item grow={5} style={headerStyles}>{props.resource.properties.display_name}</Stack.Item>
-            {headerBadge}
-          </Stack>
+        </Stack> : <TooltipHost
+          content={authNotProvisioned ? "Authentication has not yet been provisioned for this resource." : ""}
+          id={`card-${props.resource.id}`}
+        >
+          <Stack
+            styles={cardStyles}
+            aria-labelledby={`card-${props.resource.id}`}
+            onClick={() => {if (!authNotProvisioned) goToResource()}}
+          >
+            <Stack horizontal>
+              <Stack.Item grow={5} style={headerStyles}>{props.resource.properties.display_name}</Stack.Item>
+              {headerBadge}
+            </Stack>
 
-          <Stack.Item grow={3} style={bodyStyles}>
-            <Text>{props.resource.properties.description}</Text>
-          </Stack.Item>
-
-          <Stack horizontal style={footerStyles}>
-            <Stack.Item grow>
-              <Stack horizontal>
-                <Stack.Item>
-                  <IconButton
-                    iconProps={{iconName: 'Info'}}
-                    id={`item-${props.itemId}`}
-                    onClick={(e) => {
-                      // Stop onClick triggering parent handler
-                      e.stopPropagation();
-                      setShowInfo(!showInfo);
-                    }}
-                  />
-                </Stack.Item>
-                <Stack.Item>
-                  {
-                    !props.readonly && <ResourceContextMenu
-                      resource={props.resource}
-                      componentAction={latestUpdate.componentAction}
-                    />
-                  }
-                </Stack.Item>
-              </Stack>
+            <Stack.Item grow={3} style={bodyStyles}>
+              <Text>{props.resource.properties.description}</Text>
             </Stack.Item>
-            <CostsTag resourceId={props.resource.id} />
-            {
-              connectUri && <PrimaryButton
-                onClick={(e) => {e.stopPropagation(); window.open(connectUri)}}
-                disabled={shouldDisable()}
-                title={shouldDisable() ? 'Resource must be enabled, successfully deployed & powered on to connect' : 'Connect to resource'}>
-                Connect
-              </PrimaryButton>
-            }
+
+            <Stack horizontal style={footerStyles}>
+              <Stack.Item grow>
+                <Stack horizontal>
+                  <Stack.Item>
+                    <IconButton
+                      iconProps={{iconName: 'Info'}}
+                      id={`item-${props.itemId}`}
+                      onClick={(e) => {
+                        // Stop onClick triggering parent handler
+                        e.stopPropagation();
+                        setShowInfo(!showInfo);
+                      }}
+                    />
+                  </Stack.Item>
+                  <Stack.Item>
+                    {
+                      !props.readonly && <ResourceContextMenu
+                        resource={props.resource}
+                        componentAction={latestUpdate.componentAction}
+                      />
+                    }
+                  </Stack.Item>
+                </Stack>
+              </Stack.Item>
+              <CostsTag resourceId={props.resource.id} />
+              {
+                connectUri && <PrimaryButton
+                  onClick={(e) => {e.stopPropagation(); window.open(connectUri)}}
+                  disabled={shouldDisable()}
+                  title={shouldDisable() ? 'Resource must be enabled, successfully deployed & powered on to connect' : 'Connect to resource'}>
+                  Connect
+                </PrimaryButton>
+              }
+            </Stack>
           </Stack>
-        </Stack>
+        </TooltipHost>
       }
       {
         showInfo && <Callout
@@ -178,13 +186,21 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   )
 };
 
-const cardStyles: IStackStyles = {
+const baseCardStyles: IStyle = {
+  width: '100%',
+  borderRadius: '5px',
+  boxShadow: '0 1.6px 3.6px 0 rgba(0,0,0,.132),0 .3px .9px 0 rgba(0,0,0,.108)',
+  backgroundColor: DefaultPalette.white,
+  padding: 10
+}
+
+const noNavCardStyles: IStackStyles = {
+  root: { ...baseCardStyles }
+}
+
+const clickableCardStyles: IStackStyles = {
   root: {
-    width: '100%',
-    borderRadius: '5px',
-    boxShadow: '0 1.6px 3.6px 0 rgba(0,0,0,.132),0 .3px .9px 0 rgba(0,0,0,.108)',
-    backgroundColor: DefaultPalette.white,
-    padding: 10,
+    ...baseCardStyles,
     "&:hover": {
       transition: 'all .2s ease-in-out',
       transform: 'scale(1.02)',
