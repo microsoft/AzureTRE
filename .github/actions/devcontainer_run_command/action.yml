@@ -103,6 +103,9 @@ inputs:
     description: "The AppService plan sku used by tests"
     required: false
     default: ""
+  RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE:
+    description: "The number of resource processor processes to create for parallel operations"
+    required: false
 
 runs:
   using: composite
@@ -174,5 +177,7 @@ runs:
             && inputs.CORE_APP_SERVICE_PLAN_SKU) || 'P1v2' }}" \
           -e WORKSPACE_APP_SERVICE_PLAN_SKU="${{ (inputs.WORKSPACE_APP_SERVICE_PLAN_SKU != ''
             && inputs.WORKSPACE_APP_SERVICE_PLAN_SKU) || 'P1v2' }}" \
+          -e TF_VAR_resource_processor_number_processes_per_instance="${{ (inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE != ''
+            && inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE) || 5  }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}.azurecr.io/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"
