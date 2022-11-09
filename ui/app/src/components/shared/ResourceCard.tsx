@@ -32,14 +32,6 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   );
   const navigate = useNavigate();
 
-  let connectUri = props.resource.properties && props.resource.properties.connection_uri;
-  const shouldDisable = () => {
-    return latestUpdate.componentAction === ComponentAction.Lock
-      || actionsDisabledStates.includes(props.resource.deploymentStatus)
-      || !props.resource.isEnabled
-      || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== VMPowerStates.Running)
-  }
-
   const goToResource = useCallback(() => {
     let resourceUrl = '';
     switch(props.resource.resourceType) {
@@ -56,6 +48,14 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
     props.selectResource && props.selectResource(props.resource);
     navigate(resourceUrl);
   }, [navigate, props, workspaceCtx.workspace]);
+
+  let connectUri = props.resource.properties && props.resource.properties.connection_uri;
+  const shouldDisable = () => {
+    return latestUpdate.componentAction === ComponentAction.Lock
+      || actionsDisabledStates.includes(props.resource.deploymentStatus)
+      || !props.resource.isEnabled
+      || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== VMPowerStates.Running)
+  }
 
   const resourceStatus = latestUpdate.operation?.status
     ? latestUpdate.operation.status
