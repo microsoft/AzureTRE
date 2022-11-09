@@ -60,8 +60,8 @@ variable "terraform_state_container_name" {
 }
 
 variable "resource_processor_number_processes_per_instance" {
-  type        = string
-  default     = "2"
+  type        = number
+  default     = 5
   description = "The number of CPU processes to run the RP on per VM instance"
 }
 
