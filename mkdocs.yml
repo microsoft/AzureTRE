@@ -77,6 +77,7 @@ nav:
           - Introduction: using-tre/tre-for-research/index.md
           - Set up of a Virtual Machine: using-tre/tre-for-research/using-vms.md
           - Importing/exporting data with Airlock: using-tre/tre-for-research/importing-exporting-data-airlock.md
+          - Reviewing Airlock Requests: using-tre/tre-for-research/review-airlock-request.md
       # - Workspaces:
       #    - using-tre/wks/index.md # Documentation describing what a workspace is
       #    - Using Workspaces: using-tre/wks/using-wks.md # Interacting with workspaces (via the UI)
@@ -87,6 +88,7 @@ nav:
       - Workspaces:
           - Base: tre-templates/workspaces/base.md
           - Unrestricted: tre-templates/workspaces/unrestricted.md
+          - Airlock Import Review: tre-templates/workspaces/airlock-import-review.md
       - Workspace Services:
           - Azure ML: tre-templates/workspace-services/azure-ml.md
           - Gitea: tre-templates/workspace-services/gitea.md
@@ -101,6 +103,8 @@ nav:
       - User Resources:
           - Guacamole Windows VM: tre-templates/user-resources/guacamole-windows-vm.md
           - Guacamole Linux VM: tre-templates/user-resources/guacamole-linux-vm.md
+          - Import Review VM: tre-templates/user-resources/import-reviewvm.md
+          - Export Review VM: tre-templates/user-resources/export-reviewvm.md
 
   - Technical Guide: # All Technical Documentation (Admin, Development)
       - Administration: # Docs related to the deployment and operation of AzureTRE infrastructure
@@ -121,6 +125,7 @@ nav:
               - Install Base Workspace: tre-admins/setup-instructions/installing-base-workspace.md
               - Install Workspace Service and User Resource: tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md
           - Upgrading AzureTRE version: tre-admins/upgrading-tre.md
+          - Configuring Airlock Reviews: tre-admins/configure-airlock-review.md
 
       - Development: # Docs related to the developing code for the AzureTRE
           - Local Development: using-tre/local-development/local-development.md
