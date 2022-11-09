@@ -54,6 +54,10 @@ jobs:
               - 'airlock_processor/**/*'
             airlock_processor_version:
               - 'airlock_processor/_version.py'
+            ui_app:
+              - 'ui/app/**/*'
+            ui_app_version:
+              - 'ui/app/package.json'
 
       - name: "Stale version: api"
         if: ${{ steps.filter.outputs.api == 'true' &&
@@ -78,6 +82,11 @@ jobs:
       - name: "Stale version: airlock_processor"
         if: ${{ steps.filter.outputs.airlock_processor == 'true' &&
           steps.filter.outputs.airlock_processor_version == 'false' }}
+        run: echo "::error::Code update without version change" && exit 1
+
+      - name: "Stale version: ui_app"
+        if: ${{ steps.filter.outputs.ui_app == 'true' &&
+          steps.filter.outputs.ui_app_version == 'false' }}
         run: echo "::error::Code update without version change" && exit 1
 
       - name: Set up Docker Buildx
