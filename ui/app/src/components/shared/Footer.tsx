@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AnimationClassNames, Callout, IconButton, FontWeights, Stack, Text, getTheme, mergeStyles, mergeStyleSets, StackItem, IButtonStyles } from '@fluentui/react';
 import { HttpMethod, useAuthApiCall } from '../../hooks/useAuthApiCall';
 import { ApiEndpoint } from '../../models/apiEndpoints';
+import config from "../../config.json";
 
 // TODO:
 // - change text to link
@@ -25,6 +26,8 @@ export const Footer: React.FunctionComponent = () => {
     getMeta();
     getHealth();
   }, [apiCall]);
+
+  const uiConfig = config as any;
 
   return (
     <div className={contentClass}>
@@ -55,19 +58,27 @@ export const Footer: React.FunctionComponent = () => {
           </Text>
           <Stack tokens={{childrenGap: 5}}>
             {
+              uiConfig.version && <Stack horizontal horizontalAlign='space-between'>
+                <Stack.Item>UI Version:</Stack.Item>
+                <Stack.Item>{uiConfig.version}</Stack.Item>
+              </Stack>
+            }
+            {
               apiMetadata?.api_version && <Stack horizontal horizontalAlign='space-between'>
                 <Stack.Item>API Version:</Stack.Item>
                 <Stack.Item>{apiMetadata.api_version}</Stack.Item>
               </Stack>
             }
+          </Stack>
+          <Stack tokens={{childrenGap: 5}} style={{marginTop: 10, paddingTop: 8, borderTop: '1px solid #e8e8e8'}}>
             {
-                health?.services.map(s => {
-                  return <Stack horizontal horizontalAlign='space-between' key={s.service}>
-                    <Stack.Item>{s.service}:</Stack.Item>
-                    <Stack.Item>{s.status}</Stack.Item>
-                  </Stack>
-                })
-              }
+              health?.services.map(s => {
+                return <Stack horizontal horizontalAlign='space-between' key={s.service}>
+                  <Stack.Item>{s.service}:</Stack.Item>
+                  <Stack.Item>{s.status}</Stack.Item>
+                </Stack>
+              })
+            }
           </Stack>
         </Callout>
       }

@@ -29,9 +29,10 @@ ENHANCEMENTS:
 * Add additional fields for Airlock Notification event ([#2798](https://github.com/microsoft/AzureTRE/pull/2798))
 * Fail firewall database migration if there's no firewall deployed ([#2792](https://github.com/microsoft/AzureTRE/pull/2792))
 * Added optional parameter to allow a client to retrieve a template by name and version ([#2802](https://github.com/microsoft/AzureTRE/pull/2802))
-* Added support for `allOf` usage in Resource Templates - both across the API and the UI. This allows a template author to specify certain fields as being conditionally present / conditionally required, and means we can tidy up some of the resource creation forms substantially. ([#2795](https://github.com/microsoft/AzureTRE/pull/2795)).
+* Added support for `allOf` usage in Resource Templates - both across the API and the UI. This allows a template author to specify certain fields as being conditionally present / conditionally required, and means we can tidy up some of the resource creation forms substantially ([#2795](https://github.com/microsoft/AzureTRE/pull/2795)).
 * As part of the above change, the `auto_create` string passed to the `client_id` field in each Workspace template has now moved to an `auth_type` enum field, where the user can select the authentication type from a dropdown.
-* Adds extra dns zones and links into core network
+* Adds extra dns zones and links into core network ([#2828](https://github.com/microsoft/AzureTRE/pull/2828)).
+* Add UI version to its footer card ([#2849](https://github.com/microsoft/AzureTRE/pull/2849)).
 
 BUG FIXES:
 * Show the correct createdBy value for airlock requests in UI and in API queries ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
