@@ -209,7 +209,7 @@ const footerStyles: React.CSSProperties = {
 }
 
 const calloutKeyStyles: React.CSSProperties = {
-  width: 120
+  width: 160
 }
 
 const calloutValueStyles: React.CSSProperties = {
