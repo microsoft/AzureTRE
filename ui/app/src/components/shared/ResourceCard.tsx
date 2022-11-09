@@ -96,6 +96,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
         </Stack> : <TooltipHost
           content={authNotProvisioned ? "Authentication has not yet been provisioned for this resource." : ""}
           id={`card-${props.resource.id}`}
+          styles={{root: {width:'100%'}}}
         >
           <Stack
             styles={cardStyles}
