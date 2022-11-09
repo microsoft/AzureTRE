@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useState } from 'react';
 import { ComponentAction, VMPowerStates, Resource } from '../../models/resource';
-import { Callout, DefaultPalette, FontWeights, IconButton, IStackStyles, IStyle, mergeStyles, mergeStyleSets, PrimaryButton, Shimmer, Stack, Text, TooltipHost } from '@fluentui/react';
+import { Callout, DefaultPalette, FontWeights, IconButton, IStackStyles, IStyle, mergeStyleSets, PrimaryButton, Shimmer, Stack, Text, TooltipHost } from '@fluentui/react';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import { ResourceContextMenu } from './ResourceContextMenu';
