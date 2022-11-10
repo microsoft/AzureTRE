@@ -2,25 +2,22 @@
 
 ## Publish and register a workspace service template
 
-We will use the [Guacamole workspace service bundle](../../tre-templates/workspace-services/guacamole.md) for the purposes of this tutorial. These steps can be repeated for any workspace service template.
+We will use the [Guacamole workspace service bundle](../../tre-templates/workspace-services/guacamole.md) for the purposes of this tutorial; a template that provides Virtual Desktop functionality allowing the deployment of VMs for users. These steps can be repeated for any workspace service template depending on the functionalities required.
 
-Run:
+1. Run:
 
     ```cmd
-    make bundle-publish DIR=$AZURETRE_HOME/templates/workspace_services/guacamole BUNDLE_TYPE=workspace_service
-    make bundle-register DIR=$AZURETRE_HOME/templates/workspace_services/guacamole BUNDLE_TYPE=workspace_service
+    make workspace_service_bundle BUNDLE=guacamole
     ```
-
 
 ## Publish and register a user resource template
 
-The Guacamole workspace service also has user resources, there are the VMs that researchers will deploy. These steps can be repeated for any user resource template.
+The Guacamole workspace service also has user resources: the VMs that researchers will deploy. These steps can be repeated for any user resource template.
 
-Run:
+1. Run:
 
     ```cmd
-    make bundle-publish DIR=$AZURETRE_HOME/templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm BUNDLE_TYPE=user_resource
-    make bundle-register DIR=$AZURETRE_HOME/templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-guacamole
+    make user_resource_bundle BUNDLE=guacamole-azure-windowsvm WORKSPACE_SERVICE=guacamole
     ```
 
 ## Creating a workspace service
