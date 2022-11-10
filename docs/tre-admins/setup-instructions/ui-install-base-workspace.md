@@ -2,12 +2,13 @@
 
 ## Publishing and registering the base workspace bundle
 
-Run the following in a terminal:
+Run the following in a terminal to build, publish and register the base workpace bundle:
 
-  ```cmd
-  make bundle-publish DIR=$AZURETRE_HOME/templates/workspaces/base
-  make bundle-register DIR=$AZURETRE_HOME/templates/workspaces/base BUNDLE_TYPE=workspace
-  ```
+```cmd
+make workspace_bundle BUNDLE=base
+```
+
+This will prepare the template for use with your TRE.
 
 ## Create Base Workspace
 
@@ -25,7 +26,7 @@ Workspace can be easily created via AzureTRE UI. Open a browser and navigate to:
 
     - Fill in general information such as name and description
     - [Optional] Update values for Shared Storage Quota, App Service Plan (SKU) and Address space if needed
-    - Application (Client ID) - is the AAD Application representing the workspace. You can auto create one by setting it to `auto_create` or provide an existing one. To read about how to create it manually read the [Creating an Application Client for base workspace](#creating-an-application-client-for-base-workspace) section below.
+    - Workspace Authentication Type - this determines whether you'd like TRE to create an app registration for the workspace automatically, or whether you with to provide an existing one that you've created manually. To read about how to create it manually read the [Creating an Application Client for base workspace](#creating-an-application-client-for-base-workspace) section below.
 
     After filling the details press submit.
 

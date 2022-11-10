@@ -2,28 +2,13 @@
 
 ## Publishing and registering the base workspace bundle
 
-Run the following in a terminal:
+Run the following in a terminal to build, publish and register the base workpace bundle:
 
-  ```cmd
-   make bundle-publish DIR=$AZURETRE_HOME/templates/workspaces/base
-  make bundle-register DIR=$AZURETRE_HOME/templates/workspaces/base BUNDLE_TYPE=workspace
-  ```
+```cmd
+make workspace_bundle BUNDLE=base
+```
 
-If you have setup the TEST_ACCOUNT_CLIENT_ID in the [Setup Auth configuration](setup-auth-entities.md), then your bundle will automatically publish and you can skip to 'Creating a base workspace'. Otherwise continue with these steps:
-
-1. Copy the resulting JSON payload.
-
-1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/api/docs`
-
-1. Log into the Swagger UI by clicking `Authorize`, then `Authorize` again. You will be redirected to the login page.
-
-1. Once logged in, click `Try it out` on the `POST` `/api/workspace-templates` operation:
-
-    ![Post Workspace Template](../../assets/post-template.png)
-
-1. Paste the payload json generated earlier into the `Request body` field, then click `Execute`. Review the server response.
-
-1. To verify registration of the template do `GET` operation on `/api/workspace-templates`. The name of the template should now be listed.
+This will prepare the template for use with your TRE.
 
 ## Creating a base workspace
 
