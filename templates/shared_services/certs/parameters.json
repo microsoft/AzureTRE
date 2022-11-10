@@ -39,6 +39,12 @@
       "source": {
         "env": "DOMAIN_PREFIX"
       }
+    },
+    {
+      "name": "id",
+      "source": {
+        "env": "ID"
+      }
     }
   ]
 }
