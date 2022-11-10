@@ -16,6 +16,13 @@ BLOB_FILE_PATH = "./test_airlock_sample.txt"
 BLOB_NAME = os.path.basename(BLOB_FILE_PATH)
 
 
+@pytest.mark.extended
+def test_test():
+    LOGGER.info("I am INFO log")
+    raise Exception("I am BUG")
+
+
+@pytest.mark.skip
 @pytest.mark.airlock
 @pytest.mark.extended
 @pytest.mark.timeout(35 * 60)
