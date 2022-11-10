@@ -130,7 +130,7 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_api" {
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
 
   dynamic "log" {
-    for_each = data.azurerm_monitor_diagnostic_categories.api.logs
+    for_each = data.azurerm_monitor_diagnostic_categories.api.log_category_types
     content {
       category = log.value
       enabled  = contains(local.api_diagnostic_categories_enabled, log.value) ? true : false
