@@ -33,6 +33,7 @@ ENHANCEMENTS:
 * As part of the above change, the `auto_create` string passed to the `client_id` field in each Workspace template has now moved to an `auth_type` enum field, where the user can select the authentication type from a dropdown.
 * Adds extra dns zones and links into core network ([#2828](https://github.com/microsoft/AzureTRE/pull/2828)).
 * Add UI version to its footer card ([#2849](https://github.com/microsoft/AzureTRE/pull/2849)).
+* Use `log_category_types` in `azurerm_monitor_diagnostic_categories` to remove deprecation warning ([#2855](https://github.com/microsoft/AzureTRE/pull/2855)).
 
 BUG FIXES:
 * Show the correct createdBy value for airlock requests in UI and in API queries ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
@@ -40,6 +41,7 @@ BUG FIXES:
 * Fix Nexus bootstrapping firewall race condition ([#2811](https://github.com/microsoft/AzureTRE/pull/2811))
 * Handle unsupported azure subscriptions in cost reporting ([#2823](https://github.com/microsoft/AzureTRE/pull/2823))
 * Redact secrets in conditional or nested properties ([#2854](https://github.com/microsoft/AzureTRE/pull/2854))
+* Fix missing ID parameter in Certs bundle ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))
 
 COMPONENTS:
 
