@@ -135,9 +135,7 @@ jobs:
     needs: [pr_comment]
     if: |
       needs.pr_comment.outputs.command == 'run-tests' ||
-      needs.pr_comment.outputs.command == 'run-tests-extended' ||
-      needs.pr_comment.outputs.command == 'run-tests-extended-aad' ||
-      needs.pr_comment.outputs.command == 'run-tests-shared-services'
+      needs.pr_comment.outputs.command == 'run-tests-extended'
     name: Deploy PR
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
@@ -146,8 +144,6 @@ jobs:
       ciGitRef: ${{ needs.pr_comment.outputs.ciGitRef }}
       e2eTestsCustomSelector: >-
         ${{ (needs.pr_comment.outputs.command == 'run-tests-extended' && 'extended') ||
-        (needs.pr_comment.outputs.command == 'run-tests-extended-aad' && 'extended_aad') ||
-        (needs.pr_comment.outputs.command == 'run-tests-shared-services' && 'shared_services') ||
         (needs.pr_comment.outputs.command == 'run-tests' && '') }}
       environmentName: CICD
     secrets:

@@ -301,10 +301,6 @@ test-e2e-extended:
 	$(call target_title, "Running E2E extended tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=extended
 
-test-e2e-extended-aad:
-	$(call target_title, "Running E2E extended AAD tests") && \
-	$(MAKE) test-e2e-custom SELECTOR=extended_aad
-
 test-e2e-shared-services:
 	$(call target_title, "Running E2E shared service tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=shared_services
