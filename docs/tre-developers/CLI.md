@@ -41,11 +41,11 @@ tre login device-code \
 ```
 
 !!! info
-| | the API scope is usually of the form  `api://<API_CLIENT_ID>/user_impersonation`
+    the API scope is usually of the form  `api://<API_CLIENT_ID>/user_impersonation`
 
 
 !!! info
-| | when using device code flow, you need to ensure that the app registrations for the root API and any workspaces you access have device code flow enabled. (Automating this is tracked in [#2709](https://github.com/microsoft/AzureTRE/issues/2709) )
+    when using device code flow, you need to ensure that the app registrations for the root API and any workspaces you access have device code flow enabled. (Automating this is tracked in [#2709](https://github.com/microsoft/AzureTRE/issues/2709) )
 
 #### Workspace authentication
 
@@ -80,7 +80,7 @@ tre login client-credentials \
 
 
 !!! info
-| | the API scope is usually of the form  `api://<API_CLIENT_ID>/user_impersonation`
+    the API scope is usually of the form  `api://<API_CLIENT_ID>/user_impersonation`
 
 
 ### Login misc
