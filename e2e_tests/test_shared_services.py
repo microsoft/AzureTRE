@@ -9,6 +9,7 @@ from helpers import get_admin_token
 LOGGER = logging.getLogger(__name__)
 
 
+@pytest.mark.extended
 @pytest.mark.shared_services
 async def test_patch_firewall(verify):
     template_name = strings.FIREWALL_SHARED_SERVICE
@@ -91,6 +92,7 @@ shared_service_templates_to_create = [
 ]
 
 
+@pytest.mark.extended
 @pytest.mark.shared_services
 @pytest.mark.timeout(65 * 60)
 @pytest.mark.parametrize("template_name", shared_service_templates_to_create)
