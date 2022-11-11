@@ -1,4 +1,4 @@
-ARG GITEA_TAG=1.16.3
+ARG GITEA_TAG=1.17.3
 ARG CERTIFICATE_URL=https://www.digicert.com/CACerts/BaltimoreCyberTrustRoot.crt.pem
 
 FROM gitea/gitea:${GITEA_TAG}
