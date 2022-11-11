@@ -6,7 +6,7 @@ This guide will cover various components of AzureTRE CLI such as installation, l
 
 ## Installation
 
-Currently, installation has only been tested within the dev container. In this context, `make install-cli` should work
+It is recommended to use CLI within the dev container. It should be installed automatically. To install it manually, run `make install-cli`.
 
 ## Shell completion
 
@@ -40,14 +40,16 @@ tre login device-code \
   --api-scope <ROOT_API_SCOPE>
 ```
 
+!!! info
+| | the API scope is usually of the form  `api://<API_CLIENT_ID>/user_impersonation`
 
-NOTE: the api scope is usually of the form  `api://<API_CLIENT_ID>/user_impersonation`
 
-NOTE 2: When using device code flow, you need to ensure that the app registrations for the root API and any workspaces you access have device code flow enabled. (Automating this is tracked in [#2709](https://github.com/microsoft/AzureTRE/issues/2709) )
+!!! info
+| | when using device code flow, you need to ensure that the app registrations for the root API and any workspaces you access have device code flow enabled. (Automating this is tracked in [#2709](https://github.com/microsoft/AzureTRE/issues/2709) )
 
 #### Workspace authentication
 
-Since the api scope for each workspace is different, the token returned when authenticating against the root API isn't valid against a workspace.
+Since the API scope for each workspace is different, the token returned when authenticating against the root API isn't valid against a workspace.
 When running interactively, the CLI will prompt you when it needs to reauthenticate for a workspace API.
 
 You can pre-emptively get an authentication token for a workspace using the `--workspace` option. This can be specified multiple times to authenticate against multiple workspaces at once. You can also using `--all-workspaces` to get a token for all workspaces in one command.
@@ -76,7 +78,9 @@ tre login client-credentials \
   --api-scope <ROOT_API_SCOPE>
 ```
 
-NOTE: the api scope is usually of the form  `api://<API_CLIENT_ID>/user_impersonation`
+
+!!! info
+| | the API scope is usually of the form  `api://<API_CLIENT_ID>/user_impersonation`
 
 
 ### Login misc
@@ -111,44 +115,6 @@ This pattern is nested for sub-resources, e.g. operations for a workspace:
 tre workspace 567f17d6-1abb-450f-991a-19398f89b3c2 operations list
 
 ## show an individual operation for a workspace
-tre workspace 567f17d6-1abb-450f-991a-19398f89b3c2 operation 0f66839f-8727-43db-b2d6-6c7197712e36 show
-```
-
-### Alternative structures considered
-
-Initially, the command structure was more similar to the `az` CLI:
-
-```bash
-## NOTE this is an alternate syntax for illustration (i.e. not how the CLI works)
-# list workspaces
-tre workspace list
-
-## show an individual workspace
-tre workspace show --workspace-id 567f17d6-1abb-450f-991a-19398f89b3c2
-```
-
-The consistency of command grouping in this structure is nice.
-
-However, as nested commands are added it requires editing multiple locations in the command text. So the flow when drilling down into an operation is:
-
-
-```bash
-## NOTE this is an alternate syntax for illustration (i.e. not how the CLI works)
-# Find the workspace
-tre workspace list
-
-# Show operations for the workspace
-tre workspace operation list --workspace-id 567f17d6-1abb-450f-991a-19398f89b3c2
-
-# Show the operation
-tre workspace operation show --workspace-id 567f17d6-1abb-450f-991a-19398f89b3c2 --operation-id 0f66839f-8727-43db-b2d6-6c7197712e36
-```
-
-This compares to: the current structure where the changes between successive commands are all at the end of the command text:
-
-```bash
-tre workspaces list
-tre workspace 567f17d6-1abb-450f-991a-19398f89b3c2 operations list
 tre workspace 567f17d6-1abb-450f-991a-19398f89b3c2 operation 0f66839f-8727-43db-b2d6-6c7197712e36 show
 ```
 
