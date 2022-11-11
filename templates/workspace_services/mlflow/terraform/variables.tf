@@ -1,9 +1,6 @@
 variable "workspace_id" {}
 variable "tre_id" {}
-variable "tre_workspace_service_tags" {}
 variable "tre_resource_id" {}
-
-variable "resource_id" {}
 
 variable "mgmt_acr_name" {}
 variable "mgmt_resource_group_name" {}
