@@ -11,6 +11,19 @@ LOGGER = logging.getLogger(__name__)
 TIMEOUT = Timeout(10, read=30)
 
 
+async def get_resource(endpoint, access_token, verify):
+    async with AsyncClient(verify=verify, timeout=30.0) as client:
+        full_endpoint = get_full_endpoint(endpoint)
+        auth_headers = get_auth_header(access_token)
+
+        response = await client.get(full_endpoint, headers=auth_headers, timeout=TIMEOUT)
+
+        LOGGER.info(f'RESPONSE Status code: {response.status_code} Content: {response.content}')
+        assert (response.status_code == status.HTTP_200_OK), f"Get for endpoint {full_endpoint} failed"
+
+        return response.json()
+
+
 async def post_resource(payload, endpoint, access_token, verify, method="POST", wait=True, etag="*"):
     async with AsyncClient(verify=verify, timeout=30.0) as client:
 
