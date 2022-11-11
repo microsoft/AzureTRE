@@ -12,7 +12,7 @@ from airlock import strings as airlock_strings
 
 pytestmark = pytest.mark.asyncio
 LOGGER = logging.getLogger(__name__)
-BLOB_FILE_PATH = "./test_airlock_sample.txt"
+BLOB_FILE_PATH = "./data/test_airlock_sample.txt"
 BLOB_NAME = os.path.basename(BLOB_FILE_PATH)
 
 
