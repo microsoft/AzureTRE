@@ -80,6 +80,9 @@ def mask_sensitive_properties(
             return
 
         for prop_name, prop in template_fragment.items():
+            if prop_name == "pipeline":
+                continue
+
             if (
                 prop_name == "properties"
                 and template_fragment["properties"] is not None
