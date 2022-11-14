@@ -106,6 +106,12 @@ on:  # yamllint disable-line rule:truthy
       WORKSPACE_APP_SERVICE_PLAN_SKU:
         description: ""
         required: false
+      RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE:
+        description: "Inputs"
+        required: false
+      E2E_TESTS_NUMBER_PROCESSES:
+        description: ""
+        required: false
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
@@ -295,6 +301,7 @@ jobs:
           APPLICATION_ADMIN_CLIENT_SECRET: "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}"
           STATEFUL_RESOURCES_LOCKED: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           CORE_APP_SERVICE_PLAN_SKU: ${{ secrets.CORE_APP_SERVICE_PLAN_SKU }}
+          RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE: ${{ secrets.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
@@ -618,6 +625,7 @@ jobs:
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
           WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ secrets.WORKSPACE_APP_SERVICE_PLAN_SKU }}
+          E2E_TESTS_NUMBER_PROCESSES: ${{ secrets.E2E_TESTS_NUMBER_PROCESSES }}
 
       - name: Upload Test Results
         if: always()

@@ -7,13 +7,24 @@ To enable users to deploy Workspaces, Workspace Services or User Resources, we n
 
 ## Registration with make commands
 
-Porter bundles can be registered with `make` commands which can be useful for CI/CD scenarios. To start on should build the Porter bundle running the command `make bundle-build`. Once built a Template must be published so it can the registered. For this the commands `make bundle publish` and `make bundle-register` can be used Here we use the workspace service Azure ML bundle as an example:
+Porter bundles can be prepared and registered with `make` commands, which can be useful for CI/CD scenarios. Before registering, Porter bundles must be built (`make bundle-build`) and then published to the TRE registry (`make bundle publish`), before finally registering it for use with the TRE using `make bundle-register`. Here we use the Azure ML workspace service bundle as an example:
 
 ```cmd
 make bundle-build DIR=templates/workspace_services/azureml
 make bundle-publish DIR=templates/workspace_services/azureml
 make bundle-register DIR=templates/workspace_services/azureml BUNDLE_TYPE=workspace_service
 ```
+
+If you're building, publishing and registering a lot of bundles, using three separate commands can be cumbersome, so there is a unifed command for each bundle type to make this easier:
+
+```cmd
+make workspace_service_bundle BUNDLE=azureml
+```
+
+There are also `make workspace_bundle`, `make shared_service_bundle` and `make user_resource_bundle` commands for the corresponding bundle resource types.
+
+!!! tip
+The `make user_resource_bundle` also requires a `WORKSPACE_SERVICE` parameter to be passed alongside `BUNDLE` which specifies the workspace service that the user resource belongs to.
 
 ## Registration using Swagger UI
 

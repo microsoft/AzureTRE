@@ -115,7 +115,10 @@ GET /api/workspaces/{workspace_id}/costs
 
 * Once cost data becomes available in Cost Management, it will be retained for at least seven years. Only the last 13 months is available from the TRE Cost API and Azure Portal. For historical data before 13 months, please use [Exports](https://docs.microsoft.com/en-us/azure/cost-management-billing/costs/tutorial-export-acm-data?tabs=azure-portal) or the [UsageDetails API](https://docs.microsoft.com/en-us/rest/api/consumption/usage-details/list?tabs=HTTP).
 
-* For more information please refer to [Azure Cost Management](https://docs.microsoft.com/en-us/azure/cost-management-billing/costs/understand-cost-mgt-data) and Cost API swagger docs.
+* There are several Azure Offers that currently are not supported yet, Azure Offers are types of Azure subscriptions, for full list of supported and unspported Azure Offers please refer to [Supported Microsoft Azure offers](https://learn.microsoft.com/en-us/azure/cost-management-billing/costs/understand-cost-mgt-data#supported-microsoft-azure-offers),
+Azure TRE will not display costs for unsupported Azure subscriptions.
+
+* For more information please refer to [Understand Cost Management data](https://docs.microsoft.com/en-us/azure/cost-management-billing/costs/understand-cost-mgt-data) and Cost API swagger docs.
 
 
 ## Azure Resources Tagging
