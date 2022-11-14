@@ -3,7 +3,7 @@ set -euo pipefail
 # Use this for debug only
 # set -o xtrace
 
-: "${AAD_TENANT_ID?'You have not set your AAD_TENANT_ID in ./templates/core/.env'}"
+: "${AAD_TENANT_ID?'You have not set your AAD_TENANT_ID in ./devops/.env'}"
 
 # Get the directory that this script is in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
