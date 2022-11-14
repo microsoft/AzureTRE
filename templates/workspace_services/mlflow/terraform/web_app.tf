@@ -94,97 +94,27 @@ resource "azurerm_app_service" "mlflow" {
   }
 }
 
+data "azurerm_monitor_diagnostic_categories" "mlflow" {
+  resource_id = azurerm_app_service.mlflow.id
+  depends_on = [
+    azurerm_app_service.mlflow
+  ]
+}
 resource "azurerm_monitor_diagnostic_setting" "mlflow" {
   name                       = "diag-${var.tre_id}"
   target_resource_id         = azurerm_app_service.mlflow.id
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
-  log {
-    category = "AppServiceHTTPLogs"
-    enabled  = true
+  dynamic "log" {
+    for_each = data.azurerm_monitor_diagnostic_categories.mlflow.logs
+    content {
+      category = log.value
+      enabled  = contains(local.web_app_diagnostic_categories_enabled, log.value) ? true : false
 
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceConsoleLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAppLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceFileAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceIPSecAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServicePlatformLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAntivirusScanAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  metric {
-    category = "AllMetrics"
-    enabled  = true
-
-    retention_policy {
-      enabled = false
+      retention_policy {
+        enabled = contains(local.web_app_diagnostic_categories_enabled, log.value) ? true : false
+        days    = 365
+      }
     }
   }
 }
