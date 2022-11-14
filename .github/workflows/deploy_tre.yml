@@ -28,7 +28,9 @@ jobs:
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
       ciGitRef: ${{ github.ref }}
-      e2eTestsCustomSelector: "extended"
+      e2eTestsCustomSelector: >-
+        ${{ (github.event_name == 'push' && 'extended')
+        || 'extended or performance' }}
       environmentName: ${{ github.event.inputs.environment || 'CICD' }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
