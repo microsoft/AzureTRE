@@ -10,18 +10,8 @@ pytestmark = pytest.mark.asyncio
 
 @pytest.mark.extended
 @pytest.mark.timeout(75 * 60)
-async def test_create_guacamole_service_into_base_workspace(verify, setup_test_workspace) -> None:
-    workspace_path, workspace_id, workspace_owner_token = setup_test_workspace
-
-    service_payload = {
-        "templateName": strings.GUACAMOLE_SERVICE,
-        "properties": {
-            "display_name": "Workspace service test",
-            "description": "Workspace service for E2E test"
-        }
-    }
-
-    workspace_service_path, workspace_service_id = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
+async def test_create_guacamole_service_into_base_workspace(verify, setup_test_workspace_service) -> None:
+    workspace_service_path, workspace_service_id, _, workspace_id, workspace_owner_token = setup_test_workspace_service
 
     await ping_guacamole_workspace_service(workspace_id, workspace_service_id, verify)
 
@@ -48,10 +38,9 @@ async def test_create_guacamole_service_into_base_workspace(verify, setup_test_w
 
     await disable_and_delete_resource(f'/api{user_resource_path}', workspace_owner_token, verify)
 
-    await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
-
 
 @pytest.mark.aad
+@pytest.mark.extended
 @pytest.mark.timeout(75 * 60)
 async def test_create_guacamole_service_into_aad_workspace(verify, setup_test_aad_workspace) -> None:
     """This test will create a Guacamole service but will create a workspace and automatically register the AAD Application"""

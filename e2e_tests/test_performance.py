@@ -1,7 +1,6 @@
 import asyncio
 import pytest
 import config
-from resources.workspace import get_workspace_auth_details
 from resources.resource import disable_and_delete_resource, post_resource
 from resources import strings
 
@@ -10,13 +9,14 @@ from helpers import get_admin_token
 pytestmark = pytest.mark.asyncio
 
 
+# TODO: tanya
+@pytest.mark.skip
 @pytest.mark.performance
 @pytest.mark.timeout(3000)
 async def test_parallel_resource_creations(verify) -> None:
     """Creates N workspaces in parallel, and creates a workspace service in each, in parallel"""
 
     number_workspaces = 2
-
     tasks = []
 
     for i in range(number_workspaces):
@@ -30,6 +30,8 @@ async def test_parallel_resource_creations(verify) -> None:
                 "client_id": f"{config.TEST_WORKSPACE_APP_ID}"
             }
         }
+        if config.TEST_WORKSPACE_APP_PLAN != "":
+            payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
         admin_token = await get_admin_token(verify)
         task = asyncio.create_task(post_resource(payload=payload, endpoint=strings.API_WORKSPACES, access_token=admin_token, verify=verify))
@@ -46,66 +48,25 @@ async def test_parallel_resource_creations(verify) -> None:
     await asyncio.gather(*tasks)
 
 
-@pytest.mark.skip
+@pytest.mark.extended
 @pytest.mark.performance
 @pytest.mark.timeout(3000)
-async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) -> None:
+async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify, setup_test_workspace_service) -> None:
     """Optionally creates a workspace and workspace service,
     then creates N number of VMs in parallel, patches each, and deletes them"""
 
     number_vms = 5
     number_updates = 5
 
-    # To avoid creating + deleting a workspace + service in this test, set the vars for existing ones in ./templates/core/.env
-    # PERF_TEST_WORKSPACE_ID | PERF_TEST_WORKSPACE_SERVICE_ID
-    workspace_id = config.PERF_TEST_WORKSPACE_ID
-
-    if workspace_id == "":
-        # create the workspace to use
-        payload = {
-            "templateName": strings.BASE_WORKSPACE,
-            "properties": {
-                "display_name": "E2E test guacamole service",
-                "description": "",
-                "address_space_size": "small",
-                "auth_type": "Manual",
-                "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
-                "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}"
-            }
-        }
-
-        admin_token = await get_admin_token(verify)
-        workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, admin_token, verify)
-    else:
-        workspace_path = f"/workspaces/{config.PERF_TEST_WORKSPACE_ID}"
-
-    workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
-
-    if config.PERF_TEST_WORKSPACE_SERVICE_ID == "":
-        # create a guac service
-        service_payload = {
-            "templateName": strings.GUACAMOLE_SERVICE,
-            "properties": {
-                "display_name": "Workspace service test",
-                "description": ""
-            }
-        }
-
-        workspace_service_path, _ = await post_resource(
-            payload=service_payload,
-            endpoint=f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}',
-            access_token=workspace_owner_token,
-            verify=verify)
-    else:
-        workspace_service_path = f"{workspace_path}/{strings.API_WORKSPACE_SERVICES}/{config.PERF_TEST_WORKSPACE_SERVICE_ID}"
+    workspace_service_path, _, _, _, workspace_owner_token = setup_test_workspace_service
 
     # Create the VMs in parallel, and wait for them to be created
     user_resource_payload = {
-        "templateName": "tre-service-dev-vm",
+        "templateName": strings.GUACAMOLE_WINDOWS_USER_RESOURCE,
         "properties": {
             "display_name": "Perf test VM",
             "description": "",
-            "os_image": "Ubuntu 18.04"
+            "os_image": "Windows 10"
         }
     }
 
@@ -145,10 +106,3 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
         tasks.append(task)
 
     await asyncio.gather(*tasks)
-
-    admin_token = await get_admin_token(verify)
-    # clear up workspace + service (if we created them)
-    if config.PERF_TEST_WORKSPACE_SERVICE_ID == "":
-        await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
-    if config.PERF_TEST_WORKSPACE_ID == "":
-        await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)

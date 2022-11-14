@@ -6,7 +6,7 @@ import logging
 
 from resources.resource import post_resource, disable_and_delete_resource
 from resources.workspace import get_workspace_auth_details
-from resources import strings as resource_strings
+from resources import strings
 from helpers import get_admin_token
 
 
@@ -37,7 +37,7 @@ async def create_or_get_test_workspace(auth_type: str, verify: bool, pre_created
 
     LOGGER.info("Creating workspace")
     payload = {
-        "templateName": resource_strings.BASE_WORKSPACE,
+        "templateName": strings.BASE_WORKSPACE,
         "properties": {
             "display_name": "E2E test workspace",
             "description": "Test workspace for E2E tests",
@@ -53,7 +53,7 @@ async def create_or_get_test_workspace(auth_type: str, verify: bool, pre_created
         payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
     admin_token = await get_admin_token(verify=verify)
-    workspace_path, workspace_id = await post_resource(payload, resource_strings.API_WORKSPACES, access_token=admin_token, verify=verify)
+    workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, access_token=admin_token, verify=verify)
     return workspace_path, workspace_id
 
 
@@ -77,7 +77,7 @@ async def setup_test_workspace(verify) -> Tuple[str, str, str]:
     yield workspace_path, workspace_id, workspace_owner_token
 
     # Tear-down
-    clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
+    await clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
 
 
 @pytest.fixture(scope="session")
@@ -91,4 +91,35 @@ async def setup_test_aad_workspace(verify) -> Tuple[str, str, str]:
     yield workspace_path, workspace_id, workspace_owner_token
 
     # Tear-down
-    clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
+    await clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
+
+
+@pytest.fixture(scope="session")
+async def setup_test_workspace_service(verify, setup_test_workspace) -> Tuple[str, str, str, str, str]:
+    workspace_path, workspace_id, workspace_owner_token = setup_test_workspace
+    pre_created_workspace_service_id = config.TEST_WORKSPACE_SERVICE_ID
+
+    if pre_created_workspace_service_id == "":
+        # create a guac service
+        service_payload = {
+            "templateName": strings.GUACAMOLE_SERVICE,
+            "properties": {
+                "display_name": "Workspace service test",
+                "description": ""
+            }
+        }
+
+        workspace_service_path, workspace_service_id = await post_resource(
+            payload=service_payload,
+            endpoint=f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}',
+            access_token=workspace_owner_token,
+            verify=verify)
+    else:
+        workspace_service_path = f"{workspace_path}/{strings.API_WORKSPACE_SERVICES}/{config.TEST_WORKSPACE_SERVICE_ID}"
+        workspace_service_id = config.TEST_WORKSPACE_SERVICE_ID
+
+    yield workspace_service_path, workspace_service_id, workspace_path, workspace_id, workspace_owner_token
+
+    if pre_created_workspace_service_id == "":
+        admin_token = await get_admin_token(verify=verify)
+        await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)

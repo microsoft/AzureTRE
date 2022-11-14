@@ -301,10 +301,6 @@ test-e2e-extended:
 	$(call target_title, "Running E2E extended tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=extended
 
-test-e2e-shared-services:
-	$(call target_title, "Running E2E shared service tests") && \
-	$(MAKE) test-e2e-custom SELECTOR=shared_services
-
 test-e2e-custom:
 	$(call target_title, "Running E2E tests with custom selector ${SELECTOR}") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/e2e_tests/.env \
