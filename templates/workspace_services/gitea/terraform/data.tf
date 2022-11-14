@@ -49,8 +49,8 @@ data "local_file" "version" {
 }
 
 data "azurerm_key_vault" "ws" {
-  name                     = local.keyvault_name
-  resource_group_name      = data.azurerm_resource_group.ws.name
+  name                = local.keyvault_name
+  resource_group_name = data.azurerm_resource_group.ws.name
 }
 
 data "azurerm_key_vault_secret" "aad_tenant_id" {
@@ -67,7 +67,6 @@ data "azurerm_key_vault_secret" "client_secret" {
   name         = "workspace-client-secret"
   key_vault_id = data.azurerm_key_vault.ws.id
 }
-
 
 data "azurerm_monitor_diagnostic_categories" "gitea" {
   resource_id = azurerm_linux_web_app.gitea.id
