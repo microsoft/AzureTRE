@@ -19,13 +19,13 @@ from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, 
 from models.schemas.operation import OperationInResponse
 from models.schemas.user_resource import UserResourceInCreate
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
-from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestInResponse, \
+from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestWithAllowedUserActions, \
     AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
     get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user
 
-from .airlock_resource_helpers import save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, \
+from .airlock_resource_helpers import delete_review_resource, get_allowed_actions, save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, \
     enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace, delete_review_user_resources
 from .resource_helpers import save_and_deploy_resource, construct_location_header
 
@@ -37,11 +37,11 @@ airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace
 
 # airlock
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests", status_code=status_code.HTTP_201_CREATED,
-                               response_model=AirlockRequestInResponse, name=strings.API_CREATE_AIRLOCK_REQUEST,
+                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_CREATE_AIRLOCK_REQUEST,
                                dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
 async def create_draft_request(airlock_request_input: AirlockRequestInCreate, user=Depends(get_current_workspace_owner_or_researcher_user),
                                airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
-                               workspace=Depends(get_deployed_workspace_by_id_from_path)) -> AirlockRequestInResponse:
+                               workspace=Depends(get_deployed_workspace_by_id_from_path)) -> AirlockRequestWithAllowedUserActions:
     if workspace.properties.get("enable_airlock") is False:
         raise HTTPException(status_code=status_code.HTTP_405_METHOD_NOT_ALLOWED, detail=strings.AIRLOCK_NOT_ENABLED_IN_WORKSPACE)
     try:
@@ -50,7 +50,8 @@ async def create_draft_request(airlock_request_input: AirlockRequestInCreate, us
         logging.error(f"Failed creating airlock request model instance: {e}")
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
     await save_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace)
-    return AirlockRequestInResponse(airlockRequest=airlock_request)
+    allowed_actions = get_allowed_actions(airlock_request, user, airlock_request_repo)
+    return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request, allowedUserActions=allowed_actions)
 
 
 @airlock_workspace_router.get("/workspaces/{workspace_id}/requests",
@@ -77,34 +78,39 @@ async def get_all_airlock_requests_by_workspace(
 
 
 @airlock_workspace_router.get("/workspaces/{workspace_id}/requests/{airlock_request_id}", status_code=status_code.HTTP_200_OK,
-                              response_model=AirlockRequestInResponse, name=strings.API_GET_AIRLOCK_REQUEST,
+                              response_model=AirlockRequestWithAllowedUserActions, name=strings.API_GET_AIRLOCK_REQUEST,
                               dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager), Depends(get_workspace_by_id_from_path)])
-async def retrieve_airlock_request_by_id(airlock_request=Depends(get_airlock_request_by_id_from_path)) -> AirlockRequestInResponse:
-    return AirlockRequestInResponse(airlockRequest=airlock_request)
+async def retrieve_airlock_request_by_id(airlock_request=Depends(get_airlock_request_by_id_from_path),
+                                         airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
+                                         user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)) -> AirlockRequestWithAllowedUserActions:
+    allowed_actions = get_allowed_actions(airlock_request, user, airlock_request_repo)
+    return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request, allowedUserActions=allowed_actions)
 
 
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/submit", status_code=status_code.HTTP_200_OK,
-                               response_model=AirlockRequestInResponse, name=strings.API_SUBMIT_AIRLOCK_REQUEST,
+                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_SUBMIT_AIRLOCK_REQUEST,
                                dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
 async def create_submit_request(airlock_request=Depends(get_airlock_request_by_id_from_path),
                                 user=Depends(get_current_workspace_owner_or_researcher_user),
                                 airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
-                                workspace=Depends(get_workspace_by_id_from_path)) -> AirlockRequestInResponse:
-    updated_resource = await update_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace,
-                                                                      new_status=AirlockRequestStatus.Submitted)
-    return AirlockRequestInResponse(airlockRequest=updated_resource)
+                                workspace=Depends(get_workspace_by_id_from_path)) -> AirlockRequestWithAllowedUserActions:
+    updated_request = await update_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace,
+                                                                     new_status=AirlockRequestStatus.Submitted)
+    allowed_actions = get_allowed_actions(updated_request, user, airlock_request_repo)
+    return AirlockRequestWithAllowedUserActions(airlockRequest=updated_request, allowedUserActions=allowed_actions)
 
 
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/cancel", status_code=status_code.HTTP_200_OK,
-                               response_model=AirlockRequestInResponse, name=strings.API_CANCEL_AIRLOCK_REQUEST,
+                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_CANCEL_AIRLOCK_REQUEST,
                                dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
 async def create_cancel_request(airlock_request=Depends(get_airlock_request_by_id_from_path),
                                 user=Depends(get_current_workspace_owner_or_researcher_user),
                                 airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
-                                workspace=Depends(get_workspace_by_id_from_path)) -> AirlockRequestInResponse:
-    updated_resource = await update_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace,
-                                                                      new_status=AirlockRequestStatus.Cancelled)
-    return AirlockRequestInResponse(airlockRequest=updated_resource)
+                                workspace=Depends(get_workspace_by_id_from_path)) -> AirlockRequestWithAllowedUserActions:
+    updated_request = await update_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace,
+                                                                     new_status=AirlockRequestStatus.Cancelled)
+    allowed_actions = get_allowed_actions(updated_request, user, airlock_request_repo)
+    return AirlockRequestWithAllowedUserActions(airlockRequest=updated_request, allowedUserActions=allowed_actions)
 
 
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/review-user-resource",
@@ -140,7 +146,7 @@ async def create_review_user_resource(
             workspace_service_id = config["export_vm_workspace_service_id"]
             user_resource_template_name = config["export_vm_user_resource_template_name"]
 
-        logging.info(f"Going to create a user resource in {workspace_id} {workspace_service_id} {user_resource_template_name}")
+        logging.info("Found workspace configuration for review user resources")
     except (KeyError, TypeError) as e:
         logging.error(f"Failed to parse configuration: {e}")
         raise HTTPException(status_code=status_code.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -156,6 +162,37 @@ async def create_review_user_resource(
                             detail=f"Failed to retrieve Airlock Review configuration for workspace {workspace.id}.\
                             Please ask your TRE administrator to check the configuration. Details: {str(e)}")
 
+    # Check whether the user already has a healthy VM deployed for the request or not
+    if user.id in airlock_request.reviewUserResources:
+        r = airlock_request.reviewUserResources[user.id]
+        logging.info(f"User already has an existing review resource (ID: {r.userResourceId})")
+        existing_resource = user_resource_repo.get_user_resource_by_id(workspace_id=r.workspaceId, service_id=r.workspaceServiceId,
+                                                                       resource_id=r.userResourceId)
+
+        # Is the existing resource enabled and deployed
+        if existing_resource.isEnabled and existing_resource.deploymentStatus == "succeeded":
+            # And does it have power information
+            if "powerState" in existing_resource and "azureStatus" in existing_resource.powerState:
+                # And does that power state indicate it's running
+                if existing_resource.azureStatus.powerState == "VM running":
+                    logging.info("Existing review resource is enabled, in a succeeded state and running. Returning a conflict error.")
+                    raise HTTPException(status_code=status_code.HTTP_409_CONFLICT,
+                                        detail="A healthy review resource is already deployed for the current user."
+                                        "You may only have a single review resource.")
+
+            # If it wasn't healthy or running, we'll delete the existing resource if not already deleted, and then create a new one
+            logging.info("Existing review resource is in an unhealthy state.")
+            if existing_resource.deploymentStatus != "deleted":
+                logging.info("Deleting existing user resource...")
+                _ = await delete_review_resource(
+                    airlock_request=airlock_request,
+                    user_resource_repo=user_resource_repo,
+                    workspace_service_repo=workspace_service_repo,
+                    resource_template_repo=resource_template_repo,
+                    operations_repo=operation_repo,
+                    user=user
+                )
+
     # Getting the SAS URL (this function raises HTTPException in case of error)
     airlock_request_sas_url = get_airlock_container_link(airlock_request, user, workspace)
 
@@ -164,13 +201,14 @@ async def create_review_user_resource(
         templateName=user_resource_template_name,
         properties={
             "display_name": "Airlock Review VM",
-            "description": f"Airlock Review VM for request {airlock_request.title} (ID {airlock_request.id})",
+            "description": f"{airlock_request.title} (ID {airlock_request.id})",
             "airlock_request_sas_url": airlock_request_sas_url
         }
     )
 
     # Start VM creation
     try:
+        logging.info(f"Creating a user resource in {workspace_id} {workspace_service_id} {user_resource_template_name}")
         user_resource, resource_template = user_resource_repo.create_user_resource_item(
             user_resource_create, workspace_id, workspace_service_id, workspace_service.templateName, user.id, user.roles)
     except (ValidationError, ValueError) as e:
@@ -201,14 +239,14 @@ async def create_review_user_resource(
             workspaceServiceId=workspace_service_id,
             userResourceId=user_resource.id
         ))
-    logging.info(f"Airlock Request {updated_resource.id} updated to include {updated_resource.reviewUserResources}")
 
+    logging.info(f"Airlock Request {updated_resource.id} updated to include {updated_resource.reviewUserResources}")
     response.headers["Location"] = construct_location_header(operation)
     return AirlockRequestAndOperationInResponse(airlockRequest=updated_resource, operation=operation)
 
 
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/review",
-                               status_code=status_code.HTTP_200_OK, response_model=AirlockRequestInResponse,
+                               status_code=status_code.HTTP_200_OK, response_model=AirlockRequestWithAllowedUserActions,
                                name=strings.API_REVIEW_AIRLOCK_REQUEST, dependencies=[Depends(get_current_airlock_manager_user),
                                                                                       Depends(get_workspace_by_id_from_path)])
 async def create_airlock_review(
@@ -220,7 +258,7 @@ async def create_airlock_review(
         user_resource_repo=Depends(get_repository(UserResourceRepository)),
         workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)),
         operation_repo=Depends(get_repository(OperationRepository)),
-        resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> AirlockRequestInResponse:
+        resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> AirlockRequestWithAllowedUserActions:
 
     try:
         airlock_review = airlock_request_repo.create_airlock_review_item(airlock_review_input, user)
@@ -250,7 +288,8 @@ async def create_airlock_review(
         user=user
     )
 
-    return AirlockRequestInResponse(airlockRequest=updated_airlock_request)
+    allowed_actions = get_allowed_actions(updated_airlock_request, user, airlock_request_repo)
+    return AirlockRequestWithAllowedUserActions(airlockRequest=updated_airlock_request, allowedUserActions=allowed_actions)
 
 
 def get_airlock_container_link(airlock_request: AirlockRequest, user, workspace):

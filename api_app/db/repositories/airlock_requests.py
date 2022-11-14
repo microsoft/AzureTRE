@@ -152,7 +152,8 @@ class AirlockRequestRepository(BaseRepository):
             request_files=request_files,
             status_message=status_message,
             airlock_review=airlock_review,
-            review_user_resource=review_user_resource)
+            review_user_resource=review_user_resource,
+            updated_by=updated_by)
         try:
             db_response = self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
         except CosmosAccessConditionFailedError:
@@ -187,7 +188,8 @@ class AirlockRequestRepository(BaseRepository):
             request_files: List[AirlockFile] = None,
             status_message: str = None,
             airlock_review: AirlockReview = None,
-            review_user_resource: AirlockReviewUserResource = None) -> AirlockRequest:
+            review_user_resource: AirlockReviewUserResource = None,
+            updated_by: User = None) -> AirlockRequest:
         updated_request = copy.deepcopy(original_request)
 
         if new_status is not None:
@@ -207,10 +209,7 @@ class AirlockRequestRepository(BaseRepository):
                 updated_request.reviews.append(airlock_review)
 
         if review_user_resource is not None:
-            if updated_request.reviewUserResources is None:
-                updated_request.reviewUserResources = [review_user_resource]
-            else:
-                updated_request.reviewUserResources.append(review_user_resource)
+            updated_request.reviewUserResources[updated_by] = review_user_resource
 
         return updated_request
 

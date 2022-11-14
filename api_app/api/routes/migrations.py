@@ -65,6 +65,10 @@ async def migrate_database(resources_repo=Depends(get_repository(ResourceReposit
         num_updated = airlock_migration.add_created_by_and_rename_in_history()
         migrations.append(Migration(issueNumber="2779", status=f'Renamed fields & updated {num_updated} airlock requests with createdBy'))
 
+        logging.info("PR XXXX - Support multiple request reviewers")
+        num_updated = airlock_migration.change_review_resources_to_dict()
+        migrations.append(Migration(issueNumber="XXXX", status=f'Updated {num_updated} airlock requests with new reviewUserResources format'))
+
         return MigrationOutList(migrations=migrations)
     except Exception as e:
         logging.error("Failed to migrate database: %s", e, exc_info=True)
