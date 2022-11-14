@@ -1,6 +1,6 @@
 ---
 name: tre-service-mlflow
-version: 0.5.2
+version: 0.5.5
 description: "An Azure TRE service for MLflow machine learning lifecycle"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -76,10 +76,6 @@ install:
         tre_resource_id: "{{ bundle.parameters.id }}"
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -97,10 +93,6 @@ upgrade:
         tre_resource_id: "{{ bundle.parameters.id }}"
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -118,10 +110,6 @@ uninstall:
         tre_resource_id: "{{ bundle.parameters.id }}"
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
