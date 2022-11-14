@@ -65,6 +65,7 @@ async def test_get_workspace_service_templates(template_name, verify) -> None:
 @pytest.mark.parametrize("template_name", shared_service_templates)
 async def test_get_shared_service_templates(template_name, verify) -> None:
     # Test that the template is returned in GET request
+    admin_token = await get_admin_token(verify)
     async with get_template(template_name, strings.API_SHARED_SERVICE_TEMPLATES, admin_token, verify) as response:
         assert (response.status_code == status.HTTP_200_OK), f"GET Request for {template_name} failed"
 
