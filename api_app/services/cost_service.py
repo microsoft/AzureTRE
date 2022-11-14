@@ -58,7 +58,7 @@ class CostService:
 
     def __init__(self):
         self.scope = "/subscriptions/{}".format(config.SUBSCRIPTION_ID)
-        self.client = CostManagementClient(credential=credentials.get_credential(), base_url="https://7b51abd8-dca0-4c5e-9f07-36ff74023532.mock.pstmn.io")
+        self.client = CostManagementClient(credential=credentials.get_credential())
         self.resource_client = ResourceManagementClient(credentials.get_credential(), config.SUBSCRIPTION_ID)
 
     def query_tre_costs(self, tre_id, granularity: GranularityEnum, from_date: datetime, to_date: datetime,
