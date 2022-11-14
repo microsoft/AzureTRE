@@ -104,7 +104,7 @@
             "description": "Configuration for Airlock Review feature. Needs to be set up after workspace creation",
             "properties": {
               "import": {
-                "title": "Import VM Settings",
+                "title": "Import Review Settings",
                 "required": [
                   "import_vm_workspace_id",
                   "import_vm_workspace_service_id",
@@ -112,17 +112,17 @@
                 ],
                 "properties": {
                   "import_vm_workspace_id": {
-                    "title": "Import Workspace ID",
+                    "title": "Import Review Workspace ID",
                     "type": "string",
                     "description": "ID for Import Review workspace"
                   },
                   "import_vm_workspace_service_id": {
-                    "title": "Import Workspace Service ID",
+                    "title": "Import Review Workspace Service ID",
                     "type": "string",
                     "description": "ID for Workspace Service ID where to deploy Review user resources"
                   },
                   "import_vm_user_resource_template_name": {
-                    "title": "Import VM User Resource Template Name",
+                    "title": "Import Review VM User Resource Template Name",
                     "type": "string",
                     "description": "Template Name for User Resource for reviewing Import Requests",
                     "examples": [
@@ -132,19 +132,19 @@
                 }
               },
               "export": {
-                "title": "Export VM Settings",
+                "title": "Export Review VM Settings",
                 "required": [
                   "export_vm_workspace_service_id",
                   "export_vm_user_resource_template_name"
                 ],
                 "properties": {
                   "export_vm_workspace_service_id": {
-                    "title": "Export Workspace Service ID",
+                    "title": "Export Review Workspace Service ID",
                     "type": "string",
                     "description": "ID for Workspace Service ID where to deploy Review user resources"
                   },
                   "export_vm_user_resource_template_name": {
-                    "title": "Export VM User Resource Template Name",
+                    "title": "Export Review VM User Resource Template Name",
                     "type": "string",
                     "description": "Template Name for User Resource for reviewing Export Requests",
                     "examples": [

@@ -18,6 +18,8 @@ FEATURES:
 * Display workspace and shared services total costs for admin role in UI [#2738](https://github.com/microsoft/AzureTRE/pull/2772)
 * Automatically validate all resources have tre_id tag via TFLint [#2774](https://github.com/microsoft/AzureTRE/pull/2774)
 * Add metadata endpoint and simplify `tre` CLI login (also adds API version to UI) (#2794)
+* Updated resource card in UI with visual improvements, disabled state badge and resource ID in info popout [#2846](https://github.com/microsoft/AzureTRE/pull/2846)
+* Add health information for backend services to UI info popout in footer [#2846](https://github.com/microsoft/AzureTRE/pull/2846)
 
 ENHANCEMENTS:
 * Renamed several airlock fields to make them more descriptive and added a createdBy field. Included migration for backwards compatibility ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
@@ -31,12 +33,14 @@ ENHANCEMENTS:
 * As part of the above change, the `auto_create` string passed to the `client_id` field in each Workspace template has now moved to an `auth_type` enum field, where the user can select the authentication type from a dropdown.
 * Adds extra dns zones and links into core network ([#2828](https://github.com/microsoft/AzureTRE/pull/2828)).
 * Add UI version to its footer card ([#2849](https://github.com/microsoft/AzureTRE/pull/2849)).
+* Use `log_category_types` in `azurerm_monitor_diagnostic_categories` to remove deprecation warning ([#2855](https://github.com/microsoft/AzureTRE/pull/2855)).
 
 BUG FIXES:
 * Show the correct createdBy value for airlock requests in UI and in API queries ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
 * Fix deployment of Airlock Notifier ([#2745](https://github.com/microsoft/AzureTRE/pull/2745))
 * Fix Nexus bootstrapping firewall race condition ([#2811](https://github.com/microsoft/AzureTRE/pull/2811))
 * Handle unsupported azure subscriptions in cost reporting ([#2823](https://github.com/microsoft/AzureTRE/pull/2823))
+* Fix missing ID parameter in Certs bundle ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))
 
 COMPONENTS:
 

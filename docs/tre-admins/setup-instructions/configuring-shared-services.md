@@ -11,29 +11,15 @@ Before deploying the Nexus shared service, you need to make sure that it will ha
 
 You can use the Certs Shared Service to set one up by following these steps:
 
-1. Run the below commands in your terminal to build, publish and register the certs bundle:
+1. Run the below command in your terminal to build, publish and register the certs bundle:
 
   ```cmd
-  make bundle-build DIR=./templates/shared_services/certs
-  make bundle-publish DIR=./templates/shared_services/certs
-  make bundle-register DIR=./templates/shared_services/certs BUNDLE_TYPE=shared_service
+  make shared_service_bundle BUNDLE=certs
   ```
 
-2. Navigate to the Swagger UI for your TRE API at `https://<azure_tre_fqdn>/api/docs`, and authenticate if you haven't already by clicking `Authorize`.
+2. Navigate to the TRE UI, click on Shared Services in the navigation menu and click *Create new*.
 
-3. Click `Try it out` on the `POST` `/api/shared-services` operation, and paste the following to deploy the certs service:
-
-  ```json
-  {
-    "templateName": "tre-shared-service-certs",
-    "properties": {
-      "display_name": "Nexus cert",
-      "description": "Generate/renew ssl cert for Nexus shared service",
-      "domain_prefix": "nexus",
-      "cert_name": "nexus-ssl"
-    }
-  }
-  ```
+3. Select the Certs template, then fill in the required details. *Domain prefix* should be set to `nexus` and *Cert name* should be `nexus-ssl`.
 
 !!! caution
     If you have KeyVault Purge Protection enabled and are re-deploying your environment using the same `cert_name`, you may encounter this: `Status=409 Code=\"Conflict\" Message=\"Certificate nexus-ssl is currently in a deleted but recoverable state`. You need to either manually recover the certificate or purge it before redeploying.
@@ -44,31 +30,15 @@ You can verify whether this has been successful by navigating to your core keyva
 
 After verifying the certificate has been generated, you can deploy Nexus:
 
-1. Run the below commands in your terminal to build, publish and register the Nexus shared service bundle:
+1. Run the below command in your terminal to build, publish and register the Nexus shared service bundle:
 
   ```cmd
-  make bundle-build DIR=./templates/shared_services/sonatype-nexus-vm
-  make bundle-publish DIR=./templates/shared_services/sonatype-nexus-vm
-  make bundle-register DIR=./templates/shared_services/sonatype-nexus-vm BUNDLE_TYPE=shared_service
+  make shared_service_bundle BUNDLE=sonatype-nexus-vm
   ```
 
-1. Navigate to the Swagger UI for your TRE API at `https://<azure_tre_fqdn>/api/docs`, and authenticate if you haven't already by clicking `Authorize`.
+1. Navigate back to the TRE UI, and click *Create new* again within the Shared Services page.
 
-1. Click `Try it out` on the `POST` `/api/shared-services` operation, and paste the following to deploy the Nexus shared service:
-
-  ```json
-  {
-    "templateName": "tre-shared-service-sonatype-nexus",
-    "properties": {
-      "display_name": "Nexus",
-      "description": "Proxy public repositories with Nexus",
-      "ssl_cert_name": "nexus-ssl"
-    }
-  }
-  ```
-
-!!! tip
-    If you called your cert something different in the certs shared service step, make sure that is reflected above.
+1. Select the Nexus template then fill in the required details. The *SSL certificate name* should default to `nexus-ssl`, so there's no need to change it unless you gave it a different name in the previous step.
 
 This will deploy the infrastructure required for Nexus, then start the service and configure it with the repository configurations located in the `./templates/shared_services/sonatype-nexus-vm/scripts/nexus_repos_config` folder. It will also set up HTTPS using the certificate you generated in the previous section, so proxies can be served at `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`.
 
@@ -107,7 +77,6 @@ When approaching expiry, you can either provide an updated certificate if you br
 Note : This is a Gitea *shared service* which will be accessible from all workspaces intended for mirroring external Git repositories. A Gitea *workspace service* can also be deployed per workspace to enable Gitea to be used within a specific workspace.
 
 By default, this Gitea instance does not have any repositories configured. You can add repositories to Gitea either by using the command line or by using the Gitea web interface.
-
 
 ### Command Line
 Make sure you run the following commands using git bash and set your current directory as C:/AzureTRE.
