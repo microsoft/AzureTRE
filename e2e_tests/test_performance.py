@@ -9,8 +9,6 @@ from helpers import get_admin_token
 pytestmark = pytest.mark.asyncio
 
 
-# TODO: tanya
-@pytest.mark.skip
 @pytest.mark.performance
 @pytest.mark.timeout(3000)
 async def test_parallel_resource_creations(verify) -> None:
@@ -48,7 +46,6 @@ async def test_parallel_resource_creations(verify) -> None:
     await asyncio.gather(*tasks)
 
 
-@pytest.mark.extended
 @pytest.mark.performance
 @pytest.mark.timeout(3000)
 async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify, setup_test_workspace_service) -> None:
