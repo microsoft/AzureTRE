@@ -12,6 +12,10 @@ terraform {
       source  = "hashicorp/local"
       version = "=2.2.3"
     }
+    template = {
+      source  = "hashicorp/template"
+      version = ">= 2.2"
+    }
   }
 
   backend "azurerm" {
