@@ -16,6 +16,11 @@ BLOB_FILE_PATH = "./test_airlock_sample.txt"
 BLOB_NAME = os.path.basename(BLOB_FILE_PATH)
 
 
+@pytest.mark.wip
+async def test_airlock_import_workspace(setup_test_airlock_import_review_workspace):
+    LOGGER.info("Workspace set up")
+
+
 @pytest.mark.airlock
 @pytest.mark.extended
 @pytest.mark.timeout(35 * 60)

@@ -31,26 +31,34 @@ def verify(pytestconfig):
         return False
 
 
-async def create_or_get_test_workspace(auth_type: str, verify: bool, pre_created_workspace_id: str = "", client_id: str = "", client_secret: str = "") -> Tuple[str, str]:
+async def create_or_get_test_workspace(
+        auth_type: str,
+        verify: bool,
+        template_name: resource_strings.BASE_WORKSPACE,
+        pre_created_workspace_id: str = "",
+        client_id: str = "",
+        client_secret: str = "") -> Tuple[str, str]:
     if pre_created_workspace_id != "":
         return f"/workspaces/{pre_created_workspace_id}", pre_created_workspace_id
 
     LOGGER.info("Creating workspace")
+
+    description = " ".join([x.capitalize() for x in template_name.split("-")[2:]])
     payload = {
-        "templateName": resource_strings.BASE_WORKSPACE,
+        "templateName": template_name,
         "properties": {
-            "display_name": "E2E test workspace",
-            "description": "Test workspace for E2E tests",
-            "address_space_size": "small",
-            "auth_type": auth_type
+            "display_name": f"E2E {description} workspace ({auth_type} AAD)",
+            "description": f"{template_name} test workspace for E2E tests",
+            "auth_type": auth_type,
+            "address_space_size": "small"
         }
     }
+    if config.TEST_WORKSPACE_APP_PLAN != "":
+        payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
+
     if auth_type == "Manual":
         payload["properties"]["client_id"] = client_id
         payload["properties"]["client_secret"] = client_secret
-
-    if config.TEST_WORKSPACE_APP_PLAN != "":
-        payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
     admin_token = await get_admin_token(verify=verify)
     workspace_path, workspace_id = await post_resource(payload, resource_strings.API_WORKSPACES, access_token=admin_token, verify=verify)
@@ -92,3 +100,17 @@ async def setup_test_aad_workspace(verify) -> Tuple[str, str, str]:
 
     # Tear-down
     clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
+
+
+@pytest.fixture(scope="session")
+async def setup_test_airlock_import_review_workspace(verify) -> Tuple[str, str, str]:
+    pre_created_workspace_id = config.TEST_AIRLOCK_IMPORT_REVIEW_WORKSPACE_ID
+    # Set up
+    workspace_path, workspace_id = await create_or_get_test_workspace(auth_type="Automatic", verify=verify, template_name=resource_strings.AIRLOCK_IMPORT_REVIEW_WORKSPACE, pre_created_workspace_id=pre_created_workspace_id)
+
+    admin_token = await get_admin_token(verify=verify)
+    workspace_owner_token, _ = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
+    yield workspace_path, workspace_id, workspace_owner_token
+
+    # # Tear-down
+    # clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
