@@ -14,7 +14,7 @@ export interface AirlockRequest {
   title: string;
   businessJustification: string;
   status: AirlockRequestStatus;
-  reviewUserResources: Array<AirlockReviewUserResource>;
+  reviewUserResources: {[key: string]: AirlockReviewUserResource};
   allowedUserActions: Array<AirlockRequestAction>;
   reviews?: Array<AirlockReview>;
   statusMessage?: string;

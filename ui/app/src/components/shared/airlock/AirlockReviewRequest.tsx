@@ -16,6 +16,7 @@ import { useAppDispatch } from "../../../hooks/customReduxHooks";
 import { addUpdateOperation } from "../notifications/operationsSlice";
 import { StatusBadge } from "../StatusBadge";
 import vmImage from "../../../assets/virtual_machine.svg";
+import { useAccount, useMsal } from "@azure/msal-react";
 
 interface AirlockReviewRequestProps {
   request: AirlockRequest | undefined,
@@ -39,6 +40,8 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
   const dispatch = useAppDispatch();
+  const { accounts } = useMsal();
+  const account = useAccount(accounts[0] || {});
 
   useEffect(() => setRequest(props.request), [props.request]);
 
@@ -58,13 +61,13 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
 
   // Get the review user resource if present in the airlock request
   useEffect(() => {
-    const getReviewUserResource = async () => {
+    const getReviewUserResource = async (userId: string) => {
       setReviewResourceError(false);
       try {
-        // TODO: support more than one resource
-        const reviewWorkspaceId = request?.reviewUserResources[0].workspaceId;
-        const reviewServiceId = request?.reviewUserResources[0].workspaceServiceId;
-        const reviewResourceId = request?.reviewUserResources[0].userResourceId;
+        // Find the user's resource
+        const reviewWorkspaceId = request?.reviewUserResources[userId].workspaceId;
+        const reviewServiceId = request?.reviewUserResources[userId].workspaceServiceId;
+        const reviewResourceId = request?.reviewUserResources[userId].userResourceId;
 
         // First fetch the scope for the review resource workspace if different to the airlock request workspace
         let scopeId;
@@ -91,8 +94,11 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         setReviewResourceError(true);
       }
     };
-    if (reviewResourcesConfigured && request?.reviewUserResources && request?.reviewUserResources.length > 0) {
-      getReviewUserResource();
+    if (reviewResourcesConfigured && request?.reviewUserResources && account) {
+      const userId = account.localAccountId.split('.')[0];
+      if (userId in request.reviewUserResources) {
+        getReviewUserResource(userId);
+      }
     }
   }, [apiCall, request, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI, reviewResourcesConfigured]);
 
@@ -116,7 +122,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       setReviewResourceError(true);
     } else if (successStates.includes(latestUpdate.operation?.status) || successStates.includes(reviewResource.deploymentStatus)) {
       setReviewResourceStatus('created');
-    } else if (request && request.reviewUserResources?.length === 0) {
+    } else if (request && request.reviewUserResources) {
       setReviewResourceStatus('notCreated');
     }
   }, [latestUpdate.operation, reviewResource.deploymentStatus, request])

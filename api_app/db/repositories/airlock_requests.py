@@ -209,7 +209,7 @@ class AirlockRequestRepository(BaseRepository):
                 updated_request.reviews.append(airlock_review)
 
         if review_user_resource is not None:
-            updated_request.reviewUserResources[updated_by] = review_user_resource
+            updated_request.reviewUserResources[updated_by.id] = review_user_resource
 
         return updated_request
 
