@@ -7,7 +7,7 @@ import { HttpMethod, useAuthApiCall } from "./useAuthApiCall";
 import { useAppSelector } from './customReduxHooks';
 
 export const useComponentManager = (
-  resource: Resource | null | undefined,
+  resource: Resource | undefined,
   onUpdate: (r: Resource) => void,
   onRemove: (r: Resource) => void,
   workspaceScopeId = ""

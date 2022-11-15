@@ -35,7 +35,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
   const [reviewResourceError, setReviewResourceError] = useState(false);
   const [apiError, setApiError] = useState({} as APIError);
   const [proceedToReview, setProceedToReview] = useState(false);
-  const [reviewResource, setReviewResource] = useState<UserResource | null>();
+  const [reviewResource, setReviewResource] = useState<UserResource>();
   const [reviewWorkspaceScope, setReviewWorkspaceScope] = useState<string>();
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
@@ -93,12 +93,12 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         setReviewResourceError(true);
       }
     };
-    if (reviewResourcesConfigured && request?.reviewUserResources && account) {
+    if (reviewResourcesConfigured && account) {
       const userId = account.localAccountId.split('.')[0];
-      if (userId in request.reviewUserResources) {
+      if (request?.reviewUserResources && userId in request.reviewUserResources) {
         getReviewUserResource(userId);
       } else {
-        setReviewResource(null);
+        setReviewResourceStatus('notCreated');
       }
     }
   }, [apiCall, request, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI, reviewResourcesConfigured, account]);
@@ -125,8 +125,6 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       } else if (successStates.includes(latestUpdate.operation?.status) || successStates.includes(reviewResource.deploymentStatus)) {
         setReviewResourceStatus('created');
       }
-    } else if (reviewResource === null) {
-      setReviewResourceStatus('notCreated');
     }
   }, [latestUpdate, reviewResource, request])
 
@@ -146,7 +144,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       err.userMessage = "Error creating review resource";
       setApiError(err);
       setReviewResourceError(true);
-      setReviewResourceStatus('notCreated');
+      setReviewResourceStatus('failed');
     }
   }, [apiCall, workspaceCtx.workspaceApplicationIdURI, request?.id, workspaceCtx.workspace.id, dispatch, props])
 
@@ -179,56 +177,57 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
   let statusBadge = <Shimmer></Shimmer>;
   let action = <Spinner style={{marginRight:20}}></Spinner>;
 
+  // Get connection property for review userResource
+  let connectUri = '';
+  if (reviewResource?.properties && reviewResource.properties.connection_uri) {
+    connectUri = reviewResource.properties.connection_uri;
+  }
+
+  // Determine whether or not to show connect button or re-deploy
+  let resourceNotConnectable = true;
+  if (reviewResource) {
+    resourceNotConnectable = latestUpdate.componentAction === ComponentAction.Lock
+      || actionsDisabledStates.includes(reviewResource.deploymentStatus)
+      || !reviewResource.isEnabled
+      || (reviewResource.azureStatus?.powerState && reviewResource.azureStatus.powerState !== VMPowerStates.Running)
+      || !connectUri;
+  }
+
   // Determine the relevant actions and status to show
-  if (reviewResource && latestUpdate) {
-    // Get connection property for review userResource
-    let connectUri = '';
-    if (reviewResource?.properties && reviewResource.properties.connection_uri) {
-      connectUri = reviewResource.properties.connection_uri;
-    }
-
-    // Determine whether or not to show connect button or re-deploy
-    const resourceNotConnectable = latestUpdate.componentAction === ComponentAction.Lock
-        || actionsDisabledStates.includes(reviewResource.deploymentStatus)
-        || !reviewResource.isEnabled
-        || (reviewResource.azureStatus?.powerState && reviewResource.azureStatus.powerState !== VMPowerStates.Running)
-        || !connectUri;
-
-    switch (reviewResourceStatus) {
-      case 'creating':
-        statusBadge = <StatusBadge
-          resource={reviewResource}
-          status={latestUpdate.operation?.status}
+  switch (reviewResourceStatus) {
+    case 'creating':
+      statusBadge = <StatusBadge
+        resource={reviewResource}
+        status={latestUpdate.operation?.status}
+      />;
+      break;
+    case 'notCreated':
+      statusBadge = <small>Not created</small>;
+      action = <PrimaryButton onClick={createReviewResource} text="Create" />;
+      break;
+    case 'failed':
+      statusBadge = <StatusBadge
+        resource={reviewResource}
+        status={latestUpdate.operation?.status}
+      />;
+      action = <PrimaryButton onClick={createReviewResource} text="Retry" />;
+      break;
+    case 'created':
+      statusBadge = <PowerStateBadge state={reviewResource?.azureStatus.powerState} />;
+      if (resourceNotConnectable) {
+        action = <PrimaryButton
+          onClick={createReviewResource}
+          text="Re-deploy"
+          title="Re-deploy resource"
         />;
-        break;
-      case 'notCreated':
-        statusBadge = <small>Not created</small>;
-        action = <PrimaryButton onClick={createReviewResource} text="Create" />;
-        break;
-      case 'failed':
-        statusBadge = <StatusBadge
-          resource={reviewResource}
-          status={latestUpdate.operation?.status}
+      } else {
+        action = <PrimaryButton
+          onClick={() => window.open(connectUri)}
+          text="View data"
+          title="Connect to resource"
         />;
-        action = <PrimaryButton onClick={createReviewResource} text="Retry" />;
-        break;
-      case 'created':
-        statusBadge = <PowerStateBadge state={reviewResource?.azureStatus.powerState} />;
-        if (resourceNotConnectable) {
-          action = <PrimaryButton
-            onClick={createReviewResource}
-            text="Re-deploy"
-            title="Re-deploy resource"
-          />;
-        } else {
-          action = <PrimaryButton
-            onClick={() => window.open(connectUri)}
-            text="View data"
-            title="Connect to resource"
-          />;
-        }
-        break;
-    }
+      }
+      break;
   }
 
   const currentStep = !proceedToReview ? <>
