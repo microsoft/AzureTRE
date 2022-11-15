@@ -172,7 +172,7 @@ async def create_review_user_resource(
         # Is the existing resource enabled and deployed
         if existing_resource.isEnabled and existing_resource.deploymentStatus == "succeeded":
             # And does it have power information
-            if "powerState" in existing_resource and "azureStatus" in existing_resource.powerState:
+            if hasattr(existing_resource, "powerState") and hasattr(existing_resource.powerState, "azureStatus"):
                 # And does that power state indicate it's running
                 if existing_resource.azureStatus.powerState == "VM running":
                     logging.info("Existing review resource is enabled, in a succeeded state and running. Returning a conflict error.")
@@ -180,18 +180,18 @@ async def create_review_user_resource(
                                         detail="A healthy review resource is already deployed for the current user."
                                         "You may only have a single review resource.")
 
-            # If it wasn't healthy or running, we'll delete the existing resource if not already deleted, and then create a new one
-            logging.info("Existing review resource is in an unhealthy state.")
-            if existing_resource.deploymentStatus != "deleted":
-                logging.info("Deleting existing user resource...")
-                _ = await delete_review_resource(
-                    airlock_request=airlock_request,
-                    user_resource_repo=user_resource_repo,
-                    workspace_service_repo=workspace_service_repo,
-                    resource_template_repo=resource_template_repo,
-                    operations_repo=operation_repo,
-                    user=user
-                )
+        # If it wasn't healthy or running, we'll delete the existing resource if not already deleted, and then create a new one
+        logging.info("Existing review resource is in an unhealthy state.")
+        if existing_resource.deploymentStatus != "deleted":
+            logging.info("Deleting existing user resource...")
+            _ = await delete_review_resource(
+                airlock_request=airlock_request,
+                user_resource_repo=user_resource_repo,
+                workspace_service_repo=workspace_service_repo,
+                resource_template_repo=resource_template_repo,
+                operations_repo=operation_repo,
+                user=user
+            )
 
     # Getting the SAS URL (this function raises HTTPException in case of error)
     airlock_request_sas_url = get_airlock_container_link(airlock_request, user, workspace)

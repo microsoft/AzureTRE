@@ -37,6 +37,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
   const [proceedToReview, setProceedToReview] = useState(false);
   const [reviewResource, setReviewResource] = useState<UserResource>();
   const [reviewWorkspaceScope, setReviewWorkspaceScope] = useState<string>();
+  const [otherReviewers, setOtherReviewers] = useState<Array<string>>();
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
   const dispatch = useAppDispatch();
@@ -93,13 +94,15 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         setReviewResourceError(true);
       }
     };
-    if (reviewResourcesConfigured && account) {
+    if (reviewResourcesConfigured && account && request) {
       const userId = account.localAccountId.split('.')[0];
-      if (request?.reviewUserResources && userId in request.reviewUserResources) {
+      if (userId in request.reviewUserResources) {
         getReviewUserResource(userId);
       } else {
         setReviewResourceStatus('notCreated');
       }
+      const otherReviewers = Object.keys(request.reviewUserResources).filter(id => id !== userId);
+      setOtherReviewers(otherReviewers);
     }
   }, [apiCall, request, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI, reviewResourcesConfigured, account]);
 
@@ -249,6 +252,11 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
             { action }
           </Stack.Item>
         </Stack>
+        {
+          otherReviewers && otherReviewers.length > 0 && <MessageBar messageBarType={MessageBarType.info}>
+            {otherReviewers.length} others are reviewing this request.
+          </MessageBar>
+        }
         { reviewResourceError && <ExceptionLayout e={apiError} /> }
       </> : <>
         <MessageBar messageBarType={MessageBarType.severeWarning}>
