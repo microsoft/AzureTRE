@@ -10,6 +10,7 @@ resource "random_password" "gitea_passwd" {
 resource "azurerm_user_assigned_identity" "gitea_id" {
   resource_group_name = data.azurerm_resource_group.ws.name
   location            = data.azurerm_resource_group.ws.location
+  tags                = local.workspace_service_tags
 
   name = "id-gitea-${local.service_resource_name_suffix}"
 
@@ -170,6 +171,7 @@ resource "azurerm_key_vault_secret" "gitea_password" {
   name         = "${local.webapp_name}-administrator-password"
   value        = random_password.gitea_passwd.result
   key_vault_id = data.azurerm_key_vault.ws.id
+  tags                            = local.workspace_service_tags
 
   depends_on = [
     azurerm_key_vault_access_policy.gitea_policy
