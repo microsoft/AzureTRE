@@ -57,3 +57,4 @@
   | -------- | ----------- |
   | `AZURE_CREDENTIALS`| Credentials used to authorize CI/CD workflows to provision resources for the TRE workspaces and workspace services. This is basically your ARM client credentials in json format. Read more about how to create it and its format [here](./setup-instructions/workflows.md##create-a-service principal-for-provisioning-resources)|
   | `MS_TEAMS_WEBHOOK_URI` | URI for the Teams channel webhook |
+  | `E2E_TESTS_NUMBER_PROCESSES` | (Optional) Number of processes to run End-to-end tests |
