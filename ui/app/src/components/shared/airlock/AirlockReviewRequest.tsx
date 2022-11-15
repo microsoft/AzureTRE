@@ -254,7 +254,11 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         </Stack>
         {
           otherReviewers && otherReviewers.length > 0 && <MessageBar messageBarType={MessageBarType.info}>
-            {otherReviewers.length} others are reviewing this request.
+            {
+              otherReviewers.length === 1
+                ? <><b>1</b> other person is reviewing this request.</>
+                : <><b>{otherReviewers.length}</b> other people are reviewing this request.</>
+            }
           </MessageBar>
         }
         { reviewResourceError && <ExceptionLayout e={apiError} /> }

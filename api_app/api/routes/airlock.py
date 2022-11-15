@@ -185,7 +185,7 @@ async def create_review_user_resource(
         if existing_resource.deploymentStatus != "deleted":
             logging.info("Deleting existing user resource...")
             _ = await delete_review_resource(
-                airlock_request=airlock_request,
+                user_resource=existing_resource,
                 user_resource_repo=user_resource_repo,
                 workspace_service_repo=workspace_service_repo,
                 resource_template_repo=resource_template_repo,
