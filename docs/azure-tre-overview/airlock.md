@@ -28,7 +28,7 @@ The Airlock feature will create events on every meaningful step of the processes
 
 The Airlock allows a TRE user to start `import` or `export` process to a given workspace. A number of milestones must be reached in order to complete a successful import or export. These milestones are defined using the following states:
 
-1. **Draft**: An Airlock request has been created but has not yet started. The TRE User/Researcher has now access to a storage location and he must identify the data to be processed. At this point the airlock import/export processes allow a single file to be processed. However a compressed file may be used (zip).
+1. **Draft**: An Airlock request has been created but has not yet started. The TRE User/Researcher has now access to a storage location and they must identify the data to be processed. At this point the airlock import/export processes allow a single file to be processed. However a compressed file may be used (zip).
 2. **Submitted**: The request was submitted by the ressearcher (not yet processed).
 3. **In-Review**: The request is ready to be reviewed. This state can be reached directly from Submitted state or after going through a successful security scan (found clean).
 4. **Approval In-progress**: The Airlock request has been approved, however data movement is still ongoing.
@@ -60,7 +60,7 @@ graph TD
 ```
 > Airlock state flow diagram for an Airlock export request
 
-When an airlock process is created the initial state is **Draft** and the required infrastructure will get created providing a single container to isolate the data in the request. Once completed, the user user will be able to get a link for this container inside the storage account (URL + SAS token) that he can use to upload the desired data to be processed (import or export).
+When an airlock process is created the initial state is **Draft** and the required infrastructure will get created providing a single container to isolate the data in the request. Once completed, the user user will be able to get a link for this container inside the storage account (URL + SAS token) that they can use to upload the desired data to be processed (import or export).
 This storage location is external for import (`stalimex`) or internal for export (`stalexint`), however only accessible to the requestor (ex: a TRE user/researcher).
 The user will be able to upload a file to the provided storage location, using any tool of their preference: [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) or [AzCopy](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10) which is a command line.
 
@@ -97,7 +97,7 @@ The identified data in a airlock proces, will be submited to a security scan. If
 
 ## Approval mechanism
 
-The approval mechanism, is bundled with any airlock process, providing a specific way to `approve` or `reject` the data. This mechanism will allow the Airlock Managers to explicitly approve/reject the process, after having acess to the data. The Airlock Manager users will be able to execute a manual review on the data using the tools available to him in a reviewal TRE Workspace.
+The approval mechanism, is bundled with any airlock process, providing a specific way to `approve` or `reject` the data. This mechanism will allow the Airlock Managers to explicitly approve/reject the process, after having acess to the data. The Airlock Manager users will be able to execute a manual review on the data using the tools available to them in a reviewal TRE Workspace.
 Once this manual review is executed, Airlock Managers can proactivelly approve or reject the airlock request.
 
 The only goal of the Approval mechanism is to provide a cycle of revision, approval or rejection, while tracking the decision.
