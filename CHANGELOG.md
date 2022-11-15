@@ -13,6 +13,7 @@
 }
 ```
 * Fields in AirlockNotification event have changed without backward compatibility. If Airlock Notifier shared service is deployed, it needs to be re-deployed. Any other consumers of AirlockNotification event need to be updated. For more details, see [#2798](https://github.com/microsoft/AzureTRE/pull/2798)
+* The model for `reviewUserResources` in airlock requests has changed from being a list to a dictionary. A migration has been added to update your existing requests automatically; please make sure you run the migrations as part of updating your API and UI. [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
 
 FEATURES:
 * Display workspace and shared services total costs for admin role in UI [#2738](https://github.com/microsoft/AzureTRE/pull/2772)
@@ -20,6 +21,7 @@ FEATURES:
 * Add metadata endpoint and simplify `tre` CLI login (also adds API version to UI) (#2794)
 * Updated resource card in UI with visual improvements, disabled state badge and resource ID in info popout [#2846](https://github.com/microsoft/AzureTRE/pull/2846)
 * Add health information for backend services to UI info popout in footer [#2846](https://github.com/microsoft/AzureTRE/pull/2846)
+* Support review VMs for multiple reviewers for each airlock request [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
 
 ENHANCEMENTS:
 * Renamed several airlock fields to make them more descriptive and added a createdBy field. Included migration for backwards compatibility ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
