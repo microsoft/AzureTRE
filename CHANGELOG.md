@@ -34,12 +34,14 @@ ENHANCEMENTS:
 * Adds extra dns zones and links into core network ([#2828](https://github.com/microsoft/AzureTRE/pull/2828)).
 * Add UI version to its footer card ([#2849](https://github.com/microsoft/AzureTRE/pull/2849)).
 * Use `log_category_types` in `azurerm_monitor_diagnostic_categories` to remove deprecation warning ([#2855](https://github.com/microsoft/AzureTRE/pull/2855)).
+* Gitea workspace bundle has a number of updates as detailed in PR ([#2862](https://github.com/microsoft/AzureTRE/pull/2862).
 
 BUG FIXES:
 * Show the correct createdBy value for airlock requests in UI and in API queries ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
 * Fix deployment of Airlock Notifier ([#2745](https://github.com/microsoft/AzureTRE/pull/2745))
 * Fix Nexus bootstrapping firewall race condition ([#2811](https://github.com/microsoft/AzureTRE/pull/2811))
 * Handle unsupported azure subscriptions in cost reporting ([#2823](https://github.com/microsoft/AzureTRE/pull/2823))
+* Redact secrets in conditional or nested properties ([#2854](https://github.com/microsoft/AzureTRE/pull/2854))
 * Fix missing ID parameter in Certs bundle ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))
 * Handle 429 TooManyRequests and 503 ServiceUnavailable which might return from Azure Cost Management in TRE Cost API ([#2835](https://github.com/microsoft/AzureTRE/issues/2835))
 
