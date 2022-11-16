@@ -295,28 +295,27 @@ prepare-for-e2e:
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
-	cd e2e_tests && \
-	python -m pytest -m smoke --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_smoke.xml
+	$(MAKE) test-e2e-custom SELECTOR=smoke
 
 test-e2e-extended:
 	$(call target_title, "Running E2E extended tests") && \
-	cd e2e_tests && \
-	python -m pytest -m extended --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_extended.xml
+	$(MAKE) test-e2e-custom SELECTOR=extended
 
 test-e2e-extended-aad:
 	$(call target_title, "Running E2E extended AAD tests") && \
-	cd e2e_tests && \
-	python -m pytest -m extended_aad --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_extended_aad.xml
+	$(MAKE) test-e2e-custom SELECTOR=extended_aad
 
 test-e2e-shared-services:
 	$(call target_title, "Running E2E shared service tests") && \
-	cd e2e_tests && \
-	python -m pytest -m shared_services --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_shared_services.xml
+	$(MAKE) test-e2e-custom SELECTOR=shared_services
 
 test-e2e-custom:
-	$(call target_title, "Running E2E shared service tests") && \
-	cd e2e_tests && \
-	python -m pytest -m "${SELECTOR}" --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_custom.xml
+	$(call target_title, "Running E2E tests with custom selector ${SELECTOR}") \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/e2e_tests/.env \
+	&& cd e2e_tests \
+	&& if [[ -n "$${E2E_TESTS_NUMBER_PROCESSES}" && "$${E2E_TESTS_NUMBER_PROCESSES}" -ne 1 ]]; then \
+		python -m pytest -n "$${E2E_TESTS_NUMBER_PROCESSES}" -m "${SELECTOR}" --verify $${IS_API_SECURED:-true} --junit-xml "pytest_e2e_$${SELECTOR// /_}.xml"; else \
+		python -m pytest -m "${SELECTOR}" --verify $${IS_API_SECURED:-true} --junit-xml "pytest_e2e_$${SELECTOR// /_}.xml"; fi
 
 setup-local-debugging:
 	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \
