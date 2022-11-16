@@ -179,7 +179,7 @@ async def delete_review_user_resources(
         operations_repo: OperationRepository,
         user: User) -> List[Operation]:
     operations: List[Operation] = []
-    for review_ur in airlock_request.reviewUserResources:
+    for review_ur in airlock_request.reviewUserResources.values():
         user_resource = user_resource_repo.get_user_resource_by_id(
             workspace_id=review_ur.workspaceId,
             service_id=review_ur.workspaceServiceId,
