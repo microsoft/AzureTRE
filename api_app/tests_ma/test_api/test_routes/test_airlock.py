@@ -47,13 +47,13 @@ def sample_airlock_review_with_user_resources():
     return {
         "type": "import",
         "businessJustification": "some business justification",
-        "reviewUserResources": [
-            {
+        "reviewUserResources": {
+            "some userId": {
                 "workspaceId": WORKSPACE_ID,
                 "workspaceServiceId": WORKSPACE_SERVICE_ID,
                 "userResourceId": USER_RESOURCE_ID
             }
-        ]
+        }
     }
 
 
@@ -66,7 +66,7 @@ def sample_airlock_request_object(status=AirlockRequestStatus.Draft, airlock_req
         type="import",
         status=status,
         reviews=[sample_airlock_review_object()] if reviews else None,
-        reviewUserResources={"abc": sample_airlock_user_resource_object()} if review_user_resource else {}
+        reviewUserResources={"some userId": sample_airlock_user_resource_object()} if review_user_resource else {}
     )
     return airlock_request
 
