@@ -1,6 +1,16 @@
 <!-- markdownlint-disable MD041 -->
 <!-- line format short be: change short description (#pr_numer) -->
-## 0.6.1 (Unreleased)
+## 0.8.0 (Unreleased)
+
+**BREAKING CHANGES & MIGRATIONS**:
+
+ENHANCEMENTS:
+
+BUG FIXES:
+
+COMPONENTS:
+
+## 0.7.0 (November 17, 2022)
 
 **BREAKING CHANGES & MIGRATIONS**:
 * The airlock request object has changed. Make sure you have ran the db migration step after deploying the new API image and UI (which runs automatically in `make all`/`make tre-deploy` but can be manually invoked with `make db-migrate`) so that existing requests in your DB are migrated to the new model.
@@ -15,16 +25,16 @@
 * Fields in AirlockNotification event have changed without backward compatibility. If Airlock Notifier shared service is deployed, it needs to be re-deployed. Any other consumers of AirlockNotification event need to be updated. For more details, see [#2798](https://github.com/microsoft/AzureTRE/pull/2798)
 
 FEATURES:
-* Display workspace and shared services total costs for admin role in UI [#2738](https://github.com/microsoft/AzureTRE/pull/2772)
-* Automatically validate all resources have tre_id tag via TFLint [#2774](https://github.com/microsoft/AzureTRE/pull/2774)
-* Add metadata endpoint and simplify `tre` CLI login (also adds API version to UI) (#2794)
-* Updated resource card in UI with visual improvements, disabled state badge and resource ID in info popout [#2846](https://github.com/microsoft/AzureTRE/pull/2846)
-* Add health information for backend services to UI info popout in footer [#2846](https://github.com/microsoft/AzureTRE/pull/2846)
+* Display workspace and shared services total costs for admin role in UI ([#2772](https://github.com/microsoft/AzureTRE/pull/2772))
+* Automatically validate all resources have tre_id tag via TFLint ([#2774](https://github.com/microsoft/AzureTRE/pull/2774))
+* Add metadata endpoint and simplify `tre` CLI login (also adds API version to UI) ([#2794](https://github.com/microsoft/AzureTRE/pull/2794))
+* Updated resource card in UI with visual improvements, disabled state badge and resource ID in info popout ([#2846](https://github.com/microsoft/AzureTRE/pull/2846))
+* Add health information for backend services to UI info popout in footer ([#2846](https://github.com/microsoft/AzureTRE/pull/2846))
 
 ENHANCEMENTS:
-* Renamed several airlock fields to make them more descriptive and added a createdBy field. Included migration for backwards compatibility ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
+* Renamed several airlock fields to make them more descriptive and added a createdBy field. Included migration for backwards compatibility [#2779](https://github.com/microsoft/AzureTRE/pull/2779)
 * Show error message when Review VMs are not configured in the current workspace
-* CLI: Add missing endpoints and minor bug fixes (#2784)
+* CLI: Add missing endpoints and minor bug fixes ([#2784](https://github.com/microsoft/AzureTRE/pull/2784))
 * Airlock Notifier: Provide a link to request in the UI in the email ([#2754](https://github.com/microsoft/AzureTRE/pull/2754))
 * Add additional fields for Airlock Notification event ([#2798](https://github.com/microsoft/AzureTRE/pull/2798))
 * Fail firewall database migration if there's no firewall deployed ([#2792](https://github.com/microsoft/AzureTRE/pull/2792))
@@ -34,7 +44,7 @@ ENHANCEMENTS:
 * Adds extra dns zones and links into core network ([#2828](https://github.com/microsoft/AzureTRE/pull/2828)).
 * Add UI version to its footer card ([#2849](https://github.com/microsoft/AzureTRE/pull/2849)).
 * Use `log_category_types` in `azurerm_monitor_diagnostic_categories` to remove deprecation warning ([#2855](https://github.com/microsoft/AzureTRE/pull/2855)).
-* Gitea workspace bundle has a number of updates as detailed in PR ([#2862](https://github.com/microsoft/AzureTRE/pull/2862).
+* Gitea workspace bundle has a number of updates as detailed in PR ([#2862](https://github.com/microsoft/AzureTRE/pull/2862)).
 
 BUG FIXES:
 * Show the correct createdBy value for airlock requests in UI and in API queries ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
@@ -45,6 +55,31 @@ BUG FIXES:
 * Fix missing ID parameter in Certs bundle ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))
 
 COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.4.2 |
+| core | 0.4.43 |
+| tre-workspace-base | 0.5.1 |
+| tre-workspace-unrestricted | 0.5.0 |
+| tre-workspace-airlock-import-review | 0.5.0 |
+| tre-service-mlflow | 0.4.0 |
+| tre-service-innereye | 0.4.0 |
+| tre-workspace-service-gitea | 0.6.0 |
+| tre-workspace-service-mysql | 0.2.0 |
+| tre-service-guacamole-linuxvm | 0.5.2 |
+| tre-service-guacamole-export-reviewvm | 0.0.6 |
+| tre-service-guacamole-windowsvm | 0.5.2 |
+| tre-service-guacamole-import-reviewvm | 0.1.3 |
+| tre-service-guacamole | 0.5.0 |
+| tre-user-resource-aml-compute-instance | 0.4.1 |
+| tre-service-azureml | 0.5.6 |
+| tre-shared-service-cyclecloud | 0.3.0 |
+| tre-shared-service-gitea | 0.4.0 |
+| tre-shared-service-airlock-notifier | 0.2.3 |
+| tre-shared-service-admin-vm | 0.2.0 |
+| tre-shared-service-certs | 0.2.2 |
+| tre-shared-service-sonatype-nexus | 2.2.3 |
+| tre-shared-service-firewall | 0.6.2 |
 
 ## 0.6.0 (October 24, 2022)
 
