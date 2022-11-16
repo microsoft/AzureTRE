@@ -17,8 +17,9 @@ BLOB_NAME = os.path.basename(BLOB_FILE_PATH)
 
 
 @pytest.mark.wip
-async def test_airlock_import_workspace(setup_test_airlock_import_review_workspace):
-    LOGGER.info("Workspace set up")
+async def test_airlock_import_workspace(setup_test_airlock_import_review_workspace_and_workspace_service):
+    _, _, _, _, _ = setup_test_airlock_import_review_workspace_and_workspace_service
+    LOGGER.info("Workspace and workspace service set up")
 
 
 @pytest.mark.airlock
