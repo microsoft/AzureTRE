@@ -1,5 +1,4 @@
 <!-- markdownlint-disable MD041 -->
-<!-- line format short be: change short description (#pr_numer) -->
 ## 0.8.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
@@ -7,6 +6,7 @@
 ENHANCEMENTS:
 
 BUG FIXES:
+* Private endpoints for AppInsights are now provisioning successfully and consistently ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))
 
 COMPONENTS:
 
@@ -193,7 +193,7 @@ ENHANCEMENTS:
 * Airlock requests with status "blocked_by_scan" have the reason for being blocked by the malware scanner in the status_message field ([#2666](https://github.com/microsoft/AzureTRE/pull/2666))
 * Move admin-vm from core to a shared service ([#2624](https://github.com/microsoft/AzureTRE/pull/2624))
 * Remove obsolete docker environment variables ([#2675](https://github.com/microsoft/AzureTRE/pull/2675))
-* Using Porter's Terrform mixin 1.0.0-rc.1 where mirror in done internally ([#2677](https://github.com/microsoft/AzureTRE/pull/2677))
+* Using Porter's Terraform mixin 1.0.0-rc.1 where mirror in done internally ([#2677](https://github.com/microsoft/AzureTRE/pull/2677))
 * Airlock function internal storage is accessed with private endpoints ([#2679](https://github.com/microsoft/AzureTRE/pull/2679))
 
 BUG FIXES:
@@ -253,9 +253,9 @@ ENHANCEMENTS:
 * Keyvault diagnostic settings in base workspace ([#2521](https://github.com/microsoft/AzureTRE/pull/2521))
 * Airlock requests contain a field with information about the files that were submitted ([#2504](https://github.com/microsoft/AzureTRE/pull/2504))
 * UI - Operations and notifications stability improvements ([[#2530](https://github.com/microsoft/AzureTRE/pull/2530))
-* UI - Initial implemetation of Workspace Airlock Request View ([#2512](https://github.com/microsoft/AzureTRE/pull/2512))
+* UI - Initial implementation of Workspace Airlock Request View ([#2512](https://github.com/microsoft/AzureTRE/pull/2512))
 * Add ability to automatically create Azure AD groups for each application role. Requires API version 0.4.30 or later ([#2532](https://github.com/microsoft/AzureTRE/pull/2532))
-* Add `is_expsed_externally` option to Azure ML Workspace Service ([#2548](https://github.com/microsoft/AzureTRE/pull2548))
+* Add `is_exposed_externally` option to Azure ML Workspace Service ([#2548](https://github.com/microsoft/AzureTRE/pull2548))
 * Azure ML workspace service assigns Azure ML Data Scientist role to Workspace Researchers ([#2539](https://github.com/microsoft/AzureTRE/pull/2539))
 * UI is deployed by default ([#2554](https://github.com/microsoft/AzureTRE/pull/2554))
 * Remove manual/makefile option to install Gitea/Nexus ([#2573](https://github.com/microsoft/AzureTRE/pull/2573))
@@ -268,7 +268,7 @@ BUG FIXES:
 * Temporary disable AppInsight's private endpoint in base workspace ([#2543](https://github.com/microsoft/AzureTRE/pull/2543))
 * Resource Processor execution optimization (`porter show`) for long-standing services ([#2542](https://github.com/microsoft/AzureTRE/pull/2542))
 * Move AML Compute deployment to use AzApi Terraform Provider {[#2555]((https://github.com/microsoft/AzureTRE/pull/2555))
-* Invalid token exceptions in the API app are catched, throwing 401 instead of 500 Internal server error ([#2572](https://github.com/microsoft/AzureTRE/pull/2572))
+* Invalid token exceptions in the API app are caught, throwing 401 instead of 500 Internal server error ([#2572](https://github.com/microsoft/AzureTRE/pull/2572))
 
 COMPONENTS:
 
@@ -310,7 +310,7 @@ ENHANCEMENTS:
 * 'CreationTime' field was added to Airlock requests ([#2432](https://github.com/microsoft/AzureTRE/pull/2432))
 * Bundles mirror Terraform plugins when built ([#2446](https://github.com/microsoft/AzureTRE/pull/2446))
 * 'Get all Airlock requests' endpoint supports filtering ([#2433](https://github.com/microsoft/AzureTRE/pull/2433))
-* API uses user delagation key when generating SAS token for airlock requests ([#2460](https://github.com/microsoft/AzureTRE/pull/2460))
+* API uses user delegation key when generating SAS token for airlock requests ([#2460](https://github.com/microsoft/AzureTRE/pull/2460))
 * Longer docker caching in Resource Processor ([#2486](https://github.com/microsoft/AzureTRE/pull/2486))
 * Remove AppInsights Profiler support in base workspace bundle and deploy with native Terraform resources ([#2478](https://github.com/microsoft/AzureTRE/pull/2478))
 
