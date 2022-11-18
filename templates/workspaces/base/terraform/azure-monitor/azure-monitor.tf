@@ -89,7 +89,6 @@ resource "azurerm_monitor_private_link_scoped_service" "ampls_app_insights" {
 }
 
 resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
-  count               = 0 # Remove with https://github.com/microsoft/AzureTRE/issues/2357
   name                = "pe-ampls-${var.tre_id}-ws-${local.short_workspace_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
