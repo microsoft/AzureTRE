@@ -29,7 +29,7 @@ The Airlock feature will create events on every meaningful step of the process. 
 The Airlock allows a TRE user to start the `import` or `export` process to a given workspace. A number of milestones must be reached in order to complete a successful import or export. These milestones are defined using the following states:
 
 1. **Draft**: An Airlock request has been created but has not yet started. The TRE User/Researcher has now access to a storage location and they must identify the data to be processed. At this point the airlock import/export processes allow a single file to be processed. However a compressed file may be used (zip).
-2. **Submitted**: The request was submitted by the ressearcher (not yet processed).
+2. **Submitted**: The request was submitted by the researcher (not yet processed).
 3. **In-Review**: The request is ready to be reviewed. This state can be reached directly from Submitted state or after going through a successful security scan (found clean).
 4. **Approval In-progress**: The Airlock request has been approved, however data movement is still ongoing.
 5. **Approved**: The Airlock request has been approved. At this state, data has been securely verified and manually reviewed. The data is now in its final location. For an import process the data is now available in the TRE workspace, it can be accessed by the requestor from within the workspace.
