@@ -126,7 +126,9 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
     target_fqdns = [
       "keyserver.ubuntu.com",
       "packages.microsoft.com",
-      "download.docker.com"
+      "download.docker.com",
+      "azure.archive.ubuntu.com",
+      "repo.almalinux.org"
     ]
 
     source_addresses = data.azurerm_subnet.shared.address_prefixes
