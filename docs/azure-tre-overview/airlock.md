@@ -99,7 +99,7 @@ The identified data in a airlock proces, will be submited to a security scan. If
 ## Approval mechanism
 
 The approval mechanism, is bundled with any airlock process, providing a specific way to `approve` or `reject` the data. This mechanism will allow the Airlock Managers to explicitly approve/reject the process, after having access to the data. The Airlock Manager users will be able to execute a manual review on the data using the tools available to them in a review TRE Workspace.
-Once this manual review is executed, Airlock Managers can proactivelly approve or reject the airlock request.
+Once this manual review is executed, Airlock Managers can proactively approve or reject the airlock request.
 
 The only goal of the Approval mechanism is to provide a cycle of revision, approval or rejection while tracking the decision.
 
