@@ -266,6 +266,6 @@
   "forwardPorts": [
     8000
   ],
-  // Give permission to access docker socket
+  // Run commands after the container is created.
   "postCreateCommand": "./.devcontainer/scripts/post-create.sh"
 }
