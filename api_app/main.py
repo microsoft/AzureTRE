@@ -6,7 +6,6 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_utils.tasks import repeat_every
-from services.cost_service import CostService
 from service_bus.airlock_request_status_update import receive_step_result_message_and_update_status
 
 from services.tracing import RequestTracerMiddleware
