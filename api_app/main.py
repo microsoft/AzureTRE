@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_utils.tasks import repeat_every
+from services.cost_service import CostService
 from service_bus.airlock_request_status_update import receive_step_result_message_and_update_status
 
 from services.tracing import RequestTracerMiddleware
@@ -86,6 +87,13 @@ async def watch_deployment_status() -> None:
 @repeat_every(seconds=20, wait_first=True, logger=logging.getLogger())
 async def update_airlock_request_status() -> None:
     await receive_step_result_message_and_update_status(app)
+
+
+@app.on_event("startup")
+def load_cost_service() -> None:
+    logging.info("Loading cost service")
+    app.state.cost_service = CostService()
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
