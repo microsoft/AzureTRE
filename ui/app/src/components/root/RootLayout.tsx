@@ -59,7 +59,7 @@ export const RootLayout: React.FunctionComponent = () => {
         costsWriteCtx.current.setLoadingState(LoadingState.Ok)
         setLoadingCostState(LoadingState.Ok);
       }
-      catch (e:any) {
+      catch (e: any) {
         if (e instanceof APIError) {
           if (e.status === 404 /*subscription not supported*/) {
             config.debug && console.warn(e.message);
