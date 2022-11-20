@@ -16,7 +16,7 @@ from db.repositories.workspaces import WorkspaceRepository
 from models.domain.costs import CostReport, GranularityEnum, WorkspaceCostReport
 from resources import strings
 from services.authentication import get_current_admin_user, get_current_workspace_owner_or_tre_admin
-from services.cost_service import ServiceUnavailable, SubscriptionNotSupported, TooManyRequests, WorkspaceDoesNotExist
+from services.cost_service import CostService, ServiceUnavailable, SubscriptionNotSupported, TooManyRequests, WorkspaceDoesNotExist
 from starlette.responses import JSONResponse
 
 costs_core_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
@@ -50,7 +50,8 @@ class CostsQueryParams:
         self.granularity = granularity
 
 
-async def get_cost_service(req: Request):
+async def get_cost_service(req: Request) -> CostService:
+    """Returns cost service from application state."""
     return req.app.state.cost_service
 
 
@@ -58,7 +59,7 @@ async def get_cost_service(req: Request):
                        responses=get_cost_report_responses())
 async def costs(
         params: CostsQueryParams = Depends(),
-        cost_service=Depends(get_cost_service),
+        cost_service: CostService = Depends(get_cost_service),
         workspace_repo=Depends(get_repository(WorkspaceRepository)),
         shared_services_repo=Depends(get_repository(SharedServiceRepository))) -> CostReport:
 
@@ -92,7 +93,7 @@ async def costs(
                             dependencies=[Depends(get_current_workspace_owner_or_tre_admin)],
                             responses=get_workspace_cost_report_responses())
 async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depends(),
-                          cost_service=Depends(get_cost_service),
+                          cost_service: CostService = Depends(get_cost_service),
                           workspace_repo=Depends(get_repository(WorkspaceRepository)),
                           workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository)),
                           user_resource_repo=Depends(get_repository(UserResourceRepository))) -> WorkspaceCostReport:

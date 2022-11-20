@@ -91,8 +91,10 @@ async def update_airlock_request_status() -> None:
 
 @app.on_event("startup")
 def load_cost_service() -> None:
+    # load and store Cost service in app state to create a "singleton" object.
+    # api routers should use this instance instead creating a new one.
     logging.info("Loading cost service")
-    app.state.cost_service = CostService()
+    app.state.cost_service: CostService = CostService()
 
 
 if __name__ == "__main__":
