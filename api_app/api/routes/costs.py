@@ -1,6 +1,6 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from fastapi import APIRouter, Depends, Query, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 import logging
 from typing import Optional
 
@@ -50,16 +50,11 @@ class CostsQueryParams:
         self.granularity = granularity
 
 
-async def get_cost_service(req: Request) -> CostService:
-    """Returns cost service from application state."""
-    return req.app.state.cost_service
-
-
 @costs_core_router.get("/costs", response_model=CostReport, name=strings.API_GET_COSTS,
                        responses=get_cost_report_responses())
 async def costs(
         params: CostsQueryParams = Depends(),
-        cost_service: CostService = Depends(get_cost_service),
+        cost_service: CostService = Depends(CostService),
         workspace_repo=Depends(get_repository(WorkspaceRepository)),
         shared_services_repo=Depends(get_repository(SharedServiceRepository))) -> CostReport:
 
@@ -93,7 +88,7 @@ async def costs(
                             dependencies=[Depends(get_current_workspace_owner_or_tre_admin)],
                             responses=get_workspace_cost_report_responses())
 async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depends(),
-                          cost_service: CostService = Depends(get_cost_service),
+                          cost_service: CostService = Depends(CostService),
                           workspace_repo=Depends(get_repository(WorkspaceRepository)),
                           workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository)),
                           user_resource_repo=Depends(get_repository(UserResourceRepository))) -> WorkspaceCostReport:

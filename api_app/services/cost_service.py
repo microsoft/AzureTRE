@@ -1,5 +1,6 @@
 from datetime import datetime, date, timedelta
 from enum import Enum
+from functools import lru_cache
 from typing import Dict, Optional, Union
 import pandas as pd
 import logging
@@ -73,10 +74,11 @@ class CostCacheItem():
         self.ttl = ttl
 
 
+# make sure CostService is singleton
+@lru_cache(maxsize=None)
 class CostService:
     scope: str
     client: CostManagementClient
-    # in-memory cache assuming CostService is instantiated on Fast API startup event
     cache: Dict[str, CostCacheItem]
     TRE_ID_TAG: str = "tre_id"
     TRE_CORE_SERVICE_ID_TAG: str = "tre_core_service_id"

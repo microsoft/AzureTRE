@@ -89,13 +89,5 @@ async def update_airlock_request_status() -> None:
     await receive_step_result_message_and_update_status(app)
 
 
-@app.on_event("startup")
-def load_cost_service() -> None:
-    # load and store Cost service in app state to create a "singleton" object.
-    # api routers should use this instance instead creating a new one.
-    logging.info("Loading cost service")
-    app.state.cost_service: CostService = CostService()
-
-
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
