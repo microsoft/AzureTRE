@@ -3,9 +3,9 @@
 
 This guide will take you through the process of importing data into a TRE workspace, and exporting data from a workspace to the outside world, using the Airlock feature.
 
-The Airlock feature is intended for ad-hoc use when you need to bring in and export out files that you need for your research, and it ensures that when you import or export this data, all the appropriate approvals and procedures configured by your organisation take place.
+The Airlock feature is intended for ad-hoc use when you need to bring in and export out files that you need for your research. It ensures that when you import or export this data all the appropriate approvals and procedures configured by your organisation take place.
 
-You can read more about the Airock feature in the [Airlock documentation](../../azure-tre-overview/airlock.md).
+You can read more about the Airlock feature in the [Airlock documentation](../../azure-tre-overview/airlock.md).
 
 ## Importing data to a workspace
 
@@ -21,7 +21,7 @@ To bring in external data to a secure TRE workspace so you can use it for your r
 
 1. Fill in a suitable **Title** for your request (make this short but descriptive to help you and others identify it in a list of many other requests)
 
-1. Provide a **Business Jutification** for bringing the data into the workspace (this will be used to help your organisation's data stewards decide whether to approve or reject the request)
+1. Provide a **Business Justification** for bringing the data into the workspace (this will be used to help your organisation's data stewards decide whether to approve or reject the request)
 
 1. Click *Create* when ready. This will create your draft request and allow you to proceed with adding the data you'd like to import
 
@@ -31,7 +31,7 @@ To bring in external data to a secure TRE workspace so you can use it for your r
 
 ### Step 2: Add data to your import request
 
-1. The request you've just created should pop up automatically; however you can return to it at any time within the Airlock page by finding it in the list of requests. (Use the *My requests* quick filter to find it more easily)
+1. The request you've just created should pop up automatically; however, you can return to it at any time within the Airlock page by finding it in the list of requests. (Use the *My requests* quick filter to find it more easily)
 
 2. Click *Generate* in the **Files** section to generate a Storage SAS URL to use for uploading your data.
 
@@ -50,7 +50,7 @@ To bring in external data to a secure TRE workspace so you can use it for your r
 
 ### Step 3: Get your approved data
 
-The request will be in an *In Review* state until it's either approved or rejected by your Airlock Manager(s) manually or by an automated workflow, depending on your organisation's specific configuration.
+The request will be in an *In Review* state until it is either approved or rejected by your Airlock Manager(s) manually or by an automated workflow (depending on your organisation's specific configuration).
 
 !!! note
     Your organisation may have the Airlock Notifier service configured which will send email notifications when your request has been approved/rejected, or you may have another mechanism in place. Please check with your TRE administrator.
@@ -70,7 +70,7 @@ If your request is approved, you can follow the below steps to get your data fro
     - With the Azure CLI, you can use `az storage blob download --file /path/to/write/to --blob-url SAS_URL`. [More info](https://docs.microsoft.com/en-us/cli/azure/storage/blob?view=azure-cli-latest#az-storage-blob-download)
 
 !!! tip
-    If you're using a Workspace VM that uses one of the standard TRE Data Science VM images, you'll likely have both Storage Explorer and the Azure CLI pre-installed.
+    If you are using a Workspace VM that uses one of the standard TRE Data Science VM images, you will likely have both Storage Explorer and the Azure CLI pre-installed.
 
 ## Exporting data from a workspace
 

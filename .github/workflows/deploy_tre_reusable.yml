@@ -109,9 +109,6 @@ on:  # yamllint disable-line rule:truthy
       RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE:
         description: "Inputs"
         required: false
-      E2E_TESTS_NUMBER_PROCESSES:
-        description: ""
-        required: false
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
@@ -625,7 +622,6 @@ jobs:
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
           WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ secrets.WORKSPACE_APP_SERVICE_PLAN_SKU }}
-          E2E_TESTS_NUMBER_PROCESSES: ${{ secrets.E2E_TESTS_NUMBER_PROCESSES }}
 
       - name: Upload Test Results
         if: always()
