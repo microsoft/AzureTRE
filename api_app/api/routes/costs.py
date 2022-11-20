@@ -16,7 +16,7 @@ from db.repositories.workspaces import WorkspaceRepository
 from models.domain.costs import CostReport, GranularityEnum, WorkspaceCostReport
 from resources import strings
 from services.authentication import get_current_admin_user, get_current_workspace_owner_or_tre_admin
-from services.cost_service import ServiceUnavaiable, SubscriptionNotSupported, TooManyRequests, WorkspaceDoesNotExist
+from services.cost_service import ServiceUnavailable, SubscriptionNotSupported, TooManyRequests, WorkspaceDoesNotExist
 from starlette.responses import JSONResponse
 
 costs_core_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
@@ -75,7 +75,7 @@ async def costs(
                                 "message": strings.API_GET_COSTS_TOO_MANY_REQUESTS,
                                 "retry-after": str(e.retry_after)
                             }}, status_code=429, headers={"Retry-After": str(e.retry_after)})
-    except ServiceUnavaiable as e:
+    except ServiceUnavailable as e:
         return JSONResponse(content={
                             "error": {
                                 "code": "503",
@@ -113,7 +113,7 @@ async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depend
                                 "message": strings.API_GET_COSTS_TOO_MANY_REQUESTS,
                                 "retry-after": str(e.retry_after)
                             }}, status_code=429, headers={"Retry-After": str(e.retry_after)})
-    except ServiceUnavaiable as e:
+    except ServiceUnavailable as e:
         return JSONResponse(content={
                             "error": {
                                 "code": "503",
