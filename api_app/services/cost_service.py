@@ -54,7 +54,7 @@ class TooManyRequests(Exception):
         self.retry_after = retry_after
 
 
-class ServiceUnavaiable(Exception):
+class ServiceUnavailable(Exception):
     """Raised when cost management is unavaiable, retry after given number of seconds"""
     retry_after: int
 
@@ -74,7 +74,7 @@ class CostService:
     TRE_USER_RESOURCE_ID_TAG: str = "tre_user_resource_id"
     TRE_UNTAGGED: str = ""
     RATE_LIMIT_RETRY_AFTER_HEADER_KEY: str = "x-ms-ratelimit-microsoft.costmanagement-entity-retry-after"
-    SERVICE_UNAVAIABLE_RETRY_AFTER_HEADER_KEY: str = "Retry-After"
+    SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY: str = "Retry-After"
 
     def __init__(self):
         self.scope = "/subscriptions/{}".format(config.SUBSCRIPTION_ID)
@@ -276,10 +276,10 @@ class CostService:
             elif e.status_code == 503:
                 # Service unavailable - Service is temporarily unavailable.
                 # Retry after waiting for the time specified in the "Retry-After" header.
-                if self.SERVICE_UNAVAIABLE_RETRY_AFTER_HEADER_KEY in e.response.headers:
-                    raise ServiceUnavaiable(int(e.response.headers[self.SERVICE_UNAVAIABLE_RETRY_AFTER_HEADER_KEY]))
+                if self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY in e.response.headers:
+                    raise ServiceUnavailable(int(e.response.headers[self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY]))
                 else:
-                    logging.error(f"{self.SERVICE_UNAVAIABLE_RETRY_AFTER_HEADER_KEY} header was not found in respose", exc_info=e)
+                    logging.error(f"{self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY} header was not found in respose", exc_info=e)
                     raise e
             else:
                 raise e
