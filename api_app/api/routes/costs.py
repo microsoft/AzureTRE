@@ -1,6 +1,7 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi.responses import JSONResponse
 import logging
 from typing import Optional
 
@@ -17,7 +18,6 @@ from models.domain.costs import CostReport, GranularityEnum, WorkspaceCostReport
 from resources import strings
 from services.authentication import get_current_admin_user, get_current_workspace_owner_or_tre_admin
 from services.cost_service import CostService, ServiceUnavailable, SubscriptionNotSupported, TooManyRequests, WorkspaceDoesNotExist
-from starlette.responses import JSONResponse
 
 costs_core_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 costs_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_tre_admin)])
