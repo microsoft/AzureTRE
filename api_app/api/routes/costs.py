@@ -80,7 +80,7 @@ async def costs(
                             }}, status_code=503, headers={"Retry-After": str(e.retry_after)})
     except Exception as e:
         logging.error("Failed to query Azure TRE costs", exc_info=e)
-        raise e
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.API_GET_COSTS_INTERNAL_SERVER_ERROR)
 
 
 @costs_workspace_router.get("/workspaces/{workspace_id}/costs", response_model=WorkspaceCostReport,
@@ -117,5 +117,5 @@ async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depend
                                 "retry-after": str(e.retry_after)
                             }}, status_code=503, headers={"Retry-After": str(e.retry_after)})
     except Exception as e:
-        logging.error("Failed to query Azure TRE workspace costs", exc_info=e)
-        raise e
+        logging.error("Failed to query Azure TRE costs", exc_info=e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.API_GET_COSTS_INTERNAL_SERVER_ERROR)
