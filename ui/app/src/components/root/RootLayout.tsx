@@ -48,6 +48,7 @@ export const RootLayout: React.FunctionComponent = () => {
   useEffect(() => {
     const getCosts = async () => {
       try {
+        costsWriteCtx.current.setLoadingState(LoadingState.Loading)
         const r = await apiCall(ApiEndpoint.Costs, HttpMethod.Get, undefined, undefined, ResultType.JSON);
 
         costsWriteCtx.current.setCosts([
@@ -55,18 +56,32 @@ export const RootLayout: React.FunctionComponent = () => {
           ...r.shared_services
         ]);
 
+        costsWriteCtx.current.setLoadingState(LoadingState.Ok)
         setLoadingCostState(LoadingState.Ok);
       }
-      catch (e:any) {
-        if (e instanceof APIError && e.status === 404) {
-          config.debug && console.warn(e.message);
-          setLoadingCostState(LoadingState.NotSupported);
+      catch (e: any) {
+        if (e instanceof APIError) {
+          if (e.status === 404 /*subscription not supported*/) {
+            config.debug && console.warn(e.message);
+            setLoadingCostState(LoadingState.NotSupported);
+          }
+          else if (e.status === 429 /*too many requests*/ || e.status === 503 /*service unavaiable*/) {
+            let msg = JSON.parse(e.message);
+            let retryAfter = Number(msg.error["retry-after"]);
+            config.debug && console.info("retrying after " + retryAfter + " seconds");
+            setTimeout(getCosts, retryAfter * 1000);
+          }
+          else {
+            e.userMessage = 'Error retrieving costs';
+            setLoadingCostState(LoadingState.Error);
+          }
         }
         else {
           e.userMessage = 'Error retrieving costs';
           setLoadingCostState(LoadingState.Error);
         }
 
+        costsWriteCtx.current.setLoadingState(LoadingState.Error)
         setCostApiError(e);
       }
     };

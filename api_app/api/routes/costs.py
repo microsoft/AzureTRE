@@ -1,6 +1,7 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, Depends, Query, HTTPException, status
+import logging
 from typing import Optional
 
 from pydantic import UUID4
@@ -15,7 +16,8 @@ from db.repositories.workspaces import WorkspaceRepository
 from models.domain.costs import CostReport, GranularityEnum, WorkspaceCostReport
 from resources import strings
 from services.authentication import get_current_admin_user, get_current_workspace_owner_or_tre_admin
-from services.cost_service import CostService, SubscriptionNotSupported, WorkspaceDoesNotExist
+from services.cost_service import CostService, ServiceUnavailable, SubscriptionNotSupported, TooManyRequests, WorkspaceDoesNotExist
+from starlette.responses import JSONResponse
 
 costs_core_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 costs_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_tre_admin)])
@@ -62,6 +64,23 @@ async def costs(
             config.TRE_ID, params.granularity, params.from_date, params.to_date, workspace_repo, shared_services_repo)
     except SubscriptionNotSupported:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.API_GET_COSTS_SUBSCRIPTION_NOT_SUPPORTED)
+    except TooManyRequests as e:
+        return JSONResponse(content={
+                            "error": {
+                                "code": "429",
+                                "message": strings.API_GET_COSTS_TOO_MANY_REQUESTS,
+                                "retry-after": str(e.retry_after)
+                            }}, status_code=429, headers={"Retry-After": str(e.retry_after)})
+    except ServiceUnavailable as e:
+        return JSONResponse(content={
+                            "error": {
+                                "code": "503",
+                                "message": strings.API_GET_COSTS_SERVICE_UNAVAILABLE,
+                                "retry-after": str(e.retry_after)
+                            }}, status_code=503, headers={"Retry-After": str(e.retry_after)})
+    except Exception as e:
+        logging.error("Failed to query Azure TRE costs", exc_info=e)
+        raise e
 
 
 @costs_workspace_router.get("/workspaces/{workspace_id}/costs", response_model=WorkspaceCostReport,
@@ -83,3 +102,20 @@ async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depend
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_DOES_NOT_EXIST)
     except SubscriptionNotSupported:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.API_GET_COSTS_SUBSCRIPTION_NOT_SUPPORTED)
+    except TooManyRequests as e:
+        return JSONResponse(content={
+                            "error": {
+                                "code": "429",
+                                "message": strings.API_GET_COSTS_TOO_MANY_REQUESTS,
+                                "retry-after": str(e.retry_after)
+                            }}, status_code=429, headers={"Retry-After": str(e.retry_after)})
+    except ServiceUnavailable as e:
+        return JSONResponse(content={
+                            "error": {
+                                "code": "503",
+                                "message": strings.API_GET_COSTS_SERVICE_UNAVAILABLE,
+                                "retry-after": str(e.retry_after)
+                            }}, status_code=503, headers={"Retry-After": str(e.retry_after)})
+    except Exception as e:
+        logging.error("Failed to query Azure TRE workspace costs", exc_info=e)
+        raise e

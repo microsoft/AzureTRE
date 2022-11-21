@@ -7,7 +7,7 @@ import logging
 from azure.mgmt.costmanagement import CostManagementClient
 from azure.mgmt.costmanagement.models import QueryGrouping, QueryAggregation, QueryDataset, QueryDefinition, \
     TimeframeType, ExportType, QueryTimePeriod, QueryFilter, QueryComparisonExpression, QueryResult
-from azure.core.exceptions import ResourceNotFoundError
+from azure.core.exceptions import ResourceNotFoundError, HttpResponseError
 
 from azure.mgmt.resource import ResourceManagementClient
 
@@ -45,6 +45,24 @@ class SubscriptionNotSupported(Exception):
     """Raised when subscription does not support cost management"""
 
 
+class TooManyRequests(Exception):
+    """Raised when cost management api is being throttled, retry after given number of seconds"""
+    retry_after: int
+
+    def __init__(self, retry_after: int, *args: object) -> None:
+        super().__init__(*args)
+        self.retry_after = retry_after
+
+
+class ServiceUnavailable(Exception):
+    """Raised when cost management is unavaiable, retry after given number of seconds"""
+    retry_after: int
+
+    def __init__(self, retry_after: int, *args: object) -> None:
+        super().__init__(*args)
+        self.retry_after = retry_after
+
+
 class CostService:
     scope: str
     client: CostManagementClient
@@ -55,6 +73,8 @@ class CostService:
     TRE_WORKSPACE_SERVICE_ID_TAG: str = "tre_workspace_service_id"
     TRE_USER_RESOURCE_ID_TAG: str = "tre_user_resource_id"
     TRE_UNTAGGED: str = ""
+    RATE_LIMIT_RETRY_AFTER_HEADER_KEY: str = "x-ms-ratelimit-microsoft.costmanagement-entity-retry-after"
+    SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY: str = "Retry-After"
 
     def __init__(self):
         self.scope = "/subscriptions/{}".format(config.SUBSCRIPTION_ID)
@@ -240,6 +260,27 @@ class CostService:
             if "doesn't have valid WebDirect/AIRS" in e.message:
                 logging.error("Subscription doesn't support cost mangement", exc_info=e)
                 raise SubscriptionNotSupported(e)
+            else:
+                logging.error("Unhandled Cost Management API error", exc_info=e)
+                raise e
+        except HttpResponseError as e:
+            logging.error("Cost Management API error", exc_info=e)
+            if e.status_code == 429:
+                # Too many requests - Request is throttled.
+                # Retry after waiting for the time specified in the "x-ms-ratelimit-microsoft.consumption-retry-after" header.
+                if self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY in e.response.headers:
+                    raise TooManyRequests(int(e.response.headers[self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY]))
+                else:
+                    logging.error(f"{self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY} header was not found in respose", exc_info=e)
+                    raise e
+            elif e.status_code == 503:
+                # Service unavailable - Service is temporarily unavailable.
+                # Retry after waiting for the time specified in the "Retry-After" header.
+                if self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY in e.response.headers:
+                    raise ServiceUnavailable(int(e.response.headers[self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY]))
+                else:
+                    logging.error(f"{self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY} header was not found in respose", exc_info=e)
+                    raise e
             else:
                 raise e
 
