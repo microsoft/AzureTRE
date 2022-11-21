@@ -395,3 +395,8 @@ class CostService:
 
     def __parse_cost_management_date_value(self, date_value: int):
         return datetime.strptime(str(date_value), "%Y%m%d").date()
+
+
+@lru_cache(maxsize=None)
+def cost_service_factory() -> CostService:
+    return CostService()
