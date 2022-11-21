@@ -1,6 +1,7 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from enum import Enum
-from typing import Dict, Optional
+from functools import lru_cache
+from typing import Dict, Optional, Union
 import pandas as pd
 import logging
 
@@ -63,9 +64,22 @@ class ServiceUnavailable(Exception):
         self.retry_after = retry_after
 
 
+class CostCacheItem():
+    """Holds cost qery result and time to leave for storing in cache"""
+    result: QueryResult
+    ttl: datetime
+
+    def __init__(self, item: QueryResult, ttl: datetime) -> None:
+        self.result = item
+        self.ttl = ttl
+
+
+# make sure CostService is singleton
+@lru_cache(maxsize=None)
 class CostService:
     scope: str
     client: CostManagementClient
+    cache: Dict[str, CostCacheItem]
     TRE_ID_TAG: str = "tre_id"
     TRE_CORE_SERVICE_ID_TAG: str = "tre_core_service_id"
     TRE_WORKSPACE_ID_TAG: str = "tre_workspace_id"
@@ -76,10 +90,49 @@ class CostService:
     RATE_LIMIT_RETRY_AFTER_HEADER_KEY: str = "x-ms-ratelimit-microsoft.costmanagement-entity-retry-after"
     SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY: str = "Retry-After"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.scope = "/subscriptions/{}".format(config.SUBSCRIPTION_ID)
         self.client = CostManagementClient(credential=credentials.get_credential())
         self.resource_client = ResourceManagementClient(credentials.get_credential(), config.SUBSCRIPTION_ID)
+        self.cache = {}
+
+    def get_cached_result(self, key: str) -> Union[QueryResult, None]:
+        """Returns cached item result.
+
+        Args:
+            key (str): key of the cached item in cache.
+        Returns:
+            result (Union[QueryResult, None]): cost query result or None if not found or expired.
+        """
+        cached_item: CostCacheItem = self.cache.get(key, None)
+
+        # return None if key doesn't exist
+        if cached_item is None:
+            return None
+
+        # return None if key expired
+        if (datetime.now() > cached_item.ttl):
+            # remove expired cache item
+            self.cache.pop(key)
+            return None
+
+        return cached_item.result
+
+    def clear_expired_cache_items(self) -> None:
+        """Clears all expired cache items."""
+        expired_keys = [key for key in self.cache.keys() if datetime.now() > self.cache[key].ttl]
+        for key in expired_keys:
+            self.cache.pop(key)
+
+    def cache_result(self, key: str, result: QueryResult, timedelta: timedelta) -> None:
+        """Add cost result to cache.
+
+        Args:
+            key (str) : key of the cached item in cache.
+            result (QueryResult) : cost query result to cache.
+        """
+        self.cache[key] = CostCacheItem(result, datetime.now() + timedelta)
+        self.clear_expired_cache_items()
 
     def query_tre_costs(self, tre_id, granularity: GranularityEnum, from_date: datetime, to_date: datetime,
                         workspace_repo: WorkspaceRepository,
@@ -87,7 +140,12 @@ class CostService:
 
         resource_groups_dict = self.get_resource_groups_by_tag(self.TRE_ID_TAG, tre_id)
 
-        query_result = self.query_costs(CostService.TRE_ID_TAG, tre_id, granularity, from_date, to_date, list(resource_groups_dict.keys()))
+        cache_key = f"{CostService.TRE_ID_TAG}_{tre_id}_granularity{granularity}_from_date{from_date}_to_date{to_date}_rgs{'_'.join(list(resource_groups_dict.keys()))}"
+        query_result = self.get_cached_result(cache_key)
+
+        if query_result is None:
+            query_result = self.query_costs(CostService.TRE_ID_TAG, tre_id, granularity, from_date, to_date, list(resource_groups_dict.keys()))
+            self.cache_result(cache_key, query_result, timedelta(hours=2))
 
         summerized_result = self.summerize_untagged(query_result, granularity, resource_groups_dict)
 
@@ -112,7 +170,14 @@ class CostService:
                                   user_resource_repo) -> WorkspaceCostReport:
 
         resource_groups_dict = self.get_resource_groups_by_tag(self.TRE_WORKSPACE_ID_TAG, workspace_id)
-        query_result = self.query_costs(CostService.TRE_WORKSPACE_ID_TAG, workspace_id, granularity, from_date, to_date, list(resource_groups_dict.keys()))
+
+        cache_key = f"{CostService.TRE_WORKSPACE_ID_TAG}_{workspace_id}_granularity{granularity}_from_date{from_date}_to_date{to_date}_rgs{'_'.join(list(resource_groups_dict.keys()))}"
+        query_result = self.get_cached_result(cache_key)
+
+        if query_result is None:
+            query_result = self.query_costs(CostService.TRE_WORKSPACE_ID_TAG, workspace_id, granularity, from_date, to_date, list(resource_groups_dict.keys()))
+            self.cache_result(cache_key, query_result, timedelta(hours=2))
+
         summerized_result = self.summerize_untagged(query_result, granularity, resource_groups_dict)
         query_result_dict = self.__query_result_to_dict(summerized_result, granularity)
 
@@ -330,3 +395,8 @@ class CostService:
 
     def __parse_cost_management_date_value(self, date_value: int):
         return datetime.strptime(str(date_value), "%Y%m%d").date()
+
+
+@lru_cache(maxsize=None)
+def cost_service_factory() -> CostService:
+    return CostService()

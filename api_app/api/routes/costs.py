@@ -1,6 +1,7 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi.responses import JSONResponse
 import logging
 from typing import Optional
 
@@ -16,8 +17,7 @@ from db.repositories.workspaces import WorkspaceRepository
 from models.domain.costs import CostReport, GranularityEnum, WorkspaceCostReport
 from resources import strings
 from services.authentication import get_current_admin_user, get_current_workspace_owner_or_tre_admin
-from services.cost_service import CostService, ServiceUnavailable, SubscriptionNotSupported, TooManyRequests, WorkspaceDoesNotExist
-from starlette.responses import JSONResponse
+from services.cost_service import CostService, ServiceUnavailable, SubscriptionNotSupported, TooManyRequests, WorkspaceDoesNotExist, cost_service_factory
 
 costs_core_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 costs_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_tre_admin)])
@@ -54,7 +54,7 @@ class CostsQueryParams:
                        responses=get_cost_report_responses())
 async def costs(
         params: CostsQueryParams = Depends(),
-        cost_service=Depends(CostService),
+        cost_service: CostService = Depends(cost_service_factory),
         workspace_repo=Depends(get_repository(WorkspaceRepository)),
         shared_services_repo=Depends(get_repository(SharedServiceRepository))) -> CostReport:
 
@@ -80,7 +80,7 @@ async def costs(
                             }}, status_code=503, headers={"Retry-After": str(e.retry_after)})
     except Exception as e:
         logging.error("Failed to query Azure TRE costs", exc_info=e)
-        raise e
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.API_GET_COSTS_INTERNAL_SERVER_ERROR)
 
 
 @costs_workspace_router.get("/workspaces/{workspace_id}/costs", response_model=WorkspaceCostReport,
@@ -88,7 +88,7 @@ async def costs(
                             dependencies=[Depends(get_current_workspace_owner_or_tre_admin)],
                             responses=get_workspace_cost_report_responses())
 async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depends(),
-                          cost_service=Depends(CostService),
+                          cost_service: CostService = Depends(cost_service_factory),
                           workspace_repo=Depends(get_repository(WorkspaceRepository)),
                           workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository)),
                           user_resource_repo=Depends(get_repository(UserResourceRepository))) -> WorkspaceCostReport:
@@ -117,5 +117,5 @@ async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depend
                                 "retry-after": str(e.retry_after)
                             }}, status_code=503, headers={"Retry-After": str(e.retry_after)})
     except Exception as e:
-        logging.error("Failed to query Azure TRE workspace costs", exc_info=e)
-        raise e
+        logging.error("Failed to query Azure TRE costs", exc_info=e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.API_GET_COSTS_INTERNAL_SERVER_ERROR)
