@@ -74,6 +74,7 @@ API_GET_COSTS_FROM_DATE_NEED_TO_BE_BEFORE_TO_DATE = "from_date needs to be befor
 API_GET_COSTS_SUBSCRIPTION_NOT_SUPPORTED = "Azure subscription doesn't support cost management"
 API_GET_COSTS_TOO_MANY_REQUESTS = "Too many requests to Azure cost management api. Please retry."
 API_GET_COSTS_SERVICE_UNAVAILABLE = "Azure cost management api is temporarily unavailable. Please retry."
+API_GET_COSTS_INTERNAL_SERVER_ERROR = "Failed to query Azure TRE costs."
 
 
 # State store status
