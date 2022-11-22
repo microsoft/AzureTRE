@@ -812,7 +812,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
         modified_workspace_service = sample_workspace_service()
         modified_workspace_service.isEnabled = False
-        modified_workspace_service.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_workspace_owner_user())]
+        modified_workspace_service.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_workspace_owner_user(), templateVersion=modified_workspace_service.templateVersion)]
         modified_workspace_service.resourceVersion = 1
         modified_workspace_service.user = create_workspace_owner_user()
         modified_workspace_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
