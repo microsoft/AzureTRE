@@ -311,6 +311,7 @@ test-e2e-shared-services:
 
 test-e2e-custom:
 	$(call target_title, "Running E2E tests with custom selector ${SELECTOR}") \
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env,auth \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/e2e_tests/.env \
 	&& cd e2e_tests \
 	&& if [[ -n "$${E2E_TESTS_NUMBER_PROCESSES}" && "$${E2E_TESTS_NUMBER_PROCESSES}" -ne 1 ]]; then \
