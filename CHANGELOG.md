@@ -55,6 +55,7 @@ BUG FIXES:
 * Redact secrets in conditional or nested properties ([#2854](https://github.com/microsoft/AzureTRE/pull/2854))
 * Fix missing ID parameter in Certs bundle ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))
 * Fix ML Flow deployment issues and update version ([#2865](https://github.com/microsoft/AzureTRE/pull/2865))
+* Handle 429 TooManyRequests and 503 ServiceUnavailable which might return from Azure Cost Management in TRE Cost API ([#2835](https://github.com/microsoft/AzureTRE/issues/2835))
 
 COMPONENTS:
 | name | version |
