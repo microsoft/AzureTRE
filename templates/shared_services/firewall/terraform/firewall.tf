@@ -101,7 +101,33 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
       "graph.microsoft.com",
       "login.microsoftonline.com",
       "aadcdn.msftauth.net",
-      "graph.windows.net"
+      "graph.windows.net",
+      "keyserver.ubuntu.com",
+      "packages.microsoft.com",
+      "download.docker.com"
+    ]
+
+    source_addresses = data.azurerm_subnet.shared.address_prefixes
+  }
+
+  rule {
+    name = "nexus-bootstrap"
+
+    protocol {
+      port = "443"
+      type = "Https"
+    }
+
+    protocol {
+      port = "80"
+      type = "Http"
+    }
+
+    target_fqdns = [
+      "keyserver.ubuntu.com",
+      "packages.microsoft.com",
+      "download.docker.com",
+      "azure.archive.ubuntu.com"
     ]
 
     source_addresses = data.azurerm_subnet.shared.address_prefixes
@@ -152,6 +178,26 @@ resource "azurerm_firewall_application_rule_collection" "resource_processor_subn
       "download.docker.com",
       "registry-1.docker.io",
       "auth.docker.io",
+    ]
+    source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
+  }
+
+  # TODO: remove this rule when all bundles have mirrored their plugins
+  # https://github.com/microsoft/AzureTRE/issues/2445
+  rule {
+    name = "terraform-sources"
+    protocol {
+      port = "443"
+      type = "Https"
+    }
+    protocol {
+      port = "80"
+      type = "Http"
+    }
+
+    target_fqdns = [
+      "registry.terraform.io",
+      "releases.hashicorp.com",
     ]
     source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
   }

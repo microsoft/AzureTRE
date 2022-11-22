@@ -46,7 +46,7 @@ jobs:
           echo "github ref: ${GITHUB_REF}"
           REFID=$(echo "${GITHUB_REF}" | shasum | cut -c1-8)
           echo "using id of: ${REFID} for GitHub Ref: ${GITHUB_REF}"
-          echo "::set-output name=refid::${REFID}"
+          echo "refid=${REFID}" >> "$GITHUB_OUTPUT"
 
   run-deploy-tre-not-main:
     name: "Deploy PR"
@@ -83,3 +83,6 @@ jobs:
       TRE_ID: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
       TF_LOG: ${{ secrets.TF_LOG }}
+      CORE_APP_SERVICE_PLAN_SKU: ${{ secrets.CORE_APP_SERVICE_PLAN_SKU }}
+      WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ secrets.WORKSPACE_APP_SERVICE_PLAN_SKU }}
+      RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE: ${{ secrets.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE }}

@@ -2,3 +2,24 @@
 # Put files here that you don't want copied into your bundle's invocation image
 .gitignore
 Dockerfile.tmpl
+
+.bash_history
+.mypy_cache
+.pytest_cache
+
+__pycache__
+.env
+*.env
+
+docs
+!docs/requirements.txt
+
+cli/build
+cli/dist
+*.egg-info/
+
+.terraform
+tfplan*
+*.log
+
+templates/workspace_services/guacamole/guacamole-server/guacamole-auth-azure/target

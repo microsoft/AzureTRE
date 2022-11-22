@@ -15,7 +15,7 @@ export interface Resource {
     user: User,
     history: Array<HistoryItem>,
     _etag: string,
-    properties: any
+    properties: any,
     azureStatus?: any
 }
 

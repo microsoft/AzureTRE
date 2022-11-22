@@ -31,27 +31,15 @@ export interface OperationStep {
 export const awaitingStates = [
   "awaiting_deployment",
   "awaiting_update",
-  "awaiting_deletion"
+  "awaiting_deletion",
+  "awaiting_action"
 ]
 
-export const completedStates = [
+export const successStates = [
   "deployed",
-  "deleted",
   "updated",
-  "failed",
-  "deleting_failed",
-  "updating_failed",
-  "action_succeeded",
-  "action_failed"
-]
-
-export const inProgressStates = [
-  ...awaitingStates,
-  "deploying",
-  "updating",
-  "deleting",
-  "invoking_action",
-  "pipeline_running"
+  "deleted",
+  "action_succeeded"
 ]
 
 export const failedStates = [
@@ -61,11 +49,18 @@ export const failedStates = [
   "action_failed",
 ]
 
-export const successStates = [
-  "deployed",
-  "updated",
-  "deleted",
-  "action_succeeded"
+export const completedStates = [
+  ...failedStates,
+  ...successStates
+]
+
+export const inProgressStates = [
+  ...awaitingStates,
+  "deploying",
+  "updating",
+  "deleting",
+  "invoking_action",
+  "pipeline_running"
 ]
 
 export const actionsDisabledStates = [

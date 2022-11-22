@@ -50,32 +50,45 @@ nav:
           - Azure Resources: azure-tre-overview/tre-resources-breakdown.md
           - Airlock: azure-tre-overview/airlock.md
           - Cost Reporting: azure-tre-overview/cost-reporting.md
-      #- Compliance: azure-tre-overview/compliance-info.md
+      - Terms and Definitions: using-tre/terms-definitions.md
+      # - Compliance: azure-tre-overview/compliance-info.md
 
   - QuickStart: # Setup steps for anyone performing an initial deployment of the AzureTRE for eval purposes
       - tre-admins/setup-instructions/index.md
       - 1. Prerequisites: tre-admins/setup-instructions/prerequisites.md
-      - 2. AD Tenant: tre-admins/setup-instructions/ad-tenant-choices.md
-      - 3. Pre-deployment Steps: tre-admins/setup-instructions/pre-deployment-steps.md
-      - 4. Deploying Azure TRE: tre-admins/setup-instructions/deploying-azure-tre.md
-      - 5. Configuring Shared Services: tre-admins/setup-instructions/configuring-shared-services.md
-      - 6. Installing Base Workspace: tre-admins/setup-instructions/installing-base-workspace.md
-      - 7. Installing Workspace Service and User Resource: tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md
+      - 2. Deployment Repository: tre-admins/setup-instructions/deployment-repo.md
+      - 3. AD Tenant: tre-admins/setup-instructions/ad-tenant-choices.md
+      - 4. Setup Auth: tre-admins/setup-instructions/setup-auth-entities.md
+      - 5. Deployment:
+          - Manual:
+              - Pre-deployment Steps: tre-admins/setup-instructions/manual-pre-deployment-steps.md
+              - Deployment Steps: tre-admins/setup-instructions/manual-deployment.md
+          - CI/CD:
+              - Pre-deployment Steps: tre-admins/setup-instructions/cicd-pre-deployment-steps.md
+              - Deployment Steps: tre-admins/setup-instructions/cicd-deplyment.md
+      - 6. Configure Shared Services: tre-admins/setup-instructions/configuring-shared-services.md
+      - 7. Install Base Workspace: tre-admins/setup-instructions/ui-install-base-workspace.md
+      - 8. Install Workspace Service and User Resource: tre-admins/setup-instructions/ui-install-ws-and-ur.md
 
   - Using the Azure TRE: # Documentation for users of the TRE
       - Introduction: using-tre/index.md
-      - Terms and Definitions: using-tre/terms-definitions.md
       - Custom Templates: using-tre/templates/index.md
-      - Workspaces:
-          - using-tre/wks/index.md # Documentation describing what a workspace is
-          - Using Workspaces: using-tre/wks/using-wks.md # Interacting with workspaces (via the UI)
-          - The Workspace Owner: using-tre/wks/wks-owner.md # Workspace Owners. The concept, and tasks
-      - FAQ: using-tre/faq.md # FAQ section (to allow easy contribution)
+      - Using AzureTRE for Research:
+          - Introduction: using-tre/tre-for-research/index.md
+          - Set up of a Virtual Machine: using-tre/tre-for-research/using-vms.md
+          - Importing/exporting data with Airlock: using-tre/tre-for-research/importing-exporting-data-airlock.md
+          - Reviewing Airlock Requests: using-tre/tre-for-research/review-airlock-request.md
+      # - Workspaces:
+      #    - using-tre/wks/index.md # Documentation describing what a workspace is
+      #    - Using Workspaces: using-tre/wks/using-wks.md # Interacting with workspaces (via the UI)
+      #    - The Workspace Owner: using-tre/wks/wks-owner.md # Workspace Owners. The concept, and tasks
+      # - FAQ: using-tre/faq.md # FAQ section (to allow easy contribution)
 
   - Templates and Services: # Docs to highlight and illustrate workspaces, workspace services etc
       - Workspaces:
           - Base: tre-templates/workspaces/base.md
           - Unrestricted: tre-templates/workspaces/unrestricted.md
+          - Airlock Import Review: tre-templates/workspaces/airlock-import-review.md
       - Workspace Services:
           - Azure ML: tre-templates/workspace-services/azure-ml.md
           - Gitea: tre-templates/workspace-services/gitea.md
@@ -90,8 +103,11 @@ nav:
       - User Resources:
           - Guacamole Windows VM: tre-templates/user-resources/guacamole-windows-vm.md
           - Guacamole Linux VM: tre-templates/user-resources/guacamole-linux-vm.md
+          - Import Review VM: tre-templates/user-resources/import-reviewvm.md
+          - Export Review VM: tre-templates/user-resources/export-reviewvm.md
 
   - Technical Guide: # All Technical Documentation (Admin, Development)
+
       - Administration: # Docs related to the deployment and operation of AzureTRE infrastructure
           - Starting and Stopping Azure TRE Services: tre-admins/start-stop.md
           - Environment Variables: tre-admins/environment-variables.md
@@ -105,10 +121,15 @@ nav:
                   - Client: tre-admins/identities/client.md
                   - Automation Test Account: tre-admins/identities/test-account.md
                   - Workspaces: tre-admins/identities/workspace.md
-          - Registring Templates: tre-admins/registering-templates.md
+          - Registering Templates: tre-admins/registering-templates.md
+          - Install Resources via API:
+              - Install Base Workspace: tre-admins/setup-instructions/installing-base-workspace.md
+              - Install Workspace Service and User Resource: tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md
+          - Upgrading AzureTRE version: tre-admins/upgrading-tre.md
+          - Configuring Airlock Reviews: tre-admins/configure-airlock-review.md
 
       - Development: # Docs related to the developing code for the AzureTRE
-          - Local Development: using-tre/local-development/index.md
+          - Local Development: using-tre/local-development/local-development.md
           - Contributing to AzureTRE: # Docs aimed at OSS developers, committing code to the AzureTRE repo
               - Introduction: tre-developers/index.md
               - API: tre-developers/api.md
@@ -126,7 +147,7 @@ nav:
                   - Overview: tre-templates/pipeline-templates/overview.md
                   - Pipeline Schema: tre-templates/pipeline-templates/pipeline-schema.md
 
-      - Deploying the AzureTRE using CI/CD: using-tre/pipelines/pipelines.md
+      - AzureTRE CLI: tre-developers/CLI.md
 
       - Troubleshooting FAQ: # General Troubleshooting Section for Development
           - troubleshooting-faq/index.md

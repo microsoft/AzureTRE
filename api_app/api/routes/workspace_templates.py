@@ -10,7 +10,7 @@ from models.schemas.resource_template import ResourceTemplateInResponse, Resourc
 from models.schemas.workspace_template import WorkspaceTemplateInCreate, WorkspaceTemplateInResponse
 from resources import strings
 from services.authentication import get_current_admin_user
-from .resource_helpers import get_current_template_by_name
+from api.routes.resource_helpers import get_template
 
 
 workspace_templates_admin_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
@@ -23,8 +23,8 @@ async def get_workspace_templates(authorized_only: bool = False, template_repo=D
 
 
 @workspace_templates_admin_router.get("/workspace-templates/{workspace_template_name}", response_model=WorkspaceTemplateInResponse, name=strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, response_model_exclude_none=True)
-async def get_current_workspace_template_by_name(workspace_template_name: str, is_update: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceTemplateInResponse:
-    template = get_current_template_by_name(workspace_template_name, template_repo, ResourceType.Workspace, is_update=is_update)
+async def get_workspace_template(workspace_template_name: str, is_update: bool = False, version: str = None, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceTemplateInResponse:
+    template = get_template(workspace_template_name, template_repo, ResourceType.Workspace, is_update=is_update, version=version)
     return parse_obj_as(WorkspaceTemplateInResponse, template)
 
 

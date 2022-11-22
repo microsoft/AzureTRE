@@ -33,7 +33,7 @@ variable "api_image_repository" {
   default     = "microsoft/azuretre/api"
 }
 
-variable "api_app_service_plan_sku_size" {
+variable "core_app_service_plan_sku" {
   type    = string
   default = "P1v3"
 }
@@ -60,14 +60,9 @@ variable "terraform_state_container_name" {
 }
 
 variable "resource_processor_number_processes_per_instance" {
-  type        = string
-  default     = "2"
+  type        = number
+  default     = 5
   description = "The number of CPU processes to run the RP on per VM instance"
-}
-
-variable "docker_registry_server" {
-  type        = string
-  description = "Docker registry server"
 }
 
 variable "swagger_ui_client_id" {
@@ -156,4 +151,10 @@ variable "enable_airlock_malware_scanning" {
   type        = bool
   default     = false
   description = "If False, Airlock requests will skip the malware scanning stage"
+}
+
+variable "rp_bundle_values" {
+  description = "Additional environment values to set on the resource processor that can be supplied to template bundles"
+  type        = map(string)
+  default     = {}
 }

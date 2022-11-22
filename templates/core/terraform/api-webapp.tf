@@ -11,7 +11,7 @@ resource "azurerm_service_plan" "core" {
   resource_group_name = azurerm_resource_group.core.name
   location            = azurerm_resource_group.core.location
   os_type             = "Linux"
-  sku_name            = var.api_app_service_plan_sku_size
+  sku_name            = var.core_app_service_plan_sku
   tags                = local.tre_core_tags
   worker_count        = 1
   lifecycle { ignore_changes = [tags] }
@@ -73,7 +73,7 @@ resource "azurerm_linux_web_app" "api" {
     ftps_state                                    = "Disabled"
 
     application_stack {
-      docker_image     = "${var.docker_registry_server}/${var.api_image_repository}"
+      docker_image     = "${local.docker_registry_server}/${var.api_image_repository}"
       docker_image_tag = local.version
     }
 
@@ -130,7 +130,7 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_api" {
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
 
   dynamic "log" {
-    for_each = data.azurerm_monitor_diagnostic_categories.api.logs
+    for_each = data.azurerm_monitor_diagnostic_categories.api.log_category_types
     content {
       category = log.value
       enabled  = contains(local.api_diagnostic_categories_enabled, log.value) ? true : false

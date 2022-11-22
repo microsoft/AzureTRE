@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-unrestricted
-version: 0.1.9
+version: 0.5.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -64,6 +64,7 @@ parameters:
     description: "The object id of the user that will be granted WorkspaceOwner after it is created."
   - name: client_id
     type: string
+    default: ""
     description:
       "The client id of the workspace in the identity provider. This value is typically provided to you
       when you create the ws application"

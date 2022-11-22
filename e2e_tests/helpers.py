@@ -85,7 +85,7 @@ async def check_aad_auth_redirect(endpoint, verify) -> None:
         while (True):
             try:
                 response = await client.get(url=endpoint, timeout=TIMEOUT)
-                LOGGER.info(f"Endpoint Response: {response}")
+                LOGGER.info(f"Endpoint Response: {endpoint} {response}")
 
                 if response.status_code in terminal_http_status:
                     break

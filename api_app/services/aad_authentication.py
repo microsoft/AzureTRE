@@ -55,8 +55,11 @@ class AzureADAuthorization(AccessService):
             # as we have a workspace_id not given, try decoding token
             logging.debug("Workspace ID was provided. Getting Workspace API app registration")
             try:
+                # get the app reg id - which might be blank if the workspace hasn't fully created yet.
+                # if it's blank, don't use workspace auth, use core auth - and a TRE Admin can still get it
                 app_reg_id = self._fetch_ws_app_reg_id_from_ws_id(request)
-                decoded_token = self._decode_token(token, app_reg_id)
+                if app_reg_id != "":
+                    decoded_token = self._decode_token(token, app_reg_id)
             except HTTPException as h:
                 raise h
             except Exception as e:
@@ -112,7 +115,10 @@ class AzureADAuthorization(AccessService):
             workspace_id = request.path_params['workspace_id']
             ws_repo = WorkspaceRepository(get_db_client_from_request(request))
             workspace = ws_repo.get_workspace_by_id(workspace_id)
-            ws_app_reg_id = workspace.properties['client_id']
+
+            ws_app_reg_id = ""
+            if "client_id" in workspace.properties:
+                ws_app_reg_id = workspace.properties['client_id']
 
             return ws_app_reg_id
         except EntityDoesNotExist as e:
@@ -265,7 +271,7 @@ class AzureADAuthorization(AccessService):
 
             if principal_type == "User" and principal_id in user_emails:
                 app_role_id = role_assignment["appRoleId"]
-                app_role_name = inverted_app_role_ids[app_role_id]
+                app_role_name = inverted_app_role_ids.get(app_role_id)
 
                 if app_role_name:
                     workspace_role_assignments_details[app_role_name].append(user_emails[principal_id])
@@ -294,7 +300,7 @@ class AzureADAuthorization(AccessService):
 
     # This method is called when you create a workspace and you already have an AAD App Registration
     # to link it to. You pass in the client_id and go and get the extra information you need from AAD
-    # If the client_id is `auto_create`, then these values will be written by Terraform.
+    # If the auth_type is `Automatic`, then these values will be written by Terraform.
     def _get_app_auth_info(self, client_id: str) -> dict:
         graph_data = self._get_app_sp_graph_data(client_id)
         if 'value' not in graph_data or len(graph_data['value']) == 0:
@@ -363,13 +369,13 @@ class AzureADAuthorization(AccessService):
         return object_info["@odata.type"]
 
     def extract_workspace_auth_information(self, data: dict) -> dict:
-        if "client_id" not in data:
+        if ("auth_type" not in data) or (data["auth_type"] != "Automatic" and "client_id" not in data):
             raise AuthConfigValidationError(strings.ACCESS_PLEASE_SUPPLY_CLIENT_ID)
 
         auth_info = {}
         # The user may want us to create the AAD workspace app and therefore they
         # don't know the client_id yet.
-        if data["client_id"] != "auto_create":
+        if data["auth_type"] != "Automatic":
             auth_info = self._get_app_auth_info(data["client_id"])
 
             # Check we've get all our required roles

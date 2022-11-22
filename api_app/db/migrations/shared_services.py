@@ -30,10 +30,13 @@ class SharedServiceMigration(SharedServiceRepository):
         template_name = 'tre-shared-service-firewall'
         min_template_version = semantic_version.Version('0.4.0')
 
-        resource = self.query(query=f'SELECT * FROM c WHERE c.resourceType = "shared-service" \
+        resources = self.query(query=f'SELECT * FROM c WHERE c.resourceType = "shared-service" \
                                       AND c.templateName = "{template_name}" AND {IS_OPERATING_SHARED_SERVICE}')
 
-        template_version = semantic_version.Version(resource[0]["templateVersion"])
+        if not resources:
+            raise ValueError(f"Expecting to have an instance of Firewall (template name {template_name}) deployed in a successful TRE deployment")
+
+        template_version = semantic_version.Version(resources[0]["templateVersion"])
 
         if (template_version < min_template_version):
             raise ValueError(f"{template_name} deployed version ({template_version}) is below minimum ({min_template_version})!",

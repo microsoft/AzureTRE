@@ -95,6 +95,17 @@ inputs:
     description: "Log level for terraform - values are blank | DEBUG | TRACE"
     required: false
     default: ""
+  CORE_APP_SERVICE_PLAN_SKU:
+    description: "The AppService plan sku used in core resources"
+    required: false
+    default: ""
+  WORKSPACE_APP_SERVICE_PLAN_SKU:
+    description: "The AppService plan sku used by tests"
+    required: false
+    default: ""
+  RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE:
+    description: "The number of resource processor processes to create for parallel operations"
+    required: false
 
 runs:
   using: composite
@@ -162,5 +173,11 @@ runs:
           -e TF_VAR_stateful_resources_locked=${{ inputs.STATEFUL_RESOURCES_LOCKED }} \
           -e TF_VAR_enable_airlock_malware_scanning=${{ inputs.ENABLE_AIRLOCK_MALWARE_SCANNING }} \
           -e CI_CACHE_ACR_NAME="${{ inputs.CI_CACHE_ACR_NAME }}" \
+          -e TF_VAR_core_app_service_plan_sku="${{ (inputs.CORE_APP_SERVICE_PLAN_SKU != ''
+            && inputs.CORE_APP_SERVICE_PLAN_SKU) || 'P1v2' }}" \
+          -e WORKSPACE_APP_SERVICE_PLAN_SKU="${{ (inputs.WORKSPACE_APP_SERVICE_PLAN_SKU != ''
+            && inputs.WORKSPACE_APP_SERVICE_PLAN_SKU) || 'P1v2' }}" \
+          -e TF_VAR_resource_processor_number_processes_per_instance="${{ (inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE != ''
+            && inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE) || 5  }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}.azurecr.io/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"

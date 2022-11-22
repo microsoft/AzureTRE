@@ -100,7 +100,15 @@ on:  # yamllint disable-line rule:truthy
       AZURE_CREDENTIALS:
         description: ""
         required: true
-
+      CORE_APP_SERVICE_PLAN_SKU:
+        description: ""
+        required: false
+      WORKSPACE_APP_SERVICE_PLAN_SKU:
+        description: ""
+        required: false
+      RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE:
+        description: "Inputs"
+        required: false
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
@@ -123,7 +131,7 @@ jobs:
 
       - name: Report check status start
         if: inputs.prHeadSha != ''
-        uses: LouisBrunner/checks-action@v1.1.1
+        uses: LouisBrunner/checks-action@v1.5.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sha: ${{ inputs.prHeadSha }}
@@ -140,7 +148,7 @@ jobs:
           ref: ${{ inputs.prRef }}
 
       - name: Set up Docker BuildKit
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
       - name: Azure Login
         uses: azure/login@v1
@@ -289,6 +297,8 @@ jobs:
           APPLICATION_ADMIN_CLIENT_ID: "${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}"
           APPLICATION_ADMIN_CLIENT_SECRET: "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}"
           STATEFUL_RESOURCES_LOCKED: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          CORE_APP_SERVICE_PLAN_SKU: ${{ secrets.CORE_APP_SERVICE_PLAN_SKU }}
+          RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE: ${{ secrets.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
@@ -611,19 +621,14 @@ jobs:
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
+          WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ secrets.WORKSPACE_APP_SERVICE_PLAN_SKU }}
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: E2E Test (Smoke) Results
           path: "./e2e_tests/pytest_e2e_smoke.xml"
-
-      - name: Publish Test Results
-        if: always()
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        with:
-          files: "./e2e_tests/pytest_e2e_smoke.xml"
 
   e2e_tests_custom:
     name: "Run E2E Tests"
@@ -658,19 +663,14 @@ jobs:
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
+          WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ secrets.WORKSPACE_APP_SERVICE_PLAN_SKU }}
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: E2E Test Results
           path: "./e2e_tests/pytest_e2e_custom.xml"
-
-      - name: Publish Test Results
-        if: always()
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        with:
-          files: "./e2e_tests/pytest_e2e_custom.xml"
 
   summary:
     name: Summary
@@ -679,14 +679,14 @@ jobs:
     if: always()
     environment: ${{ inputs.environmentName }}
     steps:
-      - uses: technote-space/workflow-conclusion-action@v2
+      - uses: technote-space/workflow-conclusion-action@v3
 
       # For PR builds triggered from comment builds, the GITHUB_REF is set to main
       # so the checks aren't automatically associated with the PR
       # If prHeadSha is specified then explicity mark the checks for that SHA
       - name: Report check status
         if: inputs.prHeadSha != ''
-        uses: LouisBrunner/checks-action@v1.1.1
+        uses: LouisBrunner/checks-action@v1.5.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # the name must be identical to the one received by the real job
@@ -697,8 +697,13 @@ jobs:
           details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Notify teams channel
+        env:
+          MS_TEAMS_WEBHOOK_URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
         # notify only if failure
-        if: env.WORKFLOW_CONCLUSION == 'failure' && (github.ref == 'refs/heads/main' && inputs.prRef == '')
+        if: |
+          env.WORKFLOW_CONCLUSION == 'failure' &&
+          env.MS_TEAMS_WEBHOOK_URI != '' &&
+          (github.ref == 'refs/heads/main' && inputs.prRef == '')
         uses: sachinkundu/ms-teams-notification@1.4
         with:
           github-token: ${{ github.token }}
@@ -706,3 +711,14 @@ jobs:
           notification-summary: "Failed to deploy from main"
           notification-color: dc3545
           timezone: Europe/Zurich
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+
+      - name: Publish E2E Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          junit_files: "artifacts/**/*.xml"
+          check_name: "E2E Test Results"

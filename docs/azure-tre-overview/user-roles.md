@@ -20,6 +20,9 @@ While we have defined 8 different user roles for the Azure TRE solution, not all
 | Data engineer | Move data to and potentially from the TRE | |
 | Information security officer | Validate and sign-off TRE deployment | |
 
+!!! info
+    More granular RBAC information is available [here](../tre-developers/api-permissions-map.md).
+
 ## Azure administrator
 
 Provisions the Azure TRE solution in an Azure subscription and performs tasks that require knowledge of Azure operations and has access to the Azure subscription.
@@ -99,7 +102,7 @@ Example tasks:
 
 - Approve Airlock import requests
 - Approve Airlock export requests
-- Review the data being improted to and exported from a TRE Workspace
+- Review the data being imported to and exported from a TRE Workspace
 
 ## TRE service integrator
 

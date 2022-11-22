@@ -5,8 +5,6 @@ config {
 
 plugin "azurerm" {
     enabled = true
-    version = "0.17.1"
-    source  = "github.com/terraform-linters/tflint-ruleset-azurerm"
 }
 
 rule "terraform_unused_declarations" {
@@ -31,4 +29,9 @@ rule "terraform_naming_convention" {
 
 rule "terraform_standard_module_structure" {
   enabled = true
+}
+
+rule "azurerm_resource_missing_tags" {
+  enabled = true
+  tags = ["tre_id"]
 }

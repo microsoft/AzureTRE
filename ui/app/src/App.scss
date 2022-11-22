@@ -54,6 +54,7 @@ code {
 
 .tre-notifications-dismiss {
   text-align: right;
+  padding-top: 10px;
 }
 
 ul.tre-notifications-list {
@@ -103,6 +104,17 @@ ul.tre-notifications-steps-list li {
 
   .ms-Icon {
     margin-top: 3px;
+  }
+}
+
+.tre-table {
+  .ms-Persona-primaryText {
+    font-size: 12px;
+    color: rgb(108, 108, 108);
+  }
+
+  .ms-DetailsRow-cell {
+    align-self: baseline;
   }
 }
 
@@ -158,12 +170,6 @@ ul.tre-notifications-steps-list li {
   background-color: #fff;
 }
 
-.tre-table-rows-align-centre {
-  .ms-DetailsRow-cell {
-    align-self: baseline;
-  }
-}
-
 .ms-Pivot {
   margin-bottom: 10px;
 }
@@ -217,10 +223,12 @@ input[readonly]{
 // Classes for rendering power state badges
 .tre-power-badge {
   text-align: center;
+  color: #636262;
+  margin: 6px;
 
   .tre-power-on, .tre-power-off {
-    height: 10px;
-    width: 10px;
+    height: 8px;
+    width: 8px;
     background-color: #006600;
     border-radius: 50%;
     display: inline-block;
@@ -231,6 +239,64 @@ input[readonly]{
     background-color: #990000;
   }
 }
-.tre-hidden{
-  display:none;
+
+/* hide fields explicitly */
+.tre-hidden {
+  display: none;
+}
+
+/* create form overrides */
+/* panel header */
+.ms-Panel-commands {
+  background: #fff;
+  border-bottom: 1px #ccc solid;
+  padding-bottom: 10px;
+}
+
+/* template description at top of panel */
+.rjsf > .ms-Grid-col {
+  margin-top: -25px;
+}
+
+.rjsf > .ms-Grid-col > span:first-of-type {
+  display: block;
+  background-color: #efefef;
+  padding: 10px;
+  margin-bottom: 15px;
+  font-style: normal;
+}
+
+/* border around sub-blocks */
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object,
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array {
+  border: 1px #ccc dashed;
+  padding: 10px;
+  background-color: #fcfcfc;
+}
+
+/* sub titles and sub-sub titles */
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > label.ms-Label,
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array > label.ms-Label {
+  font-size: 20px;
+}
+
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > .ms-Grid > .ms-Grid-row > .ms-Grid-col > label.ms-Label,
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array > .ms-Grid > .ms-Grid-row > .ms-Grid-col > label.ms-Label {
+  font-size: 16px;
+}
+
+/* remove secondary template description at the bottom of each template + sub blocks */
+.rjsf > .ms-Grid-col > span:last-of-type,
+.rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > span:last-of-type,
+.rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > .ms-Grid > .ms-Grid-row > .ms-Grid-col > span:last-of-type {
+  display: none;
+}
+
+/* make descriptive text italic */
+.field span {
+  font-style: italic;
+}
+
+.field span.ms-Checkbox-text {
+  font-style: normal;
 }

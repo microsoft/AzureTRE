@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-airlock-import-review
-version: 0.3.30
+version: 0.5.0
 description: "A workspace to do Airlock Data Import Reviews for Azure TRE"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -60,6 +60,7 @@ parameters:
     type: string
     description: "The object id of the user that will be granted WorkspaceOwner after it is created."
   - name: client_id
+    default: ""
     type: string
     description:
       "The client id of the workspace in the identity provider. This value is typically provided to you

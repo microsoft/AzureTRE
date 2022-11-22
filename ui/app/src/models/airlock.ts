@@ -1,13 +1,31 @@
-import { Resource } from "./resource";
+import { User } from "./user";
 
-export interface AirlockRequest extends Resource {
+export interface AirlockRequest {
+  id: string;
+  resourceVersion: number;
+  createdBy: User;
+  createdWhen: number;
+  updatedBy: User;
+  updatedWhen: number;
+  history: Array<AirlockRequestHistoryItem>;
   workspaceId: string;
-  requestType: AirlockRequestType;
-  files: Array<string>;
+  type: AirlockRequestType;
+  files: Array<{name: string, size: number}>;
+  title: string;
   businessJustification: string;
-  errorMessage: null | string;
   status: AirlockRequestStatus;
-  creationTime: number;
+  reviewUserResources: Array<AirlockReviewUserResource>;
+  allowedUserActions: Array<AirlockRequestAction>;
+  reviews?: Array<AirlockReview>;
+  statusMessage?: string;
+  etag?: string
+}
+
+export interface AirlockRequestHistoryItem {
+  resourceVersion: number;
+  updatedWhen: number;
+  updatedBy: User;
+  properties: {};
 }
 
 export enum AirlockRequestType {
@@ -18,14 +36,50 @@ export enum AirlockRequestType {
 export enum AirlockRequestStatus {
   Draft = 'draft',
   InReview = 'in_review',
-  InProgress = 'in_progress',
   Approved = 'approved',
+  ApprovalInProgress = 'approval_in_progress',
+  RejectionInProgress = 'rejection_in_progress',
   Rejected = 'rejected',
+  Blocked = 'blocked',
+  BlockingInProgress = 'blocking_in_progress',
   Submitted = 'submitted',
-  Cancelled = 'cancelled'
+  Cancelled = 'cancelled',
+  Failed = 'failed'
 }
 
 export interface NewAirlockRequest {
-  requestType: AirlockRequestType;
+  type: AirlockRequestType;
+  title: string;
   businessJustification: string;
+}
+
+export enum AirlockRequestAction {
+  Cancel = 'cancel',
+  Submit = 'submit',
+  Review = 'review'
+}
+
+export const AirlockFilesLinkInvalidStatus = [
+  AirlockRequestStatus.Rejected,
+  AirlockRequestStatus.Blocked,
+  AirlockRequestStatus.Failed
+]
+
+export enum AirlockReviewDecision {
+  Approved = 'approved',
+  Rejected = 'rejected'
+}
+
+export interface AirlockReview {
+  id: string,
+  dateCreated: number,
+  reviewDecision: AirlockReviewDecision,
+  decisionExplanation: string,
+  reviewer: User
+}
+
+export interface AirlockReviewUserResource {
+  workspaceId: string,
+  workspaceServiceId: string,
+  userResourceId: string
 }
