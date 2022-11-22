@@ -20,12 +20,14 @@ import { Footer } from './components/shared/Footer';
 import { initializeFileTypeIcons } from '@fluentui/react-file-type-icons';
 import { CostResource } from './models/costs';
 import { CostsContext } from './contexts/CostsContext';
+import { LoadingState } from './models/loadingState';
 
 export const App: React.FunctionComponent = () => {
   const [appRoles, setAppRoles] = useState([] as Array<string>);
   const [selectedWorkspace, setSelectedWorkspace] = useState({} as Workspace);
   const [workspaceRoles, setWorkspaceRoles] = useState([] as Array<string>);
   const [costs, setCosts] = useState([] as Array<CostResource>);
+  const [costsLoadingState, setCostsLoadingState] = useState(LoadingState.Loading);
   const [createFormOpen, setCreateFormOpen] = useState(false);
   const [createFormResource, setCreateFormResource] = useState({ resourceType: ResourceType.Workspace } as CreateFormResource);
 
@@ -76,8 +78,10 @@ export const App: React.FunctionComponent = () => {
                   <Stack.Item grow={100} className='tre-body'>
                     <GenericErrorBoundary>
                       <CostsContext.Provider value={{
+                        loadingState: costsLoadingState,
                         costs: costs,
                         setCosts: (costs: Array<CostResource>) => {setCosts(costs)},
+                        setLoadingState: (loadingState: LoadingState) => {setCostsLoadingState(loadingState)}
                       }}>
                         <Routes>
                           <Route path="*" element={<RootLayout />} />
