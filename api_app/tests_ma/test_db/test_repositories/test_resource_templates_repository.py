@@ -136,6 +136,7 @@ def test_create_workspace_template_item_calls_create_item_with_the_correct_param
         version=input_workspace_template.version,
         resourceType=ResourceType.Workspace,
         properties=input_workspace_template.json_schema["properties"],
+        allOf=input_workspace_template.json_schema["allOf"],
         customActions=input_workspace_template.customActions,
         required=input_workspace_template.json_schema["required"],
         current=input_workspace_template.current
@@ -158,6 +159,7 @@ def test_create_item_created_with_the_expected_type(uuid_mock, save_item_mock, r
         version=input_workspace_template.version,
         resourceType=expected_type,
         properties=input_workspace_template.json_schema["properties"],
+        allOf=input_workspace_template.json_schema["allOf"],
         customActions=input_workspace_template.customActions,
         required=input_workspace_template.json_schema["required"],
         current=input_workspace_template.current

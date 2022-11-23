@@ -1,6 +1,17 @@
 <!-- markdownlint-disable MD041 -->
-<!-- line format short be: change short description (#pr_numer) -->
-## 0.6.1 (Unreleased)
+## 0.8.0 (Unreleased)
+
+**BREAKING CHANGES & MIGRATIONS**:
+
+ENHANCEMENTS:
+* Remove Porter's Docker mixin as it's not in use ([#2889](https://github.com/microsoft/AzureTRE/pull/2889))
+
+BUG FIXES:
+* Private endpoints for AppInsights are now provisioning successfully and consistently ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))
+
+COMPONENTS:
+
+## 0.7.0 (November 17, 2022)
 
 **BREAKING CHANGES & MIGRATIONS**:
 * The airlock request object has changed. Make sure you have ran the db migration step after deploying the new API image and UI (which runs automatically in `make all`/`make tre-deploy` but can be manually invoked with `make db-migrate`) so that existing requests in your DB are migrated to the new model.
@@ -18,13 +29,15 @@ FEATURES:
 * Display workspace and shared services total costs for admin role in UI [#2738](https://github.com/microsoft/AzureTRE/pull/2772)
 * Automatically validate all resources have tre_id tag via TFLint [#2774](https://github.com/microsoft/AzureTRE/pull/2774)
 * Add metadata endpoint and simplify `tre` CLI login (also adds API version to UI) (#2794)
-* Updated resource card in UI with visual improvements, disabled state badge and resource ID in info popout [#2846](https://github.com/microsoft/AzureTRE/pull/2846)
-* Add health information for backend services to UI info popout in footer [#2846](https://github.com/microsoft/AzureTRE/pull/2846)
+* Support workspaces with multiple address spaces [#2808](https://github.com/microsoft/AzureTRE/pull/2808)
+* Updated resource card in UI with visual improvements, disabled state badge and resource ID in info popout ([#2846](https://github.com/microsoft/AzureTRE/pull/2846))
+* Add health information for backend services to UI info popout in footer ([#2846](https://github.com/microsoft/AzureTRE/pull/2846))
+
 
 ENHANCEMENTS:
-* Renamed several airlock fields to make them more descriptive and added a createdBy field. Included migration for backwards compatibility ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
+* Renamed several airlock fields to make them more descriptive and added a createdBy field. Included migration for backwards compatibility [#2779](https://github.com/microsoft/AzureTRE/pull/2779)
 * Show error message when Review VMs are not configured in the current workspace
-* CLI: Add missing endpoints and minor bug fixes (#2784)
+* CLI: Add missing endpoints and minor bug fixes ([#2784](https://github.com/microsoft/AzureTRE/pull/2784))
 * Airlock Notifier: Provide a link to request in the UI in the email ([#2754](https://github.com/microsoft/AzureTRE/pull/2754))
 * Add additional fields for Airlock Notification event ([#2798](https://github.com/microsoft/AzureTRE/pull/2798))
 * Fail firewall database migration if there's no firewall deployed ([#2792](https://github.com/microsoft/AzureTRE/pull/2792))
@@ -34,15 +47,44 @@ ENHANCEMENTS:
 * Adds extra dns zones and links into core network ([#2828](https://github.com/microsoft/AzureTRE/pull/2828)).
 * Add UI version to its footer card ([#2849](https://github.com/microsoft/AzureTRE/pull/2849)).
 * Use `log_category_types` in `azurerm_monitor_diagnostic_categories` to remove deprecation warning ([#2855](https://github.com/microsoft/AzureTRE/pull/2855)).
+* Gitea workspace bundle has a number of updates as detailed in PR ([#2862](https://github.com/microsoft/AzureTRE/pull/2862)).
 
 BUG FIXES:
 * Show the correct createdBy value for airlock requests in UI and in API queries ([#2779](https://github.com/microsoft/AzureTRE/pull/2779))
 * Fix deployment of Airlock Notifier ([#2745](https://github.com/microsoft/AzureTRE/pull/2745))
 * Fix Nexus bootstrapping firewall race condition ([#2811](https://github.com/microsoft/AzureTRE/pull/2811))
 * Handle unsupported azure subscriptions in cost reporting ([#2823](https://github.com/microsoft/AzureTRE/pull/2823))
+* Redact secrets in conditional or nested properties ([#2854](https://github.com/microsoft/AzureTRE/pull/2854))
 * Fix missing ID parameter in Certs bundle ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))
+* Fix ML Flow deployment issues and update version ([#2865](https://github.com/microsoft/AzureTRE/pull/2865))
+* Handle 429 TooManyRequests and 503 ServiceUnavailable which might return from Azure Cost Management in TRE Cost API ([#2835](https://github.com/microsoft/AzureTRE/issues/2835))
 
 COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.4.2 |
+| core | 0.4.43 |
+| tre-workspace-base | 0.5.1 |
+| tre-workspace-unrestricted | 0.5.0 |
+| tre-workspace-airlock-import-review | 0.5.0 |
+| tre-service-mlflow | 0.4.0 |
+| tre-service-innereye | 0.4.0 |
+| tre-workspace-service-gitea | 0.6.0 |
+| tre-workspace-service-mysql | 0.2.0 |
+| tre-service-guacamole-linuxvm | 0.5.2 |
+| tre-service-guacamole-export-reviewvm | 0.0.6 |
+| tre-service-guacamole-windowsvm | 0.5.2 |
+| tre-service-guacamole-import-reviewvm | 0.1.3 |
+| tre-service-guacamole | 0.5.0 |
+| tre-user-resource-aml-compute-instance | 0.4.1 |
+| tre-service-azureml | 0.5.6 |
+| tre-shared-service-cyclecloud | 0.3.0 |
+| tre-shared-service-gitea | 0.4.0 |
+| tre-shared-service-airlock-notifier | 0.2.3 |
+| tre-shared-service-admin-vm | 0.2.0 |
+| tre-shared-service-certs | 0.2.2 |
+| tre-shared-service-sonatype-nexus | 2.2.3 |
+| tre-shared-service-firewall | 0.6.2 |
 
 ## 0.6.0 (October 24, 2022)
 
@@ -156,7 +198,7 @@ ENHANCEMENTS:
 * Airlock requests with status "blocked_by_scan" have the reason for being blocked by the malware scanner in the status_message field ([#2666](https://github.com/microsoft/AzureTRE/pull/2666))
 * Move admin-vm from core to a shared service ([#2624](https://github.com/microsoft/AzureTRE/pull/2624))
 * Remove obsolete docker environment variables ([#2675](https://github.com/microsoft/AzureTRE/pull/2675))
-* Using Porter's Terrform mixin 1.0.0-rc.1 where mirror in done internally ([#2677](https://github.com/microsoft/AzureTRE/pull/2677))
+* Using Porter's Terraform mixin 1.0.0-rc.1 where mirror in done internally ([#2677](https://github.com/microsoft/AzureTRE/pull/2677))
 * Airlock function internal storage is accessed with private endpoints ([#2679](https://github.com/microsoft/AzureTRE/pull/2679))
 
 BUG FIXES:
@@ -216,9 +258,9 @@ ENHANCEMENTS:
 * Keyvault diagnostic settings in base workspace ([#2521](https://github.com/microsoft/AzureTRE/pull/2521))
 * Airlock requests contain a field with information about the files that were submitted ([#2504](https://github.com/microsoft/AzureTRE/pull/2504))
 * UI - Operations and notifications stability improvements ([[#2530](https://github.com/microsoft/AzureTRE/pull/2530))
-* UI - Initial implemetation of Workspace Airlock Request View ([#2512](https://github.com/microsoft/AzureTRE/pull/2512))
+* UI - Initial implementation of Workspace Airlock Request View ([#2512](https://github.com/microsoft/AzureTRE/pull/2512))
 * Add ability to automatically create Azure AD groups for each application role. Requires API version 0.4.30 or later ([#2532](https://github.com/microsoft/AzureTRE/pull/2532))
-* Add `is_expsed_externally` option to Azure ML Workspace Service ([#2548](https://github.com/microsoft/AzureTRE/pull2548))
+* Add `is_exposed_externally` option to Azure ML Workspace Service ([#2548](https://github.com/microsoft/AzureTRE/pull2548))
 * Azure ML workspace service assigns Azure ML Data Scientist role to Workspace Researchers ([#2539](https://github.com/microsoft/AzureTRE/pull/2539))
 * UI is deployed by default ([#2554](https://github.com/microsoft/AzureTRE/pull/2554))
 * Remove manual/makefile option to install Gitea/Nexus ([#2573](https://github.com/microsoft/AzureTRE/pull/2573))
@@ -231,7 +273,7 @@ BUG FIXES:
 * Temporary disable AppInsight's private endpoint in base workspace ([#2543](https://github.com/microsoft/AzureTRE/pull/2543))
 * Resource Processor execution optimization (`porter show`) for long-standing services ([#2542](https://github.com/microsoft/AzureTRE/pull/2542))
 * Move AML Compute deployment to use AzApi Terraform Provider {[#2555]((https://github.com/microsoft/AzureTRE/pull/2555))
-* Invalid token exceptions in the API app are catched, throwing 401 instead of 500 Internal server error ([#2572](https://github.com/microsoft/AzureTRE/pull/2572))
+* Invalid token exceptions in the API app are caught, throwing 401 instead of 500 Internal server error ([#2572](https://github.com/microsoft/AzureTRE/pull/2572))
 
 COMPONENTS:
 
@@ -273,7 +315,7 @@ ENHANCEMENTS:
 * 'CreationTime' field was added to Airlock requests ([#2432](https://github.com/microsoft/AzureTRE/pull/2432))
 * Bundles mirror Terraform plugins when built ([#2446](https://github.com/microsoft/AzureTRE/pull/2446))
 * 'Get all Airlock requests' endpoint supports filtering ([#2433](https://github.com/microsoft/AzureTRE/pull/2433))
-* API uses user delagation key when generating SAS token for airlock requests ([#2460](https://github.com/microsoft/AzureTRE/pull/2460))
+* API uses user delegation key when generating SAS token for airlock requests ([#2460](https://github.com/microsoft/AzureTRE/pull/2460))
 * Longer docker caching in Resource Processor ([#2486](https://github.com/microsoft/AzureTRE/pull/2486))
 * Remove AppInsights Profiler support in base workspace bundle and deploy with native Terraform resources ([#2478](https://github.com/microsoft/AzureTRE/pull/2478))
 

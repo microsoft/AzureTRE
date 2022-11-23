@@ -5,9 +5,9 @@
   "modified": "2021-06-04T13:37:29.5071039+03:00",
   "parameters": [
     {
-      "name": "address_space",
+      "name": "address_spaces",
       "source": {
-        "env": "ADDRESS_SPACE"
+        "env": "ADDRESS_SPACES"
       }
     },
     {
