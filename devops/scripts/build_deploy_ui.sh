@@ -8,13 +8,16 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 pushd "$DIR/../../ui/app"
 
+ui_version=$(jq -r '.version' package.json)
+
 # replace the values in the config file
 jq --arg rootClientId "${SWAGGER_UI_CLIENT_ID}" \
   --arg rootTenantId "${AAD_TENANT_ID}" \
   --arg treApplicationId "api://${API_CLIENT_ID}" \
   --arg treUrl "https://${FQDN}/api" \
   --arg treId "${TRE_ID}" \
-  '.rootClientId = $rootClientId | .rootTenantId = $rootTenantId | .treApplicationId = $treApplicationId | .treUrl = $treUrl | .treId = $treId' ./src/config.source.json > ./src/config.json
+  --arg version "${ui_version}" \
+  '.rootClientId = $rootClientId | .rootTenantId = $rootTenantId | .treApplicationId = $treApplicationId | .treUrl = $treUrl | .treId = $treId | .version = $version' ./src/config.source.json > ./src/config.json
 
 # build and deploy the app
 yarn install

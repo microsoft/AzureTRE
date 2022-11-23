@@ -10,6 +10,7 @@ resource "random_password" "gitea_passwd" {
 resource "azurerm_user_assigned_identity" "gitea_id" {
   resource_group_name = data.azurerm_resource_group.ws.name
   location            = data.azurerm_resource_group.ws.location
+  tags                = local.workspace_service_tags
 
   name = "id-gitea-${local.service_resource_name_suffix}"
 
@@ -37,17 +38,17 @@ resource "azurerm_linux_web_app" "gitea" {
     GITEA_USERNAME                                   = "giteaadmin"
     GITEA_PASSWD                                     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
     GITEA_EMAIL                                      = "giteaadmin@azuretre.com"
-    GITEA_OPENID_CLIENT_ID                           = var.openid_client_id
-    GITEA_OPENID_CLIENT_SECRET                       = var.openid_client_secret
-    GITEA_OPENID_AUTHORITY                           = var.openid_authority
+    GITEA_OPENID_CLIENT_ID                           = data.azurerm_key_vault_secret.client_id.value
+    GITEA_OPENID_CLIENT_SECRET                       = data.azurerm_key_vault_secret.client_secret.value
+    GITEA_OPENID_AUTHORITY                           = "https://login.microsoftonline.com/${data.azurerm_key_vault_secret.aad_tenant_id.value}/v2.0"
     GITEA__server__ROOT_URL                          = "https://${local.webapp_name}.azurewebsites.net/"
     GITEA__server__LFS_START_SERVER                  = "true"
     GITEA__server__OFFLINE_MODE                      = true
     GITEA__lfs__PATH                                 = "/data/gitea/lfs"
     GITEA__lfs__STORAGE_TYPE                         = "local"
     GITEA__log_0x2E_console__COLORIZE                = "false" # Azure monitor doens't show colors, so this is easier to read.
-    GITEA__openid__ENALBLE_OPENID_SIGNIN             = "false"
-    GITEA__openid__ENABLE_OPENID_SIGNUP              = "true"
+    GITEA__openid__ENABLE_OPENID_SIGNIN              = "true"
+    GITEA__openid__ENABLE_OPENID_SIGNUP              = "false"
     GITEA__picture__DISABLE_GRAVATAR                 = "true" # external avaters are not available due to network restrictions
     GITEA__security__INSTALL_LOCK                    = true
     GITEA__service__DISABLE_REGISTRATION             = false
@@ -130,89 +131,21 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
 
   lifecycle { ignore_changes = [tags] }
 }
-
-resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
+resource "azurerm_monitor_diagnostic_setting" "gitea" {
   name                       = "diag-${local.service_resource_name_suffix}"
   target_resource_id         = azurerm_linux_web_app.gitea.id
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
-  log {
-    category = "AppServiceHTTPLogs"
-    enabled  = true
+  dynamic "log" {
+    for_each = data.azurerm_monitor_diagnostic_categories.gitea.log_category_types
+    content {
+      category = log.value
+      enabled  = contains(local.web_app_diagnostic_categories_enabled, log.value) ? true : false
 
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceConsoleLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAppLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceFileAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceIPSecAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServicePlatformLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAntivirusScanAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
+      retention_policy {
+        enabled = contains(local.web_app_diagnostic_categories_enabled, log.value) ? true : false
+        days    = 365
+      }
     }
   }
 
@@ -238,6 +171,7 @@ resource "azurerm_key_vault_secret" "gitea_password" {
   name         = "${local.webapp_name}-administrator-password"
   value        = random_password.gitea_passwd.result
   key_vault_id = data.azurerm_key_vault.ws.id
+  tags         = local.workspace_service_tags
 
   depends_on = [
     azurerm_key_vault_access_policy.gitea_policy

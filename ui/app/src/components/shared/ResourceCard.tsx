@@ -1,16 +1,16 @@
-import React, { useContext, useState } from 'react';
+import React, { useCallback, useContext, useState } from 'react';
 import { ComponentAction, VMPowerStates, Resource } from '../../models/resource';
-import { Callout, DefaultPalette, FontWeights, IconButton, mergeStyleSets, PrimaryButton, ProgressIndicator, Shimmer, Stack, Text } from '@fluentui/react';
-import { Link } from 'react-router-dom';
+import { Callout, DefaultPalette, FontWeights, IconButton, IStackStyles, IStyle, mergeStyleSets, PrimaryButton, Shimmer, Stack, Text, TooltipHost } from '@fluentui/react';
+import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import { ResourceContextMenu } from './ResourceContextMenu';
 import { useComponentManager } from '../../hooks/useComponentManager';
 import { StatusBadge } from './StatusBadge';
-import { actionsDisabledStates } from '../../models/operation';
+import { actionsDisabledStates, successStates } from '../../models/operation';
 import { PowerStateBadge } from './PowerStateBadge';
 import { ResourceType } from '../../models/resourceType';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
-import { CostsContext } from '../../contexts/CostsContext';
+import { CostsTag } from './CostsTag';
 
 interface ResourceCardProps {
   resource: Resource,
@@ -25,12 +25,29 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   const [loading] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const workspaceCtx = useContext(WorkspaceContext);
-  const costsCtx = useContext(CostsContext);
   const latestUpdate = useComponentManager(
     props.resource,
     (r: Resource) => { props.onUpdate(r) },
     (r: Resource) => { props.onDelete(r) }
   );
+  const navigate = useNavigate();
+
+  const goToResource = useCallback(() => {
+    let resourceUrl = '';
+    switch(props.resource.resourceType) {
+      case ResourceType.Workspace:
+      case ResourceType.WorkspaceService:
+      case ResourceType.UserResource:
+        resourceUrl = props.resource.resourcePath;
+        break;
+      case ResourceType.SharedService: // shared services are accessed from the root and the workspace, have to handle the URL differently
+        resourceUrl = workspaceCtx.workspace ? props.resource.id : props.resource.resourcePath;
+        break;
+    }
+
+    props.selectResource && props.selectResource(props.resource);
+    navigate(resourceUrl);
+  }, [navigate, props, workspaceCtx.workspace]);
 
   let connectUri = props.resource.properties && props.resource.properties.connection_uri;
   const shouldDisable = () => {
@@ -40,122 +57,100 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
       || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== VMPowerStates.Running)
   }
 
-  const resourceCosts = costsCtx?.costs?.find((resourceCost) => {
-    return resourceCost.id === props.resource.id;
-  });
+  const resourceStatus = latestUpdate.operation?.status
+    ? latestUpdate.operation.status
+    : props.resource.deploymentStatus
 
-  let resourceUrl = ""
-  switch(props.resource.resourceType) {
-    case ResourceType.Workspace:
-    case ResourceType.WorkspaceService:
-    case ResourceType.UserResource:
-      resourceUrl = props.resource.resourcePath;
-      break;
-    case ResourceType.SharedService: // shared services are accessed from the root and the workspace, have to handle the URL differently
-      resourceUrl = workspaceCtx.workspace ? props.resource.id : props.resource.resourcePath;
-      break;
+  // Decide what to show as the top-right header badge
+  let headerBadge = <></>;
+  if (
+    latestUpdate.componentAction !== ComponentAction.Lock &&
+    props.resource.azureStatus?.powerState &&
+    successStates.includes(resourceStatus) &&
+    props.resource.isEnabled
+  ) {
+    headerBadge = <PowerStateBadge state={props.resource.azureStatus.powerState} />
+  } else {
+    headerBadge = <StatusBadge resource={props.resource} status={resourceStatus} />
   }
+
+  const authNotProvisioned = props.resource.resourceType === ResourceType.Workspace && !props.resource.properties.scope_id;
+  const cardStyles = authNotProvisioned ? noNavCardStyles : clickableCardStyles;
 
   return (
     <>
       {
-        loading ?
-          <>
-            <Stack style={cardStyles}>
-              <Stack.Item style={headerStyles}>
-                <Shimmer width="70%" />
-              </Stack.Item>
-              <Stack.Item grow={3} style={bodyStyles}>
-                <br />
-                <Shimmer />
-                <br />
-                <Shimmer />
-              </Stack.Item>
-              <Stack.Item style={footerStyles}>
-                <Shimmer />
-              </Stack.Item>
-            </Stack>
-          </> :
-          <Stack style={cardStyles}>
+        loading ? <Stack styles={noNavCardStyles}>
+          <Stack.Item style={headerStyles}>
+            <Shimmer width="70%" />
+          </Stack.Item>
+          <Stack.Item grow={3} style={bodyStyles}>
+            <br />
+            <Shimmer />
+            <br />
+            <Shimmer />
+          </Stack.Item>
+          <Stack.Item style={footerStyles}>
+            <Shimmer />
+          </Stack.Item>
+        </Stack> : <TooltipHost
+          content={authNotProvisioned ? "Authentication has not yet been provisioned for this resource." : ""}
+          id={`card-${props.resource.id}`}
+          styles={{root: {width:'100%'}}}
+        >
+          <Stack
+            styles={cardStyles}
+            aria-labelledby={`card-${props.resource.id}`}
+            onClick={() => {if (!authNotProvisioned) goToResource()}}
+          >
             <Stack horizontal>
-              <Stack.Item grow={5} style={headerStyles}>
-                {
-                  props.resource.resourceType === ResourceType.Workspace && !props.resource.properties.scope_id ? // no scope id? no auth has been setup.
-                    <span title="Authentication has not yet been provisioned">{props.resource.properties.display_name}</span>
-                    :
-                    <Link to={resourceUrl} onClick={() => { props.selectResource && props.selectResource(props.resource); return false }} style={headerLinkStyles}>{props.resource.properties.display_name}</Link>
-                }
-              </Stack.Item>
-              <Stack.Item style={headerIconStyles}>
+              <Stack.Item grow={5} style={headerStyles}>{props.resource.properties.display_name}</Stack.Item>
+              {headerBadge}
+            </Stack>
+
+            <Stack.Item grow={3} style={bodyStyles}>
+              <Text>{props.resource.properties.description}</Text>
+            </Stack.Item>
+
+            <Stack horizontal style={footerStyles}>
+              <Stack.Item grow>
                 <Stack horizontal>
                   <Stack.Item>
-                    <IconButton iconProps={{ iconName: 'Info' }} id={`item-${props.itemId}`} onClick={() => setShowInfo(!showInfo)} /></Stack.Item>
+                    <IconButton
+                      iconProps={{iconName: 'Info'}}
+                      id={`item-${props.itemId}`}
+                      onClick={(e) => {
+                        // Stop onClick triggering parent handler
+                        e.stopPropagation();
+                        setShowInfo(!showInfo);
+                      }}
+                    />
+                  </Stack.Item>
                   <Stack.Item>
                     {
-                      !props.readonly &&
-                      <ResourceContextMenu
+                      !props.readonly && <ResourceContextMenu
                         resource={props.resource}
-                        componentAction={latestUpdate.componentAction} />
+                        componentAction={latestUpdate.componentAction}
+                      />
                     }
                   </Stack.Item>
                 </Stack>
               </Stack.Item>
-            </Stack>
-            <Stack.Item grow={3} style={bodyStyles}>
-              <Text>{props.resource.properties.description}</Text>
-            </Stack.Item>
-            {
-              connectUri &&
-              <Stack.Item style={connectStyles}>
-                <PrimaryButton
-                  onClick={() => window.open(connectUri)}
+              <CostsTag resourceId={props.resource.id} />
+              {
+                connectUri && <PrimaryButton
+                  onClick={(e) => {e.stopPropagation(); window.open(connectUri)}}
                   disabled={shouldDisable()}
                   title={shouldDisable() ? 'Resource must be enabled, successfully deployed & powered on to connect' : 'Connect to resource'}>
                   Connect
                 </PrimaryButton>
-              </Stack.Item>
-            }
-            <Stack.Item style={footerStyles}>
-              { latestUpdate.componentAction === ComponentAction.None && resourceCosts && resourceCosts?.costs.length > 0 &&
-              <Stack horizontal>
-                <Stack.Item style={costStyles}>
-                {resourceCosts?.costs[0].currency} {resourceCosts?.costs[0].cost.toFixed(2)}
-
-                {resourceCosts?.costs.length > 1 &&
-                  <>
-                    ,&nbsp;
-                    {resourceCosts?.costs[1].currency} {resourceCosts?.costs[1].cost.toFixed(2)}
-                  </>
-                }
-
-                </Stack.Item>
-              </Stack>
               }
-              <Stack horizontal>
-                <Stack.Item grow={1} align="center">
-                  {
-                    latestUpdate.componentAction === ComponentAction.Lock &&
-                    <ProgressIndicator
-                      barHeight={4}
-                      description='Resource is locked for changes while it updates.' />
-                  }
-                  {
-                    (props.resource.azureStatus?.powerState && latestUpdate.componentAction !== ComponentAction.Lock) &&
-                    <div style={{ marginTop: 5 }}>
-                      <PowerStateBadge state={props.resource.azureStatus.powerState} />
-                    </div>
-                  }
-                </Stack.Item>
-                <Stack.Item style={{ paddingTop: 2, paddingLeft: 10 }}>
-                  <StatusBadge resourceId={props.resource.id} status={latestUpdate.operation?.status ? latestUpdate.operation.status : props.resource.deploymentStatus} />
-                </Stack.Item>
-              </Stack>
-            </Stack.Item>
+            </Stack>
           </Stack>
+        </TooltipHost>
       }
       {
-        showInfo &&
-        <Callout
+        showInfo && <Callout
           className={styles.callout}
           ariaLabelledBy={`item-${props.itemId}-label`}
           ariaDescribedBy={`item-${props.itemId}-description`}
@@ -166,16 +161,20 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
           setInitialFocus
         >
           <Text block variant="xLarge" className={styles.title} id={`item-${props.itemId}-label`}>
-            {props.resource.templateName} - ({props.resource.templateVersion})
+            {props.resource.templateName} ({props.resource.templateVersion})
           </Text>
           <Text block variant="small" id={`item-${props.itemId}-description`}>
             <Stack>
               <Stack.Item>
-                <Stack horizontal tokens={{ childrenGap: 5 }}>
+                <Stack horizontal tokens={{childrenGap: 5}}>
+                  <Stack.Item style={calloutKeyStyles}>Resource Id:</Stack.Item>
+                  <Stack.Item style={calloutValueStyles}>{props.resource.id}</Stack.Item>
+                </Stack>
+                <Stack horizontal tokens={{childrenGap: 5}}>
                   <Stack.Item style={calloutKeyStyles}>Last Modified By:</Stack.Item>
                   <Stack.Item style={calloutValueStyles}>{props.resource.user.name}</Stack.Item>
                 </Stack>
-                <Stack horizontal tokens={{ childrenGap: 5 }}>
+                <Stack horizontal tokens={{childrenGap: 5}}>
                   <Stack.Item style={calloutKeyStyles}>Last Updated:</Stack.Item>
                   <Stack.Item style={calloutValueStyles}>{moment.unix(props.resource.updatedWhen).toDate().toDateString()}</Stack.Item>
                 </Stack>
@@ -188,49 +187,46 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   )
 };
 
-const cardStyles: React.CSSProperties = {
+const baseCardStyles: IStyle = {
   width: '100%',
-  borderRadius: '2px',
-  border: '1px #ccc solid',
-  //  boxShadow: '1px 0px 4px 0px #dddddd'
+  borderRadius: '5px',
+  boxShadow: '0 1.6px 3.6px 0 rgba(0,0,0,.132),0 .3px .9px 0 rgba(0,0,0,.108)',
+  backgroundColor: DefaultPalette.white,
+  padding: 10
+}
+
+const noNavCardStyles: IStackStyles = {
+  root: { ...baseCardStyles }
+}
+
+const clickableCardStyles: IStackStyles = {
+  root: {
+    ...baseCardStyles,
+    "&:hover": {
+      transition: 'all .2s ease-in-out',
+      transform: 'scale(1.02)',
+      cursor: 'pointer'
+    }
+  }
 }
 
 const headerStyles: React.CSSProperties = {
   padding: '5px 10px',
-  fontSize: '1.3rem',
+  fontSize: '1.2rem',
 };
 
-const headerIconStyles: React.CSSProperties = {
-  padding: '5px'
-}
-
-const headerLinkStyles: React.CSSProperties = {
-  color: DefaultPalette.themePrimary,
-  textDecoration: 'none'
-}
-
 const bodyStyles: React.CSSProperties = {
-  padding: '5px 10px',
+  padding: '10px 10px',
   minHeight: '40px'
 }
 
-const connectStyles: React.CSSProperties = {
-  padding: '5px 10px'
-}
-
 const footerStyles: React.CSSProperties = {
-  backgroundColor: DefaultPalette.white,
-  padding: '5px 7px',
   minHeight: '30px',
-  borderTop: '1px #ccc solid',
-}
-
-const costStyles: React.CSSProperties = {
-  fontSize: '0.8rem',
+  alignItems: 'center'
 }
 
 const calloutKeyStyles: React.CSSProperties = {
-  width: 120
+  width: 160
 }
 
 const calloutValueStyles: React.CSSProperties = {

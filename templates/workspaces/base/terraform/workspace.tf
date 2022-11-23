@@ -76,6 +76,5 @@ module "azure_monitor" {
   enable_local_debugging                   = var.enable_local_debugging
   depends_on = [
     module.network,
-    module.airlock, # shouldn't be required, related to: https://github.com/microsoft/AzureTRE/issues/2357
   ]
 }

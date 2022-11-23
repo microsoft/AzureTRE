@@ -71,6 +71,11 @@ API_GET_WORKSPACE_COSTS = "Get workspace costs"
 API_GET_COSTS_MAX_TIME_PERIOD = "The time period for pulling the data cannot exceed 1 year"
 API_GET_COSTS_TO_DATE_NEED_TO_BE_LATER_THEN_FROM_DATE = "to_date needs to be later than from_date"
 API_GET_COSTS_FROM_DATE_NEED_TO_BE_BEFORE_TO_DATE = "from_date needs to be before to_date"
+API_GET_COSTS_SUBSCRIPTION_NOT_SUPPORTED = "Azure subscription doesn't support cost management"
+API_GET_COSTS_TOO_MANY_REQUESTS = "Too many requests to Azure cost management API. Please retry."
+API_GET_COSTS_SERVICE_UNAVAILABLE = "Azure cost management API is temporarily unavailable. Please retry."
+API_GET_COSTS_INTERNAL_SERVER_ERROR = "Failed to query Azure TRE costs."
+
 
 # State store status
 OK = "OK"

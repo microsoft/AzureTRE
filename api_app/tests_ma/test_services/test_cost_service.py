@@ -5,15 +5,24 @@ from models.domain.shared_service import SharedService, ResourceType
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
-from services.cost_service import CostService
+from services.cost_service import CostService, SubscriptionNotSupported
 from datetime import date, datetime, timedelta
 from azure.mgmt.costmanagement.models import QueryResult, TimeframeType, QueryDefinition, QueryColumn
+from azure.core.exceptions import ResourceNotFoundError
+
+
+@pytest.fixture(autouse=True)
+def clear_lru_cache():
+    CostService.cache_clear()
+    yield
+    CostService.cache_clear()
 
 
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
-@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+# CostService is lru_cached which creates a wrapper method
+@patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
 def test_query_tre_costs_with_granularity_none_returns_correct_cost_report(get_resource_groups_by_tag_mock, client_mock,
                                                                            shared_service_repo_mock, workspace_repo_mock):
     client_mock.return_value.query.usage.return_value = __get_cost_management_query_result()
@@ -54,7 +63,8 @@ def test_query_tre_costs_with_granularity_none_returns_correct_cost_report(get_r
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
-@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+# CostService is lru_cached which creates a wrapper method
+@patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
 def test_query_tre_costs_with_granularity_daily_returns_correct_cost_report(
         get_resource_groups_by_tag_mock, client_mock, shared_service_repo_mock, workspace_repo_mock):
     client_mock.return_value.query.usage.return_value = __set_cost_management_client_mock_query_result()
@@ -155,7 +165,8 @@ def __get_daily_cost_management_query_result():
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
-@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+# CostService is lru_cached which creates a wrapper method
+@patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
 def test_query_tre_costs_with_granularity_none_and_missing_costs_data_returns_empty_cost_report(get_resource_groups_by_tag_mock,
                                                                                                 client_mock,
                                                                                                 shared_service_repo_mock,
@@ -190,7 +201,36 @@ def test_query_tre_costs_with_granularity_none_and_missing_costs_data_returns_em
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
-@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+# CostService is lru_cached which creates a wrapper method
+@patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
+def test_query_tre_costs_for_unsupported_subscription_raises_subscription_not_supported_exception(get_resource_groups_by_tag_mock,
+                                                                                                  client_mock,
+                                                                                                  shared_service_repo_mock,
+                                                                                                  workspace_repo_mock):
+
+    client_mock.return_value.query.usage.side_effect = ResourceNotFoundError({
+        "error": {
+            "code": "NotFound",
+            "message": "Given subscription xxx doesn't have valid WebDirect/AIRS offer type. (Request ID: 12daa3b6-8a53-4759-97ba-511ece1ac95b)"
+        }
+    })
+
+    __set_shared_service_repo_mock_return_value(shared_service_repo_mock)
+    __set_workspace_repo_mock_get_active_workspaces_return_value(workspace_repo_mock)
+    __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
+
+    cost_service = CostService()
+
+    with pytest.raises(SubscriptionNotSupported):
+        cost_service.query_tre_costs(
+            "guy22", GranularityEnum.none, datetime.now(), datetime.now(), workspace_repo_mock, shared_service_repo_mock)
+
+
+@patch('db.repositories.workspaces.WorkspaceRepository')
+@patch('db.repositories.shared_services.SharedServiceRepository')
+@patch('services.cost_service.CostManagementClient')
+# CostService is lru_cached which creates a wrapper method
+@patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
 def test_query_tre_costs_with_granularity_daily_and_missing_costs_data_returns_empty_cost_report(get_resource_groups_by_tag_mock,
                                                                                                  client_mock,
                                                                                                  shared_service_repo_mock,
@@ -227,7 +267,8 @@ def test_query_tre_costs_with_granularity_daily_and_missing_costs_data_returns_e
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
-@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+# CostService is lru_cached which creates a wrapper method
+@patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
 def test_query_tre_costs_with_granularity_none_and_display_name_data_returns_template_name_in_cost_report(get_resource_groups_by_tag_mock,
                                                                                                           client_mock,
                                                                                                           shared_service_repo_mock,
@@ -270,7 +311,8 @@ def test_query_tre_costs_with_granularity_none_and_display_name_data_returns_tem
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
-@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+# CostService is lru_cached which creates a wrapper method
+@patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
 def test_query_tre_costs_with_dates_set_as_none_calls_client_with_month_to_date(get_resource_groups_by_tag_mock,
                                                                                 client_mock, shared_service_repo_mock,
                                                                                 workspace_repo_mock, from_date,
@@ -280,6 +322,7 @@ def test_query_tre_costs_with_dates_set_as_none_calls_client_with_month_to_date(
     __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
+    CostService.cache_clear()
     cost_service.query_tre_costs(
         "guy22", GranularityEnum.none, from_date, to_date, workspace_repo_mock, shared_service_repo_mock)
 
@@ -290,7 +333,8 @@ def test_query_tre_costs_with_dates_set_as_none_calls_client_with_month_to_date(
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
-@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+# CostService is lru_cached which creates a wrapper method
+@patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
 def test_query_tre_costs_with_dates_set_as_none_calls_client_with_custom_dates(get_resource_groups_by_tag_mock,
                                                                                client_mock, shared_service_repo_mock,
                                                                                workspace_repo_mock):
@@ -399,7 +443,8 @@ def __set_user_resource_repo_mock_return_value(user_resource_repo_mock):
 @patch('db.repositories.workspace_services.WorkspaceServiceRepository')
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('services.cost_service.CostManagementClient')
-@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+# CostService is lru_cached which creates a wrapper method
+@patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
 def test_query_tre_workspace_costs_with_granularity_none_returns_correct_workspace_cost_report(get_resource_groups_by_tag_mock,
                                                                                                client_mock,
                                                                                                workspace_repo_mock,
@@ -453,7 +498,8 @@ def test_query_tre_workspace_costs_with_granularity_none_returns_correct_workspa
 @patch('db.repositories.workspace_services.WorkspaceServiceRepository')
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('services.cost_service.CostManagementClient')
-@patch('services.cost_service.CostService.get_resource_groups_by_tag')
+# CostService is lru_cached which creates a wrapper method
+@patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
 def test_query_tre_workspace_costs_with_granularity_daily_returns_correct_workspace_cost_report(get_resource_groups_by_tag_mock,
                                                                                                 client_mock,
                                                                                                 workspace_repo_mock,

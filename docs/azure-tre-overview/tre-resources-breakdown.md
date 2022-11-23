@@ -4,7 +4,7 @@ The Azure services deployed within an Azure TRE are described below.
 
 Once an Azure TRE has been [provisioned](../../tre-admins/setup-instructions/pre-deployment-steps) in an Azure Subscription, you will have two Resource Groups:
 
-1. Azure TRE Management Resource Group - Pre-requisiste for deploying an Azure TRE instance
+1. Azure TRE Management Resource Group - Prerequisite for deploying an Azure TRE instance
 1. Azure TRE Resource Group - Core Azure TRE instance
 
 ## Azure TRE Management Resource Group
@@ -22,11 +22,11 @@ Once an Azure TRE has been [provisioned](../../tre-admins/setup-instructions/pre
 
 | Name | Azure Service | Description | Additional links
 |---|---|---|---|
-| api-{TRE_ID} | App Service | [Azure TRE Python api](../../tre-developers/api) responsible for all operations on Workspaces and managing Workspace Templates built using the FastAPI framework | [FastAPI](https://fastapi.tiangolo.com/) |
+| api-{TRE_ID} | App Service | [Azure TRE Python API](../../tre-developers/api) responsible for all operations on Workspaces and managing Workspace Templates built using the FastAPI framework | [FastAPI](https://fastapi.tiangolo.com/) |
 | gitea-{TRE_ID} | App Service | [Azure TRE Source Mirror](../shared-services/gitea) - allows mirroring git repositories | [Gitea](https://gitea.io/)
 | nexus-{TRE_ID} | App Service | [Azure TRE Package Mirror](../shared-services/nexus) - allows mirroring packages | [Sonatype Nexus](https://www.sonatype.com/products/repository-oss)
 | plan-{TRE_ID} | App Service Plan | Compute resources in which the TRE app services run | [App Hosting plans](https://docs.microsoft.com/en-us/azure/app-service/overview-hosting-plans)
-| agw-{TRE_ID} | Azure Application Gateway | [Azure TRE App Gateway](../architecture) provides single public IP address with SSL for accessing core TRE resources | [Azure Application Gateway](https://docs.microsoft.com/en-us/azure/application-gateway/overview)
+| agw-{TRE_ID} | Azure Application Gateway | [Azure TRE App Gateway](../architecture) provides a single public IP address with SSL for accessing core TRE resources | [Azure Application Gateway](https://docs.microsoft.com/en-us/azure/application-gateway/overview)
 | appi-{TRE_ID} | Application Insights | Telemetry for all API invocations | [Application Insights](https://docs.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview)
 | cosmos-{TRE_ID} | Azure Cosmos DB Account | NoSQL state store of TRE resources, templates and operations | [Cosmos DB](https://docs.microsoft.com/en-us/azure/cosmos-db/introduction)
 | mysql-{TRE_ID} | Azure Database for MySQL server | SQL state store for Gitea | [Gitea Database](https://docs.gitea.io/en-us/database-prep)
