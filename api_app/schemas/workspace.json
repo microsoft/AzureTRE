@@ -6,8 +6,7 @@
   "description": "These parameters are required for all workspaces",
   "required": [
     "display_name",
-    "description",
-    "address_space_size"
+    "description"
   ],
   "properties": {
     "display_name": {
