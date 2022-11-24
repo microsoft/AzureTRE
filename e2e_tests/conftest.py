@@ -106,7 +106,7 @@ async def clean_up_test_workspace_service(pre_created_workspace_service_id: str,
         await disable_and_delete_resource(f'/api{workspace_service_path}', admin_token, verify)
 
 
-# TODO(tanya): Session scoped fixtures don't work with parallel test execution
+# Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
 @pytest.fixture(scope="session")
 async def setup_test_workspace(verify) -> Tuple[str, str, str]:
     pre_created_workspace_id = config.TEST_WORKSPACE_ID
@@ -122,7 +122,7 @@ async def setup_test_workspace(verify) -> Tuple[str, str, str]:
     clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
 
 
-# TODO(tanya): Session scoped fixtures don't work with parallel test execution
+# Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
 @pytest.fixture(scope="session")
 async def setup_test_workspace_and_workspace_service(verify, setup_test_workspace):
     # Set up
@@ -140,7 +140,7 @@ async def setup_test_workspace_and_workspace_service(verify, setup_test_workspac
     clean_up_test_workspace_service(pre_created_workspace_service_id=pre_created_workspace_service_id, workspace_service_path=workspace_service_path, verify=verify)
 
 
-# TODO(tanya): Session scoped fixtures don't work with parallel test execution
+# Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
 @pytest.fixture(scope="session")
 async def setup_test_aad_workspace(verify) -> Tuple[str, str, str]:
     pre_created_workspace_id = config.TEST_AAD_WORKSPACE_ID
@@ -155,7 +155,7 @@ async def setup_test_aad_workspace(verify) -> Tuple[str, str, str]:
     clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
 
 
-# TODO(tanya): Session scoped fixtures don't work with parallel test execution
+# Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
 @pytest.fixture(scope="session")
 async def setup_test_airlock_import_review_workspace_and_workspace_service(verify) -> Tuple[str, str, str, str, str]:
     pre_created_workspace_id = config.TEST_AIRLOCK_IMPORT_REVIEW_WORKSPACE_ID
