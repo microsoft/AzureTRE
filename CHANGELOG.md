@@ -8,6 +8,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Private endpoints for AppInsights are now provisioning successfully and consistently ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))
+* Enable upgrade step of base workspace ([#2899](https://github.com/microsoft/AzureTRE/pull/2899))
 
 COMPONENTS:
 
@@ -26,11 +27,13 @@ COMPONENTS:
 * Fields in AirlockNotification event have changed without backward compatibility. If Airlock Notifier shared service is deployed, it needs to be re-deployed. Any other consumers of AirlockNotification event need to be updated. For more details, see [#2798](https://github.com/microsoft/AzureTRE/pull/2798)
 
 FEATURES:
-* Display workspace and shared services total costs for admin role in UI ([#2772](https://github.com/microsoft/AzureTRE/pull/2772))
-* Automatically validate all resources have tre_id tag via TFLint ([#2774](https://github.com/microsoft/AzureTRE/pull/2774))
-* Add metadata endpoint and simplify `tre` CLI login (also adds API version to UI) ([#2794](https://github.com/microsoft/AzureTRE/pull/2794))
+* Display workspace and shared services total costs for admin role in UI [#2738](https://github.com/microsoft/AzureTRE/pull/2772)
+* Automatically validate all resources have tre_id tag via TFLint [#2774](https://github.com/microsoft/AzureTRE/pull/2774)
+* Add metadata endpoint and simplify `tre` CLI login (also adds API version to UI) (#2794)
+* Support workspaces with multiple address spaces [#2808](https://github.com/microsoft/AzureTRE/pull/2808)
 * Updated resource card in UI with visual improvements, disabled state badge and resource ID in info popout ([#2846](https://github.com/microsoft/AzureTRE/pull/2846))
 * Add health information for backend services to UI info popout in footer ([#2846](https://github.com/microsoft/AzureTRE/pull/2846))
+
 
 ENHANCEMENTS:
 * Renamed several airlock fields to make them more descriptive and added a createdBy field. Included migration for backwards compatibility [#2779](https://github.com/microsoft/AzureTRE/pull/2779)
@@ -54,6 +57,7 @@ BUG FIXES:
 * Handle unsupported azure subscriptions in cost reporting ([#2823](https://github.com/microsoft/AzureTRE/pull/2823))
 * Redact secrets in conditional or nested properties ([#2854](https://github.com/microsoft/AzureTRE/pull/2854))
 * Fix missing ID parameter in Certs bundle ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))
+* Fix ML Flow deployment issues and update version ([#2865](https://github.com/microsoft/AzureTRE/pull/2865))
 * Handle 429 TooManyRequests and 503 ServiceUnavailable which might return from Azure Cost Management in TRE Cost API ([#2835](https://github.com/microsoft/AzureTRE/issues/2835))
 
 COMPONENTS:
