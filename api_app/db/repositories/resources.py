@@ -140,10 +140,11 @@ class ResourceRepository(BaseRepository):
         desired_version = semver.VersionInfo.parse(resource_patch.templateVersion)
         current_version = semver.VersionInfo.parse(resource.templateVersion)
 
-        if desired_version.major > current_version.major:
-            raise MajorVersionUpdateDenied(f'Attempt to upgrade from {current_version} to {desired_version} denied. major version upgrade is not allowed.')
-        elif desired_version < current_version:
-            raise VersionDowngradeDenied(f'Attempt to downgrade from {current_version} to {desired_version} denied. version downgrade is not allowed.')
+        if not resource_patch.forceVersionUpdate:
+            if desired_version.major > current_version.major:
+                raise MajorVersionUpdateDenied(f'Attempt to upgrade from {current_version} to {desired_version} denied. major version upgrade is not allowed.')
+            elif desired_version < current_version:
+                raise VersionDowngradeDenied(f'Attempt to downgrade from {current_version} to {desired_version} denied. version downgrade is not allowed.')
 
         # validate if target template with desired version is registered
         try:

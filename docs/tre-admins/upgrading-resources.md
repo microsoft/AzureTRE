@@ -8,10 +8,10 @@ Upgrades (and downgrades) are based on [CNAB bundle upgrade action](https://getp
 
 Bundle template versions follow [semantic versioning rules](../tre-workspace-authors/authoring-workspace-templates.md#versioning), only minor and build version upgrades are allowed by default with Azure TRE upgrade mechanism, major versions upgrades and any version downgrades are blocked.
 
-!!! Alert
+!!! Warning
     We do not recomend upgrading automatically a major version as those changes might include breaking changes, potential data loss or cause service unavaialbility.
 
-    For users who wish to upgrade a major version, we highly recommend to read the [changelog](../../CHANGELOG.md), review what has changed and take some appropriate action before upgrading.
+    For users who wish to upgrade a major version, we highly recommend to read the changelog, review what has changed and take some appropriate action before upgrading using force version update.
 
     Version downgrades are not tested and are also blocked by Azure TRE upgrade mechanism.
 
@@ -27,7 +27,7 @@ Resources can be upgrade using Swagger UI, in the following example we show how 
 1. Copy the `_etag` property from the response body.
 1. Click `Try it out` on the `PATCH` `/api/workspace/{workspace_id}` operation.
 1. Provide your `workspace_id` and `_etag` parameters which you've just copied.
-1. Feel out the following json document in the `Request body` parameter and click `Execute`.
+1. Provide the following payload with the desired version in the `Request body` parameter and click `Execute`.
     ```json
     {
       "templateVersion": "1.0.1",
@@ -36,6 +36,14 @@ Resources can be upgrade using Swagger UI, in the following example we show how 
 1. Review server response, it should include a new `operation` document with `upgrade` as an `action` and `updating` as `status` for upgrading the workspace and a message states that the Job is starting.
 1. Once the upgrade is complete another operation will be created and can be viewed by executing `GET` `/api/workspace/{workspace_id}/operations`, review it and make sure its `status` is `updated`.
 
+!!! Note
+    If you wish to upgrade a major version, or downgrade to any version, you can override the blocking in the upgrade mechanism by setting the `forceVersionUpdate` flag in `Patch` payload.
 
+    ```json
+    {
+      "templateVersion": "2.0.0",
+      "forceVersionUpdate": "True"
+    }
+    ```
 
 
