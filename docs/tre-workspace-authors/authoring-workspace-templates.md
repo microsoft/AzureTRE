@@ -122,7 +122,7 @@ Workspace versions are the bundle versions specified in [the metadata](https://p
 
 Bundle versions should follow [Semantic Versioning](https://semver.org/), given a version number **MAJOR.MINOR.PATCH**, increment the:
 
-1. **MAJOR** version when you make a breaking change, potential data loss, changes that don't easily/automatically upgrade, or significant changes which require someone to review what has changed and take some appropriate action, users might need training.
+1. **MAJOR** version when you make a breaking change, potential data loss, changes that don't easily/automatically upgrade, or significant changes which require someone to review what has changed and take some appropriate action, or functionality of the component has significantly changed and users might need training.
 
 2. **MINOR** version when you add minor functionality which can be automatically upgraded.
 
