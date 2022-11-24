@@ -2,7 +2,7 @@ resource "azurerm_virtual_network" "ws" {
   name                = "vnet-${local.workspace_resource_name_suffix}"
   location            = var.location
   resource_group_name = var.ws_resource_group_name
-  address_space       = [var.address_space]
+  address_space       = local.address_spaces
   tags                = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
