@@ -1,11 +1,12 @@
 import copy
+import semver
 from datetime import datetime
 from typing import Tuple, List
 
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from core import config
-from db.errors import EntityDoesNotExist, UserNotAuthorizedToUseTemplate
+from db.errors import VersionDowngradeDenied, EntityDoesNotExist, MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, UserNotAuthorizedToUseTemplate
 from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from jsonschema import validate
@@ -96,7 +97,7 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(ResourceTemplate, template)
 
-    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Tuple[Resource, ResourceTemplate]:
+    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User, force_patch: bool = False) -> Tuple[Resource, ResourceTemplate]:
         # create a deep copy of the resource to use for history, create the history item + add to history list
         resource_copy = copy.deepcopy(resource)
         history_item = ResourceHistoryItem(
@@ -135,10 +136,20 @@ class ResourceRepository(BaseRepository):
         if resource.resourceType == ResourceType.UserResource:
             parent_resource_id = resource.parentWorkspaceServiceId
 
+        # validate Major upgrade
+        desired_version = semver.VersionInfo.parse(resource_patch.templateVersion)
+        current_version = semver.VersionInfo.parse(resource.templateVersion)
+
+        if desired_version.major > current_version.major:
+            raise MajorVersionUpdateDenied(f'Attempt to upgrade from {current_version} to {desired_version} denied. major version upgrade is not allowed.')
+        elif desired_version < current_version:
+            raise VersionDowngradeDenied(f'Attempt to downgrade from {current_version} to {desired_version} denied. version downgrade is not allowed.')
+
+        # validate if target template with desired version is registered
         try:
-            resource_template_repo.get_template_by_name_and_version(resource_template.name, resource_patch.templateVersion, resource_template.resourceType, parent_resource_id)
+            resource_template_repo.get_template_by_name_and_version(resource.templateName, resource_patch.templateVersion, resource_template.resourceType, parent_resource_id)
         except EntityDoesNotExist:
-            raise ValueError(f"Template '{resource_template.name}' not found for resource type '{resource_template.resourceType}' with target template version '{resource_patch.templateVersion}'")
+            raise TargetTemplateVersionDoesNotExist(f"Template '{resource_template.name}' not found for resource type '{resource_template.resourceType}' with target template version '{resource_patch.templateVersion}'")
 
     def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate):
         # get the enriched (combined) template

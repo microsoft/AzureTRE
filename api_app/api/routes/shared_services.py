@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header, status, Response
 from jsonschema.exceptions import ValidationError
 
 from db.repositories.operations import OperationRepository
-from db.errors import DuplicateEntity, UserNotAuthorizedToUseTemplate
+from db.errors import DuplicateEntity, MajorVersionUpdateDenied, UserNotAuthorizedToUseTemplate, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied
 from api.dependencies.database import get_repository
 from api.dependencies.shared_services import get_shared_service_by_id_from_path, get_operation_by_id_from_path
 from db.repositories.resource_templates import ResourceTemplateRepository
@@ -93,8 +93,9 @@ async def patch_shared_service(shared_service_patch: ResourcePatch, response: Re
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
-    except ValueError as v:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(v))
+    except (MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied) as e:
+        logging.error(str(e), exc_info=e)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @shared_services_router.delete("/shared-services/{shared_service_id}", response_model=OperationInResponse, name=strings.API_DELETE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
