@@ -53,13 +53,13 @@ resource "azurerm_network_security_rule" "deny_all_inbound_override" {
   source_port_range           = "*"
 }
 
-resource "azurerm_network_security_rule" "allow_inbound_within_services_subnet" {
+resource "azurerm_network_security_rule" "allow_inbound_within_workspace_vnet" {
   access                       = "Allow"
   destination_port_range       = "*"
-  destination_address_prefixes = azurerm_subnet.services.address_prefixes
-  source_address_prefixes      = azurerm_subnet.services.address_prefixes
+  destination_address_prefixes = azurerm_virtual_network.ws.address_space
+  source_address_prefixes      = azurerm_virtual_network.ws.address_space
   direction                    = "Inbound"
-  name                         = "inbound-within-services-subnet"
+  name                         = "inbound-within-workspace-vnet"
   network_security_group_name  = azurerm_network_security_group.ws.name
   priority                     = 100
   protocol                     = "*"
@@ -67,11 +67,11 @@ resource "azurerm_network_security_rule" "allow_inbound_within_services_subnet" 
   source_port_range            = "*"
 }
 
-resource "azurerm_network_security_rule" "allow_outbound_within_services_subnet" {
+resource "azurerm_network_security_rule" "allow_outbound_within_workspace_vnet" {
   access                       = "Allow"
   destination_port_range       = "*"
-  destination_address_prefixes = azurerm_subnet.services.address_prefixes
-  source_address_prefixes      = azurerm_subnet.services.address_prefixes
+  destination_address_prefixes = azurerm_virtual_network.ws.address_space
+  source_address_prefixes      = azurerm_virtual_network.ws.address_space
   direction                    = "Outbound"
   name                         = "outbound-within-services-subnet"
   network_security_group_name  = azurerm_network_security_group.ws.name
