@@ -26,27 +26,17 @@ resource "azurerm_storage_account" "app_insights" {
 }
 
 resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_ingestion" {
-  data_source_type      = "ingestion" # TODO: https://github.com/microsoft/AzureTRE/issues/2853
+  data_source_type      = "Ingestion"
   resource_group_name   = var.resource_group_name
   workspace_resource_id = azurerm_log_analytics_workspace.workspace.id
   storage_account_ids   = [azurerm_storage_account.app_insights.id]
-
-  lifecycle {
-    # Remove with https://github.com/microsoft/AzureTRE/issues/2853
-    ignore_changes = [data_source_type]
-  }
 }
 
 resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_customlogs" {
-  data_source_type      = "customlogs" # TODO: https://github.com/microsoft/AzureTRE/issues/2853
+  data_source_type      = "CustomLogs"
   resource_group_name   = var.resource_group_name
   workspace_resource_id = azurerm_log_analytics_workspace.workspace.id
   storage_account_ids   = [azurerm_storage_account.app_insights.id]
-
-  lifecycle {
-    # Remove with https://github.com/microsoft/AzureTRE/issues/2853
-    ignore_changes = [data_source_type]
-  }
 }
 
 resource "azurerm_monitor_private_link_scope" "workspace" {
