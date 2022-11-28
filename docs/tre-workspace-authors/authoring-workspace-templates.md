@@ -1,4 +1,4 @@
-# Authoring workspaces templates
+# Authoring templates
 
 Azure TRE workspaces, workspace services, workspace shared services, and user resources are [Porter](https://porter.sh/) bundles. Porter bundles are based on [Cloud Native Application Bundles (CNAB)](https://cnab.io/).
 
