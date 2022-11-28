@@ -1,3 +1,4 @@
+<!-- markdownlint-disable-file MD046 -->
 # Upgrading Resources Version
 
 Azure TRE workspaces, workspace services, workspace shared services, and user resources are [Porter](https://porter.sh/) bundles. Porter bundles are based on [Cloud Native Application Bundles (CNAB)](https://cnab.io/).
@@ -20,20 +21,30 @@ Bundle template versions follow [semantic versioning rules](../tre-workspace-aut
 Resources can be upgrade using Swagger UI, in the following example we show how to upgrade a workspace version from 1.0.0 to 1.0.1, other resources upgrades are similar.
 
 1. First make sure the desired template version is registered, [follow these steps if not](../tre-admins/registering-templates.md).
-1. Navigate to the Swagger UI at `/api/docs`
-1. Log into the Swagger UI using `Authorize`
-1. Click `Try it out` on the `GET` `/api/workspace/{workspace_id}` operation:
+
+1. Navigate to the Swagger UI at `/api/docs`.
+
+1. Log into the Swagger UI using `Authorize`.
+
+1. Click `Try it out` on the `GET` `/api/workspace/{workspace_id}` operation.
+
 1. Provide your `workspace_id` in the parameters secion and click `Execute`.
+
 1. Copy the `_etag` property from the response body.
+
 1. Click `Try it out` on the `PATCH` `/api/workspace/{workspace_id}` operation.
+
 1. Provide your `workspace_id` and `_etag` parameters which you've just copied.
+
 1. Provide the following payload with the desired version in the `Request body` parameter and click `Execute`.
+
     ```json
-    {
-      "templateVersion": "1.0.1",
-    }
+      {
+        "templateVersion": "1.0.1",
+      }
     ```
 1. Review server response, it should include a new `operation` document with `upgrade` as an `action` and `updating` as `status` for upgrading the workspace and a message states that the Job is starting.
+
 1. Once the upgrade is complete another operation will be created and can be viewed by executing `GET` `/api/workspace/{workspace_id}/operations`, review it and make sure its `status` is `updated`.
 
 !!! Note
