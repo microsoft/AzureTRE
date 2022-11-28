@@ -2,6 +2,8 @@
 ## 0.8.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
+* The model for `reviewUserResources` in airlock requests has changed from being a list to a dictionary. A migration has been added to update your existing requests automatically; please make sure you run the migrations as part of updating your API and UI.
+  * Note that any in-flight requests that have review resources deployed will show `UNKNOWN[i]` for the user key of that resource and in the UI users will be prompted to deploy a new resource. [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
 
 FEATURES:
 * Support review VMs for multiple reviewers for each airlock request [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
@@ -28,7 +30,6 @@ COMPONENTS:
 }
 ```
 * Fields in AirlockNotification event have changed without backward compatibility. If Airlock Notifier shared service is deployed, it needs to be re-deployed. Any other consumers of AirlockNotification event need to be updated. For more details, see [#2798](https://github.com/microsoft/AzureTRE/pull/2798)
-* The model for `reviewUserResources` in airlock requests has changed from being a list to a dictionary. A migration has been added to update your existing requests automatically; please make sure you run the migrations as part of updating your API and UI. [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
 
 FEATURES:
 * Display workspace and shared services total costs for admin role in UI [#2738](https://github.com/microsoft/AzureTRE/pull/2772)
