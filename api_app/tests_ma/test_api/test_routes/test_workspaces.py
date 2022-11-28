@@ -502,7 +502,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP
         modified_workspace.templateVersion = "2.0.0"
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID)  + "?force_version_update=True"  , json=workspace_patch, headers={"etag": etag})
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID) + "?force_version_update=True", json=workspace_patch, headers={"etag": etag})
 
         update_item_mock.assert_called_once_with(modified_workspace, etag)
         assert response.status_code == status.HTTP_202_ACCEPTED
