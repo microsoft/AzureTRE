@@ -142,7 +142,7 @@ def enrich_requests_with_allowed_actions(requests: List[AirlockRequest], user: U
     return enriched_requests
 
 
-async def delete_review_resource(
+async def delete_review_user_resource(
         user_resource: UserResource,
         user_resource_repo: UserResourceRepository,
         workspace_service_repo: WorkspaceServiceRepository,
@@ -171,7 +171,7 @@ async def delete_review_resource(
     return operation
 
 
-async def delete_review_user_resources(
+async def delete_all_review_user_resources(
         airlock_request: AirlockRequest,
         user_resource_repo: UserResourceRepository,
         workspace_service_repo: WorkspaceServiceRepository,
@@ -186,7 +186,7 @@ async def delete_review_user_resources(
             resource_id=review_ur.userResourceId
         )
 
-        operation = delete_review_resource(
+        operation = delete_review_user_resource(
             user_resource=user_resource,
             user_resource_repo=user_resource_repo,
             workspace_service_repo=workspace_service_repo,
