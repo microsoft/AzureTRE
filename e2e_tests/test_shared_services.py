@@ -97,7 +97,7 @@ shared_service_templates_to_create = [
 async def test_create_shared_service(template_name, verify) -> None:
     admin_token = await get_admin_token(verify)
     # Check that the shared service hasn't already been created
-    shared_service = await get_shared_service_id_by_name(
+    shared_service = await get_shared_service_by_name(
         template_name, verify, admin_token
     )
     if shared_service:
