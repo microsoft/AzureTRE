@@ -3,37 +3,37 @@ data "azurerm_storage_share" "shared_storage" {
   storage_account_name = local.storage_name
 }
 
-data "template_file" "mlflow-windows-config" {
+data "template_file" "mlflow_windows_config" {
   template = file("${path.module}/../mlflow-vm-config/windows/template_config.ps1")
   vars = {
     MLFlow_Connection_String = data.azurerm_storage_account.mlflow.primary_connection_string
   }
 }
 
-data "template_file" "mlflow-linux-config" {
+data "template_file" "mlflow_linux_config" {
   template = file("${path.module}/../mlflow-vm-config/linux/template_config.sh")
   vars = {
     MLFlow_Connection_String = data.azurerm_storage_account.mlflow.primary_connection_string
   }
 }
 
-resource "local_file" "mlflow-windows-config" {
-  content  = data.template_file.mlflow-windows-config.rendered
+resource "local_file" "mlflow_windows_config" {
+  content  = data.template_file.mlflow_windows_config.rendered
   filename = "${path.module}/../mlflow-vm-config/windows/config.ps1"
 }
 
-resource "local_file" "mlflow-linux-config" {
-  content  = data.template_file.mlflow-linux-config.rendered
+resource "local_file" "mlflow_linux_config" {
+  content  = data.template_file.mlflow_linux_config.rendered
   filename = "${path.module}/../mlflow-vm-config/linux/config.sh"
 }
 
-resource "azurerm_storage_share_file" "mlflow-config-windows" {
+resource "azurerm_storage_share_file" "mlflow_config_windows" {
   name             = "mlflow-windows-config-${local.webapp_name}.ps1"
   storage_share_id = data.azurerm_storage_share.shared_storage.id
   source           = "${path.module}/../mlflow-vm-config/windows/config.ps1"
 }
 
-resource "azurerm_storage_share_file" "mlflow-config-linux" {
+resource "azurerm_storage_share_file" "mlflow_config_linux" {
   name             = "mlflow-linux-config-${local.webapp_name}.sh"
   storage_share_id = data.azurerm_storage_share.shared_storage.id
   source           = "${path.module}/../mlflow-vm-config/linux/config.sh"
@@ -55,6 +55,7 @@ resource "azurerm_app_service" "mlflow" {
   resource_group_name = data.azurerm_resource_group.ws.name
   app_service_plan_id = data.azurerm_app_service_plan.workspace.id
   https_only          = true
+  tags                = local.tre_workspace_service_tags
 
   site_config {
     linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/${local.image_name}:${local.image_tag}"
@@ -94,97 +95,27 @@ resource "azurerm_app_service" "mlflow" {
   }
 }
 
+data "azurerm_monitor_diagnostic_categories" "mlflow" {
+  resource_id = azurerm_app_service.mlflow.id
+  depends_on = [
+    azurerm_app_service.mlflow
+  ]
+}
 resource "azurerm_monitor_diagnostic_setting" "mlflow" {
   name                       = "diag-${var.tre_id}"
   target_resource_id         = azurerm_app_service.mlflow.id
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
-  log {
-    category = "AppServiceHTTPLogs"
-    enabled  = true
+  dynamic "log" {
+    for_each = data.azurerm_monitor_diagnostic_categories.mlflow.logs
+    content {
+      category = log.value
+      enabled  = contains(local.web_app_diagnostic_categories_enabled, log.value) ? true : false
 
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceConsoleLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAppLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceFileAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceIPSecAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServicePlatformLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAntivirusScanAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  metric {
-    category = "AllMetrics"
-    enabled  = true
-
-    retention_policy {
-      enabled = false
+      retention_policy {
+        enabled = contains(local.web_app_diagnostic_categories_enabled, log.value) ? true : false
+        days    = 365
+      }
     }
   }
 }
@@ -208,6 +139,7 @@ resource "azurerm_private_endpoint" "mlflow" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
+  tags                = local.tre_workspace_service_tags
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.mlflow.id

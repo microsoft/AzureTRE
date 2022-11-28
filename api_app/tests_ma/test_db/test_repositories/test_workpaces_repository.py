@@ -1,3 +1,4 @@
+import copy
 import pytest
 from mock import patch, MagicMock
 import uuid
@@ -91,6 +92,7 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
     workspace_to_create = basic_workspace_request
     # make sure the input has 'None' for values that we expect to be set
     workspace_to_create.properties.pop("address_space", None)
+    workspace_to_create.properties.pop("address_spaces", None)
     workspace_to_create.properties.pop("workspace_owner_object_id", None)
 
     validate_input_mock.return_value = basic_resource_template
@@ -109,6 +111,8 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
     assert workspace.properties["tre_id"] != workspace_to_create.properties["tre_id"]
     # a new CIDR was allocated
     assert workspace.properties["address_space"] == "1.2.3.4/24"
+    # TODO: uncomment with https://github.com/microsoft/AzureTRE/pull/2902
+    # assert workspace.properties["address_spaces"] == ["1.2.3.4/24"]
     assert workspace.properties["workspace_owner_object_id"] == "test_object_id"
 
 
@@ -182,6 +186,45 @@ def test_get_address_space_based_on_size_with_custom_address_space_and_missing_a
 
     with pytest.raises(InvalidInput):
         workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
+
+
+@patch('db.repositories.workspaces.WorkspaceRepository.get_workspaces')
+@patch('core.config.RESOURCE_LOCATION', "useast2")
+@patch('core.config.TRE_ID', "9876")
+@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
+@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
+def test_get_address_space_based_on_size_with_address_space_only(get_workspaces_mock, workspace_repo, basic_workspace_request, workspace):
+    workspace_with_address_space = copy.deepcopy(workspace)
+    workspace_with_address_space.properties["address_space"] = "10.1.4.0/24"
+
+    get_workspaces_mock.return_value = [workspace_with_address_space]
+    workspace_to_create = basic_workspace_request
+    address_space = workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
+
+    assert "10.1.5.0/24" == address_space
+
+
+@patch('db.repositories.workspaces.WorkspaceRepository.get_workspaces')
+@patch('core.config.RESOURCE_LOCATION', "useast2")
+@patch('core.config.TRE_ID', "9876")
+@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
+@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
+def test_get_address_space_based_on_size_with_address_space_and_address_spaces(get_workspaces_mock, workspace_repo, basic_workspace_request, workspace):
+    workspace_with_address_space = copy.deepcopy(workspace)
+    workspace_with_address_space.properties["address_space"] = "10.1.4.0/24"
+
+    workspace_with_address_spaces = copy.deepcopy(workspace)
+    workspace_with_address_spaces.properties["address_spaces"] = ["10.1.5.0/24", "10.1.6.0/24"]
+
+    workspace_with_both = copy.deepcopy(workspace)
+    workspace_with_both.properties["address_spaces"] = ["10.1.7.0/24", "10.1.8.0/24"]
+    workspace_with_both.properties["address_space"] = "10.1.7.0/24"
+
+    get_workspaces_mock.return_value = [workspace_with_address_space, workspace_with_address_spaces, workspace_with_both]
+    workspace_to_create = basic_workspace_request
+    address_space = workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
+
+    assert "10.1.9.0/24" == address_space
 
 
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')

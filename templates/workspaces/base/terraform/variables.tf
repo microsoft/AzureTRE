@@ -19,9 +19,9 @@ variable "location" {
   description = "Azure location (region) for deployment of core TRE services"
 }
 
-variable "address_space" {
+variable "address_spaces" {
   type        = string
-  description = "VNet address space for the workspace services"
+  description = "VNet address space (base 64)"
 }
 
 variable "deploy_app_service_plan" {
