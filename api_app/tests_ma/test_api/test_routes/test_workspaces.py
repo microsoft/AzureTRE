@@ -491,7 +491,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_workspace())
     @ patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     async def test_patch_workspaces_with_upgrade_major_version_and_force_update_returns_patched_workspace(self, _, __, update_item_mock, ___, ____, app, client):
-        workspace_patch = {"templateVersion": "2.0.0", "forceVersionUpdate": "True"}
+        workspace_patch = {"templateVersion": "2.0.0"}
         etag = "some-etag-value"
 
         modified_workspace = sample_workspace()
@@ -502,7 +502,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP
         modified_workspace.templateVersion = "2.0.0"
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json=workspace_patch, headers={"etag": etag})
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID)  + "?force_version_update=True"  , json=workspace_patch, headers={"etag": etag})
 
         update_item_mock.assert_called_once_with(modified_workspace, etag)
         assert response.status_code == status.HTTP_202_ACCEPTED
@@ -845,7 +845,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @ patch("api.routes.workspaces.UserResourceRepository.update_item_with_etag", return_value=sample_user_resource_object())
     @ patch("api.routes.workspaces.UserResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     async def test_patch_user_resource_with_upgrade_major_version_and_force_update_returns_patched_user_resource(self, _, update_item_mock, __, ___, ____, _____, ______, _______, app, client):
-        user_resource_service_patch = {"templateVersion": "2.0.0", "forceVersionUpdate": "True"}
+        user_resource_service_patch = {"templateVersion": "2.0.0"}
         etag = "some-etag-value"
 
         modified_user_resource = sample_user_resource_object()
@@ -856,7 +856,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         modified_user_resource.user = create_workspace_owner_user()
         modified_user_resource.templateVersion = "2.0.0"
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID) + "?force_version_update=True", json=user_resource_service_patch, headers={"etag": etag})
 
         update_item_mock.assert_called_once_with(modified_user_resource, etag)
         assert response.status_code == status.HTTP_202_ACCEPTED
@@ -1051,7 +1051,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
         get_workspace_mock.return_value = sample_deployed_workspace(WORKSPACE_ID, auth_info_user_in_workspace_owner_role)
         etag = "some-etag-value"
-        workspace_service_patch = {"templateVersion": "2.0.0", "forceVersionUpdate": "True"}
+        workspace_service_patch = {"templateVersion": "2.0.0"}
 
         modified_workspace_service = sample_workspace_service()
         modified_workspace_service.isEnabled = True
@@ -1061,7 +1061,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         modified_workspace_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
         modified_workspace_service.templateVersion = "2.0.0"
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json=workspace_service_patch, headers={"etag": etag})
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID) + "?force_version_update=True", json=workspace_service_patch, headers={"etag": etag})
 
         update_item_mock.assert_called_once_with(modified_workspace_service, etag)
         assert response.status_code == status.HTTP_202_ACCEPTED

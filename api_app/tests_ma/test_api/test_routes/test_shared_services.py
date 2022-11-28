@@ -204,7 +204,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
     @patch("api.routes.shared_services.send_resource_request_message", return_value=sample_resource_operation(resource_id=SHARED_SERVICE_ID, operation_id=OPERATION_ID))
     async def test_patch_shared_service_with_upgrade_major_version_and_force_update_patches_shared_service(self, _, update_item_mock, __, ___, ____, app, client):
         etag = "some-etag-value"
-        shared_service_patch = {"templateVersion": "2.0.0", "forceVersionUpdate": "True"}
+        shared_service_patch = {"templateVersion": "2.0.0"}
 
         modified_shared_service = sample_shared_service()
         modified_shared_service.isEnabled = True
@@ -214,7 +214,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         modified_shared_service.user = create_admin_user()
         modified_shared_service.templateVersion = "2.0.0"
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": etag})
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID) + "?force_version_update=True", json=shared_service_patch, headers={"etag": etag})
         update_item_mock.assert_called_once_with(modified_shared_service, etag)
 
         assert response.status_code == status.HTTP_202_ACCEPTED

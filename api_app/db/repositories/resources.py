@@ -97,7 +97,7 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(ResourceTemplate, template)
 
-    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User, force_patch: bool = False) -> Tuple[Resource, ResourceTemplate]:
+    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User, force_version_update: bool) -> Tuple[Resource, ResourceTemplate]:
         # create a deep copy of the resource to use for history, create the history item + add to history list
         resource_copy = copy.deepcopy(resource)
         history_item = ResourceHistoryItem(
@@ -119,7 +119,7 @@ class ResourceRepository(BaseRepository):
             resource.isEnabled = resource_patch.isEnabled
 
         if resource_patch.templateVersion is not None:
-            self.validate_template_version_patch(resource, resource_patch, resource_template_repo, resource_template)
+            self.validate_template_version_patch(resource, resource_patch, resource_template_repo, resource_template, force_version_update)
             resource.templateVersion = resource_patch.templateVersion
 
         if resource_patch.properties is not None and len(resource_patch.properties) > 0:
@@ -131,7 +131,7 @@ class ResourceRepository(BaseRepository):
         self.update_item_with_etag(resource, etag)
         return resource, resource_template
 
-    def validate_template_version_patch(self, resource: Resource, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate):
+    def validate_template_version_patch(self, resource: Resource, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, force_version_update: bool = False):
         parent_resource_id = None
         if resource.resourceType == ResourceType.UserResource:
             parent_resource_id = resource.parentWorkspaceServiceId
@@ -140,7 +140,7 @@ class ResourceRepository(BaseRepository):
         desired_version = semver.VersionInfo.parse(resource_patch.templateVersion)
         current_version = semver.VersionInfo.parse(resource.templateVersion)
 
-        if not resource_patch.forceVersionUpdate:
+        if not force_version_update:
             if desired_version.major > current_version.major:
                 raise MajorVersionUpdateDenied(f'Attempt to upgrade from {current_version} to {desired_version} denied. major version upgrade is not allowed.')
             elif desired_version < current_version:

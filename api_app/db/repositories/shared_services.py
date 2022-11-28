@@ -83,7 +83,7 @@ class SharedServiceRepository(ResourceRepository):
 
         return shared_service, template
 
-    def patch_shared_service(self, shared_service: SharedService, shared_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Tuple[SharedService, ResourceTemplate]:
+    def patch_shared_service(self, shared_service: SharedService, shared_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User, force_version_update: bool) -> Tuple[SharedService, ResourceTemplate]:
         # get shared service template
         shared_service_template = resource_template_repo.get_template_by_name_and_version(shared_service.templateName, shared_service.templateVersion, ResourceType.SharedService)
-        return self.patch_resource(shared_service, shared_service_patch, shared_service_template, etag, resource_template_repo, user)
+        return self.patch_resource(shared_service, shared_service_patch, shared_service_template, etag, resource_template_repo, user, force_version_update)

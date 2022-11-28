@@ -12,7 +12,7 @@ Bundle template versions follow [semantic versioning rules](../tre-workspace-aut
 !!! Warning
     We do not recomend upgrading automatically a major version as those changes might include breaking changes, potential data loss or cause service unavaialbility.
 
-    For users who wish to upgrade a major version, we highly recommend to read the changelog, review what has changed and take some appropriate action before upgrading using force version update.
+    For users who wish to upgrade a major version, we highly recommend to read the changelog, review what has changed and take some appropriate action before upgrading using [force version update](#force-version-update).
 
     Version downgrades are not tested and are also blocked by Azure TRE upgrade mechanism.
 
@@ -47,14 +47,11 @@ Resources can be upgrade using Swagger UI, in the following example we show how 
 
 1. Once the upgrade is complete another operation will be created and can be viewed by executing `GET` `/api/workspace/{workspace_id}/operations`, review it and make sure its `status` is `updated`.
 
-!!! Note
-    If you wish to upgrade a major version, or downgrade to any version, you can override the blocking in the upgrade mechanism by setting the `forceVersionUpdate` flag in `Patch` payload.
+### Force version update
+If you wish to upgrade a major version, or downgrade to any version, you can override the blocking in the upgrade mechanism by passing `force_version_update=true` query parameter to the resource `Patch` action.
 
-    ```json
-    {
-      "templateVersion": "2.0.0",
-      "forceVersionUpdate": "True"
-    }
-    ```
+For example force version patching a workspace:
+
+![Force version update](../assets/swagget_force_version_update.png)
 
 
