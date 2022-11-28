@@ -333,6 +333,10 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"}
           - {BUNDLE_TYPE: "user_resource",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm"}
+          - {BUNDLE_TYPE: "user_resource",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm"}
+          - {BUNDLE_TYPE: "user_resource",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm"}
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
@@ -485,6 +489,12 @@ jobs:
              WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
           - {BUNDLE_TYPE: "user_resource",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm",
+             WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
+          - {BUNDLE_TYPE: "user_resource",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm",
+             WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
+          - {BUNDLE_TYPE: "user_resource",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm",
              WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
     environment: ${{ inputs.environmentName }}
     steps:
