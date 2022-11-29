@@ -27,10 +27,10 @@ $Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
 ### Anaconda Config
 if( ${CondaConfig} -eq 1 )
 {
-  conda config --add channels ${nexus_proxy_url}/repository/conda2/main/  --system
-  conda config --add channels ${nexus_proxy_url}/repository/conda/main/  --system
+  conda config --add channels ${nexus_proxy_url}/repository/conda-mirror/main/  --system
+  conda config --add channels ${nexus_proxy_url}/repository/conda-repo/main/  --system
   conda config --remove channels defaults --system
-  conda config --set channel_alias ${nexus_proxy_url}/repository/conda2/  --system
+  conda config --set channel_alias ${nexus_proxy_url}/repository/conda-mirror/  --system
 }
 
 # Docker proxy config
