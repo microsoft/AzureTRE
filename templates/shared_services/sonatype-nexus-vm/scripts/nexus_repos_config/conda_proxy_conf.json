@@ -1,5 +1,5 @@
 {
-  "name": "conda",
+  "name": "conda-repo",
   "online": true,
   "storage": {
     "blobStoreName": "default",
