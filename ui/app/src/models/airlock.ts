@@ -14,7 +14,7 @@ export interface AirlockRequest {
   title: string;
   businessJustification: string;
   status: AirlockRequestStatus;
-  reviewUserResources: Array<AirlockReviewUserResource>;
+  reviewUserResources: {[key: string]: AirlockReviewUserResource};
   allowedUserActions: Array<AirlockRequestAction>;
   reviews?: Array<AirlockReview>;
   statusMessage?: string;
@@ -62,7 +62,8 @@ export enum AirlockRequestAction {
 export const AirlockFilesLinkInvalidStatus = [
   AirlockRequestStatus.Rejected,
   AirlockRequestStatus.Blocked,
-  AirlockRequestStatus.Failed
+  AirlockRequestStatus.Failed,
+  AirlockRequestStatus.InReview
 ]
 
 export enum AirlockReviewDecision {
