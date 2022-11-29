@@ -68,8 +68,9 @@ class WorkspaceRepository(ResourceRepository):
         template = self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
 
         # allow for workspace template taking a single address_space or multiple address_spaces
-        address_space_param = {"address_space": self.get_address_space_based_on_size(workspace_input.properties)}
-        address_spaces_param = {"address_spaces": [address_space_param]}
+        intial_address_space = self.get_address_space_based_on_size(workspace_input.properties)
+        address_space_param = {"address_space": intial_address_space}
+        address_spaces_param = {"address_spaces": [intial_address_space]}
 
         auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}
         workspace_owner_param = {"workspace_owner_object_id": self.get_workspace_owner(workspace_input.properties, workspace_owner_object_id)}
