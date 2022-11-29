@@ -1,5 +1,5 @@
 {
-  "name": "conda-forge",
+  "name": "conda2",
   "online": true,
   "storage": {
     "blobStoreName": "default",
@@ -7,7 +7,7 @@
     "write_policy": "ALLOW"
   },
   "proxy": {
-    "remoteUrl": "https://conda.anaconda.org/conda-forge/",
+    "remoteUrl": "https://conda.anaconda.org/",
     "contentMaxAge": 1440,
     "metadataMaxAge": 1440
   },

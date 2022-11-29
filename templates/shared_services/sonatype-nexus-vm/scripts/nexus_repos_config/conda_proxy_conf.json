@@ -7,7 +7,7 @@
     "write_policy": "ALLOW"
   },
   "proxy": {
-    "remoteUrl": "https://repo.anaconda.com/pkgs/main",
+    "remoteUrl": "https://repo.anaconda.com/pkgs/",
     "contentMaxAge": 1440,
     "metadataMaxAge": 1440
   },
