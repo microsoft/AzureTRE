@@ -3,18 +3,16 @@
 
 Azure TRE workspaces, workspace services, workspace shared services, and user resources are [Porter](https://porter.sh/) bundles. Porter bundles are based on [Cloud Native Application Bundles (CNAB)](https://cnab.io/).
 
-When a new bundle version becomes avaialble, users can upgrade their resources to a newer version after building, publishing and registering the bundle template.
+When a new bundle version becomes available, users can upgrade their resources to a newer version after building, publishing and registering the bundle template.
 
 Upgrades (and downgrades) are based on [CNAB bundle upgrade action](https://getporter.org/bundle/manifest/#bundle-actions).
 
-Bundle template versions follow [semantic versioning rules](../tre-workspace-authors/authoring-workspace-templates.md#versioning), only minor and build version upgrades are allowed by default with Azure TRE upgrade mechanism, major versions upgrades and any version downgrades are blocked.
+Bundle template versions follow [semantic versioning rules](../tre-workspace-authors/authoring-workspace-templates.md#versioning).
 
-!!! Warning
-    We do not recomend upgrading automatically a major version as those changes might include breaking changes, potential data loss or cause service unavaialbility.
+!!! Note
+    Only minor and build version upgrades are automatically allowed within the Azure TRE upgrade mechanism. Major versions upgrades and any version downgrades are blocked as they are assumed to contain breaking changes or changes that require additional consideration.
 
     For users who wish to upgrade a major version, we highly recommend to read the changelog, review what has changed and take some appropriate action before upgrading using [force version update](#force-version-update).
-
-    Version downgrades are not tested and are also blocked by Azure TRE upgrade mechanism.
 
 ## How to upgrade a resource using Swagger UI
 
@@ -28,7 +26,7 @@ Resources can be upgrade using Swagger UI, in the following example we show how 
 
 1. Click `Try it out` on the `GET` `/api/workspace/{workspace_id}` operation.
 
-1. Provide your `workspace_id` in the parameters secion and click `Execute`.
+1. Provide your `workspace_id` in the parameters section and click `Execute`.
 
 1. Copy the `_etag` property from the response body.
 
@@ -52,6 +50,6 @@ If you wish to upgrade a major version, or downgrade to any version, you can ove
 
 For example force version patching a workspace:
 
-![Force version update](../assets/swagget_force_version_update.png)
+![Force version update](../assets/swagger_force_version_update.png)
 
 
