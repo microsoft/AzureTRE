@@ -171,9 +171,9 @@ async def create_review_user_resource(
         # Is the existing resource enabled and deployed
         if existing_resource.isEnabled and existing_resource.deploymentStatus == "succeeded":
             # And does it have power information
-            if hasattr(existing_resource, "powerState") and hasattr(existing_resource.powerState, "azureStatus"):
+            if hasattr(existing_resource, "azureStatus") and "powerState" in existing_resource.azureStatus:
                 # And does that power state indicate it's running
-                if existing_resource.azureStatus.powerState == "VM running":
+                if existing_resource.azureStatus["powerState"] == "VM running":
                     logging.info("Existing review resource is enabled, in a succeeded state and running. Returning a conflict error.")
                     raise HTTPException(status_code=status_code.HTTP_409_CONFLICT,
                                         detail="A healthy review resource is already deployed for the current user."
