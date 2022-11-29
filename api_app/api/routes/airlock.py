@@ -3,6 +3,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status as status_code, Response
 
 from jsonschema.exceptions import ValidationError
+from services.azure_resource_status import get_azure_resource_status
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.operations import OperationRepository
@@ -169,14 +170,15 @@ async def create_review_user_resource(
                                                                        resource_id=r.userResourceId)
 
         # Is the existing resource enabled and deployed
-        if existing_resource.isEnabled and existing_resource.deploymentStatus == "succeeded":
-            # And does it have power information
-            if hasattr(existing_resource, "azureStatus") and "powerState" in existing_resource.azureStatus:
+        if existing_resource.isEnabled and existing_resource.deploymentStatus == "deployed":
+            # And can we get power state information
+            if 'azure_resource_id' in existing_resource.properties:
+                resource_status = get_azure_resource_status(existing_resource.properties['azure_resource_id'])
                 # And does that power state indicate it's running
-                if existing_resource.azureStatus["powerState"] == "VM running":
+                if "powerState" in resource_status and resource_status["powerState"] == "VM running":
                     logging.info("Existing review resource is enabled, in a succeeded state and running. Returning a conflict error.")
                     raise HTTPException(status_code=status_code.HTTP_409_CONFLICT,
-                                        detail="A healthy review resource is already deployed for the current user."
+                                        detail="A healthy review resource is already deployed for the current user. "
                                         "You may only have a single review resource.")
 
         # If it wasn't healthy or running, we'll delete the existing resource if not already deleted, and then create a new one
