@@ -21,7 +21,6 @@ WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 IMPORT_WORKSPACE_ID = "cba000d3-13da-58fc-b6e9-9a7853ef753e"
 WORKSPACE_SERVICE_ID = "ca8fec6b-3d90-4ad3-a003-77daddfc2d64"
 USER_RESOURCE_ID = "a6489dfe-625e-4e8e-a3dc-8eda79f0f081"
-REVIEWER_USER_ID = "c576db60-8bbe-4d3a-92a1-4892c1fd67f1"
 
 AIRLOCK_REQUEST_ID = "af89dccd-cdf8-4e47-8cfe-995faeac0f09"
 AIRLOCK_REVIEW_ID = "11bd2526-054b-4305-a7f9-63a2d6d2a80c"
@@ -52,7 +51,7 @@ def sample_airlock_request_object(status=AirlockRequestStatus.Draft, airlock_req
         type="import",
         status=status,
         reviews=[sample_airlock_review_object()] if reviews else None,
-        reviewUserResources={REVIEWER_USER_ID: sample_airlock_user_resource_object()} if review_user_resource else {}
+        reviewUserResources={"user-guid-here": sample_airlock_user_resource_object()} if review_user_resource else {}
     )
     return airlock_request
 
@@ -182,7 +181,7 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
     # [POST] /workspaces/{workspace_id}/requests/{airlock_request_id}/submit
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
     @patch("api.routes.airlock.update_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Submitted))
-    async def test_post_submit_airlock_request_submitts_airlock_request_returns_200(self, _, __, app, client):
+    async def test_post_submit_airlock_request_submits_airlock_request_returns_200(self, _, __, app, client):
         response = await client.post(app.url_path_for(strings.API_SUBMIT_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["airlockRequest"]["id"] == AIRLOCK_REQUEST_ID

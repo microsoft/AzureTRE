@@ -186,7 +186,7 @@ async def delete_all_review_user_resources(
             resource_id=review_ur.userResourceId
         )
 
-        operation = delete_review_user_resource(
+        operation = await delete_review_user_resource(
             user_resource=user_resource,
             user_resource_repo=user_resource_repo,
             workspace_service_repo=workspace_service_repo,
