@@ -1,5 +1,5 @@
 import copy
-import semver
+import semantic_version
 from datetime import datetime
 from typing import Tuple, List
 
@@ -137,8 +137,8 @@ class ResourceRepository(BaseRepository):
             parent_resource_id = resource.parentWorkspaceServiceId
 
         # validate Major upgrade
-        desired_version = semver.VersionInfo.parse(resource_patch.templateVersion)
-        current_version = semver.VersionInfo.parse(resource.templateVersion)
+        desired_version = semantic_version.Version(resource_patch.templateVersion)
+        current_version = semantic_version.Version(resource.templateVersion)
 
         if not force_version_update:
             if desired_version.major > current_version.major:
