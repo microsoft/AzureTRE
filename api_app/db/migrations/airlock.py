@@ -28,6 +28,22 @@ class AirlockMigration(AirlockRequestRepository):
                 request['createdBy'] = request['updatedBy']
 
             self.update_item_dict(request)
-            num_updated = num_updated + 1
+            num_updated += 1
+
+        return num_updated
+
+    def change_review_resources_to_dict(self) -> int:
+        num_updated = 0
+        for request in self.container.read_all_items():
+            # Only migrate if airlockReviewResources property present and is a list
+            if 'reviewUserResources' in request:
+                if type(request['reviewUserResources']) == list:
+                    updated_review_resources = {}
+                    for i, resource in enumerate(request['reviewUserResources']):
+                        updated_review_resources['UNKNOWN' + str(i)] = resource
+
+                    request['reviewUserResources'] = updated_review_resources
+                    self.update_item_dict(request)
+                    num_updated += 1
 
         return num_updated

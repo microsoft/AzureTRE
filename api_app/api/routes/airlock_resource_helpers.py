@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from starlette import status
 
 from api.routes.resource_helpers import send_uninstall_message
+from models.domain.user_resource import UserResource
 from db.repositories.airlock_requests import AirlockRequestRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.user_resources import UserResourceRepository
@@ -73,8 +74,9 @@ async def update_and_publish_event_airlock_request(
     except Exception as e:
         logging.error(f'Failed updating airlock_request item {airlock_request}: {e}')
         # If the validation failed, the error was not related to the saving itself
-        if e.status_code == 400:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
+        if hasattr(e, 'status_code'):
+            if e.status_code == 400:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     if not new_status:
@@ -140,7 +142,36 @@ def enrich_requests_with_allowed_actions(requests: List[AirlockRequest], user: U
     return enriched_requests
 
 
-async def delete_review_user_resources(
+async def delete_review_user_resource(
+        user_resource: UserResource,
+        user_resource_repo: UserResourceRepository,
+        workspace_service_repo: WorkspaceServiceRepository,
+        resource_template_repo: ResourceTemplateRepository,
+        operations_repo: OperationRepository,
+        user: User) -> Operation:
+    workspace_service = workspace_service_repo.get_workspace_service_by_id(workspace_id=user_resource.workspaceId,
+                                                                           service_id=user_resource.parentWorkspaceServiceId)
+
+    resource_template = resource_template_repo.get_template_by_name_and_version(
+        user_resource.templateName,
+        user_resource.templateVersion,
+        ResourceType.UserResource,
+        workspace_service.templateName)
+
+    logging.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")
+    operation = await send_uninstall_message(
+        resource=user_resource,
+        resource_repo=user_resource_repo,
+        operations_repo=operations_repo,
+        resource_type=ResourceType.UserResource,
+        resource_template_repo=resource_template_repo,
+        user=user,
+        resource_template=resource_template)
+    logging.info(f"Started operation {operation}")
+    return operation
+
+
+async def delete_all_review_user_resources(
         airlock_request: AirlockRequest,
         user_resource_repo: UserResourceRepository,
         workspace_service_repo: WorkspaceServiceRepository,
@@ -148,31 +179,22 @@ async def delete_review_user_resources(
         operations_repo: OperationRepository,
         user: User) -> List[Operation]:
     operations: List[Operation] = []
-    for review_ur in airlock_request.reviewUserResources:
+    for review_ur in airlock_request.reviewUserResources.values():
         user_resource = user_resource_repo.get_user_resource_by_id(
             workspace_id=review_ur.workspaceId,
             service_id=review_ur.workspaceServiceId,
             resource_id=review_ur.userResourceId
         )
 
-        workspace_service = workspace_service_repo.get_workspace_service_by_id(workspace_id=user_resource.workspaceId, service_id=user_resource.parentWorkspaceServiceId)
-
-        resource_template = resource_template_repo.get_template_by_name_and_version(
-            user_resource.templateName,
-            user_resource.templateVersion,
-            ResourceType.UserResource,
-            workspace_service.templateName)
-
-        logging.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")
-        operations.append(await send_uninstall_message(
-            resource=user_resource,
-            resource_repo=user_resource_repo,
-            operations_repo=operations_repo,
-            resource_type=ResourceType.UserResource,
+        operation = await delete_review_user_resource(
+            user_resource=user_resource,
+            user_resource_repo=user_resource_repo,
+            workspace_service_repo=workspace_service_repo,
             resource_template_repo=resource_template_repo,
-            user=user,
-            resource_template=resource_template))
-        logging.info(f"Started operation {operations[-1]}")
+            operations_repo=operations_repo,
+            user=user
+        )
+        operations.append(operation)
 
     logging.info(f"Started {len(operations)} operations on deleting user resources")
     return operations

@@ -42,7 +42,8 @@ class TestMigrationRoutesThatRequireAdminRights:
     @ patch("api.routes.migrations.SharedServiceMigration.checkMinFirewallVersion")
     @ patch("api.routes.migrations.AirlockMigration.add_created_by_and_rename_in_history")
     @ patch("api.routes.migrations.AirlockMigration.rename_field_name")
-    async def test_post_migrations_returns_202_on_successful(self, airlock_rename_field, add_created_by_and_rename_in_history,
+    @ patch("api.routes.migrations.AirlockMigration.change_review_resources_to_dict")
+    async def test_post_migrations_returns_202_on_successful(self, change_review_resources_to_dict, airlock_rename_field, add_created_by_and_rename_in_history,
                                                              check_min_firewall_version, workspace_migration, shared_services_migration,
                                                              rename_field, add_deployment_field, _, logging, client, app):
         response = await client.post(app.url_path_for(strings.API_MIGRATE_DATABASE))
@@ -54,6 +55,7 @@ class TestMigrationRoutesThatRequireAdminRights:
         add_deployment_field.assert_called()
         add_created_by_and_rename_in_history.assert_called_once()
         airlock_rename_field.assert_called()
+        change_review_resources_to_dict.assert_called_once()
         logging.assert_called()
         assert response.status_code == status.HTTP_202_ACCEPTED
 
