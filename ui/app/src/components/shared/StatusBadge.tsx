@@ -14,7 +14,7 @@ export const StatusBadge: React.FunctionComponent<StatusBadgeProps> = (props: St
     badgeType = "inProgress";
   } else if (props.status && failedStates.indexOf(props.status) !== -1) {
     badgeType = "failed";
-  } else if (!props.resource?.isEnabled) {
+  } else if (props.resource && !props.resource.isEnabled) {
     badgeType = "disabled";
   }
 
