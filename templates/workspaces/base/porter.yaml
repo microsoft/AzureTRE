@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.7.1
+version: 0.7.2
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -188,7 +188,7 @@ upgrade:
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         location: "{{ bundle.parameters.azure_location }}"
-        address_space: "{{ bundle.parameters.address_space }}"
+        address_spaces: "{{ bundle.parameters.address_spaces }}"
         shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
         enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
         register_aad_application: "{{ bundle.parameters.register_aad_application }}"
