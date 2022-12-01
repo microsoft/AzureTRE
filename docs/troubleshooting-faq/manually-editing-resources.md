@@ -5,7 +5,7 @@ On occasion, resources in the TRE (i.e. a user resource, workspace service or wo
 For scenarios where you need to manually modify the state of the TRE resource, you can use the following guide.
 
 !!! caution
-      This should only be performed when absolutely neccessary. Modifying properties in a resource to unexpected/inaccurate values can cause various failures when the API/RP performs a subsequent operation on it.
+      This should only be performed when absolutely necessary. Modifying properties in a resource to unexpected/inaccurate values can cause various failures when the API/RP performs a subsequent operation on it.
 
 ## Find the Resource Id
 
