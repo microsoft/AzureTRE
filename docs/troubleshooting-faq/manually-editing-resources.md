@@ -15,7 +15,7 @@ We want to make sure we find the correct resource record in Cosmos before modify
 
 1. Navigate to the UI in your browser (typically `{YOUR_TRE_ID}.{REGION}.cloudapp.azure.com`)
 
-1. Find the resource card of the resourrce you wish to modify, then click the `i` button and copy the Resource Id
+1. Find the resource card of the resource you wish to modify, then click the `i` button and copy the Resource Id
 
 ![Find resource Id](../assets/ui_find_resource_id.png)
 
