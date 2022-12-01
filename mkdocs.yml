@@ -156,3 +156,4 @@ nav:
           - Checking the Service Bus: troubleshooting-faq/troubleshooting-sb.md
           - Checking Logs in Application Insights: troubleshooting-faq/app-insights-logs.md
           - Troubleshooting the Resource Processor: troubleshooting-faq/troubleshooting-rp.md
+          - Manually edit resources in Cosmos DB: troubleshooting-faq/manually-editing-resources.md
