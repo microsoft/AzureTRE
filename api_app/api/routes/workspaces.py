@@ -237,6 +237,9 @@ async def create_workspace_service(response: Response, workspace_service_input: 
         workspace_service.properties["address_space"] = workspace_repo.get_address_space_based_on_size(workspace_service_input.properties)
         workspace_patch = ResourcePatch()
         workspace_patch.properties = {"address_spaces": workspace.properties["address_spaces"] + [workspace_service.properties["address_space"]]}
+        # IP address allocation is managed by the API. Ideally this request would happen as a result of the workspace
+        # service deployment via the reosurce processor. there is no such functionality so the database is being
+        # updated directly, and an "update" on the workspace is called by the workspace service pipeline.
         workspace_repo.patch_workspace(workspace, workspace_patch, etag, resource_template_repo, user)
 
     operation = await save_and_deploy_resource(
