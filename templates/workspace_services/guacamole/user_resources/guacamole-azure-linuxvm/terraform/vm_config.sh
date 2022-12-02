@@ -78,10 +78,10 @@ if [ "${CONDA_CONFIG}" -eq 1 ]; then
   export PATH="/anaconda/condabin":$PATH
   export PATH="/anaconda/bin":$PATH
   export PATH="/anaconda/envs/py38_default/bin":$PATH
-  conda config --add channels "${NEXUS_PROXY_URL}"/repository/conda/  --system
-  conda config --add channels "${NEXUS_PROXY_URL}"/repository/conda-forge/  --system
+  conda config --add channels "${NEXUS_PROXY_URL}"/repository/conda-mirror/main/  --system
+  conda config --add channels "${NEXUS_PROXY_URL}"/repository/conda-repo/main/  --system
   conda config --remove channels defaults --system
-  conda config --set channel_alias "${NEXUS_PROXY_URL}"/repository/conda/  --system
+  conda config --set channel_alias "${NEXUS_PROXY_URL}"/repository/conda-mirror/  --system
 fi
 
 # Docker install and config
