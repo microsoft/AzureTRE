@@ -125,7 +125,8 @@ nav:
           - Install Resources via API:
               - Install Base Workspace: tre-admins/setup-instructions/installing-base-workspace.md
               - Install Workspace Service and User Resource: tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md
-          - Upgrading AzureTRE version: tre-admins/upgrading-tre.md
+          - Upgrading AzureTRE Version: tre-admins/upgrading-tre.md
+          - Upgrading Resources Version: tre-admins/upgrading-resources.md
           - Configuring Airlock Reviews: tre-admins/configure-airlock-review.md
 
       - Development: # Docs related to the developing code for the AzureTRE
