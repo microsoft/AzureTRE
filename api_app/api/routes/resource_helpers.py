@@ -70,7 +70,7 @@ async def save_and_deploy_resource(
 def mask_sensitive_properties(
     properties: Dict[str, Any], template: ResourceTemplate
 ) -> dict:
-    updated_resource_parameters = properties
+    updated_resource_parameters = deepcopy(properties)
 
     flattened_template_props = {}
 
@@ -113,7 +113,7 @@ def mask_sensitive_properties(
             if isinstance(prop, dict):
                 recurse_input_props(prop)
 
-    recurse_input_props(properties)
+    recurse_input_props(updated_resource_parameters)
 
     return updated_resource_parameters
 
