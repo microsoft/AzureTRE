@@ -1,9 +1,10 @@
-from typing import List
 from enum import Enum
+from typing import List, Dict
+
+from models.domain.azuretremodel import AzureTREModel
 from pydantic import Field, validator
 from pydantic.schema import Optional
 from resources import strings
-from models.domain.azuretremodel import AzureTREModel
 
 
 class AirlockRequestStatus(str, Enum):
@@ -95,7 +96,7 @@ class AirlockRequest(AzureTREModel):
     statusMessage: Optional[str] = Field(title="Optional - contains additional information about the current status.")
     reviews: Optional[List[AirlockReview]]
     etag: Optional[str] = Field(title="_etag", alias="_etag")
-    reviewUserResources: List[AirlockReviewUserResource] = Field([], title="User resources created for Airlock Reviews")
+    reviewUserResources: Dict[str, AirlockReviewUserResource] = Field({}, title="User resources created for Airlock Reviews")
 
     # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931
     @validator("etag", pre=True)

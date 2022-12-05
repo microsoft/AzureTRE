@@ -2,10 +2,16 @@
 ## 0.8.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
+* The model for `reviewUserResources` in airlock requests has changed from being a list to a dictionary. A migration has been added to update your existing requests automatically; please make sure you run the migrations as part of updating your API and UI.
+  * Note that any in-flight requests that have review resources deployed will show `UNKNOWN[i]` for the user key of that resource and in the UI users will be prompted to deploy a new resource. [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
+
+FEATURES:
+* Support review VMs for multiple reviewers for each airlock request [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
 
 ENHANCEMENTS:
 * Remove Porter's Docker mixin as it's not in use ([#2889](https://github.com/microsoft/AzureTRE/pull/2889))
 * Enable properties defined within the API to be overridden by the bundle template - enables default values to be set. ([#2576](https://github.com/microsoft/AzureTRE/pull/2576))
+* Support template version update ([#2908](https://github.com/microsoft/AzureTRE/pull/2908))
 
 BUG FIXES:
 * Private endpoints for AppInsights are now provisioning successfully and consistently ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))

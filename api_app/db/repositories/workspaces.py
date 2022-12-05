@@ -68,8 +68,9 @@ class WorkspaceRepository(ResourceRepository):
         template = self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
 
         # allow for workspace template taking a single address_space or multiple address_spaces
-        address_space_param = {"address_space": self.get_address_space_based_on_size(workspace_input.properties)}
-        address_spaces_param = {"address_spaces": [address_space_param]}
+        intial_address_space = self.get_address_space_based_on_size(workspace_input.properties)
+        address_space_param = {"address_space": intial_address_space}
+        address_spaces_param = {"address_spaces": [intial_address_space]}
 
         auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}
         workspace_owner_param = {"workspace_owner_object_id": self.get_workspace_owner(workspace_input.properties, workspace_owner_object_id)}
@@ -136,10 +137,10 @@ class WorkspaceRepository(ResourceRepository):
         new_address_space = generate_new_cidr(networks, cidr_netmask)
         return new_address_space
 
-    def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Tuple[Workspace, ResourceTemplate]:
+    def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User, force_version_update: bool) -> Tuple[Workspace, ResourceTemplate]:
         # get the workspace template
         workspace_template = resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
-        return self.patch_resource(workspace, workspace_patch, workspace_template, etag, resource_template_repo, user)
+        return self.patch_resource(workspace, workspace_patch, workspace_template, etag, resource_template_repo, user, force_version_update)
 
     def get_workspace_spec_params(self, full_workspace_id: str):
         params = self.get_resource_base_spec_params()
