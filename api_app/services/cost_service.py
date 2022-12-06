@@ -56,7 +56,7 @@ class TooManyRequests(Exception):
 
 
 class ServiceUnavailable(Exception):
-    """Raised when cost management is unavaiable, retry after given number of seconds"""
+    """Raised when cost management is unavailable, retry after given number of seconds"""
     retry_after: int
 
     def __init__(self, retry_after: int, *args: object) -> None:
@@ -147,9 +147,9 @@ class CostService:
             query_result = self.query_costs(CostService.TRE_ID_TAG, tre_id, granularity, from_date, to_date, list(resource_groups_dict.keys()))
             self.cache_result(cache_key, query_result, timedelta(hours=2))
 
-        summerized_result = self.summerize_untagged(query_result, granularity, resource_groups_dict)
+        summarized_result = self.summarize_untagged(query_result, granularity, resource_groups_dict)
 
-        query_result_dict = self.__query_result_to_dict(summerized_result, granularity)
+        query_result_dict = self.__query_result_to_dict(summarized_result, granularity)
 
         cost_report = CostReport(core_services=[], shared_services=[], workspaces=[])
 
@@ -178,8 +178,8 @@ class CostService:
             query_result = self.query_costs(CostService.TRE_WORKSPACE_ID_TAG, workspace_id, granularity, from_date, to_date, list(resource_groups_dict.keys()))
             self.cache_result(cache_key, query_result, timedelta(hours=2))
 
-        summerized_result = self.summerize_untagged(query_result, granularity, resource_groups_dict)
-        query_result_dict = self.__query_result_to_dict(summerized_result, granularity)
+        summarized_result = self.summarize_untagged(query_result, granularity, resource_groups_dict)
+        query_result_dict = self.__query_result_to_dict(summarized_result, granularity)
 
         try:
             workspace = workspace_repo.get_workspace_by_id(workspace_id)
@@ -205,9 +205,9 @@ class CostService:
 
     def get_resource_groups_by_tag(self, tag_name, tag_value) -> dict:
         resource_groups = self.resource_client.resource_groups.list(filter=f"tagName eq '{tag_name}' and tagValue eq '{tag_value}'")
-        return {resouce_group.name: self.extract_resource_group_tag(resouce_group.tags) for resouce_group in resource_groups}
+        return {resource_group.name: self.extract_resource_group_tag(resource_group.tags) for resource_group in resource_groups}
 
-    def summerize_untagged(self, query_result: QueryResult, granularity: GranularityEnum, resource_groups_dict: dict) -> list:
+    def summarize_untagged(self, query_result: QueryResult, granularity: GranularityEnum, resource_groups_dict: dict) -> list:
         if len(query_result.rows) == 0:
             return []
 
@@ -321,9 +321,9 @@ class CostService:
         except ResourceNotFoundError as e:
             # when cost management API returns 404 with an message:
             # Given subscription {subscription_id} doesn't have valid WebDirect/AIRS offer type.
-            # it means that the Azure subscription deosn't support cost management
+            # it means that the Azure subscription doesn't support cost management
             if "doesn't have valid WebDirect/AIRS" in e.message:
-                logging.error("Subscription doesn't support cost mangement", exc_info=e)
+                logging.error("Subscription doesn't support cost management", exc_info=e)
                 raise SubscriptionNotSupported(e)
             else:
                 logging.error("Unhandled Cost Management API error", exc_info=e)
@@ -336,7 +336,7 @@ class CostService:
                 if self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY in e.response.headers:
                     raise TooManyRequests(int(e.response.headers[self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY]))
                 else:
-                    logging.error(f"{self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY} header was not found in respose", exc_info=e)
+                    logging.error(f"{self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY} header was not found in response", exc_info=e)
                     raise e
             elif e.status_code == 503:
                 # Service unavailable - Service is temporarily unavailable.
@@ -344,7 +344,7 @@ class CostService:
                 if self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY in e.response.headers:
                     raise ServiceUnavailable(int(e.response.headers[self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY]))
                 else:
-                    logging.error(f"{self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY} header was not found in respose", exc_info=e)
+                    logging.error(f"{self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY} header was not found in response", exc_info=e)
                     raise e
             else:
                 raise e
@@ -359,10 +359,16 @@ class CostService:
         query_aggregation_dict["totalCost"] = query_aggregation
         tag_query_filter: QueryFilter = QueryFilter(
             tags=QueryComparisonExpression(name=tag_name, operator="In", values=[tag_value]))
-        rg_query_filter: QueryFilter = QueryFilter(
-            dimensions=QueryComparisonExpression(name="ResourceGroup", operator="In", values=resource_groups)
-        )
-        query_filter: QueryFilter = QueryFilter(or_property=[tag_query_filter, rg_query_filter])
+        if len(resource_groups) > 0:
+            logging.debug(f"filtering costs by tags [{tag_name} in {tag_value}] and resource groups [{resource_groups}].")
+            rg_query_filter: QueryFilter = QueryFilter(
+                dimensions=QueryComparisonExpression(name="ResourceGroup", operator="In", values=resource_groups)
+            )
+            query_filter: QueryFilter = QueryFilter(or_property=[tag_query_filter, rg_query_filter])
+        else:
+            logging.debug(f"filtering costs by only by tags [{tag_name} in {tag_value}], resource groups list is empty.")
+            query_filter: QueryFilter = tag_query_filter
+
         query_grouping_list = list()
         query_grouping_list.append(rg_query_grouping)
         query_grouping_list.append(tag_query_grouping)
