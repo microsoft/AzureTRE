@@ -31,7 +31,7 @@ As explained in the [auth guide](../auth.md), every workspace has a correspondin
 !!! caution
     If you're using a separate tenant for AAD app registrations to the one where you've deployed the TRE infrastructure resources, ensure you've signed into that tenant in the `az cli` before running the above command. See **Using a separate Azure Active Directory tenant** in [Setup Auth configuration](setup-auth-entities.md) for more details.
 
-Running the script will report `WORKSPACE_API_CLIENT_ID` and `WORKSPACE_API_CLIENT_SECRET` for the generated app. Copy these into `/templates/core/.env` so that automated testing will work. You also need to use `WORKSPACE_API_CLIENT_ID` in the POST body below.
+Running the script will report `workspace_api_client_id` and `workspace_api_client_secret` for the generated app. Add these under the authenrication section in `/config.yaml` so that automated testing will work. You also need to use `workspace_api_client_id` in the POST body below.
 
 ### Create workspace using the API
 Go to `https://<azure_tre_fqdn>/api/docs` and use POST `/api/workspaces` with the sample body to create a base workspace.

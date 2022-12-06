@@ -88,6 +88,9 @@ ARG YQ_VERSION="v4.27.2"
 RUN curl -L --fail -o /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" \
     && chmod +x /usr/local/bin/yq
 
+ARG PAJV_VERSION="1.2.0"
+RUN npm install -g pajv@${PAJV_VERSION}
+
 USER $USERNAME
 
 # Save command line history

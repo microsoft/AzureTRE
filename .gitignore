@@ -115,6 +115,9 @@ templates/core/tre.env
 devops/auth.env
 private.env
 
+# Config
+config.yaml
+
 # Spyder project settings
 .spyderproject
 .spyproject

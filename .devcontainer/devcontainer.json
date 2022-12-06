@@ -189,14 +189,14 @@
         },
         {
           "name": "Launch Edge (localhost)",
-          "type": "pwa-msedge",
+          "type": "msedge",
           "request": "launch",
           "url": "http://localhost:3000",
           "webRoot": "${workspaceFolder}/ui/app"
         },
         {
           "name": "Launch Chrome (localhost)",
-          "type": "pwa-chrome",
+          "type": "chrome",
           "request": "launch",
           "url": "http://localhost:3000",
           "webRoot": "${workspaceFolder}/ui/app"
@@ -209,12 +209,12 @@
       "tasks": [
         {
           "label": "Copy_env_file_for_api_debug",
-          "command": "cat ${workspaceFolder}/templates/core/.env ${workspaceFolder}/devops/auth.env ${workspaceFolder}/templates/core/private.env > ${workspaceFolder}/api_app/.env",
+          "command": "sh .devcontainer/scripts/consolidate_env.sh ${workspaceFolder} ${workspaceFolder}/api_app/.env",
           "type": "shell"
         },
         {
           "label": "Copy_env_file_for_e2e_debug",
-          "command": "cat ${workspaceFolder}/templates/core/.env ${workspaceFolder}/devops/auth.env ${workspaceFolder}/templates/core/private.env > ${workspaceFolder}/e2e_tests/.env",
+          "command": "sh .devcontainer/scripts/consolidate_env.sh ${workspaceFolder} ${workspaceFolder}/e2e_tests/.env",
           "type": "shell"
         },
         {

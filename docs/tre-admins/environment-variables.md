@@ -3,7 +3,7 @@
 !!! info
     The `.tfvars` file is intentionally not used. The `.env` file format is easier to parse, meaning we can use the values for bash scripts and other purposes.
 
-## For shared management resources in `/devops/.env`
+## For shared management resources in `/config.yaml`
 
 | <div style="width: 330px">Environment variable name</div> | Description |
 | ------------------------- | ----------- |
@@ -17,7 +17,7 @@
 | `ARM_CLIENT_SECRET` | *Optional for manual deployment without logged-in credentials.* The password of the client defined in `ARM_CLIENT_ID`. |
 | `ARM_TENANT_ID` | *Optional for manual deployment. If not specified the `az cli` selected subscription will be used.* The AAD tenant of the client defined in `ARM_CLIENT_ID`. |
 
-## For Azure TRE instance in `/templates/core/.env`
+## For Azure TRE instance in `/config.yaml`
 
 | <div style="width: 330px">Environment variable name</div> | Description |
 | ------------------------- | ----------- |
@@ -38,7 +38,7 @@
 | `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests unless otherwise specified. Default value is `P1v2`. |
 | `RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE` | Optional. The number of processes to instantiate when the Resource Processor starts. Equates to the number of parallel deployment operations possible in your TRE. Defaults to `5`. |
 
-## For authentication in `/devops/.env`
+## For authentication in `/config.yaml`
 
   | Variable | Description |
   | -------- | ----------- |
