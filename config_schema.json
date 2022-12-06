@@ -137,50 +137,6 @@
       "required": [
         "aad_tenant_id"
       ]
-    },
-    "resource_processor": {
-      "description": "Resource Processor configuration",
-      "type": "object",
-      "properties": {
-        "resource_processor_number_processes_per_instance": {
-          "description": "The number of processes to start in the resource processor VMSS image",
-          "type": "number"
-        }
-      }
-    },
-    "developer_settings": {
-      "description": "Developer Settings configuration",
-      "type": "object",
-      "properties": {
-        "stateful_resources_locked": {
-          "description": "Locks will not be added to stateful resources so they can be easily removed",
-          "type": "boolean"
-        },
-        "enable_local_debugging": {
-          "description": "This setting will enable your local debugging",
-          "type": "boolean"
-        },
-        "debug": {
-          "description": "Used by the API and Resource processor application to change log level",
-          "type": "boolean"
-        }
-      }
-    },
-    "performance_in_e2e_test": {
-      "description": "To avoid creating + deleting a workspace + service in tests set the vars for existing ones",
-      "type": "object",
-      "properties": {
-        "perf_test_workspace_id": {
-          "description": "Test workspace ID",
-          "type": "string",
-          "pattern": "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$"
-        },
-        "perf_test_worspace_service_id": {
-          "description": "Test workspace service ID",
-          "type": "string",
-          "pattern": "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$"
-        }
-      }
     }
   }
 }
