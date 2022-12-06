@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y apt-transport-https ca-certificates cur
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install jq
-RUN apt-get update && apt-get install -y jq="1.5+dfsg-2+b1" --no-install-recommends && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y jq --no-install-recommends && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONPATH .
 
