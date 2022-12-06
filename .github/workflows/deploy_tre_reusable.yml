@@ -319,6 +319,8 @@ jobs:
         include:
           - {BUNDLE_TYPE: "workspace",
              BUNDLE_DIR: "./templates/workspaces/base"}
+          - {BUNDLE_TYPE: "workspace",
+             BUNDLE_DIR: "./templates/workspaces/airlock-import-review"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/guacamole"}
           - {BUNDLE_TYPE: "workspace_service",
@@ -333,6 +335,10 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"}
           - {BUNDLE_TYPE: "user_resource",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm"}
+          - {BUNDLE_TYPE: "user_resource",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm"}
+          - {BUNDLE_TYPE: "user_resource",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm"}
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
@@ -435,6 +441,8 @@ jobs:
           # bundles type can be inferred from the bundle dir (but this is more explicit)
           - {BUNDLE_TYPE: "workspace",
              BUNDLE_DIR: "./templates/workspaces/base"}
+          - {BUNDLE_TYPE: "workspace",
+             BUNDLE_DIR: "./templates/workspaces/airlock-import-review"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/guacamole"}
           - {BUNDLE_TYPE: "workspace_service",
@@ -485,6 +493,12 @@ jobs:
              WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
           - {BUNDLE_TYPE: "user_resource",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm",
+             WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
+          - {BUNDLE_TYPE: "user_resource",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm",
+             WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
+          - {BUNDLE_TYPE: "user_resource",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm",
              WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
     environment: ${{ inputs.environmentName }}
     steps:

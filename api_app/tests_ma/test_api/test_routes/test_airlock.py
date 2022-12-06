@@ -109,6 +109,7 @@ def sample_review_resource(healthy=True) -> UserResource:
         templateVersion="0.0.1",
         _etag="123",
         isEnabled=True,
+        properties={"azure_resource_id": "abc"},
         deploymentStatus="deployed" if healthy else "failed"
     )
     return resource
@@ -373,11 +374,12 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @patch("api.routes.airlock.get_azure_resource_status", return_value={"powerState": "VM running"})
+    @patch("api.routes.airlock.ResourceTemplateRepository.get_template_by_name_and_version", return_value=ResourceTemplate(name="test_template", id="123", description="test", version="0.0.1", resourceType="user-resource", current=True, required=[], properties={}))
     @patch("api.routes.airlock.UserResourceRepository.get_user_resource_by_id", return_value=sample_review_resource())
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview, review_user_resource=True))
     @patch("api.routes.airlock.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=WorkspaceService(id=WORKSPACE_SERVICE_ID, templateName="test", templateVersion="0.0.1", _etag="123"))
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id", return_value=sample_workspace(workspace_properties=sample_airlock_review_config()))
-    async def test_post_create_review_user_resource_with_existing_healthy_resource_returns_409(self, _, __, ___, ____, _____, app, client):
+    async def test_post_create_review_user_resource_with_existing_healthy_resource_returns_409(self, _, __, ___, ____, _____, ______, app, client):
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_409_CONFLICT
 

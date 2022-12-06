@@ -84,7 +84,9 @@ fi
 
 delete_resource_diagnostic() {
   # the command will return an error if the resource doesn't support this setting, so need to suppress it.
-  az monitor diagnostic-settings list --resource "$1" --query "value[].name" -o tsv 2> /dev/null |
+  # first line works on azcli 2.37, second line works on azcli 2.42
+  { az monitor diagnostic-settings list --resource "$1" --query "value[].name" -o tsv 2> /dev/null \
+    && az monitor diagnostic-settings list --resource "$1" --query "[].name" -o tsv 2> /dev/null ; } |
   while read -r diag_name; do
     echo "Deleting ${diag_name} on $1"
     az monitor diagnostic-settings delete --resource "$1" --name "${diag_name}"
@@ -97,7 +99,6 @@ echo "Looking for diagnostic settings..."
 # and unfortunately, there's no easy way to list all that are present.
 # using xargs to run in parallel.
 az resource list --resource-group "${core_tre_rg}" --query '[].[id]' -o tsv | xargs -P 10 -I {} bash -c 'delete_resource_diagnostic "{}"'
-
 tre_id=${core_tre_rg#"rg-"}
 
 # purge keyvault if possible (makes it possible to reuse the same tre_id later)
@@ -107,16 +108,19 @@ keyvault=$(az keyvault show --name "${keyvault_name}" --resource-group "${core_t
 if [ "${keyvault}" != "0" ]; then
   secrets=$(az keyvault secret list --vault-name "${keyvault_name}" -o json | jq -r '.[].id')
   for secret_id in ${secrets}; do
+    echo "Deleting ${secret_id}"
     az keyvault secret delete --id "${secret_id}"
   done
 
   keys=$(az keyvault key list --vault-name "${keyvault_name}" -o json | jq -r '.[].id')
   for key_id in ${keys}; do
+    echo "Deleting ${secret_id}"
     az keyvault key delete --id "${key_id}"
   done
 
   certificates=$(az keyvault certificate list --vault-name "${keyvault_name}" -o json | jq -r '.[].id')
   for certificate_id in ${certificates}; do
+    echo "Deleting ${secret_id}"
     az keyvault certificate delete --id "${certificate_id}"
   done
 
@@ -144,6 +148,7 @@ fi
 workspace_name="log-${tre_id}"
 workspace=$(az monitor log-analytics workspace show --workspace-name "${workspace_name}" --resource-group "${core_tre_rg}" || echo 0)
 if [ "${workspace}" != "0" ]; then
+  echo "Deleting Linked Storage accounts if present..."
   az monitor log-analytics workspace linked-storage list -g "${core_tre_rg}" --workspace-name "${workspace_name}" -o tsv --query '[].id' \
   | xargs -P 10 -I {} az rest --method delete --uri "{}?api-version=2020-08-01"
 fi
