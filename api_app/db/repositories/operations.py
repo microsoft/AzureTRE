@@ -96,7 +96,7 @@ class OperationRepository(BaseRepository):
 
                         # if it's a shared service, should be a singleton across the TRE, get it by template name
                         if step["resourceType"] == ResourceType.SharedService:
-                            resource_for_step = resource_repo.get_resource_by_template_name(step["resourceTemplateName"])
+                            resource_for_step = resource_repo.get_operating_resource_by_template_name(step["resourceTemplateName"])
 
                         # if it's a workspace, find the parent workspace of where we are
                         if step["resourceType"] == ResourceType.Workspace:

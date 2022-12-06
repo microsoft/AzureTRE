@@ -70,8 +70,8 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(Resource, resource)
 
-    def get_resource_by_template_name(self, template_name: str) -> Resource:
-        query = f"SELECT TOP 1 * FROM c WHERE c.templateName = '{template_name}'"
+    def get_operating_resource_by_template_name(self, template_name: str) -> Resource:
+        query = f"SELECT TOP 1 * FROM c WHERE c.templateName = '{template_name}' AND {IS_OPERATING_SHARED_SERVICE}"
         resources = self.query(query=query)
         if not resources:
             raise EntityDoesNotExist
