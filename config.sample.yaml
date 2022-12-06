@@ -33,7 +33,7 @@ tre:
     resource_processor_vmss_sku: "Standard_B2s"
     enable_airlock_malware_scanning: false
 
-  # TODO: move to RP default with https://github.com/microsoft/AzureTRE/pull/2634
+  # TODO: move to RP default with https://github.com/microsoft/AzureTRE/issues/2948
   workspace_app_service_plan_sku: "P1v2"
   # The TRE Web UI is deployed by default.
   # Uncomment the following to disable deployment of the Web UI.
