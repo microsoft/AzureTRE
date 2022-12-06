@@ -47,8 +47,8 @@ fi
 
 # Load the new values back in because
 # we need TEST_ACCOUNT_CLIENT_ID
-# shellcheck disable=SC2046
-. $DIR/load_and_validate_env.sh
+# shellcheck disable=SC1091
+. "$DIR/load_and_validate_env.sh"
 
 # Then register an App for the TRE Core.
 "$DIR/aad/create_api_application.sh" \
@@ -60,7 +60,8 @@ fi
 if [ "${AUTO_WORKSPACE_APP_REGISTRATION:=false}" == false ]; then
   # Load the new values back in
   # This is because we want the SWAGGER_UI_CLIENT_ID
-  . $DIR/load_and_validate_env.sh
+  # shellcheck disable=SC1091
+  . "$DIR/load_and_validate_env.sh"
 
   "$DIR/aad/create_workspace_application.sh" \
     --name "${TRE_ID} - workspace 1" \
