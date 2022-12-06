@@ -5,7 +5,7 @@ set -o nounset
 # set -o xtrace
 #
 # Usage:
-#    load_env.sh <.env file>
+#    env_to_yaml_config.sh <.env file>
 #
 
 cp config.sample.yaml config.yaml
