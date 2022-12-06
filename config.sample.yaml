@@ -1,6 +1,6 @@
+---
 # After you have replaced all the __CHANGE_ME__ values in this file, you need to
 # run `make auth` to setup the Auth.
-
 management:
   location: __CHANGE_ME__
   mgmt_resource_group_name: __CHANGE_ME__
@@ -40,8 +40,10 @@ tre:
 
 authentication:
   aad_tenant_id: "__CHANGE_ME__"
-  # Setting AUTO_WORKSPACE_APP_REGISTRATION to false will create an identity with `Application.ReadWrite.OwnedBy`.
-  # Setting AUTO_WORKSPACE_APP_REGISTRATION to true will create an identity with `Application.ReadWrite.All` and `Directory.Read.All`.
+  # Setting AUTO_WORKSPACE_APP_REGISTRATION to false will:
+  # create an identity with `Application.ReadWrite.OwnedBy`.
+  # Setting AUTO_WORKSPACE_APP_REGISTRATION to true will:
+  # create an identity with `Application.ReadWrite.All` and `Directory.Read.All`.
   # When this is true, create Workspaces will also create an AAD Application automatically.
   # When this is false, the AAD Application will need creating manually.
   auto_workspace_app_registration: true
@@ -58,30 +60,32 @@ authentication:
   workspace_api_client_secret: ""
 
 resource_processor:
-    # The number of processes to start in the resource processor VMSS image
-    # resource_processor_number_processes_per_instance: 5
+# The number of processes to start in the resource processor VMSS image
+#   resource_processor_number_processes_per_instance: 5
 
-    # This setting provides a way to pass environment values to the resource processor to use as a source of bundle parameter values
-    # For example, to specify your image_gallery_id for use in VM user resources with custom VM images:
-    # rp_bundle_values: {"image_gallery_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/<your-rg>/providers/Microsoft.Compute/galleries/<your-gallery-name>"}
+# This setting provides a way to pass environment values to the resource processor
+# to use as a source of bundle parameter values
+# For example, to specify your image_gallery_id for use in VM user resources with custom VM images:
+# yamllint disable-line rule:line-length
+#   rp_bundle_values: {"image_gallery_id":"/subscriptions/<subscription-id>/resourceGroups/<your-rg>/providers/Microsoft.Compute/galleries/<your-gallery-name>"}
 
 developer_settings:
-  # Locks will not be added to stateful resources so they can be easily removed
-  # stateful_resources_locked: false
+# Locks will not be added to stateful resources so they can be easily removed
+#   stateful_resources_locked: false
 
-  # If you want to use TRE_URL to point to your local TRE API instance,
-  # uncomment and set this variable
-  # tre_url: __CHANGE_ME__
+# If you want to use TRE_URL to point to your local TRE API instance,
+# uncomment and set this variable
+#   tre_url: __CHANGE_ME__
 
-  # This setting will enable your local machine to be able to
-  # communicate with Service Bus and Cosmos. It will also allow deploying
-  # the base workspace.
-  # enable_local_debugging: true
+# This setting will enable your local machine to be able to
+# communicate with Service Bus and Cosmos. It will also allow deploying
+# the base workspace.
+#   enable_local_debugging: true
 
-  # Used by the API and Resource processor application to change log level
-  # debug: true
+# Used by the API and Resource processor application to change log level
+#   debug: true
 
 # To avoid creating + deleting a workspace + service in tests set the vars for existing ones
 performance_in_e2e_test:
-    # perf_test_workspace_id: __CHANGE_ME__
-    # perf_test_worspace_service_id: __CHANGE_ME__
+#   perf_test_workspace_id: __CHANGE_ME__
+#   perf_test_worspace_service_id: __CHANGE_ME__
