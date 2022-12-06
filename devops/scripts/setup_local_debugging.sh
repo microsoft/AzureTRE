@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-env
-
 : "${TRE_ID?"You have not set your TRE_ID in ./config_yaml"}"
 : "${RESOURCE_GROUP_NAME?"Check RESOURCE_GROUP_NAME is defined in ./templates/core/private.env"}"
 : "${SERVICE_BUS_RESOURCE_ID?"Check SERVICE_BUS_RESOURCE_ID is defined in ./templates/core/private.env"}"
