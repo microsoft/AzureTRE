@@ -4,7 +4,9 @@
 **BREAKING CHANGES & MIGRATIONS**:
 * The model for `reviewUserResources` in airlock requests has changed from being a list to a dictionary. A migration has been added to update your existing requests automatically; please make sure you run the migrations as part of updating your API and UI.
   * Note that any in-flight requests that have review resources deployed will show `UNKNOWN[i]` for the user key of that resource and in the UI users will be prompted to deploy a new resource. [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
-* Env files consolidation - The files /templates/core/.env, /devops/.env, /devops/auth.env are no longer used. The settings and configuration that they contain has been consolidated into a single file config.yaml that lives in the root folder of the project. Use the script devops/scripts/env_to_yaml_config.sh to migrate /templates/core/.env, /devops/.env, and /devops/auth.env to the new config.yaml file.
+* Env files consolidation - The files /templates/core/.env, /devops/.env, /devops/auth.env are no longer used. The settings and configuration that they contain has been consolidated into a single file config.yaml that lives in the root folder of the project.
+
+Use the script devops/scripts/env_to_yaml_config.sh to migrate /templates/core/.env, /devops/.env, and /devops/auth.env to the new config.yaml file.
 
 FEATURES:
 * Support review VMs for multiple reviewers for each airlock request [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
