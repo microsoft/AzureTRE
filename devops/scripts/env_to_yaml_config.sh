@@ -27,6 +27,7 @@ do
 
     # Set value in config.yaml file
     yq e -i "(.[] | select(has(\"$name\")).\"$name\") = \"$value\"" config.yaml
+    yq e -i "(.[].defaults | select(has(\"$name\")).\"$name\") = \"$value\"" config.yaml
   done < <(grep -v -e '^[[:space:]]*$' -e '^#' "$f" )
 done
 

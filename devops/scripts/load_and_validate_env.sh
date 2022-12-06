@@ -22,13 +22,17 @@ else
     fi
 
     # Validate config schema
-    pajv validate -s config_schema.json -d config.yaml
+    pajv validate -s config_schema.json -d config.yaml > /dev/null
 
-    # declare the variable and export to the caller's context
+    # Remove comments yq query
     STRIP_COMMENTS="... comments=\"\""
+    # Get leaf keys yq query
     GET_LEAF_KEYS="... | select(. == \"*\") | {(path | .[-1]): .}"
+    # Map keys to uppercase yq query
     UPCASE_KEYS="with_entries(.key |= upcase)"
+    # Prefix keys with TF_VAR_ yq query
     TF_KEYS="with_entries(.key |= \"TF_VAR_\" + .)"
+    # Yq query to format the output to be in form: key=value
     FORMAT_FOR_ENV_EXPORT="to_entries| map(.key + \"=\" +  .value)|join(\" \")"
 
     # Export as UPPERCASE keys env vars

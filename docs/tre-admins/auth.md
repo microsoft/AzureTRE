@@ -24,7 +24,7 @@ make auth
 ```
 This will create five identities, and if successful will write the outputs to athentication section in `config.yaml` file. If you are building locally, these values will be used when building your TRE. If you are setting this up for CI/CD, then these values will be needed by your Build Orchestrator.
 
-The contents of your athentication section in `config.yaml` file should contain :
+The contents of your authentication section in `config.yaml` file should contain :
 
   | Variable | Description |
   | -------- | ----------- |

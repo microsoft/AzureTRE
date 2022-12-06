@@ -35,7 +35,8 @@ tre:
 
   # TODO: move to RP default with https://github.com/microsoft/AzureTRE/pull/2634
   workspace_app_service_plan_sku: "P1v2"
-  # Uncomment to disable the UI provided as part of this repo
+  # The TRE Web UI is deployed by default.
+  # Uncomment the following to disable deployment of the Web UI.
   # deploy_ui: false
 
 authentication:
@@ -61,7 +62,7 @@ authentication:
 
 resource_processor:
 # The number of processes to start in the resource processor VMSS image
-#   resource_processor_number_processes_per_instance: 5
+  resource_processor_number_processes_per_instance: 5
 
 # This setting provides a way to pass environment values to the resource processor
 # to use as a source of bundle parameter values
@@ -80,10 +81,10 @@ developer_settings:
 # This setting will enable your local machine to be able to
 # communicate with Service Bus and Cosmos. It will also allow deploying
 # the base workspace.
-#   enable_local_debugging: true
+  enable_local_debugging: false
 
 # Used by the API and Resource processor application to change log level
-#   debug: true
+  debug: false
 
 # To avoid creating + deleting a workspace + service in tests set the vars for existing ones
 performance_in_e2e_test:

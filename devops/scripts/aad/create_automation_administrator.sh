@@ -120,3 +120,6 @@ spPassword=$(create_or_update_service_principal "${appId}" "${resetPassword}")
 # Set outputs in configuration file
 yq -i ".authentication.test_account_client_id |= \"${appId}\"" config.yaml
 yq -i ".authentication.test_account_client_secret |= \"${spPassword}\"" config.yaml
+
+echo "test_account_client_id=\"${appId}\""
+echo "test_account_client_secret=\"${spPassword}\""

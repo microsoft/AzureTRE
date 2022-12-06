@@ -359,6 +359,9 @@ fi
 yq -i ".authentication.workspace_api_client_id |= \"${workspaceAppId}\"" config.yaml
 yq -i ".authentication.workspace_api_client_secret |= \"${spPassword}\"" config.yaml
 
+echo "workspace_api_client_id=\"${workspaceAppId}\""
+echo "workspace_api_client_secret=\"${spPassword}\""
+
 if [[ $grantAdminConsent -eq 0 ]]; then
     echo "NOTE: Make sure the API permissions of the app registrations have admin consent granted."
     echo "Run this script with flag -a to grant admin consent or configure the registrations in Azure Portal."

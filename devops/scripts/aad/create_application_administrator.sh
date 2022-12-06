@@ -171,6 +171,9 @@ fi
 yq -i ".authentication.application_admin_client_id |= \"${appId}\"" config.yaml
 yq -i ".authentication.application_admin_client_secret |= \"${spPassword}\"" config.yaml
 
+echo "application_admin_client_id=\"${appId}\""
+echo "application_admin_client_secret=\"${spPassword}\""
+
 if [[ $grantAdminConsent -eq 0 ]]; then
     echo "NOTE: Make sure the API permissions of the app registrations have admin consent granted."
     echo "Run this script with flag -a to grant admin consent or configure the registrations in Azure Portal."
