@@ -61,7 +61,7 @@ authentication:
   workspace_api_client_secret: ""
 
 resource_processor:
-# The number of processes to start in the resource processor VMSS image
+  # The number of processes to start in the resource processor VMSS image
   resource_processor_number_processes_per_instance: 5
 
 # This setting provides a way to pass environment values to the resource processor
@@ -71,8 +71,8 @@ resource_processor:
 #   rp_bundle_values: {"image_gallery_id":"/subscriptions/<subscription-id>/resourceGroups/<your-rg>/providers/Microsoft.Compute/galleries/<your-gallery-name>"}
 
 developer_settings:
-# Locks will not be added to stateful resources so they can be easily removed
-#   stateful_resources_locked: false
+  # Locks will not be added to stateful resources so they can be easily removed
+  # stateful_resources_locked: false
 
 # If you want to use TRE_URL to point to your local TRE API instance,
 # uncomment and set this variable
@@ -83,7 +83,7 @@ developer_settings:
 # the base workspace.
   enable_local_debugging: false
 
-# Used by the API and Resource processor application to change log level
+  # Used by the API and Resource processor application to change log level
   debug: false
 
 # To avoid creating + deleting a workspace + service in tests set the vars for existing ones
