@@ -276,6 +276,8 @@ class TestResourceHelpers:
 
         # Checking that the item saved had a secret redacted
         resource.properties["secret"] = strings.REDACTED_SENSITIVE_VALUE
+        resource.properties["prop_with_nested_secret"]["nested_secret"] = strings.REDACTED_SENSITIVE_VALUE
+
         resource_repo.save_item.assert_called_once_with(resource)
 
     def test_sensitive_properties_get_masked(self, basic_resource_template):
