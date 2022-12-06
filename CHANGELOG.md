@@ -11,7 +11,7 @@ FEATURES:
 ENHANCEMENTS:
 * Remove Porter's Docker mixin as it's not in use ([#2889](https://github.com/microsoft/AzureTRE/pull/2889))
 * Support template version update ([#2908](https://github.com/microsoft/AzureTRE/pull/2908))
-* Support updating the firewall when installing via makefile/CICD ([#TBD](https://github.com/microsoft/AzureTRE/pull/TBD))
+* Support updating the firewall when installing via makefile/CICD ([#2942](https://github.com/microsoft/AzureTRE/pull/2942))
 
 BUG FIXES:
 * Private endpoints for AppInsights are now provisioning successfully and consistently ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))
