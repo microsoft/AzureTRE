@@ -71,7 +71,7 @@ resource "azurerm_application_gateway" "agw" {
   backend_address_pool {
     name  = local.staticweb_backend_pool_name
     #fqdns = [azurerm_storage_account.staticweb.primary_web_host]
-    fqdns = ["https://${var.ui_app_service}.azurewebsites.net"]
+    fqdns = ["${var.ui_app_service}.azurewebsites.net"]
   }
 
   # Backend pool with the API App Service.
