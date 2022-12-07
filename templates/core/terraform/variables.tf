@@ -164,7 +164,7 @@ variable "enable_airlock_malware_scanning" {
   description = "If False, Airlock requests will skip the malware scanning stage"
 }
 
-variable "ui_app_serivce" {
+variable "ui_app_service" {
   type        = string
   description = "This is the App Service to be used for the UI."
 }
