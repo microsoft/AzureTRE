@@ -13,7 +13,6 @@ resource "azurerm_key_vault_access_policy" "app_gw_managed_identity" {
 }
 
 resource "azurerm_key_vault_certificate" "tlscert" {
-  #name         = "letsencrypt"
   name         = "${var.certificate_name}"
   key_vault_id = var.keyvault_id
 
@@ -58,7 +57,7 @@ resource "azurerm_key_vault_certificate" "tlscert" {
   }
 
   # The certificate will get replaced with a real one, so we don't want Terrafomr to try and revert it.
-  #lifecycle {
-  #  ignore_changes = all
-  #}
+  lifecycle {
+    ignore_changes = all
+  }
 }

@@ -71,7 +71,6 @@ resource "azurerm_application_gateway" "agw" {
   # Backend pool with the static website in storage account.
   backend_address_pool {
     name  = local.staticweb_backend_pool_name
-    #fqdns = [azurerm_storage_account.staticweb.primary_web_host]
     fqdns = ["${var.ui_app_service}.azurewebsites.net"]
   }
 
@@ -188,8 +187,7 @@ resource "azurerm_application_gateway" "agw" {
   }
 
   # We don't want Terraform to revert certificate cycle changes. We assume the certificate will be renewed in keyvault.
-  #lifecycle { ignore_changes = [ssl_certificate, tags] }
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [ssl_certificate, tags] }
 
 }
 
