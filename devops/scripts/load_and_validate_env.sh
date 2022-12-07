@@ -24,8 +24,8 @@ else
     # Validate config schema
     pajv validate -s config_schema.json -d config.yaml > /dev/null
 
-    # Remove comments yq query
-    STRIP_COMMENTS="... comments=\"\""
+    # # Remove comments yq query
+    # STRIP_COMMENTS="... comments=\"\""
     # Get leaf keys yq query
     GET_LEAF_KEYS="... | select(. == \"*\") | {(path | .[-1]): .}"
     # Map keys to uppercase yq query
@@ -37,10 +37,10 @@ else
 
     # Export as UPPERCASE keys env vars
     # shellcheck disable=SC2046
-    export $(yq e "$STRIP_COMMENTS|$GET_LEAF_KEYS|$UPCASE_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)
+    export $(yq e "$GET_LEAF_KEYS|$UPCASE_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)
     # Export as Terraform keys env vars
     # shellcheck disable=SC2046
-    export $(yq e "$STRIP_COMMENTS|$GET_LEAF_KEYS|$TF_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)
+    export $(yq e "$GET_LEAF_KEYS|$TF_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)
 fi
 
 set +o nounset
