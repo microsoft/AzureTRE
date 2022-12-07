@@ -8,6 +8,12 @@ resource "azurerm_user_assigned_identity" "id" {
   lifecycle { ignore_changes = [tags] }
 }
 
+resource "azurerm_role_assignment" "resource_group_reader" {
+  scope                = azurerm_resource_group.core.id
+  role_definition_name = "Reader"
+  principal_id         = azurerm_user_assigned_identity.id.principal_id
+}
+
 resource "azurerm_role_assignment" "billing_reader" {
   scope                = data.azurerm_subscription.current.id
   role_definition_name = "Billing Reader"
