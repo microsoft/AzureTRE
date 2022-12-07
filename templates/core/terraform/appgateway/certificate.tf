@@ -14,7 +14,7 @@ resource "azurerm_key_vault_access_policy" "app_gw_managed_identity" {
 
 resource "azurerm_key_vault_certificate" "tlscert" {
   #name         = "letsencrypt"
-  name         = "${var.certifcate_name}"
+  name         = "${var.certificate_name}"
   key_vault_id = var.keyvault_id
 
   certificate_policy {
