@@ -34,7 +34,7 @@ def test_create_operation_steps_from_multi_step_template(_, __, resource_repo, t
     expected_op.message = "This resource is waiting to be deployed"
 
     operations_repo.save_item = MagicMock()
-    resource_repo.get_operating_resource_by_template_name = MagicMock(return_value=basic_shared_service)
+    resource_repo.get_active_resource_by_template_name = MagicMock(return_value=basic_shared_service)
     operation = operations_repo.create_operation_item(
         resource_id="resource-id",
         action="install",
