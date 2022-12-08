@@ -1,13 +1,18 @@
 import logging
 
-from azure.cosmos import CosmosClient
+from azure.cosmos.aio import CosmosClient
 from db.repositories.workspaces import WorkspaceRepository
 import semantic_version
 
 
 class WorkspaceMigration(WorkspaceRepository):
-    def __init__(self, client: CosmosClient):
-        super().__init__(client)
+    @classmethod
+    async def create(cls, client: CosmosClient):
+        cls = WorkspaceMigration()
+        resource_repo = await super().create(client)
+        cls._container = resource_repo._container
+        cls._client = resource_repo._client
+        return cls
 
     def moveAuthInformationToProperties(self) -> bool:
         migrated = False
