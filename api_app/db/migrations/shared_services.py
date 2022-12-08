@@ -20,7 +20,7 @@ class SharedServiceMigration(SharedServiceRepository):
 
         migrated = False
         for template_name in template_names:
-            for item in self.query(query=f'SELECT * FROM c WHERE c.resourceType = "shared-service" \
+            for item in await self.query(query=f'SELECT * FROM c WHERE c.resourceType = "shared-service" \
                                            AND c.templateName = "{template_name}" AND {IS_ACTIVE_RESOURCE} \
                                            ORDER BY c.updatedWhen ASC OFFSET 1 LIMIT 10000'):
                 template_version = semantic_version.Version(item["templateVersion"])
@@ -31,11 +31,11 @@ class SharedServiceMigration(SharedServiceRepository):
 
         return migrated
 
-    def checkMinFirewallVersion(self) -> bool:
+    async def checkMinFirewallVersion(self) -> bool:
         template_name = 'tre-shared-service-firewall'
         min_template_version = semantic_version.Version('0.4.0')
 
-        resources = self.query(query=f'SELECT * FROM c WHERE c.resourceType = "shared-service" \
+        resources = await self.query(query=f'SELECT * FROM c WHERE c.resourceType = "shared-service" \
                                       AND c.templateName = "{template_name}" AND {IS_ACTIVE_RESOURCE}')
 
         if not resources:
