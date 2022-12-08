@@ -18,7 +18,6 @@ management:
   # arm_client_secret: __CHANGE_ME__
 
 tre:
-  tre_id: "__CHANGE_ME__"
   # If your local machine/build agent cannot get the public IP
   # address from https://ipecho.net/plain, then you can circumvent
   # this by setting this Environment variable. This blockage can
