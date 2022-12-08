@@ -71,7 +71,7 @@ async def submit_airlock_import_request(workspace_path: str, workspace_owner_tok
     return request_id, container_url
 
 
-# TODO: add a timeout before merging
+@pytest.mark.timeout(50 * 60)
 @pytest.mark.airlock
 async def test_airlock_review_vm_flow(setup_test_workspace_and_workspace_service, setup_test_airlock_import_review_workspace_and_workspace_service, verify):
     workspace_path, workspace_id, workspace_service_path, workspace_service_id, workspace_owner_token = setup_test_workspace_and_workspace_service
