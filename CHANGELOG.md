@@ -18,6 +18,7 @@ BUG FIXES:
 * Private endpoints for AppInsights are now provisioning successfully and consistently ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))
 * Enable upgrade step of base workspace ([#2899](https://github.com/microsoft/AzureTRE/pull/2899))
 * Fix get shared service by template name to filter by active service only ([#2947](https://github.com/microsoft/AzureTRE/pull/2947))
+* Remove Guacamole's firewall rule on uninstall ([#2958](https://github.com/microsoft/AzureTRE/pull/2958))
 
 COMPONENTS:
 
