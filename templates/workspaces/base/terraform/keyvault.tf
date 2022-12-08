@@ -145,7 +145,7 @@ data "azurerm_key_vault_secret" "client_secret" {
 # This secret only gets written if Terraform is not responsible for
 # registering the AAD Application
 resource "azurerm_key_vault_secret" "client_secret" {
-  name = "workspace-client-secret"
+  name         = "workspace-client-secret"
   value        = var.client_secret == local.redacted_senstive_value ? data.azurerm_key_vault_secret.client_secret[0].value : var.client_secret
   key_vault_id = azurerm_key_vault.kv.id
   count        = var.register_aad_application ? 0 : 1
