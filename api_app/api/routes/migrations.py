@@ -46,15 +46,15 @@ async def migrate_database(resources_repo=Depends(get_repository(ResourceReposit
         migrations.append(Migration(issueNumber="PR 1717", status=migration_status))
 
         logging.info("PR 1726 - Authentication needs to be in properties so we can update them")
-        migration_status = "Executed" if workspace_migration.moveAuthInformationToProperties() else "Skipped"
+        migration_status = "Executed" if await workspace_migration.moveAuthInformationToProperties() else "Skipped"
         migrations.append(Migration(issueNumber="PR 1726", status=migration_status))
 
         logging.info("PR 1406 - Extra field to support UI")
-        num_rows = resource_migration.add_deployment_status_field(operations_repo)
+        num_rows = await resource_migration.add_deployment_status_field(operations_repo)
         migrations.append(Migration(issueNumber="1406", status=f'Updated {num_rows} resource objects'))
 
         logging.info("PR 2371 - Validate min firewall version")
-        shared_services_migration.checkMinFirewallVersion()
+        await shared_services_migration.checkMinFirewallVersion()
         migrations.append(Migration(issueNumber="2371", status='Firewall version meets requirement'))
 
         logging.info("PR 2779 - Restructure Airlock requests & add createdBy field")
@@ -62,11 +62,11 @@ async def migrate_database(resources_repo=Depends(get_repository(ResourceReposit
         await airlock_migration.rename_field_name('requestTitle', 'title')
         await airlock_migration.rename_field_name('user', 'updatedBy')
         await airlock_migration.rename_field_name('creationTime', 'createdWhen')
-        num_updated = airlock_migration.add_created_by_and_rename_in_history()
+        num_updated = await airlock_migration.add_created_by_and_rename_in_history()
         migrations.append(Migration(issueNumber="2779", status=f'Renamed fields & updated {num_updated} airlock requests with createdBy'))
 
         logging.info("PR 2883 - Support multiple reviewer VMs per Airlock request")
-        num_updated = airlock_migration.change_review_resources_to_dict()
+        num_updated = await airlock_migration.change_review_resources_to_dict()
         migrations.append(Migration(issueNumber="XXXX", status=f'Updated {num_updated} airlock requests with new reviewUserResources format'))
 
         return MigrationOutList(migrations=migrations)
