@@ -2,7 +2,7 @@ import logging
 
 from azure.cosmos import CosmosClient
 from db.repositories.shared_services import SharedServiceRepository
-from db.repositories.resources import IS_OPERATING_SHARED_SERVICE
+from db.repositories.resources import IS_ACTIVE_RESOURCE
 import semantic_version
 
 
@@ -16,7 +16,7 @@ class SharedServiceMigration(SharedServiceRepository):
         migrated = False
         for template_name in template_names:
             for item in self.query(query=f'SELECT * FROM c WHERE c.resourceType = "shared-service" \
-                                           AND c.templateName = "{template_name}" AND {IS_OPERATING_SHARED_SERVICE} \
+                                           AND c.templateName = "{template_name}" AND {IS_ACTIVE_RESOURCE} \
                                            ORDER BY c.updatedWhen ASC OFFSET 1 LIMIT 10000'):
                 template_version = semantic_version.Version(item["templateVersion"])
                 if (template_version < semantic_version.Version('0.3.0')):
@@ -31,7 +31,7 @@ class SharedServiceMigration(SharedServiceRepository):
         min_template_version = semantic_version.Version('0.4.0')
 
         resources = self.query(query=f'SELECT * FROM c WHERE c.resourceType = "shared-service" \
-                                      AND c.templateName = "{template_name}" AND {IS_OPERATING_SHARED_SERVICE}')
+                                      AND c.templateName = "{template_name}" AND {IS_ACTIVE_RESOURCE}')
 
         if not resources:
             raise ValueError(f"Expecting to have an instance of Firewall (template name {template_name}) deployed in a successful TRE deployment")

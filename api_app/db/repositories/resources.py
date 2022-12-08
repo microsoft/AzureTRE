@@ -71,8 +71,8 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(Resource, resource)
 
-    def get_resource_by_template_name(self, template_name: str) -> Resource:
-        query = f"SELECT TOP 1 * FROM c WHERE c.templateName = '{template_name}'"
+    def get_active_resource_by_template_name(self, template_name: str) -> Resource:
+        query = f"SELECT TOP 1 * FROM c WHERE c.templateName = '{template_name}' AND {IS_ACTIVE_RESOURCE}"
         resources = self.query(query=query)
         if not resources:
             raise EntityDoesNotExist
@@ -172,4 +172,4 @@ class ResourceRepository(BaseRepository):
 
 # Cosmos query consts
 IS_NOT_DELETED_CLAUSE = f'c.deploymentStatus != "{Status.Deleted}"'
-IS_OPERATING_SHARED_SERVICE = f'c.deploymentStatus != "{Status.Deleted}" and c.deploymentStatus != "{Status.DeploymentFailed}"'
+IS_ACTIVE_RESOURCE = f'c.deploymentStatus != "{Status.Deleted}" and c.deploymentStatus != "{Status.DeploymentFailed}"'
