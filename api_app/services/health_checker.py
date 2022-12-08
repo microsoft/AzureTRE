@@ -3,24 +3,14 @@ from typing import Tuple
 from azure.core import exceptions
 from azure.cosmos.aio import CosmosClient
 from azure.servicebus.aio import ServiceBusClient
-from azure.mgmt.cosmosdb.aio import CosmosDBManagementClient
 from azure.mgmt.compute.aio import ComputeManagementClient
 from azure.cosmos.exceptions import CosmosHttpResponseError
 from azure.servicebus.exceptions import ServiceBusConnectionError, ServiceBusAuthenticationError
+from api.dependencies.database import get_store_key
 
 from core import config
 from models.schemas.status import StatusEnum
 from resources import strings
-
-
-async def get_store_key(credential) -> str:
-    if config.STATE_STORE_KEY:
-        primary_master_key = config.STATE_STORE_KEY
-    else:
-        async with CosmosDBManagementClient(credential, subscription_id=config.SUBSCRIPTION_ID) as cosmosdb_mng_client:
-            database_keys = await cosmosdb_mng_client.database_accounts.list_keys(resource_group_name=config.RESOURCE_GROUP_NAME, account_name=config.COSMOSDB_ACCOUNT_NAME)
-            primary_master_key = database_keys.primary_master_key
-            return primary_master_key
 
 
 async def create_state_store_status(credential) -> Tuple[StatusEnum, str]:

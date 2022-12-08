@@ -1,11 +1,16 @@
-from azure.cosmos import CosmosClient
+from azure.cosmos.aio import CosmosClient
 from db.repositories.operations import OperationRepository
 from db.repositories.resources import ResourceRepository
 
 
 class ResourceMigration(ResourceRepository):
-    def __init__(self, client: CosmosClient):
-        super().__init__(client)
+    @classmethod
+    async def create(cls, client: CosmosClient):
+        cls = ResourceMigration()
+        resource_repo = await super().create(client)
+        cls._container = resource_repo._container
+        cls._client = resource_repo._client
+        return cls
 
     def add_deployment_status_field(self, operations_repository: OperationRepository) -> int:
         num_updated = 0

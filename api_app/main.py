@@ -78,7 +78,7 @@ async def initialize_logging_on_startup():
 @app.on_event("startup")
 async def watch_deployment_status() -> None:
     logging.info("Starting deployment status watcher thread")
-    statusWatcher = DeploymentStatusUpdater(app)
+    statusWatcher = await DeploymentStatusUpdater.create(app)
     statusWatcher.start()
 
 

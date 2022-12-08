@@ -1,10 +1,15 @@
-from azure.cosmos import CosmosClient
+from azure.cosmos.aio import CosmosClient
 from db.repositories.airlock_requests import AirlockRequestRepository
 
 
 class AirlockMigration(AirlockRequestRepository):
-    def __init__(self, client: CosmosClient):
-        super().__init__(client)
+    @classmethod
+    async def create(cls, client: CosmosClient):
+        cls = AirlockMigration()
+        resource_repo = await super().create(client)
+        cls._container = resource_repo._container
+        cls._client = resource_repo._client
+        return cls
 
     def add_created_by_and_rename_in_history(self) -> int:
         num_updated = 0

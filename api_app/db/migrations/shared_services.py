@@ -1,16 +1,21 @@
 import logging
 
-from azure.cosmos import CosmosClient
+from azure.cosmos.aio import CosmosClient
 from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.resources import IS_ACTIVE_RESOURCE
 import semantic_version
 
 
 class SharedServiceMigration(SharedServiceRepository):
-    def __init__(self, client: CosmosClient):
-        super().__init__(client)
+    @classmethod
+    async def create(cls, client: CosmosClient):
+        cls = SharedServiceMigration()
+        resource_repo = await super().create(client)
+        cls._container = resource_repo._container
+        cls._client = resource_repo._client
+        return cls
 
-    def deleteDuplicatedSharedServices(self) -> bool:
+    async def deleteDuplicatedSharedServices(self) -> bool:
         template_names = ['tre-shared-service-firewall', 'tre-shared-service-sonatype-nexus', 'tre-shared-service-gitea']
 
         migrated = False
@@ -21,7 +26,7 @@ class SharedServiceMigration(SharedServiceRepository):
                 template_version = semantic_version.Version(item["templateVersion"])
                 if (template_version < semantic_version.Version('0.3.0')):
                     logging.info(f'Deleting element {item["id"]}')
-                    self.delete_item(item["id"])
+                    await self.delete_item(item["id"])
                     migrated = True
 
         return migrated

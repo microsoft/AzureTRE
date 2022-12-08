@@ -36,7 +36,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
         logging.debug(f"Saving airlock request item: {airlock_request.id}")
         airlock_request.updatedBy = user
         airlock_request.updatedWhen = get_timestamp()
-        airlock_request_repo.save_item(airlock_request)
+        await airlock_request_repo.save_item(airlock_request)
     except Exception as e:
         logging.error(f'Failed saving airlock request {airlock_request}: {e}')
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
@@ -46,7 +46,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
         await send_status_changed_event(airlock_request=airlock_request, previous_status=None)
         await send_airlock_notification_event(airlock_request, workspace, role_assignment_details)
     except Exception as e:
-        airlock_request_repo.delete_item(airlock_request.id)
+        await airlock_request_repo.delete_item(airlock_request.id)
         logging.error(f"Failed sending status_changed message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_GENERAL_ERROR_MESSAGE)
 
@@ -63,7 +63,7 @@ async def update_and_publish_event_airlock_request(
         review_user_resource: AirlockReviewUserResource = None) -> AirlockRequest:
     try:
         logging.debug(f"Updating airlock request item: {airlock_request.id}")
-        updated_airlock_request = airlock_request_repo.update_airlock_request(
+        updated_airlock_request = await airlock_request_repo.update_airlock_request(
             original_request=airlock_request,
             updated_by=updated_by,
             new_status=new_status,
@@ -108,11 +108,11 @@ def check_email_exists(role_assignment_details: defaultdict(list)):
         raise HTTPException(status_code=status.HTTP_417_EXPECTATION_FAILED, detail=strings.AIRLOCK_NO_AIRLOCK_MANAGER_EMAIL)
 
 
-def get_airlock_requests_by_user_and_workspace(user: User, workspace: Workspace, airlock_request_repo: AirlockRequestRepository,
-                                               creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None,
-                                               order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
-    return airlock_request_repo.get_airlock_requests(workspace_id=workspace.id, creator_user_id=creator_user_id, type=type, status=status,
-                                                     order_by=order_by, order_ascending=order_ascending)
+async def get_airlock_requests_by_user_and_workspace(user: User, workspace: Workspace, airlock_request_repo: AirlockRequestRepository,
+                                                     creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None,
+                                                     order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
+    return await airlock_request_repo.get_airlock_requests(workspace_id=workspace.id, creator_user_id=creator_user_id, type=type, status=status,
+                                                           order_by=order_by, order_ascending=order_ascending)
 
 
 def get_allowed_actions(request: AirlockRequest, user: User, airlock_request_repo: AirlockRequestRepository) -> AirlockRequestWithAllowedUserActions:
@@ -149,10 +149,10 @@ async def delete_review_user_resource(
         resource_template_repo: ResourceTemplateRepository,
         operations_repo: OperationRepository,
         user: User) -> Operation:
-    workspace_service = workspace_service_repo.get_workspace_service_by_id(workspace_id=user_resource.workspaceId,
-                                                                           service_id=user_resource.parentWorkspaceServiceId)
+    workspace_service = await workspace_service_repo.get_workspace_service_by_id(workspace_id=user_resource.workspaceId,
+                                                                                 service_id=user_resource.parentWorkspaceServiceId)
 
-    resource_template = resource_template_repo.get_template_by_name_and_version(
+    resource_template = await resource_template_repo.get_template_by_name_and_version(
         user_resource.templateName,
         user_resource.templateVersion,
         ResourceType.UserResource,
@@ -180,7 +180,7 @@ async def delete_all_review_user_resources(
         user: User) -> List[Operation]:
     operations: List[Operation] = []
     for review_ur in airlock_request.reviewUserResources.values():
-        user_resource = user_resource_repo.get_user_resource_by_id(
+        user_resource = await user_resource_repo.get_user_resource_by_id(
             workspace_id=review_ur.workspaceId,
             service_id=review_ur.workspaceServiceId,
             resource_id=review_ur.userResourceId
