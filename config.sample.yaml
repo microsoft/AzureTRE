@@ -1,8 +1,9 @@
 ---
 # After you have replaced all the __CHANGE_ME__ values in this file, you need to
 # run `make auth` to setup the Auth.
+tre_id: "__CHANGE_ME__"
+location: __CHANGE_ME__
 management:
-  location: __CHANGE_ME__
   mgmt_resource_group_name: __CHANGE_ME__
   mgmt_storage_account_name: __CHANGE_ME__
   terraform_state_container_name: tfstate
@@ -25,13 +26,12 @@ tre:
   # this website is blocked. This value is the public facing IP
   # address of the deploying machine.
   # public_deployment_ip_address: __CHANGE_ME__
-  defaults:
-    core_address_space: "10.1.0.0/22"
-    tre_address_space: "10.0.0.0/12"
+  core_address_space: "10.1.0.0/22"
+  tre_address_space: "10.0.0.0/12"
 
-    core_app_service_plan_sku: "P1v2"
-    resource_processor_vmss_sku: "Standard_B2s"
-    enable_airlock_malware_scanning: false
+  core_app_service_plan_sku: "P1v2"
+  resource_processor_vmss_sku: "Standard_B2s"
+  enable_airlock_malware_scanning: false
 
   # TODO: move to RP default with https://github.com/microsoft/AzureTRE/issues/2948
   workspace_app_service_plan_sku: "P1v2"

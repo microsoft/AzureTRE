@@ -5,15 +5,21 @@
   "description": "This document contains all the configuration needed to deploy and setup AzureTRE.",
   "type": "object",
   "properties": {
+    "location": {
+      "description": "The Azure location (region) for all resources.",
+      "type": "string",
+      "pattern": "[a-z]+"
+    },
+    "tre_id": {
+      "description": "TRE unique identifier",
+      "type": "string",
+      "pattern": "^[a-zA-Z 0-9\\_]*$",
+      "maxLength": 11
+    },
     "management": {
       "description": "Management configuration",
       "type": "object",
       "properties": {
-        "location": {
-          "description": "The Azure location (region) for all resources.",
-          "type": "string",
-          "pattern": "[a-z]+"
-        },
         "mgmt_resource_group_name": {
           "description": "The shared resource group for all management resources, including the storage account.",
           "type": "string",
@@ -48,7 +54,6 @@
         }
       },
       "required": [
-        "location",
         "mgmt_resource_group_name",
         "mgmt_storage_account_name",
         "terraform_state_container_name",
@@ -60,16 +65,19 @@
       "description": "TRE configuration",
       "type": "object",
       "properties": {
-        "tre_id": {
-          "description": "TRE unique identifier",
-          "type": "string",
-          "pattern": "^[a-zA-Z 0-9\\_]*$",
-          "maxLength": 11
+        "enable_airlock_malware_scanning": {
+          "description": "Allow airlock malware scanning.",
+          "type": "boolean"
+        },
+        "core_address_space": {
+          "description": "TRE core address spaces.",
+          "type": "string"
+        },
+        "tre_address_space": {
+          "description": "TRE address spaces.",
+          "type": "string"
         }
-      },
-      "required": [
-        "tre_id"
-      ]
+      }
     },
     "authentication": {
       "description": "Authentication configuration",
@@ -138,5 +146,9 @@
         "aad_tenant_id"
       ]
     }
-  }
+  },
+  "required": [
+    "location",
+    "tre_id"
+  ]
 }
