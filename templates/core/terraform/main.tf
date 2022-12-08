@@ -7,7 +7,7 @@ terraform {
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.3.0"
+      version = "=3.4.3"
     }
     template = {
       source  = "hashicorp/template"
@@ -94,6 +94,8 @@ module "appgateway" {
   keyvault_id                = azurerm_key_vault.kv.id
   static_web_dns_zone_id     = module.network.static_web_dns_zone_id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
+  ui_app_service             = var.ui_app_service
+  certificate_name           = var.certificate_name
 
   depends_on = [
     module.network,

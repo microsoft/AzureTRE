@@ -14,6 +14,7 @@ terraform init -input=false -backend=true -reconfigure -upgrade \
     -backend-config="key=${TRE_ID}"
 
 echo "*** Migrating TF Resources ***"
+terraform refresh
 # 1. Check we have a root_module in state
 # 2. Grab the Resource ID
 # 3. Delete the old resource from state
