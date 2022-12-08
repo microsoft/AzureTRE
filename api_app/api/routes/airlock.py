@@ -67,9 +67,9 @@ async def get_all_airlock_requests_by_workspace(
         creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None,
         order_by: str = None, order_ascending: bool = True) -> AirlockRequestWithAllowedUserActionsInList:
     try:
-        airlock_requests = get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo,
-                                                                      creator_user_id=creator_user_id, type=type, status=status,
-                                                                      order_by=order_by, order_ascending=order_ascending)
+        airlock_requests = await get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo,
+                                                                            creator_user_id=creator_user_id, type=type, status=status,
+                                                                            order_by=order_by, order_ascending=order_ascending)
         airlock_requests_with_allowed_user_actions = enrich_requests_with_allowed_actions(airlock_requests, user, airlock_request_repo)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed retrieving all the airlock requests for a workspace: {e}")
@@ -155,7 +155,7 @@ async def create_review_user_resource(
 
     # Find workspace service to create user resource in
     try:
-        workspace_service = workspace_service_repo.get_workspace_service_by_id(workspace_id=workspace_id, service_id=workspace_service_id)
+        workspace_service = await workspace_service_repo.get_workspace_service_by_id(workspace_id=workspace_id, service_id=workspace_service_id)
     except EntityDoesNotExist as e:
         logging.error(f"Failed to get workspace service {workspace_service_id} for workspace {workspace_id}: {str(e)}")
         raise HTTPException(status_code=status_code.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -166,8 +166,8 @@ async def create_review_user_resource(
     if user.id in airlock_request.reviewUserResources:
         r = airlock_request.reviewUserResources[user.id]
         logging.info(f"User already has an existing review resource (ID: {r.userResourceId})")
-        existing_resource = user_resource_repo.get_user_resource_by_id(workspace_id=r.workspaceId, service_id=r.workspaceServiceId,
-                                                                       resource_id=r.userResourceId)
+        existing_resource = await user_resource_repo.get_user_resource_by_id(workspace_id=r.workspaceId, service_id=r.workspaceServiceId,
+                                                                             resource_id=r.userResourceId)
 
         # Is the existing resource enabled and deployed
         if existing_resource.isEnabled and existing_resource.deploymentStatus == "deployed":
@@ -210,7 +210,7 @@ async def create_review_user_resource(
     # Start VM creation
     try:
         logging.info(f"Creating a user resource in {workspace_id} {workspace_service_id} {user_resource_template_name}")
-        user_resource, resource_template = user_resource_repo.create_user_resource_item(
+        user_resource, resource_template = await user_resource_repo.create_user_resource_item(
             user_resource_create, workspace_id, workspace_service_id, workspace_service.templateName, user.id, user.roles)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed create user resource model instance due to validation error: {e}")
