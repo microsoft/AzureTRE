@@ -2,7 +2,7 @@
 
 # [Choice] Python version: 3, 3.9, 3.8, 3.7, 3.6
 ARG VARIANT="3.8"
-FROM mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}-buster
+FROM mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}-bullseye
 
 # This will be set to true when running in VSCode
 ARG INTERACTIVE="false"
@@ -37,7 +37,7 @@ RUN apt-get update && apt-get install -y ca-certificates curl gnupg lsb-release 
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
     | tee /etc/apt/sources.list.d/docker.list > /dev/null \
-    && apt-get update && apt-get install -y docker-ce="5:20.10.20~3-0~debian-buster" docker-ce-cli="5:20.10.20~3-0~debian-buster" containerd.io="1.6.10-1" --no-install-recommends \
+    && apt-get update && apt-get install -y docker-ce="5:20.10.21~3-0~debian-bullseye" docker-ce-cli="5:20.10.21~3-0~debian-bullseye" containerd.io="1.6.12-1" --no-install-recommends \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install Certbot
@@ -79,7 +79,7 @@ COPY ["airlock_processor/requirements.txt", "/tmp/pip-tmp/airlock_processor/"]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp
 
 # Install azure-cli
-ARG AZURE_CLI_VERSION=2.37.0-1~buster
+ARG AZURE_CLI_VERSION=2.37.0-1~bullseye
 COPY .devcontainer/scripts/azure-cli.sh /tmp/
 RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh
