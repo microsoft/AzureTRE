@@ -59,7 +59,7 @@ class BaseRepository:
         await self.container.delete_item(item=item_id, partition_key=item_id)
 
     async def rename_field_name(self, old_field_name: str, new_field_name: str):
-        for item in self.query('SELECT * FROM c'):
+        for item in await self.query('SELECT * FROM c'):
             if old_field_name in item:
                 item[new_field_name] = item[old_field_name]
                 del item[old_field_name]
