@@ -71,10 +71,10 @@ developer_settings:
 # This setting will enable your local machine to be able to
 # communicate with Service Bus and Cosmos. It will also allow deploying
 # the base workspace.
-  enable_local_debugging: false
+#  enable_local_debugging: true
 
-  # Used by the API and Resource processor application to change log level
-  debug: false
+# Used by the API and Resource processor application to change log level
+#  debug: true
 
 # To avoid creating + deleting a workspace + service in tests set the vars for existing ones
 performance_in_e2e_test:

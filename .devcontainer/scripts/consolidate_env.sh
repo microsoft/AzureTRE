@@ -1,7 +1,7 @@
 #!/bin/bash
 set -o errexit
 set -o pipefail
-
+set -o nounset
 # Uncomment this line to see each command for debugging (careful: this will show secrets!)
 # set -o xtrace
 
@@ -9,9 +9,6 @@ set -o pipefail
 
 WORKDIR=${1:-"automatic"}
 FILE=${2:-"automatic"}
-
-# done with processing args and can set this
-set -o nounset
 
 # YQ query to get leaf keys
 GET_LEAF_KEYS="... | select(. == \"*\") | {(path | .[-1]): .} "
