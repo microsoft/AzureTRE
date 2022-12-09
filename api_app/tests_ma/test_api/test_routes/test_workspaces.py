@@ -656,7 +656,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     # [POST] /workspaces/{workspace_id}/workspace-services
     @ patch("api.routes.workspaces.save_and_deploy_resource", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
-    @ patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag", return_value=sample_workspace())
+    @ patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag")
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_new_address_space", return_value="10.1.4.0/24")
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
@@ -680,6 +680,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         modified_workspace.user = create_workspace_owner_user()
         modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP
         modified_workspace.properties["address_spaces"] = ["192.168.0.1/24", "10.1.4.0/24"]
+        update_item_mock.return_value = modified_workspace
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
 
