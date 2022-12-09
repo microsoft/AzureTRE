@@ -680,6 +680,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         modified_workspace.user = create_workspace_owner_user()
         modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP
         modified_workspace.properties["address_spaces"] = ["192.168.0.1/24", "10.1.4.0/24"]
+        modified_workspace.etag = etag
         update_item_mock.return_value = modified_workspace
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
