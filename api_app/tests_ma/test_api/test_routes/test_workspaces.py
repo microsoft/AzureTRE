@@ -675,7 +675,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
         modified_workspace = sample_workspace()
         modified_workspace.isEnabled = True
-        modified_workspace.history = [ResourceHistoryItem(properties={'client_id': '12345', 'scope_id': 'test_scope_id', 'address_spaces': ["192.168.0.1/24"]}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
+        modified_workspace.history = [ResourceHistoryItem(properties={'client_id': '12345', 'scope_id': 'test_scope_id', 'address_spaces': ["192.168.0.1/24"]}, templateVersion='0.1.0', isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
         modified_workspace.resourceVersion = 1
         modified_workspace.user = create_workspace_owner_user()
         modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP
