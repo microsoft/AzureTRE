@@ -644,12 +644,11 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item", return_value=[sample_workspace_service(), sample_resource_template()])
     async def test_post_workspace_services_creates_workspace_service(self, _, __, ___, ____, get_workspace_mock, resource_template_repo, app, client, workspace_service_input, basic_workspace_service_template):
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
-        etag = "some-etag-value"
         workspace = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
         get_workspace_mock.return_value = workspace
 
         resource_template_repo.return_value = basic_workspace_service_template
-        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input, headers={"etag": etag})
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
 
         assert response.status_code == status.HTTP_202_ACCEPTED
         assert response.json()["operation"]["resourceId"] == SERVICE_ID
@@ -681,7 +680,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP
         modified_workspace.properties["address_spaces"] = ["192.168.0.1/24", "10.1.4.0/24"]
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input, headers={"etag": etag})
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
 
         update_item_mock.assert_called_once_with(modified_workspace, etag)
         assert response.status_code == status.HTTP_202_ACCEPTED
@@ -695,13 +694,12 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @ patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item")
     async def test_post_workspace_services_creates_workspace_service_with_address_space_workspace_has_no_address_spaces_property(self, create_workspace_service_item_mock, __, ___, get_workspace_mock, resource_template_repo, _____, app, client, workspace_service_input, basic_workspace_service_template, basic_resource_template):
-        etag = "some-etag-value"
         workspace = sample_workspace()
         get_workspace_mock.return_value = workspace
         basic_workspace_service_template.properties["address_space"]: str = Field()
         create_workspace_service_item_mock.return_value = [sample_workspace_service(), basic_workspace_service_template]
         resource_template_repo.return_value = [basic_workspace_service_template, basic_resource_template]
-        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input, headers={"etag": etag})
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.text == strings.WORKSPACE_DOES_NOT_HAVE_ADDRESS_SPACES_PROPERTY
@@ -712,11 +710,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item", side_effect=ValueError)
     async def test_post_workspace_services_raises_400_bad_request_if_input_is_bad(self, _, __, get_workspace_mock, app, client, workspace_service_input):
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
-        etag = "some-etag-value"
         workspace = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
         get_workspace_mock.return_value = workspace
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input, headers={"etag": etag})
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
