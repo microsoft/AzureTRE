@@ -666,7 +666,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         etag = "some-etag-value"
         workspace = sample_workspace()
         workspace.properties["address_spaces"] = ["192.168.0.1/24"]
-        workspace["etag"] = etag
+        workspace.etag = etag
         get_workspace_mock.return_value = workspace
         basic_workspace_service_template.properties["address_space"]: str = Field()
         create_workspace_service_item_mock.return_value = [sample_workspace_service(), basic_workspace_service_template]
