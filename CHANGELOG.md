@@ -10,7 +10,9 @@ FEATURES:
 
 ENHANCEMENTS:
 * Remove Porter's Docker mixin as it's not in use ([#2889](https://github.com/microsoft/AzureTRE/pull/2889))
+* Enable properties defined within the API to be overridden by the bundle template - enables default values to be set. ([#2576](https://github.com/microsoft/AzureTRE/pull/2576))
 * Support template version update ([#2908](https://github.com/microsoft/AzureTRE/pull/2908))
+* Update docker base images to bullseye ([#2946](https://github.com/microsoft/AzureTRE/pull/2946)
 * Support updating the firewall when installing via makefile/CICD ([#2942](https://github.com/microsoft/AzureTRE/pull/2942))
 * Add the ability for workspace services to request addional address spaces from a workspace ([#2902](https://github.com/microsoft/AzureTRE/pull/2902))
 
@@ -18,6 +20,7 @@ BUG FIXES:
 * Private endpoints for AppInsights are now provisioning successfully and consistently ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))
 * Enable upgrade step of base workspace ([#2899](https://github.com/microsoft/AzureTRE/pull/2899))
 * Fix get shared service by template name to filter by active service only ([#2947](https://github.com/microsoft/AzureTRE/pull/2947))
+* Fix untagged cost reporting reader role assignment ([#2951](https://github.com/microsoft/AzureTRE/pull/2951))
 
 COMPONENTS:
 
