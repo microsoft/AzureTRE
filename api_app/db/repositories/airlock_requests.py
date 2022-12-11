@@ -24,9 +24,7 @@ class AirlockRequestRepository(BaseRepository):
     @classmethod
     async def create(cls, client: CosmosClient):
         cls = AirlockRequestRepository()
-        base_repo = await super().create(client, config.STATE_STORE_AIRLOCK_REQUESTS_CONTAINER)
-        cls._container = base_repo._container
-        cls._client = base_repo._client
+        await super().create(client, config.STATE_STORE_AIRLOCK_REQUESTS_CONTAINER)
         return cls
 
     @staticmethod
