@@ -13,7 +13,7 @@ class AirlockMigration(AirlockRequestRepository):
 
     async def add_created_by_and_rename_in_history(self) -> int:
         num_updated = 0
-        for request in await self.container.read_all_items():
+        for request in await self.query('SELECT * FROM c'):
             # Only migrate if createdBy isn't present
             if 'createdBy' in request:
                 continue
@@ -39,7 +39,7 @@ class AirlockMigration(AirlockRequestRepository):
 
     async def change_review_resources_to_dict(self) -> int:
         num_updated = 0
-        for request in await self.container.read_all_items():
+        for request in await self.query('SELECT * FROM c'):
             # Only migrate if airlockReviewResources property present and is a list
             if 'reviewUserResources' in request:
                 if type(request['reviewUserResources']) == list:
