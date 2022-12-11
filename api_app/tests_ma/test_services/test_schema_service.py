@@ -67,12 +67,12 @@ def test_enrich_user_resource_template_enriches_with_user_resource_defaults(enri
         {'client_id': {'type': 'string'}},
         {'description': {'type': 'string'}, 'display_name': {'type': 'string'}, 'client_id': {'type': 'string'}}
     ),
-    # duplicate names - different types
+    # duplicate names - different defaults
     (
-        {'description': {'type': 'bool'}},
-        {'description': {'type': 'string'}, 'display_name': {'type': 'string'}},
+        {'description': {'type': 'string', 'default': 'service description'}, 'display_name': {'type': 'string'}},
+        {'description': {'type': 'string', 'default': ''}},
         {'client_id': {'type': 'string'}},
-        {'description': {'type': 'string'}, 'display_name': {'type': 'string'}, 'client_id': {'type': 'string'}}
+        {'description': {'type': 'string', 'default': 'service description'}, 'display_name': {'type': 'string'}, 'client_id': {'type': 'string'}}
     )])
 def test_enrich_template_combines_properties(original, extra1, extra2, expected, basic_resource_template):
     original_template = basic_resource_template
