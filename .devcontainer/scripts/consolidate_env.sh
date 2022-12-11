@@ -11,7 +11,7 @@ WORKDIR=${1:-"automatic"}
 FILE=${2:-"automatic"}
 
 # YQ query to get leaf keys
-GET_LEAF_KEYS="... | select(. == \"*\") | {(path | .[-1]): .} "
+GET_LEAF_KEYS=".. | select(. == \"*\") | {(path | .[-1]): .} "
 # YQ query to uppercase keys
 UPCASE_KEYS="with_entries(.key |= upcase)"
 # YQ query to map yaml entries to the following format: key=value

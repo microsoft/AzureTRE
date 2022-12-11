@@ -15,19 +15,20 @@ if [ ! -f "config.yaml" ]; then
   fi
 else
     # Validate no duplicate keys in config
-    has_dupes=$(yq e '... comments=""|.. | select(. == "*") | {(path | .[-1]): .}| keys' config.yaml | uniq -d)
+    has_dupes=$(yq e '.. | select(. == "*") | {(path | .[-1]): .}| keys' config.yaml | sort| uniq -d)
     if [ -n "${has_dupes:-}" ]; then
       echo -e "\e[31m»»» 💥 There are duplicate keys in your config, please fix and try again!\e[0m"
-      exit
+      exit 1
     fi
 
     # Validate config schema
-    pajv validate -s config_schema.json -d config.yaml > /dev/null
+    if [[ $(pajv validate -s config_schema.json -d config.yaml) != *valid* ]]; then
+      echo -e "\e[31m»»» ⚠️ Your config.yaml is invalid 😥 Please fix the errors and retry."
+      exit 1
+    fi
 
-    # # Remove comments yq query
-    # STRIP_COMMENTS="... comments=\"\""
     # Get leaf keys yq query
-    GET_LEAF_KEYS="... | select(. == \"*\") | {(path | .[-1]): .}"
+    GET_LEAF_KEYS=".. | select(. == \"*\") | {(path | .[-1]): .}"
     # Map keys to uppercase yq query
     UPCASE_KEYS="with_entries(.key |= upcase)"
     # Prefix keys with TF_VAR_ yq query

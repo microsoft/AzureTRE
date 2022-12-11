@@ -38,10 +38,10 @@ do
       value=${value:1:-1}
     fi
     if [[ ($value == ?(-)+([0-9]) || $value == "true" ||  $value == "false")]]; then
-      yq e -i "(... | select(has(\"$name\")).\"$name\") = $value" config.yaml
+      yq e -i "(.. | select(has(\"$name\")).\"$name\") = $value" config.yaml
     else
       # Set value in config.yaml file
-      yq e -i "(... | select(has(\"$name\")).\"$name\") = \"$value\"" config.yaml
+      yq e -i "(.. | select(has(\"$name\")).\"$name\") = \"$value\"" config.yaml
     fi
   done < <(grep -v -e '^[[:space:]]*$' -e '^#' "$f" )
 done
