@@ -23,6 +23,7 @@ BUG FIXES:
 * Enable upgrade step of base workspace ([#2899](https://github.com/microsoft/AzureTRE/pull/2899))
 * Fix get shared service by template name to filter by active service only ([#2947](https://github.com/microsoft/AzureTRE/pull/2947))
 * Fix untagged cost reporting reader role assignment ([#2951](https://github.com/microsoft/AzureTRE/pull/2951))
+* Remove Guacamole's firewall rule on uninstall ([#2958](https://github.com/microsoft/AzureTRE/pull/2958))
 
 COMPONENTS:
 
