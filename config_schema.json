@@ -122,12 +122,12 @@
           "minLength": 11
         },
         "test_account_client_id": {
-          "description": " This is the app that will run the tests for you.",
+          "description": "This is the app that will run the tests for you.",
           "type": "string",
           "pattern": "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$"
         },
         "test_account_client_secret": {
-          "description": " This is the secret to an app that will run the tests for you",
+          "description": "This is the secret to an app that will run the tests for you",
           "type": "string",
           "minLength": 11
         },
