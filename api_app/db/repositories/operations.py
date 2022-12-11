@@ -21,9 +21,7 @@ class OperationRepository(BaseRepository):
     @classmethod
     async def create(cls, client: CosmosClient):
         cls = OperationRepository()
-        base_repo = await super().create(client, config.STATE_STORE_OPERATIONS_CONTAINER)
-        cls._container = base_repo._container
-        cls._client = base_repo._client
+        await super().create(client, config.STATE_STORE_OPERATIONS_CONTAINER)
         return cls
 
     @staticmethod
