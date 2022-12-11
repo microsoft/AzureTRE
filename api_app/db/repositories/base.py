@@ -13,7 +13,6 @@ PARTITION_KEY = PartitionKey(path="/id")
 class BaseRepository:
     @classmethod
     async def create(cls, client: CosmosClient, container_name: str = None):
-        cls = BaseRepository()
         cls._client: CosmosClient = client
         cls._container: ContainerProxy = await cls._get_container(container_name)
         return cls
@@ -22,9 +21,10 @@ class BaseRepository:
     def container(self) -> ContainerProxy:
         return self._container
 
-    async def _get_container(self, container_name) -> ContainerProxy:
+    @classmethod
+    async def _get_container(cls, container_name) -> ContainerProxy:
         try:
-            database = self._client.get_database_client(config.STATE_STORE_DATABASE)
+            database = cls._client.get_database_client(config.STATE_STORE_DATABASE)
             container = await database.create_container_if_not_exists(id=container_name, partition_key=PARTITION_KEY)
             properties = await container.read()
             print(properties['partitionKey'])

@@ -29,9 +29,7 @@ class WorkspaceRepository(ResourceRepository):
     @classmethod
     async def create(cls, client: CosmosClient):
         cls = WorkspaceRepository()
-        resource_repo = await super().create(client)
-        cls._container = resource_repo._container
-        cls._client = resource_repo._client
+        await super().create(client)
         return cls
 
     @staticmethod
