@@ -35,7 +35,6 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   resource_group_name        = var.resource_group_name
   location                   = var.location
   https_only                 = true
-  http2_enabled              = true
   client_certificate_enabled = true
   client_certificate_mode    = "Required"
   virtual_network_subnet_id  = var.airlock_processor_subnet_id
@@ -69,6 +68,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   }
 
   site_config {
+    http2_enabled                                 = true
     always_on                                     = true
     container_registry_managed_identity_client_id = azurerm_user_assigned_identity.airlock_id.client_id
     container_registry_use_managed_identity       = true
