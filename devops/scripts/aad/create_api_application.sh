@@ -352,11 +352,14 @@ JSON
   fi
 fi
 
-{
-  echo "API_CLIENT_ID=\"${appId}\""
-  echo "API_CLIENT_SECRET=\"${spPassword}\""
-  echo "SWAGGER_UI_CLIENT_ID=\"${uxAppId}\""
-} >> "devops/auth.env"
+# Set outputs in configuration file
+yq -i ".authentication.api_client_id |= \"${appId}\"" config.yaml
+yq -i ".authentication.api_client_secret |= \"${spPassword}\"" config.yaml
+yq -i ".authentication.swagger_ui_client_id |= \"${uxAppId}\"" config.yaml
+
+echo "api_client_id=\"${appId}\""
+echo "api_client_secret=\"${spPassword}\""
+echo "swagger_ui_client_id=\"${uxAppId}\""
 
 if [[ $grantAdminConsent -eq 0 ]]; then
     echo -e "\e[96mNOTE: Make sure the API permissions of the app registrations have admin consent granted."

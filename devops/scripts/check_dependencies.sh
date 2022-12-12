@@ -20,36 +20,17 @@ if ! command -v az &> /dev/null; then
   exit 1
 fi
 
-if [[ "${1:-?}" == *"auth"* ]]; then
-  if [ -z "${USE_ENV_VARS_NOT_FILES:-}" ]; then
-    # We only do this for local builds
-    echo -e "\n\e[96mChecking for Auth setup\e[0m..."
-    if [ ! -f "devops/auth.env" ]; then
-      echo -e "\e[31m»»» ⚠️ Auth has not been setup! 😥 Please run make auth"
-      exit 1
-    fi
-    set -a
-    # shellcheck disable=SC1091
-    . "$DIR/load_env.sh" "devops/auth.env"
-  fi
-fi
 
 if [[ "${1:-?}" == *"env"* ]]; then
   if [ -z "${USE_ENV_VARS_NOT_FILES:-}" ]; then
     # We only do this for local builds
     echo -e "\n\e[96mLoading local environment variables\e[0m..."
-    if [ ! -f "devops/.env" ]; then
-      echo -e "\e[31m»»» ⚠️ Your devops environment has not been setup! 😥 Please create a ./devops/.env file."
-      exit 1
-    fi
-    if [ ! -f "templates/core/.env" ]; then
-      echo -e "\e[31m»»» ⚠️ Your template environment has not been setup! 😥 Please create a ./templates/core/.env file."
+    if [ ! -f "config.yaml" ]; then
+      echo -e "\e[31m»»» ⚠️ Your config.yaml file has not been setup! 😥 Please create a config.yaml file."
       exit 1
     fi
     # shellcheck disable=SC1091
-    . "$DIR/load_env.sh" "devops/.env"
-    # shellcheck disable=SC1091
-    . "$DIR/load_env.sh" "templates/core/.env"
+    . "$DIR/load_and_validate_env.sh"
   fi
 fi
 
