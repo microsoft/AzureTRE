@@ -33,15 +33,19 @@ do
     name=$(echo "$line" | cut -d= -f1| tr '[:upper:]' '[:lower:]')
     value=$(echo "$line" | cut -d= -f2)
 
-    # if the value is quote-delimited then strip that as we quote in the declare statement
-    if [[ ("${value:0:1}" == "'" &&  "${value: -1:1}" == "'") || (("${value:0:1}" == "\"" &&  "${value: -1:1}" == "\"")) ]]; then
-      value=${value:1:-1}
-    fi
-    if [[ ($value == ?(-)+([0-9]) || $value == "true" ||  $value == "false")]]; then
-      yq e -i "(.. | select(has(\"$name\")).\"$name\") = $value" config.yaml
+    if [ "$f" == "devops/auth.env" ]; then
+      yq e -i "(.authentication | .\"$name\") = $value" config.yaml
     else
-      # Set value in config.yaml file
-      yq e -i "(.. | select(has(\"$name\")).\"$name\") = \"$value\"" config.yaml
+      # if the value is quote-delimited then strip that as we quote in the declare statement
+      if [[ ("${value:0:1}" == "'" &&  "${value: -1:1}" == "'") || (("${value:0:1}" == "\"" &&  "${value: -1:1}" == "\"")) ]]; then
+        value=${value:1:-1}
+      fi
+      if [[ ($value == ?(-)+([0-9]) || $value == "true" ||  $value == "false")]]; then
+        yq e -i "(.. | select(has(\"$name\")).\"$name\") = $value" config.yaml
+      else
+        # Set value in config.yaml file
+        yq e -i "(.. | select(has(\"$name\")).\"$name\") = \"$value\"" config.yaml
+      fi
     fi
   done < <(grep -v -e '^[[:space:]]*$' -e '^#' "$f" )
 done
