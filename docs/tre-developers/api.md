@@ -106,7 +106,7 @@ For security, the API is by default configured to not show detailed error messag
 
 You can enable debugging via one of the two ways:
 
-1. Set `DEBUG=true` in `templates/core/.env` file (see [])
+1. Set `debug=true` under developer_settings section in your`config.yaml` file (see [])
 
 To enable debugging on an already running instance:
 
