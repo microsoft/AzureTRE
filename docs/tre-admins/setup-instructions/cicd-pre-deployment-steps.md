@@ -76,7 +76,7 @@ Configure the following secrets in your github environment -
 
 ### Configure Authentication Secrets
 
-In a previous [Setup Auth configuration](./setup-auth-entities.md) step a new `/devops/auth.env` env file was created. Go to this file and add those env vars to your github environment:
+In a previous [Setup Auth configuration](./setup-auth-entities.md) step authentication configuration was added in `config.yaml` file. Go to this file and add those env vars to your github environment:
 
   | Variable | Description |
   | -------- | ----------- |
@@ -88,8 +88,8 @@ In a previous [Setup Auth configuration](./setup-auth-entities.md) step a new `/
   | `API_CLIENT_ID` | API application (client) ID. |
   | `API_CLIENT_SECRET` | API application client secret. |
   | `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
-  | `TEST_WORKSPACE_APP_ID`| Each workspace is secured behind it's own AD Application. Use the value of `WORKSPACE_API_CLIENT_ID` created in the `/devops/auth.env` env file |
-  | `TEST_WORKSPACE_APP_SECRET`| Each workspace is secured behind it's own AD Application. This is the secret for that application. Use the value of `WORKSPACE_API_CLIENT_SECRET` created in the `/devops/auth.env` env file|
+  | `TEST_WORKSPACE_APP_ID`| Each workspace is secured behind it's own AD Application. Use the value of `WORKSPACE_API_CLIENT_ID` created in the `/config.yaml` env file |
+  | `TEST_WORKSPACE_APP_SECRET`| Each workspace is secured behind it's own AD Application. This is the secret for that application. Use the value of `WORKSPACE_API_CLIENT_SECRET` created in the `/config.yaml` env file|
 
 ### Create a Teams Webhook for deployment notifications
 

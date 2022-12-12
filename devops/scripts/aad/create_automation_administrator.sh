@@ -117,7 +117,9 @@ az ad app owner add --id "${appId}" --owner-object-id "$currentUserId" --only-sh
 # Create a Service Principal for the app.
 spPassword=$(create_or_update_service_principal "${appId}" "${resetPassword}")
 
-{
-  echo "TEST_ACCOUNT_CLIENT_ID=\"${appId}\""
-  echo "TEST_ACCOUNT_CLIENT_SECRET=\"${spPassword}\""
-} >> "devops/auth.env"
+# Set outputs in configuration file
+yq -i ".authentication.test_account_client_id |= \"${appId}\"" config.yaml
+yq -i ".authentication.test_account_client_secret |= \"${spPassword}\"" config.yaml
+
+echo "test_account_client_id=\"${appId}\""
+echo "test_account_client_secret=\"${spPassword}\""

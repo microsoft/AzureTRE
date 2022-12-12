@@ -3,7 +3,7 @@
 !!! info
     The `.tfvars` file is intentionally not used. The `.env` file format is easier to parse, meaning we can use the values for bash scripts and other purposes.
 
-## For shared management resources in `/devops/.env`
+## For shared management resources in `/config.yaml`
 
 | <div style="width: 330px">Environment variable name</div> | Description |
 | ------------------------- | ----------- |
@@ -17,11 +17,11 @@
 | `ARM_CLIENT_SECRET` | *Optional for manual deployment without logged-in credentials.* The password of the client defined in `ARM_CLIENT_ID`. |
 | `ARM_TENANT_ID` | *Optional for manual deployment. If not specified the `az cli` selected subscription will be used.* The AAD tenant of the client defined in `ARM_CLIENT_ID`. |
 
-## For Azure TRE instance in `/templates/core/.env`
+## For Azure TRE instance in `/config.yaml`
 
 | <div style="width: 330px">Environment variable name</div> | Description |
 | ------------------------- | ----------- |
-| `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `mytre-dev` will result in a resource group name for Azure TRE instance of `rg-mytre-dev`. This must be less than 12 characters. Allowed characters: Alphanumeric, underscores, and hyphens. |
+| `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `mytre-dev` will result in a resource group name for Azure TRE instance of `rg-mytre-dev`. This must be less than 12 characters. Allowed characters: Alphanumeric and underscores|
 | `TRE_URL`| This will be generated for you by populating your `TRE_ID`. This is used so that you can automatically register bundles |
 | `CORE_ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. `/22` or larger. |
 | `TRE_ADDRESS_SPACE` | The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). E.g. `10.0.0.0/12`|
@@ -38,7 +38,7 @@
 | `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests unless otherwise specified. Default value is `P1v2`. |
 | `RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE` | Optional. The number of processes to instantiate when the Resource Processor starts. Equates to the number of parallel deployment operations possible in your TRE. Defaults to `5`. |
 
-## For authentication in `/devops/.env`
+## For authentication in `/config.yaml`
 
   | Variable | Description |
   | -------- | ----------- |
