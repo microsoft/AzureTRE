@@ -23,8 +23,6 @@ resource "azurerm_linux_web_app" "api" {
   location                        = azurerm_resource_group.core.location
   service_plan_id                 = azurerm_service_plan.core.id
   https_only                      = true
-  client_certificate_enabled      = true
-  client_certificate_mode         = "Required"
   key_vault_reference_identity_id = azurerm_user_assigned_identity.id.id
   virtual_network_subnet_id       = module.network.web_app_subnet_id
   tags                            = local.tre_core_tags

@@ -35,8 +35,6 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   resource_group_name        = var.resource_group_name
   location                   = var.location
   https_only                 = true
-  client_certificate_enabled = true
-  client_certificate_mode    = "Required"
   virtual_network_subnet_id  = var.airlock_processor_subnet_id
   service_plan_id            = azurerm_service_plan.airlock_plan.id
   storage_account_name       = azurerm_storage_account.sa_airlock_processor_func_app.name
