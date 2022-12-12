@@ -103,7 +103,11 @@ resource "null_resource" "az_login_msi" {
 }
 
 resource "null_resource" "ws_core_peer_sync" {
-  depends_on = [azurerm_virtual_network_peering.ws_core_peer]
+  depends_on = [
+    azurerm_virtual_network_peering.core_ws_peer,
+    null_resource.az_login_sp,
+    null_resource.az_login_msi
+  ]
   triggers = {
     vnet2addr = join(",", azurerm_virtual_network.ws.address_space)
   }
@@ -115,7 +119,11 @@ resource "null_resource" "ws_core_peer_sync" {
 }
 
 resource "null_resource" "core_ws_sync" {
-  depends_on = [azurerm_virtual_network_peering.core_ws_peer]
+  depends_on = [
+    azurerm_virtual_network_peering.core_ws_peer,
+    null_resource.az_login_sp,
+    null_resource.az_login_msi
+  ]
   triggers = {
     vnet2addr = join(",", azurerm_virtual_network.ws.address_space)
   }
