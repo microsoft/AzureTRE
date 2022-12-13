@@ -1,3 +1,4 @@
+import json
 import logging
 import click
 
@@ -26,6 +27,28 @@ def shared_service_templates_list(output_format, query):
     output(response, output_format=output_format, query=query, default_table_query=r"templates[].{name:name, title: title, description:description}")
 
 
-shared_service_templates.add_command(shared_service_templates_list)
+@click.command(name="new", help="Register a new shared service template")
+@click.option('--definition', help='JSON definition for the template', required=False)
+@click.option('--definition-file', help='File containing JSON definition for the template', required=False, type=click.File("r"))
+@output_option()
+@query_option()
+def shared_service_templates_create(definition, definition_file, output_format, query):
+    log = logging.getLogger(__name__)
 
-# TODO register shared service template
+    if definition is None:
+        if definition_file is None:
+            raise click.UsageError('Please specify either a definition or a definition file')
+        definition = definition_file.read()
+
+    definition_dict = json.loads(definition)
+
+    client = ApiClient.get_api_client_from_config()
+    click.echo("Registering template...", err=True)
+    response = client.call_api(log, 'POST', '/api/shared-service-templates', json_data=definition_dict)
+
+    output(response, output_format=output_format, query=query, default_table_query=r"{id: id, name:name, title: title, description:description}")
+    return response.text
+
+
+shared_service_templates.add_command(shared_service_templates_list)
+shared_service_templates.add_command(shared_service_templates_create)

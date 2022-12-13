@@ -59,7 +59,10 @@ def sample_resource_with_secret():
         etag="",
         properties={
             "client_id": "12345",
-            "secret": "iamsecret"
+            "secret": "iamsecret",
+            "prop_with_nested_secret": {
+                "nested_secret": "iamanestedsecret"
+            }
         },
         resourcePath=f'/workspaces/{WORKSPACE_ID}',
         user=create_test_user(),
@@ -273,6 +276,8 @@ class TestResourceHelpers:
 
         # Checking that the item saved had a secret redacted
         resource.properties["secret"] = strings.REDACTED_SENSITIVE_VALUE
+        resource.properties["prop_with_nested_secret"]["nested_secret"] = strings.REDACTED_SENSITIVE_VALUE
+
         resource_repo.save_item.assert_called_once_with(resource)
 
     def test_sensitive_properties_get_masked(self, basic_resource_template):
@@ -280,4 +285,6 @@ class TestResourceHelpers:
 
         properties = resource.properties
         masked_resource = mask_sensitive_properties(properties, basic_resource_template)
+        assert masked_resource["client_id"] == "12345"
         assert masked_resource["secret"] == strings.REDACTED_SENSITIVE_VALUE
+        assert masked_resource["prop_with_nested_secret"]["nested_secret"] == strings.REDACTED_SENSITIVE_VALUE

@@ -23,12 +23,12 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
 
-  const onChangeRequestTitle = useCallback(
+  const onChangetitle = useCallback(
     (event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => {
       setNewRequest(request => {
         return {
           ...request,
-          requestTitle: newValue || ''
+          title: newValue || ''
         }
       });
     },
@@ -49,7 +49,7 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
 
   useEffect(
     () => setRequestValid(
-      newRequest.requestTitle?.length > 0 &&
+      newRequest.title?.length > 0 &&
       newRequest.businessJustification?.length > 0
     ),
     [newRequest, setRequestValid]
@@ -82,7 +82,7 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
 
   const renderFooter = useCallback(() => {
     let footer = <></>
-    if (newRequest.requestType) {
+    if (newRequest.type) {
       footer = <>
         <div style={{textAlign: 'end'}}>
           <DefaultButton onClick={() => setNewRequest({} as NewAirlockRequest)} styles={{root:{marginRight: 8}}}>Back</DefaultButton>
@@ -96,14 +96,14 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
   let title: string;
   let currentStep = <></>;
 
-  // Render current step depending on whether requestType has been selected
-  if (!newRequest.requestType) {
+  // Render current step depending on whether type has been selected
+  if (!newRequest.type) {
     title = "New airlock request";
     currentStep = <Stack style={{marginTop: '40px'}} tokens={stackTokens}>
       <DocumentCard
         aria-label="Import"
         type={DocumentCardType.compact}
-        onClick={() => setNewRequest({ requestType: AirlockRequestType.Import } as NewAirlockRequest)}>
+        onClick={() => setNewRequest({ type: AirlockRequestType.Import } as NewAirlockRequest)}>
         <DocumentCardPreview {...importPreviewGraphic} />
         <DocumentCardDetails>
           <DocumentCardTitle title="Import" styles={cardTitleStyles} />
@@ -118,7 +118,7 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
       <DocumentCard
         aria-label="Export"
         type={DocumentCardType.compact}
-        onClick={() => setNewRequest({ requestType: AirlockRequestType.Export } as NewAirlockRequest)}>
+        onClick={() => setNewRequest({ type: AirlockRequestType.Export } as NewAirlockRequest)}>
         <DocumentCardPreview {...exportPreviewGraphic} />
         <DocumentCardDetails>
           <DocumentCardTitle title="Export" styles={cardTitleStyles} />
@@ -131,13 +131,13 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
       </DocumentCard>
     </Stack>;
   } else {
-    title = `New airlock ${newRequest.requestType} request`;
+    title = `New airlock ${newRequest.type} request`;
     currentStep = <Stack style={{marginTop: '40px'}} tokens={stackTokens}>
       <TextField
         label="Title"
         placeholder="Enter a request title."
-        value={newRequest.requestTitle}
-        onChange={onChangeRequestTitle}
+        value={newRequest.title}
+        onChange={onChangetitle}
         rows={1}
         required
       />

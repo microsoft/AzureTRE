@@ -15,6 +15,7 @@ resource "azurerm_key_vault_access_policy" "app_gw_managed_identity" {
 resource "azurerm_key_vault_certificate" "tlscert" {
   name         = "${var.certificate_name}"
   key_vault_id = var.keyvault_id
+  tags         = local.tre_core_tags
 
   certificate_policy {
     issuer_parameters {

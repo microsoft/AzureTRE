@@ -67,7 +67,11 @@ class WorkspaceRepository(ResourceRepository):
 
         template = self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
 
-        address_space_param = {"address_space": self.get_address_space_based_on_size(workspace_input.properties)}
+        # allow for workspace template taking a single address_space or multiple address_spaces
+        intial_address_space = self.get_address_space_based_on_size(workspace_input.properties)
+        address_space_param = {"address_space": intial_address_space}
+        address_spaces_param = {"address_spaces": [intial_address_space]}
+
         auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}
         workspace_owner_param = {"workspace_owner_object_id": self.get_workspace_owner(workspace_input.properties, workspace_owner_object_id)}
 
@@ -75,6 +79,7 @@ class WorkspaceRepository(ResourceRepository):
         # so dict.update can't work. Priorities from right to left.
         resource_spec_parameters = {**workspace_input.properties,
                                     **address_space_param,
+                                    **address_spaces_param,
                                     **auto_app_registration_param,
                                     **workspace_owner_param,
                                     **auth_info,
@@ -98,7 +103,7 @@ class WorkspaceRepository(ResourceRepository):
         return workspace_owner_object_id if user_defined_workspace_owner_object_id is None else user_defined_workspace_owner_object_id
 
     def automatically_create_application_registration(self, workspace_properties: dict) -> bool:
-        return True if workspace_properties["client_id"] == "auto_create" else False
+        return True if ("auth_type" in workspace_properties and workspace_properties["auth_type"] == "Automatic") else False
 
     def get_address_space_based_on_size(self, workspace_properties: dict):
         # Default the address space to 'small' if not supplied.
@@ -124,15 +129,18 @@ class WorkspaceRepository(ResourceRepository):
         return is_network_available(allocated_networks, address_space)
 
     def get_new_address_space(self, cidr_netmask: int = 24):
-        networks = [x.properties["address_space"] for x in self.get_workspaces()]
+        workspaces = self.get_workspaces()
+        networks = [[x.properties.get("address_space")] for x in workspaces]
+        networks = networks + [x.properties.get("address_spaces", []) for x in workspaces]
+        networks = [i for s in networks for i in s if i is not None]
 
         new_address_space = generate_new_cidr(networks, cidr_netmask)
         return new_address_space
 
-    def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Tuple[Workspace, ResourceTemplate]:
+    def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User, force_version_update: bool) -> Tuple[Workspace, ResourceTemplate]:
         # get the workspace template
         workspace_template = resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
-        return self.patch_resource(workspace, workspace_patch, workspace_template, etag, resource_template_repo, user)
+        return self.patch_resource(workspace, workspace_patch, workspace_template, etag, resource_template_repo, user, force_version_update)
 
     def get_workspace_spec_params(self, full_workspace_id: str):
         params = self.get_resource_base_spec_params()

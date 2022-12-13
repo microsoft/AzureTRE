@@ -59,10 +59,10 @@ export const Airlock: React.FunctionComponent = () => {
         // Map the inner requests and the allowed user actions to state
         requests = result.airlockRequests.map((r: {
           airlockRequest: AirlockRequest,
-          allowed_user_actions: Array<AirlockRequestAction>
+          allowedUserActions: Array<AirlockRequestAction>
         }) => {
           const request = r.airlockRequest;
-          request.allowed_user_actions = r.allowed_user_actions;
+          request.allowedUserActions = r.allowedUserActions;
           return request;
         });
       } else {
@@ -175,34 +175,33 @@ export const Airlock: React.FunctionComponent = () => {
         minWidth: 150,
         maxWidth: 300,
         isResizable: true,
-        fieldName: 'requestTitle'
+        fieldName: 'title'
       },
       {
-        key: 'creator_user_id',
-        name: 'Initiator',
+        key: 'createdBy',
+        name: 'Creator',
         ariaLabel: 'Creator of the airlock request',
         minWidth: 150,
         maxWidth: 200,
         isResizable: true,
-        fieldName: 'initiator',
-        onRender: (request: AirlockRequest) => <Persona size={ PersonaSize.size24 } text={ request.user?.name } />,
+        onRender: (request: AirlockRequest) => <Persona size={ PersonaSize.size24 } text={request.createdBy?.name} />,
         isFiltered: filters.has('creator_user_id')
       },
       {
-        key: 'requestType',
+        key: 'type',
         name: 'Type',
         ariaLabel: 'Whether the request is import or export',
         minWidth: 70,
         maxWidth: 100,
         isResizable: true,
-        fieldName: 'requestType',
+        fieldName: 'type',
         columnActionsMode: ColumnActionsMode.hasDropdown,
-        isSorted: orderBy === 'requestType',
+        isSorted: orderBy === 'type',
         isSortedDescending: !orderAscending,
         onColumnClick: (ev, column) => openContextMenu(column, ev, Object.values(AirlockRequestType)),
         onColumnContextMenu: (column, ev) =>
           (column && ev) && openContextMenu(column, ev, Object.values(AirlockRequestType)),
-        isFiltered: filters.has('requestType')
+        isFiltered: filters.has('type')
       },
       {
         key: 'status',
@@ -217,7 +216,8 @@ export const Airlock: React.FunctionComponent = () => {
         onColumnClick: (ev, column) => openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
         onColumnContextMenu: (column, ev) =>
           (column && ev) && openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
-        isFiltered: filters.has('status')
+        isFiltered: filters.has('status'),
+        onRender: (request: AirlockRequest) => request.status.replace("_", " ")
       },
       {
         key: 'createdTime',
@@ -230,7 +230,7 @@ export const Airlock: React.FunctionComponent = () => {
         isSorted: orderBy === 'createdTime',
         isSortedDescending: !orderAscending,
         onRender: (request: AirlockRequest) => {
-          return <span>{ moment.unix(request.creationTime).format('DD/MM/YYYY') }</span>;
+          return <span>{ moment.unix(request.createdWhen).format('DD/MM/YYYY') }</span>;
         },
         onColumnClick: orderByColumn
       },
@@ -300,6 +300,12 @@ export const Airlock: React.FunctionComponent = () => {
             <Stack.Item grow>
               <CommandBar items={quickFilters} ariaLabel="Quick filters" />
             </Stack.Item>
+            <CommandBarButton
+              iconProps={{ iconName: 'refresh' }}
+              text="Refresh"
+              style={{ background: 'none', color: theme.palette.themePrimary }}
+              onClick={() => getAirlockRequests()}
+            />
             <CommandBarButton
               iconProps={{ iconName: 'add' }}
               text="New request"

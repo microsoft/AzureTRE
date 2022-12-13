@@ -106,6 +106,9 @@ on:  # yamllint disable-line rule:truthy
       WORKSPACE_APP_SERVICE_PLAN_SKU:
         description: ""
         required: false
+      RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE:
+        description: "Inputs"
+        required: false
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
@@ -295,6 +298,7 @@ jobs:
           APPLICATION_ADMIN_CLIENT_SECRET: "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}"
           STATEFUL_RESOURCES_LOCKED: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           CORE_APP_SERVICE_PLAN_SKU: ${{ secrets.CORE_APP_SERVICE_PLAN_SKU }}
+          RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE: ${{ secrets.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
@@ -315,6 +319,8 @@ jobs:
         include:
           - {BUNDLE_TYPE: "workspace",
              BUNDLE_DIR: "./templates/workspaces/base"}
+          - {BUNDLE_TYPE: "workspace",
+             BUNDLE_DIR: "./templates/workspaces/airlock-import-review"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/guacamole"}
           - {BUNDLE_TYPE: "workspace_service",
@@ -329,6 +335,10 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"}
           - {BUNDLE_TYPE: "user_resource",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm"}
+          - {BUNDLE_TYPE: "user_resource",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm"}
+          - {BUNDLE_TYPE: "user_resource",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm"}
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
@@ -431,6 +441,8 @@ jobs:
           # bundles type can be inferred from the bundle dir (but this is more explicit)
           - {BUNDLE_TYPE: "workspace",
              BUNDLE_DIR: "./templates/workspaces/base"}
+          - {BUNDLE_TYPE: "workspace",
+             BUNDLE_DIR: "./templates/workspaces/airlock-import-review"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/guacamole"}
           - {BUNDLE_TYPE: "workspace_service",
@@ -481,6 +493,12 @@ jobs:
              WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
           - {BUNDLE_TYPE: "user_resource",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm",
+             WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
+          - {BUNDLE_TYPE: "user_resource",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm",
+             WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
+          - {BUNDLE_TYPE: "user_resource",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm",
              WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
     environment: ${{ inputs.environmentName }}
     steps:

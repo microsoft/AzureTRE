@@ -27,14 +27,14 @@ resource "azurerm_storage_account" "az_monitor" {
 }
 
 resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_ingestion" {
-  data_source_type      = "ingestion"
+  data_source_type      = "Ingestion"
   resource_group_name   = var.resource_group_name
   workspace_resource_id = azurerm_log_analytics_workspace.core.id
   storage_account_ids   = [azurerm_storage_account.az_monitor.id]
 }
 
 resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_customlogs" {
-  data_source_type      = "customlogs"
+  data_source_type      = "CustomLogs"
   resource_group_name   = var.resource_group_name
   workspace_resource_id = azurerm_log_analytics_workspace.core.id
   storage_account_ids   = [azurerm_storage_account.az_monitor.id]

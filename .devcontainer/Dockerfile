@@ -2,7 +2,7 @@
 
 # [Choice] Python version: 3, 3.9, 3.8, 3.7, 3.6
 ARG VARIANT="3.8"
-FROM mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}-buster
+FROM mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}-bullseye
 
 # This will be set to true when running in VSCode
 ARG INTERACTIVE="false"
@@ -24,7 +24,7 @@ ARG NODE_VERSION="lts/*"
 RUN su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"
 
 # Install terraform
-ARG TERRAFORM_VERSION="1.3.2"
+ARG TERRAFORM_VERSION="1.3.5"
 COPY .devcontainer/scripts/terraform.sh /tmp/
 RUN bash /tmp/terraform.sh "${TERRAFORM_VERSION}" /usr/bin
 
@@ -37,7 +37,7 @@ RUN apt-get update && apt-get install -y ca-certificates curl gnupg lsb-release 
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
     | tee /etc/apt/sources.list.d/docker.list > /dev/null \
-    && apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io --no-install-recommends \
+    && apt-get update && apt-get install -y docker-ce="5:20.10.21~3-0~debian-bullseye" docker-ce-cli="5:20.10.21~3-0~debian-bullseye" containerd.io="1.6.12-1" --no-install-recommends \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install Certbot
@@ -55,7 +55,6 @@ ARG PORTER_MIRROR=https://cdn.porter.sh
 ARG PORTER_VERSION=v0.38.13
 ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.0-rc.1
 ARG PORTER_AZ_MIXIN_VERSION=v0.7.3
-ARG PORTER_DOCKER_MIXIN_VERSION=v0.3.0
 ARG PORTER_AZURE_PLUGIN_VERSION=v0.11.2
 ARG PORTER_HOME=/home/$USERNAME/.porter/
 COPY .devcontainer/scripts/porter.sh /tmp/
@@ -80,7 +79,7 @@ COPY ["airlock_processor/requirements.txt", "/tmp/pip-tmp/airlock_processor/"]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp
 
 # Install azure-cli
-ARG AZURE_CLI_VERSION=2.37.0-1~buster
+ARG AZURE_CLI_VERSION=2.37.0-1~bullseye
 COPY .devcontainer/scripts/azure-cli.sh /tmp/
 RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh
@@ -88,6 +87,9 @@ RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
 ARG YQ_VERSION="v4.27.2"
 RUN curl -L --fail -o /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" \
     && chmod +x /usr/local/bin/yq
+
+ARG PAJV_VERSION="1.2.0"
+RUN npm install -g pajv@${PAJV_VERSION}
 
 USER $USERNAME
 

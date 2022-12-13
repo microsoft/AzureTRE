@@ -164,15 +164,22 @@ def test_validate_input_against_template_raises_value_error_if_the_user_resource
 
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
 def test_validate_input_against_template_raises_value_error_if_payload_is_invalid(enriched_template_mock, resource_repo, workspace_input):
-    enriched_template_mock.return_value = ResourceTemplate(id="123",
-                                                           name="template1",
-                                                           description="description",
-                                                           version="0.1.0",
-                                                           resourceType=ResourceType.Workspace,
-                                                           current=True,
-                                                           required=["display_name"],
-                                                           properties={},
-                                                           customActions=[]).dict()
+    template_dict = ResourceTemplate(
+        id="123",
+        name="template1",
+        description="description",
+        version="0.1.0",
+        resourceType=ResourceType.Workspace,
+        current=True,
+        required=["display_name"],
+        properties={},
+        customActions=[]).dict()
+
+    # the enrich template method does this
+    template_dict.pop("allOf")
+
+    enriched_template_mock.return_value = template_dict
+
     # missing display name
     workspace_input = WorkspaceInCreate(templateName="template1")
 
@@ -323,7 +330,8 @@ def test_patch_resource_preserves_property_history(_, __, resource_repo):
             resourceVersion=0,
             updatedWhen=FAKE_CREATE_TIMESTAMP,
             properties={'display_name': 'initial display name', 'description': 'initial description', 'computed_prop': 'computed_val'},
-            user=user)]
+            user=user,
+            templateVersion=resource.templateVersion)]
     expected_resource.properties['display_name'] = 'updated name'
     expected_resource.resourceVersion = 1
     expected_resource.user = user
@@ -341,7 +349,8 @@ def test_patch_resource_preserves_property_history(_, __, resource_repo):
             resourceVersion=1,
             updatedWhen=FAKE_UPDATE_TIMESTAMP,
             properties={'display_name': 'updated name', 'description': 'initial description', 'computed_prop': 'computed_val'},
-            user=user
+            user=user,
+            templateVersion=resource.templateVersion
         )
     )
 

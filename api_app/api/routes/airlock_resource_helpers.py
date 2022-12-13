@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from starlette import status
 
 from api.routes.resource_helpers import send_uninstall_message
+from models.domain.user_resource import UserResource
 from db.repositories.airlock_requests import AirlockRequestRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.user_resources import UserResourceRepository
@@ -33,7 +34,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 
     try:
         logging.debug(f"Saving airlock request item: {airlock_request.id}")
-        airlock_request.user = user
+        airlock_request.updatedBy = user
         airlock_request.updatedWhen = get_timestamp()
         airlock_request_repo.save_item(airlock_request)
     except Exception as e:
@@ -43,7 +44,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
     try:
         logging.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
         await send_status_changed_event(airlock_request=airlock_request, previous_status=None)
-        await send_airlock_notification_event(airlock_request, role_assignment_details)
+        await send_airlock_notification_event(airlock_request, workspace, role_assignment_details)
     except Exception as e:
         airlock_request_repo.delete_item(airlock_request.id)
         logging.error(f"Failed sending status_changed message: {e}")
@@ -53,7 +54,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 async def update_and_publish_event_airlock_request(
         airlock_request: AirlockRequest,
         airlock_request_repo: AirlockRequestRepository,
-        user: User,
+        updated_by: User,
         workspace: Workspace,
         new_status: AirlockRequestStatus = None,
         request_files: List[AirlockFile] = None,
@@ -64,7 +65,7 @@ async def update_and_publish_event_airlock_request(
         logging.debug(f"Updating airlock request item: {airlock_request.id}")
         updated_airlock_request = airlock_request_repo.update_airlock_request(
             original_request=airlock_request,
-            user=user,
+            updated_by=updated_by,
             new_status=new_status,
             request_files=request_files,
             status_message=status_message,
@@ -73,8 +74,9 @@ async def update_and_publish_event_airlock_request(
     except Exception as e:
         logging.error(f'Failed updating airlock_request item {airlock_request}: {e}')
         # If the validation failed, the error was not related to the saving itself
-        if e.status_code == 400:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
+        if hasattr(e, 'status_code'):
+            if e.status_code == 400:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     if not new_status:
@@ -86,7 +88,7 @@ async def update_and_publish_event_airlock_request(
         await send_status_changed_event(airlock_request=updated_airlock_request, previous_status=airlock_request.status)
         access_service = get_access_service()
         role_assignment_details = access_service.get_workspace_role_assignment_details(workspace)
-        await send_airlock_notification_event(updated_airlock_request, role_assignment_details)
+        await send_airlock_notification_event(updated_airlock_request, workspace, role_assignment_details)
         return updated_airlock_request
     except Exception as e:
         logging.error(f"Failed sending status_changed message: {e}")
@@ -109,7 +111,7 @@ def check_email_exists(role_assignment_details: defaultdict(list)):
 def get_airlock_requests_by_user_and_workspace(user: User, workspace: Workspace, airlock_request_repo: AirlockRequestRepository,
                                                creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None,
                                                order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
-    return airlock_request_repo.get_airlock_requests(workspace_id=workspace.id, user_id=creator_user_id, type=type, status=status,
+    return airlock_request_repo.get_airlock_requests(workspace_id=workspace.id, creator_user_id=creator_user_id, type=type, status=status,
                                                      order_by=order_by, order_ascending=order_ascending)
 
 
@@ -136,11 +138,40 @@ def enrich_requests_with_allowed_actions(requests: List[AirlockRequest], user: U
     enriched_requests = []
     for request in requests:
         allowed_actions = get_allowed_actions(request, user, airlock_request_repo)
-        enriched_requests.append(AirlockRequestWithAllowedUserActions(airlockRequest=request, allowed_user_actions=allowed_actions))
+        enriched_requests.append(AirlockRequestWithAllowedUserActions(airlockRequest=request, allowedUserActions=allowed_actions))
     return enriched_requests
 
 
-async def delete_review_user_resources(
+async def delete_review_user_resource(
+        user_resource: UserResource,
+        user_resource_repo: UserResourceRepository,
+        workspace_service_repo: WorkspaceServiceRepository,
+        resource_template_repo: ResourceTemplateRepository,
+        operations_repo: OperationRepository,
+        user: User) -> Operation:
+    workspace_service = workspace_service_repo.get_workspace_service_by_id(workspace_id=user_resource.workspaceId,
+                                                                           service_id=user_resource.parentWorkspaceServiceId)
+
+    resource_template = resource_template_repo.get_template_by_name_and_version(
+        user_resource.templateName,
+        user_resource.templateVersion,
+        ResourceType.UserResource,
+        workspace_service.templateName)
+
+    logging.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")
+    operation = await send_uninstall_message(
+        resource=user_resource,
+        resource_repo=user_resource_repo,
+        operations_repo=operations_repo,
+        resource_type=ResourceType.UserResource,
+        resource_template_repo=resource_template_repo,
+        user=user,
+        resource_template=resource_template)
+    logging.info(f"Started operation {operation}")
+    return operation
+
+
+async def delete_all_review_user_resources(
         airlock_request: AirlockRequest,
         user_resource_repo: UserResourceRepository,
         workspace_service_repo: WorkspaceServiceRepository,
@@ -148,31 +179,22 @@ async def delete_review_user_resources(
         operations_repo: OperationRepository,
         user: User) -> List[Operation]:
     operations: List[Operation] = []
-    for review_ur in airlock_request.reviewUserResources:
+    for review_ur in airlock_request.reviewUserResources.values():
         user_resource = user_resource_repo.get_user_resource_by_id(
             workspace_id=review_ur.workspaceId,
             service_id=review_ur.workspaceServiceId,
             resource_id=review_ur.userResourceId
         )
 
-        workspace_service = workspace_service_repo.get_workspace_service_by_id(workspace_id=user_resource.workspaceId, service_id=user_resource.parentWorkspaceServiceId)
-
-        resource_template = resource_template_repo.get_template_by_name_and_version(
-            user_resource.templateName,
-            user_resource.templateVersion,
-            ResourceType.UserResource,
-            workspace_service.templateName)
-
-        logging.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")
-        operations.append(await send_uninstall_message(
-            resource=user_resource,
-            resource_repo=user_resource_repo,
-            operations_repo=operations_repo,
-            resource_type=ResourceType.UserResource,
+        operation = await delete_review_user_resource(
+            user_resource=user_resource,
+            user_resource_repo=user_resource_repo,
+            workspace_service_repo=workspace_service_repo,
             resource_template_repo=resource_template_repo,
-            user=user,
-            resource_template=resource_template))
-        logging.info(f"Started operation {operations[-1]}")
+            operations_repo=operations_repo,
+            user=user
+        )
+        operations.append(operation)
 
     logging.info(f"Started {len(operations)} operations on deleting user resources")
     return operations

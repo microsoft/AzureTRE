@@ -65,7 +65,7 @@ async def update_status_in_database(airlock_request_repo: AirlockRequestReposito
         if airlock_request.status == current_status:
             workspace = workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
             # update to new status and send to event grid
-            await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=airlock_request.user, workspace=workspace, new_status=new_status, request_files=request_files, status_message=status_message)
+            await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, updated_by=airlock_request.updatedBy, workspace=workspace, new_status=new_status, request_files=request_files, status_message=status_message)
             result = True
         else:
             error_string = strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, current_status, airlock_request.status)

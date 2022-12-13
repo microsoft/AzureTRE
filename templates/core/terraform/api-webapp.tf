@@ -66,6 +66,7 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   site_config {
+    http2_enabled                                 = true
     vnet_route_all_enabled                        = true
     container_registry_use_managed_identity       = true
     container_registry_managed_identity_client_id = azurerm_user_assigned_identity.id.client_id
@@ -130,7 +131,7 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_api" {
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
 
   dynamic "log" {
-    for_each = data.azurerm_monitor_diagnostic_categories.api.logs
+    for_each = data.azurerm_monitor_diagnostic_categories.api.log_category_types
     content {
       category = log.value
       enabled  = contains(local.api_diagnostic_categories_enabled, log.value) ? true : false

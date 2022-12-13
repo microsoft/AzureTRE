@@ -5,8 +5,8 @@ from tre.api_client import ApiClient
 from tre.commands.workspaces.contexts import pass_workspace_context
 from tre.output import output, output_option, query_option
 
-_default_table_query_list = r"airlockRequests[].airlockRequest.{id:id,workspace_id:workspaceId,type:requestType,status:status,business_justification:businessJustification}"
-_default_table_query_item = r"airlockRequest.{id:id,workspace_id:workspaceId,type:requestType,status:status,business_justification:businessJustification}"
+_default_table_query_list = r"airlockRequests[].airlockRequest.{id:id,workspace_id:workspaceId,type:type,status:status,business_justification:businessJustification}"
+_default_table_query_item = r"airlockRequest.{id:id,workspace_id:workspaceId,type:type,status:status,business_justification:businessJustification}"
 
 
 @click.group(name="airlock-requests", help="List/add airlock requests")
@@ -60,8 +60,8 @@ def airlock_create(workspace_context, request_type, title, justification, output
         'POST',
         f'/api/workspaces/{workspace_id}/requests',
         json_data={
-            "requestType": request_type,
-            "requestTitle": title,
+            "type": request_type,
+            "title": title,
             "businessJustification": justification
         },
         scope_id=workspace_scope)

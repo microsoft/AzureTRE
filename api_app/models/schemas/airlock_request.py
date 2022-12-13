@@ -20,11 +20,15 @@ def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> di
         "requestId": airlock_request_id,
         "workspaceId": workspace_id,
         "status": "draft",
-        "requestType": "import",
+        "type": "import",
         "files": [],
-        "requestTitle": "a request title",
+        "title": "a request title",
         "businessJustification": "some business justification",
-        "creationTime": datetime.utcnow().timestamp(),
+        "createdBy": {
+            "id": "a user id",
+            "name": "a user name"
+        },
+        "createdWhen": datetime.utcnow().timestamp(),
         "reviews": [
             get_sample_airlock_review("29990431-5451-40e7-a58a-02e2b7c3d7c8"),
             get_sample_airlock_review("02dc0f29-351a-43ec-87e7-3dd2b5177b7f")]
@@ -34,7 +38,7 @@ def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> di
 def get_sample_airlock_request_with_allowed_user_actions(workspace_id: str) -> dict:
     return {
         "airlockRequest": get_sample_airlock_request(workspace_id, str(uuid.uuid4())),
-        "allowed_user_actions": [AirlockActions.Cancel, AirlockActions.Review, AirlockActions.Submit],
+        "allowedUserActions": [AirlockActions.Cancel, AirlockActions.Review, AirlockActions.Submit],
     }
 
 
@@ -44,7 +48,7 @@ class AirlockRequestInResponse(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "airlock_request": get_sample_airlock_request("933ad738-7265-4b5f-9eae-a1a62928772e", "121e921f-a4aa-44b3-90a9-e8da030495ef")
+                "airlockRequest": get_sample_airlock_request("933ad738-7265-4b5f-9eae-a1a62928772e", "121e921f-a4aa-44b3-90a9-e8da030495ef")
             }
         }
 
@@ -64,7 +68,7 @@ class AirlockRequestAndOperationInResponse(BaseModel):
 
 class AirlockRequestWithAllowedUserActions(BaseModel):
     airlockRequest: AirlockRequest = Field([], title="Airlock Request")
-    allowed_user_actions: List[str] = Field([], title="actions that the requesting user can do on the request")
+    allowedUserActions: List[str] = Field([], title="actions that the requesting user can do on the request")
 
     class Config:
         schema_extra = {
@@ -78,7 +82,7 @@ class AirlockRequestWithAllowedUserActionsInList(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "airlock_requests": [
+                "airlockRequests": [
                     get_sample_airlock_request_with_allowed_user_actions("933ad738-7265-4b5f-9eae-a1a62928772e"),
                     get_sample_airlock_request_with_allowed_user_actions("933ad738-7265-4b5f-9eae-a1a62928772e")
                 ]
@@ -87,16 +91,16 @@ class AirlockRequestWithAllowedUserActionsInList(BaseModel):
 
 
 class AirlockRequestInCreate(BaseModel):
-    requestType: AirlockRequestType = Field("", title="Airlock request type", description="Specifies if this is an import or an export request")
-    requestTitle: str = Field("Airlock Request", title="Brief title for the request")
+    type: AirlockRequestType = Field("", title="Airlock request type", description="Specifies if this is an import or an export request")
+    title: str = Field("Airlock Request", title="Brief title for the request")
     businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
     properties: dict = Field({}, title="Airlock request parameters", description="Values for the parameters required by the Airlock request specification")
 
     class Config:
         schema_extra = {
             "example": {
-                "requestType": "import",
-                "requestTitle": "a request title",
+                "type": "import",
+                "title": "a request title",
                 "businessJustification": "some business justification"
             }
         }

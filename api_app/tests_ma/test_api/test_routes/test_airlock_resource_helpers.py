@@ -1,14 +1,16 @@
+import time
 from fastapi import HTTPException, status
 import pytest
 from mock import AsyncMock, patch, MagicMock
 
-from models.domain.events import AirlockNotificationData, StatusChangedData
+from models.domain.events import AirlockNotificationData, AirlockNotificationUserData, StatusChangedData, \
+    AirlockNotificationRequestData, AirlockNotificationWorkspaceData, AirlockRequestStatus, AirlockFile, AirlockRequestType
 from api.routes.airlock_resource_helpers import save_and_publish_event_airlock_request, \
     update_and_publish_event_airlock_request, get_airlock_requests_by_user_and_workspace, get_allowed_actions
 from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.workspace import Workspace
 from tests_ma.test_api.conftest import create_test_user, create_workspace_airlock_manager_user
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReview, AirlockReviewDecision, AirlockActions
+from models.domain.airlock_request import AirlockRequest, AirlockReview, AirlockReviewDecision, AirlockActions
 from azure.eventgrid import EventGridEvent
 from api.routes.airlock import create_airlock_review, create_cancel_request, create_submit_request
 
@@ -17,10 +19,20 @@ pytestmark = pytest.mark.asyncio
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 AIRLOCK_REQUEST_ID = "5dbc15ae-40e1-49a5-834b-595f59d626b7"
 AIRLOCK_REVIEW_ID = "96d909c5-e913-4c05-ae53-668a702ba2e5"
+CURRENT_TIME = time.time()
 
 
 def sample_workspace():
-    return Workspace(id=WORKSPACE_ID, templateName='template name', templateVersion='1.0', etag='', properties={"client_id": "12345"}, resourcePath="test")
+    return Workspace(
+        id=WORKSPACE_ID,
+        templateName='template name',
+        templateVersion='1.0',
+        etag='',
+        properties={
+            "client_id": "12345",
+            "display_name": "my research workspace",
+            "description": "for science!"},
+        resourcePath="test")
 
 
 @pytest.fixture
@@ -33,10 +45,23 @@ def sample_airlock_request(status=AirlockRequestStatus.Draft):
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
         workspaceId=WORKSPACE_ID,
-        requestType=AirlockRequestType.Import,
-        files=[],
+        type=AirlockRequestType.Import,
+        files=[AirlockFile(
+            name="data.txt",
+            size=5
+        )],
         businessJustification="some test reason",
-        status=status
+        status=status,
+        createdWhen=CURRENT_TIME,
+        createdBy=AirlockNotificationUserData(
+            name="John Doe",
+            email="john@example.com"
+        ),
+        updatedWhen=CURRENT_TIME,
+        updatedBy=AirlockNotificationUserData(
+            name="Test User",
+            email="test@user.com"
+        )
     )
     return airlock_request
 
@@ -54,9 +79,36 @@ def sample_status_changed_event(new_status="draft", previous_status=None):
 def sample_airlock_notification_event(status="draft"):
     status_changed_event = EventGridEvent(
         event_type="airlockNotification",
-        data=AirlockNotificationData(request_id=AIRLOCK_REQUEST_ID, event_type="status_changed", event_value=status, emails={"workspace_researcher": ["researcher@outlook.com"], "workspace_owner": ["owner@outlook.com"], "airlock_manager": ["manager@outlook.com"]}, workspace_id=WORKSPACE_ID).__dict__,
+        data=AirlockNotificationData(
+            event_type="status_changed",
+            recipient_emails_by_role={"workspace_researcher": ["researcher@outlook.com"], "workspace_owner": ["owner@outlook.com"], "airlock_manager": ["manager@outlook.com"]},
+            request=AirlockNotificationRequestData(
+                id=AIRLOCK_REQUEST_ID,
+                created_when=CURRENT_TIME,
+                created_by=AirlockNotificationUserData(
+                    name="John Doe",
+                    email="john@example.com"
+                ),
+                updated_when=CURRENT_TIME,
+                updated_by=AirlockNotificationUserData(
+                    name="Test User",
+                    email="test@user.com"
+                ),
+                request_type=AirlockRequestType.Import,
+                files=[AirlockFile(
+                    name="data.txt",
+                    size=5
+                )],
+                status=status,
+                business_justification="some test reason"
+            ),
+            workspace=AirlockNotificationWorkspaceData(
+                id=WORKSPACE_ID,
+                display_name="my research workspace",
+                description="for science!"
+            )),
         subject=f"{AIRLOCK_REQUEST_ID}/airlockNotification",
-        data_version="2.0"
+        data_version="4.0"
     )
     return status_changed_event
 
@@ -78,8 +130,8 @@ def get_required_roles(endpoint):
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
 @patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"WorkspaceResearcher": ["researcher@outlook.com"], "WorkspaceOwner": ["owner@outlook.com"], "AirlockManager": ["manager@outlook.com"]})
-async def test_save_and_publish_event_airlock_request_saves_item(_, event_grid_publisher_client_mock,
-                                                                 airlock_request_repo_mock):
+@patch('api.routes.airlock_resource_helpers.get_timestamp', return_value=CURRENT_TIME)
+async def test_save_and_publish_event_airlock_request_saves_item(_, __, event_grid_publisher_client_mock, airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     airlock_request_repo_mock.save_item = MagicMock(return_value=None)
     status_changed_event_mock = sample_status_changed_event()
@@ -172,7 +224,7 @@ async def test_update_and_publish_event_airlock_request_updates_item(_, event_gr
     actual_updated_airlock_request = await update_and_publish_event_airlock_request(
         airlock_request=airlock_request_mock,
         airlock_request_repo=airlock_request_repo_mock,
-        user=create_test_user(),
+        updated_by=create_test_user(),
         new_status=AirlockRequestStatus.Submitted,
         workspace=sample_workspace())
 
@@ -197,7 +249,7 @@ async def test_update_and_publish_event_airlock_request_sends_status_changed_eve
     await update_and_publish_event_airlock_request(
         airlock_request=sample_airlock_request(),
         airlock_request_repo=airlock_request_repo_mock,
-        user=create_test_user(),
+        updated_by=create_test_user(),
         new_status=new_status,
         workspace=sample_workspace())
 
@@ -213,7 +265,7 @@ async def test_update_and_publish_event_airlock_request_raises_400_if_status_upd
         await update_and_publish_event_airlock_request(
             airlock_request=airlock_request_mock,
             airlock_request_repo=airlock_request_repo_mock,
-            user=create_test_user(),
+            updated_by=create_test_user(),
             new_status=AirlockRequestStatus.Approved,
             workspace=sample_workspace())
 
@@ -234,7 +286,7 @@ async def test_update_and_publish_event_airlock_request_raises_503_if_publish_ev
         await update_and_publish_event_airlock_request(
             airlock_request=airlock_request_mock,
             airlock_request_repo=airlock_request_repo_mock,
-            user=create_test_user(),
+            updated_by=create_test_user(),
             new_status=AirlockRequestStatus.Submitted,
             workspace=sample_workspace())
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
@@ -250,7 +302,7 @@ async def test_update_and_publish_event_airlock_request_without_status_change_sh
     await update_and_publish_event_airlock_request(
         airlock_request=sample_airlock_request(),
         airlock_request_repo=airlock_request_repo_mock,
-        user=create_test_user(),
+        updated_by=create_test_user(),
         new_status=new_status,
         workspace=sample_workspace())
 
@@ -266,7 +318,7 @@ async def test_get_airlock_requests_by_user_and_workspace_with_status_filter_cal
     get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo_mock,
                                                status=AirlockRequestStatus.InReview)
 
-    airlock_request_repo_mock.get_airlock_requests.assert_called_once_with(workspace_id=workspace.id, user_id=None, type=None,
+    airlock_request_repo_mock.get_airlock_requests.assert_called_once_with(workspace_id=workspace.id, creator_user_id=None, type=None,
                                                                            status=AirlockRequestStatus.InReview, order_by=None, order_ascending=True)
 
 

@@ -2,7 +2,7 @@ resource "azurerm_virtual_network" "ws" {
   name                = "vnet-${local.workspace_resource_name_suffix}"
   location            = var.location
   resource_group_name = var.ws_resource_group_name
-  address_space       = [var.address_space]
+  address_space       = local.address_spaces
   tags                = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
@@ -16,11 +16,6 @@ resource "azurerm_subnet" "services" {
   # notice that private endpoints do not adhere to NSG rules
   private_endpoint_network_policies_enabled     = false
   private_link_service_network_policies_enabled = true
-
-  # Eventgrid CAN'T send messages over private endpoints, hence we need to allow service endpoints to the service bus
-  # We are using service endpoints + managed identity to send these messaages
-  # https://docs.microsoft.com/en-us/azure/event-grid/consume-private-endpoints
-  service_endpoints = ["Microsoft.ServiceBus"]
 }
 
 resource "azurerm_subnet" "webapps" {

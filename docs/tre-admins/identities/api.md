@@ -55,7 +55,7 @@ Below is a sample where `TRE_ID` has value `mytre`:
 
 
 !!! caution
-    The script will create an app password (client secret) for the **TRE API** app and the **Automation App** and write them to `/devops/auth.env` file. These values are only shown once, if you lose them, the script will create new secrets if run again.
+    The script will create an app password (client secret) for the **TRE API** app and the **Automation App** and write them to `/config.yaml` file. These values are only shown once, if you lose them, the script will create new secrets if run again.
 
 
 You can create an automation account which will aid your development flow, if you don't want to do this you can omit the `--automation-clientid` switch.
@@ -65,8 +65,8 @@ You can run the script without the `--admin-consent` and ask your admin to grant
 ## Environment Variables
 | Variable | Description | Location |
 | -------- | ----------- | -------- |
-|API_CLIENT_ID|The Client Id|`./devops/auth.env`|
-|API_CLIENT_SECRET|The client secret|`./devops/auth.env`|
+|API_CLIENT_ID|The Client Id|`./config.yaml`|
+|API_CLIENT_SECRET|The client secret|`./config.yaml`|
 
 ## Comments
 

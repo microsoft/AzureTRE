@@ -26,6 +26,7 @@ async def test_parallel_resource_creations(verify) -> None:
                 "display_name": f'Perf Test Workspace {i}',
                 "description": "workspace for perf test",
                 "address_space_size": "small",
+                "auth_type": "Manual",
                 "client_id": f"{config.TEST_WORKSPACE_APP_ID}"
             }
         }
@@ -55,7 +56,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
     number_vms = 5
     number_updates = 5
 
-    # To avoid creating + deleting a workspace + service in this test, set the vars for existing ones in ./templates/core/.env
+    # To avoid creating + deleting a workspace + service in this test, set the vars for existing ones in ./config_yaml
     # PERF_TEST_WORKSPACE_ID | PERF_TEST_WORKSPACE_SERVICE_ID
     workspace_id = config.PERF_TEST_WORKSPACE_ID
 
@@ -67,6 +68,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
                 "display_name": "E2E test guacamole service",
                 "description": "",
                 "address_space_size": "small",
+                "auth_type": "Manual",
                 "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
                 "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}"
             }

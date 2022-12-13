@@ -355,10 +355,12 @@ JSON
   fi
 fi
 
-{
-  echo "WORKSPACE_API_CLIENT_ID=\"${workspaceAppId}\""
-  echo "WORKSPACE_API_CLIENT_SECRET=\"${spPassword}\""
-} >> "devops/auth.env"
+# Set outputs in configuration file
+yq -i ".authentication.workspace_api_client_id |= \"${workspaceAppId}\"" config.yaml
+yq -i ".authentication.workspace_api_client_secret |= \"${spPassword}\"" config.yaml
+
+echo "workspace_api_client_id=\"${workspaceAppId}\""
+echo "workspace_api_client_secret=\"${spPassword}\""
 
 if [[ $grantAdminConsent -eq 0 ]]; then
     echo "NOTE: Make sure the API permissions of the app registrations have admin consent granted."

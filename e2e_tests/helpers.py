@@ -50,7 +50,7 @@ async def get_template(template_name, endpoint, token, verify):
         yield response
 
 
-async def get_shared_service_id_by_name(template_name: str, verify, token) -> Optional[dict]:
+async def get_shared_service_by_name(template_name: str, verify, token) -> Optional[dict]:
     async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
         full_endpoint = get_full_endpoint('/api/shared-services')
         auth_headers = get_auth_header(token)
@@ -85,7 +85,7 @@ async def check_aad_auth_redirect(endpoint, verify) -> None:
         while (True):
             try:
                 response = await client.get(url=endpoint, timeout=TIMEOUT)
-                LOGGER.info(f"Endpoint Response: {response}")
+                LOGGER.info(f"Endpoint Response: {endpoint} {response}")
 
                 if response.status_code in terminal_http_status:
                     break
@@ -123,7 +123,7 @@ async def get_admin_token(verify) -> str:
         try:
             responseJson = response.json()
         except JSONDecodeError:
-            assert False, "Failed to parse response as JSON: {}".format(response.content)
+            assert False, "Failed to parse response as JSON: {} {}".format(response.status_code, response.content)
 
         assert "access_token" in responseJson, "Failed to get access_token: {}".format(response.content)
         token = responseJson["access_token"]

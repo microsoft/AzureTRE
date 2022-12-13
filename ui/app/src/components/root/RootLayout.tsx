@@ -16,16 +16,16 @@ import { APIError } from '../../models/exceptions';
 import { ExceptionLayout } from '../shared/ExceptionLayout';
 import { AppRolesContext } from '../../contexts/AppRolesContext';
 import { CostsContext } from '../../contexts/CostsContext';
+import config from "../../config.json";
 
 export const RootLayout: React.FunctionComponent = () => {
   const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
-  const appRolesCtx = useContext(AppRolesContext)
-
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const [loadingCostState, setLoadingCostState] = useState(LoadingState.Loading);
   const [apiError, setApiError] = useState({} as APIError);
   const [costApiError, setCostApiError] = useState({} as APIError);
   const apiCall = useAuthApiCall();
+  const appRolesCtx = useContext(AppRolesContext);
   const costsWriteCtx = useRef(useContext(CostsContext));
 
   useEffect(() => {
@@ -42,26 +42,47 @@ export const RootLayout: React.FunctionComponent = () => {
     };
 
     getWorkspaces();
-
   }, [apiCall]);
 
 
   useEffect(() => {
     const getCosts = async () => {
       try {
+        costsWriteCtx.current.setLoadingState(LoadingState.Loading)
         const r = await apiCall(ApiEndpoint.Costs, HttpMethod.Get, undefined, undefined, ResultType.JSON);
 
         costsWriteCtx.current.setCosts([
           ...r.workspaces,
-          ...r.shared_services]
-          );
+          ...r.shared_services
+        ]);
 
+        costsWriteCtx.current.setLoadingState(LoadingState.Ok)
         setLoadingCostState(LoadingState.Ok);
       }
-      catch (e:any) {
-        e.userMessage = 'Error retrieving costs';
+      catch (e: any) {
+        if (e instanceof APIError) {
+          if (e.status === 404 /*subscription not supported*/) {
+            config.debug && console.warn(e.message);
+            setLoadingCostState(LoadingState.NotSupported);
+          }
+          else if (e.status === 429 /*too many requests*/ || e.status === 503 /*service unavaiable*/) {
+            let msg = JSON.parse(e.message);
+            let retryAfter = Number(msg.error["retry-after"]);
+            config.debug && console.info("retrying after " + retryAfter + " seconds");
+            setTimeout(getCosts, retryAfter * 1000);
+          }
+          else {
+            e.userMessage = 'Error retrieving costs';
+            setLoadingCostState(LoadingState.Error);
+          }
+        }
+        else {
+          e.userMessage = 'Error retrieving costs';
+          setLoadingCostState(LoadingState.Error);
+        }
+
+        costsWriteCtx.current.setLoadingState(LoadingState.Error)
         setCostApiError(e);
-        setLoadingCostState(LoadingState.Error);
       }
     };
 
@@ -69,36 +90,33 @@ export const RootLayout: React.FunctionComponent = () => {
       getCosts();
     }
 
-    let ctx = costsWriteCtx.current;
+    const ctx = costsWriteCtx.current;
 
-    // run this on onmount - to clear the context
-    return (() => {
-      ctx.setCosts([]);
-    });
+    // run this on unmount - to clear the context
+    return (() => ctx.setCosts([]));
   }, [apiCall, appRolesCtx.roles]);
 
   const addWorkspace = (w: Workspace) => {
-    let ws = [...workspaces]
+    const ws = [...workspaces]
     ws.push(w);
     setWorkspaces(ws);
   }
 
   const updateWorkspace = (w: Workspace) => {
-    let i = workspaces.findIndex((f: Workspace) => f.id === w.id);
-    let ws = [...workspaces]
+    const i = workspaces.findIndex((f: Workspace) => f.id === w.id);
+    const ws = [...workspaces]
     ws.splice(i, 1, w);
     setWorkspaces(ws);
   }
 
   const removeWorkspace = (w: Workspace) => {
-    let i = workspaces.findIndex((f: Workspace) => f.id === w.id);
-    let ws = [...workspaces];
+    const i = workspaces.findIndex((f: Workspace) => f.id === w.id);
+    const ws = [...workspaces];
     ws.splice(i, 1);
     setWorkspaces(ws);
   }
 
   switch (loadingState) {
-
     case LoadingState.Ok:
       return (
         <>
