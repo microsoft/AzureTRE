@@ -2,6 +2,8 @@ import uuid
 from datetime import datetime
 from typing import List
 from pydantic import BaseModel, Field
+from models.domain.operation import Operation
+from models.schemas.operation import get_sample_operation
 from models.domain.airlock_request import AirlockActions, AirlockRequest, AirlockRequestType
 
 
@@ -20,6 +22,7 @@ def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> di
         "status": "draft",
         "requestType": "import",
         "files": [],
+        "requestTitle": "a request title",
         "businessJustification": "some business justification",
         "creationTime": datetime.utcnow().timestamp(),
         "reviews": [
@@ -42,6 +45,19 @@ class AirlockRequestInResponse(BaseModel):
         schema_extra = {
             "example": {
                 "airlock_request": get_sample_airlock_request("933ad738-7265-4b5f-9eae-a1a62928772e", "121e921f-a4aa-44b3-90a9-e8da030495ef")
+            }
+        }
+
+
+class AirlockRequestAndOperationInResponse(BaseModel):
+    airlockRequest: AirlockRequest
+    operation: Operation
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "airlockRequest": get_sample_airlock_request("933ad738-7265-4b5f-9eae-a1a62928772e", "121e921f-a4aa-44b3-90a9-e8da030495ef"),
+                "operation": get_sample_operation("121e921f-a4aa-44b3-90a9-e8da030495ef")
             }
         }
 
@@ -72,6 +88,7 @@ class AirlockRequestWithAllowedUserActionsInList(BaseModel):
 
 class AirlockRequestInCreate(BaseModel):
     requestType: AirlockRequestType = Field("", title="Airlock request type", description="Specifies if this is an import or an export request")
+    requestTitle: str = Field("Airlock Request", title="Brief title for the request")
     businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
     properties: dict = Field({}, title="Airlock request parameters", description="Values for the parameters required by the Airlock request specification")
 
@@ -79,6 +96,7 @@ class AirlockRequestInCreate(BaseModel):
         schema_extra = {
             "example": {
                 "requestType": "import",
+                "requestTitle": "a request title",
                 "businessJustification": "some business justification"
             }
         }

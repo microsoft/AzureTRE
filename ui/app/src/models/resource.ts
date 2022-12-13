@@ -15,7 +15,7 @@ export interface Resource {
     user: User,
     history: Array<HistoryItem>,
     _etag: string,
-    properties: any
+    properties: any,
     azureStatus?: any
 }
 
@@ -54,3 +54,4 @@ export const getResourceFromResult = (r: any) => {
     if (r['workspace']) return r.workspace;
     if (r['sharedService']) return r.sharedService;
 }
+

@@ -11,7 +11,8 @@ from fastapi import HTTPException
 from pydantic import parse_obj_as
 from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
-from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType
+from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, \
+    AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType, AirlockReviewUserResource
 from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate
 from core import config
 from resources import strings
@@ -92,6 +93,7 @@ class AirlockRequestRepository(BaseRepository):
         airlock_request = AirlockRequest(
             id=full_airlock_request_id,
             workspaceId=workspace_id,
+            requestTitle=airlock_request_input.requestTitle,
             businessJustification=airlock_request_input.businessJustification,
             requestType=airlock_request_input.requestType,
             creationTime=datetime.utcnow().timestamp(),
@@ -101,7 +103,7 @@ class AirlockRequestRepository(BaseRepository):
 
         return airlock_request
 
-    def get_airlock_requests(self, workspace_id: str, user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None) -> List[AirlockRequest]:
+    def get_airlock_requests(self, workspace_id: str, user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
         query = self.airlock_requests_query() + f' where c.workspaceId = "{workspace_id}"'
 
         # optional filters
@@ -111,6 +113,11 @@ class AirlockRequestRepository(BaseRepository):
             query += ' AND c.status=@status'
         if type:
             query += ' AND c.requestType=@type'
+
+        # optional sorting
+        if order_by:
+            query += ' ORDER BY c.' + order_by
+            query += ' ASC' if order_ascending else ' DESC'
 
         parameters = [
             {"name": "@user_id", "value": user_id},
@@ -127,14 +134,28 @@ class AirlockRequestRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(AirlockRequest, airlock_requests)
 
-    def update_airlock_request(self, original_request: AirlockRequest, user: User, new_status: AirlockRequestStatus = None, request_files: List[AirlockFile] = None, error_message: str = None, airlock_review: AirlockReview = None) -> AirlockRequest:
-        updated_request = self._build_updated_request(original_request=original_request, new_status=new_status, request_files=request_files, error_message=error_message, airlock_review=airlock_review)
+    def update_airlock_request(
+            self,
+            original_request: AirlockRequest,
+            user: User,
+            new_status: AirlockRequestStatus = None,
+            request_files: List[AirlockFile] = None,
+            status_message: str = None,
+            airlock_review: AirlockReview = None,
+            review_user_resource: AirlockReviewUserResource = None) -> AirlockRequest:
+        updated_request = self._build_updated_request(
+            original_request=original_request,
+            new_status=new_status,
+            request_files=request_files,
+            status_message=status_message,
+            airlock_review=airlock_review,
+            review_user_resource=review_user_resource)
         try:
             db_response = self.update_airlock_request_item(original_request, updated_request, user, {"previousStatus": original_request.status})
         except CosmosAccessConditionFailedError:
             logging.warning(f"ETag mismatch for request ID: '{original_request.id}'. Retrying.")
             original_request = self.get_airlock_request_by_id(original_request.id)
-            updated_request = self._build_updated_request(original_request=original_request, new_status=new_status, request_files=request_files, error_message=error_message, airlock_review=airlock_review)
+            updated_request = self._build_updated_request(original_request=original_request, new_status=new_status, request_files=request_files, status_message=status_message, airlock_review=airlock_review)
             db_response = self.update_airlock_request_item(original_request, updated_request, user, {"previousStatus": original_request.status})
 
         return db_response
@@ -156,15 +177,22 @@ class AirlockRequestRepository(BaseRepository):
 
         return airlock_review
 
-    def _build_updated_request(self, original_request: AirlockRequest, new_status: AirlockRequestStatus = None, request_files: List[AirlockFile] = None, error_message: str = None, airlock_review: AirlockReview = None) -> AirlockRequest:
+    def _build_updated_request(
+            self,
+            original_request: AirlockRequest,
+            new_status: AirlockRequestStatus = None,
+            request_files: List[AirlockFile] = None,
+            status_message: str = None,
+            airlock_review: AirlockReview = None,
+            review_user_resource: AirlockReviewUserResource = None) -> AirlockRequest:
         updated_request = copy.deepcopy(original_request)
 
         if new_status is not None:
             self._validate_status_update(current_status=original_request.status, new_status=new_status)
             updated_request.status = new_status
 
-        if error_message is not None:
-            updated_request.errorMessage = error_message
+        if status_message is not None:
+            updated_request.statusMessage = status_message
 
         if request_files is not None:
             updated_request.files = request_files
@@ -174,6 +202,12 @@ class AirlockRequestRepository(BaseRepository):
                 updated_request.reviews = [airlock_review]
             else:
                 updated_request.reviews.append(airlock_review)
+
+        if review_user_resource is not None:
+            if updated_request.reviewUserResources is None:
+                updated_request.reviewUserResources = [review_user_resource]
+            else:
+                updated_request.reviewUserResources.append(review_user_resource)
 
         return updated_request
 

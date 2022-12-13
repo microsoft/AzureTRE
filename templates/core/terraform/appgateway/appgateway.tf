@@ -108,9 +108,14 @@ resource "azurerm_application_gateway" "agw" {
     pick_host_name_from_backend_http_settings = true
     interval                                  = 15
     protocol                                  = "Https"
-    path                                      = "/api/health"
-    timeout                                   = "30"
-    unhealthy_threshold                       = "3"
+    # Use the /api/ping endpoint to verify that we can connect to the API
+    # This still allows the richer information from /api/health to be queried
+    # in the event of a component being unavailable
+    # It also avoids incurring the Azure Management API calls to resource processor
+    # when not needed (which can cause throttling)
+    path                = "/api/ping"
+    timeout             = "30"
+    unhealthy_threshold = "3"
   }
 
   # Public HTTPS listener

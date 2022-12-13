@@ -2,7 +2,7 @@ resource "random_string" "username" {
   length    = 10
   upper     = true
   lower     = true
-  number    = false
+  numeric   = false
   min_lower = 1
   special   = false
 }
@@ -13,7 +13,7 @@ resource "random_password" "password" {
   min_lower        = 1
   upper            = true
   min_upper        = 1
-  number           = true
+  numeric          = true
   min_numeric      = 1
   special          = true
   min_special      = 1
@@ -64,7 +64,7 @@ resource "azurerm_postgresql_database" "mlflow" {
   collation           = "English_United States.1252"
 }
 
-resource "azurerm_private_endpoint" "private-endpoint" {
+resource "azurerm_private_endpoint" "private_endpoint" {
   name                = "pe-${azurerm_postgresql_server.mlflow.name}-postgres"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name

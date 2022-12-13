@@ -31,8 +31,6 @@ if [[ "${1:-?}" == *"auth"* ]]; then
     set -a
     # shellcheck disable=SC1091
     . "$DIR/load_env.sh" "devops/auth.env"
-    # shellcheck disable=SC1091
-    . "$DIR/load_terraform_env.sh" "devops/auth.env"
   fi
 fi
 
@@ -51,11 +49,7 @@ if [[ "${1:-?}" == *"env"* ]]; then
     # shellcheck disable=SC1091
     . "$DIR/load_env.sh" "devops/.env"
     # shellcheck disable=SC1091
-    . "$DIR/load_terraform_env.sh" "devops/.env"
-    # shellcheck disable=SC1091
     . "$DIR/load_env.sh" "templates/core/.env"
-    # shellcheck disable=SC1091
-    . "$DIR/load_terraform_env.sh" "templates/core/.env"
   fi
 fi
 

@@ -33,5 +33,6 @@
 | `ENABLE_AIRLOCK_MALWARE_SCANNING` | If False, Airlock requests will skip the malware scanning stage. If set to True, Setting up a scanner manually is required! |
 | `ENABLE_LOCAL_DEBUGGING` | Set to `false` by default. Setting this to `true` will ensure that Azure resources are accessible from your local development machine. (e.g. ServiceBus and Cosmos) |
 | `PUBLIC_DEPLOYMENT_IP_ADDRESS` | The public IP address of the machine that is deploying TRE. (Your desktop or the build agents). In certain locations a dynamic script to retrieve this from [https://ipecho.net/plain](https://ipecho.net/plain) does not work. If this is the case, then you can 'hardcode' your IP. |
-| `ADMIN_JUMPBOX_VM_SKU` | The SKU of the VM to use for the admin jumpbox. |
 | `RESOURCE_PROCESSOR_VMSS_SKU` | The SKU of the VMMS to use for the resource processing VM. |
+| `CORE_APP_SERVICE_PLAN_SKU` | The SKU of AppService plans created for the core infrastructure. |
+| `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests unless otherwise specified. Default value is `P1v2`. |

@@ -23,8 +23,6 @@ if [ $# -eq 0 ]; then
     usage # run usage function
 fi
 
-current="false"
-
 while [ "$1" != "" ]; do
     case $1 in
     -g | --mgmt-resource-group-name)
@@ -93,7 +91,7 @@ if [[ -z ${tf_logfile+x} ]]; then
     echo -e "No logfile provided, using ${tf_logfile}\n"
 fi
 
-terraform init -input=false -backend=true -reconfigure -upgrade \
+terraform init -input=false -backend=true -reconfigure \
     -backend-config="resource_group_name=${mgmt_resource_group_name}" \
     -backend-config="storage_account_name=${mgmt_storage_account_name}" \
     -backend-config="container_name=${container_name}" \
@@ -111,18 +109,18 @@ do
     if [[ $TF_LOG == "DEBUG" ]] ; then
       az storage blob upload --file $tf_logfile \
         --container-name "tflogs" \
-        --account-name $mgmt_storage_account_name \
+        --account-name "$mgmt_storage_account_name" \
         --auth-mode key
     fi
 
     LOCKED_STATE=$(cat ${tf_logfile} |  grep -c 'Error acquiring the state lock') || true;
     TF_ERROR=$(cat ${tf_logfile} |  grep -c 'COMMAND_EXIT_CODE="1"') || true;
-    if [[ $LOCKED_STATE > 0  ]];
+    if [[ $LOCKED_STATE -gt 0  ]];
     then
         RUN_COMMAND=1
         echo "Error acquiring the state lock"
         sleep 10
-    elif [[ $TF_ERROR > 0  ]];
+    elif [[ $TF_ERROR -gt 0  ]];
     then
         echo "Terraform Error"
         exit 1

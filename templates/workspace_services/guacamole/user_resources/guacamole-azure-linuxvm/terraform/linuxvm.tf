@@ -14,7 +14,7 @@ resource "random_string" "username" {
   length      = 4
   upper       = true
   lower       = true
-  number      = true
+  numeric     = true
   min_numeric = 1
   min_lower   = 1
   special     = false
@@ -26,7 +26,7 @@ resource "random_password" "password" {
   min_lower        = 1
   upper            = true
   min_upper        = 1
-  number           = true
+  numeric          = true
   min_numeric      = 1
   special          = true
   min_special      = 1
@@ -38,18 +38,23 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   location                        = data.azurerm_resource_group.ws.location
   resource_group_name             = data.azurerm_resource_group.ws.name
   network_interface_ids           = [azurerm_network_interface.internal.id]
-  size                            = local.vm_size[var.vm_size].value
+  size                            = local.vm_sizes[var.vm_size]
   disable_password_authentication = false
   admin_username                  = random_string.username.result
   admin_password                  = random_password.password.result
 
   custom_data = data.template_cloudinit_config.config.rendered
 
-  source_image_reference {
-    publisher = local.image_ref[var.image].publisher
-    offer     = local.image_ref[var.image].offer
-    sku       = local.image_ref[var.image].sku
-    version   = local.image_ref[var.image].version
+  # set source_image_id/reference depending on the config for the selected image
+  source_image_id = local.selected_image_source_id
+  dynamic "source_image_reference" {
+    for_each = local.selected_image_source_refs
+    content {
+      publisher = source_image_reference.value["publisher"]
+      offer     = source_image_reference.value["offer"]
+      sku       = source_image_reference.value["sku"]
+      version   = source_image_reference.value["version"]
+    }
   }
 
   os_disk {
@@ -93,14 +98,14 @@ data "template_cloudinit_config" "config" {
 data "template_file" "vm_config" {
   template = file("${path.module}/vm_config.sh")
   vars = {
-    INSTALL_UI            = local.image_ref[var.image].install_ui ? 1 : 0
+    INSTALL_UI            = local.selected_image.install_ui ? 1 : 0
     SHARED_STORAGE_ACCESS = tobool(var.shared_storage_access) ? 1 : 0
     STORAGE_ACCOUNT_NAME  = data.azurerm_storage_account.stg.name
     STORAGE_ACCOUNT_KEY   = data.azurerm_storage_account.stg.primary_access_key
     HTTP_ENDPOINT         = data.azurerm_storage_account.stg.primary_file_endpoint
-    FILESHARE_NAME        = data.azurerm_storage_share.shared_storage.name
+    FILESHARE_NAME        = var.shared_storage_access ? data.azurerm_storage_share.shared_storage[0].name : ""
     NEXUS_PROXY_URL       = local.nexus_proxy_url
-    CONDA_CONFIG          = local.image_ref[var.image].conda_config ? 1 : 0
+    CONDA_CONFIG          = local.selected_image.conda_config ? 1 : 0
   }
 }
 
@@ -137,6 +142,7 @@ data "azurerm_storage_account" "stg" {
 }
 
 data "azurerm_storage_share" "shared_storage" {
+  count                = var.shared_storage_access ? 1 : 0
   name                 = var.shared_storage_name
   storage_account_name = data.azurerm_storage_account.stg.name
 }

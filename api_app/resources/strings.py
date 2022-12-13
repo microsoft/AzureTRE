@@ -2,11 +2,13 @@ PONG = "pong"
 
 # API Descriptions
 API_GET_HEALTH_STATUS = "Get health status"
+API_GET_PING = "Simple endpoint to test calling the API"
 API_MIGRATE_DATABASE = "Migrate documents in the database"
 
 API_GET_MY_OPERATIONS = "Get Operations that the current user has initiated"
 API_GET_ALL_WORKSPACES = "Get all workspaces"
 API_GET_WORKSPACE_BY_ID = "Get workspace by Id"
+API_GET_WORKSPACE_SCOPE_ID_BY_WORKSPACE_ID = "Get workspace Scope Id by workspace Id"
 API_CREATE_WORKSPACE = "Create a workspace"
 API_DELETE_WORKSPACE = "Delete workspace"
 API_UPDATE_WORKSPACE = "Update an existing workspace"
@@ -35,6 +37,7 @@ API_SUBMIT_AIRLOCK_REQUEST = "Submit an airlock request"
 API_CANCEL_AIRLOCK_REQUEST = "Cancel an airlock request"
 API_REVIEW_AIRLOCK_REQUEST = "Review an airlock request"
 API_AIRLOCK_REQUEST_LINK = "Get a token to access airlock request"
+API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE = "Create an Airlock Review User Resource"
 
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"
@@ -42,6 +45,7 @@ API_GET_WORKSPACE_TEMPLATE_BY_NAME = "Get workspace template by name"
 
 API_CREATE_WORKSPACE_SERVICE_TEMPLATES = "Register workspace service template"
 API_GET_WORKSPACE_SERVICE_TEMPLATES = "Get workspace service templates"
+API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE = "Get workspace service templates (on workspace level)"  # only returns templates that the authenticated user is authorized to use
 API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME = "Get workspace service template by name"
 
 API_CREATE_SHARED_SERVICE_TEMPLATES = "Register shared service template"
@@ -57,6 +61,7 @@ API_INVOKE_ACTION_ON_SHARED_SERVICE = "Invoke action on a shared service"
 
 API_CREATE_USER_RESOURCE_TEMPLATES = "Register user resource template"
 API_GET_USER_RESOURCE_TEMPLATES = "Get user resource templates applicable to the workspace service template"
+API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE = "Get user resource templates applicable to the workspace service template (on workspace level)"  # only returns templates that the authenticated user is authorized to use
 API_GET_USER_RESOURCE_TEMPLATE_BY_NAME = "Get user resource template by name and workspace service"
 
 # cost report
@@ -71,11 +76,13 @@ OK = "OK"
 NOT_OK = "Not OK"
 COSMOS_DB = "Cosmos DB"
 STATE_STORE_ENDPOINT_NOT_RESPONDING = "State Store endpoint is not responding"
+STATE_STORE_ENDPOINT_NOT_ACCESSIBLE = "State Store endpoint is not accessible"
 UNSPECIFIED_ERROR = "Unspecified error"
 
 # Service bus status
 SERVICE_BUS = "Service Bus"
 SERVICE_BUS_NOT_RESPONDING = "Service Bus is not responding"
+SERVICE_BUS_AUTHENTICATION_ERROR = "Cannot authenticate Service Bus"
 
 # Resource processor status
 RESOURCE_PROCESSOR = "Resource Processor"
@@ -205,6 +212,10 @@ AIRLOCK_NO_AIRLOCK_MANAGER_EMAIL = "There are no Airlock Managers with an email 
 AIRLOCK_ACTION_REVIEW = "review"
 AIRLOCK_ACTION_CANCEL = "cancel"
 AIRLOCK_ACTION_SUBMIT = "submit"
+
+# Airlock Review Decisions
+AIRLOCK_REVIEW_DECISION_APPROVED = "approved"
+AIRLOCK_REVIEW_DECISION_REJECTED = "rejected"
 
 # Deployments
 RESOURCE_STATUS_AWAITING_DEPLOYMENT_MESSAGE = "This resource is waiting to be deployed"
