@@ -23,7 +23,7 @@ locals {
   request_routing_rule_name          = "rqrt-application"
   redirect_configuration_name        = "rdrcfg-tosecure"
 
-  certificate_name = "cert-primary"
+  #certificate_name = "cert-primary"
   tre_core_tags = {
     tre_id              = var.tre_id
     tre_core_service_id = var.tre_id
