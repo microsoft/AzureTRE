@@ -36,14 +36,6 @@ If you have created custom AzureTRE templates you can publish and register them 
     - If it is a user resource add it also under register_user_resource_bundles:
         ![Register user resource step](../../assets/using-tre/register_user_resource.png)
 
-## Clean Validation Environments
-
-This is a periodical workflow to clean unused AzureTRE environments created by your CI/CD.
-
-If you have E2E tests running and creating workspaces as part of your workflow you can make clean validation to remove those periodicaly for you. To do so, go to the `.github/scripts/clean_ci_validation_envs.sh` and uncomment the following part:
-
-![clean validation workspaces](../../assets/clean-validation-ws.png)
-Replace the github_org and  github_repo with your github organization and repository name.
 
 ## How to Contribute to our Documentation
 
