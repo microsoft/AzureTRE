@@ -1,11 +1,12 @@
 import copy
+import semantic_version
 from datetime import datetime
 from typing import Tuple, List
 
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from core import config
-from db.errors import EntityDoesNotExist, UserNotAuthorizedToUseTemplate
+from db.errors import VersionDowngradeDenied, EntityDoesNotExist, MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, UserNotAuthorizedToUseTemplate
 from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from jsonschema import validate
@@ -70,8 +71,8 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(Resource, resource)
 
-    def get_resource_by_template_name(self, template_name: str) -> Resource:
-        query = f"SELECT TOP 1 * FROM c WHERE c.templateName = '{template_name}'"
+    def get_active_resource_by_template_name(self, template_name: str) -> Resource:
+        query = f"SELECT TOP 1 * FROM c WHERE c.templateName = '{template_name}' AND {IS_ACTIVE_RESOURCE}"
         resources = self.query(query=query)
         if not resources:
             raise EntityDoesNotExist
@@ -96,7 +97,7 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(ResourceTemplate, template)
 
-    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Tuple[Resource, ResourceTemplate]:
+    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         # create a deep copy of the resource to use for history, create the history item + add to history list
         resource_copy = copy.deepcopy(resource)
         history_item = ResourceHistoryItem(
@@ -104,7 +105,8 @@ class ResourceRepository(BaseRepository):
             properties=resource_copy.properties,
             resourceVersion=resource_copy.resourceVersion,
             updatedWhen=resource_copy.updatedWhen,
-            user=resource_copy.user
+            user=resource_copy.user,
+            templateVersion=resource_copy.templateVersion
         )
         resource.history.append(history_item)
 
@@ -116,6 +118,10 @@ class ResourceRepository(BaseRepository):
         if resource_patch.isEnabled is not None:
             resource.isEnabled = resource_patch.isEnabled
 
+        if resource_patch.templateVersion is not None:
+            self.validate_template_version_patch(resource, resource_patch, resource_template_repo, resource_template, force_version_update)
+            resource.templateVersion = resource_patch.templateVersion
+
         if resource_patch.properties is not None and len(resource_patch.properties) > 0:
             self.validate_patch(resource_patch, resource_template_repo, resource_template)
 
@@ -124,6 +130,27 @@ class ResourceRepository(BaseRepository):
 
         self.update_item_with_etag(resource, etag)
         return resource, resource_template
+
+    def validate_template_version_patch(self, resource: Resource, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, force_version_update: bool = False):
+        parent_resource_id = None
+        if resource.resourceType == ResourceType.UserResource:
+            parent_resource_id = resource.parentWorkspaceServiceId
+
+        # validate Major upgrade
+        desired_version = semantic_version.Version(resource_patch.templateVersion)
+        current_version = semantic_version.Version(resource.templateVersion)
+
+        if not force_version_update:
+            if desired_version.major > current_version.major:
+                raise MajorVersionUpdateDenied(f'Attempt to upgrade from {current_version} to {desired_version} denied. major version upgrade is not allowed.')
+            elif desired_version < current_version:
+                raise VersionDowngradeDenied(f'Attempt to downgrade from {current_version} to {desired_version} denied. version downgrade is not allowed.')
+
+        # validate if target template with desired version is registered
+        try:
+            resource_template_repo.get_template_by_name_and_version(resource.templateName, resource_patch.templateVersion, resource_template.resourceType, parent_resource_id)
+        except EntityDoesNotExist:
+            raise TargetTemplateVersionDoesNotExist(f"Template '{resource_template.name}' not found for resource type '{resource_template.resourceType}' with target template version '{resource_patch.templateVersion}'")
 
     def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate):
         # get the enriched (combined) template
@@ -145,4 +172,4 @@ class ResourceRepository(BaseRepository):
 
 # Cosmos query consts
 IS_NOT_DELETED_CLAUSE = f'c.deploymentStatus != "{Status.Deleted}"'
-IS_OPERATING_SHARED_SERVICE = f'c.deploymentStatus != "{Status.Deleted}" and c.deploymentStatus != "{Status.DeploymentFailed}"'
+IS_ACTIVE_RESOURCE = f'c.deploymentStatus != "{Status.Deleted}" and c.deploymentStatus != "{Status.DeploymentFailed}"'

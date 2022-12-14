@@ -2,13 +2,29 @@
 ## 0.8.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
+* The model for `reviewUserResources` in airlock requests has changed from being a list to a dictionary. A migration has been added to update your existing requests automatically; please make sure you run the migrations as part of updating your API and UI.
+  * Note that any in-flight requests that have review resources deployed will show `UNKNOWN[i]` for the user key of that resource and in the UI users will be prompted to deploy a new resource. [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
+* Env files consolidation - The files /templates/core/.env, /devops/.env, /devops/auth.env are no longer used. The settings and configuration that they contain has been consolidated into a single file config.yaml that lives in the root folder of the project.
+
+Use the script devops/scripts/env_to_yaml_config.sh to migrate /templates/core/.env, /devops/.env, and /devops/auth.env to the new config.yaml file.
+
+FEATURES:
+* Support review VMs for multiple reviewers for each airlock request [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
 
 ENHANCEMENTS:
 * Remove Porter's Docker mixin as it's not in use ([#2889](https://github.com/microsoft/AzureTRE/pull/2889))
+* Enable properties defined within the API to be overridden by the bundle template - enables default values to be set. ([#2576](https://github.com/microsoft/AzureTRE/pull/2576))
+* Support template version update ([#2908](https://github.com/microsoft/AzureTRE/pull/2908))
+* Update docker base images to bullseye ([#2946](https://github.com/microsoft/AzureTRE/pull/2946)
+* Support updating the firewall when installing via makefile/CICD ([#2942](https://github.com/microsoft/AzureTRE/pull/2942))
+* Airlock processor function and api app service work with http2
 
 BUG FIXES:
 * Private endpoints for AppInsights are now provisioning successfully and consistently ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))
 * Enable upgrade step of base workspace ([#2899](https://github.com/microsoft/AzureTRE/pull/2899))
+* Fix get shared service by template name to filter by active service only ([#2947](https://github.com/microsoft/AzureTRE/pull/2947))
+* Fix untagged cost reporting reader role assignment ([#2951](https://github.com/microsoft/AzureTRE/pull/2951))
+* Remove Guacamole's firewall rule on uninstall ([#2958](https://github.com/microsoft/AzureTRE/pull/2958))
 
 COMPONENTS:
 

@@ -7,7 +7,7 @@ from jsonschema.exceptions import ValidationError
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_operation_by_id_from_path, get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_user_resource_by_id_from_path
 
-from db.errors import UserNotAuthorizedToUseTemplate
+from db.errors import MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, UserNotAuthorizedToUseTemplate, VersionDowngradeDenied
 from db.repositories.operations import OperationRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.user_resources import UserResourceRepository
@@ -116,9 +116,9 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
 
 
 @workspaces_core_router.patch("/workspaces/{workspace_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
-async def patch_workspace(workspace_patch: ResourcePatch, response: Response, user=Depends(get_current_admin_user), workspace=Depends(get_workspace_by_id_from_path), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(...)) -> OperationInResponse:
+async def patch_workspace(workspace_patch: ResourcePatch, response: Response, user=Depends(get_current_admin_user), workspace=Depends(get_workspace_by_id_from_path), workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
     try:
-        patched_workspace, resource_template = workspace_repo.patch_workspace(workspace, workspace_patch, etag, resource_template_repo, user)
+        patched_workspace, resource_template = workspace_repo.patch_workspace(workspace, workspace_patch, etag, resource_template_repo, user, force_version_update)
         operation = await send_resource_request_message(
             resource=patched_workspace,
             operations_repo=operations_repo,
@@ -133,6 +133,8 @@ async def patch_workspace(workspace_patch: ResourcePatch, response: Response, us
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
+    except (MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied) as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
@@ -242,9 +244,9 @@ async def create_workspace_service(response: Response, workspace_service_input: 
 
 
 @workspace_services_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
-async def patch_workspace_service(workspace_service_patch: ResourcePatch, response: Response, user=Depends(get_current_workspace_owner_user), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(...)) -> OperationInResponse:
+async def patch_workspace_service(workspace_service_patch: ResourcePatch, response: Response, user=Depends(get_current_workspace_owner_user), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
     try:
-        patched_workspace_service, resource_template = workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch, etag, resource_template_repo, user)
+        patched_workspace_service, resource_template = workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch, etag, resource_template_repo, user, force_version_update)
         operation = await send_resource_request_message(
             resource=patched_workspace_service,
             operations_repo=operations_repo,
@@ -259,6 +261,8 @@ async def patch_workspace_service(workspace_service_patch: ResourcePatch, respon
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
+    except (MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied) as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @workspace_services_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
@@ -417,11 +421,12 @@ async def patch_user_resource(
         user_resource_repo=Depends(get_repository(UserResourceRepository)),
         resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
         operations_repo=Depends(get_repository(OperationRepository)),
-        etag: str = Header(...)) -> OperationInResponse:
+        etag: str = Header(...),
+        force_version_update: bool = False) -> OperationInResponse:
     validate_user_has_valid_role_for_user_resource(user, user_resource)
 
     try:
-        patched_user_resource, resource_template = user_resource_repo.patch_user_resource(user_resource, user_resource_patch, etag, resource_template_repo, workspace_service.templateName, user)
+        patched_user_resource, resource_template = user_resource_repo.patch_user_resource(user_resource, user_resource_patch, etag, resource_template_repo, workspace_service.templateName, user, force_version_update)
         operation = await send_resource_request_message(
             resource=patched_user_resource,
             operations_repo=operations_repo,
@@ -437,6 +442,8 @@ async def patch_user_resource(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
+    except (MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied) as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 # user resource actions

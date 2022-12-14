@@ -136,7 +136,6 @@ resource "azurerm_key_vault_secret" "client_id" {
   ]
 }
 
-
 data "azurerm_key_vault_secret" "client_secret" {
   count        = var.client_secret == local.redacted_senstive_value ? 1 : 0
   name         = "workspace-client-secret"

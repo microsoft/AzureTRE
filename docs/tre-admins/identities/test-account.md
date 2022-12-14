@@ -30,8 +30,8 @@ This application is used locally to automatically register bundles against the A
 ## Environment Variables
 | Variable | Description | Location |
 | -------- | ----------- | -------- |
-|TEST_ACCOUNT_CLIENT_ID|The Client Id|`./devops/auth.env`|
-|TEST_ACCOUNT_CLIENT_SECRET|The client secret|`./devops/auth.env`|
+|TEST_ACCOUNT_CLIENT_ID|The Client Id|`./config.yaml`|
+|TEST_ACCOUNT_CLIENT_SECRET|The client secret|`./config.yaml`|
 
 ## How to create
 Example on how to run the script:
