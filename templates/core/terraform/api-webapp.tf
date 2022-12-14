@@ -66,6 +66,7 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   site_config {
+    http2_enabled                                 = true
     vnet_route_all_enabled                        = true
     container_registry_use_managed_identity       = true
     container_registry_managed_identity_client_id = azurerm_user_assigned_identity.id.client_id

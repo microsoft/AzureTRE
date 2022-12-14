@@ -66,6 +66,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   }
 
   site_config {
+    http2_enabled                                 = true
     always_on                                     = true
     container_registry_managed_identity_client_id = azurerm_user_assigned_identity.airlock_id.client_id
     container_registry_use_managed_identity       = true
