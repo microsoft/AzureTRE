@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import threading
 import uuid
 
 from pydantic import ValidationError, parse_obj_as
@@ -22,19 +21,15 @@ from models.domain.operation import DeploymentStatusUpdateMessage, Operation, Op
 from resources import strings
 
 
-class DeploymentStatusUpdater(threading.Thread):
+class DeploymentStatusUpdater():
     def __init__(self, app):
-        super().__init__(daemon=True)
+        self.app = app
 
-    @classmethod
-    async def create(cls, app):
-        db_client = await get_db_client(app)
-        cls = DeploymentStatusUpdater(app)
-        cls.app = app
-        cls.operations_repo = await OperationRepository.create(db_client)
-        cls.resource_repo = await ResourceRepository.create(db_client)
-        cls.resource_template_repo = await ResourceTemplateRepository.create(db_client)
-        return cls
+    async def init_repos(self):
+        db_client = await get_db_client(self.app)
+        self.operations_repo = await OperationRepository.create(db_client)
+        self.resource_repo = await ResourceRepository.create(db_client)
+        self.resource_template_repo = await ResourceTemplateRepository.create(db_client)
 
     def run(self, *args, **kwargs):
         asyncio.run(self.receive_messages())
