@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from opencensus.ext.azure.trace_exporter import AzureExporter
 import uvicorn
@@ -78,8 +79,10 @@ async def initialize_logging_on_startup():
 @app.on_event("startup")
 async def watch_deployment_status() -> None:
     logging.info("Starting deployment status watcher thread")
-    statusWatcher = await DeploymentStatusUpdater.create(app)
-    statusWatcher.start()
+    statusWatcher = DeploymentStatusUpdater(app)
+    await statusWatcher.init_repos()
+    current_event_loop = asyncio.get_event_loop()
+    asyncio.run_coroutine_threadsafe(statusWatcher.receive_messages(), loop=current_event_loop)
 
 
 @app.on_event("startup")
@@ -89,4 +92,4 @@ async def update_airlock_request_status() -> None:
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, loop="asyncio")
