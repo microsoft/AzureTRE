@@ -74,9 +74,9 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(Resource, resource)
 
-    def get_active_resource_by_template_name(self, template_name: str) -> Resource:
+    async def get_active_resource_by_template_name(self, template_name: str) -> Resource:
         query = f"SELECT TOP 1 * FROM c WHERE c.templateName = '{template_name}' AND {IS_ACTIVE_RESOURCE}"
-        resources = self.query(query=query)
+        resources = await self.query(query=query)
         if not resources:
             raise EntityDoesNotExist
         return parse_obj_as(Resource, resources[0])
