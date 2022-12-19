@@ -24,6 +24,11 @@ resource "azurerm_storage_account" "az_monitor" {
   tags                            = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
+
+  network_rules {
+    default_action = "Deny"
+    bypass         = ["AzureServices"]
+  }
 }
 
 resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_ingestion" {
