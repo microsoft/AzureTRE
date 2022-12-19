@@ -50,8 +50,17 @@ jq -r '
             "env_var": "STATE_STORE_RESOURCE_ID"
         },
         {
+            "path": "cosmosdb_mongo_resource_id",
+            "env_var": "COSMOSDB_MONGO_RESOURCE_ID"
+        },
+
+        {
             "path": "state_store_account_name",
             "env_var": "COSMOSDB_ACCOUNT_NAME"
+        },
+        {
+            "path": "cosmosdb_mongo_account_name",
+            "env_var": "COSMOSDB_MONGO_ACCOUNT_NAME"
         },
         {
             "path": "state_store_endpoint",

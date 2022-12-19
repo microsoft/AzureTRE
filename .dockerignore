@@ -1,5 +1,5 @@
 # See https://docs.docker.com/engine/reference/builder/#dockerignore-file
-# Put files here that you don't want copied into your bundle's invocation image
+# Put files here that you need in the devcontainer's context
 .gitignore
 Dockerfile.tmpl
 
@@ -18,8 +18,16 @@ cli/build
 cli/dist
 *.egg-info/
 
-.terraform
+**/.terraform
 tfplan*
 *.log
 
 templates/workspace_services/guacamole/guacamole-server/guacamole-auth-azure/target
+
+**/node_modules
+**/.cnab
+
+ui/app/build
+site
+
+.git

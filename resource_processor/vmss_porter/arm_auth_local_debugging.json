@@ -1,8 +1,8 @@
 {
-  "schemaVersion": "1.0.0-DRAFT+b6c701f",
-  "name": "azure",
-  "created": "2021-06-03T11:31:05.7314113Z",
-  "modified": "2021-06-03T11:31:05.7314113Z",
+  "schemaType": "CredentialSet",
+  "schemaVersion": "1.0.1",
+  "namespace": "",
+  "name": "arm_auth",
   "credentials": [
     {
       "name": "azure_client_id",
