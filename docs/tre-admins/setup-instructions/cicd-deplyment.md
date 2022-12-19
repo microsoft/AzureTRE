@@ -36,7 +36,6 @@ If you have created custom AzureTRE templates you can publish and register them 
     - If it is a user resource add it also under register_user_resource_bundles:
         ![Register user resource step](../../assets/using-tre/register_user_resource.png)
 
-
 ## How to Contribute to our Documentation
 
 If you have any comments or suggestions about our documentation then you can visit our GitHub project and either raise a new issue, or comment on one of the existing ones.
