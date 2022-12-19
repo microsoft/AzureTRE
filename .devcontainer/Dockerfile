@@ -4,6 +4,7 @@
 ARG VARIANT="3.8"
 FROM mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}-bullseye
 
+# Ignore comment - for test puposes
 # This will be set to true when running in VSCode
 ARG INTERACTIVE="false"
 
