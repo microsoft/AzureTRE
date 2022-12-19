@@ -27,7 +27,7 @@ resource "azurerm_storage_account" "az_monitor" {
     default_action = "Deny"
     bypass         = ["AzureServices"]
   }
-  
+
   lifecycle { ignore_changes = [tags] }
 }
 
