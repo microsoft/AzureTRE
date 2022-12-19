@@ -23,12 +23,12 @@ resource "azurerm_storage_account" "az_monitor" {
   allow_nested_items_to_be_public = false
   tags                            = var.tre_core_tags
 
-  lifecycle { ignore_changes = [tags] }
-
   network_rules {
     default_action = "Deny"
     bypass         = ["AzureServices"]
   }
+  
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_ingestion" {
