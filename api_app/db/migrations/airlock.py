@@ -1,14 +1,19 @@
-from azure.cosmos import CosmosClient
+from azure.cosmos.aio import CosmosClient
 from db.repositories.airlock_requests import AirlockRequestRepository
 
 
 class AirlockMigration(AirlockRequestRepository):
-    def __init__(self, client: CosmosClient):
-        super().__init__(client)
+    @classmethod
+    async def create(cls, client: CosmosClient):
+        cls = AirlockMigration()
+        resource_repo = await super().create(client)
+        cls._container = resource_repo._container
+        cls._client = resource_repo._client
+        return cls
 
-    def add_created_by_and_rename_in_history(self) -> int:
+    async def add_created_by_and_rename_in_history(self) -> int:
         num_updated = 0
-        for request in self.container.read_all_items():
+        for request in await self.query('SELECT * FROM c'):
             # Only migrate if createdBy isn't present
             if 'createdBy' in request:
                 continue
@@ -27,14 +32,14 @@ class AirlockMigration(AirlockRequestRepository):
                 # If not, the createdBy user will be the same as the updatedBy value
                 request['createdBy'] = request['updatedBy']
 
-            self.update_item_dict(request)
+            await self.update_item_dict(request)
             num_updated += 1
 
         return num_updated
 
-    def change_review_resources_to_dict(self) -> int:
+    async def change_review_resources_to_dict(self) -> int:
         num_updated = 0
-        for request in self.container.read_all_items():
+        for request in await self.query('SELECT * FROM c'):
             # Only migrate if airlockReviewResources property present and is a list
             if 'reviewUserResources' in request:
                 if type(request['reviewUserResources']) == list:
@@ -43,7 +48,7 @@ class AirlockMigration(AirlockRequestRepository):
                         updated_review_resources['UNKNOWN' + str(i)] = resource
 
                     request['reviewUserResources'] = updated_review_resources
-                    self.update_item_dict(request)
+                    await self.update_item_dict(request)
                     num_updated += 1
 
         return num_updated

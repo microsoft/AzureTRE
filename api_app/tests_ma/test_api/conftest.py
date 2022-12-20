@@ -1,4 +1,5 @@
 import pytest
+import pytest_asyncio
 from mock import patch
 
 from asgi_lifespan import LifespanManager
@@ -8,7 +9,7 @@ from httpx import AsyncClient
 from models.domain.authentication import User
 
 
-@pytest.fixture(autouse=True)
+@pytest_asyncio.fixture(autouse=True)
 def no_database():
     """ overrides connecting to the database for all tests"""
     with patch('api.dependencies.database.connect_to_db', return_value=None):
@@ -118,7 +119,7 @@ def no_workspace_role_user():
     return inner
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def app() -> FastAPI:
     from main import get_application
 
@@ -126,13 +127,13 @@ def app() -> FastAPI:
     return the_app
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def initialized_app(app: FastAPI) -> FastAPI:
     async with LifespanManager(app):
         yield app
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client(initialized_app: FastAPI) -> AsyncClient:
     async with AsyncClient(app=initialized_app, base_url="http://testserver", headers={"Content-Type": "application/json"}) as client:
         yield client

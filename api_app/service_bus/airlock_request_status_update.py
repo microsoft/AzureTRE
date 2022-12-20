@@ -63,7 +63,7 @@ async def update_status_in_database(airlock_request_repo: AirlockRequestReposito
         airlock_request = await get_airlock_request_by_id_from_path(airlock_request_id=airlock_request_id, airlock_request_repo=airlock_request_repo)
         # Validate that the airlock request status is the same as current status
         if airlock_request.status == current_status:
-            workspace = workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
+            workspace = await workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
             # update to new status and send to event grid
             await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, updated_by=airlock_request.updatedBy, workspace=workspace, new_status=new_status, request_files=request_files, status_message=status_message)
             result = True
@@ -99,8 +99,9 @@ async def receive_step_result_message_and_update_status(app) -> None:
 
     try:
         async for message in receive_message_gen:
-            airlock_request_repo = AirlockRequestRepository(get_db_client(app))
-            workspace_repo = WorkspaceRepository(get_db_client(app))
+            db_client = await get_db_client(app)
+            airlock_request_repo = await AirlockRequestRepository.create(db_client)
+            workspace_repo = await WorkspaceRepository.create(db_client)
             logging.info("Fetched step_result message from queue, start updating airlock request")
             result = await update_status_in_database(airlock_request_repo, workspace_repo, message)
             await receive_message_gen.asend(result)
