@@ -90,8 +90,6 @@ async def get_swagger(request: Request):
 async def swagger_ui_redirect():
     return get_swagger_ui_oauth2_redirect_html()
 
-core_router.include_router(core_swagger_router)
-router.include_router(core_router)
 
 # Workspace API
 workspace_router = APIRouter(prefix=config.API_PREFIX)
@@ -157,5 +155,10 @@ async def get_workspace_swagger(workspace_id, request: Request, workspace_repo=D
 
     return swagger_ui_html
 
-workspace_router.include_router(workspace_swagger_router)
+
+if config.ENABLE_SWAGGER_UI:
+    core_router.include_router(core_swagger_router)
+    workspace_router.include_router(workspace_swagger_router)
+
+router.include_router(core_router)
 router.include_router(workspace_router)
