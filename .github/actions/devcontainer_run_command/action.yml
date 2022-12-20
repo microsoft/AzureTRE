@@ -51,6 +51,9 @@ inputs:
   TRE_ADDRESS_SPACE:
     description: "TRE address apace."
     required: false
+  ENABLE_SWAGGER:
+    description: "Determines whether the Swagger interface for the API will be available."
+    required: false
   SWAGGER_UI_CLIENT_ID:
     description: "The Swagger UI Client ID."
     required: false
@@ -154,6 +157,7 @@ runs:
           -e TF_VAR_application_admin_client_id="${{ inputs.APPLICATION_ADMIN_CLIENT_ID }}" \
           -e TF_VAR_application_admin_client_secret="${{ inputs.APPLICATION_ADMIN_CLIENT_SECRET }}" \
           -e TF_VAR_arm_subscription_id="${{ fromJSON(inputs.AZURE_CREDENTIALS).subscriptionId }}" \
+          -e ENABLE_SWAGGER="${{ inputs.ENABLE_SWAGGER }}" \
           -e SWAGGER_UI_CLIENT_ID="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
           -e TF_VAR_swagger_ui_client_id="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
           -e TF_VAR_core_address_space="${{ inputs.core_address_space }}" \
