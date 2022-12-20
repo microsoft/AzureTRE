@@ -1,6 +1,9 @@
 from collections import defaultdict
 from typing import Any, DefaultDict, Dict, Optional
 
+from starlette.responses import PlainTextResponse
+from starlette.status import HTTP_403_FORBIDDEN
+
 from fastapi import APIRouter, Request, Depends
 from fastapi.openapi.docs import get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
 from fastapi.openapi.utils import get_openapi
@@ -156,9 +159,19 @@ async def get_workspace_swagger(workspace_id, request: Request, workspace_repo=D
     return swagger_ui_html
 
 
+swagger_disabled_router = APIRouter()
+
+
+@swagger_disabled_router.get("/docs", include_in_schema=False, name="swagger_disabled")
+async def get_disabled_swagger():
+    return PlainTextResponse("Swagger is disabled. Set 'ENABLE_SWAGGER' to true in order to access Swagger.", status_code=HTTP_403_FORBIDDEN)
+
+
 if config.ENABLE_SWAGGER:
     core_router.include_router(core_swagger_router)
     workspace_router.include_router(workspace_swagger_router)
+else:
+    core_router.include_router(swagger_disabled_router)
 
 router.include_router(core_router)
 router.include_router(workspace_router)
