@@ -605,7 +605,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch('api.routes.resource_helpers.send_resource_request_message', return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     async def test_delete_workspace_sends_a_request_message_to_uninstall_the_workspace(self, send_request_message_mock, cosmos_client_mock, __, get_workspace_mock, get_repository_mock, resource_template_repo, disabled_workspace, app, client, basic_resource_template):
         get_workspace_mock.return_value = disabled_workspace
-        get_repository_mock.side_effects = [WorkspaceRepository(cosmos_client_mock), WorkspaceServiceRepository(cosmos_client_mock)]
+        get_repository_mock.side_effects = [WorkspaceRepository.create(cosmos_client_mock), WorkspaceServiceRepository.create(cosmos_client_mock)]
         resource_template_repo.return_value = basic_resource_template
         await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE, workspace_id=WORKSPACE_ID))
 
@@ -1260,7 +1260,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
 
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service")
-    async def test_get_user_resources_returns_own_user_resources_for_researcher(self, get_user_resources_mock, _, app, client, non_admin_user):
+    async def test_get_user_resources_returns_own_user_resources_for_researcher(self, get_user_resources_mock_awaited_mock, _, app, client, non_admin_user):
         not_my_user_id = "def"
         my_user_id = non_admin_user().id
 
@@ -1270,8 +1270,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         my_user_resource2.ownerId = my_user_id
         not_my_user_resource = sample_user_resource_object(user_resource_id="c33ad738-7265-4b5f-9eae-a1a62928772a")
         not_my_user_resource.ownerId = not_my_user_id
-
-        get_user_resources_mock.return_value = [my_user_resource1, my_user_resource2, not_my_user_resource]
+        get_user_resources_mock_awaited_mock.return_value = [my_user_resource1, my_user_resource2, not_my_user_resource]
 
         response = await client.get(app.url_path_for(strings.API_GET_MY_USER_RESOURCES, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID))
         assert response.status_code == status.HTTP_200_OK

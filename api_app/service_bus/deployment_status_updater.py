@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import threading
 import uuid
 
 from pydantic import ValidationError, parse_obj_as
@@ -22,13 +21,15 @@ from models.domain.operation import DeploymentStatusUpdateMessage, Operation, Op
 from resources import strings
 
 
-class DeploymentStatusUpdater(threading.Thread):
+class DeploymentStatusUpdater():
     def __init__(self, app):
         self.app = app
-        self.operations_repo = OperationRepository(get_db_client(self.app))
-        self.resource_repo = ResourceRepository(get_db_client(self.app))
-        self.resource_template_repo = ResourceTemplateRepository(get_db_client(self.app))
-        super().__init__(daemon=True)
+
+    async def init_repos(self):
+        db_client = await get_db_client(self.app)
+        self.operations_repo = await OperationRepository.create(db_client)
+        self.resource_repo = await ResourceRepository.create(db_client)
+        self.resource_template_repo = await ResourceTemplateRepository.create(db_client)
 
     def run(self, *args, **kwargs):
         asyncio.run(self.receive_messages())
@@ -98,7 +99,7 @@ class DeploymentStatusUpdater(threading.Thread):
 
         try:
             # update the op
-            operation = self.operations_repo.get_operation_by_id(str(message.operationId))
+            operation = await self.operations_repo.get_operation_by_id(str(message.operationId))
             step_to_update = None
             is_last_step = False
 
@@ -119,26 +120,26 @@ class DeploymentStatusUpdater(threading.Thread):
             step_to_update.updatedWhen = get_timestamp()
 
             # update the overall headline operation status
-            self.update_overall_operation_status(operation, step_to_update, is_last_step)
+            await self.update_overall_operation_status(operation, step_to_update, is_last_step)
 
             # save the operation
-            self.operations_repo.update_item(operation)
+            await self.operations_repo.update_item(operation)
 
             # copy the step status to the resource item, for convenience
             resource_id = uuid.UUID(step_to_update.resourceId)
 
-            resource = self.resource_repo.get_resource_by_id(resource_id)
+            resource = await self.resource_repo.get_resource_by_id(resource_id)
             resource.deploymentStatus = step_to_update.status
-            self.resource_repo.update_item(resource)
+            await self.resource_repo.update_item(resource)
 
             # if the step failed, or this queue message is an intermediary ("now deploying..."), return here.
             if not step_to_update.is_success():
                 return True
 
             # update the resource doc to persist any outputs
-            resource = self.resource_repo.get_resource_dict_by_id(resource_id)
+            resource = await self.resource_repo.get_resource_dict_by_id(resource_id)
             resource_to_persist = self.create_updated_resource_document(resource, message)
-            self.resource_repo.update_item_dict(resource_to_persist)
+            await self.resource_repo.update_item_dict(resource_to_persist)
 
             # more steps in the op to do?
             if is_last_step is False:
@@ -147,11 +148,11 @@ class DeploymentStatusUpdater(threading.Thread):
 
                 # catch any errors in updating the resource - maybe Cosmos / schema invalid etc, and report them back to the op
                 try:
-                    resource_to_send = update_resource_for_step(
+                    resource_to_send = await update_resource_for_step(
                         operation_step=next_step,
                         resource_repo=self.resource_repo,
                         resource_template_repo=self.resource_template_repo,
-                        primary_resource=self.resource_repo.get_resource_by_id(operation.resourceId),  # need to get the resource again as it has been updated
+                        primary_resource=await self.resource_repo.get_resource_by_id(operation.resourceId),  # need to get the resource again as it has been updated
                         resource_to_update_id=next_step.resourceId,
                         primary_action=operation.action,
                         user=operation.user)
@@ -164,8 +165,8 @@ class DeploymentStatusUpdater(threading.Thread):
                     logging.error(f"Unable to send update for resource in pipeline step: {e}")
                     next_step.message = repr(e)
                     next_step.status = Status.UpdatingFailed
-                    self.update_overall_operation_status(operation, next_step, is_last_step)
-                    self.operations_repo.update_item(operation)
+                    await self.update_overall_operation_status(operation, next_step, is_last_step)
+                    await self.operations_repo.update_item(operation)
 
             result = True
 
@@ -179,7 +180,7 @@ class DeploymentStatusUpdater(threading.Thread):
 
         return result
 
-    def update_overall_operation_status(self, operation: Operation, step: OperationStep, is_last_step: bool):
+    async def update_overall_operation_status(self, operation: Operation, step: OperationStep, is_last_step: bool):
         operation.updatedWhen = get_timestamp()
 
         # if it's a one step operation, just replicate the status
@@ -203,9 +204,9 @@ class DeploymentStatusUpdater(threading.Thread):
                     break
 
             if main_step:
-                primary_resource = self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+                primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
                 primary_resource.deploymentStatus = operation.status
-                self.resource_repo.update_item(primary_resource)
+                await self.resource_repo.update_item(primary_resource)
 
         if step.is_success() and is_last_step:
             operation.status = self.get_success_status_for_action(operation.action)
