@@ -156,7 +156,7 @@ async def get_workspace_swagger(workspace_id, request: Request, workspace_repo=D
     return swagger_ui_html
 
 
-if config.ENABLE_SWAGGER_UI:
+if config.ENABLE_SWAGGER:
     core_router.include_router(core_swagger_router)
     workspace_router.include_router(workspace_swagger_router)
 
