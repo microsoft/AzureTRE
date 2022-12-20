@@ -18,6 +18,7 @@ ENHANCEMENTS:
 * Update docker base images to bullseye ([#2946](https://github.com/microsoft/AzureTRE/pull/2946)
 * Support updating the firewall when installing via makefile/CICD ([#2942](https://github.com/microsoft/AzureTRE/pull/2942))
 * Airlock processor function and api app service work with http2
+* Added the option to disable Swagger ([#2981](https://github.com/microsoft/AzureTRE/pull/2981))
 
 BUG FIXES:
 * Private endpoints for AppInsights are now provisioning successfully and consistently ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))
