@@ -123,7 +123,7 @@ async def get_openapi_json(workspace_id: str, request: Request, workspace_repo=D
             tags=workspace_tags_metadata
         )
 
-        workspace = workspace_repo.get_workspace_by_id(workspace_id)
+        workspace = await workspace_repo.get_workspace_by_id(workspace_id)
         scope = {get_scope(workspace): "List and Get TRE Workspaces"}
 
         openapi_definitions[workspace_id]['components']['securitySchemes']['oauth2']['flows']['authorizationCode']['scopes'] = scope
@@ -142,7 +142,7 @@ async def get_openapi_json(workspace_id: str, request: Request, workspace_repo=D
 @workspace_swagger_router.get("/workspaces/{workspace_id}/docs", include_in_schema=False, name="workspace_swagger")
 async def get_workspace_swagger(workspace_id, request: Request, workspace_repo=Depends(get_repository(WorkspaceRepository))):
 
-    workspace = workspace_repo.get_workspace_by_id(workspace_id)
+    workspace = await workspace_repo.get_workspace_by_id(workspace_id)
     scope = get_scope(workspace)
     swagger_ui_html = get_swagger_ui_html(
         openapi_url="openapi.json",
