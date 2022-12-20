@@ -1,6 +1,8 @@
+from unittest.mock import AsyncMock, MagicMock
 from fastapi import HTTPException
-from mock import patch, MagicMock
+from mock import patch
 import pytest
+import pytest_asyncio
 from tests_ma.test_api.conftest import create_test_user
 from models.schemas.airlock_request import AirlockRequestInCreate
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
@@ -9,6 +11,7 @@ from db.repositories.airlock_requests import AirlockRequestRepository
 from db.errors import EntityDoesNotExist
 from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
 
+pytestmark = pytest.mark.asyncio
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 AIRLOCK_REQUEST_ID = "ce45d43a-e734-469a-88a0-109faf4a611f"
@@ -41,10 +44,12 @@ ALLOWED_STATUS_CHANGES = {
 }
 
 
-@pytest.fixture
-def airlock_request_repo():
-    with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-        yield AirlockRequestRepository(cosmos_client_mock)
+@pytest_asyncio.fixture
+async def airlock_request_repo():
+    with patch('db.repositories.base.BaseRepository._get_container', return_value=AsyncMock()):
+        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
+            airlock_request_repo_mock = await AirlockRequestRepository.create(cosmos_client_mock)
+            yield airlock_request_repo_mock
 
 
 @pytest.fixture
@@ -86,23 +91,23 @@ def get_forbidden_status_changes():
             yield current_status, new_status
 
 
-def test_get_airlock_request_by_id(airlock_request_repo):
+async def test_get_airlock_request_by_id(airlock_request_repo):
     airlock_request = airlock_request_mock()
-    airlock_request_repo.read_item_by_id = MagicMock(return_value=airlock_request)
-    actual_service = airlock_request_repo.get_airlock_request_by_id(AIRLOCK_REQUEST_ID)
+    airlock_request_repo.read_item_by_id = AsyncMock(return_value=airlock_request)
+    actual_service = await airlock_request_repo.get_airlock_request_by_id(AIRLOCK_REQUEST_ID)
 
     assert actual_service == airlock_request
 
 
-def test_get_airlock_request_by_id_raises_entity_does_not_exist_if_no_such_request_id(airlock_request_repo):
-    airlock_request_repo.read_item_by_id = MagicMock()
+async def test_get_airlock_request_by_id_raises_entity_does_not_exist_if_no_such_request_id(airlock_request_repo):
+    airlock_request_repo.read_item_by_id = AsyncMock()
     airlock_request_repo.read_item_by_id.side_effect = CosmosResourceNotFoundError
 
     with pytest.raises(EntityDoesNotExist):
-        airlock_request_repo.get_airlock_request_by_id(AIRLOCK_REQUEST_ID)
+        await airlock_request_repo.get_airlock_request_by_id(AIRLOCK_REQUEST_ID)
 
 
-def test_create_airlock_request_item_creates_an_airlock_request_with_the_right_values(sample_airlock_request_input, airlock_request_repo):
+async def test_create_airlock_request_item_creates_an_airlock_request_with_the_right_values(sample_airlock_request_input, airlock_request_repo):
     airlock_request_item_to_create = sample_airlock_request_input
     created_by_user = {'id': 'test_user_id'}
     airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_item_to_create, WORKSPACE_ID, created_by_user)
@@ -112,32 +117,32 @@ def test_create_airlock_request_item_creates_an_airlock_request_with_the_right_v
 
 
 @pytest.mark.parametrize("current_status, new_status", get_allowed_status_changes())
-def test_update_airlock_request_with_allowed_new_status_should_update_request_status(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
+async def test_update_airlock_request_with_allowed_new_status_should_update_request_status(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
     user = create_test_user()
     mock_existing_request = airlock_request_mock(status=current_status)
-    airlock_request = airlock_request_repo.update_airlock_request(mock_existing_request, user, new_status)
+    airlock_request = await airlock_request_repo.update_airlock_request(mock_existing_request, user, new_status)
     assert airlock_request.status == new_status
 
 
 @pytest.mark.parametrize("current_status, new_status", get_forbidden_status_changes())
-def test_update_airlock_request_with_forbidden_status_should_fail_on_validation(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
+async def test_update_airlock_request_with_forbidden_status_should_fail_on_validation(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
     user = create_test_user()
     mock_existing_request = airlock_request_mock(status=current_status)
     with pytest.raises(HTTPException):
-        airlock_request_repo.update_airlock_request(mock_existing_request, user, new_status)
+        await airlock_request_repo.update_airlock_request(mock_existing_request, user, new_status)
 
 
 @patch("db.repositories.airlock_requests.AirlockRequestRepository.update_airlock_request_item", side_effect=[CosmosAccessConditionFailedError, None])
 @patch("db.repositories.airlock_requests.AirlockRequestRepository.get_airlock_request_by_id", return_value=airlock_request_mock(status=DRAFT))
-def test_update_airlock_request_should_retry_update_when_etag_is_not_up_to_date(_, update_airlock_request_item_mock, airlock_request_repo):
+async def test_update_airlock_request_should_retry_update_when_etag_is_not_up_to_date(_, update_airlock_request_item_mock, airlock_request_repo):
     expected_update_attempts = 2
     user = create_test_user()
     mock_existing_request = airlock_request_mock(status=DRAFT)
-    airlock_request_repo.update_airlock_request(original_request=mock_existing_request, updated_by=user, new_status=SUBMITTED)
+    await airlock_request_repo.update_airlock_request(original_request=mock_existing_request, updated_by=user, new_status=SUBMITTED)
     assert update_airlock_request_item_mock.call_count == expected_update_attempts
 
 
-def test_get_airlock_requests_queries_db(airlock_request_repo):
+async def test_get_airlock_requests_queries_db(airlock_request_repo):
     airlock_request_repo.container.query_items = MagicMock()
     expected_query = airlock_request_repo.airlock_requests_query() + f' WHERE c.workspaceId = "{WORKSPACE_ID}"'
     expected_parameters = [
@@ -146,5 +151,5 @@ def test_get_airlock_requests_queries_db(airlock_request_repo):
         {"name": "@type", "value": None},
     ]
 
-    airlock_request_repo.get_airlock_requests(WORKSPACE_ID)
+    await airlock_request_repo.get_airlock_requests(WORKSPACE_ID)
     airlock_request_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=expected_parameters, enable_cross_partition_query=True)

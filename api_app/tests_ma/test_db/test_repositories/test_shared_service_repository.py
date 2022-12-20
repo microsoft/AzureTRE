@@ -1,27 +1,34 @@
+from unittest.mock import AsyncMock
 import pytest
-from mock import patch, MagicMock
+import pytest_asyncio
+from mock import patch
 
-from db.errors import DuplicateEntity, EntityDoesNotExist, ResourceIsNotDeployed
+from db.errors import DuplicateEntity, EntityDoesNotExist
 from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.operations import OperationRepository
 from models.domain.shared_service import SharedService
 from models.domain.resource import ResourceType
 from models.schemas.shared_service import SharedServiceInCreate
 
+pytestmark = pytest.mark.asyncio
 
 SHARED_SERVICE_ID = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
 
 
-@pytest.fixture
-def shared_service_repo():
-    with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-        yield SharedServiceRepository(cosmos_client_mock)
+@pytest_asyncio.fixture
+async def shared_service_repo():
+    with patch('db.repositories.base.BaseRepository._get_container', return_value=AsyncMock()):
+        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
+            shared_service_repo = await SharedServiceRepository.create(cosmos_client_mock)
+            yield shared_service_repo
 
 
-@pytest.fixture
-def operations_repo():
-    with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-        yield OperationRepository(cosmos_client_mock)
+@pytest_asyncio.fixture
+async def operations_repo():
+    with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
+        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
+            operations_repo = await OperationRepository.create(cosmos_client_mock)
+            yield operations_repo
 
 
 @pytest.fixture
@@ -48,51 +55,29 @@ def basic_shared_service_request():
         })
 
 
-def test_get_shared_service_by_id_returns_resource(shared_service_repo, shared_service, operations_repo):
-    service = shared_service
-
-    shared_service_repo.get_shared_service_by_id = MagicMock(return_value=service)
-    operations_repo.resource_has_deployed_operation = MagicMock(return_value=True)
-
-    actual_service = shared_service_repo.get_deployed_shared_service_by_id(SHARED_SERVICE_ID, operations_repo)
-
-    assert actual_service == service
-
-
-def test_get_shared_service_by_id_raises_if_does_not_exist(shared_service_repo):
-    shared_service_repo.query = MagicMock()
-    shared_service_repo.query.return_value = []
+async def test_get_shared_service_by_id_raises_if_does_not_exist(shared_service_repo):
+    shared_service_repo.query = AsyncMock(return_value=[])
 
     with pytest.raises(EntityDoesNotExist):
-        shared_service_repo.get_shared_service_by_id(SHARED_SERVICE_ID)
+        await shared_service_repo.get_shared_service_by_id(SHARED_SERVICE_ID)
 
 
-def test_get_shared_service_by_id_raises_resource_is_not_deployed(shared_service_repo, shared_service, operations_repo):
-    service = shared_service
+async def test_get_active_shared_services_for_shared_queries_db(shared_service_repo):
+    shared_service_repo.query = AsyncMock(return_value=[])
 
-    shared_service_repo.get_shared_service_by_id = MagicMock(return_value=service)
-    operations_repo.resource_has_deployed_operation = MagicMock(return_value=False)
-
-    with pytest.raises(ResourceIsNotDeployed):
-        shared_service_repo.get_deployed_shared_service_by_id(SHARED_SERVICE_ID, operations_repo)
-
-
-def test_get_active_shared_services_for_shared_queries_db(shared_service_repo):
-    shared_service_repo.query = MagicMock()
-    shared_service_repo.query.return_value = []
-
-    shared_service_repo.get_active_shared_services()
+    await shared_service_repo.get_active_shared_services()
 
     shared_service_repo.query.assert_called_once_with(query=SharedServiceRepository.active_shared_services_query())
 
 
 @patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template')
 @patch('core.config.TRE_ID', "1234")
-def test_create_shared_service_item_creates_a_shared_with_the_right_values(validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template):
+async def test_create_shared_service_item_creates_a_shared_with_the_right_values(validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template):
+    shared_service_repo.query = AsyncMock(return_value=[])
     shared_service_to_create = basic_shared_service_request
     validate_input_mock.return_value = basic_shared_service_template
 
-    shared_service, _ = shared_service_repo.create_shared_service_item(shared_service_to_create, [])
+    shared_service, _ = await shared_service_repo.create_shared_service_item(shared_service_to_create, [])
 
     assert shared_service.templateName == basic_shared_service_request.templateName
     assert shared_service.resourceType == ResourceType.SharedService
@@ -104,22 +89,24 @@ def test_create_shared_service_item_creates_a_shared_with_the_right_values(valid
 
 @patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template')
 @patch('core.config.TRE_ID', "1234")
-def test_create_shared_service_item_with_the_same_name_twice_fails(validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template):
+async def test_create_shared_service_item_with_the_same_name_twice_fails(validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template):
+    shared_service_repo.query = AsyncMock(return_value=[])
     validate_input_mock.return_value = basic_shared_service_template
 
-    shared_service, _ = shared_service_repo.create_shared_service_item(basic_shared_service_request, [])
-    shared_service_repo.save_item(shared_service)
+    shared_service, _ = await shared_service_repo.create_shared_service_item(basic_shared_service_request, [])
+    await shared_service_repo.save_item(shared_service)
 
-    shared_service_repo.query = MagicMock()
+    shared_service_repo.query = AsyncMock()
     shared_service_repo.query.return_value = [shared_service.__dict__]
 
     with pytest.raises(DuplicateEntity):
-        shared_service = shared_service_repo.create_shared_service_item(basic_shared_service_request, [])
+        shared_service = await shared_service_repo.create_shared_service_item(basic_shared_service_request, [])
 
 
 @patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template', side_effect=ValueError)
-def test_create_shared_item_raises_value_error_if_template_is_invalid(_, shared_service_repo, basic_shared_service_request):
+async def test_create_shared_item_raises_value_error_if_template_is_invalid(_, shared_service_repo, basic_shared_service_request):
+    shared_service_repo.query = AsyncMock(return_value=[])
     shared_service_to_create = basic_shared_service_request
 
     with pytest.raises(ValueError):
-        shared_service_repo.create_shared_service_item(shared_service_to_create, [])
+        await shared_service_repo.create_shared_service_item(shared_service_to_create, [])
