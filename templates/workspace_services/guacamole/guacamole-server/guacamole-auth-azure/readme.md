@@ -13,6 +13,8 @@ This extension works in the following manner:
 3. When connect request is made, the extension call the project api to get the password to the selected vm and inject it into the Guacamole configurations.
 
 ## OAuth2 Proxy
+
+
 - The extention uses [OAuth2_Proxy](https://github.com/oauth2-proxy/oauth2-proxy) which is a reverse proxy and static file server that provides authentication using Providers to validate accounts by email, domain or group.
 - The current version that is being used is **7.4.0.**
 - The main file that controls the behavior of the oauth2 proxy is the [run](/workspaces/AzureTRE/templates/workspace_services/guacamole/guacamole-server/docker/services/oauth/run) file, which contains all the runtime arguments.
