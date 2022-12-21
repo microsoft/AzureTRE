@@ -50,6 +50,7 @@ core_router.include_router(costs.costs_core_router, tags=["costs"])
 core_router.include_router(costs.costs_workspace_router, tags=["costs"])
 
 core_swagger_router = APIRouter()
+swagger_disabled_router = APIRouter()
 
 openapi_definitions: DefaultDict[str, Optional[Dict[str, Any]]] = defaultdict(lambda: None)
 
@@ -70,6 +71,11 @@ async def core_openapi(request: Request):
     return openapi_definitions["core"]
 
 
+@core_swagger_router.get('/docs/oauth2-redirect', include_in_schema=False)
+async def swagger_ui_redirect():
+    return get_swagger_ui_oauth2_redirect_html()
+
+
 @core_swagger_router.get("/docs", include_in_schema=False, name="core_swagger")
 async def get_swagger(request: Request):
     swagger_ui_html = get_swagger_ui_html(
@@ -86,9 +92,9 @@ async def get_swagger(request: Request):
     return swagger_ui_html
 
 
-@core_swagger_router.get('/docs/oauth2-redirect', include_in_schema=False)
-async def swagger_ui_redirect():
-    return get_swagger_ui_oauth2_redirect_html()
+@swagger_disabled_router.get("/docs", include_in_schema=False, name="swagger_disabled")
+async def get_disabled_swagger():
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Swagger is disabled. Set 'ENABLE_SWAGGER' to true in order to access Swagger.")
 
 
 # Workspace API
@@ -154,14 +160,6 @@ async def get_workspace_swagger(workspace_id, request: Request, workspace_repo=D
     )
 
     return swagger_ui_html
-
-
-swagger_disabled_router = APIRouter()
-
-
-@swagger_disabled_router.get("/docs", include_in_schema=False, name="swagger_disabled")
-async def get_disabled_swagger():
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Swagger is disabled. Set 'ENABLE_SWAGGER' to true in order to access Swagger.")
 
 
 if config.ENABLE_SWAGGER:
