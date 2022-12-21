@@ -153,6 +153,12 @@ variable "enable_airlock_malware_scanning" {
   description = "If False, Airlock requests will skip the malware scanning stage"
 }
 
+variable "rp_bundle_values" {
+  description = "Additional environment values to set on the resource processor that can be supplied to template bundles"
+  type        = map(string)
+  default     = {}
+}
+
 variable "ui_app_service" {
   type        = string
   description = "This is the App Service to be used for the UI."
