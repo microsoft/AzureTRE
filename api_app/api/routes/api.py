@@ -10,6 +10,7 @@ from db.repositories.workspaces import WorkspaceRepository
 from api.routes import health, ping, workspaces, workspace_templates, workspace_service_templates, user_resource_templates, \
     shared_services, shared_service_templates, migrations, costs, airlock, operations, metadata
 from core import config
+from resources import strings
 
 core_tags_metadata = [
     {"name": "health", "description": "Verify that the TRE is up and running"},
@@ -106,6 +107,7 @@ workspace_router.include_router(costs.costs_workspace_router, tags=["workspace c
 workspace_router.include_router(airlock.airlock_workspace_router, tags=["airlock"])
 
 workspace_swagger_router = APIRouter()
+workspace_swagger_disabled_router = APIRouter()
 
 
 def get_scope(workspace) -> str:
@@ -162,11 +164,17 @@ async def get_workspace_swagger(workspace_id, request: Request, workspace_repo=D
     return swagger_ui_html
 
 
+@workspace_swagger_disabled_router.get("/workspaces/{workspace_id}/docs", include_in_schema=False, name="workspace_swagger_disabled")
+async def get_disabled_workspace_swagger():
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.SWAGGER_DISABLED)
+
+
 if config.ENABLE_SWAGGER:
     core_router.include_router(core_swagger_router)
     workspace_router.include_router(workspace_swagger_router)
 else:
     core_router.include_router(swagger_disabled_router)
+    workspace_router.include_router(workspace_swagger_disabled_router)
 
 router.include_router(core_router)
 router.include_router(workspace_router)
