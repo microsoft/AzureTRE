@@ -236,14 +236,14 @@ async def create_workspace_service(response: Response, workspace_service_input: 
         # check workspace has address_spaces property
         if not workspace.properties.get("address_spaces"):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_DOES_NOT_HAVE_ADDRESS_SPACES_PROPERTY)
-        workspace_service.properties["address_space"] = workspace_repo.get_address_space_based_on_size(workspace_service_input.properties)
+        workspace_service.properties["address_space"] = await workspace_repo.get_address_space_based_on_size(workspace_service_input.properties)
         workspace_patch = ResourcePatch()
         workspace_patch.properties = {"address_spaces": workspace.properties["address_spaces"] + [workspace_service.properties["address_space"]]}
         # IP address allocation is managed by the API. Ideally this request would happen as a result of the workspace
         # service deployment via the reosurce processor. there is no such functionality so the database is being
         # updated directly, and an "update" on the workspace is called by the workspace service pipeline.
         try:
-            workspace_repo.patch_workspace(workspace, workspace_patch, workspace.etag, resource_template_repo, user, False)
+            await workspace_repo.patch_workspace(workspace, workspace_patch, workspace.etag, resource_template_repo, user, False)
         except CosmosAccessConditionFailedError:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
 
