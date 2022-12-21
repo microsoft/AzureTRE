@@ -95,7 +95,7 @@ async def get_swagger(request: Request):
 
 @swagger_disabled_router.get("/docs", include_in_schema=False, name="swagger_disabled")
 async def get_disabled_swagger():
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Swagger is disabled. Set 'ENABLE_SWAGGER' to true in order to access Swagger.")
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.SWAGGER_DISABLED)
 
 
 # Workspace API
