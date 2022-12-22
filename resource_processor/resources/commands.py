@@ -63,13 +63,15 @@ async def build_porter_command(config, logger, msg_body, custom_action=False):
 
     installation_id = get_installation_id(msg_body)
 
+    arm_use_msi = False if config["arm_use_msi"] == "false" else True
+
     command_line = [f"{azure_login_command(config)} && {azure_acr_login_command(config)} && porter"
                     # If a custom action (i.e. not install, uninstall, upgrade) we need to use 'invoke'
                     f"{' invoke --action' if custom_action else ''}"
                     f" {msg_body['action']} \"{installation_id}\""
                     f" --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
                     f" {porter_parameters} --allow-docker-host-access --force"
-                    f" --credential-set arm_auth"
+                    f"{' --credential-set arm_auth' if not arm_use_msi else ''}"
                     f" --credential-set aad_auth"
                     ]
     return command_line

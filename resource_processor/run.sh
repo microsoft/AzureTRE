@@ -59,7 +59,7 @@ az logout
 
 # Can't be in the image since DB connection is needed.
 echo "Applying credential sets..."
-porter credentials apply vmss_porter/arm_auth_local_debugging.json
+# porter credentials apply vmss_porter/arm_auth_local_debugging.json
 porter credentials apply vmss_porter/aad_auth.json
 
 # Launch the runner

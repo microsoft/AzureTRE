@@ -171,13 +171,13 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, mess
     if returncode != 0:
         error_message = "Error message: " + " ".join(err.split('\n')) + "; Command executed: " + " ".join(porter_command)
 
-        pass_despite_of_error = False
+        pass_despite_error = False
         if "uninstall" == action and "could not find installation" in err:
-            message_logger_adapter.warning("The installtion doesn't exist. Treating as a succussful action to allow the flow to proceed.")
-            pass_despite_of_error = True
-            error_message = f"A success despite of underlining error. {error_message}"
+            message_logger_adapter.warning("The installation doesn't exist. Treating as a successful action to allow the flow to proceed.")
+            pass_despite_error = True
+            error_message = f"A success despite of underlying error. {error_message}"
 
-        if pass_despite_of_error:
+        if pass_despite_error:
             status_for_sb_message = statuses.pass_status_string_for[action]
         else:
             status_for_sb_message = statuses.failed_status_string_for[action]
@@ -187,7 +187,7 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, mess
         # Post message on sb queue to notify receivers of action failure
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]))
         message_logger_adapter.info(f"{installation_id}: Porter action failed with error = {error_message}")
-        return pass_despite_of_error
+        return pass_despite_error
 
     else:
         # Get the outputs
