@@ -184,16 +184,22 @@ bundle-build:
 	&& if [ -d terraform ]; then terraform -chdir=terraform init -backend=false; terraform -chdir=terraform validate; fi \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} IMAGE_NAME_PREFIX=${IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_build.sh \
-	&& porter build --debug
+	&& porter build
 	$(MAKE) bundle-check-params
 
 bundle-install: bundle-check-params
 	$(call target_title, "Deploying ${DIR} with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
-	&& cd ${DIR} && porter install -p ./parameters.json \
-		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
-		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+	&& cd ${DIR} \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh .env \
+	&& porter parameters apply parameters.json \
+	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+	&& . ${MAKEFILE_DIR}/devops/scripts/porter_local_env.sh \
+	&& porter install --parameter-set $$(yq ".name" porter.yaml) \
+		--credential-set arm_auth \
+		--credential-set aad_auth \
 		--allow-docker-host-access --debug
 
 # Validates that the parameters file is synced with the bundle.
@@ -213,18 +219,30 @@ bundle-check-params:
 bundle-uninstall:
 	$(call target_title, "Uninstalling ${DIR} with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
-	&& cd ${DIR} && porter uninstall -p ./parameters.json \
-		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
-		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
+	&& cd ${DIR} \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh .env \
+	&& porter parameters apply parameters.json \
+	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+	&& porter uninstall --parameter-set $$(yq ".name" porter.yaml) \
+		--credential-set arm_auth \
+		--credential-set aad_auth \
 		--allow-docker-host-access --debug
 
 bundle-custom-action:
  	$(call target_title, "Performing:${ACTION} ${DIR} with Porter") \
  	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
- 	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json \
- 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
- 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
- 		--allow-docker-host-access --debug
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
+	&& cd ${DIR}
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh .env \
+	&& porter parameters apply parameters.json \
+	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+ 	&& porter invoke --action ${ACTION} --parameter-set $$(yq ".name" porter.yaml) \
+		--credential-set arm_auth \
+		--credential-set aad_auth \
+		--allow-docker-host-access --debug
 
 bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
@@ -234,7 +252,7 @@ bundle-publish:
 	&& cd ${DIR} \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_push.sh \
-	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --debug
+	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --force
 
 bundle-register:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
@@ -290,11 +308,11 @@ build-and-deploy-ui:
 	&& if [ "$${DEPLOY_UI}" != "false" ]; then ${MAKEFILE_DIR}/devops/scripts/build_deploy_ui.sh; else echo "UI Deploy skipped as DEPLOY_UI is false"; fi \
 
 prepare-for-e2e:
-	$(MAKE) workspace_bundle BUNDLE=base \
-	&& $(MAKE) workspace_service_bundle BUNDLE=guacamole \
-	&& $(MAKE) shared_service_bundle BUNDLE=gitea \
-	&& $(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-windowsvm \
-	&& $(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-linuxvm
+	$(MAKE) workspace_bundle BUNDLE=base
+	$(MAKE) workspace_service_bundle BUNDLE=guacamole
+	$(MAKE) shared_service_bundle BUNDLE=gitea
+	$(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-windowsvm
+	$(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-linuxvm
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \

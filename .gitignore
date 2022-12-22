@@ -115,8 +115,9 @@ templates/core/tre.env
 devops/auth.env
 private.env
 
-# Config
+# TRE Config
 config.yaml
+!resource_processor/vmss_porter/config.yaml
 
 # Spyder project settings
 .spyderproject

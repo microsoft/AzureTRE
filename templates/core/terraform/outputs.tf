@@ -42,12 +42,25 @@ output "state_store_resource_id" {
   value = azurerm_cosmosdb_account.tre_db_account.id
 }
 
+output "cosmosdb_mongo_resource_id" {
+  value = azurerm_cosmosdb_account.mongo.id
+}
+
 output "state_store_endpoint" {
   value = azurerm_cosmosdb_account.tre_db_account.endpoint
 }
 
+output "cosmosdb_mongo_endpoint" {
+  value     = azurerm_cosmosdb_account.mongo.connection_strings[0]
+  sensitive = true
+}
+
 output "state_store_account_name" {
   value = azurerm_cosmosdb_account.tre_db_account.name
+}
+
+output "cosmosdb_mongo_account_name" {
+  value = azurerm_cosmosdb_account.mongo.name
 }
 
 output "app_insights_connection_string" {

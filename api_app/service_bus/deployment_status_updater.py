@@ -81,10 +81,11 @@ class DeploymentStatusUpdater():
             complete_message = await self.update_status_in_database(message)
             logging.info(f"Update status in DB for {message.operationId} - {message.status}")
         except (json.JSONDecodeError, ValidationError) as e:
+            # TODO: consider changing to false so the message will end up in dead letter queue/status
             complete_message = True
             logging.error(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id} - {e}")
-        except Exception as e:
-            logging.info(f"Exception for: {msg.correlation_id} - {e}")
+        except Exception:
+            logging.exception(f"Exception processing message: {msg.correlation_id}")
 
         return complete_message
 
