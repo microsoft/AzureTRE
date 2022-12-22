@@ -3,7 +3,9 @@ name: Docker build
 
 on:  # yamllint disable-line rule:truthy
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - 'feature/**'
   workflow_dispatch:
 
 # for each ref (branch/pr) run just the most recent, cancel

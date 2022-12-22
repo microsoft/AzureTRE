@@ -5,7 +5,9 @@ set -e
 : "${RESOURCE_GROUP_NAME?"Check RESOURCE_GROUP_NAME is defined in ./templates/core/private.env"}"
 : "${SERVICE_BUS_RESOURCE_ID?"Check SERVICE_BUS_RESOURCE_ID is defined in ./templates/core/private.env"}"
 : "${STATE_STORE_RESOURCE_ID?"Check STATE_STORE_RESOURCE_ID is defined in ./templates/core/private.env"}"
+: "${COSMOSDB_MONGO_RESOURCE_ID?"Check COSMOSDB_MONGO_RESOURCE_ID is defined in ./templates/core/private.env"}"
 : "${COSMOSDB_ACCOUNT_NAME?"Check COSMOSDB_ACCOUNT_NAME is defined in ./templates/core/private.env"}"
+: "${COSMOSDB_MONGO_ACCOUNT_NAME?"Check COSMOSDB_MONGO_ACCOUNT_NAME is defined in ./templates/core/private.env"}"
 : "${AZURE_SUBSCRIPTION_ID?"Check AZURE_SUBSCRIPTION_ID is defined in ./templates/core/private.env"}"
 : "${EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID?"Check EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID is defined in ./templates/core/private.env"}"
 : "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID?"Check EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID is defined in ./templates/core/private.env"}"
@@ -25,6 +27,12 @@ fi
 echo "Adding local IP Address to ${COSMOSDB_ACCOUNT_NAME}. This may take a while . . . "
 az cosmosdb update \
   --name "${COSMOSDB_ACCOUNT_NAME}" \
+  --resource-group "${RESOURCE_GROUP_NAME}" \
+  --ip-range-filter "${IPADDR}"
+
+echo "Adding local IP Address to ${COSMOSDB_MONGO_ACCOUNT_NAME}. This may take a while . . . "
+az cosmosdb update \
+  --name "${COSMOSDB_MONGO_ACCOUNT_NAME}" \
   --resource-group "${RESOURCE_GROUP_NAME}" \
   --ip-range-filter "${IPADDR}"
 
@@ -65,6 +73,11 @@ az role assignment create \
     --role "Contributor" \
     --assignee "${LOGGED_IN_OBJECT_ID}" \
     --scope "${STATE_STORE_RESOURCE_ID}"
+
+az role assignment create \
+    --role "Contributor" \
+    --assignee "${LOGGED_IN_OBJECT_ID}" \
+    --scope "${COSMOSDB_MONGO_RESOURCE_ID}"
 
 az role assignment create \
     --role "EventGrid Data Sender" \

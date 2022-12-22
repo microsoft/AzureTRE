@@ -59,18 +59,24 @@ write_files:
       set -o errexit
       used_percent=$(df / --output=pcent | tail -1 | sed 's/[^0-9]//g')
       echo "Used disk space percent: $${used_percent}"
-      if (( used_percent > 70 )); then
+      if (( used_percent > 75 )); then
         echo "Free space too low, pruning..."
         docker system prune -f
       fi
     permissions: '0755'
 
 runcmd:
+  # Those are useful live debug commands. Check the docs for details
+  # TODO: add link to docs
+  - printf '\nalias dlf="docker logs --since 1m --follow"' >> /etc/bash.bashrc
+  - printf '\nalias dlf1='\''dlf $(docker ps -q | head -n 1)'\''' >> /etc/bash.bashrc
+  - printf '\nalias rpstatus='\''tmux new-session -d "watch docker ps"; tmux split-window -p 100 -v "docker logs --since 1m --follow resource_processor1"; tmux split-window -v -p 90; tmux -2 attach-session -d'\''\n' >> /etc/bash.bashrc
+
   - export DEBIAN_FRONTEND=noninteractive
   - az login --identity -u ${vmss_msi_id}
   - az acr login --name ${docker_registry_server}
   - docker run -d -p 8080:8080 -v /var/run/docker.sock:/var/run/docker.sock
     --restart always --env-file .env
-    --name resource_processor_vmss_porter1
+    --name resource_processor1
     --log-driver local
     ${docker_registry_server}/${resource_processor_vmss_porter_image_repository}:${resource_processor_vmss_porter_image_tag}
