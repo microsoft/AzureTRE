@@ -26,13 +26,13 @@ resource "azurerm_firewall" "fw" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_management_lock" "fw" {
-  count      = var.stateful_resources_locked ? 1 : 0
-  name       = azurerm_firewall.fw.name
-  scope      = azurerm_firewall.fw.id
-  lock_level = "CanNotDelete"
-  notes      = "Locked to prevent accidental deletion"
-}
+# resource "azurerm_management_lock" "fw" {
+#   count      = var.stateful_resources_locked ? 1 : 0
+#   name       = azurerm_firewall.fw.name
+#   scope      = azurerm_firewall.fw.id
+#   lock_level = "CanNotDelete"
+#   notes      = "Locked to prevent accidental deletion"
+# }
 
 data "azurerm_monitor_diagnostic_categories" "firewall" {
   resource_id = azurerm_firewall.fw.id
@@ -45,7 +45,7 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
   log_analytics_destination_type = "AzureDiagnostics"
 
   dynamic "log" {
-    for_each = data.azurerm_monitor_diagnostic_categories.firewall.logs
+    for_each = data.azurerm_monitor_diagnostic_categories.firewall.log_category_types
     content {
       category = log.value
       enabled  = contains(local.firewall_diagnostic_categories_enabled, log.value) ? true : false

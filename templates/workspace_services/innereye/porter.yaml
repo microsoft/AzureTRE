@@ -60,40 +60,40 @@ install:
         - login
       flags:
         identity:
-        username: "{{ bundle.credentials.azure_client_id}}"
+        username: ${ bundle.credentials.azure_client_id}
   - az:
       description: "acr login"
       arguments:
         - acr
         - login
       flags:
-        name: "{{ bundle.parameters.mgmt_acr_name }}"
+        name: ${ bundle.parameters.mgmt_acr_name }
   - exec:
       description: "Install Azure ML service"
       command: ./install_service_azureml.sh
   - terraform:
       description: "Deploy service"
       vars:
-        workspace_id: "{{ bundle.parameters.workspace_id }}"
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
         inference_sp_client_id:
-          "{{ bundle.parameters.inference_sp_client_id }}"
+          ${ bundle.parameters.inference_sp_client_id }
         inference_sp_client_secret:
-          "{{ bundle.parameters.inference_sp_client_secret }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+          ${ bundle.parameters.inference_sp_client_secret }
+        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
+        arm_client_id: ${ bundle.credentials.azure_client_id }
         arm_client_secret:
-          "{{ bundle.credentials.azure_client_secret }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+          ${ bundle.credentials.azure_client_secret }
+        arm_use_msi: ${ bundle.parameters.arm_use_msi }
       backendConfig:
         resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
+          ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+          ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
         key:
-          "tre-service-innereye-{{ bundle.parameters.id }}"
+          "tre-service-innereye-${ bundle.parameters.id }
       outputs:
         - name: azureml_compute_cluster_name
 
@@ -108,21 +108,21 @@ uninstall:
   - terraform:
       description: "Tear down workspace"
       vars:
-        workspace_id: "{{ bundle.parameters.workspace_id }}"
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        inference_sp_client_id: "{{ bundle.parameters.inference_sp_client_id }}"
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        inference_sp_client_id: ${ bundle.parameters.inference_sp_client_id }
         inference_sp_client_secret:
-          "{{ bundle.parameters.inference_sp_client_secret }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+          ${ bundle.parameters.inference_sp_client_secret }
+        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
+        arm_client_id: ${ bundle.credentials.azure_client_id }
         arm_client_secret:
-          "{{ bundle.credentials.azure_client_secret }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+          ${ bundle.credentials.azure_client_secret }
+        arm_use_msi: ${ bundle.parameters.arm_use_msi }
       backendConfig:
         resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
+          ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "tre-service-innereye-{{ bundle.parameters.id }}"
+          ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: "tre-service-innereye-${ bundle.parameters.id }
