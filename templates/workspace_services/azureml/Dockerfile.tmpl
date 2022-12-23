@@ -1,20 +1,14 @@
 # syntax=docker/dockerfile-upstream:1.4.0
-FROM debian:stretch-slim
+FROM debian:bullseye-slim
 
 # PORTER_INIT
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
-# Install Azure CLI
+# Install jq
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
     apt-get update \
-    && apt-get install --no-install-recommends -y ca-certificates jq curl apt-transport-https lsb-release gnupg \
-    && curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null \
-    && AZ_REPO=$(lsb_release -cs) \
-    && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list \
-    && apt-get update && apt-get install --no-install-recommends -y azure-cli
-
-RUN az extension add --name azure-firewall
+    && apt-get install --no-install-recommends -y jq
 
 # PORTER_MIXINS
 
