@@ -43,7 +43,7 @@ RUN apt-get update && apt-get install -y ca-certificates curl gnupg lsb-release 
 
 # Install Certbot
 RUN if [ "${INTERACTIVE}" = "true" ]; then \
-    apt-get update && apt-get install -y python3 python3-venv libaugeas0 --no-install-recommends \
+    apt-get update && apt-get install -y libaugeas0 --no-install-recommends \
     && python3 -m venv /opt/certbot/ \
     && /opt/certbot/bin/pip install --no-cache-dir --upgrade pip \
     && /opt/certbot/bin/pip install --no-cache-dir certbot \
