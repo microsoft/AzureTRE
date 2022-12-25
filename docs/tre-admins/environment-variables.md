@@ -25,6 +25,7 @@
 | `TRE_URL`| This will be generated for you by populating your `TRE_ID`. This is used so that you can automatically register bundles |
 | `CORE_ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. `/22` or larger. |
 | `TRE_ADDRESS_SPACE` | The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). E.g. `10.0.0.0/12`|
+| `ENABLE_SWAGGER` | Determines whether the Swagger interface for the API will be available. |
 | `SWAGGER_UI_CLIENT_ID` | Generated when following [pre-deployment steps](./setup-instructions/setup-auth-entities.md) guide. Client ID for swagger client to make requests. |
 | `AAD_TENANT_ID` | Generated when following [pre-deployment steps](./setup-instructions/setup-auth-entities.md) guide. Tenant id against which auth is performed. |
 | `API_CLIENT_ID` | Generated when following [pre-deployment steps](./setup-instructions/setup-auth-entities.md) guide. Client id of the "TRE API". |

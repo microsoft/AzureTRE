@@ -88,6 +88,9 @@ on:  # yamllint disable-line rule:truthy
       TRE_ADDRESS_SPACE:
         description: ""
         required: true
+      ENABLE_SWAGGER:
+        description: ""
+        required: false
       TRE_ID:
         description: ""
         required: true
@@ -292,6 +295,7 @@ jobs:
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
           CORE_ADDRESS_SPACE: ${{ secrets.CORE_ADDRESS_SPACE }}
           TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
+          ENABLE_SWAGGER: ${{ secrets.ENABLE_SWAGGER }}
           SWAGGER_UI_CLIENT_ID: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           API_CLIENT_SECRET: "${{ secrets.API_CLIENT_SECRET }}"
           APPLICATION_ADMIN_CLIENT_ID: "${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}"

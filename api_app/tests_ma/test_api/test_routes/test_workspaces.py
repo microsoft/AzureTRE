@@ -1,4 +1,5 @@
 import uuid
+from pydantic import Field
 import pytest
 from mock import patch
 
@@ -651,6 +652,60 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
         assert response.status_code == status.HTTP_202_ACCEPTED
         assert response.json()["operation"]["resourceId"] == SERVICE_ID
+
+    # [POST] /workspaces/{workspace_id}/workspace-services
+    @ patch("api.routes.workspaces.save_and_deploy_resource", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
+    @ patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+    @ patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_new_address_space", return_value="10.1.4.0/24")
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @ patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
+    @ patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item")
+    async def test_post_workspace_services_creates_workspace_service_with_address_space(self, create_workspace_service_item_mock, __, get_workspace_mock, resource_template_repo, ___, update_item_mock, ____, _____, app, client, workspace_service_input, basic_workspace_service_template, basic_resource_template):
+        etag = "some-etag-value"
+        workspace = sample_workspace()
+        workspace.properties["address_spaces"] = ["192.168.0.1/24"]
+        workspace.etag = etag
+        get_workspace_mock.return_value = workspace
+        basic_workspace_service_template.properties["address_space"]: str = Field()
+        create_workspace_service_item_mock.return_value = [sample_workspace_service(), basic_workspace_service_template]
+        basic_resource_template.properties["address_spaces"] = {"type": "array", "updateable": True}
+        resource_template_repo.side_effect = [basic_resource_template, basic_workspace_service_template]
+
+        modified_workspace = sample_workspace()
+        modified_workspace.isEnabled = True
+        modified_workspace.history = [ResourceHistoryItem(properties={'client_id': '12345', 'scope_id': 'test_scope_id', 'address_spaces': ["192.168.0.1/24"]}, templateVersion='0.1.0', isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
+        modified_workspace.resourceVersion = 1
+        modified_workspace.user = create_workspace_owner_user()
+        modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP
+        modified_workspace.properties["address_spaces"] = ["192.168.0.1/24", "10.1.4.0/24"]
+        modified_workspace.etag = etag
+        update_item_mock.return_value = modified_workspace
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
+
+        update_item_mock.assert_called_once_with(modified_workspace, etag)
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert response.json()["operation"]["resourceId"] == SERVICE_ID
+
+    # [POST] /workspaces/{workspace_id}/workspace-services
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_new_address_space", return_value="10.1.4.0/24")
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @ patch("api.routes.resource_helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
+    @ patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
+    @ patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item")
+    async def test_post_workspace_services_creates_workspace_service_with_address_space_workspace_has_no_address_spaces_property(self, create_workspace_service_item_mock, __, ___, get_workspace_mock, resource_template_repo, _____, app, client, workspace_service_input, basic_workspace_service_template, basic_resource_template):
+        workspace = sample_workspace()
+        get_workspace_mock.return_value = workspace
+        basic_workspace_service_template.properties["address_space"]: str = Field()
+        create_workspace_service_item_mock.return_value = [sample_workspace_service(), basic_workspace_service_template]
+        resource_template_repo.return_value = [basic_workspace_service_template, basic_resource_template]
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.text == strings.WORKSPACE_DOES_NOT_HAVE_ADDRESS_SPACES_PROPERTY
 
     # [POST] /workspaces/{workspace_id}/workspace-services
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
