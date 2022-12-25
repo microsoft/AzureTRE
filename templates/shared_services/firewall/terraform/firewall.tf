@@ -26,14 +26,6 @@ resource "azurerm_firewall" "fw" {
   lifecycle { ignore_changes = [tags] }
 }
 
-# resource "azurerm_management_lock" "fw" {
-#   count      = var.stateful_resources_locked ? 1 : 0
-#   name       = azurerm_firewall.fw.name
-#   scope      = azurerm_firewall.fw.id
-#   lock_level = "CanNotDelete"
-#   notes      = "Locked to prevent accidental deletion"
-# }
-
 data "azurerm_monitor_diagnostic_categories" "firewall" {
   resource_id = azurerm_firewall.fw.id
 }
