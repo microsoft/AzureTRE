@@ -1,8 +1,8 @@
 import logging
 import traceback
 
-from starlette.requests import Request
-from starlette.responses import PlainTextResponse
+from fastapi import Request
+from fastapi.responses import PlainTextResponse
 
 from core import config
 from resources import strings

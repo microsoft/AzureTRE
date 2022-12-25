@@ -4,8 +4,7 @@ from typing import Callable, Type
 from azure.cosmos.aio import CosmosClient
 from azure.mgmt.cosmosdb.aio import CosmosDBManagementClient
 from fastapi import Depends, FastAPI, HTTPException
-from starlette.requests import Request
-from starlette.status import HTTP_503_SERVICE_UNAVAILABLE
+from fastapi import Request, status
 from core import config
 from db.errors import UnableToAccessDatabase
 from db.repositories.base import BaseRepository
@@ -77,6 +76,6 @@ def get_repository(repo_type: Type[BaseRepository]) -> Callable[[CosmosClient], 
             return await repo_type.create(client)
         except UnableToAccessDatabase:
             logging.exception(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
-            raise HTTPException(status_code=HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     return _get_repo

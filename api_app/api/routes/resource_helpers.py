@@ -3,8 +3,7 @@ import logging
 from copy import deepcopy
 from typing import Dict, Any
 
-from fastapi import HTTPException
-from starlette import status
+from fastapi import HTTPException, status
 from db.repositories.resources import ResourceRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
