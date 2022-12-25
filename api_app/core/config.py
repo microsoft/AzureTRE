@@ -8,6 +8,7 @@ API_PREFIX = "/api"
 PROJECT_NAME: str = config("PROJECT_NAME", default="Azure TRE API")
 DEBUG: bool = config("DEBUG", cast=bool, default=False)
 ENABLE_LOCAL_DEBUGGING: bool = config("ENABLE_LOCAL_DEBUGGING", cast=bool, default=False)
+ENABLE_SWAGGER: bool = config("ENABLE_SWAGGER", cast=bool, default=False)
 VERSION = __version__
 API_DESCRIPTION = "Welcome to the Azure TRE API - for more information about templates and workspaces see the [Azure TRE documentation](https://microsoft.github.io/AzureTRE)"
 

@@ -44,6 +44,7 @@ resource "azurerm_linux_web_app" "api" {
     "MANAGED_IDENTITY_CLIENT_ID"                     = azurerm_user_assigned_identity.id.client_id
     "TRE_ID"                                         = var.tre_id
     "RESOURCE_LOCATION"                              = azurerm_resource_group.core.location
+    "ENABLE_SWAGGER"                                 = var.enable_swagger
     "SWAGGER_UI_CLIENT_ID"                           = var.swagger_ui_client_id
     "AAD_TENANT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.auth_tenant_id.id})"
     "API_CLIENT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_id.id})"
