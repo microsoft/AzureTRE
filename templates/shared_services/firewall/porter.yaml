@@ -45,10 +45,6 @@ parameters:
     type: string
     default: "W10=" # b64 for []
     description: "Network rule collection array"
-  # - name: stateful_resources_locked
-  #   env: STATEFUL_RESOURCES_LOCKED
-  #   type: boolean
-  #   default: true
 
 mixins:
   - terraform:
