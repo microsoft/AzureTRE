@@ -1,3 +1,4 @@
+import random
 import pytest
 import asyncio
 from typing import Tuple
@@ -61,6 +62,8 @@ async def create_or_get_test_workspace(
         payload["properties"]["client_secret"] = client_secret
 
     admin_token = await get_admin_token(verify=verify)
+    # TODO: Temp fix to solve creation of workspaces - https://github.com/microsoft/AzureTRE/issues/2986
+    await asyncio.sleep(random.uniform(1, 9))
     workspace_path, workspace_id = await post_resource(payload, resource_strings.API_WORKSPACES, access_token=admin_token, verify=verify)
 
     LOGGER.info(f"Workspace {workspace_id} {template_name} created")
