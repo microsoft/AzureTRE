@@ -148,6 +148,7 @@ SHARED_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace servi
 SHARED_SERVICE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
 
 ETAG_CONFLICT = "This document has been modified by another user or process since you last retrieved it. Please get the document again and retry."
+SWAGGER_DISABLED = "Swagger is disabled. Set 'ENABLE_SWAGGER' to true in order to access Swagger."
 
 # Resource Status
 RESOURCE_STATUS_AWAITING_DEPLOYMENT = "awaiting_deployment"
