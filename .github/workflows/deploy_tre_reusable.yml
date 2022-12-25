@@ -206,8 +206,12 @@ jobs:
         # failure in the first attempt indicates a new ACR, so we need to try again after it's been created
         if: steps.ci_cache_cr_login.outcome != 'success'
         run: |
-          # shellcheck disable=SC2034,SC2015
-          for i in {1..3}; do az acr login --name "${{ secrets.CI_CACHE_ACR_NAME }}" && ec=0 && break || ec=\$? && sleep 10; done; (exit \$ec)
+          # shellcheck disable=SC2034,SC2015,SC2125
+          for i in {1..3}; do
+            az acr login --name "${{ secrets.CI_CACHE_ACR_NAME }}" && ec=0 && break || ec=\$? && sleep 10
+          done
+          # shellcheck disable=SC2242
+          (exit \$ec)
 
       - name: Push cached devcontainer
         run: docker image push ${{ env.CI_CACHE_ACR_URI }}/tredev:${{ secrets.DEVCONTAINER_TAG }}

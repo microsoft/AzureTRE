@@ -1,3 +1,4 @@
+---
 default-storage: mydb
 default-secrets: mysecrets
 

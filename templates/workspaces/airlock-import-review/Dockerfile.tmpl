@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 
 ARG AZURE_TRE_VERSION="0.4.3"
 
-WORKDIR $BUNDLE_DIR
+WORKDIR ${BUNDLE_DIR}
 
 # Copy all files from base workspace (note: some of them will be overwritten with the following COPY command)
 RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/refs/tags/v${AZURE_TRE_VERSION}.tar.gz" \
@@ -22,7 +22,7 @@ RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/r
 # PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
-COPY --link . ${BUNDLE_DIR}
+COPY --link . ${BUNDLE_DIR}/
 
 # Apply patch with the difference from the base workspace
-RUN patch -p0 < $BUNDLE_DIR/workspace_base.diff
+RUN patch -p0 < "${BUNDLE_DIR}"/workspace_base.diff
