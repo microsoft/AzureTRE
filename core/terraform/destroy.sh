@@ -5,7 +5,7 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
-# This variables are loaded in for us
+# These variables are loaded in for us
 # shellcheck disable=SC2154
 ../../devops/scripts/terraform_wrapper.sh -g "${TF_VAR_mgmt_resource_group_name}" \
                                           -s "${TF_VAR_mgmt_storage_account_name}" \
