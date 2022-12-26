@@ -13,7 +13,7 @@ Once an Azure TRE has been [provisioned](../../tre-admins/setup-instructions/pre
 
 | Name | Azure Service | Description | Additional links
 |---|---|---|---|
-| {MGMT_STORAGE_ACCOUNT_NAME} | Storage Account | [Azure TRE Terraform and Porter state](../../tre-admins/setup-instructions/pre-deployment-steps)  | [Storage Blobs](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview)
+| {MGMT_STORAGE_ACCOUNT_NAME} | Storage Account | [Azure TRE Terraform](../../tre-admins/setup-instructions/pre-deployment-steps)  | [Storage Blobs](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview)
 | {ACR_NAME} | Container Registry | [Azure TRE container images (Porter bundles)](../architecture/#composition-service) | [Container Registry](https://docs.microsoft.com/en-gb/azure/container-registry/container-registry-intro)
 
 ## Azure TRE Resource Group
@@ -42,7 +42,7 @@ Once an Azure TRE has been [provisioned](../../tre-admins/setup-instructions/pre
 | id-vmss-{TRE_ID} | Managed Identity | User-managed identity for TRE Resource Processer (VMSS) | [Managed Identities](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview)
 | sb-{TRE_ID} | Service Bus Namespace | Messaging for TRE API | [Service Bus](https://docs.microsoft.com/en-us/azure/service-bus-messaging/service-bus-messaging-overview)
 | stappinsights{TRE_ID} | Storage Account | Storage for TRE Application Insights telemetry logs | [Storage Blobs](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview)
-| stg{TRE_ID} | Storage Account | Files shares for TRE services such as Porter, Gitea, Nexus | [Storage Files](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-introduction)
+| stg{TRE_ID} | Storage Account | Files shares for TRE services such as Gitea, Nexus | [Storage Files](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-introduction)
 | stweb{TRE_ID} | Storage Account | Storage for [Azure TRE Let's Encrypt](../../tre-admins/setup-instructions/deploying-azure-tre) | [Storage Blob](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview)
 | vm-{TRE_ID} | Virtual Machine | [Azure TRE VM (jumpbox)](https://microsoft.github.io/AzureTRE/tre-admins/setup-instructions/configuring-shared-services) | [Windows Virtual Machine](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/overview)
 | vm-{TRE_ID} | Virtual Machine Scale Set | [Azure TRE Resource Processor](../../tre-developers/resource-processor) | [Virtual Machine Scale Sets](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview)
