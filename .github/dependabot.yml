@@ -1,0 +1,33 @@
+---
+version: 2
+updates:
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "npm"
+    directory: "/ui/app"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "maven"
+    directory: "/templates/workspace_services/guacamole/guacamole-server/guacamole-auth-azure"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/devops/terraform"
+    schedule:
+      interval: "monthly"
+
+  - package-ecosystem: "terraform"
+    directory: "/templates/core/terraform"
+    schedule:
+      interval: "monthly"
