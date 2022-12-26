@@ -21,7 +21,9 @@
     // Mounts the login details from the host machine to azcli works in the container
     "type=bind,source=${env:HOME}${env:USERPROFILE}/.azure,target=/home/vscode/.azure",
     // Mount docker socket for docker builds
-    "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
+    "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock",
+    // Mounts the github cli login details from the host machine to the container (~/.config/gh/hosts.yml)
+    "type=bind,source=${env:HOME}${env:USERPROFILE}/.config,target=/home/vscode/.config",
   ],
   "remoteUser": "vscode",
   "containerEnv": {

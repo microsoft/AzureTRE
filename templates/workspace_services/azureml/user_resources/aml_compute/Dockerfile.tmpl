@@ -1,9 +1,9 @@
-FROM debian:stretch-slim
+# syntax=docker/dockerfile-upstream:1.4.0
+FROM debian:bullseye-slim
 
-ARG BUNDLE_DIR
-
-COPY . $BUNDLE_DIR
+# PORTER_INIT
 
 # PORTER_MIXINS
 
-WORKDIR $BUNDLE_DIR
+# Use the BUNDLE_DIR build argument to copy files into the bundle
+COPY --link . ${BUNDLE_DIR}/

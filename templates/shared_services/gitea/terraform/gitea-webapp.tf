@@ -128,7 +128,7 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
   dynamic "log" {
-    for_each = data.azurerm_monitor_diagnostic_categories.webapp.logs
+    for_each = data.azurerm_monitor_diagnostic_categories.webapp.log_category_types
     content {
       category = log.value
       enabled  = contains(local.webapp_diagnostic_categories_enabled, log.value) ? true : false

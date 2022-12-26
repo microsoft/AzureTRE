@@ -3,7 +3,7 @@
   "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/base/template_schema.json",
   "type": "object",
   "title": "Base Workspace",
-  "description": "This workspace template is the foundation for TRE workspaces and workspace services.",
+  "description": "This workspace template is the foundation for TRE workspaces.",
   "required": [
     "auth_type",
     "address_space_size"
