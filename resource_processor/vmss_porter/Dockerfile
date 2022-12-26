@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
     export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh
 
-# TODO: remove v0
+# TODO: Remove porter v0 https://github.com/microsoft/AzureTRE/issues/2990
 # Install Porter
 ARG PORTER_MIRROR=https://cdn.porter.sh
 ARG PORTER_VERSION=v0.38.13

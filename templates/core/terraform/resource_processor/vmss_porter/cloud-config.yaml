@@ -66,8 +66,8 @@ write_files:
     permissions: '0755'
 
 runcmd:
-  # Those are useful live debug commands. Check the docs for details
-  # TODO: add link to docs
+  # Those are useful live debug commands. Check the docs for details:
+  # (https://microsoft.github.io/AzureTRE/troubleshooting-faq/troubleshooting-rp/#Logs)
   - printf '\nalias dlf="docker logs --since 1m --follow"' >> /etc/bash.bashrc
   - printf '\nalias dlf1='\''dlf $(docker ps -q | head -n 1)'\''' >> /etc/bash.bashrc
   - printf '\nalias rpstatus='\''tmux new-session -d "watch docker ps"; tmux split-window -p 100 -v "docker logs --since 1m --follow resource_processor1"; tmux split-window -v -p 90; tmux -2 attach-session -d'\''\n' >> /etc/bash.bashrc

@@ -81,7 +81,7 @@ class DeploymentStatusUpdater():
             complete_message = await self.update_status_in_database(message)
             logging.info(f"Update status in DB for {message.operationId} - {message.status}")
         except (json.JSONDecodeError, ValidationError) as e:
-            # TODO: consider changing to false so the message will end up in dead letter queue/status
+            # TODO: should move to dead letter queue https://github.com/microsoft/AzureTRE/issues/2991
             complete_message = True
             logging.error(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id} - {e}")
         except Exception:

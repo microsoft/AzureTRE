@@ -8,7 +8,7 @@ set -o nounset
 
 # Generate required configuration for Porter Azure plugin
 
-# TODO: remove with removal of porter v0
+# TODO: Remove porter v0 https://github.com/microsoft/AzureTRE/issues/2990
 # Documentation here: - https://github.com/vdice/porter-bundles/tree/master/azure-keyvault
 cat > /"${PORTER_HOME_V0}"/config.toml << EOF
 default-storage = "azurestorage"
@@ -31,7 +31,7 @@ plugin = "azure.keyvault"
 vault = "${KEY_VAULT_NAME}"
 EOF
 
-# TODO: remove with removal of porter v0
+# TODO: Remove porter v0 https://github.com/microsoft/AzureTRE/issues/2990
 echo "Azure cli login..."
 az login --identity -u "${VMSS_MSI_ID}"
 
