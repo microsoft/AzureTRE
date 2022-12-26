@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import parse_obj_as
-from starlette import status
 
 from api.dependencies.database import get_repository
 from db.errors import EntityVersionExist
