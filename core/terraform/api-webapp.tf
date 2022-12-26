@@ -1,5 +1,5 @@
 data "local_file" "api_app_version" {
-  filename = "${path.root}/../../../api_app/_version.py"
+  filename = "${path.root}/../../api_app/_version.py"
 }
 
 locals {
