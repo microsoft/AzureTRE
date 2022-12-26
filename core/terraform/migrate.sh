@@ -5,6 +5,8 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
+terraform_wrapper_path="../../devops/scripts/terraform_wrapper.sh"
+
 # This variables are loaded in for us
 # shellcheck disable=SC2154
 terraform init -input=false -backend=true -reconfigure \
@@ -64,7 +66,7 @@ if [ -n "${app_insights_via_arm}" ]; then
 
   # This variables are loaded in for us
   # shellcheck disable=SC2154
-  ../../../devops/scripts/terraform_wrapper.sh \
+  "${terraform_wrapper_path}" \
     -g "${TF_VAR_mgmt_resource_group_name}" \
     -s "${TF_VAR_mgmt_storage_account_name}" \
     -n "${TF_VAR_terraform_state_container_name}" \
@@ -93,7 +95,7 @@ if [ -n "${core_plan}" ] && [ -n "${api_diag}" ]; then
 
     # This variables are loaded in for us
     # shellcheck disable=SC2154
-    ../../../devops/scripts/terraform_wrapper.sh \
+    "${terraform_wrapper_path}" \
       -g "${TF_VAR_mgmt_resource_group_name}" \
       -s "${TF_VAR_mgmt_storage_account_name}" \
       -n "${TF_VAR_terraform_state_container_name}" \
@@ -124,7 +126,7 @@ if [ -n "${airlock_vnet_integration}" ]; then
 
   # This variables are loaded in for us
   # shellcheck disable=SC2154
-  ../../../devops/scripts/terraform_wrapper.sh \
+  "${terraform_wrapper_path}" \
     -g "${TF_VAR_mgmt_resource_group_name}" \
     -s "${TF_VAR_mgmt_storage_account_name}" \
     -n "${TF_VAR_terraform_state_container_name}" \
@@ -146,7 +148,7 @@ if [ -n "${api_vnet_integration}" ]; then
 
   # This variables are loaded in for us
   # shellcheck disable=SC2154
-  ../../../devops/scripts/terraform_wrapper.sh \
+  "${terraform_wrapper_path}" \
     -g "${TF_VAR_mgmt_resource_group_name}" \
     -s "${TF_VAR_mgmt_storage_account_name}" \
     -n "${TF_VAR_terraform_state_container_name}" \

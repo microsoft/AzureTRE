@@ -174,7 +174,7 @@
           "console": "integratedTerminal",
           "preLaunchTask": "Install_resource_processor_dependencies",
           "cwd": "${workspaceFolder}/resource_processor",
-          "envFile": "${workspaceFolder}/templates/core/private.env",
+          "envFile": "${workspaceFolder}/core/private.env",
           "env": {
             "PYTHONPATH": "."
           }

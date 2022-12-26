@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-script_dir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
+script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
 if [[ -z ${STORAGE_ACCOUNT} ]]; then
   echo "STORAGE_ACCOUNT not set"
@@ -44,7 +44,7 @@ else
   az storage account network-rule add \
     --account-name "${STORAGE_ACCOUNT}" \
     --resource-group "${RESOURCE_GROUP_NAME}" \
-    --ip-address $IPADDR
+    --ip-address "$IPADDR"
 
 fi
 
@@ -60,6 +60,7 @@ cat << EOF > index.html
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><title></title></head><body></body></html>
 EOF
 
+# shellcheck disable=SC2016
 indexExists=$(az storage blob list -o json \
     --account-name "${STORAGE_ACCOUNT}" \
     --auth-mode login \
@@ -70,6 +71,7 @@ indexExists=$(az storage blob list -o json \
 if [[ ${indexExists} -lt 1 ]]; then
     echo "Uploading index.html file"
 
+    # shellcheck disable=SC2016
     az storage blob upload \
         --account-name "${STORAGE_ACCOUNT}" \
         --auth-mode login \
@@ -92,14 +94,14 @@ mkdir -p "${ledir}/logs"
 
 # Initiate the ACME challange
 /opt/certbot/bin/certbot certonly \
-    --config-dir ${ledir} \
-    --work-dir ${ledir} \
-    --logs-dir ${ledir}/logs \
+    --config-dir "${ledir}" \
+    --work-dir "${ledir}" \
+    --logs-dir "${ledir}"/logs \
     --manual \
     --preferred-challenges=http \
-    --manual-auth-hook ${script_dir}/auth-hook.sh \
-    --manual-cleanup-hook ${script_dir}/cleanup-hook.sh \
-    --domain $FQDN \
+    --manual-auth-hook "${script_dir}"/auth-hook.sh \
+    --manual-cleanup-hook "${script_dir}"/cleanup-hook.sh \
+    --domain "$FQDN" \
     --non-interactive \
     --agree-tos \
     --register-unsafely-without-email
@@ -116,7 +118,7 @@ openssl pkcs12 -export \
 if [[ -n ${KEYVAULT} ]]; then
     sid=$(az keyvault certificate import \
         -o json \
-        --vault-name ${KEYVAULT} \
+        --vault-name "${KEYVAULT}" \
         --name 'letsencrypt' \
         --file "${CERT_DIR}/aci.pfx" \
         --password "${CERT_PASSWORD}" \
@@ -148,8 +150,8 @@ else
 
   echo "Ressetting network rule on storage account (removing $IPADDR from allow list)"
   az storage account network-rule remove \
-    --account-name ${STORAGE_ACCOUNT} \
+    --account-name "${STORAGE_ACCOUNT}" \
     --resource-group "${RESOURCE_GROUP_NAME}" \
-    --ip-address ${IPADDR}
+    --ip-address "${IPADDR}"
 
 fi

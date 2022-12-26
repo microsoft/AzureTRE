@@ -1,5 +1,5 @@
 data "local_file" "airlock_processor_version" {
-  filename = "${path.root}/../../../airlock_processor/_version.py"
+  filename = "${path.root}/../../airlock_processor/_version.py"
 }
 
 locals {
