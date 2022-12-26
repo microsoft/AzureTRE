@@ -126,8 +126,9 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
 resource "azurerm_storage_account_network_rules" "sa_export_inprogress_rules" {
   storage_account_id = azurerm_storage_account.sa_export_inprogress.id
 
-  # When the Airlock procssor tried to copy data from the export in-progress SA to the Export approved SA, its not using the PE, as the destination is public, hence, allowing this subnet is mandatory
-  # It might be possible to add PE to this storage instead of opening the fw to this subnet: https://github.com/microsoft/AzureTRE/issues/2098
+  # The Airlock processor is unable to copy blobs from the export-inprogress storage account when the only method of access from the Airlock processor is a private endpoint in the core VNet,
+  # so we need to allow the Airlock processor subnet to access this storage account without using a private endpoint.
+  # https://github.com/microsoft/AzureTRE/issues/2098
   virtual_network_subnet_ids = [var.airlock_processor_subnet_id]
 
   default_action = var.enable_local_debugging ? "Allow" : "Deny"
