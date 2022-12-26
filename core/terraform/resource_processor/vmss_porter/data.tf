@@ -1,5 +1,5 @@
 data "local_file" "version" {
-  filename = "${path.module}/../../../../../resource_processor/_version.py"
+  filename = "${path.module}/../../../../resource_processor/_version.py"
 }
 
 data "azurerm_subscription" "current" {}
