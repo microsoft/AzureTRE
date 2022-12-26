@@ -220,7 +220,7 @@ async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspa
 
 
 @workspace_services_workspace_router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
-async def create_workspace_service(response: Response, workspace_service_input: WorkspaceServiceInCreate, user=Depends(get_current_workspace_owner_user), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> OperationInResponse:
+async def create_workspace_service(response: Response, workspace_service_input: WorkspaceServiceInCreate, user=Depends(get_current_workspace_owner_user), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> OperationInResponse:
 
     try:
         workspace_service, resource_template = await workspace_service_repo.create_workspace_service_item(workspace_service_input, workspace.id, user.roles)
@@ -230,6 +230,22 @@ async def create_workspace_service(response: Response, workspace_service_input: 
     except UserNotAuthorizedToUseTemplate as e:
         logging.error(f"User not authorized to use template: {e}")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+    # if template has address_space get an address space
+    if resource_template.properties.get("address_space"):
+        # check workspace has address_spaces property
+        if not workspace.properties.get("address_spaces"):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_DOES_NOT_HAVE_ADDRESS_SPACES_PROPERTY)
+        workspace_service.properties["address_space"] = await workspace_repo.get_address_space_based_on_size(workspace_service_input.properties)
+        workspace_patch = ResourcePatch()
+        workspace_patch.properties = {"address_spaces": workspace.properties["address_spaces"] + [workspace_service.properties["address_space"]]}
+        # IP address allocation is managed by the API. Ideally this request would happen as a result of the workspace
+        # service deployment via the reosurce processor. there is no such functionality so the database is being
+        # updated directly, and an "update" on the workspace is called by the workspace service pipeline.
+        try:
+            await workspace_repo.patch_workspace(workspace, workspace_patch, workspace.etag, resource_template_repo, user, False)
+        except CosmosAccessConditionFailedError:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
 
     operation = await save_and_deploy_resource(
         resource=workspace_service,

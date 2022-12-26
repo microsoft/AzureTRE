@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.7.7
+version: 0.8.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -154,6 +154,10 @@ install:
         enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
         register_aad_application: "{{ bundle.parameters.register_aad_application }}"
         create_aad_groups: "{{ bundle.parameters.create_aad_groups }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
         auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
@@ -183,7 +187,7 @@ install:
 
 upgrade:
   - terraform:
-      description: "Deploy workspace"
+      description: "Upgrade workspace"
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
@@ -193,6 +197,10 @@ upgrade:
         enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
         register_aad_application: "{{ bundle.parameters.register_aad_application }}"
         create_aad_groups: "{{ bundle.parameters.create_aad_groups }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
         auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
@@ -249,6 +257,10 @@ uninstall:
         enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
         register_aad_application: "{{ bundle.parameters.register_aad_application }}"
         create_aad_groups: "{{ bundle.parameters.create_aad_groups }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
         auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
