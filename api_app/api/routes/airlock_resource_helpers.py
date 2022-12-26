@@ -3,8 +3,7 @@ from collections import defaultdict
 import logging
 from typing import List
 
-from fastapi import HTTPException
-from starlette import status
+from fastapi import HTTPException, status
 
 from api.routes.resource_helpers import send_uninstall_message
 from models.domain.user_resource import UserResource
