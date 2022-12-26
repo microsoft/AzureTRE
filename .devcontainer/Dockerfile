@@ -52,7 +52,7 @@ RUN if [ "${INTERACTIVE}" = "true" ]; then \
 # Install Porter
 # Not using the script from https://cdn.porter.sh/latest/install-linux.sh
 # as it installs things we don't need and duplicates the binary.
-# TODO: Remove Porter v0
+# TODO: Remove Porter v0 https://github.com/microsoft/AzureTRE/issues/2990
 ARG PORTER_MIRROR=https://cdn.porter.sh
 ARG PORTER_VERSION=v0.38.13
 ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.0-rc.1
