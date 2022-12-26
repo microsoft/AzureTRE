@@ -23,4 +23,4 @@ Use the "Run and Debug" panel within Visual Studio Code, select "E2E Extended", 
 
 - This will copy `config.yaml` settings to `/workspaces/AzureTRE/e2e_tests/.env` for you which supplies your authentciation details
 
-- This will also use `/workspaces/AzureTRE/templates/core/private.env` file for other values.
+- This will also use `/workspaces/AzureTRE/core/private.env` file for other values.

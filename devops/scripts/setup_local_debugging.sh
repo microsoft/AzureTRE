@@ -1,16 +1,18 @@
 #!/bin/bash
 set -e
 
+private_env_path="./core/private.env"
+
 : "${TRE_ID?"You have not set your TRE_ID in ./config_yaml"}"
-: "${RESOURCE_GROUP_NAME?"Check RESOURCE_GROUP_NAME is defined in ./templates/core/private.env"}"
-: "${SERVICE_BUS_RESOURCE_ID?"Check SERVICE_BUS_RESOURCE_ID is defined in ./templates/core/private.env"}"
-: "${STATE_STORE_RESOURCE_ID?"Check STATE_STORE_RESOURCE_ID is defined in ./templates/core/private.env"}"
-: "${COSMOSDB_MONGO_RESOURCE_ID?"Check COSMOSDB_MONGO_RESOURCE_ID is defined in ./templates/core/private.env"}"
-: "${COSMOSDB_ACCOUNT_NAME?"Check COSMOSDB_ACCOUNT_NAME is defined in ./templates/core/private.env"}"
-: "${COSMOSDB_MONGO_ACCOUNT_NAME?"Check COSMOSDB_MONGO_ACCOUNT_NAME is defined in ./templates/core/private.env"}"
-: "${AZURE_SUBSCRIPTION_ID?"Check AZURE_SUBSCRIPTION_ID is defined in ./templates/core/private.env"}"
-: "${EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID?"Check EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID is defined in ./templates/core/private.env"}"
-: "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID?"Check EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID is defined in ./templates/core/private.env"}"
+: "${RESOURCE_GROUP_NAME?"Check RESOURCE_GROUP_NAME is defined in ${private_env_path}"}"
+: "${SERVICE_BUS_RESOURCE_ID?"Check SERVICE_BUS_RESOURCE_ID is defined in ${private_env_path}"}"
+: "${STATE_STORE_RESOURCE_ID?"Check STATE_STORE_RESOURCE_ID is defined in ${private_env_path}"}"
+: "${COSMOSDB_MONGO_RESOURCE_ID?"Check COSMOSDB_MONGO_RESOURCE_ID is defined in ${private_env_path}"}"
+: "${COSMOSDB_ACCOUNT_NAME?"Check COSMOSDB_ACCOUNT_NAME is defined in ${private_env_path}"}"
+: "${COSMOSDB_MONGO_ACCOUNT_NAME?"Check COSMOSDB_MONGO_ACCOUNT_NAME is defined in ${private_env_path}"}"
+: "${AZURE_SUBSCRIPTION_ID?"Check AZURE_SUBSCRIPTION_ID is defined in ${private_env_path}"}"
+: "${EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID?"Check EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID is defined in ${private_env_path}"}"
+: "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID?"Check EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID is defined in ${private_env_path}"}"
 
 set -o pipefail
 set -o nounset
@@ -115,11 +117,11 @@ az role assignment create \
 
 # Write the appId and secret to the private.env file which is used for RP debugging
 # First check if the env vars are there already and delete them
-sed -i '/ARM_CLIENT_ID/d' ./templates/core/private.env
-sed -i '/ARM_CLIENT_SECRET/d' ./templates/core/private.env
+sed -i '/ARM_CLIENT_ID/d' "${private_env_path}"
+sed -i '/ARM_CLIENT_SECRET/d' "${private_env_path}"
 
 # Append them to the TRE file so that the Resource Processor can use them
-tee -a ./templates/core/private.env <<EOF
+tee -a "${private_env_path}" <<EOF
 ARM_CLIENT_ID=${RP_TESTING_SP_APP_ID}
 ARM_CLIENT_SECRET=${RP_TESTING_SP_PASSWORD}
 EOF

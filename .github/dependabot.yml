@@ -28,6 +28,6 @@ updates:
       interval: "monthly"
 
   - package-ecosystem: "terraform"
-    directory: "/templates/core/terraform"
+    directory: "/core/terraform"
     schedule:
       interval: "monthly"

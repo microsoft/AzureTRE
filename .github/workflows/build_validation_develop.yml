@@ -34,9 +34,9 @@ jobs:
               # our Terraform uses more than just *.tf files, so need to check changes in the folder
               - '**/terraform/**/*'
             core:
-              - 'templates/core/**/*'
+              - 'core/**/*'
             core_version:
-              - 'templates/core/version.txt'
+              - 'core/version.txt'
             docs:
               - 'docs/**/*'
 
