@@ -114,7 +114,7 @@ jobs:
 
       - name: "Check pytest failure file existence"
         id: check_api_test_result
-        uses: andstor/file-existence-action@v1
+        uses: andstor/file-existence-action@v2
         with:
           files: "test-results/pytest_api_unit_failed"
 
@@ -156,7 +156,7 @@ jobs:
 
       - name: "Check maven failure file existence"
         id: check_maven_test_result
-        uses: andstor/file-existence-action@v1
+        uses: andstor/file-existence-action@v2
         with:
           files: "test-results/guacamole_package_failed"
 
@@ -204,7 +204,7 @@ jobs:
 
       - name: "Check pytest failure file existence"
         id: check_airlock_processor_test_result
-        uses: andstor/file-existence-action@v1
+        uses: andstor/file-existence-action@v2
         with:
           files: "test-results/pytest_airlock_processor_unit_failed"
 
