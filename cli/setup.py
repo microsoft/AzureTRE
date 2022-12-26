@@ -44,7 +44,7 @@ setup(
         "httpx~=0.23.0",
         "msal >= 1.17.0",
         "jmespath==1.0.1",
-        "tabulate==0.8.10",
+        "tabulate==0.9.0",
         "pygments==2.13.0"
     ],
 
