@@ -14,10 +14,10 @@ echo "Comparing ${left_tfplan} to ${right_tfplan}..."
 
 
 function plan_change() {
-  terraform show -json $1 | jq -r '.resource_changes[] | select(.change.actions[] | contains("no-op") or contains("read") | not)' > "$1_filtered.json"
+  terraform show -json "$1" | jq -r '.resource_changes[] | select(.change.actions[] | contains("no-op") or contains("read") | not)' > "$1_filtered.json"
 }
 
-plan_change ${left_tfplan}
-plan_change ${right_tfplan}
+plan_change "${left_tfplan}"
+plan_change "${right_tfplan}"
 
-diff <(jq --sort-keys . ${left_tfplan}_filtered.json) <(jq --sort-keys . ${right_tfplan}_filtered.json)
+diff <(jq --sort-keys . "${left_tfplan}"_filtered.json) <(jq --sort-keys . "${right_tfplan}"_filtered.json)
