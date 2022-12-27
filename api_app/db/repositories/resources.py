@@ -122,7 +122,7 @@ class ResourceRepository(BaseRepository):
             resource.isEnabled = resource_patch.isEnabled
 
         if resource_patch.templateVersion is not None:
-            self.validate_template_version_patch(resource, resource_patch, resource_template_repo, resource_template, force_version_update)
+            await self.validate_template_version_patch(resource, resource_patch, resource_template_repo, resource_template, force_version_update)
             resource.templateVersion = resource_patch.templateVersion
 
         if resource_patch.properties is not None and len(resource_patch.properties) > 0:
@@ -134,7 +134,7 @@ class ResourceRepository(BaseRepository):
         await self.update_item_with_etag(resource, etag)
         return resource, resource_template
 
-    def validate_template_version_patch(self, resource: Resource, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, force_version_update: bool = False):
+    async def validate_template_version_patch(self, resource: Resource, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, force_version_update: bool = False):
         parent_resource_id = None
         if resource.resourceType == ResourceType.UserResource:
             parent_resource_id = resource.parentWorkspaceServiceId
@@ -151,7 +151,7 @@ class ResourceRepository(BaseRepository):
 
         # validate if target template with desired version is registered
         try:
-            resource_template_repo.get_template_by_name_and_version(resource.templateName, resource_patch.templateVersion, resource_template.resourceType, parent_resource_id)
+            await resource_template_repo.get_template_by_name_and_version(resource.templateName, resource_patch.templateVersion, resource_template.resourceType, parent_resource_id)
         except EntityDoesNotExist:
             raise TargetTemplateVersionDoesNotExist(f"Template '{resource_template.name}' not found for resource type '{resource_template.resourceType}' with target template version '{resource_patch.templateVersion}'")
 

@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock
 import pytest
 import pytest_asyncio
-from mock import patch, MagicMock
+from mock import patch
 
 from models.domain.resource import ResourceType
 from db.migrations.workspaces import WorkspaceMigration
@@ -43,7 +43,7 @@ def get_sample_old_workspace(workspace_id: str = "7ab18f7e-ee8f-4202-8d46-747818
 
 
 @ patch('logging.info')
-def test_workspace_migration_moves_fields(logging, workspace_migrator):
-    workspace_migrator.query = MagicMock(return_value=get_sample_old_workspace())
+async def test_workspace_migration_moves_fields(logging, workspace_migrator):
+    workspace_migrator.query = AsyncMock(return_value=get_sample_old_workspace())
 
-    assert (workspace_migrator.moveAuthInformationToProperties())
+    assert (await workspace_migrator.moveAuthInformationToProperties())
