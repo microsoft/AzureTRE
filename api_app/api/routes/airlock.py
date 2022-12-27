@@ -47,7 +47,7 @@ async def create_draft_request(airlock_request_input: AirlockRequestInCreate, us
     try:
         airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_input, workspace.id, user)
     except (ValidationError, ValueError) as e:
-        logging.error(f"Failed creating airlock request model instance: {e}")
+        logging.exception("Failed creating airlock request model instance")
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
     await save_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace)
     allowed_actions = get_allowed_actions(airlock_request, user, airlock_request_repo)
@@ -72,7 +72,7 @@ async def get_all_airlock_requests_by_workspace(
                                                                             order_by=order_by, order_ascending=order_ascending)
         airlock_requests_with_allowed_user_actions = enrich_requests_with_allowed_actions(airlock_requests, user, airlock_request_repo)
     except (ValidationError, ValueError) as e:
-        logging.error(f"Failed retrieving all the airlock requests for a workspace: {e}")
+        logging.exception("Failed retrieving all the airlock requests for a workspace")
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
     return AirlockRequestWithAllowedUserActionsInList(airlockRequests=airlock_requests_with_allowed_user_actions)
 
@@ -148,7 +148,7 @@ async def create_review_user_resource(
 
         logging.info("Found workspace configuration for review user resources")
     except (KeyError, TypeError) as e:
-        logging.error(f"Failed to parse configuration: {e}")
+        logging.exception("Failed to parse configuration")
         raise HTTPException(status_code=status_code.HTTP_422_UNPROCESSABLE_ENTITY,
                             detail=f"Failed to retrieve Airlock Review configuration for workspace {workspace.id}.\
                             Please ask your TRE administrator to check the configuration. Details: {str(e)}")
@@ -157,7 +157,7 @@ async def create_review_user_resource(
     try:
         workspace_service = await workspace_service_repo.get_workspace_service_by_id(workspace_id=workspace_id, service_id=workspace_service_id)
     except EntityDoesNotExist as e:
-        logging.error(f"Failed to get workspace service {workspace_service_id} for workspace {workspace_id}: {str(e)}")
+        logging.exception("Failed to get workspace service {workspace_service_id} for workspace {workspace_id}")
         raise HTTPException(status_code=status_code.HTTP_422_UNPROCESSABLE_ENTITY,
                             detail=f"Failed to retrieve Airlock Review configuration for workspace {workspace.id}.\
                             Please ask your TRE administrator to check the configuration. Details: {str(e)}")
@@ -213,12 +213,12 @@ async def create_review_user_resource(
         user_resource, resource_template = await user_resource_repo.create_user_resource_item(
             user_resource_create, workspace_id, workspace_service_id, workspace_service.templateName, user.id, user.roles)
     except (ValidationError, ValueError) as e:
-        logging.error(f"Failed create user resource model instance due to validation error: {e}")
+        logging.exception("Failed create user resource model instance due to validation error")
         raise HTTPException(status_code=status_code.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f"Invalid configuration for creating user resource. Please contact your TRE administrator. \
                             Details: {str(e)}")
     except UserNotAuthorizedToUseTemplate as e:
-        logging.error(f"User not authorized to use template: {e}")
+        logging.exception("User not authorized to use template")
         raise HTTPException(status_code=status_code.HTTP_403_FORBIDDEN, detail=str(e))
 
     operation = await save_and_deploy_resource(
@@ -264,7 +264,7 @@ async def create_airlock_review(
     try:
         airlock_review = airlock_request_repo.create_airlock_review_item(airlock_review_input, user)
     except (ValidationError, ValueError) as e:
-        logging.error(f"Failed creating airlock review model instance: {e}")
+        logging.exception("Failed creating airlock review model instance")
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
     # Store review with new status in cosmos, and send status_changed event
     if airlock_review.reviewDecision.value == AirlockReviewDecision.Approved:
