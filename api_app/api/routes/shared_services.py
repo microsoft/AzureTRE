@@ -8,6 +8,7 @@ from db.errors import DuplicateEntity, MajorVersionUpdateDenied, UserNotAuthoriz
 from api.dependencies.database import get_repository
 from api.dependencies.shared_services import get_shared_service_by_id_from_path, get_operation_by_id_from_path
 from db.repositories.resource_templates import ResourceTemplateRepository
+from db.repositories.resources_history import ResourceHistoryRepository
 from db.repositories.shared_services import SharedServiceRepository
 from models.domain.resource import ResourceType
 from models.schemas.operation import OperationInList, OperationInResponse
@@ -45,7 +46,7 @@ async def retrieve_shared_service_by_id(shared_service=Depends(get_shared_servic
 
 
 @shared_services_router.post("/shared-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
-async def create_shared_service(response: Response, shared_service_input: SharedServiceInCreate, user=Depends(get_current_admin_user), shared_services_repo=Depends(get_repository(SharedServiceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
+async def create_shared_service(response: Response, shared_service_input: SharedServiceInCreate, user=Depends(get_current_admin_user), shared_services_repo=Depends(get_repository(SharedServiceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
     try:
         shared_service, resource_template = await shared_services_repo.create_shared_service_item(shared_service_input, user.roles)
     except (ValidationError, ValueError) as e:
@@ -63,6 +64,7 @@ async def create_shared_service(response: Response, shared_service_input: Shared
         resource_repo=shared_services_repo,
         operations_repo=operations_repo,
         resource_template_repo=resource_template_repo,
+        resource_history_repo=resource_history_repo,
         user=user,
         resource_template=resource_template)
     response.headers["Location"] = construct_location_header(operation)
@@ -75,9 +77,9 @@ async def create_shared_service(response: Response, shared_service_input: Shared
                               response_model=OperationInResponse,
                               name=strings.API_UPDATE_SHARED_SERVICE,
                               dependencies=[Depends(get_current_admin_user), Depends(get_shared_service_by_id_from_path)])
-async def patch_shared_service(shared_service_patch: ResourcePatch, response: Response, user=Depends(get_current_admin_user), shared_service_repo=Depends(get_repository(SharedServiceRepository)), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(...), force_version_update: bool = False) -> SharedServiceInResponse:
+async def patch_shared_service(shared_service_patch: ResourcePatch, response: Response, user=Depends(get_current_admin_user), shared_service_repo=Depends(get_repository(SharedServiceRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(...), force_version_update: bool = False) -> SharedServiceInResponse:
     try:
-        patched_shared_service, resource_template = await shared_service_repo.patch_shared_service(shared_service, shared_service_patch, etag, resource_template_repo, user, force_version_update)
+        patched_shared_service, resource_template = await shared_service_repo.patch_shared_service(shared_service, shared_service_patch, etag, resource_template_repo, resource_history_repo, user, force_version_update)
         operation = await send_resource_request_message(
             resource=patched_shared_service,
             operations_repo=operations_repo,
@@ -85,6 +87,7 @@ async def patch_shared_service(shared_service_patch: ResourcePatch, response: Re
             user=user,
             resource_template=resource_template,
             resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
             action=RequestAction.Upgrade)
 
         response.headers["Location"] = construct_location_header(operation)
@@ -98,7 +101,7 @@ async def patch_shared_service(shared_service_patch: ResourcePatch, response: Re
 
 
 @shared_services_router.delete("/shared-services/{shared_service_id}", response_model=OperationInResponse, name=strings.API_DELETE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
-async def delete_shared_service(response: Response, user=Depends(get_current_admin_user), shared_service=Depends(get_shared_service_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), shared_service_repo=Depends(get_repository(SharedServiceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> OperationInResponse:
+async def delete_shared_service(response: Response, user=Depends(get_current_admin_user), shared_service=Depends(get_shared_service_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), shared_service_repo=Depends(get_repository(SharedServiceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
     if shared_service.isEnabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.SHARED_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
 
@@ -110,6 +113,7 @@ async def delete_shared_service(response: Response, user=Depends(get_current_adm
         operations_repo=operations_repo,
         resource_type=ResourceType.SharedService,
         resource_template_repo=resource_template_repo,
+        resource_history_repo=resource_history_repo,
         user=user,
         resource_template=resource_template)
 
@@ -119,7 +123,7 @@ async def delete_shared_service(response: Response, user=Depends(get_current_adm
 
 
 @shared_services_router.post("/shared-services/{shared_service_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
-async def invoke_action_on_shared_service(response: Response, action: str, user=Depends(get_current_admin_user), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), shared_service_repo=Depends(get_repository(SharedServiceRepository))) -> OperationInResponse:
+async def invoke_action_on_shared_service(response: Response, action: str, user=Depends(get_current_admin_user), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), shared_service_repo=Depends(get_repository(SharedServiceRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
     operation = await send_custom_action_message(
         resource=shared_service,
         resource_repo=shared_service_repo,
@@ -127,6 +131,7 @@ async def invoke_action_on_shared_service(response: Response, action: str, user=
         resource_type=ResourceType.SharedService,
         operations_repo=operations_repo,
         resource_template_repo=resource_template_repo,
+        resource_history_repo=resource_history_repo,
         user=user)
 
     response.headers["Location"] = construct_location_header(operation)

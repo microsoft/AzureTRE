@@ -7,6 +7,7 @@ from pydantic import ValidationError, parse_obj_as
 
 from api.dependencies.database import get_db_client
 from api.routes.resource_helpers import get_timestamp
+from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.request_action import RequestAction
 from db.repositories.resource_templates import ResourceTemplateRepository
 from service_bus.helpers import send_deployment_message, update_resource_for_step
@@ -30,6 +31,7 @@ class DeploymentStatusUpdater():
         self.operations_repo = await OperationRepository.create(db_client)
         self.resource_repo = await ResourceRepository.create(db_client)
         self.resource_template_repo = await ResourceTemplateRepository.create(db_client)
+        self.resource_history_repo = await ResourceHistoryRepository.create(db_client)
 
     def run(self, *args, **kwargs):
         asyncio.run(self.receive_messages())
@@ -153,6 +155,7 @@ class DeploymentStatusUpdater():
                         operation_step=next_step,
                         resource_repo=self.resource_repo,
                         resource_template_repo=self.resource_template_repo,
+                        resource_history_repo=self.resource_history_repo,
                         primary_resource=await self.resource_repo.get_resource_by_id(operation.resourceId),  # need to get the resource again as it has been updated
                         resource_to_update_id=next_step.resourceId,
                         primary_action=operation.action,

@@ -104,6 +104,7 @@ class ResourceRepository(BaseRepository):
     async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         # create the history item in the resource history repository
         await resource_history_repo.create_resource_history_item(resource)
+        await resource_history_repo.get_resource_history_by_id(resource.id)
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
         resource.user = user

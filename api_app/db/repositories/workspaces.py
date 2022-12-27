@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 from azure.cosmos.aio import CosmosClient
 from pydantic import parse_obj_as
+from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 
@@ -140,10 +141,10 @@ class WorkspaceRepository(ResourceRepository):
         new_address_space = generate_new_cidr(networks, cidr_netmask)
         return new_address_space
 
-    async def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User, force_version_update: bool) -> Tuple[Workspace, ResourceTemplate]:
+    async def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, force_version_update: bool) -> Tuple[Workspace, ResourceTemplate]:
         # get the workspace template
         workspace_template = await resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
-        return await self.patch_resource(workspace, workspace_patch, workspace_template, etag, resource_template_repo, user, force_version_update)
+        return await self.patch_resource(workspace, workspace_patch, workspace_template, etag, resource_template_repo, resource_history_repo, user, force_version_update)
 
     def get_workspace_spec_params(self, full_workspace_id: str):
         params = self.get_resource_base_spec_params()
