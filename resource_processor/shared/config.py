@@ -17,6 +17,7 @@ def get_config(logger_adapter) -> dict:
     config["service_bus_namespace"] = os.environ["SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"]
     config["vmss_msi_id"] = os.environ.get("VMSS_MSI_ID", None)
     config["number_processes"] = os.environ.get("NUMBER_PROCESSES", "1")
+    config["key_vault_name"] = os.environ.get("KEY_VAULT_NAME", os.environ.get("KEYVAULT", None))
 
     try:
         config["number_processes_int"] = int(config["number_processes"])
@@ -30,18 +31,37 @@ def get_config(logger_adapter) -> dict:
     config["arm_client_id"] = os.environ["ARM_CLIENT_ID"]
     config["arm_tenant_id"] = os.environ["AZURE_TENANT_ID"]
 
-    # Only set client secret if MSI is disabled
-    config["arm_client_secret"] = os.environ["ARM_CLIENT_SECRET"] if config["arm_use_msi"] == "false" else ""
+    if config["arm_use_msi"] == "false":
+        # These are needed when running locally
+        config["arm_client_secret"] = os.environ["ARM_CLIENT_SECRET"]
+        config["aad_tenant_id"] = os.environ["AAD_TENANT_ID"]
+        config["application_admin_client_id"] = os.environ["APPLICATION_ADMIN_CLIENT_ID"]
+        config["application_admin_client_secret"] = os.environ["APPLICATION_ADMIN_CLIENT_SECRET"]
+
+    else:
+        config["arm_client_secret"] = ""  # referenced in the credential set
 
     # Create env dict for porter
     config["porter_env"] = {
         "HOME": os.environ["HOME"],
         "PATH": os.environ["PATH"],
+        "KEY_VAULT_NAME": config["key_vault_name"],
+
+        # These are needed since they are referenced as credentials in every bundle and also in arm_auth credential set.
         "ARM_CLIENT_ID": config["arm_client_id"],
         "ARM_CLIENT_SECRET": config["arm_client_secret"],
         "ARM_SUBSCRIPTION_ID": config["arm_subscription_id"],
-        "ARM_TENANT_ID": config["arm_tenant_id"]
+        "ARM_TENANT_ID": config["arm_tenant_id"],
     }
+
+    if config["arm_use_msi"] == "false":
+        config["porter_env"].update(
+            {
+                "AAD_TENANT_ID": config["aad_tenant_id"],
+                "APPLICATION_ADMIN_CLIENT_ID": config["application_admin_client_id"],
+                "APPLICATION_ADMIN_CLIENT_SECRET": config["application_admin_client_secret"],
+            }
+        )
 
     # Load env vars for bundles
     def envvar_to_key(name: str) -> str:

@@ -111,12 +111,13 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-templates/core/tre.env
+core/tre.env
 devops/auth.env
 private.env
 
-# Config
+# TRE Config
 config.yaml
+!resource_processor/vmss_porter/config.yaml
 
 # Spyder project settings
 .spyderproject
@@ -200,9 +201,9 @@ sample.dat
 .bash_history
 
 # lets encrypt
-templates/core/terraform/scripts/index.html
-templates/core/terraform/scripts/validation.txt
-templates/core/terraform/plan
+core/terraform/scripts/index.html
+core/terraform/scripts/validation.txt
+core/terraform/plan
 
 # Test results
 e2e_tests/pytest_e2e_*.xml

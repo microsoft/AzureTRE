@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
 
 from azure.storage.blob import generate_container_sas, ContainerSasPermissions, BlobServiceClient
-from fastapi import HTTPException
-from starlette import status
+from fastapi import HTTPException, status
 from core import config, credentials
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus
 from models.domain.authentication import User
