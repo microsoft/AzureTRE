@@ -137,7 +137,7 @@ resource "azurerm_private_endpoint" "function_storage" {
 
   private_service_connection {
     name                           = "psc-${local.airlock_function_sa_name}"
-    private_connection_resource_id = azurerm_storage_account.sa_import_in_progress.id
+    private_connection_resource_id = azurerm_storage_account.sa_airlock_processor_func_app.id
     is_manual_connection           = false
     subresource_names              = [each.key]
   }
