@@ -165,3 +165,8 @@ variable "rp_bundle_values" {
   type        = map(string)
   default     = {}
 }
+
+variable "is_cosmos_defined_throughput" {
+  type = bool
+  default = false
+}
