@@ -273,10 +273,10 @@ async def patch_workspace_service(workspace_service_patch: ResourcePatch, respon
             resource=patched_workspace_service,
             operations_repo=operations_repo,
             resource_repo=workspace_service_repo,
-            resource_history_repo=resource_history_repo,
             user=user,
             resource_template=resource_template,
             resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
             action=RequestAction.Upgrade)
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
