@@ -25,9 +25,9 @@ async def health_check() -> HealthCheck:
     sb_status, sb_message = sb
     rp_status, rp_message = rp
     if cosmos_status == StatusEnum.not_ok or sb_status == StatusEnum.not_ok or rp_status == StatusEnum.not_ok:
-        logging.exception(f'Cosmos Status: {cosmos_status}, message: {cosmos_message}')
-        logging.exception(f'Service Bus Status: {sb_status}, message: {sb_message}')
-        logging.exception(f'Resource Processor Status: {rp_status}, message: {rp_message}')
+        logging.error(f'Cosmos Status: {cosmos_status}, message: {cosmos_message}')
+        logging.error(f'Service Bus Status: {sb_status}, message: {sb_message}')
+        logging.error(f'Resource Processor Status: {rp_status}, message: {rp_message}')
 
     services = [ServiceStatus(service=strings.COSMOS_DB, status=cosmos_status, message=cosmos_message),
                 ServiceStatus(service=strings.SERVICE_BUS, status=sb_status, message=sb_message),
