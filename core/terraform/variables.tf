@@ -167,6 +167,6 @@ variable "rp_bundle_values" {
 }
 
 variable "is_cosmos_defined_throughput" {
-  type = bool
+  type    = bool
   default = false
 }
