@@ -158,4 +158,15 @@ if [ -n "${api_vnet_integration}" ]; then
     terraform apply -input=false -auto-approve ${PLAN_FILE}"
 fi
 
+# this isn't a classic migration, but impacts how terraform handles the deployment in the next phase
+state_store_serverless=$(echo "${terraform_show_json}" \
+  | jq 'select(.values.root_module.resources != null) | .values.root_module.resources[] | select(.address=="azurerm_cosmosdb_account.tre_db_account") | any(.values.capabilities[]; .name=="EnableServerless")')
+# false = resource EXITS in the state WITHOUT the serverless capability.
+# true = exists with the capability, empty value = resource doesn't exist.
+if [ "${state_store_serverless}" == "false" ]; then
+  echo "Identified CosmosDB with defined throughput."
+  TF_VAR_is_cosmos_defined_throughput="true"
+  export TF_VAR_is_cosmos_defined_throughput
+fi
+
 echo "*** Migration is done. ***"
