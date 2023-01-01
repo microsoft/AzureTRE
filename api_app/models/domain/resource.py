@@ -16,6 +16,20 @@ class ResourceType(str, Enum):
     SharedService = strings.RESOURCE_TYPE_SHARED_SERVICE
 
 
+class NewResourceHistoryItem(AzureTREModel):
+    """
+    Resource History Item - to preserve history of resource properties
+    """
+    id: str = Field(title="Id", description="GUID identifying the resource request")
+    resourceId: str = Field(title="Id", description="GUID identifying the resource request")
+    properties: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
+    isEnabled: bool
+    resourceVersion: int
+    updatedWhen: float = 0
+    user: dict = {}
+    templateVersion: Optional[str]
+
+
 class ResourceHistoryItem(AzureTREModel):
     """
     Resource History Item - to preserve history of resource properties
