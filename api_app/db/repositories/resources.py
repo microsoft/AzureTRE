@@ -12,7 +12,7 @@ from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from jsonschema import validate
 from models.domain.authentication import User
-from models.domain.resource import Resource, ResourceType
+from models.domain.resource import Resource, ResourceHistoryItem, ResourceType
 from models.domain.resource_template import ResourceTemplate
 from models.domain.shared_service import SharedService
 from models.domain.operation import Status
@@ -102,9 +102,19 @@ class ResourceRepository(BaseRepository):
         return parse_obj_as(ResourceTemplate, template)
 
     async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
+        # create a deep copy of the resource to use for history, create the history item + add to history list
+        resource_copy = copy.deepcopy(resource)
+        history_item = ResourceHistoryItem(
+            isEnabled=resource_copy.isEnabled,
+            properties=resource_copy.properties,
+            resourceVersion=resource_copy.resourceVersion,
+            updatedWhen=resource_copy.updatedWhen,
+            user=resource_copy.user,
+            templateVersion=resource_copy.templateVersion
+        )
+        resource.history.append(history_item)
         # create the history item in the resource history repository
         await resource_history_repo.create_resource_history_item(resource)
-        await resource_history_repo.get_resource_history_by_id(resource.id)
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
         resource.user = user
