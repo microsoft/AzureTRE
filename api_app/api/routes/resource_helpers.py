@@ -140,7 +140,7 @@ async def send_uninstall_message(
     operations_repo: OperationRepository,
     resource_type: ResourceType,
     resource_template_repo: ResourceTemplateRepository,
-    resource_histroy_repo: ResourceHistoryRepository,
+    resource_history_repo: ResourceHistoryRepository,
     user: User,
     resource_template: ResourceTemplate,
 ) -> Operation:
@@ -151,7 +151,7 @@ async def send_uninstall_message(
             resource_repo=resource_repo,
             user=user,
             resource_template_repo=resource_template_repo,
-            resource_histroy_repo=resource_histroy_repo,
+            resource_history_repo=resource_history_repo,
             resource_template=resource_template,
             action=RequestAction.UnInstall,
         )

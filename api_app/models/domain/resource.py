@@ -34,7 +34,6 @@ class ResourceHistoryItem(AzureTREModel):
     """
     Resource History Item - to preserve history of resource properties
     """
-    resourceId: str = Field(title="Id", description="GUID identifying the resource request")
     properties: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
     isEnabled: bool
     resourceVersion: int

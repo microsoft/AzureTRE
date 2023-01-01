@@ -264,7 +264,7 @@ async def create_airlock_review(
         workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)),
         operation_repo=Depends(get_repository(OperationRepository)),
         resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
-        resource_histroy_repo=Depends(get_repository(ResourceHistoryRepository))) -> AirlockRequestWithAllowedUserActions:
+        resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> AirlockRequestWithAllowedUserActions:
 
     try:
         airlock_review = airlock_request_repo.create_airlock_review_item(airlock_review_input, user)
@@ -291,7 +291,7 @@ async def create_airlock_review(
         workspace_service_repo=workspace_service_repo,
         resource_template_repo=resource_template_repo,
         operations_repo=operation_repo,
-        resource_history_repo=resource_histroy_repo,
+        resource_history_repo=resource_history_repo,
         user=user
     )
 

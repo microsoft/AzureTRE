@@ -8,8 +8,6 @@ from models.domain.resource import Resource, NewResourceHistoryItem, ResourceTyp
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP
 from tests_ma.test_api.conftest import create_test_user
 
-pytestmark = pytest.mark.asyncio
-
 HISTORY_ID = "59676d53-5356-45b1-981a-180c0b089839"
 RESOURCE_ID = "178c1ffe-de57-495b-b1eb-9bc37d3c5087"
 USER_ID = "e5accc9a-3961-4da9-b5ee-1bc8a406388b"
@@ -64,6 +62,7 @@ def sample_resource_history() -> NewResourceHistoryItem:
     )
 
 
+@pytest.mark.asyncio
 @patch('db.repositories.resources_history.ResourceHistoryRepository.save_item', return_value=AsyncMock())
 @patch('db.repositories.resources_history.ResourceHistoryRepository.query', return_value=[])
 async def test_create_resource_history_item(mock_query, mock_save, resource_history_repo, sample_resource):
@@ -83,6 +82,7 @@ async def test_create_resource_history_item(mock_query, mock_save, resource_hist
     assert resource_history.templateVersion == sample_resource.templateVersion
 
 
+@pytest.mark.asyncio
 @patch('db.repositories.resources_history.ResourceHistoryRepository.save_item', return_value=AsyncMock())
 @patch('db.repositories.resources_history.ResourceHistoryRepository.query')
 async def test_create_resource_history_item_when_history_item_already_exists(mock_query, mock_save, resource_history_repo, sample_resource):
@@ -101,6 +101,7 @@ async def test_create_resource_history_item_when_history_item_already_exists(moc
     assert resource_history.templateVersion == sample_resource.templateVersion
 
 
+@pytest.mark.asyncio
 @patch('db.repositories.resources_history.ResourceHistoryRepository.query')
 async def test_get_resource_history_by_resource_id_if_found(mock_query, resource_history_repo, sample_resource_history):
     mock_query.return_value = [sample_resource_history]
@@ -109,6 +110,7 @@ async def test_get_resource_history_by_resource_id_if_found(mock_query, resource
     assert result == mock_query.return_value
 
 
+@pytest.mark.asyncio
 @patch('db.repositories.resources_history.ResourceHistoryRepository.query')
 async def test_get_resource_history_by_resource_id_if_not_found(mock_query, resource_history_repo):
     mock_query.return_value = []
