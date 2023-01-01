@@ -30,18 +30,6 @@ class NewResourceHistoryItem(AzureTREModel):
     templateVersion: Optional[str]
 
 
-class ResourceHistoryItem(AzureTREModel):
-    """
-    Resource History Item - to preserve history of resource properties
-    """
-    properties: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
-    isEnabled: bool
-    resourceVersion: int
-    updatedWhen: float = 0
-    user: dict = {}
-    templateVersion: Optional[str]
-
-
 class Resource(AzureTREModel):
     """
     Resource request
@@ -58,7 +46,7 @@ class Resource(AzureTREModel):
     resourceVersion: int = 0
     user: dict = {}
     updatedWhen: float = 0
-    history: List[ResourceHistoryItem] = []
+    history: List[NewResourceHistoryItem] = []
 
     def get_resource_request_message_payload(self, operation_id: str, step_id: str, action: RequestAction) -> dict:
         payload = {
