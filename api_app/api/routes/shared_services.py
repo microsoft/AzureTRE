@@ -49,13 +49,13 @@ async def create_shared_service(response: Response, shared_service_input: Shared
     try:
         shared_service, resource_template = await shared_services_repo.create_shared_service_item(shared_service_input, user.roles)
     except (ValidationError, ValueError) as e:
-        logging.error(f"Failed create shared service model instance: {e}")
+        logging.exception("Failed create shared service model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except DuplicateEntity as e:
-        logging.error(f"Shared service already exists: {e}")
+        logging.exception("Shared service already exists")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except UserNotAuthorizedToUseTemplate as e:
-        logging.error(f"User not authorized to use template: {e}")
+        logging.exception("User not authorized to use template")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
     operation = await save_and_deploy_resource(

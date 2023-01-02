@@ -71,5 +71,5 @@ async def migrate_database(resources_repo=Depends(get_repository(ResourceReposit
 
         return MigrationOutList(migrations=migrations)
     except Exception as e:
-        logging.error("Failed to migrate database: %s", e, exc_info=True)
+        logging.exception("Failed to migrate database")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

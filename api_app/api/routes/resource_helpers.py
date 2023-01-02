@@ -39,8 +39,8 @@ async def save_and_deploy_resource(
             resource.properties, resource_template
         )
         await resource_repo.save_item(masked_resource)
-    except Exception as e:
-        logging.error(f"Failed saving resource item {resource.id}: {e}")
+    except Exception:
+        logging.exception(f"Failed saving resource item {resource.id}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING,
@@ -57,9 +57,9 @@ async def save_and_deploy_resource(
             action=RequestAction.Install,
         )
         return operation
-    except Exception as e:
+    except Exception:
         await resource_repo.delete_item(resource.id)
-        logging.error(f"Failed send resource request message: {e}")
+        logging.exception("Failed send resource request message")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
@@ -151,8 +151,8 @@ async def send_uninstall_message(
             action=RequestAction.UnInstall,
         )
         return operation
-    except Exception as e:
-        logging.error(f"Failed to send {resource_type} resource delete message: {e}")
+    except Exception:
+        logging.exception(f"Failed to send {resource_type} resource delete message")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
@@ -201,10 +201,8 @@ async def send_custom_action_message(
             action=custom_action,
         )
         return operation
-    except Exception as e:
-        logging.error(
-            f"Failed to send {resource_type} resource custom action message: {e}"
-        )
+    except Exception:
+        logging.exception(f"Failed to send {resource_type} resource custom action message")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,

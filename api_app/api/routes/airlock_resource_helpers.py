@@ -36,17 +36,17 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
         airlock_request.updatedBy = user
         airlock_request.updatedWhen = get_timestamp()
         await airlock_request_repo.save_item(airlock_request)
-    except Exception as e:
-        logging.error(f'Failed saving airlock request {airlock_request}: {e}')
+    except Exception:
+        logging.exception(f'Failed saving airlock request {airlock_request}')
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
         logging.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
         await send_status_changed_event(airlock_request=airlock_request, previous_status=None)
         await send_airlock_notification_event(airlock_request, workspace, role_assignment_details)
-    except Exception as e:
+    except Exception:
         await airlock_request_repo.delete_item(airlock_request.id)
-        logging.error(f"Failed sending status_changed message: {e}")
+        logging.exception("Failed sending status_changed message")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_GENERAL_ERROR_MESSAGE)
 
 
@@ -71,7 +71,7 @@ async def update_and_publish_event_airlock_request(
             airlock_review=airlock_review,
             review_user_resource=review_user_resource)
     except Exception as e:
-        logging.error(f'Failed updating airlock_request item {airlock_request}: {e}')
+        logging.exception(f'Failed updating airlock_request item {airlock_request}')
         # If the validation failed, the error was not related to the saving itself
         if hasattr(e, 'status_code'):
             if e.status_code == 400:
@@ -89,8 +89,8 @@ async def update_and_publish_event_airlock_request(
         role_assignment_details = access_service.get_workspace_role_assignment_details(workspace)
         await send_airlock_notification_event(updated_airlock_request, workspace, role_assignment_details)
         return updated_airlock_request
-    except Exception as e:
-        logging.error(f"Failed sending status_changed message: {e}")
+    except Exception:
+        logging.exception("Failed sending status_changed message")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_GENERAL_ERROR_MESSAGE)
 
 
