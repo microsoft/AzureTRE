@@ -157,7 +157,7 @@ async def create_review_user_resource(
     try:
         workspace_service = await workspace_service_repo.get_workspace_service_by_id(workspace_id=workspace_id, service_id=workspace_service_id)
     except EntityDoesNotExist as e:
-        logging.exception("Failed to get workspace service {workspace_service_id} for workspace {workspace_id}")
+        logging.exception(f"Failed to get workspace service {workspace_service_id} for workspace {workspace_id}")
         raise HTTPException(status_code=status_code.HTTP_422_UNPROCESSABLE_ENTITY,
                             detail=f"Failed to retrieve Airlock Review configuration for workspace {workspace.id}.\
                             Please ask your TRE administrator to check the configuration. Details: {str(e)}")
