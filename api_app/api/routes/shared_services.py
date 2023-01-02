@@ -52,7 +52,7 @@ async def create_shared_service(response: Response, shared_service_input: Shared
         logging.exception("Failed create shared service model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except DuplicateEntity as e:
-        logging.exception("Shared service already exists:")
+        logging.exception("Shared service already exists")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except UserNotAuthorizedToUseTemplate as e:
         logging.exception("User not authorized to use template")

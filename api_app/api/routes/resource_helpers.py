@@ -152,7 +152,7 @@ async def send_uninstall_message(
         )
         return operation
     except Exception:
-        logging.exception("Failed to send {resource_type} resource delete message")
+        logging.exception(f"Failed to send {resource_type} resource delete message")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
@@ -202,7 +202,7 @@ async def send_custom_action_message(
         )
         return operation
     except Exception:
-        logging.exception("Failed to send {resource_type} resource custom action message")
+        logging.exception(f"Failed to send {resource_type} resource custom action message")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
