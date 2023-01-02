@@ -605,7 +605,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch('api.routes.resource_helpers.send_resource_request_message', return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     async def test_delete_workspace_sends_a_request_message_to_uninstall_the_workspace(self, send_request_message_mock, cosmos_client_mock, __, get_workspace_mock, get_repository_mock, resource_template_repo, disabled_workspace, app, client, basic_resource_template):
         get_workspace_mock.return_value = disabled_workspace
-        get_repository_mock.side_effects = [WorkspaceRepository.create(cosmos_client_mock), WorkspaceServiceRepository.create(cosmos_client_mock)]
+        get_repository_mock.side_effects = [await WorkspaceRepository.create(cosmos_client_mock), await WorkspaceServiceRepository.create(cosmos_client_mock)]
         resource_template_repo.return_value = basic_resource_template
         await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE, workspace_id=WORKSPACE_ID))
 

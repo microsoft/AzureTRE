@@ -20,6 +20,7 @@ ENHANCEMENTS:
 * Add the ability for workspace services to request addional address spaces from a workspace ([#2902](https://github.com/microsoft/AzureTRE/pull/2902))
 * Airlock processor function and api app service work with http2
 * Added the option to disable Swagger ([#2981](https://github.com/microsoft/AzureTRE/pull/2981))
+* Serverless CosmosDB for new deployments to reduce cost ([#3029](https://github.com/microsoft/AzureTRE/pull/3029))
 
 
 BUG FIXES:

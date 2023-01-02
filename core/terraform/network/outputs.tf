@@ -40,10 +40,6 @@ output "resource_processor_subnet_id" {
 
 # DNS Zones
 
-output "private_dns_zone_mysql_id" {
-  value = azurerm_private_dns_zone.mysql.id
-}
-
 output "azure_monitor_dns_zone_id" {
   value = azurerm_private_dns_zone.azure_monitor.id
 }
