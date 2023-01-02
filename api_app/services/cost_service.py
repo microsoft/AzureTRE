@@ -323,20 +323,20 @@ class CostService:
             # Given subscription {subscription_id} doesn't have valid WebDirect/AIRS offer type.
             # it means that the Azure subscription deosn't support cost management
             if "doesn't have valid WebDirect/AIRS" in e.message:
-                logging.error("Subscription doesn't support cost mangement", exc_info=e)
+                logging.exception("Subscription doesn't support cost management")
                 raise SubscriptionNotSupported(e)
             else:
-                logging.error("Unhandled Cost Management API error", exc_info=e)
+                logging.exception("Unhandled Cost Management API error")
                 raise e
         except HttpResponseError as e:
-            logging.error("Cost Management API error", exc_info=e)
+            logging.exception("Cost Management API error")
             if e.status_code == 429:
                 # Too many requests - Request is throttled.
                 # Retry after waiting for the time specified in the "x-ms-ratelimit-microsoft.consumption-retry-after" header.
                 if self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY in e.response.headers:
                     raise TooManyRequests(int(e.response.headers[self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY]))
                 else:
-                    logging.error(f"{self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY} header was not found in respose", exc_info=e)
+                    logging.exception(f"{self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY} header was not found in response")
                     raise e
             elif e.status_code == 503:
                 # Service unavailable - Service is temporarily unavailable.
@@ -344,7 +344,7 @@ class CostService:
                 if self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY in e.response.headers:
                     raise ServiceUnavailable(int(e.response.headers[self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY]))
                 else:
-                    logging.error(f"{self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY} header was not found in respose", exc_info=e)
+                    logging.exception(f"{self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY} header was not found in response")
                     raise e
             else:
                 raise e
