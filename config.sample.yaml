@@ -76,8 +76,3 @@ developer_settings:
 
 # Used by the API and Resource processor application to change log level
 #  debug: true
-
-# To avoid creating + deleting a workspace + service in tests set the vars for existing ones
-performance_in_e2e_test:
-#   perf_test_workspace_id: __CHANGE_ME__
-#   perf_test_worspace_service_id: __CHANGE_ME__
