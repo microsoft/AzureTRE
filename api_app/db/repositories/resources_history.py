@@ -1,6 +1,7 @@
 from typing import List
 import uuid
 from azure.cosmos.aio import CosmosClient
+from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from core import config
 from models.domain.resource import Resource, NewResourceHistoryItem
@@ -22,9 +23,12 @@ class ResourceHistoryRepository(BaseRepository):
     def resource_history_with_resource_version_query(resourceId: str, resourceVersion: str):
         return f'SELECT * FROM c WHERE c.resourceId = "{resourceId}" AND c.resourceVersion = "{resourceVersion}"'
 
-    async def get_resource_history_by_resource_id(self, resourceId: str) -> List[NewResourceHistoryItem]:
-        query = self.resource_history_query(resourceId)
-        resource_history_items = await self.query(query=query)
+    async def get_resource_history_by_resource_id(self, resource_id: str) -> List[NewResourceHistoryItem]:
+        query = self.resource_history_query(resource_id)
+        try:
+            resource_history_items = await self.query(query=query)
+        except EntityDoesNotExist:
+            resource_history_items = []
         return parse_obj_as(List[NewResourceHistoryItem], resource_history_items)
 
     async def create_resource_history_item(self, resource: Resource) -> NewResourceHistoryItem:

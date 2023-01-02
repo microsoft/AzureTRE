@@ -13,7 +13,7 @@ from db.repositories.shared_services import SharedServiceRepository
 from models.domain.resource import ResourceType
 from models.schemas.operation import OperationInList, OperationInResponse
 from models.schemas.shared_service import RestrictedSharedServiceInResponse, SharedServiceInCreate, SharedServicesInList, SharedServiceInResponse
-from models.schemas.resource import ResourcePatch
+from models.schemas.resource import ResourceHistoryInList, ResourcePatch
 from resources import strings
 from .workspaces import save_and_deploy_resource, construct_location_header
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
@@ -148,3 +148,9 @@ async def retrieve_shared_service_operations_by_shared_service_id(shared_service
 @shared_services_router.get("/shared-services/{shared_service_id}/operations/{operation_id}", response_model=OperationInResponse, name=strings.API_GET_RESOURCE_OPERATION_BY_ID, dependencies=[Depends(get_current_admin_user), Depends(get_shared_service_by_id_from_path)])
 async def retrieve_shared_service_operation_by_shared_service_id_and_operation_id(shared_service=Depends(get_shared_service_by_id_from_path), operation=Depends(get_operation_by_id_from_path)) -> OperationInList:
     return OperationInResponse(operation=operation)
+
+
+# Shared service history
+@shared_services_router.get("/shared-services/{shared_service_id}/history", response_model=ResourceHistoryInList, name=strings.API_GET_RESOURCE_HISTORY, dependencies=[Depends(get_current_admin_user)])
+async def retrieve_shared_service_history_by_shared_service_id(shared_service=Depends(get_shared_service_by_id_from_path), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> ResourceHistoryInList:
+    return ResourceHistoryInList(resource_history=await resource_history_repo.get_resource_history_by_resource_id(resource_id=shared_service.id))
