@@ -56,9 +56,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
     number_vms = 5
     number_updates = 5
 
-    # To avoid creating + deleting a workspace + service in this test, set the vars for existing ones in ./config_yaml
-    # PERF_TEST_WORKSPACE_ID | PERF_TEST_WORKSPACE_SERVICE_ID
-    workspace_id = config.PERF_TEST_WORKSPACE_ID
+    workspace_id = config.TEST_WORKSPACE_ID
 
     if workspace_id == "":
         # create the workspace to use
@@ -77,11 +75,13 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
         admin_token = await get_admin_token(verify)
         workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, admin_token, verify)
     else:
-        workspace_path = f"/workspaces/{config.PERF_TEST_WORKSPACE_ID}"
+        workspace_path = f"/workspaces/{workspace_id}"
 
     workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
-    if config.PERF_TEST_WORKSPACE_SERVICE_ID == "":
+    workspace_service_id = config.TEST_WORKSPACE_SERVICE_ID
+
+    if workspace_service_id == "":
         # create a guac service
         service_payload = {
             "templateName": strings.GUACAMOLE_SERVICE,
@@ -97,7 +97,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
             access_token=workspace_owner_token,
             verify=verify)
     else:
-        workspace_service_path = f"{workspace_path}/{strings.API_WORKSPACE_SERVICES}/{config.PERF_TEST_WORKSPACE_SERVICE_ID}"
+        workspace_service_path = f"{workspace_path}/{strings.API_WORKSPACE_SERVICES}/{workspace_service_id}"
 
     # Create the VMs in parallel, and wait for them to be created
     user_resource_payload = {
@@ -148,7 +148,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
 
     admin_token = await get_admin_token(verify)
     # clear up workspace + service (if we created them)
-    if config.PERF_TEST_WORKSPACE_SERVICE_ID == "":
+    if config.TEST_WORKSPACE_SERVICE_ID == "":
         await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
-    if config.PERF_TEST_WORKSPACE_ID == "":
+    if config.TEST_WORKSPACE_ID == "":
         await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
