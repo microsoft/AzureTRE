@@ -6,6 +6,6 @@
 rm -f ../test-results/pytest_airlock_processor*
 mkdir -p ../test-results
 
-if ! pytest --asyncio-mode=auto --junit-xml ../test-results/pytest_airlock_processor_unit.xml --ignore e2e_tests; then
+if ! pytest --junit-xml ../test-results/pytest_airlock_processor_unit.xml --ignore e2e_tests; then
   touch ../test-results/pytest_airlock_processor_unit_failed
 fi
