@@ -68,18 +68,15 @@ async def update_status_in_database(airlock_request_repo: AirlockRequestReposito
             await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, updated_by=airlock_request.updatedBy, workspace=workspace, new_status=new_status, request_files=request_files, status_message=status_message)
             result = True
         else:
-            error_string = strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, current_status, airlock_request.status)
-            logging.error(error_string)
+            logging.error(strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, current_status, airlock_request.status))
     except HTTPException as e:
         if e.status_code == 404:
             # Marking as true as this message will never succeed anyways and should be removed from the queue.
             result = True
-            error_string = strings.STEP_RESULT_ID_NOT_FOUND.format(airlock_request_id)
-            logging.exception(error_string)
+            logging.exception(strings.STEP_RESULT_ID_NOT_FOUND.format(airlock_request_id))
         if e.status_code == 400:
             result = True
-            error_string = strings.STEP_RESULT_MESSAGE_INVALID_STATUS.format(airlock_request_id, current_status, new_status)
-            logging.exception(error_string)
+            logging.exception(strings.STEP_RESULT_MESSAGE_INVALID_STATUS.format(airlock_request_id, current_status, new_status))
         if e.status_code == 503:
             logging.exception(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
     except Exception:

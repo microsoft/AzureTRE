@@ -174,8 +174,7 @@ class DeploymentStatusUpdater():
         except EntityDoesNotExist:
             # Marking as true as this message will never succeed anyways and should be removed from the queue.
             result = True
-            error_string = strings.DEPLOYMENT_STATUS_ID_NOT_FOUND.format(message.id)
-            logging.exception(error_string)
+            logging.exception(strings.DEPLOYMENT_STATUS_ID_NOT_FOUND.format(message.id))
         except Exception:
             logging.exception("Failed to update status")
 
