@@ -80,10 +80,10 @@ class DeploymentStatusUpdater():
             logging.info(f"Received and parsed JSON for: {msg.correlation_id}")
             complete_message = await self.update_status_in_database(message)
             logging.info(f"Update status in DB for {message.operationId} - {message.status}")
-        except (json.JSONDecodeError, ValidationError) as e:
+        except (json.JSONDecodeError, ValidationError):
             # TODO: should move to dead letter queue https://github.com/microsoft/AzureTRE/issues/2991
             complete_message = True
-            logging.error(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id} - {e}")
+            logging.exception(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id}")
         except Exception:
             logging.exception(f"Exception processing message: {msg.correlation_id}")
 
@@ -163,7 +163,7 @@ class DeploymentStatusUpdater():
                     content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.stepId, action=next_step.resourceAction))
                     await send_deployment_message(content=content, correlation_id=operation.id, session_id=resource_to_send.id, action=next_step.resourceAction)
                 except Exception as e:
-                    logging.error(f"Unable to send update for resource in pipeline step: {e}")
+                    logging.exception("Unable to send update for resource in pipeline step")
                     next_step.message = repr(e)
                     next_step.status = Status.UpdatingFailed
                     await self.update_overall_operation_status(operation, next_step, is_last_step)
@@ -175,9 +175,9 @@ class DeploymentStatusUpdater():
             # Marking as true as this message will never succeed anyways and should be removed from the queue.
             result = True
             error_string = strings.DEPLOYMENT_STATUS_ID_NOT_FOUND.format(message.id)
-            logging.error(error_string)
-        except Exception as e:
-            logging.error(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING + " " + str(e))
+            logging.exception(error_string)
+        except Exception:
+            logging.exception("Failed to update status")
 
         return result
 

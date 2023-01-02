@@ -43,8 +43,8 @@ def get_application() -> FastAPI:
         exporter = AzureExporter(sampler=ProbabilitySampler(1.0))
         exporter.add_telemetry_processor(telemetry_processor_callback_function)
         application.add_middleware(RequestTracerMiddleware, exporter=exporter)
-    except Exception as e:
-        logging.error(f"Failed to add RequestTracerMiddleware: {e}")
+    except Exception:
+        logging.exception("Failed to add RequestTracerMiddleware")
 
     application.add_middleware(ServerErrorMiddleware, handler=generic_error_handler)
     # Allow local UI debugging with local API

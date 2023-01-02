@@ -38,8 +38,8 @@ async def receive_message_from_step_result_queue():
                     try:
                         message = json.loads(str(msg))
                         result = (yield parse_obj_as(StepResultStatusUpdateMessage, message))
-                    except (json.JSONDecodeError, ValidationError) as e:
-                        logging.error(f"{strings.STEP_RESULT_MESSAGE_FORMAT_INCORRECT}: {e}")
+                    except (json.JSONDecodeError, ValidationError):
+                        logging.exception(strings.STEP_RESULT_MESSAGE_FORMAT_INCORRECT)
 
                     if result:
                         logging.info(f"Received step_result status update message with correlation ID {msg.correlation_id}: {message}")
@@ -75,15 +75,15 @@ async def update_status_in_database(airlock_request_repo: AirlockRequestReposito
             # Marking as true as this message will never succeed anyways and should be removed from the queue.
             result = True
             error_string = strings.STEP_RESULT_ID_NOT_FOUND.format(airlock_request_id)
-            logging.error(error_string)
+            logging.exception(error_string)
         if e.status_code == 400:
             result = True
             error_string = strings.STEP_RESULT_MESSAGE_INVALID_STATUS.format(airlock_request_id, current_status, new_status)
-            logging.error(error_string)
+            logging.exception(error_string)
         if e.status_code == 503:
-            logging.error(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING + " " + str(e))
-    except Exception as e:
-        logging.error(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING + " " + str(e))
+            logging.exception(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+    except Exception:
+        logging.exception("Failed updating request status")
 
     return result
 
