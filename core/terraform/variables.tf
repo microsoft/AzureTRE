@@ -65,6 +65,13 @@ variable "resource_processor_number_processes_per_instance" {
   description = "The number of CPU processes to run the RP on per VM instance"
 }
 
+variable "enable_swagger" {
+  type        = bool
+  default     = false
+  description = "Determines whether the Swagger interface for the API will be available."
+  sensitive   = false
+}
+
 variable "swagger_ui_client_id" {
   type        = string
   description = "The client id (app id) of the registration in Azure AD for the Swagger UI"
@@ -157,4 +164,9 @@ variable "rp_bundle_values" {
   description = "Additional environment values to set on the resource processor that can be supplied to template bundles"
   type        = map(string)
   default     = {}
+}
+
+variable "is_cosmos_defined_throughput" {
+  type    = bool
+  default = false
 }

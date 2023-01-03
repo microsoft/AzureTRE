@@ -2,14 +2,13 @@ from sqlite3 import InternalError
 from typing import List, Tuple
 import uuid
 
-from azure.cosmos import CosmosClient
+from azure.cosmos.aio import CosmosClient
 from pydantic import parse_obj_as
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources import ResourceRepository, IS_NOT_DELETED_CLAUSE, IS_ACTIVE_RESOURCE
-from db.repositories.operations import OperationRepository
-from db.errors import DuplicateEntity, ResourceIsNotDeployed, EntityDoesNotExist
+from db.errors import DuplicateEntity, EntityDoesNotExist
 from models.domain.shared_service import SharedService
 from models.schemas.resource import ResourcePatch
 from models.schemas.shared_service_template import SharedServiceTemplateInCreate
@@ -17,8 +16,11 @@ from models.domain.resource import ResourceType
 
 
 class SharedServiceRepository(ResourceRepository):
-    def __init__(self, client: CosmosClient):
-        super().__init__(client)
+    @classmethod
+    async def create(cls, client: CosmosClient):
+        cls = SharedServiceRepository()
+        await super().create(client)
+        return cls
 
     @staticmethod
     def shared_service_query(shared_service_id: str):
@@ -32,35 +34,27 @@ class SharedServiceRepository(ResourceRepository):
     def active_shared_service_with_template_name_query(template_name: str):
         return f'SELECT * FROM c WHERE {IS_ACTIVE_RESOURCE} AND c.resourceType = "{ResourceType.SharedService}" AND c.templateName = "{template_name}"'
 
-    def get_shared_service_by_id(self, shared_service_id: str):
-        shared_services = self.query(self.shared_service_query(shared_service_id))
+    async def get_shared_service_by_id(self, shared_service_id: str):
+        shared_services = await self.query(self.shared_service_query(shared_service_id))
         if not shared_services:
             raise EntityDoesNotExist
         return parse_obj_as(SharedService, shared_services[0])
 
-    def get_active_shared_services(self) -> List[SharedService]:
+    async def get_active_shared_services(self) -> List[SharedService]:
         """
         returns list of "non-deleted" shared services linked to this shared
         """
         query = SharedServiceRepository.active_shared_services_query()
-        shared_services = self.query(query=query)
+        shared_services = await self.query(query=query)
         return parse_obj_as(List[SharedService], shared_services)
-
-    def get_deployed_shared_service_by_id(self, shared_service_id: str, operations_repo: OperationRepository):
-        shared_service = self.get_shared_service_by_id(shared_service_id)
-
-        if (not operations_repo.resource_has_deployed_operation(resource_id=shared_service_id)):
-            raise ResourceIsNotDeployed
-
-        return shared_service
 
     def get_shared_service_spec_params(self):
         return self.get_resource_base_spec_params()
 
-    def create_shared_service_item(self, shared_service_input: SharedServiceTemplateInCreate, user_roles: List[str]) -> Tuple[SharedService, ResourceTemplate]:
+    async def create_shared_service_item(self, shared_service_input: SharedServiceTemplateInCreate, user_roles: List[str]) -> Tuple[SharedService, ResourceTemplate]:
         shared_service_id = str(uuid.uuid4())
 
-        existing_shared_services = self.query(self.active_shared_service_with_template_name_query(shared_service_input.templateName))
+        existing_shared_services = await self.query(self.active_shared_service_with_template_name_query(shared_service_input.templateName))
 
         # Duplicate is same template (=id), same version and deployed
         if existing_shared_services:
@@ -68,7 +62,7 @@ class SharedServiceRepository(ResourceRepository):
                 raise InternalError(f"More than one active shared service exists with the same id {shared_service_id}")
             raise DuplicateEntity
 
-        template = self.validate_input_against_template(shared_service_input.templateName, shared_service_input, ResourceType.SharedService, user_roles)
+        template = await self.validate_input_against_template(shared_service_input.templateName, shared_service_input, ResourceType.SharedService, user_roles)
 
         resource_spec_parameters = {**shared_service_input.properties, **self.get_shared_service_spec_params()}
 
@@ -83,7 +77,7 @@ class SharedServiceRepository(ResourceRepository):
 
         return shared_service, template
 
-    def patch_shared_service(self, shared_service: SharedService, shared_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User, force_version_update: bool) -> Tuple[SharedService, ResourceTemplate]:
+    async def patch_shared_service(self, shared_service: SharedService, shared_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User, force_version_update: bool) -> Tuple[SharedService, ResourceTemplate]:
         # get shared service template
-        shared_service_template = resource_template_repo.get_template_by_name_and_version(shared_service.templateName, shared_service.templateVersion, ResourceType.SharedService)
-        return self.patch_resource(shared_service, shared_service_patch, shared_service_template, etag, resource_template_repo, user, force_version_update)
+        shared_service_template = await resource_template_repo.get_template_by_name_and_version(shared_service.templateName, shared_service.templateVersion, ResourceType.SharedService)
+        return await self.patch_resource(shared_service, shared_service_patch, shared_service_template, etag, resource_template_repo, user, force_version_update)

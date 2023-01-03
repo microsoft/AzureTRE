@@ -4,6 +4,7 @@ cat << EOF > 'validation.txt'
 ${CERTBOT_VALIDATION}
 EOF
 
+# shellcheck disable=SC2016
 az storage blob upload \
     --account-name "${STORAGE_ACCOUNT}" \
     --auth-mode login \

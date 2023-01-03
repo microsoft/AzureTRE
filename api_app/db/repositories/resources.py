@@ -3,7 +3,7 @@ import semantic_version
 from datetime import datetime
 from typing import Tuple, List
 
-from azure.cosmos import CosmosClient
+from azure.cosmos.aio import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from core import config
 from db.errors import VersionDowngradeDenied, EntityDoesNotExist, MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, UserNotAuthorizedToUseTemplate
@@ -23,8 +23,11 @@ from pydantic import UUID4, parse_obj_as
 
 
 class ResourceRepository(BaseRepository):
-    def __init__(self, client: CosmosClient):
-        super().__init__(client, config.STATE_STORE_RESOURCES_CONTAINER)
+    @classmethod
+    async def create(cls, client: CosmosClient):
+        cls = ResourceRepository()
+        await super().create(client, config.STATE_STORE_RESOURCES_CONTAINER)
+        return cls
 
     @staticmethod
     def _active_resources_query():
@@ -41,24 +44,24 @@ class ResourceRepository(BaseRepository):
     def _validate_resource_parameters(resource_input, resource_template):
         validate(instance=resource_input["properties"], schema=resource_template)
 
-    def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = "") -> dict:
-        template_repo = ResourceTemplateRepository(self._client)
-        template = template_repo.get_current_template(template_name, resource_type, parent_template_name)
+    async def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = "") -> dict:
+        template_repo = await ResourceTemplateRepository.create(self._client)
+        template = await template_repo.get_current_template(template_name, resource_type, parent_template_name)
         return template_repo.enrich_template(template)
 
     @staticmethod
     def get_resource_base_spec_params():
         return {"tre_id": config.TRE_ID}
 
-    def get_resource_dict_by_id(self, resource_id: UUID4) -> dict:
+    async def get_resource_dict_by_id(self, resource_id: UUID4) -> dict:
         try:
-            resource = self.read_item_by_id(str(resource_id))
+            resource = await self.read_item_by_id(str(resource_id))
         except CosmosResourceNotFoundError:
             raise EntityDoesNotExist
         return resource
 
-    def get_resource_by_id(self, resource_id: UUID4) -> Resource:
-        resource = self.get_resource_dict_by_id(resource_id)
+    async def get_resource_by_id(self, resource_id: UUID4) -> Resource:
+        resource = await self.get_resource_dict_by_id(resource_id)
 
         if resource["resourceType"] == ResourceType.SharedService:
             return parse_obj_as(SharedService, resource)
@@ -71,16 +74,16 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(Resource, resource)
 
-    def get_active_resource_by_template_name(self, template_name: str) -> Resource:
+    async def get_active_resource_by_template_name(self, template_name: str) -> Resource:
         query = f"SELECT TOP 1 * FROM c WHERE c.templateName = '{template_name}' AND {IS_ACTIVE_RESOURCE}"
-        resources = self.query(query=query)
+        resources = await self.query(query=query)
         if not resources:
             raise EntityDoesNotExist
         return parse_obj_as(Resource, resources[0])
 
-    def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, user_roles: List[str] = None, parent_template_name: str = "") -> ResourceTemplate:
+    async def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, user_roles: List[str] = None, parent_template_name: str = "") -> ResourceTemplate:
         try:
-            template = self._get_enriched_template(template_name, resource_type, parent_template_name)
+            template = await self._get_enriched_template(template_name, resource_type, parent_template_name)
         except EntityDoesNotExist:
             if resource_type == ResourceType.UserResource:
                 raise ValueError(f'The template "{template_name}" does not exist or is not valid for the workspace service type "{parent_template_name}"')
@@ -97,7 +100,7 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(ResourceTemplate, template)
 
-    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
+    async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         # create a deep copy of the resource to use for history, create the history item + add to history list
         resource_copy = copy.deepcopy(resource)
         history_item = ResourceHistoryItem(
@@ -119,7 +122,7 @@ class ResourceRepository(BaseRepository):
             resource.isEnabled = resource_patch.isEnabled
 
         if resource_patch.templateVersion is not None:
-            self.validate_template_version_patch(resource, resource_patch, resource_template_repo, resource_template, force_version_update)
+            await self.validate_template_version_patch(resource, resource_patch, resource_template_repo, resource_template, force_version_update)
             resource.templateVersion = resource_patch.templateVersion
 
         if resource_patch.properties is not None and len(resource_patch.properties) > 0:
@@ -128,10 +131,10 @@ class ResourceRepository(BaseRepository):
             # if we're here then we're valid - update the props + persist
             resource.properties.update(resource_patch.properties)
 
-        self.update_item_with_etag(resource, etag)
+        await self.update_item_with_etag(resource, etag)
         return resource, resource_template
 
-    def validate_template_version_patch(self, resource: Resource, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, force_version_update: bool = False):
+    async def validate_template_version_patch(self, resource: Resource, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, force_version_update: bool = False):
         parent_resource_id = None
         if resource.resourceType == ResourceType.UserResource:
             parent_resource_id = resource.parentWorkspaceServiceId
@@ -148,7 +151,7 @@ class ResourceRepository(BaseRepository):
 
         # validate if target template with desired version is registered
         try:
-            resource_template_repo.get_template_by_name_and_version(resource.templateName, resource_patch.templateVersion, resource_template.resourceType, parent_resource_id)
+            await resource_template_repo.get_template_by_name_and_version(resource.templateName, resource_patch.templateVersion, resource_template.resourceType, parent_resource_id)
         except EntityDoesNotExist:
             raise TargetTemplateVersionDoesNotExist(f"Template '{resource_template.name}' not found for resource type '{resource_template.resourceType}' with target template version '{resource_patch.templateVersion}'")
 

@@ -63,8 +63,7 @@ RUN wget -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?
 
 ENV OAUTH2_PROXY_HOME=/etc/oauth2-proxy
 RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
-    # For some reason 7.3.1 doesn't work when deployed to app service
-    wget -O "$OAUTH2_PROXY_ARCHIVE" "https://github.com/oauth2-proxy/oauth2-proxy/releases/download/v7.2.1/oauth2-proxy-v7.2.1.linux-amd64.tar.gz" --progress=dot:giga && \
+    wget -O "$OAUTH2_PROXY_ARCHIVE" "https://github.com/oauth2-proxy/oauth2-proxy/releases/download/v7.4.0/oauth2-proxy-v7.4.0.linux-amd64.tar.gz" --progress=dot:giga && \
     mkdir -p "$OAUTH2_PROXY_HOME" && \
     tar zxpf "$OAUTH2_PROXY_ARCHIVE" -C "$OAUTH2_PROXY_HOME" --strip-components=1 && \
     rm -f "$OAUTH2_PROXY_ARCHIVE"

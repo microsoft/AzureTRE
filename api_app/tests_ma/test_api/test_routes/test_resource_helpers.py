@@ -1,7 +1,9 @@
 import datetime
+from unittest.mock import AsyncMock
 import uuid
 import pytest
-from mock import patch, MagicMock
+import pytest_asyncio
+from mock import patch
 import json
 
 from fastapi import HTTPException, status
@@ -24,16 +26,19 @@ FAKE_UPDATE_TIME = datetime.datetime(2022, 1, 1, 17, 5, 55)
 FAKE_UPDATE_TIMESTAMP: float = FAKE_UPDATE_TIME.timestamp()
 
 
-@pytest.fixture
-def resource_repo() -> ResourceRepository:
-    with patch("azure.cosmos.CosmosClient") as cosmos_client_mock:
-        return ResourceRepository(cosmos_client_mock)
+@pytest_asyncio.fixture
+async def resource_repo() -> ResourceRepository:
+    with patch('db.repositories.base.BaseRepository._get_container', return_value=AsyncMock()):
+        with patch("azure.cosmos.CosmosClient") as cosmos_client_mock:
+            resource_repo_mock = await ResourceRepository.create(cosmos_client_mock)
+            yield resource_repo_mock
 
 
-@pytest.fixture
-def operations_repo() -> OperationRepository:
+@pytest_asyncio.fixture
+async def operations_repo() -> OperationRepository:
     with patch("azure.cosmos.CosmosClient") as cosmos_client_mock:
-        return OperationRepository(cosmos_client_mock)
+        operation_repo_mock = await OperationRepository.create(cosmos_client_mock)
+        yield operation_repo_mock
 
 
 def sample_resource(workspace_id=WORKSPACE_ID):
@@ -105,8 +110,8 @@ class TestResourceHelpers:
         resource = sample_resource()
         operation = sample_resource_operation(resource_id=resource.id, operation_id=str(uuid.uuid4()))
 
-        resource_repo.save_item = MagicMock(return_value=None)
-        operations_repo.create_operation_item = MagicMock(return_value=operation)
+        resource_repo.save_item = AsyncMock(return_value=None)
+        operations_repo.create_operation_item = AsyncMock(return_value=operation)
 
         await save_and_deploy_resource(
             resource=resource,
@@ -122,7 +127,7 @@ class TestResourceHelpers:
     @pytest.mark.asyncio
     async def test_save_and_deploy_resource_raises_503_if_save_to_db_fails(self, resource_template_repo, resource_repo, operations_repo, basic_resource_template):
         resource = sample_resource()
-        resource_repo.save_item = MagicMock(side_effect=Exception)
+        resource_repo.save_item = AsyncMock(side_effect=Exception)
 
         with pytest.raises(HTTPException) as ex:
             await save_and_deploy_resource(
@@ -142,8 +147,8 @@ class TestResourceHelpers:
         resource = sample_resource()
         operation = sample_resource_operation(resource_id=resource.id, operation_id=str(uuid.uuid4()))
 
-        resource_repo.save_item = MagicMock(return_value=None)
-        operations_repo.create_operations_item = MagicMock(return_value=operation)
+        resource_repo.save_item = AsyncMock(return_value=None)
+        operations_repo.create_operations_item = AsyncMock(return_value=operation)
 
         user = create_test_user()
         await save_and_deploy_resource(
@@ -168,8 +173,8 @@ class TestResourceHelpers:
     @pytest.mark.asyncio
     async def test_save_and_deploy_resource_raises_503_if_send_request_fails(self, _, resource_template_repo, resource_repo, operations_repo, basic_resource_template):
         resource = sample_resource()
-        resource_repo.save_item = MagicMock(return_value=None)
-        resource_repo.delete_item = MagicMock(return_value=None)
+        resource_repo.save_item = AsyncMock(return_value=None)
+        resource_repo.delete_item = AsyncMock(return_value=None)
 
         with pytest.raises(HTTPException) as ex:
             await save_and_deploy_resource(
@@ -188,9 +193,9 @@ class TestResourceHelpers:
     async def test_save_and_deploy_resource_deletes_item_from_db_if_send_request_fails(self, _, resource_template_repo, resource_repo, operations_repo, basic_resource_template):
         resource = sample_resource()
 
-        resource_repo.save_item = MagicMock(return_value=None)
-        resource_repo.delete_item = MagicMock(return_value=None)
-        operations_repo.create_operation_item = MagicMock(return_value=None)
+        resource_repo.save_item = AsyncMock(return_value=None)
+        resource_repo.delete_item = AsyncMock(return_value=None)
+        operations_repo.create_operation_item = AsyncMock(return_value=None)
 
         with pytest.raises(HTTPException):
             await save_and_deploy_resource(
@@ -255,8 +260,8 @@ class TestResourceHelpers:
         operation_id = str(uuid.uuid4())
         operation = sample_resource_operation(resource_id=resource.id, operation_id=operation_id)
 
-        resource_repo.save_item = MagicMock(return_value=None)
-        operations_repo.create_operation_item = MagicMock(return_value=operation)
+        resource_repo.save_item = AsyncMock(return_value=None)
+        operations_repo.create_operation_item = AsyncMock(return_value=operation)
         user = create_test_user()
 
         await save_and_deploy_resource(

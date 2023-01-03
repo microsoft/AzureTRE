@@ -57,7 +57,7 @@ class AzureADAuthorization(AccessService):
             try:
                 # get the app reg id - which might be blank if the workspace hasn't fully created yet.
                 # if it's blank, don't use workspace auth, use core auth - and a TRE Admin can still get it
-                app_reg_id = self._fetch_ws_app_reg_id_from_ws_id(request)
+                app_reg_id = await self._fetch_ws_app_reg_id_from_ws_id(request)
                 if app_reg_id != "":
                     decoded_token = self._decode_token(token, app_reg_id)
             except HTTPException as h:
@@ -106,26 +106,27 @@ class AzureADAuthorization(AccessService):
         return user
 
     @staticmethod
-    def _fetch_ws_app_reg_id_from_ws_id(request: Request) -> str:
+    async def _fetch_ws_app_reg_id_from_ws_id(request: Request) -> str:
         workspace_id = None
         if "workspace_id" not in request.path_params:
             logging.error("Neither a workspace ID nor a default app registration id were provided")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS)
         try:
             workspace_id = request.path_params['workspace_id']
-            ws_repo = WorkspaceRepository(get_db_client_from_request(request))
-            workspace = ws_repo.get_workspace_by_id(workspace_id)
+            db_client = await get_db_client_from_request(request)
+            ws_repo = await WorkspaceRepository.create(db_client)
+            workspace = await ws_repo.get_workspace_by_id(workspace_id)
 
             ws_app_reg_id = ""
             if "client_id" in workspace.properties:
                 ws_app_reg_id = workspace.properties['client_id']
 
             return ws_app_reg_id
-        except EntityDoesNotExist as e:
-            logging.error(e)
+        except EntityDoesNotExist:
+            logging.exception(strings.WORKSPACE_DOES_NOT_EXIST)
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_DOES_NOT_EXIST)
-        except Exception as e:
-            logging.error(e)
+        except Exception:
+            logging.exception(f"Failed to get workspace app registration ID for workspace {workspace_id}")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS)
 
     @staticmethod

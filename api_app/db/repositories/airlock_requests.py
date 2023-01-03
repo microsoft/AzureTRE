@@ -5,9 +5,8 @@ from datetime import datetime
 from typing import List
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
-from azure.cosmos import CosmosClient
-from starlette import status
-from fastapi import HTTPException
+from azure.cosmos.aio import CosmosClient
+from fastapi import HTTPException, status
 from pydantic import parse_obj_as
 from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
@@ -21,8 +20,11 @@ import logging
 
 
 class AirlockRequestRepository(BaseRepository):
-    def __init__(self, client: CosmosClient):
-        super().__init__(client, config.STATE_STORE_AIRLOCK_REQUESTS_CONTAINER)
+    @classmethod
+    async def create(cls, client: CosmosClient):
+        cls = AirlockRequestRepository()
+        await super().create(client, config.STATE_STORE_AIRLOCK_REQUESTS_CONTAINER)
+        return cls
 
     @staticmethod
     def get_resource_base_spec_params():
@@ -31,7 +33,7 @@ class AirlockRequestRepository(BaseRepository):
     def get_timestamp(self) -> float:
         return datetime.utcnow().timestamp()
 
-    def update_airlock_request_item(self, original_request: AirlockRequest, new_request: AirlockRequest, updated_by: User, request_properties: dict) -> AirlockRequest:
+    async def update_airlock_request_item(self, original_request: AirlockRequest, new_request: AirlockRequest, updated_by: User, request_properties: dict) -> AirlockRequest:
         history_item = AirlockRequestHistoryItem(
             resourceVersion=original_request.resourceVersion,
             updatedWhen=original_request.updatedWhen,
@@ -45,7 +47,7 @@ class AirlockRequestRepository(BaseRepository):
         new_request.updatedBy = updated_by
         new_request.updatedWhen = self.get_timestamp()
 
-        self.upsert_item_with_etag(new_request, new_request.etag)
+        await self.upsert_item_with_etag(new_request, new_request.etag)
         return new_request
 
     @staticmethod
@@ -106,7 +108,7 @@ class AirlockRequestRepository(BaseRepository):
 
         return airlock_request
 
-    def get_airlock_requests(self, workspace_id: str, creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
+    async def get_airlock_requests(self, workspace_id: str, creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
         query = self.airlock_requests_query() + f' WHERE c.workspaceId = "{workspace_id}"'
 
         # optional filters
@@ -127,17 +129,17 @@ class AirlockRequestRepository(BaseRepository):
             {"name": "@status", "value": status},
             {"name": "@type", "value": type},
         ]
-        airlock_requests = self.query(query=query, parameters=parameters)
+        airlock_requests = await self.query(query=query, parameters=parameters)
         return parse_obj_as(List[AirlockRequest], airlock_requests)
 
-    def get_airlock_request_by_id(self, airlock_request_id: UUID4) -> AirlockRequest:
+    async def get_airlock_request_by_id(self, airlock_request_id: UUID4) -> AirlockRequest:
         try:
-            airlock_requests = self.read_item_by_id(str(airlock_request_id))
+            airlock_requests = await self.read_item_by_id(str(airlock_request_id))
         except CosmosResourceNotFoundError:
             raise EntityDoesNotExist
         return parse_obj_as(AirlockRequest, airlock_requests)
 
-    def update_airlock_request(
+    async def update_airlock_request(
             self,
             original_request: AirlockRequest,
             updated_by: User,
@@ -155,12 +157,12 @@ class AirlockRequestRepository(BaseRepository):
             review_user_resource=review_user_resource,
             updated_by=updated_by)
         try:
-            db_response = self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
+            db_response = await self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
         except CosmosAccessConditionFailedError:
             logging.warning(f"ETag mismatch for request ID: '{original_request.id}'. Retrying.")
-            original_request = self.get_airlock_request_by_id(original_request.id)
+            original_request = await self.get_airlock_request_by_id(original_request.id)
             updated_request = self._build_updated_request(original_request=original_request, new_status=new_status, request_files=request_files, status_message=status_message, airlock_review=airlock_review)
-            db_response = self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
+            db_response = await self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
 
         return db_response
 

@@ -23,7 +23,7 @@ function component_version () {
 echo -e "| name | version |\n| ----- | ----- |"
 
 component_version "devops" "devops/version.txt"
-component_version "core" "templates/core/version.txt"
+component_version "core" "core/version.txt"
 
 find . -type f -name "porter.yaml" -not -path "*/.cnab/*" -print0 | sort | while read -r -d $'\0' file
 do

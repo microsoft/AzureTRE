@@ -1,6 +1,8 @@
 import copy
+from unittest.mock import AsyncMock
 import uuid
 import pytest
+import pytest_asyncio
 from mock import patch, MagicMock
 
 from jsonschema.exceptions import ValidationError
@@ -21,10 +23,12 @@ from models.schemas.workspace import WorkspaceInCreate
 RESOURCE_ID = str(uuid.uuid4())
 
 
-@pytest.fixture
-def resource_repo():
-    with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-        yield ResourceRepository(cosmos_client_mock)
+@pytest_asyncio.fixture
+async def resource_repo():
+    with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
+        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
+            resource_repo = await ResourceRepository.create(cosmos_client_mock)
+            yield resource_repo
 
 
 @pytest.fixture
@@ -128,9 +132,10 @@ def sample_nested_template() -> ResourceTemplate:
     ).dict(exclude_none=True)
 
 
+@pytest.mark.asyncio
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
 @patch("db.repositories.resources.ResourceRepository._validate_resource_parameters", return_value=None)
-def test_validate_input_against_template_returns_template_version_if_template_is_valid(_, enriched_template_mock, resource_repo, workspace_input):
+async def test_validate_input_against_template_returns_template_version_if_template_is_valid(_, enriched_template_mock, resource_repo, workspace_input):
     enriched_template_mock.return_value = ResourceTemplate(id="123",
                                                            name="template1",
                                                            description="description",
@@ -141,29 +146,32 @@ def test_validate_input_against_template_returns_template_version_if_template_is
                                                            properties={},
                                                            customActions=[]).dict()
 
-    template = resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, [])
+    template = await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, [])
 
     assert template.version == "0.1.0"
 
 
+@pytest.mark.asyncio
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
-def test_validate_input_against_template_raises_value_error_if_template_does_not_exist(enriched_template_mock, resource_repo, workspace_input):
+async def test_validate_input_against_template_raises_value_error_if_template_does_not_exist(enriched_template_mock, resource_repo, workspace_input):
     enriched_template_mock.side_effect = EntityDoesNotExist
 
     with pytest.raises(ValueError):
-        resource_repo.validate_input_against_template("template_name", workspace_input, ResourceType.Workspace, [])
+        await resource_repo.validate_input_against_template("template_name", workspace_input, ResourceType.Workspace, [])
 
 
+@pytest.mark.asyncio
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
-def test_validate_input_against_template_raises_value_error_if_the_user_resource_template_does_not_exist_for_the_given_workspace_service(enriched_template_mock, resource_repo, workspace_input):
+async def test_validate_input_against_template_raises_value_error_if_the_user_resource_template_does_not_exist_for_the_given_workspace_service(enriched_template_mock, resource_repo, workspace_input):
     enriched_template_mock.side_effect = EntityDoesNotExist
 
     with pytest.raises(ValueError):
-        resource_repo.validate_input_against_template("template_name", workspace_input, ResourceType.UserResource, [], "parent_template_name")
+        await resource_repo.validate_input_against_template("template_name", workspace_input, ResourceType.UserResource, [], "parent_template_name")
 
 
+@pytest.mark.asyncio
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
-def test_validate_input_against_template_raises_value_error_if_payload_is_invalid(enriched_template_mock, resource_repo, workspace_input):
+async def test_validate_input_against_template_raises_value_error_if_payload_is_invalid(enriched_template_mock, resource_repo, workspace_input):
     template_dict = ResourceTemplate(
         id="123",
         name="template1",
@@ -184,11 +192,12 @@ def test_validate_input_against_template_raises_value_error_if_payload_is_invali
     workspace_input = WorkspaceInCreate(templateName="template1")
 
     with pytest.raises(ValidationError):
-        resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, [])
+        await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, [])
 
 
+@pytest.mark.asyncio
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
-def test_validate_input_against_template_raises_if_user_does_not_have_required_role(enriched_template_mock, resource_repo, workspace_input):
+async def test_validate_input_against_template_raises_if_user_does_not_have_required_role(enriched_template_mock, resource_repo, workspace_input):
     enriched_template_mock.return_value = ResourceTemplate(id="123",
                                                            name="template1",
                                                            description="description",
@@ -201,12 +210,13 @@ def test_validate_input_against_template_raises_if_user_does_not_have_required_r
                                                            customActions=[]).dict()
 
     with pytest.raises(UserNotAuthorizedToUseTemplate):
-        _ = resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_role", "another_role"])
+        _ = await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_role", "another_role"])
 
 
+@pytest.mark.asyncio
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
 @patch("db.repositories.resources.ResourceRepository._validate_resource_parameters", return_value=None)
-def test_validate_input_against_template_valid_if_user_has_only_one_role(_, enriched_template_mock, resource_repo, workspace_input):
+async def test_validate_input_against_template_valid_if_user_has_only_one_role(_, enriched_template_mock, resource_repo, workspace_input):
     enriched_template_mock.return_value = ResourceTemplate(id="123",
                                                            name="template1",
                                                            description="description",
@@ -218,15 +228,16 @@ def test_validate_input_against_template_valid_if_user_has_only_one_role(_, enri
                                                            properties={},
                                                            customActions=[]).dict()
 
-    template = resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_role", "another_role"])
+    template = await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_role", "another_role"])
 
     # does not throw
     assert template.version == "0.1.0"
 
 
+@pytest.mark.asyncio
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
 @patch("db.repositories.resources.ResourceRepository._validate_resource_parameters", return_value=None)
-def test_validate_input_against_template_valid_if_required_roles_set_is_empty(_, enriched_template_mock, resource_repo, workspace_input):
+async def test_validate_input_against_template_valid_if_required_roles_set_is_empty(_, enriched_template_mock, resource_repo, workspace_input):
     enriched_template_mock.return_value = ResourceTemplate(id="123",
                                                            name="template1",
                                                            description="description",
@@ -237,14 +248,15 @@ def test_validate_input_against_template_valid_if_required_roles_set_is_empty(_,
                                                            properties={},
                                                            customActions=[]).dict()
 
-    template = resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_user_role"])
+    template = await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_user_role"])
 
     # does not throw
     assert template.version == "0.1.0"
 
 
+@pytest.mark.asyncio
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
-def test_validate_input_against_nested_template_missing_nested_prop(enriched_template_mock, resource_repo):
+async def test_validate_input_against_nested_template_missing_nested_prop(enriched_template_mock, resource_repo):
     enriched_template_mock.return_value = sample_nested_template()
     # missing port
     nested_input = WorkspaceInCreate(templateName="template1")
@@ -257,11 +269,12 @@ def test_validate_input_against_nested_template_missing_nested_prop(enriched_tem
     ]
 
     with pytest.raises(ValidationError):
-        resource_repo.validate_input_against_template("template1", nested_input, ResourceType.Workspace)
+        await resource_repo.validate_input_against_template("template1", nested_input, ResourceType.Workspace)
 
 
+@pytest.mark.asyncio
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
-def test_validate_input_against_nested_template_valid(enriched_template_mock, resource_repo):
+async def test_validate_input_against_nested_template_valid(enriched_template_mock, resource_repo):
     enriched_template_mock.return_value = sample_nested_template()
 
     # has required props, nested
@@ -275,48 +288,52 @@ def test_validate_input_against_nested_template_valid(enriched_template_mock, re
         }
     ]
 
-    resp_template = resource_repo.validate_input_against_template("template1", nested_input, ResourceType.Workspace)
+    resp_template = await resource_repo.validate_input_against_template("template1", nested_input, ResourceType.Workspace)
     assert resp_template is not None
 
 
+@pytest.mark.asyncio
 @patch("db.repositories.resources.ResourceTemplateRepository.get_current_template")
-def test_get_enriched_template_returns_the_enriched_template(get_current_mock, resource_repo):
+async def test_get_enriched_template_returns_the_enriched_template(get_current_mock, resource_repo):
     workspace_template = ResourceTemplate(id="abc", name="template1", description="", version="", resourceType=ResourceType.Workspace, current=True, required=[], properties={}, customActions=[])
     get_current_mock.return_value = workspace_template
 
-    template = resource_repo._get_enriched_template("template1", ResourceType.Workspace)
+    template = await resource_repo._get_enriched_template("template1", ResourceType.Workspace)
 
     get_current_mock.assert_called_once_with('template1', ResourceType.Workspace, '')
     assert "display_name" in template["properties"]
 
 
+@pytest.mark.asyncio
 @patch("db.repositories.resources.ResourceTemplateRepository.get_current_template")
-def test_get_enriched_template_returns_the_enriched_template_for_user_resources(get_current_mock, resource_repo):
+async def test_get_enriched_template_returns_the_enriched_template_for_user_resources(get_current_mock, resource_repo):
     user_resource_template = UserResourceTemplate(id="abc", name="template1", description="", version="", resourceType=ResourceType.Workspace, current=True, required=[], properties={}, customActions=[], parentWorkspaceService="parent-template1")
     get_current_mock.return_value = user_resource_template
 
-    template = resource_repo._get_enriched_template("template1", ResourceType.UserResource, "parent-template1")
+    template = await resource_repo._get_enriched_template("template1", ResourceType.UserResource, "parent-template1")
 
     get_current_mock.assert_called_once_with('template1', ResourceType.UserResource, 'parent-template1')
     assert "display_name" in template["properties"]
 
 
-def test_get_resource_dict_by_id_raises_entity_does_not_exist_if_no_resources_come_back(resource_repo):
+@pytest.mark.asyncio
+async def test_get_resource_dict_by_id_raises_entity_does_not_exist_if_no_resources_come_back(resource_repo):
     item_id = "123"
-    resource_repo.read_item_by_id = MagicMock(side_effect=CosmosResourceNotFoundError)
+    resource_repo.read_item_by_id = AsyncMock(side_effect=CosmosResourceNotFoundError)
 
     with pytest.raises(EntityDoesNotExist):
-        resource_repo.get_resource_dict_by_id(item_id)
+        await resource_repo.get_resource_dict_by_id(item_id)
 
 
+@pytest.mark.asyncio
 @patch('db.repositories.resources.ResourceRepository.validate_patch')
 @patch('db.repositories.resources.ResourceRepository.get_timestamp', return_value=FAKE_UPDATE_TIMESTAMP)
-def test_patch_resource_preserves_property_history(_, __, resource_repo):
+async def test_patch_resource_preserves_property_history(_, __, resource_repo):
     """
     Tests that properties are copied into a history array and only certain values in the root are updated
     """
 
-    resource_repo.update_item_with_etag = MagicMock(return_value=None)
+    resource_repo.update_item_with_etag = AsyncMock(return_value=None)
     resource_patch = ResourcePatch(isEnabled=True, properties={'display_name': 'updated name'})
 
     etag = "some-etag-value"
@@ -337,7 +354,7 @@ def test_patch_resource_preserves_property_history(_, __, resource_repo):
     expected_resource.user = user
     expected_resource.updatedWhen = FAKE_UPDATE_TIMESTAMP
 
-    resource_repo.patch_resource(resource, resource_patch, None, etag, None, user)
+    await resource_repo.patch_resource(resource, resource_patch, None, etag, None, user)
     resource_repo.update_item_with_etag.assert_called_once_with(expected_resource, etag)
 
     # now patch again
@@ -359,7 +376,7 @@ def test_patch_resource_preserves_property_history(_, __, resource_repo):
     expected_resource.isEnabled = False
     expected_resource.user = user
 
-    resource_repo.patch_resource(new_resource, new_patch, None, etag, None, user)
+    await resource_repo.patch_resource(new_resource, new_patch, None, etag, None, user)
     resource_repo.update_item_with_etag.assert_called_with(expected_resource, etag)
 
 

@@ -1,6 +1,7 @@
 ---
+schemaVersion: 1.0.0
 name: tre-service-guacamole
-version: 0.5.1
+version: 0.6.0
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -113,65 +114,85 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.2.6
+      clientVersion: 1.3.6
 
 install:
   - terraform:
       description: "Deploy Guacamole Service"
       vars:
-        workspace_id: "{{ bundle.parameters.workspace_id }}"
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        image_name: "{{ bundle.custom.runtime_image.name }}"
-        image_tag: "{{ bundle.parameters.image_tag }}"
-        mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
-        mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
-        guac_disable_copy: "{{ bundle.parameters.guac_disable_copy }}"
-        guac_disable_paste: "{{ bundle.parameters.guac_disable_paste }}"
-        guac_enable_drive: "{{ bundle.parameters.guac_enable_drive }}"
-        guac_drive_name: "{{ bundle.parameters.guac_drive_name }}"
-        guac_drive_path: "{{ bundle.parameters.guac_drive_path }}"
-        guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
-        is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        image_name: ${ bundle.custom.runtime_image.name }
+        image_tag: ${ bundle.parameters.image_tag }
+        mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
+        mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
+        guac_disable_copy: ${ bundle.parameters.guac_disable_copy }
+        guac_disable_paste: ${ bundle.parameters.guac_disable_paste }
+        guac_enable_drive: ${ bundle.parameters.guac_enable_drive }
+        guac_drive_name: ${ bundle.parameters.guac_drive_name }
+        guac_drive_path: ${ bundle.parameters.guac_drive_path }
+        guac_disable_download: ${ bundle.parameters.guac_disable_download }
+        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
+        tre_resource_id: ${ bundle.parameters.id }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "tre-service-guacamole-{{ bundle.parameters.id }}"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-service-guacamole-${ bundle.parameters.id }
       outputs:
         - name: connection_uri
         - name: authentication_callback_uri
         - name: web_apps_addresses
 
 upgrade:
-  # When/if TF will be called here, there might be an issue caused by switching from azurerm_app_service to
-  # azurerm_linux_web_app. Since this template has no important state, it would be eaiser to recreate it.
-  - exec:
+  - terraform:
       description: "Upgrade Guacamole Service"
-      command: echo
-      arguments:
-        - "This workspace service does not implement upgrade action"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        image_name: ${ bundle.custom.runtime_image.name }
+        image_tag: ${ bundle.parameters.image_tag }
+        mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
+        mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
+        guac_disable_copy: ${ bundle.parameters.guac_disable_copy }
+        guac_disable_paste: ${ bundle.parameters.guac_disable_paste }
+        guac_enable_drive: ${ bundle.parameters.guac_enable_drive }
+        guac_drive_name: ${ bundle.parameters.guac_drive_name }
+        guac_drive_path: ${ bundle.parameters.guac_drive_path }
+        guac_disable_download: ${ bundle.parameters.guac_disable_download }
+        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
+        tre_resource_id: ${ bundle.parameters.id }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-service-guacamole-${ bundle.parameters.id }
+      outputs:
+        - name: connection_uri
+        - name: authentication_callback_uri
+        - name: web_apps_addresses
+
 
 uninstall:
   - terraform:
       description: "Delete the Guacamole Service"
       vars:
-        workspace_id: "{{ bundle.parameters.workspace_id }}"
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        image_name: "{{ bundle.custom.runtime_image.name }}"
-        image_tag: "{{ bundle.parameters.image_tag }}"
-        mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
-        mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
-        guac_disable_copy: "{{ bundle.parameters.guac_disable_copy }}"
-        guac_disable_paste: "{{ bundle.parameters.guac_disable_paste }}"
-        guac_enable_drive: "{{ bundle.parameters.guac_enable_drive }}"
-        guac_drive_name: "{{ bundle.parameters.guac_drive_name }}"
-        guac_drive_path: "{{ bundle.parameters.guac_drive_path }}"
-        guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
-        is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        image_name: ${ bundle.custom.runtime_image.name }
+        image_tag: ${ bundle.parameters.image_tag }
+        mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
+        mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
+        guac_disable_copy: ${ bundle.parameters.guac_disable_copy }
+        guac_disable_paste: ${ bundle.parameters.guac_disable_paste }
+        guac_enable_drive: ${ bundle.parameters.guac_enable_drive }
+        guac_drive_name: ${ bundle.parameters.guac_drive_name }
+        guac_drive_path: ${ bundle.parameters.guac_drive_path }
+        guac_disable_download: ${ bundle.parameters.guac_disable_download }
+        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
+        tre_resource_id: ${ bundle.parameters.id }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "tre-service-guacamole-{{ bundle.parameters.id }}"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-service-guacamole-${ bundle.parameters.id }

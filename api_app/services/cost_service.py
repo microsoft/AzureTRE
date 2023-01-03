@@ -134,9 +134,9 @@ class CostService:
         self.cache[key] = CostCacheItem(result, datetime.now() + timedelta)
         self.clear_expired_cache_items()
 
-    def query_tre_costs(self, tre_id, granularity: GranularityEnum, from_date: datetime, to_date: datetime,
-                        workspace_repo: WorkspaceRepository,
-                        shared_services_repo: SharedServiceRepository) -> CostReport:
+    async def query_tre_costs(self, tre_id, granularity: GranularityEnum, from_date: datetime, to_date: datetime,
+                              workspace_repo: WorkspaceRepository,
+                              shared_services_repo: SharedServiceRepository) -> CostReport:
 
         resource_groups_dict = self.get_resource_groups_by_tag(self.TRE_ID_TAG, tre_id)
 
@@ -156,18 +156,18 @@ class CostService:
         cost_report.core_services = self.__extract_cost_rows_by_tag(
             granularity, query_result_dict, CostService.TRE_CORE_SERVICE_ID_TAG, tre_id)
 
-        cost_report.shared_services = self.__get_shared_services_costs(
+        cost_report.shared_services = await self.__get_shared_services_costs(
             granularity, query_result_dict, shared_services_repo)
 
-        cost_report.workspaces = self.__get_workspaces_costs(granularity, query_result_dict, workspace_repo)
+        cost_report.workspaces = await self.__get_workspaces_costs(granularity, query_result_dict, workspace_repo)
 
         return cost_report
 
-    def query_tre_workspace_costs(self, workspace_id: str, granularity: GranularityEnum, from_date: Optional[datetime],
-                                  to_date: Optional[datetime],
-                                  workspace_repo: WorkspaceRepository,
-                                  workspace_services_repo: WorkspaceServiceRepository,
-                                  user_resource_repo) -> WorkspaceCostReport:
+    async def query_tre_workspace_costs(self, workspace_id: str, granularity: GranularityEnum, from_date: Optional[datetime],
+                                        to_date: Optional[datetime],
+                                        workspace_repo: WorkspaceRepository,
+                                        workspace_services_repo: WorkspaceServiceRepository,
+                                        user_resource_repo) -> WorkspaceCostReport:
 
         resource_groups_dict = self.get_resource_groups_by_tag(self.TRE_WORKSPACE_ID_TAG, workspace_id)
 
@@ -182,16 +182,16 @@ class CostService:
         query_result_dict = self.__query_result_to_dict(summerized_result, granularity)
 
         try:
-            workspace = workspace_repo.get_workspace_by_id(workspace_id)
+            workspace = await workspace_repo.get_workspace_by_id(workspace_id)
             workspace_cost_report: WorkspaceCostReport = WorkspaceCostReport(
                 id=workspace_id,
                 name=self.__get_resource_name(workspace),
                 costs=self.__extract_cost_rows_by_tag(granularity, query_result_dict, CostService.TRE_WORKSPACE_ID_TAG,
                                                       workspace_id),
-                workspace_services=self.__get_workspace_services_costs(granularity, query_result_dict,
-                                                                       workspace_services_repo,
-                                                                       user_resource_repo,
-                                                                       workspace_id))
+                workspace_services=await self.__get_workspace_services_costs(granularity, query_result_dict,
+                                                                             workspace_services_repo,
+                                                                             user_resource_repo,
+                                                                             workspace_id))
 
             return workspace_cost_report
         except EntityDoesNotExist:
@@ -253,20 +253,20 @@ class CostService:
             costs=self.__extract_cost_rows_by_tag(granularity, query_result_dict, tag, resource.id)
         )
 
-    def __get_workspaces_costs(self, granularity, query_result_dict, workspace_repo):
+    async def __get_workspaces_costs(self, granularity, query_result_dict, workspace_repo):
         return [self.__extract_cost_item(workspace, granularity, query_result_dict, CostService.TRE_WORKSPACE_ID_TAG)
-                for workspace in workspace_repo.get_active_workspaces()]
+                for workspace in await workspace_repo.get_active_workspaces()]
 
-    def __get_shared_services_costs(self, granularity, query_result_dict, shared_services_repo):
+    async def __get_shared_services_costs(self, granularity, query_result_dict, shared_services_repo):
         return [self.__extract_cost_item(shared_service, granularity, query_result_dict,
                                          CostService.TRE_SHARED_SERVICE_ID_TAG)
-                for shared_service in shared_services_repo.get_active_shared_services()]
+                for shared_service in await shared_services_repo.get_active_shared_services()]
 
-    def __get_workspace_services_costs(self, granularity, query_result_dict,
-                                       workspace_services_repo: WorkspaceServiceRepository,
-                                       user_resource_repo: UserResourceRepository, workspace_id: str):
+    async def __get_workspace_services_costs(self, granularity, query_result_dict,
+                                             workspace_services_repo: WorkspaceServiceRepository,
+                                             user_resource_repo: UserResourceRepository, workspace_id: str):
         workspace_services_costs = []
-        workspace_services_list = workspace_services_repo.get_active_workspace_services_for_workspace(workspace_id)
+        workspace_services_list = await workspace_services_repo.get_active_workspace_services_for_workspace(workspace_id)
         for workspace_service in workspace_services_list:
             workspace_service_cost_item = WorkspaceServiceCostItem(
                 id=workspace_service.id,
@@ -282,7 +282,7 @@ class CostService:
                                                                                    query_result_dict,
                                                                                    CostService.TRE_USER_RESOURCE_ID_TAG)
                                                           for user_resource in
-                                                          user_resource_repo.get_user_resources_for_workspace_service(
+                                                          await user_resource_repo.get_user_resources_for_workspace_service(
                                                               workspace_id,
                                                               workspace_service.id)]
 
@@ -323,20 +323,20 @@ class CostService:
             # Given subscription {subscription_id} doesn't have valid WebDirect/AIRS offer type.
             # it means that the Azure subscription deosn't support cost management
             if "doesn't have valid WebDirect/AIRS" in e.message:
-                logging.error("Subscription doesn't support cost mangement", exc_info=e)
+                logging.exception("Subscription doesn't support cost management")
                 raise SubscriptionNotSupported(e)
             else:
-                logging.error("Unhandled Cost Management API error", exc_info=e)
+                logging.exception("Unhandled Cost Management API error")
                 raise e
         except HttpResponseError as e:
-            logging.error("Cost Management API error", exc_info=e)
+            logging.exception("Cost Management API error")
             if e.status_code == 429:
                 # Too many requests - Request is throttled.
                 # Retry after waiting for the time specified in the "x-ms-ratelimit-microsoft.consumption-retry-after" header.
                 if self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY in e.response.headers:
                     raise TooManyRequests(int(e.response.headers[self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY]))
                 else:
-                    logging.error(f"{self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY} header was not found in respose", exc_info=e)
+                    logging.exception(f"{self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY} header was not found in response")
                     raise e
             elif e.status_code == 503:
                 # Service unavailable - Service is temporarily unavailable.
@@ -344,7 +344,7 @@ class CostService:
                 if self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY in e.response.headers:
                     raise ServiceUnavailable(int(e.response.headers[self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY]))
                 else:
-                    logging.error(f"{self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY} header was not found in respose", exc_info=e)
+                    logging.exception(f"{self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY} header was not found in response")
                     raise e
             else:
                 raise e

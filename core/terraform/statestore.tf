@@ -5,8 +5,16 @@ resource "azurerm_cosmosdb_account" "tre_db_account" {
   offer_type                = "Standard"
   kind                      = "GlobalDocumentDB"
   enable_automatic_failover = false
-  ip_range_filter           = var.enable_local_debugging ? local.myip : null
+  ip_range_filter           = "${local.azure_portal_cosmos_ips}${var.enable_local_debugging ? ",${local.myip}" : ""}"
   tags                      = local.tre_core_tags
+
+  dynamic "capabilities" {
+    # We can't change an existing cosmos
+    for_each = var.is_cosmos_defined_throughput ? [] : [1]
+    content {
+      name = "EnableServerless"
+    }
+  }
 
   consistency_policy {
     consistency_level       = "BoundedStaleness"
@@ -31,7 +39,6 @@ resource "azurerm_cosmosdb_sql_database" "tre_db" {
   name                = "AzureTRE"
   resource_group_name = azurerm_resource_group.core.name
   account_name        = azurerm_cosmosdb_account.tre_db_account.name
-  throughput          = 400
 }
 
 moved {

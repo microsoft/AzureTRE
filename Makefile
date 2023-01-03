@@ -96,7 +96,7 @@ push-airlock-processor:
 prepare-tf-state:
 	$(call target_title, "Preparing terraform state") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
-	&& pushd ${MAKEFILE_DIR}/templates/core/terraform > /dev/null && ../../shared_services/firewall/terraform/remove_state.sh && popd > /dev/null \
+	&& pushd ${MAKEFILE_DIR}/core/terraform > /dev/null && ../../shared_services/firewall/terraform/remove_state.sh && popd > /dev/null \
 	&& pushd ${MAKEFILE_DIR}/templates/shared_services/firewall/terraform > /dev/null && ./import_state.sh && popd > /dev/null
 # / End migration targets
 
@@ -104,16 +104,16 @@ deploy-core: tre-start
 	$(call target_title, "Deploying TRE") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
 	&& if [[ "$${TF_LOG}" == "DEBUG" ]]; \
-		then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${MAKEFILE_DIR}/templates/core/terraform/ \
+		then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${MAKEFILE_DIR}/core/terraform/ \
 			&& ./deploy.sh 1>/dev/null 2>/dev/null; \
-		else cd ${MAKEFILE_DIR}/templates/core/terraform/ && ./deploy.sh; fi;
+		else cd ${MAKEFILE_DIR}/core/terraform/ && ./deploy.sh; fi;
 
 letsencrypt:
 	$(call target_title, "Requesting LetsEncrypt SSL certificate") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,certbot,env \
-	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
-	&& ${MAKEFILE_DIR}/templates/core/terraform/scripts/letsencrypt.sh
+	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
+	&& ${MAKEFILE_DIR}/core/terraform/scripts/letsencrypt.sh
 
 tre-start:
 	$(call target_title, "Starting TRE") \
@@ -184,16 +184,22 @@ bundle-build:
 	&& if [ -d terraform ]; then terraform -chdir=terraform init -backend=false; terraform -chdir=terraform validate; fi \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} IMAGE_NAME_PREFIX=${IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_build.sh \
-	&& porter build --debug
+	&& porter build
 	$(MAKE) bundle-check-params
 
 bundle-install: bundle-check-params
 	$(call target_title, "Deploying ${DIR} with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
-	&& cd ${DIR} && porter install -p ./parameters.json \
-		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
-		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+	&& cd ${DIR} \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh .env \
+	&& porter parameters apply parameters.json \
+	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+	&& . ${MAKEFILE_DIR}/devops/scripts/porter_local_env.sh \
+	&& porter install --parameter-set $$(yq ".name" porter.yaml) \
+		--credential-set arm_auth \
+		--credential-set aad_auth \
 		--allow-docker-host-access --debug
 
 # Validates that the parameters file is synced with the bundle.
@@ -204,27 +210,40 @@ bundle-check-params:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,porter \
 	&& cd ${DIR} \
 	&& if [ ! -f "parameters.json" ]; then echo "Error - please create a parameters.json file."; exit 1; fi \
-	&& if ! porter explain -ojson > /dev/null; then echo "Error - porter explain issue!"; exit 1; fi \
+	&& if [ "$$(jq -r '.name' parameters.json)" != "$$(yq eval '.name' porter.yaml)" ]; then echo "Error - ParameterSet name isn't equal to bundle's name."; exit 1; fi \
+	&& if ! porter explain; then echo "Error - porter explain issue!"; exit 1; fi \
 	&& comm_output=$$(set -o pipefail && comm -3 --output-delimiter=: <(porter explain -ojson | jq -r '.parameters[].name | select (. != "arm_use_msi")' | sort) <(jq -r '.parameters[].name | select(. != "arm_use_msi")' parameters.json | sort)) \
 	&& if [ ! -z "$${comm_output}" ]; \
-		then echo -e "*** Add to params ***:*** Remove from params ***\n$$comm_output" | column -t -s ":" -n; exit 1; \
+		then echo -e "*** Add to params ***:*** Remove from params ***\n$$comm_output" | column -t -s ":"; exit 1; \
 		else echo "parameters.json file up-to-date."; fi
 
 bundle-uninstall:
 	$(call target_title, "Uninstalling ${DIR} with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
-	&& cd ${DIR} && porter uninstall -p ./parameters.json \
-		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
-		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
+	&& cd ${DIR} \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh .env \
+	&& porter parameters apply parameters.json \
+	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+	&& porter uninstall --parameter-set $$(yq ".name" porter.yaml) \
+		--credential-set arm_auth \
+		--credential-set aad_auth \
 		--allow-docker-host-access --debug
 
 bundle-custom-action:
  	$(call target_title, "Performing:${ACTION} ${DIR} with Porter") \
  	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
- 	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json \
- 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
- 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
- 		--allow-docker-host-access --debug
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
+	&& cd ${DIR}
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh .env \
+	&& porter parameters apply parameters.json \
+	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+ 	&& porter invoke --action ${ACTION} --parameter-set $$(yq ".name" porter.yaml) \
+		--credential-set arm_auth \
+		--credential-set aad_auth \
+		--allow-docker-host-access --debug
 
 bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
@@ -234,7 +253,7 @@ bundle-publish:
 	&& cd ${DIR} \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_push.sh \
-	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --debug
+	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --force
 
 bundle-register:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
@@ -278,23 +297,23 @@ firewall-install:
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
-	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
+	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& ${MAKEFILE_DIR}/devops/scripts/upload_static_web.sh
 
 build-and-deploy-ui:
 	$(call target_title, "Build and deploy UI") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
-	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
+	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& if [ "$${DEPLOY_UI}" != "false" ]; then ${MAKEFILE_DIR}/devops/scripts/build_deploy_ui.sh; else echo "UI Deploy skipped as DEPLOY_UI is false"; fi \
 
 prepare-for-e2e:
-	$(MAKE) workspace_bundle BUNDLE=base \
-	&& $(MAKE) workspace_service_bundle BUNDLE=guacamole \
-	&& $(MAKE) shared_service_bundle BUNDLE=gitea \
-	&& $(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-windowsvm \
-	&& $(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-linuxvm
+	$(MAKE) workspace_bundle BUNDLE=base
+	$(MAKE) workspace_service_bundle BUNDLE=guacamole
+	$(MAKE) shared_service_bundle BUNDLE=gitea
+	$(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-windowsvm
+	$(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-linuxvm
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
@@ -319,17 +338,17 @@ test-e2e-custom:
 	&& cd e2e_tests \
 	&& \
 		if [[ -n "$${E2E_TESTS_NUMBER_PROCESSES}" && "$${E2E_TESTS_NUMBER_PROCESSES}" -ne 1 ]]; then \
-			python -m pytest --asyncio-mode=auto -n "$${E2E_TESTS_NUMBER_PROCESSES}" -m "${SELECTOR}" --verify $${IS_API_SECURED:-true} --junit-xml "pytest_e2e_$${SELECTOR// /_}.xml"; \
+			python -m pytest -n "$${E2E_TESTS_NUMBER_PROCESSES}" -m "${SELECTOR}" --verify $${IS_API_SECURED:-true} --junit-xml "pytest_e2e_$${SELECTOR// /_}.xml"; \
 		elif [[ "$${E2E_TESTS_NUMBER_PROCESSES}" -eq 1 ]]; then \
-			python -m pytest --asyncio-mode=auto -m "${SELECTOR}" --verify $${IS_API_SECURED:-true} --junit-xml "pytest_e2e_$${SELECTOR// /_}.xml"; \
+			python -m pytest -m "${SELECTOR}" --verify $${IS_API_SECURED:-true} --junit-xml "pytest_e2e_$${SELECTOR// /_}.xml"; \
 		else \
-			python -m pytest --asyncio-mode=auto -n "${E2E_TESTS_NUMBER_PROCESSES_DEFAULT}" -m "${SELECTOR}" --verify $${IS_API_SECURED:-true} --junit-xml "pytest_e2e_$${SELECTOR// /_}.xml"; fi
+			python -m pytest -n "${E2E_TESTS_NUMBER_PROCESSES_DEFAULT}" -m "${SELECTOR}" --verify $${IS_API_SECURED:-true} --junit-xml "pytest_e2e_$${SELECTOR// /_}.xml"; fi
 
 setup-local-debugging:
 	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
-	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
+	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/setup_local_debugging.sh
 
 auth:
@@ -339,18 +358,18 @@ auth:
 
 show-core-output:
 	$(call target_title,"Display TRE core output") \
-	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && terraform show && popd > /dev/null
+	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && terraform show && popd > /dev/null
 
 api-healthcheck:
 	$(call target_title,"Checking API Health") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& ${MAKEFILE_DIR}/devops/scripts/api_healthcheck.sh
 
 db-migrate: api-healthcheck
 	$(call target_title,"Migrating Cosmos Data") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
-	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
+	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/migrate_state_store.sh --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --insecure

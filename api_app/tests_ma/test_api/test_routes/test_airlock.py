@@ -1,5 +1,6 @@
 import time
 import pytest
+import pytest_asyncio
 from mock import patch
 from fastapi import status
 from azure.core.exceptions import HttpResponseError
@@ -116,7 +117,7 @@ def sample_review_resource(healthy=True) -> UserResource:
 
 
 class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
-    @pytest.fixture(autouse=True, scope='class')
+    @pytest_asyncio.fixture(autouse=True, scope='class')
     def log_in_with_researcher_user(self, app, researcher_user):
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = researcher_user
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = researcher_user
@@ -135,14 +136,16 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         assert response.status_code == status.HTTP_200_OK
 
     # [POST] /workspaces/{workspace_id}/requests
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={}))
     @patch("api.routes.airlock.save_and_publish_event_airlock_request")
-    async def test_post_airlock_request_creates_airlock_request_returns_201(self, _, app, client, sample_airlock_request_input_data):
+    async def test_post_airlock_request_creates_airlock_request_returns_201(self, _, __, app, client, sample_airlock_request_input_data):
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_201_CREATED
         assert response.json()["airlockRequest"]["id"] == AIRLOCK_REQUEST_ID
 
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={}))
     @patch("api.routes.airlock.AirlockRequestRepository.create_airlock_request_item", side_effect=ValueError)
-    async def test_post_airlock_request_input_is_malformed_returns_400(self, _, app, client, sample_airlock_request_input_data):
+    async def test_post_airlock_request_input_is_malformed_returns_400(self, _, __, app, client, sample_airlock_request_input_data):
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -151,14 +154,16 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={}))
     @patch("api.routes.airlock.AirlockRequestRepository.save_item", side_effect=UnableToAccessDatabase)
-    async def test_post_airlock_request_with_state_store_endpoint_not_responding_returns_503(self, _, app, client, sample_airlock_request_input_data):
+    async def test_post_airlock_request_with_state_store_endpoint_not_responding_returns_503(self, _, __, app, client, sample_airlock_request_input_data):
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={}))
     @patch("api.routes.airlock.AirlockRequestRepository.delete_item")
     @patch("event_grid.event_sender.send_status_changed_event", side_effect=HttpResponseError)
-    async def test_post_airlock_request_with_event_grid_not_responding_returns_503(self, _, __, app, client, sample_airlock_request_input_data):
+    async def test_post_airlock_request_with_event_grid_not_responding_returns_503(self, _, __, ___, app, client, sample_airlock_request_input_data):
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
@@ -281,7 +286,7 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
 
 
 class TestAirlockRoutesThatRequireAirlockManagerRights():
-    @pytest.fixture(autouse=True, scope='class')
+    @pytest_asyncio.fixture(autouse=True, scope='class')
     def log_in_with_airlock_manager_user(self, app, airlock_manager_user):
         app.dependency_overrides[get_current_airlock_manager_user] = airlock_manager_user
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = airlock_manager_user

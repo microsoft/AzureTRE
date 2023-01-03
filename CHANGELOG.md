@@ -4,9 +4,9 @@
 **BREAKING CHANGES & MIGRATIONS**:
 * The model for `reviewUserResources` in airlock requests has changed from being a list to a dictionary. A migration has been added to update your existing requests automatically; please make sure you run the migrations as part of updating your API and UI.
   * Note that any in-flight requests that have review resources deployed will show `UNKNOWN[i]` for the user key of that resource and in the UI users will be prompted to deploy a new resource. [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
-* Env files consolidation - The files /templates/core/.env, /devops/.env, /devops/auth.env are no longer used. The settings and configuration that they contain has been consolidated into a single file config.yaml that lives in the root folder of the project.
-
+* Env files consolidation ([#2944](https://github.com/microsoft/AzureTRE/pull/2944)) - The files /templates/core/.env, /devops/.env, /devops/auth.env are no longer used. The settings and configuration that they contain has been consolidated into a single file config.yaml that lives in the root folder of the project.
 Use the script devops/scripts/env_to_yaml_config.sh to migrate /templates/core/.env, /devops/.env, and /devops/auth.env to the new config.yaml file.
+* Upgrade to Porter v1 ([#3014](https://github.com/microsoft/AzureTRE/pull/3014)). You should upgrade all custom template definitions and rebuild them.
 
 FEATURES:
 * Support review VMs for multiple reviewers for each airlock request [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
@@ -17,7 +17,11 @@ ENHANCEMENTS:
 * Support template version update ([#2908](https://github.com/microsoft/AzureTRE/pull/2908))
 * Update docker base images to bullseye ([#2946](https://github.com/microsoft/AzureTRE/pull/2946)
 * Support updating the firewall when installing via makefile/CICD ([#2942](https://github.com/microsoft/AzureTRE/pull/2942))
+* Add the ability for workspace services to request addional address spaces from a workspace ([#2902](https://github.com/microsoft/AzureTRE/pull/2902))
 * Airlock processor function and api app service work with http2
+* Added the option to disable Swagger ([#2981](https://github.com/microsoft/AzureTRE/pull/2981))
+* Serverless CosmosDB for new deployments to reduce cost ([#3029](https://github.com/microsoft/AzureTRE/pull/3029))
+
 
 BUG FIXES:
 * Private endpoints for AppInsights are now provisioning successfully and consistently ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))

@@ -1,3 +1,4 @@
+from unittest.mock import AsyncMock
 from mock import patch
 import pytest
 from models.domain.costs import GranularityEnum
@@ -9,6 +10,8 @@ from services.cost_service import CostService, SubscriptionNotSupported
 from datetime import date, datetime, timedelta
 from azure.mgmt.costmanagement.models import QueryResult, TimeframeType, QueryDefinition, QueryColumn
 from azure.core.exceptions import ResourceNotFoundError
+
+pytestmark = pytest.mark.asyncio
 
 
 @pytest.fixture(autouse=True)
@@ -23,15 +26,15 @@ def clear_lru_cache():
 @patch('services.cost_service.CostManagementClient')
 # CostService is lru_cached which creates a wrapper method
 @patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
-def test_query_tre_costs_with_granularity_none_returns_correct_cost_report(get_resource_groups_by_tag_mock, client_mock,
-                                                                           shared_service_repo_mock, workspace_repo_mock):
+async def test_query_tre_costs_with_granularity_none_returns_correct_cost_report(get_resource_groups_by_tag_mock, client_mock,
+                                                                                 shared_service_repo_mock, workspace_repo_mock):
     client_mock.return_value.query.usage.return_value = __get_cost_management_query_result()
     __set_shared_service_repo_mock_return_value(shared_service_repo_mock)
     __set_workspace_repo_mock_get_active_workspaces_return_value(workspace_repo_mock)
     __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
-    cost_report = cost_service.query_tre_costs(
+    cost_report = await cost_service.query_tre_costs(
         "guy22", GranularityEnum.none, datetime.now(), datetime.now(), workspace_repo_mock, shared_service_repo_mock)
 
     assert len(cost_report.core_services) == 1
@@ -65,7 +68,7 @@ def test_query_tre_costs_with_granularity_none_returns_correct_cost_report(get_r
 @patch('services.cost_service.CostManagementClient')
 # CostService is lru_cached which creates a wrapper method
 @patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
-def test_query_tre_costs_with_granularity_daily_returns_correct_cost_report(
+async def test_query_tre_costs_with_granularity_daily_returns_correct_cost_report(
         get_resource_groups_by_tag_mock, client_mock, shared_service_repo_mock, workspace_repo_mock):
     client_mock.return_value.query.usage.return_value = __set_cost_management_client_mock_query_result()
     __set_shared_service_repo_mock_return_value(shared_service_repo_mock)
@@ -73,7 +76,7 @@ def test_query_tre_costs_with_granularity_daily_returns_correct_cost_report(
     __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
-    cost_report = cost_service.query_tre_costs(
+    cost_report = await cost_service.query_tre_costs(
         "guy22", GranularityEnum.daily, datetime.now(), datetime.now(), workspace_repo_mock, shared_service_repo_mock)
 
     assert len(cost_report.core_services) == 3
@@ -167,10 +170,10 @@ def __get_daily_cost_management_query_result():
 @patch('services.cost_service.CostManagementClient')
 # CostService is lru_cached which creates a wrapper method
 @patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
-def test_query_tre_costs_with_granularity_none_and_missing_costs_data_returns_empty_cost_report(get_resource_groups_by_tag_mock,
-                                                                                                client_mock,
-                                                                                                shared_service_repo_mock,
-                                                                                                workspace_repo_mock):
+async def test_query_tre_costs_with_granularity_none_and_missing_costs_data_returns_empty_cost_report(get_resource_groups_by_tag_mock,
+                                                                                                      client_mock,
+                                                                                                      shared_service_repo_mock,
+                                                                                                      workspace_repo_mock):
     query_result = QueryResult()
     query_result.rows = [
     ]
@@ -186,7 +189,7 @@ def test_query_tre_costs_with_granularity_none_and_missing_costs_data_returns_em
     __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
-    cost_report = cost_service.query_tre_costs(
+    cost_report = await cost_service.query_tre_costs(
         "guy22", GranularityEnum.none, datetime.now(), datetime.now(), workspace_repo_mock, shared_service_repo_mock)
 
     assert len(cost_report.core_services) == 0
@@ -203,10 +206,10 @@ def test_query_tre_costs_with_granularity_none_and_missing_costs_data_returns_em
 @patch('services.cost_service.CostManagementClient')
 # CostService is lru_cached which creates a wrapper method
 @patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
-def test_query_tre_costs_for_unsupported_subscription_raises_subscription_not_supported_exception(get_resource_groups_by_tag_mock,
-                                                                                                  client_mock,
-                                                                                                  shared_service_repo_mock,
-                                                                                                  workspace_repo_mock):
+async def test_query_tre_costs_for_unsupported_subscription_raises_subscription_not_supported_exception(get_resource_groups_by_tag_mock,
+                                                                                                        client_mock,
+                                                                                                        shared_service_repo_mock,
+                                                                                                        workspace_repo_mock):
 
     client_mock.return_value.query.usage.side_effect = ResourceNotFoundError({
         "error": {
@@ -222,7 +225,7 @@ def test_query_tre_costs_for_unsupported_subscription_raises_subscription_not_su
     cost_service = CostService()
 
     with pytest.raises(SubscriptionNotSupported):
-        cost_service.query_tre_costs(
+        await cost_service.query_tre_costs(
             "guy22", GranularityEnum.none, datetime.now(), datetime.now(), workspace_repo_mock, shared_service_repo_mock)
 
 
@@ -231,10 +234,10 @@ def test_query_tre_costs_for_unsupported_subscription_raises_subscription_not_su
 @patch('services.cost_service.CostManagementClient')
 # CostService is lru_cached which creates a wrapper method
 @patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
-def test_query_tre_costs_with_granularity_daily_and_missing_costs_data_returns_empty_cost_report(get_resource_groups_by_tag_mock,
-                                                                                                 client_mock,
-                                                                                                 shared_service_repo_mock,
-                                                                                                 workspace_repo_mock):
+async def test_query_tre_costs_with_granularity_daily_and_missing_costs_data_returns_empty_cost_report(get_resource_groups_by_tag_mock,
+                                                                                                       client_mock,
+                                                                                                       shared_service_repo_mock,
+                                                                                                       workspace_repo_mock):
     query_result = QueryResult()
     query_result.rows = [
     ]
@@ -252,7 +255,7 @@ def test_query_tre_costs_with_granularity_daily_and_missing_costs_data_returns_e
     __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
-    cost_report = cost_service.query_tre_costs(
+    cost_report = await cost_service.query_tre_costs(
         "guy22", GranularityEnum.daily, datetime.now(), datetime.now(), workspace_repo_mock, shared_service_repo_mock)
 
     assert len(cost_report.core_services) == 0
@@ -269,17 +272,17 @@ def test_query_tre_costs_with_granularity_daily_and_missing_costs_data_returns_e
 @patch('services.cost_service.CostManagementClient')
 # CostService is lru_cached which creates a wrapper method
 @patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
-def test_query_tre_costs_with_granularity_none_and_display_name_data_returns_template_name_in_cost_report(get_resource_groups_by_tag_mock,
-                                                                                                          client_mock,
-                                                                                                          shared_service_repo_mock,
-                                                                                                          workspace_repo_mock):
+async def test_query_tre_costs_with_granularity_none_and_display_name_data_returns_template_name_in_cost_report(get_resource_groups_by_tag_mock,
+                                                                                                                client_mock,
+                                                                                                                shared_service_repo_mock,
+                                                                                                                workspace_repo_mock):
     client_mock.return_value.query.usage.return_value = __get_cost_management_query_result()
     __set_shared_service_repo_mock_return_value_without_display_name(shared_service_repo_mock)
     __set_workspace_repo_mock_get_active_workspaces_return_value_without_display_name(workspace_repo_mock)
     __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
-    cost_report = cost_service.query_tre_costs(
+    cost_report = await cost_service.query_tre_costs(
         "guy22", GranularityEnum.none, datetime.now(), datetime.now(), workspace_repo_mock, shared_service_repo_mock)
 
     assert len(cost_report.core_services) == 1
@@ -313,17 +316,17 @@ def test_query_tre_costs_with_granularity_none_and_display_name_data_returns_tem
 @patch('services.cost_service.CostManagementClient')
 # CostService is lru_cached which creates a wrapper method
 @patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
-def test_query_tre_costs_with_dates_set_as_none_calls_client_with_month_to_date(get_resource_groups_by_tag_mock,
-                                                                                client_mock, shared_service_repo_mock,
-                                                                                workspace_repo_mock, from_date,
-                                                                                to_date):
+async def test_query_tre_costs_with_dates_set_as_none_calls_client_with_month_to_date(get_resource_groups_by_tag_mock,
+                                                                                      client_mock, shared_service_repo_mock,
+                                                                                      workspace_repo_mock, from_date,
+                                                                                      to_date):
     __set_shared_service_repo_mock_return_value(shared_service_repo_mock)
     __set_workspace_repo_mock_get_active_workspaces_return_value(workspace_repo_mock)
     __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
     CostService.cache_clear()
-    cost_service.query_tre_costs(
+    await cost_service.query_tre_costs(
         "guy22", GranularityEnum.none, from_date, to_date, workspace_repo_mock, shared_service_repo_mock)
 
     query_definition: QueryDefinition = client_mock.return_value.query.usage.call_args_list[0][0][1]
@@ -335,9 +338,9 @@ def test_query_tre_costs_with_dates_set_as_none_calls_client_with_month_to_date(
 @patch('services.cost_service.CostManagementClient')
 # CostService is lru_cached which creates a wrapper method
 @patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
-def test_query_tre_costs_with_dates_set_as_none_calls_client_with_custom_dates(get_resource_groups_by_tag_mock,
-                                                                               client_mock, shared_service_repo_mock,
-                                                                               workspace_repo_mock):
+async def test_query_tre_costs_with_dates_set_as_none_calls_client_with_custom_dates(get_resource_groups_by_tag_mock,
+                                                                                     client_mock, shared_service_repo_mock,
+                                                                                     workspace_repo_mock):
     __set_shared_service_repo_mock_return_value(shared_service_repo_mock)
     __set_workspace_repo_mock_get_active_workspaces_return_value(workspace_repo_mock)
     __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
@@ -346,7 +349,7 @@ def test_query_tre_costs_with_dates_set_as_none_calls_client_with_custom_dates(g
     to_date = datetime.now()
 
     cost_service = CostService()
-    cost_service.query_tre_costs(
+    await cost_service.query_tre_costs(
         "guy22", GranularityEnum.none, from_date, to_date, workspace_repo_mock, shared_service_repo_mock)
 
     query_definition: QueryDefinition = client_mock.return_value.query.usage.call_args_list[0][0][1]
@@ -356,69 +359,69 @@ def test_query_tre_costs_with_dates_set_as_none_calls_client_with_custom_dates(g
 
 
 def __set_workspace_repo_mock_get_active_workspaces_return_value(workspace_repo_mock):
-    workspace_repo_mock.get_active_workspaces.return_value = [
+    workspace_repo_mock.get_active_workspaces = AsyncMock(return_value=[
         Workspace(id='19b7ce24-aa35-438c-adf6-37e6762911a6', templateName='tre-workspace-base',
                   resourceType=ResourceType.Workspace, templateVersion="1", _etag="x",
                   properties={'display_name': 'the workspace display name1'}),
         Workspace(id='d680d6b7-d1d9-411c-9101-0793da980c81', templateName='tre-workspace-base',
                   resourceType=ResourceType.Workspace, templateVersion="1", _etag="x",
                   properties={'display_name': 'the workspace display name2'})
-    ]
+    ])
 
 
 def __set_workspace_repo_mock_get_active_workspaces_return_value_without_display_name(workspace_repo_mock):
-    workspace_repo_mock.get_active_workspaces.return_value = [
+    workspace_repo_mock.get_active_workspaces = AsyncMock(return_value=[
         Workspace(id='19b7ce24-aa35-438c-adf6-37e6762911a6', templateName='tre-workspace-base',
                   resourceType=ResourceType.Workspace, templateVersion="1", _etag="x"),
         Workspace(id='d680d6b7-d1d9-411c-9101-0793da980c81', templateName='tre-workspace-base',
                   resourceType=ResourceType.Workspace, templateVersion="1", _etag="x")
-    ]
+    ])
 
 
 def __set_shared_service_repo_mock_return_value(shared_service_repo_mock):
-    shared_service_repo_mock.get_active_shared_services.return_value = [
+    shared_service_repo_mock.get_active_shared_services = AsyncMock(return_value=[
         SharedService(id='848e8eb5-0df6-4d0f-9162-afd9a3fa0631', resourceType=ResourceType.SharedService,
                       templateName="tre-shared-service-firewall", templateVersion="1", _etag="x",
                       properties={'display_name': 'Shared service tre-shared-service-firewall'}),
         SharedService(id='f16d0324-9027-4448-b69b-2d48d925e6c0', resourceType=ResourceType.SharedService,
                       templateName="tre-shared-service-gitea", templateVersion="1", _etag="x",
                       properties={'display_name': 'Shared service tre-shared-service-gitea'})
-    ]
+    ])
 
 
 def __set_shared_service_repo_mock_return_value_without_display_name(shared_service_repo_mock):
-    shared_service_repo_mock.get_active_shared_services.return_value = [
+    shared_service_repo_mock.get_active_shared_services = AsyncMock(return_value=[
         SharedService(id='848e8eb5-0df6-4d0f-9162-afd9a3fa0631', resourceType=ResourceType.SharedService,
                       templateName="tre-shared-service-firewall", templateVersion="1", _etag="x"),
         SharedService(id='f16d0324-9027-4448-b69b-2d48d925e6c0', resourceType=ResourceType.SharedService,
                       templateName="tre-shared-service-gitea", templateVersion="1", _etag="x")
-    ]
+    ])
 
 
 def __set_workspace_repo_mock_get_workspace_by_id_return_value(workspace_repo_mock):
-    workspace_repo_mock.get_workspace_by_id.return_value = Workspace(id='19b7ce24-aa35-438c-adf6-37e6762911a6',
-                                                                     templateName='tre-workspace-base',
-                                                                     resourceType=ResourceType.Workspace,
-                                                                     templateVersion="1", _etag="x",
-                                                                     properties={
-                                                                         'display_name': "workspace 1"})
+    workspace_repo_mock.get_workspace_by_id = AsyncMock(return_value=Workspace(id='19b7ce24-aa35-438c-adf6-37e6762911a6',
+                                                                               templateName='tre-workspace-base',
+                                                                               resourceType=ResourceType.Workspace,
+                                                                               templateVersion="1", _etag="x",
+                                                                               properties={
+                                                                                  'display_name': "workspace 1"}))
 
 
 def __set_workspace_service_repo_mock_return_value(workspace_service_repo_mock):
-    workspace_service_repo_mock.get_active_workspace_services_for_workspace.return_value = [
+    workspace_service_repo_mock.get_active_workspace_services_for_workspace = AsyncMock(return_value=[
         WorkspaceService(id='f8cac589-c497-4896-9fac-58e65685a20c', resourceType=ResourceType.WorkspaceService,
                          templateName="tre-service-guacamole", templateVersion="1", _etag="x",
                          properties={'display_name': 'Guacamole'}),
         WorkspaceService(id='9ad6e5d8-0bef-4b9f-91d6-ae33884883a1', resourceType=ResourceType.WorkspaceService,
                          templateName="tre-service-azureml", templateVersion="1", _etag="x",
                          properties={'display_name': 'Azure ML'})
-    ]
+    ])
 
 
 def __set_user_resource_repo_mock_return_value(user_resource_repo_mock):
     # each time 'get_user_resources_for_workspace_service' is called it will return
     # the next sub-array
-    user_resource_repo_mock.get_user_resources_for_workspace_service.side_effect = [
+    user_resource_repo_mock.get_user_resources_for_workspace_service = AsyncMock(side_effect=[
         [
             UserResource(id='09ed3e6e-fee5-41d0-937e-89644575e78c', resourceType=ResourceType.UserResource,
                          templateName="tre-user_resource_guacamole_vm", templateVersion="1", _etag="x",
@@ -436,7 +439,7 @@ def __set_user_resource_repo_mock_return_value(user_resource_repo_mock):
                          properties={'display_name': 'Compute Instance 2'})
         ]
 
-    ]
+    ])
 
 
 @patch('db.repositories.user_resources.UserResourceRepository')
@@ -445,11 +448,11 @@ def __set_user_resource_repo_mock_return_value(user_resource_repo_mock):
 @patch('services.cost_service.CostManagementClient')
 # CostService is lru_cached which creates a wrapper method
 @patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
-def test_query_tre_workspace_costs_with_granularity_none_returns_correct_workspace_cost_report(get_resource_groups_by_tag_mock,
-                                                                                               client_mock,
-                                                                                               workspace_repo_mock,
-                                                                                               workspace_services_repo_mock,
-                                                                                               user_resource_repo_mock):
+async def test_query_tre_workspace_costs_with_granularity_none_returns_correct_workspace_cost_report(get_resource_groups_by_tag_mock,
+                                                                                                     client_mock,
+                                                                                                     workspace_repo_mock,
+                                                                                                     workspace_services_repo_mock,
+                                                                                                     user_resource_repo_mock):
     client_mock.return_value.query.usage.return_value = __get_cost_management_query_result()
     __set_workspace_repo_mock_get_workspace_by_id_return_value(workspace_repo_mock)
     __set_workspace_service_repo_mock_return_value(workspace_services_repo_mock)
@@ -457,7 +460,7 @@ def test_query_tre_workspace_costs_with_granularity_none_returns_correct_workspa
     __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
-    workspace_cost_report = cost_service.query_tre_workspace_costs(
+    workspace_cost_report = await cost_service.query_tre_workspace_costs(
         "19b7ce24-aa35-438c-adf6-37e6762911a6", GranularityEnum.none, datetime.now(), datetime.now(),
         workspace_repo_mock,
         workspace_services_repo_mock, user_resource_repo_mock)
@@ -500,11 +503,11 @@ def test_query_tre_workspace_costs_with_granularity_none_returns_correct_workspa
 @patch('services.cost_service.CostManagementClient')
 # CostService is lru_cached which creates a wrapper method
 @patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
-def test_query_tre_workspace_costs_with_granularity_daily_returns_correct_workspace_cost_report(get_resource_groups_by_tag_mock,
-                                                                                                client_mock,
-                                                                                                workspace_repo_mock,
-                                                                                                workspace_services_repo_mock,
-                                                                                                user_resource_repo_mock):
+async def test_query_tre_workspace_costs_with_granularity_daily_returns_correct_workspace_cost_report(get_resource_groups_by_tag_mock,
+                                                                                                      client_mock,
+                                                                                                      workspace_repo_mock,
+                                                                                                      workspace_services_repo_mock,
+                                                                                                      user_resource_repo_mock):
     client_mock.return_value.query.usage.return_value = __set_cost_management_client_mock_query_result()
     __set_workspace_repo_mock_get_workspace_by_id_return_value(workspace_repo_mock)
     __set_workspace_service_repo_mock_return_value(workspace_services_repo_mock)
@@ -512,7 +515,7 @@ def test_query_tre_workspace_costs_with_granularity_daily_returns_correct_worksp
     __set_resource_group_by_tag_return_value(get_resource_groups_by_tag_mock)
 
     cost_service = CostService()
-    workspace_cost_report = cost_service.query_tre_workspace_costs(
+    workspace_cost_report = await cost_service.query_tre_workspace_costs(
         "19b7ce24-aa35-438c-adf6-37e6762911a6", GranularityEnum.daily, datetime.now(), datetime.now(),
         workspace_repo_mock,
         workspace_services_repo_mock, user_resource_repo_mock)

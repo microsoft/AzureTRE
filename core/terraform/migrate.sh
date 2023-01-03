@@ -5,6 +5,8 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
+terraform_wrapper_path="../../devops/scripts/terraform_wrapper.sh"
+
 # This variables are loaded in for us
 # shellcheck disable=SC2154
 terraform init -input=false -backend=true -reconfigure \
@@ -64,7 +66,7 @@ if [ -n "${app_insights_via_arm}" ]; then
 
   # This variables are loaded in for us
   # shellcheck disable=SC2154
-  ../../../devops/scripts/terraform_wrapper.sh \
+  "${terraform_wrapper_path}" \
     -g "${TF_VAR_mgmt_resource_group_name}" \
     -s "${TF_VAR_mgmt_storage_account_name}" \
     -n "${TF_VAR_terraform_state_container_name}" \
@@ -93,7 +95,7 @@ if [ -n "${core_plan}" ] && [ -n "${api_diag}" ]; then
 
     # This variables are loaded in for us
     # shellcheck disable=SC2154
-    ../../../devops/scripts/terraform_wrapper.sh \
+    "${terraform_wrapper_path}" \
       -g "${TF_VAR_mgmt_resource_group_name}" \
       -s "${TF_VAR_mgmt_storage_account_name}" \
       -n "${TF_VAR_terraform_state_container_name}" \
@@ -124,7 +126,7 @@ if [ -n "${airlock_vnet_integration}" ]; then
 
   # This variables are loaded in for us
   # shellcheck disable=SC2154
-  ../../../devops/scripts/terraform_wrapper.sh \
+  "${terraform_wrapper_path}" \
     -g "${TF_VAR_mgmt_resource_group_name}" \
     -s "${TF_VAR_mgmt_storage_account_name}" \
     -n "${TF_VAR_terraform_state_container_name}" \
@@ -146,7 +148,7 @@ if [ -n "${api_vnet_integration}" ]; then
 
   # This variables are loaded in for us
   # shellcheck disable=SC2154
-  ../../../devops/scripts/terraform_wrapper.sh \
+  "${terraform_wrapper_path}" \
     -g "${TF_VAR_mgmt_resource_group_name}" \
     -s "${TF_VAR_mgmt_storage_account_name}" \
     -n "${TF_VAR_terraform_state_container_name}" \
@@ -154,6 +156,17 @@ if [ -n "${api_vnet_integration}" ]; then
     -l "${LOG_FILE}" \
     -c "terraform plan -target azurerm_app_service_virtual_network_swift_connection.api_integrated_vnet -out ${PLAN_FILE} && \
     terraform apply -input=false -auto-approve ${PLAN_FILE}"
+fi
+
+# this isn't a classic migration, but impacts how terraform handles the deployment in the next phase
+state_store_serverless=$(echo "${terraform_show_json}" \
+  | jq 'select(.values.root_module.resources != null) | .values.root_module.resources[] | select(.address=="azurerm_cosmosdb_account.tre_db_account") | any(.values.capabilities[]; .name=="EnableServerless")')
+# false = resource EXITS in the state WITHOUT the serverless capability.
+# true = exists with the capability, empty value = resource doesn't exist.
+if [ "${state_store_serverless}" == "false" ]; then
+  echo "Identified CosmosDB with defined throughput."
+  TF_VAR_is_cosmos_defined_throughput="true"
+  export TF_VAR_is_cosmos_defined_throughput
 fi
 
 echo "*** Migration is done. ***"

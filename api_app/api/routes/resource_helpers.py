@@ -3,8 +3,7 @@ import logging
 from copy import deepcopy
 from typing import Dict, Any
 
-from fastapi import HTTPException
-from starlette import status
+from fastapi import HTTPException, status
 from db.repositories.resources import ResourceRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
@@ -39,9 +38,9 @@ async def save_and_deploy_resource(
         masked_resource.properties = mask_sensitive_properties(
             resource.properties, resource_template
         )
-        resource_repo.save_item(masked_resource)
-    except Exception as e:
-        logging.error(f"Failed saving resource item {resource.id}: {e}")
+        await resource_repo.save_item(masked_resource)
+    except Exception:
+        logging.exception(f"Failed saving resource item {resource.id}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING,
@@ -58,9 +57,9 @@ async def save_and_deploy_resource(
             action=RequestAction.Install,
         )
         return operation
-    except Exception as e:
-        resource_repo.delete_item(resource.id)
-        logging.error(f"Failed send resource request message: {e}")
+    except Exception:
+        await resource_repo.delete_item(resource.id)
+        logging.exception("Failed send resource request message")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
@@ -152,8 +151,8 @@ async def send_uninstall_message(
             action=RequestAction.UnInstall,
         )
         return operation
-    except Exception as e:
-        logging.error(f"Failed to send {resource_type} resource delete message: {e}")
+    except Exception:
+        logging.exception(f"Failed to send {resource_type} resource delete message")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
@@ -202,17 +201,15 @@ async def send_custom_action_message(
             action=custom_action,
         )
         return operation
-    except Exception as e:
-        logging.error(
-            f"Failed to send {resource_type} resource custom action message: {e}"
-        )
+    except Exception:
+        logging.exception(f"Failed to send {resource_type} resource custom action message")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
         )
 
 
-def get_template(
+async def get_template(
     template_name: str,
     template_repo: ResourceTemplateRepository,
     resource_type: ResourceType,
@@ -222,11 +219,11 @@ def get_template(
 ) -> dict:
     try:
         template = (
-            template_repo.get_template_by_name_and_version(
+            await template_repo.get_template_by_name_and_version(
                 template_name, version, resource_type, parent_service_template_name
             )
             if version
-            else template_repo.get_current_template(
+            else await template_repo.get_current_template(
                 template_name, resource_type, parent_service_template_name
             )
         )
