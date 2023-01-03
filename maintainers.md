@@ -67,10 +67,10 @@ This is intended to be used in scenarios where running the tests for a PR doesn'
 
 Currently, the GitHub API to determine whether a user is a collaborator doesn't seem to respect permissions that a user is granted via a group. As a result, users need to be directly granted `write` permission in the repo to be able to run the comment bot commands.
 
-## Preiod tasks
+## Periodic tasks
 
-### [quartley] Upgrade bundles' Terraform providers
+### [quarterly] Upgrade bundles' Terraform providers
 
 Each bundle is using Terraform providers to deploy itself. The providers are set with specific versions for stability and consistency between build.
 
-This however, requires us to manually update them by referncing newer versions in the provider blocks and assosicated lock files (`devops/scripts/upgrade_lock_files.sh` can help).
+This, however, requires us to manually update them by referencing newer versions in the provider blocks and associated lock files (`devops/scripts/upgrade_lock_files.sh` can help).
