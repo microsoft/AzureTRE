@@ -117,8 +117,8 @@ async def test_receiving_bad_json_logs_error(app, logging_mock, payload):
     status_updater = DeploymentStatusUpdater(app)
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
-    # bad message data will fail, but we will complete the message as it will never be useful
-    assert complete_message is True
+    # bad message data will fail. we don't mark complete=true since we want the message in the DLQ
+    assert complete_message is False
 
     # check we logged the error
     error_message = logging_mock.call_args.args[0]
