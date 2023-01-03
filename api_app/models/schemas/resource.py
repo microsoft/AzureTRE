@@ -1,7 +1,7 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
-from models.domain.resource import NewResourceHistoryItem
+from models.domain.resource import ResourceHistoryItem
 
 
 class ResourcePatch(BaseModel):
@@ -41,12 +41,12 @@ def get_sample_resource_history(resource_id: str) -> dict:
 
 
 class ResourceHistoryInList(BaseModel):
-    resource_history: List[NewResourceHistoryItem] = Field([], title="Resource history")
+    resource_history: List[ResourceHistoryItem] = Field([], title="Resource history")
 
     class Config:
         schema_extra = {
             "example": {
-                "userResources": [
+                "resource_history": [
                     get_sample_resource_history("2fdc9fba-726e-4db6-a1b8-9018a2165748"),
                     get_sample_resource_history("abcc9fba-726e-4db6-a1b8-9018a2165748")
                 ]

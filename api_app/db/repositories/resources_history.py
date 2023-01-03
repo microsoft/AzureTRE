@@ -4,7 +4,7 @@ from azure.cosmos.aio import CosmosClient
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from core import config
-from models.domain.resource import Resource, NewResourceHistoryItem
+from models.domain.resource import Resource, ResourceHistoryItem
 from pydantic import parse_obj_as
 
 
@@ -23,17 +23,17 @@ class ResourceHistoryRepository(BaseRepository):
     def resource_history_with_resource_version_query(resourceId: str, resourceVersion: str):
         return f'SELECT * FROM c WHERE c.resourceId = "{resourceId}" AND c.resourceVersion = "{resourceVersion}"'
 
-    async def get_resource_history_by_resource_id(self, resource_id: str) -> List[NewResourceHistoryItem]:
+    async def get_resource_history_by_resource_id(self, resource_id: str) -> List[ResourceHistoryItem]:
         query = self.resource_history_query(resource_id)
         try:
             resource_history_items = await self.query(query=query)
         except EntityDoesNotExist:
             resource_history_items = []
-        return parse_obj_as(List[NewResourceHistoryItem], resource_history_items)
+        return parse_obj_as(List[ResourceHistoryItem], resource_history_items)
 
-    async def create_resource_history_item(self, resource: Resource) -> NewResourceHistoryItem:
+    async def create_resource_history_item(self, resource: Resource) -> ResourceHistoryItem:
         resource_history_item_id = str(uuid.uuid4())
-        resource_history_item = NewResourceHistoryItem(
+        resource_history_item = ResourceHistoryItem(
             id=resource_history_item_id,
             resourceId=resource.id,
             isEnabled=resource.isEnabled,

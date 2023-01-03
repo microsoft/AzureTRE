@@ -1,11 +1,13 @@
+import random
 from unittest.mock import AsyncMock
 import uuid
 import pytest
 from mock import patch
 
 from fastapi import status
+from models.domain.resource import ResourceHistoryItem
 
-from tests_ma.test_api.conftest import create_admin_user
+from tests_ma.test_api.conftest import create_admin_user, create_test_user
 from .test_workspaces import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP, OPERATION_ID, sample_resource_operation
 
 from db.errors import EntityDoesNotExist
@@ -16,7 +18,6 @@ from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 
 pytestmark = pytest.mark.asyncio
-
 
 SHARED_SERVICE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
 
@@ -48,6 +49,29 @@ def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
         updatedWhen=FAKE_CREATE_TIMESTAMP,
         user=create_admin_user()
     )
+
+
+def sample_resource_history(history_length, shared_service_id=SHARED_SERVICE_ID) -> ResourceHistoryItem:
+    resource_history = []
+    user = create_test_user()
+
+    for version in range(history_length):
+        resource_history_item = ResourceHistoryItem(
+            id=str(uuid.uuid4()),
+            resourceId=shared_service_id,
+            isEnabled=True,
+            resourceVersion=version,
+            templateVersion="template_version",
+            properties={
+                'display_name': 'initial display name',
+                'description': 'initial description',
+                'computed_prop': 'computed_val'
+            },
+            updatedWhen=FAKE_CREATE_TIMESTAMP,
+            user=user
+        )
+        resource_history.append(resource_history_item)
+    return resource_history
 
 
 class TestSharedServiceRoutesThatDontRequireAdminRigths:
@@ -261,3 +285,36 @@ class TestSharedServiceRoutesThatRequireAdminRights:
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.text == 'Attempt to downgrade from 0.1.0 to 0.0.1 denied. version downgrade is not allowed.'
+
+    # [GET] /shared-services/{shared_service_id}/history
+    @patch("api.routes.shared_services.ResourceHistoryRepository.get_resource_history_by_resource_id")
+    @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id")
+    async def test_get_shared_service_history_returns_shared_service_history_result(self, get_shared_service_mock, get_resource_history_mock, app, client):
+        sample_guid = str(uuid.uuid4())
+        sample_history_length = random.randint(1, 10)
+        shared_service = sample_shared_service(shared_service_id=sample_guid)
+        shared_service_history = sample_resource_history(history_length=sample_history_length, shared_service_id=sample_guid)
+        get_shared_service_mock.return_value = shared_service
+        get_resource_history_mock.return_value = shared_service_history
+
+        response = await client.get(
+            app.url_path_for(strings.API_GET_RESOURCE_HISTORY, shared_service_id=SHARED_SERVICE_ID))
+
+        assert response.status_code == status.HTTP_200_OK
+        obj = response.json()["resource_history"]
+        assert len(obj) == sample_history_length
+        for item in obj:
+            assert item["resourceId"] == shared_service.id
+
+    # [GET] /shared-services/{shared_service_id}/history
+    @patch("api.routes.shared_services.ResourceHistoryRepository.get_resource_history_by_resource_id")
+    @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service())
+    async def test_get_shared_service_history_returns_empty_list_when_no_history(self, _, get_resource_history_mock, app, client):
+        get_resource_history_mock.return_value = []
+
+        response = await client.get(
+            app.url_path_for(strings.API_GET_RESOURCE_HISTORY, shared_service_id=SHARED_SERVICE_ID))
+
+        assert response.status_code == status.HTTP_200_OK
+        obj = response.json()["resource_history"]
+        assert len(obj) == 0

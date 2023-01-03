@@ -4,7 +4,7 @@ import pytest
 import pytest_asyncio
 
 from db.repositories.resources_history import ResourceHistoryRepository
-from models.domain.resource import Resource, NewResourceHistoryItem, ResourceType
+from models.domain.resource import Resource, ResourceHistoryItem, ResourceType
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP
 from tests_ma.test_api.conftest import create_test_user
 
@@ -45,8 +45,8 @@ def sample_resource() -> Resource:
 
 
 @pytest.fixture
-def sample_resource_history() -> NewResourceHistoryItem:
-    return NewResourceHistoryItem(
+def sample_resource_history() -> ResourceHistoryItem:
+    return ResourceHistoryItem(
         id=HISTORY_ID,
         resourceId=RESOURCE_ID,
         isEnabled=True,
@@ -69,7 +69,7 @@ async def test_create_resource_history_item(mock_query, mock_save, resource_hist
 
     resource_history = await resource_history_repo.create_resource_history_item(sample_resource)
     # Assertions
-    assert isinstance(resource_history, NewResourceHistoryItem)
+    assert isinstance(resource_history, ResourceHistoryItem)
     mock_query.assert_called_once_with(EXPECTED_QUERY)
     mock_save.assert_called_once_with(resource_history)
     assert resource_history.id is not None

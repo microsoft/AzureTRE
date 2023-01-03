@@ -1,3 +1,4 @@
+import random
 from unittest.mock import AsyncMock
 import uuid
 from pydantic import Field
@@ -16,7 +17,7 @@ from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.authentication import RoleAssignment
 from models.domain.operation import Operation, OperationStep, Status
-from models.domain.resource import ResourceType
+from models.domain.resource import ResourceHistoryItem, ResourceType
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
@@ -26,7 +27,8 @@ from services.authentication import get_current_admin_user, \
     get_current_tre_user_or_tre_admin, get_current_workspace_owner_user, \
     get_current_workspace_owner_or_researcher_user, \
     get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
-    get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin
+    get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin, \
+    get_current_workspace_owner_or_airlock_manager
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 
@@ -95,6 +97,29 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspa
     if auth_info:
         workspace.properties = {**auth_info}
     return workspace
+
+
+def sample_resource_history(history_length, resource_id) -> ResourceHistoryItem:
+    resource_history = []
+    user = create_test_user()
+
+    for version in range(history_length):
+        resource_history_item = ResourceHistoryItem(
+            id=str(uuid.uuid4()),
+            resourceId=resource_id,
+            isEnabled=True,
+            resourceVersion=version,
+            templateVersion="template_version",
+            properties={
+                'display_name': 'initial display name',
+                'description': 'initial description',
+                'computed_prop': 'computed_val'
+            },
+            updatedWhen=FAKE_CREATE_TIMESTAMP,
+            user=user
+        )
+        resource_history.append(resource_history_item)
+    return resource_history
 
 
 def sample_resource_operation(resource_id: str, operation_id: str):
@@ -360,6 +385,45 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         access_service_mock.return_value = [RoleAssignment('ab123', 'ab124')]
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not_valid"))
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    # [GET] /workspaces/{workspace_id}/history
+    @patch("api.routes.shared_services.ResourceHistoryRepository.get_resource_history_by_resource_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.get_identity_role_assignments")
+    async def test_get_workspace_history_returns_workspace_history_result(self, access_service_mock, get_workspace_mock, get_resource_history_mock, app, client):
+        sample_history_length = random.randint(1, 10)
+        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'client_id': 'cl123', 'app_role_id_workspace_owner': 'ab124', 'app_role_id_workspace_researcher': 'ab125', 'app_role_id_workspace_airlock_manager': 'ab130'}
+        workspace_history = sample_resource_history(history_length=sample_history_length, resource_id=WORKSPACE_ID)
+
+        get_workspace_mock.return_value = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
+        access_service_mock.return_value = [RoleAssignment('ab123', 'ab124')]
+        get_resource_history_mock.return_value = workspace_history
+
+        response = await client.get(
+            app.url_path_for(strings.API_GET_RESOURCE_HISTORY, workspace_id=WORKSPACE_ID))
+
+        assert response.status_code == status.HTTP_200_OK
+        obj = response.json()["resource_history"]
+        assert len(obj) == sample_history_length
+        for item in obj:
+            assert item["resourceId"] == WORKSPACE_ID
+
+    # [GET] /workspaces/{workspace_id}/history
+    @patch("api.routes.shared_services.ResourceHistoryRepository.get_resource_history_by_resource_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.get_identity_role_assignments")
+    async def test_get_workspace_history_returns_empty_list_when_no_history(self, access_service_mock, get_workspace_mock, get_resource_history_mock, app, client):
+        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'client_id': 'cl123', 'app_role_id_workspace_owner': 'ab124', 'app_role_id_workspace_researcher': 'ab125', 'app_role_id_workspace_airlock_manager': 'ab130'}
+        get_workspace_mock.return_value = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
+        access_service_mock.return_value = [RoleAssignment('ab123', 'ab124')]
+        get_resource_history_mock.return_value = []
+
+        response = await client.get(
+            app.url_path_for(strings.API_GET_RESOURCE_HISTORY, workspace_id=WORKSPACE_ID))
+
+        assert response.status_code == status.HTTP_200_OK
+        obj = response.json()["resource_history"]
+        assert len(obj) == 0
 
     # [POST] /workspaces/
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
@@ -633,6 +697,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         app.dependency_overrides[get_current_workspace_owner_user] = owner_user
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = owner_user
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = owner_user
+        app.dependency_overrides[get_current_workspace_owner_or_airlock_manager] = owner_user
         yield
         app.dependency_overrides = {}
 
@@ -752,6 +817,43 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
+    # [GET] /workspaces/{workspace_id}/services/{service_id}/history
+    @patch("api.routes.shared_services.ResourceHistoryRepository.get_resource_history_by_resource_id")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_get_workspace_service_history_returns_workspace_service_history_result(self, get_workspace_mock, get_workspace_service_mock, get_resource_history_mock, app, client):
+        sample_history_length = random.randint(1, 10)
+        workspace_history = sample_resource_history(history_length=sample_history_length, resource_id=SERVICE_ID)
+
+        get_workspace_mock.return_value = sample_workspace()
+        get_workspace_service_mock.return_value = sample_workspace_service(workspace_id=WORKSPACE_ID)
+        get_resource_history_mock.return_value = workspace_history
+
+        response = await client.get(
+            app.url_path_for(strings.API_GET_RESOURCE_HISTORY, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID))
+
+        assert response.status_code == status.HTTP_200_OK
+        obj = response.json()["resource_history"]
+        assert len(obj) == sample_history_length
+        for item in obj:
+            assert item["resourceId"] == SERVICE_ID
+
+    # [GET] /workspaces/{workspace_id}/services/{service_id}/history
+    @patch("api.routes.shared_services.ResourceHistoryRepository.get_resource_history_by_resource_id")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_get_workspace_service_history_returns_empty_list_when_no_history(self, get_workspace_mock, get_workspace_service_mock, get_resource_history_mock, app, client):
+        get_workspace_mock.return_value = sample_workspace()
+        get_workspace_service_mock.return_value = sample_workspace_service(workspace_id=WORKSPACE_ID)
+        get_resource_history_mock.return_value = []
+
+        response = await client.get(
+            app.url_path_for(strings.API_GET_RESOURCE_HISTORY, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID))
+
+        assert response.status_code == status.HTTP_200_OK
+        obj = response.json()["resource_history"]
+        assert len(obj) == 0
+
     @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id",
            return_value=disabled_workspace_service())
@@ -809,6 +911,49 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["userResource"]["id"] == user_resource.id
+
+    # [GET] /workspaces/{workspace_id}/services/{service_id}/user-resources/{resource_id}/history
+    @patch("api.routes.shared_services.ResourceHistoryRepository.get_resource_history_by_resource_id")
+    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_get_user_resource_history_returns_user_resource_history_result(self, get_workspace_mock, get_workspace_service_mock, get_user_resource_mock, get_resource_history_mock, app, client):
+        sample_history_length = random.randint(1, 10)
+        workspace_history = sample_resource_history(history_length=sample_history_length, resource_id=USER_RESOURCE_ID)
+
+        get_workspace_mock.return_value = sample_workspace()
+        get_workspace_service_mock.return_value = sample_workspace_service()
+        get_user_resource_mock.return_value = sample_user_resource_object()
+        get_resource_history_mock.return_value = workspace_history
+
+        response = await client.get(
+            app.url_path_for(strings.API_GET_RESOURCE_HISTORY, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
+
+        assert response.status_code == status.HTTP_200_OK
+        obj = response.json()["resource_history"]
+        assert len(obj) == sample_history_length
+        for item in obj:
+            assert item["resourceId"] == USER_RESOURCE_ID
+
+    # [GET] /workspaces/{workspace_id}/services/{service_id}/user-resources/{resource_id}/history
+    @patch("api.routes.shared_services.ResourceHistoryRepository.get_resource_history_by_resource_id")
+    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_get_user_resource_history_returns_empty_list_when_no_history(self, get_workspace_mock, get_workspace_service_mock, get_user_resource_mock, get_resource_history_mock, app, client):
+        workspace = sample_workspace()
+
+        get_workspace_mock.return_value = workspace
+        get_workspace_service_mock.return_value = sample_workspace_service()
+        get_user_resource_mock.return_value = sample_user_resource_object()
+        get_resource_history_mock.return_value = []
+
+        response = await client.get(
+            app.url_path_for(strings.API_GET_RESOURCE_HISTORY, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
+
+        assert response.status_code == status.HTTP_200_OK
+        obj = response.json()["resource_history"]
+        assert len(obj) == 0
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", side_effect=EntityDoesNotExist)

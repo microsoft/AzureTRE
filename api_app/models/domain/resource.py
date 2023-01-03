@@ -16,7 +16,7 @@ class ResourceType(str, Enum):
     SharedService = strings.RESOURCE_TYPE_SHARED_SERVICE
 
 
-class NewResourceHistoryItem(AzureTREModel):
+class ResourceHistoryItem(AzureTREModel):
     """
     Resource History Item - to preserve history of resource properties
     """
@@ -46,7 +46,7 @@ class Resource(AzureTREModel):
     resourceVersion: int = 0
     user: dict = {}
     updatedWhen: float = 0
-    history: List[NewResourceHistoryItem] = []
+    history: List[ResourceHistoryItem] = []
 
     def get_resource_request_message_payload(self, operation_id: str, step_id: str, action: RequestAction) -> dict:
         payload = {
