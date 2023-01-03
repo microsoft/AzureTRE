@@ -4,6 +4,10 @@ resource "azurerm_storage_account" "aml" {
   resource_group_name      = data.azurerm_resource_group.ws.name
   account_tier             = "Standard"
   account_replication_type = "GRS"
+
+  network_rules {
+    default_action             = "Deny"
+  }
 }
 
 data "azurerm_private_dns_zone" "blobcore" {
@@ -11,7 +15,12 @@ data "azurerm_private_dns_zone" "blobcore" {
   resource_group_name = local.core_resource_group_name
 }
 
-resource "azurerm_private_endpoint" "stgblobpe" {
+data "azurerm_private_dns_zone" "filecore" {
+  name                = "privatelink.file.core.windows.net"
+  resource_group_name = local.core_resource_group_name
+}
+
+resource "azurerm_private_endpoint" "blobpe" {
   name                = "pe-${local.storage_name}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
@@ -25,9 +34,35 @@ resource "azurerm_private_endpoint" "stgblobpe" {
   }
 
   private_service_connection {
-    name                           = "pesc-${local.storage_name}"
+    name                           = "dnsgroup-blob${local.storage_name}"
     private_connection_resource_id = azurerm_storage_account.aml.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
   }
+}
+
+
+resource "azurerm_private_endpoint" "filepe" {
+  name                = "pe-file-${local.storage_name}"
+  location            = data.azurerm_resource_group.ws.location
+  resource_group_name = data.azurerm_resource_group.ws.name
+  subnet_id           = azurerm_subnet.aml.id
+
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "dnsgroup-files-${local.storage_name}"
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.filecore.id]
+  }
+
+  private_service_connection {
+    name                           = "dnsgroup-file-${var.tre_id}"
+    private_connection_resource_id = azurerm_storage_account.aml.id
+    is_manual_connection           = false
+    subresource_names              = ["file"]
+  }
+
+  depends_on = [
+    azurerm_private_endpoint.blobpe
+  ]
 }

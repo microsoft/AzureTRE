@@ -3,9 +3,30 @@
   "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/azureml/template_schema.json",
   "type": "object",
   "title": "Azure Machine Learning",
-  "description": "Installs Azure Machine Learning. Please be aware this template opens up additional firewall rules to enable Azure ML to function.",
+  "description": "Azure Machine Learning empowers data scientists and developers to build, deploy, and manage high-quality models faster and with confidence. It accelerates time to value with industry-leading machine learning operations (MLOps), open-source interoperability, and integrated tools. This trusted platform is designed for responsible AI applications in machine learning.",
   "required": [],
   "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "default": "Azure Machine Learning",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "default": "Azure Machine Learning empowers data scientists and developers to build, deploy, and manage high-quality models faster and with confidence. It accelerates time to value with industry-leading machine learning operations (MLOps), open-source interoperability, and integrated tools. This trusted platform is designed for responsible AI applications in machine learning.",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace Service Overview",
+      "description": "Long form description of the workspace service, in markdown syntax",
+      "default": "<iframe loading='lazy'src='https://learn-video.azurefd.net/vod/player?id=838dfb73-1e2a-4c52-8672-55baf71a26bf' allowfullscreen='' title='Azure ML' tabindex='' allow='autoplay'></iframe>",
+      "updateable": true
+    },
     "is_exposed_externally": {
       "$id": "#/properties/is_exposed_externally",
       "type": "boolean",
@@ -124,8 +145,11 @@
                     "{{ resource.properties.workspace_services_subnet_address_prefix }}"
                   ],
                   "target_fqdns": [
-                    "aadcdn.msftauth.net",
-                    "ml.azure.com"
+                    "aadcdn.msauth.net",
+                    "ml.azure.com",
+                    "automlresources-prod.azureedge.net",
+                    "update.code.visualstudio.com",
+                    "database.clamav.net"
                   ],
                   "protocols": [
                     {

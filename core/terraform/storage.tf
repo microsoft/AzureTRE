@@ -36,6 +36,15 @@ resource "azurerm_private_endpoint" "blobpe" {
   }
 }
 
+data "azurerm_private_dns_zone" "filecore" {
+  name                = "privatelink.file.core.windows.net"
+  resource_group_name = azurerm_resource_group.core.name
+
+  depends_on = [
+    module.network
+  ]
+}
+
 resource "azurerm_private_endpoint" "filepe" {
   name                = "pe-file-${var.tre_id}"
   location            = azurerm_resource_group.core.location

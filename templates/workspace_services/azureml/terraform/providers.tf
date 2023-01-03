@@ -16,7 +16,6 @@ terraform {
       source  = "hashicorp/null"
       version = "=3.1.1"
     }
-
   }
 
   backend "azurerm" {}
@@ -39,7 +38,6 @@ provider "azurerm" {
   }
 }
 
-provider "azapi" {
-}
+provider "azapi" {}
 
 data "azurerm_client_config" "current" {}
