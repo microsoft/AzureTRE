@@ -43,19 +43,17 @@ class DeploymentStatusUpdater():
                     logging.info("Looking for new session...")
                     # max_wait_time=1 -> don't hold the session open after processing of the message has finished
                     async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
-                        logging.info("Got a session containing messages")
-                        renewer = AutoLockRenewer()
-                        renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
-                        async for msg in receiver:
-                            complete_message = await self.process_message(msg)
-                            if complete_message:
-                                await receiver.complete_message(msg)
-                            else:
-                                # could have been any kind of transient issue, we'll abandon back to the queue, and retry
-                                await receiver.abandon_message(msg)
-
-                        logging.info("Closing session")
-                        await renewer.close()
+                        logging.info(f"Got a session containing messages: {receiver.session.session_id}")
+                        async with AutoLockRenewer() as renewer:
+                            renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
+                            async for msg in receiver:
+                                complete_message = await self.process_message(msg)
+                                if complete_message:
+                                    await receiver.complete_message(msg)
+                                else:
+                                    # could have been any kind of transient issue, we'll abandon back to the queue, and retry
+                                    await receiver.abandon_message(msg)
+                        logging.info(f"Closing session: {receiver.session.session_id}")
 
             except OperationTimeoutError:
                 # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
