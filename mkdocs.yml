@@ -158,3 +158,5 @@ nav:
           - Checking Logs in Application Insights: troubleshooting-faq/app-insights-logs.md
           - Troubleshooting the Resource Processor: troubleshooting-faq/troubleshooting-rp.md
           - Manually edit resources in Cosmos DB: troubleshooting-faq/manually-editing-resources.md
+
+  - Technical Guide: contributing.md
