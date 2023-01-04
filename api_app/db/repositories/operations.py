@@ -2,7 +2,7 @@ from datetime import datetime
 import uuid
 from typing import List
 
-from azure.cosmos import CosmosClient
+from azure.cosmos.aio import CosmosClient
 from pydantic import parse_obj_as
 from resources import strings
 from models.domain.request_action import RequestAction
