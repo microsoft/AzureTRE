@@ -8,7 +8,7 @@ resource "azurerm_healthcare_workspace" "healthcare_workspace" {
 }
 
 resource "azurerm_healthcare_fhir_service" "fhir" {
-  count        = var.deploy_fhir ? 1 : 0
+  count               = var.deploy_fhir ? 1 : 0
   name                = "fhir${local.service_resource_name_suffix}"
   resource_group_name = data.azurerm_resource_group.ws.name
   location            = data.azurerm_resource_group.ws.location

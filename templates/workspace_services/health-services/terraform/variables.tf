@@ -14,17 +14,17 @@ variable "tre_resource_id" {
 }
 
 variable "deploy_fhir" {
-    type        = bool
-    description = "Indicates if FHIR should be created in the Azure Health Data Services Workspace."
+  type        = bool
+  description = "Indicates if FHIR should be created in the Azure Health Data Services Workspace."
 }
 
 variable "fhir_kind" {
-    type        = string
-    description = "FHIR version that will be deployed."
+  type        = string
+  description = "FHIR version that will be deployed."
 }
 
 variable "deploy_dicom" {
-    type        = bool
-    description = "Indicates if DICOM should be created in the Azure Health Data Services Workspace."
+  type        = bool
+  description = "Indicates if DICOM should be created in the Azure Health Data Services Workspace."
 }
 
