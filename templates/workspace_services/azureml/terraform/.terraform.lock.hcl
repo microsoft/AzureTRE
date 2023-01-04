@@ -2,27 +2,8 @@
 # Manual edits may be lost in future updates.
 
 provider "registry.terraform.io/azure/azapi" {
-  version = "1.1.0"
-  hashes = [
-    "h1:IR+AHCwfjl1c0baWwfOwZ6QZtHj41H2syTgHkJtAr/M=",
-    "zh:2a25df6325a49f9e821f0b02c7da86167fc19a3bac647cd1edf231300f29d077",
-    "zh:2b443a836a39724663fe455d4deee408ff3a2d9a8b86f8408aa7db2e8aa743f8",
-    "zh:364ed09ddfc50d9bed8d930f7de489cb654a9908feb139413a097823a50075fd",
-    "zh:523bc005f56ae785867d230d55c29f59db4b599dbc6c38b4d03ea55a79458916",
-    "zh:60ded375fdb305b60bcb4d9e596dbb222cab166bad1b4958199b05a72aaeacfd",
-    "zh:61e69c58642fead6814e511c872b7c0a6478ec6af4ab758b4512607d910ac078",
-    "zh:823b2154ae2262dabcbd11aac992e3cc29eae0f7baa96bee1e3e2fe1ece8730b",
-    "zh:870ea9cc24807ef5142e4cad0281dac7173f7b6bf818a79762b6c690d12d4c4b",
-    "zh:9094ae76ed66cb328a4f35bd18b9140fb6fc6859c2e46431ec73c018bcb58d96",
-    "zh:d89149cfd01cb70012459536b4d36490b58e43312440562e5910bd5160537858",
-    "zh:dba7ec06171ca062fc423ba5b4776a5600444e45e57f4d1cb043bdc3eee538b7",
-    "zh:ff5bd6883d9ac8334e043434246357a55107411e9a962856c1d17e47ee15ac37",
-  ]
-}
-
-provider "registry.terraform.io/hashicorp/azurerm" {
-  version     = "3.32.0"
-  constraints = "3.32.0"
+  version     = "1.0.0"
+  constraints = "1.0.0"
   hashes = [
     "h1:OsBIUCGM+lcmbEJqfHeY9ScQoWU5Ir/MdAUU4+lNNI0=",
     "zh:01a33aaefe4d185e70d926103eeb0ac9fefeadf750f69c5977ead2ae02e0b038",
