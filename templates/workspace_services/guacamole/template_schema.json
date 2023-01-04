@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
+    "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/template_schema.json",
   "type": "object",
   "title": "Virtual Desktop Service",
@@ -32,6 +32,13 @@
       "type": "boolean",
       "title": "Disable files download",
       "description": "Disable files download",
+      "updateable": true
+    },
+    "guac_disable_upload": {
+      "$id": "#/properties/guac_disable_upload",
+      "type": "boolean",
+      "title": "Disable files upload",
+      "description": "Disable files upload",
       "updateable": true
     },
     "is_exposed_externally": {

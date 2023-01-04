@@ -56,6 +56,8 @@ resource "azurerm_linux_web_app" "guacamole" {
     GUAC_DRIVE_NAME       = var.guac_drive_name
     GUAC_DRIVE_PATH       = var.guac_drive_path
     GUAC_DISABLE_DOWNLOAD = var.guac_disable_download
+    GUAC_DISABLE_UPLOAD   = var.guac_disable_upload
+
     AUDIENCE              = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_id.id})"
     ISSUER                = local.issuer
 

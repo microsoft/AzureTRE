@@ -21,6 +21,7 @@ ENHANCEMENTS:
 * Airlock processor function and api app service work with http2
 * Added the option to disable Swagger ([#2981](https://github.com/microsoft/AzureTRE/pull/2981))
 * Serverless CosmosDB for new deployments to reduce cost ([#3029](https://github.com/microsoft/AzureTRE/pull/3029))
+* Adding disable_download and disable_upload properties for guacamole ([#3029](https://github.com/microsoft/AzureTRE/pull/2967))
 
 
 BUG FIXES:
