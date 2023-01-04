@@ -12,7 +12,7 @@ import moment from "moment";
 import { APIError } from "../../models/exceptions";
 import { LoadingState } from "../../models/loadingState";
 import { ExceptionLayout } from "./ExceptionLayout";
-
+import { ResourceOperationStepsList } from "./ResourceOperationStepsList";
 
 interface ResourceOperationsListProps {
   resource: Resource
@@ -58,7 +58,7 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
           {
             resourceOperations && resourceOperations.map((op: Operation, i: number) => {
               return (
-                <Stack wrap horizontal style={{borderBottom: '1px #999 solid', padding: '10px 0'}} key={i}>
+                <Stack wrap horizontal style={{ borderBottom: '1px #999 solid', padding: '10px 0' }} key={i}>
                   <Stack grow styles={stackStyles}>
                     <ResourceOperationListItem header={'Resource Id'} val={op.resourceId} />
                     <ResourceOperationListItem header={'Resource Path'} val={op.resourcePath} />
@@ -69,6 +69,7 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
                     <ResourceOperationListItem header={'Created'} val={`${moment.unix(op.createdWhen).toLocaleString()} (${moment.unix(op.createdWhen).fromNow()})`} />
                     <ResourceOperationListItem header={'Updated'} val={`${moment.unix(op.updatedWhen).toLocaleString()} (${moment.unix(op.updatedWhen).fromNow()})`} />
                     <ResourceOperationListItem header={'User'} val={op.user.name} />
+                    <ResourceOperationStepsList header={'Steps'} val={op.steps} />
                   </Stack>
                 </Stack>
               )
