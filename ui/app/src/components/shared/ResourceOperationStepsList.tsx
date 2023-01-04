@@ -25,7 +25,7 @@ export const ResourceOperationStepsList: React.FunctionComponent<ResourceOperati
           return (
             <Stack.Item styles={stackItemStyles} key={i}>
               <div >
-                {step.stepTitle}
+                {i+1}{')'} {step.stepTitle}
               </div>
               <div style={{ color: DefaultPalette.neutralTertiary }}>
                 {step.message}
