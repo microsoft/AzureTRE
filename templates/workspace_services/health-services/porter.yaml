@@ -1,4 +1,5 @@
 ---
+schemaVersion: 1.0.0
 name: tre-workspace-service-health
 version: 0.1.0
 description: "An Azre Data Health Services workspace service"
@@ -52,7 +53,7 @@ parameters:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.2.6
+      clientVersion: 1.3.6
 
 install:
   - terraform:
