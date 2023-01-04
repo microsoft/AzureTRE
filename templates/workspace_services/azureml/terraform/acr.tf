@@ -21,7 +21,7 @@ resource "azurerm_private_endpoint" "acrpe" {
   name                = "acrpe-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
-  subnet_id           = data.azurerm_subnet.services.id
+  subnet_id           = azurerm_subnet.aml.id
   tags                = local.tre_workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
@@ -37,5 +37,6 @@ resource "azurerm_private_endpoint" "acrpe" {
     is_manual_connection           = false
     subresource_names              = ["registry"]
   }
+
 }
 

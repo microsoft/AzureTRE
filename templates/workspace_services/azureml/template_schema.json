@@ -17,14 +17,14 @@
       "type": "string",
       "title": "Description of the workspace service",
       "description": "Description of the workspace service",
-      "default": "Azure Machine Learning empowers data scientists and developers to build, deploy, and manage high-quality models faster and with confidence. It accelerates time to value with industry-leading machine learning operations (MLOps), open-source interoperability, and integrated tools. This trusted platform is designed for responsible AI applications in machine learning.",
+      "default": "Azure Machine Learning empowers data scientists and developers to build, deploy, and manage high-quality models faster and with confidence.",
       "updateable": true
     },
     "overview": {
       "type": "string",
       "title": "Workspace Service Overview",
       "description": "Long form description of the workspace service, in markdown syntax",
-      "default": "<iframe loading='lazy'src='https://learn-video.azurefd.net/vod/player?id=838dfb73-1e2a-4c52-8672-55baf71a26bf' allowfullscreen='' title='Azure ML' tabindex='' allow='autoplay'></iframe>",
+      "default": "",
       "updateable": true
     },
     "is_exposed_externally": {

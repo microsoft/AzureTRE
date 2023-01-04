@@ -6,7 +6,7 @@ resource "azurerm_storage_account" "aml" {
   account_replication_type = "GRS"
 
   network_rules {
-    default_action             = "Deny"
+    default_action = "Deny"
   }
 }
 
@@ -24,7 +24,7 @@ resource "azurerm_private_endpoint" "blobpe" {
   name                = "pe-${local.storage_name}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
-  subnet_id           = data.azurerm_subnet.services.id
+  subnet_id           = azurerm_subnet.aml.id
 
   lifecycle { ignore_changes = [tags] }
 

@@ -1,6 +1,6 @@
 resource "azurerm_network_security_group" "aml" {
   location            = data.azurerm_virtual_network.ws.location
-  name                = "nsg-aml"
+  name                = "nsg-aml-${local.short_service_id}"
   resource_group_name = data.azurerm_virtual_network.ws.resource_group_name
   tags                = local.tre_workspace_service_tags
 
@@ -199,10 +199,10 @@ resource "azurerm_route" "firewall" {
   name                = "rt-aml-${var.tre_id}-${local.short_service_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
   route_table_name    = azurerm_route_table.aml[count.index].name
-  address_prefix      = data.azurerm_route_table.rt[count.index].route[0].address_prefix
-  next_hop_type       = data.azurerm_route_table.rt[count.index].route[0].next_hop_type
+  address_prefix      = data.azurerm_route_table.rt.route[0].address_prefix
+  next_hop_type       = data.azurerm_route_table.rt.route[0].next_hop_type
+  next_hop_in_ip_address = data.azurerm_route_table.rt.route[0].next_hop_in_ip_address
 }
-
 
 resource "azurerm_route" "aml" {
   count               = var.is_exposed_externally ? 1 : 0
@@ -225,12 +225,12 @@ resource "azurerm_route" "batch" {
 
 resource "azurerm_subnet_route_table_association" "rt_aml_subnet_association" {
   count          = var.is_exposed_externally ? 1 : 0
-  route_table_id = data.azurerm_route_table.rt.id
+  route_table_id = azurerm_route_table.aml[count.index].id
   subnet_id      = azurerm_subnet.aml.id
 }
 
 resource "azurerm_subnet_route_table_association" "rt_core_aml_subnet_association" {
   count          = var.is_exposed_externally ? 0 : 1
-  route_table_id = azurerm_route_table.aml[count.index].id
+  route_table_id = data.azurerm_route_table.rt.id
   subnet_id      = azurerm_subnet.aml.id
 }

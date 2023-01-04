@@ -66,11 +66,12 @@ resource "azapi_resource" "compute_cluster" {
 
 }
 
-resource "azurerm_role_assignment" "compute_cluster_acr_pull" {
-  scope                = azurerm_container_registry.acr.id
-  role_definition_name = "AcrPull"
-  principal_id         = jsondecode(azapi_resource.compute_cluster.output).identity.principalId
-}
+# This seems to be added automatically
+# resource "azurerm_role_assignment" "compute_cluster_acr_pull" {
+#   scope                = azurerm_container_registry.acr.id
+#   role_definition_name = "AcrPull"
+#   principal_id         = jsondecode(azapi_resource.compute_cluster.output).identity.principalId
+# }
 
 resource "azapi_update_resource" "set_image_build_compute" {
   type      = "Microsoft.MachineLearningServices/workspaces@2022-10-01"
@@ -84,7 +85,8 @@ resource "azapi_update_resource" "set_image_build_compute" {
   })
 
   depends_on = [
-    azapi_resource.compute_cluster,
-    azurerm_role_assignment.compute_cluster_acr_pull
+    azapi_resource.compute_cluster
+    #,
+    #azurerm_role_assignment.compute_cluster_acr_pull
   ]
 }
