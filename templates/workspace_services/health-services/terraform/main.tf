@@ -32,7 +32,7 @@ resource "azurerm_healthcare_dicom_service" "dicom" {
   name         = "dicom${local.service_resource_name_suffix}"
   workspace_id = azurerm_healthcare_workspace.healthcare_workspace.id
   location     = data.azurerm_resource_group.ws.location
-  tags                = local.workspace_service_tags
+  tags         = local.workspace_service_tags
 
   identity {
     type = "SystemAssigned"
