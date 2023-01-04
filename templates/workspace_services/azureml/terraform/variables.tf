@@ -12,6 +12,7 @@ variable "description" {}
 variable "is_exposed_externally" {
   type = bool
 }
+variable "address_space" {}
 variable "auth_tenant_id" {
   type        = string
   description = "Used to authenticate into the AAD Tenant to get app role members"

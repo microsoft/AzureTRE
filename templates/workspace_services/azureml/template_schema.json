@@ -33,10 +33,29 @@
       "title": "Expose externally",
       "description": "Is the Azure ML workspace accessible from  outside of the workspace network",
       "default": false
+    },
+    "address_space": {
+      "$id": "#/properties/address_space",
+      "type": "string",
+      "title": "Address space",
+      "description": "The address space for use by AML subnets"
+    }
+  },
+  "uiSchema": {
+    "address_space": {
+      "classNames": "tre-hidden"
     }
   },
   "pipeline": {
     "install": [
+      {
+        "stepId": "12ba0dad-ea6c-4d0d-9255-d316212f5ffa",
+        "stepTitle": "Upgrade to ensure aware of address space",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": [
+        ]
+      },
       {
         "stepId": "main"
       },

@@ -20,7 +20,7 @@ resource "azapi_resource" "compute_instance" {
           }
         }
         subnet = {
-          id = data.azurerm_subnet.services.id
+          id = data.azurerm_subnet.aml.id
         }
       }
     }

@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-azureml
-version: 0.6.1
+version: 0.6.2
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -41,6 +41,9 @@ parameters:
     default: false
     env: IS_EXPOSED_EXTERNALLY
     description: "Determines if the AML workspace will be available over public/internet"
+  - name: address_space
+    type: string
+    description: "Address space for the AML subnets"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -106,19 +109,20 @@ install:
   - terraform:
       description: "Deploy Azure ML Service"
       vars:
-        workspace_id: ${ bundle.parameters.workspace_id }
-        tre_id: ${ bundle.parameters.tre_id }
-        tre_resource_id: ${ bundle.parameters.id }
-        display_name: ${ bundle.parameters.display_name }
-        description: ${ bundle.parameters.description }
-        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
-        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
-        auth_client_id: ${ bundle.credentials.auth_client_id }
-        auth_client_secret: ${ bundle.credentials.auth_client_secret }
-        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        workspace_id: "{{ bundle.parameters.workspace_id }}"
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        display_name: "{{ bundle.parameters.display_name }}"
+        description: "{{ bundle.parameters.description }}"
+        address_space: "{{ bundle.parameters.address_space }}"
+        is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        auth_client_id: "{{ bundle.credentials.auth_client_id }}"
+        auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
+        auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -137,19 +141,20 @@ upgrade:
   - terraform:
       description: "Upgrade Azure ML Service"
       vars:
-        workspace_id: ${ bundle.parameters.workspace_id }
-        tre_id: ${ bundle.parameters.tre_id }
-        tre_resource_id: ${ bundle.parameters.id }
-        display_name: ${ bundle.parameters.display_name }
-        description: ${ bundle.parameters.description }
-        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
-        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
-        auth_client_id: ${ bundle.credentials.auth_client_id }
-        auth_client_secret: ${ bundle.credentials.auth_client_secret }
-        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        workspace_id: "{{ bundle.parameters.workspace_id }}"
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        display_name: "{{ bundle.parameters.display_name }}"
+        description: "{{ bundle.parameters.description }}"
+        address_space: "{{ bundle.parameters.address_space }}"
+        is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        auth_client_id: "{{ bundle.credentials.auth_client_id }}"
+        auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
+        auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -168,19 +173,20 @@ uninstall:
   - terraform:
       description: "Delete the Azure ML Service"
       vars:
-        workspace_id: ${ bundle.parameters.workspace_id }
-        tre_id: ${ bundle.parameters.tre_id }
-        tre_resource_id: ${ bundle.parameters.id }
-        display_name: ${ bundle.parameters.display_name }
-        description: ${ bundle.parameters.description }
-        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
-        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
-        auth_client_id: ${ bundle.credentials.auth_client_id }
-        auth_client_secret: ${ bundle.credentials.auth_client_secret }
-        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        workspace_id: "{{ bundle.parameters.workspace_id }}"
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        display_name: "{{ bundle.parameters.display_name }}"
+        description: "{{ bundle.parameters.description }}"
+        address_space: "{{ bundle.parameters.address_space }}"
+        is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        auth_client_id: "{{ bundle.credentials.auth_client_id }}"
+        auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
+        auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
