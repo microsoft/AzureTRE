@@ -58,39 +58,47 @@ mixins:
 install:
   - terraform:
       description: "Deploy Azure Health workspace service"
-      input: false
       vars:
-        workspace_id: "{{ bundle.parameters.workspace_id }}"
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        deploy_fhir: "{{ bundle.parameters.deploy_fhir }}"
-        deploy_dicom: "{{ bundle.parameters.deploy_dicom }}"
-        fhir_kind: "{{ bundle.parameters.fhir_kind }}"
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        deploy_fhir: ${ bundle.parameters.deploy_fhir }
+        deploy_dicom: ${ bundle.parameters.deploy_dicom }
+        fhir_kind: ${ bundle.parameters.fhir_kind }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
         key: "tre-workspace-service-health-{{ bundle.parameters.id }}"
 
 upgrade:
-  - exec:
-      description: "Upgrade workspace service"
-      command: echo
-      arguments:
-        - "This workspace service does not implement upgrade action"
+  - terraform:
+      description: "Upgrade Azure Health workspace service"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        deploy_fhir: ${ bundle.parameters.deploy_fhir }
+        deploy_dicom: ${ bundle.parameters.deploy_dicom }
+        fhir_kind: ${ bundle.parameters.fhir_kind }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: "tre-workspace-service-health-{{ bundle.parameters.id }}"
+
 uninstall:
   - terraform:
       description: "Tear down AzurAzure Health Data Services workspace service"
-      input: false
       vars:
-        workspace_id: "{{ bundle.parameters.workspace_id }}"
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        deploy_fhir: "{{ bundle.parameters.deploy_fhir }}"
-        deploy_dicom: "{{ bundle.parameters.deploy_dicom }}"
-        fhir_kind: "{{ bundle.parameters.fhir_kind }}"
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        deploy_fhir: ${ bundle.parameters.deploy_fhir }
+        deploy_dicom: ${ bundle.parameters.deploy_dicom }
+        fhir_kind: ${ bundle.parameters.fhir_kind }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "tre-workspace-service-health-{{ bundle.parameters.id }}"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.name }-${ bundle.parameters.id }

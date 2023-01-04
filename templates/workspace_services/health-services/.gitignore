@@ -1,3 +1,2 @@
 .cnab/
-terraform/.terraform.lock.hcl
 .terraform*

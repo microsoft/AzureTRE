@@ -14,6 +14,7 @@ resource "azurerm_healthcare_fhir_service" "fhir" {
   location            = data.azurerm_resource_group.ws.location
   workspace_id        = azurerm_healthcare_workspace.healthcare_workspace.id
   kind                = "fhir-${var.fhir_kind}"
+  tags                = local.workspace_service_tags
 
   authentication {
     authority = "https://login.microsoftonline.com/${local.aad_tenant_id}"
@@ -31,13 +32,10 @@ resource "azurerm_healthcare_dicom_service" "dicom" {
   name         = "dicom${local.service_resource_name_suffix}"
   workspace_id = azurerm_healthcare_workspace.healthcare_workspace.id
   location     = data.azurerm_resource_group.ws.location
+  tags                = local.workspace_service_tags
 
   identity {
     type = "SystemAssigned"
-  }
-
-  tags = {
-    environment = "None"
   }
 }
 
