@@ -71,6 +71,6 @@ Currently, the GitHub API to determine whether a user is a collaborator doesn't 
 
 ### [quarterly] Upgrade bundles' Terraform providers
 
-Each bundle is using Terraform providers to deploy itself. The providers are set with specific versions for stability and consistency between build.
+Each bundle is using Terraform providers to deploy itself. The providers are set with specific versions for stability and consistency between builds.
 
 This, however, requires us to manually update them by referencing newer versions in the provider blocks and associated lock files (`devops/scripts/upgrade_lock_files.sh` can help).
