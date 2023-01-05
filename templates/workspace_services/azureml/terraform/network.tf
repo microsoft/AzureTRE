@@ -79,6 +79,21 @@ resource "azurerm_subnet_network_security_group_association" "services" {
   subnet_id                 = azurerm_subnet.aml.id
 }
 
+
+resource "azurerm_network_security_rule" "allow_outbound_within_workspace_vnet" {
+  access                       = "Allow"
+  destination_port_range       = "*"
+  destination_address_prefixes = data.azurerm_virtual_network.ws.address_space
+  source_address_prefixes      = data.azurerm_virtual_network.ws.address_space
+  direction                    = "Outbound"
+  name                         = "outbound-within-workspace-subnet"
+  network_security_group_name  = azurerm_network_security_group.aml.name
+  priority                     = 100
+  protocol                     = "*"
+  resource_group_name          = data.azurerm_resource_group.ws.name
+  source_port_range            = "*"
+}
+
 resource "azurerm_network_security_rule" "allow_batch_inbound" {
   count                       = var.is_exposed_externally ? 1 : 0
   access                      = "Allow"
@@ -88,26 +103,26 @@ resource "azurerm_network_security_rule" "allow_batch_inbound" {
   direction                   = "Inbound"
   name                        = "${local.short_service_id}-batch-inbound-29876"
   network_security_group_name = azurerm_network_security_group.aml.name
-  priority                    = 100
-  protocol                    = "Tcp"
-  resource_group_name         = data.azurerm_resource_group.ws.name
-  source_port_range           = "*"
-}
-
-resource "azurerm_network_security_rule" "allow_aml_inbound" {
-  #count                       = var.is_exposed_externally ? 1 : 0
-  access                      = "Allow"
-  destination_port_ranges     = ["44224"]
-  destination_address_prefix  = "VirtualNetwork"
-  source_address_prefix       = "AzureMachineLearning"
-  direction                   = "Inbound"
-  name                        = "${local.short_service_id}-aml-inbound"
-  network_security_group_name = azurerm_network_security_group.aml.name
   priority                    = 101
   protocol                    = "Tcp"
   resource_group_name         = data.azurerm_resource_group.ws.name
   source_port_range           = "*"
 }
+
+# resource "azurerm_network_security_rule" "allow_aml_inbound" {
+#   #count                       = var.is_exposed_externally ? 1 : 0
+#   access                      = "Allow"
+#   destination_port_ranges     = ["44224"]
+#   destination_address_prefix  = "VirtualNetwork"
+#   source_address_prefix       = "AzureMachineLearning"
+#   direction                   = "Inbound"
+#   name                        = "${local.short_service_id}-aml-inbound"
+#   network_security_group_name = azurerm_network_security_group.aml.name
+#   priority                    = 102
+#   protocol                    = "Tcp"
+#   resource_group_name         = data.azurerm_resource_group.ws.name
+#   source_port_range           = "*"
+# }
 
 resource "azurerm_network_security_rule" "allow_outbound_storage_445" {
   # TODO: this shouldn't be needed for private compute
@@ -119,7 +134,7 @@ resource "azurerm_network_security_rule" "allow_outbound_storage_445" {
   direction                   = "Outbound"
   name                        = "${local.short_service_id}-allow-Outbound_Storage_445"
   network_security_group_name = azurerm_network_security_group.aml.name
-  priority                    = 102
+  priority                    = 103
   protocol                    = "Tcp"
   resource_group_name         = data.azurerm_resource_group.ws.name
   source_port_range           = "*"
@@ -132,7 +147,7 @@ resource "azurerm_network_security_rule" "allow_outbound_to_shared_services" {
   direction                    = "Outbound"
   name                         = "to-shared-services"
   network_security_group_name  = azurerm_network_security_group.aml.name
-  priority                     = 103
+  priority                     = 104
   protocol                     = "*"
   resource_group_name          = data.azurerm_resource_group.ws.name
   source_address_prefix        = "*"
@@ -147,7 +162,7 @@ resource "azurerm_network_security_rule" "allow_outbound_to_internet" {
   direction                   = "Outbound"
   name                        = "to-internet"
   network_security_group_name = azurerm_network_security_group.aml.name
-  priority                    = 104
+  priority                    = 105
   protocol                    = "Tcp"
   resource_group_name         = data.azurerm_resource_group.ws.name
   source_address_prefix       = "*"
@@ -167,6 +182,21 @@ resource "azurerm_network_security_rule" "deny_outbound_override" {
   resource_group_name         = data.azurerm_resource_group.ws.name
   source_address_prefix       = "*"
   source_port_range           = "*"
+}
+
+
+resource "azurerm_network_security_rule" "allow_inbound_within_workspace_vnet" {
+  access                       = "Allow"
+  destination_port_range       = "*"
+  destination_address_prefixes = data.azurerm_virtual_network.ws.address_space
+  source_address_prefixes      = data.azurerm_virtual_network.ws.address_space
+  direction                    = "Inbound"
+  name                         = "inbound-within-workspace-vnet"
+  network_security_group_name  = azurerm_network_security_group.aml.name
+  priority                     = 100
+  protocol                     = "*"
+  resource_group_name          = data.azurerm_resource_group.ws.name
+  source_port_range            = "*"
 }
 
 resource "azurerm_network_security_rule" "deny_all_inbound_override" {
@@ -196,12 +226,12 @@ resource "azurerm_route_table" "aml" {
 }
 
 resource "azurerm_route" "firewall" {
-  count               = var.is_exposed_externally ? 1 : 0
-  name                = "rt-aml-${var.tre_id}-${local.short_service_id}"
-  resource_group_name = data.azurerm_resource_group.ws.name
-  route_table_name    = azurerm_route_table.aml[count.index].name
-  address_prefix      = data.azurerm_route_table.rt.route[0].address_prefix
-  next_hop_type       = data.azurerm_route_table.rt.route[0].next_hop_type
+  count                  = var.is_exposed_externally ? 1 : 0
+  name                   = "rt-aml-${var.tre_id}-${local.short_service_id}"
+  resource_group_name    = data.azurerm_resource_group.ws.name
+  route_table_name       = azurerm_route_table.aml[count.index].name
+  address_prefix         = data.azurerm_route_table.rt.route[0].address_prefix
+  next_hop_type          = data.azurerm_route_table.rt.route[0].next_hop_type
   next_hop_in_ip_address = data.azurerm_route_table.rt.route[0].next_hop_in_ip_address
 }
 

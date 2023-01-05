@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-azureml
-version: 0.7.7
+version: 0.7.16
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -86,12 +86,27 @@ outputs:
     applyTo:
       - install
       - upgrade
-  - name: workspace_services_subnet_address_prefix
+  - name: workspace_address_spaces
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: aml_subnet_address_prefixes
     type: string
     applyTo:
       - install
       - upgrade
   - name: storage_tag
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: batch_tag
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: mcr_tag
     type: string
     applyTo:
       - install
@@ -117,9 +132,6 @@ install:
         address_space: ${ bundle.parameters.address_space }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
         auth_client_id: ${ bundle.credentials.auth_client_id }
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
@@ -134,8 +146,11 @@ install:
         - name: azureml_storage_account_id
         - name: connection_uri
         - name: internal_connection_uri
-        - name: workspace_services_subnet_address_prefix
+        - name: workspace_address_spaces
+        - name: aml_subnet_address_prefixes
         - name: storage_tag
+        - name: batch_tag
+        - name: mcr_tag
 
 upgrade:
   - terraform:
@@ -149,9 +164,6 @@ upgrade:
         address_space: ${ bundle.parameters.address_space }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
         auth_client_id: ${ bundle.credentials.auth_client_id }
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
@@ -166,8 +178,11 @@ upgrade:
         - name: azureml_storage_account_id
         - name: connection_uri
         - name: internal_connection_uri
-        - name: workspace_services_subnet_address_prefix
+        - name: workspace_address_spaces
+        - name: aml_subnet_address_prefixes
         - name: storage_tag
+        - name: batch_tag
+        - name: mcr_tag
 
 uninstall:
   - terraform:
@@ -180,10 +195,7 @@ uninstall:
         description: ${ bundle.parameters.description }
         address_space: ${ bundle.parameters.address_space }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
         arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
         auth_client_id: ${ bundle.credentials.auth_client_id }
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }

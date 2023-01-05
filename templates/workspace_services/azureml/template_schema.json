@@ -78,33 +78,13 @@
                 {
                   "name": "AzureMachineLearning",
                   "description": "Azure Machine Learning rules",
-                  "source_addresses": [
-                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
-                  ],
+                  "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
                   "destination_addresses": [
-                    "AzureMachineLearning"
+                    "AzureMachineLearning",
+                    "{{ resource.properties.batch_tag }}"
                   ],
                   "destination_ports": [
-                    "443",
-                    "8787",
-                    "18881"
-                  ],
-                  "protocols": [
-                    "TCP"
-                  ]
-                },
-                {
-                  "name": "AzureActiveDirectory",
-                  "description": "Azure Active Directory",
-                  "source_addresses": [
-                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
-                  ],
-                  "destination_addresses": [
-                    "AzureActiveDirectory"
-                  ],
-                  "destination_ports": [
-                    "443",
-                    "80"
+                    "443"
                   ],
                   "protocols": [
                     "TCP"
@@ -113,13 +93,13 @@
                 {
                   "name": "AzureML_Dependancies",
                   "description": "AzureML Dependancies",
-                  "source_addresses": [
-                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
-                  ],
+                  "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
                   "destination_addresses": [
                     "AzureActiveDirectory",
                     "AzureResourceManager",
-                    "MicrosoftContainerRegistry"
+                    "{{ resource.properties.mcr_tag }}",
+                    "AzureFrontDoor.FirstParty"
+
                   ],
                   "destination_ports": [
                     "443"
@@ -131,9 +111,7 @@
                 {
                   "name": "AzureML_Storage",
                   "description": "AzureML Storage",
-                  "source_addresses": [
-                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
-                  ],
+                  "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
                   "destination_addresses": [
                     "{{ resource.properties.storage_tag }}"
                   ],
@@ -154,21 +132,17 @@
             "arraySubstitutionAction": "replace",
             "arrayMatchField": "name",
             "value": {
-              "name": "arc_svc_{{ resource.id }}_azureml",
+              "name": "arc_svc_{{ resource.id }}_azureml_client",
               "action": "Allow",
               "rules": [
                 {
-                  "name": "AzureML",
+                  "name": "AzureML_client",
                   "description": "AzureML rules",
-                  "source_addresses": [
-                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
-                  ],
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
                   "target_fqdns": [
                     "aadcdn.msauth.net",
                     "ml.azure.com",
-                    "automlresources-prod.azureedge.net",
-                    "update.code.visualstudio.com",
-                    "database.clamav.net"
+                    "automlresources-prod.azureedge.net"
                   ],
                   "protocols": [
                     {
@@ -206,33 +180,13 @@
                 {
                   "name": "AzureMachineLearning",
                   "description": "Azure Machine Learning rules",
-                  "source_addresses": [
-                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
-                  ],
+                  "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
                   "destination_addresses": [
-                    "AzureMachineLearning"
+                    "AzureMachineLearning",
+                    "{{ resource.properties.batch_tag }}"
                   ],
                   "destination_ports": [
-                    "443",
-                    "8787",
-                    "18881"
-                  ],
-                  "protocols": [
-                    "TCP"
-                  ]
-                },
-                {
-                  "name": "AzureActiveDirectory",
-                  "description": "Azure Active Directory",
-                  "source_addresses": [
-                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
-                  ],
-                  "destination_addresses": [
-                    "AzureActiveDirectory"
-                  ],
-                  "destination_ports": [
-                    "443",
-                    "80"
+                    "443"
                   ],
                   "protocols": [
                     "TCP"
@@ -241,13 +195,13 @@
                 {
                   "name": "AzureML_Dependancies",
                   "description": "AzureML Dependancies",
-                  "source_addresses": [
-                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
-                  ],
+                  "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
                   "destination_addresses": [
                     "AzureActiveDirectory",
                     "AzureResourceManager",
-                    "MicrosoftContainerRegistry"
+                    "{{ resource.properties.mcr_tag }}",
+                    "AzureFrontDoor.FirstParty"
+
                   ],
                   "destination_ports": [
                     "443"
@@ -259,9 +213,7 @@
                 {
                   "name": "AzureML_Storage",
                   "description": "AzureML Storage",
-                  "source_addresses": [
-                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
-                  ],
+                  "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
                   "destination_addresses": [
                     "{{ resource.properties.storage_tag }}"
                   ],
@@ -282,18 +234,17 @@
             "arraySubstitutionAction": "replace",
             "arrayMatchField": "name",
             "value": {
-              "name": "arc_svc_{{ resource.id }}_azureml",
+              "name": "arc_svc_{{ resource.id }}_azureml_client",
               "action": "Allow",
               "rules": [
                 {
-                  "name": "AzureML",
+                  "name": "AzureML_client",
                   "description": "AzureML rules",
-                  "source_addresses": [
-                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
-                  ],
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
                   "target_fqdns": [
-                    "aadcdn.msftauth.net",
-                    "ml.azure.com"
+                    "aadcdn.msauth.net",
+                    "ml.azure.com",
+                    "automlresources-prod.azureedge.net"
                   ],
                   "protocols": [
                     {
