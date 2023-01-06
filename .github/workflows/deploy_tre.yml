@@ -30,7 +30,7 @@ jobs:
       ciGitRef: ${{ github.ref }}
       e2eTestsCustomSelector: >-
         ${{ (github.event_name == 'push' && 'extended or extended_aad')
-        || 'extended or shared_services or extended_aad' }}
+        || 'extended or extended_aad' }}
       environmentName: ${{ github.event.inputs.environment || 'CICD' }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
@@ -54,7 +54,9 @@ jobs:
       TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
       TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAMEs }}
       TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
+      ENABLE_SWAGGER: ${{ secrets.ENABLE_SWAGGER }}
       TRE_ID: ${{ secrets.TRE_ID }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
       CORE_APP_SERVICE_PLAN_SKU: ${{ secrets.CORE_APP_SERVICE_PLAN_SKU }}
       WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ secrets.WORKSPACE_APP_SERVICE_PLAN_SKU }}
+      RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE: ${{ secrets.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE }}

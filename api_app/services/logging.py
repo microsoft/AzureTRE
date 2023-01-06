@@ -43,6 +43,21 @@ def telemetry_processor_callback_function(envelope):
     envelope.tags['ai.application.ver'] = VERSION
 
 
+class ExceptionTracebackFilter(logging.Filter):
+    """
+    If a record contains 'exc_info', it will only show in the 'exceptions' section of Application Insights without showing
+    in the 'traces' section. In order to show it also in the 'traces' section, we need another log that does not contain 'exc_info'.
+    """
+    def filter(self, record):
+        if record.exc_info:
+            logger = logging.getLogger(record.name)
+            _, exception_value, _ = record.exc_info
+            message = f"{record.getMessage()}\nException message: '{exception_value}'"
+            logger.log(record.levelno, message)
+
+        return True
+
+
 def initialize_logging(logging_level: int, correlation_id: str = None) -> logging.LoggerAdapter:
     """
     Adds the Application Insights handler for the root logger and sets the given logging level.
@@ -58,6 +73,7 @@ def initialize_logging(logging_level: int, correlation_id: str = None) -> loggin
         # picks up APPLICATIONINSIGHTS_CONNECTION_STRING automatically
         azurelog_handler = AzureLogHandler()
         azurelog_handler.add_telemetry_processor(telemetry_processor_callback_function)
+        azurelog_handler.addFilter(ExceptionTracebackFilter())
         logger.addHandler(azurelog_handler)
     except ValueError as e:
         logger.error(f"Failed to set Application Insights logger handler: {e}")

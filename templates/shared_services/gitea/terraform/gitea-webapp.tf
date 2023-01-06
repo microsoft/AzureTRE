@@ -128,7 +128,7 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
   dynamic "log" {
-    for_each = data.azurerm_monitor_diagnostic_categories.webapp.logs
+    for_each = data.azurerm_monitor_diagnostic_categories.webapp.log_category_types
     content {
       category = log.value
       enabled  = contains(local.webapp_diagnostic_categories_enabled, log.value) ? true : false
@@ -163,6 +163,7 @@ resource "azurerm_key_vault_secret" "gitea_password" {
   name         = "${local.webapp_name}-administrator-password"
   value        = random_password.gitea_passwd.result
   key_vault_id = data.azurerm_key_vault.keyvault.id
+  tags         = local.tre_shared_service_tags
 
   depends_on = [
     azurerm_key_vault_access_policy.gitea_policy

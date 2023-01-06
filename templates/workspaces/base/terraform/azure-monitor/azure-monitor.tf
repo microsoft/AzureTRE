@@ -22,18 +22,23 @@ resource "azurerm_storage_account" "app_insights" {
   allow_nested_items_to_be_public = false
   tags                            = var.tre_workspace_tags
 
+  network_rules {
+    default_action = "Deny"
+    bypass         = ["AzureServices"]
+  }
+
   lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_ingestion" {
-  data_source_type      = "ingestion"
+  data_source_type      = "Ingestion"
   resource_group_name   = var.resource_group_name
   workspace_resource_id = azurerm_log_analytics_workspace.workspace.id
   storage_account_ids   = [azurerm_storage_account.app_insights.id]
 }
 
 resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_customlogs" {
-  data_source_type      = "customlogs"
+  data_source_type      = "CustomLogs"
   resource_group_name   = var.resource_group_name
   workspace_resource_id = azurerm_log_analytics_workspace.workspace.id
   storage_account_ids   = [azurerm_storage_account.app_insights.id]
@@ -79,7 +84,6 @@ resource "azurerm_monitor_private_link_scoped_service" "ampls_app_insights" {
 }
 
 resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
-  count               = 0 # Remove with https://github.com/microsoft/AzureTRE/issues/2357
   name                = "pe-ampls-${var.tre_id}-ws-${local.short_workspace_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
@@ -118,6 +122,7 @@ resource "azurerm_monitor_action_group" "failure_anomalies" {
   name                = "${azurerm_application_insights.workspace.name}-failure-anomalies-action-group"
   resource_group_name = var.resource_group_name
   short_name          = "Failures"
+  tags                = var.tre_workspace_tags
 }
 
 # We don't really need this, but if not present the RG will not be empty and won't be destroyed
@@ -129,6 +134,7 @@ resource "azurerm_monitor_smart_detector_alert_rule" "failure_anomalies" {
   scope_resource_ids  = [azurerm_application_insights.workspace.id]
   frequency           = "PT1M"
   detector_type       = "FailureAnomaliesDetector"
+  tags                = var.tre_workspace_tags
 
   action_group {
     ids = [azurerm_monitor_action_group.failure_anomalies.id]

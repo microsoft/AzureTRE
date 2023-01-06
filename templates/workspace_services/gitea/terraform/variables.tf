@@ -8,6 +8,4 @@ variable "gitea_storage_limit" {
   description = "Space allocated in GB for the Gitea data in Azure Files Share"
   default     = 100
 }
-variable "openid_client_id" {}
-variable "openid_client_secret" {}
-variable "openid_authority" {}
+

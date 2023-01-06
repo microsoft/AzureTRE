@@ -1,5 +1,6 @@
 import time
 import pytest
+import pytest_asyncio
 from mock import patch
 from fastapi import status
 from azure.core.exceptions import HttpResponseError
@@ -42,21 +43,6 @@ def sample_airlock_review_input_data():
     }
 
 
-@pytest.fixture
-def sample_airlock_review_with_user_resources():
-    return {
-        "type": "import",
-        "businessJustification": "some business justification",
-        "reviewUserResources": [
-            {
-                "workspaceId": WORKSPACE_ID,
-                "workspaceServiceId": WORKSPACE_SERVICE_ID,
-                "userResourceId": USER_RESOURCE_ID
-            }
-        ]
-    }
-
-
 def sample_airlock_request_object(status=AirlockRequestStatus.Draft, airlock_request_id=AIRLOCK_REQUEST_ID, workspace_id=WORKSPACE_ID, reviews: bool = False, review_user_resource: bool = False):
     airlock_request = AirlockRequest(
         id=airlock_request_id,
@@ -66,7 +52,7 @@ def sample_airlock_request_object(status=AirlockRequestStatus.Draft, airlock_req
         type="import",
         status=status,
         reviews=[sample_airlock_review_object()] if reviews else None,
-        reviewUserResources=[sample_airlock_user_resource_object()] if review_user_resource else []
+        reviewUserResources={"user-guid-here": sample_airlock_user_resource_object()} if review_user_resource else {}
     )
     return airlock_request
 
@@ -105,20 +91,33 @@ def sample_airlock_review_config() -> dict:
     return {
         "airlock_review_config": {
             "import": {
-                "workspace_id": IMPORT_WORKSPACE_ID,
-                "workspace_service_id": WORKSPACE_SERVICE_ID,
-                "user_resource_template_name": "tre-service-guacamole-import-reviewvm"
+                "import_vm_workspace_id": IMPORT_WORKSPACE_ID,
+                "import_vm_workspace_service_id": WORKSPACE_SERVICE_ID,
+                "import_vm_user_resource_template_name": "tre-service-guacamole-import-reviewvm"
             },
             "export": {
-                "workspace_service_id": WORKSPACE_SERVICE_ID,
-                "user_resource_template_name": "tre-service-guacamole-export-reviewvm"
+                "export_vm_workspace_service_id": WORKSPACE_SERVICE_ID,
+                "export_vm_user_resource_template_name": "tre-service-guacamole-export-reviewvm"
             }
         }
     }
 
 
+def sample_review_resource(healthy=True) -> UserResource:
+    resource = UserResource(
+        id=USER_RESOURCE_ID,
+        templateName="test",
+        templateVersion="0.0.1",
+        _etag="123",
+        isEnabled=True,
+        properties={"azure_resource_id": "abc"},
+        deploymentStatus="deployed" if healthy else "failed"
+    )
+    return resource
+
+
 class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
-    @pytest.fixture(autouse=True, scope='class')
+    @pytest_asyncio.fixture(autouse=True, scope='class')
     def log_in_with_researcher_user(self, app, researcher_user):
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = researcher_user
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = researcher_user
@@ -137,14 +136,16 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         assert response.status_code == status.HTTP_200_OK
 
     # [POST] /workspaces/{workspace_id}/requests
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={}))
     @patch("api.routes.airlock.save_and_publish_event_airlock_request")
-    async def test_post_airlock_request_creates_airlock_request_returns_201(self, _, app, client, sample_airlock_request_input_data):
+    async def test_post_airlock_request_creates_airlock_request_returns_201(self, _, __, app, client, sample_airlock_request_input_data):
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_201_CREATED
         assert response.json()["airlockRequest"]["id"] == AIRLOCK_REQUEST_ID
 
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={}))
     @patch("api.routes.airlock.AirlockRequestRepository.create_airlock_request_item", side_effect=ValueError)
-    async def test_post_airlock_request_input_is_malformed_returns_400(self, _, app, client, sample_airlock_request_input_data):
+    async def test_post_airlock_request_input_is_malformed_returns_400(self, _, __, app, client, sample_airlock_request_input_data):
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -153,14 +154,16 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={}))
     @patch("api.routes.airlock.AirlockRequestRepository.save_item", side_effect=UnableToAccessDatabase)
-    async def test_post_airlock_request_with_state_store_endpoint_not_responding_returns_503(self, _, app, client, sample_airlock_request_input_data):
+    async def test_post_airlock_request_with_state_store_endpoint_not_responding_returns_503(self, _, __, app, client, sample_airlock_request_input_data):
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={}))
     @patch("api.routes.airlock.AirlockRequestRepository.delete_item")
     @patch("event_grid.event_sender.send_status_changed_event", side_effect=HttpResponseError)
-    async def test_post_airlock_request_with_event_grid_not_responding_returns_503(self, _, __, app, client, sample_airlock_request_input_data):
+    async def test_post_airlock_request_with_event_grid_not_responding_returns_503(self, _, __, ___, app, client, sample_airlock_request_input_data):
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
@@ -196,7 +199,7 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
     # [POST] /workspaces/{workspace_id}/requests/{airlock_request_id}/submit
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
     @patch("api.routes.airlock.update_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Submitted))
-    async def test_post_submit_airlock_request_submitts_airlock_request_returns_200(self, _, __, app, client):
+    async def test_post_submit_airlock_request_submits_airlock_request_returns_200(self, _, __, app, client):
         response = await client.post(app.url_path_for(strings.API_SUBMIT_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["airlockRequest"]["id"] == AIRLOCK_REQUEST_ID
@@ -283,7 +286,7 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
 
 
 class TestAirlockRoutesThatRequireAirlockManagerRights():
-    @pytest.fixture(autouse=True, scope='class')
+    @pytest_asyncio.fixture(autouse=True, scope='class')
     def log_in_with_airlock_manager_user(self, app, airlock_manager_user):
         app.dependency_overrides[get_current_airlock_manager_user] = airlock_manager_user
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = airlock_manager_user
@@ -336,8 +339,8 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
     @patch("api.routes.airlock.AirlockRequestRepository.create_airlock_review_item", return_value=sample_airlock_review_object())
     @patch("api.routes.airlock.update_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Approved, review_user_resource=True))
     @patch("api.routes.airlock.AirlockRequestRepository.save_item")
-    async def test_post_create_airlock_review_cleans_up_review_user_resources(self, _, __, ___, ____, _____, ______, _______, send_uninstall_message_mock, app, client, sample_airlock_review_with_user_resources):
-        response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_with_user_resources)
+    async def test_post_create_airlock_review_cleans_up_review_user_resources(self, _, __, ___, ____, _____, ______, _______, send_uninstall_message_mock, app, client, sample_airlock_review_input_data):
+        response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)
         assert response.status_code == status.HTTP_200_OK
         assert send_uninstall_message_mock.call_count == 1
 
@@ -346,7 +349,7 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
     @patch("api.routes.airlock.get_airlock_container_link", return_value="http://test-sas")
     @patch("api.routes.airlock.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=WorkspaceService(id=WORKSPACE_SERVICE_ID, templateName="test", templateVersion="0.0.1", _etag="123"))
     @patch("api.routes.airlock.UserResourceRepository.create_user_resource_item", return_value=(UserResource(id=USER_RESOURCE_ID, templateName="test", templateVersion="0.0.1", _etag="123"), "test"))
-    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview, review_user_resource=True))
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview))
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id", return_value=sample_workspace(workspace_properties=sample_airlock_review_config()))
     async def test_post_create_review_user_resource_returns_200(self, _, __, ___, ____, _____, ______, _______, app, client):
         # Check the Airlock Request has been updated with VM information
@@ -374,3 +377,28 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
         # Check the Airlock Request has been updated with VM information
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch("api.routes.airlock.get_azure_resource_status", return_value={"powerState": "VM running"})
+    @patch("api.routes.airlock.ResourceTemplateRepository.get_template_by_name_and_version", return_value=ResourceTemplate(name="test_template", id="123", description="test", version="0.0.1", resourceType="user-resource", current=True, required=[], properties={}))
+    @patch("api.routes.airlock.UserResourceRepository.get_user_resource_by_id", return_value=sample_review_resource())
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview, review_user_resource=True))
+    @patch("api.routes.airlock.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=WorkspaceService(id=WORKSPACE_SERVICE_ID, templateName="test", templateVersion="0.0.1", _etag="123"))
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id", return_value=sample_workspace(workspace_properties=sample_airlock_review_config()))
+    async def test_post_create_review_user_resource_with_existing_healthy_resource_returns_409(self, _, __, ___, ____, _____, ______, app, client):
+        response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_409_CONFLICT
+
+    @patch("api.routes.airlock.delete_review_user_resource", return_value=Operation(id="123", resourceId=USER_RESOURCE_ID, resourcePath="a/b", action="uninstall", createdWhen=time.time(), updatedWhen=time.time()))
+    @patch("api.routes.airlock.save_and_deploy_resource", return_value=Operation(id="123", resourceId=USER_RESOURCE_ID, resourcePath="a/b", action="install", createdWhen=time.time(), updatedWhen=time.time()))
+    @patch("api.routes.airlock.get_azure_resource_status", return_value={})
+    @patch("api.routes.airlock.UserResourceRepository.get_user_resource_by_id", return_value=sample_review_resource(healthy=False))
+    @patch("api.routes.airlock.update_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview, review_user_resource=True))
+    @patch("api.routes.airlock.get_airlock_container_link", return_value="http://test-sas")
+    @patch("api.routes.airlock.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=WorkspaceService(id=WORKSPACE_SERVICE_ID, templateName="test", templateVersion="0.0.1", _etag="123"))
+    @patch("api.routes.airlock.UserResourceRepository.create_user_resource_item", return_value=(UserResource(id=USER_RESOURCE_ID, templateName="test", templateVersion="0.0.1", _etag="123"), "test"))
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview, review_user_resource=True))
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id", return_value=sample_workspace(workspace_properties=sample_airlock_review_config()))
+    async def test_post_create_review_user_resource_with_existing_unhealthy_resource_deletes_previous_and_redeploys(self, _, __, ___, ____, _____, ______, _______, ________, deploy_resource_mock, delete_review_resource_mock, app, client):
+        await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert delete_review_resource_mock.call_count == 1
+        assert deploy_resource_mock.call_count == 1

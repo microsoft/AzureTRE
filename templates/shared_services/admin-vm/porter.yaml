@@ -1,6 +1,7 @@
 ---
+schemaVersion: 1.0.0
 name: tre-shared-service-admin-vm
-version: 0.2.0
+version: 0.3.0
 description: "An admin vm shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -42,46 +43,43 @@ parameters:
 
 mixins:
   - terraform:
-      clientVersion: 1.2.9
+      clientVersion: 1.3.6
 
 install:
   - terraform:
       description: "Deploy shared service"
-      input: false
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        admin_jumpbox_vm_sku: "{{ bundle.parameters.admin_jumpbox_vm_sku }}"
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        admin_jumpbox_vm_sku: ${ bundle.parameters.admin_jumpbox_vm_sku }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-admin-vm"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-service-admin-vm
 
 upgrade:
   - terraform:
       description: "Upgrade shared service"
-      input: false
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        admin_jumpbox_vm_sku: "{{ bundle.parameters.admin_jumpbox_vm_sku }}"
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        admin_jumpbox_vm_sku: ${ bundle.parameters.admin_jumpbox_vm_sku }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-admin-vm"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-service-admin-vm
 
 uninstall:
   - terraform:
       description: "Tear down shared service"
-      input: false
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        admin_jumpbox_vm_sku: "{{ bundle.parameters.admin_jumpbox_vm_sku }}"
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        admin_jumpbox_vm_sku: ${ bundle.parameters.admin_jumpbox_vm_sku }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-admin-vm"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-service-admin-vm

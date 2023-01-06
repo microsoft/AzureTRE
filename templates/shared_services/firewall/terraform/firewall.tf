@@ -26,14 +26,6 @@ resource "azurerm_firewall" "fw" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_management_lock" "fw" {
-  count      = var.stateful_resources_locked ? 1 : 0
-  name       = azurerm_firewall.fw.name
-  scope      = azurerm_firewall.fw.id
-  lock_level = "CanNotDelete"
-  notes      = "Locked to prevent accidental deletion"
-}
-
 data "azurerm_monitor_diagnostic_categories" "firewall" {
   resource_id = azurerm_firewall.fw.id
 }
@@ -45,7 +37,7 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
   log_analytics_destination_type = "AzureDiagnostics"
 
   dynamic "log" {
-    for_each = data.azurerm_monitor_diagnostic_categories.firewall.logs
+    for_each = data.azurerm_monitor_diagnostic_categories.firewall.log_category_types
     content {
       category = log.value
       enabled  = contains(local.firewall_diagnostic_categories_enabled, log.value) ? true : false
@@ -101,7 +93,33 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
       "graph.microsoft.com",
       "login.microsoftonline.com",
       "aadcdn.msftauth.net",
-      "graph.windows.net"
+      "graph.windows.net",
+      "keyserver.ubuntu.com",
+      "packages.microsoft.com",
+      "download.docker.com"
+    ]
+
+    source_addresses = data.azurerm_subnet.shared.address_prefixes
+  }
+
+  rule {
+    name = "nexus-bootstrap"
+
+    protocol {
+      port = "443"
+      type = "Https"
+    }
+
+    protocol {
+      port = "80"
+      type = "Http"
+    }
+
+    target_fqdns = [
+      "keyserver.ubuntu.com",
+      "packages.microsoft.com",
+      "download.docker.com",
+      "azure.archive.ubuntu.com"
     ]
 
     source_addresses = data.azurerm_subnet.shared.address_prefixes

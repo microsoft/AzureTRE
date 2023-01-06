@@ -1,6 +1,6 @@
 # Creating Custom templates
 
-This document will show how to create custom templates, integrate them into your CI/CD pipelines.
+This document will show how to create custom templates and integrate them into your CI/CD pipelines.
 
 ## Templates types
 
@@ -14,29 +14,29 @@ Read more about them [here](../../index.md#workspace)
 
 ## How to add custom templates
 
-AzureTRE deployment repository has directories setup for: workspace, workspace service and user resource template definitions.
+AzureTRE deployment repository has directories set up for workspace, workspace service and user resource template definitions.
 
-See [template authoring guide](../../tre-workspace-authors/authoring-workspace-templates.md) to learn more about how to author templates.
+See the [template authoring guide](../../tre-workspace-authors/authoring-workspace-templates.md) to learn more about how to author templates.
 
 **To add your custom templates follow the next steps:**
 
 - Deployment requirements:
 
-    1. Add your template under relevant folder (For example: if you are adding a new workspace template then place it under `/templates/workspaces` folder).  
+    1. Add your template under the relevant folder (For example: if you are adding a new workspace template then place it under `/templates/workspaces` folder).  
     2. Use existing templates in AzureTRE as a reference.  
     3. Add porter configuration - AzureTRE uses [Porter](https://porter.sh/) as a solution for implementing and deploying workspaces and workspace, learn more about how it is used in AzureTRE [here](https://microsoft.github.io/AzureTRE/tre-developers/resource-processor/#porter).  
-    4. Add terraform scripts to setup your deployment plan.
+    4. Add terraform scripts to set up your deployment plan.
 - Define resource template in the API - follow [this readme](https://microsoft.github.io/AzureTRE/tre-admins/registering-templates/) to register your template.
 - Use the [AzureTRE UI](https://microsoft.github.io/AzureTRE/tre-developers/ui/) to deploy your resources
 - Add your custom templates to CI/CD workflows - in Deploy Azure TRE Reusable workflow make sure to add your bundles under register_bundles and publish_bundles steps.
 
 ## Publish and Register Custom templates in the CI/CD
 
-See the [pipelines documentation](../../tre-admins/setup-instructions/deploying-azure-tre-cicd.md) to learn more about publishing and registering your custom templates as part of the CI/CD/
+See the [pipelines documentation](../../tre-admins/setup-instructions/cicd-deplyment.md) to learn more about publishing and registering your custom templates as part of the CI/CD/
 
 ## How to Contribute to our Documentation
 
-If you have any comments or suggestions about our documentation then you can visit our GitHub project and either raise a new issue, or comment on one of the existing ones.
+If you have any comments or suggestions about our documentation then you can visit our GitHub project and either raise a new issue or comment on one of the existing ones.
 
 You can find our existing documentation issues on GitHub by clicking on the link below:
 

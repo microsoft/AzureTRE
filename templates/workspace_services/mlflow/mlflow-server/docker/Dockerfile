@@ -1,7 +1,7 @@
-FROM python:3.8-buster
+FROM python:3.8-bullseye
 
 # Install MLflow Python Packages
-RUN pip install --no-cache-dir psycopg2==2.9.3 mlflow==1.24.0 azure-storage-blob==12.10.0
+RUN pip install --no-cache-dir psycopg2==2.9.5 mlflow==2.0.1 azure-storage-blob==12.14.1
 
 RUN apt-get update \
   && apt-get install openssh-server -y --no-install-recommends \

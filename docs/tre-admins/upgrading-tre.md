@@ -4,7 +4,7 @@ This document will cover how AzureTRE is referenced and how to upgrade its versi
 
 ## Introduction
 
-AzureTRE referenced as an external folder in [AzureTRE deployment repository](https://github.com/microsoft/AzureTRE-Deployment) (which is used as a template for your project in the quickstart guide). A specific version of AzureTRE is downloaded as part of devcontainer setup.
+AzureTRE referenced as an external folder in [AzureTRE deployment repository](https://github.com/microsoft/AzureTRE-Deployment) (which is used as a template for your project in the quick start guide). A specific version of AzureTRE is downloaded as part of devcontainer setup.
  A symlink is then created making it available to reference in the directory itself (it is available only for reference, any changes to it are gitignored)
 
 ## How to upgrade AzureTRE version

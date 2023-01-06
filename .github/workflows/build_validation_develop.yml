@@ -3,7 +3,9 @@ name: Build Validation
 
 on:  # yamllint disable-line rule:truthy
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - 'feature/**'
 
 # for each ref (branch/pr) run just the most recent,
 # cancel other pending/running ones
@@ -32,9 +34,9 @@ jobs:
               # our Terraform uses more than just *.tf files, so need to check changes in the folder
               - '**/terraform/**/*'
             core:
-              - 'templates/core/**/*'
+              - 'core/**/*'
             core_version:
-              - 'templates/core/version.txt'
+              - 'core/version.txt'
             docs:
               - 'docs/**/*'
 

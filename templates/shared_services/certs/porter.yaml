@@ -1,6 +1,7 @@
 ---
+schemaVersion: 1.0.0
 name: tre-shared-service-certs
-version: 0.2.0
+version: 0.3.1
 description: "An Azure TRE shared service to generate certificates for a specified internal domain using Letsencrypt"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -39,30 +40,34 @@ parameters:
   - name: cert_name
     type: string
     description: "What to call the certificate exported to KeyVault (alphanumeric and '-' only)"
+  - name: id
+    type: string
+    description: "Resource ID"
 
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.2.6
-  - az
+      clientVersion: 1.3.6
+  - az:
+      clientVersion: 2.37.0
 
 install:
   - terraform:
       description: "Deploy shared service"
-      input: false
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
-        domain_prefix: "{{ bundle.parameters.domain_prefix }}"
-        cert_name: "{{ bundle.parameters.cert_name }}"
+        tre_id: ${ bundle.parameters.tre_id }
+        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
+        arm_client_id: ${ bundle.credentials.azure_client_id }
+        arm_client_secret: ${ bundle.credentials.azure_client_secret }
+        arm_use_msi: ${ bundle.parameters.arm_use_msi }
+        domain_prefix: ${ bundle.parameters.domain_prefix }
+        cert_name: ${ bundle.parameters.cert_name }
+        tre_resource_id: ${ bundle.parameters.id }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-certs"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-service-certs
       outputs:
         - name: fqdn
         - name: application_gateway_name
@@ -75,19 +80,19 @@ install:
         - login
       flags:
         identity:
-        username: "{{ bundle.credentials.azure_client_id }}"
+        username: ${ bundle.credentials.azure_client_id }
   - exec:
       description: "Generate certificate"
       command: bash
       arguments:
         - ./scripts/letsencrypt.sh
       flags:
-        fqdn: "{{ bundle.outputs.fqdn }}"
-        application_gateway_name: "{{ bundle.outputs.application_gateway_name }}"
-        storage_account_name: "{{ bundle.outputs.storage_account_name }}"
-        resource_group_name: "{{ bundle.outputs.resource_group_name }}"
-        keyvault_name: "{{ bundle.outputs.keyvault_name }}"
-        cert_name: "{{ bundle.parameters.cert_name }}"
+        fqdn: ${ bundle.outputs.fqdn }
+        application_gateway_name: ${ bundle.outputs.application_gateway_name }
+        storage_account_name: ${ bundle.outputs.storage_account_name }
+        resource_group_name: ${ bundle.outputs.resource_group_name }
+        keyvault_name: ${ bundle.outputs.keyvault_name }
+        cert_name: ${ bundle.parameters.cert_name }
 
 upgrade:
   - exec:
@@ -99,31 +104,33 @@ upgrade:
 uninstall:
   - terraform:
       description: "Tear down shared service"
-      input: false
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
-        domain_prefix: "{{ bundle.parameters.domain_prefix }}"
-        cert_name: "{{ bundle.parameters.cert_name }}"
+        tre_id: ${ bundle.parameters.tre_id }
+        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
+        arm_client_id: ${ bundle.credentials.azure_client_id }
+        arm_client_secret: ${ bundle.credentials.azure_client_secret }
+        arm_use_msi: ${ bundle.parameters.arm_use_msi }
+        domain_prefix: ${ bundle.parameters.domain_prefix }
+        cert_name: ${ bundle.parameters.cert_name }
+        tre_resource_id: ${ bundle.parameters.id }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-certs"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-service-certs
 
 renew:
   - terraform:
       arguments:
         - "output"
       description: "Get Terraform output variables"
+      vars:
+        tre_resource_id: ${ bundle.parameters.id }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-certs"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-service-certs
       outputs:
         - name: fqdn
         - name: application_gateway_name
@@ -136,16 +143,16 @@ renew:
         - login
       flags:
         identity:
-        username: "{{ bundle.credentials.azure_client_id }}"
+        username: ${ bundle.credentials.azure_client_id }
   - exec:
       description: "Renew certificate"
       command: bash
       arguments:
         - ./scripts/letsencrypt.sh
       flags:
-        fqdn: "{{ bundle.outputs.fqdn }}"
-        application_gateway_name: "{{ bundle.outputs.application_gateway_name }}"
-        storage_account_name: "{{ bundle.outputs.storage_account_name }}"
-        resource_group_name: "{{ bundle.outputs.resource_group_name }}"
-        keyvault_name: "{{ bundle.outputs.keyvault_name }}"
-        cert_name: "{{ bundle.parameters.cert_name }}"
+        fqdn: ${ bundle.outputs.fqdn }
+        application_gateway_name: ${ bundle.outputs.application_gateway_name }
+        storage_account_name: ${ bundle.outputs.storage_account_name }
+        resource_group_name: ${ bundle.outputs.resource_group_name }
+        keyvault_name: ${ bundle.outputs.keyvault_name }
+        cert_name: ${ bundle.parameters.cert_name }

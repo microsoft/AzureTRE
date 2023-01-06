@@ -1,6 +1,6 @@
 from fastapi import HTTPException
-from starlette.requests import Request
-from starlette.responses import PlainTextResponse
+from fastapi import Request
+from fastapi.responses import PlainTextResponse
 
 
 def http_error_handler(_: Request, exc: HTTPException) -> PlainTextResponse:

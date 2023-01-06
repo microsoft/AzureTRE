@@ -1,8 +1,8 @@
-# Authoring workspaces templates
+# Authoring templates
 
-Azure TRE workspaces, workspace services, and user resources are [Porter](https://porter.sh/) bundles. Porter bundles are based on [Cloud Native Application Bundles (CNAB)](https://cnab.io/).
+Azure TRE workspaces, workspace services, shared services, and user resources are [Porter](https://porter.sh/) bundles. Porter bundles are based on [Cloud Native Application Bundles (CNAB)](https://cnab.io/).
 
-Workspace authors are free to choose the technology stack for provisioning resources (e.g., ARM templates, Terraform etc.), but the Azure TRE framework sets certain requirements for the bundle manifests, which specify the credentials, input and output parameters, deployment actions among other things.
+Authors are free to choose the technology stack for provisioning resources (e.g., ARM templates, Terraform etc.), but the Azure TRE framework sets certain requirements for the bundle manifests, which specify the credentials, input and output parameters, deployment actions among other things.
 
 This document describes the requirements, and the process to author a template.
 
@@ -99,6 +99,14 @@ The mandatory parameters for workspace services are:
 | `tre_id` | string | Unique ID of for the TRE instance. | `tre-dev-42` |
 | `workspace_id` | string | Unique 4-character long, alphanumeric workspace ID. | `0a9e` |
 
+### Workpace services requiring additional address sapces
+
+Some workspace services may require additional address spaces to be provisioned. This may be as they need advanced network security groups, route tables or delegated subnets.
+
+To request an additional address space, the workspace service bundle must define an `address_space` parameter in the `porter.yaml` file. The value of this parameter will be provided by API to the resource processor.
+
+The size of the `address_space` will default to `/24`, however other sizes can be requested by including an `address_space_size` as part of the workspace service template.
+
 ## User resource bundle manifests
 
 User Resource bundles are generated in the same way as workspace bundles and workspace services bundles.
@@ -120,7 +128,16 @@ Templates authors need to make sure that underling Azure resources are tagged wi
 
 Workspace versions are the bundle versions specified in [the metadata](https://porter.sh/author-bundles/#bundle-metadata). The bundle versions should match the image tags in the container registry (see [Publishing workspace bundle](#publishing-workspace-bundle)).
 
-TRE does not provide means to update an existing workspace to a newer version. Instead, the user has to first uninstall the old version and then install the new one. The CNAB **upgrade** or a Porter custom ("`update`") action may be used in the future version of TRE to do this automatically.
+Bundle versions should follow [Semantic Versioning](https://semver.org/), given a version number **MAJOR.MINOR.PATCH**, increment the:
+
+1. **MAJOR** version when you make a breaking change, potential data loss, changes that don't easily/automatically upgrade, or significant changes which require someone to review what has changed and take some appropriate action, or functionality of the component has significantly changed and users might need training.
+
+2. **MINOR** version when you add minor functionality which can be automatically upgraded.
+
+3. **PATCH** version when you make backward-compatible bug or typo fixes.
+
+
+For resource version upgrades see [Upgrading Resources Version](../tre-admins/upgrading-resources.md).
 
 ## Publishing workspace bundle
 
@@ -137,5 +154,6 @@ See [Registering workspace templates](../tre-admins/registering-templates.md).
 
   ```cmd
   make bundle-build DIR=./templates/<scope>/<bundle_name>
-  make bundle-install DIR=./templates/<scope>/<bundle_name>
+  make bundle-publish DIR=./templates/<scope>/<bundle_name> 
+  make bundle-register DIR=./templates/<scope>/<bundle_name> BUNDLE_TYPE=<scope>
   ```

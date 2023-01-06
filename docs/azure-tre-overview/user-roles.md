@@ -102,7 +102,7 @@ Example tasks:
 
 - Approve Airlock import requests
 - Approve Airlock export requests
-- Review the data being improted to and exported from a TRE Workspace
+- Review the data being imported to and exported from a TRE Workspace
 
 ## TRE service integrator
 

@@ -51,5 +51,5 @@ The following Redirect URIs will be added to the application
 ## Environment Variables
 | Variable | Description | Location |
 | -------- | ----------- | -------- |
-|SWAGGER_UI_CLIENT_ID|The Client Id|`./devops/auth.env`|
+|SWAGGER_UI_CLIENT_ID|The Client Id|`./config.yaml`|
 

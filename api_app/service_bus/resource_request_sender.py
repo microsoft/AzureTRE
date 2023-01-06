@@ -1,6 +1,5 @@
 import json
 
-
 from db.repositories.resources import ResourceRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from service_bus.helpers import send_deployment_message, update_resource_for_step
@@ -25,7 +24,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
     """
 
     # add the operation to the db - this will create all the steps needed (if any are defined in the template)
-    operation = operations_repo.create_operation_item(
+    operation = await operations_repo.create_operation_item(
         resource_id=resource.id,
         action=action,
         resource_path=resource.resourcePath,
@@ -36,7 +35,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
 
     # prep the first step to send in SB
     first_step = operation.steps[0]
-    resource_to_send = update_resource_for_step(
+    resource_to_send = await update_resource_for_step(
         operation_step=first_step,
         resource_repo=resource_repo,
         resource_template_repo=resource_template_repo,

@@ -7,7 +7,7 @@ It is common that the Azure Administrator is not necessarily the Azure Active Di
 This page describes the automated Auth setup for TRE.
 
 ## Pre-requisites
-The automation utilises a `make` command, which reads a few environment variables and creates the AAD assets. The following values are needed to be in place before you run the creation process. (`/templates/core/.env`)
+The automation utilises a `make` command, which reads a few environment variables and creates the AAD assets. The following values are needed to be in place before you run the creation process. (`/config.yaml`)
 
 | Key | Description |
 | ----------- | ----------- |
@@ -22,9 +22,9 @@ You can build all of the Identity assets by running the following at the command
 ```bash
 make auth
 ```
-This will create five identities, and if successful will write a new file; `/devops/auth.env`. If you are building locally, these values will be used when building your TRE. If you are setting this up for CI/CD, then these values will be needed by your Build Orchestrator.
+This will create five identities, and if successful will write the outputs to athentication section in `config.yaml` file. If you are building locally, these values will be used when building your TRE. If you are setting this up for CI/CD, then these values will be needed by your Build Orchestrator.
 
-The contents of your `/devops/auth.env` file should contain : -
+The contents of your authentication section in `config.yaml` file should contain :
 
   | Variable | Description |
   | -------- | ----------- |

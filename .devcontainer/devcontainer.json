@@ -21,7 +21,9 @@
     // Mounts the login details from the host machine to azcli works in the container
     "type=bind,source=${env:HOME}${env:USERPROFILE}/.azure,target=/home/vscode/.azure",
     // Mount docker socket for docker builds
-    "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
+    "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock",
+    // Mounts the github cli login details from the host machine to the container (~/.config/gh/hosts.yml)
+    "type=bind,source=${env:HOME}${env:USERPROFILE}/.config,target=/home/vscode/.config",
   ],
   "remoteUser": "vscode",
   "containerEnv": {
@@ -172,7 +174,7 @@
           "console": "integratedTerminal",
           "preLaunchTask": "Install_resource_processor_dependencies",
           "cwd": "${workspaceFolder}/resource_processor",
-          "envFile": "${workspaceFolder}/templates/core/private.env",
+          "envFile": "${workspaceFolder}/core/private.env",
           "env": {
             "PYTHONPATH": "."
           }
@@ -209,12 +211,12 @@
       "tasks": [
         {
           "label": "Copy_env_file_for_api_debug",
-          "command": "cat ${workspaceFolder}/templates/core/.env ${workspaceFolder}/devops/auth.env ${workspaceFolder}/templates/core/private.env > ${workspaceFolder}/api_app/.env",
+          "command": "./.devcontainer/scripts/consolidate_env.sh ${workspaceFolder} ${workspaceFolder}/api_app/.env",
           "type": "shell"
         },
         {
           "label": "Copy_env_file_for_e2e_debug",
-          "command": "cat ${workspaceFolder}/templates/core/.env ${workspaceFolder}/devops/auth.env ${workspaceFolder}/templates/core/private.env > ${workspaceFolder}/e2e_tests/.env",
+          "command": "./.devcontainer/scripts/consolidate_env.sh ${workspaceFolder} ${workspaceFolder}/e2e_tests/.env",
           "type": "shell"
         },
         {
@@ -266,6 +268,6 @@
   "forwardPorts": [
     8000
   ],
-  // Give permission to access docker socket
+  // Run commands after the container is created.
   "postCreateCommand": "./.devcontainer/scripts/post-create.sh"
 }

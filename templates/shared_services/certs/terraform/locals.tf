@@ -18,4 +18,9 @@ locals {
   redirect_request_routing_rule_name = "rqrt-certs-redirect"
   request_routing_rule_name          = "rqrt-certs-application"
   redirect_configuration_name        = "rdrcfg-certs-tosecure"
+
+  tre_shared_service_tags = {
+    tre_id                = var.tre_id
+    tre_shared_service_id = var.tre_resource_id
+  }
 }

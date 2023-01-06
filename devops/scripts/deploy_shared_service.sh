@@ -51,6 +51,7 @@ fi
 deployed_shared_service=$(echo "${get_shared_services_result}" \
   | jq -r ".sharedServices[] | select(.templateName == \"${template_name}\" and (.deploymentStatus != \"deleted\" or .deploymentStatus != \"deployment_failed\"))")
 
+is_update=0
 if [[ -n "${deployed_shared_service}" ]]; then
   # Get template version of the service already deployed
   deployed_version=$(echo "${deployed_shared_service}" | jq -r ".templateVersion")
@@ -59,22 +60,23 @@ if [[ -n "${deployed_shared_service}" ]]; then
     echo "Shared service ${template_name} of version ${template_version} has already been deployed"
     exit 0
   else
-    echo "Resource upgrade isn't currently implemented. See https://github.com/microsoft/AzureTRE/issues/141"
-    exit 0
+    is_update=1
   fi
 fi
 
-# Add additional properties to the payload JSON string
-additional_props=""
-for index in "${!property_names[@]}"; do
-  name=${property_names[$index]}
-  value=${property_values[$index]}
-  additional_props="$additional_props, \"$name\": \"$value\""
-done
+if [[ "${is_update}" -eq 0 ]]; then
 
-echo "Not currently deployed - deploying..."
-display_name="${template_name#tre-shared-service-}"
-if ! deploy_result=$(cat << EOF | tre shared-services new --definition-file -
+  # Add additional properties to the payload JSON string
+  additional_props=""
+  for index in "${!property_names[@]}"; do
+    name=${property_names[$index]}
+    value=${property_values[$index]}
+    additional_props="$additional_props, \"$name\": \"$value\""
+  done
+
+  echo "Not currently deployed - deploying..."
+  display_name="${template_name#tre-shared-service-}"
+  if ! deploy_result=$(cat << EOF | tre shared-services new --definition-file -
 {
     "templateName": "${template_name}",
     "properties": {
@@ -84,9 +86,19 @@ if ! deploy_result=$(cat << EOF | tre shared-services new --definition-file -
     }
 }
 EOF
-); then
-  echo "Failed to deploy shared service:"
-  echo "${deploy_result}"
-  exit 1
+  ); then
+    echo "Failed to deploy shared service:"
+    echo "${deploy_result}"
+    exit 1
+  fi
+
+else
+
+  echo "An older version is already deloyed. Trying to update..."
+  deployed_id=$(echo "${deployed_shared_service}" | jq -r ".id")
+  deployed_etag=$(echo "${deployed_shared_service}" | jq -r "._etag")
+  tre shared-service "${deployed_id}" update --etag "${deployed_etag}" --definition "{\"templateVersion\": \"${template_version}\"}"
+
 fi
+
 echo "Deployed shared service ""${template_name}"""

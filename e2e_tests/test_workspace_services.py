@@ -2,34 +2,16 @@ import pytest
 
 import config
 from helpers import check_aad_auth_redirect
-from resources.workspace import get_workspace_auth_details
 from resources.resource import disable_and_delete_resource, post_resource
 from resources import strings
-from helpers import get_admin_token
 
 pytestmark = pytest.mark.asyncio
 
 
 @pytest.mark.extended
 @pytest.mark.timeout(75 * 60)
-async def test_create_guacamole_service_into_base_workspace(verify) -> None:
-
-    payload = {
-        "templateName": strings.BASE_WORKSPACE,
-        "properties": {
-            "display_name": "E2E test guacamole service",
-            "description": "workspace for E2E",
-            "address_space_size": "small",
-            "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
-            "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}",
-        }
-    }
-    if config.TEST_WORKSPACE_APP_PLAN != "":
-        payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
-
-    admin_token = await get_admin_token(verify)
-    workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, access_token=admin_token, verify=verify)
-    workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
+async def test_create_guacamole_service_into_base_workspace(verify, setup_test_workspace) -> None:
+    workspace_path, workspace_id, workspace_owner_token = setup_test_workspace
 
     service_payload = {
         "templateName": strings.GUACAMOLE_SERVICE,
@@ -62,38 +44,20 @@ async def test_create_guacamole_service_into_base_workspace(verify) -> None:
         }
     }
 
-    user_resource_path, user_resource_id = await post_resource(user_resource_payload, f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}', workspace_owner_token, verify, method="POST")
+    user_resource_path, _ = await post_resource(user_resource_payload, f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}', workspace_owner_token, verify, method="POST")
 
     await disable_and_delete_resource(f'/api{user_resource_path}', workspace_owner_token, verify)
 
     await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
 
-    admin_token = await get_admin_token(verify)
-    await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
-
 
 @pytest.mark.extended_aad
 @pytest.mark.timeout(75 * 60)
-async def test_create_guacamole_service_into_aad_workspace(verify) -> None:
+async def test_create_guacamole_service_into_aad_workspace(verify, setup_test_aad_workspace) -> None:
     """This test will create a Guacamole service but will create a workspace and automatically register the AAD Application"""
+    workspace_path, workspace_id, workspace_owner_token = setup_test_aad_workspace
 
-    payload = {
-        "templateName": strings.BASE_WORKSPACE,
-        "properties": {
-            "display_name": "E2E test guacamole service",
-            "description": "workspace for E2E AAD",
-            "address_space_size": "small",
-            "client_id": "auto_create"
-        }
-    }
-    if config.TEST_WORKSPACE_APP_PLAN != "":
-        payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
-
-    admin_token = await get_admin_token(verify)
-    workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, access_token=admin_token, verify=verify)
-    workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
-
-    service_payload = {
+    workspace_service_payload = {
         "templateName": strings.GUACAMOLE_SERVICE,
         "properties": {
             "display_name": "Workspace service test",
@@ -101,37 +65,11 @@ async def test_create_guacamole_service_into_aad_workspace(verify) -> None:
         }
     }
 
-    workspace_service_path, workspace_service_id = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
+    workspace_service_path, workspace_service_id = await post_resource(workspace_service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
 
     await ping_guacamole_workspace_service(workspace_id, workspace_service_id, verify)
 
-    # patch the guac service. we'll just update the display_name but this will still force a full deployment run
-    # and essentially terraform no-op
-    patch_payload = {
-        "properties": {
-            "display_name": "Updated Guac Name",
-        }
-    }
-
-    await post_resource(patch_payload, f'/api{workspace_service_path}', workspace_owner_token, verify, method="PATCH")
-
-    user_resource_payload = {
-        "templateName": strings.GUACAMOLE_LINUX_USER_RESOURCE,
-        "properties": {
-            "display_name": "Linux VM",
-            "description": "Extended Tests for Linux",
-            "os_image": "Ubuntu 18.04"
-        }
-    }
-
-    user_resource_path, user_resource_id = await post_resource(user_resource_payload, f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}', workspace_owner_token, verify, method="POST")
-
-    await disable_and_delete_resource(f'/api{user_resource_path}', workspace_owner_token, verify)
-
     await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
-
-    admin_token = await get_admin_token(verify)
-    await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
 
 
 async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, verify) -> None:

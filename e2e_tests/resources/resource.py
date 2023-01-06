@@ -11,7 +11,20 @@ LOGGER = logging.getLogger(__name__)
 TIMEOUT = Timeout(10, read=30)
 
 
-async def post_resource(payload, endpoint, access_token, verify, method="POST", wait=True, etag="*"):
+async def get_resource(endpoint, access_token, verify):
+    async with AsyncClient(verify=verify, timeout=30.0) as client:
+        full_endpoint = get_full_endpoint(endpoint)
+        auth_headers = get_auth_header(access_token)
+
+        response = await client.get(full_endpoint, headers=auth_headers, timeout=TIMEOUT)
+
+        LOGGER.info(f'RESPONSE Status code: {response.status_code}')
+        assert (response.status_code == status.HTTP_200_OK), f"Get for endpoint {full_endpoint} failed"
+
+        return response.json()
+
+
+async def post_resource(payload, endpoint, access_token, verify, method="POST", wait=True, etag="*", access_token_for_wait=None):
     async with AsyncClient(verify=verify, timeout=30.0) as client:
 
         full_endpoint = get_full_endpoint(endpoint)
@@ -25,15 +38,16 @@ async def post_resource(payload, endpoint, access_token, verify, method="POST", 
             check_method = patch_done
             response = await client.patch(full_endpoint, headers=auth_headers, json=payload, timeout=TIMEOUT)
 
-        LOGGER.info(f'RESPONSE Status code: {response.status_code} Content: {response.content}')
-        assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request for resource {payload['templateName']} creation failed"
+        LOGGER.info(f'RESPONSE Status code: {response.status_code}')
+        assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request failed with response {response.status_code} and content {response.content}"
 
         resource_path = response.json()["operation"]["resourcePath"]
         resource_id = response.json()["operation"]["resourceId"]
         operation_endpoint = response.headers["Location"]
 
         if wait:
-            await wait_for(check_method, client, operation_endpoint, auth_headers, [strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, strings.RESOURCE_STATUS_UPDATING_FAILED])
+            wait_auth_headers = get_auth_header(access_token_for_wait) if access_token_for_wait else auth_headers
+            await wait_for(check_method, client, operation_endpoint, wait_auth_headers, [strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, strings.RESOURCE_STATUS_UPDATING_FAILED])
 
         return resource_path, resource_id
 
@@ -48,14 +62,14 @@ async def disable_and_delete_resource(endpoint, access_token, verify):
         # disable
         payload = {"isEnabled": False}
         response = await client.patch(full_endpoint, headers=auth_headers, json=payload, timeout=TIMEOUT)
-        LOGGER.info(f'RESPONSE Status code: {response.status_code} Content: {response.content}')
+        LOGGER.info(f'RESPONSE Status code: {response.status_code}')
         assert (response.status_code == status.HTTP_202_ACCEPTED), "Disable resource failed"
         operation_endpoint = response.headers["Location"]
         await wait_for(patch_done, client, operation_endpoint, auth_headers, [strings.RESOURCE_STATUS_UPDATING_FAILED])
 
         # delete
         response = await client.delete(full_endpoint, headers=auth_headers, timeout=TIMEOUT)
-        LOGGER.info(f'RESPONSE Status code: {response.status_code} Content: {response.content}')
+        LOGGER.info(f'RESPONSE Status code: {response.status_code}')
         assert (response.status_code == status.HTTP_200_OK), "The resource couldn't be deleted"
 
         resource_id = response.json()["operation"]["resourceId"]

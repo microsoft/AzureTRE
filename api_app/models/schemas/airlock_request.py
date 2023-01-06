@@ -48,7 +48,7 @@ class AirlockRequestInResponse(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "airlock_request": get_sample_airlock_request("933ad738-7265-4b5f-9eae-a1a62928772e", "121e921f-a4aa-44b3-90a9-e8da030495ef")
+                "airlockRequest": get_sample_airlock_request("933ad738-7265-4b5f-9eae-a1a62928772e", "121e921f-a4aa-44b3-90a9-e8da030495ef")
             }
         }
 

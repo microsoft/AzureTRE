@@ -7,7 +7,7 @@ import { HttpMethod, useAuthApiCall } from "./useAuthApiCall";
 import { useAppSelector } from './customReduxHooks';
 
 export const useComponentManager = (
-  resource: Resource,
+  resource: Resource | undefined,
   onUpdate: (r: Resource) => void,
   onRemove: (r: Resource) => void,
   workspaceScopeId = ""
@@ -22,34 +22,36 @@ export const useComponentManager = (
 
   useEffect(() => {
     const checkOps = async () => {
-      let resourceOps = operations.items.filter((o: Operation) => o.resourceId === resource.id);
-      if (resourceOps && resourceOps.length > 0) {
-        let latestOp = resourceOps[resourceOps.length - 1];
+      if (resource) {
+        let resourceOps = operations.items.filter((o: Operation) => o.resourceId === resource.id);
+        if (resourceOps && resourceOps.length > 0) {
+          let latestOp = resourceOps[resourceOps.length - 1];
 
-        // only act when a status has changed
-        if (latestOp.status === latestUpdate.operation.status) return;
+          // only act when a status has changed
+          if (latestOp.status === latestUpdate.operation.status) return;
 
-        if (inProgressStates.includes(latestOp.status)) {
-          setLatestUpdate({componentAction:ComponentAction.Lock, operation: latestOp});
-        } else if (completedStates.includes(latestOp.status)) {
-          if (latestOp.status === "deleted") {
-            onRemove(resource);
-          } else {
-            setLatestUpdate({componentAction:ComponentAction.Reload, operation: latestOp});
+          if (inProgressStates.includes(latestOp.status)) {
+            setLatestUpdate({componentAction:ComponentAction.Lock, operation: latestOp});
+          } else if (completedStates.includes(latestOp.status)) {
+            if (latestOp.status === "deleted") {
+              onRemove(resource);
+            } else {
+              setLatestUpdate({componentAction:ComponentAction.Reload, operation: latestOp});
 
-            // if it's transitioned from an in-progress to a completed state, we need to reload it
-            if (inProgressStates.includes(latestUpdate.operation.status)) {
-              let scopeId;
-              if (resource.resourceType !== ResourceType.Workspace) {
-                // If a workspaceScopeId has been passed, use that, otherwise fall back to workspace context
-                scopeId = workspaceScopeId ? workspaceScopeId : workspaceCtx.workspaceApplicationIdURI;
+              // if it's transitioned from an in-progress to a completed state, we need to reload it
+              if (inProgressStates.includes(latestUpdate.operation.status)) {
+                let scopeId;
+                if (resource.resourceType !== ResourceType.Workspace) {
+                  // If a workspaceScopeId has been passed, use that, otherwise fall back to workspace context
+                  scopeId = workspaceScopeId ? workspaceScopeId : workspaceCtx.workspaceApplicationIdURI;
+                }
+                let result = await apiCall(resource.resourcePath, HttpMethod.Get, scopeId);
+                onUpdate(getResourceFromResult(result));
               }
-              let result = await apiCall(resource.resourcePath, HttpMethod.Get, scopeId);
-              onUpdate(getResourceFromResult(result));
             }
+          } else {
+            setLatestUpdate({componentAction:ComponentAction.None, operation: latestOp});
           }
-        } else {
-          setLatestUpdate({componentAction:ComponentAction.None, operation: latestOp});
         }
       }
     }

@@ -1,8 +1,8 @@
 {
-  "schemaVersion": "1.0.0-DRAFT+TODO",
-  "name": "base",
-  "created": "2021-06-04T13:37:29.5071039+03:00",
-  "modified": "2021-06-04T13:37:29.5071039+03:00",
+  "schemaType": "ParameterSet",
+  "schemaVersion": "1.0.1",
+  "namespace": "",
+  "name": "tre-workspace-service-gitea",
   "parameters": [
     {
       "name": "id",
@@ -32,24 +32,6 @@
       "name": "mgmt_resource_group_name",
       "source": {
         "env": "MGMT_RESOURCE_GROUP_NAME"
-      }
-    },
-    {
-      "name": "openid_client_id",
-      "source": {
-        "env": "OPENID_CLIENT_ID"
-      }
-    },
-    {
-      "name": "openid_client_secret",
-      "source": {
-        "env": "OPENID_CLIENT_SECRET"
-      }
-    },
-    {
-      "name": "openid_authority",
-      "source": {
-        "env": "OPENID_AUTHORITY"
       }
     },
     {

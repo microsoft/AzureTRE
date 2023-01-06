@@ -19,9 +19,9 @@ variable "location" {
   description = "Azure location (region) for deployment of core TRE services"
 }
 
-variable "address_space" {
+variable "address_spaces" {
   type        = string
-  description = "VNet address space for the workspace services"
+  description = "VNet address space (base 64)"
 }
 
 variable "deploy_app_service_plan" {
@@ -118,5 +118,9 @@ variable "workspace_owner_object_id" {
   default     = ""
   description = "The Object Id of the user that you wish to be the Workspace Owner. E.g. the TEST_AUTOMATION_ACCOUNT."
 }
-
-
+variable "arm_use_msi" {
+  type = bool
+}
+variable "arm_tenant_id" {}
+variable "arm_client_id" {}
+variable "arm_client_secret" {}

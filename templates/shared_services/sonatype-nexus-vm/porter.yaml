@@ -1,6 +1,7 @@
 ---
+schemaVersion: 1.0.0
 name: tre-shared-service-sonatype-nexus
-version: 2.2.2
+version: 2.3.0
 description: "A Sonatype Nexus shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -61,22 +62,22 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.2.6
-  - az
+      clientVersion: 1.3.6
+  - az:
+      clientVersion: 2.37.0
 
 install:
   - terraform:
       description: "Deploy shared service"
-      input: false
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        ssl_cert_name: "{{ bundle.parameters.ssl_cert_name }}"
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        ssl_cert_name: ${ bundle.parameters.ssl_cert_name }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus-vm"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-service-sonatype-nexus-vm
       outputs:
         - name: workspace_vm_allowed_fqdns_list
         - name: nexus_allowed_fqdns_list
@@ -85,16 +86,15 @@ install:
 upgrade:
   - terraform:
       description: "Upgrade shared service"
-      input: false
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        ssl_cert_name: "{{ bundle.parameters.ssl_cert_name }}"
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        ssl_cert_name: ${ bundle.parameters.ssl_cert_name }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus-vm"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-service-sonatype-nexus-vm
       outputs:
         - name: workspace_vm_allowed_fqdns_list
         - name: nexus_allowed_fqdns_list
@@ -102,13 +102,12 @@ upgrade:
 uninstall:
   - terraform:
       description: "Tear down shared service"
-      input: false
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        ssl_cert_name: "{{ bundle.parameters.ssl_cert_name }}"
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        ssl_cert_name: ${ bundle.parameters.ssl_cert_name }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus-vm"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-service-sonatype-nexus-vm

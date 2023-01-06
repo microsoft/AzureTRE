@@ -40,13 +40,13 @@ The explicitly allowed egress traffic is described here:
 
 ## Azure Monitor
 
-Azure Monitor resources are secured using [Azure Monitor Private Link Scope (AMPLS)](https://docs.microsoft.com/azure/azure-monitor/logs/private-link-security) keeping all traffic inside the Microsoft Azure backbone network. The Azure Monitor resources and their network configuration is defined in `/templates/core/terraform/azure-monitor` folder and the required private DNS zones in file `/templates/core/terraform/network/dns_zones.tf`.
+Azure Monitor resources are secured using [Azure Monitor Private Link Scope (AMPLS)](https://docs.microsoft.com/azure/azure-monitor/logs/private-link-security) keeping all traffic inside the Microsoft Azure backbone network. The Azure Monitor resources and their network configuration is defined in `/core/terraform/azure-monitor` folder and the required private DNS zones in file `/core/terraform/network/dns_zones.tf`.
 
 ## Network security groups
 
 ### TRE Core
 
-Network security groups (NSG), and their security rules for TRE core resources are defined in `/templates/core/terraform/network/network_security_groups.tf`.
+Network security groups (NSG), and their security rules for TRE core resources are defined in `/core/terraform/network/network_security_groups.tf`.
 
 | Network security group | Associated subnet(s) |
 | ---------------------- | -------------------- |

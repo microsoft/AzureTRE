@@ -24,3 +24,15 @@ class InvalidInput(Exception):
 
 class UserNotAuthorizedToUseTemplate(Exception):
     """Raised when user attempts to use a template they aren't authorized to use"""
+
+
+class MajorVersionUpdateDenied(Exception):
+    """Raised when user attempts to update a resource with a major version."""
+
+
+class TargetTemplateVersionDoesNotExist(Exception):
+    """Raised when user attempts to upgrade a resource to a version which was not registered."""
+
+
+class VersionDowngradeDenied(Exception):
+    """Raised when user attempts to downgrade a resource to a lower version."""

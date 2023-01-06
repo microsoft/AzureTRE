@@ -2,7 +2,7 @@ import pytest
 import logging
 
 from resources.resource import disable_and_delete_resource, post_resource
-from helpers import get_shared_service_id_by_name
+from helpers import get_shared_service_by_name
 from resources import strings
 from helpers import get_admin_token
 
@@ -71,7 +71,7 @@ async def test_patch_firewall(verify):
     }
 
     admin_token = await get_admin_token(verify)
-    shared_service_firewall = await get_shared_service_id_by_name(
+    shared_service_firewall = await get_shared_service_by_name(
         template_name, verify, admin_token
     )
     shared_service_path = f'/shared-services/{shared_service_firewall["id"]}'
@@ -97,7 +97,7 @@ shared_service_templates_to_create = [
 async def test_create_shared_service(template_name, verify) -> None:
     admin_token = await get_admin_token(verify)
     # Check that the shared service hasn't already been created
-    shared_service = await get_shared_service_id_by_name(
+    shared_service = await get_shared_service_by_name(
         template_name, verify, admin_token
     )
     if shared_service:

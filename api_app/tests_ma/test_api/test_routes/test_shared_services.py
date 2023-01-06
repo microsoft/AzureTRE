@@ -163,7 +163,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
 
         modified_shared_service = sample_shared_service()
         modified_shared_service.isEnabled = False
-        modified_shared_service.history = [ResourceHistoryItem(properties=copy.deepcopy(modified_shared_service.properties), isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
+        modified_shared_service.history = [ResourceHistoryItem(properties=copy.deepcopy(modified_shared_service.properties), isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user(), templateVersion=modified_shared_service.templateVersion)]
         modified_shared_service.resourceVersion = 1
         modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
         modified_shared_service.user = create_admin_user()
@@ -172,3 +172,93 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         update_item_mock.assert_called_once_with(modified_shared_service, etag)
 
         assert response.status_code == status.HTTP_202_ACCEPTED
+
+    # [PATCH] /shared-services/{shared_service_id}
+    @patch("api.routes.shared_services.SharedServiceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+    @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service(SHARED_SERVICE_ID))
+    @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_shared_service())
+    @patch("api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service())
+    @patch("api.routes.shared_services.send_resource_request_message", return_value=sample_resource_operation(resource_id=SHARED_SERVICE_ID, operation_id=OPERATION_ID))
+    async def test_patch_shared_service_with_upgrade_minor_version_patches_shared_service(self, _, update_item_mock, __, ___, ____, app, client):
+        etag = "some-etag-value"
+        shared_service_patch = {"templateVersion": "0.2.0"}
+
+        modified_shared_service = sample_shared_service()
+        modified_shared_service.isEnabled = True
+        modified_shared_service.history = [ResourceHistoryItem(properties=copy.deepcopy(modified_shared_service.properties), isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user(), templateVersion=modified_shared_service.templateVersion)]
+        modified_shared_service.resourceVersion = 1
+        modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
+        modified_shared_service.user = create_admin_user()
+        modified_shared_service.templateVersion = "0.2.0"
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": etag})
+        update_item_mock.assert_called_once_with(modified_shared_service, etag)
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+
+    # [PATCH] /shared-services/{shared_service_id}
+    @patch("api.routes.shared_services.SharedServiceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+    @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service(SHARED_SERVICE_ID))
+    @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_shared_service())
+    @patch("api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service())
+    @patch("api.routes.shared_services.send_resource_request_message", return_value=sample_resource_operation(resource_id=SHARED_SERVICE_ID, operation_id=OPERATION_ID))
+    async def test_patch_shared_service_with_upgrade_major_version_and_force_update_patches_shared_service(self, _, update_item_mock, __, ___, ____, app, client):
+        etag = "some-etag-value"
+        shared_service_patch = {"templateVersion": "2.0.0"}
+
+        modified_shared_service = sample_shared_service()
+        modified_shared_service.isEnabled = True
+        modified_shared_service.history = [ResourceHistoryItem(properties=copy.deepcopy(modified_shared_service.properties), isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user(), templateVersion=modified_shared_service.templateVersion)]
+        modified_shared_service.resourceVersion = 1
+        modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
+        modified_shared_service.user = create_admin_user()
+        modified_shared_service.templateVersion = "2.0.0"
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID) + "?force_version_update=True", json=shared_service_patch, headers={"etag": etag})
+        update_item_mock.assert_called_once_with(modified_shared_service, etag)
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+
+    # [PATCH] /shared-services/{shared_service_id}
+    @patch("api.routes.shared_services.SharedServiceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+    @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service(SHARED_SERVICE_ID))
+    @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch("api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service())
+    @patch("api.routes.shared_services.send_resource_request_message", return_value=sample_resource_operation(resource_id=SHARED_SERVICE_ID, operation_id=OPERATION_ID))
+    async def test_patch_shared_service_with_upgrade_major_version_returns_bad_request(self, _, update_item_mock, __, ___, ____, app, client):
+        etag = "some-etag-value"
+        shared_service_patch = {"templateVersion": "2.0.0"}
+
+        modified_shared_service = sample_shared_service()
+        modified_shared_service.isEnabled = True
+        modified_shared_service.history = [ResourceHistoryItem(properties=copy.deepcopy(modified_shared_service.properties), isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user(), templateVersion=modified_shared_service.templateVersion)]
+        modified_shared_service.resourceVersion = 1
+        modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
+        modified_shared_service.user = create_admin_user()
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": etag})
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.text == 'Attempt to upgrade from 0.1.0 to 2.0.0 denied. major version upgrade is not allowed.'
+
+    # [PATCH] /shared-services/{shared_service_id}
+    @patch("api.routes.shared_services.SharedServiceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+    @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service(SHARED_SERVICE_ID))
+    @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch("api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service())
+    @patch("api.routes.shared_services.send_resource_request_message", return_value=sample_resource_operation(resource_id=SHARED_SERVICE_ID, operation_id=OPERATION_ID))
+    async def test_patch_shared_service_with_downgrade_version_returns_bad_request(self, _, update_item_mock, __, ___, ____, app, client):
+        etag = "some-etag-value"
+        shared_service_patch = {"templateVersion": "0.0.1"}
+
+        modified_shared_service = sample_shared_service()
+        modified_shared_service.isEnabled = True
+        modified_shared_service.history = [ResourceHistoryItem(properties=copy.deepcopy(modified_shared_service.properties), isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user(), templateVersion=modified_shared_service.templateVersion)]
+        modified_shared_service.resourceVersion = 1
+        modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
+        modified_shared_service.user = create_admin_user()
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": etag})
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.text == 'Attempt to downgrade from 0.1.0 to 0.0.1 denied. version downgrade is not allowed.'

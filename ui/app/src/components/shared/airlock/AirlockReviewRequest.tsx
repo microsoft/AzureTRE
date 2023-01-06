@@ -16,7 +16,7 @@ import { useAppDispatch } from "../../../hooks/customReduxHooks";
 import { addUpdateOperation } from "../notifications/operationsSlice";
 import { StatusBadge } from "../StatusBadge";
 import vmImage from "../../../assets/virtual_machine.svg";
-import warningImage from "../../../assets/warning.svg";
+import { useAccount, useMsal } from "@azure/msal-react";
 
 interface AirlockReviewRequestProps {
   request: AirlockRequest | undefined,
@@ -31,15 +31,18 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
   const [reviewing, setReviewing] = useState(false);
   const [reviewError, setReviewError] = useState(false);
   const [reviewResourcesConfigured, setReviewResourcesConfigured] = useState(false);
-  const [reviewResourceStatus, setReviewResourceStatus] = useState<'notCreated' | 'creating' | 'created'>();
+  const [reviewResourceStatus, setReviewResourceStatus] = useState<'notCreated' | 'creating' | 'created' | 'failed'>();
   const [reviewResourceError, setReviewResourceError] = useState(false);
   const [apiError, setApiError] = useState({} as APIError);
   const [proceedToReview, setProceedToReview] = useState(false);
-  const [reviewResource, setReviewResource] = useState({} as UserResource);
+  const [reviewResource, setReviewResource] = useState<UserResource>();
   const [reviewWorkspaceScope, setReviewWorkspaceScope] = useState<string>();
+  const [otherReviewers, setOtherReviewers] = useState<Array<string>>();
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
   const dispatch = useAppDispatch();
+  const { accounts } = useMsal();
+  const account = useAccount(accounts[0] || {});
 
   useEffect(() => setRequest(props.request), [props.request]);
 
@@ -50,7 +53,6 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       && workspaceCtx.workspace?.properties.airlock_review_config
       && workspaceCtx.workspace?.properties.airlock_review_config[request.type]
     ) {
-      console.log('Setting review resources configured');
       setReviewResourcesConfigured(true);
     } else {
       setReviewResourcesConfigured(false);
@@ -59,13 +61,13 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
 
   // Get the review user resource if present in the airlock request
   useEffect(() => {
-    const getReviewUserResource = async () => {
+    const getReviewUserResource = async (userId: string) => {
       setReviewResourceError(false);
       try {
-        // TODO: support more than one resource
-        const reviewWorkspaceId = request?.reviewUserResources[0].workspaceId;
-        const reviewServiceId = request?.reviewUserResources[0].workspaceServiceId;
-        const reviewResourceId = request?.reviewUserResources[0].userResourceId;
+        // Find the user's resource
+        const reviewWorkspaceId = request?.reviewUserResources[userId].workspaceId;
+        const reviewServiceId = request?.reviewUserResources[userId].workspaceServiceId;
+        const reviewResourceId = request?.reviewUserResources[userId].userResourceId;
 
         // First fetch the scope for the review resource workspace if different to the airlock request workspace
         let scopeId;
@@ -92,10 +94,17 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         setReviewResourceError(true);
       }
     };
-    if (reviewResourcesConfigured && request?.reviewUserResources && request?.reviewUserResources.length > 0) {
-      getReviewUserResource();
+    if (reviewResourcesConfigured && account && request) {
+      const userId = account.localAccountId.split('.')[0];
+      if (userId in request.reviewUserResources) {
+        getReviewUserResource(userId);
+      } else {
+        setReviewResourceStatus('notCreated');
+      }
+      const otherReviewers = Object.keys(request.reviewUserResources).filter(id => id !== userId);
+      setOtherReviewers(otherReviewers);
     }
-  }, [apiCall, request, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI, reviewResourcesConfigured]);
+  }, [apiCall, request, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI, reviewResourcesConfigured, account]);
 
   // Get the latest updates to the review resource to track deployment
   const latestUpdate = useComponentManager(
@@ -107,20 +116,20 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
 
   // Set the review resource status
   useEffect(() => {
-    if (inProgressStates.includes(latestUpdate.operation?.status) || inProgressStates.includes(reviewResource.deploymentStatus)) {
-      setReviewResourceStatus('creating');
-    } else if (failedStates.includes(latestUpdate.operation?.status) || failedStates.includes(reviewResource.deploymentStatus)) {
-      setReviewResourceStatus('notCreated');
-      const err = new Error(latestUpdate.operation?.message) as any;
-      err.userMessage = 'An issue occurred while deploying the review resource.'
-      setApiError(new Error(latestUpdate.operation?.message));
-      setReviewResourceError(true);
-    } else if (successStates.includes(latestUpdate.operation?.status) || successStates.includes(reviewResource.deploymentStatus)) {
-      setReviewResourceStatus('created');
-    } else if (request && request.reviewUserResources?.length === 0) {
-      setReviewResourceStatus('notCreated');
+    if (reviewResource && latestUpdate) {
+      if (inProgressStates.includes(latestUpdate.operation?.status) || inProgressStates.includes(reviewResource.deploymentStatus)) {
+        setReviewResourceStatus('creating');
+      } else if (failedStates.includes(latestUpdate.operation?.status) || failedStates.includes(reviewResource.deploymentStatus)) {
+        setReviewResourceStatus('failed');
+        const err = new Error(latestUpdate.operation?.message) as any;
+        err.userMessage = 'An issue occurred while deploying the review resource.'
+        setApiError(new Error(latestUpdate.operation?.message));
+        setReviewResourceError(true);
+      } else if (successStates.includes(latestUpdate.operation?.status) || successStates.includes(reviewResource.deploymentStatus)) {
+        setReviewResourceStatus('created');
+      }
     }
-  }, [latestUpdate.operation, reviewResource.deploymentStatus, request])
+  }, [latestUpdate, reviewResource, request])
 
   // Create a review resource
   const createReviewResource = useCallback(async () => {
@@ -138,7 +147,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       err.userMessage = "Error creating review resource";
       setApiError(err);
       setReviewResourceError(true);
-      setReviewResourceStatus('notCreated');
+      setReviewResourceStatus('failed');
     }
   }, [apiCall, workspaceCtx.workspaceApplicationIdURI, request?.id, workspaceCtx.workspace.id, dispatch, props])
 
@@ -168,29 +177,30 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
     }
   }, [apiCall, request, workspaceCtx.workspaceApplicationIdURI, reviewExplanation, props]);
 
-  // Get connection properies for review userResource
-  let connectUri: string;
+  let statusBadge = <Shimmer></Shimmer>;
+  let action = <Spinner style={{marginRight:20}}></Spinner>;
+
+  // Get connection property for review userResource
+  let connectUri = '';
   if (reviewResource?.properties && reviewResource.properties.connection_uri) {
     connectUri = reviewResource.properties.connection_uri;
   }
 
-  // Determine whether or not to disable the connect button
-  const connectDisabled = () => {
-    return latestUpdate.componentAction === ComponentAction.Lock
+  // Determine whether or not to show connect button or re-deploy
+  let resourceNotConnectable = true;
+  if (reviewResource) {
+    resourceNotConnectable = latestUpdate.componentAction === ComponentAction.Lock
       || actionsDisabledStates.includes(reviewResource.deploymentStatus)
       || !reviewResource.isEnabled
       || (reviewResource.azureStatus?.powerState && reviewResource.azureStatus.powerState !== VMPowerStates.Running)
-      || !connectUri
+      || !connectUri;
   }
-
-  let statusBadge = <Shimmer></Shimmer>;
-  let action = <Spinner style={{marginRight:20}}></Spinner>;
 
   // Determine the relevant actions and status to show
   switch (reviewResourceStatus) {
     case 'creating':
       statusBadge = <StatusBadge
-        resourceId={reviewResource.id}
+        resource={reviewResource}
         status={latestUpdate.operation?.status}
       />;
       break;
@@ -198,14 +208,28 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       statusBadge = <small>Not created</small>;
       action = <PrimaryButton onClick={createReviewResource} text="Create" />;
       break;
+    case 'failed':
+      statusBadge = <StatusBadge
+        resource={reviewResource}
+        status={latestUpdate.operation?.status}
+      />;
+      action = <PrimaryButton onClick={createReviewResource} text="Retry" />;
+      break;
     case 'created':
       statusBadge = <PowerStateBadge state={reviewResource?.azureStatus.powerState} />;
-      action = <PrimaryButton
-        onClick={() => window.open(connectUri)}
-        text="View data"
-        disabled={connectDisabled()}
-        title={connectDisabled() ? 'Resource must be enabled, successfully deployed & powered on to connect' : 'Connect to resource'}
-      />;
+      if (resourceNotConnectable) {
+        action = <PrimaryButton
+          onClick={createReviewResource}
+          text="Re-deploy"
+          title="Re-deploy resource"
+        />;
+      } else {
+        action = <PrimaryButton
+          onClick={() => window.open(connectUri)}
+          text="View data"
+          title="Connect to resource"
+        />;
+      }
       break;
   }
 
@@ -215,8 +239,8 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       automatically downloaded onto it. Once you've viewed the data, click "Proceed to review" to make your decision.
     </p>
     {
-      reviewResourcesConfigured ? <> {
-        !reviewResourceError ? <Stack horizontal horizontalAlign="space-between" styles={reviewVMStyles}>
+      reviewResourcesConfigured ? <>
+        <Stack horizontal horizontalAlign="space-between" styles={reviewVMStyles}>
           <Stack.Item styles={reviewVMItemStyles}>
             <img src={vmImage} alt="Virtual machine" width="50" />
             <div style={{marginLeft:20}}>
@@ -227,8 +251,18 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
           <Stack.Item styles={reviewVMItemStyles}>
             { action }
           </Stack.Item>
-        </Stack> : <ExceptionLayout e={apiError} />
-      } </> : <>
+        </Stack>
+        {
+          otherReviewers && otherReviewers.length > 0 && <MessageBar messageBarType={MessageBarType.info}>
+            {
+              otherReviewers.length === 1
+                ? <><b>1</b> other person is reviewing this request.</>
+                : <><b>{otherReviewers.length}</b> other people are reviewing this request.</>
+            }
+          </MessageBar>
+        }
+        { reviewResourceError && <ExceptionLayout e={apiError} /> }
+      </> : <>
         <MessageBar messageBarType={MessageBarType.severeWarning}>
           It looks like review VMs aren't set up in your workspace. Please contact your Workspace Owner.
         </MessageBar>

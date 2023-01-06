@@ -8,6 +8,7 @@ import { Resource } from "../../../models/resource";
 import { ResourceType } from "../../../models/resourceType";
 import { APIError } from "../../../models/exceptions";
 import { ExceptionLayout } from "../ExceptionLayout";
+import { ResourceTemplate, sanitiseTemplateForRJSF } from "../../../models/resourceTemplate";
 
 interface ResourceFormProps {
   templateName: string,
@@ -30,20 +31,17 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
     const getFullTemplate = async () => {
       try {
         // Get the full resource template containing the required parameters
-        const templateResponse = await apiCall(props.updateResource ? `${props.templatePath}?is_update=true` : props.templatePath, HttpMethod.Get);
+        const templateResponse = (await apiCall(props.updateResource ? `${props.templatePath}?is_update=true&version=${props.updateResource.templateVersion}` : props.templatePath, HttpMethod.Get)) as ResourceTemplate;
 
         // if it's an update, populate the form with the props that are available in the template
         if (props.updateResource) {
-          let d: any = {};
-          for (let prop in templateResponse.properties) {
-            d[prop] = props.updateResource?.properties[prop];
-          }
-          setFormData(d);
+          setFormData(props.updateResource.properties);
         }
 
-        setTemplate(templateResponse);
+        const sanitisedTemplate = sanitiseTemplateForRJSF(templateResponse);
+        setTemplate(sanitisedTemplate);
         setLoading(LoadingState.Ok);
-      } catch (err: any){
+      } catch (err: any) {
         err.userMessage = "Error retrieving resource template";
         setApiError(err);
         setLoading(LoadingState.Error);
@@ -56,24 +54,63 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
     }
   }, [apiCall, props.templatePath, template, props.updateResource]);
 
+  const removeReadOnlyProps = (data: any, template: ResourceTemplate): any => {
+
+    // flatten all the nested properties from across the template into a basic array we can iterate easily
+    let allProps = {} as any;
+
+    const recurseTemplate = (templateFragment: any) => {
+      Object.keys(templateFragment).forEach((key) => {
+        if (key === "properties") {
+          Object.keys(templateFragment[key]).forEach((prop) => {
+            allProps[prop] = templateFragment[key][prop];
+          });
+        }
+        if (typeof (templateFragment[key]) === "object" && key !== "if") {
+          recurseTemplate(templateFragment[key]);
+        }
+      })
+    }
+
+    recurseTemplate(template);
+
+    // iterate the data payload
+    for (let prop in data) {
+      // if the prop isn't in the template, or it's readOnly, delete it
+      if (!allProps[prop] || allProps[prop].readOnly === true) {
+        delete data[prop];
+      }
+    }
+
+    return data;
+  }
+
   const createUpdateResource = async (formData: any) => {
+    const data = removeReadOnlyProps(formData, template);
+    console.log("parsed payload to send", data);
+
     setSendingData(true);
     let response;
-    try
-    {
+    try {
       if (props.updateResource) {
-        // only send the properties we're allowed to send
-        let d: any = {}
-        for (let prop in template.properties) {
-          if (!template.properties[prop].readOnly) d[prop] = formData[prop];
-        }
-        console.log("patching resource", d);
-        let wsAuth = props.updateResource.resourceType === ResourceType.WorkspaceService || props.updateResource.resourceType === ResourceType.UserResource;
-        response = await apiCall(props.updateResource.resourcePath, HttpMethod.Patch, wsAuth ? props.workspaceApplicationIdURI : undefined, { properties: d }, ResultType.JSON, undefined, undefined, props.updateResource._etag);
+        const wsAuth =
+          props.updateResource.resourceType === ResourceType.WorkspaceService
+          || props.updateResource.resourceType === ResourceType.UserResource;
+        response = await apiCall(
+          props.updateResource.resourcePath,
+          HttpMethod.Patch,
+          wsAuth ? props.workspaceApplicationIdURI : undefined,
+          { properties: data },
+          ResultType.JSON,
+          undefined, undefined, props.updateResource._etag);
       } else {
-        const resource = { templateName: props.templateName, properties: formData };
-        console.log(resource);
-        response = await apiCall(props.resourcePath, HttpMethod.Post, props.workspaceApplicationIdURI, resource, ResultType.JSON);
+        const resource = { templateName: props.templateName, properties: data };
+        response = await apiCall(
+          props.resourcePath,
+          HttpMethod.Post,
+          props.workspaceApplicationIdURI,
+          resource,
+          ResultType.JSON);
       }
 
       setSendingData(false);
@@ -93,7 +130,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
   }
 
   // if no specific order has been set, set a generic one with the primary fields at the top
-  if (!uiSchema["ui:order"] || uiSchema["ui:order"].length === 0){
+  if (!uiSchema["ui:order"] || uiSchema["ui:order"].length === 0) {
     uiSchema["ui:order"] = [
       "display_name",
       "description",
@@ -111,7 +148,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
             sendingData ?
               <Spinner label="Sending request" ariaLive="assertive" labelPosition="bottom" size={SpinnerSize.large} />
               :
-              <Form schema={template} formData={formData} uiSchema={uiSchema} onSubmit={(e: any) => createUpdateResource(e.formData)} />
+              <Form omitExtraData={true} schema={template} formData={formData} uiSchema={uiSchema} onSubmit={(e: any) => createUpdateResource(e.formData)} />
           }
         </div>
       )

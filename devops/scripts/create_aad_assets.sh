@@ -3,7 +3,7 @@ set -euo pipefail
 # Use this for debug only
 # set -o xtrace
 
-: "${AAD_TENANT_ID?'You have not set your AAD_TENANT_ID in ./templates/core/.env'}"
+: "${AAD_TENANT_ID?'You have not set your aad_tenant_id in ./config.yaml'}"
 
 # Get the directory that this script is in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -47,11 +47,8 @@ fi
 
 # Load the new values back in because
 # we need TEST_ACCOUNT_CLIENT_ID
-set -a
 # shellcheck disable=SC1091
-. ./templates/core/.env
-# shellcheck disable=SC1091
-. ./devops/auth.env
+. "$DIR/load_and_validate_env.sh"
 
 # Then register an App for the TRE Core.
 "$DIR/aad/create_api_application.sh" \
@@ -63,11 +60,8 @@ set -a
 if [ "${AUTO_WORKSPACE_APP_REGISTRATION:=false}" == false ]; then
   # Load the new values back in
   # This is because we want the SWAGGER_UI_CLIENT_ID
-  set -a
   # shellcheck disable=SC1091
-  . ./templates/core/.env
-  # shellcheck disable=SC1091
-  . ./devops/auth.env
+  . "$DIR/load_and_validate_env.sh"
 
   "$DIR/aad/create_workspace_application.sh" \
     --name "${TRE_ID} - workspace 1" \

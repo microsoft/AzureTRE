@@ -30,6 +30,34 @@ def get_cost_report_responses():
                     "example": "Not authenticated"
                 }
             }
+        },
+        429: {
+            "description": "Too Many Requests",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "error": {
+                            "code": "429",
+                            "message": "Too many requests to Azure cost management API. Please retry.",
+                            "retry-after": "30"
+                        }
+                    }
+                }
+            }
+        },
+        503: {
+            "description": "Service Unavailable",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "error": {
+                            "code": "503",
+                            "message": "Azure cost management API is temporarly unavaiable. Please retry.",
+                            "retry-after": "30"
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -60,6 +88,34 @@ def get_workspace_cost_report_responses():
             "content": {
                 "text/plain": {
                     "example": "Not authenticated"
+                }
+            }
+        },
+        429: {
+            "description": "Too Many Requests",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "error": {
+                            "code": "429",
+                            "message": "Too many requests to Azure cost management API. Please retry.",
+                            "retry-after": "30"
+                        }
+                    }
+                }
+            }
+        },
+        503: {
+            "description": "Service Unavailable",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "error": {
+                            "code": "503",
+                            "message": "Azure cost management API is temporarly unavaiable. Please retry.",
+                            "retry-after": "30"
+                        }
+                    }
                 }
             }
         }

@@ -53,15 +53,15 @@ Example on how to run the script:
 
 
 !!! caution
-    The script will create an app password (client secret) for the workspace and write to `/devops/auth.env`. These values are only shown once, if you lose them, the script will create new secrets if run again.
+    The script will create an app password (client secret) for the workspace and write to `/config.yaml` under the authentication section. These values are only shown once, if you lose them, the script will create new secrets if run again.
 
 If you do not wish to grant the Automation App permission to your workspace, just remove the `--automation-clientid` from the command.
 
 ## Environment Variables
 | Variable | Description | Location |
 | -------- | ----------- | -------- |
-|WORKSPACE_API_CLIENT_ID|The Client Id|`./devops/auth.env`|
-|WORKSPACE_API_CLIENT_SECRET|The client secret|`./devops/auth.env`|
+|WORKSPACE_API_CLIENT_ID|The Client Id|`./config.yaml`|
+|WORKSPACE_API_CLIENT_SECRET|The client secret|`./config.yaml`|
 
 ## Comments
 When the Workspace AAD app is registered by running `make auth`, the `Workspace Scope Id` is the same as the Client Id. When the Workspace AAD app is created by the base workspace, the `Workspace Scope Id` will be in this format `api://<TRE_ID>_ws_<WORKSPACE_SHORT_IDENTIFIER>`

@@ -54,4 +54,3 @@ export const getResourceFromResult = (r: any) => {
     if (r['workspace']) return r.workspace;
     if (r['sharedService']) return r.sharedService;
 }
-

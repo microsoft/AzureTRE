@@ -68,10 +68,11 @@ class ResourceTemplate(AzureTREModel):
     required: List[str] = Field(title="List of properties which must be provided")
     authorizedRoles: Optional[List[str]] = Field(default=[], title="If not empty, the user is required to have one of these roles to install the template")
     properties: Dict[str, Property] = Field(title="Template properties")
+    allOf: Optional[List[dict]] = Field(default=None, title="All Of", description="Used for conditionally showing and validating fields")
     actions: List[CustomAction] = Field(default=[], title="Template actions")
     customActions: List[CustomAction] = Field(default=[], title="Template custom actions")
     pipeline: Optional[Pipeline] = Field(default=None, title="Template pipeline to define updates to other resources")
     uiSchema: Optional[dict] = Field(default={}, title="Dict containing a uiSchema object, if any")
 
     # setting this to false means if extra, unexpected fields are supplied, the request is invalidated
-    additionalProperties: bool = Field(default=False, title="Prevent unspecified properties being applied")
+    unevaluatedProperties: bool = Field(default=False, title="Prevent unspecified properties being applied")

@@ -28,6 +28,7 @@ These tables specify each endpoint that exists today in TRE API and the permissi
 | POST /workspaces/{workspace\_id}/requests/{airlock\_request\_id}/submit                                                   | V          | V               | X               |
 | POST /workspaces/{workspace\_id}/requests/{airlock\_request\_id}/cancel                                                   | V          | V               | X               |
 | POST /workspaces/{workspace\_id}/requests/{airlock\_request\_id}/review                                                   | X          | X               | V               |
+| POST /workspaces/{workspace\_id}/requests/{airlock\_request\_id}/review-user-resource                                                   | X          | X               | V               |
 | GET /workspaces/{workspace\_id}/requests/{airlock\_request\_id}/link                                                      | V          | V               | V               |
 ## Core API  
 | Endpoints                                                                                                           | TRE Admin | TRE User | WS Owner |

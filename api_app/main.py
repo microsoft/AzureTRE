@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from opencensus.ext.azure.trace_exporter import AzureExporter
 import uvicorn
@@ -42,8 +43,8 @@ def get_application() -> FastAPI:
         exporter = AzureExporter(sampler=ProbabilitySampler(1.0))
         exporter.add_telemetry_processor(telemetry_processor_callback_function)
         application.add_middleware(RequestTracerMiddleware, exporter=exporter)
-    except Exception as e:
-        logging.error(f"Failed to add RequestTracerMiddleware: {e}")
+    except Exception:
+        logging.exception("Failed to add RequestTracerMiddleware")
 
     application.add_middleware(ServerErrorMiddleware, handler=generic_error_handler)
     # Allow local UI debugging with local API
@@ -79,7 +80,9 @@ async def initialize_logging_on_startup():
 async def watch_deployment_status() -> None:
     logging.info("Starting deployment status watcher thread")
     statusWatcher = DeploymentStatusUpdater(app)
-    statusWatcher.start()
+    await statusWatcher.init_repos()
+    current_event_loop = asyncio.get_event_loop()
+    asyncio.run_coroutine_threadsafe(statusWatcher.receive_messages(), loop=current_event_loop)
 
 
 @app.on_event("startup")
@@ -87,5 +90,6 @@ async def watch_deployment_status() -> None:
 async def update_airlock_request_status() -> None:
     await receive_step_result_message_and_update_status(app)
 
+
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, loop="asyncio")

@@ -20,10 +20,14 @@ module "network" {
   source                 = "./network"
   location               = var.location
   tre_id                 = var.tre_id
-  address_space          = var.address_space
+  address_spaces         = var.address_spaces
   ws_resource_group_name = azurerm_resource_group.ws.name
   tre_resource_id        = var.tre_resource_id
   tre_workspace_tags     = local.tre_workspace_tags
+  arm_use_msi            = var.arm_use_msi
+  arm_tenant_id          = var.arm_tenant_id
+  arm_client_id          = var.arm_client_id
+  arm_client_secret      = var.arm_client_secret
 }
 
 module "aad" {
@@ -76,6 +80,5 @@ module "azure_monitor" {
   enable_local_debugging                   = var.enable_local_debugging
   depends_on = [
     module.network,
-    module.airlock, # shouldn't be required, related to: https://github.com/microsoft/AzureTRE/issues/2357
   ]
 }

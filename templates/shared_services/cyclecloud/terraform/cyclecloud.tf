@@ -78,6 +78,7 @@ resource "azurerm_key_vault_secret" "cyclecloud_password" {
   name         = "${local.vm_name}-admin-credentials"
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.core.id
+  tags         = local.tre_shared_service_tags
 }
 
 data "azurerm_subscription" "primary" {
@@ -87,7 +88,7 @@ data "azurerm_subscription" "primary" {
 resource "azurerm_role_assignment" "subscription_contributor" {
   scope                = data.azurerm_subscription.primary.id
   role_definition_name = "Contributor"
-  principal_id         = azurerm_virtual_machine.cyclecloud.identity.0.principal_id
+  principal_id         = azurerm_virtual_machine.cyclecloud.identity[0].principal_id
 }
 
 resource "azurerm_network_interface" "cyclecloud" {

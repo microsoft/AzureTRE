@@ -85,9 +85,15 @@
                   "name": "AzureAD",
                   "description": "AAD access for authNZ",
                   "source_addresses": "{{ resource.properties.web_apps_addresses }}",
-                  "destination_addresses": ["AzureActiveDirectory"],
-                  "destination_ports": ["*"],
-                  "protocols": ["TCP"]
+                  "destination_addresses": [
+                    "AzureActiveDirectory"
+                  ],
+                  "destination_ports": [
+                    "*"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
                 }
               ]
             }
@@ -119,6 +125,24 @@
       }
     ],
     "uninstall": [
+      {
+        "stepId": "758d8043-4455-45ee-b9b5-a0586bb9f6cf",
+        "stepTitle": "Remove network firewall rules for guacamole",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_guacamole"
+            }
+          }
+        ]
+      },
       {
         "stepId": "9a1d6b95-26c8-4165-8010-573dd4e2b45c",
         "stepTitle": "Update guacamole URI to AAD redirect URI",

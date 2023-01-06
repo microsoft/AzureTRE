@@ -34,5 +34,5 @@ This user is currently only used from the Porter bundles hosted on the Resource 
 ## Environment Variables
 | Variable | Description | Location |
 | -------- | ----------- | -------- |
-|APPLICATION_ADMIN_CLIENT_ID|The Client Id|`./devops/auth.env`|
-|APPLICATION_ADMIN_CLIENT_SECRET|The client secret|`./devops/auth.env`|
+|APPLICATION_ADMIN_CLIENT_ID|The Client Id|`./config.yaml`|
+|APPLICATION_ADMIN_CLIENT_SECRET|The client secret|`./config.yaml`|

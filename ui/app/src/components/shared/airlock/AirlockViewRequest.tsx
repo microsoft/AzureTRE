@@ -199,7 +199,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
               <b>Status</b>
             </Stack.Item>
             <Stack.Item styles={stackItemStyles}>
-              <p>{request.status}</p>
+              <p>{request.status.replace("_", " ")}</p>
             </Stack.Item>
           </Stack>
 
@@ -330,7 +330,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
       }
         <Dialog
           hidden={hideSubmitDialog}
-          onDismiss={() => setHideSubmitDialog(true)}
+          onDismiss={() => {setHideSubmitDialog(true); setSubmitError(false)}}
           dialogContentProps={{
             title: 'Submit request?',
             subText: 'Make sure you have uploaded your file to the request\'s storage account before submitting.',
@@ -343,7 +343,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
             submitting
             ? <Spinner label="Submitting..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
             : <DialogFooter>
-              <DefaultButton onClick={() => setHideSubmitDialog(true)} text="Cancel" />
+              <DefaultButton onClick={() => {setHideSubmitDialog(true); setSubmitError(false)}} text="Cancel" />
               <PrimaryButton onClick={submitRequest} text="Submit" />
             </DialogFooter>
           }
@@ -351,7 +351,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
 
         <Dialog
           hidden={hideCancelDialog}
-          onDismiss={() => setHideCancelDialog(true)}
+          onDismiss={() => {setHideCancelDialog(true); setSubmitError(false)}}
           dialogContentProps={{
             title: 'Cancel Airlock Request?',
             subText: 'Are you sure you want to cancel this airlock request?',
@@ -365,7 +365,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
             ? <Spinner label="Cancelling..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
             : <DialogFooter>
               <DefaultButton onClick={cancelRequest} text="Cancel Request" styles={destructiveButtonStyles} />
-              <DefaultButton onClick={() => setHideCancelDialog(true)} text="Back" />
+              <DefaultButton onClick={() => {setHideCancelDialog(true); setSubmitError(false)}} text="Back" />
             </DialogFooter>
           }
         </Dialog>

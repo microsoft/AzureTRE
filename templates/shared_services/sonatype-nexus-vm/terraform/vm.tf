@@ -110,6 +110,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
     name                 = "osdisk-nexus-${var.tre_id}"
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
+    disk_size_gb         = 64
   }
 
   identity {

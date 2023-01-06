@@ -10,3 +10,4 @@ Describe the current behavior you are modifying. Please also remember to update 
 - Note any pending work (with links to the issues that will address them)
 - Update documentation
 - Update CHANGELOG.md if needed
+- Increment template version if needed, for guidelines see [Authoring templates - versioning](https://microsoft.github.io/AzureTRE/tre-workspace-authors/authoring-workspace-templates/#versioning)

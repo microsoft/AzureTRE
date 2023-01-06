@@ -51,6 +51,9 @@ inputs:
   TRE_ADDRESS_SPACE:
     description: "TRE address apace."
     required: false
+  ENABLE_SWAGGER:
+    description: "Determines whether the Swagger interface for the API will be available."
+    required: false
   SWAGGER_UI_CLIENT_ID:
     description: "The Swagger UI Client ID."
     required: false
@@ -103,6 +106,9 @@ inputs:
     description: "The AppService plan sku used by tests"
     required: false
     default: ""
+  RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE:
+    description: "The number of resource processor processes to create for parallel operations"
+    required: false
 
 runs:
   using: composite
@@ -151,6 +157,7 @@ runs:
           -e TF_VAR_application_admin_client_id="${{ inputs.APPLICATION_ADMIN_CLIENT_ID }}" \
           -e TF_VAR_application_admin_client_secret="${{ inputs.APPLICATION_ADMIN_CLIENT_SECRET }}" \
           -e TF_VAR_arm_subscription_id="${{ fromJSON(inputs.AZURE_CREDENTIALS).subscriptionId }}" \
+          -e ENABLE_SWAGGER="${{ inputs.ENABLE_SWAGGER }}" \
           -e SWAGGER_UI_CLIENT_ID="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
           -e TF_VAR_swagger_ui_client_id="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
           -e TF_VAR_core_address_space="${{ inputs.core_address_space }}" \
@@ -174,5 +181,7 @@ runs:
             && inputs.CORE_APP_SERVICE_PLAN_SKU) || 'P1v2' }}" \
           -e WORKSPACE_APP_SERVICE_PLAN_SKU="${{ (inputs.WORKSPACE_APP_SERVICE_PLAN_SKU != ''
             && inputs.WORKSPACE_APP_SERVICE_PLAN_SKU) || 'P1v2' }}" \
+          -e TF_VAR_resource_processor_number_processes_per_instance="${{ (inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE != ''
+            && inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE) || 5  }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}.azurecr.io/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"

@@ -2,7 +2,7 @@ resource "azurerm_virtual_network" "ws" {
   name                = "vnet-${local.workspace_resource_name_suffix}"
   location            = var.location
   resource_group_name = var.ws_resource_group_name
-  address_space       = [var.address_space]
+  address_space       = local.address_spaces
   tags                = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
@@ -16,11 +16,6 @@ resource "azurerm_subnet" "services" {
   # notice that private endpoints do not adhere to NSG rules
   private_endpoint_network_policies_enabled     = false
   private_link_service_network_policies_enabled = true
-
-  # Eventgrid CAN'T send messages over private endpoints, hence we need to allow service endpoints to the service bus
-  # We are using service endpoints + managed identity to send these messaages
-  # https://docs.microsoft.com/en-us/azure/event-grid/consume-private-endpoints
-  service_endpoints = ["Microsoft.ServiceBus"]
 }
 
 resource "azurerm_subnet" "webapps" {
@@ -78,6 +73,65 @@ resource "azurerm_subnet_route_table_association" "rt_services_subnet_associatio
     # meant to resolve AnotherOperation errors with one operation in the vnet at a time
     azurerm_subnet.webapps
   ]
+}
+
+data "azurerm_client_config" "current" {}
+
+resource "null_resource" "az_login_sp" {
+
+  count = var.arm_use_msi == true ? 0 : 1
+  provisioner "local-exec" {
+    command = "az login --service-principal --username ${var.arm_client_id} --password ${var.arm_client_secret} --tenant ${var.arm_tenant_id}"
+  }
+
+  triggers = {
+    timestamp = timestamp()
+  }
+
+}
+
+resource "null_resource" "az_login_msi" {
+
+  count = var.arm_use_msi == true ? 1 : 0
+  provisioner "local-exec" {
+    command = "az login --identity -u '${data.azurerm_client_config.current.client_id}'"
+  }
+
+  triggers = {
+    timestamp = timestamp()
+  }
+}
+
+resource "null_resource" "ws_core_peer_sync" {
+  depends_on = [
+    azurerm_virtual_network_peering.core_ws_peer,
+    null_resource.az_login_sp,
+    null_resource.az_login_msi
+  ]
+  triggers = {
+    vnet2addr = join(",", azurerm_virtual_network.ws.address_space)
+  }
+  provisioner "local-exec" {
+    command = <<CMD
+         az network vnet peering sync --ids ${azurerm_virtual_network_peering.ws_core_peer.id}
+    CMD
+  }
+}
+
+resource "null_resource" "core_ws_sync" {
+  depends_on = [
+    azurerm_virtual_network_peering.core_ws_peer,
+    null_resource.az_login_sp,
+    null_resource.az_login_msi
+  ]
+  triggers = {
+    vnet2addr = join(",", azurerm_virtual_network.ws.address_space)
+  }
+  provisioner "local-exec" {
+    command = <<CMD
+        az network vnet peering sync --ids ${azurerm_virtual_network_peering.core_ws_peer.id}
+    CMD
+  }
 }
 
 resource "azurerm_subnet_route_table_association" "rt_webapps_subnet_association" {

@@ -1,33 +1,25 @@
-# We need azurecli 2.37+ which doesn't exist for strech so the minimum is buster
-FROM debian:buster-slim
+# syntax=docker/dockerfile-upstream:1.4.0
+FROM debian:bullseye-slim
 
-ARG BUNDLE_DIR
+# PORTER_INIT
+
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Install jq
+RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+    apt-get update && \
+    apt-get install -y jq="1.6-2.1" curl ca-certificates patch --no-install-recommends
 
 ARG AZURE_TRE_VERSION="0.4.2"
 
-RUN  apt-get update \
-  && apt-get install --no-install-recommends jq ca-certificates curl -y \
-  && apt-get clean -y && rm -rf /var/lib/apt/lists/*
-
 WORKDIR $BUNDLE_DIR
 
+# Copy all files from base workspace (note: some of them will be overwritten with the following COPY command)
 RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/refs/tags/v${AZURE_TRE_VERSION}.tar.gz" \
-  && tar -xzf azuretre.tar.gz "AzureTRE-${AZURE_TRE_VERSION}/templates/workspaces/base"  --strip-components=4 --skip-old-files \
+  && tar -xzf azuretre.tar.gz "AzureTRE-${AZURE_TRE_VERSION}/templates/workspaces/base" --strip-components=4 --skip-old-files \
   && rm -rf azuretre.tar.gz
 
-# This is a template Dockerfile for the bundle's invocation image
-# You can customize it to use different base images, install tools and copy configuration files.
-#
-# Porter will use it as a template and append lines to it for the mixins
-# and to set the CMD appropriately for the CNAB specification.
-#
-# Add the following line to porter.yaml to instruct Porter to use this template
-# dockerfile: Dockerfile.tmpl
-
-# You can control where the mixin's Dockerfile lines are inserted into this file by moving "# PORTER_MIXINS" line
-# another location in this file. If you remove that line, the mixins generated content is appended to this file.
 # PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
-
-COPY . $BUNDLE_DIR
+COPY --link . ${BUNDLE_DIR}/

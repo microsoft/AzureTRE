@@ -34,7 +34,14 @@ export const ResourceHeader: React.FunctionComponent<ResourceHeaderProps> = (pro
                 {
                   (props.latestUpdate.operation || props.resource.deploymentStatus) &&
                   <Stack.Item align="center">
-                    <StatusBadge resourceId={props.resource.id} status={props.latestUpdate.operation?.status ? props.latestUpdate.operation.status : props.resource.deploymentStatus} />
+                    <StatusBadge
+                      resource={props.resource}
+                      status={
+                        props.latestUpdate.operation?.status
+                          ? props.latestUpdate.operation.status
+                          : props.resource.deploymentStatus
+                      }
+                    />
                   </Stack.Item>
                 }
               </Stack>
@@ -42,7 +49,11 @@ export const ResourceHeader: React.FunctionComponent<ResourceHeaderProps> = (pro
             {
               !props.readonly &&
               <Stack.Item>
-                <ResourceContextMenu resource={props.resource} commandBar={true} componentAction={props.latestUpdate.componentAction} />
+                <ResourceContextMenu
+                  resource={props.resource}
+                  commandBar={true}
+                  componentAction={props.latestUpdate.componentAction}
+                />
               </Stack.Item>
             }
 

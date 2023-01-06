@@ -21,6 +21,6 @@ make prepare-for-e2e
 
 Use the "Run and Debug" panel within Visual Studio Code, select "E2E Extended", "E2E Smoke" or "E2E Performance" in the drop down box and click play.
 
-- This will copy /workspaces/AzureTRE/templates/core/.env to /workspaces/AzureTRE/e2e_tests/.env for you which supplies your authentciation details
+- This will copy `config.yaml` settings to `/workspaces/AzureTRE/e2e_tests/.env` for you which supplies your authentciation details
 
-- This will also use /workspaces/AzureTRE/templates/core/private.env file for other values.
+- This will also use `/workspaces/AzureTRE/core/private.env` file for other values.

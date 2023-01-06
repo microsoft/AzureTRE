@@ -1,13 +1,13 @@
 {
-  "schemaVersion": "1.0.0-DRAFT+TODO",
-  "name": "base",
-  "created": "2021-06-04T13:37:29.5071039+03:00",
-  "modified": "2021-06-04T13:37:29.5071039+03:00",
+  "schemaType": "ParameterSet",
+  "schemaVersion": "1.0.1",
+  "namespace": "",
+  "name": "tre-workspace-base",
   "parameters": [
     {
-      "name": "address_space",
+      "name": "address_spaces",
       "source": {
-        "env": "ADDRESS_SPACE"
+        "env": "ADDRESS_SPACES"
       }
     },
     {

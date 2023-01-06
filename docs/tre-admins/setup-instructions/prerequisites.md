@@ -19,6 +19,8 @@ The files for the dev container are located in `/.devcontainer/` folder.
 !!! tip
     An alternative of running the development container locally is to use [GitHub Codespaces](https://docs.github.com/en/codespaces).
 
+!!! warning
+    The procedures described throughout the documentation have been tested using machines with ***amd64 architecture*** CPUs. We have limited access to machines with other CPU architectures and issues may be encountered if those are used.
 
 ## Next steps
 

@@ -7,10 +7,7 @@ resource "azurerm_storage_account" "staticweb" {
   account_tier              = "Standard"
   account_replication_type  = "LRS"
   enable_https_traffic_only = true
-
-  tags = {
-    tre_id = var.tre_id
-  }
+  tags                      = local.tre_shared_service_tags
 
   static_website {
     index_document     = "index.html"

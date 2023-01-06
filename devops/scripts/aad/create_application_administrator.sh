@@ -167,8 +167,12 @@ if [[ $grantAdminConsent -eq 1 ]]; then
     done
 fi
 
-echo "APPLICATION_ADMIN_CLIENT_ID=\"${appId}\"" > "devops/auth.env"
-echo "APPLICATION_ADMIN_CLIENT_SECRET=\"${spPassword}\"" >> "devops/auth.env"
+# Set outputs in configuration file
+yq -i ".authentication.application_admin_client_id |= \"${appId}\"" config.yaml
+yq -i ".authentication.application_admin_client_secret |= \"${spPassword}\"" config.yaml
+
+echo "application_admin_client_id=\"${appId}\""
+echo "application_admin_client_secret=\"${spPassword}\""
 
 if [[ $grantAdminConsent -eq 0 ]]; then
     echo "NOTE: Make sure the API permissions of the app registrations have admin consent granted."
