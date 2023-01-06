@@ -80,13 +80,13 @@ resource "azurerm_subnet_network_security_group_association" "services" {
 }
 
 
-resource "azurerm_network_security_rule" "allow_outbound_within_workspace_vnet" {
+resource "azurerm_network_security_rule" "allow_inbound_within_workspace_vnet" {
   access                       = "Allow"
   destination_port_range       = "*"
   destination_address_prefixes = data.azurerm_virtual_network.ws.address_space
   source_address_prefixes      = data.azurerm_virtual_network.ws.address_space
-  direction                    = "Outbound"
-  name                         = "outbound-within-workspace-subnet"
+  direction                    = "Inbound"
+  name                         = "inbound-within-workspace-vnet"
   network_security_group_name  = azurerm_network_security_group.aml.name
   priority                     = 100
   protocol                     = "*"
@@ -169,6 +169,19 @@ resource "azurerm_network_security_rule" "allow_outbound_to_internet" {
   source_port_range           = "*"
 }
 
+resource "azurerm_network_security_rule" "allow_outbound_within_workspace_vnet" {
+  access                       = "Allow"
+  destination_port_range       = "*"
+  destination_address_prefixes = data.azurerm_virtual_network.ws.address_space
+  source_address_prefixes      = data.azurerm_virtual_network.ws.address_space
+  direction                    = "Outbound"
+  name                         = "outbound-within-workspace-subnet"
+  network_security_group_name  = azurerm_network_security_group.aml.name
+  priority                     = 100
+  protocol                     = "*"
+  resource_group_name          = data.azurerm_resource_group.ws.name
+  source_port_range            = "*"
+}
 
 resource "azurerm_network_security_rule" "deny_outbound_override" {
   access                      = "Deny"
@@ -185,19 +198,6 @@ resource "azurerm_network_security_rule" "deny_outbound_override" {
 }
 
 
-resource "azurerm_network_security_rule" "allow_inbound_within_workspace_vnet" {
-  access                       = "Allow"
-  destination_port_range       = "*"
-  destination_address_prefixes = data.azurerm_virtual_network.ws.address_space
-  source_address_prefixes      = data.azurerm_virtual_network.ws.address_space
-  direction                    = "Inbound"
-  name                         = "inbound-within-workspace-vnet"
-  network_security_group_name  = azurerm_network_security_group.aml.name
-  priority                     = 100
-  protocol                     = "*"
-  resource_group_name          = data.azurerm_resource_group.ws.name
-  source_port_range            = "*"
-}
 
 resource "azurerm_network_security_rule" "deny_all_inbound_override" {
   access                      = "Deny"
