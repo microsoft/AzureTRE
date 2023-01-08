@@ -55,9 +55,9 @@ async def migrate_database(resources_repo=Depends(get_repository(ResourceReposit
         num_rows = await resource_migration.add_deployment_status_field(operations_repo)
         migrations.append(Migration(issueNumber="1406", status=f'Updated {num_rows} resource objects'))
 
-        logging.info("PR TBD - Archive resources history")
+        logging.info("PR 3066 - Archive resources history")
         num_rows = await resource_migration.archive_history(resource_history_repo)
-        migrations.append(Migration(issueNumber="TBD", status=f'Updated {num_rows} resource objects'))
+        migrations.append(Migration(issueNumber="3066", status=f'Updated {num_rows} resource objects'))
 
         logging.info("PR 2371 - Validate min firewall version")
         await shared_services_migration.checkMinFirewallVersion()
@@ -77,5 +77,5 @@ async def migrate_database(resources_repo=Depends(get_repository(ResourceReposit
 
         return MigrationOutList(migrations=migrations)
     except Exception as e:
-        logging.error("Failed to migrate database: %s", e, exc_info=True)
+        logging.exception("Failed to migrate database")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

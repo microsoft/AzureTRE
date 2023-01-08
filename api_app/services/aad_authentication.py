@@ -122,11 +122,11 @@ class AzureADAuthorization(AccessService):
                 ws_app_reg_id = workspace.properties['client_id']
 
             return ws_app_reg_id
-        except EntityDoesNotExist as e:
-            logging.error(e)
+        except EntityDoesNotExist:
+            logging.exception(strings.WORKSPACE_DOES_NOT_EXIST)
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_DOES_NOT_EXIST)
-        except Exception as e:
-            logging.error(e)
+        except Exception:
+            logging.exception(f"Failed to get workspace app registration ID for workspace {workspace_id}")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS)
 
     @staticmethod

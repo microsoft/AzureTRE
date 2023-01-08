@@ -45,25 +45,21 @@ class DeploymentStatusUpdater():
                     logging.info("Looking for new session...")
                     # max_wait_time=1 -> don't hold the session open after processing of the message has finished
                     async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
-                        logging.info("Got a session containing messages")
+                        logging.info(f"Got a session containing messages: {receiver.session.session_id}")
                         async with AutoLockRenewer() as renewer:
                             renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
                             async for msg in receiver:
-
                                 complete_message = await self.process_message(msg)
-
                                 if complete_message:
                                     await receiver.complete_message(msg)
                                 else:
                                     # could have been any kind of transient issue, we'll abandon back to the queue, and retry
                                     await receiver.abandon_message(msg)
-
-                            logging.info("Closing session")
-                            await renewer.close()
+                        logging.info(f"Closing session: {receiver.session.session_id}")
 
             except OperationTimeoutError:
                 # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
-                logging.info("No sessions for this process. Will look again...")
+                logging.debug("No sessions for this process. Will look again...")
 
             except ServiceBusConnectionError:
                 # Occasionally there will be a transient / network-level error in connecting to SB.
@@ -82,10 +78,8 @@ class DeploymentStatusUpdater():
             logging.info(f"Received and parsed JSON for: {msg.correlation_id}")
             complete_message = await self.update_status_in_database(message)
             logging.info(f"Update status in DB for {message.operationId} - {message.status}")
-        except (json.JSONDecodeError, ValidationError) as e:
-            # TODO: should move to dead letter queue https://github.com/microsoft/AzureTRE/issues/2991
-            complete_message = True
-            logging.error(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id} - {e}")
+        except (json.JSONDecodeError, ValidationError):
+            logging.exception(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id}")
         except Exception:
             logging.exception(f"Exception processing message: {msg.correlation_id}")
 
@@ -166,7 +160,7 @@ class DeploymentStatusUpdater():
                     content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.stepId, action=next_step.resourceAction))
                     await send_deployment_message(content=content, correlation_id=operation.id, session_id=resource_to_send.id, action=next_step.resourceAction)
                 except Exception as e:
-                    logging.error(f"Unable to send update for resource in pipeline step: {e}")
+                    logging.exception("Unable to send update for resource in pipeline step")
                     next_step.message = repr(e)
                     next_step.status = Status.UpdatingFailed
                     await self.update_overall_operation_status(operation, next_step, is_last_step)
@@ -177,10 +171,9 @@ class DeploymentStatusUpdater():
         except EntityDoesNotExist:
             # Marking as true as this message will never succeed anyways and should be removed from the queue.
             result = True
-            error_string = strings.DEPLOYMENT_STATUS_ID_NOT_FOUND.format(message.id)
-            logging.error(error_string)
-        except Exception as e:
-            logging.error(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING + " " + str(e))
+            logging.exception(strings.DEPLOYMENT_STATUS_ID_NOT_FOUND.format(message.id))
+        except Exception:
+            logging.exception("Failed to update status")
 
         return result
 

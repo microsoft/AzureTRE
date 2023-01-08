@@ -117,17 +117,3 @@ async def test_get_resource_history_by_resource_id_if_not_found(mock_query, reso
     result = await resource_history_repo.get_resource_history_by_resource_id(RESOURCE_ID)
 
     assert result == mock_query.return_value
-
-
-def test_resource_history_query():
-    # Call resource_history_query method
-    result = ResourceHistoryRepository.resource_history_query("resource-id")
-
-    assert result == 'SELECT * FROM c WHERE c.resourceId = "resource-id"'
-
-
-def test_resource_history_with_resource_version_query():
-    # Call resource_history_with_resource_version_query method
-    result = ResourceHistoryRepository.resource_history_with_resource_version_query("resource-id", "1.0")
-
-    assert result == 'SELECT * FROM c WHERE c.resourceId = "resource-id" AND c.resourceVersion = "1.0"'

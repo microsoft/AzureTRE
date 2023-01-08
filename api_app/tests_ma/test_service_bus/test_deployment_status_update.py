@@ -109,7 +109,7 @@ def create_sample_operation(resource_id, request_action):
 
 
 @pytest.mark.parametrize("payload", test_data)
-@patch('logging.error')
+@patch('logging.exception')
 @patch('fastapi.FastAPI')
 async def test_receiving_bad_json_logs_error(app, logging_mock, payload):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(payload)
@@ -117,8 +117,8 @@ async def test_receiving_bad_json_logs_error(app, logging_mock, payload):
     status_updater = DeploymentStatusUpdater(app)
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
-    # bad message data will fail, but we will complete the message as it will never be useful
-    assert complete_message is True
+    # bad message data will fail. we don't mark complete=true since we want the message in the DLQ
+    assert complete_message is False
 
     # check we logged the error
     error_message = logging_mock.call_args.args[0]
@@ -129,7 +129,7 @@ async def test_receiving_bad_json_logs_error(app, logging_mock, payload):
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
-@patch('logging.error')
+@patch('logging.exception')
 @patch('fastapi.FastAPI')
 async def test_receiving_good_message(app, logging_mock, resource_repo, operation_repo, _, __):
     expected_workspace = create_sample_workspace_object(test_sb_message["id"])
@@ -152,7 +152,7 @@ async def test_receiving_good_message(app, logging_mock, resource_repo, operatio
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
-@patch('logging.error')
+@patch('logging.exception')
 @patch('fastapi.FastAPI')
 async def test_when_updating_non_existent_workspace_error_is_logged(app, logging_mock, resource_repo, operation_repo, _, __):
     resource_repo.return_value.get_resource_dict_by_id.side_effect = EntityDoesNotExist
@@ -173,7 +173,7 @@ async def test_when_updating_non_existent_workspace_error_is_logged(app, logging
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
-@patch('logging.error')
+@patch('logging.exception')
 @patch('fastapi.FastAPI')
 async def test_when_updating_and_state_store_exception(app, logging_mock, resource_repo, operation_repo, _, __):
     resource_repo.return_value.get_resource_dict_by_id.side_effect = Exception
@@ -185,7 +185,7 @@ async def test_when_updating_and_state_store_exception(app, logging_mock, resour
     await status_updater.init_repos()
     complete_message = await status_updater.process_message(ServiceBusReceivedMessageMock(test_sb_message))
 
-    logging_mock.assert_called_once_with(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING + " ")
+    logging_mock.assert_called_once_with("Failed to update status")
     assert complete_message is False
 
 
