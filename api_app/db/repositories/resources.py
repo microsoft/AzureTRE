@@ -9,7 +9,7 @@ from core import config
 from db.errors import VersionDowngradeDenied, EntityDoesNotExist, MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, UserNotAuthorizedToUseTemplate
 from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
-from jsonschema import validate
+from jsonschema import ValidationError, validate
 from models.domain.authentication import User
 from models.domain.resource import Resource, ResourceHistoryItem, ResourceType
 from models.domain.resource_template import ResourceTemplate
@@ -140,8 +140,11 @@ class ResourceRepository(BaseRepository):
             parent_resource_id = resource.parentWorkspaceServiceId
 
         # validate Major upgrade
-        desired_version = semantic_version.Version(resource_patch.templateVersion)
-        current_version = semantic_version.Version(resource.templateVersion)
+        try:
+            desired_version = semantic_version.Version(resource_patch.templateVersion)
+            current_version = semantic_version.Version(resource.templateVersion)
+        except ValueError:
+            raise ValidationError(f"Attempt to upgrade from {resource.templateVersion} to {resource_patch.templateVersion} denied. Invalid version format.")
 
         if not force_version_update:
             if desired_version.major > current_version.major:
