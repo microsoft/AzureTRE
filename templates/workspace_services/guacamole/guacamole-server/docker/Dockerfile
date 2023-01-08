@@ -10,7 +10,7 @@ COPY --from=client_build /target/surefire-reports/* /
 
 FROM guacamole/guacd:1.4.0
 
-ARG GUACAMOLE_AZURE_VERSION=0.1.1
+ARG GUACAMOLE_AZURE_VERSION=0.2.0
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -24,7 +24,7 @@ RUN apt-get update && apt-get install wget curl openssh-server apt-transport-htt
 
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 RUN JAVA_ARCHIVE=java.tar.gz && \
-    wget -O "$JAVA_ARCHIVE" "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.16%2B8/OpenJDK11U-jre_x64_linux_hotspot_11.0.16_8.tar.gz" --progress=dot:giga && \
+    wget -O "$JAVA_ARCHIVE" "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.17%2B8/OpenJDK11U-jre_x64_linux_hotspot_11.0.17_8.tar.gz" --progress=dot:giga && \
     mkdir -p "$JAVA_HOME" && \
     tar xzf "$JAVA_ARCHIVE" -C "$JAVA_HOME" --strip-components=1 && \
     rm -f "$JAVA_ARCHIVE" && \
@@ -32,7 +32,7 @@ RUN JAVA_ARCHIVE=java.tar.gz && \
 
 ENV CATALINA_BASE=/usr/share/tomcat9/
 RUN TOMCAT_ARCHIVE=tomcat.tar.gz && \
-    TOMCAT_VER=9.0.65 && \
+    TOMCAT_VER=9.0.70 && \
     wget -O "$TOMCAT_ARCHIVE" -N "https://archive.apache.org/dist/tomcat/tomcat-9/v${TOMCAT_VER}/bin/apache-tomcat-${TOMCAT_VER}.tar.gz" --progress=dot:giga && \
     tar xzf "$TOMCAT_ARCHIVE" && \
     rm -f "$TOMCAT_ARCHIVE" && \
@@ -70,7 +70,7 @@ RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
 
 COPY ./docker/index.jsp "$CATALINA_BASE"/webapps/ROOT/index.jsp
 
-RUN wget -O "/tmp/applicationinsights-agent.jar" "https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.3.1/applicationinsights-agent-3.3.1.jar" --progress=dot:giga
+RUN wget -O "/tmp/applicationinsights-agent.jar" "https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.4.7/applicationinsights-agent-3.4.7.jar" --progress=dot:giga
 ENV CATALINA_OPTS="$CATALINA_OPTS -javaagent:/tmp/applicationinsights-agent.jar"
 
 ENTRYPOINT [ "/init" ]

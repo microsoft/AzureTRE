@@ -171,7 +171,7 @@ async def send_custom_action_message(
 ) -> Operation:
 
     # Validate that the custom_action specified is present in the resource template
-    resource_template = resource_template_repo.get_template_by_name_and_version(
+    resource_template = await resource_template_repo.get_template_by_name_and_version(
         resource.templateName,
         resource.templateVersion,
         resource_type,
