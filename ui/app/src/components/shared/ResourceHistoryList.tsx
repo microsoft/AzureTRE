@@ -63,7 +63,6 @@ export const ResourceHistoryList: React.FunctionComponent<ResourceHistoryListPro
                     <ResourceHistoryListItem header={'Resource Version'} val={history.resourceVersion.toString()} />
                     <ResourceHistoryListItem header={'Enabled'} val={history.isEnabled.toString()} />
                     <ResourceHistoryListItem header={'Template Version'} val={history.templateVersion} />
-                    <ResourceHistoryListItem header={'Properties'} val={history.properties} />
                     <ResourceHistoryListItem header={'Updated'} val={`${moment.unix(history.updatedWhen).toLocaleString()} (${moment.unix(history.updatedWhen).fromNow()})`} />
                     <ResourceHistoryListItem header={'User'} val={history.user.name} />
                   </Stack>

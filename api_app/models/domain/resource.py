@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, Union
+from typing import Optional, Union
 from pydantic import Field, validator
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.request_action import RequestAction
@@ -46,7 +46,6 @@ class Resource(AzureTREModel):
     resourceVersion: int = 0
     user: dict = {}
     updatedWhen: float = 0
-    history: List[ResourceHistoryItem] = []
 
     def get_resource_request_message_payload(self, operation_id: str, step_id: str, action: RequestAction) -> dict:
         payload = {

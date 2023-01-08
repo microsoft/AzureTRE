@@ -24,12 +24,12 @@ class ResourceHistoryRepository(BaseRepository):
             raise ValueError("Resource Id should be a valid GUID")
 
     def resource_history_query(self, resourceId: str):
-        logging.debug("Validate sainty of resourceId")
+        logging.debug("Validate sanity of resourceId")
         self.is_valid_uuid(resourceId)
         return f'SELECT * FROM c WHERE c.resourceId = "{resourceId}"'
 
     def resource_history_with_resource_version_query(self, resourceId: str, resourceVersion: int):
-        logging.debug("Validate sainty of resourceId")
+        logging.debug("Validate sanity of resourceId")
         self.is_valid_uuid(resourceId)
         return f'SELECT * FROM c WHERE c.resourceId = "{resourceId}" AND c.resourceVersion = "{resourceVersion}"'
 
