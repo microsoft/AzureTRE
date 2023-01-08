@@ -23,11 +23,11 @@ class ResourceHistoryItem(AzureTREModel):
     id: str = Field(title="Id", description="GUID identifying the resource request")
     resourceId: str = Field(title="Id", description="GUID identifying the resource request")
     properties: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
-    isEnabled: bool
-    resourceVersion: int
+    isEnabled: bool = True
+    resourceVersion: int = 0
     updatedWhen: float = 0
     user: dict = {}
-    templateVersion: Optional[str]
+    templateVersion: Optional[str] = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
 
 
 class Resource(AzureTREModel):
