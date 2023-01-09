@@ -3,7 +3,8 @@ resource "azurerm_network_security_group" "nsg" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
 
-  tags = local.tags
+  tags = local.tre_workspace_service_tags
+
   lifecycle { ignore_changes = [tags] }
 
   security_rule {
@@ -87,10 +88,10 @@ resource "azurerm_network_security_group" "nsg" {
 }
 
 resource "azurerm_subnet" "public" {
-  name                 = local.host_subnet_name
+  name                 = local.public_subnet_name
   resource_group_name  = data.azurerm_resource_group.rg.name
-  virtual_network_name = data.azurerm_virtual_network.vnet.name
-  address_prefixes     = [var.host_subnet_address_space]
+  virtual_network_name = data.azurerm_virtual_network.ws.name
+  address_prefixes     = [local.public_subnet_address_space]
 
   delegation {
     name = "db-host-vnet-integration"
@@ -107,10 +108,10 @@ resource "azurerm_subnet" "public" {
 }
 
 resource "azurerm_subnet" "private" {
-  name                 = local.container_subnet_name
+  name                 = local.private_subnet_name
   resource_group_name  = data.azurerm_resource_group.rg.name
-  virtual_network_name = data.azurerm_virtual_network.vnet.name
-  address_prefixes     = [var.container_subnet_address_space]
+  virtual_network_name = data.azurerm_virtual_network.ws.name
+  address_prefixes     = [local.private_subnet_address_space]
 
   delegation {
     name = "db-container-vnet-integration"
@@ -132,7 +133,7 @@ resource "azurerm_route_table" "rt" {
   resource_group_name           = data.azurerm_resource_group.rg.name
   disable_bgp_route_propagation = false
 
-  tags = local.tags
+  tags = local.tre_workspace_service_tags
   lifecycle { ignore_changes = [tags] }
 
   route {

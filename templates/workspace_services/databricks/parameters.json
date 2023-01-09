@@ -1,9 +1,15 @@
 {
   "schemaVersion": "1.0.0-DRAFT+TODO",
-  "name": "databricks",
+  "name": "tre-service-databricks",
   "created": "2021-06-03T11:54:54.0225968Z",
   "modified": "2021-06-03T11:54:54.0225968Z",
   "parameters": [
+    {
+      "name": "id",
+      "source": {
+        "env": "ID"
+      }
+    },
     {
       "name": "tre_id",
       "source": {
@@ -17,21 +23,15 @@
       }
     },
     {
-      "name": "azure_location",
+      "name": "address_space",
       "source": {
-        "env": "AZURE_LOCATION"
+        "env": "ADDRESS_SPACE"
       }
     },
     {
-      "name": "hostSubnetAddressPrefix",
+      "name": "is_exposed_externally",
       "source": {
-        "env": "HOST_SUBNET_ADDRESS_PREFIX"
-      }
-    },
-    {
-      "name": "containerSubnetAddressPrefix",
-      "source": {
-        "env": "CONTAINER_SUBNET_ADDRESS_PREFIX"
+        "env": "IS_EXPOSED_EXTERNALLY"
       }
     },
     {
