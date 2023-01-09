@@ -1,6 +1,6 @@
 schemaVersion: 1.0.0
 name: tre-service-databricks
-version: 0.1.24
+version: 0.1.31
 description: "An Azure TRE service for Azure Databricks."
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -65,22 +65,12 @@ outputs:
     applyTo:
       - install
       - upgrade
-  - name: webapp_destination_addresses
+  - name: metastore_addresses
     type: string
     applyTo:
       - install
       - upgrade
-  - name: extended_infrastructure_destination_addresses
-    type: string
-    applyTo:
-      - install
-      - upgrade
-  - name: metastore_domains
-    type: string
-    applyTo:
-      - install
-      - upgrade
-  - name: event_hub_endpoint_domains
+  - name: event_hub_endpoint_addresses
     type: string
     applyTo:
       - install
@@ -91,11 +81,6 @@ outputs:
       - install
       - upgrade
   - name: artifact_blob_storage_domains
-    type: string
-    applyTo:
-      - install
-      - upgrade
-  - name: scc_relay_domains
     type: string
     applyTo:
       - install
@@ -134,13 +119,10 @@ install:
         - name: connection_uri
         - name: databricks_storage_account_name
         - name: dbfs_blob_storage_domain
-        - name: webapp_destination_addresses
-        - name: extended_infrastructure_destination_addresses
-        - name: metastore_domains
-        - name: event_hub_endpoint_domains
+        - name: metastore_addresses
+        - name: event_hub_endpoint_addresses
         - name: log_blob_storage_domains
         - name: artifact_blob_storage_domains
-        - name: scc_relay_domains
         - name: workspace_address_spaces
         - name: databricks_address_prefixes
 
@@ -163,13 +145,10 @@ upgrade:
         - name: connection_uri
         - name: databricks_storage_account_name
         - name: dbfs_blob_storage_domain
-        - name: webapp_destination_addresses
-        - name: extended_infrastructure_destination_addresses
-        - name: metastore_domains
-        - name: event_hub_endpoint_domains
+        - name: metastore_addresses
+        - name: event_hub_endpoint_addresses
         - name: log_blob_storage_domains
         - name: artifact_blob_storage_domains
-        - name: scc_relay_domains
         - name: workspace_address_spaces
         - name: databricks_address_prefixes
 
