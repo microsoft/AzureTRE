@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class ResourcePatch(BaseModel):
@@ -8,6 +8,7 @@ class ResourcePatch(BaseModel):
     templateVersion: Optional[str]
 
     class Config:
+        extra = Extra.forbid
         schema_extra = {
             "example": {
                 "isEnabled": False,
