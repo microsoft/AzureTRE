@@ -1,5 +1,5 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, Extra
 
 from models.domain.resource import ResourceHistoryItem
 
@@ -10,6 +10,7 @@ class ResourcePatch(BaseModel):
     templateVersion: Optional[str]
 
     class Config:
+        extra = Extra.forbid
         schema_extra = {
             "example": {
                 "isEnabled": False,

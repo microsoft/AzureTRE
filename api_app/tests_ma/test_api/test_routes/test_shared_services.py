@@ -20,6 +20,7 @@ from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 pytestmark = pytest.mark.asyncio
 
 SHARED_SERVICE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
+ETAG = "some-etag-value"
 
 
 @pytest.fixture
@@ -159,9 +160,8 @@ class TestSharedServiceRoutesThatRequireAdminRights:
     @patch("api.dependencies.shared_services.SharedServiceRepository.patch_shared_service", side_effect=CosmosAccessConditionFailedError)
     async def test_patch_shared_service_returns_409_if_bad_etag(self, _, __, app, client):
         shared_service_patch = {"isEnabled": True}
-        etag = "some-bad-etag-value"
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": etag})
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.text == strings.ETAG_CONFLICT
 
@@ -182,7 +182,6 @@ class TestSharedServiceRoutesThatRequireAdminRights:
     @patch("api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service())
     @patch("api.routes.shared_services.send_resource_request_message", return_value=sample_resource_operation(resource_id=SHARED_SERVICE_ID, operation_id=OPERATION_ID))
     async def test_patch_shared_service_patches_shared_service(self, _, update_item_mock, __, ___, ____, _____, app, client):
-        etag = "some-etag-value"
         shared_service_patch = {"isEnabled": False}
 
         modified_shared_service = sample_shared_service()
@@ -191,8 +190,8 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
         modified_shared_service.user = create_admin_user()
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": etag})
-        update_item_mock.assert_called_once_with(modified_shared_service, etag)
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
+        update_item_mock.assert_called_once_with(modified_shared_service, ETAG)
 
         assert response.status_code == status.HTTP_202_ACCEPTED
 
@@ -204,7 +203,6 @@ class TestSharedServiceRoutesThatRequireAdminRights:
     @patch("api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service())
     @patch("api.routes.shared_services.send_resource_request_message", return_value=sample_resource_operation(resource_id=SHARED_SERVICE_ID, operation_id=OPERATION_ID))
     async def test_patch_shared_service_with_upgrade_minor_version_patches_shared_service(self, _, update_item_mock, __, ___, ____, _____, app, client):
-        etag = "some-etag-value"
         shared_service_patch = {"templateVersion": "0.2.0"}
 
         modified_shared_service = sample_shared_service()
@@ -214,8 +212,8 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         modified_shared_service.user = create_admin_user()
         modified_shared_service.templateVersion = "0.2.0"
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": etag})
-        update_item_mock.assert_called_once_with(modified_shared_service, etag)
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
+        update_item_mock.assert_called_once_with(modified_shared_service, ETAG)
 
         assert response.status_code == status.HTTP_202_ACCEPTED
 
@@ -227,7 +225,6 @@ class TestSharedServiceRoutesThatRequireAdminRights:
     @patch("api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service())
     @patch("api.routes.shared_services.send_resource_request_message", return_value=sample_resource_operation(resource_id=SHARED_SERVICE_ID, operation_id=OPERATION_ID))
     async def test_patch_shared_service_with_upgrade_major_version_and_force_update_patches_shared_service(self, _, update_item_mock, __, ___, ____, _____, app, client):
-        etag = "some-etag-value"
         shared_service_patch = {"templateVersion": "2.0.0"}
 
         modified_shared_service = sample_shared_service()
@@ -237,8 +234,8 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         modified_shared_service.user = create_admin_user()
         modified_shared_service.templateVersion = "2.0.0"
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID) + "?force_version_update=True", json=shared_service_patch, headers={"etag": etag})
-        update_item_mock.assert_called_once_with(modified_shared_service, etag)
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID) + "?force_version_update=True", json=shared_service_patch, headers={"etag": ETAG})
+        update_item_mock.assert_called_once_with(modified_shared_service, ETAG)
 
         assert response.status_code == status.HTTP_202_ACCEPTED
 
@@ -250,7 +247,6 @@ class TestSharedServiceRoutesThatRequireAdminRights:
     @patch("api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service())
     @patch("api.routes.shared_services.send_resource_request_message", return_value=sample_resource_operation(resource_id=SHARED_SERVICE_ID, operation_id=OPERATION_ID))
     async def test_patch_shared_service_with_upgrade_major_version_returns_bad_request(self, _, update_item_mock, __, ___, ____, _____, app, client):
-        etag = "some-etag-value"
         shared_service_patch = {"templateVersion": "2.0.0"}
 
         modified_shared_service = sample_shared_service()
@@ -259,7 +255,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
         modified_shared_service.user = create_admin_user()
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": etag})
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.text == 'Attempt to upgrade from 0.1.0 to 2.0.0 denied. major version upgrade is not allowed.'
@@ -272,7 +268,6 @@ class TestSharedServiceRoutesThatRequireAdminRights:
     @patch("api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service())
     @patch("api.routes.shared_services.send_resource_request_message", return_value=sample_resource_operation(resource_id=SHARED_SERVICE_ID, operation_id=OPERATION_ID))
     async def test_patch_shared_service_with_downgrade_version_returns_bad_request(self, _, update_item_mock, __, ___, ____, _____, app, client):
-        etag = "some-etag-value"
         shared_service_patch = {"templateVersion": "0.0.1"}
 
         modified_shared_service = sample_shared_service()
@@ -281,7 +276,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
         modified_shared_service.user = create_admin_user()
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": etag})
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.text == 'Attempt to downgrade from 0.1.0 to 0.0.1 denied. version downgrade is not allowed.'
@@ -318,3 +313,13 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_200_OK
         obj = response.json()["resource_history"]
         assert len(obj) == 0
+
+    # [PATCH] /shared-services/{shared_service_id}
+    @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service(SHARED_SERVICE_ID))
+    async def test_patch_shared_service_with_invalid_field_returns_422(self, _, app, client):
+        shared_service_patch = {"fakeField": "someValue", "templateVersion": "0.2.0"}
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.text == '1 validation error for Request\nbody -> fakeField\n  extra fields not permitted (type=value_error.extra)'
