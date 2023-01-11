@@ -23,6 +23,7 @@ ENHANCEMENTS:
 * Serverless CosmosDB for new deployments to reduce cost ([#3029](https://github.com/microsoft/AzureTRE/pull/3029))
 * Adding disable_download and disable_upload properties for guacamole ([#2967](https://github.com/microsoft/AzureTRE/pull/2967))
 * Upgrade Guacamole dependencies ([#3053](https://github.com/microsoft/AzureTRE/pull/3053))
+* Lint TRE cost tags per entity type (workspace, shared service, etc.) ([#3061](https://github.com/microsoft/AzureTRE/pull/3061))
 
 
 BUG FIXES:

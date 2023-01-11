@@ -61,4 +61,5 @@ resource "azurerm_key_vault_secret" "db_password" {
   name         = "${azurerm_mysql_server.mysql.name}-administrator-password"
   value        = random_password.password.result
   key_vault_id = data.azurerm_key_vault.ws.id
+  tags         = local.workspace_service_tags
 }
