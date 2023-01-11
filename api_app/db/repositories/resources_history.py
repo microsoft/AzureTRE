@@ -28,11 +28,6 @@ class ResourceHistoryRepository(BaseRepository):
         self.is_valid_uuid(resourceId)
         return f'SELECT * FROM c WHERE c.resourceId = "{resourceId}"'
 
-    def resource_history_with_resource_version_query(self, resourceId: str, resourceVersion: int):
-        logging.debug("Validate sanity of resourceId")
-        self.is_valid_uuid(resourceId)
-        return f'SELECT * FROM c WHERE c.resourceId = "{resourceId}" AND c.resourceVersion = "{resourceVersion}"'
-
     async def get_resource_history_by_resource_id(self, resource_id: str) -> List[ResourceHistoryItem]:
         query = self.resource_history_query(resource_id)
         try:
@@ -57,9 +52,10 @@ class ResourceHistoryRepository(BaseRepository):
             user=resource.user,
             templateVersion=resource.templateVersion
         )
-        # Check if already save this resourceVersion in history container
-        existing_resource_history_item = await self.query(self.resource_history_with_resource_version_query(resource.id, resource.resourceVersion))
-        if not existing_resource_history_item:
-            logging.info(f"Saving history item for {resource.id}")
+        logging.info(f"Saving history item for {resource.id}")
+        try:
             await self.save_item(resource_history_item)
+        except Exception:
+            logging.exception(f"Failed saving history item for {resource.id}")
+            raise
         return resource_history_item

@@ -335,7 +335,7 @@ async def test_get_resource_dict_by_id_raises_entity_does_not_exist_if_no_resour
 
 
 @pytest.mark.asyncio
-@patch("db.repositories.resources_history.ResourceHistoryRepository.query", return_value=AsyncMock())
+@patch("db.repositories.resources_history.ResourceHistoryRepository.save_item", return_value=AsyncMock())
 @patch('db.repositories.resources.ResourceRepository.validate_patch')
 @patch('db.repositories.resources.ResourceRepository.get_timestamp', return_value=FAKE_UPDATE_TIMESTAMP)
 async def test_patch_resource_preserves_property_history(_, __, ___, resource_repo, resource_history_repo):

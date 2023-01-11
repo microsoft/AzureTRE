@@ -12,7 +12,6 @@ HISTORY_ID = "59676d53-5356-45b1-981a-180c0b089839"
 RESOURCE_ID = "178c1ffe-de57-495b-b1eb-9bc37d3c5087"
 USER_ID = "e5accc9a-3961-4da9-b5ee-1bc8a406388b"
 RESOURCE_VERSION = 1
-EXPECTED_QUERY = f'SELECT * FROM c WHERE c.resourceId = "{RESOURCE_ID}" AND c.resourceVersion = "{RESOURCE_VERSION}"'
 
 
 @pytest_asyncio.fixture
@@ -64,13 +63,10 @@ def sample_resource_history() -> ResourceHistoryItem:
 
 @pytest.mark.asyncio
 @patch('db.repositories.resources_history.ResourceHistoryRepository.save_item', return_value=AsyncMock())
-@patch('db.repositories.resources_history.ResourceHistoryRepository.query', return_value=[])
-async def test_create_resource_history_item(mock_query, mock_save, resource_history_repo, sample_resource):
-
+async def test_create_resource_history_item(mock_save, resource_history_repo, sample_resource):
     resource_history = await resource_history_repo.create_resource_history_item(sample_resource)
     # Assertions
     assert isinstance(resource_history, ResourceHistoryItem)
-    mock_query.assert_called_once_with(EXPECTED_QUERY)
     mock_save.assert_called_once_with(resource_history)
     assert resource_history.id is not None
     assert resource_history.resourceId == sample_resource.id
@@ -83,22 +79,20 @@ async def test_create_resource_history_item(mock_query, mock_save, resource_hist
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.resources_history.ResourceHistoryRepository.save_item', return_value=AsyncMock())
-@patch('db.repositories.resources_history.ResourceHistoryRepository.query')
-async def test_create_resource_history_item_when_history_item_already_exists(mock_query, mock_save, resource_history_repo, sample_resource):
-    mock_query.return_value = [{"id": "existing-id"}]
-    resource_history = await resource_history_repo.create_resource_history_item(sample_resource)
+@patch('db.repositories.resources_history.ResourceHistoryRepository.save_item', side_effect=Exception)
+async def test_create_resource_history_item_throws_error_when_saving(mock_save, resource_history_repo, sample_resource):
+    with pytest.raises(Exception):
+        resource_history = await resource_history_repo.create_resource_history_item(sample_resource)
 
-    assert not mock_save.called
-    mock_query.assert_called_once_with(EXPECTED_QUERY)
-    assert resource_history.id is not None
-    assert resource_history.resourceId == sample_resource.id
-    assert resource_history.isEnabled is True
-    assert resource_history.properties == sample_resource.properties
-    assert resource_history.resourceVersion == sample_resource.resourceVersion
-    assert resource_history.updatedWhen == sample_resource.updatedWhen
-    assert resource_history.user == sample_resource.user
-    assert resource_history.templateVersion == sample_resource.templateVersion
+        assert mock_save.called
+        assert resource_history.id is not None
+        assert resource_history.resourceId == sample_resource.id
+        assert resource_history.isEnabled is True
+        assert resource_history.properties == sample_resource.properties
+        assert resource_history.resourceVersion == sample_resource.resourceVersion
+        assert resource_history.updatedWhen == sample_resource.updatedWhen
+        assert resource_history.user == sample_resource.user
+        assert resource_history.templateVersion == sample_resource.templateVersion
 
 
 @pytest.mark.asyncio

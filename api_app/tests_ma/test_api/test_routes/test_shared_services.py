@@ -175,7 +175,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     # [PATCH] /shared-services/{shared_service_id}
-    @patch("api.routes.shared_services.ResourceHistoryRepository.query", return_value=AsyncMock())
+    @patch("api.routes.shared_services.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @patch("api.routes.shared_services.SharedServiceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service(SHARED_SERVICE_ID))
     @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
@@ -197,7 +197,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_202_ACCEPTED
 
     # [PATCH] /shared-services/{shared_service_id}
-    @patch("api.routes.shared_services.ResourceHistoryRepository.query", return_value=AsyncMock())
+    @patch("api.routes.shared_services.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @patch("api.routes.shared_services.SharedServiceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service(SHARED_SERVICE_ID))
     @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_shared_service())
@@ -220,7 +220,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_202_ACCEPTED
 
     # [PATCH] /shared-services/{shared_service_id}
-    @patch("api.routes.shared_services.ResourceHistoryRepository.query", return_value=AsyncMock())
+    @patch("api.routes.shared_services.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @patch("api.routes.shared_services.SharedServiceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service(SHARED_SERVICE_ID))
     @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_shared_service())
@@ -243,7 +243,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_202_ACCEPTED
 
     # [PATCH] /shared-services/{shared_service_id}
-    @patch("api.routes.shared_services.ResourceHistoryRepository.query", return_value=AsyncMock())
+    @patch("api.routes.shared_services.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @patch("api.routes.shared_services.SharedServiceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service(SHARED_SERVICE_ID))
     @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
@@ -265,7 +265,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         assert response.text == 'Attempt to upgrade from 0.1.0 to 2.0.0 denied. major version upgrade is not allowed.'
 
     # [PATCH] /shared-services/{shared_service_id}
-    @patch("api.routes.shared_services.ResourceHistoryRepository.query", return_value=AsyncMock())
+    @patch("api.routes.shared_services.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @patch("api.routes.shared_services.SharedServiceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service(SHARED_SERVICE_ID))
     @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
