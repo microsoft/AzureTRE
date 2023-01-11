@@ -92,3 +92,13 @@ data "azurerm_private_dns_zone" "nexus" {
   name                = "nexus-${var.tre_id}.${var.location}.cloudapp.azure.com"
   resource_group_name = local.core_resource_group_name
 }
+
+data "azurerm_private_dns_zone" "health" {
+  name                = "privatelink.azurehealthcareapis.com"
+  resource_group_name = local.core_resource_group_name
+}
+
+data "azurerm_private_dns_zone" "dicom" {
+  name                = "privatelink.dicom.azurehealthcareapis.com"
+  resource_group_name = local.core_resource_group_name
+}
