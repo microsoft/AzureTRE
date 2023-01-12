@@ -15,11 +15,11 @@ output "dbfs_blob_storage_domain" {
 }
 
 output "log_blob_storage_domains" {
-  value = local.mapLocationUrlConfig[module.azure_region.location_cli].logBlobStorageDomains
+  value = local.map_location_url_config[module.azure_region.location_cli].logBlobStorageDomains
 }
 
 output "artifact_blob_storage_domains" {
-  value = setunion(local.mapLocationUrlConfig[module.azure_region.location_cli].artifactBlobStoragePrimaryDomains, local.mapLocationUrlConfig[module.azure_region.location_cli].artifactBlobStorageSecondaryDomains)
+  value = setunion(local.map_location_url_config[module.azure_region.location_cli].artifactBlobStoragePrimaryDomains, local.map_location_url_config[module.azure_region.location_cli].artifactBlobStorageSecondaryDomains)
 }
 
 output "workspace_address_spaces" {
@@ -32,7 +32,7 @@ output "databricks_address_prefixes" {
 
 # convert list of metastore domains to ip addresses
 data "dns_a_record_set" "metastore_addresses" {
-  for_each = toset(local.mapLocationUrlConfig[module.azure_region.location_cli].metastoreDomains)
+  for_each = toset(local.map_location_url_config[module.azure_region.location_cli].metastoreDomains)
   host     = each.key
 }
 
@@ -42,7 +42,7 @@ output "metastore_addresses" {
 
 # convert list of event hub endpoint domains to ip addresses
 data "dns_a_record_set" "event_hub_endpoint_addresses" {
-  for_each = toset(local.mapLocationUrlConfig[module.azure_region.location_cli].eventHubEndpointDomains)
+  for_each = toset(local.map_location_url_config[module.azure_region.location_cli].eventHubEndpointDomains)
   host     = each.key
 }
 

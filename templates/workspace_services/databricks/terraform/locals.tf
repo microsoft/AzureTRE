@@ -19,7 +19,7 @@ locals {
   network_security_group_name    = "nsg-${local.workspace_resource_name_suffix}"
   route_table_name               = "rt-${local.workspace_resource_name_suffix}"
 
-  mapLocationUrlConfig = jsondecode(file("${path.module}/databricks-udr.json"))
+  map_location_url_config = jsondecode(file("${path.module}/databricks-udr.json"))
 
   tre_workspace_service_tags = {
     tre_id                   = var.tre_id

@@ -8,21 +8,9 @@ terraform {
       source  = "Azure/azapi"
       version = "=1.1.0"
     }
-    external = {
-      source  = "hashicorp/external"
-      version = "=2.2.2"
-    }
-    null = {
-      source  = "hashicorp/null"
-      version = "=3.1.1"
-    }
     databricks = {
       source  = "databricks/databricks"
       version = "1.5.0"
-    }
-    http = {
-      source  = "hashicorp/http"
-      version = "3.2.1"
     }
   }
 

@@ -140,7 +140,7 @@ resource "azurerm_route_table" "rt" {
     name                   = "to-firewall"
     address_prefix         = "0.0.0.0/0"
     next_hop_type          = "VirtualAppliance"
-    next_hop_in_ip_address = data.azurerm_firewall.firewall.ip_configuration.0.private_ip_address
+    next_hop_in_ip_address = data.azurerm_firewall.firewall.ip_configuration[0].private_ip_address
   }
 }
 
@@ -154,12 +154,12 @@ resource "azurerm_subnet_network_security_group_association" "public" {
   network_security_group_id = azurerm_network_security_group.nsg.id
 }
 
-resource "azurerm_subnet_route_table_association" "rt-private" {
+resource "azurerm_subnet_route_table_association" "rt_private" {
   subnet_id      = azurerm_subnet.private.id
   route_table_id = azurerm_route_table.rt.id
 }
 
-resource "azurerm_subnet_route_table_association" "rt-public" {
+resource "azurerm_subnet_route_table_association" "rt_public" {
   subnet_id      = azurerm_subnet.public.id
   route_table_id = azurerm_route_table.rt.id
 }
