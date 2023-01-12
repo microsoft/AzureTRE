@@ -32,14 +32,16 @@
       "type": "boolean",
       "title": "Disable files download",
       "description": "Disable files download",
-      "updateable": true
+      "updateable": true,
+      "default": true
     },
     "guac_disable_upload": {
       "$id": "#/properties/guac_disable_upload",
       "type": "boolean",
       "title": "Disable files upload",
       "description": "Disable files upload",
-      "updateable": true
+      "updateable": true,
+      "default": true
     },
     "is_exposed_externally": {
       "$id": "#/properties/is_exposed_externally",
