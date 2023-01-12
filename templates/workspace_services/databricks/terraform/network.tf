@@ -8,7 +8,7 @@ resource "azurerm_network_security_group" "nsg" {
   lifecycle { ignore_changes = [tags] }
 
   security_rule {
-    name                       = "nsgsg-${local.workspace_resource_name_suffix}-001"
+    name                       = "AllowInboundDatabricksWorkerNodesToCluster"
     description                = "Required for worker nodes communication within a cluster."
     priority                   = 100
     direction                  = "Inbound"
@@ -21,7 +21,7 @@ resource "azurerm_network_security_group" "nsg" {
   }
 
   security_rule {
-    name                       = "nsgsg-${local.workspace_resource_name_suffix}-002"
+    name                       = "AllowOutboundDatabricksWorkerNodesToControlPlain"
     description                = "Required for workers communication with Databricks Webapp."
     priority                   = 100
     direction                  = "Outbound"
@@ -34,7 +34,7 @@ resource "azurerm_network_security_group" "nsg" {
   }
 
   security_rule {
-    name                       = "nsgsg-${local.workspace_resource_name_suffix}-003"
+    name                       = "AllowOutboundDatabricksWorkerNodesToAzureSQLServices"
     description                = "Required for workers communication with Azure SQL services."
     priority                   = 101
     direction                  = "Outbound"
@@ -47,7 +47,7 @@ resource "azurerm_network_security_group" "nsg" {
   }
 
   security_rule {
-    name                       = "nsgsg-${local.workspace_resource_name_suffix}-004"
+    name                       = "AllowOutboundDatabricksWorkerNodesToAzureStorage"
     description                = "Required for workers communication with Azure Storage services."
     priority                   = 102
     direction                  = "Outbound"
@@ -60,7 +60,7 @@ resource "azurerm_network_security_group" "nsg" {
   }
 
   security_rule {
-    name                       = "nsgsg-${local.workspace_resource_name_suffix}-005"
+    name                       = "AllowOutboundDatabricksWorkerNodesWithinACluster"
     description                = "Required for worker nodes communication within a cluster."
     priority                   = 103
     direction                  = "Outbound"
@@ -73,7 +73,7 @@ resource "azurerm_network_security_group" "nsg" {
   }
 
   security_rule {
-    name                       = "nsgsg-${local.workspace_resource_name_suffix}-006"
+    name                       = "AllowOutboundWorkerNodesToAzureEventhub"
     description                = "Required for worker communication with Azure Eventhub services."
     priority                   = 104
     direction                  = "Outbound"
