@@ -24,6 +24,7 @@ ENHANCEMENTS:
 * Serverless CosmosDB for new deployments to reduce cost ([#3029](https://github.com/microsoft/AzureTRE/pull/3029))
 * Upgrade Guacamole dependencies ([#3053](https://github.com/microsoft/AzureTRE/pull/3053))
 * Lint TRE cost tags per entity type (workspace, shared service, etc.) ([#3061](https://github.com/microsoft/AzureTRE/pull/3061))
+* Validate required secrets have value ([#TBD](https://github.com/microsoft/AzureTRE/pull/TBD))
 
 
 BUG FIXES:
