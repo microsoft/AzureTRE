@@ -1,7 +1,7 @@
 from datetime import datetime
 import logging
 from copy import deepcopy
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from fastapi import HTTPException, status
 from db.repositories.resources import ResourceRepository
@@ -173,7 +173,7 @@ async def send_custom_action_message(
     resource_template_repo: ResourceTemplateRepository,
     resource_history_repo: ResourceHistoryRepository,
     user: User,
-    parent_service_name: str = None,
+    parent_service_name: Optional[str] = None,
 ) -> Operation:
 
     # Validate that the custom_action specified is present in the resource template
@@ -222,7 +222,7 @@ async def get_template(
     resource_type: ResourceType,
     parent_service_template_name: str = "",
     is_update: bool = False,
-    version: str = None,
+    version: Optional[str] = None,
 ) -> dict:
     try:
         template = (

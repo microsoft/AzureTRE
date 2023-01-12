@@ -1,4 +1,5 @@
 
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import parse_obj_as
 
@@ -24,7 +25,7 @@ async def get_user_resource_templates_for_service_template(service_template_name
 
 
 @user_resource_templates_core_router.get("/workspace-service-templates/{service_template_name}/user-resource-templates/{user_resource_template_name}", response_model=UserResourceTemplateInResponse, response_model_exclude_none=True, name=strings.API_GET_USER_RESOURCE_TEMPLATE_BY_NAME, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
-async def get_user_resource_template(service_template_name: str, user_resource_template_name: str, is_update: bool = False, version: str = None, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> UserResourceTemplateInResponse:
+async def get_user_resource_template(service_template_name: str, user_resource_template_name: str, is_update: bool = False, version: Optional[str] = None, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> UserResourceTemplateInResponse:
     template = await get_template(user_resource_template_name, template_repo, ResourceType.UserResource, service_template_name, is_update=is_update, version=version)
     return parse_obj_as(UserResourceTemplateInResponse, template)
 

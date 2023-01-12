@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from opencensus.ext.azure.log_exporter import AzureLogHandler
 from opencensus.trace import config_integration
@@ -58,7 +59,7 @@ class ExceptionTracebackFilter(logging.Filter):
         return True
 
 
-def initialize_logging(logging_level: int, correlation_id: str = None) -> logging.LoggerAdapter:
+def initialize_logging(logging_level: int, correlation_id: Optional[str] = None) -> logging.LoggerAdapter:
     """
     Adds the Application Insights handler for the root logger and sets the given logging level.
     Creates and returns a logger adapter that integrates the correlation ID, if given, to the log messages.
@@ -83,7 +84,7 @@ def initialize_logging(logging_level: int, correlation_id: str = None) -> loggin
     Tracer(sampler=AlwaysOnSampler())
     logger.setLevel(logging_level)
 
-    extra = None
+    extra = {}
 
     if correlation_id:
         extra = {'traceId': correlation_id}
