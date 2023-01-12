@@ -113,7 +113,7 @@ install:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
-        key: tre-service-databricks-${ bundle.parameters.id }
+        key: ${ bundle.name }-${ bundle.parameters.id }
       outputs:
         - name: databricks_workspace_name
         - name: connection_uri
@@ -139,7 +139,7 @@ upgrade:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
-        key: tre-service-databricks-${ bundle.parameters.id }
+        key: ${ bundle.name }-${ bundle.parameters.id }
       outputs:
         - name: databricks_workspace_name
         - name: connection_uri
@@ -165,4 +165,4 @@ uninstall:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
-        key: tre-service-databricks-${ bundle.parameters.id }
+        key: ${ bundle.name }-${ bundle.parameters.id }

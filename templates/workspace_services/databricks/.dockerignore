@@ -1,4 +1,9 @@
-# See https://docs.docker.com/engine/reference/builder/#dockerignore-file
-# Put files here that you don't want copied into your bundle's invocation image
-.gitignore
+# Local .terraform directories
+**/.terraform/*
+
+# TF backend files
+**/*_backend.tf
+
 Dockerfile.tmpl
+terraform/deploy.sh
+terraform/destroy.sh

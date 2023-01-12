@@ -92,6 +92,7 @@ resource "azurerm_private_endpoint" "stgdfspe" {
   location            = azurerm_resource_group.ws.location
   resource_group_name = azurerm_resource_group.ws.name
   subnet_id           = module.network.services_subnet_id
+  tags                = local.tre_workspace_tags
 
   depends_on = [
     module.network,

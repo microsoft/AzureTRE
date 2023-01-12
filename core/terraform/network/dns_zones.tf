@@ -96,23 +96,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blobcore" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_private_dns_zone" "dfscore" {
-  name                = "privatelink.dfs.core.windows.net"
-  resource_group_name = var.resource_group_name
-  tags                = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "dfscore" {
-  name                  = "dfscorelink"
-  resource_group_name   = var.resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.dfscore.name
-  virtual_network_id    = azurerm_virtual_network.core.id
-  tags                  = local.tre_core_tags
-
-  lifecycle { ignore_changes = [tags] }
-}
-
 resource "azurerm_private_dns_zone" "azurewebsites" {
   name                = "privatelink.azurewebsites.net"
   resource_group_name = var.resource_group_name
