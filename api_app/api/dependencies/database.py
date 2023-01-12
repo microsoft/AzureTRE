@@ -15,8 +15,8 @@ async def connect_to_db() -> CosmosClient:
     logging.debug(f"Connecting to {config.STATE_STORE_ENDPOINT}")
 
     try:
-        database_credentials = await credentials.get_credential_async()
-        primary_master_key = await get_store_key(database_credentials)
+        async with credentials.get_credential_async() as credential:
+            primary_master_key = await get_store_key(credential)
 
         if config.STATE_STORE_SSL_VERIFY:
             cosmos_client = CosmosClient(url=config.STATE_STORE_ENDPOINT, credential=primary_master_key)
