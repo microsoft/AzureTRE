@@ -1,5 +1,5 @@
 import uuid
-from typing import List, Union
+from typing import List, Optional, Union
 
 from azure.cosmos.aio import CosmosClient
 from pydantic import parse_obj_as
@@ -36,7 +36,7 @@ class ResourceTemplateRepository(BaseRepository):
         else:
             return enrich_user_resource_template(template, is_update=is_update)
 
-    async def get_templates_information(self, resource_type: ResourceType, user_roles: List[str] = None, parent_service_name: str = "") -> List[ResourceTemplateInformation]:
+    async def get_templates_information(self, resource_type: ResourceType, user_roles: Optional[List[str]] = None, parent_service_name: str = "") -> List[ResourceTemplateInformation]:
         """
         Returns name/title/description for all current resource_type templates
 
@@ -71,7 +71,7 @@ class ResourceTemplateRepository(BaseRepository):
         else:
             return parse_obj_as(ResourceTemplate, templates[0])
 
-    async def get_template_by_name_and_version(self, name: str, version: str, resource_type: ResourceType, parent_service_name: str = None) -> Union[ResourceTemplate, UserResourceTemplate]:
+    async def get_template_by_name_and_version(self, name: str, version: str, resource_type: ResourceType, parent_service_name: Optional[str] = None) -> Union[ResourceTemplate, UserResourceTemplate]:
         """
         Returns full template for the 'resource_type' template defined by 'template_name' and 'version'
 
