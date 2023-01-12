@@ -2,6 +2,7 @@ import json
 
 from db.repositories.resources import ResourceRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
+from db.repositories.resources_history import ResourceHistoryRepository
 from service_bus.helpers import send_deployment_message, update_resource_for_step
 from models.domain.resource_template import ResourceTemplate
 
@@ -14,7 +15,7 @@ from models.domain.operation import Operation
 from db.repositories.operations import OperationRepository
 
 
-async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, resource_repo: ResourceRepository, user: User, resource_template: ResourceTemplate, resource_template_repo: ResourceTemplateRepository, action: RequestAction = RequestAction.Install) -> Operation:
+async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, resource_repo: ResourceRepository, user: User, resource_template: ResourceTemplate, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, action: RequestAction = RequestAction.Install) -> Operation:
     """
     Creates and sends a resource request message for the resource to the Service Bus.
     The resource ID is added to the message to serve as an correlation ID for the deployment process.
@@ -39,6 +40,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
         operation_step=first_step,
         resource_repo=resource_repo,
         resource_template_repo=resource_template_repo,
+        resource_history_repo=resource_history_repo,
         primary_resource=resource,
         resource_to_update_id=first_step.resourceId,
         primary_action=action,

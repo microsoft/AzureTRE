@@ -7,14 +7,12 @@ from core import config
 from db.errors import UnableToAccessDatabase
 
 
-PARTITION_KEY = PartitionKey(path="/id")
-
-
 class BaseRepository:
     @classmethod
-    async def create(cls, client: CosmosClient, container_name: str = None):
+    async def create(cls, client: CosmosClient, container_name: str = None, partition_key: str = "/id"):
+        partition_key_obj = PartitionKey(path=partition_key)
         cls._client: CosmosClient = client
-        cls._container: ContainerProxy = await cls._get_container(container_name)
+        cls._container: ContainerProxy = await cls._get_container(container_name, partition_key_obj)
         return cls
 
     @property
@@ -22,10 +20,10 @@ class BaseRepository:
         return self._container
 
     @classmethod
-    async def _get_container(cls, container_name) -> ContainerProxy:
+    async def _get_container(cls, container_name, partition_key_obj) -> ContainerProxy:
         try:
             database = cls._client.get_database_client(config.STATE_STORE_DATABASE)
-            container = await database.create_container_if_not_exists(id=container_name, partition_key=PARTITION_KEY)
+            container = await database.create_container_if_not_exists(id=container_name, partition_key=partition_key_obj)
             properties = await container.read()
             print(properties['partitionKey'])
             return container

@@ -20,11 +20,14 @@ export interface Resource {
 }
 
 export interface HistoryItem {
+    id: string,
+    resourceId: string,
     isEnabled: boolean,
     resourceVersion: number,
     updatedWhen: number,
     user: User,
-    properties: any
+    properties: any,
+    templateVersion: string
 }
 
 export enum ComponentAction {
