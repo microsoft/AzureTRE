@@ -40,6 +40,7 @@ def create_test_resource():
 @pytest.mark.parametrize(
     "request_action", [RequestAction.Install, RequestAction.UnInstall]
 )
+@patch("service_bus.resource_request_sender.ResourceHistoryRepository.create")
 @patch("service_bus.resource_request_sender.OperationRepository.create")
 @patch("service_bus.helpers.ServiceBusClient")
 @patch("service_bus.resource_request_sender.ResourceRepository.create")
@@ -49,6 +50,7 @@ async def test_resource_request_message_generated_correctly(
     resource_repo,
     service_bus_client_mock,
     operations_repo_mock,
+    resource_history_repo_mock,
     request_action,
     multi_step_resource_template
 ):
@@ -66,6 +68,7 @@ async def test_resource_request_message_generated_correctly(
         user=create_test_user(),
         resource_template=multi_step_resource_template,
         resource_template_repo=resource_template_repo,
+        resource_history_repo=resource_history_repo_mock,
         action=request_action
     )
 
@@ -80,6 +83,7 @@ async def test_resource_request_message_generated_correctly(
     assert sent_message_as_json["action"] == request_action
 
 
+@patch("service_bus.resource_request_sender.ResourceHistoryRepository.create")
 @patch("service_bus.resource_request_sender.OperationRepository.create")
 @patch("service_bus.resource_request_sender.ResourceRepository.create")
 @patch("service_bus.resource_request_sender.ResourceTemplateRepository.create")
@@ -87,6 +91,7 @@ async def test_multi_step_document_sends_first_step(
     resource_template_repo,
     resource_repo,
     operations_repo_mock,
+    resource_history_repo_mock,
     multi_step_operation,
     basic_shared_service,
     basic_shared_service_template,
@@ -118,6 +123,7 @@ async def test_multi_step_document_sends_first_step(
         operation_step=multi_step_operation.steps[0],
         resource_repo=resource_repo,
         resource_template_repo=resource_template_repo,
+        resource_history_repo=resource_history_repo_mock,
         primary_resource=user_resource_multi,
         resource_to_update_id=basic_shared_service.id,
         primary_action="install",
@@ -131,17 +137,20 @@ async def test_multi_step_document_sends_first_step(
         resource=basic_shared_service,
         resource_patch=expected_patch,
         resource_template=basic_shared_service_template,
+        resource_history_repo=resource_history_repo_mock,
         etag=basic_shared_service.etag,
         resource_template_repo=resource_template_repo,
         user=test_user
     )
 
 
+@patch("service_bus.resource_request_sender.ResourceHistoryRepository.create")
 @patch("service_bus.resource_request_sender.ResourceRepository.create")
 @patch("service_bus.resource_request_sender.ResourceTemplateRepository.create")
 async def test_multi_step_document_retries(
     resource_template_repo,
     resource_repo,
+    resource_history_repo,
     basic_shared_service,
     basic_shared_service_template,
     test_user,
@@ -167,6 +176,7 @@ async def test_multi_step_document_retries(
             user=test_user,
             resource_to_update_id="resource-id",
             template_step=multi_step_resource_template.pipeline.install[0],
+            resource_history_repo=resource_history_repo,
             primary_resource=primary_resource
         )
     except CosmosAccessConditionFailedError:

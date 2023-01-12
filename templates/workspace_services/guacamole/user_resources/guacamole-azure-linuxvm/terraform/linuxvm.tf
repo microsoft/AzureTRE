@@ -134,6 +134,7 @@ resource "azurerm_key_vault_secret" "linuxvm_password" {
   name         = local.vm_password_secret_name
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
+  tags         = local.tre_user_resources_tags
 }
 
 data "azurerm_storage_account" "stg" {

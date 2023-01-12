@@ -10,6 +10,7 @@ Use the script devops/scripts/env_to_yaml_config.sh to migrate /templates/core/.
 
 FEATURES:
 * Support review VMs for multiple reviewers for each airlock request [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
+* Add Azure Health Data Services as workspace services [#3051](https://github.com/microsoft/AzureTRE/pull/3051)
 
 ENHANCEMENTS:
 * Remove Porter's Docker mixin as it's not in use ([#2889](https://github.com/microsoft/AzureTRE/pull/2889))
@@ -22,6 +23,8 @@ ENHANCEMENTS:
 * Added the option to disable Swagger ([#2981](https://github.com/microsoft/AzureTRE/pull/2981))
 * Serverless CosmosDB for new deployments to reduce cost ([#3029](https://github.com/microsoft/AzureTRE/pull/3029))
 * Upgrade Guacamole dependencies ([#3053](https://github.com/microsoft/AzureTRE/pull/3053))
+* Lint TRE cost tags per entity type (workspace, shared service, etc.) ([#3061](https://github.com/microsoft/AzureTRE/pull/3061))
+* Validate required secrets have value ([#3073](https://github.com/microsoft/AzureTRE/pull/3073))
 
 
 BUG FIXES:
