@@ -2,7 +2,7 @@ import base64
 import logging
 from collections import defaultdict
 from enum import Enum
-from typing import List
+from typing import List, Optional
 import jwt
 import requests
 import rsa
@@ -34,7 +34,7 @@ class AzureADAuthorization(AccessService):
     TRE_CORE_ROLES = ['TREAdmin', 'TREUser']
     WORKSPACE_ROLES_DICT = {'WorkspaceOwner': 'app_role_id_workspace_owner', 'WorkspaceResearcher': 'app_role_id_workspace_researcher', 'AirlockManager': 'app_role_id_workspace_airlock_manager'}
 
-    def __init__(self, auto_error: bool = True, require_one_of_roles: list = None):
+    def __init__(self, auto_error: bool = True, require_one_of_roles: Optional[list] = None):
         super(AzureADAuthorization, self).__init__(
             authorizationUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/authorize",
             tokenUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
