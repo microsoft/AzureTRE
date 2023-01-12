@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/healthcare_services/template_schema.json",
+  "type": "object",
+  "title": "Azure Health Workspace Service",
+  "description": "Provides Azure Health within the workspace",
+  "required": [],
+  "properties": {
+    "deploy_dicom": {
+      "$id": "#/properties/deploy_dicom",
+      "type": "boolean",
+      "title": "Deploy DICOM",
+      "description": "Deploy DICOM instance",
+      "updateable": true,
+      "default": false
+    },
+    "deploy_fhir": {
+      "$id": "#/properties/deploy_fhir",
+      "type": "boolean",
+      "title": "Deploy FHIR",
+      "description": "Deploy FHIR instance",
+      "updateable": true,
+      "default": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "deploy_fhir": {
+            "const": true
+          }
+        },
+        "required": [
+          "deploy_fhir"
+        ]
+      },
+      "then": {
+        "properties": {
+          "fhir_kind": {
+            "type": "string",
+            "title": "FHIR version",
+            "description": "The FHIR version that will be used.",
+            "default": "R4",
+            "enum": [
+              "R4",
+              "Stu3"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

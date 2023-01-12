@@ -3,7 +3,7 @@ import { ResourceDebug } from '../shared/ResourceDebug';
 import { Pivot, PivotItem } from '@fluentui/react';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 import { Resource } from '../../models/resource';
-import { ResourceHistory } from '../shared/ResourceHistory';
+import { ResourceHistoryList } from '../shared/ResourceHistoryList';
 import { ResourceOperationsList } from '../shared/ResourceOperationsList';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm'
@@ -39,7 +39,7 @@ export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: 
       {
         !props.readonly &&
         <PivotItem headerText="History">
-          <ResourceHistory history={props.resource.history} />
+          <ResourceHistoryList resource={props.resource} />
         </PivotItem>
       }
       {

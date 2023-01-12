@@ -9,6 +9,7 @@ import json
 from fastapi import HTTPException, status
 
 from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, mask_sensitive_properties
+from db.repositories.resources_history import ResourceHistoryRepository
 from tests_ma.test_api.conftest import create_test_user
 from resources import strings
 
@@ -39,6 +40,13 @@ async def operations_repo() -> OperationRepository:
     with patch("azure.cosmos.CosmosClient") as cosmos_client_mock:
         operation_repo_mock = await OperationRepository.create(cosmos_client_mock)
         yield operation_repo_mock
+
+
+@pytest_asyncio.fixture
+async def resource_history_repo() -> ResourceHistoryRepository:
+    with patch("azure.cosmos.CosmosClient") as cosmos_client_mock:
+        resource_history_repo_mock = await ResourceHistoryRepository.create(cosmos_client_mock)
+        yield resource_history_repo_mock
 
 
 def sample_resource(workspace_id=WORKSPACE_ID):
@@ -106,7 +114,7 @@ class TestResourceHelpers:
     @patch("api.routes.workspaces.ResourceTemplateRepository")
     @patch("api.routes.resource_helpers.send_resource_request_message")
     @pytest.mark.asyncio
-    async def test_save_and_deploy_resource_saves_item(self, _, resource_template_repo, resource_repo, operations_repo, basic_resource_template):
+    async def test_save_and_deploy_resource_saves_item(self, _, resource_template_repo, resource_repo, operations_repo, basic_resource_template, resource_history_repo):
         resource = sample_resource()
         operation = sample_resource_operation(resource_id=resource.id, operation_id=str(uuid.uuid4()))
 
@@ -118,6 +126,7 @@ class TestResourceHelpers:
             resource_repo=resource_repo,
             operations_repo=operations_repo,
             resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
             user=create_test_user(),
             resource_template=basic_resource_template)
 
@@ -125,7 +134,7 @@ class TestResourceHelpers:
 
     @patch("api.routes.workspaces.ResourceTemplateRepository")
     @pytest.mark.asyncio
-    async def test_save_and_deploy_resource_raises_503_if_save_to_db_fails(self, resource_template_repo, resource_repo, operations_repo, basic_resource_template):
+    async def test_save_and_deploy_resource_raises_503_if_save_to_db_fails(self, resource_template_repo, resource_repo, operations_repo, basic_resource_template, resource_history_repo):
         resource = sample_resource()
         resource_repo.save_item = AsyncMock(side_effect=Exception)
 
@@ -135,6 +144,7 @@ class TestResourceHelpers:
                 resource_repo=resource_repo,
                 operations_repo=operations_repo,
                 resource_template_repo=resource_template_repo,
+                resource_history_repo=resource_history_repo,
                 user=create_test_user(),
                 resource_template=basic_resource_template)
 
@@ -143,7 +153,7 @@ class TestResourceHelpers:
     @patch("api.routes.workspaces.ResourceTemplateRepository")
     @patch("api.routes.resource_helpers.send_resource_request_message", return_value=None)
     @pytest.mark.asyncio
-    async def test_save_and_deploy_resource_sends_resource_request_message(self, send_resource_request_mock, resource_template_repo, resource_repo, operations_repo, basic_resource_template):
+    async def test_save_and_deploy_resource_sends_resource_request_message(self, send_resource_request_mock, resource_template_repo, resource_repo, operations_repo, basic_resource_template, resource_history_repo):
         resource = sample_resource()
         operation = sample_resource_operation(resource_id=resource.id, operation_id=str(uuid.uuid4()))
 
@@ -156,6 +166,7 @@ class TestResourceHelpers:
             resource_repo=resource_repo,
             operations_repo=operations_repo,
             resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
             user=create_test_user(),
             resource_template=basic_resource_template)
 
@@ -165,13 +176,14 @@ class TestResourceHelpers:
             resource_repo=resource_repo,
             user=user,
             resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
             resource_template=basic_resource_template,
             action=RequestAction.Install)
 
     @patch("api.routes.workspaces.ResourceTemplateRepository")
     @patch("api.routes.resource_helpers.send_resource_request_message", side_effect=Exception)
     @pytest.mark.asyncio
-    async def test_save_and_deploy_resource_raises_503_if_send_request_fails(self, _, resource_template_repo, resource_repo, operations_repo, basic_resource_template):
+    async def test_save_and_deploy_resource_raises_503_if_send_request_fails(self, _, resource_template_repo, resource_repo, operations_repo, basic_resource_template, resource_history_repo):
         resource = sample_resource()
         resource_repo.save_item = AsyncMock(return_value=None)
         resource_repo.delete_item = AsyncMock(return_value=None)
@@ -182,6 +194,7 @@ class TestResourceHelpers:
                 resource_repo=resource_repo,
                 operations_repo=operations_repo,
                 resource_template_repo=resource_template_repo,
+                resource_history_repo=resource_history_repo,
                 user=create_test_user(),
                 resource_template=basic_resource_template)
 
@@ -190,7 +203,7 @@ class TestResourceHelpers:
     @patch("api.routes.workspaces.ResourceTemplateRepository")
     @patch("api.routes.resource_helpers.send_resource_request_message", side_effect=Exception)
     @pytest.mark.asyncio
-    async def test_save_and_deploy_resource_deletes_item_from_db_if_send_request_fails(self, _, resource_template_repo, resource_repo, operations_repo, basic_resource_template):
+    async def test_save_and_deploy_resource_deletes_item_from_db_if_send_request_fails(self, _, resource_template_repo, resource_repo, operations_repo, basic_resource_template, resource_history_repo):
         resource = sample_resource()
 
         resource_repo.save_item = AsyncMock(return_value=None)
@@ -203,6 +216,7 @@ class TestResourceHelpers:
                 resource_repo=resource_repo,
                 operations_repo=operations_repo,
                 resource_template_repo=resource_template_repo,
+                resource_history_repo=resource_history_repo,
                 user=create_test_user(),
                 resource_template=basic_resource_template)
 
@@ -212,7 +226,7 @@ class TestResourceHelpers:
     @patch("api.routes.resource_helpers.send_resource_request_message", return_value=None)
     @patch("api.routes.workspaces.OperationRepository")
     @pytest.mark.asyncio
-    async def test_send_uninstall_message_sends_uninstall_message(self, operations_repo, send_request_mock, resource_template_repo, resource_repo, basic_resource_template):
+    async def test_send_uninstall_message_sends_uninstall_message(self, operations_repo, send_request_mock, resource_template_repo, resource_repo, basic_resource_template, resource_history_repo):
         resource = sample_resource()
         user = create_test_user()
 
@@ -222,6 +236,7 @@ class TestResourceHelpers:
             operations_repo=operations_repo,
             resource_type=ResourceType.Workspace,
             resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
             user=user,
             resource_template=basic_resource_template)
 
@@ -231,6 +246,7 @@ class TestResourceHelpers:
             resource_repo=resource_repo,
             user=user,
             resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
             resource_template=basic_resource_template,
             action=RequestAction.UnInstall)
 
@@ -238,7 +254,7 @@ class TestResourceHelpers:
     @patch("api.routes.resource_helpers.send_resource_request_message", side_effect=Exception)
     @patch("api.routes.workspaces.OperationRepository")
     @pytest.mark.asyncio
-    async def test_send_uninstall_message_raises_503_on_service_bus_exception(self, operations_repo, _, resource_template_repo, resource_repo, basic_resource_template):
+    async def test_send_uninstall_message_raises_503_on_service_bus_exception(self, operations_repo, _, resource_template_repo, resource_repo, basic_resource_template, resource_history_repo):
         with pytest.raises(HTTPException) as ex:
             await send_uninstall_message(
                 resource=sample_resource(),
@@ -246,6 +262,7 @@ class TestResourceHelpers:
                 operations_repo=operations_repo,
                 resource_type=ResourceType.Workspace,
                 resource_template_repo=resource_template_repo,
+                resource_history_repo=resource_history_repo,
                 user=create_test_user(),
                 resource_template=basic_resource_template)
 
@@ -254,7 +271,7 @@ class TestResourceHelpers:
     @patch("api.routes.workspaces.ResourceTemplateRepository")
     @patch("service_bus.resource_request_sender.send_deployment_message")
     @pytest.mark.asyncio
-    async def test_save_and_deploy_masks_secrets(self, send_deployment_message_mock, resource_template_repo, resource_repo, operations_repo, basic_resource_template):
+    async def test_save_and_deploy_masks_secrets(self, send_deployment_message_mock, resource_template_repo, resource_repo, operations_repo, basic_resource_template, resource_history_repo):
         resource = sample_resource_with_secret()
         step_id = "main"
         operation_id = str(uuid.uuid4())
@@ -269,6 +286,7 @@ class TestResourceHelpers:
             resource_repo=resource_repo,
             operations_repo=operations_repo,
             resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
             user=user,
             resource_template=basic_resource_template)
 
