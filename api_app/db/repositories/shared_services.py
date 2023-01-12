@@ -7,6 +7,7 @@ from pydantic import parse_obj_as
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 from db.repositories.resource_templates import ResourceTemplateRepository
+from db.repositories.resources_history import ResourceHistoryRepository
 from db.repositories.resources import ResourceRepository, IS_NOT_DELETED_CLAUSE, IS_ACTIVE_RESOURCE
 from db.errors import DuplicateEntity, EntityDoesNotExist
 from models.domain.shared_service import SharedService
@@ -77,7 +78,7 @@ class SharedServiceRepository(ResourceRepository):
 
         return shared_service, template
 
-    async def patch_shared_service(self, shared_service: SharedService, shared_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User, force_version_update: bool) -> Tuple[SharedService, ResourceTemplate]:
+    async def patch_shared_service(self, shared_service: SharedService, shared_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, force_version_update: bool) -> Tuple[SharedService, ResourceTemplate]:
         # get shared service template
         shared_service_template = await resource_template_repo.get_template_by_name_and_version(shared_service.templateName, shared_service.templateVersion, ResourceType.SharedService)
-        return await self.patch_resource(shared_service, shared_service_patch, shared_service_template, etag, resource_template_repo, user, force_version_update)
+        return await self.patch_resource(shared_service, shared_service_patch, shared_service_template, etag, resource_template_repo, resource_history_repo, user, force_version_update)

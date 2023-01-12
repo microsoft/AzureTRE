@@ -6,6 +6,7 @@ from typing import List
 from fastapi import HTTPException, status
 
 from api.routes.resource_helpers import send_uninstall_message
+from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.user_resource import UserResource
 from db.repositories.airlock_requests import AirlockRequestRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
@@ -147,6 +148,7 @@ async def delete_review_user_resource(
         workspace_service_repo: WorkspaceServiceRepository,
         resource_template_repo: ResourceTemplateRepository,
         operations_repo: OperationRepository,
+        resource_history_repo: ResourceHistoryRepository,
         user: User) -> Operation:
     workspace_service = await workspace_service_repo.get_workspace_service_by_id(workspace_id=user_resource.workspaceId,
                                                                                  service_id=user_resource.parentWorkspaceServiceId)
@@ -164,6 +166,7 @@ async def delete_review_user_resource(
         operations_repo=operations_repo,
         resource_type=ResourceType.UserResource,
         resource_template_repo=resource_template_repo,
+        resource_history_repo=resource_history_repo,
         user=user,
         resource_template=resource_template)
     logging.info(f"Started operation {operation}")
@@ -176,6 +179,7 @@ async def delete_all_review_user_resources(
         workspace_service_repo: WorkspaceServiceRepository,
         resource_template_repo: ResourceTemplateRepository,
         operations_repo: OperationRepository,
+        resource_history_repo: ResourceHistoryRepository,
         user: User) -> List[Operation]:
     operations: List[Operation] = []
     for review_ur in airlock_request.reviewUserResources.values():
@@ -191,6 +195,7 @@ async def delete_all_review_user_resources(
             workspace_service_repo=workspace_service_repo,
             resource_template_repo=resource_template_repo,
             operations_repo=operations_repo,
+            resource_history_repo=resource_history_repo,
             user=user
         )
         operations.append(operation)
