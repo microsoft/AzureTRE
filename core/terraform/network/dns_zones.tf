@@ -6,7 +6,6 @@
 # - privatelink.ods.opinsights.azure.com
 # - privatelink.agentsvc.azure-automation.net
 # - privatelink.blob.core.windows.net (used also by Storage module)
-# - privatelink.dfs.core.windows.net
 resource "azurerm_private_dns_zone" "azure_monitor" {
   name                = "privatelink.monitor.azure.com"
   resource_group_name = var.resource_group_name
