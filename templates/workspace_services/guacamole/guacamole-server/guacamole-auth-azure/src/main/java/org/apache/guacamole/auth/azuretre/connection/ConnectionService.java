@@ -110,6 +110,7 @@ public class ConnectionService {
         config.setParameter("drive-name", System.getenv("GUAC_DRIVE_NAME"));
         config.setParameter("drive-path", System.getenv("GUAC_DRIVE_PATH"));
         config.setParameter("disable-download", System.getenv("GUAC_DISABLE_DOWNLOAD"));
+        config.setParameter("disable-upload", System.getenv("GUAC_DISABLE_UPLOAD"));
     }
 
     private static JSONArray getVMsFromProjectAPI(final AzureTREAuthenticatedUser user) throws GuacamoleException {

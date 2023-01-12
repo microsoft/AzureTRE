@@ -71,6 +71,10 @@ parameters:
     default: true
     env: GUAC_DISABLE_DOWNLOAD
     description: "Guacamole disable download configuration"
+  - name: guac_disable_upload
+    type: boolean
+    default: true
+    env: GUAC_DISABLE_UPLOAD
   - name: is_exposed_externally
     type: boolean
     default: false
@@ -132,6 +136,7 @@ install:
         guac_drive_name: ${ bundle.parameters.guac_drive_name }
         guac_drive_path: ${ bundle.parameters.guac_drive_path }
         guac_disable_download: ${ bundle.parameters.guac_disable_download }
+        guac_disable_upload: ${ bundle.parameters.guac_disable_upload }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
       backendConfig:
@@ -160,6 +165,7 @@ upgrade:
         guac_drive_name: ${ bundle.parameters.guac_drive_name }
         guac_drive_path: ${ bundle.parameters.guac_drive_path }
         guac_disable_download: ${ bundle.parameters.guac_disable_download }
+        guac_disable_upload: ${ bundle.parameters.guac_disable_upload }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
       backendConfig:
@@ -189,6 +195,7 @@ uninstall:
         guac_drive_name: ${ bundle.parameters.guac_drive_name }
         guac_drive_path: ${ bundle.parameters.guac_drive_path }
         guac_disable_download: ${ bundle.parameters.guac_disable_download }
+        guac_disable_upload: ${ bundle.parameters.guac_disable_upload }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
       backendConfig:
