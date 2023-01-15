@@ -53,7 +53,7 @@ resource "azurerm_app_service" "mlflow" {
   name                = local.webapp_name
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
-  app_service_plan_id = data.azurerm_app_service_plan.workspace.id
+  app_service_plan_id = data.azurerm_service_plan.workspace.id
   https_only          = true
   tags                = local.tre_workspace_service_tags
 
@@ -107,7 +107,7 @@ resource "azurerm_monitor_diagnostic_setting" "mlflow" {
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
   dynamic "log" {
-    for_each = data.azurerm_monitor_diagnostic_categories.mlflow.logs
+    for_each = data.azurerm_monitor_diagnostic_categories.mlflow.log_category_types
     content {
       category = log.value
       enabled  = contains(local.web_app_diagnostic_categories_enabled, log.value) ? true : false

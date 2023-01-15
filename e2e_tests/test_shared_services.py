@@ -66,33 +66,57 @@ async def test_patch_firewall(verify):
                     ]
                 }
             ],
-        },
-        "templateName": template_name,
+        }
     }
 
     admin_token = await get_admin_token(verify)
     shared_service_firewall = await get_shared_service_by_name(
         template_name, verify, admin_token
     )
-    shared_service_path = f'/shared-services/{shared_service_firewall["id"]}'
 
-    await post_resource(
-        payload=patch_payload,
-        endpoint=f"/api{shared_service_path}",
-        access_token=admin_token,
-        verify=verify,
-        method="PATCH",
-        etag=shared_service_firewall['_etag'],
-    )
+    if shared_service_firewall:
+        shared_service_path = f'/shared-services/{shared_service_firewall["id"]}'
+
+        await post_resource(
+            payload=patch_payload,
+            endpoint=f"/api{shared_service_path}",
+            access_token=admin_token,
+            verify=verify,
+            method="PATCH",
+            etag=shared_service_firewall['_etag'],
+        )
 
 
 shared_service_templates_to_create = [
-    (strings.GITEA_SHARED_SERVICE),
+    strings.GITEA_SHARED_SERVICE,
+    strings.CERTS_SHARED_SERVICE,
+    strings.ADMIN_VM_SHARED_SERVICE,
+
+    # TODO: https://github.com/microsoft/AzureTRE/issues/3077
+    # strings.AIRLOCK_NOTIFIER_SHARED_SERVICE,
+
+    # TODO: Until this is resolved we can't install nexus in parallel with others: https://github.com/microsoft/AzureTRE/issues/2328
+    # strings.NEXUS_SHARED_SERVICE,
+
+    # TODO: fix cyclecloud and enable this
+    # strings.CYCLECLOUD_SHARED_SERVICE,
 ]
+
+create_certs_properties = {
+    "domain_prefix": "foo",
+    "cert_name": "cert-foo",
+}
+
+create_airlock_notifier_properties = {
+    "smtp_server_address": "10.1.2.3",
+    "smtp_username": "smtp_user",
+    "smtp_password": "abcdefg01234567890",
+    "smtp_from_email": "a@a.com",
+}
 
 
 @pytest.mark.shared_services
-@pytest.mark.timeout(65 * 60)
+@pytest.mark.timeout(40 * 60)
 @pytest.mark.parametrize("template_name", shared_service_templates_to_create)
 async def test_create_shared_service(template_name, verify) -> None:
     admin_token = await get_admin_token(verify)
@@ -116,6 +140,11 @@ async def test_create_shared_service(template_name, verify) -> None:
             "description": f"{template_name} deployed via e2e tests",
         },
     }
+
+    if template_name == strings.CERTS_SHARED_SERVICE:
+        post_payload["properties"].update(create_certs_properties)
+    elif template_name == strings.AIRLOCK_NOTIFIER_SHARED_SERVICE:
+        post_payload["properties"].update(create_airlock_notifier_properties)
 
     shared_service_path, _ = await post_resource(
         payload=post_payload,
