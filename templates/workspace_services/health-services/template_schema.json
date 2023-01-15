@@ -176,7 +176,7 @@
       {
         "stepId": "d5504764-94cd-11ed-a1eb-0242ac120002",
         "stepTitle": "Add network firewall rules for health services",
-        "resourceTemplateName": "tre-shared-service-hs",
+        "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
         "resourceAction": "upgrade",
         "properties": [
