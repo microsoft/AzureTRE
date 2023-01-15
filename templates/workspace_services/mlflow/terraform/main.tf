@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.97.0"
+      version = "=3.39.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -23,7 +23,20 @@ terraform {
 }
 
 provider "azurerm" {
-  features {}
+  features {
+    key_vault {
+      # Don't purge on destroy (this would fail due to purge protection being enabled on keyvault)
+      purge_soft_delete_on_destroy               = false
+      purge_soft_deleted_secrets_on_destroy      = false
+      purge_soft_deleted_certificates_on_destroy = false
+      purge_soft_deleted_keys_on_destroy         = false
+      # When recreating an environment, recover any previously soft deleted secrets - set to true by default
+      recover_soft_deleted_key_vaults   = true
+      recover_soft_deleted_secrets      = true
+      recover_soft_deleted_certificates = true
+      recover_soft_deleted_keys         = true
+    }
+  }
 }
 
 data "azurerm_resource_group" "ws" {
@@ -52,7 +65,7 @@ data "azurerm_key_vault" "ws" {
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
-data "azurerm_app_service_plan" "workspace" {
+data "azurerm_service_plan" "workspace" {
   name                = "plan-${var.workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
