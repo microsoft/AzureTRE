@@ -60,7 +60,7 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
             break
 
     if template_step is None:
-        raise f"Cannot find step with id of {operation_step.stepId} in template {primary_resource.templateName} for action {primary_action}"
+        raise Exception(f"Cannot find step with id of {operation_step.stepId} in template {primary_resource.templateName} for action {primary_action}")
 
     if template_step.resourceAction == "upgrade":
         resource_to_send = await try_upgrade_with_retries(

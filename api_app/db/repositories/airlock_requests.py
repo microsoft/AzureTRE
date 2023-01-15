@@ -2,7 +2,7 @@ import copy
 import uuid
 
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
 from azure.cosmos.aio import CosmosClient
@@ -108,7 +108,7 @@ class AirlockRequestRepository(BaseRepository):
 
         return airlock_request
 
-    async def get_airlock_requests(self, workspace_id: str, creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
+    async def get_airlock_requests(self, workspace_id: str, creator_user_id: Optional[str] = None, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
         query = self.airlock_requests_query() + f' WHERE c.workspaceId = "{workspace_id}"'
 
         # optional filters
@@ -143,11 +143,11 @@ class AirlockRequestRepository(BaseRepository):
             self,
             original_request: AirlockRequest,
             updated_by: User,
-            new_status: AirlockRequestStatus = None,
-            request_files: List[AirlockFile] = None,
-            status_message: str = None,
-            airlock_review: AirlockReview = None,
-            review_user_resource: AirlockReviewUserResource = None) -> AirlockRequest:
+            new_status: Optional[AirlockRequestStatus] = None,
+            request_files: Optional[List[AirlockFile]] = None,
+            status_message: Optional[str] = None,
+            airlock_review: Optional[AirlockReview] = None,
+            review_user_resource: Optional[AirlockReviewUserResource] = None) -> AirlockRequest:
         updated_request = self._build_updated_request(
             original_request=original_request,
             new_status=new_status,
@@ -186,12 +186,12 @@ class AirlockRequestRepository(BaseRepository):
     def _build_updated_request(
             self,
             original_request: AirlockRequest,
-            new_status: AirlockRequestStatus = None,
-            request_files: List[AirlockFile] = None,
-            status_message: str = None,
-            airlock_review: AirlockReview = None,
-            review_user_resource: AirlockReviewUserResource = None,
-            updated_by: User = None) -> AirlockRequest:
+            new_status: Optional[AirlockRequestStatus] = None,
+            request_files: Optional[List[AirlockFile]] = None,
+            status_message: Optional[Optional[str]] = None,
+            airlock_review: Optional[AirlockReview] = None,
+            review_user_resource: Optional[AirlockReviewUserResource] = None,
+            updated_by: Optional[User] = None) -> AirlockRequest:
         updated_request = copy.deepcopy(original_request)
 
         if new_status is not None:
@@ -210,7 +210,7 @@ class AirlockRequestRepository(BaseRepository):
             else:
                 updated_request.reviews.append(airlock_review)
 
-        if review_user_resource is not None:
+        if review_user_resource is not None and updated_by is not None:
             updated_request.reviewUserResources[updated_by.id] = review_user_resource
 
         return updated_request
