@@ -69,7 +69,7 @@
             "arraySubstitutionAction": "replace",
             "arrayMatchField": "name",
             "value": {
-              "name": "nrc_svc_{{ resource.id }}_hs",
+              "name": "nrc_svc_{{ resource.id }}_health_services",
               "action": "Allow",
               "rules": [
                 {
@@ -89,7 +89,7 @@
             "arraySubstitutionAction": "replace",
             "arrayMatchField": "name",
             "value": {
-              "name": "arc_svc_{{ resource.id }}_hs",
+              "name": "arc_svc_{{ resource.id }}_health_services",
               "action": "Allow",
               "rules": [
                 {
@@ -129,7 +129,7 @@
             "arraySubstitutionAction": "replace",
             "arrayMatchField": "name",
             "value": {
-              "name": "nrc_svc_{{ resource.id }}_hs",
+              "name": "nrc_svc_{{ resource.id }}_health_services",
               "action": "Allow",
               "rules": [
                 {
@@ -149,7 +149,7 @@
             "arraySubstitutionAction": "replace",
             "arrayMatchField": "name",
             "value": {
-              "name": "arc_svc_{{ resource.id }}_hs",
+              "name": "arc_svc_{{ resource.id }}_health_services",
               "action": "Allow",
               "rules": [
                 {
@@ -186,7 +186,7 @@
             "arraySubstitutionAction": "remove",
             "arrayMatchField": "name",
             "value": {
-              "name": "nrc_svc_{{ resource.id }}_hs"
+              "name": "nrc_svc_{{ resource.id }}_health_services"
             }
           },
           {
@@ -195,7 +195,7 @@
             "arraySubstitutionAction": "remove",
             "arrayMatchField": "name",
             "value": {
-              "name": "arc_svc_{{ resource.id }}_hs"
+              "name": "arc_svc_{{ resource.id }}_health_services"
             }
           }
         ]
