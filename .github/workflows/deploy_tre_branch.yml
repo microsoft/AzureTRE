@@ -58,17 +58,15 @@ jobs:
       prHeadSha: ${{ github.sha }}
       e2eTestsCustomSelector: ${{ github.event.inputs.e2eTestsCustomSelector }}
       environmentName: ${{ github.event.inputs.environment }}
+      DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
-      DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
       API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
       APPLICATION_ADMIN_CLIENT_ID: ${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}
       APPLICATION_ADMIN_CLIENT_SECRET: ${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}
-      CORE_ADDRESS_SPACE: ${{ secrets.CORE_ADDRESS_SPACE }}
-      LOCATION: ${{ secrets.LOCATION }}
       MGMT_RESOURCE_GROUP_NAME: ${{ format('rg-tre{0}-mgmt', needs.prepare-not-main.outputs.refid) }}
       MS_TEAMS_WEBHOOK_URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
       MGMT_STORAGE_ACCOUNT_NAME: ${{ format('tre{0}mgmt', needs.prepare-not-main.outputs.refid) }}
@@ -78,12 +76,5 @@ jobs:
       TEST_WORKSPACE_APP_SECRET: ${{ secrets.TEST_WORKSPACE_APP_SECRET }}
       TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
       TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-      TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME }}
-      TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
-      ENABLE_SWAGGER: ${{ secrets.ENABLE_SWAGGER }}
       TRE_ID: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
-      TF_LOG: ${{ secrets.TF_LOG }}
-      CORE_APP_SERVICE_PLAN_SKU: ${{ secrets.CORE_APP_SERVICE_PLAN_SKU }}
-      WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ secrets.WORKSPACE_APP_SERVICE_PLAN_SKU }}
-      RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE: ${{ secrets.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE }}

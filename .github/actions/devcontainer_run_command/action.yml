@@ -160,8 +160,8 @@ runs:
           -e ENABLE_SWAGGER="${{ inputs.ENABLE_SWAGGER }}" \
           -e SWAGGER_UI_CLIENT_ID="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
           -e TF_VAR_swagger_ui_client_id="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
-          -e TF_VAR_core_address_space="${{ inputs.core_address_space }}" \
-          -e TF_VAR_tre_address_space="${{ inputs.tre_address_space }}" \
+          -e TF_VAR_core_address_space="${{ (inputs.CORE_ADDRESS_SPACE != '' && inputs.CORE_ADDRESS_SPACE) || '10.0.0.0/22' }}" \
+          -e TF_VAR_tre_address_space="${{ (inputs.TRE_ADDRESS_SPACE != '' && inputs.TRE_ADDRESS_SPACE) || '10.0.0.0/16'  }}" \
           -e API_CLIENT_ID="${{ inputs.API_CLIENT_ID }}" \
           -e AAD_TENANT_ID="${{ inputs.AAD_TENANT_ID }}" \
           -e TRE_ID="${{ inputs.TRE_ID }}" \
