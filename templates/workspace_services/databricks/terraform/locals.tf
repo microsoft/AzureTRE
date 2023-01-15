@@ -24,3 +24,9 @@ locals {
     tre_workspace_service_id = var.tre_resource_id
   }
 }
+
+data "azurerm_subnet" "services" {
+  name                 = "ServicesSubnet"
+  virtual_network_name = data.azurerm_virtual_network.ws.name
+  resource_group_name  = data.azurerm_virtual_network.ws.resource_group_name
+}

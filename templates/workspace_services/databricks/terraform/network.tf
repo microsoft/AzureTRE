@@ -163,3 +163,58 @@ resource "azurerm_subnet_route_table_association" "rt_public" {
   subnet_id      = azurerm_subnet.public.id
   route_table_id = azurerm_route_table.rt.id
 }
+
+
+// dpcp - data plane to control plane
+resource "azurerm_private_endpoint" "databricks_dpcp_private_endpoint" {
+  name                = "pe-adb-dpcp-${local.service_resource_name_suffix}"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  subnet_id           = data.azurerm_subnet.services.id
+  tags                = local.tre_workspace_service_tags
+
+  private_service_connection {
+    name                           = "psc-adb-dpcp-${local.service_resource_name_suffix}"
+    private_connection_resource_id = azurerm_databricks_workspace.databricks.id
+    is_manual_connection           = false
+    subresource_names              = ["databricks_ui_api"]
+  }
+
+  private_dns_zone_group {
+    name                 = "pdnszg-dpcp-${local.service_resource_name_suffix}"
+    private_dns_zone_ids = [azurerm_private_dns_zone.dns_dpcp.id]
+  }
+}
+//todo
+resource "azurerm_private_dns_zone" "dns_dpcp" {
+  name                = "privatelink.azuredatabricks.net"
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "databricks_dpcp_dns_zone_vnet_link" {
+  name                  = "pdnszvnl-adb-dpcp-${local.service_resource_name_suffix}"
+  resource_group_name   = data.azurerm_resource_group.rg.name
+  private_dns_zone_name = azurerm_private_dns_zone.dns_dpcp.name
+  virtual_network_id    = data.azurerm_virtual_network.ws.id
+}
+
+resource "azurerm_private_endpoint" "databricks_auth_private_endpoint" {
+  name                = "pe-adb-auth-${local.service_resource_name_suffix}"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  subnet_id           = data.azurerm_subnet.services.id
+  tags                = local.tre_workspace_service_tags
+
+  private_service_connection {
+    name                           = "psc-adb-auth-${local.service_resource_name_suffix}"
+    private_connection_resource_id = azurerm_databricks_workspace.databricks.id
+    is_manual_connection           = false
+    subresource_names              = ["browser_authentication"]
+  }
+
+  private_dns_zone_group {
+    name                 = "pdnszg-adb-auth-${local.service_resource_name_suffix}"
+    private_dns_zone_ids = [azurerm_private_dns_zone.dns_dpcp.id]
+  }
+}
+
