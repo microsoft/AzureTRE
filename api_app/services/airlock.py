@@ -113,7 +113,7 @@ def get_account_url(account_name: str) -> str:
 async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, airlock_request: AirlockRequest, user: User, workspace: Workspace,
                                  airlock_request_repo: AirlockRequestRepository, user_resource_repo: UserResourceRepository,
                                  workspace_service_repo, operation_repo: WorkspaceServiceRepository, resource_template_repo: ResourceTemplateRepository,
-                                 resource_history_repo: ResourceHistoryRepository):
+                                 resource_history_repo: ResourceHistoryRepository) -> AirlockRequest:
     airlock_review = airlock_request_repo.create_airlock_review_item(airlock_review_input, user)
     # Store review with new status in cosmos, and send status_changed event
     if airlock_review.reviewDecision.value == AirlockReviewDecision.Approved:
