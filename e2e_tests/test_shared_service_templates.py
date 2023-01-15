@@ -9,8 +9,12 @@ from resources import strings
 from helpers import get_admin_token
 
 shared_service_templates = [
-    (strings.FIREWALL_SHARED_SERVICE),
-    (strings.GITEA_SHARED_SERVICE),
+    strings.FIREWALL_SHARED_SERVICE,
+    strings.GITEA_SHARED_SERVICE,
+    strings.CERTS_SHARED_SERVICE,
+    strings.AIRLOCK_NOTIFIER_SHARED_SERVICE,
+    strings.ADMIN_VM_SHARED_SERVICE,
+    strings.NEXUS_SHARED_SERVICE,
 ]
 
 
