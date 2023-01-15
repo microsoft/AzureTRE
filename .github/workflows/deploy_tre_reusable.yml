@@ -446,6 +446,16 @@ jobs:
              BUNDLE_DIR: "./templates/shared_services/firewall/"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/admin-vm/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/airlock_notifier/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/certs/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/cyclecloud/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/sonatype-nexus-vm/"}
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
@@ -479,6 +489,16 @@ jobs:
              BUNDLE_DIR: "./templates/shared_services/firewall"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/admin-vm/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/airlock_notifier/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/certs/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/cyclecloud/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/sonatype-nexus-vm/"}
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
