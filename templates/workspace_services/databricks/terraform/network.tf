@@ -189,6 +189,7 @@ resource "azurerm_private_endpoint" "databricks_dpcp_private_endpoint" {
 resource "azurerm_private_dns_zone" "dns_dpcp" {
   name                = "privatelink.azuredatabricks.net"
   resource_group_name = data.azurerm_resource_group.rg.name
+  tags                = local.tre_workspace_service_tags
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "databricks_dpcp_dns_zone_vnet_link" {
@@ -196,6 +197,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "databricks_dpcp_dns_zo
   resource_group_name   = data.azurerm_resource_group.rg.name
   private_dns_zone_name = azurerm_private_dns_zone.dns_dpcp.name
   virtual_network_id    = data.azurerm_virtual_network.ws.id
+  tags                  = local.tre_workspace_service_tags
 }
 
 resource "azurerm_private_endpoint" "databricks_auth_private_endpoint" {
