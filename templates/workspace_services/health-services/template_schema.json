@@ -57,7 +57,7 @@
         "stepId": "main"
       },
       {
-        "stepId": "360421b3-7308-491f-b531-e007cbh0ff46",
+        "stepId": "d5504764-94cd-11ed-a1eb-0242ac120002",
         "stepTitle": "Add network firewall rules for health services",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
@@ -117,7 +117,7 @@
         "stepId": "main"
       },
       {
-        "stepId": "360421b3-7308-491f-b531-e007cdc0ff46",
+        "stepId": "d5504764-94cd-11ed-a1eb-0242ac120002",
         "stepTitle": "Add network firewall rules for health services",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
@@ -174,7 +174,7 @@
     ],
     "uninstall": [
       {
-        "stepId": "360421b3-7388-491f-b531-e007cdc0ff46",
+        "stepId": "d5504764-94cd-11ed-a1eb-0242ac120002",
         "stepTitle": "Add network firewall rules for health services",
         "resourceTemplateName": "tre-shared-service-hs",
         "resourceType": "shared-service",

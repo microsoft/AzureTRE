@@ -61,6 +61,11 @@ outputs:
     type: string
     applyTo:
       - install
+  - name: workspace_address_space
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
   - exec
@@ -85,6 +90,7 @@ install:
       outputs:
         - name: fhir_url
         - name: dicom_url
+        - name: workspace_address_space
 
 upgrade:
   - terraform:
@@ -104,6 +110,7 @@ upgrade:
       outputs:
         - name: fhir_url
         - name: dicom_url
+        - name: workspace_address_space
 
 uninstall:
   - terraform:
