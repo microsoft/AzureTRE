@@ -19,7 +19,7 @@ data "azurerm_key_vault_secret" "aad_tenant_id" {
 
 data "azurerm_firewall" "fw" {
   name                = "fw-${var.tre_id}"
-  resource_group_name = data.azurerm_resource_group.rg.name
+  resource_group_name = "rg-${var.tre_id}"
 }
 
 data "external" "rule_priorities" {
