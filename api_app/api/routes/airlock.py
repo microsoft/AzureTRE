@@ -15,7 +15,7 @@ from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
 
-from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType, AirlockReviewDecision
+from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
 from models.schemas.operation import OperationInResponse
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestWithAllowedUserActions, \
@@ -25,10 +25,10 @@ from services.authentication import get_current_workspace_owner_or_researcher_us
     get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user
 
 from .airlock_resource_helpers import get_allowed_actions, save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, \
-    enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace, delete_all_review_user_resources
+    enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace
 from .resource_helpers import construct_location_header
 
-from services.airlock import create_review_vm, get_airlock_container_link
+from services.airlock import create_review_vm, review_airlock_request, get_airlock_container_link
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 
@@ -164,38 +164,13 @@ async def create_airlock_review(
         operation_repo=Depends(get_repository(OperationRepository)),
         resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
         resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> AirlockRequestWithAllowedUserActions:
-
     try:
-        airlock_review = airlock_request_repo.create_airlock_review_item(airlock_review_input, user)
+        updated_airlock_request = await review_airlock_request(airlock_review_input, airlock_request, user, workspace, airlock_request_repo, user_resource_repo, workspace_service_repo, operation_repo, resource_template_repo, resource_history_repo)
+        allowed_actions = get_allowed_actions(updated_airlock_request, user, airlock_request_repo)
+        return AirlockRequestWithAllowedUserActions(airlockRequest=updated_airlock_request, allowedUserActions=allowed_actions)
     except (ValidationError, ValueError) as e:
         logging.exception("Failed creating airlock review model instance")
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
-    # Store review with new status in cosmos, and send status_changed event
-    if airlock_review.reviewDecision.value == AirlockReviewDecision.Approved:
-        review_status = AirlockRequestStatus.ApprovalInProgress
-    elif airlock_review.reviewDecision.value == AirlockReviewDecision.Rejected:
-        review_status = AirlockRequestStatus.RejectionInProgress
-
-    updated_airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request,
-                                                                             airlock_request_repo=airlock_request_repo, updated_by=user,
-                                                                             workspace=workspace, new_status=review_status,
-                                                                             airlock_review=airlock_review)
-
-    # If there was a VM created for the request, clean it up as it will no longer be needed
-    # In this request, we aren't returning the operations for clean up of VMs,
-    # however the operations still will be saved in the DB and displayed on the UI as normal.
-    _ = await delete_all_review_user_resources(
-        airlock_request=airlock_request,
-        user_resource_repo=user_resource_repo,
-        workspace_service_repo=workspace_service_repo,
-        resource_template_repo=resource_template_repo,
-        operations_repo=operation_repo,
-        resource_history_repo=resource_history_repo,
-        user=user
-    )
-
-    allowed_actions = get_allowed_actions(updated_airlock_request, user, airlock_request_repo)
-    return AirlockRequestWithAllowedUserActions(airlockRequest=updated_airlock_request, allowedUserActions=allowed_actions)
 
 
 @airlock_workspace_router.get("/workspaces/{workspace_id}/requests/{airlock_request_id}/link",

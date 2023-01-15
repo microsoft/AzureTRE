@@ -4,17 +4,18 @@ import logging
 from azure.storage.blob import generate_container_sas, ContainerSasPermissions, BlobServiceClient
 from fastapi import HTTPException, status
 from core import config, credentials
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReviewUserResource
+from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReviewUserResource, AirlockReviewDecision
 from models.domain.authentication import User
 from models.domain.workspace import Workspace
 from models.domain.user_resource import UserResource
 from models.domain.operation import Operation
+from models.schemas.airlock_request import AirlockReviewInCreate
 from typing import Tuple
 from models.schemas.user_resource import UserResourceInCreate
 from services.azure_resource_status import get_azure_resource_status
 from resources import strings, constants
 
-from airlock_resource_helpers import delete_review_user_resource, update_and_publish_event_airlock_request
+from airlock_resource_helpers import delete_review_user_resource, update_and_publish_event_airlock_request, delete_all_review_user_resources
 from resource_helpers import save_and_deploy_resource
 
 from db.repositories.user_resources import UserResourceRepository
@@ -107,6 +108,38 @@ def get_airlock_request_container_sas_token(account_name: str,
 
 def get_account_url(account_name: str) -> str:
     return f"https://{account_name}.blob.core.windows.net/"
+
+
+async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, airlock_request: AirlockRequest, user: User, workspace: Workspace,
+                                 airlock_request_repo: AirlockRequestRepository, user_resource_repo: UserResourceRepository,
+                                 workspace_service_repo, operation_repo: WorkspaceServiceRepository, resource_template_repo: ResourceTemplateRepository,
+                                 resource_history_repo: ResourceHistoryRepository):
+    airlock_review = airlock_request_repo.create_airlock_review_item(airlock_review_input, user)
+    # Store review with new status in cosmos, and send status_changed event
+    if airlock_review.reviewDecision.value == AirlockReviewDecision.Approved:
+        review_status = AirlockRequestStatus.ApprovalInProgress
+    elif airlock_review.reviewDecision.value == AirlockReviewDecision.Rejected:
+        review_status = AirlockRequestStatus.RejectionInProgress
+
+    updated_airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request,
+                                                                             airlock_request_repo=airlock_request_repo, updated_by=user,
+                                                                             workspace=workspace, new_status=review_status,
+                                                                             airlock_review=airlock_review)
+
+    # If there was a VM created for the request, clean it up as it will no longer be needed
+    # In this request, we aren't returning the operations for clean up of VMs,
+    # however the operations still will be saved in the DB and displayed on the UI as normal.
+    _ = await delete_all_review_user_resources(
+        airlock_request=airlock_request,
+        user_resource_repo=user_resource_repo,
+        workspace_service_repo=workspace_service_repo,
+        resource_template_repo=resource_template_repo,
+        operations_repo=operation_repo,
+        resource_history_repo=resource_history_repo,
+        user=user
+    )
+
+    return updated_airlock_request
 
 
 def get_airlock_container_link(airlock_request: AirlockRequest, user, workspace):
