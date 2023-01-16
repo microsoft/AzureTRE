@@ -193,7 +193,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "databricks_dpcp_dns_zo
   name                  = "pdnszvnl-adb-dpcp-${local.service_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.databricks_dpcp.name
-  virtual_network_id    = data.azurerm_virtual_network.ws.id
+  virtual_network_id    = data.azurerm_virtual_network.core.id
   tags                  = local.tre_workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }

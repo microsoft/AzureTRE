@@ -17,6 +17,7 @@ locals {
   network_security_group_name    = "nsg-${local.service_resource_name_suffix}"
   route_table_name               = "rt-${local.service_resource_name_suffix}"
   map_location_url_config        = jsondecode(file("${path.module}/databricks-udr.json"))
+  core_vnet                      = "vnet-${var.tre_id}"
 
   tre_workspace_service_tags = {
     tre_id                   = var.tre_id
