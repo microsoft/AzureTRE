@@ -59,9 +59,6 @@ COMPONENTS:
 | tre-shared-service-firewall | 0.7.0 |
 | tre-shared-service-gitea | 0.5.0 |
 | tre-shared-service-sonatype-nexus | 2.3.0 |
-| tre-workspace-airlock-import-review | 0.6.0 |
-| tre-workspace-base | 0.8.1 |
-| tre-workspace-unrestricted | 0.6.0 |
 | tre-service-azureml | 0.6.0 |
 | tre-user-resource-aml-compute-instance | 0.5.0 |
 | tre-workspace-service-gitea | 0.7.0 |
@@ -74,6 +71,9 @@ COMPONENTS:
 | tre-service-innereye | 0.5.0 |
 | tre-service-mlflow | 0.6.0 |
 | tre-workspace-service-mysql | 0.3.1 |
+| tre-workspace-airlock-import-review | 0.6.0 |
+| tre-workspace-base | 0.8.1 |
+| tre-workspace-unrestricted | 0.6.0 |
 
 ## 0.7.0 (November 17, 2022)
 
