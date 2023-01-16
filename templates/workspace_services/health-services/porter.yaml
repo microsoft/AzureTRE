@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-health
-version: 4.1.9
+version: 0.1.0
 description: "An Azure Data Health Services workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -61,6 +61,11 @@ outputs:
     type: string
     applyTo:
       - install
+  - name: workspace_address_space
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
   - exec
@@ -81,10 +86,11 @@ install:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
-        key: "${ bundle.name }-{{ bundle.parameters.id }}"
+        key: ${ bundle.name }-${ bundle.parameters.id }
       outputs:
         - name: fhir_url
         - name: dicom_url
+        - name: workspace_address_space
 
 upgrade:
   - terraform:
@@ -100,10 +106,11 @@ upgrade:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
-        key: "${ bundle.name }-{{ bundle.parameters.id }}"
+        key: ${ bundle.name }-${ bundle.parameters.id }
       outputs:
         - name: fhir_url
         - name: dicom_url
+        - name: workspace_address_space
 
 uninstall:
   - terraform:

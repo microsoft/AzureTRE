@@ -1,7 +1,7 @@
 import copy
 import semantic_version
 from datetime import datetime
-from typing import Tuple, List
+from typing import Optional, Tuple, List
 
 from azure.cosmos.aio import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
@@ -82,7 +82,7 @@ class ResourceRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Resource, resources[0])
 
-    async def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, user_roles: List[str] = None, parent_template_name: str = "") -> ResourceTemplate:
+    async def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, user_roles: Optional[List[str]] = None, parent_template_name: Optional[str] = None) -> ResourceTemplate:
         try:
             template = await self._get_enriched_template(template_name, resource_type, parent_template_name)
         except EntityDoesNotExist:
