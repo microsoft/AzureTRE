@@ -266,9 +266,3 @@ resource "azurerm_private_dns_zone_virtual_network_link" "private_dns_zone_links
 
   lifecycle { ignore_changes = [tags] }
 }
-
-resource "azurerm_private_dns_zone" "databricks_dpcp" {
-  name                = "privatelink.azuredatabricks.net"
-  resource_group_name = var.resource_group_name
-  tags                = local.tre_core_tags
-}
