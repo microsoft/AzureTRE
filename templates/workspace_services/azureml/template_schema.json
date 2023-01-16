@@ -91,6 +91,20 @@
                   ]
                 },
                 {
+                  "name": "AzureMachineLearning5831",
+                  "description": "Azure Machine Learning 5831",
+                  "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
+                  "destination_addresses": [
+                    "AzureMachineLearning"
+                  ],
+                  "destination_ports": [
+                    "5831"
+                  ],
+                  "protocols": [
+                    "UDP"
+                  ]
+                },
+                {
                   "name": "AzureML_Dependancies",
                   "description": "AzureML Dependancies",
                   "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
@@ -100,6 +114,20 @@
                     "{{ resource.properties.mcr_tag }}",
                     "AzureFrontDoor.FirstParty"
 
+                  ],
+                  "destination_ports": [
+                    "443"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "AzureML_Client",
+                  "description": "AzureML Client",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "destination_addresses": [
+                    "AzureActiveDirectory"
                   ],
                   "destination_ports": [
                     "443"
@@ -193,6 +221,20 @@
                   ]
                 },
                 {
+                  "name": "AzureMachineLearning5831",
+                  "description": "Azure Machine Learning 5831",
+                  "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
+                  "destination_addresses": [
+                    "AzureMachineLearning"
+                  ],
+                  "destination_ports": [
+                    "5831"
+                  ],
+                  "protocols": [
+                    "UDP"
+                  ]
+                },
+                {
                   "name": "AzureML_Dependancies",
                   "description": "AzureML Dependancies",
                   "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
@@ -202,6 +244,20 @@
                     "{{ resource.properties.mcr_tag }}",
                     "AzureFrontDoor.FirstParty"
 
+                  ],
+                  "destination_ports": [
+                    "443"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "AzureML_Client",
+                  "description": "AzureML Client",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "destination_addresses": [
+                    "AzureActiveDirectory"
                   ],
                   "destination_ports": [
                     "443"

@@ -169,6 +169,20 @@ resource "azurerm_network_security_rule" "allow_outbound_to_internet" {
   source_port_range           = "*"
 }
 
+resource "azurerm_network_security_rule" "allow_outbound_to_aml_5831" {
+  access                      = "Allow"
+  destination_address_prefix  = "AzureMachineLearning"
+  destination_port_range      = "5831"
+  direction                   = "Outbound"
+  name                        = "to-internet"
+  network_security_group_name = azurerm_network_security_group.aml.name
+  priority                    = 106
+  protocol                    = "Udp"
+  resource_group_name         = data.azurerm_resource_group.ws.name
+  source_address_prefix       = "*"
+  source_port_range           = "*"
+}
+
 resource "azurerm_network_security_rule" "allow_outbound_within_workspace_vnet" {
   access                       = "Allow"
   destination_port_range       = "*"
