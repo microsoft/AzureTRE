@@ -50,5 +50,159 @@
         }
       }
     }
-  ]
+  ],
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "d5504764-94cd-11ed-a1eb-0242ac120002",
+        "stepTitle": "Add network firewall rules for health services",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_health_services",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureAD",
+                  "description": "AAD access",
+                  "source_addresses": "{{ resource.properties.workspace_address_space }}",
+                  "destination_addresses": ["AzureActiveDirectory"],
+                  "destination_ports": ["*"],
+                  "protocols": ["TCP"]
+                }
+              ]
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_health_services",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AAD CDN",
+                  "description": "AAD CDN",
+                  "source_addresses": "{{ resource.properties.workspace_address_space }}",
+                  "target_fqdns": [
+                    "aadcdn.msftauth.net"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "12c0cf8c-94f7-11ed-a1eb-0242ac120002",
+        "stepTitle": "Add network firewall rules for health services",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_health_services",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureAD",
+                  "description": "AAD access for authNZ",
+                  "source_addresses": "{{ resource.properties.workspace_address_space }}",
+                  "destination_addresses": ["AzureActiveDirectory"],
+                  "destination_ports": ["*"],
+                  "protocols": ["TCP"]
+                }
+              ]
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_health_services",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AAD CDN",
+                  "description": "AAD CDN",
+                  "source_addresses": "{{ resource.properties.workspace_address_space }}",
+                  "target_fqdns": [
+                    "aadcdn.msftauth.net"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "1fc155ee-94f7-11ed-a1eb-0242ac120002",
+        "stepTitle": "Add network firewall rules for health services",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_health_services"
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_health_services"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ]
+  }
 }
