@@ -173,6 +173,8 @@ resource "azurerm_private_endpoint" "databricks_dpcp_private_endpoint" {
   subnet_id           = data.azurerm_subnet.services.id
   tags                = local.tre_workspace_service_tags
 
+  lifecycle { ignore_changes = [tags] }
+
   private_service_connection {
     name                           = "psc-adb-dpcp-${local.service_resource_name_suffix}"
     private_connection_resource_id = azurerm_databricks_workspace.databricks.id
@@ -182,22 +184,19 @@ resource "azurerm_private_endpoint" "databricks_dpcp_private_endpoint" {
 
   private_dns_zone_group {
     name                 = "pdnszg-dpcp-${local.service_resource_name_suffix}"
-    private_dns_zone_ids = [azurerm_private_dns_zone.dns_dpcp.id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.databricks_dpcp.id]
   }
 }
-//todo
-resource "azurerm_private_dns_zone" "dns_dpcp" {
-  name                = "privatelink.azuredatabricks.net"
-  resource_group_name = data.azurerm_resource_group.rg.name
-  tags                = local.tre_workspace_service_tags
-}
+
 
 resource "azurerm_private_dns_zone_virtual_network_link" "databricks_dpcp_dns_zone_vnet_link" {
   name                  = "pdnszvnl-adb-dpcp-${local.service_resource_name_suffix}"
   resource_group_name   = data.azurerm_resource_group.rg.name
-  private_dns_zone_name = azurerm_private_dns_zone.dns_dpcp.name
+  private_dns_zone_name = data.azurerm_private_dns_zone.databricks_dpcp.name
   virtual_network_id    = data.azurerm_virtual_network.ws.id
   tags                  = local.tre_workspace_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_endpoint" "databricks_auth_private_endpoint" {
@@ -207,6 +206,7 @@ resource "azurerm_private_endpoint" "databricks_auth_private_endpoint" {
   subnet_id           = data.azurerm_subnet.services.id
   tags                = local.tre_workspace_service_tags
 
+  lifecycle { ignore_changes = [tags] }
   private_service_connection {
     name                           = "psc-adb-auth-${local.service_resource_name_suffix}"
     private_connection_resource_id = azurerm_databricks_workspace.databricks.id
@@ -216,7 +216,7 @@ resource "azurerm_private_endpoint" "databricks_auth_private_endpoint" {
 
   private_dns_zone_group {
     name                 = "pdnszg-adb-auth-${local.service_resource_name_suffix}"
-    private_dns_zone_ids = [azurerm_private_dns_zone.dns_dpcp.id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.databricks_dpcp.id]
   }
 }
 

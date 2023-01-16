@@ -41,7 +41,7 @@ provider "registry.terraform.io/databricks/databricks" {
 
 provider "registry.terraform.io/hashicorp/azurerm" {
   version     = "3.39.1"
-  constraints = ">= 3.8.0"
+  constraints = ">= 3.9.1"
   hashes = [
     "h1:RoF6P0vyKApcYvDRQM6ZO52IGgGLZ9RlVopI/hErWuQ=",
     "zh:0429544b1a1385ab396e4c7b23c74184f071fdd069c2a779f3523b692677fe9e",

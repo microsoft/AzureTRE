@@ -33,6 +33,7 @@ locals {
     "privatelink.azuresynapse.net",
     "privatelink.dfs.core.windows.net",
     "privatelink.azurehealthcareapis.com",
-    "privatelink.dicom.azurehealthcareapis.com"
+    "privatelink.dicom.azurehealthcareapis.com",
+    "privatelink.azuredatabricks.net"
   ])
 }
