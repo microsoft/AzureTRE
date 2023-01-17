@@ -110,4 +110,4 @@ If you still have an existing Nexus installation based on App Service (from the 
 
 The Nexus service checks Keyvault regularly for the latest certificate matching the name you passed on deploy (`nexus-ssl` by default).
 
-When approaching expiry, you can either provide an updated certificate into the TRE core KeyVault (with the name you specified when installing Nexus) if you brought your own, or if you used the certs shared service to generate one, just call the `renew` custom action on that service. This will generate a new certificate and persist it to the Keyvault, repolacing the expired one.
+When approaching expiry, you can either provide an updated certificate into the TRE core KeyVault (with the name you specified when installing Nexus) if you brought your own, or if you used the certs shared service to generate one, just call the `renew` custom action on that service. This will generate a new certificate and persist it to the Keyvault, replacing the expired one.
