@@ -7,10 +7,12 @@ from shared_code.blob_operations import get_blob_info_from_topic_and_subject, ge
 from exceptions import TooManyFilesInRequestException, NoFilesInRequestException
 
 
-TestBlob = namedtuple("Blob", "name")
+def get_test_blob():
+    return namedtuple("Blob", "name")
 
 
 class TestBlobOperations():
+
     def test_get_blob_info_from_topic_and_subject(self):
         topic = "/subscriptions/SUB_ID/resourceGroups/RG_NAME/providers/Microsoft.Storage/storageAccounts/ST_ACC_NAME"
         subject = "/blobServices/default/containers/c144728c-3c69-4a58-afec-48c2ec8bfd45/blobs/BLOB"
@@ -32,7 +34,7 @@ class TestBlobOperations():
 
     @patch("shared_code.blob_operations.BlobServiceClient")
     def test_copy_data_fails_if_too_many_blobs_to_copy(self, mock_blob_service_client):
-        mock_blob_service_client().get_container_client().list_blobs = MagicMock(return_value=[TestBlob("a"), TestBlob("b")])
+        mock_blob_service_client().get_container_client().list_blobs = MagicMock(return_value=[get_test_blob()("a"), get_test_blob()("b")])
 
         with pytest.raises(TooManyFilesInRequestException):
             copy_data("source_acc", "dest_acc", "req_id")
@@ -69,7 +71,7 @@ class TestBlobOperations():
 
             # Any additional mocks for the copy_data method to work
             mock_blob_service_client().get_user_delegation_key = MagicMock(return_value="key")
-            mock_blob_service_client().get_container_client().list_blobs = MagicMock(return_value=[TestBlob("a")])
+            mock_blob_service_client().get_container_client().list_blobs = MagicMock(return_value=[get_test_blob()("a")])
 
             copy_data("source_acc", "dest_acc", "req_id")
 

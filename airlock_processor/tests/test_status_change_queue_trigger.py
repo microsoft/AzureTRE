@@ -70,7 +70,7 @@ class TestFileEnumeration():
     @patch("StatusChangedQueueTrigger.set_output_event_to_report_request_files")
     @patch("StatusChangedQueueTrigger.get_request_files")
     @patch("StatusChangedQueueTrigger.is_require_data_copy", return_value=False)
-    @mock.patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
+    @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
     def test_get_request_files_should_be_called_on_submit_stage(self, _, mock_get_request_files, mock_set_output_event_to_report_request_files):
         message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"submitted\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
         message = _mock_service_bus_message(body=message_body)
@@ -99,7 +99,7 @@ class TestFileEnumeration():
         assert mock_set_output_event_to_report_failure.called
 
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files")
-    @mock.patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
+    @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
     def test_get_request_files_called_with_correct_storage_account(self, mock_get_request_files):
         source_storage_account_for_submitted_stage = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + 'ws1'
         message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"submitted\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
@@ -111,7 +111,7 @@ class TestFileEnumeration():
 
 class TestFilesDeletion():
     @patch("StatusChangedQueueTrigger.set_output_event_to_trigger_container_deletion")
-    @mock.patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
+    @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
     def test_delete_request_files_should_be_called_on_cancel_stage(self, mock_set_output_event_to_trigger_container_deletion):
         message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"cancelled\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
         message = _mock_service_bus_message(body=message_body)
