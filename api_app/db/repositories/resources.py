@@ -1,17 +1,18 @@
 import copy
 import semantic_version
 from datetime import datetime
-from typing import Tuple, List
+from typing import Optional, Tuple, List
 
 from azure.cosmos.aio import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from core import config
 from db.errors import VersionDowngradeDenied, EntityDoesNotExist, MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, UserNotAuthorizedToUseTemplate
+from db.repositories.resources_history import ResourceHistoryRepository
 from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
-from jsonschema import validate
+from jsonschema import ValidationError, validate
 from models.domain.authentication import User
-from models.domain.resource import Resource, ResourceHistoryItem, ResourceType
+from models.domain.resource import Resource, ResourceType
 from models.domain.resource_template import ResourceTemplate
 from models.domain.shared_service import SharedService
 from models.domain.operation import Status
@@ -81,7 +82,7 @@ class ResourceRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Resource, resources[0])
 
-    async def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, user_roles: List[str] = None, parent_template_name: str = "") -> ResourceTemplate:
+    async def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, user_roles: Optional[List[str]] = None, parent_template_name: Optional[str] = None) -> ResourceTemplate:
         try:
             template = await self._get_enriched_template(template_name, resource_type, parent_template_name)
         except EntityDoesNotExist:
@@ -100,19 +101,8 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(ResourceTemplate, template)
 
-    async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
-        # create a deep copy of the resource to use for history, create the history item + add to history list
-        resource_copy = copy.deepcopy(resource)
-        history_item = ResourceHistoryItem(
-            isEnabled=resource_copy.isEnabled,
-            properties=resource_copy.properties,
-            resourceVersion=resource_copy.resourceVersion,
-            updatedWhen=resource_copy.updatedWhen,
-            user=resource_copy.user,
-            templateVersion=resource_copy.templateVersion
-        )
-        resource.history.append(history_item)
-
+    async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
+        await resource_history_repo.create_resource_history_item(resource)
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
         resource.user = user
@@ -140,8 +130,11 @@ class ResourceRepository(BaseRepository):
             parent_resource_id = resource.parentWorkspaceServiceId
 
         # validate Major upgrade
-        desired_version = semantic_version.Version(resource_patch.templateVersion)
-        current_version = semantic_version.Version(resource.templateVersion)
+        try:
+            desired_version = semantic_version.Version(resource_patch.templateVersion)
+            current_version = semantic_version.Version(resource.templateVersion)
+        except ValueError:
+            raise ValidationError(f"Attempt to upgrade from {resource.templateVersion} to {resource_patch.templateVersion} denied. Invalid version format.")
 
         if not force_version_update:
             if desired_version.major > current_version.major:

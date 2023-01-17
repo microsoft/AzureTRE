@@ -1,6 +1,7 @@
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
 from pydantic import parse_obj_as
+from db.repositories.resources_history import ResourceHistoryRepository
 from service_bus.substitutions import substitute_properties
 from models.domain.resource_template import PipelineStep
 from models.domain.operation import OperationStep
@@ -39,7 +40,7 @@ async def send_deployment_message(content, correlation_id, session_id, action):
     await _send_message(resource_request_message, config.SERVICE_BUS_RESOURCE_REQUEST_QUEUE)
 
 
-async def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, primary_resource: Resource, resource_to_update_id: str, primary_action: str, user: User) -> Resource:
+async def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, primary_resource: Resource, resource_to_update_id: str, primary_action: str, user: User) -> Resource:
     # if this is main, just leave it alone and return it
     if operation_step.stepId == "main":
         return primary_resource
@@ -59,7 +60,7 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
             break
 
     if template_step is None:
-        raise f"Cannot find step with id of {operation_step.stepId} in template {primary_resource.templateName} for action {primary_action}"
+        raise Exception(f"Cannot find step with id of {operation_step.stepId} in template {primary_resource.templateName} for action {primary_action}")
 
     if template_step.resourceAction == "upgrade":
         resource_to_send = await try_upgrade_with_retries(
@@ -67,6 +68,7 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
             attempt_count=0,
             resource_repo=resource_repo,
             resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
             user=user,
             resource_to_update_id=resource_to_update_id,
             template_step=template_step,
@@ -79,11 +81,12 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
         raise Exception("Only upgrade is currently supported for pipeline steps")
 
 
-async def try_upgrade_with_retries(num_retries: int, attempt_count: int, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, user: User, resource_to_update_id: str, template_step: PipelineStep, primary_resource: Resource) -> Resource:
+async def try_upgrade_with_retries(num_retries: int, attempt_count: int, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_to_update_id: str, template_step: PipelineStep, primary_resource: Resource) -> Resource:
     try:
         return await try_upgrade(
             resource_repo=resource_repo,
             resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
             user=user,
             resource_to_update_id=resource_to_update_id,
             template_step=template_step,
@@ -97,6 +100,7 @@ async def try_upgrade_with_retries(num_retries: int, attempt_count: int, resourc
                 attempt_count=(attempt_count + 1),
                 resource_repo=resource_repo,
                 resource_template_repo=resource_template_repo,
+                resource_history_repo=resource_history_repo,
                 user=user,
                 resource_to_update_id=resource_to_update_id,
                 template_step=template_step,
@@ -106,7 +110,7 @@ async def try_upgrade_with_retries(num_retries: int, attempt_count: int, resourc
             raise e
 
 
-async def try_upgrade(resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, user: User, resource_to_update_id: str, template_step: PipelineStep, primary_resource: Resource) -> Resource:
+async def try_upgrade(resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_to_update_id: str, template_step: PipelineStep, primary_resource: Resource) -> Resource:
     resource_to_update = await resource_repo.get_resource_by_id(resource_to_update_id)
 
     # substitute values into new property bag for update
@@ -131,6 +135,7 @@ async def try_upgrade(resource_repo: ResourceRepository, resource_template_repo:
         resource_template=resource_template_to_send,
         etag=resource_to_update.etag,
         resource_template_repo=resource_template_repo,
+        resource_history_repo=resource_history_repo,
         user=user)
 
     return resource_to_send

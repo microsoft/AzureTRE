@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, Union
+from typing import Optional, Union
 from pydantic import Field, validator
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.request_action import RequestAction
@@ -20,12 +20,14 @@ class ResourceHistoryItem(AzureTREModel):
     """
     Resource History Item - to preserve history of resource properties
     """
-    properties: dict = {}
-    isEnabled: bool
-    resourceVersion: int
-    updatedWhen: float
+    id: str = Field(title="Id", description="GUID identifying the resource request")
+    resourceId: str = Field(title="Id", description="GUID identifying the resource request")
+    properties: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
+    isEnabled: bool = True
+    resourceVersion: int = 0
+    updatedWhen: float = 0
     user: dict = {}
-    templateVersion: Optional[str]
+    templateVersion: Optional[str] = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
 
 
 class Resource(AzureTREModel):
@@ -44,7 +46,6 @@ class Resource(AzureTREModel):
     resourceVersion: int = 0
     user: dict = {}
     updatedWhen: float = 0
-    history: List[ResourceHistoryItem] = []
 
     def get_resource_request_message_payload(self, operation_id: str, step_id: str, action: RequestAction) -> dict:
         payload = {

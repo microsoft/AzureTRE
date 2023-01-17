@@ -1,11 +1,12 @@
 from datetime import datetime
 from collections import defaultdict
 import logging
-from typing import List
+from typing import List, Optional
 
 from fastapi import HTTPException, status
 
 from api.routes.resource_helpers import send_uninstall_message
+from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.user_resource import UserResource
 from db.repositories.airlock_requests import AirlockRequestRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
@@ -55,11 +56,11 @@ async def update_and_publish_event_airlock_request(
         airlock_request_repo: AirlockRequestRepository,
         updated_by: User,
         workspace: Workspace,
-        new_status: AirlockRequestStatus = None,
-        request_files: List[AirlockFile] = None,
-        status_message: str = None,
-        airlock_review: AirlockReview = None,
-        review_user_resource: AirlockReviewUserResource = None) -> AirlockRequest:
+        new_status: Optional[AirlockRequestStatus] = None,
+        request_files: Optional[List[AirlockFile]] = None,
+        status_message: Optional[str] = None,
+        airlock_review: Optional[AirlockReview] = None,
+        review_user_resource: Optional[AirlockReviewUserResource] = None) -> AirlockRequest:
     try:
         logging.debug(f"Updating airlock request item: {airlock_request.id}")
         updated_airlock_request = await airlock_request_repo.update_airlock_request(
@@ -74,7 +75,7 @@ async def update_and_publish_event_airlock_request(
         logging.exception(f'Failed updating airlock_request item {airlock_request}')
         # If the validation failed, the error was not related to the saving itself
         if hasattr(e, 'status_code'):
-            if e.status_code == 400:
+            if e.status_code == 400:  # type: ignore
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
@@ -108,8 +109,8 @@ def check_email_exists(role_assignment_details: defaultdict(list)):
 
 
 async def get_airlock_requests_by_user_and_workspace(user: User, workspace: Workspace, airlock_request_repo: AirlockRequestRepository,
-                                                     creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None,
-                                                     order_by: str = None, order_ascending=True) -> List[AirlockRequest]:
+                                                     creator_user_id: Optional[str] = None, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None,
+                                                     order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
     return await airlock_request_repo.get_airlock_requests(workspace_id=workspace.id, creator_user_id=creator_user_id, type=type, status=status,
                                                            order_by=order_by, order_ascending=order_ascending)
 
@@ -147,6 +148,7 @@ async def delete_review_user_resource(
         workspace_service_repo: WorkspaceServiceRepository,
         resource_template_repo: ResourceTemplateRepository,
         operations_repo: OperationRepository,
+        resource_history_repo: ResourceHistoryRepository,
         user: User) -> Operation:
     workspace_service = await workspace_service_repo.get_workspace_service_by_id(workspace_id=user_resource.workspaceId,
                                                                                  service_id=user_resource.parentWorkspaceServiceId)
@@ -164,6 +166,7 @@ async def delete_review_user_resource(
         operations_repo=operations_repo,
         resource_type=ResourceType.UserResource,
         resource_template_repo=resource_template_repo,
+        resource_history_repo=resource_history_repo,
         user=user,
         resource_template=resource_template)
     logging.info(f"Started operation {operation}")
@@ -176,6 +179,7 @@ async def delete_all_review_user_resources(
         workspace_service_repo: WorkspaceServiceRepository,
         resource_template_repo: ResourceTemplateRepository,
         operations_repo: OperationRepository,
+        resource_history_repo: ResourceHistoryRepository,
         user: User) -> List[Operation]:
     operations: List[Operation] = []
     for review_ur in airlock_request.reviewUserResources.values():
@@ -191,6 +195,7 @@ async def delete_all_review_user_resources(
             workspace_service_repo=workspace_service_repo,
             resource_template_repo=resource_template_repo,
             operations_repo=operations_repo,
+            resource_history_repo=resource_history_repo,
             user=user
         )
         operations.append(operation)

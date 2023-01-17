@@ -154,7 +154,6 @@ terraform-destroy:
 lint:
 	$(call target_title, "Linting")
 	@terraform fmt -check -recursive -diff
-	@echo "You might not see much on the screen for a few minutes..."
 	@# LOG_LEVEL=NOTICE reduces noise but it might also seem like the process is stuck - it's not...
 	@docker run --name superlinter --pull=always --rm \
 		-e RUN_LOCAL=true \
@@ -173,7 +172,7 @@ lint:
     -e VALIDATE_TYPESCRIPT_ES=true \
 		-e FILTER_REGEX_INCLUDE=${LINTER_REGEX_INCLUDE} \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
-		github/super-linter:slim-v4.9.7
+		github/super-linter:slim-v4.10.0
 
 lint-docs:
 	LINTER_REGEX_INCLUDE='./docs/.*\|./mkdocs.yml' $(MAKE) lint

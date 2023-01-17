@@ -1,8 +1,10 @@
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status as status_code, Response
 
 from jsonschema.exceptions import ValidationError
+from db.repositories.resources_history import ResourceHistoryRepository
 from services.azure_resource_status import get_azure_resource_status
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
@@ -16,7 +18,6 @@ from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deplo
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReviewDecision, \
     AirlockReviewUserResource
-from models.schemas.operation import OperationInResponse
 from models.schemas.user_resource import UserResourceInCreate
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestWithAllowedUserActions, \
@@ -64,8 +65,8 @@ async def get_all_airlock_requests_by_workspace(
         airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
         workspace=Depends(get_deployed_workspace_by_id_from_path),
         user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager),
-        creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None,
-        order_by: str = None, order_ascending: bool = True) -> AirlockRequestWithAllowedUserActionsInList:
+        creator_user_id: Optional[str] = None, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None,
+        order_by: Optional[str] = None, order_ascending: bool = True) -> AirlockRequestWithAllowedUserActionsInList:
     try:
         airlock_requests = await get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo,
                                                                             creator_user_id=creator_user_id, type=type, status=status,
@@ -126,7 +127,8 @@ async def create_review_user_resource(
         workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)),
         operation_repo=Depends(get_repository(OperationRepository)),
         airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
-        resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> OperationInResponse:
+        resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
+        resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> AirlockRequestAndOperationInResponse:
 
     if airlock_request.status != AirlockRequestStatus.InReview:
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
@@ -191,6 +193,7 @@ async def create_review_user_resource(
                 workspace_service_repo=workspace_service_repo,
                 resource_template_repo=resource_template_repo,
                 operations_repo=operation_repo,
+                resource_history_repo=resource_history_repo,
                 user=user
             )
 
@@ -226,6 +229,7 @@ async def create_review_user_resource(
         resource_repo=user_resource_repo,
         operations_repo=operation_repo,
         resource_template_repo=resource_template_repo,
+        resource_history_repo=resource_history_repo,
         user=user,
         resource_template=resource_template)
 
@@ -259,7 +263,8 @@ async def create_airlock_review(
         user_resource_repo=Depends(get_repository(UserResourceRepository)),
         workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)),
         operation_repo=Depends(get_repository(OperationRepository)),
-        resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> AirlockRequestWithAllowedUserActions:
+        resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
+        resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> AirlockRequestWithAllowedUserActions:
 
     try:
         airlock_review = airlock_request_repo.create_airlock_review_item(airlock_review_input, user)
@@ -286,6 +291,7 @@ async def create_airlock_review(
         workspace_service_repo=workspace_service_repo,
         resource_template_repo=resource_template_repo,
         operations_repo=operation_repo,
+        resource_history_repo=resource_history_repo,
         user=user
     )
 

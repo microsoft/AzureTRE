@@ -1,10 +1,11 @@
 from datetime import datetime
 import logging
 from copy import deepcopy
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from fastapi import HTTPException, status
 from db.repositories.resources import ResourceRepository
+from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 
@@ -26,6 +27,7 @@ async def save_and_deploy_resource(
     resource_repo: ResourceRepository,
     operations_repo: OperationRepository,
     resource_template_repo: ResourceTemplateRepository,
+    resource_history_repo: ResourceHistoryRepository,
     user: User,
     resource_template: ResourceTemplate,
 ) -> Operation:
@@ -54,6 +56,7 @@ async def save_and_deploy_resource(
             user=user,
             resource_template=resource_template,
             resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
             action=RequestAction.Install,
         )
         return operation
@@ -137,6 +140,7 @@ async def send_uninstall_message(
     operations_repo: OperationRepository,
     resource_type: ResourceType,
     resource_template_repo: ResourceTemplateRepository,
+    resource_history_repo: ResourceHistoryRepository,
     user: User,
     resource_template: ResourceTemplate,
 ) -> Operation:
@@ -147,6 +151,7 @@ async def send_uninstall_message(
             resource_repo=resource_repo,
             user=user,
             resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
             resource_template=resource_template,
             action=RequestAction.UnInstall,
         )
@@ -166,12 +171,13 @@ async def send_custom_action_message(
     resource_type: ResourceType,
     operations_repo: OperationRepository,
     resource_template_repo: ResourceTemplateRepository,
+    resource_history_repo: ResourceHistoryRepository,
     user: User,
-    parent_service_name: str = None,
+    parent_service_name: Optional[str] = None,
 ) -> Operation:
 
     # Validate that the custom_action specified is present in the resource template
-    resource_template = resource_template_repo.get_template_by_name_and_version(
+    resource_template = await resource_template_repo.get_template_by_name_and_version(
         resource.templateName,
         resource.templateVersion,
         resource_type,
@@ -198,6 +204,7 @@ async def send_custom_action_message(
             user=user,
             resource_template=resource_template,
             resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
             action=custom_action,
         )
         return operation
@@ -215,7 +222,7 @@ async def get_template(
     resource_type: ResourceType,
     parent_service_template_name: str = "",
     is_update: bool = False,
-    version: str = None,
+    version: Optional[str] = None,
 ) -> dict:
     try:
         template = (

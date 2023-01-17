@@ -65,6 +65,12 @@
       }
     },
     {
+      "name": "guac_disable_upload",
+      "source": {
+        "env": "GUAC_DISABLE_UPLOAD"
+      }
+    },
+    {
       "name": "guac_disable_paste",
       "source": {
         "env": "GUAC_DISABLE_PASTE"

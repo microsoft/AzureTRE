@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 from azure.cosmos.aio import CosmosClient
 from pydantic import parse_obj_as
+from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 
@@ -70,7 +71,7 @@ class UserResourceRepository(ResourceRepository):
     def get_user_resource_spec_params(self):
         return self.get_resource_base_spec_params()
 
-    async def patch_user_resource(self, user_resource: UserResource, user_resource_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, parent_template_name: str, user: User, force_version_update: bool) -> Tuple[UserResource, ResourceTemplate]:
+    async def patch_user_resource(self, user_resource: UserResource, user_resource_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, parent_template_name: str, user: User, force_version_update: bool) -> Tuple[UserResource, ResourceTemplate]:
         # get user resource template
         user_resource_template = await resource_template_repo.get_template_by_name_and_version(user_resource.templateName, user_resource.templateVersion, ResourceType.UserResource, parent_service_name=parent_template_name)
-        return await self.patch_resource(user_resource, user_resource_patch, user_resource_template, etag, resource_template_repo, user, force_version_update)
+        return await self.patch_resource(user_resource, user_resource_patch, user_resource_template, etag, resource_template_repo, resource_history_repo, user, force_version_update)
