@@ -1,5 +1,16 @@
 <!-- markdownlint-disable MD041 -->
-## 0.8.0 (Unreleased)
+## 0.9.0 (Unreleased)
+**BREAKING CHANGES & MIGRATIONS**:
+
+FEATURES:
+
+ENHANCEMENTS:
+
+BUG FIXES:
+
+COMPONENTS:
+
+## 0.8.0 (January 15, 2023)
 
 **BREAKING CHANGES & MIGRATIONS**:
 * The model for `reviewUserResources` in airlock requests has changed from being a list to a dictionary. A migration has been added to update your existing requests automatically; please make sure you run the migrations as part of updating your API and UI.
@@ -37,6 +48,32 @@ BUG FIXES:
 * Fix KeyVault purge error on MLFlow uninstall ([#3082](https://github.com/microsoft/AzureTRE/pull/3082))
 
 COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.4.4 |
+| core | 0.5.2 |
+| tre-shared-service-admin-vm | 0.3.0 |
+| tre-shared-service-airlock-notifier | 0.3.0 |
+| tre-shared-service-certs | 0.3.1 |
+| tre-shared-service-cyclecloud | 0.4.0 |
+| tre-shared-service-firewall | 0.7.0 |
+| tre-shared-service-gitea | 0.5.0 |
+| tre-shared-service-sonatype-nexus | 2.3.0 |
+| tre-service-azureml | 0.6.0 |
+| tre-user-resource-aml-compute-instance | 0.5.0 |
+| tre-workspace-service-gitea | 0.7.0 |
+| tre-service-guacamole | 0.7.0 |
+| tre-service-guacamole-export-reviewvm | 0.1.0 |
+| tre-service-guacamole-import-reviewvm | 0.2.0 |
+| tre-service-guacamole-linuxvm | 0.6.1 |
+| tre-service-guacamole-windowsvm | 0.6.0 |
+| tre-workspace-service-health | 4.1.9 |
+| tre-service-innereye | 0.5.0 |
+| tre-service-mlflow | 0.6.0 |
+| tre-workspace-service-mysql | 0.3.1 |
+| tre-workspace-airlock-import-review | 0.6.0 |
+| tre-workspace-base | 0.8.1 |
+| tre-workspace-unrestricted | 0.6.0 |
 
 ## 0.7.0 (November 17, 2022)
 
