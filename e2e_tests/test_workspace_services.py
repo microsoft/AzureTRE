@@ -8,7 +8,6 @@ from resources import strings
 pytestmark = pytest.mark.asyncio
 
 workspace_services = [
-    "",  # an empty service to init fixtures
     # strings.AZUREML_SERVICE,
     # strings.INNEREYE_SERVICE,
     strings.GITEA_SERVICE,
@@ -91,14 +90,10 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, v
 
 
 @pytest.mark.workspace_services
-@pytest.mark.timeout(20 * 60)
+@pytest.mark.timeout(45 * 60)
 @pytest.mark.parametrize("template_name", workspace_services)
 async def test_install_workspace_service(template_name, verify, setup_test_workspace) -> None:
     workspace_path, workspace_id, workspace_owner_token = setup_test_workspace
-
-    if not template_name:
-        # an empty value is used to init the fixture outside of the time allocated to a real service being created.
-        return
 
     service_payload = {
         "templateName": template_name,
