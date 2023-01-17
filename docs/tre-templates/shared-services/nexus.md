@@ -94,9 +94,11 @@ Nexus Shared Service requires access to resources outside of the Azure TRE VNET.
 
 ### Migrate from an existing V1 Nexus service (hosted on App Service)
 
-Once you've created the new V2 (VM-based) Nexus service by following the previous section, you can migrate from the V1 Nexus service by following these steps:
+If you still have an existing Nexus installation based on App Service (from the original V1 bundle), you can migrate to the VM-based Nexus service by following these steps:
 
-1. Identify any existing Guacamole user resources that are using the old proxy URL (`https://nexus-{TRE_ID}.azurewebsites.net/`). These will be any VMs with bundle versions < `0.3.2`.
+1. Install the new Nexus service alongside your old installation using the steps from earlier in this document.
+
+1. Identify any existing Guacamole user resources that are using the old proxy URL (`https://nexus-{TRE_ID}.azurewebsites.net/`). These will be any VMs with bundle versions < `0.3.2` that haven't been manually updated.
 
 1. These will need to be either **re-deployed** with the new template versions `0.3.2` or later and specifying an additional template parameter `"nexus_version"` with the value of `"V2"`, or manually have their proxy URLs updated by remoting into the VMs and updating the various configuration files of required package managers with the new URL (`https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`).
 
@@ -104,16 +106,8 @@ Once you've created the new V2 (VM-based) Nexus service by following the previou
 
 2. Once you've confirmed there are no dependencies on the old Nexus shared service, you can delete it using the API.
 
-### Upgrade notes
-
-The new V2 Nexus shared service can be located in the `./templates/shared_services/sonatype-nexus-vm` directory, with the bundle name `tre-shared-service-sonatype-nexus`, which is now hosted using a VM to enable additional configuration required for proxying certain repositories.
-
-This has been created as a separate service as the domain name exposed for proxies will be different to the one used by the original Nexus service and thus will break any user resources configured with the old proxy URL.
-
-The original Nexus service that runs on App Service (located in `./templates/shared_services/sonatype-nexus`) has the bundle name `tre-shared-service-nexus` so can co-exist with the new VM-based shared service to enable smoother upgrading of existing resources.
-
 ## Renewing certificates for Nexus
 
-The Nexus V2 service checks Keyvault regularly for the latest certificate matching the name you passed on deploy (`nexus-ssl` by default).
+The Nexus service checks Keyvault regularly for the latest certificate matching the name you passed on deploy (`nexus-ssl` by default).
 
-When approaching expiry, you can either provide an updated certificate if you brought your own, or if you used the certs shared service to generate one, just call the `renew` custom action on that service. This will generate a new certificate and persist it to the Keyvault.
+When approaching expiry, you can either provide an updated certificate into the TRE core KeyVault (with the name you specified when installing Nexus) if you brought your own, or if you used the certs shared service to generate one, just call the `renew` custom action on that service. This will generate a new certificate and persist it to the Keyvault, repolacing the expired one.
