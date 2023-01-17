@@ -1,7 +1,7 @@
 from collections import namedtuple
 import json
 import pytest
-from unittest.mock import MagicMock, patch
+from mock import MagicMock, patch
 
 from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_info_from_blob_url, copy_data, get_blob_url
 from exceptions import TooManyFilesInRequestException, NoFilesInRequestException
