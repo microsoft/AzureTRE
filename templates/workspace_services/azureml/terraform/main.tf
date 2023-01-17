@@ -16,21 +16,6 @@ resource "azurerm_machine_learning_workspace" "aml_workspace" {
   }
 }
 
-data "azurerm_private_dns_zone" "azureml" {
-  name                = "privatelink.api.azureml.ms"
-  resource_group_name = local.core_resource_group_name
-}
-
-data "azurerm_private_dns_zone" "azuremlcert" {
-  name                = "privatelink.cert.api.azureml.ms"
-  resource_group_name = local.core_resource_group_name
-}
-
-
-data "azurerm_private_dns_zone" "notebooks" {
-  name                = "privatelink.notebooks.azure.net"
-  resource_group_name = local.core_resource_group_name
-}
 resource "azurerm_private_endpoint" "mlpe" {
   name                = "mlpe-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
@@ -51,4 +36,9 @@ resource "azurerm_private_endpoint" "mlpe" {
     is_manual_connection           = false
     subresource_names              = ["amlworkspace"]
   }
+
+  depends_on = [
+    azurerm_subnet_network_security_group_association.aml,
+    azapi_resource.aml_service_endpoint_policy
+  ]
 }

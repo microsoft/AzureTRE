@@ -74,7 +74,7 @@ resource "azurerm_subnet" "aml" {
   service_endpoint_policy_ids = [azapi_resource.aml_service_endpoint_policy.id]
 }
 
-resource "azurerm_subnet_network_security_group_association" "services" {
+resource "azurerm_subnet_network_security_group_association" "aml" {
   network_security_group_id = azurerm_network_security_group.aml.id
   subnet_id                 = azurerm_subnet.aml.id
 }
@@ -109,20 +109,20 @@ resource "azurerm_network_security_rule" "allow_batch_inbound" {
   source_port_range           = "*"
 }
 
-# resource "azurerm_network_security_rule" "allow_aml_inbound" {
-#   #count                       = var.is_exposed_externally ? 1 : 0
-#   access                      = "Allow"
-#   destination_port_ranges     = ["44224"]
-#   destination_address_prefix  = "VirtualNetwork"
-#   source_address_prefix       = "AzureMachineLearning"
-#   direction                   = "Inbound"
-#   name                        = "${local.short_service_id}-aml-inbound"
-#   network_security_group_name = azurerm_network_security_group.aml.name
-#   priority                    = 102
-#   protocol                    = "Tcp"
-#   resource_group_name         = data.azurerm_resource_group.ws.name
-#   source_port_range           = "*"
-# }
+resource "azurerm_network_security_rule" "allow_aml_inbound" {
+  count                       = var.is_exposed_externally ? 1 : 0
+  access                      = "Allow"
+  destination_port_ranges     = ["44224"]
+  destination_address_prefix  = "VirtualNetwork"
+  source_address_prefix       = "AzureMachineLearning"
+  direction                   = "Inbound"
+  name                        = "${local.short_service_id}-aml-inbound"
+  network_security_group_name = azurerm_network_security_group.aml.name
+  priority                    = 102
+  protocol                    = "Tcp"
+  resource_group_name         = data.azurerm_resource_group.ws.name
+  source_port_range           = "*"
+}
 
 resource "azurerm_network_security_rule" "allow_outbound_storage_445" {
   # TODO: this shouldn't be needed for private compute
