@@ -3,7 +3,7 @@
   "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/azureml/template_schema.json",
   "type": "object",
   "title": "Azure Machine Learning",
-  "description": "Azure Machine Learning empowers data scientists and developers to build, deploy, and manage high-quality models faster and with confidence. It accelerates time to value with industry-leading machine learning operations (MLOps), open-source interoperability, and integrated tools. This trusted platform is designed for responsible AI applications in machine learning.",
+  "description": "Azure Machine Learning",
   "required": [],
   "properties": {
     "display_name": {
@@ -80,7 +80,22 @@
                   "description": "Azure Machine Learning rules",
                   "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
                   "destination_addresses": [
-                    "AzureMachineLearning",
+                    "AzureMachineLearning"
+                  ],
+                  "destination_ports": [
+                    "443",
+                    "8787",
+                    "18881"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "BatchNodeManagement",
+                  "description": "Batch Node Management",
+                  "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
+                  "destination_addresses": [
                     "{{ resource.properties.batch_tag }}"
                   ],
                   "destination_ports": [
@@ -91,8 +106,8 @@
                   ]
                 },
                 {
-                  "name": "AzureMachineLearning5831",
-                  "description": "Azure Machine Learning 5831",
+                  "name": "AzureMachineLearningUdp",
+                  "description": "Azure Machine Learning UDP",
                   "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
                   "destination_addresses": [
                     "AzureMachineLearning"
@@ -127,7 +142,8 @@
                   "description": "AzureML Client",
                   "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
                   "destination_addresses": [
-                    "AzureActiveDirectory"
+                    "AzureActiveDirectory",
+                    "AzureResourceManager"
                   ],
                   "destination_ports": [
                     "443"
@@ -210,7 +226,22 @@
                   "description": "Azure Machine Learning rules",
                   "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
                   "destination_addresses": [
-                    "AzureMachineLearning",
+                    "AzureMachineLearning"
+                  ],
+                  "destination_ports": [
+                    "443",
+                    "8787",
+                    "18881"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "BatchNodeManagement",
+                  "description": "Batch Node Management",
+                  "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
+                  "destination_addresses": [
                     "{{ resource.properties.batch_tag }}"
                   ],
                   "destination_ports": [
@@ -221,8 +252,8 @@
                   ]
                 },
                 {
-                  "name": "AzureMachineLearning5831",
-                  "description": "Azure Machine Learning 5831",
+                  "name": "AzureMachineLearningUdp",
+                  "description": "Azure Machine Learning UDP",
                   "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
                   "destination_addresses": [
                     "AzureMachineLearning"
@@ -257,7 +288,9 @@
                   "description": "AzureML Client",
                   "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
                   "destination_addresses": [
-                    "AzureActiveDirectory"
+                    "AzureActiveDirectory",
+                    "AzureResourceManager",
+                    "AzureMachineLearning"
                   ],
                   "destination_ports": [
                     "443"
