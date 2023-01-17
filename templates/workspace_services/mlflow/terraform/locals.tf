@@ -21,5 +21,5 @@ locals {
     "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
     "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"
   ]
-  identity_name                  = "id-${local.webapp_name}"
+  identity_name = "id-${local.webapp_name}"
 }
