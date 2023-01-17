@@ -104,7 +104,7 @@ If you still have an existing Nexus installation based on App Service (from the 
 
    1. For example, pip will need the `index`, `index-url` and `trusted-host` values in the global `pip.conf` file to be modified to use the new URL.
 
-2. Once you've confirmed there are no dependencies on the old Nexus shared service, you can delete it using the API.
+2. Once you've confirmed there are no dependencies on the old Nexus shared service, you can delete it using the API or UI.
 
 ## Renewing certificates for Nexus
 
