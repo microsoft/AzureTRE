@@ -1,8 +1,7 @@
 from json import JSONDecodeError
 import os
 import pytest
-from unittest import mock
-from unittest.mock import MagicMock, patch
+from mock import MagicMock, patch
 
 from pydantic import ValidationError
 from StatusChangedQueueTrigger import get_request_files, main, extract_properties, get_source_dest_for_copy, is_require_data_copy
