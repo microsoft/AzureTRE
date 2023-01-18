@@ -14,7 +14,7 @@ A symlink is then created making it available to reference in the directory itse
 
 To upgrade AzureTRE version inside [AzureTRE deployment repository](https://github.com/microsoft/AzureTRE-Deployment), you need to git pull the latest version.
 
-Use the following git command in your `AzureTRE deployment` folder:
+Use the following git command in your own repo that originated from the `AzureTRE-Deployment` template:
 ```sh
 git remote add upstream https://github.com/microsoft/AzureTRE-Deployment
 git pull upstream main --allow-unrelated-histories
