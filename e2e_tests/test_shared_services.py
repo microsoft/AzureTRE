@@ -113,6 +113,10 @@ create_airlock_notifier_properties = {
     "smtp_from_email": "a@a.com",
 }
 
+create_nexus_properties = {
+    "ssl_cert_name": "nexus-ssl",
+}
+
 
 @pytest.mark.shared_services
 @pytest.mark.timeout(40 * 60)
@@ -144,6 +148,8 @@ async def test_create_shared_service(template_name, verify) -> None:
         post_payload["properties"].update(create_certs_properties)
     elif template_name == strings.AIRLOCK_NOTIFIER_SHARED_SERVICE:
         post_payload["properties"].update(create_airlock_notifier_properties)
+    elif template_name == strings.NEXUS_SHARED_SERVICE:
+        post_payload["properties"].update(create_nexus_properties)
 
     shared_service_path, _ = await post_resource(
         payload=post_payload,
