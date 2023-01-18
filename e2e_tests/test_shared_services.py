@@ -89,17 +89,13 @@ async def test_patch_firewall(verify):
 
 shared_service_templates_to_create = [
     strings.GITEA_SHARED_SERVICE,
-
-    # TODO: https://github.com/microsoft/AzureTRE/issues/2328
-    # strings.CERTS_SHARED_SERVICE,
-
+    strings.CERTS_SHARED_SERVICE,
     strings.ADMIN_VM_SHARED_SERVICE,
 
     # TODO: https://github.com/microsoft/AzureTRE/issues/3077
     # strings.AIRLOCK_NOTIFIER_SHARED_SERVICE,
 
-    # TODO: Until this is resolved we can't install nexus in parallel with others: https://github.com/microsoft/AzureTRE/issues/2328
-    # strings.NEXUS_SHARED_SERVICE,
+    strings.NEXUS_SHARED_SERVICE,
 
     # TODO: fix cyclecloud and enable this
     # strings.CYCLECLOUD_SHARED_SERVICE,
