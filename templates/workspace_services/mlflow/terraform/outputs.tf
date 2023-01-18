@@ -1,3 +1,3 @@
 output "internal_connection_uri" {
-  value = "https://${azurerm_app_service.mlflow.default_site_hostname}"
+  value = "https://${azurerm_linux_web_app.mlflow.default_hostname}"
 }

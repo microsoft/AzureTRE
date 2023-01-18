@@ -4,11 +4,7 @@
   "type": "object",
   "title": "MySQL Workspace Service",
   "description": "Provides MySQL within the workspace",
-  "required": [
-    "sql_sku",
-    "storage_mb",
-    "db_name"
-  ],
+  "required": [],
   "properties": {
     "sql_sku": {
       "$id": "#/properties/sql_sku",

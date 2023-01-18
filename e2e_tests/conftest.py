@@ -122,7 +122,7 @@ async def setup_test_workspace(verify) -> Tuple[str, str, str]:
     yield workspace_path, workspace_id, workspace_owner_token
 
     # Tear-down
-    clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
+    await clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
 
 
 # Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
@@ -140,7 +140,7 @@ async def setup_test_workspace_and_workspace_service(verify, setup_test_workspac
 
     yield workspace_path, workspace_id, workspace_service_path, workspace_service_id, workspace_owner_token
 
-    clean_up_test_workspace_service(pre_created_workspace_service_id=pre_created_workspace_service_id, workspace_service_path=workspace_service_path, verify=verify)
+    await clean_up_test_workspace_service(pre_created_workspace_service_id=pre_created_workspace_service_id, workspace_service_path=workspace_service_path, verify=verify)
 
 
 # Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
@@ -155,7 +155,7 @@ async def setup_test_aad_workspace(verify) -> Tuple[str, str, str]:
     yield workspace_path, workspace_id, workspace_owner_token
 
     # Tear-down
-    clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
+    await clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
 
 
 # Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
@@ -179,5 +179,5 @@ async def setup_test_airlock_import_review_workspace_and_workspace_service(verif
     yield workspace_path, workspace_id, workspace_service_path, workspace_service_id, workspace_owner_token
 
     # Tear-down
-    clean_up_test_workspace_service(pre_created_workspace_service_id=pre_created_workspace_service_id, workspace_service_path=workspace_service_path, verify=verify)
-    clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
+    await clean_up_test_workspace_service(pre_created_workspace_service_id=pre_created_workspace_service_id, workspace_service_path=workspace_service_path, verify=verify)
+    await clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
