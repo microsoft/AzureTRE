@@ -172,7 +172,7 @@ jobs:
       TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
       TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME }}
       TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
-      ENABLE_SWAGGER: ${{ secrets.ENABLE_SWAGGER }}
+      ENABLE_SWAGGER: true
       TRE_ID: ${{ format('tre{0}', needs.pr_comment.outputs.prRefId) }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
       TF_LOG: ${{ secrets.TF_LOG }}
