@@ -5,7 +5,7 @@
 FEATURES:
 
 ENHANCEMENTS:
-* Add support for referencing IP Groups from the Core Resource in firewall rules created via the pipeline [#TBD](https://github.com/microsoft/AzureTRE/pull/TBD)
+* Add support for referencing IP Groups from the Core Resource Group in firewall rules created via the pipeline [#3089](https://github.com/microsoft/AzureTRE/pull/3089)
 
 BUG FIXES:
 
