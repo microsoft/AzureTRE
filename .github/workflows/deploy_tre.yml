@@ -30,7 +30,7 @@ jobs:
       ciGitRef: ${{ github.ref }}
       e2eTestsCustomSelector: >-
         ${{ (github.event_name == 'push' && 'extended or extended_aad')
-        || 'extended or extended_aad' }}
+        || 'extended or extended_aad or shared_services or airlock' }}
       environmentName: ${{ github.event.inputs.environment || 'CICD' }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}

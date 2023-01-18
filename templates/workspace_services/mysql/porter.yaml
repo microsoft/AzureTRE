@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-mysql
-version: 0.3.1
+version: 0.3.3
 description: "A MySQL workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -39,6 +39,7 @@ parameters:
     description: "The name of the Terraform state storage container"
   - name: arm_use_msi
     env: ARM_USE_MSI
+    type: boolean
     default: false
   - name: sql_sku
     type: string

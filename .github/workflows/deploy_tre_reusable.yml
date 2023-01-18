@@ -405,6 +405,8 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/mlflow"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/mysql"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/health-services"}
           - {BUNDLE_TYPE: "user_resource",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"}
           - {BUNDLE_TYPE: "user_resource",
@@ -446,6 +448,16 @@ jobs:
              BUNDLE_DIR: "./templates/shared_services/firewall/"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/admin-vm/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/airlock_notifier/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/certs/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/cyclecloud/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/sonatype-nexus-vm/"}
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
@@ -479,6 +491,16 @@ jobs:
              BUNDLE_DIR: "./templates/shared_services/firewall"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/admin-vm/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/airlock_notifier/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/certs/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/cyclecloud/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/sonatype-nexus-vm/"}
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
@@ -531,6 +553,8 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/mlflow"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/mysql"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/health-services"}
 
     environment: ${{ inputs.environmentName }}
     steps:

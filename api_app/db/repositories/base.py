@@ -1,3 +1,4 @@
+from typing import Optional
 from azure.cosmos.aio import CosmosClient, ContainerProxy
 from azure.cosmos import PartitionKey
 from azure.core import MatchConditions
@@ -9,7 +10,7 @@ from db.errors import UnableToAccessDatabase
 
 class BaseRepository:
     @classmethod
-    async def create(cls, client: CosmosClient, container_name: str = None, partition_key: str = "/id"):
+    async def create(cls, client: CosmosClient, container_name: Optional[str] = None, partition_key: str = "/id"):
         partition_key_obj = PartitionKey(path=partition_key)
         cls._client: CosmosClient = client
         cls._container: ContainerProxy = await cls._get_container(container_name, partition_key_obj)
@@ -30,7 +31,7 @@ class BaseRepository:
         except Exception:
             raise UnableToAccessDatabase
 
-    async def query(self, query: str, parameters: dict = None):
+    async def query(self, query: str, parameters: Optional[dict] = None):
         items = self.container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True)
         return [i async for i in items]
 

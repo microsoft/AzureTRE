@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status as status_code, Response
 
@@ -14,9 +15,9 @@ from db.errors import EntityDoesNotExist, UserNotAuthorizedToUseTemplate
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
-
-from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
-from models.schemas.operation import OperationInResponse
+from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReviewDecision, \
+    AirlockReviewUserResource
+from models.schemas.user_resource import UserResourceInCreate
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestWithAllowedUserActions, \
     AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate
@@ -61,8 +62,8 @@ async def get_all_airlock_requests_by_workspace(
         airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
         workspace=Depends(get_deployed_workspace_by_id_from_path),
         user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager),
-        creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None,
-        order_by: str = None, order_ascending: bool = True) -> AirlockRequestWithAllowedUserActionsInList:
+        creator_user_id: Optional[str] = None, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None,
+        order_by: Optional[str] = None, order_ascending: bool = True) -> AirlockRequestWithAllowedUserActionsInList:
     try:
         airlock_requests = await get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo,
                                                                             creator_user_id=creator_user_id, type=type, status=status,
@@ -124,7 +125,7 @@ async def create_review_user_resource(
         operation_repo=Depends(get_repository(OperationRepository)),
         airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
         resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
-        resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+        resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> AirlockRequestAndOperationInResponse:
 
     if airlock_request.status != AirlockRequestStatus.InReview:
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,

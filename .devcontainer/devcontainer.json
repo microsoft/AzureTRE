@@ -255,6 +255,7 @@
   // Add the IDs of extensions you want installed when the container is created.
   "extensions": [
     "ms-python.python",
+    "ms-python.pylance",
     "hashicorp.terraform",
     "github.vscode-pull-request-github",
     "getporter.porter-vscode",

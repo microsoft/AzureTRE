@@ -22,7 +22,7 @@ else
     fi
 
     # Validate config schema
-    if [[ $(pajv validate -s config_schema.json -d config.yaml) != *valid* ]]; then
+    if [[ $(pajv validate -s "$DIR/../../config_schema.json" -d config.yaml) != *valid* ]]; then
       echo -e "\e[31m»»» ⚠️ Your config.yaml is invalid 😥 Please fix the errors and retry."
       exit 1
     fi

@@ -2,10 +2,12 @@
 
 In general, a shared service should be installed by using the UI or API directly once its bundle has been registered on the system.
 
-## Deploy & configure V2 Nexus service (hosted on VM)
+As part of this quickstart, you will need to install the Nexus shared service, as you will be subsequently deploying Guacamole VMs that depend on public package respositories to bootstrap. Due to the TRE's Firewall blocking public access, Nexus will proxy these package repositories and make them available within the TRE for the VMs to consume.
+
+## Deploy & configure Nexus service
 
 !!! caution
-    Before deploying the V2 Nexus service, you will need workspaces of version `0.3.2` or above due to a dependency on a DNS zone link for the workspace(s) to connect to the Nexus VM.
+    Before deploying the Nexus service, you will need workspaces of version `0.3.2` or above due to a dependency on a DNS zone link for the workspace(s) to connect to the Nexus VM.
 
 Before deploying the Nexus shared service, you need to make sure that it will have access to a certificate to configure serving secure proxies. By default, the Nexus service will serve proxies from `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`, and thus it requires a certificate that validates ownership of this domain to use for SSL.
 
@@ -46,39 +48,26 @@ You can optionally go to the Nexus web interface by visiting `https://nexus-{TRE
 
 Just bear in mind that if this service is redeployed any changes made in the Nexus UI won't be persisted. If you wish to permanently add new repositories or alter existing ones, modify the JSON files within the `./nexus_repos_config` directory and redeploy.
 
-### Migrate from an existing V1 Nexus service (hosted on App Service)
+You can view further information on the Nexus shared service [here](../../tre-templates/shared-services/nexus.md).
 
-Once you've created the new V2 (VM-based) Nexus service by following the previous section, you can migrate from the V1 Nexus service by following these steps:
+## (Optional) Install Gitea and configure repositories
 
-1. Identify any existing Guacamole user resources that are using the old proxy URL (`https://nexus-{TRE_ID}.azurewebsites.net/`). These will be any VMs with bundle versions < `0.3.2`.
-
-1. These will need to be either **re-deployed** with the new template versions `0.3.2` or later and specifying an additional template parameter `"nexus_version"` with the value of `"V2"`, or manually have their proxy URLs updated by remoting into the VMs and updating the various configuration files of required package managers with the new URL (`https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`).
-
-   1. For example, pip will need the `index`, `index-url` and `trusted-host` values in the global `pip.conf` file to be modified to use the new URL.
-
-2. Once you've confirmed there are no dependencies on the old Nexus shared service, you can delete it using the API.
-
-### Upgrade notes
-
-The new V2 Nexus shared service can be located in the `./templates/shared_services/sonatype-nexus-vm` directory, with the bundle name `tre-shared-service-sonatype-nexus`, which is now hosted using a VM to enable additional configuration required for proxying certain repositories.
-
-This has been created as a separate service as the domain name exposed for proxies will be different to the one used by the original Nexus service and thus will break any user resources configured with the old proxy URL.
-
-The original Nexus service that runs on App Service (located in `./templates/shared_services/sonatype-nexus`) has the bundle name `tre-shared-service-nexus` so can co-exist with the new VM-based shared service to enable smoother upgrading of existing resources.
-
-## Renewing certificates for Nexus
-
-The Nexus V2 service checks Keyvault regularly for the latest certificate matching the name you passed on deploy (`nexus-ssl` by default).
-
-When approaching expiry, you can either provide an updated certificate if you brought your own, or if you used the certs shared service to generate one, just call the `renew` custom action on that service. This will generate a new certificate and persist it to the Keyvault.
-
-## Configure Gitea repositories
+Gitea allows you to mirror Git repositories to make them available within the TRE. This is optional as part of this quickstart.
 
 Note : This is a Gitea *shared service* which will be accessible from all workspaces intended for mirroring external Git repositories. A Gitea *workspace service* can also be deployed per workspace to enable Gitea to be used within a specific workspace.
+
+To install Gitea, first register the template:
+
+```cmd
+  make shared_service_bundle BUNDLE=gitea
+```
+
+You can then install via the TRE UI in the same way you did for the Nexus bundle.
 
 By default, this Gitea instance does not have any repositories configured. You can add repositories to Gitea either by using the command line or by using the Gitea web interface.
 
 ### Command Line
+
 Make sure you run the following commands using git bash and set your current directory as C:/AzureTRE.
 
 1. On the jumbox, run:
@@ -99,6 +88,7 @@ From a virtual machine within a workspace:
 - Command line: ```git clone https://gitea-<TRE_ID>.azurewebsites.net/giteaadmin/<NameOfrepository>```
 - Gitea Web Interface: ```https://gitea-<TRE_ID>.azurewebsites.net/```
 
+More info on the Gitea shared service is available [here](../../tre-templates/shared-services/gitea.md).
 
 ## Next steps
 

@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import parse_obj_as
 
@@ -22,7 +23,7 @@ async def get_shared_service_templates(authorized_only: bool = False, template_r
 
 
 @shared_service_templates_core_router.get("/shared-service-templates/{shared_service_template_name}", response_model=SharedServiceTemplateInResponse, response_model_exclude_none=True, name=strings.API_GET_SHARED_SERVICE_TEMPLATE_BY_NAME, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
-async def get_shared_service_template(shared_service_template_name: str, is_update: bool = False, version: str = None, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> SharedServiceTemplateInResponse:
+async def get_shared_service_template(shared_service_template_name: str, is_update: bool = False, version: Optional[str] = None, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> SharedServiceTemplateInResponse:
     try:
         template = await get_template(shared_service_template_name, template_repo, ResourceType.SharedService, is_update=is_update, version=version)
         return parse_obj_as(SharedServiceTemplateInResponse, template)
