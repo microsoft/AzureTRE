@@ -15,9 +15,7 @@ from db.errors import EntityDoesNotExist, UserNotAuthorizedToUseTemplate
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReviewDecision, \
-    AirlockReviewUserResource
-from models.schemas.user_resource import UserResourceInCreate
+from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestWithAllowedUserActions, \
     AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate
