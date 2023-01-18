@@ -19,3 +19,11 @@ async def test_health() -> None:
             {"service": "Service Bus", "status": "OK", "message": ""},
             {"service": "Resource Processor", "status": "OK", "message": ""},
         ]
+
+
+@pytest.mark.smoke
+async def test_swagger_root() -> None:
+    async with AsyncClient(verify=False) as client:
+        url = f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_SWAGGER_ROOT}"
+        response = await client.get(url)
+        assert response.status_code == 200

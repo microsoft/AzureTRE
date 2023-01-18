@@ -4,6 +4,7 @@ import config
 from helpers import check_aad_auth_redirect
 from resources.resource import disable_and_delete_resource, post_resource
 from resources import strings
+from httpx import AsyncClient
 
 pytestmark = pytest.mark.asyncio
 
@@ -21,6 +22,13 @@ workspace_services = [
 @pytest.mark.timeout(75 * 60)
 async def test_create_guacamole_service_into_base_workspace(verify, setup_test_workspace) -> None:
     workspace_path, workspace_id, workspace_owner_token = setup_test_workspace
+
+    # Check that the workspace level swagger is functioning.
+    # This isn't particulary related to the guacamole tests but there's no point in creating a seperate workspace just for this test.
+    url = f'/api{workspace_path}/docs'
+    async with AsyncClient(verify=verify) as client:
+        response = await client.get(url)
+        assert response.status_code == 200
 
     service_payload = {
         "templateName": strings.GUACAMOLE_SERVICE,
