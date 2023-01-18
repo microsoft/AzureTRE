@@ -89,22 +89,14 @@ async def test_patch_firewall(verify):
 
 shared_service_templates_to_create = [
     strings.GITEA_SHARED_SERVICE,
-    strings.CERTS_SHARED_SERVICE,
     strings.ADMIN_VM_SHARED_SERVICE,
 
     # TODO: https://github.com/microsoft/AzureTRE/issues/3077
     # strings.AIRLOCK_NOTIFIER_SHARED_SERVICE,
 
-    strings.NEXUS_SHARED_SERVICE,
-
     # TODO: fix cyclecloud and enable this
     # strings.CYCLECLOUD_SHARED_SERVICE,
 ]
-
-create_certs_properties = {
-    "domain_prefix": "foo",
-    "cert_name": "cert-foo",
-}
 
 create_airlock_notifier_properties = {
     "smtp_server_address": "10.1.2.3",
@@ -113,28 +105,12 @@ create_airlock_notifier_properties = {
     "smtp_from_email": "a@a.com",
 }
 
-create_nexus_properties = {
-    "ssl_cert_name": "nexus-ssl",
-}
-
 
 @pytest.mark.shared_services
 @pytest.mark.timeout(40 * 60)
 @pytest.mark.parametrize("template_name", shared_service_templates_to_create)
 async def test_create_shared_service(template_name, verify) -> None:
-    admin_token = await get_admin_token(verify)
-    # Check that the shared service hasn't already been created
-    shared_service = await get_shared_service_by_name(
-        template_name, verify, admin_token
-    )
-    if shared_service:
-        id = shared_service["id"]
-        LOGGER.info(
-            f"Shared service {template_name} already exists (id {id}), deleting it first..."
-        )
-        await disable_and_delete_resource(
-            f"/api/shared-services/{id}", admin_token, verify
-        )
+    await disable_and_delete_shared_service_if_exists(template_name, verify)
 
     post_payload = {
         "templateName": template_name,
@@ -144,12 +120,10 @@ async def test_create_shared_service(template_name, verify) -> None:
         },
     }
 
-    if template_name == strings.CERTS_SHARED_SERVICE:
-        post_payload["properties"].update(create_certs_properties)
-    elif template_name == strings.AIRLOCK_NOTIFIER_SHARED_SERVICE:
+    if template_name == strings.AIRLOCK_NOTIFIER_SHARED_SERVICE:
         post_payload["properties"].update(create_airlock_notifier_properties)
-    elif template_name == strings.NEXUS_SHARED_SERVICE:
-        post_payload["properties"].update(create_nexus_properties)
+
+    admin_token = await get_admin_token(verify)
 
     shared_service_path, _ = await post_resource(
         payload=post_payload,
@@ -162,3 +136,70 @@ async def test_create_shared_service(template_name, verify) -> None:
     await disable_and_delete_resource(
         f"/api{shared_service_path}", admin_token, verify
     )
+
+
+@pytest.mark.shared_services
+@pytest.mark.timeout(45 * 60)
+async def test_create_certs_nexus_shared_service(verify) -> None:
+    await disable_and_delete_shared_service_if_exists(strings.NEXUS_SHARED_SERVICE, verify)
+    await disable_and_delete_shared_service_if_exists(strings.CERTS_SHARED_SERVICE, verify)
+
+    certs_post_payload = {
+        "templateName": strings.CERTS_SHARED_SERVICE,
+        "properties": {
+            "display_name": f"Shared service {strings.CERTS_SHARED_SERVICE}",
+            "description": f"{strings.CERTS_SHARED_SERVICE} deployed via e2e tests",
+            "domain_prefix": "foo",
+            "cert_name": "nexus-ssl",
+        },
+    }
+
+    nexus_post_payload = {
+        "templateName": strings.NEXUS_SHARED_SERVICE,
+        "properties": {
+            "display_name": f"Shared service {strings.NEXUS_SHARED_SERVICE}",
+            "description": f"{strings.NEXUS_SHARED_SERVICE} deployed via e2e tests",
+            "ssl_cert_name": "nexus-ssl",
+        },
+    }
+
+    admin_token = await get_admin_token(verify)
+
+    certs_shared_service_path, _ = await post_resource(
+        payload=certs_post_payload,
+        endpoint="/api/shared-services",
+        access_token=admin_token,
+        verify=verify,
+    )
+
+    nexus_shared_service_path, _ = await post_resource(
+        payload=nexus_post_payload,
+        endpoint="/api/shared-services",
+        access_token=admin_token,
+        verify=verify,
+    )
+
+    await disable_and_delete_resource(
+        f"/api{nexus_shared_service_path}", admin_token, verify
+    )
+
+    await nexus_shared_service_path(
+        f"/api{certs_shared_service_path}", admin_token, verify
+    )
+
+
+async def disable_and_delete_shared_service_if_exists(shared_service_name, verify) -> None:
+    admin_token = await get_admin_token(verify)
+
+    # Check that the shared service hasn't already been created
+    shared_service = await get_shared_service_by_name(
+        shared_service_name, verify, admin_token
+    )
+    if shared_service:
+        id = shared_service["id"]
+        LOGGER.info(
+            f"Shared service {shared_service_name} already exists (id {id}), deleting it first..."
+        )
+        await disable_and_delete_resource(
+            f"/api/shared-services/{id}", admin_token, verify
+        )
