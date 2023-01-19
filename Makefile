@@ -184,7 +184,7 @@ bundle-build:
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} IMAGE_NAME_PREFIX=${IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_build.sh \
 	&& porter build
-	$(MAKE) bundle-check-params
+	if [ "$${USER}" == "vscode" ]; then $(MAKE) bundle-check-params; fi
 
 bundle-install: bundle-check-params
 	$(call target_title, "Deploying ${DIR} with Porter") \

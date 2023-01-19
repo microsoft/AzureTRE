@@ -89,7 +89,10 @@ async def test_patch_firewall(verify):
 
 shared_service_templates_to_create = [
     strings.GITEA_SHARED_SERVICE,
-    strings.CERTS_SHARED_SERVICE,
+
+    # TODO: https://github.com/microsoft/AzureTRE/issues/2328
+    # strings.CERTS_SHARED_SERVICE,
+
     strings.ADMIN_VM_SHARED_SERVICE,
 
     # TODO: https://github.com/microsoft/AzureTRE/issues/3077
