@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-airlock-notifier
-version: 0.3.0
+version: 0.3.1
 description: "A shared service notifying on Airlock Operations"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -43,7 +43,7 @@ parameters:
   - name: smtp_username
     env: SMTP_USERNAME
     type: string
-  - name: smtp_password
+  - name: smtpPassword
     env: SMTP_PASSWORD
     type: string
     sensitive: true
@@ -71,7 +71,7 @@ install:
         tre_url: ${ bundle.parameters.tre_url }
         smtp_server_address: ${ bundle.parameters.smtp_server_address }
         smtp_username: ${ bundle.parameters.smtp_username }
-        smtp_password: ${ bundle.parameters.smtp_password }
+        smtpPassword: ${ bundle.parameters.smtpPassword }
         smtp_from_email: ${ bundle.parameters.smtp_from_email }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
@@ -121,7 +121,7 @@ uninstall:
         tre_url: ${ bundle.parameters.tre_url }
         smtp_server_address: ${ bundle.parameters.smtp_server_address }
         smtp_username: ${ bundle.parameters.smtp_username }
-        smtp_password: ${ bundle.parameters.smtp_password }
+        smtpPassword: ${ bundle.parameters.smtpPassword }
         smtp_from_email: ${ bundle.parameters.smtp_from_email }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }

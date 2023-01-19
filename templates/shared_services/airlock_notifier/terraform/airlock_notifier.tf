@@ -70,7 +70,7 @@ resource "azurerm_resource_group_template_deployment" "smtp_api_connection" {
       value = var.smtp_username
     },
     "password" = {
-      value = var.smtp_password
+      value = var.smtpPassword
     }
   })
 

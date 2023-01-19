@@ -113,7 +113,7 @@ create_certs_properties = {
 create_airlock_notifier_properties = {
     "smtp_server_address": "10.1.2.3",
     "smtp_username": "smtp_user",
-    "smtp_password": "abcdefg01234567890",
+    "smtpPassword": "abcdefg01234567890",
     "smtp_from_email": "a@a.com",
 }
 
