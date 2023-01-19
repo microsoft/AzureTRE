@@ -5,6 +5,8 @@ resource "azurerm_databricks_workspace" "databricks" {
   sku                               = "premium"
   managed_resource_group_name       = local.managed_resource_group_name
   infrastructure_encryption_enabled = true
+  public_network_access_enabled     = var.is_exposed_externally
+  network_security_group_rules_required = var.is_exposed_externally ? "AllRules" : "NoAzureDatabricksRules"
 
   tags = local.tre_workspace_service_tags
   lifecycle { ignore_changes = [tags] }

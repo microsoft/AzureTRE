@@ -39,7 +39,7 @@
       },
       {
         "stepId": "260421b3-7308-491f-b531-e007cdc0aa46",
-        "stepTitle": "Add  firewall rules for databricks",
+        "stepTitle": "Add firewall rules for databricks",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
         "resourceAction": "upgrade",
@@ -88,6 +88,14 @@
                   "protocols": [
                     "TCP"
                   ]
+                },
+                {
+                  "name": "AzureAD",
+                  "description": "AAD access",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "destination_addresses": ["AzureActiveDirectory"],
+                  "destination_ports": ["*"],
+                  "protocols": ["TCP"]
                 }
               ]
             }
@@ -131,6 +139,20 @@
                   "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
                   "target_fqdns": [
                     "{{ resource.properties.dbfs_blob_storage_domain }}"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                },
+                {
+                  "name": "AAD CDN",
+                  "description": "AAD CDN",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "target_fqdns": [
+                    "aadcdn.msftauth.net"
                   ],
                   "protocols": [
                     {
@@ -158,7 +180,7 @@
       },
       {
         "stepId": "260421b3-7308-491f-b531-e007cdc0aa46",
-        "stepTitle": "Add  firewall rules for databricks",
+        "stepTitle": "Add firewall rules for databricks",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
         "resourceAction": "upgrade",
@@ -207,6 +229,14 @@
                   "protocols": [
                     "TCP"
                   ]
+                },
+                {
+                  "name": "AzureAD",
+                  "description": "AAD access",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "destination_addresses": ["AzureActiveDirectory"],
+                  "destination_ports": ["*"],
+                  "protocols": ["TCP"]
                 }
               ]
             }
@@ -257,6 +287,20 @@
                       "type": "Https"
                     }
                   ]
+                },
+                {
+                  "name": "AAD CDN",
+                  "description": "AAD CDN",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "target_fqdns": [
+                    "aadcdn.msftauth.net"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
                 }
               ]
             }
@@ -266,7 +310,7 @@
     ],
     "uninstall": [
       {
-        "stepId": "260421b3-7308-491f-b531-e007cdc0ff48",
+        "stepId": "260421b3-7308-491f-b531-e007cdc0aa46",
         "stepTitle": "Remove network firewall rules for databricks",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
