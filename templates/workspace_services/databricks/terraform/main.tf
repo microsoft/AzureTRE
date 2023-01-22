@@ -12,13 +12,13 @@ resource "azurerm_databricks_workspace" "databricks" {
   lifecycle { ignore_changes = [tags] }
 
   custom_parameters {
-    no_public_ip        = true
-    public_subnet_name  = azurerm_subnet.public.name
-    private_subnet_name = azurerm_subnet.private.name
-    virtual_network_id  = data.azurerm_virtual_network.ws.id
-
+    no_public_ip                                         = true
+    public_subnet_name                                   = azurerm_subnet.public.name
+    private_subnet_name                                  = azurerm_subnet.private.name
+    virtual_network_id                                   = data.azurerm_virtual_network.ws.id
     public_subnet_network_security_group_association_id  = azurerm_subnet_network_security_group_association.public.id
     private_subnet_network_security_group_association_id = azurerm_subnet_network_security_group_association.private.id
+    storage_account_name                                 = local.dbfsname
   }
 
   depends_on = [
