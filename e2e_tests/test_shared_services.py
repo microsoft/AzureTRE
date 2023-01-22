@@ -95,8 +95,7 @@ shared_service_templates_to_create = [
 
     strings.ADMIN_VM_SHARED_SERVICE,
 
-    # TODO: https://github.com/microsoft/AzureTRE/issues/3077
-    # strings.AIRLOCK_NOTIFIER_SHARED_SERVICE,
+    strings.AIRLOCK_NOTIFIER_SHARED_SERVICE,
 
     # TODO: Until this is resolved we can't install nexus in parallel with others: https://github.com/microsoft/AzureTRE/issues/2328
     # strings.NEXUS_SHARED_SERVICE,
