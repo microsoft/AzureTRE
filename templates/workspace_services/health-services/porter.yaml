@@ -80,8 +80,6 @@ mixins:
       clientVersion: 1.3.6
   - az:
       clientVersion: 2.37.0
-      extensions:
-        - azure-firewall
 
 install:
   - terraform:
