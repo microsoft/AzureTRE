@@ -22,7 +22,7 @@ variable "smtp_username" {
   type = string
 }
 
-variable "smtpPassword" {
+variable "smtp_password" {
   type      = string
   sensitive = true
 }
