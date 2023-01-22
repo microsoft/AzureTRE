@@ -167,7 +167,7 @@
       "overview",
       "app_service_plan_sku",
       "address_space_size",
-      "address_space",
+      "address_spaces",
       "auth_type",
       "create_aad_groups",
       "client_id",
