@@ -28,3 +28,17 @@ variable "deploy_dicom" {
   description = "Indicates if DICOM should be created in the Azure Health Data Services Workspace."
 }
 
+variable "auth_tenant_id" {
+  type        = string
+  description = "Used to authenticate into the AAD Tenant to get app role members"
+}
+
+variable "auth_client_id" {
+  type        = string
+  description = "Used to authenticate into the AAD Tenant to get app role members"
+}
+
+variable "auth_client_secret" {
+  type        = string
+  description = "Used to authenticate into the AAD Tenant to get app role members"
+}
