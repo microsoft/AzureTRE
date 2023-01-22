@@ -32,7 +32,7 @@
         "resourceAction": "upgrade",
         "properties": [
           {
-            "name": "network_rule_collections",
+            "name": "rule_collections",
             "type": "array",
             "arraySubstitutionAction": "replace",
             "arrayMatchField": "name",
@@ -78,7 +78,7 @@
         "resourceAction": "upgrade",
         "properties": [
           {
-            "name": "network_rule_collections",
+            "name": "rule_collections",
             "type": "array",
             "arraySubstitutionAction": "replace",
             "arrayMatchField": "name",
@@ -127,7 +127,7 @@
         "resourceAction": "upgrade",
         "properties": [
           {
-            "name": "network_rule_collections",
+            "name": "rule_collections",
             "type": "array",
             "arraySubstitutionAction": "remove",
             "arrayMatchField": "name",
