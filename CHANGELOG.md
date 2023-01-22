@@ -1,6 +1,11 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.9.0 (Unreleased)
 **BREAKING CHANGES & MIGRATIONS**:
+* Move to Azure **Firewall Policy** [#TBD](https://github.com/microsoft/AzureTRE/pull/TBD). This is a major version for the firewall shared service and will fail to automatically upgrade, follow these steps:
+  1. Let the system try to do the upgrade (via CI or `make tre-deploy`). It will fail but it's fine since now we have the new version published and registered.
+  2. In the Azure Porter, find your TRE resource group and select the route table resource (named `rt-YOUR_TRE_ID`).
+  3. In the overview screen, find the `ResourceProcessorSubnet` (should be last in the subnet list), click on the `...` and select `Dissociate`.
+  4. Issue a patch API request to `force-upgrade` the firewall to its new version.
 
 FEATURES:
 
