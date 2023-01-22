@@ -5,6 +5,7 @@
 FEATURES:
 
 ENHANCEMENTS:
+* Review VMs are being cleaned up when an Airlock request is canceled ([#3105](https://github.com/microsoft/AzureTRE/pull/3105))
 
 BUG FIXES:
 
