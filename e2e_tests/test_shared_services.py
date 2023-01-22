@@ -91,8 +91,7 @@ shared_service_templates_to_create = [
     strings.GITEA_SHARED_SERVICE,
     strings.ADMIN_VM_SHARED_SERVICE,
 
-    # TODO: https://github.com/microsoft/AzureTRE/issues/3077
-    # strings.AIRLOCK_NOTIFIER_SHARED_SERVICE,
+    strings.AIRLOCK_NOTIFIER_SHARED_SERVICE,
 
     # TODO: fix cyclecloud and enable this
     # strings.CYCLECLOUD_SHARED_SERVICE,
@@ -101,7 +100,7 @@ shared_service_templates_to_create = [
 create_airlock_notifier_properties = {
     "smtp_server_address": "10.1.2.3",
     "smtp_username": "smtp_user",
-    "smtp_password": "abcdefg01234567890",
+    "smtpPassword": "abcdefg01234567890",
     "smtp_from_email": "a@a.com",
 }
 
