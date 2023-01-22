@@ -45,6 +45,12 @@
         "custom"
       ]
     },
+    "address_spaces": {
+      "type": "array",
+      "title": "Address spaces",
+      "description": "Network address space to be used by the workspace.",
+      "updateable": true
+    },
     "auth_type": {
       "type": "string",
       "title": "Workspace Authentication Type",
@@ -263,6 +269,9 @@
     "aad_redirect_uris": {
       "classNames": "tre-hidden"
     },
+    "address_spaces": {
+      "classNames": "tre-hidden"
+    },
     "ui:order": [
       "display_name",
       "description",
@@ -270,7 +279,7 @@
       "shared_storage_quota",
       "app_service_plan_sku",
       "address_space_size",
-      "address_space",
+      "address_spaces",
       "auth_type",
       "create_aad_groups",
       "client_id",
