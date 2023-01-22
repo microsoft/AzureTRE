@@ -209,3 +209,24 @@ resource "azurerm_private_endpoint" "databricks_auth_private_endpoint" {
   }
 }
 
+resource "azurerm_private_endpoint" "databricks_filesystem_private_endpoint" {
+  name                = local.dbfsname
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  subnet_id           = data.azurerm_subnet.services.id
+  tags                = local.tre_workspace_service_tags
+
+  lifecycle { ignore_changes = [tags] }
+
+  private_service_connection {
+    name                           = "private-service-connection-databricks-filesystem-${local.service_resource_name_suffix}"
+    private_connection_resource_id = join("", [azurerm_databricks_workspace.databricks.managed_resource_group_id, "/providers/Microsoft.Storage/storageAccounts/${local.dbfsname}"])
+    is_manual_connection           = false
+    subresource_names              = ["blob"]
+  }
+
+  private_dns_zone_group {
+    name                 = "private-dns-zone-group-databricks-filesystem-${local.service_resource_name_suffix}"
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
+  }
+}
