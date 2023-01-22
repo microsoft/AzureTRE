@@ -10,11 +10,6 @@
   ],
   "authorizedRoles": [],
   "properties": {
-    "shared_storage_quota": {
-      "type": "integer",
-      "title": "Shared Storage Quota",
-      "description": "Quota (in GB) to set for the VM Shared Storage."
-    },
     "app_service_plan_sku": {
       "type": "string",
       "title": "App Service Plan SKU",
@@ -37,6 +32,12 @@
         "large",
         "custom"
       ]
+    },
+    "address_spaces": {
+      "type": "array",
+      "title": "Address spaces",
+      "description": "Network address space to be used by the workspace.",
+      "updateable": true
     },
     "auth_type": {
       "type": "string",
@@ -157,11 +158,13 @@
     "aad_redirect_uris": {
       "classNames": "tre-hidden"
     },
+    "address_spaces": {
+      "classNames": "tre-hidden"
+    },
     "ui:order": [
       "display_name",
       "description",
       "overview",
-      "shared_storage_quota",
       "app_service_plan_sku",
       "address_space_size",
       "address_space",
