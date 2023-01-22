@@ -144,13 +144,16 @@ async def test_create_certs_nexus_shared_service(verify) -> None:
     await disable_and_delete_shared_service_if_exists(strings.NEXUS_SHARED_SERVICE, verify)
     await disable_and_delete_shared_service_if_exists(strings.CERTS_SHARED_SERVICE, verify)
 
+    cert_domain = "nexus"
+    cert_name = f"${cert_domain}-ssl"
+
     certs_post_payload = {
         "templateName": strings.CERTS_SHARED_SERVICE,
         "properties": {
             "display_name": f"Shared service {strings.CERTS_SHARED_SERVICE}",
             "description": f"{strings.CERTS_SHARED_SERVICE} deployed via e2e tests",
-            "domain_prefix": "foo",
-            "cert_name": "nexus-ssl",
+            "domain_prefix": cert_domain,
+            "cert_name": cert_name,
         },
     }
 
@@ -159,7 +162,7 @@ async def test_create_certs_nexus_shared_service(verify) -> None:
         "properties": {
             "display_name": f"Shared service {strings.NEXUS_SHARED_SERVICE}",
             "description": f"{strings.NEXUS_SHARED_SERVICE} deployed via e2e tests",
-            "ssl_cert_name": "nexus-ssl",
+            "ssl_cert_name": cert_name,
         },
     }
 
