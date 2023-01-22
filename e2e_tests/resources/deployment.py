@@ -47,3 +47,4 @@ def parse_message(response):
     for i, step in enumerate(steps, 1):
         message += f'\n\nStep {i}: {step["stepTitle"]}'
         message += f'\n{step["message"]}'
+    return message
