@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "3.37.0"
     }
+    external = {
+      source  = "hashicorp/external"
+      version = "=2.2.2"
+    }
   }
 
   backend "azurerm" {}
