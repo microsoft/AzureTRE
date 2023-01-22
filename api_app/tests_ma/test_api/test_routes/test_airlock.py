@@ -232,8 +232,8 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
 
     # [POST] /workspaces/{workspace_id}/requests/{airlock_request_id}/cancel
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
-    @patch("api.routes.airlock.update_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Cancelled))
-    async def test_post_cancel_airlock_request_canceles_request_returns_200(self, _, __, app, client):
+    @patch("services.airlock.update_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Cancelled))
+    async def test_post_cancel_airlock_request_cancels_request_returns_200(self, _, __, app, client):
         response = await client.post(app.url_path_for(strings.API_CANCEL_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["airlockRequest"]["id"] == AIRLOCK_REQUEST_ID
@@ -332,6 +332,9 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @patch("services.airlock.send_uninstall_message")
+    @patch("services.airlock.ResourceHistoryRepository.save_item")
+    @patch("services.airlock.UserResourceRepository.update_item_with_etag")
+    @patch("services.airlock.send_resource_request_message")
     @patch("services.airlock.ResourceTemplateRepository.get_template_by_name_and_version", return_value=ResourceTemplate(name="test_template", id="123", description="test", version="0.0.1", resourceType="user-resource", current=True, required=[], properties={}))
     @patch("services.airlock.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=WorkspaceService(id=WORKSPACE_SERVICE_ID, templateName="test", templateVersion="0.0.1", _etag="123"))
     @patch("services.airlock.UserResourceRepository.get_user_resource_by_id", return_value=UserResource(id=USER_RESOURCE_ID, templateName="test", templateVersion="0.0.1", _etag="123"))
@@ -339,7 +342,7 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
     @patch("services.airlock.AirlockRequestRepository.create_airlock_review_item", return_value=sample_airlock_review_object())
     @patch("services.airlock.update_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Approved, review_user_resource=True))
     @patch("services.airlock.AirlockRequestRepository.save_item")
-    async def test_post_create_airlock_review_cleans_up_review_user_resources(self, _, __, ___, ____, _____, ______, _______, send_uninstall_message_mock, app, client, sample_airlock_review_input_data):
+    async def test_post_create_airlock_review_cleans_up_review_user_resources(self, _, __, ___, ____, _____, ______, _______, ________, _________, __________, send_uninstall_message_mock, app, client, sample_airlock_review_input_data):
         response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)
         assert response.status_code == status.HTTP_200_OK
         assert send_uninstall_message_mock.call_count == 1
