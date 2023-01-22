@@ -37,6 +37,7 @@ ENHANCEMENTS:
 * Upgrade Guacamole dependencies ([#3053](https://github.com/microsoft/AzureTRE/pull/3053))
 * Lint TRE cost tags per entity type (workspace, shared service, etc.) ([#3061](https://github.com/microsoft/AzureTRE/pull/3061))
 * Validate required secrets have value ([#3073](https://github.com/microsoft/AzureTRE/pull/3073))
+* Airlock processor unittests uses pytest ([#3026](https://github.com/microsoft/AzureTRE/pull/3026))
 
 
 BUG FIXES:

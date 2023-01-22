@@ -89,11 +89,13 @@ async def test_patch_firewall(verify):
 
 shared_service_templates_to_create = [
     strings.GITEA_SHARED_SERVICE,
-    strings.CERTS_SHARED_SERVICE,
+
+    # TODO: https://github.com/microsoft/AzureTRE/issues/2328
+    # strings.CERTS_SHARED_SERVICE,
+
     strings.ADMIN_VM_SHARED_SERVICE,
 
-    # TODO: https://github.com/microsoft/AzureTRE/issues/3077
-    # strings.AIRLOCK_NOTIFIER_SHARED_SERVICE,
+    strings.AIRLOCK_NOTIFIER_SHARED_SERVICE,
 
     # TODO: Until this is resolved we can't install nexus in parallel with others: https://github.com/microsoft/AzureTRE/issues/2328
     # strings.NEXUS_SHARED_SERVICE,
@@ -110,7 +112,7 @@ create_certs_properties = {
 create_airlock_notifier_properties = {
     "smtp_server_address": "10.1.2.3",
     "smtp_username": "smtp_user",
-    "smtp_password": "abcdefg01234567890",
+    "smtpPassword": "abcdefg01234567890",
     "smtp_from_email": "a@a.com",
 }
 
