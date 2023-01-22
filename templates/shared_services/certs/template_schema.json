@@ -32,7 +32,7 @@
         "resourceAction": "upgrade",
         "properties": [
           {
-            "name": "rule_collections",
+            "name": "network_rule_collections",
             "type": "array",
             "arraySubstitutionAction": "replace",
             "arrayMatchField": "name",
@@ -53,8 +53,12 @@
                       "type": "Http"
                     }
                   ],
-                  "target_fqdns": ["acme-v02.api.letsencrypt.org"],
-                  "source_ip_groups_in_core": ["ipg-resource-processor"]
+                  "target_fqdns": [
+                    "acme-v02.api.letsencrypt.org"
+                  ],
+                  "source_ip_groups_in_core": [
+                    "ipg-resource-processor"
+                  ]
                 }
               ]
             }
@@ -95,8 +99,12 @@
                       "type": "Http"
                     }
                   ],
-                  "target_fqdns": ["acme-v02.api.letsencrypt.org"],
-                  "source_ip_groups_in_core": ["ipg-resource-processor"]
+                  "target_fqdns": [
+                    "acme-v02.api.letsencrypt.org"
+                  ],
+                  "source_ip_groups_in_core": [
+                    "ipg-resource-processor"
+                  ]
                 }
               ]
             }
