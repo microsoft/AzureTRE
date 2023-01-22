@@ -1,7 +1,7 @@
 resource "azurerm_network_security_group" "nsg" {
   name                = local.network_security_group_name
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.ws.location
+  resource_group_name = data.azurerm_resource_group.ws.name
 
   tags = local.tre_workspace_service_tags
 
@@ -89,7 +89,7 @@ resource "azurerm_network_security_group" "nsg" {
 
 resource "azurerm_subnet" "public" {
   name                 = local.public_subnet_name
-  resource_group_name  = data.azurerm_resource_group.rg.name
+  resource_group_name  = data.azurerm_resource_group.ws.name
   virtual_network_name = data.azurerm_virtual_network.ws.name
   address_prefixes     = [local.public_subnet_address_space]
 
@@ -109,7 +109,7 @@ resource "azurerm_subnet" "public" {
 
 resource "azurerm_subnet" "private" {
   name                 = local.private_subnet_name
-  resource_group_name  = data.azurerm_resource_group.rg.name
+  resource_group_name  = data.azurerm_resource_group.ws.name
   virtual_network_name = data.azurerm_virtual_network.ws.name
   address_prefixes     = [local.private_subnet_address_space]
 
@@ -129,8 +129,8 @@ resource "azurerm_subnet" "private" {
 
 resource "azurerm_route_table" "rt" {
   name                          = local.route_table_name
-  location                      = data.azurerm_resource_group.rg.location
-  resource_group_name           = data.azurerm_resource_group.rg.name
+  location                      = data.azurerm_resource_group.ws.location
+  resource_group_name           = data.azurerm_resource_group.ws.name
   disable_bgp_route_propagation = false
 
   tags = local.tre_workspace_service_tags
@@ -167,8 +167,8 @@ resource "azurerm_subnet_route_table_association" "rt_public" {
 
 resource "azurerm_private_endpoint" "databricks_control_plane_private_endpoint" {
   name                = "pe-adb-cp-${local.service_resource_name_suffix}"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.ws.location
+  resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
   tags                = local.tre_workspace_service_tags
 
@@ -189,8 +189,8 @@ resource "azurerm_private_endpoint" "databricks_control_plane_private_endpoint" 
 
 resource "azurerm_private_endpoint" "databricks_auth_private_endpoint" {
   name                = "pe-adb-auth-${local.service_resource_name_suffix}"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.ws.location
+  resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
   tags                = local.tre_workspace_service_tags
 
@@ -211,8 +211,8 @@ resource "azurerm_private_endpoint" "databricks_auth_private_endpoint" {
 
 resource "azurerm_private_endpoint" "databricks_filesystem_private_endpoint" {
   name                = local.dbfsname
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.ws.location
+  resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
   tags                = local.tre_workspace_service_tags
 

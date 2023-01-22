@@ -1,10 +1,10 @@
-data "azurerm_resource_group" "rg" {
+data "azurerm_resource_group" "ws" {
   name = local.resource_group_name
 }
 
 data "azurerm_virtual_network" "ws" {
   name                = local.virtual_network_name
-  resource_group_name = data.azurerm_resource_group.rg.name
+  resource_group_name = data.azurerm_resource_group.ws.name
 }
 
 data "azurerm_firewall" "firewall" {

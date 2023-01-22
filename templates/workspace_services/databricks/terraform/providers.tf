@@ -48,5 +48,5 @@ module "azure_region" {
   source  = "claranet/regions/azurerm"
   version = ">=6.1.0"
 
-  azure_region = data.azurerm_resource_group.rg.location
+  azure_region = data.azurerm_resource_group.ws.location
 }

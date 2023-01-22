@@ -1,7 +1,7 @@
 resource "azurerm_databricks_workspace" "databricks" {
   name                                  = local.databricks_workspace_name
-  resource_group_name                   = data.azurerm_resource_group.rg.name
-  location                              = data.azurerm_resource_group.rg.location
+  resource_group_name                   = data.azurerm_resource_group.ws.name
+  location                              = data.azurerm_resource_group.ws.location
   sku                                   = "premium"
   managed_resource_group_name           = local.managed_resource_group_name
   infrastructure_encryption_enabled     = true
