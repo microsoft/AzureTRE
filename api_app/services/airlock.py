@@ -162,14 +162,14 @@ async def create_review_vm(airlock_request: AirlockRequest, user: User, workspac
                            operation_repo: OperationRepository, airlock_request_repo: AirlockRequestRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository) -> Tuple[UserResource, Operation]:
     if airlock_request.type == AirlockRequestType.Import:
         config = workspace.properties["airlock_review_config"]["import"]
-        workspace_id = config["import_vm_workspace_id"]
-        workspace_service_id = config["import_vm_workspace_service_id"]
+        review_workspace_id = config["import_vm_workspace_id"]
+        review_workspace_service_id = config["import_vm_workspace_service_id"]
         user_resource_template_name = config["import_vm_user_resource_template_name"]
     else:
         assert airlock_request.type == AirlockRequestType.Export
         config = workspace.properties["airlock_review_config"]["export"]
-        workspace_id = workspace.id
-        workspace_service_id = config["export_vm_workspace_service_id"]
+        review_workspace_id = workspace.id
+        review_workspace_service_id = config["export_vm_workspace_service_id"]
         user_resource_template_name = config["export_vm_user_resource_template_name"]
 
     # Check whether the user already has a healthy VM deployed for the request
@@ -181,7 +181,7 @@ async def create_review_vm(airlock_request: AirlockRequest, user: User, workspac
         await _handle_existing_review_resource(existing_resource, user, user_resource_repo, workspace_service_repo, operation_repo, resource_template_repo, resource_history_repo)
 
     # Create the VM
-    user_resource, operation = await _deploy_vm(airlock_request, user, workspace, workspace_service_id, user_resource_template_name, user_resource_repo, workspace_service_repo, operation_repo, resource_template_repo, resource_history_repo)
+    user_resource, operation = await _deploy_vm(airlock_request, user, workspace, review_workspace_id, review_workspace_service_id, user_resource_template_name, user_resource_repo, workspace_service_repo, operation_repo, resource_template_repo, resource_history_repo)
 
     # Update the Airlock Request with the information on the VM
     updated_resource = await update_and_publish_event_airlock_request(
@@ -190,8 +190,8 @@ async def create_review_vm(airlock_request: AirlockRequest, user: User, workspac
         user,
         workspace,
         review_user_resource=AirlockReviewUserResource(
-            workspaceId=workspace_id,
-            workspaceServiceId=workspace_service_id,
+            workspaceId=review_workspace_id,
+            workspaceServiceId=review_workspace_service_id,
             userResourceId=user_resource.id
         ))
 
@@ -199,10 +199,10 @@ async def create_review_vm(airlock_request: AirlockRequest, user: User, workspac
     return updated_resource, operation
 
 
-async def _deploy_vm(airlock_request: AirlockRequest, user: User, workspace: Workspace, workspace_service_id: str, user_resource_template_name: str,
+async def _deploy_vm(airlock_request: AirlockRequest, user: User, workspace: Workspace, review_workspace_id: str, review_workspace_service_id: str, user_resource_template_name: str,
                      user_resource_repo: UserResourceRepository, workspace_service_repo: WorkspaceServiceRepository, operation_repo: OperationRepository,
                      resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository):
-    workspace_service = await workspace_service_repo.get_workspace_service_by_id(workspace_id=workspace.id, service_id=workspace_service_id)
+    workspace_service = await workspace_service_repo.get_workspace_service_by_id(workspace_id=review_workspace_id, service_id=review_workspace_service_id)
     airlock_request_sas_url = get_airlock_container_link(airlock_request, user, workspace)
 
     user_resource_create = UserResourceInCreate(
@@ -214,9 +214,9 @@ async def _deploy_vm(airlock_request: AirlockRequest, user: User, workspace: Wor
         }
     )
 
-    logging.info(f"Creating a user resource in {workspace.id} {workspace_service_id} {user_resource_template_name}")
+    logging.info(f"Creating a user resource in {review_workspace_id} {review_workspace_service_id} {user_resource_template_name}")
     user_resource, resource_template = await user_resource_repo.create_user_resource_item(
-        user_resource_create, workspace.id, workspace_service_id, workspace_service.templateName, user.id, user.roles)
+        user_resource_create, review_workspace_id, review_workspace_service_id, workspace_service.templateName, user.id, user.roles)
 
     operation = await save_and_deploy_resource(
         resource=user_resource,

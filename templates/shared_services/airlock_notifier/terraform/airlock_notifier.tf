@@ -1,28 +1,3 @@
-resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet_allow_appservice" {
-  name                = "nrc-resource_processor_allow_appservice_subnet"
-  azure_firewall_name = data.azurerm_firewall.fw.name
-  resource_group_name = data.azurerm_firewall.fw.resource_group_name
-  priority            = 110
-  action              = "Allow"
-
-  rule {
-    name = "AzureServiceTags"
-
-    protocols = [
-      "TCP"
-    ]
-
-    destination_addresses = [
-      "AppService"
-    ]
-
-    destination_ports = [
-      "443"
-    ]
-    source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
-  }
-}
-
 resource "azurerm_service_plan" "notifier_plan" {
   name                = "airlock-notifier-plan-${var.tre_id}"
   resource_group_name = data.azurerm_resource_group.core.name

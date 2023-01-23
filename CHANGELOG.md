@@ -5,6 +5,7 @@
 FEATURES:
 
 ENHANCEMENTS:
+* Add support for referencing IP Groups from the Core Resource Group in firewall rules created via the pipeline [#3089](https://github.com/microsoft/AzureTRE/pull/3089)
 * Review VMs are being cleaned up when an Airlock request is canceled ([#3105](https://github.com/microsoft/AzureTRE/pull/3105))
 
 BUG FIXES:
