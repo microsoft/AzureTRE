@@ -159,6 +159,32 @@
 											"172.196.0.0"
 										]
 									}
+								},
+                "source_ip_group_ids": {
+									"title": "Source_ip_group_ids",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "Items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"some_ip_group_id"
+										]
+									}
+								},
+                "source_ip_groups_in_core": {
+									"title": "Source_ip_groups_in_core",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "Items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"ip_group_name_in_core_resource_group"
+										]
+									}
 								}
 							}
 						}
@@ -249,8 +275,21 @@
 										]
 									}
 								},
-                "source_ip_groups": {
-									"title": "Source_ip_groups",
+                "source_ip_group_ids": {
+									"title": "Source_ip_group_ids",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "Items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"some_ip_group_id"
+										]
+									}
+								},
+                "source_ip_groups_in_core": {
+									"title": "Source_ip_groups_in_core",
 									"type": "array",
 									"default": [],
 									"items":{
@@ -275,8 +314,8 @@
 										]
 									}
 								},
-                "destination_ip_groups": {
-									"title": "Destination_ip_groups",
+                "destination_ip_group_ids": {
+									"title": "Destination_ip_group_ids",
 									"type": "array",
 									"default": [],
 									"items":{
@@ -284,7 +323,7 @@
 										"type": "string",
 										"default": "",
 										"examples": [
-											"some_ip_group_name"
+											"some_ip_group_id"
 										]
 									}
 								},
