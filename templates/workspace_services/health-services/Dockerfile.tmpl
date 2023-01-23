@@ -2,7 +2,11 @@
 FROM debian:bullseye-slim
 
 # PORTER_INIT
-
+# Install jq
+RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+    apt-get update \
+    && apt-get install --no-install-recommends -y jq
+    
 # PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle

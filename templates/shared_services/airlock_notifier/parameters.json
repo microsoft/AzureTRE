@@ -53,7 +53,7 @@
       }
     },
     {
-      "name": "smtp_password",
+      "name": "smtpPassword",
       "source": {
         "env": "SMTP_PASSWORD"
       }

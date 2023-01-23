@@ -321,7 +321,7 @@ resource "azurerm_firewall_application_rule_collection" "web_app_subnet" {
 
 # these rule collections are driven by the API, through resource properties
 resource "azurerm_firewall_application_rule_collection" "api_driven_application_rules" {
-  for_each            = { for i, v in jsondecode(base64decode(var.api_driven_rule_collections_b64)) : i => v }
+  for_each            = { for i, v in local.api_driven_application_rule_collection : i => v }
   name                = each.value.name
   azure_firewall_name = azurerm_firewall.fw.name
   resource_group_name = azurerm_firewall.fw.resource_group_name
@@ -342,7 +342,11 @@ resource "azurerm_firewall_application_rule_collection" "api_driven_application_
       }
       target_fqdns     = try(rule.value.target_fqdns, [])
       source_addresses = try(rule.value.source_addresses, [])
-      fqdn_tags        = try(rule.value.fqdn_tags, [])
+      source_ip_groups = concat(
+        try(rule.value.source_ip_group_ids, []),
+        try([for item in rule.value.source_ip_groups_in_core : data.azurerm_ip_group.referenced[item].id], [])
+      )
+      fqdn_tags = try(rule.value.fqdn_tags, [])
     }
   }
 
@@ -357,7 +361,7 @@ moved {
 }
 
 resource "azurerm_firewall_network_rule_collection" "api_driven_network_rules" {
-  for_each            = { for i, v in jsondecode(base64decode(var.api_driven_network_rule_collections_b64)) : i => v }
+  for_each            = { for i, v in local.api_driven_network_rule_collection : i => v }
   name                = each.value.name
   azure_firewall_name = azurerm_firewall.fw.name
   resource_group_name = azurerm_firewall.fw.resource_group_name
@@ -367,12 +371,15 @@ resource "azurerm_firewall_network_rule_collection" "api_driven_network_rules" {
   dynamic "rule" {
     for_each = each.value.rules
     content {
-      name                  = rule.value.name
-      description           = rule.value.description
-      source_addresses      = try(rule.value.source_addresses, [])
-      source_ip_groups      = try(rule.value.source_ip_groups, [])
+      name             = rule.value.name
+      description      = rule.value.description
+      source_addresses = try(rule.value.source_addresses, [])
+      source_ip_groups = concat(
+        try(rule.value.source_ip_group_ids, []),
+        try([for item in rule.value.source_ip_groups_in_core : data.azurerm_ip_group.referenced[item].id], [])
+      )
       destination_addresses = try(rule.value.destination_addresses, [])
-      destination_ip_groups = try(rule.value.destination_ip_groups, [])
+      destination_ip_groups = try(rule.value.destination_ip_group_ids, [])
       destination_fqdns     = try(rule.value.destination_fqdns, [])
       destination_ports     = try(rule.value.destination_ports, [])
       protocols             = try(rule.value.protocols, [])
