@@ -46,6 +46,6 @@ def parse_message(response):
     message = json["operation"]["message"]
     message += '\n'
     for i, step in enumerate(steps, 1):
-        message += f'Step {i}: {step["stepTitle"]}'
-        message += f'\n{step["message"]}\n\n'
+        message += f'Step {i}: {step["stepTitle"]}\n'
+        message += f'{step["message"]}\n\n'
     return message
