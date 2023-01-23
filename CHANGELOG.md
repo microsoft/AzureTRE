@@ -5,7 +5,13 @@
   1. Let the system try to do the upgrade (via CI or `make tre-deploy`). It will fail but it's fine since now we have the new version published and registered.
   2. In the Azure Porter, find your TRE resource group and select the route table resource (named `rt-YOUR_TRE_ID`).
   3. In the overview screen, find the `ResourceProcessorSubnet` (should be last in the subnet list), click on the `...` and select `Dissociate`.
-  4. Issue a patch API request to `force-upgrade` the firewall to its new version.
+  4. Issue a patch API request to `force-update` the firewall to its new version.
+
+      One way to accomplish this is with the Swagger endpoint (/api/docs).
+      ![Force-update a service](./docs/assets/firewall-policy-migrate1.png)
+
+      If this endpoint is not on in your deployment - include `enable_swagger` in your `config.yaml` (see the sample file), or temporarly via the API resource on azure (named `api-YOUR_TRE-ID`) -> Configuration -> `ENABLE_SWAGGER` item.
+      ![Update API setting](./docs/assets/firewall-policy-migrate2.png)
 
 FEATURES:
 

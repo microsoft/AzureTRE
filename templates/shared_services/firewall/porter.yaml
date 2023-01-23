@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-firewall
-version: 0.8.1
+version: 0.8.1 # TODO: update before merge
 description: "An Azure TRE Firewall shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
