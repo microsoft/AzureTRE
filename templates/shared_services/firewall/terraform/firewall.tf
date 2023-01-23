@@ -45,7 +45,7 @@ resource "azurerm_firewall" "fw" {
     for_each = var.sku_tier == "Basic" ? [1] : []
     content {
       name                 = "mgmtconfig"
-      subnet_id            = data.azurerm_subnet.firewall-management.id
+      subnet_id            = data.azurerm_subnet.firewall_management.id
       public_ip_address_id = azurerm_public_ip.fwmanagement[0].id
     }
   }
@@ -91,4 +91,7 @@ resource "azurerm_firewall_policy" "root" {
   resource_group_name = local.core_resource_group_name
   location            = data.azurerm_resource_group.rg.location
   sku                 = var.sku_tier
+  tags                = local.tre_shared_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
