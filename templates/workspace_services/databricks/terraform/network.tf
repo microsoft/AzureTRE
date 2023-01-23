@@ -210,7 +210,7 @@ resource "azurerm_private_endpoint" "databricks_auth_private_endpoint" {
 }
 
 resource "azurerm_private_endpoint" "databricks_filesystem_private_endpoint" {
-  name                = local.dbfsname
+  name                = "pe-adb-fs-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
@@ -220,7 +220,7 @@ resource "azurerm_private_endpoint" "databricks_filesystem_private_endpoint" {
 
   private_service_connection {
     name                           = "private-service-connection-databricks-filesystem-${local.service_resource_name_suffix}"
-    private_connection_resource_id = join("", [azurerm_databricks_workspace.databricks.managed_resource_group_id, "/providers/Microsoft.Storage/storageAccounts/${local.dbfsname}"])
+    private_connection_resource_id = azurerm_storage_account.dbfs.id
     is_manual_connection           = false
     subresource_names              = ["blob"]
   }

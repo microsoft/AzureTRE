@@ -18,7 +18,7 @@ locals {
   route_table_name               = "rt-${local.service_resource_name_suffix}"
   map_location_url_config        = jsondecode(file("${path.module}/databricks-udr.json"))
   core_vnet                      = "vnet-${var.tre_id}"
-  dbfsname                       = lower(replace("stg${substr(local.service_resource_name_suffix, -8, -1)}", "-", ""))
+  storage_name                   = lower(replace("stgdbfs${substr(local.service_resource_name_suffix, -8, -1)}", "-", ""))
 
   tre_workspace_service_tags = {
     tre_id                   = var.tre_id
