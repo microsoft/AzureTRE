@@ -118,7 +118,7 @@
       },
       {
         "stepId": "12c0cf8c-94f7-11ed-a1eb-0242ac120002",
-        "stepTitle": "Add network firewall rules for health services",
+        "stepTitle": "Update network firewall rules for health services",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
         "resourceAction": "upgrade",
@@ -175,7 +175,7 @@
     "uninstall": [
       {
         "stepId": "1fc155ee-94f7-11ed-a1eb-0242ac120002",
-        "stepTitle": "Add network firewall rules for health services",
+        "stepTitle": "Remove network firewall rules for health services",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
         "resourceAction": "upgrade",
