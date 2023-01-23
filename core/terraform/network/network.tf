@@ -137,3 +137,12 @@ resource "azurerm_subnet" "airlock_events" {
   # https://docs.microsoft.com/en-us/azure/event-grid/consume-private-endpoints
   service_endpoints = ["Microsoft.ServiceBus"]
 }
+
+resource "azurerm_ip_group" "resource_processor" {
+  name                = "ipg-resource-processor"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  cidrs               = [local.resource_processor_subnet_address_prefix]
+  tags                = local.tre_core_tags
+  lifecycle { ignore_changes = [tags] }
+}
