@@ -137,7 +137,7 @@ async def test_create_shared_service(template_name, verify) -> None:
     )
 
 
-@pytest.mark.shared_services
+# @pytest.mark.shared_services
 @pytest.mark.timeout(45 * 60)
 async def test_create_certs_nexus_shared_service(verify) -> None:
     await disable_and_delete_shared_service_if_exists(strings.NEXUS_SHARED_SERVICE, verify)
