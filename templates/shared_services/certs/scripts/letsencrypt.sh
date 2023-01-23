@@ -114,6 +114,7 @@ openssl pkcs12 -export \
 
 # Save cert and password to KeyVault
 echo "Importing cert to KeyVault ${keyvault_name}"
+set -x
 sid=$(az keyvault certificate import \
     -o json \
     --vault-name "${keyvault_name}" \
