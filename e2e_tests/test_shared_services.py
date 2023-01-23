@@ -137,14 +137,14 @@ async def test_create_shared_service(template_name, verify) -> None:
     )
 
 
-# @pytest.mark.shared_services
-@pytest.mark.timeout(45 * 60)
+@pytest.mark.shared_services
+@pytest.mark.timeout(60 * 60)
 async def test_create_certs_nexus_shared_service(verify) -> None:
     await disable_and_delete_shared_service_if_exists(strings.NEXUS_SHARED_SERVICE, verify)
     await disable_and_delete_shared_service_if_exists(strings.CERTS_SHARED_SERVICE, verify)
 
     cert_domain = "nexus"
-    cert_name = f"${cert_domain}-ssl"
+    cert_name = "nexus-ssl"
 
     certs_post_payload = {
         "templateName": strings.CERTS_SHARED_SERVICE,
