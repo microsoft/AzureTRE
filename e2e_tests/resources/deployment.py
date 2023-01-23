@@ -31,8 +31,9 @@ async def check_deployment(client, operation_endpoint, headers):
 
     response = await client.get(full_endpoint, headers=headers, timeout=TIMEOUT)
     if response.status_code == 200:
-        deployment_status = response.json()["operation"]["status"]
-        message = parse_message(response)
+        response_json = response.json()
+        deployment_status = response_json["operation"]["status"]
+        message = format_deployment_status_message(response_json)
         return deployment_status, message
     else:
         LOGGER.error(f"Non 200 response in check_deployment: {response.status_code}")
@@ -40,12 +41,11 @@ async def check_deployment(client, operation_endpoint, headers):
         raise Exception("Non 200 response in check_deployment")
 
 
-def parse_message(response):
-    json = response.json()
-    steps = json["operation"]["steps"]
-    message = json["operation"]["message"]
-    message += '\n'
+def format_deployment_status_message(response_json):
+    steps = response_json["operation"]["steps"]
+    message = response_json["operation"]["message"]
     for i, step in enumerate(steps, 1):
-        message += f'Step {i}: {step["stepTitle"]}'
-        message += f'\n{step["message"]}\n\n'
+        message += '\n'
+        message += f'Step {i}: {step["stepTitle"]}\n'
+        message += f'{step["message"]}\n'
     return message
