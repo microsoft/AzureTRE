@@ -1,10 +1,15 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.9.0 (Unreleased)
 **BREAKING CHANGES & MIGRATIONS**:
-* Move to Azure **Firewall Policy** [#TBD](https://github.com/microsoft/AzureTRE/pull/TBD). This is a major version for the firewall shared service and will fail to automatically upgrade, follow these steps:
+* Move to Azure **Firewall Policy** [#3107](https://github.com/microsoft/AzureTRE/pull/3107). This is a major version for the firewall shared service and will fail to automatically upgrade. You should follow these steps to complete it:
   1. Let the system try to do the upgrade (via CI or `make tre-deploy`). It will fail but it's fine since now we have the new version published and registered.
-  2. In the Azure Porter, find your TRE resource group and select the route table resource (named `rt-YOUR_TRE_ID`).
-  3. In the overview screen, find the `ResourceProcessorSubnet` (should be last in the subnet list), click on the `...` and select `Dissociate`.
+  2. Make a temporary network change with either of the following options:
+      * Azure Portal: find your TRE resource group and select the route table resource (named `rt-YOUR_TRE_ID`). 
+        In the overview screen, find the `ResourceProcessorSubnet` (should be last in the subnet list), click on the `...` and select `Dissociate`.
+      * Azure CLI:
+        ```shell
+        az network vnet subnet update --resource-group rg-YOUR_TRE_ID --vnet-name vnet-YOUR_TRE_ID --name ResourceProcessorSubnet --remove routeTable
+        ```
   4. Issue a patch API request to `force-update` the firewall to its new version.
 
       One way to accomplish this is with the Swagger endpoint (/api/docs).
@@ -12,6 +17,7 @@
 
       If this endpoint is not on in your deployment - include `enable_swagger` in your `config.yaml` (see the sample file), or temporarly via the API resource on azure (named `api-YOUR_TRE-ID`) -> Configuration -> `ENABLE_SWAGGER` item.
       ![Update API setting](./docs/assets/firewall-policy-migrate2.png)
+  :warning: Any custom rules you might have added manually will be **lost** and you'll need to add it back.
 
 FEATURES:
 
