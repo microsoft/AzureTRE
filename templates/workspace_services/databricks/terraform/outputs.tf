@@ -3,11 +3,11 @@ output "databricks_workspace_name" {
 }
 
 output "connection_uri" {
-  value = var.is_exposed_externally ? "https://${azurerm_databricks_workspace.databricks.workspace_url}/aad/auth?has=&Workspace=/subscriptions/${data.azurerm_subscription.current.id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.Databricks/workspaces/${local.databricks_workspace_name}&WorkspaceResourceGroupUri=/subscriptions/${data.azurerm_subscription.current.id}/resourceGroups/${local.managed_resource_group_name}&l=en-us" : ""
+  value = var.is_exposed_externally ? "https://${azurerm_databricks_workspace.databricks.workspace_url}/aad/auth?has=&Workspace=${data.azurerm_subscription.current.id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.Databricks/workspaces/${local.databricks_workspace_name}&WorkspaceResourceGroupUri=${data.azurerm_subscription.current.id}/resourceGroups/${local.managed_resource_group_name}&l=en-us" : ""
 }
 
 output "internal_connection_uri" {
-  value = var.is_exposed_externally ? "" : "https://${azurerm_databricks_workspace.databricks.workspace_url}/aad/auth?has=&Workspace=/subscriptions/${data.azurerm_subscription.current.id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.Databricks/workspaces/${local.databricks_workspace_name}&WorkspaceResourceGroupUri=/subscriptions/${data.azurerm_subscription.current.id}/resourceGroups/${local.managed_resource_group_name}&l=en-us"
+  value = var.is_exposed_externally ? "" : "https://${azurerm_databricks_workspace.databricks.workspace_url}/aad/auth?has=&Workspace=${data.azurerm_subscription.current.id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.Databricks/workspaces/${local.databricks_workspace_name}&WorkspaceResourceGroupUri=${data.azurerm_subscription.current.id}/resourceGroups/${local.managed_resource_group_name}&l=en-us"
 }
 
 output "databricks_storage_account_name" {
