@@ -125,8 +125,7 @@ resource "azurerm_network_security_rule" "allow_aml_inbound" {
 }
 
 resource "azurerm_network_security_rule" "allow_outbound_storage_445" {
-  # TODO: this shouldn't be needed for private compute
-  # count                       = var.is_exposed_externally ? 1 : 0
+  count                       = var.is_exposed_externally ? 1 : 0
   access                      = "Allow"
   destination_port_range      = "445"
   destination_address_prefix  = "Storage"

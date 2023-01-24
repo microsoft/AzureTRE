@@ -1,3 +1,4 @@
+# Using AzApi due to https://github.com/hashicorp/terraform-provider-azurerm/issues/15362
 resource "azapi_resource" "compute_instance" {
   type                      = "Microsoft.MachineLearningServices/workspaces/computes@2022-06-01-preview"
   name                      = local.aml_compute_instance_name
