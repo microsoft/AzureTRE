@@ -45,6 +45,12 @@
       "source": {
         "env": "NETWORK_RULE_COLLECTIONS"
       }
+    },
+    {
+      "name": "sku_tier",
+      "source": {
+        "env": "SKU_TIER"
+      }
     }
   ]
 }

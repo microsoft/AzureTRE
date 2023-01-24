@@ -158,6 +158,38 @@ if [ -n "${api_vnet_integration}" ]; then
     terraform apply -input=false -auto-approve ${PLAN_FILE}"
 fi
 
+# support changing the resource processor subnet size
+rp_subnet=$(echo "${terraform_show_json}" \
+  | jq -r 'select(.values.root_module.child_modules != null) .values.root_module.child_modules[] | select (.address=="module.network") | .resources[] | select(.address=="module.network.azurerm_subnet.resource_processor") | .values.id')
+if [ -n "${rp_subnet}" ]; then
+  set +o errexit
+  terraform plan -target "module.network.azurerm_subnet.resource_processor" -detailed-exitcode
+  plan_exit_code=$?
+  set -o errexit
+
+  if [ "${plan_exit_code}" == "2" ]; then
+    echo "Migrating ${rp_subnet}"
+    PLAN_FILE="tfplan$$"
+    TS=$(date +"%s")
+    LOG_FILE="${TS}-tre-core-migrate-rp-subnet.log"
+
+    # This variables are loaded in for us
+    # shellcheck disable=SC2154
+    "${terraform_wrapper_path}" \
+      -g "${TF_VAR_mgmt_resource_group_name}" \
+      -s "${TF_VAR_mgmt_storage_account_name}" \
+      -n "${TF_VAR_terraform_state_container_name}" \
+      -k "${TRE_ID}" \
+      -l "${LOG_FILE}" \
+      -c "terraform plan -destroy -target module.resource_processor_vmss_porter[0] \
+      -target azurerm_private_endpoint.sbpe \
+      -target azurerm_private_endpoint.mongo \
+      -out ${PLAN_FILE} && \
+      terraform apply -input=false -auto-approve ${PLAN_FILE}"
+  fi
+fi
+
+
 # this isn't a classic migration, but impacts how terraform handles the deployment in the next phase
 state_store_serverless=$(echo "${terraform_show_json}" \
   | jq 'select(.values.root_module.resources != null) | .values.root_module.resources[] | select(.address=="azurerm_cosmosdb_account.tre_db_account") | any(.values.capabilities[]; .name=="EnableServerless")')
