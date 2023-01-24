@@ -1,6 +1,8 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.9.0 (Unreleased)
+
 **BREAKING CHANGES & MIGRATIONS**:
+
 * Move to Azure **Firewall Policy** [#3107](https://github.com/microsoft/AzureTRE/pull/3107). This is a major version for the firewall shared service and will fail to automatically upgrade. You should follow these steps to complete it:
   1. Let the system try to do the upgrade (via CI or `make tre-deploy`). It will fail but it's fine since now we have the new version published and registered.
   2. Make a temporary network change with either of the following options:
@@ -17,7 +19,9 @@
 
       If this endpoint is not on in your deployment - include `enable_swagger` in your `config.yaml` (see the sample file), or temporarly via the API resource on azure (named `api-YOUR_TRE-ID`) -> Configuration -> `ENABLE_SWAGGER` item.
       ![Update API setting](./docs/assets/firewall-policy-migrate2.png)
-  :warning: Any custom rules you might have added manually will be **lost** and you'll need to add it back.
+  
+  
+  :warning: Any custom rules you have added manually will be **lost** and you'll need to add it back after the upgrade has been completed.
 
 FEATURES:
 
