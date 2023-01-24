@@ -199,6 +199,7 @@ async def create_review_vm(airlock_request: AirlockRequest, user: User, workspac
 async def _deploy_vm(airlock_request: AirlockRequest, user: User, workspace: Workspace, review_workspace_id: str, review_workspace_service_id: str, user_resource_template_name: str,
                      user_resource_repo: UserResourceRepository, workspace_service_repo: WorkspaceServiceRepository, operation_repo: OperationRepository,
                      resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository):
+    logging.info(f"Creating review VM in workspace:{review_workspace_id} service:{review_workspace_service_id} using template:{user_resource_template_name}")
     workspace_service = await workspace_service_repo.get_workspace_service_by_id(workspace_id=review_workspace_id, service_id=review_workspace_service_id)
     airlock_request_sas_url = get_airlock_container_link(airlock_request, user, workspace)
 
@@ -211,7 +212,6 @@ async def _deploy_vm(airlock_request: AirlockRequest, user: User, workspace: Wor
         }
     )
 
-    logging.info(f"Creating a user resource in {review_workspace_id} {review_workspace_service_id} {user_resource_template_name}")
     user_resource, resource_template = await user_resource_repo.create_user_resource_item(
         user_resource_create, review_workspace_id, review_workspace_service_id, workspace_service.templateName, user.id, user.roles)
 
