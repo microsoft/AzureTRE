@@ -3,6 +3,7 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 FEATURES:
+* Add Azure Databricks as workspace service [#1857](https://github.com/microsoft/AzureTRE/pull/1857)
 
 ENHANCEMENTS:
 * Add support for referencing IP Groups from the Core Resource Group in firewall rules created via the pipeline [#3089](https://github.com/microsoft/AzureTRE/pull/3089)
@@ -23,7 +24,6 @@ Use the script devops/scripts/env_to_yaml_config.sh to migrate /templates/core/.
 FEATURES:
 * Support review VMs for multiple reviewers for each airlock request [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
 * Add Azure Health Data Services as workspace services [#3051](https://github.com/microsoft/AzureTRE/pull/3051)
-* Add Azure Databricks as workspace service [#1857](https://github.com/microsoft/AzureTRE/pull/1857)
 
 ENHANCEMENTS:
 * Remove Porter's Docker mixin as it's not in use ([#2889](https://github.com/microsoft/AzureTRE/pull/2889))
