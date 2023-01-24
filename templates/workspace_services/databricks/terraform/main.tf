@@ -18,7 +18,7 @@ resource "azurerm_databricks_workspace" "databricks" {
     virtual_network_id                                   = data.azurerm_virtual_network.ws.id
     public_subnet_network_security_group_association_id  = azurerm_subnet_network_security_group_association.public.id
     private_subnet_network_security_group_association_id = azurerm_subnet_network_security_group_association.private.id
-    # storage_account_name                                 = local.storage_name
+    storage_account_name                                 = local.storage_name
   }
 
   depends_on = [
