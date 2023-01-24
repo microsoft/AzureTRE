@@ -176,4 +176,4 @@ jobs:
       TRE_ID: ${{ format('tre{0}', needs.pr_comment.outputs.prRefId) }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
       TF_LOG: ${{ secrets.TF_LOG }}
-      E2E_TESTS_NUMBER_PROCESSES: 1
+      E2E_TESTS_NUMBER_PROCESSES: "1"
