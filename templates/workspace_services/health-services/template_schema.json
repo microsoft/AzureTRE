@@ -2,10 +2,24 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/healthcare_services/template_schema.json",
   "type": "object",
-  "title": "Azure Health Workspace Service",
-  "description": "Provides Azure Health within the workspace",
+  "title": "Azure Health Data Services Workspace Service",
+  "description": "Provides Azure Health Data Services within the workspace",
   "required": [],
   "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "default": "Azure Health Data Services",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "default": "Unify and manage health data and protected health information (PHI) in the cloud.",
+      "updateable": true
+    },
     "deploy_dicom": {
       "$id": "#/properties/deploy_dicom",
       "type": "boolean",
@@ -118,7 +132,7 @@
       },
       {
         "stepId": "12c0cf8c-94f7-11ed-a1eb-0242ac120002",
-        "stepTitle": "Add network firewall rules for health services",
+        "stepTitle": "Update network firewall rules for health services",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
         "resourceAction": "upgrade",
@@ -175,7 +189,7 @@
     "uninstall": [
       {
         "stepId": "1fc155ee-94f7-11ed-a1eb-0242ac120002",
-        "stepTitle": "Add network firewall rules for health services",
+        "stepTitle": "Remove network firewall rules for health services",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
         "resourceAction": "upgrade",

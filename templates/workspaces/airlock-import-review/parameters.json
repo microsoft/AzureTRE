@@ -5,9 +5,9 @@
   "name": "tre-workspace-airlock-import-review",
   "parameters": [
     {
-      "name": "address_space",
+      "name": "address_spaces",
       "source": {
-        "env": "ADDRESS_SPACE"
+        "env": "ADDRESS_SPACES"
       }
     },
     {
@@ -56,6 +56,12 @@
       "name": "register_aad_application",
       "source": {
         "env": "REGISTER_AAD_APPLICATION"
+      }
+    },
+    {
+      "name": "create_aad_groups",
+      "source": {
+        "env": "CREATE_AAD_GROUPS"
       }
     },
     {

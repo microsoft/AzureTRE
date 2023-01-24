@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-certs
-version: 0.3.1
+version: 0.4.0
 description: "An Azure TRE shared service to generate certificates for a specified internal domain using Letsencrypt"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -56,10 +56,6 @@ install:
       description: "Deploy shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
-        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
         domain_prefix: ${ bundle.parameters.domain_prefix }
         cert_name: ${ bundle.parameters.cert_name }
         tre_resource_id: ${ bundle.parameters.id }
@@ -93,6 +89,16 @@ install:
         resource_group_name: ${ bundle.outputs.resource_group_name }
         keyvault_name: ${ bundle.outputs.keyvault_name }
         cert_name: ${ bundle.parameters.cert_name }
+  - az:
+      description: "Stop application gateway"
+      arguments:
+        - network
+        - application-gateway
+        - stop
+      flags:
+        resource-group: ${ bundle.outputs.resource_group_name }
+        name: ${ bundle.outputs.application_gateway_name }
+
 
 upgrade:
   - exec:
@@ -106,10 +112,6 @@ uninstall:
       description: "Tear down shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
-        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
         domain_prefix: ${ bundle.parameters.domain_prefix }
         cert_name: ${ bundle.parameters.cert_name }
         tre_resource_id: ${ bundle.parameters.id }
@@ -124,8 +126,6 @@ renew:
       arguments:
         - "output"
       description: "Get Terraform output variables"
-      vars:
-        tre_resource_id: ${ bundle.parameters.id }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -144,6 +144,15 @@ renew:
       flags:
         identity:
         username: ${ bundle.credentials.azure_client_id }
+  - az:
+      description: "Start application gateway"
+      arguments:
+        - network
+        - application-gateway
+        - start
+      flags:
+        resource-group: ${ bundle.outputs.resource_group_name }
+        name: ${ bundle.outputs.application_gateway_name }
   - exec:
       description: "Renew certificate"
       command: bash
@@ -156,3 +165,12 @@ renew:
         resource_group_name: ${ bundle.outputs.resource_group_name }
         keyvault_name: ${ bundle.outputs.keyvault_name }
         cert_name: ${ bundle.parameters.cert_name }
+  - az:
+      description: "Stop application gateway"
+      arguments:
+        - network
+        - application-gateway
+        - stop
+      flags:
+        resource-group: ${ bundle.outputs.resource_group_name }
+        name: ${ bundle.outputs.application_gateway_name }
