@@ -2,8 +2,8 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/healthcare_services/template_schema.json",
   "type": "object",
-  "title": "Azure Health Workspace Service",
-  "description": "Provides Azure Health within the workspace",
+  "title": "Azure Health Data Services Workspace Service",
+  "description": "Provides Azure Health Data Services within the workspace",
   "required": [],
   "properties": {
     "deploy_dicom": {
