@@ -10,20 +10,20 @@ TIMEOUT = Timeout(10, read=30)
 
 async def delete_done(client, operation_endpoint, headers):
     delete_terminal_states = [strings.RESOURCE_STATUS_DELETED, strings.RESOURCE_STATUS_DELETING_FAILED]
-    deployment_status, message = await check_deployment(client, operation_endpoint, headers)
-    return (True, deployment_status, message) if deployment_status in delete_terminal_states else (False, deployment_status, message)
+    deployment_status, message, operation_steps = await check_deployment(client, operation_endpoint, headers)
+    return (True, deployment_status, message, operation_steps) if deployment_status in delete_terminal_states else (False, deployment_status, message, operation_steps)
 
 
 async def install_done(client, operation_endpoint, headers):
     install_terminal_states = [strings.RESOURCE_STATUS_DEPLOYED, strings.RESOURCE_STATUS_DEPLOYMENT_FAILED]
-    deployment_status, message = await check_deployment(client, operation_endpoint, headers)
-    return (True, deployment_status, message) if deployment_status in install_terminal_states else (False, deployment_status, message)
+    deployment_status, message, operation_steps = await check_deployment(client, operation_endpoint, headers)
+    return (True, deployment_status, message, operation_steps) if deployment_status in install_terminal_states else (False, deployment_status, message, operation_steps)
 
 
 async def patch_done(client, operation_endpoint, headers):
     install_terminal_states = [strings.RESOURCE_STATUS_UPDATED, strings.RESOURCE_STATUS_UPDATING_FAILED]
-    deployment_status, message = await check_deployment(client, operation_endpoint, headers)
-    return (True, deployment_status, message) if deployment_status in install_terminal_states else (False, deployment_status, message)
+    deployment_status, message, operation_steps = await check_deployment(client, operation_endpoint, headers)
+    return (True, deployment_status, message, operation_steps) if deployment_status in install_terminal_states else (False, deployment_status, message, operation_steps)
 
 
 async def check_deployment(client, operation_endpoint, headers):
@@ -33,19 +33,18 @@ async def check_deployment(client, operation_endpoint, headers):
     if response.status_code == 200:
         response_json = response.json()
         deployment_status = response_json["operation"]["status"]
-        message = format_deployment_status_message(response_json)
-        return deployment_status, message
+        message = response_json["operation"]["message"]
+        operation_steps = stringify_operation_steps(response_json["operation"]["steps"])
+        return deployment_status, message, operation_steps
     else:
         LOGGER.error(f"Non 200 response in check_deployment: {response.status_code}")
         LOGGER.error(f"Full response: {response}")
         raise Exception("Non 200 response in check_deployment")
 
 
-def format_deployment_status_message(response_json):
-    steps = response_json["operation"]["steps"]
-    message = response_json["operation"]["message"]
+def stringify_operation_steps(steps):
+    string = ''
     for i, step in enumerate(steps, 1):
-        message += '\n'
-        message += f'Step {i}: {step["stepTitle"]}\n'
-        message += f'{step["message"]}\n'
-    return message
+        string += f'Step {i}: {step["stepTitle"]}\n'
+        string += f'{step["message"]}\n\n'
+    return string
