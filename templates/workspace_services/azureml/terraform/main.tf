@@ -10,6 +10,7 @@ resource "azurerm_machine_learning_workspace" "aml_workspace" {
   key_vault_id                  = data.azurerm_key_vault.ws.id
   public_network_access_enabled = var.is_exposed_externally ? true : false
   storage_account_id            = azurerm_storage_account.aml.id
+  tags                          = local.tre_workspace_service_tags
 
   identity {
     type = "SystemAssigned"
@@ -41,4 +42,5 @@ resource "azurerm_private_endpoint" "mlpe" {
     azurerm_subnet_network_security_group_association.aml,
     azapi_resource.aml_service_endpoint_policy
   ]
+
 }

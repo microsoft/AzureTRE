@@ -4,10 +4,12 @@ resource "azurerm_storage_account" "aml" {
   resource_group_name      = data.azurerm_resource_group.ws.name
   account_tier             = "Standard"
   account_replication_type = "GRS"
-
+  tags                     = local.tre_workspace_service_tags
   network_rules {
     default_action = "Deny"
   }
+
+
 }
 
 data "azurerm_private_dns_zone" "blobcore" {
@@ -25,7 +27,7 @@ resource "azurerm_private_endpoint" "blobpe" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = azurerm_subnet.aml.id
-
+  tags                = local.tre_workspace_service_tags
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
@@ -39,6 +41,8 @@ resource "azurerm_private_endpoint" "blobpe" {
     is_manual_connection           = false
     subresource_names              = ["Blob"]
   }
+
+
 }
 
 
@@ -47,6 +51,7 @@ resource "azurerm_private_endpoint" "filepe" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = azurerm_subnet.aml.id
+  tags                = local.tre_workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 
@@ -65,4 +70,5 @@ resource "azurerm_private_endpoint" "filepe" {
   depends_on = [
     azurerm_private_endpoint.blobpe
   ]
+
 }
