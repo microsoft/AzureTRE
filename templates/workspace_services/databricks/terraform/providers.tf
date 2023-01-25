@@ -12,6 +12,11 @@ terraform {
       source  = "databricks/databricks"
       version = "1.5.0"
     }
+
+    dns = {
+      source = "hashicorp/dns"
+      version = "=3.2.3"
+    }
   }
 
   backend "azurerm" {}
