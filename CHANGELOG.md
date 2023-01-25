@@ -27,7 +27,7 @@ FEATURES:
 
 ENHANCEMENTS:
 * Add support for referencing IP Groups from the Core Resource Group in firewall rules created via the pipeline [#3089](https://github.com/microsoft/AzureTRE/pull/3089)
-* Update Azure Machine Learning Workspace Service to support "no public IP" compute. This is a full rework so upgrades of existing Azure ML Workspace Service deployments are not supported.  [#3052](https://github.com/microsoft/AzureTRE/pull/3052)
+* Update Azure Machine Learning Workspace Service to support "no public IP" compute. This is a full rework so upgrades of existing Azure ML Workspace Service deployments are not supported. Requires `v0.8.0` or later of the TRE project.  [#3052](https://github.com/microsoft/AzureTRE/pull/3052)
 
 BUG FIXES:
 
