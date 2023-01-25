@@ -96,6 +96,7 @@ nav:
           - InnerEye: tre-templates/workspace-services/inner-eye.md
           - MLFlow: tre-templates/workspace-services/mlflow.md
           - Health Services: tre-templates/workspace-services/health_services.md
+          - Azure Databricks: tre-templates/workspace-services/databricks.md
       - Shared Services:
           - Gitea (Source Mirror): tre-templates/shared-services/gitea.md
           - Nexus (Package Mirror): tre-templates/shared-services/nexus.md
