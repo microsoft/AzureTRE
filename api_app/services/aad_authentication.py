@@ -250,8 +250,8 @@ class AzureADAuthorization(AccessService):
                 user_emails[user_data["body"]["id"]] = [user_data["body"]["mail"]]
             # Handle group endpoint response
             if "directoryObjects" in user_data["body"]["@odata.context"]:
+                group_members_emails = []
                 for group_member in user_data["body"]["value"]:
-                    group_members_emails = []
                     if group_member["mail"] is not None and group_member["mail"] not in group_members_emails:
                         group_members_emails.append(group_member["mail"])
                 user_emails[user_data["id"]] = group_members_emails
