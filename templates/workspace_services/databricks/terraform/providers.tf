@@ -50,3 +50,6 @@ module "azure_region" {
 
   azure_region = data.azurerm_resource_group.ws.location
 }
+
+provider "dns" {
+}
