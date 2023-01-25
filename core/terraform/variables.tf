@@ -20,6 +20,10 @@ variable "acr_name" {
 variable "core_address_space" {
   type        = string
   description = "Core services VNET Address Space"
+  validation {
+    condition     = parseint(element(split("/", var.core_address_space), 1), 10) > 0 && parseint(element(split("/", var.core_address_space), 1), 10) <= 22
+    error_message = "core_address_space size should be /22 or larger"
+  }
 }
 
 variable "tre_address_space" {

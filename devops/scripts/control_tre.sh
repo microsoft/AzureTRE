@@ -66,13 +66,14 @@ if [[ "$1" == *"start"* ]]; then
 
 elif [[ "$1" == *"stop"* ]]; then
   if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
+    fw_sku=$(az network firewall show -n "${fw_name}" -g "${core_rg_name}" --query "sku.tier" -o tsv)
     IPCONFIG_NAME=$(az network firewall ip-config list -f "${fw_name}" -g "${core_rg_name}" --query "[0].name" -o tsv)
 
-    if [ -n "$IPCONFIG_NAME" ]; then
+    if [ -n "$IPCONFIG_NAME" ] && [ "${fw_sku}" != "Basic" ]; then
       echo "Deleting Firewall ip-config: $IPCONFIG_NAME"
       az network firewall ip-config delete -f "${fw_name}" -n "$IPCONFIG_NAME" -g "${core_rg_name}" &
     else
-      echo "No Firewall ip-config found"
+      echo "No Firewall ip-config found or SKU (${fw_sku}) doesn't allow deallocation"
     fi
   fi
 

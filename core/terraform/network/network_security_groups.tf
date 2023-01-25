@@ -107,7 +107,7 @@ resource "azurerm_subnet_network_security_group_association" "bastion" {
   subnet_id                 = azurerm_subnet.bastion.id
   network_security_group_id = azurerm_network_security_group.bastion.id
   # depend on the last subnet we created in the vnet
-  depends_on = [azurerm_subnet.airlock_events]
+  depends_on = [azurerm_subnet.firewall_management]
 }
 
 # Network security group for Application Gateway

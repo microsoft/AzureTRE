@@ -27,6 +27,10 @@ on:  # yamllint disable-line rule:truthy
         description: The name of the Github Action's environment this will deploy into
         type: string
         required: true
+      E2E_TESTS_NUMBER_PROCESSES:
+        description: ""
+        type: number
+        required: false
     secrets:
       AAD_TENANT_ID:
         description: ""
@@ -110,9 +114,6 @@ on:  # yamllint disable-line rule:truthy
         description: ""
         required: false
       RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE:
-        description: ""
-        required: false
-      E2E_TESTS_NUMBER_PROCESSES:
         description: ""
         required: false
 
@@ -787,7 +788,7 @@ jobs:
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
           WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ secrets.WORKSPACE_APP_SERVICE_PLAN_SKU }}
-          E2E_TESTS_NUMBER_PROCESSES: ${{ secrets.E2E_TESTS_NUMBER_PROCESSES }}
+          E2E_TESTS_NUMBER_PROCESSES: ${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}
 
       - name: Upload Test Results
         if: always()
