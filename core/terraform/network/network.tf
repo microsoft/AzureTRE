@@ -130,7 +130,7 @@ resource "azurerm_subnet" "airlock_events" {
   address_prefixes     = [local.airlock_events_subnet_address_prefix]
   # notice that private endpoints do not adhere to NSG rules
   private_endpoint_network_policies_enabled = false
-  depends_on                                = [azurerm_subnet.airlock_events]
+  depends_on                                = [azurerm_subnet.airlock_storage]
 
   # Eventgrid CAN'T send messages over private endpoints, hence we need to allow service endpoints to the service bus
   # We are using service endpoints + managed identity to send these messaages
@@ -138,11 +138,37 @@ resource "azurerm_subnet" "airlock_events" {
   service_endpoints = ["Microsoft.ServiceBus"]
 }
 
+resource "azurerm_subnet" "firewall_management" {
+  name                 = "AzureFirewallManagementSubnet"
+  virtual_network_name = azurerm_virtual_network.core.name
+  resource_group_name  = var.resource_group_name
+  address_prefixes     = [local.firewall_management_subnet_address_prefix]
+  depends_on           = [azurerm_subnet.airlock_events]
+}
+
 resource "azurerm_ip_group" "resource_processor" {
   name                = "ipg-resource-processor"
   location            = var.location
   resource_group_name = var.resource_group_name
   cidrs               = [local.resource_processor_subnet_address_prefix]
+  tags                = local.tre_core_tags
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_ip_group" "shared" {
+  name                = "ipg-shared"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  cidrs               = [local.shared_services_subnet_address_prefix]
+  tags                = local.tre_core_tags
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_ip_group" "webapp" {
+  name                = "ipg-web-app"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  cidrs               = [local.web_app_subnet_address_prefix]
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 }

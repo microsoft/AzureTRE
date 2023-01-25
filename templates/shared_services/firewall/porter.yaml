@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-firewall
-version: 0.8.0
+version: 1.0.0
 description: "An Azure TRE Firewall shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -45,6 +45,10 @@ parameters:
     type: string
     default: "W10=" # b64 for []
     description: "Network rule collection array"
+  - name: sku_tier
+    type: string
+    default: Standard
+    description: The firewall and its policy SKU tier
 
 mixins:
   - terraform:
@@ -58,6 +62,7 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
+        sku_tier: ${ bundle.parameters.sku_tier }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -72,6 +77,7 @@ upgrade:
         tre_resource_id: ${ bundle.parameters.id }
         api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
+        sku_tier: ${ bundle.parameters.sku_tier }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -86,6 +92,7 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
+        sku_tier: ${ bundle.parameters.sku_tier }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
