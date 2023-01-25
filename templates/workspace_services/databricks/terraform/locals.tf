@@ -16,6 +16,7 @@ locals {
   container_subnet_name          = "adb-container-subnet-${local.service_resource_name_suffix}"
   network_security_group_name    = "nsg-${local.service_resource_name_suffix}"
   route_table_name               = "rt-${local.service_resource_name_suffix}"
+  # databricks-udr.json was build according to this page https://learn.microsoft.com/en-us/azure/databricks/administration-guide/cloud-configurations/azure/udr
   map_location_url_config        = jsondecode(file("${path.module}/databricks-udr.json"))
   storage_name                   = lower(replace("stgdbfs${substr(local.service_resource_name_suffix, -8, -1)}", "-", ""))
 
