@@ -134,6 +134,7 @@ terraform-deploy:
 	$(call target_title, "Deploying ${DIR} with Terraform") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./deploy.sh
 
 terraform-import:

@@ -21,7 +21,7 @@ data "azurerm_role_definition" "azure_ml_data_scientist" {
 
 resource "azurerm_role_assignment" "app_role_members_aml_data_scientist" {
   for_each           = (data.external.app_role_members.result.principals == "") ? [] : toset(split("\n", data.external.app_role_members.result.principals))
-  scope              = azapi_resource.aml_workspace.id
+  scope              = azurerm_machine_learning_workspace.aml_workspace.id
   role_definition_id = data.azurerm_role_definition.azure_ml_data_scientist.id
   principal_id       = each.value
 }
