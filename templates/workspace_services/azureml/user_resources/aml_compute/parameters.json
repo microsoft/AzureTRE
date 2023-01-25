@@ -35,12 +35,6 @@
       }
     },
     {
-      "name": "auth_tenant_id",
-      "source": {
-        "env": "AAD_TENANT_ID"
-      }
-    },
-    {
       "name": "user_object_id",
       "source": {
         "env": "USER_OBJECT_ID"

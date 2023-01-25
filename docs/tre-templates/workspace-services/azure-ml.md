@@ -6,30 +6,11 @@ This service installs the following resources into an existing virtual network w
 
 ![Azure Machine Learning Service](images/aml_service.png)
 
+When deploying the service the Azure ML workspace can be exposed publicly or access restricted to the virtual network. Depending on the choice appropriate network security rules are added. This also means that in the public configuration compute instances can be deployed with public IPs, and in the private configuration they must be deployed with no public IP.
+
 Any users with the role of `Workspace Researcher` will be assigned the `AzureML Data Scientist` role within the AML workspace.
 
-## Properties
-
-- `display_name` - The name of the Azure Machine Learning workspace.
-- `description` - The description of the Azure Machine Learning workspace.
-- `is_exposed_externally` - If `True`, the Azure Machine Learning workspace is accessible from outside of the worksapce virtual network.
-
-
-## Firewall Rules
-
-Please be aware that the following outbound Firewall rules are opened for the workspace when this service is deployed, including to Azure Storage. This does open the possibility to extract data from a workspace if the user is determined to do so. Work is ongoing to remove some of these requirements:
-
-Service Tags:
-- AzureActiveDirectory
-- AzureResourceManager
-- AzureMachineLearning"
-- Storage.`{AzureRegion}`
-- MicrosoftContainerRegistry
-
-URLs:
-- aadcdn.msftauth.net
-- ml.azure.com
-
+To ensure AML compute instances are deployed with the appropriate configuration we suggest they are deployed using an Compute Instance User Resource.
 
 ## Prerequisites
 
