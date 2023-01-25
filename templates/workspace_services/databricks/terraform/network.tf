@@ -87,11 +87,11 @@ resource "azurerm_network_security_group" "nsg" {
 
 }
 
-resource "azurerm_subnet" "public" {
-  name                 = local.public_subnet_name
+resource "azurerm_subnet" "host" {
+  name                 = local.host_subnet_name
   resource_group_name  = data.azurerm_resource_group.ws.name
   virtual_network_name = data.azurerm_virtual_network.ws.name
-  address_prefixes     = [local.public_subnet_address_space]
+  address_prefixes     = [local.host_subnet_address_space]
 
   delegation {
     name = "db-host-vnet-integration"
@@ -107,11 +107,11 @@ resource "azurerm_subnet" "public" {
   }
 }
 
-resource "azurerm_subnet" "private" {
-  name                 = local.private_subnet_name
+resource "azurerm_subnet" "container" {
+  name                 = local.container_subnet_name
   resource_group_name  = data.azurerm_resource_group.ws.name
   virtual_network_name = data.azurerm_virtual_network.ws.name
-  address_prefixes     = [local.private_subnet_address_space]
+  address_prefixes     = [local.container_subnet_address_space]
 
   delegation {
     name = "db-container-vnet-integration"
@@ -144,23 +144,23 @@ resource "azurerm_route_table" "rt" {
   }
 }
 
-resource "azurerm_subnet_network_security_group_association" "private" {
-  subnet_id                 = azurerm_subnet.private.id
+resource "azurerm_subnet_network_security_group_association" "container" {
+  subnet_id                 = azurerm_subnet.container.id
   network_security_group_id = azurerm_network_security_group.nsg.id
 }
 
-resource "azurerm_subnet_network_security_group_association" "public" {
-  subnet_id                 = azurerm_subnet.public.id
+resource "azurerm_subnet_network_security_group_association" "host" {
+  subnet_id                 = azurerm_subnet.host.id
   network_security_group_id = azurerm_network_security_group.nsg.id
 }
 
-resource "azurerm_subnet_route_table_association" "rt_private" {
-  subnet_id      = azurerm_subnet.private.id
+resource "azurerm_subnet_route_table_association" "rt_container" {
+  subnet_id      = azurerm_subnet.container.id
   route_table_id = azurerm_route_table.rt.id
 }
 
-resource "azurerm_subnet_route_table_association" "rt_public" {
-  subnet_id      = azurerm_subnet.public.id
+resource "azurerm_subnet_route_table_association" "rt_host" {
+  subnet_id      = azurerm_subnet.host.id
   route_table_id = azurerm_route_table.rt.id
 }
 

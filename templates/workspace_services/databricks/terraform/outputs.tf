@@ -31,7 +31,7 @@ output "workspace_address_spaces" {
 }
 
 output "databricks_address_prefixes" {
-  value = setunion(azurerm_subnet.private.address_prefixes, azurerm_subnet.public.address_prefixes)
+  value = setunion(azurerm_subnet.container.address_prefixes, azurerm_subnet.host.address_prefixes)
 }
 
 # convert list of metastore domains to ip addresses
