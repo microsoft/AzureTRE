@@ -23,19 +23,20 @@ register_template() {
   fi
 }
 
-for template_type_dir in $(find ./templates -mindepth 1 -maxdepth 1 -type d); do
+find ./templates -mindepth 1 -maxdepth 1 -type d | while read -r template_type_dir; do
   template_type=$(basename "$template_type_dir")
   echo "Registering $template_type"
-  for template_dir in $(find ./templates/$template_type -mindepth 1 -maxdepth 1 -type d); do
+  find "$template_type_dir" -mindepth 1 -maxdepth 1 -type d | while read -r template_dir; do
     template_name=$(basename "$template_dir")
     echo "Registering $template_name $template_type template"
     register_template "$template_dir" "$template_type" "$template_type"
 
     if [[ "$template_type" == "workspace_services" ]] && [ -d "$template_dir/user_resources" ]; then
       echo "Registering user resources for $template_name"
-      for user_resource_template_dir in $(find $template_dir/user_resources -mindepth 1 -maxdepth 1 -type d); do
+      find "$template_dir/user_resources" -mindepth 1 -maxdepth 1 -type d | while read -r user_resource_template_dir; do
         register_template "$user_resource_template_dir" "user_resource" "$template_name"
       done
     fi
   done
 done
+
