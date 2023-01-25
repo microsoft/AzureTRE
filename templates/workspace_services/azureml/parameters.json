@@ -35,6 +35,12 @@
       }
     },
     {
+      "name": "address_space",
+      "source": {
+        "env": "ADDRESS_SPACE"
+      }
+    },
+    {
       "name": "is_exposed_externally",
       "source": {
         "env": "IS_EXPOSED_EXTERNALLY"

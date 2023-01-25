@@ -13,11 +13,6 @@ resource "azurerm_route_table" "rt" {
     next_hop_type          = "VirtualAppliance"
     next_hop_in_ip_address = azurerm_firewall.fw.ip_configuration[0].private_ip_address
   }
-
-  # Needs to depend on the last rule so that the traffic doesn't get denied before
-  depends_on = [
-    azurerm_firewall_application_rule_collection.web_app_subnet
-  ]
 }
 
 resource "azurerm_subnet_route_table_association" "rt_shared_subnet_association" {
@@ -28,6 +23,12 @@ resource "azurerm_subnet_route_table_association" "rt_shared_subnet_association"
 resource "azurerm_subnet_route_table_association" "rt_resource_processor_subnet_association" {
   subnet_id      = data.azurerm_subnet.resource_processor.id
   route_table_id = azurerm_route_table.rt.id
+
+  # Not waiting for the rules will block traffic prematurally.
+  depends_on = [
+    azurerm_firewall.fw,
+    azurerm_firewall_policy_rule_collection_group.core,
+  ]
 }
 
 resource "azurerm_subnet_route_table_association" "rt_web_app_subnet_association" {

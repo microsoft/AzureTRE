@@ -80,15 +80,15 @@ async def disable_and_delete_resource(endpoint, access_token, verify):
 
 
 async def wait_for(func, client, operation_endpoint, headers, failure_states: list):
-    done, done_state, message = await func(client, operation_endpoint, headers)
+    done, done_state, message, operation_steps = await func(client, operation_endpoint, headers)
     LOGGER.info(f'WAITING FOR OP: {operation_endpoint}')
     while not done:
         await asyncio.sleep(30)
 
-        done, done_state, message = await func(client, operation_endpoint, headers)
+        done, done_state, message, operation_steps = await func(client, operation_endpoint, headers)
         LOGGER.info(f"{done}, {done_state}, {message}")
     try:
         assert done_state not in failure_states
     except Exception:
-        LOGGER.exception(f"Failed to deploy status message: {message}")
+        LOGGER.exception(f"Failed to deploy. Status message: {message}.\n{operation_steps}")
         raise
