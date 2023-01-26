@@ -236,75 +236,75 @@ moved {
 # DNS Zones
 moved {
   from = module.network.azurerm_private_dns_zone.mysql
-  to = azurerm_private_dns_zone.non_core["privatelink.mysql.database.azure.com"]
+  to   = azurerm_private_dns_zone.non_core["privatelink.mysql.database.azure.com"]
 }
 
 moved {
   from = module.network.azurerm_private_dns_zone.azureml
-  to = azurerm_private_dns_zone.non_core["privatelink.api.azureml.ms"]
+  to   = azurerm_private_dns_zone.non_core["privatelink.api.azureml.ms"]
 }
 
 moved {
   from = module.network.azurerm_private_dns_zone.azuremlcert
-  to = azurerm_private_dns_zone.non_core["privatelink.cert.api.azureml.ms"]
+  to   = azurerm_private_dns_zone.non_core["privatelink.cert.api.azureml.ms"]
 }
 
 moved {
   from = module.network.azurerm_private_dns_zone.notebooks
-  to = azurerm_private_dns_zone.non_core["privatelink.notebooks.azure.net"]
+  to   = azurerm_private_dns_zone.non_core["privatelink.notebooks.azure.net"]
 }
 
 moved {
   from = module.network.azurerm_private_dns_zone.postgres
-  to = azurerm_private_dns_zone.non_core["privatelink.postgres.database.azure.com"]
+  to   = azurerm_private_dns_zone.non_core["privatelink.postgres.database.azure.com"]
 }
 
 moved {
   from = module.network.azurerm_private_dns_zone_virtual_network_link.mysql
-  to = azurerm_private_dns_zone_virtual_network_link.mysql
+  to   = azurerm_private_dns_zone_virtual_network_link.mysql
 }
 
 moved {
   from = module.network.azurerm_private_dns_zone.private_dns_zones["privatelink.purview.azure.com"]
-  to = azurerm_private_dns_zone.non_core["privatelink.purview.azure.com"]
+  to   = azurerm_private_dns_zone.non_core["privatelink.purview.azure.com"]
 }
 
 moved {
   from = module.network.azurerm_private_dns_zone.private_dns_zones["privatelink.purviewstudio.azure.com"]
-  to = azurerm_private_dns_zone.non_core["privatelink.purviewstudio.azure.com"]
+  to   = azurerm_private_dns_zone.non_core["privatelink.purviewstudio.azure.com"]
 }
 
 moved {
   from = module.network.azurerm_private_dns_zone.private_dns_zones["privatelink.sql.azuresynapse.net"]
-  to = azurerm_private_dns_zone.non_core["privatelink.sql.azuresynapse.net"]
+  to   = azurerm_private_dns_zone.non_core["privatelink.sql.azuresynapse.net"]
 }
 
 moved {
   from = module.network.azurerm_private_dns_zone.private_dns_zones["privatelink.dev.azuresynapse.net"]
-  to = azurerm_private_dns_zone.non_core["privatelink.dev.azuresynapse.net"]
+  to   = azurerm_private_dns_zone.non_core["privatelink.dev.azuresynapse.net"]
 }
 
 moved {
   from = module.network.azurerm_private_dns_zone.private_dns_zones["privatelink.azuresynapse.net"]
-  to = azurerm_private_dns_zone.non_core["privatelink.azuresynapse.net"]
+  to   = azurerm_private_dns_zone.non_core["privatelink.azuresynapse.net"]
 }
 
 moved {
   from = module.network.azurerm_private_dns_zone.private_dns_zones["privatelink.azuresynapse.net"]
-  to = azurerm_private_dns_zone.non_core["privatelink.azuresynapse.net"]
+  to   = azurerm_private_dns_zone.non_core["privatelink.azuresynapse.net"]
 }
 
 moved {
   from = module.network.azurerm_private_dns_zone.private_dns_zones["privatelink.dfs.core.windows.net"]
-  to = azurerm_private_dns_zone.non_core["privatelink.dfs.core.windows.net"]
+  to   = azurerm_private_dns_zone.non_core["privatelink.dfs.core.windows.net"]
 }
 
 moved {
   from = module.network.azurerm_private_dns_zone.private_dns_zones["privatelink.azurehealthcareapis.com"]
-  to = azurerm_private_dns_zone.non_core["privatelink.azurehealthcareapis.com"]
+  to   = azurerm_private_dns_zone.non_core["privatelink.azurehealthcareapis.com"]
 }
 
 moved {
   from = module.network.azurerm_private_dns_zone.private_dns_zones["privatelink.dicom.azurehealthcareapis.com"]
-  to = azurerm_private_dns_zone.non_core["privatelink.dicom.azurehealthcareapis.com"]
+  to   = azurerm_private_dns_zone.non_core["privatelink.dicom.azurehealthcareapis.com"]
 }
