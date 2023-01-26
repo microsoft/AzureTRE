@@ -3,9 +3,30 @@
   "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/databricks/template_schema.json",
   "type": "object",
   "title": "Azure Databricks",
-  "description": "Installs Azure Databricks.",
+  "description": "Azure Databricks",
   "required": [],
   "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "default": "Azure Databricks",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "default": "Azure Databricks is a fast, easy, and collaborative Apache Spark-based big data analytics service designed for data science and data engineering.",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace Service Overview",
+      "description": "Long form description of the workspace service, in markdown syntax",
+      "default": "The Azure Databricks Lakehouse Platform provides a unified set of tools for building, deploying, sharing, and maintaining enterprise-grade data solutions at scale.\nAzure Databricks integrates with cloud storage and security in your cloud account, and manages and deploys cloud infrastructure on your behalf.\n[Azure Databricks documentation](https://learn.microsoft.com/en-us/azure/databricks/introduction/)",
+      "updateable": true
+    },
     "is_exposed_externally": {
       "$id": "#/properties/is_exposed_externally",
       "type": "boolean",

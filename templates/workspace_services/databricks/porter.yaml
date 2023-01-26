@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-databricks
-version: 0.1.68
+version: 0.1.69
 description: "An Azure TRE service for Azure Databricks."
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -52,6 +52,11 @@ outputs:
       - install
       - upgrade
   - name: connection_uri
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: internal_connection_uri
     type: string
     applyTo:
       - install
@@ -118,6 +123,7 @@ install:
       outputs:
         - name: databricks_workspace_name
         - name: connection_uri
+        - name: internal_connection_uri
         - name: databricks_storage_account_name
         - name: dbfs_blob_storage_domain
         - name: metastore_addresses
@@ -144,6 +150,7 @@ upgrade:
       outputs:
         - name: databricks_workspace_name
         - name: connection_uri
+        - name: internal_connection_uri
         - name: databricks_storage_account_name
         - name: dbfs_blob_storage_domain
         - name: metastore_addresses
