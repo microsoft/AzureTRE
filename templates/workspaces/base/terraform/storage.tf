@@ -22,7 +22,7 @@ resource "azurerm_storage_share" "shared_storage" {
 }
 
 resource "azurerm_storage_container" "stgcontainer" {
-  name                  = "default"
+  name                  = "datalake"
   storage_account_name  = azurerm_storage_account.stg.name
   container_access_type = "private"
 }
