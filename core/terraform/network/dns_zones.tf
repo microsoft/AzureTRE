@@ -112,23 +112,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_private_dns_zone" "mysql" {
-  name                = "privatelink.mysql.database.azure.com"
-  resource_group_name = var.resource_group_name
-  tags                = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "mysql" {
-  resource_group_name   = var.resource_group_name
-  virtual_network_id    = azurerm_virtual_network.core.id
-  private_dns_zone_name = azurerm_private_dns_zone.mysql.name
-  name                  = "azurewebsites-link"
-  registration_enabled  = false
-  tags                  = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
-}
-
 resource "azurerm_private_dns_zone" "static_web" {
   name                = "privatelink.web.core.windows.net"
   resource_group_name = var.resource_group_name
@@ -190,42 +173,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "acrlink" {
   private_dns_zone_name = azurerm_private_dns_zone.azurecr.name
   virtual_network_id    = azurerm_virtual_network.core.id
   tags                  = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_private_dns_zone" "azureml" {
-  name                = "privatelink.api.azureml.ms"
-  resource_group_name = var.resource_group_name
-  tags                = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_private_dns_zone" "azuremlcert" {
-  name                = "privatelink.cert.api.azureml.ms"
-  resource_group_name = var.resource_group_name
-  tags                = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_private_dns_zone" "notebooks" {
-  name                = "privatelink.notebooks.azure.net"
-  resource_group_name = var.resource_group_name
-  tags                = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_private_dns_zone" "postgres" {
-  name                = "privatelink.postgres.database.azure.com"
-  resource_group_name = var.resource_group_name
-  tags                = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_private_dns_zone" "nexus" {
-  name                = "nexus-${var.tre_id}.${var.location}.cloudapp.azure.com"
-  resource_group_name = var.resource_group_name
-  tags                = local.tre_core_tags
-
   lifecycle { ignore_changes = [tags] }
 }
 
