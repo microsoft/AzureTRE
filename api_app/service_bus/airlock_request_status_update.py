@@ -7,7 +7,7 @@ from pydantic import ValidationError, parse_obj_as
 
 from api.dependencies.database import get_db_client
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
-from api.routes.airlock_resource_helpers import update_and_publish_event_airlock_request
+from services.airlock import update_and_publish_event_airlock_request
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.airlock_request import AirlockRequestStatus
 from db.repositories.airlock_requests import AirlockRequestRepository
