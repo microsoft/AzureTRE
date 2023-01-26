@@ -30,6 +30,7 @@ ENHANCEMENTS:
 * Support for _Azure Firewall Basic_ SKU [#3107](https://github.com/microsoft/AzureTRE/pull/3107). This SKU doesn't support deallocation and for most non 24/7 scenarios will be more expensive than the Standard SKU.
 * Update Azure Machine Learning Workspace Service to support "no public IP" compute. This is a full rework so upgrades of existing Azure ML Workspace Service deployments are not supported. Requires `v0.8.0` or later of the TRE project.  [#3052](https://github.com/microsoft/AzureTRE/pull/3052)
 * Move non-core DNS zones out of the network module to reduce dependencies [#3119](https://github.com/microsoft/AzureTRE/pull/3119)
+* Review VMs are being cleaned up when an Airlock request is canceled ([#3105](https://github.com/microsoft/AzureTRE/pull/3105))
 
 BUG FIXES:
 

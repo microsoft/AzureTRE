@@ -26,7 +26,7 @@ from services.authentication import get_current_workspace_owner_or_researcher_us
 from .resource_helpers import construct_location_header
 
 from services.airlock import create_review_vm, review_airlock_request, get_airlock_container_link, get_allowed_actions, save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, \
-    enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace
+    enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace, cancel_request
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 
@@ -101,10 +101,14 @@ async def create_submit_request(airlock_request=Depends(get_airlock_request_by_i
                                dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
 async def create_cancel_request(airlock_request=Depends(get_airlock_request_by_id_from_path),
                                 user=Depends(get_current_workspace_owner_or_researcher_user),
+                                workspace=Depends(get_workspace_by_id_from_path),
                                 airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
-                                workspace=Depends(get_workspace_by_id_from_path)) -> AirlockRequestWithAllowedUserActions:
-    updated_request = await update_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace,
-                                                                     new_status=AirlockRequestStatus.Cancelled)
+                                user_resource_repo=Depends(get_repository(UserResourceRepository)),
+                                workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)),
+                                resource_history_repo=Depends(get_repository(ResourceHistoryRepository)),
+                                operation_repo=Depends(get_repository(OperationRepository)),
+                                resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),) -> AirlockRequestWithAllowedUserActions:
+    updated_request = await cancel_request(airlock_request, user, workspace, airlock_request_repo, user_resource_repo, workspace_service_repo, resource_template_repo, operation_repo, resource_history_repo)
     allowed_actions = get_allowed_actions(updated_request, user, airlock_request_repo)
     return AirlockRequestWithAllowedUserActions(airlockRequest=updated_request, allowedUserActions=allowed_actions)
 
