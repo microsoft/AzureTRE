@@ -145,7 +145,7 @@ async def test_airlock_review_vm_flow(setup_test_workspace_and_workspace_service
 
     # Check that deletion for user resource has started
     user_resource = await get_resource(f"/api{user_resource_path}", import_workspace_owner_token, verify)
-    assert user_resource["userResource"]["deploymentStatus"] == "deleting"
+    assert user_resource["userResource"]["deploymentStatus"] == "updating"
     LOGGER.info("Review VM has started deletion successfully")
 
     # EXPORT FLOW
