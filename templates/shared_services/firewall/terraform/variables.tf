@@ -17,3 +17,8 @@ variable "api_driven_network_rule_collections_b64" {
   type    = string
   default = "W10=" #b64 for []
 }
+
+variable "sku_tier" {
+  type    = string
+  default = "Standard"
+}

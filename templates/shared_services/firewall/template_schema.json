@@ -8,7 +8,7 @@
   "properties": {
     "rule_collections": {
 			"$id": "#properties/rule_collections",
-			"title": "rule_collections",
+			"title": "application rule collections",
 			"type": "array",
 			"default": [],
       "updateable": true,
@@ -29,16 +29,8 @@
 						],
 						"pattern": "^.*$"
 					},
-					"priority": {
-						"title": "priority",
-						"type": "integer",
-            "description": "Numeric priority for rule collection - leave blank for auto numbering",
-						"examples": [
-							110
-						]
-					},
 					"action": {
-						"title": "action",
+						"title": "action DEPRECATED",
 						"type": "string",
 						"examples": [
 							"Allow"
@@ -53,7 +45,7 @@
 						"type": "array",
 						"default": [],
 						"items":{
-							"title": "Items",
+							"title": "items",
 							"type": "object",
 							"required": [
 								"name"
@@ -81,7 +73,7 @@
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "object",
 										"required": [
 											"port",
@@ -112,11 +104,11 @@
 									}
 								},
                 "fqdn_tags": {
-									"title": "fqdn_tags",
+									"title": "fqdn tags",
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "string",
 										"default": "",
                     "enum":[
@@ -135,11 +127,11 @@
 									}
 								},
 								"target_fqdns": {
-									"title": "target_fqdns",
+									"title": "destination fqdns",
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "string",
 										"default": "",
 										"examples": [
@@ -148,11 +140,11 @@
 									}
 								},
 								"source_addresses": {
-									"title": "Source_addresses",
+									"title": "source addresses",
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "string",
 										"default": "",
 										"examples": [
@@ -161,11 +153,11 @@
 									}
 								},
                 "source_ip_group_ids": {
-									"title": "Source_ip_group_ids",
+									"title": "source ip group ids",
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "string",
 										"default": "",
 										"examples": [
@@ -174,11 +166,11 @@
 									}
 								},
                 "source_ip_groups_in_core": {
-									"title": "Source_ip_groups_in_core",
+									"title": "source ip group names in core",
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "string",
 										"default": "",
 										"examples": [
@@ -194,7 +186,7 @@
     },
     "network_rule_collections": {
 			"$id": "#properties/network_rule_collections",
-			"title": "network_rule_collections",
+			"title": "network rule collections",
 			"type": "array",
 			"default": [],
       "updateable": true,
@@ -203,7 +195,6 @@
 				"type": "object",
 				"required": [
 					"name",
-					"action",
 					"rules"
 				],
 				"properties": {
@@ -215,16 +206,8 @@
 						],
 						"pattern": "^.*$"
 					},
-					"priority": {
-						"title": "priority",
-						"type": "integer",
-            "description": "Numeric priority for rule collection - leave blank for auto numbering",
-						"examples": [
-							110
-						]
-					},
 					"action": {
-						"title": "action",
+						"title": "action DEPRECATED",
 						"type": "string",
 						"examples": [
 							"Allow"
@@ -239,7 +222,7 @@
 						"type": "array",
 						"default": [],
 						"items":{
-							"title": "Items",
+							"title": "items",
 							"type": "object",
 							"required": [
 								"name"
@@ -254,7 +237,7 @@
 									"pattern": "^.{5,80}$"
 								},
 								"description": {
-									"title": "description",
+									"title": "description DEPRECATED",
 									"type": "string",
 									"default": "",
 									"examples": [
@@ -263,11 +246,11 @@
 									"pattern": "^.*$"
 								},
 								"source_addresses": {
-									"title": "Source_addresses",
+									"title": "source addresses",
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "string",
 										"default": "",
 										"examples": [
@@ -276,11 +259,11 @@
 									}
 								},
                 "source_ip_group_ids": {
-									"title": "Source_ip_group_ids",
+									"title": "source ip group ids",
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "string",
 										"default": "",
 										"examples": [
@@ -289,11 +272,11 @@
 									}
 								},
                 "source_ip_groups_in_core": {
-									"title": "Source_ip_groups_in_core",
+									"title": "source ip group names in core",
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "string",
 										"default": "",
 										"examples": [
@@ -302,11 +285,11 @@
 									}
 								},
 								"destination_addresses": {
-									"title": "Destination_addresses",
+									"title": "destination addresses",
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "string",
 										"default": "",
 										"examples": [
@@ -315,11 +298,11 @@
 									}
 								},
                 "destination_ip_group_ids": {
-									"title": "Destination_ip_group_ids",
+									"title": "destination ip group ids",
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "string",
 										"default": "",
 										"examples": [
@@ -328,11 +311,11 @@
 									}
 								},
                 "destination_fqdns": {
-									"title": "Destination_fqdns",
+									"title": "destination fqdns",
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "string",
 										"default": "",
 										"examples": [
@@ -341,11 +324,11 @@
 									}
 								},
                 "destination_ports": {
-									"title": "Destination_ports",
+									"title": "destination ports",
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "string",
 										"default": "",
 										"examples": [
@@ -360,7 +343,7 @@
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "string",
                     "enum": [
                       "Any",
