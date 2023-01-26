@@ -10,7 +10,7 @@ terraform {
     }
     databricks = {
       source  = "databricks/databricks"
-      version = "1.5.0"
+      version = "=1.5.0"
     }
     dns = {
       source  = "hashicorp/dns"
@@ -50,7 +50,7 @@ provider "databricks" {
 
 module "azure_region" {
   source  = "claranet/regions/azurerm"
-  version = ">=6.1.0"
+  version = "=6.1.0"
 
   azure_region = data.azurerm_resource_group.ws.location
 }
