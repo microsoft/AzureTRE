@@ -30,13 +30,5 @@ locals {
   private_dns_zone_names = toset([
     "privatelink.queue.core.windows.net",
     "privatelink.table.core.windows.net",
-    "privatelink.purview.azure.com",
-    "privatelink.purviewstudio.azure.com",
-    "privatelink.sql.azuresynapse.net",
-    "privatelink.dev.azuresynapse.net",
-    "privatelink.azuresynapse.net",
-    "privatelink.dfs.core.windows.net",
-    "privatelink.azurehealthcareapis.com",
-    "privatelink.dicom.azurehealthcareapis.com"
   ])
 }
