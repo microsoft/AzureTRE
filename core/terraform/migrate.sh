@@ -189,6 +189,13 @@ if [ -n "${rp_subnet}" ]; then
   fi
 fi
 
+# DNS Zones migration. We can't use a moved block due the the vars being used.
+nexus_dns_zone=$(echo "${terraform_show_json}" \
+  | jq -r 'select(.values.root_module.child_modules != null) .values.root_module.child_modules[] | select (.address=="module.network") | .resources[] | select(.address=="module.network.azurerm_private_dns_zone.nexus") | .values.id')
+if [ -n "${nexus_dns_zone}" ]; then
+  terraform state rm module.network.azurerm_private_dns_zone.nexus
+  terraform import azurerm_private_dns_zone.non_core[\""nexus-${TRE_ID}.${LOCATION}.cloudapp.azure.com"\"] "${nexus_dns_zone}"
+fi
 
 # this isn't a classic migration, but impacts how terraform handles the deployment in the next phase
 state_store_serverless=$(echo "${terraform_show_json}" \
