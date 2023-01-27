@@ -12,6 +12,7 @@
     }
   },
   "runArgs": [
+    "--platform=linux/amd64",
     "--network",
     "host"
   ],
@@ -27,7 +28,8 @@
   ],
   "remoteUser": "vscode",
   "containerEnv": {
-    "DOCKER_BUILDKIT": "1"
+    "DOCKER_BUILDKIT": "1",
+    "DOCKER_DEFAULT_PLATFORM": "amd64"
   },
   "remoteEnv": {
     // this is used for SuperLinter

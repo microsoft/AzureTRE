@@ -2,7 +2,8 @@
 
 # [Choice] Python version: 3, 3.9, 3.8, 3.7, 3.6
 ARG VARIANT="3.8"
-FROM mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}-bullseye
+ARG TARGETPLATFORM="linux/amd64"
+FROM --platform="${TARGETPLATFORM}" mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}-bullseye
 
 # This will be set to true when running in VSCode
 ARG INTERACTIVE="false"
