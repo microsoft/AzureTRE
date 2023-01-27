@@ -1,4 +1,4 @@
-FROM maven:3-jdk-11 AS client_build
+FROM --platform=linux/amd64 maven:3-jdk-11 AS client_build
 
 COPY ./guacamole-auth-azure/pom.xml /pom.xml
 COPY ./guacamole-auth-azure/src /src
