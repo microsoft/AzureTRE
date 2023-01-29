@@ -1,5 +1,5 @@
 ---
-name: Deploy Latest Documentation
+name: Deploy Documentation
 on:
   workflow_dispatch:
   release:
@@ -12,7 +12,7 @@ on:
       - main
 jobs:
   deploy:
-    name: Deploy Latest Documentation
+    name: Deploy Documentation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main
@@ -36,4 +36,4 @@ jobs:
         run: mike deploy --push --update-aliases ${GITHUB_REF#refs/*/} latest-release
       - name: Deploy the development docs
         if: ${{ github.event_name == 'push' }}
-        run: mike deploy --push main
+        run: mike deploy --push develop

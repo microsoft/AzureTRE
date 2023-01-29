@@ -25,6 +25,7 @@ theme:
 extra:
   version:
     provider: mike
+    default: latest-release
 
 plugins:
   - search
