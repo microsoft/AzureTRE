@@ -1,4 +1,5 @@
-name: Deploy the latest documentation
+---
+name: Deploy Latest Documentation
 on:
   workflow_dispatch:
     inputs:
@@ -9,7 +10,7 @@ on:
     types: [published]
 jobs:
   deploy:
-    name: Deploy the latest documentation
+    name: Deploy Latest Documentation
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout main
@@ -23,7 +24,7 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install -r docs/requirements.txt
-      - name: Configure the git user
+      - name: Configure Git User
         run: |
           git config user.name "ci-docs"
           git config user.email "ci-docs@gmail.com"
