@@ -22,7 +22,7 @@ We want to make sure we find the correct resource record in Cosmos before modify
 ### Using the TRE API
 
 1. Head to the Swagger UI (typically `{YOUR_TRE_ID}.{REGION}.cloudapp.azure.com/api/docs`)
-    - If looking for a resource within a workspace (i.e. a workspace service or user resource), you will instead need to open `/api/workspaces/{WORKSPACE_ID}/docs`
+   - If you're looking for a resource within a workspace (i.e. a workspace service or user resource), you will instead need to open `/api/workspaces/{WORKSPACE_ID}/docs`
 
 1. Click *Authorize* and authenticate
 

@@ -46,15 +46,6 @@ done
 # done with processing args and can set this
 set -o nounset
 
-# Start the Application Gateway if stopped
-echo "Checking app gateway status"
-if [[ $(az network application-gateway list --output json --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='agw-certs-${TRE_ID}'&&operationalState=='Stopped'] | length(@)") != 0 ]]; then
-  echo "App gateway stopped. Starting..."
-  az network application-gateway start -g "rg-$TRE_ID" -n "agw-certs-$TRE_ID"
-else
-  echo "App gateway running"
-fi
-
 echo "Checking for index.html file in storage account"
 
 # Create the default index.html page
@@ -142,7 +133,3 @@ az network application-gateway ssl-cert update \
     --gateway-name "${application_gateway_name}" \
     --name 'cert-primary' \
     --key-vault-secret-id "${sid}"
-
-# Stop the app gateway once done to save cost
-echo "Stopping app gateway"
-az network application-gateway stop -g "rg-$TRE_ID" -n "agw-certs-$TRE_ID"

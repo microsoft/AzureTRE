@@ -39,9 +39,9 @@ To bring in external data to a secure TRE workspace so you can use it for your r
 
 3. Copy the URL and use it to upload your data to the Azure Storage account. You can use several tools for this that accept SAS URLs, such as the Azure Storage Explorer, or the Azure CLI, depending on your preference.
 
-    - To use Storage Explorer, follow [this guide](https://learn.microsoft.com/en-us/azure/vs-azure-tools-storage-manage-with-storage-explorer?tabs=macos)
+   - To use Storage Explorer, follow [this guide](https://learn.microsoft.com/en-us/azure/vs-azure-tools-storage-manage-with-storage-explorer?tabs=macos)
 
-    - With the Azure CLI, you can run `az storage blob upload -f /path/to/file --blob-url SAS_URL`. [More info](https://learn.microsoft.com/en-us/cli/azure/storage/blob?view=azure-cli-latest#az-storage-blob-upload)
+   - With the Azure CLI, you can run `az storage blob upload -f /path/to/file --blob-url SAS_URL`. [More info](https://learn.microsoft.com/en-us/cli/azure/storage/blob?view=azure-cli-latest#az-storage-blob-upload)
 
 !!! warning
     Airlock only supports a single file per request. If you need to import multiple files, please zip them before uploading to the request's storage container.
@@ -67,7 +67,7 @@ If your request is approved, you can follow the below steps to get your data fro
 
 3. Paste this link into your Workspace VM (or whichever workspace resource you're wanting to access the data from). Like before, use your preferred tool to access the data using the SAS URL, but this time to download the data.
 
-    - With the Azure CLI, you can use `az storage blob download --file /path/to/write/to --blob-url SAS_URL`. [More info](https://docs.microsoft.com/en-us/cli/azure/storage/blob?view=azure-cli-latest#az-storage-blob-download)
+   - With the Azure CLI, you can use `az storage blob download --file /path/to/write/to --blob-url SAS_URL`. [More info](https://docs.microsoft.com/en-us/cli/azure/storage/blob?view=azure-cli-latest#az-storage-blob-download)
 
 !!! tip
     If you are using a Workspace VM that uses one of the standard TRE Data Science VM images, you will likely have both Storage Explorer and the Azure CLI pre-installed.

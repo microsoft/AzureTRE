@@ -8,7 +8,7 @@ from resources import strings
 pytestmark = pytest.mark.asyncio
 
 workspace_services = [
-    # strings.AZUREML_SERVICE,
+    strings.AZUREML_SERVICE,
     # strings.INNEREYE_SERVICE,
     strings.GITEA_SERVICE,
     strings.MLFLOW_SERVICE,
