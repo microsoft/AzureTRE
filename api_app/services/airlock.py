@@ -417,7 +417,7 @@ async def disable_user_resource(
 
     resource_patch = ResourcePatch(isEnabled=False)
     operation = await update_user_resource(user_resource=user_resource, resource_patch=resource_patch, force_version_update=False,
-                                           user=user, workspace_service=workspace_service, user_resource_repo=user_resource_repo,
+                                           user=user, etag=user_resource.etag, workspace_service=workspace_service, user_resource_repo=user_resource_repo,
                                            resource_template_repo=resource_template_repo, operations_repo=operations_repo, resource_history_repo=resource_history_repo)
 
     return operation

@@ -267,13 +267,14 @@ async def update_user_resource(
         resource_patch: ResourcePatch,
         force_version_update: bool,
         user: User,
+        etag: str,
         workspace_service: WorkspaceService,
         user_resource_repo: UserResourceRepository,
         resource_template_repo: ResourceTemplateRepository,
         operations_repo: OperationRepository,
         resource_history_repo: ResourceHistoryRepository) -> Operation:
 
-    patched_user_resource, resource_template = await user_resource_repo.patch_user_resource(user_resource, resource_patch, user_resource.etag, resource_template_repo, resource_history_repo, workspace_service.templateName, user, force_version_update)
+    patched_user_resource, resource_template = await user_resource_repo.patch_user_resource(user_resource, resource_patch, etag, resource_template_repo, resource_history_repo, workspace_service.templateName, user, force_version_update)
     operation = await send_resource_request_message(
         resource=patched_user_resource,
         operations_repo=operations_repo,

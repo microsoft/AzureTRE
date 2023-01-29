@@ -334,7 +334,7 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
     @patch("services.airlock.send_uninstall_message")
     @patch("services.airlock.ResourceHistoryRepository.save_item")
     @patch("services.airlock.UserResourceRepository.update_item_with_etag")
-    @patch("services.airlock.send_resource_request_message")
+    @patch("services.airlock.update_user_resource")
     @patch("services.airlock.ResourceTemplateRepository.get_template_by_name_and_version", return_value=ResourceTemplate(name="test_template", id="123", description="test", version="0.0.1", resourceType="user-resource", current=True, required=[], properties={}))
     @patch("services.airlock.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=WorkspaceService(id=WORKSPACE_SERVICE_ID, templateName="test", templateVersion="0.0.1", _etag="123"))
     @patch("services.airlock.UserResourceRepository.get_user_resource_by_id", return_value=UserResource(id=USER_RESOURCE_ID, templateName="test", templateVersion="0.0.1", _etag="123"))
