@@ -22,6 +22,9 @@ theme:
   features:
     - navigation.instant
     - navigation.indexes
+extra:
+  version:
+    provider: mike
 
 plugins:
   - search

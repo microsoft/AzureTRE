@@ -1,0 +1,36 @@
+name: Deploy the latest documentation
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to be deployed
+        required: true
+  release:
+    types: [published]
+jobs:
+  deploy:
+    name: Deploy the latest documentation
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - name: Install Dependencies
+        run: |
+          pip install -r docs/requirements.txt
+      - name: Configure the git user
+        run: |
+          git config user.name "ci-docs"
+          git config user.email "ci-docs@gmail.com"
+      - name: Deploy the latest documents from new release
+        if: ${{ github.event.inputs.version == '' }}
+        run: |
+          mike deploy --push --update-aliases ${GITHUB_REF#refs/*/} latest
+      - name: Deploy the latest documents from manual trigger
+        if: ${{ github.event.inputs.version != '' }}
+        run: mike deploy --push --update-aliases ${{ github.event.inputs.version }} latest
