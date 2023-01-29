@@ -2,11 +2,6 @@
 name: Deploy Latest Documentation
 on:
   workflow_dispatch:
-    push:
-      branches: [main]
-      paths:
-        - 'docs/**'
-        - mkdocs.yml
   release:
     types: [published]
   push:
@@ -18,7 +13,7 @@ on:
 jobs:
   deploy:
     name: Deploy Latest Documentation
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout main
         uses: actions/checkout@v3
@@ -41,4 +36,4 @@ jobs:
         run: mike deploy --push --update-aliases ${GITHUB_REF#refs/*/} latest-release
       - name: Deploy the development docs
         if: ${{ github.event_name == 'push' }}
-        run: mike deploy --push dev
+        run: mike deploy --push main
