@@ -73,10 +73,10 @@ async def submit_airlock_import_request(workspace_path: str, workspace_owner_tok
 
 @pytest.mark.timeout(50 * 60)
 @pytest.mark.airlock
-async def test_airlock_review_vm_flow(setup_test_workspace_and_workspace_service, setup_test_airlock_import_review_workspace_and_workspace_service, verify):
-    workspace_path, workspace_id, workspace_service_path, workspace_service_id, workspace_owner_token = setup_test_workspace_and_workspace_service
-    _, import_review_workspace_id, _, import_review_workspace_service_id, _ = setup_test_airlock_import_review_workspace_and_workspace_service
-    LOGGER.info("Workspace and workspace service set up")
+async def test_airlock_review_vm_flow(setup_test_workspace, setup_test_airlock_import_review_workspace_and_guacamole_service, verify):
+    workspace_path, workspace_id, workspace_owner_token = setup_test_workspace
+    _, import_review_workspace_id, _, import_review_workspace_service_id, _ = setup_test_airlock_import_review_workspace_and_guacamole_service
+    LOGGER.info("Base workspace set up")
 
     # Preparation: Update the research workspace so that it has the import review details
     patch_payload = {
@@ -90,7 +90,7 @@ async def test_airlock_review_vm_flow(setup_test_workspace_and_workspace_service
                     "import_vm_user_resource_template_name": "tre-service-guacamole-import-reviewvm"
                 },
                 "export": {
-                    "export_vm_workspace_service_id": workspace_service_id,
+                    "export_vm_workspace_service_id": "",
                     "export_vm_user_resource_template_name": "tre-service-guacamole-export-reviewvm"
                 }
             }

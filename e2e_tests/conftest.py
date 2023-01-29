@@ -127,7 +127,7 @@ async def setup_test_workspace(verify) -> Tuple[str, str, str]:
 
 # Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
 @pytest.fixture(scope="session")
-async def setup_test_workspace_and_workspace_service(verify, setup_test_workspace):
+async def setup_test_workspace_and_guacamole_service(verify, setup_test_workspace):
     # Set up
     workspace_path, workspace_id, workspace_owner_token = setup_test_workspace
 
@@ -160,7 +160,7 @@ async def setup_test_aad_workspace(verify) -> Tuple[str, str, str]:
 
 # Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
 @pytest.fixture(scope="session")
-async def setup_test_airlock_import_review_workspace_and_workspace_service(verify) -> Tuple[str, str, str, str, str]:
+async def setup_test_airlock_import_review_workspace_and_guacamole_service(verify) -> Tuple[str, str, str, str, str]:
     pre_created_workspace_id = config.TEST_AIRLOCK_IMPORT_REVIEW_WORKSPACE_ID
     # Set up
     workspace_path, workspace_id = await create_or_get_test_workspace(auth_type="Automatic", verify=verify, template_name=resource_strings.AIRLOCK_IMPORT_REVIEW_WORKSPACE, pre_created_workspace_id=pre_created_workspace_id)
