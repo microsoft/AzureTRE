@@ -185,7 +185,7 @@ async def test_create_certs_nexus_shared_service(verify) -> None:
         f"/api{nexus_shared_service_path}", admin_token, verify
     )
 
-    await nexus_shared_service_path(
+    await disable_and_delete_resource(
         f"/api{certs_shared_service_path}", admin_token, verify
     )
 
