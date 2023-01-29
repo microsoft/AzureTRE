@@ -33,7 +33,7 @@ jobs:
           git config user.email "ci-docs@dummy.com"
       - name: Deploy the latest documents from new release
         if: ${{ github.event_name == 'release' }}
-        run: mike deploy --push --update-aliases "${GITHUB_REF#refs/*/}"" latest-release
+        run: mike deploy --push --update-aliases "${GITHUB_REF#refs/*/}" latest-release
       - name: Deploy the development docs
         if: ${{ github.event_name == 'push' }}
         run: mike deploy --push develop
