@@ -30,8 +30,7 @@ jobs:
           git config user.email "ci-docs@gmail.com"
       - name: Deploy the latest documents from new release
         if: ${{ github.event.inputs.version == '' }}
-        run: |
-          mike deploy --push --update-aliases ${GITHUB_REF#refs/*/} latest
+        run: mike deploy --push --update-aliases ${GITHUB_REF#refs/*/} latest
       - name: Deploy the latest documents from manual trigger
         if: ${{ github.event.inputs.version != '' }}
         run: mike deploy --push --update-aliases ${{ github.event.inputs.version }} latest
