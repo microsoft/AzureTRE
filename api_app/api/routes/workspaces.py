@@ -34,7 +34,7 @@ from services.authentication import extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from .resource_helpers import get_identity_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, \
-    send_custom_action_message, send_resource_request_message
+    send_custom_action_message, send_resource_request_message, update_user_resource
 from models.domain.request_action import RequestAction
 
 workspaces_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
@@ -466,17 +466,7 @@ async def patch_user_resource(
     validate_user_has_valid_role_for_user_resource(user, user_resource)
 
     try:
-        patched_user_resource, resource_template = await user_resource_repo.patch_user_resource(user_resource, user_resource_patch, etag, resource_template_repo, resource_history_repo, workspace_service.templateName, user, force_version_update)
-        operation = await send_resource_request_message(
-            resource=patched_user_resource,
-            operations_repo=operations_repo,
-            resource_repo=user_resource_repo,
-            user=user,
-            resource_template=resource_template,
-            resource_template_repo=resource_template_repo,
-            resource_history_repo=resource_history_repo,
-            action=RequestAction.Upgrade)
-
+        operation = update_user_resource(user_resource, user_resource_patch, force_version_update, user, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:

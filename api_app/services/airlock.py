@@ -11,7 +11,6 @@ from models.domain.user_resource import UserResource
 from models.domain.operation import Operation
 from models.domain.resource import ResourceType
 from models.domain.workspace_service import WorkspaceService
-from models.domain.request_action import RequestAction
 from models.schemas.airlock_request import AirlockReviewInCreate
 from models.schemas.airlock_request import AirlockRequestWithAllowedUserActions
 from models.schemas.resource import ResourcePatch
@@ -22,7 +21,7 @@ from services.authentication import get_access_service
 
 from resources import strings, constants
 
-from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, send_resource_request_message
+from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, update_user_resource
 
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
@@ -417,17 +416,9 @@ async def disable_user_resource(
         resource_history_repo: ResourceHistoryRepository) -> Operation:
 
     resource_patch = ResourcePatch(isEnabled=False)
-    patched_user_resource, resource_template = await user_resource_repo.patch_user_resource(user_resource, resource_patch, user_resource.etag, resource_template_repo, resource_history_repo, workspace_service.templateName, user, force_version_update=False)
-
-    operation = await send_resource_request_message(
-        resource=patched_user_resource,
-        operations_repo=operations_repo,
-        resource_repo=user_resource_repo,
-        user=user,
-        resource_template=resource_template,
-        resource_template_repo=resource_template_repo,
-        resource_history_repo=resource_history_repo,
-        action=RequestAction.Upgrade)
+    operation = update_user_resource(user_resource=user_resource, resource_patch=resource_patch, force_version_update=False,
+                                     user=user, workspace_service=workspace_service, user_resource_repo=user_resource_repo,
+                                     resource_template_repo=resource_template_repo, operations_repo=operations_repo, resource_history_repo=resource_history_repo)
 
     return operation
 
