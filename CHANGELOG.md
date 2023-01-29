@@ -33,6 +33,7 @@ ENHANCEMENTS:
 * Review VMs are being cleaned up when an Airlock request is canceled ([#3130](https://github.com/microsoft/AzureTRE/pull/3130))
 
 BUG FIXES:
+* Reauth CLI if TRE endpoint has changed [#3137](https://github.com/microsoft/AzureTRE/pull/3137)
 
 COMPONENTS:
 
