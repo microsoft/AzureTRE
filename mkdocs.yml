@@ -65,7 +65,7 @@ nav:
               - Deployment Steps: tre-admins/setup-instructions/manual-deployment.md
           - CI/CD:
               - Pre-deployment Steps: tre-admins/setup-instructions/cicd-pre-deployment-steps.md
-              - Deployment Steps: tre-admins/setup-instructions/cicd-deplyment.md
+              - Deployment Steps: tre-admins/setup-instructions/cicd-deployment.md
       - 6. Configure Shared Services: tre-admins/setup-instructions/configuring-shared-services.md
       - 7. Install Base Workspace: tre-admins/setup-instructions/ui-install-base-workspace.md
       - 8. Install Workspace Service and User Resource: tre-admins/setup-instructions/ui-install-ws-and-ur.md
