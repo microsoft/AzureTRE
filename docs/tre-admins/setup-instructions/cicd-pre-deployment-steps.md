@@ -123,4 +123,4 @@ With all the repository secrets set, you can trigger a workflow run by pushing t
 
 ## Next steps
 
-* [Deploying Azure TRE in Pipelines](cicd-deplyment.md)
+* [Deploying Azure TRE in Pipelines](cicd-deployment.md)

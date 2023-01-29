@@ -27,14 +27,15 @@ inputs part where the used Github environment name is set, make sure to update i
 
 ## Publish Custom Templates in Pipelines
 
-If you have created custom AzureTRE templates you can publish and register them as part of the CI/CD pipelines. To do so follow the next steps:
-1. Go to `.github/workflows/deploy_tre_reusable.yml` workflow. Add your template under the following jobs:
-    - publish_bundles:
-        ![Publish bundle](../../assets/using-tre/push_bundles_step.png)
-    - register_bundles:
-        ![Register bundle](../../assets/using-tre/register_bundles.png)
-    - If it is a user resource add it also under register_user_resource_bundles:
-        ![Register user resource step](../../assets/using-tre/register_user_resource.png)
+If you have created custom AzureTRE templates you can publish and register them as part of the CI/CD pipelines.
+To do so go to `.github/workflows/deploy_tre_reusable.yml` workflow and add your template under the following jobs:
+
+1. publish_bundles
+    ![Publish bundle](../../assets/using-tre/push_bundles_step.png)
+1. register_bundles
+    ![Register bundle](../../assets/using-tre/register_bundles.png)
+1. If it is a user resource add it also under register_user_resource_bundles
+    ![Register user resource step](../../assets/using-tre/register_user_resource.png)
 
 ## How to Contribute to our Documentation
 
