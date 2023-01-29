@@ -466,7 +466,7 @@ async def patch_user_resource(
     validate_user_has_valid_role_for_user_resource(user, user_resource)
 
     try:
-        operation = update_user_resource(user_resource, user_resource_patch, force_version_update, user, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
+        operation = await update_user_resource(user_resource, user_resource_patch, force_version_update, user, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
