@@ -4,10 +4,10 @@ from copy import deepcopy
 from typing import Dict, Any, Optional
 
 from fastapi import HTTPException, status
-from api_app.db.repositories.user_resources import UserResourceRepository
-from api_app.models.domain.user_resource import UserResource
-from api_app.models.domain.workspace_service import WorkspaceService
-from api_app.models.schemas.resource import ResourcePatch
+from db.repositories.user_resources import UserResourceRepository
+from models.domain.user_resource import UserResource
+from models.domain.workspace_service import WorkspaceService
+from models.schemas.resource import ResourcePatch
 from db.repositories.resources import ResourceRepository
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
