@@ -95,8 +95,14 @@ async def wait_for_status(
             200,
         )
         current_status = request_result[strings.AIRLOCK_REQUEST][strings.AIRLOCK_REQUEST_STATUS]
-        if (current_status == request_status or is_final_status(current_status)):
+
+        if (current_status == request_status):
             break
+
+        if (is_final_status(current_status)):
+            status = request_result[strings.AIRLOCK_REQUEST].get(strings.AIRLOCK_REQUEST_STATUS_MESSAGE)
+            LOGGER.error(f"Airlock request ended with unexpected status: {current_status}. reason: {status}")
+            raise Exception("Airlock request unexpected status.")
 
         LOGGER.info(f"Waiting for request status: {request_status}, current status is {current_status}")
         await asyncio.sleep(5)
