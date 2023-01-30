@@ -76,7 +76,6 @@ async def submit_airlock_import_request(workspace_path: str, workspace_owner_tok
 async def test_airlock_review_vm_flow(setup_test_workspace, setup_test_airlock_import_review_workspace_and_guacamole_service, verify):
     workspace_path, workspace_id, workspace_owner_token = setup_test_workspace
     _, import_review_workspace_id, _, import_review_workspace_service_id, _ = setup_test_airlock_import_review_workspace_and_guacamole_service
-    LOGGER.info("Base workspace set up")
 
     # Preparation: Update the research workspace so that it has the import review details
     patch_payload = {
