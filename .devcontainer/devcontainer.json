@@ -12,7 +12,6 @@
     }
   },
   "runArgs": [
-    "--platform=linux/amd64",
     "--network",
     "host"
   ],
