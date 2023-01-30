@@ -247,12 +247,14 @@ class AzureADAuthorization(AccessService):
         for user_data in users_graph_data["responses"]:
             # Handle user endpoint response
             if "users" in user_data["body"]["@odata.context"] and user_data["body"]["mail"] is not None:
-                user_emails[user_data["body"]["id"]] = user_data["body"]["mail"]
+                user_emails[user_data["body"]["id"]] = [user_data["body"]["mail"]]
             # Handle group endpoint response
             if "directoryObjects" in user_data["body"]["@odata.context"]:
+                group_members_emails = []
                 for group_member in user_data["body"]["value"]:
-                    if group_member["mail"] is not None:
-                        user_emails[group_member["id"]] = group_member["mail"]
+                    if group_member["mail"] is not None and group_member["mail"] not in group_members_emails:
+                        group_members_emails.append(group_member["mail"])
+                user_emails[user_data["id"]] = group_members_emails
         return user_emails
 
     def get_workspace_role_assignment_details(self, workspace: Workspace):
@@ -270,12 +272,12 @@ class AzureADAuthorization(AccessService):
             principal_id = role_assignment["principalId"]
             principal_type = role_assignment["principalType"]
 
-            if principal_type == "User" and principal_id in user_emails:
+            if principal_type != "ServicePrincipal" and principal_id in user_emails:
                 app_role_id = role_assignment["appRoleId"]
                 app_role_name = inverted_app_role_ids.get(app_role_id)
 
                 if app_role_name:
-                    workspace_role_assignments_details[app_role_name].append(user_emails[principal_id])
+                    workspace_role_assignments_details[app_role_name].extend(user_emails[principal_id])
 
         return workspace_role_assignments_details
 
