@@ -10,8 +10,10 @@ from models.domain.workspace import Workspace
 from models.domain.user_resource import UserResource
 from models.domain.operation import Operation
 from models.domain.resource import ResourceType
+from models.domain.workspace_service import WorkspaceService
 from models.schemas.airlock_request import AirlockReviewInCreate
 from models.schemas.airlock_request import AirlockRequestWithAllowedUserActions
+from models.schemas.resource import ResourcePatch
 from typing import Tuple, List, Optional
 from models.schemas.user_resource import UserResourceInCreate
 from services.azure_resource_status import get_azure_resource_status
@@ -19,7 +21,7 @@ from services.authentication import get_access_service
 
 from resources import strings, constants
 
-from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message
+from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, update_user_resource
 
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
@@ -381,6 +383,9 @@ async def delete_review_user_resource(
     workspace_service = await workspace_service_repo.get_workspace_service_by_id(workspace_id=user_resource.workspaceId,
                                                                                  service_id=user_resource.parentWorkspaceServiceId)
 
+    # disable might contain logic that we need to execute before the deletion of the resource
+    _ = await disable_user_resource(user_resource, user, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
+
     resource_template = await resource_template_repo.get_template_by_name_and_version(
         user_resource.templateName,
         user_resource.templateVersion,
@@ -398,6 +403,23 @@ async def delete_review_user_resource(
         user=user,
         resource_template=resource_template)
     logging.info(f"Started operation {operation}")
+    return operation
+
+
+async def disable_user_resource(
+        user_resource: UserResource,
+        user: User,
+        workspace_service: WorkspaceService,
+        user_resource_repo: UserResourceRepository,
+        resource_template_repo: ResourceTemplateRepository,
+        operations_repo: OperationRepository,
+        resource_history_repo: ResourceHistoryRepository) -> Operation:
+
+    resource_patch = ResourcePatch(isEnabled=False)
+    operation = await update_user_resource(user_resource=user_resource, resource_patch=resource_patch, force_version_update=False,
+                                           user=user, etag=user_resource.etag, workspace_service=workspace_service, user_resource_repo=user_resource_repo,
+                                           resource_template_repo=resource_template_repo, operations_repo=operations_repo, resource_history_repo=resource_history_repo)
+
     return operation
 
 
@@ -430,3 +452,11 @@ async def delete_all_review_user_resources(
 
     logging.info(f"Started {len(operations)} operations on deleting user resources")
     return operations
+
+
+async def cancel_request(airlock_request: AirlockRequest, user: User, workspace: Workspace,
+                         airlock_request_repo: AirlockRequestRepository, user_resource_repo: UserResourceRepository, workspace_service_repo: WorkspaceServiceRepository,
+                         resource_template_repo: ResourceTemplateRepository, operations_repo: OperationRepository, resource_history_repo: ResourceHistoryRepository) -> AirlockRequest:
+    updated_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, updated_by=user, workspace=workspace, new_status=AirlockRequestStatus.Cancelled)
+    await delete_all_review_user_resources(airlock_request, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, resource_history_repo, user)
+    return updated_request
