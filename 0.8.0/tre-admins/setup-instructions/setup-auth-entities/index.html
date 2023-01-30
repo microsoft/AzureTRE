@@ -1105,6 +1105,8 @@
         
           
         
+          
+        
       
       
         <label class="md-nav__link" for="__nav_4_2" tabindex="0" aria-expanded="false">
@@ -1183,6 +1185,20 @@
     <li class="md-nav__item">
       <a href="../../../tre-templates/workspace-services/mlflow/" class="md-nav__link">
         MLFlow
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tre-templates/workspace-services/health_services/" class="md-nav__link">
+        Health Services
       </a>
     </li>
   
@@ -1455,6 +1471,8 @@
       <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_5_1" type="checkbox" id="__nav_5_1" >
       
       
+        
+          
         
           
         
@@ -1803,7 +1821,21 @@
   
     <li class="md-nav__item">
       <a href="../../upgrading-tre/" class="md-nav__link">
-        Upgrading AzureTRE version
+        Upgrading AzureTRE Version
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../upgrading-resources/" class="md-nav__link">
+        Upgrading Resources Version
       </a>
     </li>
   
@@ -2228,6 +2260,8 @@
         
           
         
+          
+        
       
       
         
@@ -2320,6 +2354,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../troubleshooting-faq/manually-editing-resources/" class="md-nav__link">
+        Manually edit resources in Cosmos DB
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -2329,6 +2377,21 @@
           
         </ul>
       </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/" class="md-nav__link">
+        Contributing
+      </a>
     </li>
   
 
@@ -2386,10 +2449,10 @@
 <p>Next, you will set the configuration variables for the specific Azure TRE instance:</p>
 <ol>
 <li>
-<p>Open the <code>/devops/.env.sample</code> file and then save it without the .sample extension. You should now have a file called <code>.env</code> located in the <code>/devops</code> folder. The file contains configuration variables for the shared management infrastructure which is used to support the deployment of one or more Azure TRE instances.</p>
+<p>Open the <code>/config.sample.yaml</code> file and then save it without the .sample extension. You should now have a file called <code>config.yaml</code> located in the root folder. The file contains configuration variables. In this part you will add the configuration required for the shared management infrastructure which is used to support the deployment of one or more Azure TRE instances.</p>
 </li>
 <li>
-<p>Provide the values for the following variables:</p>
+<p>Provide the values for the following variables under management section in your <code>config.yaml</code> file:</p>
 <table>
 <thead>
 <tr>
@@ -2399,23 +2462,23 @@
 </thead>
 <tbody>
 <tr>
-<td><code>LOCATION</code></td>
+<td><code>location</code></td>
 <td>The <a href="https://azure.microsoft.com/global-infrastructure/geographies/#geographies">Azure location (region)</a> for all resources. E.g., <code>westeurope</code></td>
 </tr>
 <tr>
-<td><code>MGMT_RESOURCE_GROUP_NAME</code></td>
+<td><code>mgmt_resource_group_name</code></td>
 <td>The shared resource group for all management resources, including the storage account.</td>
 </tr>
 <tr>
-<td><code>MGMT_STORAGE_ACCOUNT_NAME</code></td>
+<td><code>mgmt_storage_account_name</code></td>
 <td>The name of the storage account to hold the Terraform state and other deployment artifacts.</td>
 </tr>
 <tr>
-<td><code>ACR_NAME</code></td>
+<td><code>acr_name</code></td>
 <td>A globally unique name for the <a href="https://docs.microsoft.com/azure/container-registry/">Azure Container Registry (ACR)</a> that will be created to store deployment images.</td>
 </tr>
 <tr>
-<td><code>ARM_SUBSCRIPTION_ID</code></td>
+<td><code>arm_subscription_id</code></td>
 <td>The Azure subscription ID for all resources.</td>
 </tr>
 </tbody>
@@ -2425,17 +2488,16 @@
 <p>The rest of the variables can have their default values.</p>
 </li>
 <li>
-<p>Open the <code>/templates/core/.env.sample</code> file and then save it without the .sample extension. You should now have a file called <code>.env</code> located in the <code>/templates/core</code> folder.</p>
+<p>Decide on a name for your <code>tre_id</code>, which is an alphanumeric (with underscores allowed) ID for the Azure TRE instance. The value will be used in various Azure resources and AAD application names. It <strong>needs to be globally unique and less than 12 characters in length</strong>. Use only lowercase letters. Choose wisely!</p>
 </li>
-<li>Decide on a name for your <code>TRE_ID</code>, which is an alphanumeric (with underscores and hyphens allowed) ID for the Azure TRE instance. The value will be used in various Azure resources and AAD application names. It <strong>needs to be globally unique and less than 12 characters in length</strong>. Use only lowercase letters. Choose wisely!</li>
-<li>Once you have decided on which AD Tenant paradigm, then you should be able to set <code>AAD_TENANT_ID</code></li>
+<li>Once you have decided on which AD Tenant paradigm, then you should be able to set <code>aad_tenant_id</code> in the authentication section in your <code>config.yaml</code> file.</li>
 <li>
 <p>Your AAD Tenant Admin can now use the terminal window in Visual Studio Code to execute the following script from within the development container to create all the AAD Applications that are used for TRE. The details of the script are covered in the <a href="../../auth/">auth document</a>.</p>
 <div class="highlight"><pre><span></span><code>make<span class="w"> </span>auth
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>A new auth.env file will be created under /devops folder. It will contain all the credentials created by the <code>make auth</code> command.</p>
+<p>Credentials created by the <code>make auth</code> command will be added under the authentication section in your <code>config.yaml</code> file</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>

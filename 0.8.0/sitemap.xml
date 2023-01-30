@@ -11,6 +11,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://github.com/microsoft/AzureTRE/0.8.0/contributing/</loc>
+         <lastmod>2023-01-30</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://github.com/microsoft/AzureTRE/0.8.0/azure-tre-overview/airlock/</loc>
          <lastmod>2023-01-30</lastmod>
          <changefreq>daily</changefreq>
@@ -72,6 +77,11 @@
     </url>
     <url>
          <loc>https://github.com/microsoft/AzureTRE/0.8.0/tre-admins/tear-down/</loc>
+         <lastmod>2023-01-30</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://github.com/microsoft/AzureTRE/0.8.0/tre-admins/upgrading-resources/</loc>
          <lastmod>2023-01-30</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -301,6 +311,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://github.com/microsoft/AzureTRE/0.8.0/tre-templates/workspace-services/health_services/</loc>
+         <lastmod>2023-01-30</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://github.com/microsoft/AzureTRE/0.8.0/tre-templates/workspace-services/inner-eye/</loc>
          <lastmod>2023-01-30</lastmod>
          <changefreq>daily</changefreq>
@@ -352,6 +367,11 @@
     </url>
     <url>
          <loc>https://github.com/microsoft/AzureTRE/0.8.0/troubleshooting-faq/debug-api/</loc>
+         <lastmod>2023-01-30</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://github.com/microsoft/AzureTRE/0.8.0/troubleshooting-faq/manually-editing-resources/</loc>
          <lastmod>2023-01-30</lastmod>
          <changefreq>daily</changefreq>
     </url>

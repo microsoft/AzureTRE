@@ -1116,6 +1116,8 @@
         
           
         
+          
+        
       
       
         <label class="md-nav__link" for="__nav_4_2" tabindex="0" aria-expanded="false">
@@ -1194,6 +1196,20 @@
     <li class="md-nav__item">
       <a href="../../../tre-templates/workspace-services/mlflow/" class="md-nav__link">
         MLFlow
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tre-templates/workspace-services/health_services/" class="md-nav__link">
+        Health Services
       </a>
     </li>
   
@@ -1466,6 +1482,8 @@
       <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_5_1" type="checkbox" id="__nav_5_1" >
       
       
+        
+          
         
           
         
@@ -1814,7 +1832,21 @@
   
     <li class="md-nav__item">
       <a href="../../upgrading-tre/" class="md-nav__link">
-        Upgrading AzureTRE version
+        Upgrading AzureTRE Version
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../upgrading-resources/" class="md-nav__link">
+        Upgrading Resources Version
       </a>
     </li>
   
@@ -2239,6 +2271,8 @@
         
           
         
+          
+        
       
       
         
@@ -2331,6 +2365,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../troubleshooting-faq/manually-editing-resources/" class="md-nav__link">
+        Manually edit resources in Cosmos DB
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -2340,6 +2388,21 @@
           
         </ul>
       </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/" class="md-nav__link">
+        Contributing
+      </a>
     </li>
   
 
@@ -2408,7 +2471,7 @@
 <h2 id="set-environment-configuration-variables-of-shared-management-resources">Set environment configuration variables of shared management resources</h2>
 <ol>
 <li>
-<p>Open the <code>/devops/.env.sample</code> file and then save it without the .sample extension. You should now have a file called <code>.env</code> located in the <code>/devops</code> folder. The file contains configuration variables for the shared management infrastructure which is used to support the deployment of one or more Azure TRE instances.</p>
+<p>In this part we will setup configuration variables in <code>config.yaml</code> file for the shared management infrastructure which is used to support the deployment of one or more Azure TRE instances.</p>
 </li>
 <li>
 <p>Provide the values for the following variables:</p>
@@ -2421,23 +2484,23 @@
 </thead>
 <tbody>
 <tr>
-<td><code>LOCATION</code></td>
+<td><code>location</code></td>
 <td>The <a href="https://azure.microsoft.com/global-infrastructure/geographies/#geographies">Azure location (region)</a> for all resources. E.g., <code>westeurope</code></td>
 </tr>
 <tr>
-<td><code>MGMT_RESOURCE_GROUP_NAME</code></td>
+<td><code>mgmt_resource_group_name</code></td>
 <td>The shared resource group for all management resources, including the storage account.</td>
 </tr>
 <tr>
-<td><code>MGMT_STORAGE_ACCOUNT_NAME</code></td>
+<td><code>mgmt_storage_account_name</code></td>
 <td>The name of the storage account to hold the Terraform state and other deployment artifacts.</td>
 </tr>
 <tr>
-<td><code>ACR_NAME</code></td>
+<td><code>acr_name</code></td>
 <td>A globally unique name for the <a href="https://docs.microsoft.com/azure/container-registry/">Azure Container Registry (ACR)</a> that will be created to store deployment images.</td>
 </tr>
 <tr>
-<td><code>ARM_SUBSCRIPTION_ID</code></td>
+<td><code>arm_subscription_id</code></td>
 <td>The Azure subscription ID for all resources.</td>
 </tr>
 </tbody>
@@ -2448,25 +2511,22 @@
 </div>
 </li>
 </ol>
-<p>The rest of the variables can have their default values. You should now have a <code>.env</code> file that looks similar to the one below:</p>
-<div class="highlight"><pre><span></span><code># Management infrastructure
-LOCATION=westeurope
-MGMT_RESOURCE_GROUP_NAME=aztremgmt
-MGMT_STORAGE_ACCOUNT_NAME=aztremgmt
-TERRAFORM_STATE_CONTAINER_NAME=tfstate
-ACR_NAME=aztreacr
-
-ARM_SUBSCRIPTION_ID=12...54e
-
-# If you want to override the currently signed in credentials
-# ARM_TENANT_ID=__CHANGE_ME__
-# ARM_CLIENT_ID=__CHANGE_ME__
-# ARM_CLIENT_SECRET=__CHANGE_ME__
-
-# Debug mode
-DEBUG=&quot;false&quot;
+<p>The rest of the variables can have their default values. You should now have a management section in the <code>config.yaml</code> file that looks similar to the one below:</p>
+<div class="highlight"><pre><span></span><code>  management:
+    location: westeurope
+    mgmt_resource_group_name: aztremgmt
+    mgmt_storage_account_name: aztremgmt
+    terraform_state_container_name: tfstate
+    acr_name: aztreacr
+    # Azure Resource Manager credentials used for CI/CD pipelines
+    arm_subscription_id: 12...54e
+    # If you want to override the currently signed in credentials
+    # You would do this if running commands like `make terraform-install DIR=./templates/workspaces/base`
+    # arm_tenant_id: __CHANGE_ME__
+    # arm_client_id: __CHANGE_ME__
+    # arm_client_secret: __CHANGE_ME__
 </code></pre></div>
-<p>3. If you want to disable the built-in web UI (<code>./ui</code>) ensure you set <code>DEPLOY_UI=false</code> in the /templates/core/.env file.</p>
+<p>3. If you want to disable the built-in web UI (<code>./ui</code>) ensure you set <code>deploy_ui=false</code> under tre defaults section in the <code>config.yaml</code> file.</p>
 <h2 id="next-steps">Next steps</h2>
 <ul>
 <li><a href="../manual-deployment/">Deploying Azure TRE</a></li>

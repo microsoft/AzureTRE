@@ -1178,6 +1178,8 @@
         
           
         
+          
+        
       
       
         <label class="md-nav__link" for="__nav_4_2" tabindex="0" aria-expanded="false">
@@ -1256,6 +1258,20 @@
     <li class="md-nav__item">
       <a href="../../../tre-templates/workspace-services/mlflow/" class="md-nav__link">
         MLFlow
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tre-templates/workspace-services/health_services/" class="md-nav__link">
+        Health Services
       </a>
     </li>
   
@@ -1528,6 +1544,8 @@
       <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_5_1" type="checkbox" id="__nav_5_1" >
       
       
+        
+          
         
           
         
@@ -1876,7 +1894,21 @@
   
     <li class="md-nav__item">
       <a href="../../upgrading-tre/" class="md-nav__link">
-        Upgrading AzureTRE version
+        Upgrading AzureTRE Version
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../upgrading-resources/" class="md-nav__link">
+        Upgrading Resources Version
       </a>
     </li>
   
@@ -2301,6 +2333,8 @@
         
           
         
+          
+        
       
       
         
@@ -2393,6 +2427,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../troubleshooting-faq/manually-editing-resources/" class="md-nav__link">
+        Manually edit resources in Cosmos DB
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -2402,6 +2450,21 @@
           
         </ul>
       </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/" class="md-nav__link">
+        Contributing
+      </a>
     </li>
   
 
@@ -2625,10 +2688,14 @@ az account set --subscription &lt;subscription ID&gt;
 <td><code>RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE</code></td>
 <td>Optional. The number of processes to instantiate when the Resource Processor starts. Equates to the number of parallel deployment operations possible in your TRE. Defaults to <code>5</code>.</td>
 </tr>
+<tr>
+<td><code>ENABLE_SWAGGER</code></td>
+<td>Optional. Determines whether the Swagger interface for the API will be available. Default value is <code>false</code>.</td>
+</tr>
 </tbody>
 </table>
 <h3 id="configure-authentication-secrets">Configure Authentication Secrets</h3>
-<p>In a previous <a href="../setup-auth-entities/">Setup Auth configuration</a> step a new <code>/devops/auth.env</code> env file was created. Go to this file and add those env vars to your github environment:</p>
+<p>In a previous <a href="../setup-auth-entities/">Setup Auth configuration</a> step authentication configuration was added in <code>config.yaml</code> file. Go to this file and add those env vars to your github environment:</p>
 <table>
 <thead>
 <tr>
@@ -2671,11 +2738,11 @@ az account set --subscription &lt;subscription ID&gt;
 </tr>
 <tr>
 <td><code>TEST_WORKSPACE_APP_ID</code></td>
-<td>Each workspace is secured behind it's own AD Application. Use the value of <code>WORKSPACE_API_CLIENT_ID</code> created in the <code>/devops/auth.env</code> env file</td>
+<td>Each workspace is secured behind it's own AD Application. Use the value of <code>WORKSPACE_API_CLIENT_ID</code> created in the <code>/config.yaml</code> env file</td>
 </tr>
 <tr>
 <td><code>TEST_WORKSPACE_APP_SECRET</code></td>
-<td>Each workspace is secured behind it's own AD Application. This is the secret for that application. Use the value of <code>WORKSPACE_API_CLIENT_SECRET</code> created in the <code>/devops/auth.env</code> env file</td>
+<td>Each workspace is secured behind it's own AD Application. This is the secret for that application. Use the value of <code>WORKSPACE_API_CLIENT_SECRET</code> created in the <code>/config.yaml</code> env file</td>
 </tr>
 </tbody>
 </table>

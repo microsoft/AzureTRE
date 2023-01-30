@@ -1062,6 +1062,8 @@
         
           
         
+          
+        
       
       
         <label class="md-nav__link" for="__nav_4_2" tabindex="0" aria-expanded="false">
@@ -1140,6 +1142,20 @@
     <li class="md-nav__item">
       <a href="../../../tre-templates/workspace-services/mlflow/" class="md-nav__link">
         MLFlow
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tre-templates/workspace-services/health_services/" class="md-nav__link">
+        Health Services
       </a>
     </li>
   
@@ -1416,6 +1432,8 @@
       <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_5_1" type="checkbox" id="__nav_5_1" checked>
       
       
+        
+          
         
           
         
@@ -1851,7 +1869,21 @@
   
     <li class="md-nav__item">
       <a href="../../upgrading-tre/" class="md-nav__link">
-        Upgrading AzureTRE version
+        Upgrading AzureTRE Version
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../upgrading-resources/" class="md-nav__link">
+        Upgrading Resources Version
       </a>
     </li>
   
@@ -2276,6 +2308,8 @@
         
           
         
+          
+        
       
       
         
@@ -2368,6 +2402,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../troubleshooting-faq/manually-editing-resources/" class="md-nav__link">
+        Manually edit resources in Cosmos DB
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -2377,6 +2425,21 @@
           
         </ul>
       </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/" class="md-nav__link">
+        Contributing
+      </a>
     </li>
   
 
@@ -2592,7 +2655,7 @@
 </table>
 <div class="admonition caution">
 <p class="admonition-title">Caution</p>
-<p>The script will create an app password (client secret) for the workspace and write to <code>/devops/auth.env</code>. These values are only shown once, if you lose them, the script will create new secrets if run again.</p>
+<p>The script will create an app password (client secret) for the workspace and write to <code>/config.yaml</code> under the authentication section. These values are only shown once, if you lose them, the script will create new secrets if run again.</p>
 </div>
 <p>If you do not wish to grant the Automation App permission to your workspace, just remove the <code>--automation-clientid</code> from the command.</p>
 <h2 id="environment-variables">Environment Variables</h2>
@@ -2608,12 +2671,12 @@
 <tr>
 <td>WORKSPACE_API_CLIENT_ID</td>
 <td>The Client Id</td>
-<td><code>./devops/auth.env</code></td>
+<td><code>./config.yaml</code></td>
 </tr>
 <tr>
 <td>WORKSPACE_API_CLIENT_SECRET</td>
 <td>The client secret</td>
-<td><code>./devops/auth.env</code></td>
+<td><code>./config.yaml</code></td>
 </tr>
 </tbody>
 </table>

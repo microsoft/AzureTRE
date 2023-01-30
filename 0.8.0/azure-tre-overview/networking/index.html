@@ -1141,6 +1141,8 @@
         
           
         
+          
+        
       
       
         <label class="md-nav__link" for="__nav_4_2" tabindex="0" aria-expanded="false">
@@ -1219,6 +1221,20 @@
     <li class="md-nav__item">
       <a href="../../tre-templates/workspace-services/mlflow/" class="md-nav__link">
         MLFlow
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspace-services/health_services/" class="md-nav__link">
+        Health Services
       </a>
     </li>
   
@@ -1491,6 +1507,8 @@
       <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_5_1" type="checkbox" id="__nav_5_1" >
       
       
+        
+          
         
           
         
@@ -1839,7 +1857,21 @@
   
     <li class="md-nav__item">
       <a href="../../tre-admins/upgrading-tre/" class="md-nav__link">
-        Upgrading AzureTRE version
+        Upgrading AzureTRE Version
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/upgrading-resources/" class="md-nav__link">
+        Upgrading Resources Version
       </a>
     </li>
   
@@ -2264,6 +2296,8 @@
         
           
         
+          
+        
       
       
         
@@ -2356,6 +2390,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting-faq/manually-editing-resources/" class="md-nav__link">
+        Manually edit resources in Cosmos DB
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -2365,6 +2413,21 @@
           
         </ul>
       </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        Contributing
+      </a>
     </li>
   
 
@@ -2509,10 +2572,10 @@
 <li><a href="../../tre-templates/shared-services/nexus/#network-requirements">Nexus Shared Service</a></li>
 </ul>
 <h2 id="azure-monitor">Azure Monitor</h2>
-<p>Azure Monitor resources are secured using <a href="https://docs.microsoft.com/azure/azure-monitor/logs/private-link-security">Azure Monitor Private Link Scope (AMPLS)</a> keeping all traffic inside the Microsoft Azure backbone network. The Azure Monitor resources and their network configuration is defined in <code>/templates/core/terraform/azure-monitor</code> folder and the required private DNS zones in file <code>/templates/core/terraform/network/dns_zones.tf</code>.</p>
+<p>Azure Monitor resources are secured using <a href="https://docs.microsoft.com/azure/azure-monitor/logs/private-link-security">Azure Monitor Private Link Scope (AMPLS)</a> keeping all traffic inside the Microsoft Azure backbone network. The Azure Monitor resources and their network configuration is defined in <code>/core/terraform/azure-monitor</code> folder and the required private DNS zones in file <code>/core/terraform/network/dns_zones.tf</code>.</p>
 <h2 id="network-security-groups">Network security groups</h2>
 <h3 id="tre-core">TRE Core</h3>
-<p>Network security groups (NSG), and their security rules for TRE core resources are defined in <code>/templates/core/terraform/network/network_security_groups.tf</code>.</p>
+<p>Network security groups (NSG), and their security rules for TRE core resources are defined in <code>/core/terraform/network/network_security_groups.tf</code>.</p>
 <table>
 <thead>
 <tr>

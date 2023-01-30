@@ -1062,6 +1062,8 @@
         
           
         
+          
+        
       
       
         <label class="md-nav__link" for="__nav_4_2" tabindex="0" aria-expanded="false">
@@ -1140,6 +1142,20 @@
     <li class="md-nav__item">
       <a href="../../tre-templates/workspace-services/mlflow/" class="md-nav__link">
         MLFlow
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspace-services/health_services/" class="md-nav__link">
+        Health Services
       </a>
     </li>
   
@@ -1416,6 +1432,8 @@
       <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_5_1" type="checkbox" id="__nav_5_1" checked>
       
       
+        
+          
         
           
         
@@ -1847,7 +1865,21 @@
   
     <li class="md-nav__item">
       <a href="../upgrading-tre/" class="md-nav__link">
-        Upgrading AzureTRE version
+        Upgrading AzureTRE Version
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../upgrading-resources/" class="md-nav__link">
+        Upgrading Resources Version
       </a>
     </li>
   
@@ -2272,6 +2304,8 @@
         
           
         
+          
+        
       
       
         
@@ -2364,6 +2398,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting-faq/manually-editing-resources/" class="md-nav__link">
+        Manually edit resources in Cosmos DB
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -2373,6 +2421,21 @@
           
         </ul>
       </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        Contributing
+      </a>
     </li>
   
 
@@ -2471,7 +2534,7 @@
 <p>It is common that the Azure Administrator is not necessarily the Azure Active Directory Administrator. Due to this, this step may have to be carried out by a different individual/team. We have automated this into a simple command, but should you wish, you can run these steps manually.</p>
 <p>This page describes the automated Auth setup for TRE.</p>
 <h2 id="pre-requisites">Pre-requisites</h2>
-<p>The automation utilises a <code>make</code> command, which reads a few environment variables and creates the AAD assets. The following values are needed to be in place before you run the creation process. (<code>/templates/core/.env</code>)</p>
+<p>The automation utilises a <code>make</code> command, which reads a few environment variables and creates the AAD assets. The following values are needed to be in place before you run the creation process. (<code>/config.yaml</code>)</p>
 <table>
 <thead>
 <tr>
@@ -2506,8 +2569,8 @@
 <p>You can build all of the Identity assets by running the following at the command line
 <div class="highlight"><pre><span></span><code>make<span class="w"> </span>auth
 </code></pre></div>
-This will create five identities, and if successful will write a new file; <code>/devops/auth.env</code>. If you are building locally, these values will be used when building your TRE. If you are setting this up for CI/CD, then these values will be needed by your Build Orchestrator.</p>
-<p>The contents of your <code>/devops/auth.env</code> file should contain :</p>
+This will create five identities, and if successful will write the outputs to athentication section in <code>config.yaml</code> file. If you are building locally, these values will be used when building your TRE. If you are setting this up for CI/CD, then these values will be needed by your Build Orchestrator.</p>
+<p>The contents of your authentication section in <code>config.yaml</code> file should contain :</p>
 <table>
 <thead>
 <tr>

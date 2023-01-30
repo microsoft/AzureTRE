@@ -1148,6 +1148,8 @@
         
           
         
+          
+        
       
       
         <label class="md-nav__link" for="__nav_4_2" tabindex="0" aria-expanded="false">
@@ -1226,6 +1228,20 @@
     <li class="md-nav__item">
       <a href="../../../tre-templates/workspace-services/mlflow/" class="md-nav__link">
         MLFlow
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tre-templates/workspace-services/health_services/" class="md-nav__link">
+        Health Services
       </a>
     </li>
   
@@ -1498,6 +1514,8 @@
       <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_5_1" type="checkbox" id="__nav_5_1" >
       
       
+        
+          
         
           
         
@@ -1846,7 +1864,21 @@
   
     <li class="md-nav__item">
       <a href="../../../tre-admins/upgrading-tre/" class="md-nav__link">
-        Upgrading AzureTRE version
+        Upgrading AzureTRE Version
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tre-admins/upgrading-resources/" class="md-nav__link">
+        Upgrading Resources Version
       </a>
     </li>
   
@@ -2271,6 +2303,8 @@
         
           
         
+          
+        
       
       
         
@@ -2363,6 +2397,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../troubleshooting-faq/manually-editing-resources/" class="md-nav__link">
+        Manually edit resources in Cosmos DB
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -2372,6 +2420,21 @@
           
         </ul>
       </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/" class="md-nav__link">
+        Contributing
+      </a>
     </li>
   
 
@@ -2468,8 +2531,8 @@
 
 <h1 id="importing-and-exporting-data-with-airlock">Importing and exporting data with Airlock</h1>
 <p>This guide will take you through the process of importing data into a TRE workspace, and exporting data from a workspace to the outside world, using the Airlock feature.</p>
-<p>The Airlock feature is intended for ad-hoc use when you need to bring in and export out files that you need for your research, and it ensures that when you import or export this data, all the appropriate approvals and procedures configured by your organisation take place.</p>
-<p>You can read more about the Airock feature in the <a href="../../../azure-tre-overview/airlock/">Airlock documentation</a>.</p>
+<p>The Airlock feature is intended for ad-hoc use when you need to bring in and export out files that you need for your research. It ensures that when you import or export this data all the appropriate approvals and procedures configured by your organisation take place.</p>
+<p>You can read more about the Airlock feature in the <a href="../../../azure-tre-overview/airlock/">Airlock documentation</a>.</p>
 <h2 id="importing-data-to-a-workspace">Importing data to a workspace</h2>
 <p>To bring in external data to a secure TRE workspace so you can use it for your research, follow the steps outlined below.</p>
 <h3 id="step-1-create-a-draft-import-request">Step 1: Create a draft import request</h3>
@@ -2487,7 +2550,7 @@
 <p>Fill in a suitable <strong>Title</strong> for your request (make this short but descriptive to help you and others identify it in a list of many other requests)</p>
 </li>
 <li>
-<p>Provide a <strong>Business Jutification</strong> for bringing the data into the workspace (this will be used to help your organisation's data stewards decide whether to approve or reject the request)</p>
+<p>Provide a <strong>Business Justification</strong> for bringing the data into the workspace (this will be used to help your organisation's data stewards decide whether to approve or reject the request)</p>
 </li>
 <li>
 <p>Click <em>Create</em> when ready. This will create your draft request and allow you to proceed with adding the data you'd like to import</p>
@@ -2497,7 +2560,7 @@
 <h3 id="step-2-add-data-to-your-import-request">Step 2: Add data to your import request</h3>
 <ol>
 <li>
-<p>The request you've just created should pop up automatically; however you can return to it at any time within the Airlock page by finding it in the list of requests. (Use the <em>My requests</em> quick filter to find it more easily)</p>
+<p>The request you've just created should pop up automatically; however, you can return to it at any time within the Airlock page by finding it in the list of requests. (Use the <em>My requests</em> quick filter to find it more easily)</p>
 </li>
 <li>
 <p>Click <em>Generate</em> in the <strong>Files</strong> section to generate a Storage SAS URL to use for uploading your data.</p>
@@ -2517,7 +2580,7 @@
 <li>Once you've uploaded your data, head back to the TRE UI and click <em>Submit</em> on your draft request. This will submit your request for approval.</li>
 </ol>
 <h3 id="step-3-get-your-approved-data">Step 3: Get your approved data</h3>
-<p>The request will be in an <em>In Review</em> state until it's either approved or rejected by your Airlock Manager(s) manually or by an automated workflow, depending on your organisation's specific configuration.</p>
+<p>The request will be in an <em>In Review</em> state until it is either approved or rejected by your Airlock Manager(s) manually or by an automated workflow (depending on your organisation's specific configuration).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Your organisation may have the Airlock Notifier service configured which will send email notifications when your request has been approved/rejected, or you may have another mechanism in place. Please check with your TRE administrator.</p>
@@ -2539,7 +2602,7 @@
 </ol>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>If you're using a Workspace VM that uses one of the standard TRE Data Science VM images, you'll likely have both Storage Explorer and the Azure CLI pre-installed.</p>
+<p>If you are using a Workspace VM that uses one of the standard TRE Data Science VM images, you will likely have both Storage Explorer and the Azure CLI pre-installed.</p>
 </div>
 <h2 id="exporting-data-from-a-workspace">Exporting data from a workspace</h2>
 <p>Exporting data from a secure TRE workspace to the outside world involves similar steps to Import, but with a couple of key differences. Follow these steps:</p>

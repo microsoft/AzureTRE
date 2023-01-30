@@ -18,6 +18,8 @@
         <link rel="prev" href="../app-insights-logs/">
       
       
+        <link rel="next" href="../manually-editing-resources/">
+      
       <link rel="icon" href="../../assets/ms_icon.png">
       <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.6">
     
@@ -1060,6 +1062,8 @@
         
           
         
+          
+        
       
       
         <label class="md-nav__link" for="__nav_4_2" tabindex="0" aria-expanded="false">
@@ -1138,6 +1142,20 @@
     <li class="md-nav__item">
       <a href="../../tre-templates/workspace-services/mlflow/" class="md-nav__link">
         MLFlow
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspace-services/health_services/" class="md-nav__link">
+        Health Services
       </a>
     </li>
   
@@ -1412,6 +1430,8 @@
       <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_5_1" type="checkbox" id="__nav_5_1" >
       
       
+        
+          
         
           
         
@@ -1760,7 +1780,21 @@
   
     <li class="md-nav__item">
       <a href="../../tre-admins/upgrading-tre/" class="md-nav__link">
-        Upgrading AzureTRE version
+        Upgrading AzureTRE Version
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/upgrading-resources/" class="md-nav__link">
+        Upgrading Resources Version
       </a>
     </li>
   
@@ -2187,6 +2221,8 @@
         
           
         
+          
+        
       
       
         
@@ -2305,6 +2341,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#logs" class="md-nav__link">
+    Logs
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#updating-the-running-container" class="md-nav__link">
     Updating the running container
   </a>
@@ -2320,6 +2363,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manually-editing-resources/" class="md-nav__link">
+        Manually edit resources in Cosmos DB
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -2329,6 +2386,21 @@
           
         </ul>
       </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        Contributing
+      </a>
     </li>
   
 
@@ -2358,6 +2430,13 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#logs" class="md-nav__link">
+    Logs
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#updating-the-running-container" class="md-nav__link">
@@ -2423,10 +2502,13 @@
 </code></pre></div>
 </li>
 </ol>
-<div class="admonition info">
-<p class="admonition-title">Info</p>
-<p>All logs from the resource processor should also be transferred to the App Insights instance, so it is not necessary to follow the progress by logging into the instance. Logging into the instance and starting a container manually however, is helpful in live debugging.</p>
-</div>
+<h2 id="logs">Logs</h2>
+<p>All logs from the resource processor are transferred to the App Insights instance, so it is not usually necessary to follow the progress by logging into the instance.</p>
+<p>Logging into the instance and starting a container manually however, is helpful in live debugging.
+When doing so, you can use the following aliases to monitor progress:
+* rpstatus - a split screen with <code>docker ps</code> to show what containers are running (a bundle action run in its own container), the Resource Processor logs, and a <em>free</em> section for you to type any other command you wish (see below).
+* dlf - runs <code>docker logs --since 1m --follow</code>, you should use with the name/id of the container you want to view, e.g. <code>dlf my_container</code>
+* dlf1 - same as <code>dlf</code> but will auto select the last container in the <code>docker ps</code> list (usually the last one started).</p>
 <h2 id="updating-the-running-container">Updating the running container</h2>
 <p>If you start a container manually you will probably want to install software, for example, an editor. However, the firewall blocks all ingress traffic, so you cannot run <code>sudo apt update</code>. You need to add an override rule in the firewall to allow the traffic.</p>
 <div class="admonition caution">

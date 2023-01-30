@@ -1062,6 +1062,8 @@
         
           
         
+          
+        
       
       
         <label class="md-nav__link" for="__nav_4_2" tabindex="0" aria-expanded="false">
@@ -1140,6 +1142,20 @@
     <li class="md-nav__item">
       <a href="../../tre-templates/workspace-services/mlflow/" class="md-nav__link">
         MLFlow
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspace-services/health_services/" class="md-nav__link">
+        Health Services
       </a>
     </li>
   
@@ -1433,6 +1449,8 @@
         
           
         
+          
+        
       
       
         <label class="md-nav__link" for="__nav_5_1" tabindex="0" aria-expanded="true">
@@ -1501,22 +1519,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#for-shared-management-resources-in-devopsenv" class="md-nav__link">
-    For shared management resources in /devops/.env
+  <a href="#for-shared-management-resources-in-configyaml" class="md-nav__link">
+    For shared management resources in /config.yaml
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#for-azure-tre-instance-in-templatescoreenv" class="md-nav__link">
-    For Azure TRE instance in /templates/core/.env
+  <a href="#for-azure-tre-instance-in-configyaml" class="md-nav__link">
+    For Azure TRE instance in /config.yaml
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#for-authentication-in-devopsenv" class="md-nav__link">
-    For authentication in /devops/.env
+  <a href="#for-authentication-in-configyaml" class="md-nav__link">
+    For authentication in /config.yaml
   </a>
   
 </li>
@@ -1826,7 +1844,21 @@
   
     <li class="md-nav__item">
       <a href="../upgrading-tre/" class="md-nav__link">
-        Upgrading AzureTRE version
+        Upgrading AzureTRE Version
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../upgrading-resources/" class="md-nav__link">
+        Upgrading Resources Version
       </a>
     </li>
   
@@ -2251,6 +2283,8 @@
         
           
         
+          
+        
       
       
         
@@ -2343,6 +2377,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting-faq/manually-editing-resources/" class="md-nav__link">
+        Manually edit resources in Cosmos DB
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -2352,6 +2400,21 @@
           
         </ul>
       </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        Contributing
+      </a>
     </li>
   
 
@@ -2383,22 +2446,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#for-shared-management-resources-in-devopsenv" class="md-nav__link">
-    For shared management resources in /devops/.env
+  <a href="#for-shared-management-resources-in-configyaml" class="md-nav__link">
+    For shared management resources in /config.yaml
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#for-azure-tre-instance-in-templatescoreenv" class="md-nav__link">
-    For Azure TRE instance in /templates/core/.env
+  <a href="#for-azure-tre-instance-in-configyaml" class="md-nav__link">
+    For Azure TRE instance in /config.yaml
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#for-authentication-in-devopsenv" class="md-nav__link">
-    For authentication in /devops/.env
+  <a href="#for-authentication-in-configyaml" class="md-nav__link">
+    For authentication in /config.yaml
   </a>
   
 </li>
@@ -2431,7 +2494,7 @@
 <p class="admonition-title">Info</p>
 <p>The <code>.tfvars</code> file is intentionally not used. The <code>.env</code> file format is easier to parse, meaning we can use the values for bash scripts and other purposes.</p>
 </div>
-<h2 id="for-shared-management-resources-in-devopsenv">For shared management resources in <code>/devops/.env</code></h2>
+<h2 id="for-shared-management-resources-in-configyaml">For shared management resources in <code>/config.yaml</code></h2>
 <table>
 <thead>
 <tr>
@@ -2478,7 +2541,7 @@
 </tr>
 </tbody>
 </table>
-<h2 id="for-azure-tre-instance-in-templatescoreenv">For Azure TRE instance in <code>/templates/core/.env</code></h2>
+<h2 id="for-azure-tre-instance-in-configyaml">For Azure TRE instance in <code>/config.yaml</code></h2>
 <table>
 <thead>
 <tr>
@@ -2489,7 +2552,7 @@
 <tbody>
 <tr>
 <td><code>TRE_ID</code></td>
-<td>A globally unique identifier. <code>TRE_ID</code> can be found in the resource names of the Azure TRE instance; for example, a <code>TRE_ID</code> of <code>mytre-dev</code> will result in a resource group name for Azure TRE instance of <code>rg-mytre-dev</code>. This must be less than 12 characters. Allowed characters: Alphanumeric, underscores, and hyphens.</td>
+<td>A globally unique identifier. <code>TRE_ID</code> can be found in the resource names of the Azure TRE instance; for example, a <code>TRE_ID</code> of <code>mytre-dev</code> will result in a resource group name for Azure TRE instance of <code>rg-mytre-dev</code>. This must be less than 12 characters. Allowed characters: Alphanumeric and underscores</td>
 </tr>
 <tr>
 <td><code>TRE_URL</code></td>
@@ -2502,6 +2565,10 @@
 <tr>
 <td><code>TRE_ADDRESS_SPACE</code></td>
 <td>The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). E.g. <code>10.0.0.0/12</code></td>
+</tr>
+<tr>
+<td><code>ENABLE_SWAGGER</code></td>
+<td>Determines whether the Swagger interface for the API will be available.</td>
 </tr>
 <tr>
 <td><code>SWAGGER_UI_CLIENT_ID</code></td>
@@ -2553,7 +2620,7 @@
 </tr>
 </tbody>
 </table>
-<h2 id="for-authentication-in-devopsenv">For authentication in <code>/devops/.env</code></h2>
+<h2 id="for-authentication-in-configyaml">For authentication in <code>/config.yaml</code></h2>
 <table>
 <thead>
 <tr>

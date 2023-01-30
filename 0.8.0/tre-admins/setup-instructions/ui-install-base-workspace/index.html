@@ -1126,6 +1126,8 @@
         
           
         
+          
+        
       
       
         <label class="md-nav__link" for="__nav_4_2" tabindex="0" aria-expanded="false">
@@ -1204,6 +1206,20 @@
     <li class="md-nav__item">
       <a href="../../../tre-templates/workspace-services/mlflow/" class="md-nav__link">
         MLFlow
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tre-templates/workspace-services/health_services/" class="md-nav__link">
+        Health Services
       </a>
     </li>
   
@@ -1476,6 +1492,8 @@
       <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_5_1" type="checkbox" id="__nav_5_1" >
       
       
+        
+          
         
           
         
@@ -1824,7 +1842,21 @@
   
     <li class="md-nav__item">
       <a href="../../upgrading-tre/" class="md-nav__link">
-        Upgrading AzureTRE version
+        Upgrading AzureTRE Version
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../upgrading-resources/" class="md-nav__link">
+        Upgrading Resources Version
       </a>
     </li>
   
@@ -2249,6 +2281,8 @@
         
           
         
+          
+        
       
       
         
@@ -2341,6 +2375,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../troubleshooting-faq/manually-editing-resources/" class="md-nav__link">
+        Manually edit resources in Cosmos DB
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -2350,6 +2398,21 @@
           
         </ul>
       </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/" class="md-nav__link">
+        Contributing
+      </a>
     </li>
   
 
@@ -2472,7 +2535,7 @@
 <p class="admonition-title">Caution</p>
 <p>If you're using a separate tenant for AAD app registrations to the one where you've deployed the TRE infrastructure resources, ensure you've signed into that tenant in the <code>az cli</code> before running the above command. See <strong>Using a separate Azure Active Directory tenant</strong> in <a href="../setup-auth-entities/">Setup Auth configuration</a> for more details.</p>
 </div>
-<p>Running the script will report <code>WORKSPACE_API_CLIENT_ID</code> and <code>WORKSPACE_API_CLIENT_SECRET</code> for the generated app. Copy these into <code>/templates/core/.env</code> so that automated testing will work. You also need to use <code>WORKSPACE_API_CLIENT_ID</code> and <code>WORKSPACE_API_CLIENT_SECRET</code> in the form.</p>
+<p>Running the script will report <code>WORKSPACE_API_CLIENT_ID</code> and <code>WORKSPACE_API_CLIENT_SECRET</code> for the generated app. Set these under authentication section in <code>config.yaml</code> so that automated testing will work. You also need to use <code>WORKSPACE_API_CLIENT_ID</code> and <code>WORKSPACE_API_CLIENT_SECRET</code> in the form.</p>
 <h2 id="next-steps">Next steps</h2>
 <ul>
 <li><a href="../ui-install-ws-and-ur/">Installing a workspace service &amp; user resources</a></li>

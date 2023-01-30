@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#authoring-workspaces-templates" class="md-skip">
+        <a href="#authoring-templates" class="md-skip">
           Skip to content
         </a>
       
@@ -1062,6 +1062,8 @@
         
           
         
+          
+        
       
       
         <label class="md-nav__link" for="__nav_4_2" tabindex="0" aria-expanded="false">
@@ -1140,6 +1142,20 @@
     <li class="md-nav__item">
       <a href="../../tre-templates/workspace-services/mlflow/" class="md-nav__link">
         MLFlow
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspace-services/health_services/" class="md-nav__link">
+        Health Services
       </a>
     </li>
   
@@ -1414,6 +1430,8 @@
       <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_5_1" type="checkbox" id="__nav_5_1" >
       
       
+        
+          
         
           
         
@@ -1762,7 +1780,21 @@
   
     <li class="md-nav__item">
       <a href="../../tre-admins/upgrading-tre/" class="md-nav__link">
-        Upgrading AzureTRE version
+        Upgrading AzureTRE Version
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/upgrading-resources/" class="md-nav__link">
+        Upgrading Resources Version
       </a>
     </li>
   
@@ -2130,6 +2162,19 @@
     Workspace service bundle manifests
   </a>
   
+    <nav class="md-nav" aria-label="Workspace service bundle manifests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workpace-services-requiring-additional-address-sapces" class="md-nav__link">
+    Workpace services requiring additional address sapces
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2315,6 +2360,8 @@
         
           
         
+          
+        
       
       
         
@@ -2407,6 +2454,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting-faq/manually-editing-resources/" class="md-nav__link">
+        Manually edit resources in Cosmos DB
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -2416,6 +2477,21 @@
           
         </ul>
       </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        Contributing
+      </a>
     </li>
   
 
@@ -2499,6 +2575,19 @@
     Workspace service bundle manifests
   </a>
   
+    <nav class="md-nav" aria-label="Workspace service bundle manifests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workpace-services-requiring-additional-address-sapces" class="md-nav__link">
+    Workpace services requiring additional address sapces
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2552,9 +2641,9 @@
 
 
 
-<h1 id="authoring-workspaces-templates">Authoring workspaces templates</h1>
-<p>Azure TRE workspaces, workspace services, and user resources are <a href="https://porter.sh/">Porter</a> bundles. Porter bundles are based on <a href="https://cnab.io/">Cloud Native Application Bundles (CNAB)</a>.</p>
-<p>Workspace authors are free to choose the technology stack for provisioning resources (e.g., ARM templates, Terraform etc.), but the Azure TRE framework sets certain requirements for the bundle manifests, which specify the credentials, input and output parameters, deployment actions among other things.</p>
+<h1 id="authoring-templates">Authoring templates</h1>
+<p>Azure TRE workspaces, workspace services, shared services, and user resources are <a href="https://porter.sh/">Porter</a> bundles. Porter bundles are based on <a href="https://cnab.io/">Cloud Native Application Bundles (CNAB)</a>.</p>
+<p>Authors are free to choose the technology stack for provisioning resources (e.g., ARM templates, Terraform etc.), but the Azure TRE framework sets certain requirements for the bundle manifests, which specify the credentials, input and output parameters, deployment actions among other things.</p>
 <p>This document describes the requirements, and the process to author a template.</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
@@ -2676,6 +2765,10 @@ ARM_CLIENT_SECRET
 </tr>
 </tbody>
 </table>
+<h3 id="workpace-services-requiring-additional-address-sapces">Workpace services requiring additional address sapces</h3>
+<p>Some workspace services may require additional address spaces to be provisioned. This may be as they need advanced network security groups, route tables or delegated subnets.</p>
+<p>To request an additional address space, the workspace service bundle must define an <code>address_space</code> parameter in the <code>porter.yaml</code> file. The value of this parameter will be provided by API to the resource processor.</p>
+<p>The size of the <code>address_space</code> will default to <code>/24</code>, however other sizes can be requested by including an <code>address_space_size</code> as part of the workspace service template.</p>
 <h2 id="user-resource-bundle-manifests">User resource bundle manifests</h2>
 <p>User Resource bundles are generated in the same way as workspace bundles and workspace services bundles.
 The main difference is that a workspace service type needs to be supplied when registering a user resource template, as it only applies to a given workspace service.</p>
@@ -2709,7 +2802,19 @@ The main difference is that a workspace service type needs to be supplied when r
 Templates authors need to make sure that underling Azure resources are tagged with the relevent tags, for more information see <a href="../../azure-tre-overview/cost-reporting/#azure-resources-tagging">cost reporting</a>:</p>
 <h2 id="versioning">Versioning</h2>
 <p>Workspace versions are the bundle versions specified in <a href="https://porter.sh/author-bundles/#bundle-metadata">the metadata</a>. The bundle versions should match the image tags in the container registry (see <a href="#publishing-workspace-bundle">Publishing workspace bundle</a>).</p>
-<p>TRE does not provide means to update an existing workspace to a newer version. Instead, the user has to first uninstall the old version and then install the new one. The CNAB <strong>upgrade</strong> or a Porter custom ("<code>update</code>") action may be used in the future version of TRE to do this automatically.</p>
+<p>Bundle versions should follow <a href="https://semver.org/">Semantic Versioning</a>, given a version number <strong>MAJOR.MINOR.PATCH</strong>, increment the:</p>
+<ol>
+<li>
+<p><strong>MAJOR</strong> version when you make a breaking change, potential data loss, changes that don't easily/automatically upgrade, or significant changes which require someone to review what has changed and take some appropriate action, or functionality of the component has significantly changed and users might need training.</p>
+</li>
+<li>
+<p><strong>MINOR</strong> version when you add minor functionality which can be automatically upgraded.</p>
+</li>
+<li>
+<p><strong>PATCH</strong> version when you make backward-compatible bug or typo fixes.</p>
+</li>
+</ol>
+<p>For resource version upgrades see <a href="../../tre-admins/upgrading-resources/">Upgrading Resources Version</a>.</p>
 <h2 id="publishing-workspace-bundle">Publishing workspace bundle</h2>
 <p>See <a href="../../tre-admins/registering-templates/">Registering workspace templates</a>.</p>
 <h2 id="manual-deployment">Manual Deployment</h2>

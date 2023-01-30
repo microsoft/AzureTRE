@@ -1062,6 +1062,8 @@
         
           
         
+          
+        
       
       
         <label class="md-nav__link" for="__nav_4_2" tabindex="0" aria-expanded="false">
@@ -1140,6 +1142,20 @@
     <li class="md-nav__item">
       <a href="../../tre-templates/workspace-services/mlflow/" class="md-nav__link">
         MLFlow
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspace-services/health_services/" class="md-nav__link">
+        Health Services
       </a>
     </li>
   
@@ -1414,6 +1430,8 @@
       <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_5_1" type="checkbox" id="__nav_5_1" >
       
       
+        
+          
         
           
         
@@ -1762,7 +1780,21 @@
   
     <li class="md-nav__item">
       <a href="../../tre-admins/upgrading-tre/" class="md-nav__link">
-        Upgrading AzureTRE version
+        Upgrading AzureTRE Version
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/upgrading-resources/" class="md-nav__link">
+        Upgrading Resources Version
       </a>
     </li>
   
@@ -2334,6 +2366,8 @@
         
           
         
+          
+        
       
       
         
@@ -2426,6 +2460,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting-faq/manually-editing-resources/" class="md-nav__link">
+        Manually edit resources in Cosmos DB
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -2435,6 +2483,21 @@
           
         </ul>
       </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        Contributing
+      </a>
     </li>
   
 
@@ -2695,7 +2758,7 @@ To SSH to this instance, use Bastion.</p>
 <!-- markdownlint-enable MD013 -->
 
 <h3 id="porter-azure-plugin">Porter Azure plugin</h3>
-<p>Resource Processor uses <a href="https://github.com/getporter/azure-plugins">Porter Azure plugin</a> to store Porter data in TRE management storage account. The storage table, named <code>porter</code>, is created during the bootstrapping phase of TRE deployment. The <code>/resource_processor/run.sh</code> script generates a <code>config.toml</code> file in Porter home folder to enable the Azure plugin when the image is started.</p>
+<p>Resource Processor uses <a href="https://github.com/getporter/azure-plugins">Porter Azure plugin</a> to access secrets in Azure Key Vault.</p>
 <h3 id="porter-bundle-inputs">Porter bundle inputs</h3>
 <p>When Porter runs bundle actions, it passes input parameters. Full set of inputs that Porter passes can be found in <a href="https://github.com/microsoft/AzureTRE/blob/main/resource_processor/shared/config.py">config.py</a>.</p>
 <div class="admonition info">
