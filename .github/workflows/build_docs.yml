@@ -35,5 +35,5 @@ jobs:
         if: ${{ github.event_name == 'release' }}
         run: mike deploy --push --update-aliases "${GITHUB_REF#refs/*/}" latest-release
       - name: Deploy the development docs
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name != 'release' }}
         run: mike deploy --push develop
