@@ -308,8 +308,3 @@ moved {
   from = module.network.azurerm_private_dns_zone.private_dns_zones["privatelink.dicom.azurehealthcareapis.com"]
   to   = azurerm_private_dns_zone.non_core["privatelink.dicom.azurehealthcareapis.com"]
 }
-
-moved {
-  from = module.network.azurerm_private_dns_zone.private_dns_zones["privatelink.azuredatabricks.net"]
-  to   = azurerm_private_dns_zone.non_core["privatelink.azuredatabricks.net"]
-}
