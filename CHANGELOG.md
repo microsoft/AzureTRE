@@ -32,6 +32,7 @@ ENHANCEMENTS:
 * Move non-core DNS zones out of the network module to reduce dependencies [#3119](https://github.com/microsoft/AzureTRE/pull/3119)
 
 BUG FIXES:
+* Reauth CLI if TRE endpoint has changed [#3137](https://github.com/microsoft/AzureTRE/pull/3137)
 
 COMPONENTS:
 

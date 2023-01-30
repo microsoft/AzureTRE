@@ -181,7 +181,7 @@ if [ -n "${rp_subnet}" ]; then
       -n "${TF_VAR_terraform_state_container_name}" \
       -k "${TRE_ID}" \
       -l "${LOG_FILE}" \
-      -c "terraform plan -destroy -target module.resource_processor_vmss_porter[0] \
+      -c "terraform plan -destroy -target module.resource_processor_vmss_porter[0].azurerm_linux_virtual_machine_scale_set.vm_linux \
       -target azurerm_private_endpoint.sbpe \
       -target azurerm_private_endpoint.mongo \
       -out ${PLAN_FILE} && \
