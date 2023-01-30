@@ -75,7 +75,7 @@ async def migrate_database(resources_repo=Depends(get_repository(ResourceReposit
         num_updated = await airlock_migration.change_review_resources_to_dict()
         migrations.append(Migration(issueNumber="XXXX", status=f'Updated {num_updated} airlock requests with new reviewUserResources format'))
 
-        logging.info("PR <TBD> - Migrate reviewDecision of Airlock Reviews")
+        logging.info("PR 3152 - Migrate reviewDecision of Airlock Reviews")
         num_updated = await airlock_migration.update_review_decision_values()
         migrations.append(Migration(issueNumber="3121", status=f'Updated {num_updated} airlock requests with new reviewDecision value'))
 
