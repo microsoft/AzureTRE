@@ -71,6 +71,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://github.com/microsoft/AzureTRE/0.5.1/tre-admins/upgrading-tre/</loc>
+         <lastmod>2023-01-30</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://github.com/microsoft/AzureTRE/0.5.1/tre-admins/identities/api/</loc>
          <lastmod>2023-01-30</lastmod>
          <changefreq>daily</changefreq>
@@ -116,7 +121,17 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://github.com/microsoft/AzureTRE/0.5.1/tre-admins/setup-instructions/deploying-azure-tre-cicd/</loc>
+         <lastmod>2023-01-30</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://github.com/microsoft/AzureTRE/0.5.1/tre-admins/setup-instructions/deploying-azure-tre/</loc>
+         <lastmod>2023-01-30</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://github.com/microsoft/AzureTRE/0.5.1/tre-admins/setup-instructions/deployment-repo/</loc>
          <lastmod>2023-01-30</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -331,17 +346,17 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://github.com/microsoft/AzureTRE/0.5.1/using-tre/pipelines/pipelines/</loc>
-         <lastmod>2023-01-30</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
          <loc>https://github.com/microsoft/AzureTRE/0.5.1/using-tre/templates/</loc>
          <lastmod>2023-01-30</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://github.com/microsoft/AzureTRE/0.5.1/using-tre/upgrading-tre/</loc>
+         <loc>https://github.com/microsoft/AzureTRE/0.5.1/using-tre/tre-for-research/</loc>
+         <lastmod>2023-01-30</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://github.com/microsoft/AzureTRE/0.5.1/using-tre/tre-for-research/using-vms/</loc>
          <lastmod>2023-01-30</lastmod>
          <changefreq>daily</changefreq>
     </url>
