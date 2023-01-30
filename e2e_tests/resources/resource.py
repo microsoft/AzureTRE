@@ -2,7 +2,7 @@ import asyncio
 import logging
 from httpx import AsyncClient, Timeout
 from starlette import status
-from e2e_tests.helpers import get_auth_header, get_full_endpoint
+from e2e_tests.helpers import assert_status, get_auth_header, get_full_endpoint
 from e2e_tests.resources.deployment import delete_done, install_done, patch_done
 
 from resources import strings
@@ -17,9 +17,7 @@ async def get_resource(endpoint, access_token, verify):
         auth_headers = get_auth_header(access_token)
 
         response = await client.get(full_endpoint, headers=auth_headers, timeout=TIMEOUT)
-
-        LOGGER.info(f'RESPONSE Status code: {response.status_code}')
-        assert (response.status_code == status.HTTP_200_OK), f"Get for endpoint {full_endpoint} failed"
+        assert_status(response, [status.HTTP_202_ACCEPTED], f"Failed to GET {full_endpoint}")
 
         return response.json()
 
@@ -38,8 +36,7 @@ async def post_resource(payload, endpoint, access_token, verify, method="POST", 
             check_method = patch_done
             response = await client.patch(full_endpoint, headers=auth_headers, json=payload, timeout=TIMEOUT)
 
-        LOGGER.info(f'RESPONSE Status code: {response.status_code}')
-        assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request failed with response {response.status_code} and content {response.content}"
+        assert_status(response, [status.HTTP_202_ACCEPTED], "The resource couldn't be sent")
 
         resource_path = response.json()["operation"]["resourcePath"]
         resource_id = response.json()["operation"]["resourceId"]
@@ -62,15 +59,13 @@ async def disable_and_delete_resource(endpoint, access_token, verify):
         # disable
         payload = {"isEnabled": False}
         response = await client.patch(full_endpoint, headers=auth_headers, json=payload, timeout=TIMEOUT)
-        LOGGER.info(f'RESPONSE Status code: {response.status_code}')
-        assert (response.status_code == status.HTTP_202_ACCEPTED), "Disable resource failed"
+        assert_status(response, [status.HTTP_202_ACCEPTED], "The resource couldn't be disabled")
         operation_endpoint = response.headers["Location"]
         await wait_for(patch_done, client, operation_endpoint, auth_headers, [strings.RESOURCE_STATUS_UPDATING_FAILED])
 
         # delete
         response = await client.delete(full_endpoint, headers=auth_headers, timeout=TIMEOUT)
-        LOGGER.info(f'RESPONSE Status code: {response.status_code}')
-        assert (response.status_code == status.HTTP_200_OK), "The resource couldn't be deleted"
+        assert_status(response, [status.HTTP_200_OK], "The resource couldn't be deleted")
 
         resource_id = response.json()["operation"]["resourceId"]
         operation_endpoint = response.headers["Location"]
