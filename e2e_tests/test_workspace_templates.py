@@ -33,4 +33,4 @@ async def test_get_workspace_templates(template_name, verify) -> None:
 async def test_get_workspace_template(template_name, verify) -> None:
     admin_token = await get_admin_token(verify)
     async with get_template(template_name, strings.API_WORKSPACE_TEMPLATES, admin_token, verify) as response:
-        assert_status(response, [status.HTTP_200_OK], f"Failed to create template: {template_name}")
+        assert_status(response, [status.HTTP_200_OK], f"Failed to GET template: {template_name}")
