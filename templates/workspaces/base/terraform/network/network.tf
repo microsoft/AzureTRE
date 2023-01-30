@@ -43,10 +43,13 @@ resource "azurerm_subnet" "webapps" {
 }
 
 resource "azurerm_virtual_network_peering" "ws_core_peer" {
-  name                      = "ws-core-peer-${local.workspace_resource_name_suffix}"
-  resource_group_name       = var.ws_resource_group_name
-  virtual_network_name      = azurerm_virtual_network.ws.name
-  remote_virtual_network_id = data.azurerm_virtual_network.core.id
+  name                         = "ws-core-peer-${local.workspace_resource_name_suffix}"
+  resource_group_name          = var.ws_resource_group_name
+  virtual_network_name         = azurerm_virtual_network.ws.name
+  remote_virtual_network_id    = data.azurerm_virtual_network.core.id
+  allow_virtual_network_access = false
+  allow_forwarded_traffic      = false
+  allow_gateway_transit        = false
 }
 
 moved {
@@ -59,6 +62,9 @@ resource "azurerm_virtual_network_peering" "core_ws_peer" {
   resource_group_name       = local.core_resource_group_name
   virtual_network_name      = local.core_vnet
   remote_virtual_network_id = azurerm_virtual_network.ws.id
+  allow_virtual_network_access = false
+  allow_forwarded_traffic      = false
+  allow_gateway_transit        = false
 }
 
 moved {

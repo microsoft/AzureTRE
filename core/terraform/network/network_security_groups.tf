@@ -101,6 +101,18 @@ resource "azurerm_network_security_group" "bastion" {
     source_address_prefix      = "*"
     destination_address_prefix = "Internet"
   }
+
+  security_rule {
+    name                       = "AllowOutboundSshRdpTREAddressSpace"
+    priority                   = 4024
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_ranges    = ["22", "3389"]
+    source_address_prefix      = "*"
+    destination_address_prefix = var.tre_address_space
+  }
 }
 
 resource "azurerm_subnet_network_security_group_association" "bastion" {
@@ -156,6 +168,30 @@ resource "azurerm_network_security_group" "default_rules" {
   location            = var.location
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
+
+  security_rule {
+    name                       = "AllowTREAddressSpaceInbound"
+    priority                   = 4000
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = var.tre_address_space
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "AllowTREAddressSpaceOutbound"
+    priority                   = 4001
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = var.tre_address_space
+  }
 }
 
 resource "azurerm_subnet_network_security_group_association" "shared" {

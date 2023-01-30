@@ -77,6 +77,7 @@ module "network" {
   location            = var.location
   resource_group_name = azurerm_resource_group.core.name
   core_address_space  = var.core_address_space
+  tre_address_space   = var.tre_address_space
 }
 
 module "appgateway" {
