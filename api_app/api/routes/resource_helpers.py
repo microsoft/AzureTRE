@@ -4,6 +4,10 @@ from copy import deepcopy
 from typing import Dict, Any, Optional
 
 from fastapi import HTTPException, status
+from db.repositories.user_resources import UserResourceRepository
+from models.domain.user_resource import UserResource
+from models.domain.workspace_service import WorkspaceService
+from models.schemas.resource import ResourcePatch
 from db.repositories.resources import ResourceRepository
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
@@ -256,3 +260,29 @@ async def get_template(
 
 def get_timestamp() -> float:
     return datetime.utcnow().timestamp()
+
+
+async def update_user_resource(
+        user_resource: UserResource,
+        resource_patch: ResourcePatch,
+        force_version_update: bool,
+        user: User,
+        etag: str,
+        workspace_service: WorkspaceService,
+        user_resource_repo: UserResourceRepository,
+        resource_template_repo: ResourceTemplateRepository,
+        operations_repo: OperationRepository,
+        resource_history_repo: ResourceHistoryRepository) -> Operation:
+
+    patched_user_resource, resource_template = await user_resource_repo.patch_user_resource(user_resource, resource_patch, etag, resource_template_repo, resource_history_repo, workspace_service.templateName, user, force_version_update)
+    operation = await send_resource_request_message(
+        resource=patched_user_resource,
+        operations_repo=operations_repo,
+        resource_repo=user_resource_repo,
+        user=user,
+        resource_template=resource_template,
+        resource_template_repo=resource_template_repo,
+        resource_history_repo=resource_history_repo,
+        action=RequestAction.Upgrade)
+
+    return operation
