@@ -17,7 +17,7 @@ async def get_resource(endpoint, access_token, verify):
         auth_headers = get_auth_header(access_token)
 
         response = await client.get(full_endpoint, headers=auth_headers, timeout=TIMEOUT)
-        assert_status(response, [status.HTTP_202_ACCEPTED], f"Failed to GET {full_endpoint}")
+        assert_status(response, [status.HTTP_200_OK], f"Failed to GET {full_endpoint}")
 
         return response.json()
 
