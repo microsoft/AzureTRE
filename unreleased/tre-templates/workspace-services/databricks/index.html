@@ -12,27 +12,27 @@
         <meta name="author" content="Microsoft">
       
       
-        <link rel="canonical" href="https://github.com/microsoft/AzureTRE/unreleased/azure-tre-overview/user-roles/">
+        <link rel="canonical" href="https://github.com/microsoft/AzureTRE/unreleased/tre-templates/workspace-services/databricks/">
       
       
-        <link rel="prev" href="../..">
+        <link rel="prev" href="../health_services/">
       
       
-        <link rel="next" href="../architecture/">
+        <link rel="next" href="../../shared-services/gitea/">
       
-      <link rel="icon" href="../../assets/ms_icon.png">
+      <link rel="icon" href="../../../assets/ms_icon.png">
       <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.9">
     
     
       
-        <title>User Roles - Azure TRE</title>
+        <title>Azure Databricks - Azure TRE</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.0d440cfe.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.0d440cfe.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.2505c338.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.2505c338.min.css">
       
       
 
@@ -48,7 +48,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
 <script type="text/javascript">
   (function(c,l,a,r,i,t,y){
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#user-roles" class="md-skip">
+        <a href="#azure-databricks-workspace-service-bundle" class="md-skip">
           Skip to content
         </a>
       
@@ -93,7 +93,7 @@
             <div class="md-banner__inner md-grid md-typeset">
               
   You're not viewing the latest version.
-  <a href="../../..">
+  <a href="../../../..">
     <strong>Click here to go to latest.</strong>
   </a>
 </script>
@@ -109,9 +109,9 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Azure TRE" class="md-header__button md-logo" aria-label="Azure TRE" data-md-component="logo">
+    <a href="../../.." title="Azure TRE" class="md-header__button md-logo" aria-label="Azure TRE" data-md-component="logo">
       
-  <img src="../../assets/ms_icon.png" alt="logo">
+  <img src="../../../assets/ms_icon.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -127,7 +127,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              User Roles
+              Azure Databricks
             
           </span>
         </div>
@@ -206,9 +206,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Azure TRE" class="md-nav__button md-logo" aria-label="Azure TRE" data-md-component="logo">
+    <a href="../../.." title="Azure TRE" class="md-nav__button md-logo" aria-label="Azure TRE" data-md-component="logo">
       
-  <img src="../../assets/ms_icon.png" alt="logo">
+  <img src="../../../assets/ms_icon.png" alt="logo">
 
     </a>
     Azure TRE
@@ -234,16 +234,14 @@
 
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
       
       
         
@@ -262,7 +260,7 @@
         
         
         <div class="md-nav__link md-nav__link--index ">
-          <a href="../..">Overview</a>
+          <a href="../../..">Overview</a>
           
             <label for="__nav_1">
               <span class="md-nav__icon md-icon"></span>
@@ -270,7 +268,7 @@
           
         </div>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
         <label class="md-nav__title" for="__nav_1">
           <span class="md-nav__icon md-icon"></span>
           Overview
@@ -283,115 +281,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          User Roles
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../azure-tre-overview/user-roles/" class="md-nav__link">
         User Roles
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#role-overview" class="md-nav__link">
-    Role overview
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#azure-administrator" class="md-nav__link">
-    Azure administrator
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tre-administrator" class="md-nav__link">
-    TRE administrator
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tre-workspace-owner" class="md-nav__link">
-    TRE workspace owner
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#researcher" class="md-nav__link">
-    Researcher
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#airlock-manager" class="md-nav__link">
-    Airlock Manager
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tre-service-integrator" class="md-nav__link">
-    TRE service integrator
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#azure-tre-developer" class="md-nav__link">
-    Azure TRE developer
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#data-engineer" class="md-nav__link">
-    Data engineer
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#information-security-officer" class="md-nav__link">
-    Information Security Officer
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -442,7 +336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+      <a href="../../../azure-tre-overview/architecture/" class="md-nav__link">
         System Architecture
       </a>
     </li>
@@ -456,7 +350,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../networking/" class="md-nav__link">
+      <a href="../../../azure-tre-overview/networking/" class="md-nav__link">
         Network Architecture
       </a>
     </li>
@@ -470,7 +364,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tre-resources-breakdown/" class="md-nav__link">
+      <a href="../../../azure-tre-overview/tre-resources-breakdown/" class="md-nav__link">
         Azure Resources
       </a>
     </li>
@@ -484,7 +378,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../airlock/" class="md-nav__link">
+      <a href="../../../azure-tre-overview/airlock/" class="md-nav__link">
         Airlock
       </a>
     </li>
@@ -498,7 +392,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cost-reporting/" class="md-nav__link">
+      <a href="../../../azure-tre-overview/cost-reporting/" class="md-nav__link">
         Cost Reporting
       </a>
     </li>
@@ -519,7 +413,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../using-tre/terms-definitions/" class="md-nav__link">
+      <a href="../../../using-tre/terms-definitions/" class="md-nav__link">
         Terms and Definitions
       </a>
     </li>
@@ -575,7 +469,7 @@
         
         
         <div class="md-nav__link md-nav__link--index ">
-          <a href="../../tre-admins/setup-instructions/">QuickStart</a>
+          <a href="../../../tre-admins/setup-instructions/">QuickStart</a>
           
             <label for="__nav_2">
               <span class="md-nav__icon md-icon"></span>
@@ -598,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/prerequisites/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/prerequisites/" class="md-nav__link">
         1. Prerequisites
       </a>
     </li>
@@ -612,7 +506,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/deployment-repo/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/deployment-repo/" class="md-nav__link">
         2. Deployment Repository
       </a>
     </li>
@@ -626,7 +520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/ad-tenant-choices/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/ad-tenant-choices/" class="md-nav__link">
         3. AD Tenant
       </a>
     </li>
@@ -640,7 +534,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/setup-auth-entities/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/setup-auth-entities/" class="md-nav__link">
         4. Setup Auth
       </a>
     </li>
@@ -720,7 +614,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/manual-pre-deployment-steps/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/manual-pre-deployment-steps/" class="md-nav__link">
         Pre-deployment Steps
       </a>
     </li>
@@ -734,7 +628,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/manual-deployment/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/manual-deployment/" class="md-nav__link">
         Deployment Steps
       </a>
     </li>
@@ -788,7 +682,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/cicd-pre-deployment-steps/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/cicd-pre-deployment-steps/" class="md-nav__link">
         Pre-deployment Steps
       </a>
     </li>
@@ -802,7 +696,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/cicd-deployment/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/cicd-deployment/" class="md-nav__link">
         Deployment Steps
       </a>
     </li>
@@ -830,7 +724,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/configuring-shared-services/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/configuring-shared-services/" class="md-nav__link">
         6. Configure Shared Services
       </a>
     </li>
@@ -844,7 +738,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/ui-install-base-workspace/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/ui-install-base-workspace/" class="md-nav__link">
         7. Install Base Workspace
       </a>
     </li>
@@ -858,7 +752,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/ui-install-ws-and-ur/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/ui-install-ws-and-ur/" class="md-nav__link">
         8. Install Workspace Service and User Resource
       </a>
     </li>
@@ -904,7 +798,7 @@
         
         
         <div class="md-nav__link md-nav__link--index ">
-          <a href="../../using-tre/">Using the Azure TRE</a>
+          <a href="../../../using-tre/">Using the Azure TRE</a>
           
             <label for="__nav_3">
               <span class="md-nav__icon md-icon"></span>
@@ -927,7 +821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../using-tre/templates/" class="md-nav__link">
+      <a href="../../../using-tre/templates/" class="md-nav__link">
         Custom Templates
       </a>
     </li>
@@ -965,7 +859,7 @@
         
         
         <div class="md-nav__link md-nav__link--index ">
-          <a href="../../using-tre/tre-for-research/">Using AzureTRE for Research</a>
+          <a href="../../../using-tre/tre-for-research/">Using AzureTRE for Research</a>
           
             <label for="__nav_3_3">
               <span class="md-nav__icon md-icon"></span>
@@ -988,7 +882,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../using-tre/tre-for-research/using-vms/" class="md-nav__link">
+      <a href="../../../using-tre/tre-for-research/using-vms/" class="md-nav__link">
         Set up of a Virtual Machine
       </a>
     </li>
@@ -1002,7 +896,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../using-tre/tre-for-research/importing-exporting-data-airlock/" class="md-nav__link">
+      <a href="../../../using-tre/tre-for-research/importing-exporting-data-airlock/" class="md-nav__link">
         Importing/exporting data with Airlock
       </a>
     </li>
@@ -1016,7 +910,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../using-tre/tre-for-research/review-airlock-request/" class="md-nav__link">
+      <a href="../../../using-tre/tre-for-research/review-airlock-request/" class="md-nav__link">
         Reviewing Airlock Requests
       </a>
     </li>
@@ -1043,14 +937,16 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
       
       
         
@@ -1069,7 +965,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_4">
           <span class="md-nav__icon md-icon"></span>
           Templates and Services
@@ -1117,7 +1013,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspaces/base/" class="md-nav__link">
+      <a href="../../workspaces/base/" class="md-nav__link">
         Base
       </a>
     </li>
@@ -1131,7 +1027,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspaces/unrestricted/" class="md-nav__link">
+      <a href="../../workspaces/unrestricted/" class="md-nav__link">
         Unrestricted
       </a>
     </li>
@@ -1145,7 +1041,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspaces/airlock-import-review/" class="md-nav__link">
+      <a href="../../workspaces/airlock-import-review/" class="md-nav__link">
         Airlock Import Review
       </a>
     </li>
@@ -1164,14 +1060,16 @@
               
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" checked>
       
       
         
@@ -1196,7 +1094,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_4_2">
           <span class="md-nav__icon md-icon"></span>
           Workspace Services
@@ -1209,7 +1107,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspace-services/azure-ml/" class="md-nav__link">
+      <a href="../azure-ml/" class="md-nav__link">
         Azure ML
       </a>
     </li>
@@ -1223,7 +1121,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspace-services/gitea/" class="md-nav__link">
+      <a href="../gitea/" class="md-nav__link">
         Gitea
       </a>
     </li>
@@ -1237,7 +1135,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspace-services/guacamole/" class="md-nav__link">
+      <a href="../guacamole/" class="md-nav__link">
         Guacamole
       </a>
     </li>
@@ -1251,7 +1149,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspace-services/inner-eye/" class="md-nav__link">
+      <a href="../inner-eye/" class="md-nav__link">
         InnerEye
       </a>
     </li>
@@ -1265,7 +1163,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspace-services/mlflow/" class="md-nav__link">
+      <a href="../mlflow/" class="md-nav__link">
         MLFlow
       </a>
     </li>
@@ -1279,7 +1177,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspace-services/health_services/" class="md-nav__link">
+      <a href="../health_services/" class="md-nav__link">
         Health Services
       </a>
     </li>
@@ -1291,11 +1189,59 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../../tre-templates/workspace-services/databricks/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Azure Databricks
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Azure Databricks
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#properties" class="md-nav__link">
+    Properties
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1351,7 +1297,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/shared-services/gitea/" class="md-nav__link">
+      <a href="../../shared-services/gitea/" class="md-nav__link">
         Gitea (Source Mirror)
       </a>
     </li>
@@ -1365,7 +1311,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/shared-services/nexus/" class="md-nav__link">
+      <a href="../../shared-services/nexus/" class="md-nav__link">
         Nexus (Package Mirror)
       </a>
     </li>
@@ -1379,7 +1325,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/shared-services/cyclecloud/" class="md-nav__link">
+      <a href="../../shared-services/cyclecloud/" class="md-nav__link">
         Azure CycleCloud (HPC Compute)
       </a>
     </li>
@@ -1393,7 +1339,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/shared-services/airlock-notifier/" class="md-nav__link">
+      <a href="../../shared-services/airlock-notifier/" class="md-nav__link">
         Airlock Notifier
       </a>
     </li>
@@ -1451,7 +1397,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/user-resources/guacamole-windows-vm/" class="md-nav__link">
+      <a href="../../user-resources/guacamole-windows-vm/" class="md-nav__link">
         Guacamole Windows VM
       </a>
     </li>
@@ -1465,7 +1411,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/user-resources/guacamole-linux-vm/" class="md-nav__link">
+      <a href="../../user-resources/guacamole-linux-vm/" class="md-nav__link">
         Guacamole Linux VM
       </a>
     </li>
@@ -1479,7 +1425,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/user-resources/import-reviewvm/" class="md-nav__link">
+      <a href="../../user-resources/import-reviewvm/" class="md-nav__link">
         Import Review VM
       </a>
     </li>
@@ -1493,7 +1439,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/user-resources/export-reviewvm/" class="md-nav__link">
+      <a href="../../user-resources/export-reviewvm/" class="md-nav__link">
         Export Review VM
       </a>
     </li>
@@ -1606,7 +1552,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/start-stop/" class="md-nav__link">
+      <a href="../../../tre-admins/start-stop/" class="md-nav__link">
         Starting and Stopping Azure TRE Services
       </a>
     </li>
@@ -1620,7 +1566,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/environment-variables/" class="md-nav__link">
+      <a href="../../../tre-admins/environment-variables/" class="md-nav__link">
         Environment Variables
       </a>
     </li>
@@ -1634,7 +1580,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/tear-down/" class="md-nav__link">
+      <a href="../../../tre-admins/tear-down/" class="md-nav__link">
         Tear-down
       </a>
     </li>
@@ -1683,7 +1629,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/auth/" class="md-nav__link">
+      <a href="../../../tre-admins/auth/" class="md-nav__link">
         Introduction
       </a>
     </li>
@@ -1697,7 +1643,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/auth-manual/" class="md-nav__link">
+      <a href="../../../tre-admins/identities/auth-manual/" class="md-nav__link">
         Manual Setup
       </a>
     </li>
@@ -1750,7 +1696,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/application_admin/" class="md-nav__link">
+      <a href="../../../tre-admins/identities/application_admin/" class="md-nav__link">
         Application Admin
       </a>
     </li>
@@ -1764,7 +1710,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/api/" class="md-nav__link">
+      <a href="../../../tre-admins/identities/api/" class="md-nav__link">
         API
       </a>
     </li>
@@ -1778,7 +1724,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/client/" class="md-nav__link">
+      <a href="../../../tre-admins/identities/client/" class="md-nav__link">
         Client
       </a>
     </li>
@@ -1792,7 +1738,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/test-account/" class="md-nav__link">
+      <a href="../../../tre-admins/identities/test-account/" class="md-nav__link">
         Automation Test Account
       </a>
     </li>
@@ -1806,7 +1752,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/workspace/" class="md-nav__link">
+      <a href="../../../tre-admins/identities/workspace/" class="md-nav__link">
         Workspaces
       </a>
     </li>
@@ -1834,7 +1780,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/registering-templates/" class="md-nav__link">
+      <a href="../../../tre-admins/registering-templates/" class="md-nav__link">
         Registering Templates
       </a>
     </li>
@@ -1881,7 +1827,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/installing-base-workspace/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/installing-base-workspace/" class="md-nav__link">
         Install Base Workspace
       </a>
     </li>
@@ -1895,7 +1841,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/installing-workspace-service-and-user-resource/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/installing-workspace-service-and-user-resource/" class="md-nav__link">
         Install Workspace Service and User Resource
       </a>
     </li>
@@ -1916,7 +1862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/upgrading-tre/" class="md-nav__link">
+      <a href="../../../tre-admins/upgrading-tre/" class="md-nav__link">
         Upgrading AzureTRE Version
       </a>
     </li>
@@ -1930,7 +1876,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/upgrading-resources/" class="md-nav__link">
+      <a href="../../../tre-admins/upgrading-resources/" class="md-nav__link">
         Upgrading Resources Version
       </a>
     </li>
@@ -1944,7 +1890,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/configure-airlock-review/" class="md-nav__link">
+      <a href="../../../tre-admins/configure-airlock-review/" class="md-nav__link">
         Configuring Airlock Reviews
       </a>
     </li>
@@ -2000,7 +1946,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../using-tre/local-development/local-development/" class="md-nav__link">
+      <a href="../../../using-tre/local-development/local-development/" class="md-nav__link">
         Local Development
       </a>
     </li>
@@ -2046,7 +1992,7 @@
         
         
         <div class="md-nav__link md-nav__link--index ">
-          <a href="../../tre-developers/">Contributing to AzureTRE</a>
+          <a href="../../../tre-developers/">Contributing to AzureTRE</a>
           
             <label for="__nav_5_2_2">
               <span class="md-nav__icon md-icon"></span>
@@ -2069,7 +2015,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-developers/api/" class="md-nav__link">
+      <a href="../../../tre-developers/api/" class="md-nav__link">
         API
       </a>
     </li>
@@ -2083,7 +2029,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-developers/ui/" class="md-nav__link">
+      <a href="../../../tre-developers/ui/" class="md-nav__link">
         UI
       </a>
     </li>
@@ -2097,7 +2043,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-developers/resource-processor/" class="md-nav__link">
+      <a href="../../../tre-developers/resource-processor/" class="md-nav__link">
         Resource Processor
       </a>
     </li>
@@ -2111,7 +2057,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-developers/end-to-end-tests/" class="md-nav__link">
+      <a href="../../../tre-developers/end-to-end-tests/" class="md-nav__link">
         End to End Tests
       </a>
     </li>
@@ -2125,7 +2071,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-developers/letsencrypt/" class="md-nav__link">
+      <a href="../../../tre-developers/letsencrypt/" class="md-nav__link">
         Letsencrypt
       </a>
     </li>
@@ -2139,7 +2085,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-developers/release/" class="md-nav__link">
+      <a href="../../../tre-developers/release/" class="md-nav__link">
         Releases
       </a>
     </li>
@@ -2153,7 +2099,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/workflows/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/workflows/" class="md-nav__link">
         GitHub Actions
       </a>
     </li>
@@ -2209,7 +2155,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-workspace-authors/authoring-workspace-templates/" class="md-nav__link">
+      <a href="../../../tre-workspace-authors/authoring-workspace-templates/" class="md-nav__link">
         Authoring Workspace Templates
       </a>
     </li>
@@ -2223,7 +2169,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-workspace-authors/firewall-rules/" class="md-nav__link">
+      <a href="../../../tre-workspace-authors/firewall-rules/" class="md-nav__link">
         Firewall Rules
       </a>
     </li>
@@ -2270,7 +2216,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/pipeline-templates/overview/" class="md-nav__link">
+      <a href="../../pipeline-templates/overview/" class="md-nav__link">
         Overview
       </a>
     </li>
@@ -2284,7 +2230,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/pipeline-templates/pipeline-schema/" class="md-nav__link">
+      <a href="../../pipeline-templates/pipeline-schema/" class="md-nav__link">
         Pipeline Schema
       </a>
     </li>
@@ -2319,7 +2265,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-developers/CLI/" class="md-nav__link">
+      <a href="../../../tre-developers/CLI/" class="md-nav__link">
         AzureTRE CLI
       </a>
     </li>
@@ -2363,7 +2309,7 @@
         
         
         <div class="md-nav__link md-nav__link--index ">
-          <a href="../../troubleshooting-faq/">Troubleshooting FAQ</a>
+          <a href="../../../troubleshooting-faq/">Troubleshooting FAQ</a>
           
             <label for="__nav_5_4">
               <span class="md-nav__icon md-icon"></span>
@@ -2386,7 +2332,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting-faq/debug-api/" class="md-nav__link">
+      <a href="../../../troubleshooting-faq/debug-api/" class="md-nav__link">
         Enabling Debugging for the API
       </a>
     </li>
@@ -2400,7 +2346,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting-faq/api-logs-deployment-center/" class="md-nav__link">
+      <a href="../../../troubleshooting-faq/api-logs-deployment-center/" class="md-nav__link">
         API logs using deployment center
       </a>
     </li>
@@ -2414,7 +2360,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting-faq/troubleshooting-sb/" class="md-nav__link">
+      <a href="../../../troubleshooting-faq/troubleshooting-sb/" class="md-nav__link">
         Checking the Service Bus
       </a>
     </li>
@@ -2428,7 +2374,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting-faq/app-insights-logs/" class="md-nav__link">
+      <a href="../../../troubleshooting-faq/app-insights-logs/" class="md-nav__link">
         Checking Logs in Application Insights
       </a>
     </li>
@@ -2442,7 +2388,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting-faq/troubleshooting-rp/" class="md-nav__link">
+      <a href="../../../troubleshooting-faq/troubleshooting-rp/" class="md-nav__link">
         Troubleshooting the Resource Processor
       </a>
     </li>
@@ -2456,7 +2402,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting-faq/manually-editing-resources/" class="md-nav__link">
+      <a href="../../../troubleshooting-faq/manually-editing-resources/" class="md-nav__link">
         Manually edit resources in Cosmos DB
       </a>
     </li>
@@ -2485,7 +2431,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributing/" class="md-nav__link">
+      <a href="../../../contributing/" class="md-nav__link">
         Contributing
       </a>
     </li>
@@ -2519,71 +2465,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#role-overview" class="md-nav__link">
-    Role overview
+  <a href="#properties" class="md-nav__link">
+    Properties
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#azure-administrator" class="md-nav__link">
-    Azure administrator
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tre-administrator" class="md-nav__link">
-    TRE administrator
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tre-workspace-owner" class="md-nav__link">
-    TRE workspace owner
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#researcher" class="md-nav__link">
-    Researcher
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#airlock-manager" class="md-nav__link">
-    Airlock Manager
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tre-service-integrator" class="md-nav__link">
-    TRE service integrator
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#azure-tre-developer" class="md-nav__link">
-    Azure TRE developer
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#data-engineer" class="md-nav__link">
-    Data engineer
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#information-security-officer" class="md-nav__link">
-    Information Security Officer
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
   </a>
   
 </li>
@@ -2604,188 +2494,17 @@
 
 
 
-<h1 id="user-roles">User roles</h1>
-<p>The Azure TRE solution has 8 different user roles defined. The roles are modeled around a set of tasks for each role. The roles are not mutually exclusive, and one person can have multiple roles assigned to be able to carry out a broader set of tasks.</p>
-<p>Before you deploy a Trusted Research Environment based on the Azure TRE solution, you should consider your scenario and have an understanding of which of these roles that needs to be staffed.</p>
-<h2 id="role-overview">Role overview</h2>
-<p>While we have defined 8 different user roles for the Azure TRE solution, not all of them are required in all scenarios. Three of the roles support role-based access control (RBAC) within the TRE.  </p>
-<table>
-<thead>
-<tr>
-<th>Role</th>
-<th>Key task</th>
-<th>TRE RBAC</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Azure administrator</td>
-<td>Deploy the TRE</td>
-<td></td>
-</tr>
-<tr>
-<td>TRE administrator</td>
-<td>Administer the TRE</td>
-<td>✔</td>
-</tr>
-<tr>
-<td>TRE workspace owner</td>
-<td>Own a workspace</td>
-<td>✔</td>
-</tr>
-<tr>
-<td>Researcher</td>
-<td>Perform research on the data</td>
-<td>✔</td>
-</tr>
-<tr>
-<td>Airlock Manager</td>
-<td>Approves data import &amp; export</td>
-<td>✔</td>
-</tr>
-<tr>
-<td>TRE service integrator</td>
-<td>Integrate additional workspace services</td>
-<td></td>
-</tr>
-<tr>
-<td>Azure TRE developer</td>
-<td>Extend the TRE OSS solution</td>
-<td></td>
-</tr>
-<tr>
-<td>Data engineer</td>
-<td>Move data to and potentially from the TRE</td>
-<td></td>
-</tr>
-<tr>
-<td>Information security officer</td>
-<td>Validate and sign-off TRE deployment</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<div class="admonition info">
-<p class="admonition-title">Info</p>
-<p>More granular RBAC information is available <a href="../../tre-developers/api-permissions-map/">here</a>.</p>
-</div>
-<h2 id="azure-administrator">Azure administrator</h2>
-<p>Provisions the Azure TRE solution in an Azure subscription and performs tasks that require knowledge of Azure operations and has access to the Azure subscription.</p>
-<p>Example tasks:</p>
+<h1 id="azure-databricks-workspace-service-bundle">Azure Databricks workspace service bundle</h1>
+<p>See: <a href="https://azure.microsoft.com/en-us/products/databricks/">https://azure.microsoft.com/en-us/products/databricks/</a></p>
+<p>This service installs the following resources into an existing virtual network within the workspace:</p>
+<p><img alt="Azure Databricks workspace service" src="../../../assets/databricks_workspace_service.png" /></p>
+<h2 id="properties">Properties</h2>
 <ul>
-<li>Provision Azure TRE solution instances.</li>
-<li>Second line support for TRE administrators, TRE workspace owners and Researchers when Azure TRE troubleshooting is required.</li>
-<li>Work with the data engineer to connect the Azure TRE with the data platform.</li>
-<li>Troubleshoot provisioning issues and failed deployments.</li>
-<li>Manage TRE administrator users.</li>
-<li>Manage data backups and restores.</li>
-<li>Update the Azure TRE instances.</li>
-<li>Configure log and metrics alerts.</li>
+<li><code>is_exposed_externally</code> - If <code>True</code>, the Azure Databricks workspace is accessible from outside of the worksapce virtual network. If <code>False</code> use a Guacamole VM and the <code>internal_connection_uri</code> to access Databricks workspace.</li>
 </ul>
-<p>Expected skills:</p>
+<h2 id="prerequisites">Prerequisites</h2>
 <ul>
-<li>Azure administration and operations.</li>
-<li>Infrastructure as Code (Terraform, ARM, Git)</li>
-<li>PowerShell, Bash</li>
-</ul>
-<h2 id="tre-administrator">TRE administrator</h2>
-<p>Day-to-day running and operations of the Azure TRE instance without touching Azure resources.</p>
-<p>Example tasks:</p>
-<ul>
-<li>Manage workspace owner users.</li>
-<li>Provision workspaces.</li>
-<li>Manage shared services e.g., available packages in package mirror shared service.</li>
-<li>Monitor workspace usage and billing.</li>
-<li>Set and manage quotas.</li>
-<li>Create and manage workspaces</li>
-</ul>
-<p>Expected skills:</p>
-<ul>
-<li>Limited or no Azure knowledge expected.</li>
-</ul>
-<h2 id="tre-workspace-owner">TRE workspace owner</h2>
-<p>Owns a specific workspace and has additional privileges than the researcher within the workspace. Is most likely also a <em>Researcher</em>.</p>
-<p>Example tasks:</p>
-<ul>
-<li>Manage Researcher users.</li>
-<li>Export data from workspace.</li>
-<li>Import data and make it available within the workspace.</li>
-<li>Enable services within the workspace.</li>
-<li>Monitor billing and usage of the workspace.</li>
-<li>Create and manage workspace services</li>
-</ul>
-<p>Expected skills:</p>
-<ul>
-<li>Limited or no Azure knowledge expected.</li>
-</ul>
-<h2 id="researcher">Researcher</h2>
-<p>Has access to one specific workspace and can use all the services provisioned within that workspace.</p>
-<p>Example tasks:</p>
-<ul>
-<li>Import software packages needed to conduct research (PyPi, Conda, Apt).</li>
-<li>Perform research using the services in the workspace.</li>
-<li>Create and manage user resources</li>
-</ul>
-<p>Expected skills:</p>
-<ul>
-<li>Python, R</li>
-<li>Git</li>
-<li>Linux</li>
-</ul>
-<h2 id="airlock-manager">Airlock Manager</h2>
-<p>Approves (and reviews in some instances) the data that is being imported to and exported from a TRE Workspace</p>
-<p>Example tasks:</p>
-<ul>
-<li>Approve Airlock import requests</li>
-<li>Approve Airlock export requests</li>
-<li>Review the data being imported to and exported from a TRE Workspace</li>
-</ul>
-<h2 id="tre-service-integrator">TRE service integrator</h2>
-<p>Integrates workspace service types with an Azure TRE instance. This involves extending the Azure Infrastructure as Code templates to make a workspace service available within an Azure TRE instance.</p>
-<p>Example tasks:</p>
-<ul>
-<li>Integrate a workspace service type with your Azure TRE instance.</li>
-<li>Implement Infrastructure as Code templates for new workspace service types.</li>
-</ul>
-<p>Expected skills:</p>
-<ul>
-<li>Infrastructure as Code (Terraform, ARM, Git)</li>
-<li>Python, Bash</li>
-<li>Azure administration</li>
-</ul>
-<h2 id="azure-tre-developer">Azure TRE developer</h2>
-<p>Software developer who contributes to the development of the Azure TRE solution.</p>
-<p>Example tasks:</p>
-<ul>
-<li>Modify the deployment service, API and other components of the Azure TRE solution.</li>
-<li>Contribute to the Azure TRE OSS solution.</li>
-</ul>
-<p>Expected skills:</p>
-<ul>
-<li>Python, Bash</li>
-<li>Infrastructure as Code (Terraform, ARM, Git</li>
-<li>Azure administration</li>
-</ul>
-<h2 id="data-engineer">Data engineer</h2>
-<p>Supporting role that is expected to build data movement pipelines between the data platform (not part of the TRE), and the TRE instance.</p>
-<p>Example tasks:</p>
-<ul>
-<li>Transfer data from the data platform to the TRE and potentially back.</li>
-<li>Create data movement and transformation pipelines.</li>
-</ul>
-<p>Expected skills:</p>
-<ul>
-<li>Python, Bash, Linux</li>
-<li>Azure Data Factory, Other ETL tools.</li>
-</ul>
-<h2 id="information-security-officer">Information Security Officer</h2>
-<p>Needs to understand the security posture of the TRE to ensure that the organization is compliant with the information governance framework and additional relevant regulations.</p>
-<p>Example tasks:</p>
-<ul>
-<li>Use the Azure TRE documentation to understand the security posture of the TRE.</li>
-<li>Work with Azure administrator and TRE administrator to enforce the required security and privacy controls on the TRE.</li>
-<li>Commission penetration testing.</li>
-<li>Work with organization Information Governance committee to validate and sign-off Azure TRE deployment</li>
+<li><a href="../../workspaces/base/">A base workspace bundle installed</a></li>
 </ul>
 
 
@@ -2824,10 +2543,10 @@
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.db81ec45.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest-release", "provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.instant", "navigation.indexes"], "search": "../../../assets/javascripts/workers/search.db81ec45.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest-release", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.a00a7c5e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.a00a7c5e.min.js"></script>
       
     
   </body>
