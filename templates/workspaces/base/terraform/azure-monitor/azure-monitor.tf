@@ -22,6 +22,11 @@ resource "azurerm_storage_account" "app_insights" {
   allow_nested_items_to_be_public = false
   tags                            = var.tre_workspace_tags
 
+  network_rules {
+    default_action = "Deny"
+    bypass         = ["AzureServices"]
+  }
+
   lifecycle { ignore_changes = [tags] }
 }
 

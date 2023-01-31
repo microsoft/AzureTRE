@@ -1,25 +1,3 @@
-resource "null_resource" "az_login_sp" {
-  count = var.arm_use_msi == true ? 0 : 1
-  provisioner "local-exec" {
-    command = "az login --service-principal --username ${var.arm_client_id} --password ${var.arm_client_secret} --tenant ${var.arm_tenant_id}"
-  }
-
-  triggers = {
-    timestamp = timestamp()
-  }
-}
-
-resource "null_resource" "az_login_msi" {
-  count = var.arm_use_msi == true ? 1 : 0
-  provisioner "local-exec" {
-    command = "az login --identity -u '${data.azurerm_client_config.current.client_id}'"
-  }
-
-  triggers = {
-    timestamp = timestamp()
-  }
-}
-
 resource "azurerm_public_ip" "appgwpip" {
   name                = "pip-cert-${var.domain_prefix}-${var.tre_id}"
   resource_group_name = data.azurerm_resource_group.rg.name
@@ -185,13 +163,5 @@ resource "azurerm_application_gateway" "agw" {
 
   depends_on = [
     azurerm_key_vault_access_policy.app_gw_managed_identity,
-    null_resource.az_login_sp,
-    null_resource.az_login_msi
   ]
-
-  # Stop app gateway once provisioned to save cost until the generate custom action is invoked (which will start/stop as required)
-  provisioner "local-exec" {
-    command = "az network application-gateway stop -g ${data.azurerm_resource_group.rg.name} -n agw-certs-${var.tre_id}"
-  }
-
 }

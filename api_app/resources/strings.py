@@ -23,6 +23,7 @@ API_DELETE_WORKSPACE_SERVICE = "Delete workspace service"
 API_INVOKE_ACTION_ON_WORKSPACE_SERVICE = "Invoke action on a workspace service"
 API_GET_RESOURCE_OPERATIONS = "Get all operations for a resource"
 API_GET_RESOURCE_OPERATION_BY_ID = "Get a single resource operation by id"
+API_GET_RESOURCE_HISTORY = "Get history for a resource"
 
 API_CREATE_USER_RESOURCE = "Create a user resource"
 API_GET_MY_USER_RESOURCES = "Get my user resources in the workspace service"
@@ -131,6 +132,7 @@ WORKSPACE_SERVICE_DOES_NOT_EXIST = "Workspace service does not exist"
 WORKSPACE_SERVICE_IS_NOT_DEPLOYED = "Workspace service is not deployed."
 WORKSPACE_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The workspace service needs to be disabled before you can delete it"
 WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE = "All workspace services need to be deleted before you can delete the workspace"
+WORKSPACE_DOES_NOT_HAVE_ADDRESS_SPACES_PROPERTY = "Workspace does not have address_spaces property"
 WORKSPACE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
 OPERATION_DOES_NOT_EXIST = "Operation does not exist"
 CUSTOM_ACTION_NOT_DEFINED = "The specified custom action isn't defined in the targeted resource."
@@ -147,6 +149,7 @@ SHARED_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace servi
 SHARED_SERVICE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
 
 ETAG_CONFLICT = "This document has been modified by another user or process since you last retrieved it. Please get the document again and retry."
+SWAGGER_DISABLED = "Swagger is disabled. Set 'ENABLE_SWAGGER' to true in order to access Swagger."
 
 # Resource Status
 RESOURCE_STATUS_AWAITING_DEPLOYMENT = "awaiting_deployment"

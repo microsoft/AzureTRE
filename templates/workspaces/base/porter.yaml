@@ -1,6 +1,7 @@
 ---
+schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 0.7.6
+version: 1.0.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -139,40 +140,45 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.3.5
-  - az
+      clientVersion: 1.3.6
+  - az:
+      clientVersion: 2.37.0
 
 install:
   - terraform:
       description: "Deploy workspace"
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        location: "{{ bundle.parameters.azure_location }}"
-        address_spaces: "{{ bundle.parameters.address_spaces }}"
-        shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
-        enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
-        register_aad_application: "{{ bundle.parameters.register_aad_application }}"
-        create_aad_groups: "{{ bundle.parameters.create_aad_groups }}"
-        auth_client_id: "{{ bundle.credentials.auth_client_id }}"
-        auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
-        auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
-        workspace_owner_object_id: "{{ bundle.parameters.workspace_owner_object_id }}"
-        client_id: "{{ bundle.parameters.client_id }}"
-        client_secret: "{{ bundle.parameters.client_secret }}"
-        scope_id: "{{ bundle.parameters.scope_id }}"
-        sp_id: "{{ bundle.parameters.sp_id }}"
-        app_role_id_workspace_owner: "{{ bundle.parameters.app_role_id_workspace_owner }}"
-        app_role_id_workspace_researcher: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
-        app_role_id_workspace_airlock_manager: "{{ bundle.parameters.app_role_id_workspace_airlock_manager }}"
-        aad_redirect_uris_b64: "{{ bundle.parameters.aad_redirect_uris }}"
-        app_service_plan_sku: "{{ bundle.parameters.app_service_plan_sku }}"
-        enable_airlock: "{{ bundle.parameters.enable_airlock }}"
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        location: ${ bundle.parameters.azure_location }
+        address_spaces: ${ bundle.parameters.address_spaces }
+        shared_storage_quota: ${ bundle.parameters.shared_storage_quota }
+        enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
+        register_aad_application: ${ bundle.parameters.register_aad_application }
+        create_aad_groups: ${ bundle.parameters.create_aad_groups }
+        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
+        arm_client_id: ${ bundle.credentials.azure_client_id }
+        arm_client_secret: ${ bundle.credentials.azure_client_secret }
+        arm_use_msi: ${ bundle.parameters.arm_use_msi }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        workspace_owner_object_id: ${ bundle.parameters.workspace_owner_object_id }
+        client_id: ${ bundle.parameters.client_id }
+        client_secret: ${ bundle.parameters.client_secret }
+        scope_id: ${ bundle.parameters.scope_id }
+        sp_id: ${ bundle.parameters.sp_id }
+        app_role_id_workspace_owner: ${ bundle.parameters.app_role_id_workspace_owner }
+        app_role_id_workspace_researcher: ${ bundle.parameters.app_role_id_workspace_researcher }
+        app_role_id_workspace_airlock_manager: ${ bundle.parameters.app_role_id_workspace_airlock_manager }
+        aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
+        app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
+        enable_airlock: ${ bundle.parameters.enable_airlock }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.id }}"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-ws-${ bundle.parameters.id }
       outputs:
         - name: app_role_id_workspace_owner
         - name: app_role_id_workspace_researcher
@@ -183,35 +189,39 @@ install:
 
 upgrade:
   - terraform:
-      description: "Deploy workspace"
+      description: "Upgrade workspace"
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        location: "{{ bundle.parameters.azure_location }}"
-        address_spaces: "{{ bundle.parameters.address_spaces }}"
-        shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
-        enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
-        register_aad_application: "{{ bundle.parameters.register_aad_application }}"
-        create_aad_groups: "{{ bundle.parameters.create_aad_groups }}"
-        auth_client_id: "{{ bundle.credentials.auth_client_id }}"
-        auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
-        auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
-        workspace_owner_object_id: "{{ bundle.parameters.workspace_owner_object_id }}"
-        client_id: "{{ bundle.parameters.client_id }}"
-        client_secret: "{{ bundle.parameters.client_secret }}"
-        scope_id: "{{ bundle.parameters.scope_id }}"
-        sp_id: "{{ bundle.parameters.sp_id }}"
-        app_role_id_workspace_owner: "{{ bundle.parameters.app_role_id_workspace_owner }}"
-        app_role_id_workspace_researcher: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
-        app_role_id_workspace_airlock_manager: "{{ bundle.parameters.app_role_id_workspace_airlock_manager }}"
-        aad_redirect_uris_b64: "{{ bundle.parameters.aad_redirect_uris }}"
-        app_service_plan_sku: "{{ bundle.parameters.app_service_plan_sku }}"
-        enable_airlock: "{{ bundle.parameters.enable_airlock }}"
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        location: ${ bundle.parameters.azure_location }
+        address_spaces: ${ bundle.parameters.address_spaces }
+        shared_storage_quota: ${ bundle.parameters.shared_storage_quota }
+        enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
+        register_aad_application: ${ bundle.parameters.register_aad_application }
+        create_aad_groups: ${ bundle.parameters.create_aad_groups }
+        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
+        arm_client_id: ${ bundle.credentials.azure_client_id }
+        arm_client_secret: ${ bundle.credentials.azure_client_secret }
+        arm_use_msi: ${ bundle.parameters.arm_use_msi }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        workspace_owner_object_id: ${ bundle.parameters.workspace_owner_object_id }
+        client_id: ${ bundle.parameters.client_id }
+        client_secret: ${ bundle.parameters.client_secret }
+        scope_id: ${ bundle.parameters.scope_id }
+        sp_id: ${ bundle.parameters.sp_id }
+        app_role_id_workspace_owner: ${ bundle.parameters.app_role_id_workspace_owner }
+        app_role_id_workspace_researcher: ${ bundle.parameters.app_role_id_workspace_researcher }
+        app_role_id_workspace_airlock_manager: ${ bundle.parameters.app_role_id_workspace_airlock_manager }
+        aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
+        app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
+        enable_airlock: ${ bundle.parameters.enable_airlock }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.id }}"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-ws-${ bundle.parameters.id }
       outputs:
         - name: app_role_id_workspace_owner
         - name: app_role_id_workspace_researcher
@@ -225,45 +235,49 @@ upgrade:
         - login
       flags:
         service-principal: ""
-        username: "'{{bundle.credentials.auth_client_id}}'"
-        password: "'{{bundle.credentials.auth_client_secret}}'"
-        tenant: "'{{bundle.credentials.auth_tenant_id}}'"
+        username: '${ bundle.credentials.auth_client_id }'
+        password: '${ bundle.credentials.auth_client_secret }'
+        tenant: '${ bundle.credentials.auth_tenant_id }'
         allow-no-subscriptions: ""
   - exec:
       description: "Update workspace app redirect urls"
       command: ./update_redirect_urls.sh
       flags:
-        workspace-api-client-id: "{{ bundle.parameters.client_id }}"
-        aad-redirect-uris-b64: "{{ bundle.parameters.aad_redirect_uris }}"
-        register-aad-application: "{{ bundle.parameters.register_aad_application }}"
+        workspace-api-client-id: '${ bundle.parameters.client_id }'
+        aad-redirect-uris-b64: '${ bundle.parameters.aad_redirect_uris }'
+        register-aad-application: '${ bundle.parameters.register_aad_application }'
 
 uninstall:
   - terraform:
       description: "Tear down workspace"
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        location: "{{ bundle.parameters.azure_location }}"
-        address_spaces: "{{ bundle.parameters.address_spaces }}"
-        shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
-        enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
-        register_aad_application: "{{ bundle.parameters.register_aad_application }}"
-        create_aad_groups: "{{ bundle.parameters.create_aad_groups }}"
-        auth_client_id: "{{ bundle.credentials.auth_client_id }}"
-        auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
-        auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
-        workspace_owner_object_id: "{{ bundle.parameters.workspace_owner_object_id }}"
-        client_id: "{{ bundle.parameters.client_id }}"
-        scope_id: "{{ bundle.parameters.scope_id }}"
-        sp_id: "{{ bundle.parameters.sp_id }}"
-        app_role_id_workspace_owner: "{{ bundle.parameters.app_role_id_workspace_owner }}"
-        app_role_id_workspace_researcher: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
-        app_role_id_workspace_airlock_manager: "{{ bundle.parameters.app_role_id_workspace_airlock_manager }}"
-        aad_redirect_uris_b64: "{{ bundle.parameters.aad_redirect_uris }}"
-        app_service_plan_sku: "{{ bundle.parameters.app_service_plan_sku }}"
-        enable_airlock: "{{ bundle.parameters.enable_airlock }}"
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        location: ${ bundle.parameters.azure_location }
+        address_spaces: ${ bundle.parameters.address_spaces }
+        shared_storage_quota: ${ bundle.parameters.shared_storage_quota }
+        enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
+        register_aad_application: ${ bundle.parameters.register_aad_application }
+        create_aad_groups: ${ bundle.parameters.create_aad_groups }
+        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
+        arm_client_id: ${ bundle.credentials.azure_client_id }
+        arm_client_secret: ${ bundle.credentials.azure_client_secret }
+        arm_use_msi: ${ bundle.parameters.arm_use_msi }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        workspace_owner_object_id: ${ bundle.parameters.workspace_owner_object_id }
+        client_id: ${ bundle.parameters.client_id }
+        scope_id: ${ bundle.parameters.scope_id }
+        sp_id: ${ bundle.parameters.sp_id }
+        app_role_id_workspace_owner: ${ bundle.parameters.app_role_id_workspace_owner }
+        app_role_id_workspace_researcher: ${ bundle.parameters.app_role_id_workspace_researcher }
+        app_role_id_workspace_airlock_manager: ${ bundle.parameters.app_role_id_workspace_airlock_manager }
+        aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
+        app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
+        enable_airlock: ${ bundle.parameters.enable_airlock }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.id }}"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-ws-${ bundle.parameters.id }

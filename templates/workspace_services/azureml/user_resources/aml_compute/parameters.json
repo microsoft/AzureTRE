@@ -1,8 +1,8 @@
 {
-  "schemaVersion": "1.0.0-DRAFT+TODO",
-  "name": "avd-aad",
-  "created": "2021-06-03T11:54:54.0225968Z",
-  "modified": "2021-06-03T11:54:54.0225968Z",
+  "schemaType": "ParameterSet",
+  "schemaVersion": "1.0.1",
+  "namespace": "",
+  "name": "tre-user-resource-aml-compute-instance",
   "parameters": [
     {
       "name": "id",
@@ -32,12 +32,6 @@
       "name": "vm_size",
       "source": {
         "env": "VM_SIZE"
-      }
-    },
-    {
-      "name": "auth_tenant_id",
-      "source": {
-        "env": "AAD_TENANT_ID"
       }
     },
     {

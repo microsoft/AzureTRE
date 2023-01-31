@@ -56,8 +56,10 @@ resource "azurerm_linux_web_app" "guacamole" {
     GUAC_DRIVE_NAME       = var.guac_drive_name
     GUAC_DRIVE_PATH       = var.guac_drive_path
     GUAC_DISABLE_DOWNLOAD = var.guac_disable_download
-    AUDIENCE              = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_id.id})"
-    ISSUER                = local.issuer
+    GUAC_DISABLE_UPLOAD   = var.guac_disable_upload
+
+    AUDIENCE = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_id.id})"
+    ISSUER   = local.issuer
 
     OAUTH2_PROXY_CLIENT_ID       = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_id.id})"
     OAUTH2_PROXY_CLIENT_SECRET   = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_secret.id})"
@@ -99,7 +101,7 @@ resource "azurerm_monitor_diagnostic_setting" "guacamole" {
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
   dynamic "log" {
-    for_each = data.azurerm_monitor_diagnostic_categories.guacamole.logs
+    for_each = data.azurerm_monitor_diagnostic_categories.guacamole.log_category_types
     content {
       category = log.value
       enabled  = contains(local.guacamole_diagnostic_categories_enabled, log.value) ? true : false

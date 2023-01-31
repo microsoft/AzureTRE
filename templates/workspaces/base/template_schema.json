@@ -3,7 +3,7 @@
   "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/base/template_schema.json",
   "type": "object",
   "title": "Base Workspace",
-  "description": "This workspace template is the foundation for TRE workspaces and workspace services.",
+  "description": "This workspace template is the foundation for TRE workspaces.",
   "required": [
     "auth_type",
     "address_space_size"
@@ -44,6 +44,12 @@
         "large",
         "custom"
       ]
+    },
+    "address_spaces": {
+      "type": "array",
+      "title": "Address spaces",
+      "description": "Network address space to be used by the workspace.",
+      "updateable": true
     },
     "auth_type": {
       "type": "string",
@@ -262,6 +268,9 @@
   "pipeline": null,
   "uiSchema": {
     "aad_redirect_uris": {
+      "classNames": "tre-hidden"
+    },
+    "address_spaces": {
       "classNames": "tre-hidden"
     },
     "ui:order": [

@@ -4,7 +4,7 @@
   "type": "object",
   "title": "Airlock Notifier Shared Service",
   "description": "A shared service notifying on Airlock operations",
-  "required": ["smtp_server_address", "smtp_username", "smtp_password", "smtp_from_email"],
+  "required": ["smtp_server_address", "smtp_username", "smtpPassword", "smtp_from_email"],
   "properties": {
     "smtp_server_address": {
       "$id": "#/properties/smtp_server_address",
@@ -20,8 +20,8 @@
       "description": "SMTP Username",
       "updateable": false
     },
-    "smtp_password": {
-      "$id": "#/properties/smtp_password",
+    "smtpPassword": {
+      "$id": "#/properties/smtpPassword",
       "type": "string",
       "title": "SMTP Password",
       "description": "SMTP Password",
@@ -49,10 +49,107 @@
   },
   "pipeline": {
     "install": [
+      {
+        "stepId": "e8360838-008c-40d4-8135-65cdbead5392",
+        "stepTitle": "Add network firewall rules for airlock notifier deployment",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_rp_airlock_notifier_deployment",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AppService",
+                  "description": "Resource Processor to interact with AppService",
+                  "source_ip_groups_in_core": ["ipg-resource-processor"],
+                  "destination_addresses": [
+                    "AppService"
+                  ],
+                  "destination_ports": [
+                    "443"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
     ],
     "upgrade": [
+      {
+        "stepId": "b757f0e1-3e38-4231-8227-6ab43dc2b1f3",
+        "stepTitle": "Update network firewall rules for airlock notifier deployment",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_rp_airlock_notifier_deployment",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AppService",
+                  "description": "Resource Processor to interact with AppService",
+                  "source_ip_groups_in_core": ["ipg-resource-processor"],
+                  "destination_addresses": [
+                    "AppService"
+                  ],
+                  "destination_ports": [
+                    "443"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
     ],
     "uninstall": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "040c788a-babf-49cd-824d-535efd631150",
+        "stepTitle": "Remove network firewall rules for airlock notifier deployment",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_rp_airlock_notifier_deployment"
+            }
+          }
+        ]
+      }
     ]
   }
 }

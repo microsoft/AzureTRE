@@ -14,6 +14,7 @@ export enum ApiEndpoint {
     UserResourceTemplates = 'user-resource-templates',
     SharedServiceTemplates = 'shared-service-templates',
     Operations = 'operations',
+    History = 'history',
     InvokeAction = 'invoke-action',
     Costs = 'costs',
     Metadata = ".metadata",

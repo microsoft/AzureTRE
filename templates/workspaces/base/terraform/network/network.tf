@@ -75,6 +75,65 @@ resource "azurerm_subnet_route_table_association" "rt_services_subnet_associatio
   ]
 }
 
+data "azurerm_client_config" "current" {}
+
+resource "null_resource" "az_login_sp" {
+
+  count = var.arm_use_msi == true ? 0 : 1
+  provisioner "local-exec" {
+    command = "az login --service-principal --username ${var.arm_client_id} --password ${var.arm_client_secret} --tenant ${var.arm_tenant_id}"
+  }
+
+  triggers = {
+    timestamp = timestamp()
+  }
+
+}
+
+resource "null_resource" "az_login_msi" {
+
+  count = var.arm_use_msi == true ? 1 : 0
+  provisioner "local-exec" {
+    command = "az login --identity -u '${data.azurerm_client_config.current.client_id}'"
+  }
+
+  triggers = {
+    timestamp = timestamp()
+  }
+}
+
+resource "null_resource" "ws_core_peer_sync" {
+  depends_on = [
+    azurerm_virtual_network_peering.core_ws_peer,
+    null_resource.az_login_sp,
+    null_resource.az_login_msi
+  ]
+  triggers = {
+    vnet2addr = join(",", azurerm_virtual_network.ws.address_space)
+  }
+  provisioner "local-exec" {
+    command = <<CMD
+         az network vnet peering sync --ids ${azurerm_virtual_network_peering.ws_core_peer.id}
+    CMD
+  }
+}
+
+resource "null_resource" "core_ws_sync" {
+  depends_on = [
+    azurerm_virtual_network_peering.core_ws_peer,
+    null_resource.az_login_sp,
+    null_resource.az_login_msi
+  ]
+  triggers = {
+    vnet2addr = join(",", azurerm_virtual_network.ws.address_space)
+  }
+  provisioner "local-exec" {
+    command = <<CMD
+        az network vnet peering sync --ids ${azurerm_virtual_network_peering.core_ws_peer.id}
+    CMD
+  }
+}
+
 resource "azurerm_subnet_route_table_association" "rt_webapps_subnet_association" {
   route_table_id = data.azurerm_route_table.rt.id
   subnet_id      = azurerm_subnet.webapps.id

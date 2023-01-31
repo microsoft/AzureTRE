@@ -128,7 +128,7 @@ Furthermore, Porter provides a set of [mixins](https://porter.sh/mixins/) - anal
 
 ### Porter Azure plugin
 
-Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to store Porter data in TRE management storage account. The storage table, named `porter`, is created during the bootstrapping phase of TRE deployment. The `/resource_processor/run.sh` script generates a `config.toml` file in Porter home folder to enable the Azure plugin when the image is started.
+Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to access secrets in Azure Key Vault.
 
 ### Porter bundle inputs
 

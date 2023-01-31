@@ -1,8 +1,9 @@
 import uuid
 from typing import List, Tuple
 
-from azure.cosmos import CosmosClient
+from azure.cosmos.aio import CosmosClient
 from pydantic import parse_obj_as
+from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 
@@ -26,8 +27,11 @@ class WorkspaceRepository(ResourceRepository):
     # We allow the users some predefined TShirt sizes for the address space
     predefined_address_spaces = {"small": 24, "medium": 22, "large": 16}
 
-    def __init__(self, client: CosmosClient):
-        super().__init__(client)
+    @classmethod
+    async def create(cls, client: CosmosClient):
+        cls = WorkspaceRepository()
+        await super().create(client)
+        return cls
 
     @staticmethod
     def workspaces_query_string():
@@ -37,38 +41,38 @@ class WorkspaceRepository(ResourceRepository):
     def active_workspaces_query_string():
         return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.Workspace}" AND {IS_NOT_DELETED_CLAUSE}'
 
-    def get_workspaces(self) -> List[Workspace]:
+    async def get_workspaces(self) -> List[Workspace]:
         query = WorkspaceRepository.workspaces_query_string()
-        workspaces = self.query(query=query)
+        workspaces = await self.query(query=query)
         return parse_obj_as(List[Workspace], workspaces)
 
-    def get_active_workspaces(self) -> List[Workspace]:
+    async def get_active_workspaces(self) -> List[Workspace]:
         query = WorkspaceRepository.active_workspaces_query_string()
-        workspaces = self.query(query=query)
+        workspaces = await self.query(query=query)
         return parse_obj_as(List[Workspace], workspaces)
 
-    def get_deployed_workspace_by_id(self, workspace_id: str, operations_repo: OperationRepository) -> Workspace:
-        workspace = self.get_workspace_by_id(workspace_id)
+    async def get_deployed_workspace_by_id(self, workspace_id: str, operations_repo: OperationRepository) -> Workspace:
+        workspace = await self.get_workspace_by_id(workspace_id)
 
-        if (not operations_repo.resource_has_deployed_operation(resource_id=workspace_id)):
+        if (not await operations_repo.resource_has_deployed_operation(resource_id=workspace_id)):
             raise ResourceIsNotDeployed
 
         return workspace
 
-    def get_workspace_by_id(self, workspace_id: str) -> Workspace:
+    async def get_workspace_by_id(self, workspace_id: str) -> Workspace:
         query = self.workspaces_query_string() + f' AND c.id = "{workspace_id}"'
-        workspaces = self.query(query=query)
+        workspaces = await self.query(query=query)
         if not workspaces:
             raise EntityDoesNotExist
         return parse_obj_as(Workspace, workspaces[0])
 
-    def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str, user_roles: List[str]) -> Tuple[Workspace, ResourceTemplate]:
+    async def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str, user_roles: List[str]) -> Tuple[Workspace, ResourceTemplate]:
         full_workspace_id = str(uuid.uuid4())
 
-        template = self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
+        template = await self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
 
         # allow for workspace template taking a single address_space or multiple address_spaces
-        intial_address_space = self.get_address_space_based_on_size(workspace_input.properties)
+        intial_address_space = await self.get_address_space_based_on_size(workspace_input.properties)
         address_space_param = {"address_space": intial_address_space}
         address_spaces_param = {"address_spaces": [intial_address_space]}
 
@@ -105,31 +109,31 @@ class WorkspaceRepository(ResourceRepository):
     def automatically_create_application_registration(self, workspace_properties: dict) -> bool:
         return True if ("auth_type" in workspace_properties and workspace_properties["auth_type"] == "Automatic") else False
 
-    def get_address_space_based_on_size(self, workspace_properties: dict):
+    async def get_address_space_based_on_size(self, workspace_properties: dict):
         # Default the address space to 'small' if not supplied.
         address_space_size = workspace_properties.get("address_space_size", "small").lower()
 
         # 773 allow custom sized networks to be requested
         if (address_space_size == "custom"):
-            if (self.validate_address_space(workspace_properties.get("address_space"))):
+            if (await self.validate_address_space(workspace_properties.get("address_space"))):
                 return workspace_properties.get("address_space")
             else:
                 raise InvalidInput("The custom 'address_space' you requested does not fit in the current network.")
 
         # Default mask is 24 (small)
         cidr_netmask = WorkspaceRepository.predefined_address_spaces.get(address_space_size, 24)
-        return self.get_new_address_space(cidr_netmask)
+        return await self.get_new_address_space(cidr_netmask)
 
     # 772 check that the provided address_space is available in the network.
-    def validate_address_space(self, address_space):
+    async def validate_address_space(self, address_space):
         if (address_space is None):
             raise InvalidInput("Missing 'address_space' from properties.")
 
-        allocated_networks = [x.properties["address_space"] for x in self.get_workspaces()]
+        allocated_networks = [x.properties["address_space"] for x in await self.get_workspaces()]
         return is_network_available(allocated_networks, address_space)
 
-    def get_new_address_space(self, cidr_netmask: int = 24):
-        workspaces = self.get_workspaces()
+    async def get_new_address_space(self, cidr_netmask: int = 24):
+        workspaces = await self.get_workspaces()
         networks = [[x.properties.get("address_space")] for x in workspaces]
         networks = networks + [x.properties.get("address_spaces", []) for x in workspaces]
         networks = [i for s in networks for i in s if i is not None]
@@ -137,10 +141,10 @@ class WorkspaceRepository(ResourceRepository):
         new_address_space = generate_new_cidr(networks, cidr_netmask)
         return new_address_space
 
-    def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User, force_version_update: bool) -> Tuple[Workspace, ResourceTemplate]:
+    async def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, force_version_update: bool) -> Tuple[Workspace, ResourceTemplate]:
         # get the workspace template
-        workspace_template = resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
-        return self.patch_resource(workspace, workspace_patch, workspace_template, etag, resource_template_repo, user, force_version_update)
+        workspace_template = await resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
+        return await self.patch_resource(workspace, workspace_patch, workspace_template, etag, resource_template_repo, resource_history_repo, user, force_version_update)
 
     def get_workspace_spec_params(self, full_workspace_id: str):
         params = self.get_resource_base_spec_params()

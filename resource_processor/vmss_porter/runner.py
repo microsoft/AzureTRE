@@ -142,6 +142,7 @@ def service_bus_message_generator(sb_message: dict, status: str, deployment_mess
         message_dict["outputs"] = outputs
 
     resource_request_message = json.dumps(message_dict)
+    logger_adapter.info(f"Deployment Status Message: {resource_request_message}")
     return resource_request_message
 
 
@@ -168,13 +169,25 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, mess
 
     # Handle command output
     if returncode != 0:
-        error_message = "Error context message = " + " ".join(err.split('\n')) + " ; Command executed: ".join(porter_command)
-        resource_request_message = service_bus_message_generator(msg_body, statuses.failed_status_string_for[action], error_message)
+        error_message = "Error message: " + " ".join(err.split('\n')) + "; Command executed: " + " ".join(porter_command)
+
+        pass_despite_error = False
+        if "uninstall" == action and "could not find installation" in err:
+            message_logger_adapter.warning("The installation doesn't exist. Treating as a successful action to allow the flow to proceed.")
+            pass_despite_error = True
+            error_message = f"A success despite of underlying error. {error_message}"
+
+        if pass_despite_error:
+            status_for_sb_message = statuses.pass_status_string_for[action]
+        else:
+            status_for_sb_message = statuses.failed_status_string_for[action]
+
+        resource_request_message = service_bus_message_generator(msg_body, status_for_sb_message, error_message)
 
         # Post message on sb queue to notify receivers of action failure
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]))
         message_logger_adapter.info(f"{installation_id}: Porter action failed with error = {error_message}")
-        return False
+        return pass_despite_error
 
     else:
         # Get the outputs
@@ -209,8 +222,8 @@ async def get_porter_outputs(msg_body: dict, message_logger_adapter: logging.Log
 
             # loop props individually to try to deserialise to dict/list, as all TF outputs are strings, but we want the pure value
             for i in range(0, len(outputs_json)):
-                if "{" in outputs_json[i]['Value'] or "[" in outputs_json[i]['Value']:
-                    outputs_json[i]['Value'] = json.loads(outputs_json[i]['Value'].replace("\\", ""))
+                if "{" in outputs_json[i]['value'] or "[" in outputs_json[i]['value']:
+                    outputs_json[i]['value'] = json.loads(outputs_json[i]['value'].replace("\\", ""))
 
             message_logger_adapter.info(f"Got outputs as json: {outputs_json}")
         except ValueError:
