@@ -30,5 +30,6 @@ locals {
     "privatelink.postgres.database.azure.com",
     "nexus-${var.tre_id}.${var.location}.cloudapp.azure.com",
     "privatelink.mysql.database.azure.com",
+    "privatelink.azuredatabricks.net"
   ])
 }

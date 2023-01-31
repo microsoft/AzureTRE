@@ -1,0 +1,1316 @@
+{
+  "australiacentral": {
+    "webappDestinationAddresses": [
+      "13.75.218.172/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "13.75.164.249/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.australiaeast.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "13.70.105.50/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.53.145.128/28"
+    ],
+    " ": [
+      "dblogprodausteast.blob.core.windows.net"
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      "dbartifactsprodaustc.blob.core.windows.net"
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      "dbartifactsprodaustc2.blob.core.windows.net"
+    ],
+    "eventHubEndpointDomains": [
+      "prod-australiaeast-observabilityeventhubs.servicebus.windows.net"
+    ],
+    "metastoreDomains": [
+      "consolidated-australiacentral-prod-metastore.mysql.database.azure.com"
+    ]
+  },
+  "australiacentral2": {
+    "webappDestinationAddresses": [
+      "13.75.218.172/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "13.75.164.249/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.australiaeast.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "13.70.105.50/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.53.145.128/28"
+    ],
+    "logBlobStorageDomains": [
+      "dblogprodausteast.blob.core.windows.net"
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      "dbartifactsprodaustc2.blob.core.windows.net"
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      "dbartifactsprodaustc.blob.core.windows.net"
+    ],
+    "eventHubEndpointDomains": [
+      "prod-australiaeast-observabilityeventhubs.servicebus.windows.net"
+    ],
+    "metastoreDomains": [
+      "consolidated-australiacentral2-prod-metastore.mysql.database.azure.com"
+    ]
+  },
+  "australiaeast": {
+    "webappDestinationAddresses": [
+      "13.75.218.172/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "13.75.164.249/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.australiaeast.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "13.70.105.50/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.53.145.128/28"
+    ],
+    "logBlobStorageDomains": [
+      "dblogprodausteast.blob.core.windows.net"
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      "dbartifactsprodauste.blob.core.windows.net",
+      "arprodaustea1.blob.core.windows.net",
+      "arprodaustea2.blob.core.windows.net",
+      "arprodaustea3.blob.core.windows.net",
+      "arprodaustea4.blob.core.windows.net",
+      "arprodaustea5.blob.core.windows.net",
+      "arprodaustea6.blob.core.windows.net",
+      "arprodaustea7.blob.core.windows.net",
+      "arprodaustea8.blob.core.windows.net",
+      "arprodaustea9.blob.core.windows.net",
+      "arprodaustea10.blob.core.windows.net",
+      "arprodaustea11.blob.core.windows.net",
+      "arprodaustea12.blob.core.windows.net",
+      "arprodaustea13.blob.core.windows.net",
+      "arprodaustea14.blob.core.windows.net",
+      "arprodaustea15.blob.core.windows.net"
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      "dbartifactsprodaustse.blob.core.windows.net"
+    ],
+    "eventHubEndpointDomains": [
+      "prod-australiaeast-observabilityeventhubs.servicebus.windows.net"
+    ],
+    "metastoreDomains": [
+      "consolidated-australiaeast-prod-metastore.mysql.database.azure.com",
+      "consolidated-australiaeast-prod-metastore-addl-1.mysql.database.azure.com"
+    ]
+  },
+  "australiasoutheast": {
+    "webappDestinationAddresses": [
+      "13.75.218.172/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "13.75.164.249/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.australiaeast.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "13.70.105.50/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.53.145.128/28"
+    ],
+    "logBlobStorageDomains": [
+      "dblogprodausteast.blob.core.windows.net"
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      "dbartifactsprodaustse.blob.core.windows.net"
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      "dbartifactsprodauste.blob.core.windows.net"
+    ],
+    "eventHubEndpointDomains": [
+      "prod-australiaeast-observabilityeventhubs.servicebus.windows.net"
+    ],
+    "metastoreDomains": [
+      "consolidated-australiasoutheast-prod-metastore.mysql.database.azure.com"
+    ]
+  },
+  "brazilsouth": {
+    "webappDestinationAddresses": [
+      "104.41.54.118/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "23.97.106.142/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.brazilsouth.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "191.232.53.223/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.197.222.144/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "canadacentral": {
+    "webappDestinationAddresses": [
+      "13.71.184.74/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "13.88.249.244/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.canadacentral.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "40.85.223.25/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "52.139.4.160/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "canadaeast": {
+    "webappDestinationAddresses": [
+      "13.71.184.74/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "13.88.249.244/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.canadacentral.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "40.85.223.25/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "52.139.4.160/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "centralindia": {
+    "webappDestinationAddresses": [
+      "104.211.89.81/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "52.172.133.58/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.centralindia.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "104.211.101.14/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.193.246.208/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "centralus": {
+    "webappDestinationAddresses": [
+      "40.70.58.221/32",
+      "20.37.156.209/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "13.86.58.215/32",
+      "52.247.0.200/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.eastus2.azuredatabricks.net",
+      "tunnel.centralusc2.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "23.101.152.95/32",
+      "20.37.156.208/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.57.106.0/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "chinaeast2": {
+    "webappDestinationAddresses": [
+      "52.130.1.64/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "52.130.1.65/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.chinaeast2.databricks.azure.cn"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "52.130.1.65/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "chinanorth2": {
+    "webappDestinationAddresses": [
+      "52.130.16.113/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "52.130.16.112/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.chinanorth2.databricks.azure.cn"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "52.130.16.112/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "eastasia": {
+    "webappDestinationAddresses": [
+      "52.187.145.107/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "102.37.41.3/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.southeastasia.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "52.187.0.85/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.195.104.64/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "eastus": {
+    "webappDestinationAddresses": [
+      "40.70.58.221/32",
+      "20.42.4.209/32",
+      "20.42.4.211/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "52.247.0.200/32",
+      "52.146.50.16/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.eastus2.azuredatabricks.net",
+      "tunnel.eastusc3.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "23.101.152.95/32",
+      "20.42.4.208/32",
+      "20.42.4.210/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.57.106.0/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "eastus2": {
+    "webappDestinationAddresses": [
+      "40.70.58.221/32",
+      "20.41.4.113/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "52.247.0.200/32",
+      "20.186.83.56/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.eastus2.azuredatabricks.net",
+      "tunnel.eastus2c2.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "23.101.152.95/32",
+      "20.41.4.112/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.57.106.0/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "francecentral": {
+    "webappDestinationAddresses": [
+      "40.89.168.225/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "51.103.18.111/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.francecentral.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "40.89.171.101/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.74.69.128/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "germanywestcentral": {
+    "webappDestinationAddresses": [
+      "20.52.93.41/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "20.52.93.40/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.germanywestcentral.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "20.52.93.42/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.52.93.40/29"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "japaneast": {
+    "webappDestinationAddresses": [
+      "52.246.160.72/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "20.46.121.76/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.japaneast.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "13.78.19.235/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.78.226.176/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "japanwest": {
+    "webappDestinationAddresses": [
+      "52.246.160.72/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "20.46.121.76/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.japaneast.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "13.78.19.235/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.78.226.176/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "koreacentral": {
+    "webappDestinationAddresses": [
+      "52.141.22.164/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "20.194.4.102/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.koreacentral.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "52.141.6.181/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.194.107.48/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "northcentralus": {
+    "webappDestinationAddresses": [
+      "40.70.58.221/32",
+      "40.80.188.0/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "52.247.0.200/32",
+      "23.100.226.13/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.eastus2.azuredatabricks.net",
+      "tunnel.northcentralusc2.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "23.101.152.95/32",
+      "40.80.188.1/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.57.106.0/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "northeurope": {
+    "webappDestinationAddresses": [
+      "52.232.19.246/32",
+      "20.38.84.81/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "23.97.201.41/32",
+      "40.127.147.196/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.westeurope.azuredatabricks.net",
+      "tunnel.northeuropec2.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "23.100.0.135/32",
+      "20.38.84.80/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.73.215.48/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "norwayeast": {
+    "webappDestinationAddresses": [
+      "51.120.40.120/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "51.120.40.122/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.norwayeast.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "51.120.40.121/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "51.13.86.224/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "southafricanorth": {
+    "webappDestinationAddresses": [
+      "102.133.224.24/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "102.37.41.3/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.southafricanorth.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "40.127.5.82/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "102.133.192.48/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "southcentralus": {
+    "webappDestinationAddresses": [
+      "40.118.174.12/32",
+      "40.119.9.208/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "40.86.167.110/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.westus.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "40.83.178.242/32",
+      "40.119.9.209/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "13.91.84.96/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "southindia": {
+    "webappDestinationAddresses": [
+      "104.211.89.81/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "52.172.133.58/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.centralindia.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "104.211.101.14/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.193.246.208/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "southeastasia": {
+    "webappDestinationAddresses": [
+      "52.187.145.107/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "52.230.27.216/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.southeastasia.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "52.187.0.85/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.195.104.64/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "swedencentral": {
+    "webappDestinationAddresses": [
+      "51.12.41.16/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "51.12.41.18/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.swedencentral.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "51.12.41.17/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.91.164.16/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "switzerlandnorth": {
+    "webappDestinationAddresses": [
+      "51.107.48.120/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "51.107.203.195/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.switzerlandnorth.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "51.107.48.121/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "51.103.172.176/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "switzerlandwest": {
+    "webappDestinationAddresses": [
+      "51.107.144.68/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "51.107.144.70/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.switzerlandwest.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "51.107.144.69/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "51.107.233.80/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "uaenorth": {
+    "webappDestinationAddresses": [
+      "40.123.212.253/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "40.123.225.135/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.uaenorth.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "40.123.218.63/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "40.120.89.0/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "uksouth": {
+    "webappDestinationAddresses": [
+      "51.140.204.4/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "51.141.103.193/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.ukwest.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "51.140.203.27/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "51.141.64.128/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "ukwest": {
+    "webappDestinationAddresses": [
+      "51.140.204.4/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "51.141.103.193/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.ukwest.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "51.140.203.27/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "51.141.64.128/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "usgovarizona": {
+    "webappDestinationAddresses": [
+      "52.244.37.5/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "52.244.38.231/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.usgovarizona.databricks.azure.us"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "20.140.48.120/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "usgovvirginia": {
+    "webappDestinationAddresses": [
+      "52.227.227.164/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "52.227.226.255/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.usgovvirginia.databricks.azure.us"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "52.127.49.73/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "westcentralus": {
+    "webappDestinationAddresses": [
+      "52.150.136.68/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "52.150.136.70/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.westcentralus.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "52.150.136.69/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "52.161.34.0/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "westeurope": {
+    "webappDestinationAddresses": [
+      "52.232.19.246/32",
+      "40.74.30.80/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "23.97.201.41/32",
+      "51.138.96.158/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.westeurope.azuredatabricks.net",
+      "tunnel.westeuropec2.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "23.100.0.135/32",
+      "40.74.30.81/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.73.215.48/28"
+    ],
+    "logBlobStorageDomains": [
+      "dblogprodwesteurope.blob.core.windows.net"
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      "dbartifactsprodwesteu.blob.core.windows.net",
+      "dbartifactsprodwesteu1.blob.core.windows.net",
+      "arprodwesteua2.blob.core.windows.net",
+      "arprodwesteua3.blob.core.windows.net",
+      "arprodwesteua4.blob.core.windows.net",
+      "arprodwesteua5.blob.core.windows.net",
+      "arprodwesteua6.blob.core.windows.net",
+      "arprodwesteua7.blob.core.windows.net",
+      "arprodwesteua8.blob.core.windows.net",
+      "arprodwesteua9.blob.core.windows.net",
+      "arprodwesteua10.blob.core.windows.net",
+      "arprodwesteua11.blob.core.windows.net",
+      "arprodwesteua12.blob.core.windows.net",
+      "arprodwesteua13.blob.core.windows.net",
+      "arprodwesteua14.blob.core.windows.net",
+      "arprodwesteua15.blob.core.windows.net",
+      "arprodwesteua16.blob.core.windows.net",
+      "arprodwesteua17.blob.core.windows.net",
+      "arprodwesteua18.blob.core.windows.net",
+      "arprodwesteua19.blob.core.windows.net",
+      "arprodwesteua20.blob.core.windows.net",
+      "arprodwesteua21.blob.core.windows.net",
+      "arprodwesteua22.blob.core.windows.net",
+      "arprodwesteua23.blob.core.windows.net",
+      "arprodwesteua24.blob.core.windows.net"
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      "dbartifactsprodnortheu.blob.core.windows.net"
+    ],
+    "eventHubEndpointDomains": [
+      "prod-westeurope-observabilityeventhubs.servicebus.windows.net",
+      "prod-westeuc2-observabilityeventhubs.servicebus.windows.net"
+    ],
+    "metastoreDomains": [
+      "consolidated-westeurope-prod-metastore-addl-1.mysql.database.azure.com",
+      "consolidated-westeurope-prod-metastore-addl-2.mysql.database.azure.com",
+      "consolidated-westeurope-prod-metastore-addl-3.mysql.database.azure.com",
+      "consolidated-westeuropec2-prod-metastore-0.mysql.database.azure.com",
+      "consolidated-westeuropec2-prod-metastore-1.mysql.database.azure.com",
+      "consolidated-westeuropec2-prod-metastore-2.mysql.database.azure.com",
+      "consolidated-westeuropec2-prod-metastore-3.mysql.database.azure.com"
+    ]
+  },
+  "westindia": {
+    "webappDestinationAddresses": [
+      "104.211.89.81/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "52.172.133.58/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.centralindia.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "104.211.101.14/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "20.193.246.208/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "westus": {
+    "webappDestinationAddresses": [
+      "40.118.174.12/32",
+      "20.42.129.160/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "40.86.167.110/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.westus.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "40.83.178.242/32",
+      "20.42.129.161/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "13.91.84.96/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  },
+  "westus2": {
+    "webappDestinationAddresses": [
+      "40.118.174.12/32"
+    ],
+    "sccRelayDestinationAddresses": [
+      "40.86.167.110/32"
+    ],
+    "sccRelayDomains": [
+      "tunnel.westus.azuredatabricks.net"
+    ],
+    "controlPlaneNatDestinationAddresses": [
+      "40.83.178.242/32"
+    ],
+    "extendedInfrastructureDestinationAddresses": [
+      "13.91.84.96/28"
+    ],
+    "logBlobStorageDomains": [
+      ""
+    ],
+    "artifactBlobStoragePrimaryDomains": [
+      ""
+    ],
+    "artifactBlobStorageSecondaryDomains": [
+      ""
+    ],
+    "eventHubEndpointDomains": [
+      ""
+    ],
+    "metastoreDomains": [
+      ""
+    ]
+  }
+}
