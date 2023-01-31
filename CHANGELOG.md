@@ -24,6 +24,7 @@
   :warning: Any custom rules you have added manually will be **lost** and you'll need to add it back after the upgrade has been completed.
 
 FEATURES:
+* Add Azure Databricks as workspace service [#1857](https://github.com/microsoft/AzureTRE/pull/1857)
 
 ENHANCEMENTS:
 * Add support for referencing IP Groups from the Core Resource Group in firewall rules created via the pipeline [#3089](https://github.com/microsoft/AzureTRE/pull/3089)
