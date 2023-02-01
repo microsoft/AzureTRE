@@ -37,6 +37,7 @@ ENHANCEMENTS:
 BUG FIXES:
 * Reauth CLI if TRE endpoint has changed [#3137](https://github.com/microsoft/AzureTRE/pull/3137)
 * Added Migration for Airlock requests that were created prior to version 0.5.0  ([#3152](https://github.com/microsoft/AzureTRE/pull/3152))
+* Temporarly use the remote bundle for `check-params` target [#3149](https://github.com/microsoft/AzureTRE/pull/3149)
 
 COMPONENTS:
 
