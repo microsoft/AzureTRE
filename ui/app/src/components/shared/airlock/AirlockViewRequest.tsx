@@ -4,7 +4,7 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { WorkspaceContext } from "../../../contexts/WorkspaceContext";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
-import { AirlockFilesLinkInvalidStatus, AirlockRequest, AirlockRequestAction, AirlockRequestStatus, AirlockReviewDecision } from "../../../models/airlock";
+import { AirlockFilesLinkValidStatus, AirlockRequest, AirlockRequestAction, AirlockRequestStatus, AirlockReviewDecision } from "../../../models/airlock";
 import { ApiEndpoint } from "../../../models/apiEndpoints";
 import { APIError } from "../../../models/exceptions";
 import { destructiveButtonStyles } from "../../../styles";
@@ -241,7 +241,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
             </Stack.Item>
           </Stack>
           {
-            !AirlockFilesLinkInvalidStatus.includes(request.status) && <>
+            AirlockFilesLinkValidStatus.includes(request.status) && <>
               <Stack style={{marginTop: '20px'}} styles={underlineStackStyles}>
                 <Stack.Item styles={stackItemStyles}>
                   <b>Files</b>
