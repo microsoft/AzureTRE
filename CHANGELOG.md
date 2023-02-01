@@ -33,7 +33,7 @@ ENHANCEMENTS:
 * Move non-core DNS zones out of the network module to reduce dependencies [#3119](https://github.com/microsoft/AzureTRE/pull/3119)
 * Review VMs are being cleaned up when an Airlock request is canceled ([#3130](https://github.com/microsoft/AzureTRE/pull/3130))
 * Sample queries to investigate logs of the core TRE applications ([#3151](https://github.com/microsoft/AzureTRE/pull/3151))
-* API runs with gunicorn and uvicorn workers (as recommanded) [#TBD](https://github.com/microsoft/AzureTRE/pull/TBD)
+* API runs with gunicorn and uvicorn workers (as recommanded) [#3178](https://github.com/microsoft/AzureTRE/pull/3178)
 
 BUG FIXES:
 * Reauth CLI if TRE endpoint has changed [#3137](https://github.com/microsoft/AzureTRE/pull/3137)
