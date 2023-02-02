@@ -68,7 +68,7 @@ async def build_porter_command(config, logger, msg_body, custom_action=False):
                     f"{' invoke --action' if custom_action else ''}"
                     f" {msg_body['action']} \"{installation_id}\""
                     f" --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
-                    f" {porter_parameters} --allow-docker-host-access --force"
+                    f" {porter_parameters} --force"
                     f" --credential-set arm_auth"
                     f" --credential-set aad_auth"
                     ]
