@@ -125,7 +125,7 @@ export const AirlockRequestFilesSection: React.FunctionComponent<AirlockRequestF
         <Stack>
           <Stack.Item style={{ paddingTop: '10px', paddingBottom: '10px' }}>
             <small>Use Azure command-line interface (Azure CLI) to interact with the storage container.</small>
-            <hr style={{ border: "1px solid #ddd", borderRadius: "1px" }} />
+            <hr style={{ border: "1px solid #faf9f8", borderRadius: "1px" }} />
           </Stack.Item>
           <Stack.Item style={{ paddingTop: '10px', paddingBottom: '10px' }}>
             {
@@ -137,7 +137,7 @@ export const AirlockRequestFilesSection: React.FunctionComponent<AirlockRequestF
               <>
                 <Stack horizontal styles={{ root: { alignItems: 'center', paddingTop: '7px' } }}>
                   <Stack.Item grow>
-                    <TextField readOnly value={cliCommand} defaultValue="" multiline autoAdjustHeight={true} resizable={false} />
+                    <TextField readOnly value={cliCommand} defaultValue="" multiline rows={6} autoAdjustHeight={true} resizable={false} />
                   </Stack.Item>
                   <PrimaryButton
                     iconProps={{ iconName: 'copy' }}
