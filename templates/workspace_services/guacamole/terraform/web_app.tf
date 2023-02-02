@@ -100,14 +100,13 @@ resource "azurerm_monitor_diagnostic_setting" "guacamole" {
   target_resource_id         = azurerm_linux_web_app.guacamole.id
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
-  dynamic "log" {
-    for_each = data.azurerm_monitor_diagnostic_categories.guacamole.log_category_types
+  dynamic "enabled_log" {
+    for_each = setintersection(data.azurerm_monitor_diagnostic_categories.guacamole.log_category_types, local.guacamole_diagnostic_categories_enabled)
     content {
-      category = log.value
-      enabled  = contains(local.guacamole_diagnostic_categories_enabled, log.value) ? true : false
+      category = enabled_log.value
 
       retention_policy {
-        enabled = contains(local.guacamole_diagnostic_categories_enabled, log.value) ? true : false
+        enabled = true
         days    = 365
       }
     }
