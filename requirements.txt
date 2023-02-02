@@ -1,6 +1,6 @@
 # Dev requirements
 flake8==5.0.4 # same as super linter
-pre-commit==2.21.0
+pre-commit==3.0.3
 semantic-version==2.10.0
 
 -r api_app/requirements.txt
