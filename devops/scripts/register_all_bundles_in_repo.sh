@@ -1,5 +1,9 @@
 #!/bin/bash
-set -eu
+set -o errexit
+set -o pipefail
+set -o nounset
+# Uncomment this line to see each command for debugging (careful: this will show secrets!)
+# set -o xtrace
 
 register_template() {
   local template_dir=$1
