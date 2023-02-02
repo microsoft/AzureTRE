@@ -35,6 +35,7 @@ ENHANCEMENTS:
 * Sample queries to investigate logs of the core TRE applications ([#3151](https://github.com/microsoft/AzureTRE/pull/3151))
 * Remove support of docker-in-docker for templates/bundles ([#3180](https://github.com/microsoft/AzureTRE/pull/3180))
 * API runs with gunicorn and uvicorn workers (as recommended) [#3178](https://github.com/microsoft/AzureTRE/pull/3178)
+* Upgrade core components and key templates to Terraform AzurmRM [#3185](https://github.com/microsoft/AzureTRE/pull/3185)
 
 BUG FIXES:
 * Reauth CLI if TRE endpoint has changed [#3137](https://github.com/microsoft/AzureTRE/pull/3137)
