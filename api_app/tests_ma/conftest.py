@@ -1,5 +1,7 @@
 import uuid
 import pytest
+import pytest_asyncio
+from mock import patch
 from models.domain.request_action import RequestAction
 from models.domain.resource import Resource
 from models.domain.user_resource import UserResource
@@ -458,3 +460,13 @@ def simple_pipeline_step() -> PipelineStep:
             ),
         ]
     )
+
+
+@pytest_asyncio.fixture()
+def no_database():
+    """ overrides connecting to the database """
+    with patch('api.dependencies.database.connect_to_db', return_value=None):
+        with patch('api.dependencies.database.get_db_client', return_value=None):
+            with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
+                with patch('core.events.bootstrap_database', return_value=None):
+                    yield

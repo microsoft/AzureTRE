@@ -1,0 +1,176 @@
+---
+schemaVersion: 1.0.0
+name: tre-service-databricks
+version: 0.1.71
+description: "An Azure TRE service for Azure Databricks."
+registry: azuretre
+dockerfile: Dockerfile.tmpl
+
+credentials:
+
+  - name: azure_tenant_id
+    env: ARM_TENANT_ID
+  - name: azure_subscription_id
+    env: ARM_SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: ARM_CLIENT_ID
+  - name: azure_client_secret
+    env: ARM_CLIENT_SECRET
+
+parameters:
+  - name: workspace_id
+    type: string
+  - name: tre_id
+    type: string
+  - name: id
+    type: string
+    description: "Resource ID"
+  - name: address_space
+    type: string
+  - name: is_exposed_externally
+    type: boolean
+  - name: tfstate_resource_group_name
+    type: string
+    description: "Resource group containing the Terraform state storage account"
+  - name: tfstate_storage_account_name
+    type: string
+    description: "The name of the Terraform state storage account"
+  - name: tfstate_container_name
+    env: tfstate_container_name
+    type: string
+    default: "tfstate"
+    description: "The name of the Terraform state storage container"
+  - name: arm_use_msi
+    env: ARM_USE_MSI
+    type: boolean
+    default: false
+
+outputs:
+  - name: databricks_workspace_name
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: connection_uri
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: internal_connection_uri
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: databricks_storage_account_name
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: dbfs_blob_storage_domain
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: metastore_addresses
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: event_hub_endpoint_addresses
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: log_blob_storage_domains
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: artifact_blob_storage_domains
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: workspace_address_spaces
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: databricks_address_prefixes
+    type: string
+    applyTo:
+      - install
+      - upgrade
+
+mixins:
+  - terraform:
+      clientVersion: 1.3.6
+
+install:
+  - terraform:
+      description: "Deploy Databricks Service"
+      vars:
+        tre_resource_id: ${ bundle.parameters.id }
+        tre_id: ${ bundle.parameters.tre_id }
+        workspace_id: ${ bundle.parameters.workspace_id }
+        address_space: ${ bundle.parameters.address_space }
+        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.name }-${ bundle.parameters.id }
+      outputs:
+        - name: databricks_workspace_name
+        - name: connection_uri
+        - name: internal_connection_uri
+        - name: databricks_storage_account_name
+        - name: dbfs_blob_storage_domain
+        - name: metastore_addresses
+        - name: event_hub_endpoint_addresses
+        - name: log_blob_storage_domains
+        - name: artifact_blob_storage_domains
+        - name: workspace_address_spaces
+        - name: databricks_address_prefixes
+
+upgrade:
+  - terraform:
+      description: "Upgrade Databricks Service"
+      vars:
+        tre_resource_id: ${ bundle.parameters.id }
+        tre_id: ${ bundle.parameters.tre_id }
+        workspace_id: ${ bundle.parameters.workspace_id }
+        address_space: ${ bundle.parameters.address_space }
+        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.name }-${ bundle.parameters.id }
+      outputs:
+        - name: databricks_workspace_name
+        - name: connection_uri
+        - name: internal_connection_uri
+        - name: databricks_storage_account_name
+        - name: dbfs_blob_storage_domain
+        - name: metastore_addresses
+        - name: event_hub_endpoint_addresses
+        - name: log_blob_storage_domains
+        - name: artifact_blob_storage_domains
+        - name: workspace_address_spaces
+        - name: databricks_address_prefixes
+
+uninstall:
+  - terraform:
+      description: "Uninstall Azure Databricks Service"
+      vars:
+        tre_resource_id: ${ bundle.parameters.id }
+        tre_id: ${ bundle.parameters.tre_id }
+        workspace_id: ${ bundle.parameters.workspace_id }
+        address_space: ${ bundle.parameters.address_space }
+        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.name }-${ bundle.parameters.id }

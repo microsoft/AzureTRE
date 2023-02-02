@@ -86,7 +86,7 @@ export const RootLayout: React.FunctionComponent = () => {
       }
     };
 
-    if (appRolesCtx.roles.includes(RoleName.TREAdmin)) {
+    if (appRolesCtx.roles && appRolesCtx.roles.includes(RoleName.TREAdmin)) {
       getCosts();
     }
 
