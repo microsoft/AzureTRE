@@ -103,6 +103,7 @@ prepare-tf-state:
 deploy-core: tre-start
 	$(call target_title, "Deploying TRE") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
+	&& rm -fr ~/.config/tre/environment.json \
 	&& if [[ "$${TF_LOG}" == "DEBUG" ]]; \
 		then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${MAKEFILE_DIR}/core/terraform/ \
 			&& ./deploy.sh 1>/dev/null 2>/dev/null; \
@@ -185,9 +186,9 @@ bundle-build:
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} IMAGE_NAME_PREFIX=${IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_build.sh \
 	&& porter build
-	if [ "$${USER}" == "vscode" ]; then $(MAKE) bundle-check-params; fi
+#	$(MAKE) bundle-check-params # TODO: uncomment when resolved https://github.com/microsoft/AzureTRE/issues/3146
 
-bundle-install: bundle-check-params
+bundle-install: # bundle-check-params # TODO: uncomment when resolved https://github.com/microsoft/AzureTRE/issues/3146
 	$(call target_title, "Deploying ${DIR} with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
@@ -200,7 +201,7 @@ bundle-install: bundle-check-params
 	&& porter install --parameter-set $$(yq ".name" porter.yaml) \
 		--credential-set arm_auth \
 		--credential-set aad_auth \
-		--allow-docker-host-access --debug
+		--debug
 
 # Validates that the parameters file is synced with the bundle.
 # The file is used when installing the bundle from a local machine.
@@ -217,6 +218,20 @@ bundle-check-params:
 		then echo -e "*** Add to params ***:*** Remove from params ***\n$$comm_output" | column -t -s ":"; exit 1; \
 		else echo "parameters.json file up-to-date."; fi
 
+# TODO: probably delete when resolved https://github.com/microsoft/AzureTRE/issues/3146
+bundle-check-params-remote:
+	$(call target_title, "Checking bundle parameters in ${DIR}") \
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
+	&& az acr login --name $${ACR_NAME}	\
+	&& cd ${DIR} \
+	&& if [ ! -f "parameters.json" ]; then echo "Error - please create a parameters.json file."; exit 1; fi \
+	&& if [ "$$(jq -r '.name' parameters.json)" != "$$(yq eval '.name' porter.yaml)" ]; then echo "Error - ParameterSet name isn't equal to bundle's name."; exit 1; fi \
+	&& bundle_remote_ref="$${ACR_NAME}.azurecr.io/$$(yq eval '.name' porter.yaml):v$$(yq eval '.version' porter.yaml)" \
+	&& comm_output=$$(set -o pipefail && comm -3 --output-delimiter=: <(porter explain --reference $${bundle_remote_ref} -ojson | jq -r '.parameters[].name | select (. != "arm_use_msi")' | sort) <(jq -r '.parameters[].name | select(. != "arm_use_msi")' parameters.json | sort)) \
+	&& if [ ! -z "$${comm_output}" ]; \
+		then echo -e "*** Add to params ***:*** Remove from params ***\n$$comm_output" | column -t -s ":"; exit 1; \
+		else echo "parameters.json file up-to-date."; fi
+
 bundle-uninstall:
 	$(call target_title, "Uninstalling ${DIR} with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
@@ -229,7 +244,7 @@ bundle-uninstall:
 	&& porter uninstall --parameter-set $$(yq ".name" porter.yaml) \
 		--credential-set arm_auth \
 		--credential-set aad_auth \
-		--allow-docker-host-access --debug
+		--debug
 
 bundle-custom-action:
  	$(call target_title, "Performing:${ACTION} ${DIR} with Porter") \
@@ -243,7 +258,7 @@ bundle-custom-action:
  	&& porter invoke --action ${ACTION} --parameter-set $$(yq ".name" porter.yaml) \
 		--credential-set arm_auth \
 		--credential-set aad_auth \
-		--allow-docker-host-access --debug
+		--debug
 
 bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
@@ -255,7 +270,8 @@ bundle-publish:
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_push.sh \
 	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --force
 
-bundle-register:
+# TODO: delete bundle-check-params-remote prestep when resolved https://github.com/microsoft/AzureTRE/issues/3146
+bundle-register: bundle-check-params-remote
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Registering ${DIR} bundle") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \

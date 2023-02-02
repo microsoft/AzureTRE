@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-export-reviewvm
-version: 0.1.0
+version: 0.1.2
 description: "An Azure TRE User Resource Template for reviewing Airlock export requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -15,7 +15,7 @@ custom:
       source_image_reference:
         publisher: microsoft-dsvm
         offer: dsvm-win-2019
-        sku: server-2019
+        sku: winserver-2019
         version: latest
       conda_config: true
 

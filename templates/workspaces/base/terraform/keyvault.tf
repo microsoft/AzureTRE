@@ -48,11 +48,10 @@ resource "azurerm_monitor_diagnostic_setting" "kv" {
   target_resource_id         = azurerm_key_vault.kv.id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
 
-  dynamic "log" {
-    for_each = toset(["AuditEvent", "AzurePolicyEvaluationDetails"])
+  dynamic "enabled_log" {
+    for_each = ["AuditEvent", "AzurePolicyEvaluationDetails"]
     content {
-      category = log.value
-      enabled  = true
+      category = enabled_log.value
 
       retention_policy {
         enabled = true

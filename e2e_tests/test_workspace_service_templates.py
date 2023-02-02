@@ -4,7 +4,7 @@ from httpx import AsyncClient
 from starlette import status
 
 import config
-from helpers import get_auth_header, get_template
+from helpers import assert_status, get_auth_header, get_template
 from resources import strings
 from helpers import get_admin_token
 
@@ -35,6 +35,7 @@ async def test_get_workspace_service_template(template_name, verify) -> None:
     admin_token = await get_admin_token(verify)
     async with get_template(template_name, strings.API_WORKSPACE_SERVICE_TEMPLATES, admin_token, verify) as response:
         assert (response.status_code == status.HTTP_200_OK), f"GET Request for {template_name} failed"
+        assert_status(response, [status.HTTP_200_OK], f"Failed to GET {template_name}")
 
 
 @pytest.mark.smoke
@@ -58,4 +59,4 @@ async def test_create_workspace_service_templates(verify) -> None:
         admin_token = await get_admin_token(verify)
         response = await client.post(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACE_SERVICE_TEMPLATES}", headers=get_auth_header(admin_token), json=payload)
 
-        assert (response.status_code == status.HTTP_201_CREATED or response.status_code == status.HTTP_409_CONFLICT), "The workspace service template creation service returned unexpected response."
+        assert_status(response, [status.HTTP_201_CREATED, status.HTTP_409_CONFLICT], "Failed to create workspace service template")

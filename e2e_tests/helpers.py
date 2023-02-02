@@ -1,9 +1,9 @@
 from json import JSONDecodeError
 
 import asyncio
-from typing import Optional
+from typing import List, Optional
 from contextlib import asynccontextmanager
-from httpx import AsyncClient, Timeout
+from httpx import AsyncClient, Timeout, Response
 import logging
 from starlette import status
 
@@ -56,8 +56,8 @@ async def get_shared_service_by_name(template_name: str, verify, token) -> Optio
         auth_headers = get_auth_header(token)
 
         response = await client.get(full_endpoint, headers=auth_headers, timeout=TIMEOUT)
+        assert_status(response, [status.HTTP_200_OK], "Failed to get shared services")
         LOGGER.info(f'RESPONSE: {response}')
-        assert (response.status_code == status.HTTP_200_OK), "Request to get shared services failed"
 
         shared_service_list = response.json()["sharedServices"]
 
@@ -95,11 +95,11 @@ async def check_aad_auth_redirect(endpoint, verify) -> None:
             except Exception:
                 LOGGER.exception("Generic execption in http request.")
 
-        assert (response.status_code == status.HTTP_302_FOUND)
+        assert_status(response, [status.HTTP_302_FOUND])
         assert response.has_redirect_location
 
         location = response.headers["Location"]
-        LOGGER.info("Returned redirect URL: %s", location)
+        LOGGER.info(f"Returned redirect URL: {location}")
 
         valid_redirection_contains = ["login", "microsoftonline", "oauth2", "authorize"]
         assert all(word in location for word in valid_redirection_contains), "Redirect URL doesn't apper to be valid"
@@ -123,9 +123,14 @@ async def get_admin_token(verify) -> str:
         try:
             responseJson = response.json()
         except JSONDecodeError:
-            assert False, "Failed to parse response as JSON: {} {}".format(response.status_code, response.content)
+            assert False, f"Failed to parse response as JSON. status_code: {response.status_code}, content: {response.content}"
 
-        assert "access_token" in responseJson, "Failed to get access_token: {}".format(response.content)
+        assert "access_token" in responseJson, f"Failed to get access_token. content: {response.content}"
         token = responseJson["access_token"]
         assert token is not None, "Token not returned"
-        return token if (response.status_code == status.HTTP_200_OK) else None
+        return token if (response.status_code == status.HTTP_200_OK) else ""
+
+
+def assert_status(response: Response, expected_status: List[int] = [200], message_prefix: str = "Unexpected HTTP Status"):
+    assert response.status_code in expected_status, \
+        f"{message_prefix}. Expected: {expected_status}. Actual: {response.status_code}. Response text: {response.text}"
