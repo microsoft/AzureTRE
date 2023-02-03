@@ -15,7 +15,7 @@
       "type": "securestring"
     },
     "enableSSL": {
-      "type": "boolean"
+      "type": "string"
     }
   },
   "variables": {},
