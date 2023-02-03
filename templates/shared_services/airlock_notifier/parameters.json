@@ -47,6 +47,12 @@
       }
     },
     {
+      "name": "smtp_server_port",
+      "source": {
+        "env": "SMTP_SERVER_PORT"
+      }
+    },
+    {
       "name": "smtp_username",
       "source": {
         "env": "SMTP_USERNAME"
@@ -62,6 +68,12 @@
       "name": "smtp_from_email",
       "source": {
         "env": "SMTP_FROM_EMAIL"
+      }
+    },
+    {
+      "name": "smtp_server_enable_ssl",
+      "source": {
+        "env": "SMTP_SERVER_ENABLE_SSL"
       }
     }
   ]
