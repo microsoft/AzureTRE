@@ -5,7 +5,7 @@
     "serverAddress": {
       "type": "string"
     },
-    "port": {
+    "serverPort": {
       "type": "string"
     },
     "userName": {
