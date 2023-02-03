@@ -5,11 +5,17 @@
     "serverAddress": {
       "type": "string"
     },
+    "port": {
+      "type": "string"
+    },
     "userName": {
       "type": "string"
     },
     "password": {
       "type": "securestring"
+    },
+    "enableSSL": {
+      "type": "boolean"
     }
   },
   "variables": {},
@@ -23,7 +29,7 @@
           "userName": "[parameters('userName')]",
           "password": "[parameters('password')]",
           "port": "[parameters('serverPort')]",
-          "enableSSL": false
+          "enableSSL": "[parameters('enableSSL')]"
         },
         "api": {
           "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'smtp')]"

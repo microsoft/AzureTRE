@@ -32,7 +32,7 @@ variable "smtp_password" {
 }
 
 variable "smtp_server_enable_ssl" {
-  type    = boolean
+  type    = bool
   default = false
 }
 
