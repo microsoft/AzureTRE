@@ -41,16 +41,17 @@ async def send_deployment_message(content, correlation_id, session_id, action):
 
 
 async def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, primary_resource: Resource, resource_to_update_id: str, primary_action: str, user: User) -> Resource:
+    current_resource = await resource_repo.get_resource_by_id(operation_step.resourceId)
     # if this is main, just leave it alone and return it
     if operation_step.stepId == "main":
-        return primary_resource
+        return current_resource
 
     # get the template for the primary resource, to get all the step details for substitutions
     primary_parent_service_name = ""
     if primary_resource.resourceType == ResourceType.UserResource:
-        primary_parent_workspace_service = await resource_repo.get_resource_by_id(primary_resource.parentWorkspaceServiceId)
+        primary_parent_workspace_service = await resource_repo.get_resource_by_id(current_resource.parentWorkspaceServiceId)
         primary_parent_service_name = primary_parent_workspace_service.templateName
-    primary_template = await resource_template_repo.get_template_by_name_and_version(primary_resource.templateName, primary_resource.templateVersion, primary_resource.resourceType, primary_parent_service_name)
+    primary_template = await resource_template_repo.get_template_by_name_and_version(operation_step.parentResourceTemplate, operation_step.parentResourceTemplateVersion, operation_step.parentResourceType, primary_parent_service_name)
 
     # get the template step
     template_step = None
@@ -60,7 +61,7 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
             break
 
     if template_step is None:
-        raise Exception(f"Cannot find step with id of {operation_step.stepId} in template {primary_resource.templateName} for action {primary_action}")
+        raise Exception(f"Cannot find step with id of {operation_step.stepId} in template {current_resource.templateName} for action {primary_action}")
 
     if template_step.resourceAction == "upgrade":
         resource_to_send = await try_upgrade_with_retries(

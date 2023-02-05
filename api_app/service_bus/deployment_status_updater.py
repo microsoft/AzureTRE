@@ -102,7 +102,7 @@ class DeploymentStatusUpdater():
 
             current_step_index = 0
             for i, step in enumerate(operation.steps):
-                if step.stepId == message.stepId:
+                if step.stepId == message.stepId and step.resourceId == str(message.id):
                     step_to_update = step
                     current_step_index = i
                     if i == (len(operation.steps) - 1):
@@ -145,12 +145,15 @@ class DeploymentStatusUpdater():
 
                 # catch any errors in updating the resource - maybe Cosmos / schema invalid etc, and report them back to the op
                 try:
+                    parent_resource = ""
+                    if next_step.parentResourceId:
+                        parent_resource = await self.resource_repo.get_resource_by_id(next_step.parentResourceId)
                     resource_to_send = await update_resource_for_step(
                         operation_step=next_step,
                         resource_repo=self.resource_repo,
                         resource_template_repo=self.resource_template_repo,
                         resource_history_repo=self.resource_history_repo,
-                        primary_resource=await self.resource_repo.get_resource_by_id(operation.resourceId),  # need to get the resource again as it has been updated
+                        primary_resource=parent_resource,  # need to get the resource again as it has been updated
                         resource_to_update_id=next_step.resourceId,
                         primary_action=operation.action,
                         user=operation.user)

@@ -6,7 +6,6 @@ from jsonschema.exceptions import ValidationError
 
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_operation_by_id_from_path, get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_user_resource_by_id_from_path
-
 from db.errors import MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, UserNotAuthorizedToUseTemplate, VersionDowngradeDenied
 from db.repositories.operations import OperationRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
@@ -33,7 +32,7 @@ from services.authentication import get_current_admin_user, \
 from services.authentication import extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
-from .resource_helpers import get_identity_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, \
+from .resource_helpers import cascaded_update_resource, delete_validation, get_identity_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, \
     send_custom_action_message, send_resource_request_message, update_user_resource
 from models.domain.request_action import RequestAction
 
@@ -118,9 +117,13 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
 
 
 @workspaces_core_router.patch("/workspaces/{workspace_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
-async def patch_workspace(workspace_patch: ResourcePatch, response: Response, user=Depends(get_current_admin_user), workspace=Depends(get_workspace_by_id_from_path), workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
+async def patch_workspace(resource_patch: ResourcePatch, response: Response, user=Depends(get_current_admin_user), workspace=Depends(get_workspace_by_id_from_path), workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
     try:
-        patched_workspace, resource_template = await workspace_repo.patch_workspace(workspace, workspace_patch, etag, resource_template_repo, resource_history_repo, user, force_version_update)
+        cascade_enabled = not resource_patch.isEnabled
+        if cascade_enabled:
+            await cascaded_update_resource(resource_patch, workspace, user, etag, force_version_update, resource_template_repo=resource_template_repo, resource_history_repo=resource_history_repo, resource_repo=workspace_repo)
+        patched_workspace, resource_template = await workspace_repo.patch_workspace(workspace, resource_patch, etag, resource_template_repo, resource_history_repo, user, force_version_update)
+        # Send the message to service bus
         operation = await send_resource_request_message(
             resource=patched_workspace,
             operations_repo=operations_repo,
@@ -129,7 +132,9 @@ async def patch_workspace(workspace_patch: ResourcePatch, response: Response, us
             resource_template=resource_template,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
-            action=RequestAction.Upgrade)
+            action=RequestAction.Upgrade,
+            cascade_enabled=cascade_enabled)
+
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
@@ -141,26 +146,24 @@ async def patch_workspace(workspace_patch: ResourcePatch, response: Response, us
 
 
 @workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
-async def delete_workspace(response: Response, user=Depends(get_current_admin_user), workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
-    if workspace.isEnabled:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
-    if len(await workspace_service_repo.get_active_workspace_services_for_workspace(workspace.id)) > 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)
+async def delete_workspace(response: Response, user=Depends(get_current_admin_user), workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+    if await delete_validation(workspace, workspace_repo):
+        resource_template = await resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
 
-    resource_template = await resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
+        operation = await send_uninstall_message(
+            resource=workspace,
+            resource_repo=workspace_repo,
+            operations_repo=operations_repo,
+            resource_type=ResourceType.Workspace,
+            resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
+            user=user,
+            resource_template=resource_template,
+            cascade_enabled=True
+        )
 
-    operation = await send_uninstall_message(
-        resource=workspace,
-        resource_repo=workspace_repo,
-        operations_repo=operations_repo,
-        resource_type=ResourceType.Workspace,
-        resource_template_repo=resource_template_repo,
-        resource_history_repo=resource_history_repo,
-        user=user,
-        resource_template=resource_template)
-
-    response.headers["Location"] = construct_location_header(operation)
-    return OperationInResponse(operation=operation)
+        response.headers["Location"] = construct_location_header(operation)
+        return OperationInResponse(operation=operation)
 
 
 @workspaces_core_router.post("/workspaces/{workspace_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
@@ -271,9 +274,12 @@ async def create_workspace_service(response: Response, workspace_service_input: 
 
 
 @workspace_services_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
-async def patch_workspace_service(workspace_service_patch: ResourcePatch, response: Response, user=Depends(get_current_workspace_owner_user), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
+async def patch_workspace_service(resource_patch: ResourcePatch, response: Response, user=Depends(get_current_workspace_owner_user), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
     try:
-        patched_workspace_service, resource_template = await workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch, etag, resource_template_repo, resource_history_repo, user, force_version_update)
+        cascade_enabled = not resource_patch.isEnabled
+        if cascade_enabled:
+            await cascaded_update_resource(resource_patch, workspace_service, user, etag, force_version_update, resource_template_repo=resource_template_repo, resource_history_repo=resource_history_repo, resource_repo=workspace_service_repo)
+        patched_workspace_service, resource_template = await workspace_service_repo.patch_workspace_service(workspace_service, resource_patch, etag, resource_template_repo, resource_history_repo, user, force_version_update)
         operation = await send_resource_request_message(
             resource=patched_workspace_service,
             operations_repo=operations_repo,
@@ -295,28 +301,22 @@ async def patch_workspace_service(workspace_service_patch: ResourcePatch, respon
 
 @workspace_services_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
 async def delete_workspace_service(response: Response, user=Depends(get_current_workspace_owner_user), workspace=Depends(get_workspace_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+    if await delete_validation(workspace_service, workspace_service_repo):
+        resource_template = await resource_template_repo.get_template_by_name_and_version(workspace_service.templateName, workspace_service.templateVersion, ResourceType.WorkspaceService)
 
-    if workspace_service.isEnabled:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
+        operation = await send_uninstall_message(
+            resource=workspace_service,
+            resource_repo=workspace_service_repo,
+            operations_repo=operations_repo,
+            resource_type=ResourceType.WorkspaceService,
+            resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
+            user=user,
+            resource_template=resource_template)
 
-    if len(await user_resource_repo.get_user_resources_for_workspace_service(workspace.id, workspace_service.id)) > 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_RESOURCES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)
+        response.headers["Location"] = construct_location_header(operation)
 
-    resource_template = await resource_template_repo.get_template_by_name_and_version(workspace_service.templateName, workspace_service.templateVersion, ResourceType.WorkspaceService)
-
-    operation = await send_uninstall_message(
-        resource=workspace_service,
-        resource_repo=workspace_service_repo,
-        operations_repo=operations_repo,
-        resource_type=ResourceType.WorkspaceService,
-        resource_template_repo=resource_template_repo,
-        resource_history_repo=resource_history_repo,
-        user=user,
-        resource_template=resource_template)
-
-    response.headers["Location"] = construct_location_header(operation)
-
-    return OperationInResponse(operation=operation)
+        return OperationInResponse(operation=operation)
 
 
 @workspace_services_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
