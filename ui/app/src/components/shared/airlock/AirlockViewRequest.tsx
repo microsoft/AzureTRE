@@ -105,7 +105,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
         {
           request.status === AirlockRequestStatus.Draft && <div style={{marginTop: '10px', marginBottom: '10px'}}>
             <MessageBar>
-              This request is currently in draft. Add a file to the request's storage container using the SAS URL and submit when ready.
+              This request is currently in draft. Add a file to the request's storage container and submit when ready.
             </MessageBar>
           </div>
         }
