@@ -20,14 +20,15 @@ export const CliCommand: React.FunctionComponent<CliCommandProps> = (props: CliC
   }
 
   const renderCommand = () => {
-    const commandMatches = props.command.match(/^az\s(\w+(?:\s\w+)*)/);
-    const parameterMatches = props.command.match(/--[\w-]+\s+[^\s]+/g)
+    const commandMatches = props.command.match(/^((?! -).)*/);
 
     if (!commandMatches) {
       return
     }
 
     const commandWithoutParams = commandMatches[0]
+    const paramsOnly = props.command.replace(commandWithoutParams, '')
+    const parameterMatches = paramsOnly.match(/(?<= )-{1,2}[\w-]+(?:(?!( -){1,2}).)*/g)
 
     return <Stack styles={{ root: { padding: "15px", backgroundColor: "#f2f2f2", border: '1px solid #e6e6e6' } }}>
       <code style={{ color: "blue", fontSize: "13px" }}>
@@ -35,15 +36,11 @@ export const CliCommand: React.FunctionComponent<CliCommandProps> = (props: CliC
       </code>
       <Stack.Item style={{ paddingLeft: "30px" }}>
         {parameterMatches?.map((parameterMatch) => {
-          const paramMatch = parameterMatch.match(/(--[\w-]+)(\s+[^\s]+)/);
+          const splitParam = parameterMatch.split(/\s(.*)/)
 
-          if (!paramMatch) {
-            return null;
-          }
-
-          const param = paramMatch[1];
-          const paramValue = paramMatch[2];
-          const paramValueIsComment = paramValue.match(/<.*?>/);
+          const param = splitParam[0];
+          const paramValue = ` ${splitParam[1] || ''}`;
+          const paramValueIsComment = paramValue?.match(/<.*?>/);
 
           return (
             <div style={{ wordBreak: "break-all", fontSize: "13px" }}>
