@@ -20,6 +20,7 @@ export const CliCommand: React.FunctionComponent<CliCommandProps> = (props: CliC
   }
 
   const renderCommand = () => {
+    // regex to match only the command part (without the parameters)
     const commandMatches = props.command.match(/^((?! -).)*/);
 
     if (!commandMatches) {
@@ -28,15 +29,17 @@ export const CliCommand: React.FunctionComponent<CliCommandProps> = (props: CliC
 
     const commandWithoutParams = commandMatches[0]
     const paramsOnly = props.command.replace(commandWithoutParams, '')
-    const parameterMatches = paramsOnly.match(/(?<= )-{1,2}[\w-]+(?:(?!( -){1,2}).)*/g)
+    // regex to match all the parameters, along with their assigned values
+    const paramsList = paramsOnly.match(/(?<= )-{1,2}[\w-]+(?:(?!( -){1,2}).)*/g)
 
     return <Stack styles={{ root: { padding: "15px", backgroundColor: "#f2f2f2", border: '1px solid #e6e6e6' } }}>
       <code style={{ color: "blue", fontSize: "13px" }}>
         {commandWithoutParams}
       </code>
       <Stack.Item style={{ paddingLeft: "30px" }}>
-        {parameterMatches?.map((parameterMatch) => {
-          const splitParam = parameterMatch.split(/\s(.*)/)
+        {paramsList?.map((paramWithValue) => {
+          // split the parameter from it's value
+          const splitParam = paramWithValue.split(/\s(.*)/)
 
           const param = splitParam[0];
           const paramValue = ` ${splitParam[1] || ''}`;
