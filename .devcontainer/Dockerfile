@@ -125,3 +125,6 @@ RUN if [ "${INTERACTIVE}" = "true" ]; then /tmp/gh.sh; fi
 COPY ./cli /tmp/cli
 WORKDIR /tmp/cli
 RUN make install-cli && echo -e "\n# Set up tre completion\nsource <(_TRE_COMPLETE=bash_source tre)" >> ~/.bashrc
+
+# Build x86-64 docker images by default
+ENV DOCKER_DEFAULT_PLATFORM=amd64

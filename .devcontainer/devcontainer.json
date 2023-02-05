@@ -27,8 +27,7 @@
   ],
   "remoteUser": "vscode",
   "containerEnv": {
-    "DOCKER_BUILDKIT": "1",
-    "DOCKER_DEFAULT_PLATFORM": "amd64"
+    "DOCKER_BUILDKIT": "1"
   },
   "remoteEnv": {
     // this is used for SuperLinter
