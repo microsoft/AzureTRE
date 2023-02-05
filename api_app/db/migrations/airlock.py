@@ -1,4 +1,5 @@
 from azure.cosmos.aio import CosmosClient
+from resources import strings
 from db.repositories.airlock_requests import AirlockRequestRepository
 
 
@@ -50,5 +51,30 @@ class AirlockMigration(AirlockRequestRepository):
                     request['reviewUserResources'] = updated_review_resources
                     await self.update_item_dict(request)
                     num_updated += 1
+
+        return num_updated
+
+    async def update_review_decision_values(self) -> int:
+        num_updated = 0
+        for request in await self.query('SELECT * FROM c WHERE ARRAY_LENGTH(c.reviews) > 0'):
+            request_changed = False
+
+            for review in request['reviews']:
+                old_decision = review['reviewDecision']
+                new_decision = old_decision
+
+                if old_decision == 'approval_in_progress':
+                    new_decision = strings.AIRLOCK_REVIEW_DECISION_APPROVED
+
+                if old_decision == 'rejection_in_progress':
+                    new_decision = strings.AIRLOCK_REVIEW_DECISION_REJECTED
+
+                if new_decision != old_decision:
+                    request_changed = True
+                    review['reviewDecision'] = new_decision
+
+            if request_changed:
+                await self.update_item_dict(request)
+                num_updated += 1
 
         return num_updated

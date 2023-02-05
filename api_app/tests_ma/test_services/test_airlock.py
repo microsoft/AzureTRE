@@ -4,8 +4,8 @@ import pytest_asyncio
 import time
 from resources import strings
 from services.airlock import validate_user_allowed_to_access_storage_account, get_required_permission, \
-    validate_request_status
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReview, AirlockReviewDecision, AirlockActions
+    validate_request_status, cancel_request, delete_review_user_resource
+from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReview, AirlockReviewDecision, AirlockActions, AirlockReviewUserResource
 from tests_ma.test_api.conftest import create_workspace_owner_user, create_workspace_researcher_user
 from mock import AsyncMock, patch, MagicMock
 from models.domain.events import AirlockNotificationData, AirlockNotificationUserData, StatusChangedData, \
@@ -22,6 +22,8 @@ from api.routes.airlock import create_airlock_review, create_cancel_request, cre
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 AIRLOCK_REQUEST_ID = "5dbc15ae-40e1-49a5-834b-595f59d626b7"
 AIRLOCK_REVIEW_ID = "96d909c5-e913-4c05-ae53-668a702ba2e5"
+USER_RESOURCE_ID = "cce59042-1dee-42dc-9388-6db846feeb3b"
+WORKSPACE_SERVICE_ID = "30f2fefa-e7bb-4e5b-93aa-e50bb037502a"
 CURRENT_TIME = time.time()
 
 
@@ -51,6 +53,7 @@ def sample_airlock_request(status=AirlockRequestStatus.Draft):
         id=AIRLOCK_REQUEST_ID,
         workspaceId=WORKSPACE_ID,
         type=AirlockRequestType.Import,
+        reviewUserResources={"user-guid-here": sample_airlock_user_resource_object()},
         files=[AirlockFile(
             name="data.txt",
             size=5
@@ -69,6 +72,14 @@ def sample_airlock_request(status=AirlockRequestStatus.Draft):
         )
     )
     return airlock_request
+
+
+def sample_airlock_user_resource_object():
+    return AirlockReviewUserResource(
+        workspaceId=WORKSPACE_ID,
+        workspaceServiceId=WORKSPACE_SERVICE_ID,
+        userResourceId=USER_RESOURCE_ID
+    )
 
 
 def sample_status_changed_event(new_status="draft", previous_status=None):
@@ -453,3 +464,36 @@ async def test_get_allowed_actions_requires_same_roles_as_endpoint(action, requi
         user.roles = [role]
         allowed_actions = get_allowed_actions(request=sample_airlock_request(), user=user, airlock_request_repo=airlock_request_repo_mock)
         assert action in allowed_actions
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.delete_review_user_resource")
+@patch("services.airlock.update_and_publish_event_airlock_request")
+async def test_cancel_request_deletes_review_resource(_, delete_review_user_resource, airlock_request_repo_mock):
+    await cancel_request(
+        airlock_request=sample_airlock_request(),
+        user=create_test_user(),
+        airlock_request_repo=airlock_request_repo_mock,
+        workspace=sample_workspace(),
+        user_resource_repo=AsyncMock(),
+        workspace_service_repo=AsyncMock(),
+        resource_template_repo=AsyncMock(),
+        operations_repo=AsyncMock(),
+        resource_history_repo=AsyncMock())
+
+    delete_review_user_resource.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.disable_user_resource")
+@patch("services.airlock.send_uninstall_message")
+@patch("services.airlock.update_and_publish_event_airlock_request")
+async def test_delete_review_user_resource_disables_the_resource_before_deletion(_, __, disable_user_resource):
+    await delete_review_user_resource(user_resource=AsyncMock(),
+                                      user_resource_repo=AsyncMock(),
+                                      workspace_service_repo=AsyncMock(),
+                                      resource_template_repo=AsyncMock(),
+                                      operations_repo=AsyncMock(),
+                                      resource_history_repo=AsyncMock(),
+                                      user=create_test_user())
+    disable_user_resource.assert_called_once()
