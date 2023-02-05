@@ -1,11 +1,11 @@
-import { IconButton, MessageBar, MessageBarType, Pivot, PivotItem, PrimaryButton, Spinner, Stack, TextField, TooltipHost } from "@fluentui/react";
+import { MessageBar, MessageBarType, Pivot, PivotItem, PrimaryButton, Stack, TextField, } from "@fluentui/react";
 import React, { useCallback, useEffect, useState } from "react";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
 import { AirlockRequest, AirlockRequestStatus } from "../../../models/airlock";
 import { ApiEndpoint } from "../../../models/apiEndpoints";
 import { APIError } from "../../../models/exceptions";
 import { ExceptionLayout } from "../ExceptionLayout";
-import { Text } from '@fluentui/react/lib/Text';
+import { CliCommand } from "../CliCommand";
 
 interface AirlockRequestFilesSectionProps {
   request: AirlockRequest;
@@ -14,11 +14,8 @@ interface AirlockRequestFilesSectionProps {
 
 export const AirlockRequestFilesSection: React.FunctionComponent<AirlockRequestFilesSectionProps> = (props: AirlockRequestFilesSectionProps) => {
 
-  const COPY_TOOL_TIP_DEFAULT_TEXT = "Copy to clipboard"
-
   const [filesLink, setFilesLink] = useState<string>();
-  const [cliCommand, setCliCommand] = useState<string>();
-  const [copyToolTipText, setCopyToolTipText] = useState<string>(COPY_TOOL_TIP_DEFAULT_TEXT);
+  const [cliCommand, setCliCommand] = useState<string>("");
 
   const [filesLinkError, setFilesLinkError] = useState(false);
   const [apiFilesLinkError, setApiFilesLinkError] = useState({} as APIError);
@@ -41,49 +38,6 @@ export const AirlockRequestFilesSection: React.FunctionComponent<AirlockRequestF
     }
   }
 
-  const handleCopyCliCommand = (cliCommand: string) => {
-    navigator.clipboard.writeText(cliCommand);
-    setCopyToolTipText("Copied")
-    setTimeout(() => setCopyToolTipText(COPY_TOOL_TIP_DEFAULT_TEXT), 3000);
-  }
-
-  const renderCommand = (rawCommand: string) => {
-    const commandMatches = rawCommand.match(/^az\s(\w+(?:\s\w+)*)/);
-    const parameterMatches = rawCommand.match(/--[\w-]+\s+[^\s]+/g)
-
-    if (!commandMatches) {
-      return
-    }
-
-    const command = commandMatches[0]
-
-    return <Stack styles={{ root: { padding: "15px", backgroundColor: "#f2f2f2", border: '1px solid #e6e6e6' } }}>
-      <code style={{ color: "blue", fontSize: "13px" }}>
-        {command}
-      </code>
-      <Stack.Item style={{ paddingLeft: "30px" }}>
-        {parameterMatches?.map((parameterMatch) => {
-          const paramMatch = parameterMatch.match(/(--[\w-]+)(\s+[^\s]+)/);
-
-          if (!paramMatch) {
-            return null;
-          }
-
-          const param = paramMatch[1];
-          const paramValue = paramMatch[2];
-          const paramValueIsComment = paramValue.match(/<.*?>/);
-
-          return (
-            <div style={{ wordBreak: "break-all", fontSize: "13px" }}>
-              <code style={{ color: "teal" }}>{param}</code><code style={{ color: paramValueIsComment ? "firebrick" : "black" }}>{paramValue}</code>
-            </div>
-          );
-        })}
-      </Stack.Item>
-    </Stack >
-  }
-
-  // Retrieve a link to view/edit the airlock files
   const generateFilesLink = useCallback(async () => {
     if (props.request && props.request.workspaceId) {
       try {
@@ -174,25 +128,12 @@ export const AirlockRequestFilesSection: React.FunctionComponent<AirlockRequestF
             <small>Use Azure command-line interface (Azure CLI) to interact with the storage container.</small>
             <hr style={{ border: "1px solid #faf9f8", borderRadius: "1px" }} />
           </Stack.Item>
-          <Stack.Item style={{ paddingTop: '10px', paddingBottom: '10px' }}>
-            <Stack horizontal style={{ backgroundColor: "#e6e6e6", alignItems: 'center' }}>
-              <Stack.Item grow style={{ paddingLeft: "10px", height: "100%" }}>
-                {
-                  props.request.status === AirlockRequestStatus.Draft
-                    ? <Text >Upload a file to the storage container</Text>
-                    : <Text>Download the file from the storage container</Text>
-                }
-              </Stack.Item>
-              <Stack.Item align="end">
-                <TooltipHost content={copyToolTipText}>
-                  <IconButton
-                    iconProps={{ iconName: 'copy' }}
-                    styles={{ root: { minWidth: '40px' } }}
-                    onClick={() => { cliCommand && handleCopyCliCommand(cliCommand) }} />
-                </TooltipHost>
-              </Stack.Item>
-            </Stack>
-            {(!cliCommandError && cliCommand) ? renderCommand(cliCommand) : !cliCommandError && <Spinner label="Generating command..." style={{ padding: "15px", backgroundColor: "#f2f2f2", border: '1px solid #e6e6e6' }} />}
+          <Stack.Item style={{ paddingTop: '10px' }}>
+            <CliCommand
+              command={cliCommand}
+              title={props.request.status === AirlockRequestStatus.Draft ? "Upload a file to the storage container" : "Download the file from the storage container"}
+              isLoading={!cliCommand && !cliCommandError}
+            />
           </Stack.Item>
           {
             cliCommandError && <ExceptionLayout e={apiCliCommandError} />
