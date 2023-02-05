@@ -5,3 +5,4 @@ pytest-asyncio==0.20.3
 starlette
 pytest-timeout==2.1.0
 pytest-xdist==3.0.2
+backoff==2.2.1

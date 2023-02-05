@@ -85,11 +85,10 @@ async def receive_message(service_bus_client, logger_adapter: logging.LoggerAdap
                         await receiver.complete_message(msg)
 
                     logger_adapter.info(f"Closing session: {receiver.session.session_id}")
-                    await renewer.close()
 
         except OperationTimeoutError:
             # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
-            logger_adapter.info("No sessions for this process. Will look again...")
+            logger_adapter.debug("No sessions for this process. Will look again...")
 
         except ServiceBusConnectionError:
             # Occasionally there will be a transient / network-level error in connecting to SB.

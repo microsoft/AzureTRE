@@ -17,11 +17,11 @@
       One way to accomplish this is with the Swagger endpoint (/api/docs).
       ![Force-update a service](./docs/assets/firewall-policy-migrate1.png)
 
-      If this endpoint is not on in your deployment - include `enable_swagger` in your `config.yaml` (see the sample file), or temporarly via the API resource on azure (named `api-YOUR_TRE-ID`) -> Configuration -> `ENABLE_SWAGGER` item.
+      If this endpoint is not working in your deployment - include `enable_swagger` in your `config.yaml` (see the sample file), or temporarly activate it via the API resource on azure (named `api-YOUR_TRE-ID`) -> Configuration -> `ENABLE_SWAGGER` item.
       ![Update API setting](./docs/assets/firewall-policy-migrate2.png)
   
   
-  :warning: Any custom rules you have added manually will be **lost** and you'll need to add it back after the upgrade has been completed.
+  :warning: Any custom rules you have added manually will be **lost** and you'll need to add them back after the upgrade has been completed.
 
 FEATURES:
 * Add Azure Databricks as workspace service [#1857](https://github.com/microsoft/AzureTRE/pull/1857)
@@ -33,11 +33,15 @@ ENHANCEMENTS:
 * Move non-core DNS zones out of the network module to reduce dependencies [#3119](https://github.com/microsoft/AzureTRE/pull/3119)
 * Review VMs are being cleaned up when an Airlock request is canceled ([#3130](https://github.com/microsoft/AzureTRE/pull/3130))
 * Sample queries to investigate logs of the core TRE applications ([#3151](https://github.com/microsoft/AzureTRE/pull/3151))
+* Remove support of docker-in-docker for templates/bundles ([#3180](https://github.com/microsoft/AzureTRE/pull/3180))
+* API runs with gunicorn and uvicorn workers (as recommended) [#3178](https://github.com/microsoft/AzureTRE/pull/3178)
+* Upgrade core components and key templates to Terraform AzurmRM [#3185](https://github.com/microsoft/AzureTRE/pull/3185)
 
 BUG FIXES:
 * Reauth CLI if TRE endpoint has changed [#3137](https://github.com/microsoft/AzureTRE/pull/3137)
-* Added Migration for Airlock requests that were created prior to version 0.5.0  ([#3152](https://github.com/microsoft/AzureTRE/pull/3152))
+* Added Migration for Airlock requests that were created prior to version 0.5.0 ([#3152](https://github.com/microsoft/AzureTRE/pull/3152))
 * Temporarly use the remote bundle for `check-params` target [#3149](https://github.com/microsoft/AzureTRE/pull/3149)
+* Workspace module dependency to resolve _AnotherOperationInProgress_ errors [#TBD](https://github.com/microsoft/AzureTRE/pull/TBD)
 
 COMPONENTS:
 

@@ -201,7 +201,7 @@ bundle-install: # bundle-check-params # TODO: uncomment when resolved https://gi
 	&& porter install --parameter-set $$(yq ".name" porter.yaml) \
 		--credential-set arm_auth \
 		--credential-set aad_auth \
-		--allow-docker-host-access --debug
+		--debug
 
 # Validates that the parameters file is synced with the bundle.
 # The file is used when installing the bundle from a local machine.
@@ -244,7 +244,7 @@ bundle-uninstall:
 	&& porter uninstall --parameter-set $$(yq ".name" porter.yaml) \
 		--credential-set arm_auth \
 		--credential-set aad_auth \
-		--allow-docker-host-access --debug
+		--debug
 
 bundle-custom-action:
  	$(call target_title, "Performing:${ACTION} ${DIR} with Porter") \
@@ -258,7 +258,7 @@ bundle-custom-action:
  	&& porter invoke --action ${ACTION} --parameter-set $$(yq ".name" porter.yaml) \
 		--credential-set arm_auth \
 		--credential-set aad_auth \
-		--allow-docker-host-access --debug
+		--debug
 
 bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
@@ -297,6 +297,9 @@ shared_service_bundle:
 user_resource_bundle:
 	$(MAKE) bundle-build bundle-publish bundle-register \
 	DIR="${MAKEFILE_DIR}/templates/workspace_services/${WORKSPACE_SERVICE}/user_resources/${BUNDLE}" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-${WORKSPACE_SERVICE}
+
+bundle-publish-register-all:
+	${MAKEFILE_DIR}/devops/scripts/publish_and_register_all_bundles.sh
 
 deploy-shared-service:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't

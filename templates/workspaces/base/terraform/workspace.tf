@@ -80,5 +80,6 @@ module "azure_monitor" {
   enable_local_debugging                   = var.enable_local_debugging
   depends_on = [
     module.network,
+    module.airlock
   ]
 }
