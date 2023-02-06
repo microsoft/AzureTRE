@@ -1,4 +1,4 @@
-import { MessageBar, MessageBarType, Pivot, PivotItem, PrimaryButton, Stack, TextField } from "@fluentui/react";
+import { MessageBar, MessageBarType, Pivot, PivotItem, PrimaryButton, Stack, TextField, TooltipHost } from "@fluentui/react";
 import React, { useCallback, useEffect, useState } from "react";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
 import { AirlockRequest, AirlockRequestStatus } from "../../../models/airlock";
@@ -14,7 +14,11 @@ interface AirlockRequestFilesSectionProps {
 
 export const AirlockRequestFilesSection: React.FunctionComponent<AirlockRequestFilesSectionProps> = (props: AirlockRequestFilesSectionProps) => {
 
+  const COPY_TOOL_TIP_DEFAULT_MESSAGE = "Copy to clipboard"
+
+  const [copyToolTipMessage, setCopyToolTipMessage] = useState<string>(COPY_TOOL_TIP_DEFAULT_MESSAGE);
   const [sasUrl, setSasUrl] = useState<string>();
+
   const [sasUrlError, setSasUrlError] = useState(false);
   const [apiSasUrlError, setApiSasUrlError] = useState({} as APIError);
 
@@ -49,6 +53,15 @@ export const AirlockRequestFilesSection: React.FunctionComponent<AirlockRequestF
       sasToken: match[3]
     }
   };
+
+  const handleCopySasUrl = () => {
+    if (!sasUrl) {
+      return;
+    }
+    navigator.clipboard.writeText(sasUrl);
+    setCopyToolTipMessage("Copied")
+    setTimeout(() => setCopyToolTipMessage(COPY_TOOL_TIP_DEFAULT_MESSAGE), 3000);
+  }
 
   const getAzureCliCommand = (sasUrl: string) => {
     let containerDetails = parseSasUrl(sasUrl)
@@ -85,13 +98,13 @@ export const AirlockRequestFilesSection: React.FunctionComponent<AirlockRequestF
                 <Stack.Item grow>
                   <TextField readOnly value={sasUrl} />
                 </Stack.Item>
-                {
+                <TooltipHost content={copyToolTipMessage}>
                   <PrimaryButton
                     iconProps={{ iconName: 'copy' }}
                     styles={{ root: { minWidth: '40px' } }}
-                    onClick={() => { sasUrl && navigator.clipboard.writeText(sasUrl) }}
+                    onClick={() => { handleCopySasUrl() }}
                   />
-                }
+                </TooltipHost>
               </Stack>
             </Stack.Item>
             {
