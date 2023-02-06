@@ -8,6 +8,7 @@ API_PREFIX = "/api"
 PROJECT_NAME: str = config("PROJECT_NAME", default="Azure TRE API")
 DEBUG: bool = config("DEBUG", cast=bool, default=False)
 ENABLE_LOCAL_DEBUGGING: bool = config("ENABLE_LOCAL_DEBUGGING", cast=bool, default=False)
+ENABLE_SWAGGER: bool = config("ENABLE_SWAGGER", cast=bool, default=False)
 VERSION = __version__
 API_DESCRIPTION = "Welcome to the Azure TRE API - for more information about templates and workspaces see the [Azure TRE documentation](https://microsoft.github.io/AzureTRE)"
 
@@ -25,6 +26,7 @@ COSMOSDB_ACCOUNT_NAME: str = config("COSMOSDB_ACCOUNT_NAME", default="")        
 STATE_STORE_DATABASE = "AzureTRE"
 STATE_STORE_RESOURCES_CONTAINER = "Resources"
 STATE_STORE_RESOURCE_TEMPLATES_CONTAINER = "ResourceTemplates"
+STATE_STORE_RESOURCES_HISTORY_CONTAINER = "ResourceHistory"
 STATE_STORE_OPERATIONS_CONTAINER = "Operations"
 STATE_STORE_AIRLOCK_REQUESTS_CONTAINER = "Requests"
 SUBSCRIPTION_ID: str = config("SUBSCRIPTION_ID", default="")
@@ -35,7 +37,7 @@ RESOURCE_GROUP_NAME: str = config("RESOURCE_GROUP_NAME", default="")
 SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE: str = config("SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE", default="")
 SERVICE_BUS_RESOURCE_REQUEST_QUEUE: str = config("SERVICE_BUS_RESOURCE_REQUEST_QUEUE", default="")
 SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE: str = config("SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE", default="")
-SERVICE_BUS_STEP_RESULT_QUEUE = str = config("SERVICE_BUS_STEP_RESULT_QUEUE", default="")
+SERVICE_BUS_STEP_RESULT_QUEUE: str = config("SERVICE_BUS_STEP_RESULT_QUEUE", default="")
 
 # Event grid configuration
 EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT: str = config("EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT", default="")

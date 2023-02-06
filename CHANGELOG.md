@@ -1,15 +1,55 @@
 <!-- markdownlint-disable MD041 -->
-## 0.8.0 (Unreleased)
+## 0.9.0 (Unreleased)
+
+**BREAKING CHANGES & MIGRATIONS**:
+
+* Move to Azure **Firewall Policy** [#3107](https://github.com/microsoft/AzureTRE/pull/3107). This is a major version for the firewall shared service and will fail to automatically upgrade. You should follow these steps to complete it:
+  1. Let the system try to do the upgrade (via CI or `make tre-deploy`). It will fail but it's fine since now we have the new version published and registered.
+  2. Make a temporary network change with either of the following options:
+      * Azure Portal: find your TRE resource group and select the route table resource (named `rt-YOUR_TRE_ID`).
+        In the overview screen, find the `ResourceProcessorSubnet` (should be last in the subnet list), click on the `...` and select `Dissociate`.
+      * Azure CLI:
+        ```shell
+        az network vnet subnet update --resource-group rg-YOUR_TRE_ID --vnet-name vnet-YOUR_TRE_ID --name ResourceProcessorSubnet --remove routeTable
+        ```
+  4. Issue a patch API request to `force-update` the firewall to its new version.
+
+      One way to accomplish this is with the Swagger endpoint (/api/docs).
+      ![Force-update a service](./docs/assets/firewall-policy-migrate1.png)
+
+      If this endpoint is not on in your deployment - include `enable_swagger` in your `config.yaml` (see the sample file), or temporarly via the API resource on azure (named `api-YOUR_TRE-ID`) -> Configuration -> `ENABLE_SWAGGER` item.
+      ![Update API setting](./docs/assets/firewall-policy-migrate2.png)
+  
+  
+  :warning: Any custom rules you have added manually will be **lost** and you'll need to add it back after the upgrade has been completed.
+
+FEATURES:
+* Add Azure Databricks as workspace service [#1857](https://github.com/microsoft/AzureTRE/pull/1857)
+
+ENHANCEMENTS:
+* Add support for referencing IP Groups from the Core Resource Group in firewall rules created via the pipeline [#3089](https://github.com/microsoft/AzureTRE/pull/3089)
+* Support for _Azure Firewall Basic_ SKU [#3107](https://github.com/microsoft/AzureTRE/pull/3107). This SKU doesn't support deallocation and for most non 24/7 scenarios will be more expensive than the Standard SKU.
+* Update Azure Machine Learning Workspace Service to support "no public IP" compute. This is a full rework so upgrades of existing Azure ML Workspace Service deployments are not supported. Requires `v0.8.0` or later of the TRE project.  [#3052](https://github.com/microsoft/AzureTRE/pull/3052)
+* Move non-core DNS zones out of the network module to reduce dependencies [#3119](https://github.com/microsoft/AzureTRE/pull/3119)
+* Review VMs are being cleaned up when an Airlock request is canceled ([#3130](https://github.com/microsoft/AzureTRE/pull/3130))
+
+BUG FIXES:
+* Reauth CLI if TRE endpoint has changed [#3137](https://github.com/microsoft/AzureTRE/pull/3137)
+
+COMPONENTS:
+
+## 0.8.0 (January 15, 2023)
 
 **BREAKING CHANGES & MIGRATIONS**:
 * The model for `reviewUserResources` in airlock requests has changed from being a list to a dictionary. A migration has been added to update your existing requests automatically; please make sure you run the migrations as part of updating your API and UI.
   * Note that any in-flight requests that have review resources deployed will show `UNKNOWN[i]` for the user key of that resource and in the UI users will be prompted to deploy a new resource. [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
-* Env files consolidation - The files /templates/core/.env, /devops/.env, /devops/auth.env are no longer used. The settings and configuration that they contain has been consolidated into a single file config.yaml that lives in the root folder of the project.
-
+* Env files consolidation ([#2944](https://github.com/microsoft/AzureTRE/pull/2944)) - The files /templates/core/.env, /devops/.env, /devops/auth.env are no longer used. The settings and configuration that they contain has been consolidated into a single file config.yaml that lives in the root folder of the project.
 Use the script devops/scripts/env_to_yaml_config.sh to migrate /templates/core/.env, /devops/.env, and /devops/auth.env to the new config.yaml file.
+* Upgrade to Porter v1 ([#3014](https://github.com/microsoft/AzureTRE/pull/3014)). You should upgrade all custom template definitions and rebuild them.
 
 FEATURES:
 * Support review VMs for multiple reviewers for each airlock request [#2883](https://github.com/microsoft/AzureTRE/pull/2883)
+* Add Azure Health Data Services as workspace services [#3051](https://github.com/microsoft/AzureTRE/pull/3051)
 
 ENHANCEMENTS:
 * Remove Porter's Docker mixin as it's not in use ([#2889](https://github.com/microsoft/AzureTRE/pull/2889))
@@ -17,7 +57,16 @@ ENHANCEMENTS:
 * Support template version update ([#2908](https://github.com/microsoft/AzureTRE/pull/2908))
 * Update docker base images to bullseye ([#2946](https://github.com/microsoft/AzureTRE/pull/2946)
 * Support updating the firewall when installing via makefile/CICD ([#2942](https://github.com/microsoft/AzureTRE/pull/2942))
+* Add the ability for workspace services to request addional address spaces from a workspace ([#2902](https://github.com/microsoft/AzureTRE/pull/2902))
 * Airlock processor function and api app service work with http2
+* Added the option to disable Swagger ([#2981](https://github.com/microsoft/AzureTRE/pull/2981))
+* Serverless CosmosDB for new deployments to reduce cost ([#3029](https://github.com/microsoft/AzureTRE/pull/3029))
+* Adding disable_download and disable_upload properties for guacamole ([#2967](https://github.com/microsoft/AzureTRE/pull/2967))
+* Upgrade Guacamole dependencies ([#3053](https://github.com/microsoft/AzureTRE/pull/3053))
+* Lint TRE cost tags per entity type (workspace, shared service, etc.) ([#3061](https://github.com/microsoft/AzureTRE/pull/3061))
+* Validate required secrets have value ([#3073](https://github.com/microsoft/AzureTRE/pull/3073))
+* Airlock processor unittests uses pytest ([#3026](https://github.com/microsoft/AzureTRE/pull/3026))
+
 
 BUG FIXES:
 * Private endpoints for AppInsights are now provisioning successfully and consistently ([#2841](https://github.com/microsoft/AzureTRE/pull/2841))
@@ -25,8 +74,35 @@ BUG FIXES:
 * Fix get shared service by template name to filter by active service only ([#2947](https://github.com/microsoft/AzureTRE/pull/2947))
 * Fix untagged cost reporting reader role assignment ([#2951](https://github.com/microsoft/AzureTRE/pull/2951))
 * Remove Guacamole's firewall rule on uninstall ([#2958](https://github.com/microsoft/AzureTRE/pull/2958))
+* Fix KeyVault purge error on MLFlow uninstall ([#3082](https://github.com/microsoft/AzureTRE/pull/3082))
 
 COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.4.4 |
+| core | 0.5.2 |
+| tre-shared-service-admin-vm | 0.3.0 |
+| tre-shared-service-airlock-notifier | 0.3.0 |
+| tre-shared-service-certs | 0.3.1 |
+| tre-shared-service-cyclecloud | 0.4.0 |
+| tre-shared-service-firewall | 0.7.0 |
+| tre-shared-service-gitea | 0.5.0 |
+| tre-shared-service-sonatype-nexus | 2.3.0 |
+| tre-service-azureml | 0.6.0 |
+| tre-user-resource-aml-compute-instance | 0.5.0 |
+| tre-workspace-service-gitea | 0.7.0 |
+| tre-service-guacamole | 0.7.0 |
+| tre-service-guacamole-export-reviewvm | 0.1.0 |
+| tre-service-guacamole-import-reviewvm | 0.2.0 |
+| tre-service-guacamole-linuxvm | 0.6.1 |
+| tre-service-guacamole-windowsvm | 0.6.0 |
+| tre-workspace-service-health | 0.1.0 |
+| tre-service-innereye | 0.5.0 |
+| tre-service-mlflow | 0.6.0 |
+| tre-workspace-service-mysql | 0.3.1 |
+| tre-workspace-airlock-import-review | 0.6.0 |
+| tre-workspace-base | 0.8.1 |
+| tre-workspace-unrestricted | 0.6.0 |
 
 ## 0.7.0 (November 17, 2022)
 
@@ -289,7 +365,7 @@ BUG FIXES:
 * API health check is also returned by accessing the root path at / ([#2469](https://github.com/microsoft/AzureTRE/pull/2469))
 * Temporary disable AppInsight's private endpoint in base workspace ([#2543](https://github.com/microsoft/AzureTRE/pull/2543))
 * Resource Processor execution optimization (`porter show`) for long-standing services ([#2542](https://github.com/microsoft/AzureTRE/pull/2542))
-* Move AML Compute deployment to use AzApi Terraform Provider {[#2555]((https://github.com/microsoft/AzureTRE/pull/2555))
+* Move AML Compute deployment to use AzApi Terraform Provider ([#2555](https://github.com/microsoft/AzureTRE/pull/2555))
 * Invalid token exceptions in the API app are caught, throwing 401 instead of 500 Internal server error ([#2572](https://github.com/microsoft/AzureTRE/pull/2572))
 
 COMPONENTS:

@@ -1,14 +1,20 @@
+from unittest.mock import AsyncMock
 import pytest
-from mock import patch, MagicMock
+import pytest_asyncio
+from mock import patch
 
 from models.domain.resource import ResourceType
 from db.migrations.workspaces import WorkspaceMigration
 
+pytestmark = pytest.mark.asyncio
 
-@pytest.fixture
-def workspace_migrator():
-    with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-        yield WorkspaceMigration(cosmos_client_mock)
+
+@pytest_asyncio.fixture
+async def workspace_migrator():
+    with patch('db.repositories.base.BaseRepository._get_container', return_value=AsyncMock()):
+        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
+            workspace_migrator = await WorkspaceMigration.create(cosmos_client_mock)
+            yield workspace_migrator
 
 
 def get_sample_old_workspace(workspace_id: str = "7ab18f7e-ee8f-4202-8d46-747818ec76f4", spec_workspace_id: str = "0001") -> dict:
@@ -37,7 +43,7 @@ def get_sample_old_workspace(workspace_id: str = "7ab18f7e-ee8f-4202-8d46-747818
 
 
 @ patch('logging.info')
-def test_workspace_migration_moves_fields(logging, workspace_migrator):
-    workspace_migrator.query = MagicMock(return_value=get_sample_old_workspace())
+async def test_workspace_migration_moves_fields(logging, workspace_migrator):
+    workspace_migrator.query = AsyncMock(return_value=get_sample_old_workspace())
 
-    assert(workspace_migrator.moveAuthInformationToProperties())
+    assert (await workspace_migrator.moveAuthInformationToProperties())

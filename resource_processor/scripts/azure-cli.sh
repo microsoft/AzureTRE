@@ -14,7 +14,3 @@ AZ_REPO="$(lsb_release -cs)"
 echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list
 apt-get update
 apt-get -y install azure-cli="${AZURE_CLI_VERSION}"
-
-# apt cleanup
-apt-get clean -y
-rm -rf /var/lib/apt/lists/*

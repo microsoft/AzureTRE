@@ -12,3 +12,4 @@ FAILED_STATUS = "failed"
 
 AIRLOCK_REQUEST = "airlockRequest"
 AIRLOCK_REQUEST_STATUS = "status"
+AIRLOCK_REQUEST_STATUS_MESSAGE = "statusMessage"

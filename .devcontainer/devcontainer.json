@@ -21,7 +21,9 @@
     // Mounts the login details from the host machine to azcli works in the container
     "type=bind,source=${env:HOME}${env:USERPROFILE}/.azure,target=/home/vscode/.azure",
     // Mount docker socket for docker builds
-    "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
+    "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock",
+    // Mounts the github cli login details from the host machine to the container (~/.config/gh/hosts.yml)
+    "type=bind,source=${env:HOME}${env:USERPROFILE}/.config,target=/home/vscode/.config",
   ],
   "remoteUser": "vscode",
   "containerEnv": {
@@ -172,7 +174,7 @@
           "console": "integratedTerminal",
           "preLaunchTask": "Install_resource_processor_dependencies",
           "cwd": "${workspaceFolder}/resource_processor",
-          "envFile": "${workspaceFolder}/templates/core/private.env",
+          "envFile": "${workspaceFolder}/core/private.env",
           "env": {
             "PYTHONPATH": "."
           }
@@ -253,6 +255,7 @@
   // Add the IDs of extensions you want installed when the container is created.
   "extensions": [
     "ms-python.python",
+    "ms-python.pylance",
     "hashicorp.terraform",
     "github.vscode-pull-request-github",
     "getporter.porter-vscode",

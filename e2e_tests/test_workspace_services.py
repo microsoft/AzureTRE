@@ -7,6 +7,15 @@ from resources import strings
 
 pytestmark = pytest.mark.asyncio
 
+workspace_services = [
+    strings.AZUREML_SERVICE,
+    # strings.INNEREYE_SERVICE,
+    strings.GITEA_SERVICE,
+    strings.MLFLOW_SERVICE,
+    strings.MYSQL_SERVICE,
+    strings.HEALTH_SERVICE,
+]
+
 
 @pytest.mark.extended
 @pytest.mark.timeout(75 * 60)
@@ -78,3 +87,22 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, v
     endpoint = f"https://guacamole-{config.TRE_ID}-ws-{short_workspace_id}-svc-{short_workspace_service_id}.azurewebsites.net/guacamole"
 
     await check_aad_auth_redirect(endpoint, verify)
+
+
+@pytest.mark.workspace_services
+@pytest.mark.timeout(45 * 60)
+@pytest.mark.parametrize("template_name", workspace_services)
+async def test_install_workspace_service(template_name, verify, setup_test_workspace) -> None:
+    workspace_path, workspace_id, workspace_owner_token = setup_test_workspace
+
+    service_payload = {
+        "templateName": template_name,
+        "properties": {
+            "display_name": f"{template_name} test",
+            "description": "Workspace service for E2E test"
+        }
+    }
+
+    workspace_service_path, workspace_service_id = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
+
+    await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)

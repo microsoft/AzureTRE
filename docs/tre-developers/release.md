@@ -5,22 +5,23 @@ A release is created when enough changes have been made and the main branch is s
 The process follows these steps:
 
 1. Update `CHANGELOG.md` in a PR with the following:
-    1. Rename the top-most verion noted as unreleaed with the version number that makes sense. Note that you don't have to keep the one that is currently in the file as the version number chosen should reflect the changes made (major, minor, etc.)
-    1. Create a new section for the next-unreleaed version so that future changes will be placed there.
-    1. Run `devops/scripts/list_versions.sh` and include the output in the change log for the version you're about the release
+   1. Rename the top-most verion noted as unreleaed with the version number that makes sense. Note that you don't have to keep the one that is currently in the file as the version number chosen should reflect the changes made (major, minor, etc.)
+   1. Create a new section for the next-unreleaed version so that future changes will be placed there.
+   1. Run `devops/scripts/list_versions.sh` and include the output in the change log for the version you're about the release
 1. Merge the PR
 1. Create a GitHub Release
-    <!-- markdownlint-disable-next-line MD034 -->
-    1. Go to https://github.com/microsoft/AzureTRE/releases/new
-    1. Click on `Choose a tag` and type a new one for you version. It should be in the form of `v0.9.2` - note the "v" in the begining.
-    1. The release title should be just the version number "0.9.2" in the example above.
-    1. Copy the text from the CHANGELOG.md file and paste in the release description.
-    1. Include a final line with a link to the full changelog similar to this:
-    <!-- markdownlint-disable-next-line MD034 -->
-          **Full Changelog**: https://github.com/microsoft/AzureTRE/compare/v0.9.1...v0.9.2
+   <!-- markdownlint-disable-next-line MD034 -->
+   1. Go to https://github.com/microsoft/AzureTRE/releases/new
+   1. Click on `Choose a tag` and type a new one for you version. It should be in the form of `v0.9.2` - note the "v" in the begining.
+   1. The release title should be just the version number "0.9.2" in the example above.
+   1. Copy the text from the CHANGELOG.md file and paste in the release description.
+   1. Include a final line with a link to the full changelog similar to this:
+   <!-- markdownlint-disable-next-line MD034 -->
+      **Full Changelog**: https://github.com/microsoft/AzureTRE/compare/v0.9.1...v0.9.2
+
 1. Update [AzureTRE-Deployment](https://github.com/microsoft/AzureTRE-Deployment). The procedure may vary depending on the level of changes introduced in the new version but should include the following steps:
-    1. Update the tag used in [devcontainer.json](https://github.com/microsoft/AzureTRE-Deployment/blob/main/.devcontainer/devcontainer.json).
-    1. Rebuild the container.
-    1. Compare both `.devcontainer` and `.github` folders of the new release with the ones in the repo and make required updates so that only required difference exist.
-    The comapre can be done with VSCode [Compare Folders extension](https://marketplace.visualstudio.com/items?itemName=moshfeu.compare-folders) as you have both the old version (under to root folder) and the "new" one inside the _AzureTRE_ symlink.
-    1. With all changes made, rebuild the container to verify it's working and that AzureTRE folder has been populated correctly.
+   1. Update the tag used in [devcontainer.json](https://github.com/microsoft/AzureTRE-Deployment/blob/main/.devcontainer/devcontainer.json).
+   1. Rebuild the container.
+   1. Compare both `.devcontainer` and `.github` folders of the new release with the ones in the repo and make required updates so that only required difference exist.
+   The comapre can be done with VSCode [Compare Folders extension](https://marketplace.visualstudio.com/items?itemName=moshfeu.compare-folders) as you have both the old version (under to root folder) and the "new" one inside the _AzureTRE_ symlink.
+   1. With all changes made, rebuild the container to verify it's working and that AzureTRE folder has been populated correctly.

@@ -1,3 +1,4 @@
+import random
 import pytest
 import asyncio
 from typing import Tuple
@@ -61,6 +62,8 @@ async def create_or_get_test_workspace(
         payload["properties"]["client_secret"] = client_secret
 
     admin_token = await get_admin_token(verify=verify)
+    # TODO: Temp fix to solve creation of workspaces - https://github.com/microsoft/AzureTRE/issues/2986
+    await asyncio.sleep(random.uniform(1, 9))
     workspace_path, workspace_id = await post_resource(payload, resource_strings.API_WORKSPACES, access_token=admin_token, verify=verify)
 
     LOGGER.info(f"Workspace {workspace_id} {template_name} created")
@@ -119,12 +122,12 @@ async def setup_test_workspace(verify) -> Tuple[str, str, str]:
     yield workspace_path, workspace_id, workspace_owner_token
 
     # Tear-down
-    clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
+    await clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
 
 
 # Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
 @pytest.fixture(scope="session")
-async def setup_test_workspace_and_workspace_service(verify, setup_test_workspace):
+async def setup_test_workspace_and_guacamole_service(verify, setup_test_workspace):
     # Set up
     workspace_path, workspace_id, workspace_owner_token = setup_test_workspace
 
@@ -137,7 +140,7 @@ async def setup_test_workspace_and_workspace_service(verify, setup_test_workspac
 
     yield workspace_path, workspace_id, workspace_service_path, workspace_service_id, workspace_owner_token
 
-    clean_up_test_workspace_service(pre_created_workspace_service_id=pre_created_workspace_service_id, workspace_service_path=workspace_service_path, verify=verify)
+    await clean_up_test_workspace_service(pre_created_workspace_service_id=pre_created_workspace_service_id, workspace_service_path=workspace_service_path, verify=verify)
 
 
 # Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
@@ -152,12 +155,12 @@ async def setup_test_aad_workspace(verify) -> Tuple[str, str, str]:
     yield workspace_path, workspace_id, workspace_owner_token
 
     # Tear-down
-    clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
+    await clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
 
 
 # Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
 @pytest.fixture(scope="session")
-async def setup_test_airlock_import_review_workspace_and_workspace_service(verify) -> Tuple[str, str, str, str, str]:
+async def setup_test_airlock_import_review_workspace_and_guacamole_service(verify) -> Tuple[str, str, str, str, str]:
     pre_created_workspace_id = config.TEST_AIRLOCK_IMPORT_REVIEW_WORKSPACE_ID
     # Set up
     workspace_path, workspace_id = await create_or_get_test_workspace(auth_type="Automatic", verify=verify, template_name=resource_strings.AIRLOCK_IMPORT_REVIEW_WORKSPACE, pre_created_workspace_id=pre_created_workspace_id)
@@ -176,5 +179,5 @@ async def setup_test_airlock_import_review_workspace_and_workspace_service(verif
     yield workspace_path, workspace_id, workspace_service_path, workspace_service_id, workspace_owner_token
 
     # Tear-down
-    clean_up_test_workspace_service(pre_created_workspace_service_id=pre_created_workspace_service_id, workspace_service_path=workspace_service_path, verify=verify)
-    clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
+    await clean_up_test_workspace_service(pre_created_workspace_service_id=pre_created_workspace_service_id, workspace_service_path=workspace_service_path, verify=verify)
+    await clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)

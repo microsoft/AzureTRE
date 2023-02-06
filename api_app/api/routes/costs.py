@@ -60,7 +60,7 @@ async def costs(
 
     validate_report_period(params.from_date, params.to_date)
     try:
-        return cost_service.query_tre_costs(
+        return await cost_service.query_tre_costs(
             config.TRE_ID, params.granularity, params.from_date, params.to_date, workspace_repo, shared_services_repo)
     except SubscriptionNotSupported:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.API_GET_COSTS_SUBSCRIPTION_NOT_SUPPORTED)
@@ -78,8 +78,8 @@ async def costs(
                                 "message": strings.API_GET_COSTS_SERVICE_UNAVAILABLE,
                                 "retry-after": str(e.retry_after)
                             }}, status_code=503, headers={"Retry-After": str(e.retry_after)})
-    except Exception as e:
-        logging.error("Failed to query Azure TRE costs", exc_info=e)
+    except Exception:
+        logging.exception("Failed to query Azure TRE costs")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.API_GET_COSTS_INTERNAL_SERVER_ERROR)
 
 
@@ -95,7 +95,7 @@ async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depend
 
     validate_report_period(params.from_date, params.to_date)
     try:
-        return cost_service.query_tre_workspace_costs(
+        return await cost_service.query_tre_workspace_costs(
             str(workspace_id), params.granularity, params.from_date, params.to_date,
             workspace_repo, workspace_services_repo, user_resource_repo)
     except WorkspaceDoesNotExist:
@@ -116,6 +116,6 @@ async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depend
                                 "message": strings.API_GET_COSTS_SERVICE_UNAVAILABLE,
                                 "retry-after": str(e.retry_after)
                             }}, status_code=503, headers={"Retry-After": str(e.retry_after)})
-    except Exception as e:
-        logging.error("Failed to query Azure TRE costs", exc_info=e)
+    except Exception:
+        logging.exception("Failed to query Azure TRE costs")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.API_GET_COSTS_INTERNAL_SERVER_ERROR)

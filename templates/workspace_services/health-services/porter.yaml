@@ -1,0 +1,147 @@
+---
+schemaVersion: 1.0.0
+name: tre-workspace-service-health
+version: 0.1.1
+description: "An Azure Data Health Services workspace service"
+registry: azuretre
+dockerfile: Dockerfile.tmpl
+
+credentials:
+  # Credentials for interacting with the AAD Auth tenant
+  - name: auth_client_id
+    env: AUTH_CLIENT_ID
+  - name: auth_client_secret
+    env: AUTH_CLIENT_SECRET
+  - name: auth_tenant_id
+    env: AUTH_TENANT_ID
+  # Credentials for interacting with Azure
+  - name: azure_tenant_id
+    env: ARM_TENANT_ID
+  - name: azure_subscription_id
+    env: ARM_SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: ARM_CLIENT_ID
+  - name: azure_client_secret
+    env: ARM_CLIENT_SECRET
+
+parameters:
+  - name: workspace_id
+    type: string
+  - name: tre_id
+    type: string
+
+  # the following are added automatically by the resource processor
+  - name: id
+    type: string
+    description: "Resource ID"
+    env: id
+  - name: tfstate_resource_group_name
+    type: string
+    description: "Resource group containing the Terraform state storage account"
+  - name: tfstate_storage_account_name
+    type: string
+    description: "The name of the Terraform state storage account"
+  - name: tfstate_container_name
+    env: tfstate_container_name
+    type: string
+    default: "tfstate"
+    description: "The name of the Terraform state storage container"
+  - name: arm_use_msi
+    env: ARM_USE_MSI
+    type: boolean
+    default: false
+  - name: deploy_fhir
+    type: boolean
+    default: false
+  - name: deploy_dicom
+    type: boolean
+    default: false
+  - name: fhir_kind
+    type: string
+    default: ""
+
+outputs:
+  - name: fhir_url
+    type: string
+    applyTo:
+      - install
+  - name: dicom_url
+    type: string
+    applyTo:
+      - install
+  - name: workspace_address_space
+    type: string
+    applyTo:
+      - install
+      - upgrade
+
+mixins:
+  - terraform:
+      clientVersion: 1.3.6
+  - az:
+      clientVersion: 2.37.0
+
+install:
+  - terraform:
+      description: "Deploy Azure Health workspace service"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        deploy_fhir: ${ bundle.parameters.deploy_fhir }
+        deploy_dicom: ${ bundle.parameters.deploy_dicom }
+        fhir_kind: ${ bundle.parameters.fhir_kind }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.name }-${ bundle.parameters.id }
+      outputs:
+        - name: fhir_url
+        - name: dicom_url
+        - name: workspace_address_space
+
+upgrade:
+  - terraform:
+      description: "Upgrade Azure Health workspace service"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        deploy_fhir: ${ bundle.parameters.deploy_fhir }
+        deploy_dicom: ${ bundle.parameters.deploy_dicom }
+        fhir_kind: ${ bundle.parameters.fhir_kind }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.name }-${ bundle.parameters.id }
+      outputs:
+        - name: fhir_url
+        - name: dicom_url
+        - name: workspace_address_space
+
+uninstall:
+  - terraform:
+      description: "Tear down AzurAzure Health Data Services workspace service"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        deploy_fhir: ${ bundle.parameters.deploy_fhir }
+        deploy_dicom: ${ bundle.parameters.deploy_dicom }
+        fhir_kind: ${ bundle.parameters.fhir_kind }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.name }-${ bundle.parameters.id }

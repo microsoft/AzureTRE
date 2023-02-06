@@ -2,7 +2,7 @@ import base64
 import logging
 from collections import defaultdict
 from enum import Enum
-from typing import List
+from typing import List, Optional
 import jwt
 import requests
 import rsa
@@ -34,7 +34,7 @@ class AzureADAuthorization(AccessService):
     TRE_CORE_ROLES = ['TREAdmin', 'TREUser']
     WORKSPACE_ROLES_DICT = {'WorkspaceOwner': 'app_role_id_workspace_owner', 'WorkspaceResearcher': 'app_role_id_workspace_researcher', 'AirlockManager': 'app_role_id_workspace_airlock_manager'}
 
-    def __init__(self, auto_error: bool = True, require_one_of_roles: list = None):
+    def __init__(self, auto_error: bool = True, require_one_of_roles: Optional[list] = None):
         super(AzureADAuthorization, self).__init__(
             authorizationUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/authorize",
             tokenUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
@@ -57,7 +57,7 @@ class AzureADAuthorization(AccessService):
             try:
                 # get the app reg id - which might be blank if the workspace hasn't fully created yet.
                 # if it's blank, don't use workspace auth, use core auth - and a TRE Admin can still get it
-                app_reg_id = self._fetch_ws_app_reg_id_from_ws_id(request)
+                app_reg_id = await self._fetch_ws_app_reg_id_from_ws_id(request)
                 if app_reg_id != "":
                     decoded_token = self._decode_token(token, app_reg_id)
             except HTTPException as h:
@@ -106,26 +106,27 @@ class AzureADAuthorization(AccessService):
         return user
 
     @staticmethod
-    def _fetch_ws_app_reg_id_from_ws_id(request: Request) -> str:
+    async def _fetch_ws_app_reg_id_from_ws_id(request: Request) -> str:
         workspace_id = None
         if "workspace_id" not in request.path_params:
             logging.error("Neither a workspace ID nor a default app registration id were provided")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS)
         try:
             workspace_id = request.path_params['workspace_id']
-            ws_repo = WorkspaceRepository(get_db_client_from_request(request))
-            workspace = ws_repo.get_workspace_by_id(workspace_id)
+            db_client = await get_db_client_from_request(request)
+            ws_repo = await WorkspaceRepository.create(db_client)
+            workspace = await ws_repo.get_workspace_by_id(workspace_id)
 
             ws_app_reg_id = ""
             if "client_id" in workspace.properties:
                 ws_app_reg_id = workspace.properties['client_id']
 
             return ws_app_reg_id
-        except EntityDoesNotExist as e:
-            logging.error(e)
+        except EntityDoesNotExist:
+            logging.exception(strings.WORKSPACE_DOES_NOT_EXIST)
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_DOES_NOT_EXIST)
-        except Exception as e:
-            logging.error(e)
+        except Exception:
+            logging.exception(f"Failed to get workspace app registration ID for workspace {workspace_id}")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS)
 
     @staticmethod
@@ -246,12 +247,14 @@ class AzureADAuthorization(AccessService):
         for user_data in users_graph_data["responses"]:
             # Handle user endpoint response
             if "users" in user_data["body"]["@odata.context"] and user_data["body"]["mail"] is not None:
-                user_emails[user_data["body"]["id"]] = user_data["body"]["mail"]
+                user_emails[user_data["body"]["id"]] = [user_data["body"]["mail"]]
             # Handle group endpoint response
             if "directoryObjects" in user_data["body"]["@odata.context"]:
+                group_members_emails = []
                 for group_member in user_data["body"]["value"]:
-                    if group_member["mail"] is not None:
-                        user_emails[group_member["id"]] = group_member["mail"]
+                    if group_member["mail"] is not None and group_member["mail"] not in group_members_emails:
+                        group_members_emails.append(group_member["mail"])
+                user_emails[user_data["id"]] = group_members_emails
         return user_emails
 
     def get_workspace_role_assignment_details(self, workspace: Workspace):
@@ -269,12 +272,12 @@ class AzureADAuthorization(AccessService):
             principal_id = role_assignment["principalId"]
             principal_type = role_assignment["principalType"]
 
-            if principal_type == "User" and principal_id in user_emails:
+            if principal_type != "ServicePrincipal" and principal_id in user_emails:
                 app_role_id = role_assignment["appRoleId"]
                 app_role_name = inverted_app_role_ids.get(app_role_id)
 
                 if app_role_name:
-                    workspace_role_assignments_details[app_role_name].append(user_emails[principal_id])
+                    workspace_role_assignments_details[app_role_name].extend(user_emails[principal_id])
 
         return workspace_role_assignments_details
 

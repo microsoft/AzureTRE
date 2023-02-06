@@ -1,7 +1,7 @@
 import uuid
-from typing import List, Union
+from typing import List, Optional, Union
 
-from azure.cosmos import CosmosClient
+from azure.cosmos.aio import CosmosClient
 from pydantic import parse_obj_as
 
 from core import config
@@ -15,8 +15,11 @@ from services.schema_service import enrich_shared_service_template, enrich_works
 
 
 class ResourceTemplateRepository(BaseRepository):
-    def __init__(self, client: CosmosClient):
-        super().__init__(client, config.STATE_STORE_RESOURCE_TEMPLATES_CONTAINER)
+    @classmethod
+    async def create(cls, client: CosmosClient):
+        cls = ResourceTemplateRepository()
+        await super().create(client, config.STATE_STORE_RESOURCE_TEMPLATES_CONTAINER)
+        return cls
 
     @staticmethod
     def _template_by_name_query(name: str, resource_type: ResourceType) -> str:
@@ -33,7 +36,7 @@ class ResourceTemplateRepository(BaseRepository):
         else:
             return enrich_user_resource_template(template, is_update=is_update)
 
-    def get_templates_information(self, resource_type: ResourceType, user_roles: List[str] = None, parent_service_name: str = "") -> List[ResourceTemplateInformation]:
+    async def get_templates_information(self, resource_type: ResourceType, user_roles: Optional[List[str]] = None, parent_service_name: str = "") -> List[ResourceTemplateInformation]:
         """
         Returns name/title/description for all current resource_type templates
 
@@ -43,7 +46,7 @@ class ResourceTemplateRepository(BaseRepository):
         query = f'SELECT c.name, c.title, c.description, c.authorizedRoles FROM c WHERE c.resourceType = "{resource_type}" AND c.current = true'
         if resource_type == ResourceType.UserResource:
             query += f' AND c.parentWorkspaceService = "{parent_service_name}"'
-        template_infos = self.query(query=query)
+        template_infos = await self.query(query=query)
         templates = [parse_obj_as(ResourceTemplateInformation, info) for info in template_infos]
 
         if not user_roles:
@@ -51,14 +54,14 @@ class ResourceTemplateRepository(BaseRepository):
         # User can view template if they have at least one of authorizedRoles
         return [t for t in templates if not t.authorizedRoles or len(set(t.authorizedRoles).intersection(set(user_roles))) > 0]
 
-    def get_current_template(self, template_name: str, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
+    async def get_current_template(self, template_name: str, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
         """
         Returns full template for the current version of the 'template_name' template
         """
         query = self._template_by_name_query(template_name, resource_type) + ' AND c.current = true'
         if resource_type == ResourceType.UserResource:
             query += f' AND c.parentWorkspaceService = "{parent_service_name}"'
-        templates = self.query(query=query)
+        templates = await self.query(query=query)
         if len(templates) == 0:
             raise EntityDoesNotExist
         if len(templates) > 1:
@@ -68,7 +71,7 @@ class ResourceTemplateRepository(BaseRepository):
         else:
             return parse_obj_as(ResourceTemplate, templates[0])
 
-    def get_template_by_name_and_version(self, name: str, version: str, resource_type: ResourceType, parent_service_name: str = None) -> Union[ResourceTemplate, UserResourceTemplate]:
+    async def get_template_by_name_and_version(self, name: str, version: str, resource_type: ResourceType, parent_service_name: Optional[str] = None) -> Union[ResourceTemplate, UserResourceTemplate]:
         """
         Returns full template for the 'resource_type' template defined by 'template_name' and 'version'
 
@@ -84,7 +87,7 @@ class ResourceTemplateRepository(BaseRepository):
                 raise Exception("When getting a UserResource template, you must pass in a 'parent_service_name'")
 
         # Execute the query and handle results
-        templates = self.query(query=query)
+        templates = await self.query(query=query)
         if len(templates) != 1:
             raise EntityDoesNotExist
         if resource_type == ResourceType.UserResource:
@@ -92,7 +95,7 @@ class ResourceTemplateRepository(BaseRepository):
         else:
             return parse_obj_as(ResourceTemplate, templates[0])
 
-    def create_template(self, template_input: ResourceTemplateInCreate, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
+    async def create_template(self, template_input: ResourceTemplateInCreate, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
         """
         creates a template based on the input (workspace and workspace-services template)
         """
@@ -125,27 +128,27 @@ class ResourceTemplateRepository(BaseRepository):
         else:
             template = parse_obj_as(ResourceTemplate, template)
 
-        self.save_item(template)
+        await self.save_item(template)
         return template
 
-    def create_and_validate_template(self, template_input: ResourceTemplateInCreate, resource_type: ResourceType, workspace_service_template_name: str = "") -> dict:
+    async def create_and_validate_template(self, template_input: ResourceTemplateInCreate, resource_type: ResourceType, workspace_service_template_name: str = "") -> dict:
         """
         Validates that we don't have a version conflict
         Updates the current version for the template
         Saves to the database and returns the enriched template
         """
         try:
-            template = self.get_template_by_name_and_version(template_input.name, template_input.version, resource_type, workspace_service_template_name)
+            template = await self.get_template_by_name_and_version(template_input.name, template_input.version, resource_type, workspace_service_template_name)
             if template:
                 raise EntityVersionExist
         except EntityDoesNotExist:
             try:
-                template = self.get_current_template(template_input.name, resource_type, workspace_service_template_name)
+                template = await self.get_current_template(template_input.name, resource_type, workspace_service_template_name)
                 if template_input.current:
                     template.current = False
-                    self.update_item(template)
+                    await self.update_item(template)
             except EntityDoesNotExist:
                 # first registration
                 template_input.current = True  # For first time registration, template is always marked current
-            created_template = self.create_template(template_input, resource_type, workspace_service_template_name)
+            created_template = await self.create_template(template_input, resource_type, workspace_service_template_name)
             return self.enrich_template(created_template)

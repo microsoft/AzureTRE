@@ -73,6 +73,7 @@ Configure the following secrets in your github environment -
 | `CORE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan for core infrastructure. Default value is `P1v2`. |
 | `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests. Default value is `P1v2`. |
 | `RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE` | Optional. The number of processes to instantiate when the Resource Processor starts. Equates to the number of parallel deployment operations possible in your TRE. Defaults to `5`. |
+| `ENABLE_SWAGGER` | Optional. Determines whether the Swagger interface for the API will be available. Default value is `false`. |
 
 ### Configure Authentication Secrets
 
@@ -122,4 +123,4 @@ With all the repository secrets set, you can trigger a workflow run by pushing t
 
 ## Next steps
 
-* [Deploying Azure TRE in Pipelines](cicd-deplyment.md)
+* [Deploying Azure TRE in Pipelines](cicd-deployment.md)

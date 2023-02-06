@@ -76,6 +76,10 @@
         "tre_address_space": {
           "description": "TRE address spaces.",
           "type": "string"
+        },
+        "enable_swagger": {
+          "description": "Determines whether the Swagger interface for the API will be available.",
+          "type": "boolean"
         }
       }
     },
