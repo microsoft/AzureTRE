@@ -47,7 +47,8 @@ export const CliCommand: React.FunctionComponent<CliCommandProps> = (props: CliC
 
           return (
             <div style={{ wordBreak: "break-all", fontSize: "13px" }}>
-              <code style={{ color: "teal" }}>{param}</code><code style={{ color: paramValueIsComment ? "firebrick" : "black" }}>{paramValue}</code>
+              <code style={{ color: "teal" }}>{param}</code>
+              <code style={{ color: paramValueIsComment ? "firebrick" : "black" }}>{paramValue}</code>
             </div>
           );
         })}
@@ -70,7 +71,8 @@ export const CliCommand: React.FunctionComponent<CliCommandProps> = (props: CliC
           </TooltipHost>
         </Stack.Item>
       </Stack>
-      {(!props.isLoading) ? renderCommand() : <Spinner label="Generating command..." style={{ padding: "15px", backgroundColor: "#f2f2f2", border: '1px solid #e6e6e6' }} />}
+      {(!props.isLoading) ? renderCommand() :
+        <Spinner label="Generating command..." style={{ padding: "15px", backgroundColor: "#f2f2f2", border: '1px solid #e6e6e6' }} />}
     </Stack>
   );
 }

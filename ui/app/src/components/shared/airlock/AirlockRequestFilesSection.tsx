@@ -22,7 +22,6 @@ export const AirlockRequestFilesSection: React.FunctionComponent<AirlockRequestF
   const [cliCommandError, setCliCommandError] = useState(false);
   const [apiCliCommandError, setApiCliCommandError] = useState({} as APIError);
 
-
   const apiCall = useAuthApiCall();
 
   const parseSasUrl = (sasUrl: string) => {
