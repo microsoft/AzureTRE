@@ -14,7 +14,6 @@ terraform init -input=false -backend=true -reconfigure \
     -backend-config="key=${TRE_ID}"
 
 echo "*** Migrating TF Resources... ***"
-terraform refresh
 # terraform show might fail if provider schema has changed. Since we don't call apply at this stage a refresh is needed
 terraform refresh
 
