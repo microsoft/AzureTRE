@@ -1,5 +1,5 @@
 # Dev requirements
-flake8==5.0.4 # same as super linter
+flake8==6.0.0 # same as super linter
 pre-commit==3.0.4
 semantic-version==2.10.0
 
