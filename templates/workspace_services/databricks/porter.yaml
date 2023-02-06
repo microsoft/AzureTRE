@@ -56,11 +56,6 @@ outputs:
     applyTo:
       - install
       - upgrade
-  - name: internal_connection_uri
-    type: string
-    applyTo:
-      - install
-      - upgrade
   - name: databricks_storage_account_name
     type: string
     applyTo:
@@ -123,7 +118,6 @@ install:
       outputs:
         - name: databricks_workspace_name
         - name: connection_uri
-        - name: internal_connection_uri
         - name: databricks_storage_account_name
         - name: dbfs_blob_storage_domain
         - name: metastore_addresses
@@ -150,7 +144,6 @@ upgrade:
       outputs:
         - name: databricks_workspace_name
         - name: connection_uri
-        - name: internal_connection_uri
         - name: databricks_storage_account_name
         - name: dbfs_blob_storage_domain
         - name: metastore_addresses
