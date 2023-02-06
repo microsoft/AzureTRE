@@ -55,10 +55,10 @@ async def test_create_operation_steps_from_multi_step_template(_, __, resource_r
     resource_template_repo.get_template_by_name_and_version = AsyncMock(return_value=multi_step_resource_template)
 
     operation = await operations_repo.create_operation_item(
-        resource_id="resource-id",
+        resource_id="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
         resource_list=[basic_shared_service.__dict__],
         action="install",
-        resource_path="/workspaces/resource-id",
+        resource_path="/workspaces/59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
         resource_version=0,
         user=test_user,
         resource_repo=resource_repo,
