@@ -43,6 +43,7 @@ BUG FIXES:
 * Added Migration for Airlock requests that were created prior to version 0.5.0 ([#3152](https://github.com/microsoft/AzureTRE/pull/3152))
 * Temporarly use the remote bundle for `check-params` target [#3149](https://github.com/microsoft/AzureTRE/pull/3149)
 * Workspace module dependency to resolve _AnotherOperationInProgress_ errors [#TBD](https://github.com/microsoft/AzureTRE/pull/TBD)
+* Cannot login to Databricks - auth endpoint cannot be reached. [#3201](https://github.com/microsoft/AzureTRE/pull/3201) and [3199](https://github.com/microsoft/AzureTRE/pull/3199)
 
 COMPONENTS:
 
