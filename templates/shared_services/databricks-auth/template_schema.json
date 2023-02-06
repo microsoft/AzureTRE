@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/databricks-auth/template_schema.json",
+  "type": "object",
+  "title": "Azure Databricks Private Authentication Shared Service",
+  "description": "Azure Databricks Private Authentication Shared Service",
+  "required": [],
+  "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "Azure Databricks Private Authentication Shared Service",
+      "default": "Azure Databricks Private Authentication Shared Service",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Azure Databricks Private Authentication Shared Service",
+      "default": "Azure Databricks is a fast, easy, and collaborative Apache Spark-based big data analytics service designed for data science and data engineering.",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Azure Databricks Private Authentication Shared Service",
+      "description": "Long form description of the workspace service, in markdown syntax",
+      "default": "The Azure Databricks Lakehouse Platform provides a unified set of tools for building, deploying, sharing, and maintaining enterprise-grade data solutions at scale.\nAzure Databricks integrates with cloud storage and security in your cloud account, and manages and deploys cloud infrastructure on your behalf.\n[Azure Databricks documentation](https://learn.microsoft.com/en-us/azure/databricks/introduction/)",
+      "updateable": true
+    }
+  }
+}
