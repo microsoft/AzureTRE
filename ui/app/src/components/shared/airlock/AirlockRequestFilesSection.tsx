@@ -1,4 +1,4 @@
-import { MessageBar, MessageBarType, Pivot, PivotItem, PrimaryButton, Stack, TextField, } from "@fluentui/react";
+import { MessageBar, MessageBarType, Pivot, PivotItem, PrimaryButton, Stack, TextField } from "@fluentui/react";
 import React, { useCallback, useEffect, useState } from "react";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
 import { AirlockRequest, AirlockRequestStatus } from "../../../models/airlock";
