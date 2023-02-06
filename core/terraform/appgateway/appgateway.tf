@@ -200,11 +200,10 @@ resource "azurerm_monitor_diagnostic_setting" "agw" {
   log_analytics_workspace_id = var.log_analytics_workspace_id
   # log_analytics_destination_type = "Dedicated"
 
-  dynamic "log" {
-    for_each = toset(["ApplicationGatewayAccessLog", "ApplicationGatewayPerformanceLog", "ApplicationGatewayFirewallLog"])
+  dynamic "enabled_log" {
+    for_each = ["ApplicationGatewayAccessLog", "ApplicationGatewayPerformanceLog", "ApplicationGatewayFirewallLog"]
     content {
-      category = log.value
-      enabled  = true
+      category = enabled_log.value
 
       retention_policy {
         enabled = true
