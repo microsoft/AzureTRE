@@ -18,6 +18,10 @@ variable "smtp_server_address" {
   type = string
 }
 
+variable "smtp_server_port" {
+  type = string
+}
+
 variable "smtp_username" {
   type = string
 }
@@ -25,6 +29,11 @@ variable "smtp_username" {
 variable "smtp_password" {
   type      = string
   sensitive = true
+}
+
+variable "smtp_server_enable_ssl" {
+  type    = bool
+  default = false
 }
 
 variable "smtp_from_email" {
