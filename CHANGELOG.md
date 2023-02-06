@@ -25,6 +25,7 @@
 
 FEATURES:
 * Add Azure Databricks as workspace service [#1857](https://github.com/microsoft/AzureTRE/pull/1857)
+* (UI) Added the option to upload/download files to airlock requests via Azure CLI ([#3196](https://github.com/microsoft/AzureTRE/pull/3196))
 
 ENHANCEMENTS:
 * Add support for referencing IP Groups from the Core Resource Group in firewall rules created via the pipeline [#3089](https://github.com/microsoft/AzureTRE/pull/3089)
