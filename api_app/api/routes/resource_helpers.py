@@ -85,7 +85,6 @@ async def save_and_deploy_resource(
             operations_repo=operations_repo,
             resource_repo=resource_repo,
             user=user,
-            resource_template=resource_template,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=RequestAction.Install,
@@ -173,7 +172,6 @@ async def send_uninstall_message(
     resource_template_repo: ResourceTemplateRepository,
     resource_history_repo: ResourceHistoryRepository,
     user: User,
-    resource_template: ResourceTemplate,
     cascade_enabled: str = False
 ) -> Operation:
     try:
@@ -184,7 +182,6 @@ async def send_uninstall_message(
             user=user,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
-            resource_template=resource_template,
             action=RequestAction.UnInstall,
             cascade_enabled=cascade_enabled
         )
@@ -235,7 +232,6 @@ async def send_custom_action_message(
             operations_repo=operations_repo,
             resource_repo=resource_repo,
             user=user,
-            resource_template=resource_template,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=custom_action,
@@ -303,13 +299,12 @@ async def update_user_resource(
         operations_repo: OperationRepository,
         resource_history_repo: ResourceHistoryRepository) -> Operation:
 
-    patched_user_resource, resource_template = await user_resource_repo.patch_user_resource(user_resource, resource_patch, etag, resource_template_repo, resource_history_repo, workspace_service.templateName, user, force_version_update)
+    patched_user_resource, _ = await user_resource_repo.patch_user_resource(user_resource, resource_patch, etag, resource_template_repo, resource_history_repo, workspace_service.templateName, user, force_version_update)
     operation = await send_resource_request_message(
         resource=patched_user_resource,
         operations_repo=operations_repo,
         resource_repo=user_resource_repo,
         user=user,
-        resource_template=resource_template,
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo,
         action=RequestAction.Upgrade)

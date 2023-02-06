@@ -122,14 +122,13 @@ async def patch_workspace(resource_patch: ResourcePatch, response: Response, use
         cascade_enabled = not resource_patch.isEnabled
         if cascade_enabled:
             await cascaded_update_resource(resource_patch, workspace, user, etag, force_version_update, resource_template_repo=resource_template_repo, resource_history_repo=resource_history_repo, resource_repo=workspace_repo)
-        patched_workspace, resource_template = await workspace_repo.patch_workspace(workspace, resource_patch, etag, resource_template_repo, resource_history_repo, user, force_version_update)
+        patched_workspace, _ = await workspace_repo.patch_workspace(workspace, resource_patch, etag, resource_template_repo, resource_history_repo, user, force_version_update)
         # Send the message to service bus
         operation = await send_resource_request_message(
             resource=patched_workspace,
             operations_repo=operations_repo,
             resource_repo=workspace_repo,
             user=user,
-            resource_template=resource_template,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=RequestAction.Upgrade,
@@ -148,8 +147,6 @@ async def patch_workspace(resource_patch: ResourcePatch, response: Response, use
 @workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
 async def delete_workspace(response: Response, user=Depends(get_current_admin_user), workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
     if await delete_validation(workspace, workspace_repo):
-        resource_template = await resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
-
         operation = await send_uninstall_message(
             resource=workspace,
             resource_repo=workspace_repo,
@@ -158,7 +155,6 @@ async def delete_workspace(response: Response, user=Depends(get_current_admin_us
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             user=user,
-            resource_template=resource_template,
             cascade_enabled=True
         )
 
@@ -279,13 +275,12 @@ async def patch_workspace_service(resource_patch: ResourcePatch, response: Respo
         cascade_enabled = not resource_patch.isEnabled
         if cascade_enabled:
             await cascaded_update_resource(resource_patch, workspace_service, user, etag, force_version_update, resource_template_repo=resource_template_repo, resource_history_repo=resource_history_repo, resource_repo=workspace_service_repo)
-        patched_workspace_service, resource_template = await workspace_service_repo.patch_workspace_service(workspace_service, resource_patch, etag, resource_template_repo, resource_history_repo, user, force_version_update)
+        patched_workspace_service, _ = await workspace_service_repo.patch_workspace_service(workspace_service, resource_patch, etag, resource_template_repo, resource_history_repo, user, force_version_update)
         operation = await send_resource_request_message(
             resource=patched_workspace_service,
             operations_repo=operations_repo,
             resource_repo=workspace_service_repo,
             user=user,
-            resource_template=resource_template,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=RequestAction.Upgrade)
@@ -302,8 +297,6 @@ async def patch_workspace_service(resource_patch: ResourcePatch, response: Respo
 @workspace_services_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
 async def delete_workspace_service(response: Response, user=Depends(get_current_workspace_owner_user), workspace=Depends(get_workspace_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
     if await delete_validation(workspace_service, workspace_service_repo):
-        resource_template = await resource_template_repo.get_template_by_name_and_version(workspace_service.templateName, workspace_service.templateVersion, ResourceType.WorkspaceService)
-
         operation = await send_uninstall_message(
             resource=workspace_service,
             resource_repo=workspace_service_repo,
@@ -311,8 +304,7 @@ async def delete_workspace_service(response: Response, user=Depends(get_current_
             resource_type=ResourceType.WorkspaceService,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
-            user=user,
-            resource_template=resource_template)
+            user=user)
 
         response.headers["Location"] = construct_location_header(operation)
 
@@ -433,8 +425,6 @@ async def delete_user_resource(
     if user_resource.isEnabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_RESOURCE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
 
-    resource_template = await resource_template_repo.get_template_by_name_and_version(user_resource.templateName, user_resource.templateVersion, ResourceType.UserResource, workspace_service.templateName)
-
     operation = await send_uninstall_message(
         resource=user_resource,
         resource_repo=user_resource_repo,
@@ -442,8 +432,7 @@ async def delete_user_resource(
         resource_type=ResourceType.UserResource,
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo,
-        user=user,
-        resource_template=resource_template)
+        user=user)
 
     response.headers["Location"] = construct_location_header(operation)
 

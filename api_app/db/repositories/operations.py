@@ -9,7 +9,6 @@ from resources import strings
 from models.domain.request_action import RequestAction
 from models.domain.resource import ResourceType
 from db.repositories.resources import ResourceRepository
-from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 from core import config
 from db.repositories.base import BaseRepository
@@ -49,7 +48,7 @@ class OperationRepository(BaseRepository):
             message=message,
             updatedWhen=self.get_timestamp())
 
-    async def create_operation_item(self, resource_id: str, resource_list: List, action: str, resource_path: str, resource_version: int, user: User, resource_template: ResourceTemplate, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository) -> Operation:
+    async def create_operation_item(self, resource_id: str, resource_list: List, action: str, resource_path: str, resource_version: int, user: User, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository) -> Operation:
         operation_id = self.create_operation_id()
 
         # get the right "awaiting" message based on the action

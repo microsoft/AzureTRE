@@ -386,12 +386,6 @@ async def delete_review_user_resource(
     # disable might contain logic that we need to execute before the deletion of the resource
     _ = await disable_user_resource(user_resource, user, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
 
-    resource_template = await resource_template_repo.get_template_by_name_and_version(
-        user_resource.templateName,
-        user_resource.templateVersion,
-        ResourceType.UserResource,
-        workspace_service.templateName)
-
     logging.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")
     operation = await send_uninstall_message(
         resource=user_resource,
@@ -400,8 +394,7 @@ async def delete_review_user_resource(
         resource_type=ResourceType.UserResource,
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo,
-        user=user,
-        resource_template=resource_template)
+        user=user)
     logging.info(f"Started operation {operation}")
     return operation
 
