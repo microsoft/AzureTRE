@@ -468,7 +468,7 @@ async def test_get_allowed_actions_requires_same_roles_as_endpoint(action, requi
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("action, required_roles, airlock_request_repo_mock", [
+@pytest.mark.parametrize("action, endpoint_roles, airlock_request_repo_mock", [
     (AirlockActions.Review, get_required_roles(endpoint=create_airlock_review), airlock_request_repo_mock),
     (AirlockActions.Cancel, get_required_roles(endpoint=create_cancel_request), airlock_request_repo_mock),
     (AirlockActions.Submit, get_required_roles(endpoint=create_submit_request), airlock_request_repo_mock)])
