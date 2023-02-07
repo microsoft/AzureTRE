@@ -8,23 +8,23 @@
   "properties": {
     "display_name": {
       "type": "string",
-      "title": "Name for the workspace service",
-      "description": "Azure Databricks Private Authentication Shared Service",
+      "title": "Name for the shared service",
+      "description": "The name of the shared service to be displayed to users",
       "default": "Azure Databricks Private Authentication Shared Service",
       "updateable": true
     },
     "description": {
       "type": "string",
-      "title": "Description of the workspace service",
-      "description": "Azure Databricks Private Authentication Shared Service",
-      "default": "Azure Databricks is a fast, easy, and collaborative Apache Spark-based big data analytics service designed for data science and data engineering.",
+      "title": "Description of the shared service",
+      "description": "The description of the shared service to be displayed to users",
+      "default": "Azure Databricks Private Authentication Shared Service is a Databricks workspace that you create in the same region as your Azure Databricks workspaces, and its only purpose is hosting the browser authentication private endpoint connection for your actual production Azure Databricks workspaces in that region. The private web auth workspace is not used for anything else but authentication.",
       "updateable": true
     },
     "overview": {
       "type": "string",
-      "title": "Azure Databricks Private Authentication Shared Service",
-      "description": "Long form description of the workspace service, in markdown syntax",
-      "default": "The Azure Databricks Lakehouse Platform provides a unified set of tools for building, deploying, sharing, and maintaining enterprise-grade data solutions at scale.\nAzure Databricks integrates with cloud storage and security in your cloud account, and manages and deploys cloud infrastructure on your behalf.\n[Azure Databricks documentation](https://learn.microsoft.com/en-us/azure/databricks/introduction/)",
+      "title": "Overview for the shared service",
+      "description": "Long form description of the shared service, in markdown syntax",
+      "default": "Azure Databricks Private Authentication Shared Service is a Databricks workspace that you create in the same region as your Azure Databricks workspaces, and its only purpose is hosting the browser authentication private endpoint connection for your actual production Azure Databricks workspaces in that region. The private web auth workspace is not used for anything else but authentication.\n[Enable Azure Private Link as a simplified deployment](https://learn.microsoft.com/en-us/azure/databricks/administration-guide/cloud-configurations/azure/private-link-simplified)",
       "updateable": true
     }
   }
