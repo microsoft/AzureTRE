@@ -43,7 +43,7 @@ BUG FIXES:
 * Added Migration for Airlock requests that were created prior to version 0.5.0 ([#3152](https://github.com/microsoft/AzureTRE/pull/3152))
 * Temporarly use the remote bundle for `check-params` target [#3149](https://github.com/microsoft/AzureTRE/pull/3149)
 * Workspace module dependency to resolve _AnotherOperationInProgress_ errors [#3194](https://github.com/microsoft/AzureTRE/pull/3194)
-* Skip Certs shared service E2E on Friday & Saterday due to LetsEncrypt limits [#3203](https://github.com/microsoft/AzureTRE/pull/3203)
+* Skip Certs shared service E2E on Friday & Saturday due to LetsEncrypt limits [#3203](https://github.com/microsoft/AzureTRE/pull/3203)
 
 COMPONENTS:
 
