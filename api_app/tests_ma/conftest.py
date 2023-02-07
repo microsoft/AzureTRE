@@ -347,9 +347,6 @@ def multi_step_operation(
                 status=Status.AwaitingUpdate,
                 message="This resource is waiting to be updated",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
-                parentResourceTemplate="template1",
-                parentResourceTemplateVersion="0.1.0",
-                parentResourceType=ResourceType.Workspace,
                 parentResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
             ),
             OperationStep(
@@ -362,9 +359,6 @@ def multi_step_operation(
                 status=Status.AwaitingDeployment,
                 message="This resource is waiting to be deployed",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
-                parentResourceTemplate='',
-                parentResourceTemplateVersion='',
-                parentResourceType=None,
                 parentResourceId=None
             ),
             OperationStep(
@@ -377,9 +371,6 @@ def multi_step_operation(
                 status=Status.AwaitingUpdate,
                 message="This resource is waiting to be updated",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
-                parentResourceTemplate="template1",
-                parentResourceTemplateVersion="0.1.0",
-                parentResourceType=ResourceType.Workspace,
                 parentResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
             ),
         ],

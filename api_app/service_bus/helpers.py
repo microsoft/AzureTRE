@@ -47,15 +47,16 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
         return current_resource
 
     # get the template for the primary resource, to get all the step details for substitutions
-    primary_parent_service_name = ""
-    if current_resource.resourceType == ResourceType.UserResource:
-        primary_parent_workspace_service = await resource_repo.get_resource_by_id(current_resource.parentWorkspaceServiceId)
-        primary_parent_service_name = primary_parent_workspace_service.templateName
-    primary_template = await resource_template_repo.get_template_by_name_and_version(operation_step.parentResourceTemplate, operation_step.parentResourceTemplateVersion, operation_step.parentResourceType, primary_parent_service_name)
+    parent_resource = await resource_repo.get_resource_by_id(operation_step.parentResourceId)
+    parent_service_name = ""
+    if parent_resource.resourceType == ResourceType.UserResource:
+        parent_workspace_service = await resource_repo.get_resource_by_id(parent_resource.parentWorkspaceServiceId)
+        parent_service_name = parent_workspace_service.templateName
+    parent_template = await resource_template_repo.get_template_by_name_and_version(parent_resource.templateName, parent_resource.templateVersion, parent_resource.resourceType, parent_service_name)
 
     # get the template step
     template_step = None
-    for step in primary_template.pipeline.dict()[primary_action]:
+    for step in parent_template.pipeline.dict()[primary_action]:
         if step["stepId"] == operation_step.stepId:
             template_step = parse_obj_as(PipelineStep, step)
             break

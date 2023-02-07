@@ -141,9 +141,6 @@ class OperationRepository(BaseRepository):
                             status=resource_for_step_status,
                             message=resource_for_step_message,
                             updatedWhen=self.get_timestamp(),
-                            parentResourceTemplate=resource_template_dict["name"],
-                            parentResourceTemplateVersion=resource_template_dict["version"],
-                            parentResourceType=resource_template_dict["resourceType"],
                             parentResourceId=resource_id
                         ))
         return steps

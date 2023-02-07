@@ -51,10 +51,7 @@ class OperationStep(AzureTREModel):
     status: Optional[Status] = Field(None, title="Operation step status")
     message: Optional[str] = Field("", title="Additional operation step status information")
     updatedWhen: Optional[float] = Field("", title="POSIX Timestamp for When the operation step was updated")
-    parentResourceTemplate: Optional[str] = Field("", title="parentResourceTemplate", description="Name of the parent template for the resource under change")
-    parentResourceTemplateVersion: Optional[str] = Field("", title="parentResourceTemplateVersion", description="Name of the parent template for the resource under change")
-    parentResourceType: Optional[ResourceType] = Field(title="parentResourceType", description="Type of resource under change")
-    parentResourceId: Optional[str] = Field(title="parentResourceId", description="Type of resource under change")
+    parentResourceId: Optional[str] = Field(title="parentResourceId", description="Id of the parent of the resource to update")
 
     def is_success(self) -> bool:
         return self.status in (
