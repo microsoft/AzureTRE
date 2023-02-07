@@ -17,7 +17,7 @@ from models.domain.workspace import Workspace
 from tests_ma.test_api.conftest import create_test_user, create_workspace_airlock_manager_user
 from azure.eventgrid import EventGridEvent
 from api.routes.airlock import create_airlock_review, create_cancel_request, create_submit_request
-
+from services.aad_authentication import AzureADAuthorization
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 AIRLOCK_REQUEST_ID = "5dbc15ae-40e1-49a5-834b-595f59d626b7"
@@ -25,6 +25,7 @@ AIRLOCK_REVIEW_ID = "96d909c5-e913-4c05-ae53-668a702ba2e5"
 USER_RESOURCE_ID = "cce59042-1dee-42dc-9388-6db846feeb3b"
 WORKSPACE_SERVICE_ID = "30f2fefa-e7bb-4e5b-93aa-e50bb037502a"
 CURRENT_TIME = time.time()
+ALL_ROLES = AzureADAuthorization.WORKSPACE_ROLES_DICT.keys()
 
 
 @pytest_asyncio.fixture
@@ -464,6 +465,21 @@ async def test_get_allowed_actions_requires_same_roles_as_endpoint(action, requi
         user.roles = [role]
         allowed_actions = get_allowed_actions(request=sample_airlock_request(), user=user, airlock_request_repo=airlock_request_repo_mock)
         assert action in allowed_actions
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action, required_roles, airlock_request_repo_mock", [
+    (AirlockActions.Review, get_required_roles(endpoint=create_airlock_review), airlock_request_repo_mock),
+    (AirlockActions.Cancel, get_required_roles(endpoint=create_cancel_request), airlock_request_repo_mock),
+    (AirlockActions.Submit, get_required_roles(endpoint=create_submit_request), airlock_request_repo_mock)])
+async def test_get_allowed_actions_does_not_return_actions_that_are_forbidden_to_the_user_role(action, endpoint_roles, airlock_request_repo_mock):
+    airlock_request_repo_mock.validate_status_update = MagicMock(return_value=True)
+    user = create_test_user()
+    forbidden_roles = [role for role in ALL_ROLES if role not in endpoint_roles]
+    for forbidden_role in forbidden_roles:
+        user.roles = [forbidden_role]
+        allowed_actions = get_allowed_actions(request=sample_airlock_request(), user=user, airlock_request_repo=airlock_request_repo_mock)
+        assert action not in allowed_actions
 
 
 @pytest.mark.asyncio
