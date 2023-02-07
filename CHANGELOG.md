@@ -17,14 +17,15 @@
       One way to accomplish this is with the Swagger endpoint (/api/docs).
       ![Force-update a service](./docs/assets/firewall-policy-migrate1.png)
 
-      If this endpoint is not on in your deployment - include `enable_swagger` in your `config.yaml` (see the sample file), or temporarly via the API resource on azure (named `api-YOUR_TRE-ID`) -> Configuration -> `ENABLE_SWAGGER` item.
+      If this endpoint is not working in your deployment - include `enable_swagger` in your `config.yaml` (see the sample file), or temporarly activate it via the API resource on azure (named `api-YOUR_TRE-ID`) -> Configuration -> `ENABLE_SWAGGER` item.
       ![Update API setting](./docs/assets/firewall-policy-migrate2.png)
   
   
-  :warning: Any custom rules you have added manually will be **lost** and you'll need to add it back after the upgrade has been completed.
+  :warning: Any custom rules you have added manually will be **lost** and you'll need to add them back after the upgrade has been completed.
 
 FEATURES:
 * Add Azure Databricks as workspace service [#1857](https://github.com/microsoft/AzureTRE/pull/1857)
+* (UI) Added the option to upload/download files to airlock requests via Azure CLI ([#3196](https://github.com/microsoft/AzureTRE/pull/3196))
 
 ENHANCEMENTS:
 * Add support for referencing IP Groups from the Core Resource Group in firewall rules created via the pipeline [#3089](https://github.com/microsoft/AzureTRE/pull/3089)
@@ -41,6 +42,7 @@ BUG FIXES:
 * Reauth CLI if TRE endpoint has changed [#3137](https://github.com/microsoft/AzureTRE/pull/3137)
 * Added Migration for Airlock requests that were created prior to version 0.5.0 ([#3152](https://github.com/microsoft/AzureTRE/pull/3152))
 * Temporarly use the remote bundle for `check-params` target [#3149](https://github.com/microsoft/AzureTRE/pull/3149)
+* Workspace module dependency to resolve _AnotherOperationInProgress_ errors [#TBD](https://github.com/microsoft/AzureTRE/pull/TBD)
 
 COMPONENTS:
 
