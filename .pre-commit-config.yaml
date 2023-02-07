@@ -1,10 +1,10 @@
 ---
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v1.2.3
+  - repo: https://github.com/pycqa/flake8
+    rev: '6.0.0'
     hooks:
       - id: flake8
   - repo: https://github.com/hcodes/yaspeller
-    rev: v7.0.0
+    rev: v8.0.1
     hooks:
       - id: yaspeller

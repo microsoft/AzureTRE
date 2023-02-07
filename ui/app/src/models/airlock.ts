@@ -59,11 +59,9 @@ export enum AirlockRequestAction {
   Review = 'review'
 }
 
-export const AirlockFilesLinkInvalidStatus = [
-  AirlockRequestStatus.Rejected,
-  AirlockRequestStatus.Blocked,
-  AirlockRequestStatus.Failed,
-  AirlockRequestStatus.InReview
+export const AirlockFilesLinkValidStatus = [
+  AirlockRequestStatus.Draft,
+  AirlockRequestStatus.Approved,
 ]
 
 export enum AirlockReviewDecision {

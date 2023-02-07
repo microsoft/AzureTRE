@@ -1,11 +1,10 @@
 import logging
-
-from httpx import Timeout
+import backoff
+from httpx import TimeoutException
 from e2e_tests.helpers import get_full_endpoint
 from e2e_tests.resources import strings
 
 LOGGER = logging.getLogger(__name__)
-TIMEOUT = Timeout(10, read=30)
 
 
 async def delete_done(client, operation_endpoint, headers):
@@ -26,10 +25,13 @@ async def patch_done(client, operation_endpoint, headers):
     return (True, deployment_status, message, operation_steps) if deployment_status in install_terminal_states else (False, deployment_status, message, operation_steps)
 
 
+@backoff.on_exception(backoff.constant,
+                      TimeoutException,  # catching all timeout types (Connection, Read, etc.)
+                      max_time=90)
 async def check_deployment(client, operation_endpoint, headers):
     full_endpoint = get_full_endpoint(operation_endpoint)
 
-    response = await client.get(full_endpoint, headers=headers, timeout=TIMEOUT)
+    response = await client.get(full_endpoint, headers=headers, timeout=5.0)
     if response.status_code == 200:
         response_json = response.json()
         deployment_status = response_json["operation"]["status"]
