@@ -140,12 +140,11 @@ def sample_airlock_review(review_decision=AirlockReviewDecision.Approved):
 
 
 def test_validate_user_is_allowed_to_access_sa_blocks_access_as_expected():
-    # Workspace owner can access only in review
-    ws_owner_user = create_workspace_owner_user()
+    airlock_manager_user = create_workspace_airlock_manager_user()
     draft_airlock_request = sample_airlock_request()
     with pytest.raises(HTTPException) as ex:
         validate_user_allowed_to_access_storage_account(
-            user=ws_owner_user,
+            user=airlock_manager_user,
             airlock_request=draft_airlock_request
         )
 
@@ -163,7 +162,6 @@ def test_validate_user_is_allowed_to_access_sa_blocks_access_as_expected():
 
 
 def test_validate_user_is_allowed_to_access_grants_access_to_user_with_a_valid_role():
-    # Workspace owner can access only in review
     ws_owner_user = create_workspace_owner_user()
     draft_airlock_request = sample_airlock_request(AirlockRequestStatus.InReview)
 
