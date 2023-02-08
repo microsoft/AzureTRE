@@ -41,9 +41,10 @@ ENHANCEMENTS:
 BUG FIXES:
 * Reauth CLI if TRE endpoint has changed [#3137](https://github.com/microsoft/AzureTRE/pull/3137)
 * Added Migration for Airlock requests that were created prior to version 0.5.0 ([#3152](https://github.com/microsoft/AzureTRE/pull/3152))
-* Temporarly use the remote bundle for `check-params` target [#3149](https://github.com/microsoft/AzureTRE/pull/3149)
+* Temporarily use the remote bundle for `check-params` target [#3149](https://github.com/microsoft/AzureTRE/pull/3149)
 * Workspace module dependency to resolve _AnotherOperationInProgress_ errors [#3194](https://github.com/microsoft/AzureTRE/pull/3194)
 * Skip Certs shared service E2E on Friday & Saturday due to LetsEncrypt limits [#3203](https://github.com/microsoft/AzureTRE/pull/3203)
+* Create Workspace AppInsights via AzAPI provider due to an issue with AzureRM [#3207](https://github.com/microsoft/AzureTRE/pull/3207)
 * 'Workspace Owner' is now able to access Airlock request's SAS URL even if the request is not in review [#3208](https://github.com/microsoft/AzureTRE/pull/3208)
 
 COMPONENTS:
@@ -117,8 +118,8 @@ COMPONENTS:
 ## 0.7.0 (November 17, 2022)
 
 **BREAKING CHANGES & MIGRATIONS**:
-* The airlock request object has changed. Make sure you have ran the db migration step after deploying the new API image and UI (which runs automatically in `make all`/`make tre-deploy` but can be manually invoked with `make db-migrate`) so that existing requests in your DB are migrated to the new model.
-* Also the model for creating new airlock requests with the API has changed slightly; this is updated in the UI and CLI but if you have written custom tools ensure you are POSTing to `/requests` with the following model:
+* The airlock request object has changed. Make sure you have ran the DB migration step after deploying the new API image and UI (which runs automatically in `make all`/`make tre-deploy` but can be manually invoked with `make db-migrate`) so that existing requests in your DB are migrated to the new model.
+* Also the model for creating new airlock requests with the API has changed slightly; this is updated in the UI and CLI but if you have written custom tools ensure you POST to `/requests` with the following model:
 ```json
 {
     "type": "'import' or 'export'",
@@ -200,7 +201,7 @@ FEATURES:
 
 ENHANCEMENTS:
 * Add cran support to nexus, open port 80 for the workspace nsg and update the firewall config to allow let's encrypt CRLs ([#2694](https://github.com/microsoft/AzureTRE/pull/2694))
-* Upgrade Github Actions versions ([#2731](https://github.com/microsoft/AzureTRE/pull/2744))
+* Upgrade GitHub Actions versions ([#2731](https://github.com/microsoft/AzureTRE/pull/2744))
 * Install TRE CLI inside the devcontainer image (rather than via a post-create step) ([#2757](https://github.com/microsoft/AzureTRE/pull/2757))
 * Upgrade Terraform to 1.3.2 ([#2758](https://github.com/microsoft/AzureTRE/pull/2758))
 * `tre` CLI: added `raw` output option, improved `airlock-requests` handling, more consistent exit codes on error, added examples to CLI README.md
@@ -275,8 +276,8 @@ COMPONENTS:
 
 **BREAKING CHANGES & MIGRATIONS**:
 
-* Github Actions deployments use a single ACR instead of two. Github secrets might need updating, see PR for details. ([#2654](https://github.com/microsoft/AzureTRE/pull/2654))
-* Align Github Action secret names. Existing Github environments must be updated, see PR for details. ([#2655](https://github.com/microsoft/AzureTRE/pull/2655))
+* GitHub Actions deployments use a single ACR instead of two. GitHub secrets might need updating, see PR for details. ([#2654](https://github.com/microsoft/AzureTRE/pull/2654))
+* Align GitHub Action secret names. Existing GitHub environments must be updated, see PR for details. ([#2655](https://github.com/microsoft/AzureTRE/pull/2655))
 * Add workspace creator as an owner of the workspace enterprise application ([#2627](https://github.com/microsoft/AzureTRE/pull/2627)). **Migration** if the `AUTO_WORKSPACE_APP_REGISTRATION` is set, the `Directory.Read.All` MS Graph API permission permission needs granting to the Application Registration identified by `APPLICATION_ADMIN_CLIENT_ID`.
 * Add support for setting AppService plan SKU in GitHub Actions. Previous environment variable names of `API_APP_SERVICE_PLAN_SKU_SIZE` and `APP_SERVICE_PLAN_SKU` have been renamed to `CORE_APP_SERVICE_PLAN_SKU` and `WORKSPACE_APP_SERVICE_PLAN_SKU` ([#2684](https://github.com/microsoft/AzureTRE/pull/2684))
 * Reworked how status update messages are handled by the API, to enforce ordering and run the queue subscription in a dedicated thread. Since sessions are now enabled for the status update queue, a `tre-deploy` is required, which will re-create the queue. ([#2700](https://github.com/microsoft/AzureTRE/pull/2700))
@@ -318,7 +319,6 @@ COMPONENTS:
 | devops | 0.4.2 |
 | core | 0.4.36 |
 | porter-hello | 0.1.0 |
-| tre-workspace-base-sl-test | 0.3.19 |
 | tre-workspace-base | 0.4.0 |
 | tre-workspace-unrestricted | 0.2.0 |
 | tre-workspace-airlock-import-review | 0.4.0 |
@@ -411,7 +411,7 @@ COMPONENTS:
 
 FEATURES:
 
-* MySql workspace service ([#2476](https://github.com/microsoft/AzureTRE/pull/2476))
+* MySQL workspace service ([#2476](https://github.com/microsoft/AzureTRE/pull/2476))
 
 ENHANCEMENTS:
 
