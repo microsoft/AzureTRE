@@ -15,6 +15,15 @@ resource "azurerm_machine_learning_workspace" "aml_workspace" {
   identity {
     type = "SystemAssigned"
   }
+
+  lifecycle {
+    ignore_changes = [
+      tags,
+      image_build_compute_name,
+      public_access_behind_virtual_network_enabled
+    ]
+  }
+
 }
 
 resource "azurerm_private_endpoint" "mlpe" {
