@@ -6,7 +6,7 @@ from resources import strings
 from services.airlock import validate_user_allowed_to_access_storage_account, get_required_permission, \
     validate_request_status, cancel_request, delete_review_user_resource
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReview, AirlockReviewDecision, AirlockActions, AirlockReviewUserResource
-from tests_ma.test_api.conftest import create_workspace_owner_user, create_workspace_researcher_user
+from tests_ma.test_api.conftest import create_workspace_owner_user, create_workspace_researcher_user, get_required_roles
 from mock import AsyncMock, patch, MagicMock
 from models.domain.events import AirlockNotificationData, AirlockNotificationUserData, StatusChangedData, \
     AirlockNotificationRequestData, AirlockNotificationWorkspaceData, AirlockFile
@@ -137,12 +137,6 @@ def sample_airlock_review(review_decision=AirlockReviewDecision.Approved):
         decisionExplanation="test explanation"
     )
     return airlock_review
-
-
-def get_required_roles(endpoint):
-    dependencies = list(filter(lambda x: hasattr(x.dependency, 'require_one_of_roles'), endpoint.__defaults__))
-    required_roles = dependencies[0].dependency.require_one_of_roles
-    return required_roles
 
 
 def test_validate_user_is_allowed_to_access_sa_blocks_access_as_expected():
