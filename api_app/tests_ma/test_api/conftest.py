@@ -76,6 +76,12 @@ def override_get_user():
     return user
 
 
+def get_required_roles(endpoint):
+    dependencies = list(filter(lambda x: hasattr(x.dependency, 'require_one_of_roles'), endpoint.__defaults__))
+    required_roles = dependencies[0].dependency.require_one_of_roles
+    return required_roles
+
+
 @pytest.fixture(scope='module')
 def admin_user():
     def inner():

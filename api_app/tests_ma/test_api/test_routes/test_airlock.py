@@ -6,6 +6,8 @@ from fastapi import status
 from azure.core.exceptions import HttpResponseError
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
+from tests_ma.test_api.conftest import create_test_user, get_required_roles
+from api.routes.airlock import create_draft_request
 from db.errors import EntityDoesNotExist, UnableToAccessDatabase
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockReview, AirlockReviewDecision, AirlockReviewUserResource
 from models.domain.user_resource import UserResource
@@ -114,6 +116,14 @@ def sample_review_resource(healthy=True) -> UserResource:
         deploymentStatus="deployed" if healthy else "failed"
     )
     return resource
+
+
+def create_test_user_with_roles(roles):
+    def inner():
+        user = create_test_user()
+        user.roles = roles
+        return user
+    return inner
 
 
 class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
@@ -405,3 +415,25 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
         await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert delete_review_resource_mock.call_count == 1
         assert deploy_resource_mock.call_count == 1
+
+
+class TestAirlockRoutesPermissions():
+
+    @pytest_asyncio.fixture()
+    def log_in_with_user(self, app):
+        def inner(user):
+            app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = user
+            app.dependency_overrides[get_current_airlock_manager_user] = user
+            app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = user
+        return inner
+
+    @pytest.mark.parametrize("role", (role for role in get_required_roles(endpoint=create_draft_request)))
+    @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(WORKSPACE_ID))
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Draft))
+    @patch("services.airlock.get_airlock_request_container_sas_token", return_value="valid-sas-token")
+    async def test_get_airlock_container_link_is_accessible_to_every_role_that_can_create_request(self, _, __, ___, ____, app, client, log_in_with_user, role):
+        user = create_test_user_with_roles([role])
+        log_in_with_user(user)
+        response = await client.get(app.url_path_for(strings.API_AIRLOCK_REQUEST_LINK, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_200_OK
