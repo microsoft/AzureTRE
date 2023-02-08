@@ -283,7 +283,8 @@ async def patch_workspace_service(resource_patch: ResourcePatch, response: Respo
             user=user,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
-            action=RequestAction.Upgrade)
+            action=RequestAction.Upgrade,
+            cascade_enabled=cascade_enabled)
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
@@ -304,7 +305,8 @@ async def delete_workspace_service(response: Response, user=Depends(get_current_
             resource_type=ResourceType.WorkspaceService,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
-            user=user)
+            user=user,
+            cascade_enabled=True)
 
         response.headers["Location"] = construct_location_header(operation)
 
