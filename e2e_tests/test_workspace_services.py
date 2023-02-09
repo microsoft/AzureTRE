@@ -21,8 +21,20 @@ workspace_services = [
 @pytest.mark.extended
 @pytest.mark.timeout(75 * 60)
 async def test_create_guacamole_service_into_base_workspace(verify, setup_test_workspace_and_guacamole_service) -> None:
-    _, workspace_id, workspace_service_path, _ = setup_test_workspace_and_guacamole_service
+    _, workspace_id, workspace_service_path, workspace_service_id = setup_test_workspace_and_guacamole_service
     workspace_owner_token = await get_workspace_owner_token(verify, workspace_id)
+
+    await ping_guacamole_workspace_service(workspace_id, workspace_service_id, verify)
+
+    # patch the guac service. we'll just update the display_name but this will still force a full deployment run
+    # and essentially terraform no-op
+    patch_payload = {
+        "properties": {
+            "display_name": "Updated Guac Name",
+        }
+    }
+
+    await post_resource(patch_payload, f'/api{workspace_service_path}', workspace_owner_token, verify, method="PATCH")
 
     user_resource_payload = {
         "templateName": strings.GUACAMOLE_WINDOWS_USER_RESOURCE,
