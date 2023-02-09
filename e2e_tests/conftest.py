@@ -104,7 +104,7 @@ async def clean_up_test_workspace(pre_created_workspace_id: str, workspace_path:
 async def clean_up_test_workspace_service(pre_created_workspace_service_id: str, workspace_service_path: str, workspace_id: str, verify: bool):
     if pre_created_workspace_service_id == "":
         LOGGER.info(f"Deleting workspace service {pre_created_workspace_service_id}")
-        await disable_and_delete_ws_resource(f'/api{workspace_service_path}', verify)
+        await disable_and_delete_ws_resource(verify, f'/api{workspace_service_path}', workspace_id)
 
 
 # Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868

@@ -142,7 +142,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
 
         # clear up all the VMs in parallel
         # NOTE: Due to bug https://github.com/microsoft/AzureTRE/issues/1163 - this VM delete step currently fails
-        task = asyncio.create_task(disable_and_delete_ws_resource(f'/api{resource_path}', verify))
+        task = asyncio.create_task(disable_and_delete_ws_resource(verify, workspace_id, f'/api{resource_path}'))
         tasks.append(task)
 
     await asyncio.gather(*tasks)
@@ -150,6 +150,6 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
     admin_token = await get_admin_token(verify)
     # clear up workspace + service (if we created them)
     if config.TEST_WORKSPACE_SERVICE_ID == "":
-        await disable_and_delete_ws_resource(f'/api{workspace_service_path}', verify)
+        await disable_and_delete_ws_resource(verify, f'/api{workspace_service_path}', workspace_id)
     if config.TEST_WORKSPACE_ID == "":
         await disable_and_delete_tre_resource(f'/api{workspace_path}', verify)
