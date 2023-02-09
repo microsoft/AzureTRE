@@ -1,6 +1,7 @@
 variable "tre_id" {}
 variable "location" {}
 variable "resource_group_name" {}
+variable "resource_group_id" {}
 variable "tre_workspace_tags" {}
 variable "workspace_subnet_id" {}
 variable "azure_monitor_dns_zone_id" {}

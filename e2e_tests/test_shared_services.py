@@ -1,6 +1,7 @@
 import pytest
 import logging
 from e2e_tests.conftest import disable_and_delete_tre_resource
+from datetime import date
 
 from resources.resource import post_resource
 from helpers import get_shared_service_by_name
@@ -139,6 +140,7 @@ async def test_create_shared_service(template_name, verify) -> None:
 
 @pytest.mark.shared_services
 @pytest.mark.timeout(60 * 60)
+@pytest.mark.skipif(date.today().weekday() in [4, 5], reason="LetsEncrypt limits to 5 times a week. Skipping on FRI & SAT.")
 async def test_create_certs_nexus_shared_service(verify) -> None:
     await disable_and_delete_shared_service_if_exists(strings.NEXUS_SHARED_SERVICE, verify)
     await disable_and_delete_shared_service_if_exists(strings.CERTS_SHARED_SERVICE, verify)
