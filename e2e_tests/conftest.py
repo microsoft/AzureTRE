@@ -98,8 +98,7 @@ async def clean_up_test_workspace(pre_created_workspace_id: str, workspace_path:
     # Only delete the workspace if it wasn't pre-created
     if pre_created_workspace_id == "":
         LOGGER.info(f"Deleting workspace {pre_created_workspace_id}")
-        admin_token = await get_admin_token(verify)
-        await disable_and_delete_tre_resource(f'/api{workspace_path}', admin_token, verify)
+        await disable_and_delete_tre_resource(f'/api{workspace_path}', verify)
 
 
 async def clean_up_test_workspace_service(pre_created_workspace_service_id: str, workspace_service_path: str, workspace_id: str, verify: bool):

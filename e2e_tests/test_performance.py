@@ -152,4 +152,4 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
     if config.TEST_WORKSPACE_SERVICE_ID == "":
         await disable_and_delete_ws_resource(f'/api{workspace_service_path}', verify)
     if config.TEST_WORKSPACE_ID == "":
-        await disable_and_delete_tre_resource(f'/api{workspace_path}', admin_token, verify)
+        await disable_and_delete_tre_resource(f'/api{workspace_path}', verify)
