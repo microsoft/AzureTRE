@@ -507,7 +507,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # [PATCH] /workspaces/{workspace_id}
-    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph", return_value=[sample_workspace().__dict__])
+    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace().__dict__])
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -530,7 +530,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_202_ACCEPTED
 
     # [PATCH] /workspaces/{workspace_id}
-    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph", return_value=[sample_workspace().__dict__])
+    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace().__dict__])
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -553,7 +553,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.text == 'Attempt to upgrade from 0.1.0 to 2.0.0 denied. major version upgrade is not allowed.'
 
     # [PATCH] /workspaces/{workspace_id}
-    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph", return_value=[sample_workspace().__dict__])
+    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace().__dict__])
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -577,7 +577,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_202_ACCEPTED
 
     # [PATCH] /workspaces/{workspace_id}
-    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph", return_value=[sample_workspace().__dict__])
+    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace().__dict__])
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -600,7 +600,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.text == 'Attempt to downgrade from 0.1.0 to 0.0.1 denied. version downgrade is not allowed.'
 
     # [PATCH] /workspaces/{workspace_id}
-    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph", return_value=[sample_workspace().__dict__])
+    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace().__dict__])
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -624,7 +624,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_202_ACCEPTED
 
     # [PATCH] /workspaces/{workspace_id}
-    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph", return_value=[sample_workspace().__dict__])
+    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace().__dict__])
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @ patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag", side_effect=CosmosAccessConditionFailedError)
@@ -646,7 +646,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.text == strings.ETAG_CONFLICT
 
     # [DELETE] /workspaces/{workspace_id}
-    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph", return_value=[sample_workspace().__dict__])
+    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace().__dict__])
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     async def test_delete_workspace_returns_400_if_workspace_is_enabled(self, get_workspace_mock, _, app, client):
         workspace = sample_workspace()
@@ -657,11 +657,11 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     # [DELETE] /workspaces/{workspace_id}
-    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph")
+    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list")
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    async def test_delete_workspace_returns_400_if_associated_workspace_services_are_not_deleted(self, get_workspace_mock, resource_template_repo, resource_dependecny_graph_mock, disabled_workspace, app, client, basic_resource_template):
-        resource_dependecny_graph_mock.return_value = [disabled_workspace.__dict__, sample_workspace_service().__dict__]
+    async def test_delete_workspace_returns_400_if_associated_workspace_services_are_not_deleted(self, get_workspace_mock, resource_template_repo, resource_dependency_list_mock, disabled_workspace, app, client, basic_resource_template):
+        resource_dependency_list_mock.return_value = [disabled_workspace.__dict__, sample_workspace_service().__dict__]
         get_workspace_mock.return_value = disabled_workspace
         resource_template_repo.return_value = basic_resource_template
         response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE, workspace_id=WORKSPACE_ID))
@@ -669,7 +669,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     # [DELETE] /workspaces/{workspace_id}
-    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph")
+    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list")
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
     @ patch("api.dependencies.workspaces.get_repository")
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
@@ -685,7 +685,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         send_request_message_mock.assert_called_once()
 
     # [DELETE] /workspaces/{workspace_id}
-    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph")
+    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list")
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
     @ patch("api.dependencies.workspaces.get_repository")
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
@@ -796,7 +796,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     # [DELETE] /workspaces/{workspace_id}/services/{service_id}
-    @patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph", return_value=[sample_workspace_service().__dict__])
+    @patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace_service().__dict__])
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     async def test_delete_workspace_service_raises_400_if_workspace_service_is_enabled(self, _, get_workspace_service_mock, __, app, client):
@@ -811,7 +811,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     # [DELETE] /workspaces/{workspace_id}/services/{service_id}
-    @patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph", return_value=[disabled_workspace_service().__dict__, sample_user_resource_object().__dict__])
+    @patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[disabled_workspace_service().__dict__, sample_user_resource_object().__dict__])
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id",
            return_value=disabled_workspace_service())
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
@@ -861,7 +861,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         obj = response.json()["resource_history"]
         assert len(obj) == 0
 
-    @patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph", return_value=[disabled_workspace_service().__dict__])
+    @patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[disabled_workspace_service().__dict__])
     @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id",
            return_value=disabled_workspace_service())
@@ -876,7 +876,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
                                              service_id=SERVICE_ID))
         send_uninstall_mock.assert_called_once()
 
-    @patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph", return_value=[disabled_workspace_service().__dict__])
+    @patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[disabled_workspace_service().__dict__])
     @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
@@ -1200,7 +1200,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
-    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph", return_value=[sample_workspace_service().__dict__])
+    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace_service().__dict__])
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
@@ -1227,7 +1227,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.status_code == status.HTTP_202_ACCEPTED
 
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
-    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph", return_value=[sample_workspace_service().__dict__])
+    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace_service().__dict__])
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_workspace_service())
@@ -1253,7 +1253,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.text == 'Attempt to upgrade from 0.1.0 to 2.0.0 denied. major version upgrade is not allowed.'
 
-    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph", return_value=[sample_workspace_service().__dict__])
+    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace_service().__dict__])
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_workspace_service())
@@ -1281,7 +1281,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.status_code == status.HTTP_202_ACCEPTED
 
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
-    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph", return_value=[sample_workspace_service().__dict__])
+    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace_service().__dict__])
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_workspace_service())
@@ -1308,7 +1308,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.text == 'Attempt to downgrade from 0.1.0 to 0.0.1 denied. version downgrade is not allowed.'
 
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
-    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependecny_graph", return_value=[sample_workspace_service().__dict__])
+    @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace_service().__dict__])
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_workspace_service())

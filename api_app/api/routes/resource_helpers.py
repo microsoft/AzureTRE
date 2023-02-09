@@ -28,8 +28,8 @@ from services.authentication import get_access_service
 
 
 async def delete_validation(resource: Resource, resource_repo: ResourceRepository):
-    dependency_graph = await resource_repo.get_resource_dependecny_graph(resource)
-    for resource in dependency_graph:
+    dependency_list = await resource_repo.get_resource_dependency_list(resource)
+    for resource in dependency_list:
         if resource["isEnabled"]:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
 
@@ -37,10 +37,10 @@ async def delete_validation(resource: Resource, resource_repo: ResourceRepositor
 
 
 async def cascaded_update_resource(resource_patch: ResourcePatch, parent_resource: Resource, user: User, force_version_update: bool, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, resource_repo: ResourceRepository):
-    # Get dependecy graph
-    dependency_graph = await resource_repo.get_resource_dependecny_graph(parent_resource)
+    # Get dependecy list
+    dependency_list = await resource_repo.get_resource_dependency_list(parent_resource)
     # Patch all resources
-    for child_resource in dependency_graph[:-1]:
+    for child_resource in dependency_list[:-1]:
         child_etag = child_resource["_etag"]
         primary_parent_service_name = ""
         if child_resource["resourceType"] == ResourceType.WorkspaceService:

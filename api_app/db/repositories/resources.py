@@ -124,7 +124,7 @@ class ResourceRepository(BaseRepository):
         await self.update_item_with_etag(resource, etag)
         return resource, resource_template
 
-    async def get_resource_dependecny_graph(self, resource: Resource) -> List:
+    async def get_resource_dependency_list(self, resource: Resource) -> List:
         # Get the parent resource path and id
         parent_resource_path = resource.resourcePath
         dependent_resources_list = []

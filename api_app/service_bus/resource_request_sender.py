@@ -24,7 +24,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
     #  Construct the resources to build an operation item for
     resources_list = []
     if is_cascade:
-        resources_list = await resource_repo.get_resource_dependecny_graph(resource)
+        resources_list = await resource_repo.get_resource_dependency_list(resource)
     else:
         resources_list.append(resource.__dict__)
 
