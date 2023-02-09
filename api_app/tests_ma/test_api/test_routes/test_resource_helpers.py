@@ -246,7 +246,7 @@ class TestResourceHelpers:
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=RequestAction.UnInstall,
-            cascade_enabled=False)
+            is_cascade=False)
 
     @patch("api.routes.workspaces.ResourceTemplateRepository")
     @patch("api.routes.resource_helpers.send_resource_request_message", side_effect=Exception)

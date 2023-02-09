@@ -127,7 +127,7 @@ class ResourceRepository(BaseRepository):
     async def get_resource_dependecny_graph(self, resource: Resource) -> List:
         # Get the parent resource path and id
         parent_resource_path = resource.resourcePath
-        dependentResourcesList = []
+        dependent_resources_list = []
 
         # Get all related resources
         related_resources_query = f"SELECT * FROM c WHERE CONTAINS(c.resourcePath, '{parent_resource_path}') AND c.deploymentStatus != '{Status.Deleted}' and c.deploymentStatus != '{Status.DeploymentFailed}'"
@@ -135,9 +135,9 @@ class ResourceRepository(BaseRepository):
         for resource in related_resources:
             resource_path = resource["resourcePath"]
             resource_level = resource_path.count("/")
-            dependentResourcesList.append((resource, resource_level))
+            dependent_resources_list.append((resource, resource_level))
         # Sort resources list
-        sorted_list = sorted(dependentResourcesList, key=lambda x: x[1], reverse=True)
+        sorted_list = sorted(dependent_resources_list, key=lambda x: x[1], reverse=True)
         return [resource[0] for resource in sorted_list]
 
     async def validate_template_version_patch(self, resource: Resource, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, force_version_update: bool = False):

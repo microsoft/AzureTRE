@@ -119,9 +119,9 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
 @workspaces_core_router.patch("/workspaces/{workspace_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
 async def patch_workspace(resource_patch: ResourcePatch, response: Response, user=Depends(get_current_admin_user), workspace=Depends(get_workspace_by_id_from_path), workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
     try:
-        cascade_enabled = not resource_patch.isEnabled
-        if cascade_enabled:
-            await cascaded_update_resource(resource_patch, workspace, user, etag, force_version_update, resource_template_repo=resource_template_repo, resource_history_repo=resource_history_repo, resource_repo=workspace_repo)
+        is_disablement = not resource_patch.isEnabled
+        if is_disablement:
+            await cascaded_update_resource(resource_patch, workspace, user, force_version_update, resource_template_repo=resource_template_repo, resource_history_repo=resource_history_repo, resource_repo=workspace_repo)
         patched_workspace, _ = await workspace_repo.patch_workspace(workspace, resource_patch, etag, resource_template_repo, resource_history_repo, user, force_version_update)
         # Send the message to service bus
         operation = await send_resource_request_message(
@@ -132,7 +132,7 @@ async def patch_workspace(resource_patch: ResourcePatch, response: Response, use
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=RequestAction.Upgrade,
-            cascade_enabled=cascade_enabled)
+            is_cascade=is_disablement)
 
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
@@ -155,7 +155,7 @@ async def delete_workspace(response: Response, user=Depends(get_current_admin_us
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             user=user,
-            cascade_enabled=True
+            is_cascade=True
         )
 
         response.headers["Location"] = construct_location_header(operation)
@@ -272,9 +272,9 @@ async def create_workspace_service(response: Response, workspace_service_input: 
 @workspace_services_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
 async def patch_workspace_service(resource_patch: ResourcePatch, response: Response, user=Depends(get_current_workspace_owner_user), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
     try:
-        cascade_enabled = not resource_patch.isEnabled
-        if cascade_enabled:
-            await cascaded_update_resource(resource_patch, workspace_service, user, etag, force_version_update, resource_template_repo=resource_template_repo, resource_history_repo=resource_history_repo, resource_repo=workspace_service_repo)
+        is_disablement = not resource_patch.isEnabled
+        if is_disablement:
+            await cascaded_update_resource(resource_patch, workspace_service, user, force_version_update, resource_template_repo=resource_template_repo, resource_history_repo=resource_history_repo, resource_repo=workspace_service_repo)
         patched_workspace_service, _ = await workspace_service_repo.patch_workspace_service(workspace_service, resource_patch, etag, resource_template_repo, resource_history_repo, user, force_version_update)
         operation = await send_resource_request_message(
             resource=patched_workspace_service,
@@ -284,7 +284,7 @@ async def patch_workspace_service(resource_patch: ResourcePatch, response: Respo
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=RequestAction.Upgrade,
-            cascade_enabled=cascade_enabled)
+            is_cascade=is_disablement)
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
@@ -306,7 +306,7 @@ async def delete_workspace_service(response: Response, user=Depends(get_current_
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             user=user,
-            cascade_enabled=True)
+            is_cascade=True)
 
         response.headers["Location"] = construct_location_header(operation)
 

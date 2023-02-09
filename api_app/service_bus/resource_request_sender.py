@@ -13,7 +13,7 @@ from models.domain.operation import Operation
 from db.repositories.operations import OperationRepository
 
 
-async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, resource_repo: ResourceRepository, user: User, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, action: RequestAction = RequestAction.Install, cascade_enabled: str = False) -> Operation:
+async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, resource_repo: ResourceRepository, user: User, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, action: RequestAction = RequestAction.Install, is_cascade: str = False) -> Operation:
     """
     Creates and sends a resource request message for the resource to the Service Bus.
     The resource ID is added to the message to serve as an correlation ID for the deployment process.
@@ -23,7 +23,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
     """
     #  Construct the resources to build an operation item for
     resources_list = []
-    if cascade_enabled:
+    if is_cascade:
         resources_list = await resource_repo.get_resource_dependecny_graph(resource)
     else:
         resources_list.append(resource.__dict__)
