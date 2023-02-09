@@ -66,11 +66,16 @@ def get_account_by_request(airlock_request: AirlockRequest, workspace: Workspace
 
 
 def validate_user_allowed_to_access_storage_account(user: User, airlock_request: AirlockRequest):
-    if "WorkspaceResearcher" not in user.roles and airlock_request.status != AirlockRequestStatus.InReview:
+    allowed_roles = []
+
+    if (airlock_request.status == AirlockRequestStatus.InReview):
+        allowed_roles = ["AirlockManager", "WorkspaceOwner"]
+    else:
+        allowed_roles = ["WorkspaceResearcher", "WorkspaceOwner"]
+
+    if not _user_has_one_of_roles(user=user, roles=allowed_roles):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AIRLOCK_UNAUTHORIZED_TO_SA)
 
-    if "WorkspaceOwner" not in user.roles and "AirlockManager" not in user.roles and airlock_request.status == AirlockRequestStatus.InReview:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AIRLOCK_UNAUTHORIZED_TO_SA)
     return
 
 
@@ -453,3 +458,7 @@ async def cancel_request(airlock_request: AirlockRequest, user: User, workspace:
     updated_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, updated_by=user, workspace=workspace, new_status=AirlockRequestStatus.Cancelled)
     await delete_all_review_user_resources(airlock_request, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, resource_history_repo, user)
     return updated_request
+
+
+def _user_has_one_of_roles(user: User, roles) -> bool:
+    return any(role in roles for role in user.roles)
