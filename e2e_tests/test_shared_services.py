@@ -1,7 +1,8 @@
 import pytest
 import logging
+from e2e_tests.conftest import disable_and_delete_tre_resource
 
-from resources.resource import disable_and_delete_resource, post_resource
+from resources.resource import post_resource
 from helpers import get_shared_service_by_name
 from resources import strings
 from helpers import get_admin_token
@@ -131,9 +132,8 @@ async def test_create_shared_service(template_name, verify) -> None:
         verify=verify,
     )
 
-    admin_token = await get_admin_token(verify)
-    await disable_and_delete_resource(
-        f"/api{shared_service_path}", admin_token, verify
+    await disable_and_delete_tre_resource(
+        f"/api{shared_service_path}", verify
     )
 
 
@@ -181,12 +181,12 @@ async def test_create_certs_nexus_shared_service(verify) -> None:
         verify=verify,
     )
 
-    await disable_and_delete_resource(
-        f"/api{nexus_shared_service_path}", admin_token, verify
+    await disable_and_delete_tre_resource(
+        f"/api{nexus_shared_service_path}", verify
     )
 
-    await disable_and_delete_resource(
-        f"/api{certs_shared_service_path}", admin_token, verify
+    await disable_and_delete_tre_resource(
+        f"/api{certs_shared_service_path}", verify
     )
 
 
@@ -202,6 +202,6 @@ async def disable_and_delete_shared_service_if_exists(shared_service_name, verif
         LOGGER.info(
             f"Shared service {shared_service_name} already exists (id {id}), deleting it first..."
         )
-        await disable_and_delete_resource(
-            f"/api/shared-services/{id}", admin_token, verify
+        await disable_and_delete_tre_resource(
+            f"/api/shared-services/{id}", verify
         )

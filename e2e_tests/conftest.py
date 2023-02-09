@@ -99,14 +99,13 @@ async def clean_up_test_workspace(pre_created_workspace_id: str, workspace_path:
     if pre_created_workspace_id == "":
         LOGGER.info(f"Deleting workspace {pre_created_workspace_id}")
         admin_token = await get_admin_token(verify)
-        await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
+        await disable_and_delete_tre_resource(f'/api{workspace_path}', admin_token, verify)
 
 
 async def clean_up_test_workspace_service(pre_created_workspace_service_id: str, workspace_service_path: str, workspace_id: str, verify: bool):
     if pre_created_workspace_service_id == "":
         LOGGER.info(f"Deleting workspace service {pre_created_workspace_service_id}")
-        workspace_owner_token = await get_workspace_owner_token(verify, workspace_id)
-        await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
+        await disable_and_delete_ws_resource(f'/api{workspace_service_path}', verify)
 
 
 # Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
@@ -161,9 +160,14 @@ async def get_workspace_owner_token(verify, workspace_id):
     return workspace_owner_token
 
 
-async def disable_and_delete_test_resource(verify, resource_path, workspace_id):
+async def disable_and_delete_ws_resource(verify, resource_path, workspace_id):
     workspace_owner_token = await get_workspace_owner_token(verify, workspace_id)
     await disable_and_delete_resource(f'/api{resource_path}', workspace_owner_token, verify)
+
+
+async def disable_and_delete_tre_resource(verify, resource_path, workspace_id):
+    admin_token = await get_admin_token(verify)
+    await disable_and_delete_resource(f'/api{resource_path}', admin_token, verify)
 
 
 # Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
