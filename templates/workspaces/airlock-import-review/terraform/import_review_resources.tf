@@ -1,3 +1,9 @@
+locals {
+  core_resource_group_name = "rg-${var.tre_id}"
+  # STorage AirLock IMport InProgress
+  import_in_progress_storage_name = lower(replace("stalimip${var.tre_id}", "-", ""))
+}
+
 data "azurerm_storage_account" "sa_import_inprogress" {
   name                = local.import_in_progress_storage_name
   resource_group_name = local.core_resource_group_name
