@@ -46,6 +46,7 @@ BUG FIXES:
 * Skip Certs shared service E2E on Friday & Saturday due to LetsEncrypt limits [#3203](https://github.com/microsoft/AzureTRE/pull/3203)
 * Create Workspace AppInsights via AzAPI provider due to an issue with AzureRM [#3207](https://github.com/microsoft/AzureTRE/pull/3207)
 * 'Workspace Owner' is now able to access Airlock request's SAS URL even if the request is not in review [#3208](https://github.com/microsoft/AzureTRE/pull/3208)
+* Fix DNS conflict in airlock-review workspace that could make the entire airlock module inoperable [#3215](https://github.com/microsoft/AzureTRE/pull/3215)
 
 COMPONENTS:
 
