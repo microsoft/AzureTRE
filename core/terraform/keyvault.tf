@@ -113,10 +113,9 @@ resource "azurerm_key_vault_secret" "application_admin_client_secret" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "kv" {
-  name                           = "diagnostics-kv-${var.tre_id}"
-  target_resource_id             = azurerm_key_vault.kv.id
-  log_analytics_workspace_id     = module.azure_monitor.log_analytics_workspace_id
-  log_analytics_destination_type = "AzureDiagnostics"
+  name                       = "diagnostics-kv-${var.tre_id}"
+  target_resource_id         = azurerm_key_vault.kv.id
+  log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
 
   dynamic "enabled_log" {
     for_each = ["AuditEvent", "AzurePolicyEvaluationDetails"]
@@ -139,4 +138,6 @@ resource "azurerm_monitor_diagnostic_setting" "kv" {
       days    = 365
     }
   }
+
+  lifecycle { ignore_changes = [log_analytics_destination_type] }
 }
