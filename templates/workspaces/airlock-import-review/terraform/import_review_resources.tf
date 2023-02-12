@@ -4,10 +4,6 @@ locals {
   import_in_progress_storage_name = lower(replace("stalimip${var.tre_id}", "-", ""))
 }
 
-variable "ws_resource_group_name" {}
-variable "services_subnet_id" {}
-variable "tre_workspace_tags" {}
-
 data "azurerm_storage_account" "sa_import_inprogress" {
   name                = local.import_in_progress_storage_name
   resource_group_name = local.core_resource_group_name
@@ -21,8 +17,8 @@ data "azurerm_private_dns_zone" "blobcore" {
 resource "azurerm_private_endpoint" "sa_import_inprogress_pe" {
   name                = "stg-ip-import-blob-${local.workspace_resource_name_suffix}"
   location            = var.location
-  resource_group_name = var.ws_resource_group_name
-  subnet_id           = var.services_subnet_id
+  resource_group_name = azurerm_resource_group.ws.name
+  subnet_id           = module.network.services_subnet_id
 
   lifecycle { ignore_changes = [tags] }
 
@@ -38,5 +34,5 @@ resource "azurerm_private_endpoint" "sa_import_inprogress_pe" {
     subresource_names              = ["Blob"]
   }
 
-  tags = var.tre_workspace_tags
+  tags = local.tre_workspace_tags
 }
