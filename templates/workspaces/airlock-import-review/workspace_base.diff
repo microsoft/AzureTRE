@@ -13,12 +13,6 @@ diff -Naur ../base/terraform/airlock/data.tf terraform/airlock/data.tf
 diff -Naur ../base/terraform/airlock/locals.tf terraform/airlock/locals.tf
 --- ../base/terraform/airlock/locals.tf	2022-08-17 12:09:06.000000000 +0100
 +++ terraform/airlock/locals.tf	2022-09-14 23:46:54.000000000 +0100
-@@ -1,4 +1,5 @@
- locals {
-+  core_vnet                      = "vnet-${var.tre_id}"
-   core_resource_group_name       = "rg-${var.tre_id}"
-   workspace_resource_name_suffix = "${var.tre_id}-ws-${var.short_workspace_id}"
- 
 @@ -11,6 +12,8 @@
  
    # STorage AirLock IMport APProved
@@ -28,25 +22,6 @@ diff -Naur ../base/terraform/airlock/locals.tf terraform/airlock/locals.tf
    # STorage AirLock EXport INTernal
    export_internal_storage_name = lower(replace("stalexint${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
    # STorage AirLock EXport InProgress
-@@ -19,18 +22,4 @@
-   export_rejected_storage_name = lower(replace("stalexrej${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
-   # STorage AirLock EXport BLOCKED
-   export_blocked_storage_name = lower(replace("stalexblocked${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
--
--  airlock_blob_data_contributor = [
--    azurerm_storage_account.sa_import_approved.id,
--    azurerm_storage_account.sa_export_internal.id,
--    azurerm_storage_account.sa_export_inprogress.id,
--    azurerm_storage_account.sa_export_rejected.id,
--    azurerm_storage_account.sa_export_blocked.id
--  ]
--
--  api_sa_data_contributor = [
--    azurerm_storage_account.sa_import_approved.id,
--    azurerm_storage_account.sa_export_internal.id,
--    azurerm_storage_account.sa_export_inprogress.id
--  ]
- }
 diff -Naur ../base/terraform/airlock/storage_accounts.tf terraform/airlock/storage_accounts.tf
 --- ../base/terraform/airlock/storage_accounts.tf	2022-08-17 12:09:06.000000000 +0100
 +++ terraform/airlock/storage_accounts.tf	2022-09-14 23:46:54.000000000 +0100
@@ -57,7 +32,7 @@ diff -Naur ../base/terraform/airlock/storage_accounts.tf terraform/airlock/stora
 +# 'In progress' storage account
 +
 +resource "azurerm_private_endpoint" "sa_import_inprogress_pe" {
-+  name                = "stg-ip-import-blob-${var.tre_id}-ws-${var.short_workspace_id}"
++  name                = "stg-ip-import-blob-${local.workspace_resource_name_suffix}"
 +  location            = var.location
 +  resource_group_name = var.ws_resource_group_name
 +  subnet_id           = var.services_subnet_id
@@ -65,12 +40,12 @@ diff -Naur ../base/terraform/airlock/storage_accounts.tf terraform/airlock/stora
 +  lifecycle { ignore_changes = [tags] }
 +
 +  private_dns_zone_group {
-+    name                 = "private-dns-zone-group-stg-import-ip"
++    name                 = "pdzg-stg-ip-import-blob-${local.workspace_resource_name_suffix}"
 +    private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
 +  }
 +
 +  private_service_connection {
-+    name                           = "psc-stgipimport-${var.tre_id}"
++    name                           = "psc-stg-ip-import-blob-${local.workspace_resource_name_suffix}"
 +    private_connection_resource_id = data.azurerm_storage_account.sa_import_inprogress.id
 +    is_manual_connection           = false
 +    subresource_names              = ["Blob"]
@@ -81,77 +56,6 @@ diff -Naur ../base/terraform/airlock/storage_accounts.tf terraform/airlock/stora
  
  # 'Drop' location for export
  resource "azurerm_storage_account" "sa_export_internal" {
-@@ -259,19 +283,59 @@
-   }
- }
- 
--# we can't use for_each due to the data object
--resource "azurerm_role_assignment" "airlock_blob_data_contributor" {
--  count                = length(local.airlock_blob_data_contributor)
--  scope                = local.airlock_blob_data_contributor[count.index]
--  role_definition_name = "Storage Blob Data Contributor"
-+resource "azurerm_role_assignment" "sa_import_approved" {
-+  scope                = azurerm_storage_account.sa_import_approved.id
-+  role_definition_name = "Contributor"
-+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
-+}
-+
-+
-+resource "azurerm_role_assignment" "sa_export_internal" {
-+  scope                = azurerm_storage_account.sa_export_internal.id
-+  role_definition_name = "Contributor"
-   principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
- }
- 
--# This might be considered redundent since we give Virtual Machine Contributor
--# at the subscription level, but best to be explicit.
--resource "azurerm_role_assignment" "api_sa_data_contributor" {
--  count                = length(local.api_sa_data_contributor)
--  scope                = local.api_sa_data_contributor[count.index]
--  role_definition_name = "Storage Blob Data Contributor"
-+resource "azurerm_role_assignment" "sa_export_inprogress" {
-+  scope                = azurerm_storage_account.sa_export_inprogress.id
-+  role_definition_name = "Contributor"
-+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
-+}
-+
-+resource "azurerm_role_assignment" "sa_export_rejected" {
-+  scope                = azurerm_storage_account.sa_export_rejected.id
-+  role_definition_name = "Contributor"
-+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
-+}
-+
-+resource "azurerm_role_assignment" "sa_export_blocked" {
-+  scope                = azurerm_storage_account.sa_export_blocked.id
-+  role_definition_name = "Contributor"
-+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
-+}
-+
-+
-+resource "azurerm_role_assignment" "sa_import_approved_reader" {
-+  scope                = azurerm_storage_account.sa_import_approved.id
-+  role_definition_name = "Reader and Data Access"
-+  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-+}
-+
-+
-+resource "azurerm_role_assignment" "sa_export_internal_reader" {
-+  scope                = azurerm_storage_account.sa_export_internal.id
-+  role_definition_name = "Reader and Data Access"
-+  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-+}
-+
-+resource "azurerm_role_assignment" "sa_export_inprogress_reader" {
-+  scope                = azurerm_storage_account.sa_export_inprogress.id
-+  role_definition_name = "Reader and Data Access"
-+  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-+}
-+
-+resource "azurerm_role_assignment" "sa_export_rejected_reader" {
-+  scope                = azurerm_storage_account.sa_export_rejected.id
-+  role_definition_name = "Reader and Data Access"
-   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
- }
 diff -Naur ../base/terraform/storage.tf terraform/storage.tf
 --- ../base/terraform/storage.tf	2022-08-10 10:15:54.000000000 +0100
 +++ terraform/storage.tf	2022-09-14 23:46:54.000000000 +0100
