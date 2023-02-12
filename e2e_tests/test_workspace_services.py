@@ -48,7 +48,6 @@ async def test_create_guacamole_service_into_base_workspace(verify, setup_test_w
     user_resource_path, _ = await post_resource(user_resource_payload, f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}', workspace_owner_token, verify, method="POST")
 
     await disable_and_delete_ws_resource(verify, user_resource_path, workspace_id)
-    await disable_and_delete_ws_resource(verify, workspace_service_path, workspace_id)
 
 
 @pytest.mark.extended_aad
