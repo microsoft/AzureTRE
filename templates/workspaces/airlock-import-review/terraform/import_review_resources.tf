@@ -4,8 +4,17 @@ locals {
   import_in_progress_storage_name = lower(replace("stalimip${var.tre_id}", "-", ""))
 }
 
+variable "ws_resource_group_name" {}
+variable "services_subnet_id" {}
+variable "tre_workspace_tags" {}
+
 data "azurerm_storage_account" "sa_import_inprogress" {
   name                = local.import_in_progress_storage_name
+  resource_group_name = local.core_resource_group_name
+}
+
+data "azurerm_private_dns_zone" "blobcore" {
+  name                = "privatelink.blob.core.windows.net"
   resource_group_name = local.core_resource_group_name
 }
 
