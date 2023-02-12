@@ -12,6 +12,10 @@ terraform {
       source  = "hashicorp/null"
       version = "=3.2.1"
     }
+    azapi = {
+      source  = "Azure/azapi"
+      version = "=1.3.0"
+    }
   }
 
   backend "azurerm" {}
@@ -38,4 +42,7 @@ provider "azuread" {
   client_id     = var.auth_client_id
   client_secret = var.auth_client_secret
   tenant_id     = var.auth_tenant_id
+}
+
+provider "azapi" {
 }

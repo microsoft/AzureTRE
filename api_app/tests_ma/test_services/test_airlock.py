@@ -6,7 +6,7 @@ from resources import strings
 from services.airlock import validate_user_allowed_to_access_storage_account, get_required_permission, \
     validate_request_status, cancel_request, delete_review_user_resource
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReview, AirlockReviewDecision, AirlockActions, AirlockReviewUserResource
-from tests_ma.test_api.conftest import create_workspace_owner_user, create_workspace_researcher_user
+from tests_ma.test_api.conftest import create_workspace_owner_user, create_workspace_researcher_user, get_required_roles
 from mock import AsyncMock, patch, MagicMock
 from models.domain.events import AirlockNotificationData, AirlockNotificationUserData, StatusChangedData, \
     AirlockNotificationRequestData, AirlockNotificationWorkspaceData, AirlockFile
@@ -17,7 +17,7 @@ from models.domain.workspace import Workspace
 from tests_ma.test_api.conftest import create_test_user, create_workspace_airlock_manager_user
 from azure.eventgrid import EventGridEvent
 from api.routes.airlock import create_airlock_review, create_cancel_request, create_submit_request
-
+from services.aad_authentication import AzureADAuthorization
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 AIRLOCK_REQUEST_ID = "5dbc15ae-40e1-49a5-834b-595f59d626b7"
@@ -25,6 +25,7 @@ AIRLOCK_REVIEW_ID = "96d909c5-e913-4c05-ae53-668a702ba2e5"
 USER_RESOURCE_ID = "cce59042-1dee-42dc-9388-6db846feeb3b"
 WORKSPACE_SERVICE_ID = "30f2fefa-e7bb-4e5b-93aa-e50bb037502a"
 CURRENT_TIME = time.time()
+ALL_ROLES = AzureADAuthorization.WORKSPACE_ROLES_DICT.keys()
 
 
 @pytest_asyncio.fixture
@@ -138,19 +139,12 @@ def sample_airlock_review(review_decision=AirlockReviewDecision.Approved):
     return airlock_review
 
 
-def get_required_roles(endpoint):
-    dependencies = list(filter(lambda x: hasattr(x.dependency, 'require_one_of_roles'), endpoint.__defaults__))
-    required_roles = dependencies[0].dependency.require_one_of_roles
-    return required_roles
-
-
 def test_validate_user_is_allowed_to_access_sa_blocks_access_as_expected():
-    # Workspace owner can access only in review
-    ws_owner_user = create_workspace_owner_user()
+    airlock_manager_user = create_workspace_airlock_manager_user()
     draft_airlock_request = sample_airlock_request()
     with pytest.raises(HTTPException) as ex:
         validate_user_allowed_to_access_storage_account(
-            user=ws_owner_user,
+            user=airlock_manager_user,
             airlock_request=draft_airlock_request
         )
 
@@ -168,7 +162,6 @@ def test_validate_user_is_allowed_to_access_sa_blocks_access_as_expected():
 
 
 def test_validate_user_is_allowed_to_access_grants_access_to_user_with_a_valid_role():
-    # Workspace owner can access only in review
     ws_owner_user = create_workspace_owner_user()
     draft_airlock_request = sample_airlock_request(AirlockRequestStatus.InReview)
 
@@ -464,6 +457,21 @@ async def test_get_allowed_actions_requires_same_roles_as_endpoint(action, requi
         user.roles = [role]
         allowed_actions = get_allowed_actions(request=sample_airlock_request(), user=user, airlock_request_repo=airlock_request_repo_mock)
         assert action in allowed_actions
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action, endpoint_roles, airlock_request_repo_mock", [
+    (AirlockActions.Review, get_required_roles(endpoint=create_airlock_review), airlock_request_repo_mock),
+    (AirlockActions.Cancel, get_required_roles(endpoint=create_cancel_request), airlock_request_repo_mock),
+    (AirlockActions.Submit, get_required_roles(endpoint=create_submit_request), airlock_request_repo_mock)])
+async def test_get_allowed_actions_does_not_return_actions_that_are_forbidden_to_the_user_role(action, endpoint_roles, airlock_request_repo_mock):
+    airlock_request_repo_mock.validate_status_update = MagicMock(return_value=True)
+    user = create_test_user()
+    forbidden_roles = [role for role in ALL_ROLES if role not in endpoint_roles]
+    for forbidden_role in forbidden_roles:
+        user.roles = [forbidden_role]
+        allowed_actions = get_allowed_actions(request=sample_airlock_request(), user=user, airlock_request_repo=airlock_request_repo_mock)
+        assert action not in allowed_actions
 
 
 @pytest.mark.asyncio
