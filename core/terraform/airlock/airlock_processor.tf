@@ -113,6 +113,8 @@ resource "azurerm_monitor_diagnostic_setting" "airlock_function_app" {
       days    = 365
     }
   }
+
+  lifecycle { ignore_changes = [log_analytics_destination_type] }
 }
 
 resource "azurerm_private_endpoint" "function_storage" {
