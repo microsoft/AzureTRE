@@ -42,6 +42,9 @@ async def send_deployment_message(content, correlation_id, session_id, action):
 
 async def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, primary_resource: Resource, resource_to_update_id: str, primary_action: str, user: User) -> Resource:
     current_resource = await resource_repo.get_resource_by_id(operation_step.resourceId)
+    # Check if there were sensitive props
+    if primary_resource.id == current_resource.id:
+        current_resource = primary_resource
     # if this is main, just leave it alone and return it
     if operation_step.stepId == "main":
         return current_resource
