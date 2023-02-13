@@ -1,3 +1,6 @@
+# This file has a .terraform extension to bypass the validation that is performed by the 'terraform init' command in 'make bundle-build'.
+# The extension is changed to .tf in the Dockerfile after all files from the base workspace are copied to the directory.
+
 locals {
   core_resource_group_name = "rg-${var.tre_id}"
   # STorage AirLock IMport InProgress
