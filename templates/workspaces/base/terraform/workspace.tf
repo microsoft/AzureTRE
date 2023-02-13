@@ -22,7 +22,6 @@ module "network" {
   tre_id                      = var.tre_id
   address_spaces              = var.address_spaces
   ws_resource_group_name      = azurerm_resource_group.ws.name
-  tre_resource_id             = var.tre_resource_id
   tre_workspace_tags          = local.tre_workspace_tags
   arm_use_msi                 = var.arm_use_msi
   arm_tenant_id               = var.arm_tenant_id
