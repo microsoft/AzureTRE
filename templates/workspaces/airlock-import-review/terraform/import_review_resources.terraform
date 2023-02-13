@@ -1,5 +1,5 @@
-# This file has a .terraform extension to bypass the validation that is performed by the 'terraform init' command in 'make bundle-build'.
-# The extension is changed to .tf in the Dockerfile after all files from the base workspace are copied to the directory.
+# This file has a .terraform file extension in order to avoid 'terraform init's validation checks that are executed by the 'make bundle-build' command.
+# The Dockerfile includes a RUN command to change the extension from .terraform to .tf after the files from the base workspace are copied to this directory.
 
 locals {
   core_resource_group_name = "rg-${var.tre_id}"
