@@ -39,6 +39,47 @@
       "title": "Shared storage",
       "default": true,
       "description": "Enable access to shared storage"
+    },
+    "parent_ws_unique_identifier_suffix": {
+      "$id": "#/properties/parent_ws_unique_identifier_suffix",
+      "type": "string",
+      "title": "Parent WS unique identifier suffix",
+      "description": "The parent workspace unique identifier used to create various Azure resources",
+      "updateable": true
+    },
+    "parent_ws_svc_unique_identifier_suffix": {
+      "$id": "#/properties/parent_ws_svc_unique_identifier_suffix",
+      "type": "string",
+      "title": "Parent WS SVC unique identifier suffix",
+      "description": "The parent workspace service unique identifier used to create various Azure resources",
+      "updateable": true
     }
+  },
+    "uiSchema": {
+    "parent_ws_unique_identifier_suffix": {
+      "classNames": "tre-hidden"
+    },
+    "parent_ws_svc_unique_identifier_suffix": {
+      "classNames": "tre-hidden"
+    }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "main",
+        "properties": [
+          {
+            "name": "parent_ws_unique_identifier_suffix",
+            "type": "string",
+            "value": "{{ parent_workspace.resource.properties.unique_identifier_suffix }}"
+          },
+          {
+            "name": "parent_ws_svc_unique_identifier_suffix",
+            "type": "string",
+            "value": "{{ parent_workspace_service.resource.properties.unique_identifier_suffix }}"
+          }
+        ]
+      }
+    ]
   }
 }

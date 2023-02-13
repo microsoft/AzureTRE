@@ -11,3 +11,5 @@ variable "shared_storage_name" {}
 variable "image_gallery_id" {
   default = ""
 }
+variable "parent_ws_unique_identifier_suffix" {}
+variable "parent_ws_svc_unique_identifier_suffix" {}

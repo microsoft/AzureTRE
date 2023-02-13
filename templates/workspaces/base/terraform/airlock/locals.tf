@@ -1,6 +1,6 @@
 locals {
   core_resource_group_name       = "rg-${var.tre_id}"
-  workspace_resource_name_suffix = "${var.tre_id}-ws-${var.short_workspace_id}"
+  workspace_resource_name_suffix = "${var.tre_id}-ws-${var.ws_unique_identifier_suffix}"
 
   import_approved_sys_topic_name   = "evgt-airlock-import-approved-${local.workspace_resource_name_suffix}"
   export_inprogress_sys_topic_name = "evgt-airlock-export-inprog-${local.workspace_resource_name_suffix}"

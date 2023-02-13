@@ -75,6 +75,18 @@
       "source": {
         "env": "IMAGE_GALLERY_ID"
       }
+    },
+    {
+      "name": "parent_ws_unique_identifier_suffix",
+      "source": {
+        "env": "PARENT_WS_UNIQUE_IDENTIFIER_SUFFIX"
+      }
+    },
+    {
+      "name": "parent_ws_svc_unique_identifier_suffix",
+      "source": {
+        "env": "PARENT_WS_SVC_UNIQUE_IDENTIFIER_SUFFIX"
+      }
     }
   ]
 }

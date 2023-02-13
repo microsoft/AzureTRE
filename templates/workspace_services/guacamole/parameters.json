@@ -105,6 +105,12 @@
       "source": {
         "env": "IS_EXPOSED_EXTERNALLY"
       }
+    },
+    {
+      "name": "parent_ws_unique_identifier_suffix",
+      "source": {
+        "env": "PARENT_WS_UNIQUE_IDENTIFIER_SUFFIX"
+      }
     }
   ]
 }

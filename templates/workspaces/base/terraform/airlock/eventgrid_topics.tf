@@ -145,7 +145,7 @@ resource "azurerm_role_assignment" "servicebus_sender_export_blocked_blob_create
 
 ## Subscriptions
 resource "azurerm_eventgrid_event_subscription" "import_approved_blob_created" {
-  name  = "import-approved-blob-created-${var.short_workspace_id}"
+  name  = "import-approved-blob-created-${var.ws_unique_identifier_suffix}"
   scope = azurerm_storage_account.sa_import_approved.id
 
   service_bus_topic_endpoint_id = data.azurerm_servicebus_topic.blob_created.id
@@ -161,7 +161,7 @@ resource "azurerm_eventgrid_event_subscription" "import_approved_blob_created" {
 }
 
 resource "azurerm_eventgrid_event_subscription" "export_inprogress_blob_created" {
-  name  = "export-inprogress-blob-created-${var.short_workspace_id}"
+  name  = "export-inprogress-blob-created-${var.ws_unique_identifier_suffix}"
   scope = azurerm_storage_account.sa_export_inprogress.id
 
   service_bus_topic_endpoint_id = data.azurerm_servicebus_topic.blob_created.id
@@ -177,7 +177,7 @@ resource "azurerm_eventgrid_event_subscription" "export_inprogress_blob_created"
 }
 
 resource "azurerm_eventgrid_event_subscription" "export_rejected_blob_created" {
-  name  = "export-rejected-blob-created-${var.short_workspace_id}"
+  name  = "export-rejected-blob-created-${var.ws_unique_identifier_suffix}"
   scope = azurerm_storage_account.sa_export_rejected.id
 
   service_bus_topic_endpoint_id = data.azurerm_servicebus_topic.blob_created.id
@@ -193,7 +193,7 @@ resource "azurerm_eventgrid_event_subscription" "export_rejected_blob_created" {
 }
 
 resource "azurerm_eventgrid_event_subscription" "export_blocked_blob_created" {
-  name  = "export-blocked-blob-created-${var.short_workspace_id}"
+  name  = "export-blocked-blob-created-${var.ws_unique_identifier_suffix}"
   scope = azurerm_storage_account.sa_export_blocked.id
 
   service_bus_topic_endpoint_id = data.azurerm_servicebus_topic.blob_created.id

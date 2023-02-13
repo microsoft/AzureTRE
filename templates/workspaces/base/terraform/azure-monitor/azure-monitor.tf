@@ -1,5 +1,5 @@
 resource "azurerm_log_analytics_workspace" "workspace" {
-  name                       = "log-${var.tre_id}-ws-${local.short_workspace_id}"
+  name                       = "log-${var.tre_id}-ws-${var.ws_unique_identifier_suffix}"
   resource_group_name        = var.resource_group_name
   location                   = var.location
   retention_in_days          = 30
@@ -13,7 +13,7 @@ resource "azurerm_log_analytics_workspace" "workspace" {
 # Storage account for Application Insights
 # Because Private Link is enabled on Application Performance Management (APM), Bring Your Own Storage (BYOS) approach is required
 resource "azurerm_storage_account" "app_insights" {
-  name                            = lower(replace("stai${var.tre_id}ws${local.short_workspace_id}", "-", ""))
+  name                            = lower(replace("stai${var.tre_id}ws${var.ws_unique_identifier_suffix}", "-", ""))
   resource_group_name             = var.resource_group_name
   location                        = var.location
   account_kind                    = "StorageV2"
@@ -45,7 +45,7 @@ resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_custo
 }
 
 resource "azurerm_monitor_private_link_scope" "workspace" {
-  name                = "ampls-${var.tre_id}-ws-${local.short_workspace_id}"
+  name                = "ampls-${var.tre_id}-ws-${var.ws_unique_identifier_suffix}"
   resource_group_name = var.resource_group_name
   tags                = var.tre_workspace_tags
 
@@ -113,7 +113,7 @@ resource "azurerm_monitor_private_link_scoped_service" "ampls_app_insights" {
 }
 
 resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
-  name                = "pe-ampls-${var.tre_id}-ws-${local.short_workspace_id}"
+  name                = "pe-ampls-${var.tre_id}-ws-${var.ws_unique_identifier_suffix}"
   resource_group_name = var.resource_group_name
   location            = var.location
   subnet_id           = var.workspace_subnet_id
@@ -123,7 +123,7 @@ resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
 
   private_service_connection {
     private_connection_resource_id = azurerm_monitor_private_link_scope.workspace.id
-    name                           = "psc-ampls-${var.tre_id}-ws-${local.short_workspace_id}"
+    name                           = "psc-ampls-${var.tre_id}-ws-${var.ws_unique_identifier_suffix}"
     subresource_names              = ["azuremonitor"]
     is_manual_connection           = false
   }

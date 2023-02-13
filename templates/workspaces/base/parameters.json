@@ -135,6 +135,12 @@
       "source": {
         "env": "ENABLE_AIRLOCK"
       }
+    },
+    {
+      "name": "is_legacy_shortened_ws_id",
+      "source": {
+        "env": "IS_LEGACY_SHORTENED_WS_ID"
+      }
     }
   ]
 }

@@ -1,13 +1,13 @@
 locals {
-  short_service_id               = substr(var.tre_resource_id, -4, -1)
-  short_workspace_id             = substr(var.workspace_id, -4, -1)
-  short_parent_id                = substr(var.parent_service_id, -4, -1)
-  workspace_resource_name_suffix = "${var.tre_id}-ws-${local.short_workspace_id}"
-  service_resource_name_suffix   = "${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_service_id}"
-  vm_name                        = "linuxvm${local.short_service_id}"
-  keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
-  storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
-  vm_password_secret_name        = "${local.vm_name}-admin-credentials"
+  ws_unique_identifier_suffix            = length(var.parent_ws_unique_identifier_suffix) <= 4 ? substr(var.workspace_id, -4, -1) : var.parent_ws_unique_identifier_suffix
+  svc_unique_identifier_suffix           = length(var.parent_ws_svc_unique_identifier_suffix) <= 4 ? substr(var.parent_service_id, -4, -1) : var.parent_ws_svc_unique_identifier_suffix
+  user_resource_unique_identifier_suffix = length(var.parent_ws_unique_identifier_suffix) <= 4 ? substr(var.tre_resource_id, -4, -1) : substr(var.tre_resource_id, -6, -1)
+  workspace_resource_name_suffix         = "${var.tre_id}-ws-${local.ws_unique_identifier_suffix}"
+  service_resource_name_suffix           = "${var.tre_id}-ws-${local.ws_unique_identifier_suffix}-svc-${local.svc_unique_identifier_suffix}"
+  vm_name                                = "linuxvm${local.user_resource_unique_identifier_suffix}"
+  keyvault_name                          = lower("kv-${substr(local.workspace_resource_name_suffix, length(var.parent_ws_unique_identifier_suffix) <= 4 ? -20 : -22, -1)}")
+  storage_name                           = lower(replace("stg${substr(local.workspace_resource_name_suffix, length(var.parent_ws_unique_identifier_suffix) <= 4 ? -8 : -10, -1)}", "-", ""))
+  vm_password_secret_name                = "${local.vm_name}-admin-credentials"
   tre_user_resources_tags = {
     tre_id                   = var.tre_id
     tre_workspace_id         = var.workspace_id

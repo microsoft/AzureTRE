@@ -9,3 +9,7 @@ output "authentication_callback_uri" {
 output "web_apps_addresses" {
   value = jsonencode(data.azurerm_subnet.web_apps.address_prefixes)
 }
+
+output "unique_identifier_suffix" {
+  value = local.svc_unique_identifier_suffix
+}

@@ -37,7 +37,7 @@ provider "azurerm" {
 }
 
 data "azurerm_resource_group" "ws" {
-  name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
+  name = "rg-${var.tre_id}-ws-${local.ws_unique_identifier_suffix}"
 }
 
 data "azurerm_resource_group" "core" {
@@ -45,7 +45,7 @@ data "azurerm_resource_group" "core" {
 }
 
 data "azurerm_virtual_network" "ws" {
-  name                = "vnet-${var.tre_id}-ws-${local.short_workspace_id}"
+  name                = "vnet-${var.tre_id}-ws-${local.ws_unique_identifier_suffix}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
@@ -61,6 +61,6 @@ data "azurerm_key_vault" "ws" {
 }
 
 data "azurerm_linux_web_app" "guacamole" {
-  name                = "guacamole-${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_parent_id}"
+  name                = "guacamole-${var.tre_id}-ws-${local.ws_unique_identifier_suffix}-svc-${local.svc_unique_identifier_suffix}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }

@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-linuxvm
-version: 0.6.2
+version: 0.6.3
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -93,6 +93,10 @@ parameters:
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
+  - name: parent_ws_unique_identifier_suffix
+    type: string
+  - name: parent_ws_svc_unique_identifier_suffix
+    type: string
 
 outputs:
   - name: ip
@@ -114,6 +118,8 @@ outputs:
       - start
       - stop
       - reset_password
+  - name: unique_identifier_suffix
+
 
 mixins:
   - exec
@@ -135,6 +141,8 @@ install:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        parent_ws_unique_identifier_suffix: ${ bundle.parameters.parent_ws_unique_identifier_suffix }
+        parent_ws_svc_unique_identifier_suffix: ${ bundle.parameters.parent_ws_svc_unique_identifier_suffix }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -145,6 +153,7 @@ install:
         - name: hostname
         - name: connection_uri
         - name: azure_resource_id
+        - name: unique_identifier_suffix
 
 upgrade:
   - terraform:
@@ -159,6 +168,8 @@ upgrade:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        parent_ws_unique_identifier_suffix: ${ bundle.parameters.parent_ws_unique_identifier_suffix }
+        parent_ws_svc_unique_identifier_suffix: ${ bundle.parameters.parent_ws_svc_unique_identifier_suffix }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -169,6 +180,7 @@ upgrade:
         - name: hostname
         - name: connection_uri
         - name: azure_resource_id
+        - name: unique_identifier_suffix
 
 uninstall:
   - exec:
@@ -192,6 +204,8 @@ uninstall:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        parent_ws_unique_identifier_suffix: ${ bundle.parameters.parent_ws_unique_identifier_suffix }
+        parent_ws_svc_unique_identifier_suffix: ${ bundle.parameters.parent_ws_svc_unique_identifier_suffix }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

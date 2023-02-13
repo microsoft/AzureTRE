@@ -10,3 +10,4 @@ variable "arm_use_msi" {
 variable "arm_tenant_id" {}
 variable "arm_client_id" {}
 variable "arm_client_secret" {}
+variable "ws_unique_identifier_suffix" {}

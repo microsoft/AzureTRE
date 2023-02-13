@@ -26,3 +26,7 @@ output "keyvault_name" {
   value = local.keyvault_name
 }
 
+output "unique_identifier_suffix" {
+  value = local.user_resource_unique_identifier_suffix
+}
+

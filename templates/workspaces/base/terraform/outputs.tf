@@ -29,3 +29,10 @@ output "scope_id" {
   value = var.register_aad_application ? module.aad[0].scope_id : var.scope_id
 }
 
+output "is_legacy_shortened_ws_id" {
+  value = var.is_legacy_shortened_ws_id
+}
+
+output "unique_identifier_suffix" {
+  value = local.ws_unique_identifier_suffix
+}

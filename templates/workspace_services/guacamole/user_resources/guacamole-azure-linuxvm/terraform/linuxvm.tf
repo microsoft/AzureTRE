@@ -1,5 +1,5 @@
 resource "azurerm_network_interface" "internal" {
-  name                = "internal-nic-${local.service_resource_name_suffix}"
+  name                = "internal-nic-${local.service_resource_name_suffix}-${local.user_resource_unique_identifier_suffix}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   tags                = local.tre_user_resources_tags

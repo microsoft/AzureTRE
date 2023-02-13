@@ -118,6 +118,10 @@ variable "workspace_owner_object_id" {
   default     = ""
   description = "The Object Id of the user that you wish to be the Workspace Owner. E.g. the TEST_AUTOMATION_ACCOUNT."
 }
+variable "is_legacy_shortened_ws_id" {
+  type        = bool
+  description = "Is this workspace used the 'older' 4 chars trimmed ws id."
+}
 variable "arm_use_msi" {
   type = bool
 }

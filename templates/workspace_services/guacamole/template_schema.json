@@ -49,12 +49,31 @@
       "title": "Expose externally",
       "description": "Is the Guacamole service exposed outside of the vnet",
       "default": true
+    },
+    "parent_ws_unique_identifier_suffix": {
+      "$id": "#/properties/parent_ws_unique_identifier_suffix",
+      "type": "string",
+      "title": "Parent workspace suffix",
+      "description": "The string used as the suffix in the parent workspace resource name",
+      "updateable": true
+    }
+  },
+  "uiSchema": {
+    "parent_ws_unique_identifier_suffix": {
+      "classNames": "tre-hidden"
     }
   },
   "pipeline": {
     "install": [
       {
-        "stepId": "main"
+        "stepId": "main",
+        "properties": [
+          {
+            "name": "parent_ws_unique_identifier_suffix",
+            "type": "string",
+            "value": "{{ parent_workspace.resource.properties.unique_identifier_suffix }}"
+          }
+        ]
       },
       {
         "stepId": "12ba0dad-ea6c-4d0d-9255-d316212f5ffa",

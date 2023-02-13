@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 1.1.0
+version: 1.1.1
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -110,6 +110,9 @@ parameters:
   - name: enable_airlock
     type: boolean
     default: true
+  - name: is_legacy_shortened_ws_id
+    type: boolean
+    default: true
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -136,6 +139,10 @@ outputs:
     type: string
     applyTo:
       - install
+  - name: is_legacy_shortened_ws_id
+    type: boolean
+  - name: unique_identifier_suffix
+    type: string
 
 mixins:
   - exec
@@ -174,6 +181,7 @@ install:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
+        is_legacy_shortened_ws_id: false
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -186,6 +194,8 @@ install:
         - name: client_id
         - name: scope_id
         - name: sp_id
+        - name: is_legacy_shortened_ws_id
+        - name: unique_identifier_suffix
 
 upgrade:
   - terraform:
@@ -217,6 +227,7 @@ upgrade:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
+        is_legacy_shortened_ws_id: ${ bundle.parameters.is_legacy_shortened_ws_id }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -229,6 +240,8 @@ upgrade:
         - name: client_id
         - name: scope_id
         - name: sp_id
+        - name: is_legacy_shortened_ws_id
+        - name: unique_identifier_suffix
   - az:
       description: "AAD Application Admin Login"
       arguments:
@@ -276,6 +289,7 @@ uninstall:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
+        is_legacy_shortened_ws_id: ${ bundle.parameters.is_legacy_shortened_ws_id }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

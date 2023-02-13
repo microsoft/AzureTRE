@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole
-version: 0.7.1
+version: 0.7.2
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -100,6 +100,8 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: parent_ws_unique_identifier_suffix
+    type: string
 
 outputs:
   - name: connection_uri
@@ -114,6 +116,7 @@ outputs:
     type: string
     applyTo:
       - install
+  - name: unique_identifier_suffix
 
 mixins:
   - exec
@@ -139,6 +142,7 @@ install:
         guac_disable_upload: ${ bundle.parameters.guac_disable_upload }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
+        parent_ws_unique_identifier_suffix: ${ bundle.parameters.parent_ws_unique_identifier_suffix }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -148,6 +152,7 @@ install:
         - name: connection_uri
         - name: authentication_callback_uri
         - name: web_apps_addresses
+        - name: unique_identifier_suffix
 
 upgrade:
   - terraform:
@@ -168,6 +173,7 @@ upgrade:
         guac_disable_upload: ${ bundle.parameters.guac_disable_upload }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
+        parent_ws_unique_identifier_suffix: ${ bundle.parameters.parent_ws_unique_identifier_suffix }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -177,7 +183,7 @@ upgrade:
         - name: connection_uri
         - name: authentication_callback_uri
         - name: web_apps_addresses
-
+        - name: unique_identifier_suffix
 
 uninstall:
   - terraform:
@@ -198,6 +204,7 @@ uninstall:
         guac_disable_upload: ${ bundle.parameters.guac_disable_upload }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
+        parent_ws_unique_identifier_suffix: ${ bundle.parameters.parent_ws_unique_identifier_suffix }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
