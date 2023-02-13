@@ -25,4 +25,4 @@ RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/r
 COPY --link . ${BUNDLE_DIR}/
 
 # Change the file extension of all .terraform files to .tf
-RUN for file in ${BUNDLE_DIR}/terraform/*.terraform; do mv -- "$file" "${file%.terraform}.tf"; done
+RUN for file in "${BUNDLE_DIR}"/terraform/*.terraform; do mv -- "$file" "${file%.terraform}.tf"; done
