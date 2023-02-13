@@ -13,7 +13,7 @@ def test_substitution_for_primary_resource(primary_resource):
 
     # array val to inject, with text. Text will be dropped.
     val_to_sub = "{{ resource.properties.fqdn }} - this text will be removed because fqdn is a list and shouldn't be concatenated into a string"
-    val = substitute_value(val_to_sub, resource_dict,  None, None)
+    val = substitute_value(val_to_sub, resource_dict, None, None)
     assert val == ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"]
 
     # single string val, with text. Will be concatenated into text.
@@ -179,7 +179,7 @@ def test_substitution_array_append_remove(
     step = copy.deepcopy(pipeline_step)
     step.properties[0].arraySubstitutionAction = "remove"
     step.properties[0].value["name"] = "object 2"
-    obj = substitute_properties(step, primary_resource,  None, None, resource_to_update)
+    obj = substitute_properties(step, primary_resource, None, None, resource_to_update)
     assert len(obj["rule_collections"]) == 2
     assert obj["rule_collections"][0]["name"] == "object 1"
     assert obj["rule_collections"][1]["name"] == "object 3"
