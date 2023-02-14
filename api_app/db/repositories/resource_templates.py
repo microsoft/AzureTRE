@@ -5,7 +5,7 @@ from azure.cosmos.aio import CosmosClient
 from pydantic import parse_obj_as
 
 from core import config
-from db.errors import DuplicateEntity, EntityDoesNotExist, EntityVersionExist
+from db.errors import DuplicateEntity, EntityDoesNotExist, EntityVersionExist, InvalidInput
 from db.repositories.base import BaseRepository
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
@@ -117,7 +117,9 @@ class ResourceTemplateRepository(BaseRepository):
             template["uiSchema"] = template_input.json_schema["uiSchema"]
 
         if "pipeline" in template_input.json_schema:
-            template["pipeline"] = template_input.json_schema["pipeline"]
+            pipeline = template_input.json_schema["pipeline"]
+            self._validate_pipeline_has_unique_step_ids(pipeline)
+            template["pipeline"] = pipeline
 
         if "allOf" in template_input.json_schema:
             template["allOf"] = template_input.json_schema["allOf"]
@@ -152,3 +154,15 @@ class ResourceTemplateRepository(BaseRepository):
                 template_input.current = True  # For first time registration, template is always marked current
             created_template = await self.create_template(template_input, resource_type, workspace_service_template_name)
             return self.enrich_template(created_template)
+
+    def _validate_pipeline_has_unique_step_ids(self, pipeline):
+        step_ids = []
+        for action in pipeline:
+            action_steps = pipeline[action]
+            for step in action_steps:
+                step_id = step["stepId"]
+                if step_id == "main":
+                    continue
+                if step_id in step_ids:
+                    raise InvalidInput('Invalid template - duplicate stepIds are not allowed. stepId: ' + step_id)
+                step_ids.append(step_id)

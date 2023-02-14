@@ -4,7 +4,7 @@ from mock import patch
 from models.domain.user_resource_template import UserResourceTemplate
 
 from db.repositories.resource_templates import ResourceTemplateRepository
-from db.errors import EntityDoesNotExist
+from db.errors import EntityDoesNotExist, InvalidInput
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
 
@@ -203,3 +203,15 @@ async def test_create_item_with_pipeline_succeeds(uuid_mock, save_item_mock, res
     )
     save_item_mock.assert_called_once_with(expected_resource_template)
     assert expected_resource_template == returned_template
+
+
+async def test_create_template_with_pipeline_that_has_duplicated_step_id_fails_with_invalid_input_error(resource_template_repo, input_user_resource_template):
+    pipeline = {
+        "install": [
+            {"stepId": "sameStepId"},
+            {"stepId": "sameStepId"}
+        ]
+    }
+    input_user_resource_template.json_schema["pipeline"] = pipeline
+    with pytest.raises(InvalidInput):
+        await resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource)
