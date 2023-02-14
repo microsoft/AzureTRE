@@ -145,7 +145,7 @@ class DeploymentStatusUpdater():
 
                 # catch any errors in updating the resource - maybe Cosmos / schema invalid etc, and report them back to the op
                 try:
-                    parent_resource = ""
+                    parent_resource = await self.resource_repo.get_resource_by_id(next_step.resourceId)
                     if next_step.parentResourceId:
                         parent_resource = await self.resource_repo.get_resource_by_id(next_step.parentResourceId)
                     resource_to_send = await update_resource_for_step(
