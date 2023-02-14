@@ -5,7 +5,7 @@ from mock import patch
 from starlette import status
 
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
-from db.errors import DuplicateEntity, EntityDoesNotExist, EntityVersionExist, UnableToAccessDatabase
+from db.errors import DuplicateEntity, EntityDoesNotExist, EntityVersionExist, InvalidInput, UnableToAccessDatabase
 from models.domain.resource import ResourceType
 from models.domain.user_resource_template import UserResourceTemplate
 from models.schemas.resource_template import ResourceTemplateInformation
@@ -94,6 +94,13 @@ class TestUserResourceTemplatesRequiringAdminRights:
         response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, service_template_name=parent_workspace_service_name), json=input_user_resource_template.dict())
 
         assert response.status_code == status.HTTP_409_CONFLICT
+
+    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template", side_effect=InvalidInput)
+    @patch("api.dependencies.workspace_service_templates.ResourceTemplateRepository.get_current_template")
+    async def test_creating_a_user_resource_template_raises_http_422_if_step_ids_are_duplicated(self, _, __, client, app, input_user_resource_template):
+        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, service_template_name="guacamole"), json=input_user_resource_template.dict())
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 class TestUserResourceTemplatesNotRequiringAdminRights:

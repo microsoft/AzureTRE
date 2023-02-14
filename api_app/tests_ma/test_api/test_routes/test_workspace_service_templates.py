@@ -147,7 +147,7 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         assert response.status_code == status.HTTP_409_CONFLICT
 
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template", side_effect=InvalidInput)
-    async def test_creating_a_template_raises_http_422_if_step_ids_are_duplicated(self, _, client, app, input_workspace_service_template):
+    async def test_creating_a_workspace_service_template_raises_http_422_if_step_ids_are_duplicated(self, _, client, app, input_workspace_service_template):
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_service_template.dict())
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
