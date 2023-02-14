@@ -84,6 +84,10 @@ def substitute_value(val: str, primary_resource_dict: dict, primary_parent_ws_di
     if "{{" not in val:
         return val
 
+    if primary_resource_dict is None:
+        raise Exception("primary_resource_dict cannot be None")
+    primary_resource_type = primary_resource_dict["resourceType"]
+
     val = val.replace("{{ ", "{{").replace(" }}", "}}")
 
     # if the value being substituted in is a simple type, we can return it in the string, to allow for concatenation
@@ -102,15 +106,37 @@ def substitute_value(val: str, primary_resource_dict: dict, primary_parent_ws_di
     for t in tokens:
         # t = "{resource/parent_workspace/parent_workspace_service}.properties.prop_1"
         p = t.split(".")
+
         # decide on which dictionary to use (parents support)
-        if p[0] == "resource":
-            dict_to_use = primary_resource_dict
-        elif p[0] == "parent_workspace":
-            dict_to_use = primary_parent_ws_dict
-        elif p[0] == "parent_workspace_service":
-            dict_to_use = primary_parent_ws_svc_dict
+
+        # how many parents levels do we have (0- current resource, 1-direct parent, 2-skip level parent, 3-invalid)
+        hierarchy_level = 0
+        for i in range(3, 0, -1):
+            if len(p) > i:
+                if p[i] == "parent":
+                    hierarchy_level += 1
+
+        # sanity
+        if primary_resource_type == "user-resource" and hierarchy_level > 2:
+            raise ValueError("parent.parent.parent is invalid for a resource of type 'user-resource'")
+        elif primary_resource_type == "workspace-service" and hierarchy_level > 1:
+            raise ValueError("parent.parent is invalid for a resource of type 'workspace-service'")
+        elif primary_resource_type == "workspace" and hierarchy_level > 0:
+            raise ValueError("parent is invalid for a resource of type 'workspace'")
+
+        if hierarchy_level == 2:
+            if primary_resource_type == "user-resource":
+                dict_to_use = primary_parent_ws_dict
+                del p[2]
+                del p[1]
+        elif hierarchy_level == 1:
+            if primary_resource_type == "user-resource":
+                dict_to_use = primary_parent_ws_svc_dict
+            elif primary_resource_type == "workspace-service":
+                dict_to_use = primary_parent_ws_dict
+            del p[1]
         else:
-            raise ValueError("invalid resource, must be either 'resource', 'parent_workspace' or 'parent_workspace_service'")
+            dict_to_use = primary_resource_dict
 
         prop_to_get = dict_to_use
         for i in range(1, len(p)):

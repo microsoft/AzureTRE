@@ -422,6 +422,44 @@ def primary_resource() -> Resource:
 
 
 @pytest.fixture
+def primary_user_resource() -> Resource:
+    return Resource(
+        id="123",
+        name="test resource",
+        isEnabled=True,
+        templateName="template name",
+        templateVersion="7",
+        resourceType="user-resource",
+        _etag="",
+        properties={
+            "display_name": "test_resource name",
+            "address_prefix": ["172.0.0.1", "192.168.0.1"],
+            "fqdn": ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
+            "my_protocol": "MyCoolProtocol",
+        },
+    )
+
+
+@pytest.fixture
+def primary_workspace_service_resource() -> Resource:
+    return Resource(
+        id="123",
+        name="test resource",
+        isEnabled=True,
+        templateName="template name",
+        templateVersion="7",
+        resourceType="workspace-service",
+        _etag="",
+        properties={
+            "display_name": "test_workspace_service_resource name",
+            "address_prefix": ["172.0.0.1", "192.168.0.1"],
+            "fqdn": ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
+            "my_protocol": "MyCoolProtocol",
+        },
+    )
+
+
+@pytest.fixture
 def resource_ws_parent() -> Resource:
     return Resource(
         id="234",
