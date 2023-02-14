@@ -142,6 +142,24 @@ def test_substitution_for_workspace_primary_resource_parents(primary_resource):
         val = substitute_value(val_to_sub, primary_resource_dict, None, None)
 
 
+def test_substitution_for_shared_service_primary_resource_parents(basic_shared_service):
+    primary_resource_dict = basic_shared_service.dict()
+
+    # single array val
+    val_to_sub = "I am a shared service WITHOUT any parents, my name is '{{ resource.properties.display_name }}'"
+    val = substitute_value(val_to_sub, primary_resource_dict, None, None)
+    assert val == "I am a shared service WITHOUT any parents, my name is 'shared_service_resource name'"
+
+    # shared service cant have any parents
+    val_to_sub = "{{ resource.parent.properties.display_name }}"
+    with pytest.raises(ValueError):
+        val = substitute_value(val_to_sub, primary_resource_dict, None, None)
+
+    val_to_sub = "{{ resource.parent.parent.properties.display_name }}"
+    with pytest.raises(ValueError):
+        val = substitute_value(val_to_sub, primary_resource_dict, None, None)
+
+
 def test_simple_substitution(
     simple_pipeline_step, primary_resource, resource_to_update
 ):

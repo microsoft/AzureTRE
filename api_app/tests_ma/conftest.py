@@ -330,7 +330,9 @@ def basic_shared_service(test_user, basic_shared_service_template):
         templateName=basic_shared_service_template.name,
         templateVersion=basic_shared_service_template.version,
         etag="",
-        properties={},
+        properties={
+            "display_name": "shared_service_resource name",
+        },
         resourcePath=f"/shared-services/{id}",
         updatedWhen=FAKE_CREATE_TIMESTAMP,
         user=test_user,
