@@ -158,16 +158,15 @@ class ResourceTemplateRepository(BaseRepository):
     def _validate_pipeline_has_unique_step_ids(self, pipeline):
         step_ids = []
         for action in pipeline:
-            main_steps_in_action = 0
-
+            num_of_main_steps = 0
             for step in pipeline[action]:
                 step_id = step["stepId"]
-                if step_id == "main":
-                    main_steps_in_action += 1
-                    continue
-                if step_id in step_ids:
-                    raise InvalidInput(f"Invalid template - duplicate stepIds are not allowed. stepId: {step_id}")
-                step_ids.append(step_id)
 
-            if main_steps_in_action > 1:
-                raise InvalidInput(f"Invalid template - stepId 'main' is duplicated in action {action}")
+                if step_id == "main":
+                    num_of_main_steps += 1
+
+                if step_id in step_ids or num_of_main_steps > 1:
+                    raise InvalidInput(f"Invalid template - duplicate stepIds are not allowed. stepId: {step_id}")
+
+                if step_id != "main":
+                    step_ids.append(step_id)

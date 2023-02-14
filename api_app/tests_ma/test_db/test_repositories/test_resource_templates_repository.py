@@ -226,3 +226,14 @@ async def test_create_template_with_pipeline_that_has_duplicated_step_id_fails_w
     input_user_resource_template.json_schema["pipeline"] = pipeline
     with pytest.raises(InvalidInput):
         await resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource)
+
+
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
+async def test_create_template_with_pipeline_without_duplicated_step_id_succeeds(_, resource_template_repo, input_user_resource_template):
+    input_user_resource_template.json_schema["pipeline"] = {
+        "install": [{"stepId": "main"}, {"stepId": "1"}],
+        "upgrade": [{"stepId": "main"}, {"stepId": "2"}],
+    }
+
+    created = await resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource)
+    assert created.pipeline
