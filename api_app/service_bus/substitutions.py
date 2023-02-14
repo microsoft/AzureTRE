@@ -1,4 +1,5 @@
 from typing import Union
+from resources import strings
 from models.domain.resource_template import PipelineStep
 from models.domain.resource import Resource
 
@@ -104,11 +105,10 @@ def substitute_value(val: str, primary_resource_dict: dict, primary_parent_ws_di
 
     dict_to_use = None
     for t in tokens:
-        # t = "{resource/parent_workspace/parent_workspace_service}.properties.prop_1"
+        # t = "{resource[.parent][.parent].properties.prop_1"
         p = t.split(".")
 
         # decide on which dictionary to use (parents support)
-
         # how many parents levels do we have (0- current resource, 1-direct parent, 2-skip level parent, 3-invalid)
         hierarchy_level = 0
         for i in range(3, 0, -1):
@@ -117,22 +117,24 @@ def substitute_value(val: str, primary_resource_dict: dict, primary_parent_ws_di
                     hierarchy_level += 1
 
         # sanity
-        if primary_resource_type == "user-resource" and hierarchy_level > 2:
-            raise ValueError("parent.parent.parent is invalid for a resource of type 'user-resource'")
-        elif primary_resource_type == "workspace-service" and hierarchy_level > 1:
-            raise ValueError("parent.parent is invalid for a resource of type 'workspace-service'")
-        elif primary_resource_type == "workspace" and hierarchy_level > 0:
-            raise ValueError("parent is invalid for a resource of type 'workspace'")
+        if primary_resource_type == strings.USER_RESOURCE and hierarchy_level > 2:
+            raise ValueError("parent.parent.parent is invalid for a resource of type '{}'".format(str(strings.USER_RESOURCE)))
+        elif primary_resource_type == strings.RESOURCE_TYPE_WORKSPACE_SERVICE and hierarchy_level > 1:
+            raise ValueError("parent.parent is invalid for a resource of type '{}'".format(str(strings.RESOURCE_TYPE_WORKSPACE_SERVICE)))
+        elif primary_resource_type == strings.RESOURCE_TYPE_WORKSPACE and hierarchy_level > 0:
+            raise ValueError("parent is invalid for a resource of type '{}'".format(str(strings.RESOURCE_TYPE_WORKSPACE)))
+        elif primary_resource_type == strings.RESOURCE_TYPE_SHARED_SERVICE and hierarchy_level > 0:
+            raise ValueError("parent is invalid for a resource of type '{}'".format(str(strings.RESOURCE_TYPE_SHARED_SERVICE)))
 
         if hierarchy_level == 2:
-            if primary_resource_type == "user-resource":
+            if primary_resource_type == strings.USER_RESOURCE:
                 dict_to_use = primary_parent_ws_dict
                 del p[2]
                 del p[1]
         elif hierarchy_level == 1:
-            if primary_resource_type == "user-resource":
+            if primary_resource_type == strings.USER_RESOURCE:
                 dict_to_use = primary_parent_ws_svc_dict
-            elif primary_resource_type == "workspace-service":
+            elif primary_resource_type == strings.RESOURCE_TYPE_WORKSPACE_SERVICE:
                 dict_to_use = primary_parent_ws_dict
             del p[1]
         else:
