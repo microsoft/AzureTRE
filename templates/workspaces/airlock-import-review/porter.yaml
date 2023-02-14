@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-airlock-import-review
-version: 0.8.2
+version: 0.9.0
 description: "A workspace to do Airlock Data Import Reviews for Azure TRE"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -104,9 +104,6 @@ parameters:
     type: string
     description: "The SKU used when deploying an Azure App Service Plan"
     default: "P1v3"
-  - name: enable_airlock
-    type: boolean
-    default: true
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -169,7 +166,7 @@ install:
         app_role_id_workspace_airlock_manager: ${ bundle.parameters.app_role_id_workspace_airlock_manager }
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
-        enable_airlock: ${ bundle.parameters.enable_airlock }
+        enable_airlock: false
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -211,7 +208,7 @@ upgrade:
         app_role_id_workspace_airlock_manager: ${ bundle.parameters.app_role_id_workspace_airlock_manager }
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
-        enable_airlock: ${ bundle.parameters.enable_airlock }
+        enable_airlock: false
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -269,7 +266,7 @@ uninstall:
         app_role_id_workspace_airlock_manager: ${ bundle.parameters.app_role_id_workspace_airlock_manager }
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
-        enable_airlock: ${ bundle.parameters.enable_airlock }
+        enable_airlock: false
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
