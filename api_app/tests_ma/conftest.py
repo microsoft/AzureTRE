@@ -285,6 +285,33 @@ def multi_step_resource_template(basic_shared_service_template) -> ResourceTempl
                         )
                     ],
                 ),
+            ],
+            uninstall=[
+                PipelineStep(
+                    stepId="pre-step-1",
+                    stepTitle="Title for pre-step-1",
+                    resourceTemplateName=basic_shared_service_template.name,
+                    resourceType=basic_shared_service_template.resourceType,
+                    resourceAction="upgrade",
+                    properties=[
+                        PipelineStepProperty(
+                            name="display_name", type="string", value="new name"
+                        )
+                    ],
+                ),
+                PipelineStep(stepId="main"),
+                PipelineStep(
+                    stepId="post-step-1",
+                    stepTitle="Title for post-step-1",
+                    resourceTemplateName=basic_shared_service_template.name,
+                    resourceType=basic_shared_service_template.resourceType,
+                    resourceAction="upgrade",
+                    properties=[
+                        PipelineStepProperty(
+                            name="display_name", type="string", value="old name"
+                        )
+                    ],
+                ),
             ]
         ),
     )
@@ -390,6 +417,44 @@ def primary_resource() -> Resource:
             "address_prefix": ["172.0.0.1", "192.168.0.1"],
             "fqdn": ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
             "my_protocol": "MyCoolProtocol",
+        },
+    )
+
+
+@pytest.fixture
+def resource_ws_parent() -> Resource:
+    return Resource(
+        id="234",
+        name="ws test resource",
+        isEnabled=True,
+        templateName="ws template name",
+        templateVersion="8",
+        resourceType="workspace",
+        _etag="",
+        properties={
+            "display_name": "ImTheParentWS",
+            "address_prefix": ["172.1.1.1", "192.168.1.1"],
+            "fqdn": ["*pypi.org", "security.ubuntu.com"],
+            "my_protocol": "MyWSCoolProtocol",
+        },
+    )
+
+
+@pytest.fixture
+def resource_ws_svc_parent() -> Resource:
+    return Resource(
+        id="345",
+        name="ws svc test resource",
+        isEnabled=True,
+        templateName="svc template name",
+        templateVersion="9",
+        resourceType="workspace-service",
+        _etag="",
+        properties={
+            "display_name": "ImTheParentWSSvc",
+            "address_prefix": ["172.2.2.2", "192.168.2.2"],
+            "fqdn": ["*pypi.org", "files.pythonhosted.org"],
+            "my_protocol": "MyWSSvcCoolProtocol",
         },
     )
 

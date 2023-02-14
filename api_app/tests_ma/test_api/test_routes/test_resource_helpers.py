@@ -279,6 +279,9 @@ class TestResourceHelpers:
 
         resource_repo.save_item = AsyncMock(return_value=None)
         operations_repo.create_operation_item = AsyncMock(return_value=operation)
+
+        resource_template_repo.get_template_by_name_and_version = AsyncMock(return_value=basic_resource_template)
+
         user = create_test_user()
 
         await save_and_deploy_resource(

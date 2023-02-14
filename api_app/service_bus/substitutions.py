@@ -3,14 +3,23 @@ from models.domain.resource_template import PipelineStep
 from models.domain.resource import Resource
 
 
-def substitute_properties(template_step: PipelineStep, primary_resource: Resource, resource_to_update: Resource) -> dict:
+def substitute_properties(template_step: PipelineStep, primary_resource: Resource, primary_parent_workspace: Resource, primary_parent_workspace_svc: Resource, resource_to_update: Resource) -> dict:
     properties = {}
+    parent_ws_dict = {}
+    parent_ws_svc_dict = {}
     primary_resource_dict = primary_resource.dict()
+    if primary_parent_workspace is not None:
+        parent_ws_dict = primary_parent_workspace.dict()
+    if primary_parent_workspace_svc is not None:
+        parent_ws_svc_dict = primary_parent_workspace_svc.dict()
+
+    if template_step is None or template_step.properties is None:
+        return properties
 
     for prop in template_step.properties:
         val = prop.value
         if isinstance(prop.value, dict):
-            val = recurse_object(prop.value, primary_resource_dict)
+            val = recurse_object(prop.value, primary_resource_dict, parent_ws_dict, parent_ws_svc_dict)
 
             if prop.type == 'array':
                 if prop.name in resource_to_update.properties:
@@ -42,7 +51,7 @@ def substitute_properties(template_step: PipelineStep, primary_resource: Resourc
                 properties[prop.name] = val
 
         else:
-            val = substitute_value(val, primary_resource_dict)
+            val = substitute_value(val, primary_resource_dict, parent_ws_dict, parent_ws_svc_dict)
             properties[prop.name] = val
 
     return properties
@@ -55,23 +64,23 @@ def find_item_index(array: list, arrayMatchField: str, val: dict) -> int:
     return -1
 
 
-def recurse_object(obj: dict, primary_resource_dict: dict) -> dict:
+def recurse_object(obj: dict, resource_dict: dict, parent_ws_dict: dict, parent_ws_svc_dict: dict) -> dict:
     for prop in obj:
         if isinstance(obj[prop], list):
             for i in range(0, len(obj[prop])):
                 if isinstance(obj[prop][i], list) or isinstance(obj[prop][i], dict):
-                    obj[prop][i] = recurse_object(obj[prop][i], primary_resource_dict)
+                    obj[prop][i] = recurse_object(obj[prop][i], resource_dict, parent_ws_dict, parent_ws_svc_dict)
                 else:
-                    obj[prop][i] = substitute_value(obj[prop][i], primary_resource_dict)
+                    obj[prop][i] = substitute_value(obj[prop][i], resource_dict, parent_ws_dict, parent_ws_svc_dict)
         if isinstance(obj[prop], dict):
-            obj[prop] = recurse_object(obj[prop], primary_resource_dict)
+            obj[prop] = recurse_object(obj[prop], resource_dict, parent_ws_dict, parent_ws_svc_dict)
         else:
-            obj[prop] = substitute_value(obj[prop], primary_resource_dict)
+            obj[prop] = substitute_value(obj[prop], resource_dict, parent_ws_dict, parent_ws_svc_dict)
 
     return obj
 
 
-def substitute_value(val: str, primary_resource_dict: dict) -> Union[dict, list, str]:
+def substitute_value(val: str, primary_resource_dict: dict, primary_parent_ws_dict: dict, primary_parent_ws_svc_dict: dict) -> Union[dict, list, str]:
     if "{{" not in val:
         return val
 
@@ -89,18 +98,31 @@ def substitute_value(val: str, primary_resource_dict: dict) -> Union[dict, list,
             t = p[0:p.index("}}")]
             tokens.append(t)
 
+    dict_to_use = None
     for t in tokens:
-        # t = "resource.properties.prop_1"
+        # t = "{resource/parent_workspace/parent_workspace_service}.properties.prop_1"
         p = t.split(".")
+        # decide on which dictionary to use (parents support)
         if p[0] == "resource":
-            prop_to_get = primary_resource_dict
-            for i in range(1, len(p)):
-                prop_to_get = prop_to_get[p[i]]
+            dict_to_use = primary_resource_dict
+        elif p[0] == "parent_workspace":
+            dict_to_use = primary_parent_ws_dict
+        elif p[0] == "parent_workspace_service":
+            dict_to_use = primary_parent_ws_svc_dict
+        else:
+            raise ValueError("invalid resource, must be either 'resource', 'parent_workspace' or 'parent_workspace_service'")
 
-            # if the value to inject is actually an object / list - just return it, else replace the value in the string
-            if isinstance(prop_to_get, dict) or isinstance(prop_to_get, list):
-                return prop_to_get
-            else:
-                val = val.replace("{{" + t + "}}", str(prop_to_get))
+        prop_to_get = dict_to_use
+        for i in range(1, len(p)):
+            # instead of failing, if the value is not found, return empty string. Used for backward compatability
+            if p[i] not in prop_to_get:
+                return ""
+            prop_to_get = prop_to_get[p[i]]
+
+        # if the value to inject is actually an object / list - just return it, else replace the value in the string
+        if isinstance(prop_to_get, dict) or isinstance(prop_to_get, list):
+            return prop_to_get
+        else:
+            val = val.replace("{{" + t + "}}", str(prop_to_get))
 
     return val

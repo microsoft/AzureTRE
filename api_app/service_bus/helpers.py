@@ -41,16 +41,23 @@ async def send_deployment_message(content, correlation_id, session_id, action):
 
 
 async def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, primary_resource: Resource, resource_to_update_id: str, primary_action: str, user: User) -> Resource:
-    # if this is main, just leave it alone and return it
-    if operation_step.stepId == "main":
-        return primary_resource
-
     # get the template for the primary resource, to get all the step details for substitutions
     primary_parent_service_name = ""
+    primary_parent_workspace = None
+    primary_parent_workspace_service = None
     if primary_resource.resourceType == ResourceType.UserResource:
         primary_parent_workspace_service = await resource_repo.get_resource_by_id(primary_resource.parentWorkspaceServiceId)
         primary_parent_service_name = primary_parent_workspace_service.templateName
+        primary_parent_workspace = await resource_repo.get_resource_by_id(primary_resource.workspaceId)
+
+    if primary_resource.resourceType == ResourceType.WorkspaceService:
+        primary_parent_workspace = await resource_repo.get_resource_by_id(primary_resource.workspaceId)
+
     primary_template = await resource_template_repo.get_template_by_name_and_version(primary_resource.templateName, primary_resource.templateVersion, primary_resource.resourceType, primary_parent_service_name)
+
+    # if there are no pipelines, no need to continue with substitutions.
+    if primary_template.pipeline is None:
+        return primary_resource
 
     # get the template step
     template_step = None
@@ -62,40 +69,40 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
     if template_step is None:
         raise Exception(f"Cannot find step with id of {operation_step.stepId} in template {primary_resource.templateName} for action {primary_action}")
 
-    if template_step.resourceAction == "upgrade":
-        resource_to_send = await try_upgrade_with_retries(
-            num_retries=3,
-            attempt_count=0,
-            resource_repo=resource_repo,
-            resource_template_repo=resource_template_repo,
-            resource_history_repo=resource_history_repo,
-            user=user,
-            resource_to_update_id=resource_to_update_id,
-            template_step=template_step,
-            primary_resource=primary_resource
-        )
+    resource_to_send = await try_update_with_retries(
+        num_retries=3,
+        attempt_count=0,
+        resource_repo=resource_repo,
+        resource_template_repo=resource_template_repo,
+        resource_history_repo=resource_history_repo,
+        user=user,
+        resource_to_update_id=resource_to_update_id,
+        template_step=template_step,
+        primary_resource=primary_resource,
+        primary_parent_workspace=primary_parent_workspace,
+        primary_parent_workspace_svc=primary_parent_workspace_service
+    )
 
-        return resource_to_send
-
-    else:
-        raise Exception("Only upgrade is currently supported for pipeline steps")
+    return resource_to_send
 
 
-async def try_upgrade_with_retries(num_retries: int, attempt_count: int, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_to_update_id: str, template_step: PipelineStep, primary_resource: Resource) -> Resource:
+async def try_update_with_retries(num_retries: int, attempt_count: int, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_to_update_id: str, template_step: PipelineStep, primary_resource: Resource, primary_parent_workspace: Resource = None, primary_parent_workspace_svc: Resource = None) -> Resource:
     try:
-        return await try_upgrade(
+        return await try_patch(
             resource_repo=resource_repo,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             user=user,
             resource_to_update_id=resource_to_update_id,
             template_step=template_step,
-            primary_resource=primary_resource
+            primary_resource=primary_resource,
+            primary_parent_workspace=primary_parent_workspace,
+            primary_parent_workspace_svc=primary_parent_workspace_svc
         )
     except CosmosAccessConditionFailedError as e:
         logging.warning(f"Etag mismatch for {resource_to_update_id}. Retrying.")
         if attempt_count < num_retries:
-            await try_upgrade_with_retries(
+            await try_update_with_retries(
                 num_retries=num_retries,
                 attempt_count=(attempt_count + 1),
                 resource_repo=resource_repo,
@@ -104,22 +111,23 @@ async def try_upgrade_with_retries(num_retries: int, attempt_count: int, resourc
                 user=user,
                 resource_to_update_id=resource_to_update_id,
                 template_step=template_step,
-                primary_resource=primary_resource
+                primary_resource=primary_resource,
+                primary_parent_workspace=primary_parent_workspace
             )
         else:
             raise e
 
 
-async def try_upgrade(resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_to_update_id: str, template_step: PipelineStep, primary_resource: Resource) -> Resource:
+async def try_patch(resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_to_update_id: str, template_step: PipelineStep, primary_resource: Resource, primary_parent_workspace: Resource, primary_parent_workspace_svc: Resource) -> Resource:
     resource_to_update = await resource_repo.get_resource_by_id(resource_to_update_id)
 
     # substitute values into new property bag for update
-    properties = substitute_properties(template_step, primary_resource, resource_to_update)
+    properties = substitute_properties(template_step, primary_resource, primary_parent_workspace, primary_parent_workspace_svc, resource_to_update)
 
     # get the template for the resource to upgrade
     parent_service_name = ""
     if resource_to_update.resourceType == ResourceType.UserResource:
-        parent_service_name = resource_to_update["parentWorkspaceServiceId"]
+        parent_service_name = primary_parent_workspace_svc.templateName
 
     resource_template_to_send = await resource_template_repo.get_template_by_name_and_version(resource_to_update.templateName, resource_to_update.templateVersion, resource_to_update.resourceType, parent_service_name)
 
