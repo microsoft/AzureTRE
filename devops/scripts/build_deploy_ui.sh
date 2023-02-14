@@ -14,7 +14,7 @@ ui_version=$(jq -r '.version' package.json)
 jq --arg rootClientId "${SWAGGER_UI_CLIENT_ID}" \
   --arg rootTenantId "${AAD_TENANT_ID}" \
   --arg treApplicationId "api://${API_CLIENT_ID}" \
-  --arg treUrl "https://${FQDN}/api" \
+  --arg treUrl "/api" \
   --arg treId "${TRE_ID}" \
   --arg version "${ui_version}" \
   '.rootClientId = $rootClientId | .rootTenantId = $rootTenantId | .treApplicationId = $treApplicationId | .treUrl = $treUrl | .treId = $treId | .version = $version' ./src/config.source.json > ./src/config.json
