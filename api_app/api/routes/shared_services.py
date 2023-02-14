@@ -79,13 +79,12 @@ async def create_shared_service(response: Response, shared_service_input: Shared
                               dependencies=[Depends(get_current_admin_user), Depends(get_shared_service_by_id_from_path)])
 async def patch_shared_service(shared_service_patch: ResourcePatch, response: Response, user=Depends(get_current_admin_user), shared_service_repo=Depends(get_repository(SharedServiceRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(...), force_version_update: bool = False) -> SharedServiceInResponse:
     try:
-        patched_shared_service, resource_template = await shared_service_repo.patch_shared_service(shared_service, shared_service_patch, etag, resource_template_repo, resource_history_repo, user, force_version_update)
+        patched_shared_service, _ = await shared_service_repo.patch_shared_service(shared_service, shared_service_patch, etag, resource_template_repo, resource_history_repo, user, force_version_update)
         operation = await send_resource_request_message(
             resource=patched_shared_service,
             operations_repo=operations_repo,
             resource_repo=shared_service_repo,
             user=user,
-            resource_template=resource_template,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=RequestAction.Upgrade)
@@ -105,8 +104,6 @@ async def delete_shared_service(response: Response, user=Depends(get_current_adm
     if shared_service.isEnabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.SHARED_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
 
-    resource_template = await resource_template_repo.get_template_by_name_and_version(shared_service.templateName, shared_service.templateVersion, ResourceType.SharedService)
-
     operation = await send_uninstall_message(
         resource=shared_service,
         resource_repo=shared_service_repo,
@@ -114,8 +111,7 @@ async def delete_shared_service(response: Response, user=Depends(get_current_adm
         resource_type=ResourceType.SharedService,
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo,
-        user=user,
-        resource_template=resource_template)
+        user=user)
 
     response.headers["Location"] = construct_location_header(operation)
 
