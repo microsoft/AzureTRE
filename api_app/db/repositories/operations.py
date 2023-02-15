@@ -44,6 +44,7 @@ class OperationRepository(BaseRepository):
             resourceTemplateName=resource_template["name"],
             resourceType=resource_template["resourceType"],
             resourceAction=action,
+            parentResourceId=resource_id,
             status=status,
             message=message,
             updatedWhen=self.get_timestamp())
