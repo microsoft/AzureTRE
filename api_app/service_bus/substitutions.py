@@ -106,14 +106,14 @@ def substitute_value(val: str, primary_resource_dict: dict, primary_parent_ws_di
     dict_to_use = None
     for t in tokens:
         # t = "{resource[.parent][.parent].properties.prop_1"
-        p = t.split(".")
+        path_tokens = t.split(".")
 
         # decide on which dictionary to use (parents support)
         # how many parents levels do we have (0- current resource, 1-direct parent, 2-skip level parent, 3-invalid)
         hierarchy_level = 0
         for i in range(3, 0, -1):
-            if len(p) > i:
-                if p[i] == "parent":
+            if len(path_tokens) > i:
+                if path_tokens[i] == "parent":
                     hierarchy_level += 1
 
         # sanity
@@ -129,23 +129,23 @@ def substitute_value(val: str, primary_resource_dict: dict, primary_parent_ws_di
         if hierarchy_level == 2:
             if primary_resource_type == strings.USER_RESOURCE:
                 dict_to_use = primary_parent_ws_dict
-                del p[2]
-                del p[1]
+                del path_tokens[2]
+                del path_tokens[1]
         elif hierarchy_level == 1:
             if primary_resource_type == strings.USER_RESOURCE:
                 dict_to_use = primary_parent_ws_svc_dict
             elif primary_resource_type == strings.RESOURCE_TYPE_WORKSPACE_SERVICE:
                 dict_to_use = primary_parent_ws_dict
-            del p[1]
+            del path_tokens[1]
         else:
             dict_to_use = primary_resource_dict
 
         prop_to_get = dict_to_use
-        for i in range(1, len(p)):
+        for i in range(1, len(path_tokens)):
             # instead of failing, if the value is not found, return empty string. Used for backward compatability
-            if p[i] not in prop_to_get:
+            if path_tokens[i] not in prop_to_get:
                 return ""
-            prop_to_get = prop_to_get[p[i]]
+            prop_to_get = prop_to_get[path_tokens[i]]
 
         # if the value to inject is actually an object / list - just return it, else replace the value in the string
         if isinstance(prop_to_get, dict) or isinstance(prop_to_get, list):
