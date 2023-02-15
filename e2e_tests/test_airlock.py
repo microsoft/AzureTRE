@@ -10,6 +10,7 @@ from airlock.request import post_request, get_request, upload_blob_using_sas, wa
 from resources.resource import get_resource, post_resource
 from resources.workspace import get_workspace_auth_details
 from airlock import strings as airlock_strings
+from e2e_tests.conftest import get_workspace_owner_token
 from helpers import get_admin_token
 
 
@@ -74,8 +75,10 @@ async def submit_airlock_import_request(workspace_path: str, workspace_owner_tok
 @pytest.mark.timeout(50 * 60)
 @pytest.mark.airlock
 async def test_airlock_review_vm_flow(setup_test_workspace, setup_test_airlock_import_review_workspace_and_guacamole_service, verify):
-    workspace_path, workspace_id, workspace_owner_token = setup_test_workspace
-    _, import_review_workspace_id, _, import_review_workspace_service_id, _ = setup_test_airlock_import_review_workspace_and_guacamole_service
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(verify, workspace_id)
+
+    _, import_review_workspace_id, _, import_review_workspace_service_id = setup_test_airlock_import_review_workspace_and_guacamole_service
 
     # Preparation: Update the research workspace so that it has the import review details
     patch_payload = {
@@ -156,7 +159,8 @@ async def test_airlock_review_vm_flow(setup_test_workspace, setup_test_airlock_i
 @pytest.mark.timeout(35 * 60)
 async def test_airlock_flow(verify, setup_test_workspace) -> None:
     # 1. Get the workspace set up
-    workspace_path, workspace_id, workspace_owner_token = setup_test_workspace
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(verify, workspace_id)
 
     # 2. create and submit airlock request
     request_id, container_url = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
