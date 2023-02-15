@@ -68,7 +68,6 @@ async def test_resource_request_message_generated_correctly(
         operations_repo=operations_repo_mock,
         resource_repo=resource_repo,
         user=create_test_user(),
-        resource_template=multi_step_resource_template,
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo_mock,
         action=request_action

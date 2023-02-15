@@ -42,32 +42,33 @@ async def send_deployment_message(content, correlation_id, session_id, action):
 
 async def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, primary_resource: Resource, resource_to_update_id: str, primary_action: str, user: User) -> Resource:
     # get the template for the primary resource, to get all the step details for substitutions
-    primary_parent_service_name = ""
-    primary_parent_workspace = None
-    primary_parent_workspace_service = None
-    if primary_resource.resourceType == ResourceType.UserResource:
-        primary_parent_workspace_service = await resource_repo.get_resource_by_id(primary_resource.parentWorkspaceServiceId)
-        primary_parent_service_name = primary_parent_workspace_service.templateName
-        primary_parent_workspace = await resource_repo.get_resource_by_id(primary_resource.workspaceId)
+    step_origin_resource = await resource_repo.get_resource_by_id(operation_step.parentResourceId)
+    step_origin_parent_service_name = ""
+    step_origin_parent_workspace = None
+    step_origin_parent_workspace_service = None
+    if step_origin_resource.resourceType == ResourceType.UserResource:
+        step_origin_parent_workspace_service = await resource_repo.get_resource_by_id(step_origin_resource.parentWorkspaceServiceId)
+        step_origin_parent_service_name = step_origin_parent_workspace_service.templateName
+        step_origin_parent_workspace = await resource_repo.get_resource_by_id(step_origin_resource.workspaceId)
 
-    if primary_resource.resourceType == ResourceType.WorkspaceService:
-        primary_parent_workspace = await resource_repo.get_resource_by_id(primary_resource.workspaceId)
+    if step_origin_resource.resourceType == ResourceType.WorkspaceService:
+        step_origin_parent_workspace = await resource_repo.get_resource_by_id(step_origin_resource.workspaceId)
 
-    primary_template = await resource_template_repo.get_template_by_name_and_version(primary_resource.templateName, primary_resource.templateVersion, primary_resource.resourceType, primary_parent_service_name)
+    parent_template = await resource_template_repo.get_template_by_name_and_version(step_origin_resource.templateName, step_origin_resource.templateVersion, step_origin_resource.resourceType, step_origin_parent_service_name)
 
     # if there are no pipelines, no need to continue with substitutions.
-    if primary_template.pipeline is None:
+    if parent_template.pipeline is None:
         return primary_resource
 
     # get the template step
     template_step = None
-    for step in primary_template.pipeline.dict()[primary_action]:
+    for step in parent_template.pipeline.dict()[primary_action]:
         if step["stepId"] == operation_step.stepId:
             template_step = parse_obj_as(PipelineStep, step)
             break
 
     if template_step is None:
-        raise Exception(f"Cannot find step with id of {operation_step.stepId} in template {primary_resource.templateName} for action {primary_action}")
+        raise Exception(f"Cannot find step with id of {operation_step.stepId} in template {current_resource.templateName} for action {primary_action}")
 
     resource_to_send = await try_update_with_retries(
         num_retries=3,
@@ -79,8 +80,8 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
         resource_to_update_id=resource_to_update_id,
         template_step=template_step,
         primary_resource=primary_resource,
-        primary_parent_workspace=primary_parent_workspace,
-        primary_parent_workspace_svc=primary_parent_workspace_service
+        primary_parent_workspace=step_origin_parent_workspace,
+        primary_parent_workspace_svc=step_origin_parent_workspace_service
     )
 
     return resource_to_send
