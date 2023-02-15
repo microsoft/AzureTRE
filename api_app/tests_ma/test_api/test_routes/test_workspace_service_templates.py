@@ -6,7 +6,7 @@ from pydantic import parse_obj_as
 from starlette import status
 
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
-from db.errors import EntityDoesNotExist, EntityVersionExist, UnableToAccessDatabase
+from db.errors import EntityDoesNotExist, EntityVersionExist, InvalidInput, UnableToAccessDatabase
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
 from models.schemas.resource_template import ResourceTemplateInformation
@@ -145,6 +145,12 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_service_template.dict())
 
         assert response.status_code == status.HTTP_409_CONFLICT
+
+    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template", side_effect=InvalidInput)
+    async def test_creating_a_workspace_service_template_raises_http_422_if_step_ids_are_duplicated(self, _, client, app, input_workspace_service_template):
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_service_template.dict())
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     # GET /workspace-service-templates/{template_name}
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_current_template")
