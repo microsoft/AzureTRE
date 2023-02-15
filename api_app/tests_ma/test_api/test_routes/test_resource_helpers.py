@@ -177,7 +177,6 @@ class TestResourceHelpers:
             user=user,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
-            resource_template=basic_resource_template,
             action=RequestAction.Install)
 
     @patch("api.routes.workspaces.ResourceTemplateRepository")
@@ -226,7 +225,7 @@ class TestResourceHelpers:
     @patch("api.routes.resource_helpers.send_resource_request_message", return_value=None)
     @patch("api.routes.workspaces.OperationRepository")
     @pytest.mark.asyncio
-    async def test_send_uninstall_message_sends_uninstall_message(self, operations_repo, send_request_mock, resource_template_repo, resource_repo, basic_resource_template, resource_history_repo):
+    async def test_send_uninstall_message_sends_uninstall_message(self, operations_repo, send_request_mock, resource_template_repo, resource_repo, resource_history_repo):
         resource = sample_resource()
         user = create_test_user()
 
@@ -237,8 +236,7 @@ class TestResourceHelpers:
             resource_type=ResourceType.Workspace,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
-            user=user,
-            resource_template=basic_resource_template)
+            user=user)
 
         send_request_mock.assert_called_once_with(
             resource=resource,
@@ -247,8 +245,8 @@ class TestResourceHelpers:
             user=user,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
-            resource_template=basic_resource_template,
-            action=RequestAction.UnInstall)
+            action=RequestAction.UnInstall,
+            is_cascade=False)
 
     @patch("api.routes.workspaces.ResourceTemplateRepository")
     @patch("api.routes.resource_helpers.send_resource_request_message", side_effect=Exception)
@@ -263,8 +261,7 @@ class TestResourceHelpers:
                 resource_type=ResourceType.Workspace,
                 resource_template_repo=resource_template_repo,
                 resource_history_repo=resource_history_repo,
-                user=create_test_user(),
-                resource_template=basic_resource_template)
+                user=create_test_user())
 
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
@@ -278,6 +275,7 @@ class TestResourceHelpers:
         operation = sample_resource_operation(resource_id=resource.id, operation_id=operation_id)
 
         resource_repo.save_item = AsyncMock(return_value=None)
+        resource_repo.get_resource_by_id = AsyncMock(return_value=resource)
         operations_repo.create_operation_item = AsyncMock(return_value=operation)
         user = create_test_user()
 
@@ -302,6 +300,7 @@ class TestResourceHelpers:
         resource.properties["prop_with_nested_secret"]["nested_secret"] = strings.REDACTED_SENSITIVE_VALUE
 
         resource_repo.save_item.assert_called_once_with(resource)
+        resource_repo.get_resource_by_id.assert_called_once_with(resource.id)
 
     def test_sensitive_properties_get_masked(self, basic_resource_template):
         resource = sample_resource_with_secret()
