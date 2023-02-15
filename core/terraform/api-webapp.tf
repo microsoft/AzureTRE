@@ -152,4 +152,6 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_api" {
       days    = 365
     }
   }
+
+  lifecycle { ignore_changes = [log_analytics_destination_type] }
 }

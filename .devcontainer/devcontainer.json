@@ -55,6 +55,9 @@
     "python.testing.pytestArgs": [
       "api_app"
     ],
+    "files.associations": {
+      "*.terraform": "terraform"
+    },
     "launch": {
       "configurations": [
         {
