@@ -156,6 +156,9 @@ class ResourceTemplateRepository(BaseRepository):
             return self.enrich_template(created_template)
 
     def _validate_pipeline_has_unique_step_ids(self, pipeline):
+        if pipeline is None:
+            return
+
         step_ids = []
         for action in pipeline:
             num_of_main_steps = 0

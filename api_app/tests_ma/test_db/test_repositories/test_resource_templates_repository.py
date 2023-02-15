@@ -237,3 +237,10 @@ async def test_create_template_with_pipeline_without_duplicated_step_id_succeeds
 
     created = await resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource)
     assert created.pipeline
+
+
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
+async def test_create_template_with_null_pipeline_creates_template_without_pipeline(_, resource_template_repo, input_user_resource_template):
+    input_user_resource_template.json_schema["pipeline"] = None
+    created = await resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource)
+    assert created.pipeline is None
