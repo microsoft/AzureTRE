@@ -148,7 +148,5 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
 
     admin_token = await get_admin_token(verify)
     # clear up workspace + service (if we created them)
-    if config.TEST_WORKSPACE_SERVICE_ID == "":
-        await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
     if config.TEST_WORKSPACE_ID == "":
         await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)

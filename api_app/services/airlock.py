@@ -66,11 +66,16 @@ def get_account_by_request(airlock_request: AirlockRequest, workspace: Workspace
 
 
 def validate_user_allowed_to_access_storage_account(user: User, airlock_request: AirlockRequest):
-    if "WorkspaceResearcher" not in user.roles and airlock_request.status != AirlockRequestStatus.InReview:
+    allowed_roles = []
+
+    if (airlock_request.status == AirlockRequestStatus.InReview):
+        allowed_roles = ["AirlockManager", "WorkspaceOwner"]
+    else:
+        allowed_roles = ["WorkspaceResearcher", "WorkspaceOwner"]
+
+    if not _user_has_one_of_roles(user=user, roles=allowed_roles):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AIRLOCK_UNAUTHORIZED_TO_SA)
 
-    if "WorkspaceOwner" not in user.roles and "AirlockManager" not in user.roles and airlock_request.status == AirlockRequestStatus.InReview:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AIRLOCK_UNAUTHORIZED_TO_SA)
     return
 
 
@@ -386,12 +391,6 @@ async def delete_review_user_resource(
     # disable might contain logic that we need to execute before the deletion of the resource
     _ = await disable_user_resource(user_resource, user, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
 
-    resource_template = await resource_template_repo.get_template_by_name_and_version(
-        user_resource.templateName,
-        user_resource.templateVersion,
-        ResourceType.UserResource,
-        workspace_service.templateName)
-
     logging.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")
     operation = await send_uninstall_message(
         resource=user_resource,
@@ -400,8 +399,7 @@ async def delete_review_user_resource(
         resource_type=ResourceType.UserResource,
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo,
-        user=user,
-        resource_template=resource_template)
+        user=user)
     logging.info(f"Started operation {operation}")
     return operation
 
@@ -460,3 +458,7 @@ async def cancel_request(airlock_request: AirlockRequest, user: User, workspace:
     updated_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, updated_by=user, workspace=workspace, new_status=AirlockRequestStatus.Cancelled)
     await delete_all_review_user_resources(airlock_request, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, resource_history_repo, user)
     return updated_request
+
+
+def _user_has_one_of_roles(user: User, roles) -> bool:
+    return any(role in roles for role in user.roles)
