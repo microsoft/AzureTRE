@@ -1,4 +1,3 @@
-import uuid
 import pytest
 import pytest_asyncio
 from mock import patch
@@ -297,7 +296,7 @@ def test_user():
 
 @pytest.fixture
 def basic_shared_service(test_user, basic_shared_service_template):
-    id = str(uuid.uuid4())
+    id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     return SharedService(
         id=id,
         templateName=basic_shared_service_template.name,
@@ -331,10 +330,10 @@ def multi_step_operation(
 ):
     return Operation(
         id="op-guid-here",
-        resourceId="resource-id",
+        resourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
         action=RequestAction.Install,
         user=test_user,
-        resourcePath="/workspaces/resource-id",
+        resourcePath="/workspaces/59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
         createdWhen=FAKE_CREATE_TIMESTAMP,
         updatedWhen=FAKE_CREATE_TIMESTAMP,
         steps=[
@@ -348,17 +347,19 @@ def multi_step_operation(
                 status=Status.AwaitingUpdate,
                 message="This resource is waiting to be updated",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
+                parentResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
             ),
             OperationStep(
                 stepId="main",
-                stepTitle="Main step for resource-id",
+                stepTitle="Main step for 59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
                 resourceAction="install",
                 resourceType=ResourceType.Workspace,
                 resourceTemplateName="template1",
-                resourceId="resource-id",
+                resourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
                 status=Status.AwaitingDeployment,
                 message="This resource is waiting to be deployed",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
+                parentResourceId=None
             ),
             OperationStep(
                 stepId="post-step-1",
@@ -370,6 +371,7 @@ def multi_step_operation(
                 status=Status.AwaitingUpdate,
                 message="This resource is waiting to be updated",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
+                parentResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
             ),
         ],
     )

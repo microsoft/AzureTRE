@@ -53,11 +53,7 @@ async def test_create_guacamole_service_into_base_workspace(verify, setup_test_w
         }
     }
 
-    user_resource_path, _ = await post_resource(user_resource_payload, f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}', workspace_owner_token, verify, method="POST")
-
-    await disable_and_delete_resource(f'/api{user_resource_path}', workspace_owner_token, verify)
-
-    await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
+    _, _ = await post_resource(user_resource_payload, f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}', workspace_owner_token, verify, method="POST")
 
 
 @pytest.mark.extended_aad
@@ -74,11 +70,9 @@ async def test_create_guacamole_service_into_aad_workspace(verify, setup_test_aa
         }
     }
 
-    workspace_service_path, workspace_service_id = await post_resource(workspace_service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
+    _, workspace_service_id = await post_resource(workspace_service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
 
     await ping_guacamole_workspace_service(workspace_id, workspace_service_id, verify)
-
-    await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
 
 
 async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, verify) -> None:
@@ -103,6 +97,6 @@ async def test_install_workspace_service(template_name, verify, setup_test_works
         }
     }
 
-    workspace_service_path, workspace_service_id = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
+    workspace_service_path, _ = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
 
     await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
