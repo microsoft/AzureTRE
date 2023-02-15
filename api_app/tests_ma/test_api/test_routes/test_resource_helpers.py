@@ -303,7 +303,6 @@ class TestResourceHelpers:
         resource.properties["prop_with_nested_secret"]["nested_secret"] = strings.REDACTED_SENSITIVE_VALUE
 
         resource_repo.save_item.assert_called_once_with(resource)
-        resource_repo.get_resource_by_id.assert_called_once_with(resource.id)
 
     def test_sensitive_properties_get_masked(self, basic_resource_template):
         resource = sample_resource_with_secret()

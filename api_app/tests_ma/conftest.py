@@ -388,7 +388,7 @@ def multi_step_operation(
                 status=Status.AwaitingDeployment,
                 message="This resource is waiting to be deployed",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
-                parentResourceId=None
+                parentResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
             ),
             OperationStep(
                 stepId="post-step-1",
