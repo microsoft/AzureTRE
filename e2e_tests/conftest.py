@@ -178,6 +178,5 @@ async def setup_test_airlock_import_review_workspace_and_guacamole_service(verif
     workspace_owner_token, _ = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
     yield workspace_path, workspace_id, workspace_service_path, workspace_service_id, workspace_owner_token
 
-    # Tear-down
-    await clean_up_test_workspace_service(pre_created_workspace_service_id=pre_created_workspace_service_id, workspace_service_path=workspace_service_path, verify=verify)
+    # Tear-down in a cascaded way
     await clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
