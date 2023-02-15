@@ -134,7 +134,7 @@ async def test_create_shared_service(template_name, verify) -> None:
     )
 
     await disable_and_delete_tre_resource(
-        f"/api{shared_service_path}", verify
+        shared_service_path, verify
     )
 
 
@@ -184,11 +184,11 @@ async def test_create_certs_nexus_shared_service(verify) -> None:
     )
 
     await disable_and_delete_tre_resource(
-        f"/api{nexus_shared_service_path}", verify
+        nexus_shared_service_path, verify
     )
 
     await disable_and_delete_tre_resource(
-        f"/api{certs_shared_service_path}", verify
+        certs_shared_service_path, verify
     )
 
 
@@ -205,5 +205,5 @@ async def disable_and_delete_shared_service_if_exists(shared_service_name, verif
             f"Shared service {shared_service_name} already exists (id {id}), deleting it first..."
         )
         await disable_and_delete_tre_resource(
-            f"/api/shared-services/{id}", verify
+            f"/shared-services/{id}", verify
         )
