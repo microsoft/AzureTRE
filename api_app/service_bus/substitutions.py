@@ -118,13 +118,13 @@ def substitute_value(val: str, primary_resource_dict: dict, primary_parent_ws_di
 
         # sanity
         if primary_resource_type == strings.USER_RESOURCE and hierarchy_level > 2:
-            raise ValueError("parent.parent.parent is invalid for a resource of type '{}'".format(str(strings.USER_RESOURCE)))
+            raise ValueError(f"parent.parent.parent is invalid for a resource of type '{strings.USER_RESOURCE}'")
         elif primary_resource_type == strings.RESOURCE_TYPE_WORKSPACE_SERVICE and hierarchy_level > 1:
-            raise ValueError("parent.parent is invalid for a resource of type '{}'".format(str(strings.RESOURCE_TYPE_WORKSPACE_SERVICE)))
+            raise ValueError(f"parent.parent is invalid for a resource of type '{strings.RESOURCE_TYPE_WORKSPACE_SERVICE}'")
         elif primary_resource_type == strings.RESOURCE_TYPE_WORKSPACE and hierarchy_level > 0:
-            raise ValueError("parent is invalid for a resource of type '{}'".format(str(strings.RESOURCE_TYPE_WORKSPACE)))
+            raise ValueError(f"parent is invalid for a resource of type '{strings.RESOURCE_TYPE_WORKSPACE}'")
         elif primary_resource_type == strings.RESOURCE_TYPE_SHARED_SERVICE and hierarchy_level > 0:
-            raise ValueError("parent is invalid for a resource of type '{}'".format(str(strings.RESOURCE_TYPE_SHARED_SERVICE)))
+            raise ValueError(f"parent is invalid for a resource of type '{strings.RESOURCE_TYPE_SHARED_SERVICE}'")
 
         if hierarchy_level == 2:
             if primary_resource_type == strings.USER_RESOURCE:
