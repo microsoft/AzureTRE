@@ -71,9 +71,9 @@ export const AirlockRequestFilesSection: React.FunctionComponent<AirlockRequestF
 
     let cliCommand = "";
     if (props.request.status === AirlockRequestStatus.Draft) {
-      cliCommand = `az storage blob upload --file <~/path/to/file> --name <filename.filetype> --account-name ${containerDetails.StorageAccountName} --type block --container-name ${containerDetails.containerName} --sas-token "${containerDetails.sasToken}"`
+      cliCommand = `az storage blob upload --file </path/to/file> --name <filename.filetype> --account-name ${containerDetails.StorageAccountName} --type block --container-name ${containerDetails.containerName} --sas-token "${containerDetails.sasToken}"`
     } else {
-      cliCommand = `az storage blob download-batch --destination <~/destination/path/for/file> --source ${containerDetails.containerName} --account-name ${containerDetails.StorageAccountName} --sas-token "${containerDetails.sasToken}"`
+      cliCommand = `az storage blob download-batch --destination </destination/path/for/file> --source ${containerDetails.containerName} --account-name ${containerDetails.StorageAccountName} --sas-token "${containerDetails.sasToken}"`
     }
 
     return cliCommand;
