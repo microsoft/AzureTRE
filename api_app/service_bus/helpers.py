@@ -43,6 +43,7 @@ async def send_deployment_message(content, correlation_id, session_id, action):
 async def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, primary_resource: Resource, resource_to_update_id: str, primary_action: str, user: User) -> Resource:
     # get the template for the primary resource, to get all the step details for substitutions
     step_origin_resource = await resource_repo.get_resource_by_id(operation_step.parentResourceId)
+    resource_to_update = await resource_repo.get_resource_by_id(resource_to_update_id)
     step_origin_parent_service_name = ""
     step_origin_parent_workspace = None
     step_origin_parent_workspace_service = None
@@ -58,7 +59,10 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
 
     # if there are no pipelines, no need to continue with substitutions.
     if parent_template.pipeline is None:
-        return primary_resource
+        return resource_to_update
+
+    if parent_template.pipeline.dict()[primary_action] is None:
+        return resource_to_update
 
     # get the template step
     template_step = None
