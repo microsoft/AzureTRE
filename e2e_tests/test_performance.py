@@ -41,7 +41,7 @@ async def test_parallel_resource_creations(verify) -> None:
     # Now disable + delete them all in parallel
     tasks = []
     for workspace_path, _ in resource_paths:
-        task = asyncio.create_task(disable_and_delete_tre_resource(workspace_path, verify))
+        task = asyncio.create_task(disable_and_delete_tre_resource(verify, workspace_path))
         tasks.append(task)
 
     await asyncio.gather(*tasks)
@@ -150,4 +150,4 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
     admin_token = await get_admin_token(verify)
     # clear up workspace + service (if we created them)
     if config.TEST_WORKSPACE_ID == "":
-        await disable_and_delete_tre_resource(workspace_path, verify)
+        await disable_and_delete_tre_resource(verify, workspace_path)
