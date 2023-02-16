@@ -204,4 +204,4 @@ async def disable_and_delete_shared_service_if_exists(shared_service_name, verif
         LOGGER.info(
             f"Shared service {shared_service_name} already exists (id {id}), deleting it first..."
         )
-        await disable_and_delete_tre_resource(verify, f"/shared-services/{id}")
+        await disable_and_delete_tre_resource(f"/shared-services/{id}", verify)
