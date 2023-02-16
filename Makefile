@@ -198,7 +198,7 @@ bundle-install: bundle-check-params
 	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
 	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
 	&& . ${MAKEFILE_DIR}/devops/scripts/porter_local_env.sh \
-	&& porter install --parameter-set $$(yq ".name" porter.yaml) \
+	&& porter install --autobuild-disabled --parameter-set $$(yq ".name" porter.yaml) \
 		--credential-set arm_auth \
 		--credential-set aad_auth \
 		--debug
@@ -212,8 +212,8 @@ bundle-check-params:
 	&& cd ${DIR} \
 	&& if [ ! -f "parameters.json" ]; then echo "Error - please create a parameters.json file."; exit 1; fi \
 	&& if [ "$$(jq -r '.name' parameters.json)" != "$$(yq eval '.name' porter.yaml)" ]; then echo "Error - ParameterSet name isn't equal to bundle's name."; exit 1; fi \
-	&& if ! porter explain; then echo "Error - porter explain issue!"; exit 1; fi \
-	&& comm_output=$$(set -o pipefail && comm -3 --output-delimiter=: <(porter explain -ojson | jq -r '.parameters[].name | select (. != "arm_use_msi")' | sort) <(jq -r '.parameters[].name | select(. != "arm_use_msi")' parameters.json | sort)) \
+	&& if ! porter explain --autobuild-disabled; then echo "Error - porter explain issue!"; exit 1; fi \
+	&& comm_output=$$(set -o pipefail && comm -3 --output-delimiter=: <(porter explain --autobuild-disabled -ojson | jq -r '.parameters[].name | select (. != "arm_use_msi")' | sort) <(jq -r '.parameters[].name | select(. != "arm_use_msi")' parameters.json | sort)) \
 	&& if [ ! -z "$${comm_output}" ]; \
 		then echo -e "*** Add to params ***:*** Remove from params ***\n$$comm_output" | column -t -s ":"; exit 1; \
 		else echo "parameters.json file up-to-date."; fi
@@ -227,7 +227,7 @@ bundle-uninstall:
 	&& porter parameters apply parameters.json \
 	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
 	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
-	&& porter uninstall --parameter-set $$(yq ".name" porter.yaml) \
+	&& porter uninstall --autobuild-disabled --parameter-set $$(yq ".name" porter.yaml) \
 		--credential-set arm_auth \
 		--credential-set aad_auth \
 		--debug
@@ -241,7 +241,7 @@ bundle-custom-action:
 	&& porter parameters apply parameters.json \
 	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
 	&& porter credentials apply ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
- 	&& porter invoke --action ${ACTION} --parameter-set $$(yq ".name" porter.yaml) \
+ 	&& porter invoke --autobuild-disabled --action ${ACTION} --parameter-set $$(yq ".name" porter.yaml) \
 		--credential-set arm_auth \
 		--credential-set aad_auth \
 		--debug
