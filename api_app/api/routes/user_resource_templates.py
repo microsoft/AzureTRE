@@ -6,7 +6,7 @@ from pydantic import parse_obj_as
 from api.dependencies.database import get_repository
 from api.dependencies.workspace_service_templates import get_workspace_service_template_by_name_from_path
 from api.routes.resource_helpers import get_template
-from db.errors import EntityVersionExist
+from db.errors import EntityVersionExist, InvalidInput
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
 from models.schemas.user_resource_template import UserResourceTemplateInResponse, UserResourceTemplateInCreate
@@ -36,3 +36,5 @@ async def register_user_resource_template(template_input: UserResourceTemplateIn
         return await template_repo.create_and_validate_template(template_input, ResourceType.UserResource, workspace_service_template.name)
     except EntityVersionExist:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_TEMPLATE_VERSION_EXISTS)
+    except InvalidInput as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
