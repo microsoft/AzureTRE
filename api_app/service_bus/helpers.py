@@ -43,6 +43,11 @@ async def send_deployment_message(content, correlation_id, session_id, action):
 async def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, primary_resource: Resource, resource_to_update_id: str, primary_action: str, user: User) -> Resource:
     # get the template for the primary resource, to get all the step details for substitutions
     step_origin_resource = await resource_repo.get_resource_by_id(operation_step.parentResourceId)
+
+    # Check if there were sensitive props
+    if primary_resource.id == step_origin_resource.id:
+        step_origin_resource = primary_resource
+
     step_origin_parent_service_name = ""
     step_origin_parent_workspace = None
     step_origin_parent_workspace_service = None
@@ -82,7 +87,7 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
         user=user,
         resource_to_update_id=resource_to_update_id,
         template_step=template_step,
-        primary_resource=primary_resource,
+        primary_resource=step_origin_resource,
         primary_parent_workspace=step_origin_parent_workspace,
         primary_parent_workspace_svc=step_origin_parent_workspace_service
     )
