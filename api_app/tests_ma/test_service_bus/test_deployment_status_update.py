@@ -316,7 +316,8 @@ async def test_multi_step_operation_sends_next_step(app, sb_sender_client, resou
         resource_repo=ANY,
         resource_template_repo=ANY,
         resource_history_repo=ANY,
-        primary_resource=ANY,
+        root_resource=ANY,
+        step_resource=ANY,
         resource_to_update_id=multi_step_operation.steps[1].resourceId,
         primary_action=ANY,
         user=ANY)

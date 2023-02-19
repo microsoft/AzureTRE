@@ -40,13 +40,15 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
         resource_template_repo=resource_template_repo)
 
     # prep the first step to send in SB
+    # resource at this point is the original object with unmaskked values
     first_step = operation.steps[0]
     resource_to_send = await update_resource_for_step(
         operation_step=first_step,
         resource_repo=resource_repo,
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo,
-        primary_resource=resource,
+        root_resource=resource,
+        step_resource=None,
         resource_to_update_id=first_step.resourceId,
         primary_action=action,
         user=user)

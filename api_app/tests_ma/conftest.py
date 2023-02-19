@@ -284,6 +284,33 @@ def multi_step_resource_template(basic_shared_service_template) -> ResourceTempl
                         )
                     ],
                 ),
+            ],
+            uninstall=[
+                PipelineStep(
+                    stepId="pre-step-1",
+                    stepTitle="Title for pre-step-1",
+                    resourceTemplateName=basic_shared_service_template.name,
+                    resourceType=basic_shared_service_template.resourceType,
+                    resourceAction="upgrade",
+                    properties=[
+                        PipelineStepProperty(
+                            name="display_name", type="string", value="new name"
+                        )
+                    ],
+                ),
+                PipelineStep(stepId="main"),
+                PipelineStep(
+                    stepId="post-step-1",
+                    stepTitle="Title for post-step-1",
+                    resourceTemplateName=basic_shared_service_template.name,
+                    resourceType=basic_shared_service_template.resourceType,
+                    resourceAction="upgrade",
+                    properties=[
+                        PipelineStepProperty(
+                            name="display_name", type="string", value="old name"
+                        )
+                    ],
+                ),
             ]
         ),
     )
@@ -302,7 +329,9 @@ def basic_shared_service(test_user, basic_shared_service_template):
         templateName=basic_shared_service_template.name,
         templateVersion=basic_shared_service_template.version,
         etag="",
-        properties={},
+        properties={
+            "display_name": "shared_service_resource name",
+        },
         resourcePath=f"/shared-services/{id}",
         updatedWhen=FAKE_CREATE_TIMESTAMP,
         user=test_user,
@@ -359,7 +388,7 @@ def multi_step_operation(
                 status=Status.AwaitingDeployment,
                 message="This resource is waiting to be deployed",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
-                parentResourceId=None
+                parentResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
             ),
             OperationStep(
                 stepId="post-step-1",
@@ -392,6 +421,82 @@ def primary_resource() -> Resource:
             "address_prefix": ["172.0.0.1", "192.168.0.1"],
             "fqdn": ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
             "my_protocol": "MyCoolProtocol",
+        },
+    )
+
+
+@pytest.fixture
+def primary_user_resource() -> Resource:
+    return Resource(
+        id="123",
+        name="test resource",
+        isEnabled=True,
+        templateName="template name",
+        templateVersion="7",
+        resourceType="user-resource",
+        _etag="",
+        properties={
+            "display_name": "test_resource name",
+            "address_prefix": ["172.0.0.1", "192.168.0.1"],
+            "fqdn": ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
+            "my_protocol": "MyCoolProtocol",
+        },
+    )
+
+
+@pytest.fixture
+def primary_workspace_service_resource() -> Resource:
+    return Resource(
+        id="123",
+        name="test resource",
+        isEnabled=True,
+        templateName="template name",
+        templateVersion="7",
+        resourceType="workspace-service",
+        _etag="",
+        properties={
+            "display_name": "test_workspace_service_resource name",
+            "address_prefix": ["172.0.0.1", "192.168.0.1"],
+            "fqdn": ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
+            "my_protocol": "MyCoolProtocol",
+        },
+    )
+
+
+@pytest.fixture
+def resource_ws_parent() -> Resource:
+    return Resource(
+        id="234",
+        name="ws test resource",
+        isEnabled=True,
+        templateName="ws template name",
+        templateVersion="8",
+        resourceType="workspace",
+        _etag="",
+        properties={
+            "display_name": "ImTheParentWS",
+            "address_prefix": ["172.1.1.1", "192.168.1.1"],
+            "fqdn": ["*pypi.org", "security.ubuntu.com"],
+            "my_protocol": "MyWSCoolProtocol",
+        },
+    )
+
+
+@pytest.fixture
+def resource_ws_svc_parent() -> Resource:
+    return Resource(
+        id="345",
+        name="ws svc test resource",
+        isEnabled=True,
+        templateName="svc template name",
+        templateVersion="9",
+        resourceType="workspace-service",
+        _etag="",
+        properties={
+            "display_name": "ImTheParentWSSvc",
+            "address_prefix": ["172.2.2.2", "192.168.2.2"],
+            "fqdn": ["*pypi.org", "files.pythonhosted.org"],
+            "my_protocol": "MyWSSvcCoolProtocol",
         },
     )
 
