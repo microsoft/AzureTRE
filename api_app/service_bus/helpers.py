@@ -40,13 +40,14 @@ async def send_deployment_message(content, correlation_id, session_id, action):
     await _send_message(resource_request_message, config.SERVICE_BUS_RESOURCE_REQUEST_QUEUE)
 
 
-async def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, primary_resource: Resource, resource_to_update_id: str, primary_action: str, user: User) -> Resource:
+async def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, root_resource: Resource, step_origin_resource: Resource, resource_to_update_id: str, primary_action: str, user: User) -> Resource:
     # get the template for the primary resource, to get all the step details for substitutions
-    step_origin_resource = await resource_repo.get_resource_by_id(operation_step.parentResourceId)
+    if step_origin_resource is None:
+        step_origin_resource = await resource_repo.get_resource_by_id(operation_step.parentResourceId)
 
-    # Check if there were sensitive props
-    if primary_resource.id == step_origin_resource.id:
-        step_origin_resource = primary_resource
+    # If we are handling the root resource, we can leverage the given resource which has non redacted properties
+    if root_resource is not None and root_resource.id == step_origin_resource.id:
+        step_origin_resource = root_resource
 
     step_origin_parent_service_name = ""
     step_origin_parent_workspace = None
