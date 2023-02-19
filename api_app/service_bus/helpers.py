@@ -123,7 +123,8 @@ async def try_update_with_retries(num_retries: int, attempt_count: int, resource
                 resource_to_update_id=resource_to_update_id,
                 template_step=template_step,
                 primary_resource=primary_resource,
-                primary_parent_workspace=primary_parent_workspace
+                primary_parent_workspace=primary_parent_workspace,
+                primary_parent_workspace_svc=primary_parent_workspace_svc
             )
         else:
             raise e
