@@ -41,11 +41,12 @@ async def send_deployment_message(content, correlation_id, session_id, action):
 
 
 async def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, root_resource: Resource, step_resource: Resource, resource_to_update_id: str, primary_action: str, user: User) -> Resource:
+    if step_resource is None:
+        step_resource = await resource_repo.get_resource_by_id(operation_step.parentResourceId)
+
     # If we are handling the root resource, we can leverage the given resource which has non redacted properties
     if root_resource is not None and root_resource.id == step_resource.id:
         step_resource = root_resource
-    elif step_resource is None:
-        step_resource = await resource_repo.get_resource_by_id(operation_step.parentResourceId)
 
     step_resource_parent_service_name = ""
     step_resource_parent_workspace = None
