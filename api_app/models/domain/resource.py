@@ -1,6 +1,6 @@
 from enum import Enum
-from typing import Optional, Union
-from pydantic import Field, validator
+from typing import Optional, Union, List
+from pydantic import BaseModel, Field, validator
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.request_action import RequestAction
 from resources import strings
@@ -30,6 +30,11 @@ class ResourceHistoryItem(AzureTREModel):
     templateVersion: Optional[str] = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
 
 
+class AvailableUpgrades(BaseModel):
+    upgrades: List[str]
+    majorUpgrades: List[str]
+
+
 class Resource(AzureTREModel):
     """
     Resource request
@@ -38,6 +43,7 @@ class Resource(AzureTREModel):
     templateName: str = Field(title="Resource template name", description="The resource template (bundle) to deploy")
     templateVersion: str = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
     properties: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
+    availableUpgrades: Optional[AvailableUpgrades] = Field(title="Available template upgrades", description="Versions of the template that are available for upgrade")
     isEnabled: bool = True  # Must be set before a resource can be deleted
     resourceType: ResourceType
     deploymentStatus: Optional[str] = Field(title="Deployment Status", description="Overall deployment status of the resource")

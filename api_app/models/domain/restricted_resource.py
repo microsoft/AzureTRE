@@ -1,6 +1,6 @@
 from typing import Optional
 from pydantic import Field
-from models.domain.resource import ResourceType
+from models.domain.resource import AvailableUpgrades, ResourceType
 from models.domain.azuretremodel import AzureTREModel
 
 
@@ -20,6 +20,7 @@ class RestrictedResource(AzureTREModel):
     templateName: str = Field(title="Resource template name", description="The resource template (bundle) to deploy")
     templateVersion: str = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
     properties: RestrictedProperties = Field(None, title="Restricted Properties", description="Resource properties safe to share with non-admins")
+    availableUpgrades: Optional[AvailableUpgrades] = Field(title="Available template upgrades", description="Versions of the template that are available for upgrade")
     isEnabled: bool = True  # Must be set before a resource can be deleted
     resourceType: ResourceType
     deploymentStatus: Optional[str] = Field(title="Deployment Status", description="Overall deployment status of the resource")

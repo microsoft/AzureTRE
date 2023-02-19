@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+import semantic_version
 from copy import deepcopy
 from typing import Dict, Any, Optional
 
@@ -311,3 +312,17 @@ async def update_user_resource(
         action=RequestAction.Upgrade)
 
     return operation
+
+
+async def enrich_resource_with_available_upgrades(resource: Resource, resource_template_repo: ResourceTemplateRepository):
+    resource_version = semantic_version.Version(resource.templateVersion)
+    all_versions = await resource_template_repo.get_all_template_versions(resource.templateName)
+
+    higher_versions = [version for version in all_versions if semantic_version.Version(version) > resource_version]
+    major_update_versions = [version for version in higher_versions if semantic_version.Version(version).major > resource_version.major]
+    non_major_update_versions = [version for version in higher_versions if version not in major_update_versions]
+
+    resource.availableUpgrades = {
+        'upgrades': sorted(non_major_update_versions, key=semantic_version.Version),
+        'majorUpgrades': sorted(major_update_versions, key=semantic_version.Version)
+    }
