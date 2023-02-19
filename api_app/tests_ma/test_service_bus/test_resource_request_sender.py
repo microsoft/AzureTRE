@@ -7,7 +7,7 @@ from azure.servicebus import ServiceBusMessage
 from mock import AsyncMock, patch
 from models.schemas.resource import ResourcePatch
 from service_bus.helpers import (
-    try_upgrade_with_retries,
+    try_update_with_retries,
     update_resource_for_step,
 )
 from tests_ma.test_api.conftest import create_test_user
@@ -60,6 +60,8 @@ async def test_resource_request_message_generated_correctly(
     operations_repo_mock.create_operation_item.return_value = operation
     resource_repo.get_resource_by_id.return_value = resource
     resource_template_repo.get_template_by_name_and_version.return_value = multi_step_resource_template
+
+    resource_repo.patch_resource.return_value = (resource, multi_step_resource_template)
 
     await send_resource_request_message(
         resource=resource,
@@ -123,7 +125,8 @@ async def test_multi_step_document_sends_first_step(
         resource_repo=resource_repo,
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo_mock,
-        primary_resource=user_resource_multi,
+        step_resource=user_resource_multi,
+        root_resource=None,
         resource_to_update_id=basic_shared_service.id,
         primary_action="install",
         user=test_user,
@@ -167,7 +170,7 @@ async def test_multi_step_document_retries(
 
     num_retries = 5
     try:
-        await try_upgrade_with_retries(
+        await try_update_with_retries(
             num_retries=num_retries,
             attempt_count=0,
             resource_repo=resource_repo,
@@ -176,7 +179,9 @@ async def test_multi_step_document_retries(
             resource_to_update_id="resource-id",
             template_step=multi_step_resource_template.pipeline.install[0],
             resource_history_repo=resource_history_repo,
-            primary_resource=primary_resource
+            primary_resource=primary_resource,
+            primary_parent_workspace=None,
+            primary_parent_workspace_svc=None
         )
     except CosmosAccessConditionFailedError:
         pass
