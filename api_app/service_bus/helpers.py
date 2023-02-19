@@ -41,6 +41,8 @@ async def send_deployment_message(content, correlation_id, session_id, action):
 
 
 async def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, root_resource: Resource, step_resource: Resource, resource_to_update_id: str, primary_action: str, user: User) -> Resource:
+    # step_resource is the resource instance where the step was defined. e.g. 'add firewall rule' step defined in Guacamole template -> the step_resource is the Guacamole ws service.
+    # root_resource is theresource on which the user chose to update, i.e. the top most resource in cascaded action or the same resource in a non-cascaded action.
     if step_resource is None:
         step_resource = await resource_repo.get_resource_by_id(operation_step.parentResourceId)
 
