@@ -153,7 +153,7 @@ class DeploymentStatusUpdater():
                         resource_template_repo=self.resource_template_repo,
                         resource_history_repo=self.resource_history_repo,
                         root_resource=None,
-                        step_origin_resource=parent_resource,
+                        step_resource=parent_resource,
                         resource_to_update_id=next_step.resourceId,
                         primary_action=operation.action,
                         user=operation.user)

@@ -48,7 +48,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo,
         root_resource=resource,
-        step_origin_resource=None,
+        step_resource=None,
         resource_to_update_id=first_step.resourceId,
         primary_action=action,
         user=user)

@@ -125,7 +125,7 @@ async def test_multi_step_document_sends_first_step(
         resource_repo=resource_repo,
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo_mock,
-        step_origin_resource=user_resource_multi,
+        step_resource=user_resource_multi,
         root_resource=None,
         resource_to_update_id=basic_shared_service.id,
         primary_action="install",
