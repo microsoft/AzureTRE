@@ -102,7 +102,8 @@ class DeploymentStatusUpdater():
 
             current_step_index = 0
             for i, step in enumerate(operation.steps):
-                if step.stepId == message.stepId and step.resourceId == str(message.id):
+                # TODO more simple condition
+                if step.id == message.stepId and step.resourceId == str(message.id):
                     step_to_update = step
                     current_step_index = i
                     if i == (len(operation.steps) - 1):
@@ -160,7 +161,7 @@ class DeploymentStatusUpdater():
 
                     # create + send the message
                     logging.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.stepId}, action: {next_step.resourceAction}")
-                    content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.stepId, action=next_step.resourceAction))
+                    content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.id, action=next_step.resourceAction))
                     await send_deployment_message(content=content, correlation_id=operation.id, session_id=resource_to_send.id, action=next_step.resourceAction)
                 except Exception as e:
                     logging.exception("Unable to send update for resource in pipeline step")

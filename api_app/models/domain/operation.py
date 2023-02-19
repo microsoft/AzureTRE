@@ -42,6 +42,7 @@ class OperationStep(AzureTREModel):
     The steps are built up front as the operation is created from the initial user request.
     As each step completes, the next one is processed.
     """
+    id: str = Field(title="Id", description="Unique id identifying the step")
     stepId: str = Field(title="stepId", description="Unique id identifying the step")
     stepTitle: Optional[str] = Field(title="stepTitle", description="Human readable title of what the step is for")
     resourceId: Optional[str] = Field(title="resourceId", description="Id of the resource to update")

@@ -38,6 +38,7 @@ class OperationRepository(BaseRepository):
 
     def create_main_step(self, resource_template: dict, action: str, resource_id: str, status: Status, message: str) -> OperationStep:
         return OperationStep(
+            id=str(uuid.uuid4()),
             stepId="main",
             stepTitle=f"Main step for {resource_id}",
             resourceId=resource_id,
@@ -133,6 +134,7 @@ class OperationRepository(BaseRepository):
                         resource_for_step_status, resource_for_step_message = self.get_initial_status(step["resourceAction"])
 
                         steps.append(OperationStep(
+                            id=str(uuid.uuid4()),
                             stepId=step["stepId"],
                             stepTitle=step["stepTitle"],
                             resourceId=resource_for_step.id,
