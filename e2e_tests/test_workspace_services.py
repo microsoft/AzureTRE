@@ -20,9 +20,9 @@ workspace_services = [
 
 @pytest.mark.extended
 @pytest.mark.timeout(75 * 60)
-async def test_create_guacamole_service_into_base_workspace(verify, setup_test_workspace_and_guacamole_service) -> None:
+async def test_create_guacamole_service_into_base_workspace(setup_test_workspace_and_guacamole_service, verify) -> None:
     _, workspace_id, workspace_service_path, workspace_service_id = setup_test_workspace_and_guacamole_service
-    workspace_owner_token = await get_workspace_owner_token(verify, workspace_id)
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
 
     await ping_guacamole_workspace_service(workspace_id, workspace_service_id, verify)
 
@@ -40,10 +40,10 @@ async def test_create_guacamole_service_into_base_workspace(verify, setup_test_w
 
 @pytest.mark.extended_aad
 @pytest.mark.timeout(75 * 60)
-async def test_create_guacamole_service_into_aad_workspace(verify, setup_test_aad_workspace) -> None:
+async def test_create_guacamole_service_into_aad_workspace(setup_test_aad_workspace, verify) -> None:
     """This test will create a Guacamole service but will create a workspace and automatically register the AAD Application"""
     workspace_path, workspace_id = setup_test_aad_workspace
-    workspace_owner_token = await get_workspace_owner_token(verify, workspace_id)
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
 
     workspace_service_payload = {
         "templateName": strings.GUACAMOLE_SERVICE,
@@ -71,7 +71,7 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, v
 @pytest.mark.parametrize("template_name", workspace_services)
 async def test_install_workspace_service(template_name, verify, setup_test_workspace) -> None:
     workspace_path, workspace_id = setup_test_workspace
-    workspace_owner_token = await get_workspace_owner_token(verify, workspace_id)
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
 
     service_payload = {
         "templateName": template_name,
@@ -83,4 +83,4 @@ async def test_install_workspace_service(template_name, verify, setup_test_works
 
     workspace_service_path, _ = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
 
-    await disable_and_delete_ws_resource(verify, workspace_service_path, workspace_id)
+    await disable_and_delete_ws_resource(workspace_service_path, workspace_id, verify)

@@ -133,9 +133,7 @@ async def test_create_shared_service(template_name, verify) -> None:
         verify=verify,
     )
 
-    await disable_and_delete_tre_resource(
-        shared_service_path, verify
-    )
+    await disable_and_delete_tre_resource(shared_service_path, verify)
 
 
 @pytest.mark.shared_services
@@ -183,13 +181,9 @@ async def test_create_certs_nexus_shared_service(verify) -> None:
         verify=verify,
     )
 
-    await disable_and_delete_tre_resource(
-        nexus_shared_service_path, verify
-    )
+    await disable_and_delete_tre_resource(nexus_shared_service_path, verify)
 
-    await disable_and_delete_tre_resource(
-        certs_shared_service_path, verify
-    )
+    await disable_and_delete_tre_resource(certs_shared_service_path, verify)
 
 
 async def disable_and_delete_shared_service_if_exists(shared_service_name, verify) -> None:
@@ -204,6 +198,4 @@ async def disable_and_delete_shared_service_if_exists(shared_service_name, verif
         LOGGER.info(
             f"Shared service {shared_service_name} already exists (id {id}), deleting it first..."
         )
-        await disable_and_delete_tre_resource(
-            f"/shared-services/{id}", verify
-        )
+        await disable_and_delete_tre_resource(f"/shared-services/{id}", verify)
