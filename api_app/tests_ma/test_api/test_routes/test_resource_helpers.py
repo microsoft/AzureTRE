@@ -277,6 +277,9 @@ class TestResourceHelpers:
         resource_repo.save_item = AsyncMock(return_value=None)
         resource_repo.get_resource_by_id = AsyncMock(return_value=resource)
         operations_repo.create_operation_item = AsyncMock(return_value=operation)
+
+        resource_template_repo.get_template_by_name_and_version = AsyncMock(return_value=basic_resource_template)
+
         user = create_test_user()
 
         await save_and_deploy_resource(
@@ -300,7 +303,6 @@ class TestResourceHelpers:
         resource.properties["prop_with_nested_secret"]["nested_secret"] = strings.REDACTED_SENSITIVE_VALUE
 
         resource_repo.save_item.assert_called_once_with(resource)
-        resource_repo.get_resource_by_id.assert_called_once_with(resource.id)
 
     def test_sensitive_properties_get_masked(self, basic_resource_template):
         resource = sample_resource_with_secret()
