@@ -5,6 +5,7 @@
 FEATURES:
 
 ENHANCEMENTS:
+* Added 'availableUpgrades' field to Resources in GET/GET all Resources endpoints. The field indicates whether there are template versions that a resource can be upgraded to [#3234](https://github.com/microsoft/AzureTRE/pull/3234)
 
 BUG FIXES:
 
