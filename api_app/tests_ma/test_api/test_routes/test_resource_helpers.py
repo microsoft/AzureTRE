@@ -8,7 +8,7 @@ import json
 
 from fastapi import HTTPException, status
 
-from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, mask_sensitive_properties
+from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, mask_sensitive_properties, enrich_resource_with_available_upgrades
 from db.repositories.resources_history import ResourceHistoryRepository
 from tests_ma.test_api.conftest import create_test_user
 from resources import strings
@@ -301,6 +301,26 @@ class TestResourceHelpers:
 
         resource_repo.save_item.assert_called_once_with(resource)
         resource_repo.get_resource_by_id.assert_called_once_with(resource.id)
+
+    @patch("api.routes.workspaces.ResourceTemplateRepository")
+    @pytest.mark.asyncio
+    async def test_enrich_resource_with_available_upgrades_when_there_are_new_upgrades_returns_relevant_upgrades_only(self, resource_template_repo):
+        resource_template_repo.get_all_template_versions = AsyncMock(return_value=['0.1.0', '0.1.2', '1.0.0', '1.0.1'])
+        resource = sample_resource()
+        await enrich_resource_with_available_upgrades(resource, resource_template_repo)
+
+        assert resource.availableUpgrades.nonMajorVersions == ['0.1.2']
+        assert resource.availableUpgrades.majorVersions == ['1.0.0', '1.0.1']
+
+    @patch("api.routes.workspaces.ResourceTemplateRepository")
+    @pytest.mark.asyncio
+    async def test_enrich_resource_with_available_upgrades_when_there_are_no_upgrades_returns_empty_lists(self, resource_template_repo):
+        resource_template_repo.get_all_template_versions = AsyncMock(return_value=['0.1.0'])
+        resource = sample_resource()
+        await enrich_resource_with_available_upgrades(resource, resource_template_repo)
+
+        assert resource.availableUpgrades.nonMajorVersions == []
+        assert resource.availableUpgrades.majorVersions == []
 
     def test_sensitive_properties_get_masked(self, basic_resource_template):
         resource = sample_resource_with_secret()
