@@ -318,9 +318,9 @@ async def enrich_resource_with_available_upgrades(resource: Resource, resource_t
     resource_version = semantic_version.Version(resource.templateVersion)
     all_versions = await resource_template_repo.get_all_template_versions(resource.templateName)
 
-    higher_versions = [version for version in all_versions if semantic_version.Version(version) > resource_version]
-    major_update_versions = [version for version in higher_versions if semantic_version.Version(version).major > resource_version.major]
-    non_major_update_versions = [version for version in higher_versions if version not in major_update_versions]
+    versions_higher_than_current = [version for version in all_versions if semantic_version.Version(version) > resource_version]
+    major_update_versions = [version for version in versions_higher_than_current if semantic_version.Version(version).major > resource_version.major]
+    non_major_update_versions = [version for version in versions_higher_than_current if version not in major_update_versions]
 
     resource.availableUpgrades = AvailableUpgrades(
         nonMajorVersions=sorted(non_major_update_versions, key=semantic_version.Version),
