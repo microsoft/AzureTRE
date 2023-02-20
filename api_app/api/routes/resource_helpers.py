@@ -18,7 +18,7 @@ from pydantic import parse_obj_as
 from db.errors import DuplicateEntity, EntityDoesNotExist
 from db.repositories.operations import OperationRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
-from models.domain.resource import ResourceType, Resource
+from models.domain.resource import AvailableUpgrades, ResourceType, Resource
 from models.domain.operation import Operation
 from resources import strings
 from service_bus.resource_request_sender import (
@@ -322,7 +322,7 @@ async def enrich_resource_with_available_upgrades(resource: Resource, resource_t
     major_update_versions = [version for version in higher_versions if semantic_version.Version(version).major > resource_version.major]
     non_major_update_versions = [version for version in higher_versions if version not in major_update_versions]
 
-    resource.availableUpgrades = {
-        'nonMajorVersions': sorted(non_major_update_versions, key=semantic_version.Version),
-        'majorVersions': sorted(major_update_versions, key=semantic_version.Version)
-    }
+    resource.availableUpgrades = AvailableUpgrades(
+        nonMajorVersions=sorted(non_major_update_versions, key=semantic_version.Version),
+        majorVersions=sorted(major_update_versions, key=semantic_version.Version)
+    )
