@@ -31,8 +31,8 @@ class ResourceHistoryItem(AzureTREModel):
 
 
 class AvailableUpgrades(BaseModel):
-    upgrades: List[str]
-    majorUpgrades: List[str]
+    nonMajorVersions: List[str]
+    majorVersions: List[str]
 
 
 class Resource(AzureTREModel):

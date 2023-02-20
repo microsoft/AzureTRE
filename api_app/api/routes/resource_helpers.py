@@ -323,6 +323,6 @@ async def enrich_resource_with_available_upgrades(resource: Resource, resource_t
     non_major_update_versions = [version for version in higher_versions if version not in major_update_versions]
 
     resource.availableUpgrades = {
-        'upgrades': sorted(non_major_update_versions, key=semantic_version.Version),
-        'majorUpgrades': sorted(major_update_versions, key=semantic_version.Version)
+        'nonMajorVersions': sorted(non_major_update_versions, key=semantic_version.Version),
+        'majorVersions': sorted(major_update_versions, key=semantic_version.Version)
     }
