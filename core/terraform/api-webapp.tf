@@ -131,14 +131,13 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_api" {
   target_resource_id         = azurerm_linux_web_app.api.id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
 
-  dynamic "log" {
-    for_each = data.azurerm_monitor_diagnostic_categories.api.log_category_types
+  dynamic "enabled_log" {
+    for_each = setintersection(data.azurerm_monitor_diagnostic_categories.api.log_category_types, local.api_diagnostic_categories_enabled)
     content {
-      category = log.value
-      enabled  = contains(local.api_diagnostic_categories_enabled, log.value) ? true : false
+      category = enabled_log.value
 
       retention_policy {
-        enabled = contains(local.api_diagnostic_categories_enabled, log.value) ? true : false
+        enabled = true
         days    = 365
       }
     }
@@ -153,4 +152,6 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_api" {
       days    = 365
     }
   }
+
+  lifecycle { ignore_changes = [log_analytics_destination_type] }
 }

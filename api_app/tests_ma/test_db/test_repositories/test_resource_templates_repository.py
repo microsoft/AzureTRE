@@ -4,7 +4,7 @@ from mock import patch
 from models.domain.user_resource_template import UserResourceTemplate
 
 from db.repositories.resource_templates import ResourceTemplateRepository
-from db.errors import EntityDoesNotExist
+from db.errors import EntityDoesNotExist, InvalidInput
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
 
@@ -203,3 +203,44 @@ async def test_create_item_with_pipeline_succeeds(uuid_mock, save_item_mock, res
     )
     save_item_mock.assert_called_once_with(expected_resource_template)
     assert expected_resource_template == returned_template
+
+
+@pytest.mark.parametrize(
+    "pipeline",
+    [
+        {
+            "install": [{"stepId": "1"}, {"stepId": "1"}],
+            "upgrade": [{"stepId": "main"}, {"stepId": "2"}],
+        },
+        {
+            "install": [{"stepId": "main"}, {"stepId": "1"}],
+            "upgrade": [{"stepId": "main"}, {"stepId": "1"}],
+        },
+        {
+            "install": [{"stepId": "main"}, {"stepId": "1"}],
+            "upgrade": [{"stepId": "main"}, {"stepId": "main"}],
+        },
+    ],
+)
+async def test_create_template_with_pipeline_that_has_duplicated_step_id_fails_with_invalid_input_error(resource_template_repo, input_user_resource_template, pipeline):
+    input_user_resource_template.json_schema["pipeline"] = pipeline
+    with pytest.raises(InvalidInput):
+        await resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource)
+
+
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
+async def test_create_template_with_pipeline_without_duplicated_step_id_succeeds(_, resource_template_repo, input_user_resource_template):
+    input_user_resource_template.json_schema["pipeline"] = {
+        "install": [{"stepId": "main"}, {"stepId": "1"}],
+        "upgrade": [{"stepId": "main"}, {"stepId": "2"}],
+    }
+
+    created = await resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource)
+    assert created.pipeline
+
+
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
+async def test_create_template_with_null_pipeline_creates_template_without_pipeline(_, resource_template_repo, input_user_resource_template):
+    input_user_resource_template.json_schema["pipeline"] = None
+    created = await resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource)
+    assert created.pipeline is None

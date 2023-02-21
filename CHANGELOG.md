@@ -1,5 +1,16 @@
 <!-- markdownlint-disable MD041 -->
-## 0.9.0 (Unreleased)
+## 0.10.0 (Unreleased)
+**BREAKING CHANGES & MIGRATIONS**:
+
+FEATURES:
+
+ENHANCEMENTS:
+
+BUG FIXES:
+
+COMPONENTS:
+
+## 0.9.0 (February 9, 2023)
 
 **BREAKING CHANGES & MIGRATIONS**:
 
@@ -17,14 +28,15 @@
       One way to accomplish this is with the Swagger endpoint (/api/docs).
       ![Force-update a service](./docs/assets/firewall-policy-migrate1.png)
 
-      If this endpoint is not on in your deployment - include `enable_swagger` in your `config.yaml` (see the sample file), or temporarly via the API resource on azure (named `api-YOUR_TRE-ID`) -> Configuration -> `ENABLE_SWAGGER` item.
+      If this endpoint is not working in your deployment - include `enable_swagger` in your `config.yaml` (see the sample file), or temporarly activate it via the API resource on azure (named `api-YOUR_TRE-ID`) -> Configuration -> `ENABLE_SWAGGER` item.
       ![Update API setting](./docs/assets/firewall-policy-migrate2.png)
   
   
-  :warning: Any custom rules you have added manually will be **lost** and you'll need to add it back after the upgrade has been completed.
+  :warning: Any custom rules you have added manually will be **lost** and you'll need to add them back after the upgrade has been completed.
 
 FEATURES:
 * Add Azure Databricks as workspace service [#1857](https://github.com/microsoft/AzureTRE/pull/1857)
+* (UI) Added the option to upload/download files to airlock requests via Azure CLI ([#3196](https://github.com/microsoft/AzureTRE/pull/3196))
 
 ENHANCEMENTS:
 * Add support for referencing IP Groups from the Core Resource Group in firewall rules created via the pipeline [#3089](https://github.com/microsoft/AzureTRE/pull/3089)
@@ -32,11 +44,51 @@ ENHANCEMENTS:
 * Update Azure Machine Learning Workspace Service to support "no public IP" compute. This is a full rework so upgrades of existing Azure ML Workspace Service deployments are not supported. Requires `v0.8.0` or later of the TRE project.  [#3052](https://github.com/microsoft/AzureTRE/pull/3052)
 * Move non-core DNS zones out of the network module to reduce dependencies [#3119](https://github.com/microsoft/AzureTRE/pull/3119)
 * Review VMs are being cleaned up when an Airlock request is canceled ([#3130](https://github.com/microsoft/AzureTRE/pull/3130))
+* Sample queries to investigate logs of the core TRE applications ([#3151](https://github.com/microsoft/AzureTRE/pull/3151))
+* Remove support of docker-in-docker for templates/bundles ([#3180](https://github.com/microsoft/AzureTRE/pull/3180))
+* API runs with gunicorn and uvicorn workers (as recommended) [#3178](https://github.com/microsoft/AzureTRE/pull/3178)
+* Upgrade core components and key templates to Terraform AzurmRM [#3185](https://github.com/microsoft/AzureTRE/pull/3185)
 
 BUG FIXES:
 * Reauth CLI if TRE endpoint has changed [#3137](https://github.com/microsoft/AzureTRE/pull/3137)
+* Added Migration for Airlock requests that were created prior to version 0.5.0 ([#3152](https://github.com/microsoft/AzureTRE/pull/3152))
+* Temporarily use the remote bundle for `check-params` target [#3149](https://github.com/microsoft/AzureTRE/pull/3149)
+* Workspace module dependency to resolve _AnotherOperationInProgress_ errors [#3194](https://github.com/microsoft/AzureTRE/pull/3194)
+* Skip Certs shared service E2E on Friday & Saturday due to LetsEncrypt limits [#3203](https://github.com/microsoft/AzureTRE/pull/3203)
+* Create Workspace AppInsights via AzAPI provider due to an issue with AzureRM [#3207](https://github.com/microsoft/AzureTRE/pull/3207)
+* 'Workspace Owner' is now able to access Airlock request's SAS URL even if the request is not in review [#3208](https://github.com/microsoft/AzureTRE/pull/3208)
+* Ignore changes in log_analytics_destination_type to prevent redundant updates [#3217](https://github.com/microsoft/AzureTRE/pull/3217)
+* Fix DNS conflict in airlock-review workspace that could make the entire airlock module inoperable [#3215](https://github.com/microsoft/AzureTRE/pull/3215)
 
 COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.4.5 |
+| core | 0.7.4 |
+| tre-shared-service-admin-vm | 0.3.0 |
+| tre-shared-service-airlock-notifier | 0.4.0 |
+| tre-shared-service-certs | 0.4.0 |
+| tre-shared-service-cyclecloud | 0.4.0 |
+| tre-shared-service-firewall | 1.0.0 |
+| tre-shared-service-gitea | 0.5.0 |
+| tre-shared-service-sonatype-nexus | 2.3.0 |
+| tre-service-azureml | 0.7.26 |
+| tre-user-resource-aml-compute-instance | 0.5.3 |
+| tre-service-databricks | 0.1.72 |
+| tre-workspace-service-gitea | 0.7.0 |
+| tre-service-guacamole | 0.7.1 |
+| tre-service-guacamole-export-reviewvm | 0.1.2 |
+| tre-service-guacamole-import-reviewvm | 0.2.2 |
+| tre-service-guacamole-linuxvm | 0.6.2 |
+| tre-service-guacamole-windowsvm | 0.7.2 |
+| tre-workspace-service-health | 0.1.1 |
+| tre-service-innereye | 0.5.0 |
+| tre-service-mlflow | 0.6.4 |
+| tre-workspace-service-mysql | 0.3.3 |
+| tre-workspace-airlock-import-review | 0.8.1 |
+| tre-workspace-base | 1.1.0 |
+| tre-workspace-unrestricted | 0.8.1 |
 
 ## 0.8.0 (January 15, 2023)
 
@@ -107,8 +159,8 @@ COMPONENTS:
 ## 0.7.0 (November 17, 2022)
 
 **BREAKING CHANGES & MIGRATIONS**:
-* The airlock request object has changed. Make sure you have ran the db migration step after deploying the new API image and UI (which runs automatically in `make all`/`make tre-deploy` but can be manually invoked with `make db-migrate`) so that existing requests in your DB are migrated to the new model.
-* Also the model for creating new airlock requests with the API has changed slightly; this is updated in the UI and CLI but if you have written custom tools ensure you are POSTing to `/requests` with the following model:
+* The airlock request object has changed. Make sure you have ran the DB migration step after deploying the new API image and UI (which runs automatically in `make all`/`make tre-deploy` but can be manually invoked with `make db-migrate`) so that existing requests in your DB are migrated to the new model.
+* Also the model for creating new airlock requests with the API has changed slightly; this is updated in the UI and CLI but if you have written custom tools ensure you POST to `/requests` with the following model:
 ```json
 {
     "type": "'import' or 'export'",
@@ -190,7 +242,7 @@ FEATURES:
 
 ENHANCEMENTS:
 * Add cran support to nexus, open port 80 for the workspace nsg and update the firewall config to allow let's encrypt CRLs ([#2694](https://github.com/microsoft/AzureTRE/pull/2694))
-* Upgrade Github Actions versions ([#2731](https://github.com/microsoft/AzureTRE/pull/2744))
+* Upgrade GitHub Actions versions ([#2731](https://github.com/microsoft/AzureTRE/pull/2744))
 * Install TRE CLI inside the devcontainer image (rather than via a post-create step) ([#2757](https://github.com/microsoft/AzureTRE/pull/2757))
 * Upgrade Terraform to 1.3.2 ([#2758](https://github.com/microsoft/AzureTRE/pull/2758))
 * `tre` CLI: added `raw` output option, improved `airlock-requests` handling, more consistent exit codes on error, added examples to CLI README.md
@@ -265,8 +317,8 @@ COMPONENTS:
 
 **BREAKING CHANGES & MIGRATIONS**:
 
-* Github Actions deployments use a single ACR instead of two. Github secrets might need updating, see PR for details. ([#2654](https://github.com/microsoft/AzureTRE/pull/2654))
-* Align Github Action secret names. Existing Github environments must be updated, see PR for details. ([#2655](https://github.com/microsoft/AzureTRE/pull/2655))
+* GitHub Actions deployments use a single ACR instead of two. GitHub secrets might need updating, see PR for details. ([#2654](https://github.com/microsoft/AzureTRE/pull/2654))
+* Align GitHub Action secret names. Existing GitHub environments must be updated, see PR for details. ([#2655](https://github.com/microsoft/AzureTRE/pull/2655))
 * Add workspace creator as an owner of the workspace enterprise application ([#2627](https://github.com/microsoft/AzureTRE/pull/2627)). **Migration** if the `AUTO_WORKSPACE_APP_REGISTRATION` is set, the `Directory.Read.All` MS Graph API permission permission needs granting to the Application Registration identified by `APPLICATION_ADMIN_CLIENT_ID`.
 * Add support for setting AppService plan SKU in GitHub Actions. Previous environment variable names of `API_APP_SERVICE_PLAN_SKU_SIZE` and `APP_SERVICE_PLAN_SKU` have been renamed to `CORE_APP_SERVICE_PLAN_SKU` and `WORKSPACE_APP_SERVICE_PLAN_SKU` ([#2684](https://github.com/microsoft/AzureTRE/pull/2684))
 * Reworked how status update messages are handled by the API, to enforce ordering and run the queue subscription in a dedicated thread. Since sessions are now enabled for the status update queue, a `tre-deploy` is required, which will re-create the queue. ([#2700](https://github.com/microsoft/AzureTRE/pull/2700))
@@ -308,7 +360,6 @@ COMPONENTS:
 | devops | 0.4.2 |
 | core | 0.4.36 |
 | porter-hello | 0.1.0 |
-| tre-workspace-base-sl-test | 0.3.19 |
 | tre-workspace-base | 0.4.0 |
 | tre-workspace-unrestricted | 0.2.0 |
 | tre-workspace-airlock-import-review | 0.4.0 |
@@ -401,7 +452,7 @@ COMPONENTS:
 
 FEATURES:
 
-* MySql workspace service ([#2476](https://github.com/microsoft/AzureTRE/pull/2476))
+* MySQL workspace service ([#2476](https://github.com/microsoft/AzureTRE/pull/2476))
 
 ENHANCEMENTS:
 

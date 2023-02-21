@@ -1,14 +1,15 @@
-import { DefaultButton, Dialog, DialogFooter, DocumentCard, DocumentCardActivity, DocumentCardDetails, DocumentCardTitle, DocumentCardType, FontIcon, getTheme, IStackItemStyles, IStackStyles, IStackTokens, mergeStyles, MessageBar, MessageBarType, Modal, Panel, PanelType, Persona, PersonaSize, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from "@fluentui/react";
+import { DefaultButton, Dialog, DialogFooter, DocumentCard, DocumentCardActivity, DocumentCardDetails, DocumentCardTitle, DocumentCardType, FontIcon, getTheme, IStackItemStyles, IStackStyles, IStackTokens, mergeStyles, MessageBar, MessageBarType, Modal, Panel, PanelType, Persona, PersonaSize, PrimaryButton, Spinner, SpinnerSize, Stack} from "@fluentui/react";
 import moment from "moment";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { WorkspaceContext } from "../../../contexts/WorkspaceContext";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
-import { AirlockFilesLinkInvalidStatus, AirlockRequest, AirlockRequestAction, AirlockRequestStatus, AirlockReviewDecision } from "../../../models/airlock";
+import { AirlockFilesLinkValidStatus, AirlockRequest, AirlockRequestAction, AirlockRequestStatus, AirlockReviewDecision } from "../../../models/airlock";
 import { ApiEndpoint } from "../../../models/apiEndpoints";
 import { APIError } from "../../../models/exceptions";
 import { destructiveButtonStyles } from "../../../styles";
 import { ExceptionLayout } from "../ExceptionLayout";
+import { AirlockRequestFilesSection } from "./AirlockRequestFilesSection";
 import { AirlockReviewRequest } from "./AirlockReviewRequest";
 
 interface AirlockViewRequestProps {
@@ -19,14 +20,11 @@ interface AirlockViewRequestProps {
 export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps> = (props: AirlockViewRequestProps) => {
   const {requestId} = useParams();
   const [request, setRequest] = useState<AirlockRequest>();
-  const [filesLink, setFilesLink] = useState<string>();
-  const [filesLinkError, setFilesLinkError] = useState(false);
   const [hideSubmitDialog, setHideSubmitDialog] = useState(true);
   const [reviewIsOpen, setReviewIsOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const [hideCancelDialog, setHideCancelDialog] = useState(true);
-  const [apiFilesLinkError, setApiFilesLinkError] = useState({} as APIError);
   const [apiError, setApiError] = useState({} as APIError);
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
@@ -52,24 +50,6 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
     }
     console.log(req);
   }, [apiCall, requestId, props.requests, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI]);
-
-  // Retrieve a link to view/edit the airlock files
-  const generateFilesLink = useCallback(async () => {
-    if (request && request.workspaceId) {
-      try {
-        const linkObject = await apiCall(
-          `${ApiEndpoint.Workspaces}/${request.workspaceId}/${ApiEndpoint.AirlockRequests}/${request.id}/${ApiEndpoint.AirlockLink}`,
-          HttpMethod.Get,
-          workspaceCtx.workspaceApplicationIdURI
-        );
-        setFilesLink(linkObject.containerUrl);
-      } catch (err: any) {
-        err.userMessage = 'Error retrieving storage link';
-        setApiFilesLinkError(err);
-        setFilesLinkError(true);
-      }
-    }
-  }, [apiCall, request, workspaceCtx.workspaceApplicationIdURI]);
 
   const dismissPanel = useCallback(() => navigate('../'), [navigate]);
 
@@ -125,7 +105,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
         {
           request.status === AirlockRequestStatus.Draft && <div style={{marginTop: '10px', marginBottom: '10px'}}>
             <MessageBar>
-              This request is currently in draft. Add a file to the request's storage container using the SAS URL and submit when ready.
+              This request is currently in draft. Add a file to the request's storage container and submit when ready.
             </MessageBar>
           </div>
         }
@@ -241,41 +221,13 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
             </Stack.Item>
           </Stack>
           {
-            !AirlockFilesLinkInvalidStatus.includes(request.status) && <>
+            AirlockFilesLinkValidStatus.includes(request.status) && <>
               <Stack style={{marginTop: '20px'}} styles={underlineStackStyles}>
                 <Stack.Item styles={stackItemStyles}>
                   <b>Files</b>
                 </Stack.Item>
               </Stack>
-              <Stack>
-                <Stack.Item style={{paddingTop: '10px', paddingBottom: '10px'}}>
-                  {
-                    request.status === AirlockRequestStatus.Draft
-                      ? <small>Generate a storage container SAS URL to upload your request file.</small>
-                      : <small>Generate a storage container SAS URL to view the request file.</small>
-                  }
-                  <Stack horizontal styles={{root: {alignItems: 'center', paddingTop: '7px'}}}>
-                    <Stack.Item grow>
-                      <TextField readOnly value={filesLink} defaultValue="Click generate to create a link" />
-                    </Stack.Item>
-                    {
-                      filesLink ? <PrimaryButton
-                        iconProps={{iconName: 'copy'}}
-                        styles={{root: {minWidth: '40px'}}}
-                        onClick={() => {navigator.clipboard.writeText(filesLink)}}
-                      /> : <PrimaryButton onClick={() => {setFilesLinkError(false); generateFilesLink()}}>Generate</PrimaryButton>
-                    }
-                  </Stack>
-                </Stack.Item>
-                {
-                  request.status === AirlockRequestStatus.Draft && <MessageBar messageBarType={MessageBarType.info}>
-                    Please upload a single file. Only single-file imports (including zip files) are supported.
-                  </MessageBar>
-                }
-                {
-                  filesLinkError && <ExceptionLayout e={apiFilesLinkError} />
-                }
-              </Stack>
+              <AirlockRequestFilesSection request={request} workspaceApplicationIdURI={workspaceCtx.workspaceApplicationIdURI}/>
             </>
           }
           {

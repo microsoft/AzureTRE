@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import parse_obj_as
 
 from api.dependencies.database import get_repository
-from db.errors import EntityDoesNotExist, EntityVersionExist
+from db.errors import EntityDoesNotExist, EntityVersionExist, InvalidInput
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
 from models.schemas.resource_template import ResourceTemplateInResponse, ResourceTemplateInformationInList
@@ -37,3 +37,5 @@ async def register_shared_service_template(template_input: SharedServiceTemplate
         return await template_repo.create_and_validate_template(template_input, ResourceType.SharedService)
     except EntityVersionExist:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.SHARED_SERVICE_TEMPLATE_VERSION_EXISTS)
+    except InvalidInput as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))

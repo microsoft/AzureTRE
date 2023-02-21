@@ -69,6 +69,7 @@ module "azure_monitor" {
   tre_id                                   = var.tre_id
   location                                 = var.location
   resource_group_name                      = azurerm_resource_group.ws.name
+  resource_group_id                        = azurerm_resource_group.ws.id
   tre_resource_id                          = var.tre_resource_id
   tre_workspace_tags                       = local.tre_workspace_tags
   workspace_subnet_id                      = module.network.services_subnet_id
@@ -80,5 +81,6 @@ module "azure_monitor" {
   enable_local_debugging                   = var.enable_local_debugging
   depends_on = [
     module.network,
+    module.airlock
   ]
 }

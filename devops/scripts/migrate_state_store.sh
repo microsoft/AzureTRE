@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script migrates the Cosmos database based on any breaking changes that have occurred.
-# Cosmos is behind a private network, so we call the /migrate endpoint of the API
+# Cosmos is behind a private network, so we call the /migrations endpoint of the API
 
 set -o errexit
 set -o pipefail

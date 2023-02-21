@@ -96,13 +96,11 @@ resource "azurerm_monitor_diagnostic_setting" "sb" {
   name                       = "diagnostics-sb-${var.tre_id}"
   target_resource_id         = azurerm_servicebus_namespace.sb.id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
-  # log_analytics_destination_type = "Dedicated"
 
-  dynamic "log" {
-    for_each = toset(["OperationalLogs", "VNetAndIPFilteringLogs", "RuntimeAuditLogs", "ApplicationMetricsLogs"])
+  dynamic "enabled_log" {
+    for_each = ["OperationalLogs", "VNetAndIPFilteringLogs", "RuntimeAuditLogs", "ApplicationMetricsLogs"]
     content {
-      category = log.value
-      enabled  = true
+      category = enabled_log.value
 
       retention_policy {
         enabled = true
@@ -120,4 +118,6 @@ resource "azurerm_monitor_diagnostic_setting" "sb" {
       days    = 365
     }
   }
+
+  lifecycle { ignore_changes = [log_analytics_destination_type] }
 }

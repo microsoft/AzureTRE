@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import parse_obj_as
 
 from api.dependencies.database import get_repository
-from db.errors import EntityVersionExist
+from db.errors import EntityVersionExist, InvalidInput
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
 from models.schemas.resource_template import ResourceTemplateInResponse, ResourceTemplateInformationInList
@@ -34,3 +34,5 @@ async def register_workspace_template(template_input: WorkspaceTemplateInCreate,
         return await template_repo.create_and_validate_template(template_input, ResourceType.Workspace)
     except EntityVersionExist:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_TEMPLATE_VERSION_EXISTS)
+    except InvalidInput as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))

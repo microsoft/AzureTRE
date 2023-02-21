@@ -95,7 +95,7 @@ resource "azurerm_monitor_diagnostic_setting" "airlock_function_app" {
   target_resource_id         = azurerm_linux_function_app.airlock_function_app.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
 
-  log {
+  enabled_log {
     category = "FunctionAppLogs"
 
     retention_policy {
@@ -113,6 +113,8 @@ resource "azurerm_monitor_diagnostic_setting" "airlock_function_app" {
       days    = 365
     }
   }
+
+  lifecycle { ignore_changes = [log_analytics_destination_type] }
 }
 
 resource "azurerm_private_endpoint" "function_storage" {
