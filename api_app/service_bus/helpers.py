@@ -44,7 +44,7 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
     # step_resource is the resource instance where the step was defined. e.g. 'add firewall rule' step defined in Guacamole template -> the step_resource is the Guacamole ws service.
     # root_resource is theresource on which the user chose to update, i.e. the top most resource in cascaded action or the same resource in a non-cascaded action.
     if step_resource is None:
-        step_resource = await resource_repo.get_resource_by_id(operation_step.parentResourceId)
+        step_resource = await resource_repo.get_resource_by_id(operation_step.templateResourceId)
 
     # If we are handling the root resource, we can leverage the given resource which has non redacted properties
     if root_resource is not None and root_resource.id == step_resource.id:
@@ -73,12 +73,12 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
     # get the template step
     template_step = None
     for step in parent_template.pipeline.dict()[primary_action]:
-        if step["stepId"] == operation_step.stepId:
+        if step["stepId"] == operation_step.stepIdFromTemplate:
             template_step = parse_obj_as(PipelineStep, step)
             break
 
     if template_step is None:
-        raise Exception(f"Cannot find step with id of {operation_step.stepId} in template {step_resource.templateName} for action {primary_action}")
+        raise Exception(f"Cannot find step with id of {operation_step.stepIdFromTemplate} in template {step_resource.templateName} for action {primary_action}")
 
     resource_to_send = await try_update_with_retries(
         num_retries=3,

@@ -136,10 +136,12 @@ def sample_resource_operation(resource_id: str, operation_id: str):
         user=create_test_user(),
         steps=[
             OperationStep(
-                stepId="main",
+                id="random-uuid",
+                stepIdFromTemplate="main",
                 resourceId=resource_id,
                 resourceAction="install",
-                updatedWhen=FAKE_UPDATE_TIMESTAMP
+                updatedWhen=FAKE_UPDATE_TIMESTAMP,
+                templateResourceId=resource_id
             )
         ]
     )

@@ -39,13 +39,13 @@ class OperationRepository(BaseRepository):
     def create_main_step(self, resource_template: dict, action: str, resource_id: str, status: Status, message: str) -> OperationStep:
         return OperationStep(
             id=str(uuid.uuid4()),
-            stepId="main",
+            stepIdFromTemplate="main",
             stepTitle=f"Main step for {resource_id}",
             resourceId=resource_id,
             resourceTemplateName=resource_template["name"],
             resourceType=resource_template["resourceType"],
             resourceAction=action,
-            parentResourceId=resource_id,
+            templateResourceId=resource_id,
             status=status,
             message=message,
             updatedWhen=self.get_timestamp())
@@ -135,7 +135,7 @@ class OperationRepository(BaseRepository):
 
                         steps.append(OperationStep(
                             id=str(uuid.uuid4()),
-                            stepId=step["stepId"],
+                            stepIdFromTemplate=step["stepId"],
                             stepTitle=step["stepTitle"],
                             resourceId=resource_for_step.id,
                             resourceTemplateName=resource_for_step.templateName,
@@ -144,7 +144,7 @@ class OperationRepository(BaseRepository):
                             status=resource_for_step_status,
                             message=resource_for_step_message,
                             updatedWhen=self.get_timestamp(),
-                            parentResourceId=resource_id
+                            templateResourceId=resource_id
                         ))
         return steps
 

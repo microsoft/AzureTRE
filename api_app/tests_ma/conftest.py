@@ -367,7 +367,8 @@ def multi_step_operation(
         updatedWhen=FAKE_CREATE_TIMESTAMP,
         steps=[
             OperationStep(
-                stepId="pre-step-1",
+                id="random-uuid-1",
+                stepIdFromTemplate="pre-step-1",
                 stepTitle="Title for pre-step-1",
                 resourceAction="upgrade",
                 resourceTemplateName=basic_shared_service_template.name,
@@ -376,10 +377,11 @@ def multi_step_operation(
                 status=Status.AwaitingUpdate,
                 message="This resource is waiting to be updated",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
-                parentResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+                templateResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
             ),
             OperationStep(
-                stepId="main",
+                id="random-uuid-2",
+                stepIdFromTemplate="main",
                 stepTitle="Main step for 59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
                 resourceAction="install",
                 resourceType=ResourceType.Workspace,
@@ -388,10 +390,11 @@ def multi_step_operation(
                 status=Status.AwaitingDeployment,
                 message="This resource is waiting to be deployed",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
-                parentResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+                templateResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
             ),
             OperationStep(
-                stepId="post-step-1",
+                id="random-uuid-3",
+                stepIdFromTemplate="post-step-1",
                 stepTitle="Title for post-step-1",
                 resourceAction="upgrade",
                 resourceType=basic_shared_service_template.resourceType,
@@ -400,7 +403,7 @@ def multi_step_operation(
                 status=Status.AwaitingUpdate,
                 message="This resource is waiting to be updated",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
-                parentResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+                templateResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
             ),
         ],
     )
