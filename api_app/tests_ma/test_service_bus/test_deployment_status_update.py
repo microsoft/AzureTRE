@@ -97,7 +97,7 @@ def create_sample_operation(resource_id, request_action):
         steps=[
             OperationStep(
                 id="random-uuid",
-                stepIdFromTemplate="main",
+                templateStepId="main",
                 resourceId=resource_id,
                 stepTitle=f"main step for {resource_id}",
                 resourceTemplateName="workspace-base",

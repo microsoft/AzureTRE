@@ -137,7 +137,7 @@ def sample_resource_operation(resource_id: str, operation_id: str):
         steps=[
             OperationStep(
                 id="random-uuid",
-                stepIdFromTemplate="main",
+                templateStepId="main",
                 resourceId=resource_id,
                 resourceAction="install",
                 updatedWhen=FAKE_UPDATE_TIMESTAMP,

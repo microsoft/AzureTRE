@@ -368,7 +368,7 @@ def multi_step_operation(
         steps=[
             OperationStep(
                 id="random-uuid-1",
-                stepIdFromTemplate="pre-step-1",
+                templateStepId="pre-step-1",
                 stepTitle="Title for pre-step-1",
                 resourceAction="upgrade",
                 resourceTemplateName=basic_shared_service_template.name,
@@ -381,7 +381,7 @@ def multi_step_operation(
             ),
             OperationStep(
                 id="random-uuid-2",
-                stepIdFromTemplate="main",
+                templateStepId="main",
                 stepTitle="Main step for 59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
                 resourceAction="install",
                 resourceType=ResourceType.Workspace,
@@ -394,7 +394,7 @@ def multi_step_operation(
             ),
             OperationStep(
                 id="random-uuid-3",
-                stepIdFromTemplate="post-step-1",
+                templateStepId="post-step-1",
                 stepTitle="Title for post-step-1",
                 resourceAction="upgrade",
                 resourceType=basic_shared_service_template.resourceType,

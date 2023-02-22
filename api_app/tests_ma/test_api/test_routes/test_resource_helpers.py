@@ -98,7 +98,7 @@ def sample_resource_operation(resource_id: str, operation_id: str):
         steps=[
             OperationStep(
                 id="random-uuid-1",
-                stepIdFromTemplate="main",
+                templateStepId="main",
                 stepTitle="Main step for resource-id",
                 resourceAction="install",
                 resourceType=ResourceType.Workspace,

@@ -160,7 +160,7 @@ class DeploymentStatusUpdater():
                         user=operation.user)
 
                     # create + send the message
-                    logging.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.stepIdFromTemplate}, action: {next_step.resourceAction}")
+                    logging.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.templateStepId}, action: {next_step.resourceAction}")
                     content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.id, action=next_step.resourceAction))
                     await send_deployment_message(content=content, correlation_id=operation.id, session_id=resource_to_send.id, action=next_step.resourceAction)
                 except Exception as e:
@@ -195,12 +195,12 @@ class DeploymentStatusUpdater():
 
         if step.is_failure():
             operation.status = self.get_failure_status_for_action(operation.action)
-            operation.message = f"Multi step pipeline failed on step {step.stepIdFromTemplate}"
+            operation.message = f"Multi step pipeline failed on step {step.templateStepId}"
 
             # pipeline failed - update the primary resource (from the main step) as failed too
             main_step = None
             for i, step in enumerate(operation.steps):
-                if step.stepIdFromTemplate == "main":
+                if step.templateStepId == "main":
                     main_step = step
                     break
 

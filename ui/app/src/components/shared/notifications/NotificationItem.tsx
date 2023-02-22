@@ -132,7 +132,7 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
                 <Stack horizontal style={{ marginTop: '10px' }}>
                   <Stack.Item grow={5}>
                     {
-                      props.operation.steps && props.operation.steps.length > 0 && !(props.operation.steps.length === 1 && props.operation.steps[0].stepIdFromTemplate === 'main') ?
+                      props.operation.steps && props.operation.steps.length > 0 && !(props.operation.steps.length === 1 && props.operation.steps[0].templateStepId === 'main') ?
                         <FluentLink title={isExpanded ? 'Show less' : 'Show more'} href="#" onClick={() => { setIsExpanded(!isExpanded) }} style={{ position: 'relative', top: '2px' }}>{isExpanded ? <Icon iconName='ChevronUp' aria-label='Expand Steps' /> : <Icon iconName='ChevronDown' aria-label='Collapse Steps' />}</FluentLink>
                         :
                         ' '
@@ -150,7 +150,7 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
                           <li key={i}>
                             <Icon iconName={getIconAndColourForStatus(s.status)[0]} style={{ color: getIconAndColourForStatus(s.status)[1], position: 'relative', top: '2px', marginRight: '10px' }} />
                             {
-                              s.stepIdFromTemplate === "main" ?
+                              s.templateStepId === "main" ?
                                 <>{notification.resource.properties.display_name}: {props.operation.action}</> :
                                 s.stepTitle
                             }

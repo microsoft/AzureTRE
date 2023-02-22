@@ -73,12 +73,12 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
     # get the template step
     template_step = None
     for step in parent_template.pipeline.dict()[primary_action]:
-        if step["stepId"] == operation_step.stepIdFromTemplate:
+        if step["stepId"] == operation_step.templateStepId:
             template_step = parse_obj_as(PipelineStep, step)
             break
 
     if template_step is None:
-        raise Exception(f"Cannot find step with id of {operation_step.stepIdFromTemplate} in template {step_resource.templateName} for action {primary_action}")
+        raise Exception(f"Cannot find step with id of {operation_step.templateStepId} in template {step_resource.templateName} for action {primary_action}")
 
     resource_to_send = await try_update_with_retries(
         num_retries=3,

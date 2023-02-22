@@ -43,7 +43,7 @@ class OperationStep(AzureTREModel):
     As each step completes, the next one is processed.
     """
     id: str = Field(title="Id", description="Unique id identifying the step")
-    stepIdFromTemplate: str = Field(title="stepIdFromTemplate", description="Unique id identifying the step")
+    templateStepId: str = Field(title="templateStepId", description="Unique id identifying the step")
     stepTitle: Optional[str] = Field(title="stepTitle", description="Human readable title of what the step is for")
     resourceId: Optional[str] = Field(title="resourceId", description="Id of the resource to update")
     resourceTemplateName: Optional[str] = Field("", title="resourceTemplateName", description="Name of the template for the resource under change")
