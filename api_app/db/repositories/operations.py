@@ -45,7 +45,7 @@ class OperationRepository(BaseRepository):
             resourceTemplateName=resource_template["name"],
             resourceType=resource_template["resourceType"],
             resourceAction=action,
-            templateResourceId=resource_id,
+            sourceTemplateResourceId=resource_id,
             status=status,
             message=message,
             updatedWhen=self.get_timestamp())
@@ -144,7 +144,7 @@ class OperationRepository(BaseRepository):
                             status=resource_for_step_status,
                             message=resource_for_step_message,
                             updatedWhen=self.get_timestamp(),
-                            templateResourceId=resource_id
+                            sourceTemplateResourceId=resource_id
                         ))
         return steps
 
