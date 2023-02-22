@@ -41,3 +41,12 @@ class ResourceMigration(ResourceRepository):
             num_updated = num_updated + 1
 
         return num_updated
+
+    async def add_unique_identifier_suffix(self) -> int:
+        num_updated = 0
+        for resource in await self.query("SELECT * from c WHERE NOT IS_DEFINED(c.properties.unique_identifier_suffix)"):
+            resource['properties']['unique_identifier_suffix'] = resource['id'][-4:]
+            await self.update_item_dict(resource)
+            num_updated = num_updated + 1
+
+        return num_updated

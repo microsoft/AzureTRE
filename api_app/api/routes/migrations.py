@@ -79,6 +79,10 @@ async def migrate_database(resources_repo=Depends(get_repository(ResourceReposit
         num_updated = await airlock_migration.update_review_decision_values()
         migrations.append(Migration(issueNumber="3152", status=f'Updated {num_updated} airlock requests with new reviewDecision value'))
 
+        logging.info("PR <TODO:ADD> - Migrate reviewDecision of Airlock Reviews")
+        num_updated = await resource_migration.add_unique_identifier_suffix()
+        migrations.append(Migration(issueNumber="<TODO:ADD>", status=f'Added the unique_identifier_suffix field to {num_updated} resources'))
+
         return MigrationOutList(migrations=migrations)
     except Exception as e:
         logging.exception("Failed to migrate database")
