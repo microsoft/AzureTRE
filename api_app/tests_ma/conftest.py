@@ -377,7 +377,7 @@ def multi_step_operation(
                 status=Status.AwaitingUpdate,
                 message="This resource is waiting to be updated",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
-                templateResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+                sourceTemplateResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
             ),
             OperationStep(
                 id="random-uuid-2",
@@ -390,7 +390,7 @@ def multi_step_operation(
                 status=Status.AwaitingDeployment,
                 message="This resource is waiting to be deployed",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
-                templateResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+                sourceTemplateResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
             ),
             OperationStep(
                 id="random-uuid-3",
@@ -403,7 +403,7 @@ def multi_step_operation(
                 status=Status.AwaitingUpdate,
                 message="This resource is waiting to be updated",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
-                templateResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+                sourceTemplateResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
             ),
         ],
     )

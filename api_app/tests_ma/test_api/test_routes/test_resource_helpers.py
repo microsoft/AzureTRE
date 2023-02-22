@@ -105,7 +105,7 @@ def sample_resource_operation(resource_id: str, operation_id: str):
                 resourceTemplateName="template1",
                 resourceId=resource_id,
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
-                templateResourceId=resource_id
+                sourceTemplateResourceId=resource_id
             )
         ]
     )

@@ -147,7 +147,7 @@ class DeploymentStatusUpdater():
                 # catch any errors in updating the resource - maybe Cosmos / schema invalid etc, and report them back to the op
                 try:
                     # parent resource is always retrieved via cosmos, hence it is always with redacted sensitive values
-                    parent_resource = await self.resource_repo.get_resource_by_id(next_step.templateResourceId)
+                    parent_resource = await self.resource_repo.get_resource_by_id(next_step.sourceTemplateResourceId)
                     resource_to_send = await update_resource_for_step(
                         operation_step=next_step,
                         resource_repo=self.resource_repo,

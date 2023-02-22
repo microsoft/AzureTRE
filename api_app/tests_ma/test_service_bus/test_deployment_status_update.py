@@ -104,7 +104,7 @@ def create_sample_operation(resource_id, request_action):
                 resourceType=ResourceType.Workspace,
                 resourceAction=request_action,
                 updatedWhen=FAKE_UPDATE_TIMESTAMP,
-                templateResourceId=resource_id
+                sourceTemplateResourceId=resource_id
             )
         ]
     )

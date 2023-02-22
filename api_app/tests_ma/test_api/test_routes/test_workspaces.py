@@ -141,7 +141,7 @@ def sample_resource_operation(resource_id: str, operation_id: str):
                 resourceId=resource_id,
                 resourceAction="install",
                 updatedWhen=FAKE_UPDATE_TIMESTAMP,
-                templateResourceId=resource_id
+                sourceTemplateResourceId=resource_id
             )
         ]
     )
