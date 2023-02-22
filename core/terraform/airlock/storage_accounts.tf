@@ -21,7 +21,7 @@ resource "azurerm_storage_account" "sa_import_external" {
 }
 
 resource "azurerm_private_endpoint" "stg_import_external_pe" {
-  name                = "stg-ex-import-blob-${var.tre_id}"
+  name                = "pe-stg-import-external-blob-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.airlock_storage_subnet_id
@@ -30,12 +30,12 @@ resource "azurerm_private_endpoint" "stg_import_external_pe" {
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
-    name                 = "private-dns-zone-group-stg-export-app"
+    name                 = "pdzg-stg-import-external-blob-${var.tre_id}"
     private_dns_zone_ids = [var.blob_core_dns_zone_id]
   }
 
   private_service_connection {
-    name                           = "psc-stgeximport-${var.tre_id}"
+    name                           = "psc-stg-import-external-blob-${var.tre_id}"
     private_connection_resource_id = azurerm_storage_account.sa_import_external.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
@@ -65,7 +65,7 @@ resource "azurerm_storage_account" "sa_export_approved" {
 }
 
 resource "azurerm_private_endpoint" "stg_export_approved_pe" {
-  name                = "stg-app-export-blob-${var.tre_id}"
+  name                = "pe-stg-export-approved-blob-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.airlock_storage_subnet_id
@@ -74,12 +74,12 @@ resource "azurerm_private_endpoint" "stg_export_approved_pe" {
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
-    name                 = "private-dns-zone-group-stg-export-app"
+    name                 = "pdzg-stg-export-approved-blob-${var.tre_id}"
     private_dns_zone_ids = [var.blob_core_dns_zone_id]
   }
 
   private_service_connection {
-    name                           = "psc-stgappexport-${var.tre_id}"
+    name                           = "psc-stg-export-approved-blob-${var.tre_id}"
     private_connection_resource_id = azurerm_storage_account.sa_export_approved.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
@@ -112,7 +112,7 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
 }
 
 resource "azurerm_private_endpoint" "stg_import_inprogress_pe" {
-  name                = "stg-ip-import-blob-${var.tre_id}"
+  name                = "pe-stg-import-inprogress-blob-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.airlock_storage_subnet_id
@@ -121,12 +121,12 @@ resource "azurerm_private_endpoint" "stg_import_inprogress_pe" {
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
-    name                 = "private-dns-zone-group-stg-import-ip"
+    name                 = "pdzg-stg-import-inprogress-blob-${var.tre_id}"
     private_dns_zone_ids = [var.blob_core_dns_zone_id]
   }
 
   private_service_connection {
-    name                           = "psc-stgipimport-${var.tre_id}"
+    name                           = "psc-stg-import-inprogress-blob-${var.tre_id}"
     private_connection_resource_id = azurerm_storage_account.sa_import_in_progress.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
@@ -160,18 +160,18 @@ resource "azurerm_storage_account" "sa_import_rejected" {
 }
 
 resource "azurerm_private_endpoint" "stg_import_rejected_pe" {
-  name                = "stg-import-rej-blob-${var.tre_id}"
+  name                = "pe-stg-import-rejected-blob-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.airlock_storage_subnet_id
 
   private_dns_zone_group {
-    name                 = "private-dns-zone-group-stg-import-rej"
+    name                 = "pdzg-stg-import-rejected-blob-${var.tre_id}"
     private_dns_zone_ids = [var.blob_core_dns_zone_id]
   }
 
   private_service_connection {
-    name                           = "psc-stg-import-rej-${var.tre_id}"
+    name                           = "psc-stg-import-rejected-blob-${var.tre_id}"
     private_connection_resource_id = azurerm_storage_account.sa_import_rejected.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
@@ -208,18 +208,18 @@ resource "azurerm_storage_account" "sa_import_blocked" {
 }
 
 resource "azurerm_private_endpoint" "stg_import_blocked_pe" {
-  name                = "stg-import-blocked-blob-${var.tre_id}"
+  name                = "pe-stg-import-blocked-blob-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.airlock_storage_subnet_id
 
   private_dns_zone_group {
-    name                 = "private-dns-zone-group-stg-import-blocked"
+    name                 = "pdzg-stg-import-blocked-blob-${var.tre_id}"
     private_dns_zone_ids = [var.blob_core_dns_zone_id]
   }
 
   private_service_connection {
-    name                           = "psc-stg-import-rej-${var.tre_id}"
+    name                           = "psc-stg-import-blocked-blob-${var.tre_id}"
     private_connection_resource_id = azurerm_storage_account.sa_import_blocked.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]

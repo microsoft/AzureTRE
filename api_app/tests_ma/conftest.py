@@ -1,4 +1,3 @@
-import uuid
 import pytest
 import pytest_asyncio
 from mock import patch
@@ -285,6 +284,33 @@ def multi_step_resource_template(basic_shared_service_template) -> ResourceTempl
                         )
                     ],
                 ),
+            ],
+            uninstall=[
+                PipelineStep(
+                    stepId="pre-step-1",
+                    stepTitle="Title for pre-step-1",
+                    resourceTemplateName=basic_shared_service_template.name,
+                    resourceType=basic_shared_service_template.resourceType,
+                    resourceAction="upgrade",
+                    properties=[
+                        PipelineStepProperty(
+                            name="display_name", type="string", value="new name"
+                        )
+                    ],
+                ),
+                PipelineStep(stepId="main"),
+                PipelineStep(
+                    stepId="post-step-1",
+                    stepTitle="Title for post-step-1",
+                    resourceTemplateName=basic_shared_service_template.name,
+                    resourceType=basic_shared_service_template.resourceType,
+                    resourceAction="upgrade",
+                    properties=[
+                        PipelineStepProperty(
+                            name="display_name", type="string", value="old name"
+                        )
+                    ],
+                ),
             ]
         ),
     )
@@ -297,13 +323,15 @@ def test_user():
 
 @pytest.fixture
 def basic_shared_service(test_user, basic_shared_service_template):
-    id = str(uuid.uuid4())
+    id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     return SharedService(
         id=id,
         templateName=basic_shared_service_template.name,
         templateVersion=basic_shared_service_template.version,
         etag="",
-        properties={},
+        properties={
+            "display_name": "shared_service_resource name",
+        },
         resourcePath=f"/shared-services/{id}",
         updatedWhen=FAKE_CREATE_TIMESTAMP,
         user=test_user,
@@ -331,10 +359,10 @@ def multi_step_operation(
 ):
     return Operation(
         id="op-guid-here",
-        resourceId="resource-id",
+        resourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
         action=RequestAction.Install,
         user=test_user,
-        resourcePath="/workspaces/resource-id",
+        resourcePath="/workspaces/59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
         createdWhen=FAKE_CREATE_TIMESTAMP,
         updatedWhen=FAKE_CREATE_TIMESTAMP,
         steps=[
@@ -348,17 +376,19 @@ def multi_step_operation(
                 status=Status.AwaitingUpdate,
                 message="This resource is waiting to be updated",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
+                parentResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
             ),
             OperationStep(
                 stepId="main",
-                stepTitle="Main step for resource-id",
+                stepTitle="Main step for 59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
                 resourceAction="install",
                 resourceType=ResourceType.Workspace,
                 resourceTemplateName="template1",
-                resourceId="resource-id",
+                resourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
                 status=Status.AwaitingDeployment,
                 message="This resource is waiting to be deployed",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
+                parentResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
             ),
             OperationStep(
                 stepId="post-step-1",
@@ -370,6 +400,7 @@ def multi_step_operation(
                 status=Status.AwaitingUpdate,
                 message="This resource is waiting to be updated",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
+                parentResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
             ),
         ],
     )
@@ -390,6 +421,82 @@ def primary_resource() -> Resource:
             "address_prefix": ["172.0.0.1", "192.168.0.1"],
             "fqdn": ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
             "my_protocol": "MyCoolProtocol",
+        },
+    )
+
+
+@pytest.fixture
+def primary_user_resource() -> Resource:
+    return Resource(
+        id="123",
+        name="test resource",
+        isEnabled=True,
+        templateName="template name",
+        templateVersion="7",
+        resourceType="user-resource",
+        _etag="",
+        properties={
+            "display_name": "test_resource name",
+            "address_prefix": ["172.0.0.1", "192.168.0.1"],
+            "fqdn": ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
+            "my_protocol": "MyCoolProtocol",
+        },
+    )
+
+
+@pytest.fixture
+def primary_workspace_service_resource() -> Resource:
+    return Resource(
+        id="123",
+        name="test resource",
+        isEnabled=True,
+        templateName="template name",
+        templateVersion="7",
+        resourceType="workspace-service",
+        _etag="",
+        properties={
+            "display_name": "test_workspace_service_resource name",
+            "address_prefix": ["172.0.0.1", "192.168.0.1"],
+            "fqdn": ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
+            "my_protocol": "MyCoolProtocol",
+        },
+    )
+
+
+@pytest.fixture
+def resource_ws_parent() -> Resource:
+    return Resource(
+        id="234",
+        name="ws test resource",
+        isEnabled=True,
+        templateName="ws template name",
+        templateVersion="8",
+        resourceType="workspace",
+        _etag="",
+        properties={
+            "display_name": "ImTheParentWS",
+            "address_prefix": ["172.1.1.1", "192.168.1.1"],
+            "fqdn": ["*pypi.org", "security.ubuntu.com"],
+            "my_protocol": "MyWSCoolProtocol",
+        },
+    )
+
+
+@pytest.fixture
+def resource_ws_svc_parent() -> Resource:
+    return Resource(
+        id="345",
+        name="ws svc test resource",
+        isEnabled=True,
+        templateName="svc template name",
+        templateVersion="9",
+        resourceType="workspace-service",
+        _etag="",
+        properties={
+            "display_name": "ImTheParentWSSvc",
+            "address_prefix": ["172.2.2.2", "192.168.2.2"],
+            "fqdn": ["*pypi.org", "files.pythonhosted.org"],
+            "my_protocol": "MyWSSvcCoolProtocol",
         },
     )
 

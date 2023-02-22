@@ -12,6 +12,7 @@ from db.repositories.resources import ResourceRepository
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
+from pydantic import parse_obj_as
 
 from db.errors import DuplicateEntity, EntityDoesNotExist
 from db.repositories.operations import OperationRepository
@@ -24,6 +25,33 @@ from service_bus.resource_request_sender import (
     RequestAction,
 )
 from services.authentication import get_access_service
+
+
+async def delete_validation(resource: Resource, resource_repo: ResourceRepository):
+    dependency_list = await resource_repo.get_resource_dependency_list(resource)
+    for resource in dependency_list:
+        if resource["isEnabled"]:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
+
+    return True
+
+
+async def cascaded_update_resource(resource_patch: ResourcePatch, parent_resource: Resource, user: User, force_version_update: bool, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, resource_repo: ResourceRepository):
+    # Get dependecy list
+    dependency_list = await resource_repo.get_resource_dependency_list(parent_resource)
+    # Patch all resources
+    for child_resource in dependency_list[:-1]:
+        child_etag = child_resource["_etag"]
+        primary_parent_service_name = ""
+        if child_resource["resourceType"] == ResourceType.WorkspaceService:
+            child_resource = parse_obj_as(WorkspaceService, child_resource)
+        elif child_resource["resourceType"] == ResourceType.UserResource:
+            child_resource = parse_obj_as(UserResource, child_resource)
+            primary_parent_workspace_service = await resource_repo.get_resource_by_id(child_resource.parentWorkspaceServiceId)
+            primary_parent_service_name = primary_parent_workspace_service.templateName
+
+        child_resource_template = await resource_template_repo.get_template_by_name_and_version(child_resource.templateName, child_resource.templateVersion, child_resource.resourceType, parent_service_name=primary_parent_service_name)
+        await resource_repo.patch_resource(child_resource, resource_patch, child_resource_template, child_etag, resource_template_repo, resource_history_repo, user, force_version_update)
 
 
 async def save_and_deploy_resource(
@@ -58,7 +86,6 @@ async def save_and_deploy_resource(
             operations_repo=operations_repo,
             resource_repo=resource_repo,
             user=user,
-            resource_template=resource_template,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=RequestAction.Install,
@@ -146,7 +173,7 @@ async def send_uninstall_message(
     resource_template_repo: ResourceTemplateRepository,
     resource_history_repo: ResourceHistoryRepository,
     user: User,
-    resource_template: ResourceTemplate,
+    is_cascade: str = False
 ) -> Operation:
     try:
         operation = await send_resource_request_message(
@@ -156,8 +183,8 @@ async def send_uninstall_message(
             user=user,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
-            resource_template=resource_template,
             action=RequestAction.UnInstall,
+            is_cascade=is_cascade
         )
         return operation
     except Exception:
@@ -206,7 +233,6 @@ async def send_custom_action_message(
             operations_repo=operations_repo,
             resource_repo=resource_repo,
             user=user,
-            resource_template=resource_template,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=custom_action,
@@ -274,13 +300,12 @@ async def update_user_resource(
         operations_repo: OperationRepository,
         resource_history_repo: ResourceHistoryRepository) -> Operation:
 
-    patched_user_resource, resource_template = await user_resource_repo.patch_user_resource(user_resource, resource_patch, etag, resource_template_repo, resource_history_repo, workspace_service.templateName, user, force_version_update)
+    patched_user_resource, _ = await user_resource_repo.patch_user_resource(user_resource, resource_patch, etag, resource_template_repo, resource_history_repo, workspace_service.templateName, user, force_version_update)
     operation = await send_resource_request_message(
         resource=patched_user_resource,
         operations_repo=operations_repo,
         resource_repo=user_resource_repo,
         user=user,
-        resource_template=resource_template,
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo,
         action=RequestAction.Upgrade)

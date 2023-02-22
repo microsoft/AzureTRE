@@ -1,5 +1,16 @@
 <!-- markdownlint-disable MD041 -->
-## 0.9.0 (Unreleased)
+## 0.10.0 (Unreleased)
+**BREAKING CHANGES & MIGRATIONS**:
+
+FEATURES:
+
+ENHANCEMENTS:
+
+BUG FIXES:
+
+COMPONENTS:
+
+## 0.9.0 (February 9, 2023)
 
 **BREAKING CHANGES & MIGRATIONS**:
 
@@ -49,8 +60,38 @@ BUG FIXES:
 * Ignore changes in log_analytics_destination_type to prevent redundant updates [#3217](https://github.com/microsoft/AzureTRE/pull/3217)
 * Add Databricks private authentication shared service for SSO. [#3201](https://github.com/microsoft/AzureTRE/pull/3201)
 * Remove auth private endpoint from databricks workspace service. [3199](https://github.com/microsoft/AzureTRE/pull/3199)
+* Fix DNS conflict in airlock-review workspace that could make the entire airlock module inoperable [#3215](https://github.com/microsoft/AzureTRE/pull/3215)
+
 
 COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.4.5 |
+| core | 0.7.4 |
+| tre-shared-service-admin-vm | 0.3.0 |
+| tre-shared-service-airlock-notifier | 0.4.0 |
+| tre-shared-service-certs | 0.4.0 |
+| tre-shared-service-cyclecloud | 0.4.0 |
+| tre-shared-service-firewall | 1.0.0 |
+| tre-shared-service-gitea | 0.5.0 |
+| tre-shared-service-sonatype-nexus | 2.3.0 |
+| tre-service-azureml | 0.7.26 |
+| tre-user-resource-aml-compute-instance | 0.5.3 |
+| tre-service-databricks | 0.1.72 |
+| tre-workspace-service-gitea | 0.7.0 |
+| tre-service-guacamole | 0.7.1 |
+| tre-service-guacamole-export-reviewvm | 0.1.2 |
+| tre-service-guacamole-import-reviewvm | 0.2.2 |
+| tre-service-guacamole-linuxvm | 0.6.2 |
+| tre-service-guacamole-windowsvm | 0.7.2 |
+| tre-workspace-service-health | 0.1.1 |
+| tre-service-innereye | 0.5.0 |
+| tre-service-mlflow | 0.6.4 |
+| tre-workspace-service-mysql | 0.3.3 |
+| tre-workspace-airlock-import-review | 0.8.1 |
+| tre-workspace-base | 1.1.0 |
+| tre-workspace-unrestricted | 0.8.1 |
 
 ## 0.8.0 (January 15, 2023)
 
