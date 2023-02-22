@@ -51,7 +51,7 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
     unique_suffix = request_properties.unique_identifier_suffix
     request_type = request_properties.type
 
-    logging.info('Processing request with id %s. new status is "%s", type is "%s"', req_id, new_status, request_type)
+    logging.info(f'Processing request with id {req_id}. new status is {new_status}, previous status is {previous_status}, unique_suffix is {unique_suffix} type is {request_type}')
 
     if new_status == constants.STAGE_DRAFT:
         account_name = get_storage_account(status=constants.STAGE_DRAFT, request_type=request_type, unique_identifier_suffix=unique_suffix)
