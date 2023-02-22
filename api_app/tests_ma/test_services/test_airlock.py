@@ -45,6 +45,7 @@ def sample_workspace():
         properties={
             "client_id": "12345",
             "display_name": "my research workspace",
+            "unique_identifier_suffix": WORKSPACE_ID[-6:],
             "description": "for science!"},
         resourcePath="test")
 
@@ -86,7 +87,7 @@ def sample_airlock_user_resource_object():
 def sample_status_changed_event(new_status="draft", previous_status=None):
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=new_status, previous_status=previous_status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:]).__dict__,
+        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=new_status, previous_status=previous_status, type=AirlockRequestType.Import, unique_identifier_suffix=WORKSPACE_ID[-6:]).__dict__,
         subject=f"{AIRLOCK_REQUEST_ID}/statusChanged",
         data_version="2.0"
     )

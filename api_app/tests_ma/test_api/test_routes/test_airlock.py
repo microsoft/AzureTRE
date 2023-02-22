@@ -283,8 +283,7 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
                                                      airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id",
-           return_value=sample_workspace(WORKSPACE_ID))
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(WORKSPACE_ID, {'unique_identifier_suffix': '123456'}))
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Approved))
     @patch("services.airlock.validate_user_allowed_to_access_storage_account")
     @patch("services.airlock.get_airlock_request_container_sas_token", return_value="valid-sas-token")
@@ -429,7 +428,7 @@ class TestAirlockRoutesPermissions():
 
     @pytest.mark.parametrize("role", (role for role in get_required_roles(endpoint=create_draft_request)))
     @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation")
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(WORKSPACE_ID))
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(WORKSPACE_ID, {'unique_identifier_suffix': '123456'}))
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Draft))
     @patch("services.airlock.get_airlock_request_container_sas_token", return_value="valid-sas-token")
     async def test_get_airlock_container_link_is_accessible_to_every_role_that_can_create_request(self, _, __, ___, ____, app, client, log_in_with_user, role):

@@ -26,6 +26,7 @@ def sample_workspace():
         properties={
             "display_name": "research workspace",
             "description": "research workspace",
+            "unique_identifier_suffix": "123456",
             "client_id": "12345"
         },
         resourcePath="test")
