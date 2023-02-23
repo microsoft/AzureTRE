@@ -18,7 +18,7 @@ class RequestProperties(BaseModel):
     new_status: str
     previous_status: Optional[str]
     type: str
-    unique_identifier_suffix: str
+    workspace_unique_identifier_suffix: str
 
 
 class ContainersCopyMetadata:
@@ -48,13 +48,13 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
     new_status = request_properties.new_status
     previous_status = request_properties.previous_status
     req_id = request_properties.request_id
-    unique_suffix = request_properties.unique_identifier_suffix
+    unique_suffix = request_properties.workspace_unique_identifier_suffix
     request_type = request_properties.type
 
     logging.info(f'Processing request with id {req_id}. new status is {new_status}, previous status is {previous_status}, unique_suffix is {unique_suffix} type is {request_type}')
 
     if new_status == constants.STAGE_DRAFT:
-        account_name = get_storage_account(status=constants.STAGE_DRAFT, request_type=request_type, unique_identifier_suffix=unique_suffix)
+        account_name = get_storage_account(status=constants.STAGE_DRAFT, request_type=request_type, workspace_unique_identifier_suffix=unique_suffix)
         blob_operations.create_container(account_name, req_id)
         return
 
@@ -69,7 +69,7 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
 
     if (is_require_data_copy(new_status)):
         logging.info('Request with id %s. requires data copy between storage accounts', req_id)
-        containers_metadata = get_source_dest_for_copy(new_status=new_status, previous_status=previous_status, request_type=request_type, unique_identifier_suffix=unique_suffix)
+        containers_metadata = get_source_dest_for_copy(new_status=new_status, previous_status=previous_status, request_type=request_type, workspace_unique_identifier_suffix=unique_suffix)
         blob_operations.create_container(containers_metadata.dest_account_name, req_id)
         blob_operations.copy_data(containers_metadata.source_account_name,
                                   containers_metadata.dest_account_name, req_id)
@@ -102,7 +102,7 @@ def is_require_data_copy(new_status: str):
     return False
 
 
-def get_source_dest_for_copy(new_status: str, previous_status: str, request_type: str, unique_identifier_suffix: str) -> ContainersCopyMetadata:
+def get_source_dest_for_copy(new_status: str, previous_status: str, request_type: str, workspace_unique_identifier_suffix: str) -> ContainersCopyMetadata:
     # sanity
     if is_require_data_copy(new_status) is False:
         raise Exception("Given new status is not supported")
@@ -114,19 +114,19 @@ def get_source_dest_for_copy(new_status: str, previous_status: str, request_type
         logging.error(msg)
         raise Exception(msg)
 
-    source_account_name = get_storage_account(previous_status, request_type, unique_identifier_suffix)
-    dest_account_name = get_storage_account_destination_for_copy(new_status, request_type, unique_identifier_suffix)
+    source_account_name = get_storage_account(previous_status, request_type, workspace_unique_identifier_suffix)
+    dest_account_name = get_storage_account_destination_for_copy(new_status, request_type, workspace_unique_identifier_suffix)
     return ContainersCopyMetadata(source_account_name, dest_account_name)
 
 
-def get_storage_account(status: str, request_type: str, unique_identifier_suffix: str) -> str:
+def get_storage_account(status: str, request_type: str, workspace_unique_identifier_suffix: str) -> str:
     tre_id = _get_tre_id()
 
     if request_type == constants.IMPORT_TYPE:
         if status == constants.STAGE_DRAFT:
             return constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL + tre_id
         elif status == constants.STAGE_APPROVED:
-            return constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED + unique_identifier_suffix
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED + workspace_unique_identifier_suffix
         elif status == constants.STAGE_REJECTED:
             return constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED + tre_id
         elif status == constants.STAGE_BLOCKED_BY_SCAN:
@@ -136,29 +136,29 @@ def get_storage_account(status: str, request_type: str, unique_identifier_suffix
 
     if request_type == constants.EXPORT_TYPE:
         if status == constants.STAGE_DRAFT:
-            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + unique_identifier_suffix
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + workspace_unique_identifier_suffix
         elif status == constants.STAGE_APPROVED:
             return constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED + tre_id
         elif status == constants.STAGE_REJECTED:
-            return constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED + unique_identifier_suffix
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED + workspace_unique_identifier_suffix
         elif status == constants.STAGE_BLOCKED_BY_SCAN:
-            return constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED + unique_identifier_suffix
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED + workspace_unique_identifier_suffix
         elif status in [constants.STAGE_IN_REVIEW, constants.STAGE_SUBMITTED, constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
-            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + unique_identifier_suffix
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + workspace_unique_identifier_suffix
 
     error_message = f"Missing current storage account definition for status '{status}' and request type '{request_type}'."
     logging.error(error_message)
     raise Exception(error_message)
 
 
-def get_storage_account_destination_for_copy(new_status: str, request_type: str, unique_identifier_suffix: str) -> str:
+def get_storage_account_destination_for_copy(new_status: str, request_type: str, workspace_unique_identifier_suffix: str) -> str:
     tre_id = _get_tre_id()
 
     if request_type == constants.IMPORT_TYPE:
         if new_status == constants.STAGE_SUBMITTED:
             return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
         elif new_status == constants.STAGE_APPROVAL_INPROGRESS:
-            return constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED + unique_identifier_suffix
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED + workspace_unique_identifier_suffix
         elif new_status == constants.STAGE_REJECTION_INPROGRESS:
             return constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED + tre_id
         elif new_status == constants.STAGE_BLOCKING_INPROGRESS:
@@ -166,13 +166,13 @@ def get_storage_account_destination_for_copy(new_status: str, request_type: str,
 
     if request_type == constants.EXPORT_TYPE:
         if new_status == constants.STAGE_SUBMITTED:
-            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + unique_identifier_suffix
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + workspace_unique_identifier_suffix
         elif new_status == constants.STAGE_APPROVAL_INPROGRESS:
             return constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED + tre_id
         elif new_status == constants.STAGE_REJECTION_INPROGRESS:
-            return constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED + unique_identifier_suffix
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED + workspace_unique_identifier_suffix
         elif new_status == constants.STAGE_BLOCKING_INPROGRESS:
-            return constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED + unique_identifier_suffix
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED + workspace_unique_identifier_suffix
 
     error_message = f"Missing copy destination storage account definition for status '{new_status}' and request type '{request_type}'."
     logging.error(error_message)
@@ -218,7 +218,7 @@ def set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_pr
 
 
 def get_request_files(request_properties: RequestProperties):
-    storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.unique_identifier_suffix)
+    storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.workspace_unique_identifier_suffix)
     return blob_operations.get_request_files(account_name=storage_account_name, request_id=request_properties.request_id)
 
 
