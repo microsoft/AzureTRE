@@ -297,7 +297,7 @@
       },
       {
         "stepId": "260421b3-7308-491f-b531-e007cdc0ff46",
-        "stepTitle": "Add network firewall rules for to allow all internt access",
+        "stepTitle": "Add network firewall rules for to allow all internet access",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
         "resourceAction": "upgrade",
@@ -339,8 +339,8 @@
         "stepId": "main"
       },
       {
-        "stepId": "260421b3-7308-491f-b531-e007cdc0ff46",
-        "stepTitle": "Add network firewall rules for to allow all internt access",
+        "stepId": "11c61770-d67c-4a58-b90e-4924ddcc035b",
+        "stepTitle": "Add network firewall rules for to allow all internet access",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
         "resourceAction": "upgrade",
