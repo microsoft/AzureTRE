@@ -58,7 +58,10 @@ BUG FIXES:
 * Create Workspace AppInsights via AzAPI provider due to an issue with AzureRM [#3207](https://github.com/microsoft/AzureTRE/pull/3207)
 * 'Workspace Owner' is now able to access Airlock request's SAS URL even if the request is not in review [#3208](https://github.com/microsoft/AzureTRE/pull/3208)
 * Ignore changes in log_analytics_destination_type to prevent redundant updates [#3217](https://github.com/microsoft/AzureTRE/pull/3217)
+* Add Databricks private authentication shared service for SSO. [#3201](https://github.com/microsoft/AzureTRE/pull/3201)
+* Remove auth private endpoint from databricks workspace service. [3199](https://github.com/microsoft/AzureTRE/pull/3199)
 * Fix DNS conflict in airlock-review workspace that could make the entire airlock module inoperable [#3215](https://github.com/microsoft/AzureTRE/pull/3215)
+
 
 COMPONENTS:
 
