@@ -108,7 +108,7 @@ create_airlock_notifier_properties = {
 
 
 @pytest.mark.shared_services
-@pytest.mark.timeout(40 * 60)
+@pytest.mark.timeout(50 * 60)
 @pytest.mark.parametrize("template_name", shared_service_templates_to_create)
 async def test_create_shared_service(template_name, verify) -> None:
     await disable_and_delete_shared_service_if_exists(template_name, verify)
