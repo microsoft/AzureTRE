@@ -54,7 +54,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
         user=user)
 
     # create + send the message
-    content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=first_step.stepId, action=first_step.resourceAction))
+    content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=first_step.id, action=first_step.resourceAction))
     await send_deployment_message(content=content, correlation_id=operation.id, session_id=first_step.resourceId, action=first_step.resourceAction)
 
     return operation

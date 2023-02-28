@@ -97,13 +97,15 @@ def sample_resource_operation(resource_id: str, operation_id: str):
         user=create_test_user(),
         steps=[
             OperationStep(
-                stepId="main",
+                id="random-uuid-1",
+                templateStepId="main",
                 stepTitle="Main step for resource-id",
                 resourceAction="install",
                 resourceType=ResourceType.Workspace,
                 resourceTemplateName="template1",
                 resourceId=resource_id,
-                updatedWhen=FAKE_CREATE_TIMESTAMP
+                updatedWhen=FAKE_CREATE_TIMESTAMP,
+                sourceTemplateResourceId=resource_id
             )
         ]
     )
@@ -270,7 +272,7 @@ class TestResourceHelpers:
     @pytest.mark.asyncio
     async def test_save_and_deploy_masks_secrets(self, send_deployment_message_mock, resource_template_repo, resource_repo, operations_repo, basic_resource_template, resource_history_repo):
         resource = sample_resource_with_secret()
-        step_id = "main"
+        step_id = "random-uuid-1"
         operation_id = str(uuid.uuid4())
         operation = sample_resource_operation(resource_id=resource.id, operation_id=operation_id)
 
