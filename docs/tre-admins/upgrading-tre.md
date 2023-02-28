@@ -21,7 +21,7 @@ git pull upstream main --allow-unrelated-histories
 ```
 This will pull the latest version of AzureTRE to your copy of the repository. You may need to resovle merge conflicts if you have made edits.
 
-Once the code is merged follow same process used to initally deploy the TRE to upgrade the TRE. This might mean running a command such as `make all`, or running your CI/CD pipeline(s). 
+Once the code is merged follow same process used to initally deploy the TRE to upgrade the TRE. This might mean running a command such as `make all`, or running your CI/CD pipeline(s).
 
 > If running commands manually, please ensure that you build and push the container images. Running `make tre-deploy` alone will update the infrastructure but not the container images. `make all` runs all the required commands.
 
