@@ -1861,6 +1861,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#deploying-a-specific-version-of-azure-tre" class="md-nav__link">
+    Deploying a specific version of Azure TRE
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2478,6 +2485,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#deploying-a-specific-version-of-azure-tre" class="md-nav__link">
+    Deploying a specific version of Azure TRE
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2500,15 +2514,28 @@
 <p>A symlink is then created making it available to reference in the directory itself (it is available only for reference, any changes to it are gitignored).</p>
 <h2 id="how-to-upgrade-azuretre-version">How to upgrade AzureTRE version</h2>
 <blockquote>
-<p>Please check the release note before upgrading.</p>
+<p>Please check the release notes before upgrading.</p>
 </blockquote>
-<p>To upgrade AzureTRE version inside <a href="https://github.com/microsoft/AzureTRE-Deployment">AzureTRE deployment repository</a>, you need to git pull the latest version.</p>
-<p>Use the following git command in your own repo that originated from the <code>AzureTRE-Deployment</code> template:
+<ul>
+<li>If using the <a href="https://github.com/microsoft/AzureTRE-Deployment">AzureTRE deployment repository</a> directly (not one created using a Template), you need to git pull the latest version.</li>
+</ul>
+<ul>
+<li>If using a repository created from the <code>AzureTRE-Deployment</code> template then run following git command in your own repo:
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>upstream<span class="w"> </span>https://github.com/microsoft/AzureTRE-Deployment
 git<span class="w"> </span>pull<span class="w"> </span>upstream<span class="w"> </span>main<span class="w"> </span>--allow-unrelated-histories
 </code></pre></div>
-This will pull the latest version of AzureTRE.
-Now rebuild your container.</p>
+This will pull the latest version of AzureTRE to your copy of the repository. You may need to resovle merge conflicts if you have made edits.</li>
+</ul>
+<p>Once the code is merged follow same process used to initally deploy the TRE to upgrade the TRE. This might mean running a command such as <code>make all</code>, or running your CI/CD pipeline(s).</p>
+<blockquote>
+<p>If running commands manually, please ensure that you build and push the container images. Running <code>make tre-deploy</code> alone will update the infrastructure but not the container images. <code>make all</code> runs all the required commands.</p>
+</blockquote>
+<h2 id="deploying-a-specific-version-of-azure-tre">Deploying a specific version of Azure TRE</h2>
+<p>If you wish to upgrade or deploy a specific version, or unreleased version of Azure TRE and are using the <a href="https://github.com/microsoft/AzureTRE-Deployment">AzureTRE deployment repository</a> you can change the value of <code>OSS_VERSION</code> in <code>.devcontainer/devcontainer.json</code>, for example:</p>
+<ul>
+<li><code>"OSS_VERSION": "v0.9.0"</code></li>
+<li><code>"OSS_VERSION": "main"</code></li>
+</ul>
 
 
 
