@@ -2537,10 +2537,12 @@
 <h2 id="logs">Logs</h2>
 <p>All logs from the resource processor are transferred to the App Insights instance, so it is not usually necessary to follow the progress by logging into the instance.</p>
 <p>Logging into the instance and starting a container manually however, is helpful in live debugging.
-When doing so, you can use the following aliases to monitor progress:
-* rpstatus - a split screen with <code>docker ps</code> to show what containers are running (a bundle action run in its own container), the Resource Processor logs, and a <em>free</em> section for you to type any other command you wish (see below).
-* dlf - runs <code>docker logs --since 1m --follow</code>, you should use with the name/id of the container you want to view, e.g. <code>dlf my_container</code>
-* dlf1 - same as <code>dlf</code> but will auto select the last container in the <code>docker ps</code> list (usually the last one started).</p>
+When doing so, you can use the following aliases to monitor progress:</p>
+<ul>
+<li><strong>rpstatus</strong> - a split screen with <code>docker ps</code> to show what containers are running (a bundle action run in its own container), the Resource Processor logs, and a <em>free</em> section for you to type any other command you wish (see below).</li>
+<li><strong>dlf</strong> - runs <code>docker logs --since 1m --follow</code>, you should use with the name/id of the container you want to view, e.g. <code>dlf my_container</code></li>
+<li><strong>dlf1</strong> - same as <code>dlf</code> but will auto select the last container in the <code>docker ps</code> list (usually the last one started).</li>
+</ul>
 <h2 id="updating-the-running-container">Updating the running container</h2>
 <p>If you start a container manually you will probably want to install software, for example, an editor. However, the firewall blocks all ingress traffic, so you cannot run <code>sudo apt update</code>. You need to add an override rule in the firewall to allow the traffic.</p>
 <div class="admonition caution">
