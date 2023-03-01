@@ -9,7 +9,7 @@ azure-mgmt-costmanagement==3.0.0
 azure-storage-blob==12.14.1
 azure-servicebus==7.8.1
 azure-eventgrid==4.9.1
-fastapi[all]==0.89.1
+fastapi[all]==0.92.0
 fastapi-utils==0.2.1
 gunicorn==20.1.0
 jsonschema[format_nongpl]==4.17.1
