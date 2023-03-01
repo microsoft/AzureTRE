@@ -1,6 +1,6 @@
 # Maintainers
 
-This document is targetted at maintainers of the AzureTRE project.
+This document is targeted at maintainers of the AzureTRE project.
 For information on developing and contributing to AzureTRE, see the [TRE Developers docs](https://microsoft.github.io/AzureTRE/tre-developers/)
 
 ## PR Comment bot commands
