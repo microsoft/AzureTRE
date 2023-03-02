@@ -4,10 +4,10 @@ import json
 import logging
 import msal
 import os
+import asyncio
 
 from pathlib import Path
-from httpx import Client
-
+from azure.identity.aio import ClientSecretCredential
 from tre.api_client import ApiClient
 
 from typing import List
@@ -253,30 +253,19 @@ def _get_auth_token_client_credentials(
     api_scope: str,
     verify: bool
 ):
-    with Client(verify=verify) as client:
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        # Use Client Credentials flow
-        payload = f"grant_type=client_credentials&client_id={client_id}&client_secret={client_secret}&scope={api_scope}/.default"
-        url = f"https://login.microsoftonline.com/{aad_tenant_id}/oauth2/v2.0/token"
+    try:
+        event_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(event_loop)
 
-        log.debug("POSTing to token endpoint")
-        response = client.post(url, headers=headers, content=payload)
-        try:
-            if response.status_code == 200:
-                log.debug("Parsing response")
-                response_json = response.json()
-                if "access_token" in response_json:
-                    token = response_json["access_token"]
-                    return token
-                else:
-                    raise click.ClickException(f"Failed to get access_token: ${response.text}")
-            msg = f"Sign-in failed: {response.status_code}: {response.text}"
-            log.error(msg)
-            raise RuntimeError(msg)
-        except json.JSONDecodeError:
-            log.debug(f"Failed to parse response as JSON: {response.content}")
+        credential = ClientSecretCredential(aad_tenant_id, client_id, client_secret, connection_verify=verify)
+        token = event_loop.run_until_complete(credential.get_token(f'{api_scope}/.default'))
+        event_loop.run_until_complete(credential.close())
 
-    raise RuntimeError("Failed to get auth token")
+        event_loop.close()
+        return token.token
+    except Exception as ex:
+        log.error(f"Failed to authenticate: {ex}")
+        raise RuntimeError("Failed to get auth token")
 
 
 login.add_command(login_client_credentials)

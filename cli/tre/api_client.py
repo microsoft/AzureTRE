@@ -4,10 +4,12 @@ import click
 import json
 import msal
 import os
+import asyncio
 
 from httpx import Client, Response
 from logging import Logger
 from pathlib import Path
+from azure.identity.aio import ClientSecretCredential
 
 
 class ApiException(click.ClickException):
@@ -138,31 +140,19 @@ class ClientCredentialsApiClient(ApiClient):
         self._scope = scope
 
     def get_auth_token(self, log, scope):
-        with Client() as client:
-            headers = {'Content-Type': "application/x-www-form-urlencoded"}
-            # Use Client Credentials flow
-            payload = f"grant_type=client_credentials&client_id={self._client_id}&client_secret={self._client_secret}&scope={scope or self._scope}/.default"
-            url = f"https://login.microsoftonline.com/{self._aad_tenant_id}/oauth2/v2.0/token"
+        try:
+            event_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(event_loop)
 
-            log.debug('POSTing to token endpoint')
-            response = client.post(url, headers=headers, content=payload)
-            try:
-                if response.status_code == 200:
-                    log.debug('Parsing response')
-                    response_json = response.json()
-                    if "access_token" in response_json:
-                        token = response_json["access_token"]
-                        return token
-                    else:
-                        raise click.ClickException(f"Failed to get access_token: ${response.text}")
-                msg = f"Sign-in failed: {response.status_code}: {response.text}"
-                log.error(msg)
-                raise RuntimeError(msg)
-            except json.JSONDecodeError:
-                log.debug(
-                    f'Failed to parse response as JSON: {response.content}')
+            credential = ClientSecretCredential(self._aad_tenant_id, self._client_id, self._client_secret)
+            token = event_loop.run_until_complete(credential.get_token(f'{scope or self._scope}/.default'))
+            event_loop.run_until_complete(credential.close())
 
-        raise RuntimeError("Failed to get auth token")
+            event_loop.close()
+            return token.token
+        except Exception as ex:
+            log.error(f"Failed to authenticate: {ex}")
+            raise RuntimeError("Failed to get auth token")
 
 
 class DeviceCodeApiClient(ApiClient):
