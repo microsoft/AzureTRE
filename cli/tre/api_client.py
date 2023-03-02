@@ -4,13 +4,12 @@ import click
 import json
 import msal
 import os
-import asyncio
 
 from httpx import Client, Response
 from logging import Logger
 from pathlib import Path
-from azure.identity.aio import ClientSecretCredential
-from msal.authority import AuthorityBuilder, AZURE_PUBLIC
+
+from tre.authentication import get_auth_token_client_credentials, get_public_client_application
 
 
 class ApiException(click.ClickException):
@@ -141,19 +140,7 @@ class ClientCredentialsApiClient(ApiClient):
         self._scope = scope
 
     def get_auth_token(self, log, scope):
-        try:
-            event_loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(event_loop)
-
-            credential = ClientSecretCredential(self._aad_tenant_id, self._client_id, self._client_secret)
-            token = event_loop.run_until_complete(credential.get_token(f'{scope or self._scope}/.default'))
-            event_loop.run_until_complete(credential.close())
-
-            event_loop.close()
-            return token.token
-        except Exception as ex:
-            log.error(f"Failed to authenticate: {ex}")
-            raise RuntimeError("Failed to get auth token")
+        return get_auth_token_client_credentials(log, self._client_id, self._client_secret, self._aad_tenant_id, scope or self._scope, self.verify)
 
 
 class DeviceCodeApiClient(ApiClient):
@@ -178,10 +165,7 @@ class DeviceCodeApiClient(ApiClient):
         if os.path.exists(self._token_cache_file):
             cache.deserialize(open(self._token_cache_file, "r").read())
 
-        app = msal.PublicClientApplication(
-            client_id=self._client_id,
-            authority=AuthorityBuilder(AZURE_PUBLIC, self._aad_tenant_id),
-            token_cache=cache)
+        app = get_public_client_application(self._client_id, self._aad_tenant_id, cache)
 
         accounts = app.get_accounts()
         if accounts:

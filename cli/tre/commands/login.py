@@ -4,15 +4,12 @@ import json
 import logging
 import msal
 import os
-import asyncio
 
 from pathlib import Path
-from azure.identity.aio import ClientSecretCredential
-
-from msal.authority import AuthorityBuilder, AZURE_PUBLIC
 from tre.api_client import ApiClient
-
 from typing import List
+
+from tre.authentication import get_auth_token_client_credentials, get_public_client_application
 
 
 def all_or_none(values: "list(bool)") -> bool:
@@ -95,10 +92,7 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
     if os.path.exists(token_cache_file):
         cache.deserialize(open(token_cache_file, "r").read())
 
-    app = msal.PublicClientApplication(
-        client_id=client_id,
-        authority=AuthorityBuilder(AZURE_PUBLIC, aad_tenant_id),
-        token_cache=cache)
+    app = get_public_client_application(client_id, aad_tenant_id, cache)
 
     click.echo(f'api_scope: {api_scope}')
     flow = app.initiate_device_flow(scopes=[api_scope])
@@ -216,7 +210,7 @@ def login_client_credentials(
     # Test the auth succeeds
     try:
         log.info("Attempting sign-in...")
-        _get_auth_token_client_credentials(
+        get_auth_token_client_credentials(
             log, client_id, client_secret, aad_tenant_id, api_scope, verify
         )
         log.info("Sign-in successful")
@@ -245,29 +239,6 @@ def login_client_credentials(
     )
 
     click.echo("Login details saved\n")
-
-
-def _get_auth_token_client_credentials(
-    log: logging.Logger,
-    client_id: str,
-    client_secret: str,
-    aad_tenant_id: str,
-    api_scope: str,
-    verify: bool
-):
-    try:
-        event_loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(event_loop)
-
-        credential = ClientSecretCredential(aad_tenant_id, client_id, client_secret, connection_verify=verify)
-        token = event_loop.run_until_complete(credential.get_token(f'{api_scope}/.default'))
-        event_loop.run_until_complete(credential.close())
-
-        event_loop.close()
-        return token.token
-    except Exception as ex:
-        log.error(f"Failed to authenticate: {ex}")
-        raise RuntimeError("Failed to get auth token")
 
 
 login.add_command(login_client_credentials)
