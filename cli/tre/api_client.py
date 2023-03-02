@@ -10,6 +10,7 @@ from httpx import Client, Response
 from logging import Logger
 from pathlib import Path
 from azure.identity.aio import ClientSecretCredential
+from msal.authority import AuthorityBuilder, AZURE_PUBLIC
 
 
 class ApiException(click.ClickException):
@@ -179,7 +180,7 @@ class DeviceCodeApiClient(ApiClient):
 
         app = msal.PublicClientApplication(
             client_id=self._client_id,
-            authority=f"https://login.microsoftonline.com/{self._aad_tenant_id}",
+            authority=AuthorityBuilder(AZURE_PUBLIC, self._aad_tenant_id),
             token_cache=cache)
 
         accounts = app.get_accounts()

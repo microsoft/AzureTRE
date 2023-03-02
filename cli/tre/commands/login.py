@@ -8,6 +8,8 @@ import asyncio
 
 from pathlib import Path
 from azure.identity.aio import ClientSecretCredential
+
+from msal.authority import AuthorityBuilder, AZURE_PUBLIC
 from tre.api_client import ApiClient
 
 from typing import List
@@ -95,7 +97,7 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
 
     app = msal.PublicClientApplication(
         client_id=client_id,
-        authority=f"https://login.microsoftonline.com/{aad_tenant_id}",
+        authority=AuthorityBuilder(AZURE_PUBLIC, aad_tenant_id),
         token_cache=cache)
 
     click.echo(f'api_scope: {api_scope}')
