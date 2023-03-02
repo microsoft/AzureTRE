@@ -3,7 +3,7 @@
 from setuptools import find_packages
 from setuptools import setup
 
-PROJECT = 'tre'
+PROJECT = 'azure-tre-cli'
 VERSION = '0.1.2'
 
 try:
