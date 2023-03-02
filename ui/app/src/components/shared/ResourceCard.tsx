@@ -23,6 +23,7 @@ interface ResourceCardProps {
 
 export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: ResourceCardProps) => {
   const [loading] = useState(false);
+  const [showCopyUrl, setShowCopyUrl] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const workspaceCtx = useContext(WorkspaceContext);
   const latestUpdate = useComponentManager(
