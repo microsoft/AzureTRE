@@ -30,7 +30,7 @@ Examples:
     3. $0 --name 'TRE' --tre-url https://mytre.region.cloudapp.azure.com --admin-consent --automation-account
 
 USAGE
-    exit 1
+    exit 2
 }
 
 if ! command -v az &> /dev/null; then
@@ -85,7 +85,6 @@ while [[ $# -gt 0 ]]; do
         *)
             echo "Invalid option: $1."
             show_usage
-            exit 2
         ;;
     esac
 done

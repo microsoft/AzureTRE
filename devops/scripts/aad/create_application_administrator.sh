@@ -23,7 +23,7 @@ Options:
     -r,--reset-password         Optional, switch to automatically reset the password. Default 0
 
 USAGE
-    exit 1
+    exit 2
 }
 
 if ! command -v az &> /dev/null; then
@@ -64,7 +64,6 @@ while [[ $# -gt 0 ]]; do
         *)
             echo "Invalid option: $1."
             show_usage
-            exit 2
         ;;
     esac
 done
