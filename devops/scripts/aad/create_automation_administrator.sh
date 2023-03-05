@@ -19,7 +19,7 @@ Options:
     -r,--reset-password         Optional, switch to automatically reset the password. Default 0
 
 USAGE
-    exit 1
+    exit 2
 }
 
 if ! command -v az &> /dev/null; then
@@ -32,7 +32,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 declare resetPassword=0
 declare currentUserId=""
-declare msGraphUri="https://graph.microsoft.com/v1.0"
+declare msGraphUri=""
 declare appName=""
 
 # Initialize parameters specified from command line
@@ -49,7 +49,6 @@ while [[ $# -gt 0 ]]; do
         *)
             echo "Invalid option: $1."
             show_usage
-            exit 2
         ;;
     esac
 done
@@ -68,6 +67,7 @@ if [[ -z "$appName" ]]; then
 fi
 appName="$appName Automation Admin"
 currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-errors)
+msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
 echo -e "\e[96mCreating the Automation Admin in the \"${tenant}\" Azure AD tenant.\e[0m"
