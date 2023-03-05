@@ -28,7 +28,7 @@ name = "aad_auth"
 plugin = "azure.keyvault"
 
 [secrets.config]
-vault = "${KEY_VAULT_NAME}"
+vault-url = "${KEY_VAULT_URL}"
 EOF
 
 # TODO: Remove porter v0 https://github.com/microsoft/AzureTRE/issues/2990
