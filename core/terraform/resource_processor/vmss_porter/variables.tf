@@ -12,6 +12,7 @@ variable "mgmt_storage_account_name" {}
 variable "mgmt_resource_group_name" {}
 variable "terraform_state_container_name" {}
 variable "app_insights_connection_string" {}
+variable "key_vault_name" {}
 variable "key_vault_url" {}
 variable "key_vault_id" {}
 variable "resource_processor_number_processes_per_instance" {}
