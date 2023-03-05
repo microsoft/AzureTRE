@@ -12,4 +12,4 @@ secrets:
   - name: mysecrets
     plugin: azure.keyvault
     config:
-      vault: ${env.KEY_VAULT_NAME}
+      vault-url: https://${env.KEY_VAULT_NAME}.vault.azure.net
