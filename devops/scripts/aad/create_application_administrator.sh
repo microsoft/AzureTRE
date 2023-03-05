@@ -38,7 +38,7 @@ declare grantAdminConsent=0
 declare resetPassword=0
 declare currentUserId=""
 declare spId=""
-declare msGraphUri="https://graph.microsoft.com/v1.0"
+declare msGraphUri=""
 declare appName=""
 declare applicationPermission="Application.ReadWrite.OwnedBy"
 
@@ -83,6 +83,7 @@ if [[ -z "$appName" ]]; then
 fi
 appName="$appName Application Admin"
 currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-errors)
+msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
 echo -e "\e[96mCreating the Application Admin in the \"${tenant}\" Azure AD tenant.\e[0m"

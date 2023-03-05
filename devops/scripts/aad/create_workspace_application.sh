@@ -46,7 +46,7 @@ declare spPassword=""
 declare grantAdminConsent=0
 declare currentUserId=""
 declare uxClientId=""
-declare msGraphUri="https://graph.microsoft.com/v1.0"
+declare msGraphUri=""
 declare appName=""
 declare automationClientId=""
 declare applicationAdminClientId=""
@@ -101,6 +101,7 @@ if [[ -z "$applicationAdminClientId" ]]; then
 fi
 applicationAdminObjectId=$(az ad sp show --id "${applicationAdminClientId}" --query id -o tsv --only-show-errors)
 currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-errors)
+msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
 echo -e "\e[96mCreating a Workspace Application in the \"${tenant}\" Azure AD tenant.\e[0m"
