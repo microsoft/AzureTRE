@@ -51,6 +51,7 @@ write_files:
       NUMBER_PROCESSES=${resource_processor_number_processes_per_instance}
       KEY_VAULT_NAME=${key_vault_name}
       KEY_VAULT_URL=${key_vault_url}
+      ARM_ENVIRONMENT=${arm_environment}
       ${rp_bundle_values}
   - path: /etc/cron.hourly/docker-prune
     # An hourly cron job to have docker free disk space. Running this frquently
