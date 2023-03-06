@@ -37,7 +37,7 @@ def get_full_endpoint(endpoint: str) -> str:
     if (config.TRE_URL != ""):
         return f"{config.TRE_URL}{endpoint}"
     else:
-        return f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}"
+        return f"https://{config.FQDN}{endpoint}"
 
 
 @asynccontextmanager
