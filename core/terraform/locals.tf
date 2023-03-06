@@ -28,7 +28,6 @@ locals {
     "privatelink.cert.api.azureml.ms",
     "privatelink.notebooks.azure.net",
     "privatelink.postgres.database.azure.com",
-    "nexus-${module.appgateway.app_gateway_fqdn}",
     "privatelink.mysql.database.azure.com",
     "privatelink.azuredatabricks.net"
   ])

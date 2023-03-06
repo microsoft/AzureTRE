@@ -224,4 +224,11 @@ resource "azurerm_monitor_diagnostic_setting" "agw" {
   lifecycle { ignore_changes = [log_analytics_destination_type] }
 }
 
+# Once the deployment of the app gateway is complete, we can proceed to include the required DNS zone for Nexus, which is dependent on the FQDN of the app gateway.
+resource "azurerm_private_dns_zone" "non_core" {
+  name                = "nexus-${azurerm_public_ip.appgwpip.fqdn}"
+  resource_group_name = var.resource_group_name
+  tags                = local.tre_core_tags
 
+  lifecycle { ignore_changes = [tags] }
+}
