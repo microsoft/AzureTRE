@@ -50,7 +50,7 @@ resource "azurerm_key_vault_certificate" "tlscert" {
       subject = "CN=${azurerm_public_ip.appgwpip.fqdn}"
 
       subject_alternative_names {
-        dns_names = ["${azurerm_public_ip.appgwpip.fqdn}"]
+        dns_names = [azurerm_public_ip.appgwpip.fqdn]
       }
 
       validity_in_months = 12
