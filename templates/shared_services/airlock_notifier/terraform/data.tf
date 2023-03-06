@@ -39,3 +39,8 @@ data "azurerm_subnet" "airlock_notification" {
   virtual_network_name = local.core_vnet
   resource_group_name  = local.core_resource_group_name
 }
+
+data "azurerm_public_ip" "app_gateway_ip" {
+  name                = "pip-agw-${var.tre_id}"
+  resource_group_name = local.core_resource_group_name
+}

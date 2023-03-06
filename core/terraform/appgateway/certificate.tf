@@ -47,10 +47,10 @@ resource "azurerm_key_vault_certificate" "tlscert" {
         "keyEncipherment",
       ]
 
-      subject = "CN=${var.tre_id}.${var.location}.cloudapp.azure.com"
+      subject = "CN=${azurerm_public_ip.appgwpip.fqdn}"
 
       subject_alternative_names {
-        dns_names = ["${var.tre_id}.${var.location}.cloudapp.azure.com"]
+        dns_names = ["${azurerm_public_ip.appgwpip.fqdn}"]
       }
 
       validity_in_months = 12
