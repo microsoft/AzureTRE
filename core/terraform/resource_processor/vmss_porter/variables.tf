@@ -17,6 +17,7 @@ variable "key_vault_url" {}
 variable "key_vault_id" {}
 variable "resource_processor_number_processes_per_instance" {}
 variable "resource_processor_vmss_sku" {}
+variable "arm_environment" {}
 variable "subscription_id" {
   description = "The subscription id to create the resource processor permission/role. If not supplied will use the TF context."
   type        = string
