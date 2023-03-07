@@ -12,7 +12,7 @@ from azure.core.exceptions import ResourceNotFoundError, HttpResponseError
 
 from azure.mgmt.resource import ResourceManagementClient
 
-from core import config, credentials
+from core import config, credentials, cloud
 from db.errors import EntityDoesNotExist
 from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.user_resources import UserResourceRepository
@@ -91,9 +91,13 @@ class CostService:
     SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY: str = "Retry-After"
 
     def __init__(self) -> None:
+        resource_manage_endpoint = cloud.get_cloud().endpoints.resource_manager
         self.scope = "/subscriptions/{}".format(config.SUBSCRIPTION_ID)
         self.client = CostManagementClient(credential=credentials.get_credential())
-        self.resource_client = ResourceManagementClient(credentials.get_credential(), config.SUBSCRIPTION_ID)
+        self.resource_client = ResourceManagementClient(credentials.get_credential(),
+                                                        config.SUBSCRIPTION_ID,
+                                                        base_url=resource_manage_endpoint,
+                                                        credential_scopes=[resource_manage_endpoint + ".default"])
         self.cache = {}
 
     def get_cached_result(self, key: str) -> Union[QueryResult, None]:

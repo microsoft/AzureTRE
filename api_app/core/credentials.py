@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from core import config
+from core import config, cloud
 from azure.core.credentials import TokenCredential
 
 from azure.identity import (
@@ -21,7 +21,7 @@ def get_credential() -> TokenCredential:
             ManagedIdentityCredential(client_id=managed_identity)
         )
     else:
-        return DefaultAzureCredential()
+        return DefaultAzureCredential(authority=cloud.get_authority())
 
 
 @asynccontextmanager
@@ -35,7 +35,7 @@ async def get_credential_async() -> TokenCredential:
             ManagedIdentityCredentialASync(client_id=managed_identity)
         )
         if managed_identity
-        else DefaultAzureCredentialASync()
+        else DefaultAzureCredentialASync(authority=cloud.get_authority())
     )
     yield credential
     await credential.close()
