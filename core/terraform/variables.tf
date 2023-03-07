@@ -124,6 +124,12 @@ variable "resource_processor_vmss_sku" {
   description = "The SKU of the resource processor VMSS."
 }
 
+variable "arm_environment" {
+  type        = string
+  default     = "public"
+  description = "Used as an environment variable in the VMSS to set the Azure cloud for Terraform"
+}
+
 variable "stateful_resources_locked" {
   type        = bool
   default     = true
