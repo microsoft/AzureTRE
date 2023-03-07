@@ -34,4 +34,3 @@ echo "TEST_WORKSPACE_APP_SECRET='${WORKSPACE_API_CLIENT_SECRET}'" >> ../private.
 echo "SUBSCRIPTION_ID='${SUB_ID}'" >> ../private.env
 echo "AZURE_SUBSCRIPTION_ID='${SUB_ID}'" >> ../private.env
 echo "AZURE_TENANT_ID='${TENANT_ID}'" >> ../private.env
-echo "ARM_ENVIRONMENT='${ARM_ENVIRONMENT}'" >> ../private.env
