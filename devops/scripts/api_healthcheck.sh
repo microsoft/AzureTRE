@@ -10,13 +10,13 @@ echo '*' > "$DIR/script_tmp/.gitignore"
 api_response_file="$DIR/script_tmp/api_response.txt"
 
 echo "Calling /health endpoint..."
-response_code=$(curl --insecure --silent --output "$api_response_file" --write-out "%{http_code}" "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com/api/health")
+response_code=$(curl --insecure --silent --output "$api_response_file" --write-out "%{http_code}" "${TRE_URL}/api/health")
 
 # Add retries in case the backends aren't up yet
 retries_left=5
 while [[ "${response_code}" != "200" ]] && [[ $retries_left -ge 0 ]]; do
   echo "Calling /health endpoint... ($retries_left retries left)"
-  response_code=$(curl --insecure --silent --output "$api_response_file" --write-out "%{http_code}" "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com/api/health")
+  response_code=$(curl --insecure --silent --output "$api_response_file" --write-out "%{http_code}" "https://${TRE_URL}/api/health")
   retries_left=$(( retries_left - 1))
   sleep 30
 done
