@@ -14,6 +14,7 @@ image_name=$(yq eval ".custom.runtime_image.name" porter.yaml)
 version_file=$(yq eval ".custom.runtime_image.build.version_file" porter.yaml)
 docker_file=$(yq eval ".custom.runtime_image.build.docker_file" porter.yaml)
 docker_context=$(yq eval ".custom.runtime_image.build.docker_context" porter.yaml)
+acr_domain=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)
 
 version_line=$(cat "${version_file}")
 
@@ -28,7 +29,7 @@ docker_cache=("--cache-from" "${FULL_IMAGE_NAME_PREFIX}/${image_name}:${version}
 
 if [ -n "${CI_CACHE_ACR_NAME:-}" ]; then
 	az acr login -n "${CI_CACHE_ACR_NAME}"
-	docker_cache+=("--cache-from" "${CI_CACHE_ACR_NAME}.azurecr.io/${IMAGE_NAME_PREFIX}/${image_name}:${version}")
+	docker_cache+=("--cache-from" "${CI_CACHE_ACR_NAME}${acr_domain}/${IMAGE_NAME_PREFIX}/${image_name}:${version}")
 fi
 
 docker build --build-arg BUILDKIT_INLINE_CACHE=1 \

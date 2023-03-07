@@ -4,7 +4,8 @@ SHELL:=/bin/bash
 MAKEFILE_FULLPATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR := $(dir $(MAKEFILE_FULLPATH))
 IMAGE_NAME_PREFIX?="microsoft/azuretre"
-FULL_CONTAINER_REGISTRY_NAME?="$${ACR_NAME}.azurecr.io"
+ACR_DOMAIN := $(shell az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)
+FULL_CONTAINER_REGISTRY_NAME?="$${ACR_NAME}${ACR_DOMAIN}"
 FULL_IMAGE_NAME_PREFIX:=`echo "${FULL_CONTAINER_REGISTRY_NAME}/${IMAGE_NAME_PREFIX}" | tr A-Z a-z`
 LINTER_REGEX_INCLUDE?=all # regular expression used to specify which files to include in local linting (defaults to "all")
 E2E_TESTS_NUMBER_PROCESSES_DEFAULT=4  # can be overridden in e2e_tests/.env
@@ -54,7 +55,7 @@ $(call target_title, "Building $(1) Image") \
 && az acr login -n $${ACR_NAME} \
 && if [ -n "$${CI_CACHE_ACR_NAME:-}" ]; then \
 	az acr login -n $${CI_CACHE_ACR_NAME}; \
-	ci_cache="--cache-from $${CI_CACHE_ACR_NAME}.azurecr.io/${IMAGE_NAME_PREFIX}/$(1):$${__version__}"; fi \
+	ci_cache="--cache-from $${CI_CACHE_ACR_NAME}${ACR_DOMAIN}/${IMAGE_NAME_PREFIX}/$(1):$${__version__}"; fi \
 && docker build -t ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} --build-arg BUILDKIT_INLINE_CACHE=1 \
 	--cache-from ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} $${ci_cache:-} -f $(3) $(4)
 endef
@@ -254,7 +255,7 @@ bundle-publish:
 	&& cd ${DIR} \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_push.sh \
-	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --force
+	&& porter publish --registry "${FULL_CONTAINER_REGISTRY_NAME}" --force
 
 bundle-register:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
