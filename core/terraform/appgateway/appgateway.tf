@@ -63,14 +63,14 @@ resource "azurerm_application_gateway" "agw" {
 
   # Primary SSL cert linked to KeyVault
   ssl_certificate {
-    name                = local.certificate_name
+    name                = var.certificate_name
     key_vault_secret_id = azurerm_key_vault_certificate.tlscert.secret_id
   }
 
   # Backend pool with the static website in storage account.
   backend_address_pool {
     name  = local.staticweb_backend_pool_name
-    fqdns = [azurerm_storage_account.staticweb.primary_web_host]
+    fqdns = ["${var.ui_app_service}.azurewebsites.net"]
   }
 
   # Backend pool with the API App Service.
@@ -124,7 +124,7 @@ resource "azurerm_application_gateway" "agw" {
     frontend_ip_configuration_name = local.frontend_ip_configuration_name
     frontend_port_name             = local.secure_frontend_port_name
     protocol                       = "Https"
-    ssl_certificate_name           = local.certificate_name
+    ssl_certificate_name           = var.certificate_name
   }
 
   # Public HTTP listener

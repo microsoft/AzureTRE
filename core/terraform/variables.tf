@@ -170,6 +170,16 @@ variable "rp_bundle_values" {
   default     = {}
 }
 
+variable "ui_app_service" {
+  type        = string
+  description = "This is the App Service to be used for the UI."
+}
+
+variable "certificate_name" {
+  type        = string
+  description = "This is the certificate name to be used for the UI."
+}
+
 variable "is_cosmos_defined_throughput" {
   type    = bool
   default = false
