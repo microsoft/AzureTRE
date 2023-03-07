@@ -167,7 +167,7 @@ class AzureADAuthorization(AccessService):
         Rather tha use PyJWKClient.get_signing_key_from_jwt every time, we'll get all the keys from AAD and cache them.
         """
         if key_id not in AzureADAuthorization._jwt_keys:
-            response = requests.get(f"{cloud.get}/{config.AAD_TENANT_ID}/v2.0/.well-known/openid-configuration")
+            response = requests.get(f"{self.aad_instance}/{config.AAD_TENANT_ID}/v2.0/.well-known/openid-configuration")
             aad_metadata = response.json() if response.ok else None
             jwks_uri = aad_metadata['jwks_uri'] if aad_metadata and 'jwks_uri' in aad_metadata else None
             if jwks_uri:
