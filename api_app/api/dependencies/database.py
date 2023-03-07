@@ -19,10 +19,14 @@ async def connect_to_db() -> CosmosClient:
             primary_master_key = await get_store_key(credential)
 
         if config.STATE_STORE_SSL_VERIFY:
-            cosmos_client = CosmosClient(url=config.STATE_STORE_ENDPOINT, credential=primary_master_key)
+            cosmos_client = CosmosClient(
+                url=config.STATE_STORE_ENDPOINT, credential=primary_master_key
+            )
         else:
             # ignore TLS (setup is a pain) when using local Cosmos emulator.
-            cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key, connection_verify=False)
+            cosmos_client = CosmosClient(
+                config.STATE_STORE_ENDPOINT, primary_master_key, connection_verify=False
+            )
         logging.debug("Connection established")
         return cosmos_client
     except Exception:
@@ -34,12 +38,16 @@ async def get_store_key(credential) -> str:
         primary_master_key = config.STATE_STORE_KEY
     else:
         resource_manage_endpoint = cloud.get_cloud().endpoints.resource_manager
-        async with CosmosDBManagementClient(credential,
-                                            subscription_id=config.SUBSCRIPTION_ID,
-                                            base_url=resource_manage_endpoint,
-                                            credential_scopes=[resource_manage_endpoint + ".default"]
-                                            ) as cosmosdb_mng_client:
-            database_keys = await cosmosdb_mng_client.database_accounts.list_keys(resource_group_name=config.RESOURCE_GROUP_NAME, account_name=config.COSMOSDB_ACCOUNT_NAME)
+        async with CosmosDBManagementClient(
+            credential,
+            subscription_id=config.SUBSCRIPTION_ID,
+            base_url=resource_manage_endpoint,
+            credential_scopes=[resource_manage_endpoint + ".default"],
+        ) as cosmosdb_mng_client:
+            database_keys = await cosmosdb_mng_client.database_accounts.list_keys(
+                resource_group_name=config.RESOURCE_GROUP_NAME,
+                account_name=config.COSMOSDB_ACCOUNT_NAME,
+            )
             primary_master_key = database_keys.primary_master_key
 
     return primary_master_key
@@ -55,12 +63,19 @@ async def get_db_client_from_request(request: Request) -> CosmosClient:
     return await get_db_client(request.app)
 
 
-def get_repository(repo_type: Type[BaseRepository]) -> Callable[[CosmosClient], BaseRepository]:
-    async def _get_repo(client: CosmosClient = Depends(get_db_client_from_request)) -> BaseRepository:
+def get_repository(
+    repo_type: Type[BaseRepository],
+) -> Callable[[CosmosClient], BaseRepository]:
+    async def _get_repo(
+        client: CosmosClient = Depends(get_db_client_from_request),
+    ) -> BaseRepository:
         try:
             return await repo_type.create(client)
         except UnableToAccessDatabase:
             logging.exception(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING,
+            )
 
     return _get_repo
