@@ -9,7 +9,7 @@ from pathlib import Path
 from tre.api_client import ApiClient
 from typing import List
 
-from tre.authentication import get_auth_token_client_credentials, get_public_client_application
+from tre.authentication import get_auth_token_client_credentials, get_public_client_application, supported_clouds
 
 
 def all_or_none(values: "list(bool)") -> bool:
@@ -53,6 +53,11 @@ def login():
 @click.option('--verify/--no-verify',
               help='Enable/disable SSL verification',
               default=True)
+@click.option('--cloud',
+              required=False,
+              type=click.Choice(list(supported_clouds.keys())),
+              help='Sets the Azure environment to be used',
+              default="public")
 @click.option('--workspace', "workspaces",
               required=False,
               help='Additionally log in to workspace with specified id (can be specified multiple times).',
@@ -62,7 +67,7 @@ def login():
               default=False,
               is_flag=True,
               help='Additionally log in to all current workspaces (not compatible with --workspace)')
-def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_scope: str, verify: bool, workspaces: List[str], all_workspaces):
+def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_scope: str, verify: bool, cloud: str, workspaces: List[str], all_workspaces):
     log = logging.getLogger(__name__)
 
     if workspaces is not None and len(workspaces) > 0:
@@ -92,7 +97,7 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
     if os.path.exists(token_cache_file):
         cache.deserialize(open(token_cache_file, "r").read())
 
-    app = get_public_client_application(client_id, aad_tenant_id, cache)
+    app = get_public_client_application(client_id, aad_tenant_id, cache, cloud)
 
     click.echo(f'api_scope: {api_scope}')
     flow = app.initiate_device_flow(scopes=[api_scope])
@@ -114,6 +119,7 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
         'aad-tenant-id': aad_tenant_id,
         'api-scope': api_scope,
         'verify': verify,
+        'cloud': cloud,
     }
     Path('~/.config/tre/environment.json').expanduser().write_text(
         json.dumps(environment_config, indent=4),
@@ -179,6 +185,11 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
 @click.option(
     "--verify/--no-verify", help="Enable/disable SSL verification", default=True
 )
+@click.option('--cloud',
+              required=False,
+              type=click.Choice(list(supported_clouds.keys())),
+              help='Sets the Azure environment to be used',
+              default="public")
 def login_client_credentials(
     base_url: str,
     client_id: str,
@@ -186,6 +197,7 @@ def login_client_credentials(
     aad_tenant_id: str,
     api_scope: str,
     verify: bool,
+    cloud: str,
 ):
     log = logging.getLogger(__name__)
 
@@ -211,7 +223,7 @@ def login_client_credentials(
     try:
         log.info("Attempting sign-in...")
         get_auth_token_client_credentials(
-            log, client_id, client_secret, aad_tenant_id, api_scope, verify
+            log, client_id, client_secret, aad_tenant_id, api_scope, verify, cloud
         )
         log.info("Sign-in successful")
         # TODO make a call against the API to ensure the auth token
@@ -230,6 +242,7 @@ def login_client_credentials(
         "aad-tenant-id": aad_tenant_id,
         "api-scope": api_scope,
         "verify": verify,
+        "cloud": cloud,
     }
 
     # ensure ~/.config/tre folder exists
