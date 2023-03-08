@@ -19,7 +19,7 @@
     "arm_environment": {
       "description": "The Azure environment where resources will be deployed.",
       "type": "string",
-      "enum": ["public", "usgovernment", "china", "german", "stack"]
+      "enum": ["public", "usgovernment"]
     },
     "management": {
       "description": "Management configuration",
