@@ -85,6 +85,11 @@
         "enable_swagger": {
           "description": "Determines whether the Swagger interface for the API will be available.",
           "type": "boolean"
+        },
+        "tre_url": {
+          "description": "Url for the TRE environment.",
+          "type": "string",
+          "pattern": "^https://$"
         }
       }
     },
