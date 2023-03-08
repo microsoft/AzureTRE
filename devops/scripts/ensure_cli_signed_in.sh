@@ -29,6 +29,7 @@ else
       --client-secret "$TEST_ACCOUNT_CLIENT_SECRET" \
       --aad-tenant-id "$AAD_TENANT_ID" \
       --api-scope "api://${API_CLIENT_ID}" \
+      --cloud "$ARM_ENVIRONMENT" \
       --no-verify  # skip SSL verification in case certs aren't set up
   else
     # Use resource owner password credentials flow with USERNAME/PASSWORD
