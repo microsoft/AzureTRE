@@ -27,9 +27,8 @@ def get_azure_resource_status(resource_id):
 
 
 def get_azure_vm_instance_view(vm_name, resource_group_name) -> models.VirtualMachineInstanceView:
-    resource_manager_endpoint = cloud.get_cloud().endpoints.resource_manager
     compute_client = ComputeManagementClient(credentials.get_credential(),
                                              subscription_id=config.SUBSCRIPTION_ID,
-                                             base_url=resource_manager_endpoint,
-                                             credential_scopes=[resource_manager_endpoint + ".default"])
+                                             base_url=cloud.get_resource_manager_endpoint(),
+                                             credential_scopes=cloud.get_resource_manager_credential_scopes())
     return compute_client.virtual_machines.instance_view(resource_group_name, vm_name)

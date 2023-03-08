@@ -37,12 +37,11 @@ async def get_store_key(credential) -> str:
     if config.STATE_STORE_KEY:
         primary_master_key = config.STATE_STORE_KEY
     else:
-        resource_manager_endpoint = cloud.get_cloud().endpoints.resource_manager
         async with CosmosDBManagementClient(
             credential,
             subscription_id=config.SUBSCRIPTION_ID,
-            base_url=resource_manager_endpoint,
-            credential_scopes=[resource_manager_endpoint + ".default"],
+            base_url=cloud.get_resource_manager_endpoint(),
+            credential_scopes=cloud.get_resource_manager_credential_scopes()
         ) as cosmosdb_mng_client:
             database_keys = await cosmosdb_mng_client.database_accounts.list_keys(
                 resource_group_name=config.RESOURCE_GROUP_NAME,

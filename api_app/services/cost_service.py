@@ -91,13 +91,12 @@ class CostService:
     SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY: str = "Retry-After"
 
     def __init__(self) -> None:
-        resource_manager_endpoint = cloud.get_cloud().endpoints.resource_manager
         self.scope = "/subscriptions/{}".format(config.SUBSCRIPTION_ID)
         self.client = CostManagementClient(credential=credentials.get_credential())
         self.resource_client = ResourceManagementClient(credentials.get_credential(),
                                                         config.SUBSCRIPTION_ID,
-                                                        base_url=resource_manager_endpoint,
-                                                        credential_scopes=[resource_manager_endpoint + ".default"])
+                                                        base_url=cloud.get_resource_manager_endpoint(),
+                                                        credential_scopes=cloud.get_resource_manager_credential_scopes())
         self.cache = {}
 
     def get_cached_result(self, key: str) -> Union[QueryResult, None]:
