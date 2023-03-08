@@ -14,6 +14,10 @@ def get_authority():
     return get_cloud().endpoints.active_directory.replace("https://", "")
 
 
+def get_aad_authority():
+    return get_cloud().endpoints.active_directory
+
+
 def get_resource_manager_endpoint():
     return get_cloud().endpoints.resource_manager
 
