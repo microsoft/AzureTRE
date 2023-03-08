@@ -149,10 +149,12 @@ module "resource_processor_vmss_porter" {
   mgmt_resource_group_name                         = var.mgmt_resource_group_name
   terraform_state_container_name                   = var.terraform_state_container_name
   key_vault_name                                   = azurerm_key_vault.kv.name
+  key_vault_url                                    = azurerm_key_vault.kv.vault_uri
   key_vault_id                                     = azurerm_key_vault.kv.id
   subscription_id                                  = var.arm_subscription_id
   resource_processor_number_processes_per_instance = var.resource_processor_number_processes_per_instance
   resource_processor_vmss_sku                      = var.resource_processor_vmss_sku
+  arm_environment                                  = var.arm_environment
   log_analytics_workspace_workspace_id             = module.azure_monitor.log_analytics_workspace_workspace_id
   log_analytics_workspace_primary_key              = module.azure_monitor.log_analytics_workspace_primary_key
   rp_bundle_values                                 = var.rp_bundle_values
