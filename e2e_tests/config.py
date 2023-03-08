@@ -6,7 +6,6 @@ config = Config(".env")
 # Resource Info
 RESOURCE_LOCATION: str = config("RESOURCE_LOCATION", default="")
 TRE_ID: str = config("TRE_ID", default="")
-FQDN: str = config("FQDN", default="")
 TRE_URL: str = config("TRE_URL", default="")
 API_CLIENT_ID: str = config("API_CLIENT_ID", default="")
 TEST_USER_NAME: str = config("TEST_USER_NAME", default="")

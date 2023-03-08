@@ -40,9 +40,5 @@ else
   done < <(grep -v -e '^[[:space:]]*$' -e '^#' "$1" ) # feed in via Process Substition to avoid bash subshell (http://mywiki.wooledge.org/ProcessSubstitution)
 fi
 
-if [ -n "${TRE_ID:-}" ] && [ -n "${LOCATION:-}" ]; then
-  TRE_URL=${TRE_URL:-https://${TRE_ID}.${LOCATION}.cloudapp.azure.com}
-  export TRE_URL
-fi
 
 set +o nounset
