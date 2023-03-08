@@ -98,7 +98,7 @@ resource "azurerm_monitor_diagnostic_setting" "sb" {
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
 
   dynamic "enabled_log" {
-    for_each = ["OperationalLogs", "VNetAndIPFilteringLogs", "RuntimeAuditLogs", "ApplicationMetricsLogs"]
+    for_each = setintersection(data.azurerm_monitor_diagnostic_categories.sb.log_category_types, local.servicebus_diagnostic_categories_enabled)
     content {
       category = enabled_log.value
 
