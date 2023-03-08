@@ -17,12 +17,13 @@ In my Azure TRE deployment I am trying to...
 
 ## Steps
 The steps I have tried are:
-1. 
+1.
 2.
 3.
 
 ## Code
 The code I am using is:
-```
+
+```yaml
 code here
 ```
