@@ -1,10 +1,12 @@
 ---
-name: 🪲 Bug report
+name: "\U0001FAB2 Bug report"
 about: Create a report to help us improve
 title: ''
-labels: 'bug'
+labels: bug
 assignees: ''
+
 ---
+
 Remember to label the issue with the appropriate area, and also assign it to yourself if you plan to work on the issue in the near future.
 
 **Describe the bug**
