@@ -155,6 +155,7 @@ module "resource_processor_vmss_porter" {
   resource_processor_number_processes_per_instance = var.resource_processor_number_processes_per_instance
   resource_processor_vmss_sku                      = var.resource_processor_vmss_sku
   arm_environment                                  = var.arm_environment
+  az_cloud_environment                             = var.az_cloud_environment
   log_analytics_workspace_workspace_id             = module.azure_monitor.log_analytics_workspace_workspace_id
   log_analytics_workspace_primary_key              = module.azure_monitor.log_analytics_workspace_primary_key
   rp_bundle_values                                 = var.rp_bundle_values

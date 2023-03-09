@@ -130,6 +130,12 @@ variable "arm_environment" {
   description = "Used as an environment variable in the VMSS to set the Azure cloud for Terraform"
 }
 
+variable "az_cloud_environment" {
+  type        = string
+  default     = "AzureCloud"
+  description = "Used in the VMSS to set the cloud environment for Azure CLI"
+}
+
 variable "stateful_resources_locked" {
   type        = bool
   default     = true
