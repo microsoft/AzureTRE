@@ -9,6 +9,8 @@ from httpx import Client, Response
 from logging import Logger
 from pathlib import Path
 
+from tre.authentication import get_auth_token_client_credentials, get_public_client_application
+
 
 class ApiException(click.ClickException):
     """An exception that Click can handle and show to the user containing API call error info."""
@@ -138,31 +140,7 @@ class ClientCredentialsApiClient(ApiClient):
         self._scope = scope
 
     def get_auth_token(self, log, scope):
-        with Client() as client:
-            headers = {'Content-Type': "application/x-www-form-urlencoded"}
-            # Use Client Credentials flow
-            payload = f"grant_type=client_credentials&client_id={self._client_id}&client_secret={self._client_secret}&scope={scope or self._scope}/.default"
-            url = f"https://login.microsoftonline.com/{self._aad_tenant_id}/oauth2/v2.0/token"
-
-            log.debug('POSTing to token endpoint')
-            response = client.post(url, headers=headers, content=payload)
-            try:
-                if response.status_code == 200:
-                    log.debug('Parsing response')
-                    response_json = response.json()
-                    if "access_token" in response_json:
-                        token = response_json["access_token"]
-                        return token
-                    else:
-                        raise click.ClickException(f"Failed to get access_token: ${response.text}")
-                msg = f"Sign-in failed: {response.status_code}: {response.text}"
-                log.error(msg)
-                raise RuntimeError(msg)
-            except json.JSONDecodeError:
-                log.debug(
-                    f'Failed to parse response as JSON: {response.content}')
-
-        raise RuntimeError("Failed to get auth token")
+        return get_auth_token_client_credentials(log, self._client_id, self._client_secret, self._aad_tenant_id, scope or self._scope, self.verify)
 
 
 class DeviceCodeApiClient(ApiClient):
@@ -187,10 +165,7 @@ class DeviceCodeApiClient(ApiClient):
         if os.path.exists(self._token_cache_file):
             cache.deserialize(open(self._token_cache_file, "r").read())
 
-        app = msal.PublicClientApplication(
-            client_id=self._client_id,
-            authority=f"https://login.microsoftonline.com/{self._aad_tenant_id}",
-            token_cache=cache)
+        app = get_public_client_application(self._client_id, self._aad_tenant_id, cache)
 
         accounts = app.get_accounts()
         if accounts:

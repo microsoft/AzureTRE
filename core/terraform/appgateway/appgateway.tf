@@ -200,7 +200,7 @@ resource "azurerm_monitor_diagnostic_setting" "agw" {
   log_analytics_workspace_id = var.log_analytics_workspace_id
 
   dynamic "enabled_log" {
-    for_each = ["ApplicationGatewayAccessLog", "ApplicationGatewayPerformanceLog", "ApplicationGatewayFirewallLog"]
+    for_each = setintersection(data.azurerm_monitor_diagnostic_categories.agw.log_category_types, local.appgateway_diagnostic_categories_enabled)
     content {
       category = enabled_log.value
 
