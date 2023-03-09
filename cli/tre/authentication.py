@@ -2,7 +2,8 @@ import asyncio
 from logging import Logger
 import msal
 from azure.identity.aio import ClientSecretCredential
-from msal.authority import AuthorityBuilder, AZURE_PUBLIC
+from azure.cli.core import cloud
+from msal.authority import AuthorityBuilder
 
 
 def get_auth_token_client_credentials(
@@ -17,7 +18,7 @@ def get_auth_token_client_credentials(
         event_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(event_loop)
 
-        credential = ClientSecretCredential(aad_tenant_id, client_id, client_secret, connection_verify=verify)
+        credential = ClientSecretCredential(aad_tenant_id, client_id, client_secret, connection_verify=verify, authority=get_authority_domain())
         token = event_loop.run_until_complete(credential.get_token(f'{api_scope}/.default'))
         event_loop.run_until_complete(credential.close())
 
@@ -35,5 +36,13 @@ def get_public_client_application(
 ):
     return msal.PublicClientApplication(
         client_id=client_id,
-        authority=AuthorityBuilder(AZURE_PUBLIC, aad_tenant_id),
+        authority=AuthorityBuilder(instance=get_authority_domain(), tenant=aad_tenant_id),
         token_cache=token_cache)
+
+
+def get_cloud() -> cloud.Cloud:
+    return cloud.get_active_cloud()
+
+
+def get_authority_domain():
+    return get_cloud().endpoints.active_directory.replace('https://', '')
