@@ -158,6 +158,7 @@
   },
   "required": [
     "location",
-    "tre_id"
+    "tre_id",
+    "arm_environment"
   ]
 }

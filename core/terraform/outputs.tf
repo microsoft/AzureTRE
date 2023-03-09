@@ -104,7 +104,3 @@ output "event_grid_airlock_notification_topic_resource_id" {
 output "service_bus_step_result_queue" {
   value = module.airlock_resources.service_bus_step_result_queue
 }
-
-output "arm_environment" {
-  value = var.arm_environment
-}

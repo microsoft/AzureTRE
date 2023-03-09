@@ -1,10 +1,9 @@
-from msrestazure.azure_cloud import AZURE_PUBLIC_CLOUD, AZURE_US_GOV_CLOUD
-from core import config
+from azure.cli.core import cloud
 
 
-def get_cloud():
-    arm_env = config.ARM_ENVIRONMENT.lower()
-    supported_clouds = {"public": AZURE_PUBLIC_CLOUD, "usgovernment": AZURE_US_GOV_CLOUD}
-    if arm_env in supported_clouds:
-        return supported_clouds[arm_env]
-    raise ValueError(f"Invalid arm environment. Got: {arm_env}. Supported envs are: {', '.join(supported_clouds.keys())}.")
+def get_cloud() -> cloud.Cloud:
+    return cloud.get_active_cloud()
+
+
+def get_acr_domain_suffix():
+    return cloud.get_active_cloud().suffixes.acr_login_server_endpoint

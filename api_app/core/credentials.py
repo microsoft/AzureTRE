@@ -21,7 +21,7 @@ def get_credential() -> TokenCredential:
             ManagedIdentityCredential(client_id=managed_identity)
         )
     else:
-        return DefaultAzureCredential(authority=cloud.get_authority())
+        return DefaultAzureCredential(authority=cloud.get_aad_authority_fqdn())
 
 
 @asynccontextmanager
@@ -35,7 +35,7 @@ async def get_credential_async() -> TokenCredential:
             ManagedIdentityCredentialASync(client_id=managed_identity)
         )
         if managed_identity
-        else DefaultAzureCredentialASync(authority=cloud.get_authority())
+        else DefaultAzureCredentialASync(authority=cloud.get_aad_authority_fqdn())
     )
     yield credential
     await credential.close()

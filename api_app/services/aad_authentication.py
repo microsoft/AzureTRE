@@ -30,7 +30,7 @@ class AzureADAuthorization(AccessService):
     _jwt_keys: dict = {}
 
     require_one_of_roles = None
-    aad_instance = cloud.get_aad_authority()
+    aad_instance = cloud.get_aad_authority_url()
 
     TRE_CORE_ROLES = ['TREAdmin', 'TREUser']
     WORKSPACE_ROLES_DICT = {'WorkspaceOwner': 'app_role_id_workspace_owner', 'WorkspaceResearcher': 'app_role_id_workspace_researcher', 'AirlockManager': 'app_role_id_workspace_airlock_manager'}
@@ -189,7 +189,7 @@ class AzureADAuthorization(AccessService):
     @staticmethod
     def _get_msgraph_token() -> str:
         scopes = ["https://graph.microsoft.com/.default"]
-        app = ConfidentialClientApplication(client_id=config.API_CLIENT_ID, client_credential=config.API_CLIENT_SECRET, authority=f"{cloud.get_aad_authority()}/{config.AAD_TENANT_ID}")
+        app = ConfidentialClientApplication(client_id=config.API_CLIENT_ID, client_credential=config.API_CLIENT_SECRET, authority=f"{cloud.get_aad_authority_url()}/{config.AAD_TENANT_ID}")
         result = app.acquire_token_silent(scopes=scopes, account=None)
         if not result:
             logging.debug('No suitable token exists in cache, getting a new one from AAD')

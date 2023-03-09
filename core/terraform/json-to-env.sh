@@ -101,10 +101,6 @@ jq -r '
         {
             "path": "event_grid_airlock_notification_topic_resource_id",
             "env_var": "EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID"
-        },
-        {
-            "path": "arm_environment",
-            "env_var": "ARM_ENVIRONMENT"
         }
     ]
         as $env_vars_to_extract
