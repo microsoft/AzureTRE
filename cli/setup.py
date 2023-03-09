@@ -3,8 +3,8 @@
 from setuptools import find_packages
 from setuptools import setup
 
-PROJECT = 'tre'
-VERSION = '0.1.2'
+PROJECT = 'azure-tre-cli'
+VERSION = '0.1.3'
 
 try:
     long_description = open('README.md', 'rt').read()
@@ -46,7 +46,8 @@ setup(
         "jmespath==1.0.1",
         "tabulate==0.9.0",
         "pygments==2.14.0",
-        "PyJWT==2.6.0"
+        "PyJWT==2.6.0",
+        "azure-cli-core==2.46.0"
     ],
 
     namespace_packages=[],
