@@ -21,6 +21,11 @@
       "type": "string",
       "enum": ["public", "usgovernment", "china", "german", "stack"]
     },
+    "az_cloud_environment": {
+      "description": "Used by Azure CLI to set the Azure environment.",
+      "type": "string",
+      "enum": ["AzureCloud", "AzureUSGovernment"]
+    },
     "management": {
       "description": "Management configuration",
       "type": "object",

@@ -42,6 +42,10 @@ else
     # Export as Terraform keys env vars
     # shellcheck disable=SC2046
     export $(yq e "$GET_LEAF_KEYS|$TF_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)
+
+    # Set the cloud environment for Azure CLI
+    az cloud set --name "${AZ_CLOUD_ENVIRONMENT:-"AzureCloud"}"
+
 fi
 
 set +o nounset
