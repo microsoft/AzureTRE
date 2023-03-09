@@ -47,7 +47,7 @@ parameters:
   - name: smtp_username
     env: SMTP_USERNAME
     type: string
-  - name: smtpPassword
+  - name: smtp_password
     env: SMTP_PASSWORD
     type: string
     sensitive: true
@@ -80,7 +80,7 @@ install:
         smtp_server_address: ${ bundle.parameters.smtp_server_address }
         smtp_server_port: ${ bundle.parameters.smtp_server_port }
         smtp_username: ${ bundle.parameters.smtp_username }
-        smtp_password: ${ bundle.parameters.smtpPassword }
+        smtp_password: ${ bundle.parameters.smtp_password }
         smtp_server_enable_ssl: ${ bundle.parameters.smtp_server_enable_ssl }
         smtp_from_email: ${ bundle.parameters.smtp_from_email }
       backendConfig:
@@ -132,7 +132,7 @@ uninstall:
         smtp_server_address: ${ bundle.parameters.smtp_server_address }
         smtp_server_port: ${ bundle.parameters.smtp_server_port }
         smtp_username: ${ bundle.parameters.smtp_username }
-        smtp_password: ${ bundle.parameters.smtpPassword }
+        smtp_password: ${ bundle.parameters.smtp_password }
         smtp_server_enable_ssl: ${ bundle.parameters.smtp_server_enable_ssl }
         smtp_from_email: ${ bundle.parameters.smtp_from_email }
       backendConfig:

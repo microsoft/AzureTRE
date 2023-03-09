@@ -27,8 +27,8 @@
       "description": "SMTP Username",
       "updateable": false
     },
-    "smtpPassword": {
-      "$id": "#/properties/smtpPassword",
+    "smtp_password": {
+      "$id": "#/properties/smtp_password",
       "type": "string",
       "title": "SMTP Password",
       "description": "SMTP Password",
