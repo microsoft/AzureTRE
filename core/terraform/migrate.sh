@@ -198,8 +198,9 @@ if [ -n "${nexus_dns_zone}" ]; then
 fi
 
 # Additional DNS Zones migration. We changed the name for the nexus dns zone hence we need to apply the change.
+NEXUS_DNS_NAME="nexus-${TRE_ID}.${LOCATION}.cloudapp.azure.com"
 nexus_dns_zone_changed=$(echo "${terraform_show_json}" \
-  | jq -r 'select(.values.root_module.resources != null) .values.root_module.resources[] | select (.address=="azurerm_private_dns_zone.non_core[\"nexus-${TRE_ID}.${LOCATION}.cloudapp.azure.com\"]") | .values.id')
+  |  jq -r --arg nexus_dns_name "$NEXUS_DNS_NAME" 'select(.values.root_module.resources != null) .values.root_module.resources[] | select (.address=="azurerm_private_dns_zone.non_core[\""+$nexus_dns_name+"\"]") | .values.id')
 if [ -n "${nexus_dns_zone_changed}" ]; then
   terraform state rm azurerm_private_dns_zone.non_core[\""nexus-${TRE_ID}.${LOCATION}.cloudapp.azure.com"\"]
   terraform import azurerm_private_dns_zone.nexus "${nexus_dns_zone_changed}"
