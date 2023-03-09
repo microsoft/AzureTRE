@@ -60,8 +60,7 @@ class ApiClient:
                 config["client-id"],
                 config["client-secret"],
                 config["aad-tenant-id"],
-                config["api-scope"],
-                config["cloud"]
+                config["api-scope"]
             )
         elif login_method == "device-code":
             return DeviceCodeApiClient(
@@ -70,8 +69,7 @@ class ApiClient:
                 config["token-cache-file"],
                 config["client-id"],
                 config["aad-tenant-id"],
-                config["api-scope"],
-                config["cloud"]
+                config["api-scope"]
             )
         else:
             raise click.ClickException(f"Unhandled login method: {login_method}")
@@ -132,8 +130,7 @@ class ClientCredentialsApiClient(ApiClient):
                  client_id: str,
                  client_secret: str,
                  aad_tenant_id: str,
-                 scope: str,
-                 cloud: str):
+                 scope: str):
         while base_url.endswith("/"):
             base_url = base_url[0:-1]
         super().__init__(base_url, verify)
@@ -141,10 +138,9 @@ class ClientCredentialsApiClient(ApiClient):
         self._client_secret = client_secret
         self._aad_tenant_id = aad_tenant_id
         self._scope = scope
-        self.cloud = cloud
 
     def get_auth_token(self, log, scope):
-        return get_auth_token_client_credentials(log, self._client_id, self._client_secret, self._aad_tenant_id, scope or self._scope, self.verify, self.cloud)
+        return get_auth_token_client_credentials(log, self._client_id, self._client_secret, self._aad_tenant_id, scope or self._scope, self.verify)
 
 
 class DeviceCodeApiClient(ApiClient):
@@ -154,14 +150,12 @@ class DeviceCodeApiClient(ApiClient):
                  token_cache_file: str,
                  client_id: str,
                  aad_tenant_id: str,
-                 scope: str,
-                 cloud: str):
+                 scope: str):
         super().__init__(base_url, verify)
         self._token_cache_file = token_cache_file
         self._client_id = client_id
         self._aad_tenant_id = aad_tenant_id
         self._scope = scope
-        self._cloud = cloud
 
     def get_auth_token(self, log, scope):
 
@@ -171,7 +165,7 @@ class DeviceCodeApiClient(ApiClient):
         if os.path.exists(self._token_cache_file):
             cache.deserialize(open(self._token_cache_file, "r").read())
 
-        app = get_public_client_application(self._client_id, self._aad_tenant_id, cache, self._cloud)
+        app = get_public_client_application(self._client_id, self._aad_tenant_id, cache)
 
         accounts = app.get_accounts()
         if accounts:
