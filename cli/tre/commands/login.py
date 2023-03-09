@@ -6,11 +6,10 @@ import msal
 import os
 
 from pathlib import Path
-from httpx import Client
-
 from tre.api_client import ApiClient
-
 from typing import List
+
+from tre.authentication import get_auth_token_client_credentials, get_public_client_application
 
 
 def all_or_none(values: "list(bool)") -> bool:
@@ -93,10 +92,7 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
     if os.path.exists(token_cache_file):
         cache.deserialize(open(token_cache_file, "r").read())
 
-    app = msal.PublicClientApplication(
-        client_id=client_id,
-        authority=f"https://login.microsoftonline.com/{aad_tenant_id}",
-        token_cache=cache)
+    app = get_public_client_application(client_id, aad_tenant_id, cache)
 
     click.echo(f'api_scope: {api_scope}')
     flow = app.initiate_device_flow(scopes=[api_scope])
@@ -214,7 +210,7 @@ def login_client_credentials(
     # Test the auth succeeds
     try:
         log.info("Attempting sign-in...")
-        _get_auth_token_client_credentials(
+        get_auth_token_client_credentials(
             log, client_id, client_secret, aad_tenant_id, api_scope, verify
         )
         log.info("Sign-in successful")
@@ -243,40 +239,6 @@ def login_client_credentials(
     )
 
     click.echo("Login details saved\n")
-
-
-def _get_auth_token_client_credentials(
-    log: logging.Logger,
-    client_id: str,
-    client_secret: str,
-    aad_tenant_id: str,
-    api_scope: str,
-    verify: bool
-):
-    with Client(verify=verify) as client:
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        # Use Client Credentials flow
-        payload = f"grant_type=client_credentials&client_id={client_id}&client_secret={client_secret}&scope={api_scope}/.default"
-        url = f"https://login.microsoftonline.com/{aad_tenant_id}/oauth2/v2.0/token"
-
-        log.debug("POSTing to token endpoint")
-        response = client.post(url, headers=headers, content=payload)
-        try:
-            if response.status_code == 200:
-                log.debug("Parsing response")
-                response_json = response.json()
-                if "access_token" in response_json:
-                    token = response_json["access_token"]
-                    return token
-                else:
-                    raise click.ClickException(f"Failed to get access_token: ${response.text}")
-            msg = f"Sign-in failed: {response.status_code}: {response.text}"
-            log.error(msg)
-            raise RuntimeError(msg)
-        except json.JSONDecodeError:
-            log.debug(f"Failed to parse response as JSON: {response.content}")
-
-    raise RuntimeError("Failed to get auth token")
 
 
 login.add_command(login_client_credentials)
