@@ -9,5 +9,7 @@ locals {
     tre_id                = var.tre_id
     tre_shared_service_id = var.tre_resource_id
   }
-  default_tre_url = "https://${var.tre_id}.${data.azurerm_resource_group.core.location}.cloudapp.azure.com"
+  default_tre_url        = "https://${var.tre_id}.${data.azurerm_resource_group.core.location}.cloudapp.azure.com"
+  public_ip_address_name = "pip-fw-${var.tre_id}"
+  firewall_name          = "fw-${var.tre_id}"
 }

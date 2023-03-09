@@ -1,3 +1,28 @@
+resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet_allow_appservice" {
+  name                = "nrc-resource_processor_allow_appservice_subnet"
+  azure_firewall_name = data.azurerm_firewall.fw.name
+  resource_group_name = data.azurerm_firewall.fw.resource_group_name
+  priority            = 210
+  action              = "Allow"
+
+  rule {
+    name = "AzureServiceTags"
+
+    protocols = [
+      "TCP"
+    ]
+
+    destination_addresses = [
+      "AppService"
+    ]
+
+    destination_ports = [
+      "443"
+    ]
+    source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
+  }
+}
+
 resource "azurerm_service_plan" "notifier_plan" {
   name                = "airlock-notifier-plan-${var.tre_id}"
   resource_group_name = data.azurerm_resource_group.core.name
@@ -7,7 +32,6 @@ resource "azurerm_service_plan" "notifier_plan" {
   tags                = local.tre_shared_service_tags
   lifecycle { ignore_changes = [tags] }
 }
-
 
 resource "azurerm_servicebus_queue" "notifications_queue" {
   name         = "notifications"
@@ -39,10 +63,10 @@ resource "azurerm_resource_group_template_deployment" "smtp_api_connection" {
 
   parameters_content = jsonencode({
     "serverAddress" = {
-      value = var.smtp_server_address
+      value = data.azurerm_public_ip.fwtransit.ip_address
     },
     "serverPort" = {
-      value = var.smtp_server_port
+      value = "2525"
     },
     "userName" = {
       value = var.smtp_username
@@ -90,7 +114,6 @@ resource "azurerm_logic_app_standard" "logic_app" {
   lifecycle { ignore_changes = [tags] }
 }
 
-
 resource "azurerm_resource_group_template_deployment" "smtp_api_connection_access_policy" {
   name                = "smtp-api-connection-access-policy"
   resource_group_name = data.azurerm_resource_group.core.name
@@ -112,8 +135,27 @@ resource "azurerm_resource_group_template_deployment" "smtp_api_connection_acces
   lifecycle { ignore_changes = [tags] }
 }
 
-
 resource "azurerm_app_service_virtual_network_swift_connection" "airlock_notifier_integrated_vnet" {
   app_service_id = azurerm_logic_app_standard.logic_app.id
   subnet_id      = data.azurerm_subnet.airlock_notification.id
+}
+
+resource "azurerm_firewall_nat_rule_collection" "airlock_collection_run" {
+  name                = "airlock-notifier-smtp-collection-rule"
+  azure_firewall_name = data.azurerm_firewall.fw.name
+  resource_group_name = data.azurerm_resource_group.core.name
+  priority            = 202
+  action              = "Dnat"
+
+  rule {
+    name = "airlock-notifier-collection-${var.tre_id}"
+    source_addresses = [ "*" ]
+    destination_ports = [ "2525" ]
+    destination_addresses = [
+      data.azurerm_public_ip.fwtransit.ip_address
+    ]
+    translated_port = "${var.smtp_server_port}"
+    translated_address = "${var.smtp_server_address}"
+    protocols = [ "TCP" ]
+  }
 }
