@@ -93,8 +93,13 @@ data "azurerm_private_dns_zone" "postgres" {
   resource_group_name = local.core_resource_group_name
 }
 
+data "azurerm_public_ip" "app_gateway_ip" {
+  name                = "pip-agw-${var.tre_id}"
+  resource_group_name = local.core_resource_group_name
+}
+
 data "azurerm_private_dns_zone" "nexus" {
-  name                = "nexus-${var.tre_id}.${var.location}.cloudapp.azure.com"
+  name                = "nexus-${data.azurerm_public_ip.app_gateway_ip.fqdn}"
   resource_group_name = local.core_resource_group_name
 }
 
