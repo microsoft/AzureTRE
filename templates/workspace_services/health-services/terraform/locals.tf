@@ -5,7 +5,7 @@ locals {
   workspace_resource_name_suffix = "${var.tre_id}-ws-${local.short_workspace_id}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   service_resource_name_suffix   = "${local.short_workspace_id}svc${local.short_service_id}"
-  authority                      = "${var.aad_authority_fqdn}/${local.aad_tenant_id}"
+  authority                      = "${var.aad_authority_url}/${local.aad_tenant_id}"
   core_resource_group_name       = "rg-${var.tre_id}"
   workspace_service_tags = {
     tre_id                   = var.tre_id

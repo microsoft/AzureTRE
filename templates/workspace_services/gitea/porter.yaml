@@ -24,7 +24,7 @@ credentials:
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
 parameters:
-  - name: aad_authority_fqdn
+  - name: aad_authority_url
     type: string
   - name: workspace_id
     type: string
@@ -90,7 +90,7 @@ install:
         id: ${ bundle.parameters.id }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
-        aad_authority_fqdn: ${ bundle.parameters.aad_authority_fqdn }
+        aad_authority_url: ${ bundle.parameters.aad_authority_url }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -110,7 +110,7 @@ upgrade:
         id: ${ bundle.parameters.id }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
-        aad_authority_fqdn: ${ bundle.parameters.aad_authority_fqdn }
+        aad_authority_url: ${ bundle.parameters.aad_authority_url }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -130,7 +130,7 @@ uninstall:
         id: ${ bundle.parameters.id }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
-        aad_authority_fqdn: ${ bundle.parameters.aad_authority_fqdn }
+        aad_authority_url: ${ bundle.parameters.aad_authority_url }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

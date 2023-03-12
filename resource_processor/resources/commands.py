@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 import base64
-from shared.cloud import get_aad_authority_fqdn
+from shared.cloud import get_aad_authority_url
 
 from resources.helpers import get_installation_id
 from shared.logging import shell_output_logger
@@ -120,5 +120,5 @@ def get_special_porter_param_value(config, parameter_name: str, msg_body):
         return msg_body.get("parentWorkspaceServiceId")  # not included in all messages
     if (value := config["bundle_params"].get(parameter_name.lower())) is not None:
         return value
-    if parameter_name == "aad_authority_fqdn":
-        return get_aad_authority_fqdn()
+    if parameter_name == "aad_authority_url":
+        return get_aad_authority_url()
