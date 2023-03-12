@@ -89,7 +89,7 @@
         "tre_url": {
           "description": "Url for the TRE environment.",
           "type": "string",
-          "pattern": "^https://$"
+          "pattern": "^https?://"
         }
       }
     },
