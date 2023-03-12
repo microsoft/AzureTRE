@@ -170,6 +170,10 @@ class DeviceCodeApiClient(ApiClient):
         accounts = app.get_accounts()
         if accounts:
             auth_result = app.acquire_token_silent(scopes=[effective_scope], account=accounts[0])
+            try:
+                auth_result = app.acquire_token_silent(scopes=[effective_scope], account=accounts[0])
+            except Exception:
+                auth_result = app.acquire_token_for_client(scopes=[effective_scope])
             if cache.has_state_changed:
                 with open(self._token_cache_file, "w") as cache_file:
                     cache_file.write(cache.serialize())

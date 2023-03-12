@@ -190,7 +190,10 @@ class AzureADAuthorization(AccessService):
     def _get_msgraph_token() -> str:
         scopes = ["https://graph.microsoft.com/.default"]
         app = ConfidentialClientApplication(client_id=config.API_CLIENT_ID, client_credential=config.API_CLIENT_SECRET, authority=f"{cloud.get_aad_authority_url()}/{config.AAD_TENANT_ID}")
-        result = app.acquire_token_silent(scopes=scopes, account=None)
+        try:
+            result = app.acquire_token_silent(scopes=scopes, account=None)
+        except Exception:
+            result = None
         if not result:
             logging.debug('No suitable token exists in cache, getting a new one from AAD')
             result = app.acquire_token_for_client(scopes=scopes)
