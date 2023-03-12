@@ -11,3 +11,7 @@ def get_acr_domain_suffix():
 
 def get_aad_authority_url() -> str:
     return get_cloud().endpoints.active_directory
+
+
+def get_microsoft_graph_fqdn() -> str:
+    return get_cloud().endpoints.microsoft_graph_resource_id.strip("/", "https://")

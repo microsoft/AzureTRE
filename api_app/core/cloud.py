@@ -27,3 +27,7 @@ def get_resource_manager_endpoint() -> str:
 def get_resource_manager_credential_scopes():
     resource_manager_endpoint = get_resource_manager_endpoint()
     return [resource_manager_endpoint + ".default"]
+
+
+def get_microsoft_graph_url() -> str:
+    return get_cloud().endpoints.microsoft_graph_resource_id.strip("/")
