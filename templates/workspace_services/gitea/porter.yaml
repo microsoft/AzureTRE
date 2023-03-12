@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-gitea
-version: 0.7.0
+version: 0.7.1
 description: "A Gitea workspace service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -24,6 +24,8 @@ credentials:
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
 parameters:
+  - name: aad_authority_fqdn
+    type: string
   - name: workspace_id
     type: string
   - name: tre_id
@@ -88,6 +90,7 @@ install:
         id: ${ bundle.parameters.id }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
+        aad_authority_fqdn: ${ bundle.parameters.aad_authority_fqdn }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -107,6 +110,7 @@ upgrade:
         id: ${ bundle.parameters.id }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
+        aad_authority_fqdn: ${ bundle.parameters.aad_authority_fqdn }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -126,6 +130,7 @@ uninstall:
         id: ${ bundle.parameters.id }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
+        aad_authority_fqdn: ${ bundle.parameters.aad_authority_fqdn }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

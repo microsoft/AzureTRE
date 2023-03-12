@@ -25,6 +25,8 @@ credentials:
     env: ARM_CLIENT_SECRET
 
 parameters:
+  - name: aad_authority_fqdn
+    type: string
   - name: workspace_id
     type: string
   - name: tre_id
@@ -94,6 +96,7 @@ install:
         auth_client_id: ${ bundle.credentials.auth_client_id }
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        aad_authority_fqdn: ${ bundle.parameters.aad_authority_fqdn }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -117,6 +120,7 @@ upgrade:
         auth_client_id: ${ bundle.credentials.auth_client_id }
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        aad_authority_fqdn: ${ bundle.parameters.aad_authority_fqdn }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -140,6 +144,7 @@ uninstall:
         auth_client_id: ${ bundle.credentials.auth_client_id }
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        aad_authority_fqdn: ${ bundle.parameters.aad_authority_fqdn }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole
-version: 0.7.2
+version: 0.7.3
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -25,6 +25,8 @@ credentials:
     env: ARM_CLIENT_SECRET
 
 parameters:
+  - name: aad_authority_fqdn
+    type: string
   - name: workspace_id
     type: string
   - name: tre_id
@@ -139,6 +141,7 @@ install:
         guac_disable_upload: ${ bundle.parameters.guac_disable_upload }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
+        aad_authority_fqdn: ${ bundle.parameters.aad_authority_fqdn }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -168,6 +171,7 @@ upgrade:
         guac_disable_upload: ${ bundle.parameters.guac_disable_upload }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
+        aad_authority_fqdn: ${ bundle.parameters.aad_authority_fqdn }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -198,6 +202,7 @@ uninstall:
         guac_disable_upload: ${ bundle.parameters.guac_disable_upload }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
+        aad_authority_fqdn: ${ bundle.parameters.aad_authority_fqdn }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

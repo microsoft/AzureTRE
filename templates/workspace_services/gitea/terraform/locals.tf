@@ -17,4 +17,5 @@ locals {
     "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
     "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"
   ]
+  gitea_openid_auth = "${var.aad_authority_fqdn}/${data.azurerm_key_vault_secret.aad_tenant_id.value}/v2.0"
 }
