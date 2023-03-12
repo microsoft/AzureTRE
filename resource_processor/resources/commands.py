@@ -9,14 +9,16 @@ from shared.cloud import get_acr_domain_suffix, get_cloud
 
 
 def azure_login_command(config):
+    set_cloud_command = f"az cloud set --name {get_cloud().name}"
+
     if config["vmss_msi_id"]:
         # Use the Managed Identity when in VMSS context
-        command = f"az login --identity -u {config['vmss_msi_id']}"
+        login_command = f"az login --identity -u {config['vmss_msi_id']}"
     else:
         # Use a Service Principal when running locally
-        command = f"az login --service-principal --username {config['arm_client_id']} --password {config['arm_client_secret']} --tenant {config['arm_tenant_id']}"
+        login_command = f"az login --service-principal --username {config['arm_client_id']} --password {config['arm_client_secret']} --tenant {config['arm_tenant_id']}"
 
-    return command
+    return f"{set_cloud_command} && {login_command}"
 
 
 def azure_acr_login_command(config):
