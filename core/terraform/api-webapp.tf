@@ -35,7 +35,7 @@ resource "azurerm_linux_web_app" "api" {
     "WEBSITES_PORT"                                  = "8000"
     "STATE_STORE_ENDPOINT"                           = azurerm_cosmosdb_account.tre_db_account.endpoint
     "COSMOSDB_ACCOUNT_NAME"                          = azurerm_cosmosdb_account.tre_db_account.name
-    "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"          = "sb-${var.tre_id}.servicebus.windows.net"
+    "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"          = local.service_bus_namespace_fqdn
     "EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT"       = module.airlock_resources.event_grid_status_changed_topic_endpoint
     "EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT" = module.airlock_resources.event_grid_airlock_notification_topic_endpoint
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"             = azurerm_servicebus_queue.workspacequeue.name

@@ -35,4 +35,6 @@ locals {
     "privatelink.mysql.database.azure.com",
     "privatelink.azuredatabricks.net"
   ])
+
+  service_bus_namespace_fqdn = regex("(?:(?P<scheme>[^:/?#]+):)?(?://(?P<fqdn>[^/?#:]*))?(?::(?P<port>[0-9]+))?(?P<path>[^?#]*)(?:\\?(?P<query>[^#]*))?(?:#(?P<fragment>.*))?", azurerm_servicebus_namespace.sb.endpoint).fqdn
 }

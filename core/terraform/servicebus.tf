@@ -47,7 +47,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "servicebuslink" {
 }
 
 resource "azurerm_private_endpoint" "sbpe" {
-  name                = "pe-sb-${var.tre_id}"
+  name                = "pe-${azurerm_servicebus_namespace.sb.name}"
   location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
   subnet_id           = module.network.resource_processor_subnet_id
@@ -61,7 +61,7 @@ resource "azurerm_private_endpoint" "sbpe" {
   }
 
   private_service_connection {
-    name                           = "psc-sb-${var.tre_id}"
+    name                           = "psc-${azurerm_servicebus_namespace.sb.name}"
     private_connection_resource_id = azurerm_servicebus_namespace.sb.id
     is_manual_connection           = false
     subresource_names              = ["namespace"]
@@ -93,7 +93,7 @@ resource "azurerm_servicebus_namespace_network_rule_set" "servicebus_network_rul
 }
 
 resource "azurerm_monitor_diagnostic_setting" "sb" {
-  name                       = "diagnostics-sb-${var.tre_id}"
+  name                       = "diagnostics-${azurerm_servicebus_namespace.sb.name}"
   target_resource_id         = azurerm_servicebus_namespace.sb.id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
 
