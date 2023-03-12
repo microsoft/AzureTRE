@@ -23,7 +23,7 @@ shared_service_templates = [
 async def test_get_shared_service_templates(template_name, verify) -> None:
     async with AsyncClient(verify=verify) as client:
         admin_token = await get_admin_token(verify)
-        response = await client.get(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_SHARED_SERVICE_TEMPLATES}", headers=get_auth_header(admin_token))
+        response = await client.get(f"{config.TRE_URL}{strings.API_SHARED_SERVICE_TEMPLATES}", headers=get_auth_header(admin_token))
 
         template_names = [templates["name"] for templates in response.json()["templates"]]
         assert (template_name in template_names), f"No {template_name} template found"

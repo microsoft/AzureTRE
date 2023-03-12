@@ -53,7 +53,7 @@ fi
 # Then register an App for the TRE Core.
 "$DIR/aad/create_api_application.sh" \
   --name "${TRE_ID}" \
-  --tre-url "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com" \
+  --tre-url "${TRE_URL}" \
   --admin-consent --automation-clientid "${TEST_ACCOUNT_CLIENT_ID}" \
   --reset-password $RESET_PASSWORDS
 
