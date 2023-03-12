@@ -96,8 +96,8 @@ if [[ -z ${bundle_type:-} ]]; then
     usage
 fi
 
-acr_domain=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)
-explain_json=$(porter explain --reference "${acr_name}${acr_domain}"/"$(yq eval '.name' porter.yaml)":v"$(yq eval '.version' porter.yaml)" -o json)
+acr_domain_suffix=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)
+explain_json=$(porter explain --reference "${acr_name}${acr_domain_suffix}"/"$(yq eval '.name' porter.yaml)":v"$(yq eval '.version' porter.yaml)" -o json)
 
 payload=$(echo "${explain_json}" | jq --argfile json_schema template_schema.json --arg current "${current}" --arg bundle_type "${bundle_type}" '. + {"json_schema": $json_schema, "resourceType": $bundle_type, "current": $current}')
 
