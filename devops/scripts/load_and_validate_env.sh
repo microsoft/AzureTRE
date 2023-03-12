@@ -65,6 +65,8 @@ else
     # Export as Terraform keys env vars
     # shellcheck disable=SC2046
     export $(yq e "$GET_LEAF_KEYS|$TF_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)
+    TRE_URL=${TRE_URL:-https://${TRE_ID}.${LOCATION}.cloudapp.azure.com}
+    export TRE_URL
 fi
 
 set +o nounset

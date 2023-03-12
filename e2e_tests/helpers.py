@@ -34,10 +34,7 @@ def get_auth_header(token: str) -> dict:
 
 
 def get_full_endpoint(endpoint: str) -> str:
-    if (config.TRE_URL != ""):
-        return f"{config.TRE_URL}{endpoint}"
-    else:
-        return f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}"
+    return f"{config.TRE_URL}{endpoint}"
 
 
 @asynccontextmanager
