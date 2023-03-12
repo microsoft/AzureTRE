@@ -19,7 +19,7 @@
     "arm_environment": {
       "description": "The Azure environment where resources will be deployed.",
       "type": "string",
-      "enum": ["public", "usgovernment", "china", "german", "stack"]
+      "enum": ["public", "usgovernment"]
     },
     "management": {
       "description": "Management configuration",
@@ -85,6 +85,11 @@
         "enable_swagger": {
           "description": "Determines whether the Swagger interface for the API will be available.",
           "type": "boolean"
+        },
+        "tre_url": {
+          "description": "Url for the TRE environment.",
+          "type": "string",
+          "pattern": "^https?://"
         }
       }
     },
@@ -158,6 +163,7 @@
   },
   "required": [
     "location",
-    "tre_id"
+    "tre_id",
+    "arm_environment"
   ]
 }

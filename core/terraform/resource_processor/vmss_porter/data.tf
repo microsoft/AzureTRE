@@ -15,7 +15,7 @@ data "template_file" "cloudconfig" {
     mgmt_storage_account_name                        = var.mgmt_storage_account_name
     service_bus_deployment_status_update_queue       = var.service_bus_deployment_status_update_queue
     service_bus_resource_request_queue               = var.service_bus_resource_request_queue
-    service_bus_namespace                            = "sb-${var.tre_id}.servicebus.windows.net"
+    service_bus_namespace                            = var.service_bus_namespace_fqdn
     vmss_msi_id                                      = azurerm_user_assigned_identity.vmss_msi.client_id
     arm_subscription_id                              = data.azurerm_subscription.current.subscription_id
     arm_tenant_id                                    = data.azurerm_client_config.current.tenant_id

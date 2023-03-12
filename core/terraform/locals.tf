@@ -31,8 +31,9 @@ locals {
     "privatelink.cert.api.azureml.ms",
     "privatelink.notebooks.azure.net",
     "privatelink.postgres.database.azure.com",
-    "nexus-${var.tre_id}.${var.location}.cloudapp.azure.com",
     "privatelink.mysql.database.azure.com",
     "privatelink.azuredatabricks.net"
   ])
+
+  service_bus_namespace_fqdn = regex("(?:(?P<scheme>[^:/?#]+):)?(?://(?P<fqdn>[^/?#:]*))?(?::(?P<port>[0-9]+))?(?P<path>[^?#]*)(?:\\?(?P<query>[^#]*))?(?:#(?P<fragment>.*))?", azurerm_servicebus_namespace.sb.endpoint).fqdn
 }

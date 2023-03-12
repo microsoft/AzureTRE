@@ -8,7 +8,7 @@ from azure.cosmos.exceptions import CosmosHttpResponseError
 from azure.servicebus.exceptions import ServiceBusConnectionError, ServiceBusAuthenticationError
 from api.dependencies.database import get_store_key
 
-from core import config
+from core import config, cloud
 from models.schemas.status import StatusEnum
 from resources import strings
 
@@ -63,7 +63,10 @@ async def create_resource_processor_status(credential) -> Tuple[StatusEnum, str]
     message = ""
     try:
         vmss_name = f"vmss-rp-porter-{config.TRE_ID}"
-        compute_client = ComputeManagementClient(credential=credential, subscription_id=config.SUBSCRIPTION_ID)
+        compute_client = ComputeManagementClient(credential=credential,
+                                                 subscription_id=config.SUBSCRIPTION_ID,
+                                                 base_url=cloud.get_resource_manager_endpoint(),
+                                                 credential_scopes=cloud.get_resource_manager_credential_scopes())
         async with compute_client:
             vmss_list = compute_client.virtual_machine_scale_set_vms.list(config.RESOURCE_GROUP_NAME, vmss_name)
             async for vm in vmss_list:

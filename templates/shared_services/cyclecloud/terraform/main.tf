@@ -50,3 +50,8 @@ data "azurerm_virtual_network" "core" {
   name                = local.core_vnet
   resource_group_name = local.core_resource_group_name
 }
+
+data "azurerm_public_ip" "app_gateway_ip" {
+  name                = "pip-agw-${var.tre_id}"
+  resource_group_name = local.core_resource_group_name
+}

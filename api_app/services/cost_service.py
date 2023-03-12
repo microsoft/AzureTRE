@@ -12,7 +12,7 @@ from azure.core.exceptions import ResourceNotFoundError, HttpResponseError
 
 from azure.mgmt.resource import ResourceManagementClient
 
-from core import config, credentials
+from core import config, credentials, cloud
 from db.errors import EntityDoesNotExist
 from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.user_resources import UserResourceRepository
@@ -93,7 +93,10 @@ class CostService:
     def __init__(self) -> None:
         self.scope = "/subscriptions/{}".format(config.SUBSCRIPTION_ID)
         self.client = CostManagementClient(credential=credentials.get_credential())
-        self.resource_client = ResourceManagementClient(credentials.get_credential(), config.SUBSCRIPTION_ID)
+        self.resource_client = ResourceManagementClient(credentials.get_credential(),
+                                                        config.SUBSCRIPTION_ID,
+                                                        base_url=cloud.get_resource_manager_endpoint(),
+                                                        credential_scopes=cloud.get_resource_manager_credential_scopes())
         self.cache = {}
 
     def get_cached_result(self, key: str) -> Union[QueryResult, None]:
