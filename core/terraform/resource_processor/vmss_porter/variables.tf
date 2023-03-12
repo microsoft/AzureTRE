@@ -6,6 +6,7 @@ variable "resource_processor_subnet_id" {}
 variable "resource_processor_vmss_porter_image_repository" {}
 variable "docker_registry_server" {}
 variable "service_bus_namespace_id" {}
+variable "service_bus_namespace_fqdn" {}
 variable "service_bus_resource_request_queue" {}
 variable "service_bus_deployment_status_update_queue" {}
 variable "mgmt_storage_account_name" {}
