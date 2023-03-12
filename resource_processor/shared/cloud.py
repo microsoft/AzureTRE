@@ -6,4 +6,4 @@ def get_cloud() -> cloud.Cloud:
 
 
 def get_acr_domain_suffix():
-    return cloud.get_active_cloud().suffixes.acr_login_server_endpoint
+    return get_cloud().suffixes.acr_login_server_endpoint
