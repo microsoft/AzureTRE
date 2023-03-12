@@ -11,7 +11,7 @@ from fastapi import Request, HTTPException, status
 from msal import ConfidentialClientApplication
 
 from services.access_service import AccessService, AuthConfigValidationError
-from core import config
+from core import config, cloud
 from db.errors import EntityDoesNotExist
 from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace import Workspace, WorkspaceRole
@@ -30,15 +30,16 @@ class AzureADAuthorization(AccessService):
     _jwt_keys: dict = {}
 
     require_one_of_roles = None
+    aad_instance = cloud.get_aad_authority_url()
 
     TRE_CORE_ROLES = ['TREAdmin', 'TREUser']
     WORKSPACE_ROLES_DICT = {'WorkspaceOwner': 'app_role_id_workspace_owner', 'WorkspaceResearcher': 'app_role_id_workspace_researcher', 'AirlockManager': 'app_role_id_workspace_airlock_manager'}
 
     def __init__(self, auto_error: bool = True, require_one_of_roles: Optional[list] = None):
         super(AzureADAuthorization, self).__init__(
-            authorizationUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/authorize",
-            tokenUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
-            refreshUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
+            authorizationUrl=f"{self.aad_instance}/{config.AAD_TENANT_ID}/oauth2/v2.0/authorize",
+            tokenUrl=f"{self.aad_instance}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
+            refreshUrl=f"{self.aad_instance}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
             scheme_name="oauth2",
             auto_error=auto_error
         )
@@ -166,7 +167,7 @@ class AzureADAuthorization(AccessService):
         Rather tha use PyJWKClient.get_signing_key_from_jwt every time, we'll get all the keys from AAD and cache them.
         """
         if key_id not in AzureADAuthorization._jwt_keys:
-            response = requests.get(f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/v2.0/.well-known/openid-configuration")
+            response = requests.get(f"{self.aad_instance}/{config.AAD_TENANT_ID}/v2.0/.well-known/openid-configuration")
             aad_metadata = response.json() if response.ok else None
             jwks_uri = aad_metadata['jwks_uri'] if aad_metadata and 'jwks_uri' in aad_metadata else None
             if jwks_uri:
@@ -188,8 +189,11 @@ class AzureADAuthorization(AccessService):
     @staticmethod
     def _get_msgraph_token() -> str:
         scopes = ["https://graph.microsoft.com/.default"]
-        app = ConfidentialClientApplication(client_id=config.API_CLIENT_ID, client_credential=config.API_CLIENT_SECRET, authority=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}")
-        result = app.acquire_token_silent(scopes=scopes, account=None)
+        app = ConfidentialClientApplication(client_id=config.API_CLIENT_ID, client_credential=config.API_CLIENT_SECRET, authority=f"{cloud.get_aad_authority_url()}/{config.AAD_TENANT_ID}")
+        try:
+            result = app.acquire_token_silent(scopes=scopes, account=None)
+        except Exception:
+            result = None
         if not result:
             logging.debug('No suitable token exists in cache, getting a new one from AAD')
             result = app.acquire_token_for_client(scopes=scopes)

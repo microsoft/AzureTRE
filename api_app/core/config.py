@@ -52,9 +52,10 @@ API_CLIENT_SECRET: str = config("API_CLIENT_SECRET", default="")
 SWAGGER_UI_CLIENT_ID: str = config("SWAGGER_UI_CLIENT_ID", default="")
 AAD_TENANT_ID: str = config("AAD_TENANT_ID", default="")
 
-AAD_INSTANCE: str = config("AAD_INSTANCE", default="https://login.microsoftonline.com")
 API_AUDIENCE: str = config("API_AUDIENCE", default=API_CLIENT_ID)
 
 AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS: int = config("AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS", default=1)
 
 API_ROOT_SCOPE: str = f"api://{API_CLIENT_ID}/user_impersonation"
+
+ARM_ENVIRONMENT: str = config("ARM_ENVIRONMENT", default="public")

@@ -6,6 +6,7 @@ variable "resource_processor_subnet_id" {}
 variable "resource_processor_vmss_porter_image_repository" {}
 variable "docker_registry_server" {}
 variable "service_bus_namespace_id" {}
+variable "service_bus_namespace_fqdn" {}
 variable "service_bus_resource_request_queue" {}
 variable "service_bus_deployment_status_update_queue" {}
 variable "mgmt_storage_account_name" {}
@@ -30,8 +31,4 @@ variable "log_analytics_workspace_primary_key" {}
 
 variable "rp_bundle_values" {
   type = map(string)
-}
-
-locals {
-  rp_bundle_values_formatted = join("\n", [for key in keys(var.rp_bundle_values) : "RP_BUNDLE_${key}=${var.rp_bundle_values[key]}"])
 }

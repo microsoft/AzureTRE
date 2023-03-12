@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.41.0"
+      version = "=3.47.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -11,7 +11,7 @@ terraform {
     }
     local = {
       source  = "hashicorp/local"
-      version = "~> 2.3.0"
+      version = "~> 2.4.0"
     }
     http = {
       source  = "hashicorp/http"
@@ -143,6 +143,7 @@ module "resource_processor_vmss_porter" {
   docker_registry_server                           = local.docker_registry_server
   resource_processor_vmss_porter_image_repository  = var.resource_processor_vmss_porter_image_repository
   service_bus_namespace_id                         = azurerm_servicebus_namespace.sb.id
+  service_bus_namespace_fqdn                       = local.service_bus_namespace_fqdn
   service_bus_resource_request_queue               = azurerm_servicebus_queue.workspacequeue.name
   service_bus_deployment_status_update_queue       = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
   mgmt_storage_account_name                        = var.mgmt_storage_account_name
