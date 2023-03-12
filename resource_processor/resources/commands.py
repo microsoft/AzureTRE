@@ -20,7 +20,8 @@ def azure_login_command(config):
 
 
 def azure_acr_login_command(config):
-    return f"az acr login --name {config['registry_server'].replace(get_acr_domain_suffix(),'')}"
+    acr_name = _get_acr_name(acr_fqdn=config['registry_server'])
+    return f"az acr login --name {acr_name}"
 
 
 async def build_porter_command(config, logger, msg_body, custom_action=False):
@@ -111,7 +112,7 @@ async def get_porter_parameter_keys(config, logger, msg_body):
 def get_special_porter_param_value(config, parameter_name: str, msg_body):
     # some parameters might not have identical names and this comes to handle that
     if parameter_name == "mgmt_acr_name":
-        return config["registry_server"].replace(get_acr_domain_suffix(), '')
+        return _get_acr_name(acr_fqdn=config['registry_server'])
     if parameter_name == "mgmt_resource_group_name":
         return config["tfstate_resource_group_name"]
     if parameter_name == "workspace_id":
@@ -120,3 +121,7 @@ def get_special_porter_param_value(config, parameter_name: str, msg_body):
         return msg_body.get("parentWorkspaceServiceId")  # not included in all messages
     if (value := config["bundle_params"].get(parameter_name.lower())) is not None:
         return value
+
+
+def _get_acr_name(acr_fqdn: str):
+    return acr_fqdn.replace(get_acr_domain_suffix(), '')
