@@ -3,3 +3,4 @@ opencensus-ext-azure==1.1.7
 opencensus-ext-logging==0.1.1
 azure-identity==1.12.0
 aiohttp==3.8.3
+azure-cli-core==2.46.0
