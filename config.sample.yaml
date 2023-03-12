@@ -4,7 +4,6 @@
 tre_id: __CHANGE_ME__
 location: __CHANGE_ME__
 # arm_environment: public
-# az_cloud_environment: AzureCloud
 management:
   mgmt_resource_group_name: __CHANGE_ME__
   mgmt_storage_account_name: __CHANGE_ME__

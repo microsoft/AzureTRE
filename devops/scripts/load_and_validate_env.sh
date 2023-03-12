@@ -45,8 +45,14 @@ else
     TRE_URL=${TRE_URL:-https://${TRE_ID}.${LOCATION}.cloudapp.azure.com}
     export TRE_URL
 
-    # Set the cloud environment for Azure CLI
-    az cloud set --name "${AZ_CLOUD_ENVIRONMENT:-"AzureCloud"}"
+    # Set the cloud environment for Azure CLI (based on the ARM_ENVIRONMENT env var)
+    declare -A azure_environments
+    azure_environments["public"]="AzureCloud"
+    azure_environments["usgovernment"]="AzureUSGovernment"
+    azure_environments["china"]="AzureChinaCloud"
+    azure_environments["german"]="AzureGermanCloud"
+
+    az cloud set --name "${azure_environments[${ARM_ENVIRONMENT}]}"
 
 fi
 

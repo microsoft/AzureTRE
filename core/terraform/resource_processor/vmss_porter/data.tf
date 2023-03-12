@@ -26,7 +26,7 @@ data "template_file" "cloudconfig" {
     key_vault_name                                   = var.key_vault_name
     key_vault_url                                    = var.key_vault_url
     arm_environment                                  = var.arm_environment
-    az_cloud_environment                             = var.az_cloud_environment
+    az_cloud_environment                             = local.az_cloud_environment
     rp_bundle_values                                 = local.rp_bundle_values_formatted
   }
 }
