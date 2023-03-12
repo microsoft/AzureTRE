@@ -5,7 +5,7 @@ import base64
 
 from resources.helpers import get_installation_id
 from shared.logging import shell_output_logger
-from shared.cloud import get_acr_domain_suffix
+from shared.cloud import get_acr_domain_suffix, get_cloud
 
 
 def azure_login_command(config):
@@ -115,6 +115,8 @@ def get_special_porter_param_value(config, parameter_name: str, msg_body):
         return _get_acr_name(acr_fqdn=config['registry_server'])
     if parameter_name == "mgmt_resource_group_name":
         return config["tfstate_resource_group_name"]
+    if parameter_name == "az_cloud_environment":
+        return get_cloud().name
     if parameter_name == "workspace_id":
         return msg_body.get("workspaceId")  # not included in all messages
     if parameter_name == "parent_service_id":

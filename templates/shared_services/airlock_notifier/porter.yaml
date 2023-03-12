@@ -27,6 +27,10 @@ parameters:
   - name: id
     type: string
     description: "Resource ID"
+  - name: az_cloud_environment
+    type: string
+    default: "AzureCloud"
+    description: "Used by Azure CLI to set the Azure environment"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -81,6 +85,14 @@ install:
       outputs:
         - name: airlock_notifier_logic_app_name
         - name: airlock_notifier_logic_app_resource_group_name
+
+  - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.az_cloud_environment }
 
   - az:
       description: "Login to Azure"

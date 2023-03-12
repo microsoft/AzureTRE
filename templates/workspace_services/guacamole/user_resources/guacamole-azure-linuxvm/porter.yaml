@@ -52,6 +52,10 @@ parameters:
     type: string
   - name: tre_id
     type: string
+  - name: az_cloud_environment
+    type: string
+    default: "AzureCloud"
+    description: "Used by Azure CLI to set the Azure environment"
   - name: parent_service_id
     type: string
     description: "Resource group containing the shared ACR"
@@ -211,6 +215,13 @@ start:
       outputs:
         - name: azure_resource_id
   - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.az_cloud_environment }
+  - az:
       description: "Login to Azure"
       arguments:
         - login
@@ -237,6 +248,13 @@ stop:
         key: ${ bundle.parameters.id }
       outputs:
         - name: azure_resource_id
+  - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.az_cloud_environment }
   - az:
       description: "Login to Azure"
       arguments:
@@ -267,6 +285,13 @@ reset_password:
         - name: vm_username
         - name: vm_password_secret_name
         - name: keyvault_name
+  - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.az_cloud_environment }
   - az:
       description: "Login to Azure"
       arguments:
