@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-innereye
-version: 0.6.0
+version: 0.5.1
 description: "An Azure TRE service for InnerEye Deep Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
