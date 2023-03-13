@@ -15,6 +15,3 @@ def get_aad_authority_url() -> str:
 
 def get_microsoft_graph_fqdn() -> str:
     return get_cloud().endpoints.microsoft_graph_resource_id.replace("https://", '').strip('/')
-
-def get_storage_endpoint() -> str:
-    return get_cloud().suffixes.storage_endpoint
