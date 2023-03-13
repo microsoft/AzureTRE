@@ -10,7 +10,5 @@ locals {
   az_cloud_environment = lookup({
     "public"       = "AzureCloud"
     "usgovernment" = "AzureUSGovernment"
-    "german"       = "AzureGermanCloud"
-    "china"        = "AzureChinaCloud"
   }, var.arm_environment, "AzureCloud")
 }
