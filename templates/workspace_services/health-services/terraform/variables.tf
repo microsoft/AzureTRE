@@ -3,6 +3,11 @@ variable "workspace_id" {
   description = "TRE workspace ID"
 }
 
+variable "aad_authority_url" {
+  type        = string
+  description = "Active directory"
+}
+
 variable "tre_id" {
   type        = string
   description = "TRE ID"

@@ -153,7 +153,7 @@ resource "azurerm_firewall_policy_rule_collection_group" "core" {
         type = "Https"
       }
       destination_fqdns = [
-        "graph.microsoft.com"
+        var.microsoft_graph_fqdn
       ]
       source_ip_groups = [data.azurerm_ip_group.web.id]
     }
