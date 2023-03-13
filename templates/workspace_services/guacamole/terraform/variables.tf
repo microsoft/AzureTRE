@@ -1,4 +1,5 @@
 variable "workspace_id" {}
+variable "aad_authority_url" {}
 variable "tre_id" {}
 variable "mgmt_resource_group_name" {}
 variable "mgmt_acr_name" {}

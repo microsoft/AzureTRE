@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import base64
+from shared.cloud import get_aad_authority_url, get_microsoft_graph_fqdn
 
 from resources.helpers import get_installation_id
 from shared.logging import shell_output_logger
@@ -121,6 +122,11 @@ def get_special_porter_param_value(config, parameter_name: str, msg_body):
         return msg_body.get("parentWorkspaceServiceId")  # not included in all messages
     if (value := config["bundle_params"].get(parameter_name.lower())) is not None:
         return value
+    # Parameters that relate to the cloud type
+    if parameter_name == "aad_authority_url":
+        return get_aad_authority_url()
+    if parameter_name == "microsoft_graph_fqdn":
+        return get_microsoft_graph_fqdn()
 
 
 def _get_acr_name(acr_fqdn: str):

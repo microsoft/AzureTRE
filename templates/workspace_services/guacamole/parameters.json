@@ -105,6 +105,12 @@
       "source": {
         "env": "IS_EXPOSED_EXTERNALLY"
       }
+    },
+    {
+      "name": "aad_authority_url",
+      "source": {
+        "env": "AAD_AUTHORITY_URL"
+      }
     }
   ]
 }
