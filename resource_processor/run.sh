@@ -33,6 +33,7 @@ EOF
 
 # TODO: Remove porter v0 https://github.com/microsoft/AzureTRE/issues/2990
 echo "Azure cli login..."
+az cloud set --name "${AZ_CLOUD_ENVIRONMENT}"
 az login --identity -u "${VMSS_MSI_ID}"
 
 echo "Checking if porter v0 state exists..."

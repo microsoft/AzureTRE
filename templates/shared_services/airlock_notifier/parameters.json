@@ -63,6 +63,12 @@
       "source": {
         "env": "SMTP_FROM_EMAIL"
       }
+    },
+    {
+      "name": "az_cloud_environment",
+      "source": {
+        "env": "AZ_CLOUD_ENVIRONMENT"
+      }
     }
   ]
 }

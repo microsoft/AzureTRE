@@ -6,18 +6,20 @@ from shared.cloud import get_aad_authority_url, get_microsoft_graph_fqdn
 
 from resources.helpers import get_installation_id
 from shared.logging import shell_output_logger
-from shared.cloud import get_acr_domain_suffix
+from shared.cloud import get_acr_domain_suffix, get_cloud
 
 
 def azure_login_command(config):
+    set_cloud_command = f"az cloud set --name {get_cloud().name}"
+
     if config["vmss_msi_id"]:
         # Use the Managed Identity when in VMSS context
-        command = f"az login --identity -u {config['vmss_msi_id']}"
+        login_command = f"az login --identity -u {config['vmss_msi_id']}"
     else:
         # Use a Service Principal when running locally
-        command = f"az login --service-principal --username {config['arm_client_id']} --password {config['arm_client_secret']} --tenant {config['arm_tenant_id']}"
+        login_command = f"az login --service-principal --username {config['arm_client_id']} --password {config['arm_client_secret']} --tenant {config['arm_tenant_id']}"
 
-    return command
+    return f"{set_cloud_command} && {login_command}"
 
 
 def azure_acr_login_command(config):
@@ -116,6 +118,8 @@ def get_special_porter_param_value(config, parameter_name: str, msg_body):
         return _get_acr_name(acr_fqdn=config['registry_server'])
     if parameter_name == "mgmt_resource_group_name":
         return config["tfstate_resource_group_name"]
+    if parameter_name == "az_cloud_environment":
+        return get_cloud().name
     if parameter_name == "workspace_id":
         return msg_body.get("workspaceId")  # not included in all messages
     if parameter_name == "parent_service_id":

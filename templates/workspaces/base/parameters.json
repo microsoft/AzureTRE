@@ -135,6 +135,12 @@
       "source": {
         "env": "ENABLE_AIRLOCK"
       }
+    },
+    {
+      "name": "az_cloud_environment",
+      "source": {
+        "env": "AZ_CLOUD_ENVIRONMENT"
+      }
     }
   ]
 }

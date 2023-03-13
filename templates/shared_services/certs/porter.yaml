@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-certs
-version: 0.4.0
+version: 0.4.1
 description: "An Azure TRE shared service to generate certificates for a specified internal domain using Letsencrypt"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -20,6 +20,10 @@ parameters:
   - name: tre_id
     type: string
     description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
+  - name: az_cloud_environment
+    type: string
+    default: "AzureCloud"
+    description: "Used by Azure CLI to set the Azure environment"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -70,6 +74,13 @@ install:
         - name: storage_account_name
         - name: resource_group_name
         - name: keyvault_name
+  - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.az_cloud_environment }
   - az:
       description: "Login to Azure"
       arguments:
@@ -137,6 +148,13 @@ renew:
         - name: storage_account_name
         - name: resource_group_name
         - name: keyvault_name
+  - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.az_cloud_environment }
   - az:
       description: "Login to Azure"
       arguments:
