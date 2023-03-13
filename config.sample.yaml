@@ -3,7 +3,6 @@
 # run `make auth` to setup the Auth.
 tre_id: __CHANGE_ME__
 location: __CHANGE_ME__
-# Sets the Azure environment to be used. Possible values: public, usgovernment, china, german, stack
 # arm_environment: public
 management:
   mgmt_resource_group_name: __CHANGE_ME__

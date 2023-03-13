@@ -57,6 +57,12 @@
       "source": {
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
       }
+    },
+    {
+      "name": "az_cloud_environment",
+      "source": {
+        "env": "AZ_CLOUD_ENVIRONMENT"
+      }
     }
   ]
 }
