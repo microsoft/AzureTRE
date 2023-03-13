@@ -8,10 +8,12 @@ import logging
 from starlette import status
 
 import config
+from e2e_tests import cloud
 
 
 LOGGER = logging.getLogger(__name__)
 TIMEOUT = Timeout(10, read=30)
+AAD_AUTHORITY_URL = cloud.get_aad_authority_url()
 
 
 class InstallFailedException(Exception):
@@ -109,12 +111,12 @@ async def get_admin_token(verify) -> str:
         if config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != "":
             # Use Client Credentials flow
             payload = f"grant_type=client_credentials&client_id={config.TEST_ACCOUNT_CLIENT_ID}&client_secret={config.TEST_ACCOUNT_CLIENT_SECRET}&scope=api://{config.API_CLIENT_ID}/.default"
-            url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/v2.0/token"
+            url = f"{AAD_AUTHORITY_URL}/{config.AAD_TENANT_ID}/oauth2/v2.0/token"
 
         else:
             # Use Resource Owner Password Credentials flow
             payload = f"grant_type=password&resource={config.API_CLIENT_ID}&username={config.TEST_USER_NAME}&password={config.TEST_USER_PASSWORD}&scope=api://{config.API_CLIENT_ID}/user_impersonation&client_id={config.TEST_APP_ID}"
-            url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/token"
+            url = f"{AAD_AUTHORITY_URL}/{config.AAD_TENANT_ID}/oauth2/token"
 
         response = await client.post(url, headers=headers, content=payload)
         try:
