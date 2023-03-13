@@ -17,7 +17,7 @@ resource "azurerm_healthcare_fhir_service" "fhir" {
   tags                = local.workspace_service_tags
 
   authentication {
-    authority = "https://login.microsoftonline.com/${local.aad_tenant_id}"
+    authority = local.authority
     audience  = "https://hs${local.service_resource_name_suffix}-fhir${local.service_resource_name_suffix}.fhir.azurehealthcareapis.com"
   }
 

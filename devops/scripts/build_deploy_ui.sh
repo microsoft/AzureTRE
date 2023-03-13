@@ -10,6 +10,8 @@ pushd "$DIR/../../ui/app"
 
 ui_version=$(jq -r '.version' package.json)
 
+activeDirectoryUri="$(az cloud show --query endpoints.activeDirectory --output tsv)"
+
 # replace the values in the config file
 jq --arg rootClientId "${SWAGGER_UI_CLIENT_ID}" \
   --arg rootTenantId "${AAD_TENANT_ID}" \
@@ -17,7 +19,8 @@ jq --arg rootClientId "${SWAGGER_UI_CLIENT_ID}" \
   --arg treUrl "/api" \
   --arg treId "${TRE_ID}" \
   --arg version "${ui_version}" \
-  '.rootClientId = $rootClientId | .rootTenantId = $rootTenantId | .treApplicationId = $treApplicationId | .treUrl = $treUrl | .treId = $treId | .version = $version' ./src/config.source.json > ./src/config.json
+  --arg activeDirectoryUri "${activeDirectoryUri}" \
+  '.rootClientId = $rootClientId | .rootTenantId = $rootTenantId | .treApplicationId = $treApplicationId | .treUrl = $treUrl | .treId = $treId | .version = $version | .activeDirectoryUri = $activeDirectoryUri' ./src/config.source.json > ./src/config.json
 
 # build and deploy the app
 yarn install
