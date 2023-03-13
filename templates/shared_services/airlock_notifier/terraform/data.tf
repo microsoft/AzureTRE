@@ -27,8 +27,8 @@ data "azurerm_virtual_network" "core" {
   resource_group_name = local.core_resource_group_name
 }
 
-data "azurerm_firewall" "fw" {
-  name                = local.firewall_name
+data "azurerm_firewall_policy" "airlock_collection_policy" {
+  name                = local.firewall_policy_name
   resource_group_name = local.core_resource_group_name
 }
 

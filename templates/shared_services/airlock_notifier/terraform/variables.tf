@@ -22,11 +22,11 @@ variable "smtp_server_port" {
   type = string
 }
 
-variable "smtp_username" {
+variable "smtpUsername" {
   type = string
 }
 
-variable "smtp_password" {
+variable "smtpPassword" {
   type      = string
   sensitive = true
 }

@@ -11,5 +11,5 @@ locals {
   }
   default_tre_url        = "https://${var.tre_id}.${data.azurerm_resource_group.core.location}.cloudapp.azure.com"
   public_ip_address_name = "pip-fw-${var.tre_id}"
-  firewall_name          = "fw-${var.tre_id}"
+  firewall_policy_name   = "fw-policy-${var.tre_id}"
 }

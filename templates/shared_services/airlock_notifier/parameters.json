@@ -53,13 +53,13 @@
       }
     },
     {
-      "name": "smtp_username",
+      "name": "smtpUsername",
       "source": {
         "env": "SMTP_USERNAME"
       }
     },
     {
-      "name": "smtp_password",
+      "name": "smtpPassword",
       "source": {
         "env": "SMTP_PASSWORD"
       }
