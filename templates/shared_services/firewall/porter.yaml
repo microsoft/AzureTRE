@@ -51,6 +51,7 @@ parameters:
     description: The firewall and its policy SKU tier
   - name: microsoft_graph_fqdn
     type: string
+    default: "graph.microsoft.com"
 
 mixins:
   - terraform:

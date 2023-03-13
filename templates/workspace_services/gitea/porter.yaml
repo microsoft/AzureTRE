@@ -24,8 +24,6 @@ credentials:
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
 parameters:
-  - name: aad_authority_url
-    type: string
   - name: workspace_id
     type: string
   - name: tre_id
@@ -58,6 +56,9 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: aad_authority_url
+    type: string
+    default: "https://login.microsoftonline.com"
 
 mixins:
   - exec

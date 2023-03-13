@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole
-version: 0.7.3
+version: 0.7.4
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -82,6 +82,7 @@ parameters:
     description: "Determines if the web app will be available over public/internet or private networks"
   - name: aad_authority_url
     type: string
+    default: "https://login.microsoftonline.com"
   # the following are added automatically by the resource processor
   - name: id
     type: string
