@@ -4,6 +4,7 @@ import logging
 import json
 import re
 from typing import Tuple
+from shared_code.cloud import get_storage_endpoint
 
 from azure.core.exceptions import ResourceExistsError
 from azure.identity import DefaultAzureCredential
@@ -11,9 +12,11 @@ from azure.storage.blob import ContainerSasPermissions, generate_container_sas, 
 
 from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
 
+STORAGE_ENDPOINT = get_storage_endpoint()
+
 
 def get_account_url(account_name: str) -> str:
-    return f"https://{account_name}.blob.core.windows.net/"
+    return f"https://{account_name}.blob.{STORAGE_ENDPOINT}/"
 
 
 def get_blob_client_from_blob_info(storage_account_name: str, container_name: str, blob_name: str):
@@ -120,7 +123,7 @@ def get_blob_info_from_topic_and_subject(topic: str, subject: str):
 
 def get_blob_info_from_blob_url(blob_url: str) -> Tuple[str, str, str]:
     # Example of blob url: https://stalimappws663d.blob.core.windows.net/50866a82-d13a-4fd5-936f-deafdf1022ce/test_blob.txt
-    return re.search(r'https://(.*?).blob.core.windows.net/(.*?)/(.*?)$', blob_url).groups()
+    return re.search(rf'https://(.*?).blob.{STORAGE_ENDPOINT}/(.*?)/(.*?)$', blob_url).groups()
 
 
 def get_blob_url(account_name: str, container_name: str, blob_name='') -> str:
