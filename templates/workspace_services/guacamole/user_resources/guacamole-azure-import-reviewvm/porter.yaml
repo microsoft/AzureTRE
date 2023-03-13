@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-import-reviewvm
-version: 0.2.2
+version: 0.2.3
 description: "An Azure TRE User Resource Template for reviewing Airlock import requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -50,6 +50,10 @@ parameters:
   - name: id
     type: string
     description: "An Id for this installation"
+  - name: az_cloud_environment
+    type: string
+    default: "AzureCloud"
+    description: "Used by Azure CLI to set the Azure environment"
     env: id
   - name: tfstate_resource_group_name
     type: string
@@ -191,6 +195,13 @@ start:
       outputs:
         - name: azure_resource_id
   - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.az_cloud_environment }
+  - az:
       description: "Login to Azure"
       arguments:
         - login
@@ -217,6 +228,13 @@ stop:
         key: ${ bundle.parameters.id }
       outputs:
         - name: azure_resource_id
+  - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.az_cloud_environment }
   - az:
       description: "Login to Azure"
       arguments:
@@ -247,6 +265,13 @@ reset_password:
         - name: vm_username
         - name: vm_password_secret_name
         - name: keyvault_name
+  - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.az_cloud_environment }
   - az:
       description: "Login to Azure"
       arguments:

@@ -6,4 +6,9 @@ locals {
   }
 
   rp_bundle_values_formatted = join("\n", [for key in keys(var.rp_bundle_values) : "RP_BUNDLE_${key}=${var.rp_bundle_values[key]}"])
+
+  az_cloud_environment = lookup({
+    "public"       = "AzureCloud"
+    "usgovernment" = "AzureUSGovernment"
+  }, var.arm_environment, "AzureCloud")
 }

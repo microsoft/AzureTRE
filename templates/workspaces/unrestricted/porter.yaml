@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-unrestricted
-version: 0.8.1
+version: 0.8.2
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -31,6 +31,10 @@ parameters:
   - name: id
     type: string
     description: "the resource ID for this installation"
+  - name: az_cloud_environment
+    type: string
+    default: "AzureCloud"
+    description: "Used by Azure CLI to set the Azure environment"
   - name: azure_location
     type: string
     description: "Azure location (region) to deploy to"
@@ -229,6 +233,13 @@ upgrade:
         - name: client_id
         - name: scope_id
         - name: sp_id
+  - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.az_cloud_environment }
   - az:
       description: "AAD Application Admin Login"
       arguments:
