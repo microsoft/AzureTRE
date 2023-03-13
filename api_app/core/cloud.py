@@ -31,3 +31,7 @@ def get_resource_manager_credential_scopes():
 
 def get_microsoft_graph_url() -> str:
     return get_cloud().endpoints.microsoft_graph_resource_id.strip("/")
+
+
+def get_storage_endpoint() -> str:
+    return get_cloud().suffixes.storage_endpoint
