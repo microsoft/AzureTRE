@@ -46,9 +46,8 @@ else
     TRE_URL=${TRE_URL:-https://${TRE_ID}.${LOCATION}.cloudapp.azure.com}
     export TRE_URL
 
-    # Set AZ_CLOUD_ENVIRONMENT based on the ARM_ENVIRONMENT env var
-    declare -A azure_environments=( ["public"]="AzureCloud" ["usgovernment"]="AzureUSGovernment")
-    export AZ_CLOUD_ENVIRONMENT="${azure_environments[${ARM_ENVIRONMENT}]}"
+    AZ_CLOUD_ENVIRONMENT=$(az cloud show --query name --output tsv)
+    export AZ_CLOUD_ENVIRONMENT
 
 fi
 
