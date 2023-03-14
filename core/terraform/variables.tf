@@ -71,7 +71,7 @@ variable "resource_processor_number_processes_per_instance" {
 
 variable "enable_swagger" {
   type        = bool
-  default     = false
+  default     = true
   description = "Determines whether the Swagger interface for the API will be available."
   sensitive   = false
 }
