@@ -3,7 +3,7 @@ import logging
 
 from azure.storage.blob import generate_container_sas, ContainerSasPermissions, BlobServiceClient
 from fastapi import HTTPException, status
-from core.cloud import get_storage_endpoint
+from core.cloud import get_storage_endpoint_suffix
 from core import config, credentials
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReviewUserResource, AirlockReviewDecision, AirlockActions, AirlockFile, AirlockReview
 from models.domain.authentication import User
@@ -34,7 +34,7 @@ from db.repositories.resources_history import ResourceHistoryRepository
 from collections import defaultdict
 from event_grid.event_sender import send_status_changed_event, send_airlock_notification_event
 
-STORAGE_ENDPOINT = get_storage_endpoint()
+STORAGE_ENDPOINT = get_storage_endpoint_suffix()
 
 
 def get_account_by_request(airlock_request: AirlockRequest, workspace: Workspace) -> str:

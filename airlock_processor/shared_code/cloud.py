@@ -22,5 +22,5 @@ def get_cloud() -> cloud.Cloud:
         f"Invalid arm environment. Got: {arm_env}. Supported envs are: {', '.join(supported_clouds.keys())}.")
 
 
-def get_storage_endpoint() -> str:
+def get_storage_endpoint_suffix() -> str:
     return get_cloud().suffixes.storage_endpoint
