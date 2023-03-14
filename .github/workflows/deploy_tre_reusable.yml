@@ -1,5 +1,5 @@
 ---
-name: Deploy Azure TRE Resuable
+name: Deploy Azure TRE Reusable
 
 on:  # yamllint disable-line rule:truthy
   workflow_call:
@@ -137,7 +137,7 @@ jobs:
           echo "environment : ${{ inputs.environmentName }}"
 
       - name: Check required secrets
-        # since this is a resuable workflow, required=true secrets will always have a value but it can be empty.
+        # since this is a reusable workflow, required=true secrets will always have a value but it can be empty.
         run: |
           if [ "${{ secrets.AAD_TENANT_ID }}" == '' ]; then
             echo "Missing secret: AAD_TENANT_ID" && exit 1
