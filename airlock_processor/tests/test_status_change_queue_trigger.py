@@ -111,7 +111,7 @@ class TestFileEnumeration():
 
 class TestFilesDeletion():
     @patch("StatusChangedQueueTrigger.set_output_event_to_trigger_container_deletion")
-    @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
+    @patch.dict(os.environ, {"TRE_ID": "tre-id", 'ARM_ENVIRONMENT': 'public'}, clear=True)
     def test_delete_request_files_should_be_called_on_cancel_stage(self, mock_set_output_event_to_trigger_container_deletion):
         message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"cancelled\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
         message = _mock_service_bus_message(body=message_body)

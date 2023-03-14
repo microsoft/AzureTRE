@@ -1,5 +1,6 @@
 from collections import namedtuple
 import json
+import os
 import pytest
 from mock import MagicMock, patch
 
@@ -7,13 +8,12 @@ from shared_code.blob_operations import get_blob_info_from_topic_and_subject, ge
 from exceptions import TooManyFilesInRequestException, NoFilesInRequestException
 from shared_code.cloud import get_storage_endpoint
 
-STORAGE_ENDPOINT = get_storage_endpoint()
-
 
 def get_test_blob():
     return namedtuple("Blob", "name")
 
 
+@patch.dict(os.environ, {'ARM_ENVIRONMENT': 'public'})
 class TestBlobOperations():
 
     def test_get_blob_info_from_topic_and_subject(self):
@@ -27,7 +27,7 @@ class TestBlobOperations():
         assert blob_name == "BLOB"
 
     def test_get_blob_info_from_url(self):
-        url = f"https://stalimextest.blob.{STORAGE_ENDPOINT}/c144728c-3c69-4a58-afec-48c2ec8bfd45/test_dataset.txt"
+        url = f"https://stalimextest.blob.{get_storage_endpoint()}/c144728c-3c69-4a58-afec-48c2ec8bfd45/test_dataset.txt"
 
         storage_account_name, container_name, blob_name = get_blob_info_from_blob_url(blob_url=url)
 
@@ -52,7 +52,7 @@ class TestBlobOperations():
     @patch("shared_code.blob_operations.BlobServiceClient")
     @patch("shared_code.blob_operations.generate_container_sas", return_value="sas")
     def test_copy_data_adds_copied_from_metadata(self, _, mock_blob_service_client):
-        source_url = f"http://storageacct.blob.{STORAGE_ENDPOINT}/container/blob"
+        source_url = f"http://storageacct.blob.{get_storage_endpoint()}/container/blob"
 
         # Check for two scenarios: when there's no copied_from history in metadata, and when there is some
         for source_metadata, dest_metadata in [
@@ -87,11 +87,11 @@ class TestBlobOperations():
         blob_name = "blob"
 
         blob_url = get_blob_url(account_name, container_name, blob_name)
-        assert blob_url == f"https://{account_name}.blob.{STORAGE_ENDPOINT}/{container_name}/{blob_name}"
+        assert blob_url == f"https://{account_name}.blob.{get_storage_endpoint()}/{container_name}/{blob_name}"
 
     def test_get_blob_url_without_blob_name_should_return_container_url(self):
         account_name = "account"
         container_name = "container"
 
         blob_url = get_blob_url(account_name, container_name)
-        assert blob_url == f"https://{account_name}.blob.{STORAGE_ENDPOINT}/{container_name}/"
+        assert blob_url == f"https://{account_name}.blob.{get_storage_endpoint()}/{container_name}/"
