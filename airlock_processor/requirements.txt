@@ -6,3 +6,4 @@ azure-identity
 azure-mgmt-storage
 azure-mgmt-resource
 pydantic
+azure-cli-core

@@ -115,6 +115,7 @@ module "airlock_resources" {
   airlock_servicebus                    = azurerm_servicebus_namespace.sb
   applicationinsights_connection_string = module.azure_monitor.app_insights_connection_string
   enable_malware_scanning               = var.enable_airlock_malware_scanning
+  arm_environment                       = var.arm_environment
   tre_core_tags                         = local.tre_core_tags
   log_analytics_workspace_id            = module.azure_monitor.log_analytics_workspace_id
   blob_core_dns_zone_id                 = module.network.blob_core_dns_zone_id
