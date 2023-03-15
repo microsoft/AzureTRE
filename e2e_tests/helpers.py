@@ -1,11 +1,10 @@
-from json import JSONDecodeError
-
 import asyncio
 from typing import List, Optional
 from contextlib import asynccontextmanager
 from httpx import AsyncClient, Timeout, Response
 import logging
 from starlette import status
+from azure.identity import ClientSecretCredential, UsernamePasswordCredential
 
 import config
 from e2e_tests import cloud
@@ -13,7 +12,6 @@ from e2e_tests import cloud
 
 LOGGER = logging.getLogger(__name__)
 TIMEOUT = Timeout(10, read=30)
-AAD_AUTHORITY_URL = cloud.get_aad_authority_url()
 
 
 class InstallFailedException(Exception):
@@ -105,29 +103,17 @@ async def check_aad_auth_redirect(endpoint, verify) -> None:
 
 
 async def get_admin_token(verify) -> str:
-    async with AsyncClient(verify=verify) as client:
-        responseJson = ""
-        headers = {'Content-Type': "application/x-www-form-urlencoded"}
-        if config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != "":
-            # Use Client Credentials flow
-            payload = f"grant_type=client_credentials&client_id={config.TEST_ACCOUNT_CLIENT_ID}&client_secret={config.TEST_ACCOUNT_CLIENT_SECRET}&scope=api://{config.API_CLIENT_ID}/.default"
-            url = f"{AAD_AUTHORITY_URL}/{config.AAD_TENANT_ID}/oauth2/v2.0/token"
+    scope_uri = f"api://{config.API_CLIENT_ID}"
+    if config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != "":
+        # Use Client Credentials flow
+        credential = ClientSecretCredential(config.AAD_TENANT_ID, config.TEST_ACCOUNT_CLIENT_ID, config.TEST_ACCOUNT_CLIENT_SECRET, connection_verify=verify, authority=cloud.get_authority_domain())
+        token = credential.get_token(f'{scope_uri}/.default')
+    else:
+        # Use Resource Owner Password Credentials flow
+        credential = UsernamePasswordCredential(config.TEST_APP_ID, config.TEST_USER_NAME, config.TEST_USER_PASSWORD, connection_verify=verify, authority=cloud.get_authority_domain(), tenant_id=config.AAD_TENANT_ID)
+        token = credential.get_token(f'{scope_uri}/user_impersonation')
 
-        else:
-            # Use Resource Owner Password Credentials flow
-            payload = f"grant_type=password&resource={config.API_CLIENT_ID}&username={config.TEST_USER_NAME}&password={config.TEST_USER_PASSWORD}&scope=api://{config.API_CLIENT_ID}/user_impersonation&client_id={config.TEST_APP_ID}"
-            url = f"{AAD_AUTHORITY_URL}/{config.AAD_TENANT_ID}/oauth2/token"
-
-        response = await client.post(url, headers=headers, content=payload)
-        try:
-            responseJson = response.json()
-        except JSONDecodeError:
-            assert False, f"Failed to parse response as JSON. status_code: {response.status_code}, content: {response.content}"
-
-        assert "access_token" in responseJson, f"Failed to get access_token. content: {response.content}"
-        token = responseJson["access_token"]
-        assert token is not None, "Token not returned"
-        return token if (response.status_code == status.HTTP_200_OK) else ""
+    return token.token
 
 
 def assert_status(response: Response, expected_status: List[int] = [200], message_prefix: str = "Unexpected HTTP Status"):
