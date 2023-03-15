@@ -82,6 +82,7 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+          environment: ${{ secrets.AZURE_ENVIRONMENT }}
 
       - name: Run deployment cleanup
         env:
@@ -115,6 +116,7 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+          environment: ${{ secrets.AZURE_ENVIRONMENT }}
 
       - name: Run deployment cleanup
         env:
@@ -156,6 +158,7 @@ jobs:
       ACR_NAME: ${{ format('tre{0}', needs.pr_comment.outputs.prRefId) }}
       DEVCONTAINER_TAG: ${{ needs.pr_comment.outputs.prRefId }}
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS}}
+      AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
       API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
       APPLICATION_ADMIN_CLIENT_ID: ${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}

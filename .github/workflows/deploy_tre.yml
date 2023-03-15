@@ -38,6 +38,7 @@ jobs:
       ACR_NAME: ${{ secrets.ACR_NAME }}
       DEVCONTAINER_TAG: 'latest'
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
       API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
       APPLICATION_ADMIN_CLIENT_ID: ${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}

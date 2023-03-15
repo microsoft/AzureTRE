@@ -11,6 +11,10 @@ inputs:
   AZURE_CREDENTIALS:
     description: "Credentials to access Azure."
     required: true
+  AZURE_ENVIRONMENT:
+    description: "Azure Cloud Environment"
+    default: "AzureCloud"
+    required: false
   API_CLIENT_ID:
     description: "The API Client Id."
     required: false
@@ -122,6 +126,7 @@ runs:
       if: contains(inputs.COMMAND, 'bootstrap') != true
       with:
         creds: ${{ inputs.AZURE_CREDENTIALS }}
+        environment: ${{ inputs.AZURE_ENVIRONMENT }}
 
     - name: ACR Login
       shell: bash
@@ -132,10 +137,17 @@ runs:
     - name: Construct TRE_URL
       shell: bash
       run: |
-        declare -A cloudapp_endpoint_suffix=( ["AzureCloud"]="cloudapp.azure.com" ["AzureUSGovernment"]="cloudapp.usgovcloudapi.net")
-        cloud_name=$(az cloud show --query name --output tsv)
-        tre_url=${TRE_URL:-https://${TRE_ID}.${LOCATION}.${cloudapp_endpoint_suffix[${cloud_name}]}}
+        declare -A cloudapp_endpoint_suffixes=( ["AzureCloud"]="cloudapp.azure.com" ["AzureUSGovernment"]="cloudapp.usgovcloudapi.net")
+        azure_env="${{ inputs.AZURE_ENVIRONMENT }}"
+        tre_url=${TRE_URL:-https://${TRE_ID}.${LOCATION}.${cloudapp_endpoint_suffixes[${azure_env}]}}
         echo "TRE_URL=$tre_url" >> $GITHUB_ENV
+
+    - name: Construct ARM_ENVIRONMENT
+      shell: bash
+      run: |
+        declare -A arm_envs=( ["AzureCloud"]="public" ["AzureUSGovernment"]="usgovernment")
+        azure_env="${{ inputs.AZURE_ENVIRONMENT }}"
+        echo "ARM_ENVIRONMENT=${arm_envs[${azure_env}]}" >> $GITHUB_ENV
 
     - name: Run command in DevContainer
       shell: bash
@@ -150,6 +162,7 @@ runs:
           -e USE_ENV_VARS_NOT_FILES="true" \
           -e BUNDLE_TYPE="${{ inputs.BUNDLE_TYPE }}" \
           -e WORKSPACE_SERVICE_NAME="${{ inputs.WORKSPACE_SERVICE_NAME }}" \
+          -e ARM_ENVIRONMENT="${{ env.ARM_ENVIRONMENT }}"  \
           -e AZ_CLOUD_ENVIRONMENT=$(az cloud show --query name --output tsv) \
           -e LOCATION="${{ inputs.LOCATION }}" \
           -e TF_VAR_location="${{ inputs.LOCATION }}" \
