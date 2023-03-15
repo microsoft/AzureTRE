@@ -129,6 +129,14 @@ runs:
       run: |
         az acr login --name "${{ inputs.CI_CACHE_ACR_NAME }}"
 
+    - name: Construct TRE_URL
+      shell: bash
+      run: |
+        declare -A cloudapp_endpoint_suffix=( ["AzureCloud"]="cloudapp.azure.com" ["AzureUSGovernment"]="cloudapp.usgovcloudapi.net")
+        cloud_name=$(az cloud show --query name --output tsv)
+        tre_url=${TRE_URL:-https://${TRE_ID}.${LOCATION}.${cloudapp_endpoint_suffix[${cloud_name}]}}
+        echo "TRE_URL=$tre_url" >> $GITHUB_ENV
+
     - name: Run command in DevContainer
       shell: bash
       run: |
@@ -142,6 +150,7 @@ runs:
           -e USE_ENV_VARS_NOT_FILES="true" \
           -e BUNDLE_TYPE="${{ inputs.BUNDLE_TYPE }}" \
           -e WORKSPACE_SERVICE_NAME="${{ inputs.WORKSPACE_SERVICE_NAME }}" \
+          -e AZ_CLOUD_ENVIRONMENT=$(az cloud show --query name --output tsv) \
           -e LOCATION="${{ inputs.LOCATION }}" \
           -e TF_VAR_location="${{ inputs.LOCATION }}" \
           -e RESOURCE_LOCATION="${{ inputs.LOCATION }}" \
@@ -170,7 +179,7 @@ runs:
           -e AAD_TENANT_ID="${{ inputs.AAD_TENANT_ID }}" \
           -e TRE_ID="${{ inputs.TRE_ID }}" \
           -e TF_VAR_tre_id="${{ inputs.TRE_ID }}" \
-          -e TRE_URL="https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com" \
+          -e TRE_URL="${{ env.TRE_URL }}" \
           -e TEST_WORKSPACE_APP_ID="${{ inputs.TEST_WORKSPACE_APP_ID }}" \
           -e TEST_WORKSPACE_APP_SECRET="${{ inputs.TEST_WORKSPACE_APP_SECRET }}" \
           -e TEST_APP_ID="${{ inputs.TEST_APP_ID }}" \
