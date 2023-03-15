@@ -61,6 +61,7 @@ fi
 # This is called if we are in a CI system and we will login
 # with a Service Principal.
 if [ -n "${TF_IN_AUTOMATION:-}" ]; then
+    az cloud set --name "$AZ_CLOUD_ENVIRONMENT"
     az login --service-principal -u "$ARM_CLIENT_ID" -p "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID"
     az account set -s "$ARM_SUBSCRIPTION_ID"
 fi
