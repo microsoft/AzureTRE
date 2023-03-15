@@ -104,12 +104,16 @@ async def check_aad_auth_redirect(endpoint, verify) -> None:
 
 async def get_admin_token(verify) -> str:
     scope_uri = f"api://{config.API_CLIENT_ID}"
+    return get_token(scope_uri, verify)
+
+
+def get_token(scope_uri, verify) -> str:
     if config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != "":
-        # Use Client Credentials flow
+        # Logging in as an Enterprise Application: Use Client Credentials flow
         credential = ClientSecretCredential(config.AAD_TENANT_ID, config.TEST_ACCOUNT_CLIENT_ID, config.TEST_ACCOUNT_CLIENT_SECRET, connection_verify=verify, authority=cloud.get_authority_domain())
         token = credential.get_token(f'{scope_uri}/.default')
     else:
-        # Use Resource Owner Password Credentials flow
+        # Logging in as a User: Use Resource Owner Password Credentials flow
         credential = UsernamePasswordCredential(config.TEST_APP_ID, config.TEST_USER_NAME, config.TEST_USER_PASSWORD, connection_verify=verify, authority=cloud.get_authority_domain(), tenant_id=config.AAD_TENANT_ID)
         token = credential.get_token(f'{scope_uri}/user_impersonation')
 
