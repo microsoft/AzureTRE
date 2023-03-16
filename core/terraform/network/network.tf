@@ -172,3 +172,8 @@ resource "azurerm_ip_group" "webapp" {
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 }
+
+module "cloud_settings" {
+  source = "../../../cloud_settings"
+  arm_environment = var.arm_environment
+}

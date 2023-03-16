@@ -125,9 +125,9 @@
       }
     },
     {
-      "name": "az_cloud_environment",
+      "name": "azure_environment",
       "source": {
-        "env": "AZ_CLOUD_ENVIRONMENT"
+        "env": "AZURE_ENVIRONMENT"
       }
     },
     {

@@ -122,7 +122,7 @@ resource "azurerm_private_endpoint" "api_private_endpoint" {
   }
 
   private_dns_zone_group {
-    name                 = "privatelink.azurewebsites.net"
+    name                 = module.cloud_settings.private_links["privatelink.azurewebsites.net"]
     private_dns_zone_ids = [module.network.azurewebsites_dns_zone_id]
   }
 }

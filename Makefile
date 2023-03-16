@@ -183,11 +183,13 @@ bundle-build:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 	&& cd ${DIR} \
+	&& cp -r ${MAKEFILE_DIR}/cloud_settings ${DIR}/terraform \
 	&& if [ -d terraform ]; then terraform -chdir=terraform init -backend=false; terraform -chdir=terraform validate; fi \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} IMAGE_NAME_PREFIX=${IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_build.sh \
-	&& porter build
+	&& porter build \
 	$(MAKE) bundle-check-params
+#	rm -rf ${DIR}/terraform/cloud_settings
 
 bundle-install: bundle-check-params
 	$(call target_title, "Deploying ${DIR} with Porter") \
@@ -269,7 +271,8 @@ bundle-register:
 		--workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
 workspace_bundle:
-	$(MAKE) bundle-build bundle-publish bundle-register \
+	${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
+	&& $(MAKE) bundle-build bundle-publish bundle-register \
 	DIR="${MAKEFILE_DIR}/templates/workspaces/${BUNDLE}" BUNDLE_TYPE=workspace
 
 workspace_service_bundle:

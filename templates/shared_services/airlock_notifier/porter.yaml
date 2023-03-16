@@ -27,7 +27,7 @@ parameters:
   - name: id
     type: string
     description: "Resource ID"
-  - name: az_cloud_environment
+  - name: azure_environment
     type: string
     default: "AzureCloud"
     description: "Used by Azure CLI to set the Azure environment"
@@ -96,7 +96,7 @@ install:
         - cloud
         - set
       flags:
-        name: ${ bundle.parameters.az_cloud_environment }
+        name: ${ bundle.parameters.azure_environment }
 
   - az:
       description: "Login to Azure"
