@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-gitea
-version: 0.7.1
+version: 0.7.2
 description: "A Gitea workspace service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -56,6 +56,10 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+    type: string
+    default: "public"
   - name: aad_authority_url
     type: string
     default: "https://login.microsoftonline.com"

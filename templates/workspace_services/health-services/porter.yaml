@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-health
-version: 0.1.1
+version: 0.1.2
 description: "An Azure Data Health Services workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -53,6 +53,10 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+    type: string
+    default: "public"
   - name: deploy_fhir
     type: boolean
     default: false
