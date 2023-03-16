@@ -139,7 +139,10 @@ runs:
       run: |
         declare -A cloudapp_endpoint_suffixes=( ["AzureCloud"]="cloudapp.azure.com" ["AzureUSGovernment"]="cloudapp.usgovcloudapi.net")
         azure_env="${{ inputs.AZURE_ENVIRONMENT }}"
-        tre_url=${TRE_URL:-https://${TRE_ID}.${LOCATION}.${cloudapp_endpoint_suffixes[${azure_env}]}}
+        domain=${cloudapp_endpoint_suffixes[${azure_env}]}
+        tre_id="${{ inputs.TRE_ID }}"
+        location="${{ inputs.LOCATION }}"
+        tre_url=${TRE_URL:-https://${tre_id}.${location}.${domain}}
         echo "TRE_URL=$tre_url" >> $GITHUB_ENV
 
     - name: Construct ARM_ENVIRONMENT
@@ -210,5 +213,5 @@ runs:
           -e TF_VAR_resource_processor_number_processes_per_instance="${{ (inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE != ''
             && inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE) || 5  }}" \
           -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
-          '${{ inputs.CI_CACHE_ACR_NAME }}.azurecr.io/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
+          "${{ inputs.CI_CACHE_ACR_NAME }}$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)/tredev:${{ inputs.DEVCONTAINER_TAG }}" \
         bash -c "${{ inputs.COMMAND }}"
