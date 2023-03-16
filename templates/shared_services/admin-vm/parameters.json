@@ -39,6 +39,12 @@
       "source": {
         "env": "ADMIN_JUMPBOX_VM_SKU"
       }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
+      }
     }
   ]
 }
