@@ -43,6 +43,8 @@ write_files:
       SERVICE_BUS_RESOURCE_REQUEST_QUEUE=${service_bus_resource_request_queue}
       SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE=${service_bus_namespace}
       VMSS_MSI_ID=${vmss_msi_id}
+      # the following line makes sure the right msi will be used if multiple are available on the VM
+      AZURE_CLIENT_ID=${vmss_msi_id}
       AZURE_SUBSCRIPTION_ID=${arm_subscription_id}
       ARM_CLIENT_ID=${vmss_msi_id}
       AZURE_TENANT_ID=${arm_tenant_id}
