@@ -213,7 +213,7 @@ bundle-check-params:
 	&& cd ${DIR} \
 	&& if [ ! -f "parameters.json" ]; then echo "Error - please create a parameters.json file."; exit 1; fi \
 	&& if [ "$$(jq -r '.name' parameters.json)" != "$$(yq eval '.name' porter.yaml)" ]; then echo "Error - ParameterSet name isn't equal to bundle's name."; exit 1; fi \
-	&& if ! porter explain --autobuild-disabled; then echo "Error - porter explain issue!"; exit 1; fi \
+	&& if ! porter explain --autobuild-disabled > /dev/null; then echo "Error - porter explain issue!"; exit 1; fi \
 	&& comm_output=$$(set -o pipefail && comm -3 --output-delimiter=: <(porter explain --autobuild-disabled -ojson | jq -r '.parameters[].name | select (. != "arm_use_msi")' | sort) <(jq -r '.parameters[].name | select(. != "arm_use_msi")' parameters.json | sort)) \
 	&& if [ ! -z "$${comm_output}" ]; \
 		then echo -e "*** Add to params ***:*** Remove from params ***\n$$comm_output" | column -t -s ":"; exit 1; \
