@@ -34,7 +34,7 @@ parameters:
   - name: azure_location
     type: string
     description: "Azure location (region) to deploy to"
-  - name: az_cloud_environment
+  - name: azure_environment
     type: string
     default: "AzureCloud"
     description: "Used by Azure CLI to set the Azure environment"
@@ -235,7 +235,7 @@ upgrade:
         - cloud
         - set
       flags:
-        name: ${ bundle.parameters.az_cloud_environment }
+        name: ${ bundle.parameters.azure_environment }
   - az:
       description: "AAD Application Admin Login"
       arguments:

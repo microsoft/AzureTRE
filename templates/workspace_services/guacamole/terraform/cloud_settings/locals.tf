@@ -70,12 +70,10 @@ locals {
   }
   suffixes = {
     usgovernment = {
-      "azurewebsites.net" = "azurewebsites.us",
-      "file.core.windows.net" = "file.core.usgovcloudapi.net"
+      "azurewebsites.net" = "azurewebsites.us"
     }
     public = {
-      "azurewebsites.net" = "azurewebsites.net",
-      "file.core.windows.net" = "file.core.windows.net"
+      "azurewebsites.net" = "azurewebsites.net"
     }
   }
 }

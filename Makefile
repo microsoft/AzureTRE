@@ -271,8 +271,7 @@ bundle-register:
 		--workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
 workspace_bundle:
-	${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
-	&& $(MAKE) bundle-build bundle-publish bundle-register \
+	$(MAKE) bundle-build bundle-publish bundle-register \
 	DIR="${MAKEFILE_DIR}/templates/workspaces/${BUNDLE}" BUNDLE_TYPE=workspace
 
 workspace_service_bundle:

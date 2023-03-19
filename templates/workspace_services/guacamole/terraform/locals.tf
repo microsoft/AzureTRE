@@ -8,8 +8,8 @@ locals {
   aad_tenant_id                  = data.azurerm_key_vault_secret.aad_tenant_id.value
   issuer                         = "${var.aad_authority_url}/${local.aad_tenant_id}/v2.0"
   jwks_endpoint                  = "${var.aad_authority_url}/${local.aad_tenant_id}/discovery/v2.0/keys"
-  werbapp_suffix                 = module.cloud_settings.suffixes["azurewebsites.net"]
-  api_url                        = "https://api-${var.tre_id}.${werbapp_suffix}"
+  webapp_suffix                  = module.cloud_settings.suffixes["azurewebsites.net"]
+  api_url                        = "https://api-${var.tre_id}.${local.webapp_suffix}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   image_tag_from_file            = replace(replace(replace(data.local_file.version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
   image_tag                      = var.image_tag == "" ? local.image_tag_from_file : var.image_tag
