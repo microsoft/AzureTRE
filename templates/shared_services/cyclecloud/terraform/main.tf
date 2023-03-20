@@ -31,6 +31,11 @@ provider "azurerm" {
   }
 }
 
+module "cloud_settings" {
+  source = "./cloud_settings"
+  arm_environment = var.arm_environment
+}
+
 data "azurerm_subnet" "shared" {
   name                 = "SharedSubnet"
   virtual_network_name = "vnet-${var.tre_id}"

@@ -66,7 +66,7 @@ parameters:
   - name: id
     type: string
     description: "An Id for this installation"
-  - name: az_cloud_environment
+  - name: azure_environment
     type: string
     default: "AzureCloud"
     description: "Used by Azure CLI to set the Azure environment"
@@ -98,6 +98,8 @@ parameters:
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
+  - name: arm_environment
+    type: string
 
 outputs:
   - name: ip
@@ -140,6 +142,7 @@ install:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -164,6 +167,7 @@ upgrade:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -197,6 +201,7 @@ uninstall:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -221,7 +226,7 @@ start:
         - cloud
         - set
       flags:
-        name: ${ bundle.parameters.az_cloud_environment }
+        name: ${ bundle.parameters.azure_environment }
   - az:
       description: "Login to Azure"
       arguments:
@@ -255,7 +260,7 @@ stop:
         - cloud
         - set
       flags:
-        name: ${ bundle.parameters.az_cloud_environment }
+        name: ${ bundle.parameters.azure_environment }
   - az:
       description: "Login to Azure"
       arguments:
@@ -292,7 +297,7 @@ reset_password:
         - cloud
         - set
       flags:
-        name: ${ bundle.parameters.az_cloud_environment }
+        name: ${ bundle.parameters.azure_environment }
   - az:
       description: "Login to Azure"
       arguments:

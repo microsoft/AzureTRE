@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-firewall
-version: 1.0.4
+version: 1.0.5
 description: "An Azure TRE Firewall shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -52,6 +52,8 @@ parameters:
   - name: microsoft_graph_fqdn
     type: string
     default: "graph.microsoft.com"
+  - name: arm_environment
+    type: string
 
 mixins:
   - terraform:
@@ -67,6 +69,7 @@ install:
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
         sku_tier: ${ bundle.parameters.sku_tier }
         microsoft_graph_fqdn: ${ bundle.parameters.microsoft_graph_fqdn }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -83,6 +86,7 @@ upgrade:
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
         sku_tier: ${ bundle.parameters.sku_tier }
         microsoft_graph_fqdn: ${ bundle.parameters.microsoft_graph_fqdn }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -99,6 +103,7 @@ uninstall:
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
         sku_tier: ${ bundle.parameters.sku_tier }
         microsoft_graph_fqdn: ${ bundle.parameters.microsoft_graph_fqdn }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

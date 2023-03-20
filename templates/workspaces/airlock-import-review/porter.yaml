@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-airlock-import-review
-version: 0.9.1
+version: 0.9.3
 description: "A workspace to do Airlock Data Import Reviews for Azure TRE"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -34,7 +34,7 @@ parameters:
   - name: azure_location
     type: string
     description: "Azure location (region) to deploy to"
-  - name: az_cloud_environment
+  - name: azure_environment
     type: string
     default: "AzureCloud"
     description: "Used by Azure CLI to set the Azure environment"
@@ -54,6 +54,10 @@ parameters:
   - name: arm_use_msi
     type: boolean
     default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+    type: string
+    default: "public"
   - name: enable_local_debugging
     type: boolean
     default: false
@@ -108,6 +112,8 @@ parameters:
     type: string
     description: "The SKU used when deploying an Azure App Service Plan"
     default: "P1v3"
+  - name: arm_environment
+    type: string
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -171,6 +177,7 @@ install:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: false
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -213,6 +220,7 @@ upgrade:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: false
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -231,7 +239,7 @@ upgrade:
         - cloud
         - set
       flags:
-        name: ${ bundle.parameters.az_cloud_environment }
+        name: ${ bundle.parameters.azure_environment }
   - az:
       description: "AAD Application Admin Login"
       arguments:
@@ -278,6 +286,7 @@ uninstall:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: false
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

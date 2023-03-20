@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-databricks-private-auth
-version: 0.0.6
+version: 0.0.8
 description: "An Azure TRE shared service for Azure Databricks autnetication."
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -38,6 +38,10 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+    type: string
+    default: "public"
 
 outputs:
   - name: databricks_workspace_name
@@ -56,6 +60,7 @@ install:
       vars:
         tre_resource_id: ${ bundle.parameters.id }
         tre_id: ${ bundle.parameters.tre_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -70,6 +75,7 @@ upgrade:
       vars:
         tre_resource_id: ${ bundle.parameters.id }
         tre_id: ${ bundle.parameters.tre_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -84,6 +90,7 @@ uninstall:
       vars:
         tre_resource_id: ${ bundle.parameters.id }
         tre_id: ${ bundle.parameters.tre_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

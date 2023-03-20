@@ -19,6 +19,7 @@ def get_config(logger_adapter) -> dict:
     config["number_processes"] = os.environ.get("NUMBER_PROCESSES", "1")
     config["key_vault_url"] = os.environ.get("KEY_VAULT_URL", os.environ.get("KEYVAULT", None))
     config["arm_environment"] = os.environ.get("ARM_ENVIRONMENT", "public")
+    config["azure_environment"] = os.environ.get("AZURE_ENVIRONMENT", "public")
 
     try:
         config["number_processes_int"] = int(config["number_processes"])
@@ -48,6 +49,7 @@ def get_config(logger_adapter) -> dict:
         "PATH": os.environ["PATH"],
         "KEY_VAULT_URL": config["key_vault_url"],
         "ARM_ENVIRONMENT": config["arm_environment"],
+        "AZURE_ENVIRONMENT": config["azure_environment"],
 
         # These are needed since they are referenced as credentials in every bundle and also in arm_auth credential set.
         "ARM_CLIENT_ID": config["arm_client_id"],

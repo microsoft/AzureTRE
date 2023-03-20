@@ -71,9 +71,15 @@
       }
     },
     {
-      "name": "az_cloud_environment",
+      "name": "azure_environment",
       "source": {
-        "env": "AZ_CLOUD_ENVIRONMENT"
+        "env": "AZURE_ENVIRONMENT"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
       }
     }
   ]

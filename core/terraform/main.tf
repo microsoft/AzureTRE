@@ -77,6 +77,7 @@ module "network" {
   location            = var.location
   resource_group_name = azurerm_resource_group.core.name
   core_address_space  = var.core_address_space
+  arm_environment     = var.arm_environment
 }
 
 module "appgateway" {
@@ -115,6 +116,7 @@ module "airlock_resources" {
   airlock_servicebus                    = azurerm_servicebus_namespace.sb
   applicationinsights_connection_string = module.azure_monitor.app_insights_connection_string
   enable_malware_scanning               = var.enable_airlock_malware_scanning
+  arm_environment                       = var.arm_environment
   tre_core_tags                         = local.tre_core_tags
   log_analytics_workspace_id            = module.azure_monitor.log_analytics_workspace_id
   blob_core_dns_zone_id                 = module.network.blob_core_dns_zone_id
@@ -166,4 +168,9 @@ module "resource_processor_vmss_porter" {
     azurerm_key_vault.kv,
     azurerm_key_vault_access_policy.deployer
   ]
+}
+
+module "cloud_settings" {
+  source = "../../cloud_settings"
+  arm_environment = var.arm_environment
 }

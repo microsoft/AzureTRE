@@ -19,6 +19,11 @@ provider "azurerm" {
   features {}
 }
 
+module "cloud_settings" {
+  source = "./cloud_settings"
+  arm_environment = var.arm_environment
+}
+
 data "azurerm_resource_group" "ws" {
   name = "rg-${local.workspace_resource_name_suffix}"
 }

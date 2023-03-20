@@ -79,7 +79,7 @@ resource "azurerm_private_endpoint" "private_endpoint" {
   }
 
   private_dns_zone_group {
-    name                 = "privatelink.postgres.database.azure.com"
+    name                 = module.cloud_settings.private_links["privatelink.postgres.database.azure.com"]
     private_dns_zone_ids = [data.azurerm_private_dns_zone.postgres.id]
   }
 

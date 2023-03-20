@@ -7,7 +7,7 @@
 # - privatelink.agentsvc.azure-automation.net
 # - privatelink.blob.core.windows.net (used also by Storage module)
 resource "azurerm_private_dns_zone" "azure_monitor" {
-  name                = "privatelink.monitor.azure.com"
+  name                = module.cloud_settings.private_links["privatelink.monitor.azure.com"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
 
@@ -26,7 +26,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor" {
 }
 
 resource "azurerm_private_dns_zone" "azure_monitor_oms_opinsights" {
-  name                = "privatelink.oms.opinsights.azure.com"
+  name                = module.cloud_settings.private_links["privatelink.oms.opinsights.azure.com"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
 
@@ -45,7 +45,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_oms_opin
 }
 
 resource "azurerm_private_dns_zone" "azure_monitor_ods_opinsights" {
-  name                = "privatelink.ods.opinsights.azure.com"
+  name                = module.cloud_settings.private_links["privatelink.ods.opinsights.azure.com"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
@@ -62,7 +62,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_ods_opin
 }
 
 resource "azurerm_private_dns_zone" "azure_monitor_agentsvc" {
-  name                = "privatelink.agentsvc.azure-automation.net"
+  name                = module.cloud_settings.private_links["privatelink.agentsvc.azure-automation.net"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
@@ -80,7 +80,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_agentsvc
 
 # Blob DNS zone is used by both Azure Monitor and Storage modules
 resource "azurerm_private_dns_zone" "blobcore" {
-  name                = "privatelink.blob.core.windows.net"
+  name                = module.cloud_settings.private_links["privatelink.blob.core.windows.net"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
@@ -96,7 +96,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blobcore" {
 }
 
 resource "azurerm_private_dns_zone" "azurewebsites" {
-  name                = "privatelink.azurewebsites.net"
+  name                = module.cloud_settings.private_links["privatelink.azurewebsites.net"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
@@ -113,7 +113,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
 }
 
 resource "azurerm_private_dns_zone" "static_web" {
-  name                = "privatelink.web.core.windows.net"
+  name                = module.cloud_settings.private_links["privatelink.web.core.windows.net"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
@@ -129,7 +129,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "webcorelink" {
 }
 
 resource "azurerm_private_dns_zone" "filecore" {
-  name                = "privatelink.file.core.windows.net"
+  name                = module.cloud_settings.private_links["privatelink.file.core.windows.net"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
@@ -145,7 +145,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "filecorelink" {
 }
 
 resource "azurerm_private_dns_zone" "vaultcore" {
-  name                = "privatelink.vaultcore.azure.net"
+  name                = module.cloud_settings.private_links["privatelink.vaultcore.azure.net"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
@@ -161,7 +161,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "vaultcore" {
 }
 
 resource "azurerm_private_dns_zone" "azurecr" {
-  name                = "privatelink.azurecr.io"
+  name                = module.cloud_settings.private_links["privatelink.azurecr.io"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
@@ -177,7 +177,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "acrlink" {
 }
 
 resource "azurerm_private_dns_zone" "eventgrid" {
-  name                = "privatelink.eventgrid.azure.net"
+  name                = module.cloud_settings.private_links["privatelink.eventgrid.azure.net"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
 

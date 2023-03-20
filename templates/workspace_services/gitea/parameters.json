@@ -57,6 +57,12 @@
       "source": {
         "env": "AAD_AUTHORITY_URL"
       }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
+      }
     }
   ]
 }

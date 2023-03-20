@@ -8,6 +8,7 @@
     "BLOB_CREATED_TOPIC_NAME": "",
     "TOPIC_SUBSCRIPTION_NAME":"",
     "TRE_ID": "",
-    "ENABLE_MALWARE_SCANNING": "false"
+    "ENABLE_MALWARE_SCANNING": "false",
+    "ARM_ENVIRONMENT": "public"
   }
 }
