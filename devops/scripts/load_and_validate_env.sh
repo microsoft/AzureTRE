@@ -43,8 +43,8 @@ else
     # shellcheck disable=SC2046
     export $(yq e "$GET_LEAF_KEYS|$TF_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)
 
-    AZ_CLOUD_ENVIRONMENT=$(az cloud show --query name --output tsv)
-    export AZ_CLOUD_ENVIRONMENT
+    AZURE_ENVIRONMENT=$(az cloud show --query name --output tsv)
+    export AZURE_ENVIRONMENT
 
     declare -A cloudapp_endpoint_suffix=( ["public"]="cloudapp.azure.com" ["usgovernment"]="cloudapp.usgovcloudapi.net")
     export TRE_URL=${TRE_URL:-https://${TRE_ID}.${LOCATION}.${cloudapp_endpoint_suffix[${ARM_ENVIRONMENT}]}}

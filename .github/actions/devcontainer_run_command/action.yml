@@ -172,7 +172,7 @@ runs:
           -e WORKSPACE_SERVICE_NAME="${{ inputs.WORKSPACE_SERVICE_NAME }}" \
           -e ARM_ENVIRONMENT="${{ env.ARM_ENVIRONMENT }}"  \
           -e TF_VAR_arm_environment="${{ env.ARM_ENVIRONMENT }}"  \
-          -e AZ_CLOUD_ENVIRONMENT="${{ inputs.AZURE_ENVIRONMENT }}" \
+          -e AZURE_ENVIRONMENT="${{ inputs.AZURE_ENVIRONMENT }}" \
           -e LOCATION="${{ inputs.LOCATION }}" \
           -e TF_VAR_location="${{ inputs.LOCATION }}" \
           -e RESOURCE_LOCATION="${{ inputs.LOCATION }}" \
