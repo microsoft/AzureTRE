@@ -171,6 +171,6 @@ module "resource_processor_vmss_porter" {
 }
 
 module "cloud_settings" {
-  source = "../../cloud_settings"
+  source          = "../../cloud_settings"
   arm_environment = var.arm_environment
 }

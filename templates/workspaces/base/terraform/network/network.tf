@@ -144,6 +144,6 @@ resource "azurerm_subnet_route_table_association" "rt_webapps_subnet_association
 }
 
 module "cloud_settings" {
-  source = "../cloud_settings"
+  source          = "../cloud_settings"
   arm_environment = var.arm_environment
 }
