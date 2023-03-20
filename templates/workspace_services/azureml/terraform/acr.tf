@@ -13,7 +13,7 @@ resource "azurerm_container_registry" "acr" {
 }
 
 data "azurerm_private_dns_zone" "azurecr" {
-  name                = "privatelink.azurecr.io"
+  name                = module.cloud_settings.private_links["privatelink.azurecr.io"]
   resource_group_name = local.core_resource_group_name
 }
 

@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-innereye
-version: 0.5.2
+version: 0.5.3
 description: "An Azure TRE service for InnerEye Deep Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -102,6 +102,7 @@ install:
         arm_client_id: ${ bundle.credentials.azure_client_id }
         arm_client_secret: ${ bundle.credentials.azure_client_secret }
         arm_use_msi: ${ bundle.parameters.arm_use_msi }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -130,6 +131,7 @@ uninstall:
         arm_client_id: ${ bundle.credentials.azure_client_id }
         arm_client_secret: ${ bundle.credentials.azure_client_secret }
         arm_use_msi: ${ bundle.parameters.arm_use_msi }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

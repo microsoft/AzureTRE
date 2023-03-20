@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-cyclecloud
-version: 0.4.2
+version: 0.4.3
 description: "An Azure TRE Shared Service Template for Azure Cyclecloud"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -71,6 +71,7 @@ install:
         arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
         arm_use_msi: ${ bundle.parameters.arm_use_msi }
         tre_resource_id: ${ bundle.parameters.id }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -89,6 +90,7 @@ upgrade:
         arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
         arm_use_msi: ${ bundle.parameters.arm_use_msi }
         tre_resource_id: ${ bundle.parameters.id }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -107,6 +109,7 @@ uninstall:
         arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
         arm_use_msi: ${ bundle.parameters.arm_use_msi }
         tre_resource_id: ${ bundle.parameters.id }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

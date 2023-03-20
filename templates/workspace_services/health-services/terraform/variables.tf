@@ -47,3 +47,5 @@ variable "auth_client_secret" {
   type        = string
   description = "Used to authenticate into the AAD Tenant to get app role members"
 }
+
+variable "arm_environment" {}

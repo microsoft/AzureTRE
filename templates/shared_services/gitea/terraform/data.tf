@@ -21,12 +21,12 @@ data "azurerm_subnet" "web_app" {
 }
 
 data "azurerm_private_dns_zone" "mysql" {
-  name                = "privatelink.mysql.database.azure.com"
+  name                = module.cloud_settings.private_links["privatelink.mysql.database.azure.com"]
   resource_group_name = local.core_resource_group_name
 }
 
 data "azurerm_private_dns_zone" "azurewebsites" {
-  name                = "privatelink.azurewebsites.net"
+  name                = module.cloud_settings.private_links["privatelink.azurewebsites.net"]
   resource_group_name = local.core_resource_group_name
 }
 

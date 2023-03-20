@@ -104,8 +104,7 @@
         },
         "auto_workspace_app_registration": {
           "description": "This identity is used to manage other AAD applications that it owns. Read more about it here: docs/tre-admins/auth.md",
-          "type": "boolean",
-          "default": true
+          "type": "boolean"
         },
         "auto_workspace_group_creation": {
           "description": "This identity can create security groups aligned to each applciation role. Read more about it here: docs/tre-admins/auth.md",

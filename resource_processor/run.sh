@@ -55,9 +55,6 @@ else
   echo "Porter v0 state doesn't exist."
 fi
 
-echo "Azure cli logout..."
-#az logout
-
 # Can't be in the image since DB connection is needed.
 echo "Applying credential sets..."
 porter credentials apply vmss_porter/arm_auth_local_debugging.json

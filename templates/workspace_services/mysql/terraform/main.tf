@@ -31,6 +31,12 @@ provider "azurerm" {
   }
 }
 
+module "cloud_settings" {
+  source = "./cloud_settings"
+  arm_environment = var.arm_environment
+}
+
+
 data "azurerm_resource_group" "ws" {
   name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
 }
@@ -52,6 +58,6 @@ data "azurerm_subnet" "services" {
 }
 
 data "azurerm_private_dns_zone" "mysql" {
-  name                = "privatelink.mysql.database.azure.com"
+  name                = module.cloud_settings.private_links["privatelink.mysql.database.azure.com"]
   resource_group_name = local.core_resource_group_name
 }

@@ -34,3 +34,8 @@ provider "azurerm" {
     }
   }
 }
+
+module "cloud_settings" {
+  source = "./cloud_settings"
+  arm_environment = var.arm_environment
+}
