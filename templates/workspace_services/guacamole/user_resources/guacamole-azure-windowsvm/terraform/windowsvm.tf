@@ -96,13 +96,13 @@ resource "azurerm_key_vault_secret" "windowsvm_password" {
 data "template_file" "vm_config" {
   template = file("${path.module}/vm_config.ps1")
   vars = {
-    nexus_proxy_url     = local.nexus_proxy_url
-    SharedStorageAccess = var.shared_storage_access ? 1 : 0
-    StorageAccountName  = data.azurerm_storage_account.stg.name
-    StorageAccountKey   = data.azurerm_storage_account.stg.primary_access_key
+    nexus_proxy_url      = local.nexus_proxy_url
+    SharedStorageAccess  = var.shared_storage_access ? 1 : 0
+    StorageAccountName   = data.azurerm_storage_account.stg.name
+    StorageAccountKey    = data.azurerm_storage_account.stg.primary_access_key
     StorageAccountSuffix = module.cloud_settings.suffixes["file.core.windows.net"]
-    FileShareName       = var.shared_storage_access ? data.azurerm_storage_share.shared_storage[0].name : ""
-    CondaConfig         = local.selected_image.conda_config ? 1 : 0
+    FileShareName        = var.shared_storage_access ? data.azurerm_storage_share.shared_storage[0].name : ""
+    CondaConfig          = local.selected_image.conda_config ? 1 : 0
   }
 }
 

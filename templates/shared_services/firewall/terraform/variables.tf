@@ -29,5 +29,5 @@ variable "sku_tier" {
 }
 
 variable "arm_environment" {
-  type    = string
+  type = string
 }

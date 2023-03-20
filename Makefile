@@ -184,7 +184,7 @@ bundle-build:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 	&& cd ${DIR} \
-	&& cp -r ${MAKEFILE_DIR}/cloud_settings ${DIR}/terraform \
+	&& cp -r ${MAKEFILE_DIR}/cloud_settings /terraform \
 	&& if [ -d terraform ]; then terraform -chdir=terraform init -backend=false; terraform -chdir=terraform validate; fi \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} IMAGE_NAME_PREFIX=${IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_build.sh \
