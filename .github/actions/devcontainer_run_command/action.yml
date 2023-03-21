@@ -165,7 +165,8 @@ runs:
           -e TF_VAR_application_admin_client_id="${{ inputs.APPLICATION_ADMIN_CLIENT_ID }}" \
           -e TF_VAR_application_admin_client_secret="${{ inputs.APPLICATION_ADMIN_CLIENT_SECRET }}" \
           -e TF_VAR_arm_subscription_id="${{ fromJSON(inputs.AZURE_CREDENTIALS).subscriptionId }}" \
-          -e ENABLE_SWAGGER="${{ inputs.ENABLE_SWAGGER }}" \
+          -e TF_VAR_enable_swagger="${{ (inputs.ENABLE_SWAGGER != ''
+            && inputs.ENABLE_SWAGGER) || 'false' }}" \
           -e SWAGGER_UI_CLIENT_ID="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
           -e TF_VAR_swagger_ui_client_id="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
           -e TF_VAR_core_address_space="${{ inputs.core_address_space }}" \
