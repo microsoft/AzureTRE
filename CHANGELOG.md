@@ -7,6 +7,7 @@ FEATURES:
 ENHANCEMENTS:
 
 BUG FIXES:
+* Fix ENABLE_SWAGGER configuration being ignored in CI ([#3355](https://github.com/microsoft/AzureTRE/pull/3355))
 
 COMPONENTS:
 
