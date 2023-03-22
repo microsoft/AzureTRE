@@ -17,3 +17,9 @@ rule "azurerm_resource_missing_tags" {
   enabled = true
   tags = ["tre_id", "tre_workspace_id"]
 }
+
+rule "terraform_module_pinned_source" {
+  enabled = false
+  style = "flexible"
+  default_branches = ["main"]
+}
