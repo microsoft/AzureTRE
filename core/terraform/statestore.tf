@@ -60,7 +60,7 @@ moved {
 }
 
 resource "azurerm_private_dns_zone" "cosmos" {
-  name                = module.cloud_settings.private_links["privatelink.documents.azure.com"]
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.documents.azure.com"]
   resource_group_name = azurerm_resource_group.core.name
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }

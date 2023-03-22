@@ -24,11 +24,11 @@ data "azurerm_subnet" "services" {
 }
 
 data "azurerm_private_dns_zone" "health" {
-  name                = module.cloud_settings.private_links["privatelink.azurehealthcareapis.com"]
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurehealthcareapis.com"]
   resource_group_name = local.core_resource_group_name
 }
 
 data "azurerm_private_dns_zone" "dicom" {
-  name                = module.cloud_settings.private_links["privatelink.dicom.azurehealthcareapis.com"]
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.dicom.azurehealthcareapis.com"]
   resource_group_name = local.core_resource_group_name
 }

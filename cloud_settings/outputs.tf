@@ -1,7 +1,7 @@
 output "private_links" {
-  value = lookup(local.private_links, var.arm_environment, null)
+  value = local.private_links[var.arm_environment]
 }
 
 output "suffixes" {
-  value = lookup(local.suffixes, var.arm_environment, null)
+  value = local.suffixes[var.arm_environment]
 }

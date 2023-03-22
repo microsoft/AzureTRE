@@ -73,9 +73,9 @@ output "file_core_dns_zone_id" {
 }
 
 output "queue_core_dns_zone_id" {
-  value = azurerm_private_dns_zone.private_dns_zones[module.cloud_settings.private_links["privatelink.queue.core.windows.net"]].id
+  value = azurerm_private_dns_zone.private_dns_zones[module.terraform_azurerm_environment_configuration.private_links["privatelink.queue.core.windows.net"]].id
 }
 
 output "table_core_dns_zone_id" {
-  value = azurerm_private_dns_zone.private_dns_zones[module.cloud_settings.private_links["privatelink.table.core.windows.net"]].id
+  value = azurerm_private_dns_zone.private_dns_zones[module.terraform_azurerm_environment_configuration.private_links["privatelink.table.core.windows.net"]].id
 }

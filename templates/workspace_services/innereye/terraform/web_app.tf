@@ -55,7 +55,7 @@ resource "azurerm_app_service_virtual_network_swift_connection" "inference" {
 }
 
 data "azurerm_private_dns_zone" "azurewebsites" {
-  name                = module.cloud_settings.private_links["privatelink.azurewebsites.net"]
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurewebsites.net"]
   resource_group_name = local.core_resource_group_name
 }
 
@@ -74,7 +74,7 @@ resource "azurerm_private_endpoint" "inference" {
   }
 
   private_dns_zone_group {
-    name                 = module.cloud_settings.private_links["privatelink.azurewebsites.net"]
+    name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurewebsites.net"]
     private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
 }

@@ -7,8 +7,8 @@ locals {
   import_in_progress_storage_name = lower(replace("stalimip${var.tre_id}", "-", ""))
 }
 
-module "cloud_settings" {
-  source = "./cloud_settings"
+module "terraform_azurerm_environment_configuration" {
+  source = "github.com/microsoft/AzureTRE-modules/terraform_azurerm_environment_configuration"
   arm_environment = var.arm_environment
 }
 
@@ -18,7 +18,7 @@ data "azurerm_storage_account" "sa_import_inprogress" {
 }
 
 data "azurerm_private_dns_zone" "blobcore" {
-  name                = module.cloud_settings.private_links["privatelink.blob.core.windows.net"]
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.blob.core.windows.net"]
   resource_group_name = local.core_resource_group_name
 }
 

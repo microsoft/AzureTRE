@@ -31,8 +31,8 @@ provider "azurerm" {
   }
 }
 
-module "cloud_settings" {
-  source          = "./cloud_settings"
+module "terraform_azurerm_environment_configuration" {
+  source = "github.com/microsoft/AzureTRE-modules/terraform_azurerm_environment_configuration"
   arm_environment = var.arm_environment
 }
 
@@ -58,6 +58,6 @@ data "azurerm_subnet" "services" {
 }
 
 data "azurerm_private_dns_zone" "mysql" {
-  name                = module.cloud_settings.private_links["privatelink.mysql.database.azure.com"]
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.mysql.database.azure.com"]
   resource_group_name = local.core_resource_group_name
 }
