@@ -21,12 +21,8 @@ su gitea -c "gitea admin auth add-oauth --name oidc --provider openidConnect --k
 
 echo "Configuring Allowed Domains"
 CONFIG_FILE="/data/gitea/conf/app.ini"
-
 # Add the migrations section to the app.ini file if it doesn't exist
-if ! grep -q "\[migrations\]" $CONFIG_FILE; then
-    echo -e "\n[migrations]" >> $CONFIG_FILE
-fi
+echo "[migrations]" >> $CONFIG_FILE
 # Add the allowed domains line to the migrations section
-if ! grep -q "ALLOWED_DOMAINS=\"$GITEA__ALLOWED_DOMAIN \"" $CONFIG_FILE; then
-    echo -e "\nALLOWED_DOMAINS=\"$GITEA__ALLOWED_DOMAIN \"" >> $CONFIG_FILE
-fi
+echo -e "ALLOWED_DOMAINS=\"$GITEA__ALLOWED_DOMAIN\"" >> $CONFIG_FILE
+
