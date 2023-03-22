@@ -144,6 +144,6 @@ resource "azurerm_subnet_route_table_association" "rt_webapps_subnet_association
 }
 
 module "terraform_azurerm_environment_configuration" {
-  source = "github.com/microsoft/AzureTRE-modules/terraform_azurerm_environment_configuration"
+  source          = "github.com/microsoft/AzureTRE-modules/terraform_azurerm_environment_configuration"
   arm_environment = var.arm_environment
 }

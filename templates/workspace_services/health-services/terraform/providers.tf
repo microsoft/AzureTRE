@@ -32,6 +32,6 @@ provider "azurerm" {
 }
 
 module "terraform_azurerm_environment_configuration" {
-  source = "github.com/microsoft/AzureTRE-modules/terraform_azurerm_environment_configuration"
+  source          = "github.com/microsoft/AzureTRE-modules/terraform_azurerm_environment_configuration"
   arm_environment = var.arm_environment
 }
