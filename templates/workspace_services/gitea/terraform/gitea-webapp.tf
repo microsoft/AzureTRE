@@ -60,7 +60,7 @@ resource "azurerm_linux_web_app" "gitea" {
     GITEA__database__NAME                            = azurerm_mysql_database.gitea.name
     GITEA__database__USER                            = "${azurerm_mysql_server.gitea.administrator_login}@${azurerm_mysql_server.gitea.fqdn}"
     GITEA__database__PASSWD                          = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_password.id})"
-    GITEA__ALLOWED_DOMAIN                            = "https://gitea-${var.tre_id}.azurewebsites.net/"
+    GITEA__ALLOWED_DOMAIN                            = "gitea-${var.tre_id}.azurewebsites.net"
   }
 
   lifecycle { ignore_changes = [tags] }
