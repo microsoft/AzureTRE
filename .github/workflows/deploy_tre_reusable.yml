@@ -116,6 +116,9 @@ on:  # yamllint disable-line rule:truthy
       RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE:
         description: ""
         required: false
+      RP_BUNDLE_VALUES:
+        description: ""
+        required: false
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
@@ -375,6 +378,7 @@ jobs:
           STATEFUL_RESOURCES_LOCKED: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           CORE_APP_SERVICE_PLAN_SKU: ${{ secrets.CORE_APP_SERVICE_PLAN_SKU }}
           RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE: ${{ secrets.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE }}
+          RP_BUNDLE_VALUES: ${{ secrets.RP_BUNDLE_VALUES }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
@@ -760,7 +764,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environmentName }}
     needs: [deploy_shared_services, register_bundles, register_user_resource_bundles]
-    timeout-minutes: 240
+    timeout-minutes: 300
     steps:
       - name: Checkout
         uses: actions/checkout@v3

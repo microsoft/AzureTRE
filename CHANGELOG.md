@@ -8,6 +8,7 @@ ENHANCEMENTS:
 * Added 'availableUpgrades' field to Resources in GET/GET all Resources endpoints. The field indicates whether there are template versions that a resource can be upgraded to [#3234](https://github.com/microsoft/AzureTRE/pull/3234)
 
 BUG FIXES:
+* Fix ENABLE_SWAGGER configuration being ignored in CI ([#3355](https://github.com/microsoft/AzureTRE/pull/3355))
 
 COMPONENTS:
 
@@ -15,8 +16,8 @@ COMPONENTS:
 
 **BREAKING CHANGES & MIGRATIONS**:
 
-* Move to Azure **Firewall Policy** [#3107](https://github.com/microsoft/AzureTRE/pull/3107). This is a major version for the firewall shared service and will fail to automatically upgrade. You should follow these steps to complete it:
-  1. Let the system try to do the upgrade (via CI or `make tre-deploy`). It will fail but it's fine since now we have the new version published and registered.
+* Move to Azure **Firewall Policy** ([#3107](https://github.com/microsoft/AzureTRE/pull/3107)). This is a major version for the firewall shared service and will fail to automatically upgrade. You should follow these steps to complete it:
+  1. Let the system try to do the upgrade (via CI or `make all`). It will fail but it's fine since now we have the new version published and registered.
   2. Make a temporary network change with either of the following options:
       * Azure Portal: find your TRE resource group and select the route table resource (named `rt-YOUR_TRE_ID`).
         In the overview screen, find the `ResourceProcessorSubnet` (should be last in the subnet list), click on the `...` and select `Dissociate`.
@@ -29,37 +30,40 @@ COMPONENTS:
       One way to accomplish this is with the Swagger endpoint (/api/docs).
       ![Force-update a service](./docs/assets/firewall-policy-migrate1.png)
 
-      If this endpoint is not working in your deployment - include `enable_swagger` in your `config.yaml` (see the sample file), or temporarly activate it via the API resource on azure (named `api-YOUR_TRE-ID`) -> Configuration -> `ENABLE_SWAGGER` item.
+      If this endpoint is not working in your deployment - include `enable_swagger` in your `config.yaml` (see the sample file), or temporarily activate it via the API resource on azure (named `api-YOUR_TRE-ID`) -> Configuration -> `ENABLE_SWAGGER` item.
       ![Update API setting](./docs/assets/firewall-policy-migrate2.png)
   
   
   :warning: Any custom rules you have added manually will be **lost** and you'll need to add them back after the upgrade has been completed.
 
 FEATURES:
-* Add Azure Databricks as workspace service [#1857](https://github.com/microsoft/AzureTRE/pull/1857)
+* Add Azure Databricks as workspace service ([#1857](https://github.com/microsoft/AzureTRE/pull/1857))
 * (UI) Added the option to upload/download files to airlock requests via Azure CLI ([#3196](https://github.com/microsoft/AzureTRE/pull/3196))
 
 ENHANCEMENTS:
-* Add support for referencing IP Groups from the Core Resource Group in firewall rules created via the pipeline [#3089](https://github.com/microsoft/AzureTRE/pull/3089)
-* Support for _Azure Firewall Basic_ SKU [#3107](https://github.com/microsoft/AzureTRE/pull/3107). This SKU doesn't support deallocation and for most non 24/7 scenarios will be more expensive than the Standard SKU.
-* Update Azure Machine Learning Workspace Service to support "no public IP" compute. This is a full rework so upgrades of existing Azure ML Workspace Service deployments are not supported. Requires `v0.8.0` or later of the TRE project.  [#3052](https://github.com/microsoft/AzureTRE/pull/3052)
-* Move non-core DNS zones out of the network module to reduce dependencies [#3119](https://github.com/microsoft/AzureTRE/pull/3119)
+* Add support for referencing IP Groups from the Core Resource Group in firewall rules created via the pipeline ([#3089](https://github.com/microsoft/AzureTRE/pull/3089))
+* Support for _Azure Firewall Basic_ SKU ([#3107](https://github.com/microsoft/AzureTRE/pull/3107)). This SKU doesn't support deallocation and for most non 24/7 scenarios will be more expensive than the Standard SKU.
+* Update Azure Machine Learning Workspace Service to support "no public IP" compute. This is a full rework so upgrades of existing Azure ML Workspace Service deployments are not supported. Requires `v0.8.0` or later of the TRE project. ([#3052](https://github.com/microsoft/AzureTRE/pull/3052))
+* Move non-core DNS zones out of the network module to reduce dependencies ([#3119](https://github.com/microsoft/AzureTRE/pull/3119))
 * Review VMs are being cleaned up when an Airlock request is canceled ([#3130](https://github.com/microsoft/AzureTRE/pull/3130))
 * Sample queries to investigate logs of the core TRE applications ([#3151](https://github.com/microsoft/AzureTRE/pull/3151))
 * Remove support of docker-in-docker for templates/bundles ([#3180](https://github.com/microsoft/AzureTRE/pull/3180))
-* API runs with gunicorn and uvicorn workers (as recommended) [#3178](https://github.com/microsoft/AzureTRE/pull/3178)
-* Upgrade core components and key templates to Terraform AzurmRM [#3185](https://github.com/microsoft/AzureTRE/pull/3185)
+* API runs with gunicorn and uvicorn workers (as recommended) ([#3178](https://github.com/microsoft/AzureTRE/pull/3178))
+* Upgrade core components and key templates to Terraform AzureRM ([#3185](https://github.com/microsoft/AzureTRE/pull/3185))
 
 BUG FIXES:
-* Reauth CLI if TRE endpoint has changed [#3137](https://github.com/microsoft/AzureTRE/pull/3137)
+* Reauth CLI if TRE endpoint has changed ([#3137](https://github.com/microsoft/AzureTRE/pull/3137))
 * Added Migration for Airlock requests that were created prior to version 0.5.0 ([#3152](https://github.com/microsoft/AzureTRE/pull/3152))
-* Temporarily use the remote bundle for `check-params` target [#3149](https://github.com/microsoft/AzureTRE/pull/3149)
-* Workspace module dependency to resolve _AnotherOperationInProgress_ errors [#3194](https://github.com/microsoft/AzureTRE/pull/3194)
-* Skip Certs shared service E2E on Friday & Saturday due to LetsEncrypt limits [#3203](https://github.com/microsoft/AzureTRE/pull/3203)
-* Create Workspace AppInsights via AzAPI provider due to an issue with AzureRM [#3207](https://github.com/microsoft/AzureTRE/pull/3207)
-* 'Workspace Owner' is now able to access Airlock request's SAS URL even if the request is not in review [#3208](https://github.com/microsoft/AzureTRE/pull/3208)
-* Ignore changes in log_analytics_destination_type to prevent redundant updates [#3217](https://github.com/microsoft/AzureTRE/pull/3217)
-* Fix DNS conflict in airlock-review workspace that could make the entire airlock module inoperable [#3215](https://github.com/microsoft/AzureTRE/pull/3215)
+* Temporarily use the remote bundle for `check-params` target ([#3149](https://github.com/microsoft/AzureTRE/pull/3149))
+* Workspace module dependency to resolve _AnotherOperationInProgress_ errors ([#3194](https://github.com/microsoft/AzureTRE/pull/3194))
+* Skip Certs shared service E2E on Friday & Saturday due to LetsEncrypt limits ([#3203](https://github.com/microsoft/AzureTRE/pull/3203))
+* Create Workspace AppInsights via AzAPI provider due to an issue with AzureRM ([#3207](https://github.com/microsoft/AzureTRE/pull/3207))
+* 'Workspace Owner' is now able to access Airlock request's SAS URL even if the request is not in review ([#3208](https://github.com/microsoft/AzureTRE/pull/3208))
+* Ignore changes in log_analytics_destination_type to prevent redundant updates ([#3217](https://github.com/microsoft/AzureTRE/pull/3217))
+* Add Databricks private authentication shared service for SSO ([#3201](https://github.com/microsoft/AzureTRE/pull/3201))
+* Remove auth private endpoint from databricks workspace service ([3199](https://github.com/microsoft/AzureTRE/pull/3199))
+* Fix DNS conflict in airlock-review workspace that could make the entire airlock module inoperable ([#3215](https://github.com/microsoft/AzureTRE/pull/3215))
+
 
 COMPONENTS:
 
@@ -110,7 +114,7 @@ ENHANCEMENTS:
 * Support template version update ([#2908](https://github.com/microsoft/AzureTRE/pull/2908))
 * Update docker base images to bullseye ([#2946](https://github.com/microsoft/AzureTRE/pull/2946)
 * Support updating the firewall when installing via makefile/CICD ([#2942](https://github.com/microsoft/AzureTRE/pull/2942))
-* Add the ability for workspace services to request addional address spaces from a workspace ([#2902](https://github.com/microsoft/AzureTRE/pull/2902))
+* Add the ability for workspace services to request additional address spaces from a workspace ([#2902](https://github.com/microsoft/AzureTRE/pull/2902))
 * Airlock processor function and api app service work with http2
 * Added the option to disable Swagger ([#2981](https://github.com/microsoft/AzureTRE/pull/2981))
 * Serverless CosmosDB for new deployments to reduce cost ([#3029](https://github.com/microsoft/AzureTRE/pull/3029))
@@ -118,7 +122,7 @@ ENHANCEMENTS:
 * Upgrade Guacamole dependencies ([#3053](https://github.com/microsoft/AzureTRE/pull/3053))
 * Lint TRE cost tags per entity type (workspace, shared service, etc.) ([#3061](https://github.com/microsoft/AzureTRE/pull/3061))
 * Validate required secrets have value ([#3073](https://github.com/microsoft/AzureTRE/pull/3073))
-* Airlock processor unittests uses pytest ([#3026](https://github.com/microsoft/AzureTRE/pull/3026))
+* Airlock processor unit-tests uses pytest ([#3026](https://github.com/microsoft/AzureTRE/pull/3026))
 
 
 BUG FIXES:

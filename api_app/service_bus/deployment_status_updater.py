@@ -102,7 +102,8 @@ class DeploymentStatusUpdater():
 
             current_step_index = 0
             for i, step in enumerate(operation.steps):
-                if step.stepId == message.stepId and step.resourceId == str(message.id):
+                # TODO more simple condition
+                if step.id == message.stepId and step.resourceId == str(message.id):
                     step_to_update = step
                     current_step_index = i
                     if i == (len(operation.steps) - 1):
@@ -146,7 +147,7 @@ class DeploymentStatusUpdater():
                 # catch any errors in updating the resource - maybe Cosmos / schema invalid etc, and report them back to the op
                 try:
                     # parent resource is always retrieved via cosmos, hence it is always with redacted sensitive values
-                    parent_resource = await self.resource_repo.get_resource_by_id(next_step.parentResourceId)
+                    parent_resource = await self.resource_repo.get_resource_by_id(next_step.sourceTemplateResourceId)
                     resource_to_send = await update_resource_for_step(
                         operation_step=next_step,
                         resource_repo=self.resource_repo,
@@ -159,8 +160,8 @@ class DeploymentStatusUpdater():
                         user=operation.user)
 
                     # create + send the message
-                    logging.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.stepId}, action: {next_step.resourceAction}")
-                    content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.stepId, action=next_step.resourceAction))
+                    logging.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.templateStepId}, action: {next_step.resourceAction}")
+                    content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.id, action=next_step.resourceAction))
                     await send_deployment_message(content=content, correlation_id=operation.id, session_id=resource_to_send.id, action=next_step.resourceAction)
                 except Exception as e:
                     logging.exception("Unable to send update for resource in pipeline step")
@@ -194,12 +195,12 @@ class DeploymentStatusUpdater():
 
         if step.is_failure():
             operation.status = self.get_failure_status_for_action(operation.action)
-            operation.message = f"Multi step pipeline failed on step {step.stepId}"
+            operation.message = f"Multi step pipeline failed on step {step.templateStepId}"
 
             # pipeline failed - update the primary resource (from the main step) as failed too
             main_step = None
             for i, step in enumerate(operation.steps):
-                if step.stepId == "main":
+                if step.templateStepId == "main":
                     main_step = step
                     break
 

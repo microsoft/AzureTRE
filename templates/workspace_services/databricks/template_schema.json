@@ -59,7 +59,7 @@
         "stepId": "main"
       },
       {
-        "stepId": "260421b3-7308-491f-b531-e007cdc0aa46",
+        "stepId": "7ec5fa90-23bd-4809-b0d7-2d32c94016b1",
         "stepTitle": "Add firewall rules for databricks",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
@@ -331,7 +331,7 @@
     ],
     "uninstall": [
       {
-        "stepId": "260421b3-7308-491f-b531-e007cdc0aa46",
+        "stepId": "da2d99a3-3940-4dcc-a934-53535f2e2451",
         "stepTitle": "Remove network firewall rules for databricks",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",

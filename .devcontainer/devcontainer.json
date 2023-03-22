@@ -33,242 +33,246 @@
     // this is used for SuperLinter
     "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
   },
-  // Set *default* container specific settings.json values on container create.
-  "settings": {
-    "terminal.integrated.defaultProfile.linux": "bash",
-    "python.pythonPath": "/usr/local/bin/python",
-    "python.linting.enabled": true,
-    "python.linting.pylintEnabled": false,
-    "python.linting.flake8Enabled": true,
-    "python.formatting.provider": "black",
-    "python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
-    "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
-    "python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
-    "python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
-    "python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
-    "python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
-    "python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
-    "python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
-    "python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
-    "python.testing.pytestArgs": [
-      "api_app"
-    ],
-    "files.associations": {
-      "*.terraform": "terraform"
-    },
-    "launch": {
-      "configurations": [
-        {
-          "name": "TRE API",
-          "type": "python",
-          "module": "uvicorn",
-          "request": "launch",
-          "args": [
-            "main:app",
-            "--reload",
-            "--host",
-            "::",
-            "--port",
-            "8000"
+  "customizations": {
+    "vscode": {
+      // Set *default* container specific settings.json values on container create.
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "python.pythonPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": false,
+        "python.linting.flake8Enabled": true,
+        "python.formatting.provider": "black",
+        "python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
+        "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
+        "python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
+        "python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
+        "python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
+        "python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
+        "python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
+        "python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
+        "python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
+        "python.testing.unittestEnabled": false,
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": [
+          "api_app"
+        ],
+        "files.associations": {
+          "*.terraform": "terraform"
+        },
+        "launch": {
+          "configurations": [
+            {
+              "name": "TRE API",
+              "type": "python",
+              "module": "uvicorn",
+              "request": "launch",
+              "args": [
+                "main:app",
+                "--reload",
+                "--host",
+                "::",
+                "--port",
+                "8000"
+              ],
+              "jinja": true,
+              "justMyCode": false,
+              "console": "integratedTerminal",
+              "preLaunchTask": "Copy_env_file_for_api_debug",
+              "cwd": "${workspaceFolder}/api_app"
+            },
+            {
+              "name": "E2E Extended",
+              "type": "python",
+              "request": "launch",
+              "module": "pytest",
+              "justMyCode": true,
+              "cwd": "${workspaceFolder}/e2e_tests/",
+              "preLaunchTask": "Copy_env_file_for_e2e_debug",
+              "args": [
+                "-m",
+                "extended",
+                "--verify",
+                "false"
+              ]
+            },
+            {
+              "name": "E2E Extended AAD",
+              "type": "python",
+              "request": "launch",
+              "module": "pytest",
+              "justMyCode": true,
+              "cwd": "${workspaceFolder}/e2e_tests/",
+              "preLaunchTask": "Copy_env_file_for_e2e_debug",
+              "args": [
+                "-m",
+                "extended_aad",
+                "--verify",
+                "false"
+              ]
+            },
+            {
+              "name": "E2E Shared Services",
+              "type": "python",
+              "request": "launch",
+              "module": "pytest",
+              "justMyCode": true,
+              "cwd": "${workspaceFolder}/e2e_tests/",
+              "preLaunchTask": "Copy_env_file_for_e2e_debug",
+              "args": [
+                "-m",
+                "shared_services",
+                "--verify",
+                "false"
+              ]
+            },
+            {
+              "name": "E2E Performance",
+              "type": "python",
+              "request": "launch",
+              "module": "pytest",
+              "justMyCode": true,
+              "cwd": "${workspaceFolder}/e2e_tests/",
+              "preLaunchTask": "Copy_env_file_for_e2e_debug",
+              "args": [
+                "-m",
+                "performance",
+                "--verify",
+                "false"
+              ]
+            },
+            {
+              "name": "E2E Smoke",
+              "type": "python",
+              "request": "launch",
+              "module": "pytest",
+              "justMyCode": true,
+              "cwd": "${workspaceFolder}/e2e_tests/",
+              "preLaunchTask": "Copy_env_file_for_e2e_debug",
+              "args": [
+                "-m",
+                "smoke",
+                "--verify",
+                "false"
+              ]
+            },
+            {
+              "name": "E2E Airlock",
+              "type": "python",
+              "request": "launch",
+              "module": "pytest",
+              "justMyCode": true,
+              "cwd": "${workspaceFolder}/e2e_tests/",
+              "preLaunchTask": "Copy_env_file_for_e2e_debug",
+              "args": [
+                "-m",
+                "airlock",
+                "--verify",
+                "false"
+              ]
+            },
+            {
+              "name": "Resource Processor",
+              "type": "python",
+              "request": "launch",
+              "program": "vmss_porter/runner.py",
+              "console": "integratedTerminal",
+              "preLaunchTask": "Install_resource_processor_dependencies",
+              "cwd": "${workspaceFolder}/resource_processor",
+              "envFile": "${workspaceFolder}/core/private.env",
+              "env": {
+                "PYTHONPATH": "."
+              }
+            },
+            {
+              "name": "Debug Python file",
+              "type": "python",
+              "request": "launch",
+              "program": "${file}",
+              "console": "integratedTerminal",
+              "purpose": [
+                "debug-test"
+              ]
+            },
+            {
+              "name": "Launch Edge (localhost)",
+              "type": "pwa-msedge",
+              "request": "launch",
+              "url": "http://localhost:3000",
+              "webRoot": "${workspaceFolder}/ui/app"
+            },
+            {
+              "name": "Launch Chrome (localhost)",
+              "type": "pwa-chrome",
+              "request": "launch",
+              "url": "http://localhost:3000",
+              "webRoot": "${workspaceFolder}/ui/app"
+            }
           ],
-          "jinja": true,
-          "justMyCode": false,
-          "console": "integratedTerminal",
-          "preLaunchTask": "Copy_env_file_for_api_debug",
-          "cwd": "${workspaceFolder}/api_app"
+          "compounds": []
         },
-        {
-          "name": "E2E Extended",
-          "type": "python",
-          "request": "launch",
-          "module": "pytest",
-          "justMyCode": true,
-          "cwd": "${workspaceFolder}/e2e_tests/",
-          "preLaunchTask": "Copy_env_file_for_e2e_debug",
-          "args": [
-            "-m",
-            "extended",
-            "--verify",
-            "false"
-          ]
-        },
-        {
-          "name": "E2E Extended AAD",
-          "type": "python",
-          "request": "launch",
-          "module": "pytest",
-          "justMyCode": true,
-          "cwd": "${workspaceFolder}/e2e_tests/",
-          "preLaunchTask": "Copy_env_file_for_e2e_debug",
-          "args": [
-            "-m",
-            "extended_aad",
-            "--verify",
-            "false"
-          ]
-        },
-        {
-          "name": "E2E Shared Services",
-          "type": "python",
-          "request": "launch",
-          "module": "pytest",
-          "justMyCode": true,
-          "cwd": "${workspaceFolder}/e2e_tests/",
-          "preLaunchTask": "Copy_env_file_for_e2e_debug",
-          "args": [
-            "-m",
-            "shared_services",
-            "--verify",
-            "false"
-          ]
-        },
-        {
-          "name": "E2E Performance",
-          "type": "python",
-          "request": "launch",
-          "module": "pytest",
-          "justMyCode": true,
-          "cwd": "${workspaceFolder}/e2e_tests/",
-          "preLaunchTask": "Copy_env_file_for_e2e_debug",
-          "args": [
-            "-m",
-            "performance",
-            "--verify",
-            "false"
-          ]
-        },
-        {
-          "name": "E2E Smoke",
-          "type": "python",
-          "request": "launch",
-          "module": "pytest",
-          "justMyCode": true,
-          "cwd": "${workspaceFolder}/e2e_tests/",
-          "preLaunchTask": "Copy_env_file_for_e2e_debug",
-          "args": [
-            "-m",
-            "smoke",
-            "--verify",
-            "false"
-          ]
-        },
-        {
-          "name": "E2E Airlock",
-          "type": "python",
-          "request": "launch",
-          "module": "pytest",
-          "justMyCode": true,
-          "cwd": "${workspaceFolder}/e2e_tests/",
-          "preLaunchTask": "Copy_env_file_for_e2e_debug",
-          "args": [
-            "-m",
-            "airlock",
-            "--verify",
-            "false"
-          ]
-        },
-        {
-          "name": "Resource Processor",
-          "type": "python",
-          "request": "launch",
-          "program": "vmss_porter/runner.py",
-          "console": "integratedTerminal",
-          "preLaunchTask": "Install_resource_processor_dependencies",
-          "cwd": "${workspaceFolder}/resource_processor",
-          "envFile": "${workspaceFolder}/core/private.env",
-          "env": {
-            "PYTHONPATH": "."
-          }
-        },
-        {
-          "name": "Debug Python file",
-          "type": "python",
-          "request": "launch",
-          "program": "${file}",
-          "console": "integratedTerminal",
-          "purpose": [
-            "debug-test"
-          ]
-        },
-        {
-          "name": "Launch Edge (localhost)",
-          "type": "pwa-msedge",
-          "request": "launch",
-          "url": "http://localhost:3000",
-          "webRoot": "${workspaceFolder}/ui/app"
-        },
-        {
-          "name": "Launch Chrome (localhost)",
-          "type": "pwa-chrome",
-          "request": "launch",
-          "url": "http://localhost:3000",
-          "webRoot": "${workspaceFolder}/ui/app"
-        }
-      ],
-      "compounds": []
-    },
-    "tasks": {
-      "version": "2.0.0",
-      "tasks": [
-        {
-          "label": "Copy_env_file_for_api_debug",
-          "command": "./.devcontainer/scripts/consolidate_env.sh ${workspaceFolder} ${workspaceFolder}/api_app/.env",
-          "type": "shell"
-        },
-        {
-          "label": "Copy_env_file_for_e2e_debug",
-          "command": "./.devcontainer/scripts/consolidate_env.sh ${workspaceFolder} ${workspaceFolder}/e2e_tests/.env",
-          "type": "shell"
-        },
-        {
-          "label": "Install_resource_processor_dependencies",
-          "command": "pip install -r ./resource_processor/vmss_porter/requirements.txt",
-          "type": "shell"
-        },
-        {
-          "label": "Unit_tests",
-          "group": {
-            "kind": "test",
-            "isDefault": true
-          },
-          "command": "pytest",
-          "args": [
-            "--ignore=e2e_tests"
-          ]
-        },
-        {
-          "label": "Smoke_tests",
-          "group": "test",
-          "command": "python",
-          "options": {
-            "cwd": "${workspaceFolder}/e2e_tests/"
-          },
-          "args": [
-            "-m",
-            "pytest",
-            "-m",
-            "smoke"
+        "tasks": {
+          "version": "2.0.0",
+          "tasks": [
+            {
+              "label": "Copy_env_file_for_api_debug",
+              "command": "./.devcontainer/scripts/consolidate_env.sh ${workspaceFolder} ${workspaceFolder}/api_app/.env",
+              "type": "shell"
+            },
+            {
+              "label": "Copy_env_file_for_e2e_debug",
+              "command": "./.devcontainer/scripts/consolidate_env.sh ${workspaceFolder} ${workspaceFolder}/e2e_tests/.env",
+              "type": "shell"
+            },
+            {
+              "label": "Install_resource_processor_dependencies",
+              "command": "pip install -r ./resource_processor/vmss_porter/requirements.txt",
+              "type": "shell"
+            },
+            {
+              "label": "Unit_tests",
+              "group": {
+                "kind": "test",
+                "isDefault": true
+              },
+              "command": "pytest",
+              "args": [
+                "--ignore=e2e_tests"
+              ]
+            },
+            {
+              "label": "Smoke_tests",
+              "group": "test",
+              "command": "python",
+              "options": {
+                "cwd": "${workspaceFolder}/e2e_tests/"
+              },
+              "args": [
+                "-m",
+                "pytest",
+                "-m",
+                "smoke"
+              ]
+            }
           ]
         }
+      },
+      // Add the IDs of extensions you want installed when the container is created.
+      "extensions": [
+        "ms-python.python",
+        "ms-python.pylance",
+        "hashicorp.terraform",
+        "github.vscode-pull-request-github",
+        "getporter.porter-vscode",
+        "davidanson.vscode-markdownlint",
+        "editorconfig.editorconfig",
+        "mikestead.dotenv",
+        "humao.rest-client",
+        "timonwong.shellcheck",
+        "ms-azuretools.vscode-azurefunctions"
       ]
     }
   },
-  // Add the IDs of extensions you want installed when the container is created.
-  "extensions": [
-    "ms-python.python",
-    "ms-python.pylance",
-    "hashicorp.terraform",
-    "github.vscode-pull-request-github",
-    "getporter.porter-vscode",
-    "davidanson.vscode-markdownlint",
-    "editorconfig.editorconfig",
-    "mikestead.dotenv",
-    "humao.rest-client",
-    "timonwong.shellcheck",
-    "ms-azuretools.vscode-azurefunctions"
-  ],
   "forwardPorts": [
     8000
   ],

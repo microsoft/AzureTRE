@@ -27,7 +27,7 @@ OPERATION_ID = "0000c8e7-5c42-4fcb-a7fd-294cfc27aa76"
 
 test_sb_message = {
     "operationId": OPERATION_ID,
-    "stepId": "main",
+    "stepId": "random-uuid",
     "id": "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
     "status": Status.Deployed,
     "message": "test message",
@@ -36,7 +36,7 @@ test_sb_message = {
 
 test_sb_message_with_outputs = {
     "operationId": OPERATION_ID,
-    "stepId": "main",
+    "stepId": "random-uuid",
     "id": "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
     "status": Status.Deployed,
     "message": "test message",
@@ -48,7 +48,7 @@ test_sb_message_with_outputs = {
 
 test_sb_message_multi_step_1_complete = {
     "operationId": OPERATION_ID,
-    "stepId": "pre-step-1",
+    "stepId": "random-uuid-1",
     "id": "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
     "status": Status.Updated,
     "message": "upgrade succeeded"
@@ -56,7 +56,7 @@ test_sb_message_multi_step_1_complete = {
 
 test_sb_message_multi_step_3_complete = {
     "operationId": OPERATION_ID,
-    "stepId": "post-step-1",
+    "stepId": "random-uuid-3",
     "id": "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
     "status": Status.Updated,
     "message": "upgrade succeeded"
@@ -96,13 +96,15 @@ def create_sample_operation(resource_id, request_action):
         updatedWhen=FAKE_UPDATE_TIMESTAMP,
         steps=[
             OperationStep(
-                stepId="main",
+                id="random-uuid",
+                templateStepId="main",
                 resourceId=resource_id,
                 stepTitle=f"main step for {resource_id}",
                 resourceTemplateName="workspace-base",
                 resourceType=ResourceType.Workspace,
                 resourceAction=request_action,
-                updatedWhen=FAKE_UPDATE_TIMESTAMP
+                updatedWhen=FAKE_UPDATE_TIMESTAMP,
+                sourceTemplateResourceId=resource_id
             )
         ]
     )

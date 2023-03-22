@@ -40,9 +40,10 @@ async def resource_template_repo():
             yield resource_template_repo
 
 
+@patch('uuid.uuid4', side_effect=["random-uuid-1", "random-uuid-2", "random-uuid-3"])
 @patch("db.repositories.operations.OperationRepository.get_timestamp", return_value=FAKE_CREATE_TIMESTAMP)
 @patch("db.repositories.operations.OperationRepository.create_operation_id", return_value=OPERATION_ID)
-async def test_create_operation_steps_from_multi_step_template(_, __, resource_repo, test_user, multi_step_operation, operations_repo, basic_shared_service, resource_template_repo, multi_step_resource_template):
+async def test_create_operation_steps_from_multi_step_template(_, __, ___, resource_repo, test_user, multi_step_operation, operations_repo, basic_shared_service, resource_template_repo, multi_step_resource_template):
 
     expected_op = multi_step_operation
     expected_op.id = OPERATION_ID
