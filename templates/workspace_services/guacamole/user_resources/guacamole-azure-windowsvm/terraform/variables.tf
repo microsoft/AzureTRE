@@ -11,4 +11,3 @@ variable "shared_storage_name" {}
 variable "image_gallery_id" {
   default = ""
 }
-variable "arm_environment" {}
