@@ -1,6 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.10.0 (Unreleased)
 **BREAKING CHANGES & MIGRATIONS**:
+A migration for OperationSteps in Operation objects was added ([#XX](https://github.com/microsoft/AzureTRE/pull/XX)).
 
 FEATURES:
 
