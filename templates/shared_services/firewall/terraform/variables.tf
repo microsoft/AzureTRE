@@ -27,3 +27,5 @@ variable "sku_tier" {
   type    = string
   default = "Standard"
 }
+
+variable "arm_environment" {}
