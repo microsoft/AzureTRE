@@ -87,6 +87,11 @@ RUN curl -L --fail -o /usr/local/bin/yq "https://github.com/mikefarah/yq/release
 ARG PAJV_VERSION="1.2.0"
 RUN npm install -g pajv@${PAJV_VERSION}
 
+# Install git - required for external github modules
+RUN if [ "${INTERACTIVE}" = "false" ]; then \
+apt-get update && apt-get install --no-install-recommends -y git \
+&& apt-get clean -y && rm -rf /var/lib/apt/lists/* ; fi
+
 USER $USERNAME
 
 # Save command line history
@@ -103,11 +108,6 @@ RUN if [ "${INTERACTIVE}" = "true" ]; then /tmp/gh.sh; fi
 COPY ./cli /tmp/cli
 WORKDIR /tmp/cli
 RUN make install-cli && echo -e "\n# Set up tre completion\nsource <(_TRE_COMPLETE=bash_source tre)" >> ~/.bashrc
-
-# Install git - required for external github modules
-RUN apt-get update && apt-get install --no-install-recommends -y git \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
 
 # Build x86-64 docker images by default
 ENV DOCKER_DEFAULT_PLATFORM=amd64
