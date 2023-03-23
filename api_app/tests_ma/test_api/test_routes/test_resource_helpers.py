@@ -16,7 +16,7 @@ from resources import strings
 from db.repositories.resources import ResourceRepository
 from db.repositories.operations import OperationRepository
 from models.domain.operation import Status, Operation, OperationStep
-from models.domain.resource import RequestAction, ResourceType
+from models.domain.resource import AvailableUpgrade, RequestAction, ResourceType
 from models.domain.workspace import Workspace
 
 
@@ -313,18 +313,17 @@ class TestResourceHelpers:
         resource = sample_resource()
         await enrich_resource_with_available_upgrades(resource, resource_template_repo)
 
-        assert resource.availableUpgrades.nonMajorVersions == ['0.1.2']
-        assert resource.availableUpgrades.majorVersions == ['1.0.0', '1.0.1']
+        assert resource.availableUpgrades == [AvailableUpgrade(version='0.1.2', forceUpdateRequired=False),
+                                              AvailableUpgrade(version='1.0.0', forceUpdateRequired=True),
+                                              AvailableUpgrade(version='1.0.1', forceUpdateRequired=True)]
 
     @patch("api.routes.workspaces.ResourceTemplateRepository")
     @pytest.mark.asyncio
-    async def test_enrich_resource_with_available_upgrades_when_there_are_no_upgrades_returns_empty_lists(self, resource_template_repo):
+    async def test_enrich_resource_with_available_upgrades_when_there_are_no_upgrades_returns_empty_list(self, resource_template_repo):
         resource_template_repo.get_all_template_versions = AsyncMock(return_value=['0.1.0'])
         resource = sample_resource()
         await enrich_resource_with_available_upgrades(resource, resource_template_repo)
-
-        assert resource.availableUpgrades.nonMajorVersions == []
-        assert resource.availableUpgrades.majorVersions == []
+        assert resource.availableUpgrades == []
 
     def test_sensitive_properties_get_masked(self, basic_resource_template):
         resource = sample_resource_with_secret()
