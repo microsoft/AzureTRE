@@ -28,19 +28,25 @@ else
     fi
 
     # Get any default entries from config schema and export. Any values in config.yaml will override these defaults
-    DEFAULT_VALUES=$(yq '[... |select(has("default"))| {"":path | .[-1] | upcase , " ": .default }| to_entries| map(.key + "=" +  .value)|join("")  ]'  config_schema.json)
-
+    DEFAULT_VALUES=$(yq '[... |select(has("default"))| {"":path | .[-1] | upcase , " ": .default }| to_entries| map("=" +  .value)|join("")  ]'  config_schema.json)
     # Format env string
     DEFAULT_VALUES=${DEFAULT_VALUES//"- ="}
-    DEFAULT_VALUES=${DEFAULT_VALUES//" "}
+
+    # Catch if no default values have been declared
+    if [ ${#DEFAULT_VALUES} -gt 2 ]; then
 
     # Export default values
-    for item in $DEFAULT_VALUES
-    do
-      tfvar="TF_VAR_$item"
-      export "$item"
-      export "$tfvar"
-    done
+      for item in $DEFAULT_VALUES
+      do
+        # Export as UPPERCASE keys env vars
+        export "$item"
+        # TF_VAR requires the key in lowercase
+        IFS='=' read -ra arr <<< "$item"
+        tfkey=$(echo "${arr[0]}" | tr '[:upper:]' '[:lower:]')
+        tfvar="TF_VAR_$tfkey=${arr[1]}"
+        export "$tfvar"
+      done
+    fi
 
     # Get leaf keys yq query
     GET_LEAF_KEYS=".. | select(. == \"*\") | {(path | .[-1]): .}"
