@@ -19,20 +19,20 @@ locals {
   # we define some zones in core despite not used by the core infra because
   # it's the easier way to make them available to other services in the system.
   private_dns_zone_names_non_core = toset([
-    module.cloud_settings.private_links["privatelink.purview.azure.com"],
-    module.cloud_settings.private_links["privatelink.purviewstudio.azure.com"],
-    module.cloud_settings.private_links["privatelink.sql.azuresynapse.net"],
-    module.cloud_settings.private_links["privatelink.dev.azuresynapse.net"],
-    module.cloud_settings.private_links["privatelink.azuresynapse.net"],
-    module.cloud_settings.private_links["privatelink.dfs.core.windows.net"],
-    module.cloud_settings.private_links["privatelink.azurehealthcareapis.com"],
-    module.cloud_settings.private_links["privatelink.dicom.azurehealthcareapis.com"],
-    module.cloud_settings.private_links["privatelink.api.azureml.ms"],
-    module.cloud_settings.private_links["privatelink.cert.api.azureml.ms"],
-    module.cloud_settings.private_links["privatelink.notebooks.azure.net"],
-    module.cloud_settings.private_links["privatelink.postgres.database.azure.com"],
-    module.cloud_settings.private_links["privatelink.mysql.database.azure.com"],
-    module.cloud_settings.private_links["privatelink.azuredatabricks.net"]
+    "privatelink.purview.azure.com",
+    "privatelink.purviewstudio.azure.com",
+    "privatelink.sql.azuresynapse.net",
+    "privatelink.dev.azuresynapse.net",
+    "privatelink.azuresynapse.net",
+    "privatelink.dfs.core.windows.net",
+    "privatelink.azurehealthcareapis.com",
+    "privatelink.dicom.azurehealthcareapis.com",
+    "privatelink.api.azureml.ms",
+    "privatelink.cert.api.azureml.ms",
+    "privatelink.notebooks.azure.net",
+    "privatelink.postgres.database.azure.com",
+    "privatelink.mysql.database.azure.com",
+    "privatelink.azuredatabricks.net"
   ])
 
   service_bus_namespace_fqdn = regex("(?:(?P<scheme>[^:/?#]+):)?(?://(?P<fqdn>[^/?#:]*))?(?::(?P<port>[0-9]+))?(?P<path>[^?#]*)(?:\\?(?P<query>[^#]*))?(?:#(?P<fragment>.*))?", azurerm_servicebus_namespace.sb.endpoint).fqdn

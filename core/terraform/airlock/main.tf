@@ -12,7 +12,7 @@ terraform {
   }
 }
 
-module "cloud_settings" {
-  source          = "../../../cloud_settings"
+module "terraform_azurerm_environment_configuration" {
+  source          = "github.com/microsoft/AzureTRE-modules/terraform_azurerm_environment_configuration"
   arm_environment = var.arm_environment
 }

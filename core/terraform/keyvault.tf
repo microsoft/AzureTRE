@@ -32,7 +32,7 @@ resource "azurerm_key_vault_access_policy" "managed_identity" {
 }
 
 data "azurerm_private_dns_zone" "vaultcore" {
-  name                = module.cloud_settings.private_links["privatelink.vaultcore.azure.net"]
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.vaultcore.azure.net"]
   resource_group_name = azurerm_resource_group.core.name
 
   depends_on = [
