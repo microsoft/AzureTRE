@@ -37,3 +37,4 @@ variable "auth_client_secret" {
 }
 
 variable "arm_environment" {}
+variable "azure_environment" {}

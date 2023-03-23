@@ -14,8 +14,8 @@ resource "azurerm_private_dns_zone" "non_core" {
 resource "azurerm_private_dns_zone_virtual_network_link" "mysql" {
   resource_group_name   = azurerm_resource_group.core.name
   virtual_network_id    = module.network.core_vnet_id
-  private_dns_zone_name = azurerm_private_dns_zone.non_core[module.terraform_azurerm_environment_configuration.private_links["privatelink.mysql.database.azure.com"]].name
-  name                  = azurerm_private_dns_zone.non_core[module.terraform_azurerm_environment_configuration.private_links["privatelink.mysql.database.azure.com"]].name
+  private_dns_zone_name = azurerm_private_dns_zone.non_core["privatelink.mysql.database.azure.com"].name
+  name                  = azurerm_private_dns_zone.non_core["privatelink.mysql.database.azure.com"].name
   registration_enabled  = false
   tags                  = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }

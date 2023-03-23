@@ -4,6 +4,8 @@ set -euo pipefail
 
 eval "$(jq -r '@sh "AUTH_CLIENT_ID=\(.auth_client_id) AUTH_CLIENT_SECRET=\(.auth_client_secret) AUTH_TENANT_ID=\(.auth_tenant_id) WORSKPACE_CLIENT_ID=\(.workspace_client_id)"')"
 
+az cloud set --name "$AZURE_ENVIRONMENT"
+
 az login --allow-no-subscriptions --service-principal --username "$AUTH_CLIENT_ID" --password "$AUTH_CLIENT_SECRET" --tenant "$AUTH_TENANT_ID" > /dev/null
 
 msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
