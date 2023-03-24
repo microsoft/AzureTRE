@@ -39,11 +39,13 @@ else
       for item in $DEFAULT_VALUES
       do
         # Export as UPPERCASE keys env vars
+        # shellcheck disable=SC2163
         export "$item"
         # TF_VAR requires the key in lowercase
         IFS='=' read -ra arr <<< "$item"
         tfkey=$(echo "${arr[0]}" | tr '[:upper:]' '[:lower:]')
         tfvar="TF_VAR_$tfkey=${arr[1]}"
+        # shellcheck disable=SC2163
         export "$tfvar"
       done
     fi
