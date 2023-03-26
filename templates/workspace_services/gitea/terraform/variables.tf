@@ -9,4 +9,4 @@ variable "gitea_storage_limit" {
   description = "Space allocated in GB for the Gitea data in Azure Files Share"
   default     = 100
 }
-
+variable "arm_environment" {}

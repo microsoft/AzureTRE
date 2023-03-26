@@ -19,6 +19,11 @@ provider "azurerm" {
   features {}
 }
 
+module "terraform_azurerm_environment_configuration" {
+  source          = "github.com/microsoft/AzureTRE-modules/terraform_azurerm_environment_configuration"
+  arm_environment = var.arm_environment
+}
+
 data "azurerm_resource_group" "ws" {
   name = "rg-${local.workspace_resource_name_suffix}"
 }

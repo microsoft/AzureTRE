@@ -360,7 +360,7 @@ class AzureADAuthorization(AccessService):
         return graph_data
 
     def _get_identity_type(self, id: str) -> str:
-        objects_endpoint = "{MICROSOFT_GRAPH_URL}/v1.0/directoryObjects/getByIds"
+        objects_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/directoryObjects/getByIds"
         request_body = {"ids": [id], "types": ["user", "servicePrincipal"]}
         graph_data = self._ms_graph_query(objects_endpoint, "POST", json=request_body)
 

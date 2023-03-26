@@ -20,7 +20,7 @@ parameters:
   - name: tre_id
     type: string
     description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
-  - name: az_cloud_environment
+  - name: azure_environment
     type: string
     default: "AzureCloud"
     description: "Used by Azure CLI to set the Azure environment"
@@ -84,7 +84,7 @@ install:
         - cloud
         - set
       flags:
-        name: ${ bundle.parameters.az_cloud_environment }
+        name: ${ bundle.parameters.azure_environment }
   - az:
       description: "Login to Azure"
       arguments:
@@ -158,7 +158,7 @@ renew:
         - cloud
         - set
       flags:
-        name: ${ bundle.parameters.az_cloud_environment }
+        name: ${ bundle.parameters.azure_environment }
   - az:
       description: "Login to Azure"
       arguments:

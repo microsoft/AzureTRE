@@ -12,6 +12,7 @@ data "external" "app_role_members" {
     auth_client_secret  = var.auth_client_secret
     auth_tenant_id      = var.auth_tenant_id
     workspace_client_id = data.azurerm_key_vault_secret.workspace_client_id.value
+    azure_environment   = var.azure_environment
   }
 }
 

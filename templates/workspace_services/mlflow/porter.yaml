@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-mlflow
-version: 0.6.5
+version: 0.6.6
 description: "An Azure TRE service for MLflow machine learning lifecycle"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -81,6 +81,7 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -98,6 +99,7 @@ upgrade:
         tre_resource_id: ${ bundle.parameters.id }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -115,6 +117,7 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

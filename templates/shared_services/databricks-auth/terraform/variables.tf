@@ -7,3 +7,5 @@ variable "tre_resource_id" {
   type        = string
   description = "Unique TRE Resource ID"
 }
+
+variable "arm_environment" {}
