@@ -82,7 +82,7 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-          environment: ${{ secrets.AZURE_ENVIRONMENT }}
+          environment: ${{ (secrets.AZURE_ENVIRONMENT != '' && secrets.AZURE_ENVIRONMENT) || 'AzureCloud' }}
 
       - name: Run deployment cleanup
         env:
@@ -116,7 +116,7 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-          environment: ${{ secrets.AZURE_ENVIRONMENT }}
+          environment: ${{ (secrets.AZURE_ENVIRONMENT != '' && secrets.AZURE_ENVIRONMENT) || 'AzureCloud' }}
 
       - name: Run deployment cleanup
         env:
