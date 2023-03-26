@@ -245,7 +245,7 @@ jobs:
           USER_UID=$(id -u)
           USER_GID=$(id -g)
           acr_domain_suffix=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)
-          CI_CACHE_ACR_URI=${{ secrets.CI_CACHE_ACR_NAME }}${acr_domain_suffix}
+          CI_CACHE_ACR_URI=${{ secrets.CI_CACHE_ACR_NAME }}"${acr_domain_suffix}"
           echo "CI_CACHE_ACR_URI=$CI_CACHE_ACR_URI" >> "$GITHUB_ENV"
 
           docker_cache=()
