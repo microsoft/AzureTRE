@@ -245,7 +245,7 @@ jobs:
           USER_UID=$(id -u)
           USER_GID=$(id -g)
           acr_domain_suffix=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)
-          CI_CACHE_ACR_URI=${{ secrets.CI_CACHE_ACR_NAME }}"${acr_domain_suffix}"
+          CI_CACHE_ACR_URI=${{ secrets.CI_CACHE_ACR_NAME }}${acr_domain_suffix}
           echo "CI_CACHE_ACR_URI=$CI_CACHE_ACR_URI" >> "$GITHUB_ENV"
 
           docker_cache=()
@@ -258,8 +258,8 @@ jobs:
             -t "tredev:${{ secrets.DEVCONTAINER_TAG }}" -f ".devcontainer/Dockerfile" \
             --build-arg BUILDKIT_INLINE_CACHE=1 --build-arg USER_UID="${USER_UID}" --build-arg USER_GID="${USER_GID}"
 
-          docker image tag tredev:${{ secrets.DEVCONTAINER_TAG }} \
-            $CI_CACHE_ACR_URI/tredev:${{ secrets.DEVCONTAINER_TAG }}
+          docker image tag tredev:"${{ secrets.DEVCONTAINER_TAG }}" \
+            $CI_CACHE_ACR_URI/tredev:"${{ secrets.DEVCONTAINER_TAG }}"
 
       - name: Deploy management
         uses: ./.github/actions/devcontainer_run_command
