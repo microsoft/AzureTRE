@@ -172,3 +172,8 @@ resource "azurerm_ip_group" "webapp" {
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 }
+
+module "terraform_azurerm_environment_configuration" {
+  source          = "github.com/microsoft/AzureTRE-modules/terraform_azurerm_environment_configuration"
+  arm_environment = var.arm_environment
+}

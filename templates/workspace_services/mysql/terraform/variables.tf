@@ -10,3 +10,4 @@ variable "storage_mb" {
     error_message = "The storage value is out of range."
   }
 }
+variable "arm_environment" {}

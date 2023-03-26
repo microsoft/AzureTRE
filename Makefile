@@ -186,8 +186,8 @@ bundle-build:
 	&& if [ -d terraform ]; then terraform -chdir=terraform init -backend=false; terraform -chdir=terraform validate; fi \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} IMAGE_NAME_PREFIX=${IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_build.sh \
-	&& porter build
-	$(MAKE) bundle-check-params
+	&& porter build \
+	  $(MAKE) bundle-check-params
 
 bundle-install: bundle-check-params
 	$(call target_title, "Deploying ${DIR} with Porter") \
