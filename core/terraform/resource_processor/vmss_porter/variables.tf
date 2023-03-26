@@ -25,9 +25,6 @@ variable "subscription_id" {
   default     = ""
 }
 
-variable "log_analytics_workspace_workspace_id" {}
-variable "log_analytics_workspace_primary_key" {}
-
 variable "rp_bundle_values" {
   type = map(string)
 }
