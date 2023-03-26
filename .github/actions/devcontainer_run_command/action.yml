@@ -138,7 +138,7 @@ runs:
       shell: bash
       run: |
         declare -A cloudapp_endpoint_suffixes=( ["AzureCloud"]="cloudapp.azure.com" ["AzureUSGovernment"]="cloudapp.usgovcloudapi.net")
-        azure_env="${{ inputs.AZURE_ENVIRONMENT }}" || azure_env="AzureCloud"
+        azure_env="${{ (inputs.AZURE_ENVIRONMENT != '' && inputs.AZURE_ENVIRONMENT) || 'AzureCloud' }}"
         domain=${cloudapp_endpoint_suffixes[${azure_env}]}
         tre_id="${{ inputs.TRE_ID }}"
         location="${{ inputs.LOCATION }}"
@@ -149,7 +149,7 @@ runs:
       shell: bash
       run: |
         declare -A arm_envs=( ["AzureCloud"]="public" ["AzureUSGovernment"]="usgovernment")
-        azure_env="${{ inputs.AZURE_ENVIRONMENT }}" || azure_env="AzureCloud"
+        azure_env="${{ (inputs.AZURE_ENVIRONMENT != '' && inputs.AZURE_ENVIRONMENT) || 'AzureCloud' }}"
         echo "ARM_ENVIRONMENT=${arm_envs[${azure_env}]}" >> $GITHUB_ENV
 
     - name: Construct ACR Domain Suffix
