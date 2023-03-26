@@ -259,7 +259,7 @@ jobs:
             --build-arg BUILDKIT_INLINE_CACHE=1 --build-arg USER_UID="${USER_UID}" --build-arg USER_GID="${USER_GID}"
 
           docker image tag tredev:"${{ secrets.DEVCONTAINER_TAG }}" \
-            $CI_CACHE_ACR_URI/tredev:"${{ secrets.DEVCONTAINER_TAG }}"
+            "$CI_CACHE_ACR_URI/tredev:${{ secrets.DEVCONTAINER_TAG }}"
 
       - name: Deploy management
         uses: ./.github/actions/devcontainer_run_command
