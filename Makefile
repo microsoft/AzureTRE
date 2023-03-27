@@ -4,9 +4,10 @@ SHELL:=/bin/bash
 MAKEFILE_FULLPATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR := $(dir $(MAKEFILE_FULLPATH))
 IMAGE_NAME_PREFIX?="microsoft/azuretre"
-ACR_DOMAIN_SUFFIX := $(shell az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)
-ACR_FQDN?="$${ACR_NAME}${ACR_DOMAIN_SUFFIX}"
-FULL_IMAGE_NAME_PREFIX:=`echo "${ACR_FQDN}/${IMAGE_NAME_PREFIX}" | tr A-Z a-z`
+ACR_DOMAIN_SUFFIX?=`az cloud show --query suffixes.acrLoginServerEndpoint --output tsv`
+ACR_NAME?=`echo "$${ACR_NAME}" | tr A-Z a-z`
+ACR_FQDN?="${ACR_NAME}${ACR_DOMAIN_SUFFIX}"
+FULL_IMAGE_NAME_PREFIX:=${ACR_FQDN}/${IMAGE_NAME_PREFIX}
 LINTER_REGEX_INCLUDE?=all # regular expression used to specify which files to include in local linting (defaults to "all")
 E2E_TESTS_NUMBER_PROCESSES_DEFAULT=4  # can be overridden in e2e_tests/.env
 
@@ -52,7 +53,7 @@ $(call target_title, "Building $(1) Image") \
 && . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 && . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 && source <(grep = $(2) | sed 's/ *= */=/g') \
-&& az acr login -n $${ACR_NAME} \
+&& az acr login -n ${ACR_NAME} \
 && if [ -n "$${CI_CACHE_ACR_NAME:-}" ]; then \
 	az acr login -n $${CI_CACHE_ACR_NAME}; \
 	ci_cache="--cache-from $${CI_CACHE_ACR_NAME}${ACR_DOMAIN_SUFFIX}/${IMAGE_NAME_PREFIX}/$(1):$${__version__}"; fi \
@@ -78,7 +79,7 @@ $(call target_title, "Pushing $(1) Image") \
 && . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 && . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 && source <(grep = $(2) | sed 's/ *= */=/g') \
-&& az acr login -n $${ACR_NAME} \
+&& az acr login -n ${ACR_NAME} \
 && docker push "${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__}"
 endef
 
@@ -251,7 +252,7 @@ bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
-	&& az acr login --name $${ACR_NAME}	\
+	&& az acr login --name ${ACR_NAME}	\
 	&& cd ${DIR} \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_push.sh \
@@ -261,10 +262,10 @@ bundle-register:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Registering ${DIR} bundle") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
-	&& az acr login --name $${ACR_NAME}	\
+	&& az acr login --name ${ACR_NAME}	\
 	&& ${MAKEFILE_DIR}/devops/scripts/ensure_cli_signed_in.sh $${TRE_URL} \
 	&& cd ${DIR} \
-	&& ${MAKEFILE_DIR}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" \
+	&& ${MAKEFILE_DIR}/devops/scripts/register_bundle_with_api.sh --acr-name "${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" \
 		--current --verify \
 		--workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 

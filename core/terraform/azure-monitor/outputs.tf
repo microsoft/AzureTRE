@@ -9,11 +9,3 @@ output "log_analytics_workspace_id" {
 output "log_analytics_workspace_name" {
   value = azurerm_log_analytics_workspace.core.name
 }
-
-output "log_analytics_workspace_primary_key" {
-  value = azurerm_log_analytics_workspace.core.primary_shared_key
-}
-
-output "log_analytics_workspace_workspace_id" {
-  value = azurerm_log_analytics_workspace.core.workspace_id
-}
