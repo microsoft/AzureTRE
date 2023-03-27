@@ -1,7 +1,4 @@
 #!/bin/bash
-set -o errexit
-set -o pipefail
-set -o nounset
 
 # This script is designed to be `source`d to create reusable helper functions
 
