@@ -1,6 +1,6 @@
 # Supported Clouds
 
-AzureTRE can be installed on the following clouds: 
+AzureTRE can be installed on the following clouds:
 1. Azure Public cloud
 2. [Azure US Government Cloud](https://azure.microsoft.com/en-us/explore/global-infrastructure/government/)
 
@@ -10,7 +10,7 @@ AzureTRE can be installed on the following clouds:
 1. In Azure US Government Cloud the following services are supported
     - All type of workspaces
     - Virtual Desktops service - Guacamole
-    - Linux and Windows VM machines 
+    - Linux and Windows VM machines
 
 ## Technical Notes
 
