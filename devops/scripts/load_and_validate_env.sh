@@ -10,6 +10,8 @@ set -o nounset
 
 # shellcheck disable=SC1091
 source "${DIR}"/construct_tre_url.sh
+# shellcheck disable=SC1091
+source "${DIR}"/convert_azure_env_to_arm_env.sh
 
 if [ ! -f "config.yaml" ]; then
   if [ -z "${USE_ENV_VARS_NOT_FILES:-}" ]; then
@@ -50,11 +52,10 @@ else
     AZURE_ENVIRONMENT=$(az cloud show --query name --output tsv)
     export AZURE_ENVIRONMENT
 
-    declare -A arm_environments=( ["AzureCloud"]="public" ["AzureUSGovernment"]="usgovernment")
-
     # The ARM Environment is required by terrafform to indicate the destination cloud.
-    export ARM_ENVIRONMENT="${arm_environments[${AZURE_ENVIRONMENT}]}"
-    export TF_VAR_arm_environment="${arm_environments[${AZURE_ENVIRONMENT}]}"
+    ARM_ENVIRONMENT=$(convert_azure_env_to_arm_env "${AZURE_ENVIRONMENT}")
+    export ARM_ENVIRONMENT
+    export TF_VAR_arm_environment="${ARM_ENVIRONMENT}"
 
     TRE_URL=$(construct_tre_url "${TRE_ID}" "${LOCATION}" "${AZURE_ENVIRONMENT}")
     export TRE_URL

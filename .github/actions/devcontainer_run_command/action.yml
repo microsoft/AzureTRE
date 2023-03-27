@@ -150,9 +150,9 @@ runs:
     - name: Construct ARM_ENVIRONMENT
       shell: bash
       run: |
-        declare -A arm_envs=( ["AzureCloud"]="public" ["AzureUSGovernment"]="usgovernment")
-        azure_env="${{ env.AZURE_ENVIRONMENT }}"
-        echo "ARM_ENVIRONMENT=${arm_envs[${azure_env}]}" >> $GITHUB_ENV
+        source devops/scripts/convert_azure_env_to_arm_env.sh
+        arm_environment=$(convert_azure_env_to_arm_env "${{ env.AZURE_ENVIRONMENT }}")
+        echo "ARM_ENVIRONMENT=$arm_environment" >> $GITHUB_ENV
 
     - name: Construct ACR Domain Suffix
       shell: bash
