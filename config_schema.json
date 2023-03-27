@@ -16,11 +16,6 @@
       "pattern": "^[a-zA-Z 0-9\\_]*$",
       "maxLength": 11
     },
-    "arm_environment": {
-      "description": "The Azure environment where resources will be deployed.",
-      "type": "string",
-      "enum": ["public", "usgovernment"]
-    },
     "management": {
       "description": "Management configuration",
       "type": "object",
@@ -163,7 +158,6 @@
   },
   "required": [
     "location",
-    "tre_id",
-    "arm_environment"
+    "tre_id"
   ]
 }
