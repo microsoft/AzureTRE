@@ -48,7 +48,7 @@ else
     # shellcheck disable=SC2046
     export $(yq e "$GET_LEAF_KEYS|$TF_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)
 
-    # Source AZURE_ENVIRONMENT and setup the  ARM_ENVIRONMENT based on it
+    # Source AZURE_ENVIRONMENT and setup the ARM_ENVIRONMENT based on it
     AZURE_ENVIRONMENT=$(az cloud show --query name --output tsv)
     export AZURE_ENVIRONMENT
 
