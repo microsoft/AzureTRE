@@ -8,6 +8,9 @@ set -o nounset
 #    load_and_validate_env.sh
 #
 
+# shellcheck disable=SC1091
+source "${DIR}"/construct_tre_url.sh
+
 if [ ! -f "config.yaml" ]; then
   if [ -z "${USE_ENV_VARS_NOT_FILES:-}" ]; then
     echo -e "\e[31m»»» 💥 Unable to find config.yaml file, please create file and try again!\e[0m"
@@ -46,8 +49,8 @@ else
     AZURE_ENVIRONMENT=$(az cloud show --query name --output tsv)
     export AZURE_ENVIRONMENT
 
-    declare -A cloudapp_endpoint_suffix=( ["public"]="cloudapp.azure.com" ["usgovernment"]="cloudapp.usgovcloudapi.net")
-    export TRE_URL=${TRE_URL:-https://${TRE_ID}.${LOCATION}.${cloudapp_endpoint_suffix[${ARM_ENVIRONMENT}]}}
+    TRE_URL=$(construct_tre_url "${TRE_ID}" "${LOCATION}" "${AZURE_ENVIRONMENT}")
+    export TRE_URL
 fi
 
 set +o nounset
