@@ -46,8 +46,15 @@ else
     # shellcheck disable=SC2046
     export $(yq e "$GET_LEAF_KEYS|$TF_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)
 
+    # Source AZURE_ENVIRONMENT and setup the  ARM_ENVIRONMENT based on it
     AZURE_ENVIRONMENT=$(az cloud show --query name --output tsv)
     export AZURE_ENVIRONMENT
+
+    declare -A arm_environments=( ["AzureCloud"]="public" ["AzureUSGovernment"]="usgovernment")
+
+    # The ARM Environment is required by terrafform to indicate the destination cloud.
+    export ARM_ENVIRONMENT="${arm_environments[${AZURE_ENVIRONMENT}]}"
+    export TF_VAR_arm_environment="${arm_environments[${AZURE_ENVIRONMENT}]}"
 
     TRE_URL=$(construct_tre_url "${TRE_ID}" "${LOCATION}" "${AZURE_ENVIRONMENT}")
     export TRE_URL
