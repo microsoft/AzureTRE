@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Header, status, Request, Response
@@ -32,7 +33,7 @@ from services.authentication import get_current_admin_user, \
 from services.authentication import extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
-from .resource_helpers import cascaded_update_resource, delete_validation, get_identity_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, \
+from .resource_helpers import cascaded_update_resource, delete_validation, enrich_resource_with_available_upgrades, get_identity_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, \
     send_custom_action_message, send_resource_request_message, update_user_resource
 from models.domain.request_action import RequestAction
 
@@ -54,11 +55,13 @@ def validate_user_has_valid_role_for_user_resource(user, user_resource):
 
 # WORKSPACE ROUTES
 @workspaces_core_router.get("/workspaces", response_model=WorkspacesInList, name=strings.API_GET_ALL_WORKSPACES)
-async def retrieve_users_active_workspaces(request: Request, user=Depends(get_current_tre_user_or_tre_admin), workspace_repo=Depends(get_repository(WorkspaceRepository))) -> WorkspacesInList:
+async def retrieve_users_active_workspaces(request: Request, user=Depends(get_current_tre_user_or_tre_admin), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspacesInList:
 
     try:
         user = await get_current_admin_user(request)
-        return WorkspacesInList(workspaces=await workspace_repo.get_active_workspaces())
+        workspaces = await workspace_repo.get_active_workspaces()
+        await asyncio.gather(*[enrich_resource_with_available_upgrades(workspace, resource_template_repo) for workspace in workspaces])
+        return WorkspacesInList(workspaces=workspaces)
 
     except Exception:
         workspaces = await workspace_repo.get_active_workspaces()
@@ -78,7 +81,8 @@ async def retrieve_users_active_workspaces(request: Request, user=Depends(get_cu
 
 
 @workspaces_shared_router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID)
-async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path)) -> WorkspaceInResponse:
+async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceInResponse:
+    await enrich_resource_with_available_upgrades(workspace, resource_template_repo)
     return WorkspaceInResponse(workspace=workspace)
 
 
@@ -218,13 +222,15 @@ async def retrieve_workspace_history_by_workspace_id(workspace=Depends(get_works
 
 # WORKSPACE SERVICES ROUTES
 @workspace_services_workspace_router.get("/workspaces/{workspace_id}/workspace-services", response_model=WorkspaceServicesInList, name=strings.API_GET_ALL_WORKSPACE_SERVICES, dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
-async def retrieve_users_active_workspace_services(workspace=Depends(get_workspace_by_id_from_path), workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository))) -> WorkspaceServicesInList:
+async def retrieve_users_active_workspace_services(workspace=Depends(get_workspace_by_id_from_path), workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceServicesInList:
     workspace_services = await workspace_services_repo.get_active_workspace_services_for_workspace(workspace.id)
+    await asyncio.gather(*[enrich_resource_with_available_upgrades(workspace_service, resource_template_repo) for workspace_service in workspace_services])
     return WorkspaceServicesInList(workspaceServices=workspace_services)
 
 
 @workspace_services_workspace_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_GET_WORKSPACE_SERVICE_BY_ID, dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager), Depends(get_workspace_by_id_from_path)])
-async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspace_service_by_id_from_path)) -> WorkspaceServiceInResponse:
+async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceServiceInResponse:
+    await enrich_resource_with_available_upgrades(workspace_service, resource_template_repo)
     return WorkspaceServiceInResponse(workspaceService=workspace_service)
 
 
@@ -352,6 +358,7 @@ async def retrieve_user_resources_for_workspace_service(
         workspace_id: str,
         service_id: str,
         user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager),
+        resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
         user_resource_repo=Depends(get_repository(UserResourceRepository))) -> UserResourcesInList:
     user_resources = await user_resource_repo.get_user_resources_for_workspace_service(workspace_id, service_id)
 
@@ -363,18 +370,22 @@ async def retrieve_user_resources_for_workspace_service(
         if 'azure_resource_id' in user_resource.properties:
             user_resource.azureStatus = get_azure_resource_status(user_resource.properties['azure_resource_id'])
 
+    await asyncio.gather(*[enrich_resource_with_available_upgrades(user_resource, resource_template_repo) for user_resource in user_resources])
+
     return UserResourcesInList(userResources=user_resources)
 
 
 @user_resources_workspace_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_GET_USER_RESOURCE, dependencies=[Depends(get_workspace_by_id_from_path)])
 async def retrieve_user_resource_by_id(
         user_resource=Depends(get_user_resource_by_id_from_path),
+        resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
         user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)) -> UserResourceInResponse:
     validate_user_has_valid_role_for_user_resource(user, user_resource)
 
     if 'azure_resource_id' in user_resource.properties:
         user_resource.azureStatus = get_azure_resource_status(user_resource.properties['azure_resource_id'])
 
+    await enrich_resource_with_available_upgrades(user_resource, resource_template_repo)
     return UserResourceInResponse(userResource=user_resource)
 
 
