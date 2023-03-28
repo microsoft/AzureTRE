@@ -1,4 +1,5 @@
 from azure.cli.core import cloud
+from urllib.parse import urlparse
 
 
 def get_cloud() -> cloud.Cloud:
@@ -14,4 +15,4 @@ def get_aad_authority_url() -> str:
 
 
 def get_microsoft_graph_fqdn() -> str:
-    return get_cloud().endpoints.microsoft_graph_resource_id.replace("https://", '').strip('/')
+    urlparse(get_cloud().endpoints.microsoft_graph_resource_id).netloc
