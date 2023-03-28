@@ -8,6 +8,11 @@ set -o nounset
 #    load_and_validate_env.sh
 #
 
+# shellcheck disable=SC1091
+source "${DIR}"/construct_tre_url.sh
+# shellcheck disable=SC1091
+source "${DIR}"/convert_azure_env_to_arm_env.sh
+
 if [ ! -f "config.yaml" ]; then
   if [ -z "${USE_ENV_VARS_NOT_FILES:-}" ]; then
     echo -e "\e[31m»»» 💥 Unable to find config.yaml file, please create file and try again!\e[0m"
@@ -66,18 +71,17 @@ else
     # shellcheck disable=SC2046
     export $(yq e "$GET_LEAF_KEYS|$TF_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)
 
-    # Source AZURE_ENVIRONMENT and setup the  ARM_ENVIRONMENT based on it
+    # Source AZURE_ENVIRONMENT and setup the ARM_ENVIRONMENT based on it
     AZURE_ENVIRONMENT=$(az cloud show --query name --output tsv)
     export AZURE_ENVIRONMENT
 
-    declare -A arm_environments=( ["AzureCloud"]="public" ["AzureUSGovernment"]="usgovernment")
-    declare -A cloudapp_endpoint_suffix=( ["AzureCloud"]="cloudapp.azure.com" ["AzureUSGovernment"]="cloudapp.usgovcloudapi.net")
+    # The ARM Environment is required by terraform to indicate the destination cloud.
+    ARM_ENVIRONMENT=$(convert_azure_env_to_arm_env "${AZURE_ENVIRONMENT}")
+    export ARM_ENVIRONMENT
+    export TF_VAR_arm_environment="${ARM_ENVIRONMENT}"
 
-    # The ARM Environment is required by terrafform to indicate the destination cloud.
-    export ARM_ENVIRONMENT="${arm_environments[${AZURE_ENVIRONMENT}]}"
-    export TF_VAR_arm_environment="${arm_environments[${AZURE_ENVIRONMENT}]}"
-
-    export TRE_URL=${TRE_URL:-https://${TRE_ID}.${LOCATION}.${cloudapp_endpoint_suffix[${AZURE_ENVIRONMENT}]}}
+    TRE_URL=$(construct_tre_url "${TRE_ID}" "${LOCATION}" "${AZURE_ENVIRONMENT}")
+    export TRE_URL
 fi
 
 set +o nounset
