@@ -16,4 +16,4 @@ AzureTRE can be installed on the following clouds:
 
 When Using Azure US Government Cloud make sure to:
 1. Setup the cloud in Azure CLI - `az cloud set --name AzureUSGovernment`
-1. Setup the AZURE_ENVIRONMENT param in CI/CD pipelines to `AzureUSGovernment` - as mentioned in [CI/CD predeployment steps](docs/tre-admins/setup-instructions/cicd-pre-deployment-steps.md)
+1. Setup the AZURE_ENVIRONMENT param in CI/CD pipelines to `AzureUSGovernment` - as mentioned in [CI/CD predeployment steps](setup-instructions/cicd-pre-deployment-steps.md)
