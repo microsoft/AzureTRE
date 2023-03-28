@@ -195,3 +195,8 @@ resource "azurerm_key_vault_access_policy" "resource_processor" {
   secret_permissions      = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
   certificate_permissions = ["Get", "Recover", "Import", "Delete", "Purge"]
 }
+
+module "terraform_azurerm_environment_configuration" {
+  source          = "github.com/microsoft/terraform-azurerm-environment-configuration"
+  arm_environment = var.arm_environment
+}
