@@ -121,12 +121,18 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Construct AZURE_ENVIRONMENT
+      shell: bash
+      run: |
+        azure_env="${{ (inputs.AZURE_ENVIRONMENT != '' && inputs.AZURE_ENVIRONMENT) || 'AzureCloud' }}"
+        echo "AZURE_ENVIRONMENT=$azure_env" >> $GITHUB_ENV
+
     - name: Azure Login
       uses: azure/login@v1
       if: contains(inputs.COMMAND, 'bootstrap') != true
       with:
         creds: ${{ inputs.AZURE_CREDENTIALS }}
-        environment: ${{ (inputs.AZURE_ENVIRONMENT != '' && inputs.AZURE_ENVIRONMENT) || 'AzureCloud' }}
+        environment: "${{ env.AZURE_ENVIRONMENT }}"
 
     - name: ACR Login
       shell: bash
@@ -137,20 +143,16 @@ runs:
     - name: Construct TRE_URL
       shell: bash
       run: |
-        declare -A cloudapp_endpoint_suffixes=( ["AzureCloud"]="cloudapp.azure.com" ["AzureUSGovernment"]="cloudapp.usgovcloudapi.net")
-        azure_env="${{ (inputs.AZURE_ENVIRONMENT != '' && inputs.AZURE_ENVIRONMENT) || 'AzureCloud' }}"
-        domain=${cloudapp_endpoint_suffixes[${azure_env}]}
-        tre_id="${{ inputs.TRE_ID }}"
-        location="${{ inputs.LOCATION }}"
-        tre_url=${TRE_URL:-https://${tre_id}.${location}.${domain}}
+        source devops/scripts/construct_tre_url.sh
+        tre_url=$(construct_tre_url "${{ inputs.TRE_ID }}" "${{ inputs.LOCATION }}" "${{ env.AZURE_ENVIRONMENT }}")
         echo "TRE_URL=$tre_url" >> $GITHUB_ENV
 
     - name: Construct ARM_ENVIRONMENT
       shell: bash
       run: |
-        declare -A arm_envs=( ["AzureCloud"]="public" ["AzureUSGovernment"]="usgovernment")
-        azure_env="${{ (inputs.AZURE_ENVIRONMENT != '' && inputs.AZURE_ENVIRONMENT) || 'AzureCloud' }}"
-        echo "ARM_ENVIRONMENT=${arm_envs[${azure_env}]}" >> $GITHUB_ENV
+        source devops/scripts/convert_azure_env_to_arm_env.sh
+        arm_environment=$(convert_azure_env_to_arm_env "${{ env.AZURE_ENVIRONMENT }}")
+        echo "ARM_ENVIRONMENT=$arm_environment" >> $GITHUB_ENV
 
     - name: Construct ACR Domain Suffix
       shell: bash
@@ -172,7 +174,7 @@ runs:
           -e WORKSPACE_SERVICE_NAME="${{ inputs.WORKSPACE_SERVICE_NAME }}" \
           -e ARM_ENVIRONMENT="${{ env.ARM_ENVIRONMENT }}"  \
           -e TF_VAR_arm_environment="${{ env.ARM_ENVIRONMENT }}"  \
-          -e AZURE_ENVIRONMENT="${{ (inputs.AZURE_ENVIRONMENT != '' && inputs.AZURE_ENVIRONMENT) || 'AzureCloud' }}"  \
+          -e AZURE_ENVIRONMENT="${{ env.AZURE_ENVIRONMENT }}"  \
           -e LOCATION="${{ inputs.LOCATION }}" \
           -e TF_VAR_location="${{ inputs.LOCATION }}" \
           -e RESOURCE_LOCATION="${{ inputs.LOCATION }}" \
