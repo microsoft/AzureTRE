@@ -52,7 +52,7 @@ else
     AZURE_ENVIRONMENT=$(az cloud show --query name --output tsv)
     export AZURE_ENVIRONMENT
 
-    # The ARM Environment is required by terrafform to indicate the destination cloud.
+    # The ARM Environment is required by terraform to indicate the destination cloud.
     ARM_ENVIRONMENT=$(convert_azure_env_to_arm_env "${AZURE_ENVIRONMENT}")
     export ARM_ENVIRONMENT
     export TF_VAR_arm_environment="${ARM_ENVIRONMENT}"
