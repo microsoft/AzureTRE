@@ -5,7 +5,7 @@ from azure.cosmos.aio import CosmosClient
 from azure.mgmt.cosmosdb.aio import CosmosDBManagementClient
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi import Request, status
-from core import config, credentials, cloud
+from core import config, credentials
 from db.errors import UnableToAccessDatabase
 from db.repositories.base import BaseRepository
 from resources import strings
@@ -40,8 +40,8 @@ async def get_store_key(credential) -> str:
         async with CosmosDBManagementClient(
             credential,
             subscription_id=config.SUBSCRIPTION_ID,
-            base_url=cloud.get_resource_manager_endpoint(),
-            credential_scopes=cloud.get_resource_manager_credential_scopes()
+            base_url=config.RESOURCE_MANAGER_ENDPOINT,
+            credential_scopes=[config.RESOURCE_MANAGER_ENDPOINT + ".default"]
         ) as cosmosdb_mng_client:
             database_keys = await cosmosdb_mng_client.database_accounts.list_keys(
                 resource_group_name=config.RESOURCE_GROUP_NAME,

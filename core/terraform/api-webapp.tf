@@ -54,6 +54,10 @@ resource "azurerm_linux_web_app" "api" {
     CORE_ADDRESS_SPACE                               = var.core_address_space
     TRE_ADDRESS_SPACE                                = var.tre_address_space
     ARM_ENVIRONMENT                                  = var.arm_environment
+    AAD_AUTHORITY_URL                                = module.terraform_azurerm_environment_configuration.endpoints.active_directory
+    RESOURCE_MANAGER_ENDPOINT                        = module.terraform_azurerm_environment_configuration.endpoints.resource_manager
+    MICROSOFT_GRAPH_URL                              = module.terraform_azurerm_environment_configuration.endpoints.microsoft_graph
+    STORAGE_ENDPOINT_SUFFIX                          = module.terraform_azurerm_environment_configuration.suffixes.storage_endpoint
   }
 
   identity {

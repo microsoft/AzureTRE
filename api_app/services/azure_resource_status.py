@@ -1,4 +1,4 @@
-from core import config, credentials, cloud
+from core import config, credentials
 import logging
 
 from azure.mgmt.compute import ComputeManagementClient, models
@@ -29,6 +29,6 @@ def get_azure_resource_status(resource_id):
 def get_azure_vm_instance_view(vm_name, resource_group_name) -> models.VirtualMachineInstanceView:
     compute_client = ComputeManagementClient(credentials.get_credential(),
                                              subscription_id=config.SUBSCRIPTION_ID,
-                                             base_url=cloud.get_resource_manager_endpoint(),
-                                             credential_scopes=cloud.get_resource_manager_credential_scopes())
+                                             base_url=config.RESOURCE_MANAGER_ENDPOINT,
+                                             credential_scopes=[config.RESOURCE_MANAGER_ENDPOINT + ".default"])
     return compute_client.virtual_machines.instance_view(resource_group_name, vm_name)
