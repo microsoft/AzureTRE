@@ -8,7 +8,7 @@ import json
 
 from fastapi import HTTPException, status
 
-from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, mask_sensitive_properties
+from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, mask_sensitive_properties, enrich_resource_with_available_upgrades
 from db.repositories.resources_history import ResourceHistoryRepository
 from tests_ma.test_api.conftest import create_test_user
 from resources import strings
@@ -16,7 +16,7 @@ from resources import strings
 from db.repositories.resources import ResourceRepository
 from db.repositories.operations import OperationRepository
 from models.domain.operation import Status, Operation, OperationStep
-from models.domain.resource import RequestAction, ResourceType
+from models.domain.resource import AvailableUpgrade, RequestAction, ResourceType
 from models.domain.workspace import Workspace
 
 
@@ -305,6 +305,25 @@ class TestResourceHelpers:
         resource.properties["prop_with_nested_secret"]["nested_secret"] = strings.REDACTED_SENSITIVE_VALUE
 
         resource_repo.save_item.assert_called_once_with(resource)
+
+    @patch("api.routes.workspaces.ResourceTemplateRepository")
+    @pytest.mark.asyncio
+    async def test_enrich_resource_with_available_upgrades_when_there_are_new_upgrades_returns_relevant_upgrades_only(self, resource_template_repo):
+        resource_template_repo.get_all_template_versions = AsyncMock(return_value=['0.1.0', '0.1.2', '1.0.0', '1.0.1'])
+        resource = sample_resource()
+        await enrich_resource_with_available_upgrades(resource, resource_template_repo)
+
+        assert resource.availableUpgrades == [AvailableUpgrade(version='0.1.2', forceUpdateRequired=False),
+                                              AvailableUpgrade(version='1.0.0', forceUpdateRequired=True),
+                                              AvailableUpgrade(version='1.0.1', forceUpdateRequired=True)]
+
+    @patch("api.routes.workspaces.ResourceTemplateRepository")
+    @pytest.mark.asyncio
+    async def test_enrich_resource_with_available_upgrades_when_there_are_no_upgrades_returns_empty_list(self, resource_template_repo):
+        resource_template_repo.get_all_template_versions = AsyncMock(return_value=['0.1.0'])
+        resource = sample_resource()
+        await enrich_resource_with_available_upgrades(resource, resource_template_repo)
+        assert resource.availableUpgrades == []
 
     def test_sensitive_properties_get_masked(self, basic_resource_template):
         resource = sample_resource_with_secret()
