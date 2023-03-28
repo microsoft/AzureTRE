@@ -4,9 +4,8 @@ import os
 import pytest
 from mock import MagicMock, patch
 
-from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_info_from_blob_url, copy_data, get_blob_url
+from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_info_from_blob_url, copy_data, get_blob_url, get_storage_endpoint_suffix
 from exceptions import TooManyFilesInRequestException, NoFilesInRequestException
-from shared_code.cloud import get_storage_endpoint_suffix
 
 
 def get_test_blob():
