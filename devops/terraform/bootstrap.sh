@@ -9,8 +9,9 @@ echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e
 az group create --resource-group "$TF_VAR_mgmt_resource_group_name" --location "$LOCATION" -o table
 # shellcheck disable=SC2154
 az storage account create --resource-group "$TF_VAR_mgmt_resource_group_name" \
---name "$TF_VAR_mgmt_storage_account_name" --location "$LOCATION" \
---kind StorageV2 --sku Standard_LRS -o table
+  --name "$TF_VAR_mgmt_storage_account_name" --location "$LOCATION" \
+  --allow-blob-public-access false \
+  --kind StorageV2 --sku Standard_LRS -o table
 
 # Blob container
 # shellcheck disable=SC2154
