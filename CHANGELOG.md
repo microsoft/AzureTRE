@@ -1,12 +1,15 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.10.0 (Unreleased)
 **BREAKING CHANGES & MIGRATIONS**:
+A migration for OperationSteps in Operation objects was added ([#3358](https://github.com/microsoft/AzureTRE/pull/3358)).
 
 FEATURES:
 
 ENHANCEMENTS:
+* Added 'availableUpgrades' field to Resources in GET/GET all Resources endpoints. The field indicates whether there are template versions that a resource can be upgraded to [#3234](https://github.com/microsoft/AzureTRE/pull/3234)
 
 BUG FIXES:
+* Fix ENABLE_SWAGGER configuration being ignored in CI ([#3355](https://github.com/microsoft/AzureTRE/pull/3355))
 
 COMPONENTS:
 

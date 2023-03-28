@@ -63,7 +63,7 @@ resource_processor:
 # to use as a source of bundle parameter values
 # For example, to specify your image_gallery_id for use in VM user resources with custom VM images:
 # yamllint disable-line rule:line-length
-#   rp_bundle_values: {"image_gallery_id":"/subscriptions/<subscription-id>/resourceGroups/<your-rg>/providers/Microsoft.Compute/galleries/<your-gallery-name>"}
+#  rp_bundle_values: '{"custom_key_1":"custom_value_1","image_gallery_id":"/subscriptions/<subscription-id>/resourceGroups/<your-rg>/providers/Microsoft.Compute/galleries/<your-gallery-name>"}'
 
 developer_settings:
   # Locks will not be added to stateful resources so they can be easily removed
