@@ -10,6 +10,6 @@ terraform {
 
 
 module "terraform_azurerm_environment_configuration" {
-  source          = "github.com/microsoft/terraform-azurerm-environment-configuration"
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.1.0"
   arm_environment = var.arm_environment
 }
