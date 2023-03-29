@@ -12,7 +12,6 @@ def get_test_blob():
     return namedtuple("Blob", "name")
 
 
-@patch.dict(os.environ, {'ARM_ENVIRONMENT': 'public'})
 class TestBlobOperations():
 
     def test_get_blob_info_from_topic_and_subject(self):

@@ -47,7 +47,6 @@ EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT: str = config("EVENT_GRID_AIRLOCK
 MANAGED_IDENTITY_CLIENT_ID: str = config("MANAGED_IDENTITY_CLIENT_ID", default="")
 
 # Cloud configuration
-ARM_ENVIRONMENT: str = config("ARM_ENVIRONMENT", default="public")
 AAD_AUTHORITY_URL: str = config("AAD_AUTHORITY_URL", default="https://login.microsoftonline.com")
 RESOURCE_MANAGER_ENDPOINT: str = config("RESOURCE_MANAGER_ENDPOINT", default="https://management.azure.com")
 MICROSOFT_GRAPH_URL: str = config("MICROSOFT_GRAPH_URL", default="https://graph.microsoft.com")
