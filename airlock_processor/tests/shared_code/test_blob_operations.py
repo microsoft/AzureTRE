@@ -1,6 +1,5 @@
 from collections import namedtuple
 import json
-import os
 import pytest
 from mock import MagicMock, patch
 

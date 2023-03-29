@@ -1,4 +1,3 @@
-import os
 from mock import patch, MagicMock
 
 from DataDeletionTrigger import delete_blob_and_container_if_last_blob
