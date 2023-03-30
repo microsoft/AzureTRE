@@ -2,15 +2,15 @@ import asyncio
 import json
 import logging
 import base64
-from shared.cloud import get_aad_authority_url, get_microsoft_graph_fqdn
+from urllib.parse import urlparse
+
 
 from resources.helpers import get_installation_id
 from shared.logging import shell_output_logger
-from shared.cloud import get_acr_domain_suffix, get_cloud
 
 
 def azure_login_command(config):
-    set_cloud_command = f"az cloud set --name {get_cloud().name}"
+    set_cloud_command = f"az cloud set --name {config['azure_environment']}"
 
     if config["vmss_msi_id"]:
         # Use the Managed Identity when in VMSS context
@@ -119,7 +119,7 @@ def get_special_porter_param_value(config, parameter_name: str, msg_body):
     if parameter_name == "mgmt_resource_group_name":
         return config["tfstate_resource_group_name"]
     if parameter_name == "azure_environment":
-        return get_cloud().name
+        return config['azure_environment']
     if parameter_name == "workspace_id":
         return msg_body.get("workspaceId")  # not included in all messages
     if parameter_name == "parent_service_id":
@@ -128,12 +128,12 @@ def get_special_porter_param_value(config, parameter_name: str, msg_body):
         return value
     # Parameters that relate to the cloud type
     if parameter_name == "aad_authority_url":
-        return get_aad_authority_url()
+        return config['aad_authority_url']
     if parameter_name == "microsoft_graph_fqdn":
-        return get_microsoft_graph_fqdn()
+        return urlparse(config['microsoft_graph_fqdn']).netloc
     if parameter_name == "arm_environment":
         return config["arm_environment"]
 
 
 def _get_acr_name(acr_fqdn: str):
-    return acr_fqdn.replace(get_acr_domain_suffix(), '')
+    return acr_fqdn.split('.', 1)[0]

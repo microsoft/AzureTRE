@@ -1,11 +1,9 @@
-import os
 from mock import patch, MagicMock
 
 from DataDeletionTrigger import delete_blob_and_container_if_last_blob
-from shared_code.cloud import get_storage_endpoint_suffix
+from shared_code.blob_operations import get_storage_endpoint_suffix
 
 
-@patch.dict(os.environ, {'ARM_ENVIRONMENT': 'public'})
 class TestDataDeletionTrigger():
 
     @patch("DataDeletionTrigger.BlobServiceClient")
