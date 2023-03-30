@@ -4,7 +4,6 @@ import logging
 import json
 import re
 from typing import Tuple
-from shared_code.cloud import get_storage_endpoint_suffix
 
 from azure.core.exceptions import ResourceExistsError
 from azure.identity import DefaultAzureCredential
@@ -126,3 +125,12 @@ def get_blob_info_from_blob_url(blob_url: str) -> Tuple[str, str, str]:
 
 def get_blob_url(account_name: str, container_name: str, blob_name='') -> str:
     return f'{get_account_url(account_name)}{container_name}/{blob_name}'
+
+
+def get_storage_endpoint_suffix():
+    default_value = "core.windows.net"
+    try:
+        return os.environ["STORAGE_ENDPOINT_SUFFIX"]
+    except KeyError as e:
+        logging.warning(f"Missing environment variable: {e}. using default value: '{default_value}'")
+        return default_value

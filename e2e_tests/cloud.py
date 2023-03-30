@@ -1,4 +1,5 @@
 from azure.cli.core import cloud
+from urllib.parse import urlparse
 
 
 def get_cloud() -> cloud.Cloud:
@@ -6,4 +7,4 @@ def get_cloud() -> cloud.Cloud:
 
 
 def get_aad_authority_fqdn() -> str:
-    return get_cloud().endpoints.active_directory.replace('https://', '')
+    return urlparse(get_cloud().endpoints.active_directory).netloc

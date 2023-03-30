@@ -64,6 +64,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
     "MANAGED_IDENTITY_CLIENT_ID"                 = azurerm_user_assigned_identity.airlock_id.client_id
     "TRE_ID"                                     = var.tre_id
     "WEBSITE_CONTENTOVERVNET"                    = 1
+    "STORAGE_ENDPOINT_SUFFIX"                    = module.terraform_azurerm_environment_configuration.storage_suffix
   }
 
   site_config {

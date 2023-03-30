@@ -27,6 +27,8 @@ data "template_file" "cloudconfig" {
     key_vault_url                                    = var.key_vault_url
     arm_environment                                  = var.arm_environment
     azure_environment                                = local.azure_environment
+    aad_authority_url                                = module.terraform_azurerm_environment_configuration.active_directory_endpoint
+    microsoft_graph_fqdn                             = module.terraform_azurerm_environment_configuration.microsoft_graph_endpoint
     rp_bundle_values                                 = local.rp_bundle_values_formatted
   }
 }

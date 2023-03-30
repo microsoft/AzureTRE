@@ -11,7 +11,7 @@ from fastapi import Request, HTTPException, status
 from msal import ConfidentialClientApplication
 
 from services.access_service import AccessService, AuthConfigValidationError
-from core import config, cloud
+from core import config
 from db.errors import EntityDoesNotExist
 from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace import Workspace, WorkspaceRole
@@ -19,7 +19,7 @@ from resources import strings
 from api.dependencies.database import get_db_client_from_request
 from db.repositories.workspaces import WorkspaceRepository
 
-MICROSOFT_GRAPH_URL = cloud.get_microsoft_graph_url()
+MICROSOFT_GRAPH_URL = config.MICROSOFT_GRAPH_URL.strip("/")
 
 
 class PrincipalType(Enum):
@@ -32,7 +32,7 @@ class AzureADAuthorization(AccessService):
     _jwt_keys: dict = {}
 
     require_one_of_roles = None
-    aad_instance = cloud.get_aad_authority_url()
+    aad_instance = config.AAD_AUTHORITY_URL
 
     TRE_CORE_ROLES = ['TREAdmin', 'TREUser']
     WORKSPACE_ROLES_DICT = {'WorkspaceOwner': 'app_role_id_workspace_owner', 'WorkspaceResearcher': 'app_role_id_workspace_researcher', 'AirlockManager': 'app_role_id_workspace_airlock_manager'}
@@ -191,7 +191,7 @@ class AzureADAuthorization(AccessService):
     @staticmethod
     def _get_msgraph_token() -> str:
         scopes = [f"{MICROSOFT_GRAPH_URL}/.default"]
-        app = ConfidentialClientApplication(client_id=config.API_CLIENT_ID, client_credential=config.API_CLIENT_SECRET, authority=f"{cloud.get_aad_authority_url()}/{config.AAD_TENANT_ID}")
+        app = ConfidentialClientApplication(client_id=config.API_CLIENT_ID, client_credential=config.API_CLIENT_SECRET, authority=f"{config.AAD_AUTHORITY_URL}/{config.AAD_TENANT_ID}")
         try:
             result = app.acquire_token_silent(scopes=scopes, account=None)
         except Exception:
