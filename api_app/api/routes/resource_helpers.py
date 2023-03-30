@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+import semantic_version
 from copy import deepcopy
 from typing import Dict, Any, Optional
 
@@ -17,7 +18,7 @@ from pydantic import parse_obj_as
 from db.errors import DuplicateEntity, EntityDoesNotExist
 from db.repositories.operations import OperationRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
-from models.domain.resource import ResourceType, Resource
+from models.domain.resource import AvailableUpgrade, ResourceType, Resource
 from models.domain.operation import Operation
 from resources import strings
 from service_bus.resource_request_sender import (
@@ -311,3 +312,21 @@ async def update_user_resource(
         action=RequestAction.Upgrade)
 
     return operation
+
+
+async def enrich_resource_with_available_upgrades(resource: Resource, resource_template_repo: ResourceTemplateRepository):
+    available_upgrades = []
+    resource_version = semantic_version.Version(resource.templateVersion)
+    all_versions = await resource_template_repo.get_all_template_versions(resource.templateName)
+
+    versions_higher_than_current = [version for version in all_versions if semantic_version.Version(version) > resource_version]
+    major_update_versions = [version for version in versions_higher_than_current if semantic_version.Version(version).major > resource_version.major]
+    non_major_update_versions = [version for version in versions_higher_than_current if version not in major_update_versions]
+
+    for version in sorted(non_major_update_versions, key=semantic_version.Version):
+        available_upgrades.append(AvailableUpgrade(version=version, forceUpdateRequired=False))
+
+    for version in sorted(major_update_versions, key=semantic_version.Version):
+        available_upgrades.append(AvailableUpgrade(version=version, forceUpdateRequired=True))
+
+    resource.availableUpgrades = available_upgrades

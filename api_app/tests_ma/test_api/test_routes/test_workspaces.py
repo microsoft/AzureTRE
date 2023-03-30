@@ -348,7 +348,8 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
     # [GET] /workspaces
     @ patch("api.routes.workspaces.WorkspaceRepository.get_active_workspaces")
-    async def test_get_workspaces_returns_correct_data_when_resources_exist(self, get_workspaces_mock, app, client) -> None:
+    @patch("api.routes.workspaces.enrich_resource_with_available_upgrades", return_value=None)
+    async def test_get_workspaces_returns_correct_data_when_resources_exist(self, _, get_workspaces_mock, app, client) -> None:
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
         auth_info_user_in_workspace_researcher_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab127', 'WorkspaceResearcher': 'ab126'}}
         auth_info_user_not_in_workspace_role = {'sp_id': 'ab127', 'roles': {'WorkspaceOwner': 'ab128', 'WorkspaceResearcher': 'ab129'}}
@@ -370,7 +371,8 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     # [GET] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.get_identity_role_assignments")
-    async def test_get_workspace_by_id_as_tre_admin(self, access_service_mock, get_workspace_mock, app, client):
+    @patch("api.routes.workspaces.enrich_resource_with_available_upgrades", return_value=None)
+    async def test_get_workspace_by_id_as_tre_admin(self, _, access_service_mock, get_workspace_mock, app, client):
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'client_id': 'cl123', 'app_role_id_workspace_owner': 'ab124', 'app_role_id_workspace_researcher': 'ab125', 'app_role_id_workspace_airlock_manager': 'ab130'}
         workspace = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
         get_workspace_mock.return_value = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
@@ -896,9 +898,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.json()["operation"]["resourceId"] == workspace_service.id
 
     # GET /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
+    @ patch("api.routes.workspaces.enrich_resource_with_available_upgrades", return_value=None)
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service")
-    async def test_get_user_resources_returns_all_user_resources_for_workspace_service_if_owner(self, get_user_resources_mock, _, app, client):
+    async def test_get_user_resources_returns_all_user_resources_for_workspace_service_if_owner(self, get_user_resources_mock, _, __, app, client):
         user_resources = [
             sample_user_resource_object(user_resource_id="a33ad738-7265-4b5f-9eae-a1a62928772a"),
             sample_user_resource_object(user_resource_id="b33ad738-7265-4b5f-9eae-a1a62928772a"),
@@ -912,9 +915,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.json()["userResources"][1]["id"] == user_resources[1].id
 
     # GET /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
+    @ patch("api.routes.workspaces.enrich_resource_with_available_upgrades", return_value=None)
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
-    async def test_get_user_resource_returns_a_user_resource_if_found(self, get_user_resource_mock, _, app, client):
+    async def test_get_user_resource_returns_a_user_resource_if_found(self, get_user_resource_mock, _, __, app, client):
         user_resource = sample_user_resource_object(user_resource_id=str(uuid.uuid4()))
         get_user_resource_mock.return_value = user_resource
 
@@ -1349,8 +1353,9 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         app.dependency_overrides = {}
 
     # [GET] /workspaces/{workspace_id}
+    @patch("api.routes.workspaces.enrich_resource_with_available_upgrades", return_value=None)
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
-    async def test_get_workspace_by_id_get_as_workspace_researcher(self, _, app, client):
+    async def test_get_workspace_by_id_get_as_workspace_researcher(self, _, __, app, client):
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
         assert response.status_code == status.HTTP_200_OK
 
@@ -1367,12 +1372,13 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         assert response.status_code == status.HTTP_200_OK
 
     # [GET] /workspaces/{workspace_id}/workspace-services
+    @patch("api.routes.workspaces.enrich_resource_with_available_upgrades", return_value=None)
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace",
            return_value=None)
     async def test_get_workspace_services_returns_workspace_services_for_workspace(self,
                                                                                    get_active_workspace_services_mock,
-                                                                                   _, app, client):
+                                                                                   _, __, app, client):
         workspace_services = [sample_workspace_service()]
         get_active_workspace_services_mock.return_value = workspace_services
 
@@ -1399,7 +1405,8 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     # [GET] /workspaces/{workspace_id}/workspace-services/{service_id}
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
-    async def test_get_workspace_service_returns_workspace_service_result(self, _, get_workspace_service_mock,
+    @patch("api.routes.workspaces.enrich_resource_with_available_upgrades", return_value=None)
+    async def test_get_workspace_service_returns_workspace_service_result(self, _, __, get_workspace_service_mock,
                                                                           app, client):
         workspace_service = sample_workspace_service(workspace_service_id=str(uuid.uuid4()))
         get_workspace_service_mock.return_value = workspace_service
@@ -1421,9 +1428,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
                              service_id=SERVICE_ID))
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @ patch("api.routes.workspaces.enrich_resource_with_available_upgrades", return_value=None)
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service")
-    async def test_get_user_resources_returns_own_user_resources_for_researcher(self, get_user_resources_mock_awaited_mock, _, app, client, non_admin_user):
+    async def test_get_user_resources_returns_own_user_resources_for_researcher(self, get_user_resources_mock_awaited_mock, _, __, app, client, non_admin_user):
         not_my_user_id = "def"
         my_user_id = non_admin_user().id
 

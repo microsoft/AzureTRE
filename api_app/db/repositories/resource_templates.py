@@ -95,6 +95,12 @@ class ResourceTemplateRepository(BaseRepository):
         else:
             return parse_obj_as(ResourceTemplate, templates[0])
 
+    async def get_all_template_versions(self, template_name: str) -> List[str]:
+        query = 'SELECT VALUE c.version FROM c where c.name = @template_name'
+        parameters = [{"name": "@template_name", "value": template_name}]
+        versions = await self.query(query=query, parameters=parameters)
+        return versions
+
     async def create_template(self, template_input: ResourceTemplateInCreate, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
         """
         creates a template based on the input (workspace and workspace-services template)
