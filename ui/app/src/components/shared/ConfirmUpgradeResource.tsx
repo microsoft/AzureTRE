@@ -19,7 +19,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
   const apiCall = useAuthApiCall();
   const [selectedVersion, setSelectedVersion] = useState("")
   const [apiError, setApiError] = useState({} as APIError);
-  const [loading, setLoading] = useState(LoadingState.Ok);
+  const [requestLoadingState, setRequestLoadingState] = useState(LoadingState.Ok);
   const workspaceCtx = useContext(WorkspaceContext);
   const dispatch = useAppDispatch();
 
@@ -41,16 +41,23 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
   const wsAuth = (props.resource.resourceType === ResourceType.WorkspaceService || props.resource.resourceType === ResourceType.UserResource);
 
   const upgradeCall = async () => {
-    setLoading(LoadingState.Loading);
+    setRequestLoadingState(LoadingState.Loading);
     try {
       let body = { templateVersion: selectedVersion }
-      let op = await apiCall(props.resource.resourcePath, HttpMethod.Patch, wsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined, body, ResultType.JSON, undefined, undefined, props.resource._etag);
+      let op = await apiCall(props.resource.resourcePath,
+        HttpMethod.Patch,
+        wsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
+        body,
+        ResultType.JSON,
+        undefined,
+        undefined,
+        props.resource._etag);
       dispatch(addUpdateOperation(op.operation));
       props.onDismiss();
     } catch (err: any) {
       err.userMessage = 'Failed to upgrade resource';
       setApiError(err);
-      setLoading(LoadingState.Error);
+      setRequestLoadingState(LoadingState.Error);
     }
   }
 
@@ -84,7 +91,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
       modalProps={modalProps}
     >
       {
-        loading === LoadingState.Ok &&
+        requestLoadingState === LoadingState.Ok &&
         <>
           <MessageBar messageBarType={MessageBarType.warning} >Upgrading the template version is irreversible</MessageBar>
           <DialogFooter>
@@ -101,11 +108,11 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         </>
       }
       {
-        loading === LoadingState.Loading &&
+        requestLoadingState === LoadingState.Loading &&
         <Spinner label="Sending request..." ariaLive="assertive" labelPosition="right" />
       }
       {
-        loading === LoadingState.Error &&
+        requestLoadingState === LoadingState.Error &&
         <ExceptionLayout e={apiError} />
       }
     </Dialog>
