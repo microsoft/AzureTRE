@@ -93,7 +93,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
       {
         requestLoadingState === LoadingState.Ok &&
         <>
-          <MessageBar messageBarType={MessageBarType.warning} >Upgrading the template version is irreversible</MessageBar>
+          <MessageBar messageBarType={MessageBarType.warning} >Upgrading the template version is irreversible.</MessageBar>
           <DialogFooter>
             <Dropdown
               placeholder='Select Version'
