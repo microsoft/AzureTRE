@@ -3,7 +3,7 @@
   "version": "0.5.0",
   "private": true,
   "dependencies": {
-    "@azure/msal-browser": "^2.33.0",
+    "@azure/msal-browser": "^2.34.0",
     "@azure/msal-react": "^1.5.1",
     "@fluentui/react": "^8.106.1",
     "@fluentui/react-file-type-icons": "^8.7.9",
