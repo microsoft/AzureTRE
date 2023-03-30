@@ -50,7 +50,7 @@ MANAGED_IDENTITY_CLIENT_ID: str = config("MANAGED_IDENTITY_CLIENT_ID", default="
 # Cloud configuration
 AAD_AUTHORITY_URL: str = config("AAD_AUTHORITY_URL", default="https://login.microsoftonline.com")
 RESOURCE_MANAGER_ENDPOINT: str = config("RESOURCE_MANAGER_ENDPOINT", default="https://management.azure.com")
-CREDENTIAL_SCOPES: List[str] = [f"{RESOURCE_MANAGER_ENDPOINT}.default"]
+CREDENTIAL_SCOPES: List[str] = [f"{RESOURCE_MANAGER_ENDPOINT}/.default"]
 MICROSOFT_GRAPH_URL: str = config("MICROSOFT_GRAPH_URL", default="https://graph.microsoft.com")
 STORAGE_ENDPOINT_SUFFIX: str = config("STORAGE_ENDPOINT_SUFFIX", default="core.windows.net")
 
