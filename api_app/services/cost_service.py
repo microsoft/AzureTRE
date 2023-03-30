@@ -96,7 +96,7 @@ class CostService:
         self.resource_client = ResourceManagementClient(credentials.get_credential(),
                                                         config.SUBSCRIPTION_ID,
                                                         base_url=config.RESOURCE_MANAGER_ENDPOINT,
-                                                        credential_scopes=[config.RESOURCE_MANAGER_ENDPOINT + ".default"])
+                                                        credential_scopes=config.CREDENTIAL_SCOPES)
         self.cache = {}
 
     def get_cached_result(self, key: str) -> Union[QueryResult, None]:

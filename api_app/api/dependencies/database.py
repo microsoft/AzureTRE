@@ -41,7 +41,7 @@ async def get_store_key(credential) -> str:
             credential,
             subscription_id=config.SUBSCRIPTION_ID,
             base_url=config.RESOURCE_MANAGER_ENDPOINT,
-            credential_scopes=[config.RESOURCE_MANAGER_ENDPOINT + ".default"]
+            credential_scopes=config.CREDENTIAL_SCOPES
         ) as cosmosdb_mng_client:
             database_keys = await cosmosdb_mng_client.database_accounts.list_keys(
                 resource_group_name=config.RESOURCE_GROUP_NAME,
