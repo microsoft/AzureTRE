@@ -10,6 +10,7 @@ export interface Resource {
     resourceType: ResourceType
     templateName: string,
     templateVersion: string,
+    availableUpgrades: Array<AvailableUpgrade>,
     deploymentStatus: string,
     updatedWhen: number,
     user: User,
@@ -28,6 +29,11 @@ export interface HistoryItem {
     user: User,
     properties: any,
     templateVersion: string
+}
+
+export interface AvailableUpgrade {
+  version: string,
+  forceUpdateRequired : boolean
 }
 
 export enum ComponentAction {
