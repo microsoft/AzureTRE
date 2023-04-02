@@ -18,6 +18,7 @@ import { actionsDisabledStates } from '../../models/operation';
 import { AppRolesContext } from '../../contexts/AppRolesContext';
 import { useAppDispatch } from '../../hooks/customReduxHooks';
 import { addUpdateOperation } from '../shared/notifications/operationsSlice';
+import { ConfirmUpgradeResource } from './ConfirmUpgradeResource';
 
 interface ResourceContextMenuProps {
   resource: Resource,
@@ -30,6 +31,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   const workspaceCtx = useContext(WorkspaceContext);
   const [showDisable, setShowDisable] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [resourceTemplate, setResourceTemplate] = useState({} as ResourceTemplate);
   const createFormCtx = useContext(CreateUpdateResourceContext);
   const [parentResource, setParentResource] = useState({} as WorkspaceService | Workspace);
@@ -182,6 +184,19 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
     });
   }
 
+  // add 'upgrade' button if we have available template upgrades
+  const nonMajorUpgrades = props.resource.availableUpgrades?.filter(upgrade => !upgrade.forceUpdateRequired)
+  if (nonMajorUpgrades.length > 0) {
+    menuItems.push({
+      key: 'upgrade',
+      text: 'Upgrade',
+      title: 'Upgrade this resource template version',
+      iconProps: { iconName: 'Refresh' },
+      onClick: () => setShowUpgrade(true),
+      disabled: (props.componentAction === ComponentAction.Lock)
+    })
+  }
+
   const menuProps: IContextualMenuProps = {
     shouldFocusOnMount: true,
     items: menuItems
@@ -205,6 +220,10 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       {
         showDelete &&
         <ConfirmDeleteResource onDismiss={() => setShowDelete(false)} resource={props.resource} />
+      }
+      {
+        showUpgrade &&
+        <ConfirmUpgradeResource onDismiss={() => setShowUpgrade(false)} resource={props.resource} />
       }
     </>
   )
