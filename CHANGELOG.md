@@ -8,6 +8,7 @@ FEATURES:
 
 ENHANCEMENTS:
 * Added 'availableUpgrades' field to Resources in GET/GET all Resources endpoints. The field indicates whether there are template versions that a resource can be upgraded to [#3234](https://github.com/microsoft/AzureTRE/pull/3234)
+* Remove AAD params from templates and configure in API. ([#3407](https://github.com/microsoft/AzureTRE/pull/3407))
 
 BUG FIXES:
 * Fix ENABLE_SWAGGER configuration being ignored in CI ([#3355](https://github.com/microsoft/AzureTRE/pull/3355))
