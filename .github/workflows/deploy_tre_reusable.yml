@@ -163,6 +163,12 @@ jobs:
           if [ "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}" == '' ]; then
             echo "Missing secret: APPLICATION_ADMIN_CLIENT_SECRET" && exit 1
           fi
+          if [ "${{ secrets.AUTO_WORKSPACE_APP_REGISTRATION }}" == '' ]; then
+            echo "Missing secret: AUTO_WORKSPACE_APP_REGISTRATION" && exit 1
+          fi
+          if [ "${{ secrets.AUTO_WORKSPACE_GROUP_CREATION }}" == '' ]; then
+            echo "Missing secret: AUTO_WORKSPACE_GROUP_CREATION" && exit 1
+          fi
           if [ "${{ secrets.CORE_ADDRESS_SPACE }}" == '' ]; then
             echo "Missing secret: CORE_ADDRESS_SPACE" && exit 1
           fi
@@ -375,6 +381,8 @@ jobs:
           API_CLIENT_SECRET: "${{ secrets.API_CLIENT_SECRET }}"
           APPLICATION_ADMIN_CLIENT_ID: "${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}"
           APPLICATION_ADMIN_CLIENT_SECRET: "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}"
+          AUTO_WORKSPACE_APP_REGISTRATION: ${{ secrets.AUTO_WORKSPACE_APP_REGISTRATION }}
+          AUTO_WORKSPACE_GROUP_CREATION: ${{ secrets.AUTO_WORKSPACE_GROUP_CREATION }}
           STATEFUL_RESOURCES_LOCKED: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           CORE_APP_SERVICE_PLAN_SKU: ${{ secrets.CORE_APP_SERVICE_PLAN_SKU }}
           RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE: ${{ secrets.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE }}

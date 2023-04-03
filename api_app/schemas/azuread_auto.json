@@ -1,0 +1,43 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://github.com/microsoft/AzureTRE/schema/azuread.json",
+    "type": "object",
+    "title": "Azure AD Authorisation Schema",
+    "default": {},
+    "required": [
+    ],
+    "properties": {
+      "aad_redirect_uris": {
+        "type": "array",
+        "title": "AAD Redirect URIs",
+        "description": "Redirect URIs for the AAD app in Automatic Auth mode",
+        "items": {
+          "title": "items",
+          "type": "object",
+          "required": [
+            "name",
+            "value"
+          ],
+          "properties": {
+            "name": {
+              "title": "name",
+              "type": "string",
+              "description": "Redirect URI Name",
+              "examples": [
+                "My Redirect URI"
+              ],
+              "pattern": "^.*$"
+            },
+            "value": {
+              "title": "value",
+              "type": "string",
+              "description": "Redirect URI Value",
+              "examples": [
+                "https://a-domain-name.com/oauth/"
+              ]
+            }
+          }
+        }
+      }
+    }
+}

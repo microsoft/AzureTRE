@@ -1,0 +1,24 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://github.com/microsoft/AzureTRE/schema/azuread.json",
+    "type": "object",
+    "title": "Azure AD Authorisation Schema",
+    "default": {},
+    "required": [
+      "client_id",
+      "client_secret"
+    ],
+    "properties": {
+      "client_id": {
+        "type": "string",
+        "title": "Application (Client) ID",
+        "description": "The AAD Application Registration ID for the workspace."
+      },
+      "client_secret": {
+        "type": "string",
+        "title": "Application (Client) Secret",
+        "description": "The AAD Application Registration secret for the workspace. This value will be stored in the Workspace Key Vault.",
+        "sensitive": true
+      }
+    }
+}

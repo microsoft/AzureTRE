@@ -5,7 +5,6 @@
   "title": "Base Workspace",
   "description": "This workspace template is the foundation for TRE workspaces.",
   "required": [
-    "auth_type",
     "address_space_size"
   ],
   "authorizedRoles": [],
@@ -49,17 +48,6 @@
       "type": "array",
       "title": "Address spaces",
       "description": "Network address space to be used by the workspace.",
-      "updateable": true
-    },
-    "auth_type": {
-      "type": "string",
-      "title": "Workspace Authentication Type",
-      "description": "",
-      "default": "Automatic",
-      "enum": [
-        "Automatic",
-        "Manual"
-      ],
       "updateable": true
     }
   },
@@ -189,78 +177,6 @@
           "address_space"
         ]
       }
-    },
-    {
-      "if": {
-        "properties": {
-          "auth_type": {
-            "const": "Manual"
-          }
-        },
-        "required": [
-          "auth_type"
-        ]
-      },
-      "then": {
-        "properties": {
-          "client_id": {
-            "type": "string",
-            "title": "Application (Client) ID",
-            "description": "The AAD Application Registration ID for the workspace."
-          },
-          "client_secret": {
-            "type": "string",
-            "title": "Application (Client) Secret",
-            "description": "The AAD Application Registration secret for the workspace. This value will be stored in the Workspace Key Vault.",
-            "sensitive": true
-          }
-        },
-        "required": [
-          "client_id"
-        ]
-      },
-      "else": {
-        "properties": {
-          "create_aad_groups": {
-            "type": "boolean",
-            "title": "Create AAD Groups for each workspace role",
-            "description": "Create AAD Groups for the workspace roles. If this is set to true, the workspace will create new AAD Groups.",
-            "default": false
-          },
-          "aad_redirect_uris": {
-            "type": "array",
-            "title": "AAD Redirect URIs",
-            "description": "Redirect URIs for the AAD app in Automatic Auth mode",
-            "items": {
-              "title": "items",
-              "type": "object",
-              "required": [
-                "name",
-                "value"
-              ],
-              "properties": {
-                "name": {
-                  "title": "name",
-                  "type": "string",
-                  "description": "Redirect URI Name",
-                  "examples": [
-                    "My Redirect URI"
-                  ],
-                  "pattern": "^.*$"
-                },
-                "value": {
-                  "title": "value",
-                  "type": "string",
-                  "description": "Redirect URI Value",
-                  "examples": [
-                    "https://a-domain-name.com/oauth/"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
     }
   ],
   "actions": [],
@@ -281,7 +197,6 @@
       "app_service_plan_sku",
       "address_space_size",
       "address_space",
-      "auth_type",
       "create_aad_groups",
       "client_id",
       "client_secret",
