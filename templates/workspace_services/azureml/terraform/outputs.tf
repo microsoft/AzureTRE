@@ -10,12 +10,16 @@ output "azureml_storage_account_id" {
   value = azurerm_storage_account.aml.id
 }
 
+output "aml_fqdn" {
+  value = regex("ml\\.azure\\.[a-z]+", "${azurerm_machine_learning_workspace.aml_workspace.discovery_url}")
+}
+
 output "connection_uri" {
-  value = var.is_exposed_externally ? "https://ml.azure.com/?wsid=${azurerm_machine_learning_workspace.aml_workspace.id}&tid=${var.arm_tenant_id}" : ""
+  value = var.is_exposed_externally ? format("https://%s/?wsid=%s&tid=%s", regex("ml\\.azure\\.[a-z]+", "${azurerm_machine_learning_workspace.aml_workspace.discovery_url}"), "${azurerm_machine_learning_workspace.aml_workspace.id}", "${var.arm_tenant_id}") : ""
 }
 
 output "internal_connection_uri" {
-  value = var.is_exposed_externally ? "" : "https://ml.azure.com/?wsid=${azurerm_machine_learning_workspace.aml_workspace.id}&tid=${var.arm_tenant_id}"
+  value = var.is_exposed_externally ? "" : format("https://%s/?wsid=%s&tid=%s", regex("ml\\.azure\\.[a-z]+", "${azurerm_machine_learning_workspace.aml_workspace.discovery_url}"), "${azurerm_machine_learning_workspace.aml_workspace.id}", "${var.arm_tenant_id}")
 }
 
 output "workspace_address_spaces" {
