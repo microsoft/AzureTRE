@@ -66,6 +66,12 @@ inputs:
   APPLICATION_ADMIN_CLIENT_SECRET:
     description: "The Client secret of an identity that can manage the AAD Applications."
     required: false
+  AUTO_WORKSPACE_APP_REGISTRATION:
+    description: "Determines whether the API will automatically register the workspace application."
+    required: false
+  AUTO_WORKSPACE_GROUP_CREATION:
+    description: "Determines whether the API will automatically create AAD groups for the workspace."
+    required: false
   ACR_NAME:
     description: "The Container Registry that holds our Research images."
     required: false
@@ -164,6 +170,8 @@ runs:
           -e TF_VAR_api_client_secret="${{ inputs.API_CLIENT_SECRET }}" \
           -e TF_VAR_application_admin_client_id="${{ inputs.APPLICATION_ADMIN_CLIENT_ID }}" \
           -e TF_VAR_application_admin_client_secret="${{ inputs.APPLICATION_ADMIN_CLIENT_SECRET }}" \
+          -e TF_VAR_auto_workspace_app_registration="${{ inputs.AUTO_WORKSPACE_APP_REGISTRATION }}" \
+          -e TF_VAR_auto_workspace_group_creation="${{ inputs.AUTO_WORKSPACE_GROUP_CREATION }}" \
           -e TF_VAR_arm_subscription_id="${{ fromJSON(inputs.AZURE_CREDENTIALS).subscriptionId }}" \
           -e TF_VAR_enable_swagger="${{ (inputs.ENABLE_SWAGGER != ''
             && inputs.ENABLE_SWAGGER) || 'false' }}" \

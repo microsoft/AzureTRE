@@ -84,6 +84,8 @@ In a previous [Setup Auth configuration](./setup-auth-entities.md) step authenti
   | `AAD_TENANT_ID` | Tenant id against which auth is performed. |
   | `APPLICATION_ADMIN_CLIENT_ID`| This client will administer AAD Applications for TRE |
   | `APPLICATION_ADMIN_CLIENT_SECRET`| This client will administer AAD Applications for TRE |
+  | `AUTO_WORKSPACE_APP_REGISTRATION`| App registration for workspaces will be auto created. |
+  | `AUTO_WORKSPACE_GROUP_CREATION`| Workspace groups will be auto created. |
   | `TEST_ACCOUNT_CLIENT_ID`| This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
   | `TEST_ACCOUNT_CLIENT_SECRET` | This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
   | `API_CLIENT_ID` | API application (client) ID. |
