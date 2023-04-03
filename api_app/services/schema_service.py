@@ -1,3 +1,4 @@
+from core.config import AUTO_WORKSPACE_APP_REGISTRATION
 import json
 from pathlib import Path
 from typing import List, Dict, Tuple
@@ -74,7 +75,12 @@ def enrich_workspace_template(template, is_update: bool = False) -> dict:
         [Dict]: [Enriched template with all required and system properties added]
     """
     workspace_default_properties = read_schema('workspace.json')
-    azure_ad_properties = read_schema('azuread.json')
+
+    if AUTO_WORKSPACE_APP_REGISTRATION:
+        azure_ad_properties = read_schema('azuread_auto.json')
+    else:
+        azure_ad_properties = read_schema('azuread_manual.json')
+
     return enrich_template(template, [workspace_default_properties, azure_ad_properties], is_update=is_update)
 
 

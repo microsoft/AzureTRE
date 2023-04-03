@@ -11,7 +11,7 @@ from fastapi import Request, HTTPException, status
 from msal import ConfidentialClientApplication
 
 from services.access_service import AccessService, AuthConfigValidationError
-from core import config
+from core.config import AAD_INSTANCE, AAD_TENANT_ID, API_AUDIENCE, API_CLIENT_ID, API_CLIENT_SECRET, AUTO_WORKSPACE_APP_REGISTRATION, AUTO_WORKSPACE_GROUP_REGISTRATION
 from db.errors import EntityDoesNotExist
 from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace import Workspace, WorkspaceRole
@@ -36,9 +36,9 @@ class AzureADAuthorization(AccessService):
 
     def __init__(self, auto_error: bool = True, require_one_of_roles: Optional[list] = None):
         super(AzureADAuthorization, self).__init__(
-            authorizationUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/authorize",
-            tokenUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
-            refreshUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
+            authorizationUrl=f"{AAD_INSTANCE}/{AAD_TENANT_ID}/oauth2/v2.0/authorize",
+            tokenUrl=f"{AAD_INSTANCE}/{AAD_TENANT_ID}/oauth2/v2.0/token",
+            refreshUrl=f"{AAD_INSTANCE}/{AAD_TENANT_ID}/oauth2/v2.0/token",
             scheme_name="oauth2",
             auto_error=auto_error
         )
@@ -70,7 +70,7 @@ class AzureADAuthorization(AccessService):
         # Try TRE API app registration if appropriate
         if decoded_token is None and any(role in self.require_one_of_roles for role in self.TRE_CORE_ROLES):
             try:
-                decoded_token = self._decode_token(token, config.API_AUDIENCE)
+                decoded_token = self._decode_token(token, API_AUDIENCE)
             except jwt.exceptions.InvalidSignatureError:
                 logging.debug("Failed to decode using TRE API app registration (Invalid Signatrue)")
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.INVALID_SIGNATURE)
@@ -166,7 +166,7 @@ class AzureADAuthorization(AccessService):
         Rather tha use PyJWKClient.get_signing_key_from_jwt every time, we'll get all the keys from AAD and cache them.
         """
         if key_id not in AzureADAuthorization._jwt_keys:
-            response = requests.get(f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/v2.0/.well-known/openid-configuration")
+            response = requests.get(f"{AAD_INSTANCE}/{AAD_TENANT_ID}/v2.0/.well-known/openid-configuration")
             aad_metadata = response.json() if response.ok else None
             jwks_uri = aad_metadata['jwks_uri'] if aad_metadata and 'jwks_uri' in aad_metadata else None
             if jwks_uri:
@@ -188,7 +188,7 @@ class AzureADAuthorization(AccessService):
     @staticmethod
     def _get_msgraph_token() -> str:
         scopes = ["https://graph.microsoft.com/.default"]
-        app = ConfidentialClientApplication(client_id=config.API_CLIENT_ID, client_credential=config.API_CLIENT_SECRET, authority=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}")
+        app = ConfidentialClientApplication(client_id=API_CLIENT_ID, client_credential=API_CLIENT_SECRET, authority=f"{AAD_INSTANCE}/{AAD_TENANT_ID}")
         result = app.acquire_token_silent(scopes=scopes, account=None)
         if not result:
             logging.debug('No suitable token exists in cache, getting a new one from AAD')
@@ -303,7 +303,7 @@ class AzureADAuthorization(AccessService):
 
     # This method is called when you create a workspace and you already have an AAD App Registration
     # to link it to. You pass in the client_id and go and get the extra information you need from AAD
-    # If the auth_type is `Automatic`, then these values will be written by Terraform.
+    # If the AUTO_WORKSPACE_APP_REGISTRATION is `True`, then these values will be written by Terraform.
     def _get_app_auth_info(self, client_id: str) -> dict:
         graph_data = self._get_app_sp_graph_data(client_id)
         if 'value' not in graph_data or len(graph_data['value']) == 0:
@@ -372,13 +372,16 @@ class AzureADAuthorization(AccessService):
         return object_info["@odata.type"]
 
     def extract_workspace_auth_information(self, data: dict) -> dict:
-        if ("auth_type" not in data) or (data["auth_type"] != "Automatic" and "client_id" not in data):
+        if not AUTO_WORKSPACE_APP_REGISTRATION and "client_id" not in data:
             raise AuthConfigValidationError(strings.ACCESS_PLEASE_SUPPLY_CLIENT_ID)
 
         auth_info = {}
+        auth_info["register_aad_application"] = AUTO_WORKSPACE_APP_REGISTRATION
+        auth_info["create_aad_groups"] = AUTO_WORKSPACE_GROUP_REGISTRATION
+
         # The user may want us to create the AAD workspace app and therefore they
         # don't know the client_id yet.
-        if data["auth_type"] != "Automatic":
+        if not AUTO_WORKSPACE_APP_REGISTRATION:
             auth_info = self._get_app_auth_info(data["client_id"])
 
             # Check we've get all our required roles

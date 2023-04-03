@@ -27,7 +27,6 @@ async def test_parallel_resource_creations(verify) -> None:
                 "display_name": f'Perf Test Workspace {i}',
                 "description": "workspace for perf test",
                 "address_space_size": "small",
-                "auth_type": "Manual",
                 "client_id": f"{config.TEST_WORKSPACE_APP_ID}"
             }
         }
@@ -67,7 +66,6 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
                 "display_name": "E2E test guacamole service",
                 "description": "",
                 "address_space_size": "small",
-                "auth_type": "Manual",
                 "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
                 "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}"
             }

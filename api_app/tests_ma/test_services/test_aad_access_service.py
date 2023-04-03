@@ -26,10 +26,11 @@ class GroupPrincipal:
         self.members = members
 
 
-def test_extract_workspace__raises_error_if_client_id_not_available():
+@patch("core.config.AUTO_WORKSPACE_APP_REGISTRATION", return_value=False)
+def test_extract_workspace__raises_error_if_client_id_not_available(config_mock):
     access_service = AzureADAuthorization()
     with pytest.raises(AuthConfigValidationError):
-        access_service.extract_workspace_auth_information(data={"auth_type": "Manual"})
+        access_service.extract_workspace_auth_information(data={})
 
 
 @patch(
@@ -66,8 +67,9 @@ def test_extract_workspace__raises_error_if_graph_data_is_invalid(
         access_service.extract_workspace_auth_information(data={"client_id": "1234"})
 
 
+@patch("core.config.AUTO_WORKSPACE_APP_REGISTRATION", return_value=False)
 @patch("services.aad_authentication.AzureADAuthorization._get_app_sp_graph_data")
-def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
+def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock, config_mock):
     get_app_sp_graph_data_mock.return_value = {
         "value": [
             {
@@ -91,7 +93,7 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
 
     access_service = AzureADAuthorization()
     actual_auth_info = access_service.extract_workspace_auth_information(
-        data={"auth_type": "Manual", "client_id": "1234"}
+        data={"client_id": "1234"}
     )
 
     assert actual_auth_info == expected_auth_info

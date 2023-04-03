@@ -15,7 +15,7 @@ def test_enrich_workspace_template_enriches_with_workspace_defaults_and_aad(enri
 
     services.schema_service.enrich_workspace_template(workspace_template)
 
-    read_schema_mock.assert_has_calls([call('workspace.json'), call('azuread.json')])
+    read_schema_mock.assert_has_calls([call('workspace.json'), call('azuread_manual.json')])
     enrich_template_mock.assert_called_once_with(workspace_template, [default_props, aad_props], is_update=False)
 
 

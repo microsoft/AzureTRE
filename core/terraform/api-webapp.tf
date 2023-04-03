@@ -49,10 +49,12 @@ resource "azurerm_linux_web_app" "api" {
     "AAD_TENANT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.auth_tenant_id.id})"
     "API_CLIENT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_id.id})"
     "API_CLIENT_SECRET"                              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_secret.id})"
+    "AUTO_WORKSPACE_APP_REGISTRATION"                = var.auto_workspace_app_registration
+    "AUTO_WORKSPACE_GROUP_CREATION"                  = var.auto_workspace_group_creation
     "RESOURCE_GROUP_NAME"                            = azurerm_resource_group.core.name
     "SUBSCRIPTION_ID"                                = data.azurerm_subscription.current.subscription_id
-    CORE_ADDRESS_SPACE                               = var.core_address_space
-    TRE_ADDRESS_SPACE                                = var.tre_address_space
+    "CORE_ADDRESS_SPACE"                             = var.core_address_space
+    "TRE_ADDRESS_SPACE"                              = var.tre_address_space
   }
 
   identity {

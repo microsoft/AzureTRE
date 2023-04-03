@@ -100,6 +100,18 @@ variable "api_client_secret" {
   sensitive   = true
 }
 
+variable "auto_workspace_app_registration" {
+  type        = bool
+  default     = false
+  description = "If true, the API will automatically create an app registration for each workspace."
+}
+
+variable "auto_workspace_group_creation" {
+  type        = bool
+  default     = false
+  description = "If true, the API will automatically create a group for each workspace."
+}
+
 variable "application_admin_client_id" {
   type        = string
   description = "The client id (app id) of the registration in Azure AD for creating AAD Applications."
