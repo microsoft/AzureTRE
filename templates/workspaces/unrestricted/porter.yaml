@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-unrestricted
-version: 0.8.4
+version: 0.9.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -182,7 +182,6 @@ install:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
-        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -226,7 +225,6 @@ upgrade:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
-        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -293,7 +291,6 @@ uninstall:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
-        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

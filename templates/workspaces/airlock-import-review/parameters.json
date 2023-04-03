@@ -125,12 +125,6 @@
       }
     },
     {
-      "name": "azure_environment",
-      "source": {
-        "env": "AZURE_ENVIRONMENT"
-      }
-    },
-    {
       "name": "arm_environment",
       "source": {
         "env": "ARM_ENVIRONMENT"

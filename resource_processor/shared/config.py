@@ -21,7 +21,7 @@ def get_config(logger_adapter) -> dict:
     config["arm_environment"] = os.environ.get("ARM_ENVIRONMENT", "public")
     config["azure_environment"] = os.environ.get("AZURE_ENVIRONMENT", "AzureCloud")
     config["aad_authority_url"] = os.environ.get("AAD_AUTHORITY_URL", "https://login.microsoftonline.com")
-    config["microsoft_graph_fqdn"] = os.environ.get("MICROSOFT_GRAPH_FQDN", "https://graph.microsoft.com")
+    config["microsoft_graph_fqdn"] = os.environ.get("MICROSOFT_GRAPH_FQDN", "graph.microsoft.com")
 
     try:
         config["number_processes_int"] = int(config["number_processes"])
