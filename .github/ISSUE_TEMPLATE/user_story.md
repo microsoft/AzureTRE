@@ -2,7 +2,7 @@
 name: User story
 about: User story with acceptance criteria
 title: ''
-labels: 'story'
+labels: story
 assignees: ''
 
 ---

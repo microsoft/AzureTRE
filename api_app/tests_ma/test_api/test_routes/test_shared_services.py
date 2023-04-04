@@ -85,7 +85,8 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
 
     # [GET] /shared-services
     @patch("api.routes.shared_services.SharedServiceRepository.get_active_shared_services", return_value=None)
-    async def test_get_shared_services_returns_list_of_shared_services(self, get_active_shared_services_mock, app, client):
+    @patch("api.routes.shared_services.enrich_resource_with_available_upgrades", return_value=None)
+    async def test_get_shared_services_returns_list_of_shared_services(self, _, get_active_shared_services_mock, app, client):
         shared_services = [sample_shared_service()]
         get_active_shared_services_mock.return_value = shared_services
 
@@ -96,7 +97,8 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
 
     # [GET] /shared-services/<shared-service-id>
     @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service())
-    async def test_get_shared_service_returns_shared_service_result_for_user(self, get_shared_service_mock, app, client):
+    @patch("api.routes.shared_services.enrich_resource_with_available_upgrades", return_value=None)
+    async def test_get_shared_service_returns_shared_service_result_for_user(self, _, get_shared_service_mock, app, client):
         shared_service = sample_shared_service(shared_service_id=str(uuid.uuid4()))
         get_shared_service_mock.return_value = shared_service
 
@@ -123,7 +125,8 @@ class TestSharedServiceRoutesThatRequireAdminRights:
 
     # [GET] /shared-services/{shared_service_id}
     @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service())
-    async def test_get_shared_service_returns_shared_service_result(self, get_shared_service_mock, app, client):
+    @patch("api.routes.shared_services.enrich_resource_with_available_upgrades", return_value=None)
+    async def test_get_shared_service_returns_shared_service_result(self, _, get_shared_service_mock, app, client):
         shared_service = sample_shared_service(shared_service_id=str(uuid.uuid4()))
         get_shared_service_mock.return_value = shared_service
 

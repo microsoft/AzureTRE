@@ -1,6 +1,6 @@
 # Maintainers
 
-This document is targetted at maintainers of the AzureTRE project.
+This document is targeted at maintainers of the AzureTRE project.
 For information on developing and contributing to AzureTRE, see the [TRE Developers docs](https://microsoft.github.io/AzureTRE/tre-developers/)
 
 ## PR Comment bot commands
@@ -55,7 +55,7 @@ Before running tests on a PR, run the same checks on the PR code as for `/test`.
 
 When running `/test` multiple times on a PR, the same TRE ID and environment are used by default. The `/test-destroy-env` command destroys a previously created validation environment, allowing you to re-run `/test` with a clean starting point.
 
-The `/test-destroy-env` command also destroys the environmnent associated with the PR branch (created by running the `deploy_tre_branch` workflow).
+The `/test-destroy-env` command also destroys the environment associated with the PR branch (created by running the `deploy_tre_branch` workflow).
 
 ### `/test-force-approve`
 

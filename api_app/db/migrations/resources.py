@@ -41,3 +41,16 @@ class ResourceMigration(ResourceRepository):
             num_updated = num_updated + 1
 
         return num_updated
+
+    async def migrate_step_id_of_operation_steps(self, operations_repository: OperationRepository) -> int:
+        num_updated = 0
+        for operation in await operations_repository.query("SELECT * from c WHERE ARRAY_LENGTH(c.steps) > 0 AND IS_DEFINED(c.steps[0].stepId)"):
+            for operation_step in operation['steps']:
+                operation_step['templateStepId'] = operation_step['stepId']
+                operation_step['id'] = str(uuid.uuid4())
+                del operation_step['stepId']
+
+            await operations_repository.update_item_dict(operation)
+            num_updated = num_updated + 1
+
+        return num_updated
