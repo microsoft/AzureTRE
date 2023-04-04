@@ -1,5 +1,5 @@
 # How to contribute to Azure TRE
-> To read about how to set up your development environment and contribute to Azure TRE components please visit [Local Development](/using-tre/local-development/local-development/).
+> To read about how to set up your development environment and contribute to Azure TRE components please visit [Local Development](./using-tre/local-development/local-development.md).
 
 ## Did you find a bug?
 
