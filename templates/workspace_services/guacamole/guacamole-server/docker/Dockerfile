@@ -8,9 +8,9 @@ RUN bash /tmp/maven_package_and_exit_succesfully.sh
 FROM scratch as test-results
 COPY --from=client_build /target/surefire-reports/* /
 
-FROM guacamole/guacd:1.5.0
+FROM guacamole/guacd:1.4.0
 
-ARG GUACAMOLE_AZURE_VERSION=0.2.1
+ARG GUACAMOLE_AZURE_VERSION=0.2.0
 
 ENV DEBIAN_FRONTEND=noninteractive
 
