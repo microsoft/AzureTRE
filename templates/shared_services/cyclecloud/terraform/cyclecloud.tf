@@ -104,15 +104,8 @@ resource "azurerm_network_interface" "cyclecloud" {
   }
 }
 
-module "azure_region" {
-  source  = "claranet/regions/azurerm"
-  version = ">=5.1.0"
-
-  azure_region = azurerm_virtual_machine.cyclecloud.location
-}
-
 resource "azurerm_private_dns_zone" "cyclecloud" {
-  name                = "cyclecloud-${var.tre_id}.${module.azure_region.location_cli}.cloudapp.azure.com"
+  name                = "cyclecloud-${data.azurerm_public_ip.app_gateway_ip.fqdn}"
   resource_group_name = local.core_resource_group_name
   tags                = local.tre_shared_service_tags
 

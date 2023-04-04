@@ -44,6 +44,8 @@ variable "enable_malware_scanning" {
   description = "If False, Airlock requests will skip the malware scanning stage"
 }
 
+variable "arm_environment" {}
+
 variable "log_analytics_workspace_id" {}
 
 variable "blob_core_dns_zone_id" {}

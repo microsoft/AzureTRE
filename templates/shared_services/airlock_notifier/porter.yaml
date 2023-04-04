@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-airlock-notifier
-version: 0.4.0
+version: 0.5.0
 description: "A shared service notifying on Airlock Operations"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -27,6 +27,10 @@ parameters:
   - name: id
     type: string
     description: "Resource ID"
+  - name: azure_environment
+    type: string
+    default: "AzureCloud"
+    description: "Used by Azure CLI to set the Azure environment"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -54,6 +58,10 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+    type: string
+    default: "public"
 
 mixins:
   - exec
@@ -81,6 +89,14 @@ install:
       outputs:
         - name: airlock_notifier_logic_app_name
         - name: airlock_notifier_logic_app_resource_group_name
+
+  - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.azure_environment }
 
   - az:
       description: "Login to Azure"
