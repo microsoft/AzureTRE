@@ -19,6 +19,8 @@ from resources import strings
 from api.dependencies.database import get_db_client_from_request
 from db.repositories.workspaces import WorkspaceRepository
 
+MICROSOFT_GRAPH_URL = config.MICROSOFT_GRAPH_URL.strip("/")
+
 
 class PrincipalType(Enum):
     User = "User"
@@ -30,15 +32,16 @@ class AzureADAuthorization(AccessService):
     _jwt_keys: dict = {}
 
     require_one_of_roles = None
+    aad_instance = config.AAD_AUTHORITY_URL
 
     TRE_CORE_ROLES = ['TREAdmin', 'TREUser']
     WORKSPACE_ROLES_DICT = {'WorkspaceOwner': 'app_role_id_workspace_owner', 'WorkspaceResearcher': 'app_role_id_workspace_researcher', 'AirlockManager': 'app_role_id_workspace_airlock_manager'}
 
     def __init__(self, auto_error: bool = True, require_one_of_roles: Optional[list] = None):
         super(AzureADAuthorization, self).__init__(
-            authorizationUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/authorize",
-            tokenUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
-            refreshUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
+            authorizationUrl=f"{self.aad_instance}/{config.AAD_TENANT_ID}/oauth2/v2.0/authorize",
+            tokenUrl=f"{self.aad_instance}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
+            refreshUrl=f"{self.aad_instance}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
             scheme_name="oauth2",
             auto_error=auto_error
         )
@@ -166,7 +169,7 @@ class AzureADAuthorization(AccessService):
         Rather tha use PyJWKClient.get_signing_key_from_jwt every time, we'll get all the keys from AAD and cache them.
         """
         if key_id not in AzureADAuthorization._jwt_keys:
-            response = requests.get(f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/v2.0/.well-known/openid-configuration")
+            response = requests.get(f"{self.aad_instance}/{config.AAD_TENANT_ID}/v2.0/.well-known/openid-configuration")
             aad_metadata = response.json() if response.ok else None
             jwks_uri = aad_metadata['jwks_uri'] if aad_metadata and 'jwks_uri' in aad_metadata else None
             if jwks_uri:
@@ -187,9 +190,12 @@ class AzureADAuthorization(AccessService):
     # If there is no need to list all workspaces for a specific user, then Directory.ReadAll permissions are not required.
     @staticmethod
     def _get_msgraph_token() -> str:
-        scopes = ["https://graph.microsoft.com/.default"]
-        app = ConfidentialClientApplication(client_id=config.API_CLIENT_ID, client_credential=config.API_CLIENT_SECRET, authority=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}")
-        result = app.acquire_token_silent(scopes=scopes, account=None)
+        scopes = [f"{MICROSOFT_GRAPH_URL}/.default"]
+        app = ConfidentialClientApplication(client_id=config.API_CLIENT_ID, client_credential=config.API_CLIENT_SECRET, authority=f"{config.AAD_AUTHORITY_URL}/{config.AAD_TENANT_ID}")
+        try:
+            result = app.acquire_token_silent(scopes=scopes, account=None)
+        except Exception:
+            result = None
         if not result:
             logging.debug('No suitable token exists in cache, getting a new one from AAD')
             result = app.acquire_token_for_client(scopes=scopes)
@@ -206,15 +212,15 @@ class AzureADAuthorization(AccessService):
 
     @staticmethod
     def _get_service_principal_endpoint(client_id) -> str:
-        return f"https://graph.microsoft.com/v1.0/serviceprincipals?$filter=appid eq '{client_id}'"
+        return f"{MICROSOFT_GRAPH_URL}/v1.0/serviceprincipals?$filter=appid eq '{client_id}'"
 
     @staticmethod
     def _get_service_principal_assigned_roles_endpoint(client_id) -> str:
-        return f"https://graph.microsoft.com/v1.0/serviceprincipals/{client_id}/appRoleAssignedTo?$select=appRoleId,principalId,principalType"
+        return f"{MICROSOFT_GRAPH_URL}/v1.0/serviceprincipals/{client_id}/appRoleAssignedTo?$select=appRoleId,principalId,principalType"
 
     @staticmethod
     def _get_batch_endpoint() -> str:
-        return "https://graph.microsoft.com/v1.0/$batch"
+        return f"{MICROSOFT_GRAPH_URL}/v1.0/$batch"
 
     @staticmethod
     def _get_users_endpoint(user_object_id) -> str:
@@ -344,17 +350,17 @@ class AzureADAuthorization(AccessService):
         return graph_data
 
     def _get_role_assignment_graph_data_for_user(self, user_id: str) -> dict:
-        user_endpoint = f"https://graph.microsoft.com/v1.0/users/{user_id}/appRoleAssignments"
+        user_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}/appRoleAssignments"
         graph_data = self._ms_graph_query(user_endpoint, "GET")
         return graph_data
 
     def _get_role_assignment_graph_data_for_service_principal(self, principal_id: str) -> dict:
-        svc_principal_endpoint = f"https://graph.microsoft.com/v1.0/servicePrincipals/{principal_id}/appRoleAssignments"
+        svc_principal_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{principal_id}/appRoleAssignments"
         graph_data = self._ms_graph_query(svc_principal_endpoint, "GET")
         return graph_data
 
     def _get_identity_type(self, id: str) -> str:
-        objects_endpoint = "https://graph.microsoft.com/v1.0/directoryObjects/getByIds"
+        objects_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/directoryObjects/getByIds"
         request_body = {"ids": [id], "types": ["user", "servicePrincipal"]}
         graph_data = self._ms_graph_query(objects_endpoint, "POST", json=request_body)
 

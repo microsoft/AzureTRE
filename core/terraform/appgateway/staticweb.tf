@@ -1,5 +1,3 @@
-data "azurerm_client_config" "deployer" {}
-
 # See https://microsoft.github.io/AzureTRE/tre-developers/letsencrypt/
 resource "azurerm_storage_account" "staticweb" {
   name                            = local.staticweb_storage_name

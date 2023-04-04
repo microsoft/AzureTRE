@@ -26,7 +26,6 @@ fi
 
 # Add a few extra values to the file to help us (i.e. for local debugging api_app and resource processor)
 # shellcheck disable=SC2129
-echo "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE='sb-${TRE_ID}.servicebus.windows.net'" >> ../private.env
 echo "TEST_WORKSPACE_APP_ID='${WORKSPACE_API_CLIENT_ID}'" >> ../private.env
 echo "TEST_WORKSPACE_APP_SECRET='${WORKSPACE_API_CLIENT_SECRET}'" >> ../private.env
 

@@ -52,6 +52,8 @@ done
 # done with processing args and can set this
 set -o nounset
 
+az cloud set --name "$AZURE_ENVIRONMENT"
+
 if [ "${register_aad_application}" != "false" ]; then
     echo "This script can only run when auto-aad is disabled but got value of: ${register_aad_application}. Exiting..."
     exit 0

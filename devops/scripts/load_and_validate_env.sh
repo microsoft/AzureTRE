@@ -8,6 +8,11 @@ set -o nounset
 #    load_and_validate_env.sh
 #
 
+# shellcheck disable=SC1091
+source "${DIR}"/construct_tre_url.sh
+# shellcheck disable=SC1091
+source "${DIR}"/convert_azure_env_to_arm_env.sh
+
 if [ ! -f "config.yaml" ]; then
   if [ -z "${USE_ENV_VARS_NOT_FILES:-}" ]; then
     echo -e "\e[31m»»» 💥 Unable to find config.yaml file, please create file and try again!\e[0m"
@@ -27,6 +32,29 @@ else
       exit 1
     fi
 
+    # Get any default entries from config schema and export. Any values in config.yaml will override these defaults
+    DEFAULT_VALUES=$(yq '[... |select(has("default"))| {"":path | .[-1] | upcase , " ": .default }| to_entries| map("=" +  .value)|join("")  ]'  config_schema.json)
+    # Format env string
+    DEFAULT_VALUES=${DEFAULT_VALUES//"- ="}
+
+    # Catch if no default values have been declared
+    if [ ${#DEFAULT_VALUES} -gt 2 ]; then
+
+    # Export default values
+      for item in $DEFAULT_VALUES
+      do
+        # Export as UPPERCASE keys env vars
+        # shellcheck disable=SC2163
+        export "$item"
+        # TF_VAR requires the key in lowercase
+        IFS='=' read -ra arr <<< "$item"
+        tfkey=$(echo "${arr[0]}" | tr '[:upper:]' '[:lower:]')
+        tfvar="TF_VAR_$tfkey=${arr[1]}"
+        # shellcheck disable=SC2163
+        export "$tfvar"
+      done
+    fi
+
     # Get leaf keys yq query
     GET_LEAF_KEYS=".. | select(. == \"*\") | {(path | .[-1]): .}"
     # Map keys to uppercase yq query
@@ -42,6 +70,18 @@ else
     # Export as Terraform keys env vars
     # shellcheck disable=SC2046
     export $(yq e "$GET_LEAF_KEYS|$TF_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)
+
+    # Source AZURE_ENVIRONMENT and setup the ARM_ENVIRONMENT based on it
+    AZURE_ENVIRONMENT=$(az cloud show --query name --output tsv)
+    export AZURE_ENVIRONMENT
+
+    # The ARM Environment is required by terraform to indicate the destination cloud.
+    ARM_ENVIRONMENT=$(convert_azure_env_to_arm_env "${AZURE_ENVIRONMENT}")
+    export ARM_ENVIRONMENT
+    export TF_VAR_arm_environment="${ARM_ENVIRONMENT}"
+
+    TRE_URL=$(construct_tre_url "${TRE_ID}" "${LOCATION}" "${AZURE_ENVIRONMENT}")
+    export TRE_URL
 fi
 
 set +o nounset
