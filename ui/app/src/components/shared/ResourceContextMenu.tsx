@@ -143,7 +143,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== VMPowerStates.Running);
   }
 
-  // add 'connect' button if we have a URL to connect to TODO if has a connection uri
+  // add 'connect' button if we have a URL to connect to
   if (props.resource.properties.is_exposed_externally === true) {
     menuItems.push({
       key: 'connect',

@@ -135,7 +135,8 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
                           selectResource={(r: Resource) => setSelectedUserResource(r as UserResource)}
                           updateResource={(r: Resource) => updateUserResource(r as UserResource)}
                           removeResource={(r: Resource) => removeUserResource(r as UserResource)}
-                          emptyText="This workspace service contains no user resources." />
+                          emptyText="This workspace service contains no user resources."
+                          isExposedExternally={workspaceService.properties.is_exposed_externally} />
                       }
                     </Stack.Item>
                   </Stack>

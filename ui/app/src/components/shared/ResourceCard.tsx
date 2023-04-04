@@ -11,6 +11,7 @@ import { PowerStateBadge } from './PowerStateBadge';
 import { ResourceType } from '../../models/resourceType';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { CostsTag } from './CostsTag';
+import { ConfirmCopyUrlToClipboard } from './ConfirmCopyUrlToClipboard';
 
 interface ResourceCardProps {
   resource: Resource,
@@ -19,6 +20,7 @@ interface ResourceCardProps {
   onUpdate: (resource: Resource) => void,
   onDelete: (resource: Resource) => void,
   readonly?: boolean
+  isExposedExternally?: boolean
 }
 
 export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: ResourceCardProps) => {
@@ -140,11 +142,14 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
               <CostsTag resourceId={props.resource.id} />
               {
                 connectUri && <PrimaryButton
-                  onClick={(e) => {e.stopPropagation(); window.open(connectUri)}}
+                  onClick={(e) => {e.stopPropagation(); props.isExposedExternally === false ? setShowCopyUrl(true) : window.open(connectUri)}}
                   disabled={shouldDisable()}
                   title={shouldDisable() ? 'Resource must be enabled, successfully deployed & powered on to connect' : 'Connect to resource'}>
                   Connect
                 </PrimaryButton>
+              }
+              {
+                 showCopyUrl && <ConfirmCopyUrlToClipboard onDismiss={() => setShowCopyUrl(false)} resource={props.resource} />
               }
             </Stack>
           </Stack>
