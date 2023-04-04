@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-mysql
-version: 0.3.3
+version: 0.4.0
 description: "A MySQL workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -41,6 +41,10 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+    type: string
+    default: "public"
   - name: sql_sku
     type: string
     default: "GP | 5GB 2vCores"
@@ -72,6 +76,7 @@ install:
         sql_sku: ${ bundle.parameters.sql_sku }
         storage_mb: ${ bundle.parameters.storage_mb }
         db_name: ${ bundle.parameters.db_name }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -95,6 +100,7 @@ uninstall:
         sql_sku: ${ bundle.parameters.sql_sku }
         storage_mb: ${ bundle.parameters.storage_mb }
         db_name: ${ bundle.parameters.db_name }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

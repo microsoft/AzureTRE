@@ -40,7 +40,7 @@ resource "azurerm_linux_web_app" "gitea" {
     GITEA_EMAIL                                      = "giteaadmin@azuretre.com"
     GITEA_OPENID_CLIENT_ID                           = data.azurerm_key_vault_secret.client_id.value
     GITEA_OPENID_CLIENT_SECRET                       = data.azurerm_key_vault_secret.client_secret.value
-    GITEA_OPENID_AUTHORITY                           = "https://login.microsoftonline.com/${data.azurerm_key_vault_secret.aad_tenant_id.value}/v2.0"
+    GITEA_OPENID_AUTHORITY                           = local.gitea_openid_auth
     GITEA__server__ROOT_URL                          = "https://${local.webapp_name}.azurewebsites.net/"
     GITEA__server__LFS_START_SERVER                  = "true"
     GITEA__server__OFFLINE_MODE                      = true
@@ -125,7 +125,7 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   }
 
   private_dns_zone_group {
-    name                 = "privatelink.azurewebsites.net"
+    name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurewebsites.net"]
     private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
 

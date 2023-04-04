@@ -13,7 +13,8 @@ function grant_admin_consent()
     principalId=$1
     resourceId=$2
     appRoleId=$3
-    local msGraphUri="https://graph.microsoft.com/v1.0"
+    local msGraphUri=""
+    msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
 
     # test if enabled to avoid "Permission being assigned already exists on the object" error
     is_enabled=$(az rest --method GET \

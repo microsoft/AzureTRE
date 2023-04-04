@@ -122,37 +122,6 @@ resource "azurerm_firewall_policy_rule_collection_group" "core" {
     action   = "Allow"
 
     rule {
-      name = "admin-resources"
-      protocols {
-        port = "443"
-        type = "Https"
-      }
-      protocols {
-        port = "80"
-        type = "Http"
-      }
-      destination_fqdns = [
-        "go.microsoft.com",
-        "*.azureedge.net",
-        "*github.com",
-        "*powershellgallery.com",
-        "git-scm.com",
-        "*githubusercontent.com",
-        "*core.windows.net",
-        "aka.ms",
-        "management.azure.com",
-        "graph.microsoft.com",
-        "login.microsoftonline.com",
-        "aadcdn.msftauth.net",
-        "graph.windows.net",
-        "keyserver.ubuntu.com",
-        "packages.microsoft.com",
-        "download.docker.com"
-      ]
-      source_ip_groups = [data.azurerm_ip_group.shared.id]
-    }
-
-    rule {
       name = "nexus-bootstrap"
       protocols {
         port = "443"
@@ -184,7 +153,7 @@ resource "azurerm_firewall_policy_rule_collection_group" "core" {
         type = "Https"
       }
       destination_fqdns = [
-        "graph.microsoft.com"
+        var.microsoft_graph_fqdn
       ]
       source_ip_groups = [data.azurerm_ip_group.web.id]
     }

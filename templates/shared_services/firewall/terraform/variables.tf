@@ -3,6 +3,11 @@ variable "tre_id" {
   description = "Unique TRE ID"
 }
 
+variable "microsoft_graph_fqdn" {
+  type        = string
+  description = "Microsoft Graph FQDN"
+}
+
 variable "tre_resource_id" {
   type        = string
   description = "Resource ID"
