@@ -1,5 +1,5 @@
 ---
-name: Deploy Azure TRE Resuable
+name: Deploy Azure TRE Reusable
 
 on:  # yamllint disable-line rule:truthy
   workflow_call:
@@ -107,6 +107,9 @@ on:  # yamllint disable-line rule:truthy
       AZURE_CREDENTIALS:
         description: ""
         required: true
+      AZURE_ENVIRONMENT:
+        description: ""
+        required: true
       CORE_APP_SERVICE_PLAN_SKU:
         description: ""
         required: false
@@ -140,7 +143,7 @@ jobs:
           echo "environment : ${{ inputs.environmentName }}"
 
       - name: Check required secrets
-        # since this is a resuable workflow, required=true secrets will always have a value but it can be empty.
+        # since this is a reusable workflow, required=true secrets will always have a value but it can be empty.
         run: |
           if [ "${{ secrets.AAD_TENANT_ID }}" == '' ]; then
             echo "Missing secret: AAD_TENANT_ID" && exit 1
@@ -228,6 +231,7 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+          environment: ${{ (secrets.AZURE_ENVIRONMENT != '' && secrets.AZURE_ENVIRONMENT) || 'AzureCloud' }}
 
       - name: ACR Login
         id: ci_cache_cr_login
@@ -243,7 +247,8 @@ jobs:
 
           USER_UID=$(id -u)
           USER_GID=$(id -g)
-          CI_CACHE_ACR_URI=${{ secrets.CI_CACHE_ACR_NAME }}.azurecr.io
+          acr_domain_suffix=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)
+          CI_CACHE_ACR_URI=${{ secrets.CI_CACHE_ACR_NAME }}${acr_domain_suffix}
           echo "CI_CACHE_ACR_URI=$CI_CACHE_ACR_URI" >> "$GITHUB_ENV"
 
           docker_cache=()
@@ -256,8 +261,8 @@ jobs:
             -t "tredev:${{ secrets.DEVCONTAINER_TAG }}" -f ".devcontainer/Dockerfile" \
             --build-arg BUILDKIT_INLINE_CACHE=1 --build-arg USER_UID="${USER_UID}" --build-arg USER_GID="${USER_GID}"
 
-          docker image tag tredev:${{ secrets.DEVCONTAINER_TAG }} \
-            $CI_CACHE_ACR_URI/tredev:${{ secrets.DEVCONTAINER_TAG }}
+          docker image tag tredev:"${{ secrets.DEVCONTAINER_TAG }}" \
+            "$CI_CACHE_ACR_URI/tredev:${{ secrets.DEVCONTAINER_TAG }}"
 
       - name: Deploy management
         uses: ./.github/actions/devcontainer_run_command
@@ -266,6 +271,7 @@ jobs:
           DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
@@ -314,6 +320,7 @@ jobs:
           DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
 
   start_tre:
@@ -337,6 +344,7 @@ jobs:
           DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           TRE_ID: "${{ secrets.TRE_ID }}"
 
   deploy_tre:
@@ -360,6 +368,7 @@ jobs:
           DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
@@ -387,6 +396,7 @@ jobs:
           DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
 
@@ -442,6 +452,7 @@ jobs:
             && ec=0 && break || ec=\$? && sleep 30; done; (exit \$ec)
           DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           ACR_NAME: ${{ secrets.ACR_NAME }}
 
@@ -485,6 +496,7 @@ jobs:
             && ec=0 && break || ec=\$? && sleep 30; done; (exit \$ec)
           DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           ACR_NAME: ${{ secrets.ACR_NAME }}
 
@@ -527,6 +539,7 @@ jobs:
           DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
@@ -582,6 +595,7 @@ jobs:
           DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
@@ -630,6 +644,7 @@ jobs:
           DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
@@ -662,6 +677,7 @@ jobs:
           DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
@@ -677,6 +693,7 @@ jobs:
           DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
@@ -708,6 +725,7 @@ jobs:
           DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
@@ -739,6 +757,7 @@ jobs:
           DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           LOCATION: "${{ secrets.LOCATION }}"
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
@@ -781,6 +800,7 @@ jobs:
           DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           LOCATION: "${{ secrets.LOCATION }}"
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"

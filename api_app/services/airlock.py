@@ -33,6 +33,8 @@ from db.repositories.resources_history import ResourceHistoryRepository
 from collections import defaultdict
 from event_grid.event_sender import send_status_changed_event, send_airlock_notification_event
 
+STORAGE_ENDPOINT = config.STORAGE_ENDPOINT_SUFFIX
+
 
 def get_account_by_request(airlock_request: AirlockRequest, workspace: Workspace) -> str:
     tre_id = config.TRE_ID
@@ -115,12 +117,12 @@ def get_airlock_request_container_sas_token(account_name: str,
                                    permission=required_permission,
                                    expiry=expiry)
 
-    return "https://{}.blob.core.windows.net/{}?{}" \
-        .format(account_name, airlock_request.id, token)
+    return "https://{}.blob.{}/{}?{}" \
+        .format(account_name, STORAGE_ENDPOINT, airlock_request.id, token)
 
 
 def get_account_url(account_name: str) -> str:
-    return f"https://{account_name}.blob.core.windows.net/"
+    return f"https://{account_name}.blob.{STORAGE_ENDPOINT}/"
 
 
 async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, airlock_request: AirlockRequest, user: User, workspace: Workspace,

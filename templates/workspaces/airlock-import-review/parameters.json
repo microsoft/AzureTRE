@@ -123,6 +123,18 @@
       "source": {
         "env": "WORKSPACE_APP_SERVICE_PLAN_SKU"
       }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
+      }
+    },
+    {
+      "name": "azure_environment",
+      "source": {
+        "env": "AZURE_ENVIRONMENT"
+      }
     }
   ]
 }
