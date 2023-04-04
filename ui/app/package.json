@@ -5,7 +5,7 @@
   "dependencies": {
     "@azure/msal-browser": "^2.35.0",
     "@azure/msal-react": "^1.5.1",
-    "@fluentui/react": "^8.106.1",
+    "@fluentui/react": "^8.107.1",
     "@fluentui/react-file-type-icons": "^8.7.9",
     "@reduxjs/toolkit": "^1.8.6",
     "@rjsf/core": "^4.2.0",
