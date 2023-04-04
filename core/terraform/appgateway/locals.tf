@@ -28,4 +28,6 @@ locals {
     tre_id              = var.tre_id
     tre_core_service_id = var.tre_id
   }
+
+  appgateway_diagnostic_categories_enabled = ["ApplicationGatewayAccessLog", "ApplicationGatewayPerformanceLog", "ApplicationGatewayFirewallLog"]
 }

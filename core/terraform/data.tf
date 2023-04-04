@@ -25,3 +25,10 @@ data "azurerm_monitor_diagnostic_categories" "api" {
     azurerm_service_plan.core,
   ]
 }
+
+data "azurerm_monitor_diagnostic_categories" "sb" {
+  resource_id = azurerm_servicebus_namespace.sb.id
+  depends_on = [
+    azurerm_servicebus_namespace.sb
+  ]
+}

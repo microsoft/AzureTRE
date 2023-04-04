@@ -1,5 +1,5 @@
 data "azurerm_private_dns_zone" "eventgrid" {
-  name                = "privatelink.eventgrid.azure.net"
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.eventgrid.azure.net"]
   resource_group_name = var.resource_group_name
 }
 

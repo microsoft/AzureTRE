@@ -6,6 +6,8 @@ from models.domain.workspace import Workspace, WorkspaceRole
 from services.aad_authentication import AzureADAuthorization
 from services.access_service import AuthConfigValidationError
 
+MOCK_MICROSOFT_GRAPH_URL = "https://graph.microsoft.com"
+
 
 class PrincipalRole:
     def __init__(self, principal_id, role_id, principal_type):
@@ -565,7 +567,7 @@ def get_mock_batch_response(user_principals, group_principals):
 
 def get_mock_user_response(principal_id, mail):
     headers = '{"Cache-Control":"no-cache","x-ms-resource-unit":"1","OData-Version":"4.0","Content-Type":"application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8"}'
-    user_odata = '@odata.context":"https://graph.microsoft.com/v1.0/$metadata#users(mail,id)/$entity'
+    user_odata = f'@odata.context":"{MOCK_MICROSOFT_GRAPH_URL}/v1.0/$metadata#users(mail,id)/$entity'
     user_response_body = {
         "id": "1",
         "status": 200,
@@ -577,7 +579,7 @@ def get_mock_user_response(principal_id, mail):
 
 def get_mock_group_response(group):
     headers = '{"Cache-Control":"no-cache","x-ms-resource-unit":"1","OData-Version":"4.0","Content-Type":"application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8"}'
-    group_odata = "https://graph.microsoft.com/v1.0/$metadata#directoryObjects(mail,id)"
+    group_odata = f"{MOCK_MICROSOFT_GRAPH_URL}/v1.0/$metadata#directoryObjects(mail,id)"
     group_members_body = []
     for member in group.members:
         group_members_body.append(
@@ -597,7 +599,7 @@ def get_mock_group_response(group):
 
 
 def get_mock_role_response(principal_roles):
-    odata_context = '@odata.context":"https://graph.microsoft.com/v1.0/$metadata#servicePrincipals(workspace-client-id))/appRoleAssignedTo(appRoleId,principalId,principalType)'
+    odata_context = f'@odata.context":"{MOCK_MICROSOFT_GRAPH_URL}/v1.0/$metadata#servicePrincipals(workspace-client-id))/appRoleAssignedTo(appRoleId,principalId,principalType)'
     response = {"@odata.context": odata_context, "value": []}
     for principal_role in principal_roles:
         response["value"].append(

@@ -43,6 +43,8 @@ write_files:
       SERVICE_BUS_RESOURCE_REQUEST_QUEUE=${service_bus_resource_request_queue}
       SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE=${service_bus_namespace}
       VMSS_MSI_ID=${vmss_msi_id}
+      # the following line makes sure the right msi will be used if multiple are available on the VM
+      AZURE_CLIENT_ID=${vmss_msi_id}
       AZURE_SUBSCRIPTION_ID=${arm_subscription_id}
       ARM_CLIENT_ID=${vmss_msi_id}
       AZURE_TENANT_ID=${arm_tenant_id}
@@ -50,6 +52,11 @@ write_files:
       APPLICATIONINSIGHTS_CONNECTION_STRING=${app_insights_connection_string}
       NUMBER_PROCESSES=${resource_processor_number_processes_per_instance}
       KEY_VAULT_NAME=${key_vault_name}
+      KEY_VAULT_URL=${key_vault_url}
+      ARM_ENVIRONMENT=${arm_environment}
+      AZURE_ENVIRONMENT=${azure_environment}
+      AAD_AUTHORITY_URL=${aad_authority_url}
+      MICROSOFT_GRAPH_FQDN=${microsoft_graph_fqdn}
       ${rp_bundle_values}
   - path: /etc/cron.hourly/docker-prune
     # An hourly cron job to have docker free disk space. Running this frquently
@@ -73,6 +80,7 @@ runcmd:
   - printf '\nalias rpstatus='\''tmux new-session -d "watch docker ps"; tmux split-window -p 100 -v "docker logs --since 1m --follow resource_processor1"; tmux split-window -v -p 90; tmux -2 attach-session -d'\''\n' >> /etc/bash.bashrc
 
   - export DEBIAN_FRONTEND=noninteractive
+  - az cloud set --name ${azure_environment}
   - az login --identity -u ${vmss_msi_id}
   - az acr login --name ${docker_registry_server}
   - docker run -d -p 8080:8080 -v /var/run/docker.sock:/var/run/docker.sock

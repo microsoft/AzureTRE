@@ -1,10 +1,7 @@
 import logging
-import config
 from httpx import AsyncClient, Timeout
-from json import JSONDecodeError
-from starlette import status
 from typing import Tuple
-from e2e_tests.helpers import get_auth_header, get_full_endpoint
+from e2e_tests.helpers import get_auth_header, get_full_endpoint, get_token
 
 LOGGER = logging.getLogger(__name__)
 TIMEOUT = Timeout(10, read=30)
@@ -39,24 +36,6 @@ async def get_workspace_auth_details(admin_token, workspace_id, verify) -> Tuple
     async with AsyncClient(verify=verify) as client:
         auth_headers = get_auth_header(admin_token)
         scope_uri = await get_identifier_uri(client, workspace_id, auth_headers)
+        access_token = get_token(scope_uri, verify)
 
-        if config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != "":
-            # Logging in as an Enterprise Application: Use Client Credentials flow
-            payload = f"grant_type=client_credentials&client_id={config.TEST_ACCOUNT_CLIENT_ID}&client_secret={config.TEST_ACCOUNT_CLIENT_SECRET}&scope={scope_uri}/.default"
-            url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/v2.0/token"
-
-        else:
-            # Logging in as a User: Use Resource Owner Password Credentials flow
-            payload = f"grant_type=password&resource={workspace_id}&username={config.TEST_USER_NAME}&password={config.TEST_USER_PASSWORD}&scope={scope_uri}/user_impersonation&client_id={config.TEST_APP_ID}"
-            url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/token"
-
-        response = await client.post(url, headers=auth_headers, content=payload)
-        try:
-            responseJson = response.json()
-        except JSONDecodeError:
-            raise Exception("Failed to parse response as JSON: {}".format(response.content))
-
-        if "access_token" not in responseJson or response.status_code != status.HTTP_200_OK:
-            raise Exception("Failed to get access_token: {}".format(response.content))
-
-        return responseJson["access_token"], scope_uri
+        return access_token, scope_uri

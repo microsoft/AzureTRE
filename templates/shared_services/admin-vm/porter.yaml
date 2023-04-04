@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-admin-vm
-version: 0.3.0
+version: 0.4.0
 description: "An admin vm shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -36,6 +36,10 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+    type: string
+    default: "public"
   - name: admin_jumpbox_vm_sku
     env: ADMIN_JUMPBOX_VM_SKU
     type: string

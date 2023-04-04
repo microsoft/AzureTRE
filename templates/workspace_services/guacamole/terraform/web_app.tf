@@ -63,10 +63,10 @@ resource "azurerm_linux_web_app" "guacamole" {
 
     OAUTH2_PROXY_CLIENT_ID       = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_id.id})"
     OAUTH2_PROXY_CLIENT_SECRET   = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_secret.id})"
-    OAUTH2_PROXY_REDIRECT_URI    = "https://${local.webapp_name}.azurewebsites.net/oauth2/callback"
+    OAUTH2_PROXY_REDIRECT_URI    = "https://${local.webapp_name}.${local.webapp_suffix}/oauth2/callback"
     OAUTH2_PROXY_EMAIL_DOMAIN    = "\"*\"" # oauth proxy will allow all email domains only when the value is "*"
-    OAUTH2_PROXY_OIDC_ISSUER_URL = "https://login.microsoftonline.com/${local.aad_tenant_id}/v2.0"
-    OAUTH2_PROXY_JWKS_ENDPOINT   = "https://login.microsoftonline.com/${local.aad_tenant_id}/discovery/v2.0/keys"
+    OAUTH2_PROXY_OIDC_ISSUER_URL = local.issuer
+    OAUTH2_PROXY_JWKS_ENDPOINT   = local.jwks_endpoint
   }
 
   logs {
@@ -145,7 +145,7 @@ resource "azurerm_private_endpoint" "guacamole" {
   }
 
   private_dns_zone_group {
-    name                 = "privatelink.azurewebsites.net"
+    name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurewebsites.net"]
     private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
 }

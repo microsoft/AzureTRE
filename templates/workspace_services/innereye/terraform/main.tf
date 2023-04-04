@@ -19,6 +19,11 @@ provider "azurerm" {
   features {}
 }
 
+module "terraform_azurerm_environment_configuration" {
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
+  arm_environment = var.arm_environment
+}
+
 data "azurerm_resource_group" "ws" {
   name = "rg-${local.workspace_resource_name_suffix}"
 }

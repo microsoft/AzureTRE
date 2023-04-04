@@ -4,4 +4,9 @@ locals {
     tre_id              = var.tre_id
     tre_core_service_id = var.tre_id
   }
+
+  azure_environment = lookup({
+    "public"       = "AzureCloud"
+    "usgovernment" = "AzureUSGovernment"
+  }, var.arm_environment, "AzureCloud")
 }
