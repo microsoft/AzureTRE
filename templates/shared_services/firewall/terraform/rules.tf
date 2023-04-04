@@ -114,6 +114,21 @@ resource "azurerm_firewall_policy_rule_collection_group" "core" {
       ]
       source_ip_groups = [data.azurerm_ip_group.resource_processor.id]
     }
+    # This rule is needed to support Gov Cloud.
+    # The az cli uses msal lib which requires access to this fqdn for authentication.
+    rule {
+      name = "microsoft-login"
+      protocols {
+        port = "443"
+        type = "Https"
+      }
+      destination_fqdns = [
+        "login.microsoftonline.com",
+      ]
+      source_ip_groups = [data.azurerm_ip_group.resource_processor.id]
+    }
+
+
   }
 
   application_rule_collection {
