@@ -25,7 +25,7 @@ Options:
     -r,--reset-password             Optional, switch to automatically reset the password. Default 0
 
 USAGE
-    exit 1
+    exit 2
 }
 
 if ! command -v az &> /dev/null; then
@@ -46,7 +46,7 @@ declare spPassword=""
 declare grantAdminConsent=0
 declare currentUserId=""
 declare uxClientId=""
-declare msGraphUri="https://graph.microsoft.com/v1.0"
+declare msGraphUri=""
 declare appName=""
 declare automationClientId=""
 declare applicationAdminClientId=""
@@ -82,7 +82,6 @@ while [[ $# -gt 0 ]]; do
         *)
             echo "Invalid option: $1."
             show_usage
-            exit 2
         ;;
     esac
 done
@@ -101,6 +100,7 @@ if [[ -z "$applicationAdminClientId" ]]; then
 fi
 applicationAdminObjectId=$(az ad sp show --id "${applicationAdminClientId}" --query id -o tsv --only-show-errors)
 currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-errors)
+msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
 echo -e "\e[96mCreating a Workspace Application in the \"${tenant}\" Azure AD tenant.\e[0m"

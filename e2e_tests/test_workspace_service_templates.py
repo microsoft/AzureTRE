@@ -23,7 +23,7 @@ workspace_service_templates = [
 async def test_get_workspace_service_templates(template_name, verify) -> None:
     async with AsyncClient(verify=verify) as client:
         admin_token = await get_admin_token(verify)
-        response = await client.get(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACE_SERVICE_TEMPLATES}", headers=get_auth_header(admin_token))
+        response = await client.get(f"{config.TRE_URL}{strings.API_WORKSPACE_SERVICE_TEMPLATES}", headers=get_auth_header(admin_token))
 
         template_names = [templates["name"] for templates in response.json()["templates"]]
         assert (template_name in template_names), f"No {template_name} template found"
@@ -57,6 +57,6 @@ async def test_create_workspace_service_templates(verify) -> None:
         }
 
         admin_token = await get_admin_token(verify)
-        response = await client.post(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACE_SERVICE_TEMPLATES}", headers=get_auth_header(admin_token), json=payload)
+        response = await client.post(f"{config.TRE_URL}{strings.API_WORKSPACE_SERVICE_TEMPLATES}", headers=get_auth_header(admin_token), json=payload)
 
         assert_status(response, [status.HTTP_201_CREATED, status.HTTP_409_CONFLICT], "Failed to create workspace service template")

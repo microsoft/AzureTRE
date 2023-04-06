@@ -115,7 +115,7 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   }
 
   private_dns_zone_group {
-    name                 = "privatelink.azurewebsites.net"
+    name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurewebsites.net"]
     private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
 

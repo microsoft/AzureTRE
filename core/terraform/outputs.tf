@@ -30,6 +30,10 @@ output "service_bus_resource_id" {
   value = azurerm_servicebus_namespace.sb.id
 }
 
+output "service_bus_namespace_fqdn" {
+  value = local.service_bus_namespace_fqdn
+}
+
 output "service_bus_workspace_queue" {
   value = azurerm_servicebus_queue.workspacequeue.name
 }

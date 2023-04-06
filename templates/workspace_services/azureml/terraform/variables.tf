@@ -39,3 +39,7 @@ variable "public_access_enabled" {
   type = bool
   default = false
 }
+
+variable "arm_environment" {}
+
+variable "azure_environment" {}
