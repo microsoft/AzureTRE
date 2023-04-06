@@ -63,3 +63,7 @@ output "mcr_tag" {
 output "batch_tag" {
   value = data.azurerm_network_service_tags.batch_tag.id
 }
+
+output "azure_endpoint" {
+  value = var.azure_environment == "AzureGovCloud" ? "cloudapp.usgovcloudapi.net" : "cloudapp.azure.com"
+}

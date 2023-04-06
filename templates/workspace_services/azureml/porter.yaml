@@ -164,6 +164,7 @@ install:
         - name: storage_tag
         - name: batch_tag
         - name: mcr_tag
+        - name: azure_endpoint
 
   - az:
       description: "Login to Azure"
@@ -182,7 +183,7 @@ install:
       flags:
         registry: ${ bundle.outputs.azureml_acr_name }
         image: aml-tre-nexus-image
-        build-arg: "TRE_LOCATION=${ bundle.outputs.core_location } --build-arg TRE_ID=${ bundle.parameters.tre_id }"
+        build-arg: "TRE_LOCATION=${ bundle.outputs.core_location } --build-arg TRE_ID=${ bundle.parameters.tre_id } --build-arg AZURE_ENDPOINT=${ bundle.outputs.azure_endpoint }"
 
   - terraform:
       description: "Update ACR to close network"
@@ -218,6 +219,7 @@ install:
         - name: storage_tag
         - name: batch_tag
         - name: mcr_tag
+        - name: azure_endpoint
 
 upgrade:
   - terraform:
@@ -255,6 +257,7 @@ upgrade:
         - name: storage_tag
         - name: batch_tag
         - name: mcr_tag
+        - name: azure_endpoint
 
   - exec:
       command: sleep # wait for public network access to _actually_ take effect
@@ -278,7 +281,7 @@ upgrade:
       flags:
         registry: ${ bundle.outputs.azureml_acr_name }
         image: aml-tre-nexus-image
-        build-arg: "TRE_LOCATION=${ bundle.outputs.core_location } --build-arg TRE_ID=${ bundle.parameters.tre_id }"
+        build-arg: "TRE_LOCATION=${ bundle.outputs.core_location } --build-arg TRE_ID=${ bundle.parameters.tre_id } --build-arg AZURE_ENDPOINT=${ bundle.outputs.azure_endpoint }"
 
   - terraform:
       description: "Update ACR to close network"
@@ -314,6 +317,7 @@ upgrade:
         - name: storage_tag
         - name: batch_tag
         - name: mcr_tag
+        - name: azure_endpoint
 
 uninstall:
   - terraform:
@@ -330,7 +334,9 @@ uninstall:
         auth_client_id: ${ bundle.credentials.auth_client_id }
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        public_access_enabled: false
         arm_environment: ${ bundle.parameters.arm_environment }
+        azure_environment: ${ bundle.parameters.azure_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

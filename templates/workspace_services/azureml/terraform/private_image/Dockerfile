@@ -6,7 +6,8 @@ FROM mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu22.04@sha256:2c217d40498433d57
 
 ARG TRE_ID
 ARG TRE_LOCATION
-ENV NEXUS_PROXY_URL="https://nexus-${TRE_ID}.${TRE_LOCATION}.cloudapp.azure.com"
+ARG AZURE_ENDPOINT
+ENV NEXUS_PROXY_URL="https://nexus-${TRE_ID}.${TRE_LOCATION}.${AZURE_ENDPOINT}"
 
 # Set Nexus Conda
 ENV PATH="/anaconda/condabin":$PATH
