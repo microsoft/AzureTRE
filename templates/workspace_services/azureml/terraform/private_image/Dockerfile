@@ -2,7 +2,7 @@
 
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
-FROM mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu22.04
+FROM mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu22.04:latest
 
 ARG TRE_ID
 ARG TRE_LOCATION
