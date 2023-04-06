@@ -19,4 +19,4 @@ RUN conda config --add channels "${NEXUS_PROXY_URL}/repository/conda-mirror/main
   conda config --set channel_alias "${NEXUS_PROXY_URL}/repository/conda-mirror/"  --system
 
 # Set PyPi sources
-RUN printf "[global]\nindex = ${NEXUS_PROXY_URL}/repository/pypi/pypi\nindex-url = ${NEXUS_PROXY_URL}/repository/pypi/simple\ntrusted-host = ${NEXUS_PROXY_URL}\n" >> /etc/pip.conf
+RUN printf "[global]\nindex = %s/repository/pypi/pypi\nindex-url = %s/repository/pypi/simple\ntrusted-host = %s\n" "${NEXUS_PROXY_URL}" "${NEXUS_PROXY_URL}" "${NEXUS_PROXY_URL}" >> /etc/pip.conf
