@@ -6,6 +6,14 @@ output "azureml_acr_id" {
   value = azurerm_container_registry.acr.id
 }
 
+output "azureml_acr_name" {
+  value = azurerm_container_registry.acr.name
+}
+
+output "core_location" {
+  value = data.azurerm_resource_group.core.location
+}
+
 output "azureml_storage_account_id" {
   value = azurerm_storage_account.aml.id
 }

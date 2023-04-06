@@ -2,6 +2,10 @@ data "azurerm_resource_group" "ws" {
   name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
 }
 
+data "azurerm_resource_group" "core" {
+  name = "rg-${var.tre_id}"
+}
+
 data "azurerm_virtual_network" "ws" {
   name                = "vnet-${var.tre_id}-ws-${local.short_workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
