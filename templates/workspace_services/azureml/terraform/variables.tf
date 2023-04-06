@@ -36,7 +36,7 @@ variable "auth_client_secret" {
   description = "Used to authenticate into the AAD Tenant to get app role members"
 }
 variable "public_access_enabled" {
-  type = bool
+  type    = bool
   default = false
 }
 
