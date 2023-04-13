@@ -59,7 +59,7 @@ async def test_create_guacamole_service_into_aad_workspace(setup_test_aad_worksp
 
 async def ping_guacamole_workspace_service(workspace_service_path, access_token, verify) -> None:
     workspace_service = await get_resource(f"/api{workspace_service_path}", access_token, verify)
-    endpoint = workspace_service["properties"]["connection_uri"]
+    endpoint = workspace_service["workspaceService"]["properties"]["connection_uri"]
     await check_aad_auth_redirect(endpoint, verify)
 
 
