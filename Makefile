@@ -259,7 +259,6 @@ bundle-publish:
 	&& porter publish --registry "${ACR_FQDN}" --force
 
 bundle-register:
-	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Registering ${DIR} bundle") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
 	&& az acr login --name ${ACR_NAME}	\
@@ -289,7 +288,6 @@ bundle-publish-register-all:
 	${MAKEFILE_DIR}/devops/scripts/publish_and_register_all_bundles.sh
 
 deploy-shared-service:
-	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Deploying ${DIR} shared service") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
 	&& ${MAKEFILE_DIR}/devops/scripts/ensure_cli_signed_in.sh $${TRE_URL} \
