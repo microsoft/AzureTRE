@@ -176,9 +176,9 @@ runs:
           -e USE_ENV_VARS_NOT_FILES="true" \
           -e BUNDLE_TYPE="${{ inputs.BUNDLE_TYPE }}" \
           -e WORKSPACE_SERVICE_NAME="${{ inputs.WORKSPACE_SERVICE_NAME }}" \
-          -e ARM_ENVIRONMENT="${{ env.ARM_ENVIRONMENT }}"  \
-          -e TF_VAR_arm_environment="${{ env.ARM_ENVIRONMENT }}"  \
-          -e AZURE_ENVIRONMENT="${{ env.AZURE_ENVIRONMENT }}"  \
+          -e ARM_ENVIRONMENT="${{ env.ARM_ENVIRONMENT }}" \
+          -e TF_VAR_arm_environment="${{ env.ARM_ENVIRONMENT }}" \
+          -e AZURE_ENVIRONMENT="${{ env.AZURE_ENVIRONMENT }}" \
           -e LOCATION="${{ inputs.LOCATION }}" \
           -e TF_VAR_location="${{ inputs.LOCATION }}" \
           -e RESOURCE_LOCATION="${{ inputs.LOCATION }}" \
@@ -202,8 +202,8 @@ runs:
             && inputs.ENABLE_SWAGGER) || 'false' }}" \
           -e SWAGGER_UI_CLIENT_ID="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
           -e TF_VAR_swagger_ui_client_id="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
-          -e TF_VAR_core_address_space="${{ inputs.core_address_space }}" \
-          -e TF_VAR_tre_address_space="${{ inputs.tre_address_space }}" \
+          -e TF_VAR_core_address_space="${{ (inputs.CORE_ADDRESS_SPACE != '' && inputs.CORE_ADDRESS_SPACE) || '10.0.0.0/22' }}" \
+          -e TF_VAR_tre_address_space="${{ (inputs.TRE_ADDRESS_SPACE != '' && inputs.TRE_ADDRESS_SPACE) || '10.0.0.0/16' }}" \
           -e API_CLIENT_ID="${{ inputs.API_CLIENT_ID }}" \
           -e AAD_TENANT_ID="${{ inputs.AAD_TENANT_ID }}" \
           -e TRE_ID="${{ inputs.TRE_ID }}" \
@@ -225,7 +225,7 @@ runs:
             && inputs.WORKSPACE_APP_SERVICE_PLAN_SKU) || 'P1v2' }}" \
           -e TF_VAR_rp_bundle_values='${{ inputs.RP_BUNDLE_VALUES }}' \
           -e TF_VAR_resource_processor_number_processes_per_instance="${{ (inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE != ''
-            && inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE) || 5  }}" \
+            && inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE) || 5 }}" \
           -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"
