@@ -1,3 +1,4 @@
+from typing import List
 from starlette.config import Config
 from _version import __version__
 
@@ -46,13 +47,19 @@ EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT: str = config("EVENT_GRID_AIRLOCK
 # Managed identity configuration
 MANAGED_IDENTITY_CLIENT_ID: str = config("MANAGED_IDENTITY_CLIENT_ID", default="")
 
+# Cloud configuration
+AAD_AUTHORITY_URL: str = config("AAD_AUTHORITY_URL", default="https://login.microsoftonline.com")
+RESOURCE_MANAGER_ENDPOINT: str = config("RESOURCE_MANAGER_ENDPOINT", default="https://management.azure.com")
+CREDENTIAL_SCOPES: List[str] = [f"{RESOURCE_MANAGER_ENDPOINT}/.default"]
+MICROSOFT_GRAPH_URL: str = config("MICROSOFT_GRAPH_URL", default="https://graph.microsoft.com")
+STORAGE_ENDPOINT_SUFFIX: str = config("STORAGE_ENDPOINT_SUFFIX", default="core.windows.net")
+
 # Authentication
 API_CLIENT_ID: str = config("API_CLIENT_ID", default="")
 API_CLIENT_SECRET: str = config("API_CLIENT_SECRET", default="")
 SWAGGER_UI_CLIENT_ID: str = config("SWAGGER_UI_CLIENT_ID", default="")
 AAD_TENANT_ID: str = config("AAD_TENANT_ID", default="")
 
-AAD_INSTANCE: str = config("AAD_INSTANCE", default="https://login.microsoftonline.com")
 API_AUDIENCE: str = config("API_AUDIENCE", default=API_CLIENT_ID)
 
 AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS: int = config("AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS", default=1)

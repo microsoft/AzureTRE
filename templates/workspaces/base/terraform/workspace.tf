@@ -28,6 +28,8 @@ module "network" {
   arm_tenant_id          = var.arm_tenant_id
   arm_client_id          = var.arm_client_id
   arm_client_secret      = var.arm_client_secret
+  arm_environment        = var.arm_environment
+  azure_environment      = var.azure_environment
 }
 
 module "aad" {
@@ -43,7 +45,7 @@ module "aad" {
   depends_on = [
     azurerm_key_vault_access_policy.deployer,
     azurerm_key_vault_access_policy.resource_processor,
-    null_resource.wait_for_dns_vault
+    terraform_data.wait_for_dns_vault
   ]
 }
 
@@ -58,6 +60,7 @@ module "airlock" {
   services_subnet_id          = module.network.services_subnet_id
   short_workspace_id          = local.short_workspace_id
   airlock_processor_subnet_id = module.network.airlock_processor_subnet_id
+  arm_environment             = var.arm_environment
   depends_on = [
     module.network,
   ]

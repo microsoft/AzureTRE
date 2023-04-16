@@ -40,7 +40,7 @@ resource "azapi_resource" "compute_cluster" {
       computeType      = "AmlCompute"
       properties = {
         enableNodePublicIp          = false
-        isolatedNetwork             = true
+        isolatedNetwork             = false # isolatedNetwork = true for internal MS usage only
         osType                      = "Linux"
         remoteLoginPortPublicAccess = "Disabled"
         scaleSettings = {

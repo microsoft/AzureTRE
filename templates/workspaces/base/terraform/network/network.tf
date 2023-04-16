@@ -77,40 +77,35 @@ resource "azurerm_subnet_route_table_association" "rt_services_subnet_associatio
 
 data "azurerm_client_config" "current" {}
 
-resource "null_resource" "az_login_sp" {
-
+resource "terraform_data" "az_login_sp" {
   count = var.arm_use_msi == true ? 0 : 1
   provisioner "local-exec" {
-    command = "az login --service-principal --username ${var.arm_client_id} --password ${var.arm_client_secret} --tenant ${var.arm_tenant_id}"
+    command = "az cloud set --name ${var.azure_environment} && az login --service-principal --username ${var.arm_client_id} --password ${var.arm_client_secret} --tenant ${var.arm_tenant_id}"
   }
-
-  triggers = {
-    timestamp = timestamp()
-  }
-
+  triggers_replace = [
+    timestamp()
+  ]
 }
 
-resource "null_resource" "az_login_msi" {
-
+resource "terraform_data" "az_login_msi" {
   count = var.arm_use_msi == true ? 1 : 0
   provisioner "local-exec" {
-    command = "az login --identity -u '${data.azurerm_client_config.current.client_id}'"
+    command = "az cloud set --name ${var.azure_environment} && az login --identity -u '${data.azurerm_client_config.current.client_id}'"
   }
-
-  triggers = {
-    timestamp = timestamp()
-  }
+  triggers_replace = [
+    timestamp()
+  ]
 }
 
-resource "null_resource" "ws_core_peer_sync" {
+resource "terraform_data" "ws_core_peer_sync" {
   depends_on = [
     azurerm_virtual_network_peering.core_ws_peer,
-    null_resource.az_login_sp,
-    null_resource.az_login_msi
+    terraform_data.az_login_sp,
+    terraform_data.az_login_msi
   ]
-  triggers = {
-    vnet2addr = join(",", azurerm_virtual_network.ws.address_space)
-  }
+  triggers_replace = [
+    join(",", azurerm_virtual_network.ws.address_space)
+  ]
   provisioner "local-exec" {
     command = <<CMD
          az network vnet peering sync --ids ${azurerm_virtual_network_peering.ws_core_peer.id}
@@ -118,15 +113,15 @@ resource "null_resource" "ws_core_peer_sync" {
   }
 }
 
-resource "null_resource" "core_ws_sync" {
+resource "terraform_data" "core_ws_sync" {
   depends_on = [
     azurerm_virtual_network_peering.core_ws_peer,
-    null_resource.az_login_sp,
-    null_resource.az_login_msi
+    terraform_data.az_login_sp,
+    terraform_data.az_login_msi
   ]
-  triggers = {
-    vnet2addr = join(",", azurerm_virtual_network.ws.address_space)
-  }
+  triggers_replace = [
+    join(",", azurerm_virtual_network.ws.address_space)
+  ]
   provisioner "local-exec" {
     command = <<CMD
         az network vnet peering sync --ids ${azurerm_virtual_network_peering.core_ws_peer.id}
@@ -141,4 +136,9 @@ resource "azurerm_subnet_route_table_association" "rt_webapps_subnet_association
     # meant to resolve AnotherOperation errors with one operation in the vnet at a time
     azurerm_subnet_route_table_association.rt_services_subnet_association
   ]
+}
+
+module "terraform_azurerm_environment_configuration" {
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
+  arm_environment = var.arm_environment
 }

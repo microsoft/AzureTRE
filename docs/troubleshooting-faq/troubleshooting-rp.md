@@ -46,9 +46,10 @@ All logs from the resource processor are transferred to the App Insights instanc
 
 Logging into the instance and starting a container manually however, is helpful in live debugging.
 When doing so, you can use the following aliases to monitor progress:
-* rpstatus - a split screen with `docker ps` to show what containers are running (a bundle action run in its own container), the Resource Processor logs, and a _free_ section for you to type any other command you wish (see below).
-* dlf - runs `docker logs --since 1m --follow`, you should use with the name/id of the container you want to view, e.g. `dlf my_container`
-* dlf1 - same as `dlf` but will auto select the last container in the `docker ps` list (usually the last one started).
+
+* **rpstatus** - a split screen with `docker ps` to show what containers are running (a bundle action run in its own container), the Resource Processor logs, and a _free_ section for you to type any other command you wish (see below).
+* **dlf** - runs `docker logs --since 1m --follow`, you should use with the name/id of the container you want to view, e.g. `dlf my_container`
+* **dlf1** - same as `dlf` but will auto select the last container in the `docker ps` list (usually the last one started).
 
 ## Updating the running container
 

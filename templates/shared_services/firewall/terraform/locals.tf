@@ -2,9 +2,13 @@ locals {
   core_resource_group_name = "rg-${var.tre_id}"
   firewall_name            = "fw-${var.tre_id}"
   firewall_diagnostic_categories_enabled = [
-    "AZFWApplicationRule",
-    "AZFWNetworkRule",
-    "AZFWDnsProxy",
+    "AzureFirewallApplicationRule",
+    "AzureFirewallNetworkRule",
+    "AzureFirewallDnsProxy",
+    # These are for resource specific table settings that are still in preview
+    # "AZFWApplicationRule",
+    # "AZFWNetworkRule",
+    # "AZFWDnsProxy",
   ]
   tre_shared_service_tags = {
     tre_id                = var.tre_id

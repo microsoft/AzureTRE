@@ -2,24 +2,29 @@ import asyncio
 import json
 import logging
 import base64
+from urllib.parse import urlparse
+
 
 from resources.helpers import get_installation_id
 from shared.logging import shell_output_logger
 
 
 def azure_login_command(config):
+    set_cloud_command = f"az cloud set --name {config['azure_environment']}"
+
     if config["vmss_msi_id"]:
         # Use the Managed Identity when in VMSS context
-        command = f"az login --identity -u {config['vmss_msi_id']}"
+        login_command = f"az login --identity -u {config['vmss_msi_id']}"
     else:
         # Use a Service Principal when running locally
-        command = f"az login --service-principal --username {config['arm_client_id']} --password {config['arm_client_secret']} --tenant {config['arm_tenant_id']}"
+        login_command = f"az login --service-principal --username {config['arm_client_id']} --password {config['arm_client_secret']} --tenant {config['arm_tenant_id']}"
 
-    return command
+    return f"{set_cloud_command} && {login_command}"
 
 
 def azure_acr_login_command(config):
-    return f"az acr login --name {config['registry_server'].replace('.azurecr.io','')}"
+    acr_name = _get_acr_name(acr_fqdn=config['registry_server'])
+    return f"az acr login --name {acr_name}"
 
 
 async def build_porter_command(config, logger, msg_body, custom_action=False):
@@ -110,12 +115,25 @@ async def get_porter_parameter_keys(config, logger, msg_body):
 def get_special_porter_param_value(config, parameter_name: str, msg_body):
     # some parameters might not have identical names and this comes to handle that
     if parameter_name == "mgmt_acr_name":
-        return config["registry_server"].replace('.azurecr.io', '')
+        return _get_acr_name(acr_fqdn=config['registry_server'])
     if parameter_name == "mgmt_resource_group_name":
         return config["tfstate_resource_group_name"]
+    if parameter_name == "azure_environment":
+        return config['azure_environment']
     if parameter_name == "workspace_id":
         return msg_body.get("workspaceId")  # not included in all messages
     if parameter_name == "parent_service_id":
         return msg_body.get("parentWorkspaceServiceId")  # not included in all messages
     if (value := config["bundle_params"].get(parameter_name.lower())) is not None:
         return value
+    # Parameters that relate to the cloud type
+    if parameter_name == "aad_authority_url":
+        return config['aad_authority_url']
+    if parameter_name == "microsoft_graph_fqdn":
+        return urlparse(config['microsoft_graph_fqdn']).netloc
+    if parameter_name == "arm_environment":
+        return config["arm_environment"]
+
+
+def _get_acr_name(acr_fqdn: str):
+    return acr_fqdn.split('.', 1)[0]
