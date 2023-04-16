@@ -33,7 +33,7 @@ else
     fi
 
     # Get any default entries from config schema and export. Any values in config.yaml will override these defaults
-    DEFAULT_VALUES=$(yq '[... |select(has("default"))| {"":path | .[-1] | upcase , " ": .default }| to_entries| map("=" +  .value)|join("")  ]'  config_schema.json)
+    DEFAULT_VALUES=$(yq '[... |select(has("default"))| {"":path | .[-1] | upcase , " ": .default }| to_entries| map("=" +  .value)|join("")  ]' --output-format=yaml config_schema.json)
     # Format env string
     DEFAULT_VALUES=${DEFAULT_VALUES//"- ="}
 
