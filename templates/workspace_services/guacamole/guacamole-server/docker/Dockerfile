@@ -18,8 +18,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 # hadolint ignore=DL3002
 USER root
 
-RUN apk add --update --no-cache wget openssh openjdk11-jre
-RUN ssh-keygen -A
+RUN apk add --update --no-cache wget openssh openjdk11-jre \
+    && ssh-keygen -A
 
 ENV CATALINA_BASE=/usr/share/tomcat9/
 RUN TOMCAT_ARCHIVE="tomcat.tar.gz" && \
