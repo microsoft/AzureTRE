@@ -35,6 +35,10 @@ variable "auth_client_secret" {
   sensitive   = true
   description = "Used to authenticate into the AAD Tenant to get app role members"
 }
+variable "public_access_enabled" {
+  type    = bool
+  default = false
+}
 
 variable "arm_environment" {}
 

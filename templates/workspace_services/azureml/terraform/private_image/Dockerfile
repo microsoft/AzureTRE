@@ -1,0 +1,23 @@
+# https://github.com/Azure/AzureML-Containers/blob/master/base/cpu/openmpi4.1.0-ubuntu22.04/Dockerfile
+
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+FROM mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu22.04@sha256:2c217d40498433d578cd4ec6cc519b49b324da34aca1e0df1930e1552c89af7d
+
+ARG TRE_ID
+ARG TRE_LOCATION
+ARG AZURE_ENDPOINT
+ENV NEXUS_PROXY_URL="https://nexus-${TRE_ID}.${TRE_LOCATION}.${AZURE_ENDPOINT}"
+
+# Set Nexus Conda
+ENV PATH="/anaconda/condabin":$PATH
+ENV PATH="/anaconda/bin":$PATH
+ENV PATH="/anaconda/envs/py38_default/bin":$PATH
+
+RUN conda config --add channels "${NEXUS_PROXY_URL}/repository/conda-mirror/main/"  --system && \
+  conda config --add channels "${NEXUS_PROXY_URL}/repository/conda-repo/main/"  --system && \
+  conda config --remove channels defaults --system && \
+  conda config --set channel_alias "${NEXUS_PROXY_URL}/repository/conda-mirror/"  --system
+
+# Set PyPi sources
+RUN printf "[global]\nindex = %s/repository/pypi/pypi\nindex-url = %s/repository/pypi/simple\ntrusted-host = %s\n" "${NEXUS_PROXY_URL}" "${NEXUS_PROXY_URL}" "${NEXUS_PROXY_URL}" >> /etc/pip.conf

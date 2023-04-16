@@ -1,13 +1,14 @@
-
-
 resource "azurerm_container_registry" "acr" {
-  name                          = local.acr_name
-  location                      = data.azurerm_resource_group.ws.location
-  resource_group_name           = data.azurerm_resource_group.ws.name
-  sku                           = "Premium"
-  admin_enabled                 = false
-  public_network_access_enabled = false
-  tags                          = local.tre_workspace_service_tags
+  name                = local.acr_name
+  location            = data.azurerm_resource_group.ws.location
+  resource_group_name = data.azurerm_resource_group.ws.name
+  sku                 = "Premium"
+  admin_enabled       = false
+
+  # Allows porter to run once with network open, upload an image, then run again to close the network
+  public_network_access_enabled = var.public_access_enabled
+
+  tags = local.tre_workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -37,6 +38,4 @@ resource "azurerm_private_endpoint" "acrpe" {
     is_manual_connection           = false
     subresource_names              = ["registry"]
   }
-
 }
-
