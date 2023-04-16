@@ -45,7 +45,7 @@ module "aad" {
   depends_on = [
     azurerm_key_vault_access_policy.deployer,
     azurerm_key_vault_access_policy.resource_processor,
-    null_resource.wait_for_dns_vault
+    terraform_data.wait_for_dns_vault
   ]
 }
 
