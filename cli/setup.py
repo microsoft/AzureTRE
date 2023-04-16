@@ -48,6 +48,8 @@ setup(
         "pygments==2.14.0",
         "PyJWT==2.6.0",
         "azure-cli-core==2.47.0"
+        "azure-identity==1.12.0",
+        "aiohttp==3.8.4"
     ],
 
     namespace_packages=[],
