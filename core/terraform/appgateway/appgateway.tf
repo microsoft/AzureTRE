@@ -43,13 +43,11 @@ resource "azurerm_application_gateway" "agw" {
     subnet_id = var.app_gw_subnet
   }
 
-  # HTTP Port
   frontend_port {
     name = local.insecure_frontend_port_name
     port = 80
   }
 
-  # HTTPS Port
   frontend_port {
     name = local.secure_frontend_port_name
     port = 443
@@ -160,7 +158,7 @@ resource "azurerm_application_gateway" "agw" {
 
     path_rule {
       name                       = "api"
-      paths                      = ["/api/*", "/api/docs", "/openapi.json", "/api/docs/oauth2-redirect"]
+      paths                      = ["/api/*", "/openapi.json"]
       backend_address_pool_name  = local.api_backend_pool_name
       backend_http_settings_name = local.api_http_setting_name
     }

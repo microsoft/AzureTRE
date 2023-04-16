@@ -172,7 +172,7 @@ lint:
     -e VALIDATE_TYPESCRIPT_ES=true \
 		-e FILTER_REGEX_INCLUDE=${LINTER_REGEX_INCLUDE} \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
-		github/super-linter:slim-v4.10.0
+		github/super-linter:slim-v5.0.0
 
 lint-docs:
 	LINTER_REGEX_INCLUDE='./docs/.*\|./mkdocs.yml' $(MAKE) lint
