@@ -31,12 +31,12 @@ RUN JAVA_ARCHIVE=java.tar.gz && \
     export PATH="$JAVA_HOME"/bin:"$PATH" && java -version
 
 ENV CATALINA_BASE=/usr/share/tomcat9/
-RUN TOMCAT_ARCHIVE=tomcat.tar.gz && \
-    TOMCAT_VER=9.0.73 && \
+RUN TOMCAT_ARCHIVE="tomcat.tar.gz" && \
+    TOMCAT_VER="9.0.73" && \
     wget -O "$TOMCAT_ARCHIVE" -N "https://archive.apache.org/dist/tomcat/tomcat-9/v${TOMCAT_VER}/bin/apache-tomcat-${TOMCAT_VER}.tar.gz" --progress=dot:giga && \
     tar xzf "$TOMCAT_ARCHIVE" && \
     rm -f "$TOMCAT_ARCHIVE" && \
-    mv apache-tomcat-${TOMCAT_VER}/ "$CATALINA_BASE"
+    mv "apache-tomcat-${TOMCAT_VER}/" "$CATALINA_BASE"
 
 ENV GUACAMOLE_HOME=/guacamole/
 ENV GUACAMOLE_LIB="${GUACAMOLE_HOME}/lib/"
