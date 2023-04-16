@@ -6,7 +6,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
 # Install Azure CLI
-ARG AZURE_CLI_VERSION=2.46.0-1~bullseye
+ARG AZURE_CLI_VERSION=2.47.0-1~bullseye
 COPY scripts/azure-cli.sh /tmp/
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
     export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
@@ -34,7 +34,7 @@ ENV PORTER_HOME_V0 ${PORTER_HOME}
 # can't be in a non default path
 # ARG PORTER_HOME_V1=/home/$USERNAME/.porter-v1/
 ARG PORTER_HOME_V1=/root/.porter/
-ARG PORTER_VERSION=v1.0.9
+ARG PORTER_VERSION=v1.0.11
 ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.2
 ARG PORTER_AZ_MIXIN_VERSION=v1.0.1
 ARG PORTER_AZURE_PLUGIN_VERSION=v1.2.0
@@ -54,7 +54,7 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
     | tee /etc/apt/sources.list.d/docker.list > /dev/null \
-    && apt-get update && apt-get install -y docker-ce="5:23.0.1-1~debian.11~bullseye" docker-ce-cli="5:23.0.1-1~debian.11~bullseye" containerd.io="1.6.18-1" --no-install-recommends
+    && apt-get update && apt-get install -y docker-ce="5:23.0.3-1~debian.11~bullseye" docker-ce-cli="5:23.0.3-1~debian.11~bullseye" containerd.io="1.6.20-1" --no-install-recommends
 
 COPY ./vmss_porter/config.yaml ${PORTER_HOME_V1}/
 
