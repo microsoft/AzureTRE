@@ -42,12 +42,12 @@ setup(
     install_requires=[
         "click==8.1.3",
         "httpx~=0.23.1",
-        "msal >= 1.17.0",
+        "msal == 1.20.0",
         "jmespath==1.0.1",
         "tabulate==0.9.0",
         "pygments==2.14.0",
         "PyJWT==2.6.0",
-        "azure-cli-core==2.46.0"
+        "azure-cli-core==2.47.0"
     ],
 
     namespace_packages=[],
