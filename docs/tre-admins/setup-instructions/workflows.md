@@ -117,22 +117,34 @@ The `deploy_tre.yml` workflow sends a notification to a Microsoft Teams channel 
   | ----------- | ----------- |
   | `MS_TEAMS_WEBHOOK_URI` | URI for the Teams channel webhook |
 
-### Configure repository secrets
+### Configure repository/environment secrets
 
-Configure additional repository secrets used in the deployment workflow
+Configure additional secrets used in the deployment workflow:
 
 | <div style="width: 230px">Secret name</div> | Description |
 | ----------- | ----------- |
+| `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `tre-dev-42` will result in a resource group name for Azure TRE instance of `rg-tre-dev-42`. This must be less than 12 characters. Allowed characters: Alphanumeric, underscores, and hyphens. |
 | `MGMT_RESOURCE_GROUP_NAME` | The name of the shared resource group for all Azure TRE core resources. |
 | `MGMT_STORAGE_ACCOUNT_NAME` | The name of the storage account to hold the Terraform state and other deployment artifacts. E.g. `mystorageaccount`. |
 | `ACR_NAME` | A globally unique name for the Azure Container Registry (ACR) that will be created to store deployment images. |
-| `CORE_ADDRESS_SPACE` |  The address space for the Azure TRE core virtual network. E.g. `10.1.0.0/22`. Recommended `/22` or larger.  |
-| `TRE_ADDRESS_SPACE` | The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). E.g. `10.0.0.0/12`|
-| `AZURE_ENVIRONMENT` | Optional. The name of the Azure environment. Supported values are `AzureCloud` and `AzureUSGovernment`. Default value is `AzureCloud`. |
+
+
+### Configure repository/environment variables
+
+Configure variables used in the deployment workflow:
+
+| <div style="width: 230px">Variable name</div> | Description |
+| ----------- | ----------- |
+| `LOCATION` | The Azure location (region) for all resources. E.g. `westeurope` |
 | `TERRAFORM_STATE_CONTAINER_NAME` | Optional. The name of the blob container to hold the Terraform state. Default value is `tfstate`. |
+| `CORE_ADDRESS_SPACE` | Optional. The address space for the Azure TRE core virtual network. Default value is `10.0.0.0/22`. |
+| `TRE_ADDRESS_SPACE` | Optional. The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). Default value is `10.0.0.0/16`|
+| `AZURE_ENVIRONMENT` | Optional. The name of the Azure environment. Supported values are `AzureCloud` and `AzureUSGovernment`. Default value is `AzureCloud`. |
 | `CORE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan for core infrastructure. Default value is `P1v2`. |
 | `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests. Default value is `P1v2`. |
+| `RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE` | Optional. The number of processes to instantiate when the Resource Processor starts. Equates to the number of parallel deployment operations possible in your TRE. Defaults to `5`. |
 | `ENABLE_SWAGGER` | Optional. Determines whether the Swagger interface for the API will be available. Default value is `false`. |
+
 
 ### Deploy the TRE using the workflow
 
