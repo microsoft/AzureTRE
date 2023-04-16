@@ -47,7 +47,7 @@ setup(
         "tabulate==0.9.0",
         "pygments==2.14.0",
         "PyJWT==2.6.0",
-        "azure-cli-core==2.46.0"
+        "azure-cli-core==2.47.0"
     ],
 
     namespace_packages=[],
