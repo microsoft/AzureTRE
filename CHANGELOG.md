@@ -13,9 +13,9 @@ ENHANCEMENTS:
 * Added 'availableUpgrades' field to Resources in GET/GET all Resources endpoints. The field indicates whether there are template versions that a resource can be upgraded to [#3234](https://github.com/microsoft/AzureTRE/pull/3234)
 * Update Porter (1.0.11), Docker (23.0.3), Terraform (1.4.5) ([#3430](https://github.com/microsoft/AzureTRE/issues/3430))
 
-
 BUG FIXES:
 * Fix ENABLE_SWAGGER configuration being ignored in CI ([#3355](https://github.com/microsoft/AzureTRE/pull/3355))
+* Set yq output format when reading a json file ([#3441](https://github.com/microsoft/AzureTRE/pull/3441))
 
 COMPONENTS:
 
@@ -70,8 +70,6 @@ BUG FIXES:
 * Add Databricks private authentication shared service for SSO ([#3201](https://github.com/microsoft/AzureTRE/pull/3201))
 * Remove auth private endpoint from databricks workspace service ([3199](https://github.com/microsoft/AzureTRE/pull/3199))
 * Fix DNS conflict in airlock-review workspace that could make the entire airlock module inoperable ([#3215](https://github.com/microsoft/AzureTRE/pull/3215))
-* Set yq output format when reading a json file ([#3441](https://github.com/microsoft/AzureTRE/pull/3441))
-
 
 COMPONENTS:
 
