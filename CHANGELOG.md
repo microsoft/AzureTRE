@@ -12,11 +12,13 @@ FEATURES:
 ENHANCEMENTS:
 * Added 'availableUpgrades' field to Resources in GET/GET all Resources endpoints. The field indicates whether there are template versions that a resource can be upgraded to [#3234](https://github.com/microsoft/AzureTRE/pull/3234)
 * Update Porter (1.0.11), Docker (23.0.3), Terraform (1.4.5) ([#3430](https://github.com/microsoft/AzureTRE/issues/3430))
+* Build, publish and register Databricks bundles in workflow ([#3447](https://github.com/microsoft/AzureTRE/issues/3447))
 * Update Guacamole to version 1.5.1 ([#3443](https://github.com/microsoft/AzureTRE/issues/3443))
 
 BUG FIXES:
 * Fix ENABLE_SWAGGER configuration being ignored in CI ([#3355](https://github.com/microsoft/AzureTRE/pull/3355))
 * Set yq output format when reading a json file ([#3441](https://github.com/microsoft/AzureTRE/pull/3441))
+* Set `{}` as the workflow default for `RP_BUNDLE_VALUES` parameter ([#3444](https://github.com/microsoft/AzureTRE/pull/3444))
 
 COMPONENTS:
 
