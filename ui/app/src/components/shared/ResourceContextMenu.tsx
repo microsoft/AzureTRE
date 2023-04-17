@@ -10,6 +10,7 @@ import { ApiEndpoint } from '../../models/apiEndpoints';
 import { UserResource } from '../../models/userResource';
 import { getActionIcon, ResourceTemplate, TemplateAction } from '../../models/resourceTemplate';
 import { ConfirmDeleteResource } from './ConfirmDeleteResource';
+import { ConfirmCopyUrlToClipboard } from './ConfirmCopyUrlToClipboard';
 import { ConfirmDisableEnableResource } from './ConfirmDisableEnableResource';
 import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResourceContext';
 import { Workspace } from '../../models/workspace';
@@ -31,6 +32,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   const workspaceCtx = useContext(WorkspaceContext);
   const [showDisable, setShowDisable] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showCopyUrl, setShowCopyUrl] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [resourceTemplate, setResourceTemplate] = useState({} as ResourceTemplate);
   const createFormCtx = useContext(CreateUpdateResourceContext);
@@ -142,7 +144,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   }
 
   // add 'connect' button if we have a URL to connect to
-  if (props.resource.properties.connection_uri) {
+  if (props.resource.properties.is_exposed_externally === true) {
     menuItems.push({
       key: 'connect',
       text: 'Connect',
@@ -152,6 +154,17 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       disabled: shouldDisableConnect()
     })
   }
+  else if (props.resource.properties.is_exposed_externally === false) {
+    menuItems.push({
+      key: 'connect',
+      text: 'Connect',
+      title: shouldDisableConnect() ? 'Resource must be deployed, enabled & powered on to connect' : 'Connect to resource',
+      iconProps: { iconName: 'PlugConnected' },
+      onClick: () => setShowCopyUrl(true),
+      disabled: shouldDisableConnect()
+    })
+  }
+
 
   const shouldDisableActions = () => {
     return props.componentAction === ComponentAction.Lock
@@ -220,6 +233,10 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       {
         showDelete &&
         <ConfirmDeleteResource onDismiss={() => setShowDelete(false)} resource={props.resource} />
+      }
+      {
+         showCopyUrl &&
+        <ConfirmCopyUrlToClipboard onDismiss={() => setShowCopyUrl(false)} resource={props.resource} />
       }
       {
         showUpgrade &&
