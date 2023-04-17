@@ -1,5 +1,17 @@
 <!-- markdownlint-disable MD041 -->
-## 0.10.0 (Unreleased)
+## 0.11.0 (Unreleased)
+
+**BREAKING CHANGES & MIGRATIONS**:
+
+FEATURES:
+
+ENHANCEMENTS:
+
+BUG FIXES:
+
+COMPONENTS:
+
+## 0.10.0 (April 16, 2023)
 
 **BREAKING CHANGES & MIGRATIONS**:
 * A migration for OperationSteps in Operation objects was added ([#3358](https://github.com/microsoft/AzureTRE/pull/3358))
@@ -21,6 +33,35 @@ BUG FIXES:
 * Set `{}` as the workflow default for `RP_BUNDLE_VALUES` parameter ([#3444](https://github.com/microsoft/AzureTRE/pull/3444))
 
 COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.5.1 |
+| core | 0.8.1 |
+| tre-shared-service-admin-vm | 0.4.0 |
+| tre-shared-service-airlock-notifier | 0.5.0 |
+| tre-shared-service-certs | 0.5.0 |
+| tre-shared-service-cyclecloud | 0.5.1 |
+| tre-shared-service-databricks-private-auth | 0.1.1 |
+| tre-shared-service-firewall | 1.1.0 |
+| tre-shared-service-gitea | 0.6.1 |
+| tre-shared-service-sonatype-nexus | 2.4.0 |
+| tre-service-azureml | 0.8.1 |
+| tre-user-resource-aml-compute-instance | 0.5.4 |
+| tre-service-databricks | 0.2.1 |
+| tre-workspace-service-gitea | 0.8.1 |
+| tre-service-guacamole | 0.8.4 |
+| tre-service-guacamole-export-reviewvm | 0.1.4 |
+| tre-service-guacamole-import-reviewvm | 0.2.4 |
+| tre-service-guacamole-linuxvm | 0.6.5 |
+| tre-service-guacamole-windowsvm | 0.7.4 |
+| tre-workspace-service-health | 0.2.1 |
+| tre-service-innereye | 0.6.1 |
+| tre-service-mlflow | 0.7.1 |
+| tre-workspace-service-mysql | 0.4.1 |
+| tre-workspace-airlock-import-review | 0.10.1 |
+| tre-workspace-base | 1.2.3 |
+| tre-workspace-unrestricted | 0.9.0 |
 
 ## 0.9.0 (February 9, 2023)
 
