@@ -1,18 +1,66 @@
 <!-- markdownlint-disable MD041 -->
-## 0.10.0 (Unreleased)
+## 0.11.0 (Unreleased)
+
 **BREAKING CHANGES & MIGRATIONS**:
-A migration for OperationSteps in Operation objects was added ([#3358](https://github.com/microsoft/AzureTRE/pull/3358)).
+
+FEATURES:
+
+ENHANCEMENTS:
+
+BUG FIXES:
+
+COMPONENTS:
+
+## 0.10.0 (April 16, 2023)
+
+**BREAKING CHANGES & MIGRATIONS**:
+* A migration for OperationSteps in Operation objects was added ([#3358](https://github.com/microsoft/AzureTRE/pull/3358))
+* Some Github _secrets_ have moved to be _environment variables_ - `LOCATION` and a few optional others will need to be redefined as listed [here](https://microsoft.github.io/AzureTRE/latest/tre-admins/setup-instructions/cicd-pre-deployment-steps/#configure-core-variables) ([#3084](https://github.com/microsoft/AzureTRE/pull/3084))
 
 FEATURES:
 * (UI) Added upgrade button to resources that have pending template upgrades ([#3387](https://github.com/microsoft/AzureTRE/pull/3387))
+* Enable deployment to Azure US Government Cloud ([#3128](https://github.com/microsoft/AzureTRE/issues/3128))
 
 ENHANCEMENTS:
 * Added 'availableUpgrades' field to Resources in GET/GET all Resources endpoints. The field indicates whether there are template versions that a resource can be upgraded to [#3234](https://github.com/microsoft/AzureTRE/pull/3234)
+* Update Porter (1.0.11), Docker (23.0.3), Terraform (1.4.5) ([#3430](https://github.com/microsoft/AzureTRE/issues/3430))
+* Build, publish and register Databricks bundles in workflow ([#3447](https://github.com/microsoft/AzureTRE/issues/3447))
 
 BUG FIXES:
 * Fix ENABLE_SWAGGER configuration being ignored in CI ([#3355](https://github.com/microsoft/AzureTRE/pull/3355))
+* Set yq output format when reading a json file ([#3441](https://github.com/microsoft/AzureTRE/pull/3441))
+* Set `{}` as the workflow default for `RP_BUNDLE_VALUES` parameter ([#3444](https://github.com/microsoft/AzureTRE/pull/3444))
 
 COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.5.1 |
+| core | 0.8.1 |
+| tre-shared-service-admin-vm | 0.4.0 |
+| tre-shared-service-airlock-notifier | 0.5.0 |
+| tre-shared-service-certs | 0.5.0 |
+| tre-shared-service-cyclecloud | 0.5.1 |
+| tre-shared-service-databricks-private-auth | 0.1.1 |
+| tre-shared-service-firewall | 1.1.0 |
+| tre-shared-service-gitea | 0.6.1 |
+| tre-shared-service-sonatype-nexus | 2.4.0 |
+| tre-service-azureml | 0.8.1 |
+| tre-user-resource-aml-compute-instance | 0.5.4 |
+| tre-service-databricks | 0.2.1 |
+| tre-workspace-service-gitea | 0.8.1 |
+| tre-service-guacamole | 0.8.4 |
+| tre-service-guacamole-export-reviewvm | 0.1.4 |
+| tre-service-guacamole-import-reviewvm | 0.2.4 |
+| tre-service-guacamole-linuxvm | 0.6.5 |
+| tre-service-guacamole-windowsvm | 0.7.4 |
+| tre-workspace-service-health | 0.2.1 |
+| tre-service-innereye | 0.6.1 |
+| tre-service-mlflow | 0.7.1 |
+| tre-workspace-service-mysql | 0.4.1 |
+| tre-workspace-airlock-import-review | 0.10.1 |
+| tre-workspace-base | 1.2.3 |
+| tre-workspace-unrestricted | 0.9.0 |
 
 ## 0.9.0 (February 9, 2023)
 
@@ -65,7 +113,6 @@ BUG FIXES:
 * Add Databricks private authentication shared service for SSO ([#3201](https://github.com/microsoft/AzureTRE/pull/3201))
 * Remove auth private endpoint from databricks workspace service ([3199](https://github.com/microsoft/AzureTRE/pull/3199))
 * Fix DNS conflict in airlock-review workspace that could make the entire airlock module inoperable ([#3215](https://github.com/microsoft/AzureTRE/pull/3215))
-
 
 COMPONENTS:
 

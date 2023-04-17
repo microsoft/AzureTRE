@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-linuxvm
-version: 0.6.2
+version: 0.6.5
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -52,6 +52,10 @@ parameters:
     type: string
   - name: tre_id
     type: string
+  - name: azure_environment
+    type: string
+    default: "AzureCloud"
+    description: "Used by Azure CLI to set the Azure environment"
   - name: parent_service_id
     type: string
     description: "Resource group containing the shared ACR"
@@ -81,6 +85,10 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+    type: string
+    default: "public"
   - name: os_image
     type: string
     default: "Ubuntu 18.04 Data Science VM"
@@ -211,6 +219,13 @@ start:
       outputs:
         - name: azure_resource_id
   - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.azure_environment }
+  - az:
       description: "Login to Azure"
       arguments:
         - login
@@ -237,6 +252,13 @@ stop:
         key: ${ bundle.parameters.id }
       outputs:
         - name: azure_resource_id
+  - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.azure_environment }
   - az:
       description: "Login to Azure"
       arguments:
@@ -267,6 +289,13 @@ reset_password:
         - name: vm_username
         - name: vm_password_secret_name
         - name: keyvault_name
+  - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.azure_environment }
   - az:
       description: "Login to Azure"
       arguments:

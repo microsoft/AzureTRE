@@ -51,6 +51,18 @@
       "source": {
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
       }
+    },
+    {
+      "name": "aad_authority_url",
+      "source": {
+        "env": "AAD_AUTHORITY_URL"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
+      }
     }
   ]
 }

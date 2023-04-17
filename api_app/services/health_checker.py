@@ -63,7 +63,10 @@ async def create_resource_processor_status(credential) -> Tuple[StatusEnum, str]
     message = ""
     try:
         vmss_name = f"vmss-rp-porter-{config.TRE_ID}"
-        compute_client = ComputeManagementClient(credential=credential, subscription_id=config.SUBSCRIPTION_ID)
+        compute_client = ComputeManagementClient(credential=credential,
+                                                 subscription_id=config.SUBSCRIPTION_ID,
+                                                 base_url=config.RESOURCE_MANAGER_ENDPOINT,
+                                                 credential_scopes=config.CREDENTIAL_SCOPES)
         async with compute_client:
             vmss_list = compute_client.virtual_machine_scale_set_vms.list(config.RESOURCE_GROUP_NAME, vmss_name)
             async for vm in vmss_list:

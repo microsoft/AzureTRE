@@ -1,6 +1,6 @@
 ---
 site_name: Azure TRE
-site_url: https://github.com/microsoft/AzureTRE
+site_url: https://microsoft.github.io/AzureTRE
 site_description: Azure TRE
 site_author: Microsoft
 
@@ -135,6 +135,7 @@ nav:
           - Upgrading AzureTRE Version: tre-admins/upgrading-tre.md
           - Upgrading Resources Version: tre-admins/upgrading-resources.md
           - Configuring Airlock Reviews: tre-admins/configure-airlock-review.md
+          - Supported Clouds: tre-admins/supported-clouds.md
 
       - Development: # Docs related to the developing code for the AzureTRE
           - Local Development: using-tre/local-development/local-development.md

@@ -5,10 +5,9 @@ FROM debian:bullseye-slim
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
-# Install jq
+# Git is required for terraform_azurerm_environment_configuration
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
-    apt-get update && \
-    apt-get install -y jq="1.6-2.1" --no-install-recommends
+    apt-get update && apt-get install -y git jq --no-install-recommends
 
 # PORTER_MIXINS
 

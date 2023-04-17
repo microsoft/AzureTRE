@@ -10,3 +10,4 @@ variable "is_exposed_externally" {
   description = "Is the webapp available on the public internet"
   default     = false
 }
+variable "arm_environment" {}

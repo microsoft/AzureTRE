@@ -9,7 +9,7 @@ data "azurerm_user_assigned_identity" "api_id" {
 }
 
 data "azurerm_private_dns_zone" "blobcore" {
-  name                = "privatelink.blob.core.windows.net"
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.blob.core.windows.net"]
   resource_group_name = local.core_resource_group_name
 }
 

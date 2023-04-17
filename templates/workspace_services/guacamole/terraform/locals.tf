@@ -6,8 +6,10 @@ locals {
   webapp_name                    = "guacamole-${local.service_resource_name_suffix}"
   core_resource_group_name       = "rg-${var.tre_id}"
   aad_tenant_id                  = data.azurerm_key_vault_secret.aad_tenant_id.value
-  issuer                         = "https://login.microsoftonline.com/${local.aad_tenant_id}/v2.0"
-  api_url                        = "https://api-${var.tre_id}.azurewebsites.net"
+  issuer                         = "${var.aad_authority_url}/${local.aad_tenant_id}/v2.0"
+  jwks_endpoint                  = "${var.aad_authority_url}/${local.aad_tenant_id}/discovery/v2.0/keys"
+  webapp_suffix                  = module.terraform_azurerm_environment_configuration.web_app_suffix
+  api_url                        = "https://api-${var.tre_id}.${local.webapp_suffix}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   image_tag_from_file            = replace(replace(replace(data.local_file.version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
   image_tag                      = var.image_tag == "" ? local.image_tag_from_file : var.image_tag

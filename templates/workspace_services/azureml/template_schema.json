@@ -186,7 +186,7 @@
                   "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
                   "target_fqdns": [
                     "aadcdn.msauth.net",
-                    "ml.azure.com",
+                    "{{ resource.properties.aml_fqdn }}",
                     "automlresources-prod.azureedge.net"
                   ],
                   "protocols": [
@@ -333,7 +333,7 @@
                   "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
                   "target_fqdns": [
                     "aadcdn.msauth.net",
-                    "ml.azure.com",
+                    "{{ resource.properties.aml_fqdn }}",
                     "automlresources-prod.azureedge.net"
                   ],
                   "protocols": [

@@ -6,7 +6,7 @@ set -o nounset
 # Uncomment this line to see each command for debugging (careful: this will show secrets!)
 # set -o xtrace
 
-base_url="${TRE_URL:-https://${TRE_ID}.${LOCATION}.cloudapp.azure.com}"
+base_url="${TRE_URL}"
 cli_env_file="${HOME}/.config/tre/environment.json"
 # Are we already signed in?
 already_signed_in=0
