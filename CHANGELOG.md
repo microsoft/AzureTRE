@@ -29,6 +29,7 @@ ENHANCEMENTS:
 BUG FIXES:
 * Fix ENABLE_SWAGGER configuration being ignored in CI ([#3355](https://github.com/microsoft/AzureTRE/pull/3355))
 * Set yq output format when reading a json file ([#3441](https://github.com/microsoft/AzureTRE/pull/3441))
+* Set `{}` as the workflow default for `RP_BUNDLE_VALUES` parameter ([#3444](https://github.com/microsoft/AzureTRE/pull/3444))
 
 COMPONENTS:
 
