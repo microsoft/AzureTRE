@@ -6,7 +6,7 @@
 
     <groupId>org.apache.guacamole</groupId>
     <artifactId>guacamole-auth-tre</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
     <packaging>jar</packaging>
     <name>guacamole-azure-tre</name>
 
@@ -27,7 +27,6 @@
             <artifactId>java-jwt</artifactId>
             <version>4.3.0</version>
         </dependency>
-        <!-- Guice -->
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
@@ -42,7 +41,7 @@
         <dependency>
             <groupId>org.apache.guacamole</groupId>
             <artifactId>guacamole-ext</artifactId>
-            <version>1.5.0</version>
+            <version>1.5.1</version>
             <scope>provided</scope>
         </dependency>
         <!-- MS Azure dependencies -->
