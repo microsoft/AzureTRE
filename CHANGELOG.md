@@ -9,6 +9,7 @@ ENHANCEMENTS:
 * Update Guacamole to version 1.5.1 ([#3443](https://github.com/microsoft/AzureTRE/issues/3443))
 
 BUG FIXES:
+* AML workspace service fails to install and puts firewall into failed state ([#3448](https://github.com/microsoft/AzureTRE/issues/3448))
 
 COMPONENTS:
 

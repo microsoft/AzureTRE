@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-azureml
-version: 0.8.1
+version: 0.8.2
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -115,6 +115,11 @@ outputs:
     applyTo:
       - install
       - upgrade
+  - name: aml_fqdn
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
   - terraform:
@@ -155,6 +160,7 @@ install:
         - name: storage_tag
         - name: batch_tag
         - name: mcr_tag
+        - name: aml_fqdn
 
 upgrade:
   - terraform:
@@ -188,6 +194,7 @@ upgrade:
         - name: storage_tag
         - name: batch_tag
         - name: mcr_tag
+        - name: aml_fqdn
 
 uninstall:
   - terraform:
