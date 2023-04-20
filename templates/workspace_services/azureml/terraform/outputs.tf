@@ -11,7 +11,7 @@ output "azureml_storage_account_id" {
 }
 
 output "aml_fqdn" {
-  value = module.terraform_azurerm_environment_configuration.aml_studio_endpoint
+  value = regex("(?:(?P<scheme>[^:/?#]+):)?(?://(?P<fqdn>[^/?#:]*))?", module.terraform_azurerm_environment_configuration.aml_studio_endpoint).fqdn
 }
 
 output "connection_uri" {
