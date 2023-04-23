@@ -10,6 +10,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * AML workspace service fails to install and puts firewall into failed state ([#3448](https://github.com/microsoft/AzureTRE/issues/3448))
+* Nexus fails to install due to `az login` and firewall rules ([#3453](https://github.com/microsoft/AzureTRE/issues/3453))
 
 COMPONENTS:
 

@@ -194,9 +194,9 @@ data "template_file" "nexus_bootstrapping" {
 data "template_file" "configure_nexus_ssl" {
   template = file("${path.module}/../scripts/configure_nexus_ssl.sh")
   vars = {
-    MSI_ID                 = azurerm_user_assigned_identity.nexus_msi.id
-    VAULT_NAME             = data.azurerm_key_vault.kv.name
-    SSL_CERT_NAME          = data.azurerm_key_vault_certificate.nexus_cert.name
+    MSI_ID        = azurerm_user_assigned_identity.nexus_msi.id
+    VAULT_NAME    = data.azurerm_key_vault.kv.name
+    SSL_CERT_NAME = data.azurerm_key_vault_certificate.nexus_cert.name
   }
 }
 
@@ -212,7 +212,7 @@ resource "azurerm_virtual_machine_extension" "keyvault" {
   settings = jsonencode({
     "secretsManagementSettings" : {
       "pollingIntervalInS" : "3600",
-      "requireInitialSync": true,
+      "requireInitialSync" : true,
       "observedCertificates" : [
         data.azurerm_key_vault_certificate.nexus_cert.versionless_secret_id
       ]
