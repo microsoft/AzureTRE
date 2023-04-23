@@ -10,7 +10,7 @@ set -o nounset
 echo "Setting up Nexus SSL..."
 
 # Import ssl cert to keystore within Nexus volume
-keystore_timeout=300
+keystore_timeout=60
 echo 'Checking for nexus-data/keystores directory...'
 while [ ! -d /etc/nexus-data/keystores ]; do
   # Wait for /keystore dir to be created by container first
@@ -18,12 +18,12 @@ while [ ! -d /etc/nexus-data/keystores ]; do
     echo 'ERROR - Timeout while waiting for Nexus to create nexus-data/keystores'
     exit 1
   fi
-  sleep 1
+  sleep 5
   ((keystore_timeout--))
 done
 
 downloaded_cert_path="/var/lib/waagent/Microsoft.Azure.KeyVault.Store/${VAULT_NAME}.${SSL_CERT_NAME}"
-cert_timeout=300
+cert_timeout=60
 echo 'Waiting for cert to be downloaded from KV...'
 while [ ! -f "$downloaded_cert_path" ]; do
   if [ $cert_timeout == 0 ]; then
