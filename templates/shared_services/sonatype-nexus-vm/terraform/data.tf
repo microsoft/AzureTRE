@@ -19,11 +19,6 @@ data "azurerm_key_vault_certificate" "nexus_cert" {
   key_vault_id = data.azurerm_key_vault.kv.id
 }
 
-data "azurerm_key_vault_secret" "nexus_cert_password" {
-  name         = "${data.azurerm_key_vault_certificate.nexus_cert.name}-password"
-  key_vault_id = data.azurerm_key_vault.kv.id
-}
-
 data "azurerm_storage_account" "nexus" {
   name                = local.storage_account_name
   resource_group_name = local.core_resource_group_name

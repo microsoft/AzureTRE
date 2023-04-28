@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-sonatype-nexus
-version: 2.4.0
+version: 2.5.0
 description: "A Sonatype Nexus shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -58,7 +58,7 @@ outputs:
     applyTo:
       - install
       - upgrade
-  - name: shared_address_prefixes
+  - name: private_ip_addresses
     applyTo:
       - install
       - upgrade
@@ -66,9 +66,7 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.3.6
-  - az:
-      clientVersion: 2.37.0
+      clientVersion: 1.4.5
 
 install:
   - terraform:
@@ -85,7 +83,7 @@ install:
       outputs:
         - name: workspace_vm_allowed_fqdns_list
         - name: nexus_allowed_fqdns_list
-        - name: shared_address_prefixes
+        - name: private_ip_addresses
 
 upgrade:
   - terraform:
@@ -102,7 +100,7 @@ upgrade:
       outputs:
         - name: workspace_vm_allowed_fqdns_list
         - name: nexus_allowed_fqdns_list
-        - name: shared_address_prefixes
+        - name: private_ip_addresses
 uninstall:
   - terraform:
       description: "Tear down shared service"
