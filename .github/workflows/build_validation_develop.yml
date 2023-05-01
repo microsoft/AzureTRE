@@ -97,7 +97,7 @@ jobs:
 
       - name: Workspace Tags
         if: ${{ steps.filter.outputs.terraform_workspaces == 'true' }}
-        uses: github/super-linter/slim@v4.10.0
+        uses: github/super-linter/slim@v5.0.0
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
@@ -108,7 +108,7 @@ jobs:
 
       - name: Workspace Services Tags
         if: ${{ steps.filter.outputs.terraform_workspace_services == 'true' }}
-        uses: github/super-linter/slim@v4.10.0
+        uses: github/super-linter/slim@v5.0.0
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
@@ -120,7 +120,7 @@ jobs:
 
       - name: User Resources Tags
         if: ${{ steps.filter.outputs.terraform_workspace_services == 'true' }}
-        uses: github/super-linter/slim@v4.10.0
+        uses: github/super-linter/slim@v5.0.0
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
@@ -131,7 +131,7 @@ jobs:
 
       - name: Shared Services Tags
         if: ${{ steps.filter.outputs.terraform_shared_services == 'true' }}
-        uses: github/super-linter/slim@v4.10.0
+        uses: github/super-linter/slim@v5.0.0
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
