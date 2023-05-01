@@ -174,6 +174,6 @@ resource "azurerm_ip_group" "webapp" {
 }
 
 module "terraform_azurerm_environment_configuration" {
-  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.3.0"
   arm_environment = var.arm_environment
 }
