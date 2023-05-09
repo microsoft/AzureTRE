@@ -148,6 +148,8 @@ terraform-import:
 terraform-destroy:
 	$(call target_title, "Destroying ${DIR} Service") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./destroy.sh
 
 # This will validate all files, not only the changed ones as the CI version does.
