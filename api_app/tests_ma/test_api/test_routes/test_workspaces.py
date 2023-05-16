@@ -263,7 +263,8 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
     # [GET] /workspaces
     @patch("api.routes.workspaces.WorkspaceRepository.get_active_workspaces")
     @patch("api.routes.workspaces.get_identity_role_assignments")
-    async def test_get_workspaces_returns_correct_data_when_resources_exist(self, access_service_mock, get_workspaces_mock, app, client) -> None:
+    @patch("api.routes.workspaces.enrich_resource_with_available_upgrades", return_value=None)
+    async def test_get_workspaces_returns_correct_data_when_resources_exist(self, _, access_service_mock, get_workspaces_mock, app, client) -> None:
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'app_role_id_workspace_owner': 'ab124', 'app_role_id_workspace_researcher': 'ab125', 'app_role_id_workspace_airlock_manager': 'ab130'}
         auth_info_user_in_workspace_researcher_role = {'sp_id': 'ab123', 'app_role_id_workspace_owner': 'ab127', 'app_role_id_workspace_researcher': 'ab126', 'app_role_id_workspace_airlock_manager': 'ab130'}
         auth_info_user_not_in_workspace_role = {'sp_id': 'ab127', 'app_role_id_workspace_owner': 'ab128', 'app_role_id_workspace_researcher': 'ab129', 'app_role_id_workspace_airlock_manager': 'ab130'}
