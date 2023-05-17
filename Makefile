@@ -14,10 +14,10 @@ E2E_TESTS_NUMBER_PROCESSES_DEFAULT=4  # can be overridden in e2e_tests/.env
 
 target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
 
-all: bootstrap mgmt-deploy images tre-deploy ## 🚀 Provision application resources locally
-tre-deploy: deploy-core build-and-deploy-ui firewall-install db-migrate show-core-output
+all: bootstrap mgmt-deploy images tre-deploy ## 🚀 Provision all the application resources from beginning to end
+tre-deploy: deploy-core build-and-deploy-ui firewall-install db-migrate show-core-output ## 🚀 Provision TRE using existing images
 
-images: build-and-push-api build-and-push-resource-processor build-and-push-airlock-processor
+images: build-and-push-api build-and-push-resource-processor build-and-push-airlock-processor ## 📦 Build and push all images
 build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-airlock-processor: build-airlock-processor push-airlock-processor
