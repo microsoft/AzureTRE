@@ -4,7 +4,7 @@
   "type": "object",
   "title": "Airlock Notifier Shared Service",
   "description": "A shared service notifying on Airlock operations",
-  "required": ["smtp_server_address", "smtp_username", "smtpPassword", "smtp_from_email"],
+  "required": ["smtp_server_address", "smtp_server_port", "smtp_username", "smtpPassword", "smtp_from_email"],
   "properties": {
     "smtp_server_address": {
       "$id": "#/properties/smtp_server_address",
@@ -45,6 +45,20 @@
       "examples": [
         "https://mytre.westeurope.cloudapp.azure.com"
       ]
+    },
+    "smtp_server_enable_ssl": {
+      "$id": "#/properties/smtp_server_enable_ssl",
+      "type": "boolean",
+      "title": "SMTP SSL Enabled",
+      "description": "SMTP SSL Enabled",
+      "updateable": false
+    },
+    "smtp_server_port": {
+      "$id": "#/properties/smtp_server_port",
+      "type": "string",
+      "title": "SMTP Server Port",
+      "description": "SMTP Server Port",
+      "updateable": false
     }
   },
   "pipeline": {
