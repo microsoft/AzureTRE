@@ -77,6 +77,7 @@ async def retrieve_users_active_workspaces(request: Request, user=Depends(get_cu
             except AuthConfigValidationError:
                 return WorkspaceRole.NoRole
         user_workspaces = [workspace for workspace in workspaces if _safe_get_workspace_role(user, workspace, user_role_assignments) != WorkspaceRole.NoRole]
+        await asyncio.gather(*[enrich_resource_with_available_upgrades(workspace, resource_template_repo) for workspace in user_workspaces])
         return WorkspacesInList(workspaces=user_workspaces)
 
 
