@@ -215,11 +215,11 @@ resource "azurerm_virtual_machine_extension" "keyvault" {
       "requireInitialSync" : true,
       "observedCertificates" : [
         data.azurerm_key_vault_certificate.nexus_cert.versionless_secret_id
-      ],
-      "authenticationSettings" : {
-        "msiEndpoint" : "http://169.254.169.254/metadata/identity",
-        "msiClientId" : azurerm_user_assigned_identity.nexus_msi.id
-      }
+      ]
+    }
+    "authenticationSettings" : {
+      "msiEndpoint" : "http://169.254.169.254/metadata/identity",
+      "msiClientId" : azurerm_user_assigned_identity.nexus_msi.client_id
     }
   })
 }
