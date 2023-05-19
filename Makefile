@@ -1,4 +1,5 @@
 .PHONY: bootstrap-init mgmt-deploy mgmt-destroy build-api-image push-api-image deploy-tre destroy-tre letsencrypt
+.DEFAULT_GOAL := help
 
 SHELL:=/bin/bash
 MAKEFILE_FULLPATH := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -13,13 +14,16 @@ E2E_TESTS_NUMBER_PROCESSES_DEFAULT=4  # can be overridden in e2e_tests/.env
 
 target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
 
-all: bootstrap mgmt-deploy images tre-deploy
-tre-deploy: deploy-core build-and-deploy-ui firewall-install db-migrate show-core-output
+all: bootstrap mgmt-deploy images tre-deploy ## 🚀 Provision all the application resources from beginning to end
+tre-deploy: deploy-core build-and-deploy-ui firewall-install db-migrate show-core-output ## 🚀 Provision TRE using existing images
 
-images: build-and-push-api build-and-push-resource-processor build-and-push-airlock-processor
+images: build-and-push-api build-and-push-resource-processor build-and-push-airlock-processor ## 📦 Build and push all images
 build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-airlock-processor: build-airlock-processor push-airlock-processor
+
+help: ## 💬 This help message :)
+	@grep -E '[a-zA-Z_-]+:.*?## .*$$' $(firstword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
 # to move your environment from the single 'core' deployment (which includes the firewall)
 # toward the shared services model, where it is split out - run the following make target before a tre-deploy
@@ -118,17 +122,17 @@ letsencrypt:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& ${MAKEFILE_DIR}/core/terraform/scripts/letsencrypt.sh
 
-tre-start:
+tre-start: ## ⏩ Start the TRE Service
 	$(call target_title, "Starting TRE") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& ${MAKEFILE_DIR}/devops/scripts/control_tre.sh start
 
-tre-stop:
+tre-stop: ## ⛔ Stop the TRE Service
 	$(call target_title, "Stopping TRE") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& ${MAKEFILE_DIR}/devops/scripts/control_tre.sh stop
 
-tre-destroy:
+tre-destroy: ## 🧨 Destroy the TRE Service
 	$(call target_title, "Destroying TRE") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/destroy_env_no_terraform.sh
@@ -151,7 +155,7 @@ terraform-destroy:
 	&& cd ${DIR}/terraform/ && ./destroy.sh
 
 # This will validate all files, not only the changed ones as the CI version does.
-lint:
+lint: ## 🧹 Lint all files
 	$(call target_title, "Linting")
 	@terraform fmt -check -recursive -diff
 	@# LOG_LEVEL=NOTICE reduces noise but it might also seem like the process is stuck - it's not...
@@ -319,23 +323,23 @@ prepare-for-e2e:
 	$(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-windowsvm
 	$(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-linuxvm
 
-test-e2e-smoke:
+test-e2e-smoke:	## 🧪 Run E2E smoke tests
 	$(call target_title, "Running E2E smoke tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=smoke
 
-test-e2e-extended:
+test-e2e-extended: ## 🧪 Run E2E extended tests
 	$(call target_title, "Running E2E extended tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=extended
 
-test-e2e-extended-aad:
+test-e2e-extended-aad: ## 🧪 Run E2E extended AAD tests
 	$(call target_title, "Running E2E extended AAD tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=extended_aad
 
-test-e2e-shared-services:
+test-e2e-shared-services: ## 🧪 Run E2E shared service tests
 	$(call target_title, "Running E2E shared service tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=shared_services
 
-test-e2e-custom:
+test-e2e-custom: ## 🧪 Run E2E tests with custom selector (SELECTOR=)
 	$(call target_title, "Running E2E tests with custom selector ${SELECTOR}") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env,auth \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/e2e_tests/.env \
@@ -348,14 +352,14 @@ test-e2e-custom:
 		else \
 			python -m pytest -n "${E2E_TESTS_NUMBER_PROCESSES_DEFAULT}" -m "${SELECTOR}" --verify $${IS_API_SECURED:-true} --junit-xml "pytest_e2e_$${SELECTOR// /_}.xml"; fi
 
-setup-local-debugging:
+setup-local-debugging: ## 🛠️ Setup local debugging
 	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
 	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/setup_local_debugging.sh
 
-auth:
+auth: ## 🔐 Create the necessary Azure Active Directory assets
 	$(call target_title,"Setting up Azure Active Directory") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
 	&& ${MAKEFILE_DIR}/devops/scripts/create_aad_assets.sh
@@ -371,7 +375,7 @@ api-healthcheck:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& ${MAKEFILE_DIR}/devops/scripts/api_healthcheck.sh
 
-db-migrate: api-healthcheck
+db-migrate: api-healthcheck ## 🗄️ Run database migrations
 	$(call target_title,"Migrating Cosmos Data") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
 	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
