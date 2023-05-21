@@ -10,7 +10,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Nexus might fail to deploy due to wrong identity used in key-vault extension ([#3492](https://github.com/microsoft/AzureTRE/issues/3492))
-* Airlock notifier needs SCM basic-auth enabled to install ([#TBD](https://github.com/microsoft/AzureTRE/issues/TBD))
+* Airlock notifier needs SCM basic-auth enabled to install ([#3509](https://github.com/microsoft/AzureTRE/issues/3509))
 
 COMPONENTS:
 
