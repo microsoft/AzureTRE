@@ -9,6 +9,7 @@ FEATURES:
 ENHANCEMENTS:
 
 BUG FIXES:
+* Nexus might fail to deploy due to wrong identity used in key-vault extension ([#3492](https://github.com/microsoft/AzureTRE/issues/3492))
 
 COMPONENTS:
 
