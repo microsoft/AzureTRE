@@ -122,7 +122,7 @@ install:
       description: Wait for SCM Auth settings to kick in
       command: sleep
       arguments:
-      - "60"
+        - "60"
 
   - az:
       description: "Deploy logic app"
