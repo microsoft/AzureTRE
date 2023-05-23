@@ -11,6 +11,9 @@
       "INTERACTIVE": "true"
     }
   },
+  "hostRequirements": {
+    "memory": "8gb"
+  },
   "runArgs": [
     "--network",
     "host"
