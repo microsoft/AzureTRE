@@ -21,7 +21,7 @@ This user is currently only used from the Porter bundles hosted on the Resource 
 
 ## How to create
 ```bash
-./scripts/aad/create_application_administrator.sh \
+./devops/scripts/aad/create_application_administrator.sh \
 --name "${TRE_ID}" --admin-consent --application-permission "${APPLICATION_PERMISSION}"
 ```
 
