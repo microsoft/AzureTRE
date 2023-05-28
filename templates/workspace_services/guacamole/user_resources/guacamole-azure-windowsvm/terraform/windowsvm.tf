@@ -44,7 +44,17 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   admin_username             = random_string.username.result
   admin_password             = random_password.password.result
 
-  custom_data = base64encode(data.template_file.vm_config.rendered)
+  custom_data = base64encode(templatefile(
+    "${path.module}/vm_config.ps1", {
+      nexus_proxy_url        = local.nexus_proxy_url
+      SharedStorageAccess    = var.shared_storage_access ? 1 : 0
+      StorageAccountName     = data.azurerm_storage_account.stg.name
+      StorageAccountKey      = data.azurerm_storage_account.stg.primary_access_key
+      StorageAccountFileHost = data.azurerm_storage_account.stg.primary_file_host
+      FileShareName          = var.shared_storage_access ? data.azurerm_storage_share.shared_storage[0].name : ""
+      CondaConfig            = local.selected_image.conda_config ? 1 : 0
+    }
+  ))
 
   # set source_image_id/reference depending on the config for the selected image
   source_image_id = local.selected_image_source_id
@@ -91,28 +101,4 @@ resource "azurerm_key_vault_secret" "windowsvm_password" {
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
   tags         = local.tre_user_resources_tags
-}
-
-data "template_file" "vm_config" {
-  template = file("${path.module}/vm_config.ps1")
-  vars = {
-    nexus_proxy_url            = local.nexus_proxy_url
-    SharedStorageAccess        = var.shared_storage_access ? 1 : 0
-    StorageAccountName         = data.azurerm_storage_account.stg.name
-    StorageAccountKey          = data.azurerm_storage_account.stg.primary_access_key
-    StorageAccountFileEndpoint = data.azurerm_storage_account.stg.primary_file_endpoint
-    FileShareName              = var.shared_storage_access ? data.azurerm_storage_share.shared_storage[0].name : ""
-    CondaConfig                = local.selected_image.conda_config ? 1 : 0
-  }
-}
-
-data "azurerm_storage_account" "stg" {
-  name                = local.storage_name
-  resource_group_name = data.azurerm_resource_group.ws.name
-}
-
-data "azurerm_storage_share" "shared_storage" {
-  count                = var.shared_storage_access ? 1 : 0
-  name                 = var.shared_storage_name
-  storage_account_name = data.azurerm_storage_account.stg.name
 }
