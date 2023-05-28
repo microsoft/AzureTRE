@@ -1,7 +1,7 @@
 # API
 httpx~=0.23.0
 pytest==7.2.0
-pytest-asyncio==0.20.3
+pytest-asyncio==0.21.0
 starlette
 pytest-timeout==2.1.0
 pytest-xdist==3.2.1
