@@ -13,7 +13,7 @@ COPY --from=client_build /target/surefire-reports/* /
 
 FROM guacamole/guacd:1.5.2
 
-ARG GUACAMOLE_AZURE_VERSION=0.3.1
+ARG GUACAMOLE_AZURE_VERSION=0.3.2
 
 ENV DEBIAN_FRONTEND=noninteractive
 
