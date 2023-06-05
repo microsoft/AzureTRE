@@ -120,4 +120,3 @@ variable "workspace_owner_object_id" {
 }
 
 variable "arm_environment" {}
-variable "azure_environment" {}

@@ -177,7 +177,6 @@ install:
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
         arm_environment: ${ bundle.parameters.arm_environment }
-        azure_environment: ${ bundle.parameters.azure_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -218,7 +217,6 @@ upgrade:
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
         arm_environment: ${ bundle.parameters.arm_environment }
-        azure_environment: ${ bundle.parameters.azure_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -282,7 +280,6 @@ uninstall:
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
         arm_environment: ${ bundle.parameters.arm_environment }
-        azure_environment: ${ bundle.parameters.azure_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
