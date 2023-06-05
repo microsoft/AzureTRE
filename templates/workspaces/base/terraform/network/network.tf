@@ -48,7 +48,7 @@ resource "azurerm_virtual_network_peering" "ws_core_peer" {
   virtual_network_name      = azurerm_virtual_network.ws.name
   remote_virtual_network_id = data.azurerm_virtual_network.core.id
 
-    triggers = {
+  triggers = {
     remote_address_space = join(",", data.azurerm_virtual_network.core.address_space)
   }
 }
