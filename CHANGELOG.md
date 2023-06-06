@@ -12,7 +12,7 @@ ENHANCEMENTS:
 BUG FIXES:
 * Nexus might fail to deploy due to wrong identity used in key-vault extension ([#3492](https://github.com/microsoft/AzureTRE/issues/3492))
 * Airlock notifier needs SCM basic-auth enabled to install ([#3509](https://github.com/microsoft/AzureTRE/issues/3509))
-* Databricks fails to depoly in East US ([#3515](https://github.com/microsoft/AzureTRE/issues/3515))
+* Databricks fails to deploy in East US ([#3515](https://github.com/microsoft/AzureTRE/issues/3515))
 * `load_env.sh` is able to use an equal `=` sign in values ([#3535](https://github.com/microsoft/AzureTRE/issues/3535))
 
 COMPONENTS:
