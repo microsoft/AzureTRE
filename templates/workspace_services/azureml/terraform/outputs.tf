@@ -15,11 +15,7 @@ output "aml_fqdn" {
 }
 
 output "connection_uri" {
-  value = var.is_exposed_externally ? format("%s/?wsid=%s&tid=%s", module.terraform_azurerm_environment_configuration.aml_studio_endpoint, azurerm_machine_learning_workspace.aml_workspace.id, var.arm_tenant_id) : ""
-}
-
-output "internal_connection_uri" {
-  value = var.is_exposed_externally ? "" : format("%s/?wsid=%s&tid=%s", module.terraform_azurerm_environment_configuration.aml_studio_endpoint, azurerm_machine_learning_workspace.aml_workspace.id, var.arm_tenant_id)
+  value =  format("%s/?wsid=%s&tid=%s", module.terraform_azurerm_environment_configuration.aml_studio_endpoint, azurerm_machine_learning_workspace.aml_workspace.id, var.arm_tenant_id)
 }
 
 output "workspace_address_spaces" {
