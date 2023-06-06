@@ -20,8 +20,8 @@ else
   while read -r line
   do
     # split the line into name/value
-    name=$(echo "$line" | cut -d= -f1)
-    value=$(echo "$line" | cut -d= -f2)
+    IFS='=' read -r name value <<< "$line"
+
     # Create the Terraform var name form, i.e. convert FOO=BAR to TF_VAR_foo=BAR
     tf_name="TF_VAR_$(echo "$name" | tr '[:upper:]' '[:lower:]')"
 
