@@ -13,7 +13,7 @@
     "tre_id": {
       "description": "TRE unique identifier",
       "type": "string",
-      "pattern": "^[a-zA-Z 0-9\\_]*$",
+      "pattern": "^[a-z]*$",
       "maxLength": 11
     },
     "management": {
