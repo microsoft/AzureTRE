@@ -1,0 +1,207 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/ohdsi/template_schema.json",
+  "type": "object",
+  "title": "OHDSI Workspace Service",
+  "description": "Provides OHDSI within the workspace",
+  "required": [],
+  "properties": {
+    "address_space": {
+      "$id": "#/properties/address_space",
+      "type": "string",
+      "title": "Address space",
+      "description": "Address space for PostgreSQL's subnet"
+    },
+    "configure_data_source": {
+      "type": "boolean",
+      "title": "Configure Data Source",
+      "default": true,
+      "updateable": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "configure_data_source": {
+            "const": true
+          }
+        },
+        "required": [
+          "configure_data_source"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data_source_config": {
+            "type": "object",
+            "title": "Data Source Configuration",
+            "default": null,
+            "properties": {
+              "dialect": {
+                "type": "string",
+                "title": "Dialect",
+                "default": "Azure Synapse",
+                "enum": [
+                  "Azure Synapse"
+                ],
+                "updateable": true
+              },
+              "source_name": {
+                "type": "string",
+                "title": "Source Name"
+              },
+              "source_key": {
+                "type": "string",
+                "title": "Source Key",
+                "description": "A unique source key"
+              },
+              "connection_string": {
+                "type": "string",
+                "title": "Connection String"
+              },
+              "username": {
+                "type": "string",
+                "title": "Username"
+              },
+              "password": {
+                "type": "string",
+                "title": "Password",
+                "format": "password"
+              }
+            },
+            "required": [
+              "source_name",
+              "dialect",
+              "source_key",
+              "connection_string",
+              "username",
+              "password"
+            ]
+          },
+          "data_source_daimons": {
+            "type": "object",
+            "title": "Source Daimons",
+            "description": "Optionally configure source daimons",
+            "default": null,
+            "properties": {
+              "daimon_cdm": {
+                "type": "string",
+                "title": "CDM"
+              },
+              "daimon_vocabulary": {
+                "type": "string",
+                "title": "Vocabulary"
+              },
+              "daimon_results": {
+                "type": "string",
+                "title": "Results Schema to copy"
+              },
+              "daimon_cem": {
+                "type": "string",
+                "title": "CEM"
+              },
+              "daimon_cem_results": {
+                "type": "string",
+                "title": "CEMResults"
+              },
+              "daimon_temp": {
+                "type": "string",
+                "title": "Temp Schema to copy"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "uiSchema": {
+    "address_space": {
+      "classNames": "tre-hidden"
+    }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "b9d7370e-c624-4263-921c-632329974872",
+        "stepTitle": "Upgrade workspace to ensure the existence of Postgres' address space",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": []
+      },
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "7276dcc1-7d0e-496a-badf-87c8c25fc06e",
+        "stepTitle": "Add Atlas callback URI as AAD redirect URI",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "aad_redirect_uris",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}",
+              "value": "{{ resource.properties.authentication_callback_uri }}"
+            }
+          }
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "01dfec9b-ecc5-42c4-a022-050930a29916",
+        "stepTitle": "Upgrade workspace to ensure the existence of Postgres' address space",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": []
+      },
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "0d3961fd-1538-4b0e-a6ed-bf401b65c034",
+        "stepTitle": "Upgrade Atlas callback URI as AAD redirect URI",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "aad_redirect_uris",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}",
+              "value": "{{ resource.properties.authentication_callback_uri }}"
+            }
+          }
+        ]
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "e1986fe8-b1f9-4a9d-abb1-da1ea9a50b41",
+        "stepTitle": "Remove Atlas callback URI as AAD redirect URI",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "aad_redirect_uris",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ]
+  }
+}
