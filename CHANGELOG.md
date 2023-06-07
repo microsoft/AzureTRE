@@ -16,7 +16,7 @@ BUG FIXES:
 * Make AML route names unique ([#3546](https://github.com/microsoft/AzureTRE/issues/3546))
 * Azure ML connection URI is an object, not string ([#3486](https://github.com/microsoft/AzureTRE/issues/3486))
 * Update key in Linux VM deploy script ([#3434](https://github.com/microsoft/AzureTRE/issues/3434))
-
+* Change Guacamole username claim to `preffered_username`, so email not required ([#3539](https://github.com/microsoft/AzureTRE/issues/3539))
 
 COMPONENTS:
 
