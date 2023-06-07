@@ -8,12 +8,12 @@
     "location": {
       "description": "The Azure location (region) for all resources.",
       "type": "string",
-      "pattern": "[a-z0-9]+"
+      "pattern": "[a-z]+"
     },
     "tre_id": {
       "description": "TRE unique identifier",
       "type": "string",
-      "pattern": "^[a-z]*$",
+      "pattern": "^[a-z0-9]*$",
       "maxLength": 11
     },
     "management": {
