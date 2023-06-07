@@ -114,19 +114,6 @@ resource "azurerm_subnet_network_security_group_association" "postgres" {
   network_security_group_id = azurerm_network_security_group.postgres.id
 }
 
-resource "terraform_data" "postgres_core_dns_link" {
-  provisioner "local-exec" {
-
-    environment = {
-      RESOURCE_GROUP = local.core_resource_group_name
-      DNS_ZONE_NAME  = data.azurerm_private_dns_zone.postgres.name
-      VNET           = data.azurerm_virtual_network.core.name
-    }
-
-    command = "../scripts/postgres_dns_link.sh"
-  }
-}
-
 resource "azurerm_postgresql_flexible_server" "postgres" {
   name                   = "psql-server-${local.service_suffix}"
   resource_group_name    = data.azurerm_resource_group.ws.name
