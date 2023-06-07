@@ -62,9 +62,6 @@ locals {
   data_source_config     = try(jsondecode(base64decode(var.data_source_config)), {})
   data_source_daimons    = try(jsondecode(base64decode(var.data_source_daimons)), {})
   data_source_dialect    = try(local.data_source_config.dialect, null)
-  is_synapse_data_source = var.configure_data_source && local.data_source_dialect == "Azure Synapse"
   daimon_results         = try(local.data_source_daimons.daimon_results, null)
   daimon_temp            = try(local.data_source_daimons.daimon_temp, null)
-  results_schema_name    = local.is_synapse_data_source && local.daimon_results != null ? "${local.data_source_daimons.daimon_results}_${replace(var.tre_resource_id, "-", "_")}" : local.daimon_results
-  temp_schema_name       = local.is_synapse_data_source && local.daimon_temp != null ? "${local.data_source_daimons.daimon_temp}_${replace(var.tre_resource_id, "-", "_")}" : local.daimon_temp
 }

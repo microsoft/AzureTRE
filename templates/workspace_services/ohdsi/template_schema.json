@@ -15,7 +15,7 @@
     "configure_data_source": {
       "type": "boolean",
       "title": "Configure Data Source",
-      "default": true,
+      "default": false,
       "updateable": true
     }
   },
@@ -41,8 +41,16 @@
               "dialect": {
                 "type": "string",
                 "title": "Dialect",
-                "default": "Azure Synapse",
                 "enum": [
+                  "PostgreSQL",
+                  "SQL server",
+                  "Oracle",
+                  "Amazon Redshift",
+                  "Microsoft PDW",
+                  "IBM Netezza",
+                  "Hive LLAP",
+                  "Apache Spark",
+                  "Snowflake",
                   "Azure Synapse"
                 ],
                 "updateable": true
