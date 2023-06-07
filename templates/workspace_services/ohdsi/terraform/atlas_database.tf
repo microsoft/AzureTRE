@@ -191,7 +191,6 @@ resource "terraform_data" "deployment_ohdsi_webapi_init" {
   }
 
   depends_on = [
-    terraform_data.postgres_core_dns_link,
     azurerm_subnet_network_security_group_association.postgres
   ]
 }
