@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-azureml
-version: 0.8.3
+version: 0.8.5
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -85,11 +85,6 @@ outputs:
     applyTo:
       - install
       - upgrade
-  - name: internal_connection_uri
-    type: string
-    applyTo:
-      - install
-      - upgrade
   - name: workspace_address_spaces
     type: string
     applyTo:
@@ -154,7 +149,6 @@ install:
         - name: azureml_acr_id
         - name: azureml_storage_account_id
         - name: connection_uri
-        - name: internal_connection_uri
         - name: workspace_address_spaces
         - name: aml_subnet_address_prefixes
         - name: storage_tag
@@ -188,7 +182,6 @@ upgrade:
         - name: azureml_acr_id
         - name: azureml_storage_account_id
         - name: connection_uri
-        - name: internal_connection_uri
         - name: workspace_address_spaces
         - name: aml_subnet_address_prefixes
         - name: storage_tag
