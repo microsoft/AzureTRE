@@ -16,7 +16,7 @@ BUG FIXES:
 * Make AML route names unique ([#3546](https://github.com/microsoft/AzureTRE/issues/3546))
 * Azure ML connection URI is an object, not string ([#3486](https://github.com/microsoft/AzureTRE/issues/3486))
 * Update key in Linux VM deploy script ([#3434](https://github.com/microsoft/AzureTRE/issues/3434))
-
+* Add missing `azure_environment` porter parameters ([#3549](https://github.com/microsoft/AzureTRE/issues/3549))
 
 COMPONENTS:
 
