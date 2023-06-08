@@ -29,6 +29,7 @@ resource "terraform_data" "deployment_atlas_security" {
   depends_on = [
     azurerm_postgresql_flexible_server_database.db,
     terraform_data.deployment_ohdsi_webapi_init,
+    terraform_data.postgres_core_dns_link,
     azurerm_private_endpoint.webapi_private_endpoint,
     azurerm_subnet_network_security_group_association.postgres
   ]
