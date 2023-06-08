@@ -81,7 +81,7 @@ resource "azurerm_key_vault_access_policy" "nexus_msi" {
   tenant_id    = azurerm_user_assigned_identity.nexus_msi.tenant_id
   object_id    = azurerm_user_assigned_identity.nexus_msi.principal_id
 
-  secret_permissions = ["Get", "Recover"]
+  secret_permissions = ["Get", "List"]
 }
 
 resource "azurerm_linux_virtual_machine" "nexus" {
@@ -216,6 +216,10 @@ resource "azurerm_virtual_machine_extension" "keyvault" {
       "observedCertificates" : [
         data.azurerm_key_vault_certificate.nexus_cert.versionless_secret_id
       ]
+    }
+    "authenticationSettings" : {
+      "msiEndpoint" : "http://169.254.169.254/metadata/identity",
+      "msiClientId" : azurerm_user_assigned_identity.nexus_msi.client_id
     }
   })
 }

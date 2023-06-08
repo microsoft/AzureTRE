@@ -76,7 +76,7 @@ mixins:
   - az:
       clientVersion: 2.37.0
   - terraform:
-      clientVersion: 1.3.6
+      clientVersion: 1.4.6
 
 install:
   - terraform:
@@ -117,6 +117,24 @@ install:
         username: ${ bundle.credentials.azure_client_id }
 
   - az:
+      arguments:
+        - resource
+        - update
+      flags:
+        resource-group: ${ bundle.outputs.airlock_notifier_logic_app_resource_group_name }
+        name: scm
+        namespace: Microsoft.Web
+        resource-type: basicPublishingCredentialsPolicies
+        parent: sites/${ bundle.outputs.airlock_notifier_logic_app_name }
+        set: "properties.allow=true"
+
+  - exec:
+      description: Wait for SCM Auth settings to kick in
+      command: sleep
+      arguments:
+        - "60"
+
+  - az:
       description: "Deploy logic app"
       arguments:
         - functionapp
@@ -127,7 +145,7 @@ install:
         name: ${ bundle.outputs.airlock_notifier_logic_app_name }
         resource-group: ${ bundle.outputs.airlock_notifier_logic_app_resource_group_name }
         subscription: ${ bundle.credentials.azure_subscription_id }
-        src: LogicApp.zip
+        src: /cnab/app/LogicApp.zip
 
 
 upgrade:
