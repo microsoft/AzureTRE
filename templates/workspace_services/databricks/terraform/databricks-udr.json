@@ -422,19 +422,46 @@
       "20.57.106.0/28"
     ],
     "logBlobStorageDomains": [
-      ""
+      "dblogprodwestus.blob.core.windows.net",
+      "dblogprodeastus.blob.core.windows.net"
     ],
     "artifactBlobStoragePrimaryDomains": [
-      ""
+      "dbartifactsprodeastus.blob.core.windows.net",
+      "arprodeastusa1.blob.core.windows.net",
+      "arprodeastusa2.blob.core.windows.net",
+      "arprodeastusa3.blob.core.windows.net",
+      "arprodeastusa4.blob.core.windows.net",
+      "arprodeastusa5.blob.core.windows.net",
+      "arprodeastusa6.blob.core.windows.net",
+      "arprodeastusa7.blob.core.windows.net",
+      "arprodeastusa8.blob.core.windows.net",
+      "arprodeastusa9.blob.core.windows.net",
+      "arprodeastusa10.blob.core.windows.net",
+      "arprodeastusa11.blob.core.windows.net",
+      "arprodeastusa12.blob.core.windows.net",
+      "arprodeastusa13.blob.core.windows.net",
+      "arprodeastusa14.blob.core.windows.net",
+      "arprodeastusa15.blob.core.windows.net"
     ],
     "artifactBlobStorageSecondaryDomains": [
-      ""
+      "dbartifactsprodeastus2.blob.core.windows.net"
     ],
     "eventHubEndpointDomains": [
-      ""
+      "prod-westus-observabilityEventHubs.servicebus.windows.net",
+      "prod-eastusc2-observabilityeventhubs.servicebus.windows.net",
+      "prod-eastusc3-observabilityeventhubs.servicebus.windows.net"
     ],
     "metastoreDomains": [
-      ""
+      "consolidated-eastus-prod-metastore.mysql.database.azure.com",
+      "consolidated-eastus-prod-metastore-addl-1.mysql.database.azure.com",
+      "consolidated-eastus-prod-metastore-addl-2.mysql.database.azure.com",
+      "consolidated-eastus-prod-metastore-addl-3.mysql.database.azure.com",
+      "consolidated-eastus-prod-metastore-addl-4.mysql.database.azure.com",
+      "consolidated-eastusc2-prod-metastore-0.mysql.database.azure.com",
+      "consolidated-eastusc3-prod-metastore-0.mysql.database.azure.com",
+      "consolidated-eastusc3-prod-metastore-1.mysql.database.azure.com",
+      "consolidated-eastusc3-prod-metastore-2.mysql.database.azure.com",
+      "consolidated-eastusc3-prod-metastore-3.mysql.database.azure.com"
     ]
   },
   "eastus2": {

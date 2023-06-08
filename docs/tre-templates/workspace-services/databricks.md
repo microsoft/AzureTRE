@@ -6,6 +6,11 @@ This service along with Azure Databricks Private Authentication Shared Service i
 
 ![Azure Databricks workspace service](../../assets/databricks_workspace_service.png)
 
+This service uses a JSON file to store the various network endpoints required by Databricks to function.
+
+If you hit networking related issues when deploying or using Databricks, please ensure this file [https://github.com/microsoft/AzureTRE/blob/main/templates/workspace_services/databricks/terraform/databricks-udr.json](https://github.com/microsoft/AzureTRE/blob/main/templates/workspace_services/databricks/terraform/databricks-udr.json) contains the approprate settings for the region you are using.
+
+The required settings for each region can be extracted from this document: [https://learn.microsoft.com/azure/databricks/resources/supported-regions](https://learn.microsoft.com/azure/databricks/resources/supported-regions).
 
 ## Properties
 
