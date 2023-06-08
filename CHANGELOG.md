@@ -7,13 +7,17 @@
 FEATURES:
 
 ENHANCEMENTS:
-* Workspace networking peering sync is handled nativly by Terraform ([#3534](https://github.com/microsoft/AzureTRE/issues/3534))
+* Workspace networking peering sync is handled natively by Terraform ([#3534](https://github.com/microsoft/AzureTRE/issues/3534))
 
 BUG FIXES:
 * Nexus might fail to deploy due to wrong identity used in key-vault extension ([#3492](https://github.com/microsoft/AzureTRE/issues/3492))
 * Airlock notifier needs SCM basic-auth enabled to install ([#3509](https://github.com/microsoft/AzureTRE/issues/3509))
 * Databricks fails to deploy in East US ([#3515](https://github.com/microsoft/AzureTRE/issues/3515))
 * `load_env.sh` is able to use an equal `=` sign in values ([#3535](https://github.com/microsoft/AzureTRE/issues/3535))
+* Make AML route names unique ([#3546](https://github.com/microsoft/AzureTRE/issues/3546))
+* Azure ML connection URI is an object, not string ([#3486](https://github.com/microsoft/AzureTRE/issues/3486))
+* Update key in Linux VM deploy script ([#3434](https://github.com/microsoft/AzureTRE/issues/3434))
+* Add missing `azure_environment` porter parameters ([#3549](https://github.com/microsoft/AzureTRE/issues/3549))
 
 COMPONENTS:
 

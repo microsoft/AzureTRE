@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-azureml
-version: 0.8.2
+version: 0.8.7
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -85,11 +85,6 @@ outputs:
     applyTo:
       - install
       - upgrade
-  - name: internal_connection_uri
-    type: string
-    applyTo:
-      - install
-      - upgrade
   - name: workspace_address_spaces
     type: string
     applyTo:
@@ -154,7 +149,6 @@ install:
         - name: azureml_acr_id
         - name: azureml_storage_account_id
         - name: connection_uri
-        - name: internal_connection_uri
         - name: workspace_address_spaces
         - name: aml_subnet_address_prefixes
         - name: storage_tag
@@ -178,6 +172,7 @@ upgrade:
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         arm_environment: ${ bundle.parameters.arm_environment }
+        azure_environment: ${ bundle.parameters.azure_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -188,7 +183,6 @@ upgrade:
         - name: azureml_acr_id
         - name: azureml_storage_account_id
         - name: connection_uri
-        - name: internal_connection_uri
         - name: workspace_address_spaces
         - name: aml_subnet_address_prefixes
         - name: storage_tag
@@ -212,6 +206,7 @@ uninstall:
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         arm_environment: ${ bundle.parameters.arm_environment }
+        azure_environment: ${ bundle.parameters.azure_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
