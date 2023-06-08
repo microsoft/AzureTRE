@@ -82,7 +82,7 @@
           "data_source_daimons": {
             "type": "object",
             "title": "Source Daimons",
-            "description": "Optionally configure source daimons",
+            "description": "Configure source daimons",
             "default": null,
             "properties": {
               "daimon_cdm": {
@@ -109,7 +109,12 @@
                 "type": "string",
                 "title": "Temp Schema to copy"
               }
-            }
+            },
+            "required": [
+              "daimon_cdm",
+              "daimon_vocabulary",
+              "daimon_results"
+            ]
           }
         }
       }

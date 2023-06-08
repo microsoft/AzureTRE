@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-ohdsi
-version: 0.1.80
+version: 0.1.82
 description: "A OHDSI workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl

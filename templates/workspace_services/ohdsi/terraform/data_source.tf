@@ -32,7 +32,7 @@ resource "terraform_data" "add_data_source" {
   depends_on = [terraform_data.deployment_atlas_security]
 }
 
-resource "terraform_data" "init_schemas_synapse" {
+resource "terraform_data" "init_synapse_schemas" {
   count = local.is_synapse_data_source && local.daimon_results != null && local.daimon_temp != null ? 1 : 0
 
   provisioner "local-exec" {
