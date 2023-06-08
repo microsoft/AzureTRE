@@ -51,7 +51,7 @@ resource "azurerm_resource_group_template_deployment" "smtp_api_connection" {
       value = var.smtp_server_enable_ssl
     },
     "serverPort" = {
-      value = var.server_port
+      value = var.smtp_server_port
     }
   })
 
