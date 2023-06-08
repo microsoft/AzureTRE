@@ -47,6 +47,7 @@ parameters:
   - name: smtp_server_port
     env: SMTP_SERVER_PORT
     type: string
+    default: "25"
   - name: smtp_username
     env: SMTP_USERNAME
     type: string
