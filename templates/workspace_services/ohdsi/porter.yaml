@@ -8,16 +8,6 @@ dockerfile: Dockerfile.tmpl
 
 custom:
   dialects:
-    # Support for dialects other than Azure Synapse was not implemented
-    # "PostgreSQL": "postgresql"
-    # "SQL server": "sql server"
-    # "Oracle": "oracle"
-    # "Amazon Redshift": "redshift"
-    # "Microsoft PDW": "pdw"
-    # "IBM Netezza": "netezza"
-    # "Hive LLAP": "hive"
-    # "Apache Spark": "spark"
-    # "Snowflake": "snowflake"
     "Azure Synapse": "synapse"
 
 credentials:
