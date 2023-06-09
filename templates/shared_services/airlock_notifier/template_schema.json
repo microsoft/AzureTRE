@@ -45,6 +45,20 @@
       "examples": [
         "https://mytre.westeurope.cloudapp.azure.com"
       ]
+    },
+    "smtp_server_enable_ssl": {
+      "$id": "#/properties/smtp_server_enable_ssl",
+      "type": "boolean",
+      "title": "SMTP SSL Enabled",
+      "description": "SMTP SSL Enabled",
+      "updateable": false
+    },
+    "smtp_server_port": {
+      "$id": "#/properties/smtp_server_port",
+      "type": "string",
+      "title": "SMTP Server Port",
+      "description": "SMTP Server Port",
+      "updateable": false
     }
   },
   "pipeline": {
