@@ -44,3 +44,13 @@ data "azurerm_public_ip" "app_gateway_ip" {
   name                = "pip-agw-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
 }
+
+data "azurerm_firewall_policy" "core" {
+  name                = "fw-policy-${var.tre_id}"
+  resource_group_name = local.core_resource_group_name
+}
+
+data "azurerm_ip_group" "resource_processor" {
+  name                = "ipg-resource-processor"
+  resource_group_name = local.core_resource_group_name
+}

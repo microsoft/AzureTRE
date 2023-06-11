@@ -67,6 +67,7 @@ resource "azurerm_logic_app_standard" "logic_app" {
   app_service_plan_id        = azurerm_service_plan.notifier_plan.id
   storage_account_name       = data.azurerm_storage_account.storage.name
   storage_account_access_key = data.azurerm_storage_account.storage.primary_access_key
+  virtual_network_subnet_id  = data.azurerm_subnet.airlock_notification.id
   app_settings = {
     "FUNCTIONS_WORKER_RUNTIME"              = "node"
     "WEBSITE_NODE_DEFAULT_VERSION"          = "~12"
@@ -110,10 +111,4 @@ resource "azurerm_resource_group_template_deployment" "smtp_api_connection_acces
   deployment_mode = "Incremental"
   tags            = local.tre_shared_service_tags
   lifecycle { ignore_changes = [tags] }
-}
-
-
-resource "azurerm_app_service_virtual_network_swift_connection" "airlock_notifier_integrated_vnet" {
-  app_service_id = azurerm_logic_app_standard.logic_app.id
-  subnet_id      = data.azurerm_subnet.airlock_notification.id
 }
