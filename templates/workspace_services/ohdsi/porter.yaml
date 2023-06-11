@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-ohdsi
-version: 0.1.82
+version: 0.1.86
 description: "A OHDSI workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -53,6 +53,13 @@ parameters:
   - name: azure_environment
     type: string
     description: "Used by Azure CLI to set the Azure environment"
+  - name: rule_collections
+    type: string
+    default: "W10=" # b64 for []
+    description: "Application rule collection array"
+  - name: network_rule_collections
+    type: string
+    default: "W10=" # b64 for []
 
   # parameters for configuring the data source
   - name: configure_data_source
