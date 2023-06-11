@@ -174,7 +174,7 @@
                 {
                   "name": "AzureAD",
                   "description": "Allow access to AAD",
-                  "source_addresses": "{{ resource.properties.address_spaces }}",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
                   "destination_addresses": [
                     "AzureActiveDirectory"
                   ],
@@ -200,7 +200,7 @@
                 {
                   "name": "microsoft-aad",
                   "description": "Allow AAD FQDNs",
-                  "source_addresses": "{{ resource.properties.address_spaces }}",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
                   "target_fqdns": [
                     "*.msftauth.net",
                     "*.msauth.net",
@@ -276,7 +276,7 @@
                 {
                   "name": "AzureAD",
                   "description": "Allow access to AAD",
-                  "source_addresses": "{{ resource.properties.address_spaces }}",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
                   "destination_addresses": [
                     "AzureActiveDirectory"
                   ],
@@ -302,7 +302,7 @@
                 {
                   "name": "microsoft-aad",
                   "description": "Allow AAD FQDNs",
-                  "source_addresses": "{{ resource.properties.address_spaces }}",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
                   "target_fqdns": [
                     "*.msftauth.net",
                     "*.msauth.net",
