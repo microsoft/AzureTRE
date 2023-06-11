@@ -8,6 +8,7 @@ FEATURES:
 
 ENHANCEMENTS:
 * Workspace networking peering sync is handled natively by Terraform ([#3534](https://github.com/microsoft/AzureTRE/issues/3534))
+* Added OHDSI workspace service ([#1505](https://github.com/microsoft/AzureTRE/issues/1505))
 
 BUG FIXES:
 * Nexus might fail to deploy due to wrong identity used in key-vault extension ([#3492](https://github.com/microsoft/AzureTRE/issues/3492))
