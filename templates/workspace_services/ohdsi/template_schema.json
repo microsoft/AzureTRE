@@ -82,7 +82,7 @@
           "data_source_daimons": {
             "type": "object",
             "title": "Source Daimons",
-            "description": "Optionally configure source daimons",
+            "description": "Configure source daimons",
             "default": null,
             "properties": {
               "daimon_cdm": {
@@ -109,7 +109,12 @@
                 "type": "string",
                 "title": "Temp Schema to copy"
               }
-            }
+            },
+            "required": [
+              "daimon_cdm",
+              "daimon_vocabulary",
+              "daimon_results"
+            ]
           }
         }
       }
@@ -149,6 +154,78 @@
             }
           }
         ]
+      },
+      {
+        "stepId": "37d7fbde-fd61-4096-ac4d-741960474995",
+        "stepTitle": "Add firewall rules for AAD",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureAD",
+                  "description": "Allow access to AAD",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
+                  "destination_addresses": [
+                    "AzureActiveDirectory"
+                  ],
+                  "destination_ports": [
+                    "*"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "microsoft-aad",
+                  "description": "Allow AAD FQDNs",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
+                  "target_fqdns": [
+                    "*.msftauth.net",
+                    "*.msauth.net",
+                    "login.microsoftonline.com",
+                    "aadcdn.msftauthimages.net",
+                    "aadcdn.msauthimages.net",
+                    "*.login.live.com",
+                    "*.microsoftonline-p.com",
+                    "msft.sts.microsoft.com"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    },
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
       }
     ],
     "upgrade": [
@@ -176,6 +253,78 @@
             "value": {
               "name": "{{ resource.id }}",
               "value": "{{ resource.properties.authentication_callback_uri }}"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "3329d760-3e09-4721-8722-f369b123ca77",
+        "stepTitle": "Add firewall rules for AAD",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureAD",
+                  "description": "Allow access to AAD",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
+                  "destination_addresses": [
+                    "AzureActiveDirectory"
+                  ],
+                  "destination_ports": [
+                    "*"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "microsoft-aad",
+                  "description": "Allow AAD FQDNs",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
+                  "target_fqdns": [
+                    "*.msftauth.net",
+                    "*.msauth.net",
+                    "login.microsoftonline.com",
+                    "aadcdn.msftauthimages.net",
+                    "aadcdn.msauthimages.net",
+                    "*.login.live.com",
+                    "*.microsoftonline-p.com",
+                    "msft.sts.microsoft.com"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    },
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                }
+              ]
             }
           }
         ]

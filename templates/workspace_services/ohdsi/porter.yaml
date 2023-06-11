@@ -1,8 +1,8 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-ohdsi
-version: 0.1.71
-description: "A OHDSI workspace service"
+version: 0.1.94
+description: "An OHDSI workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
 
@@ -50,12 +50,8 @@ parameters:
     default: false
   - name: arm_environment
     type: string
-    # TODO: remove the default value for arm_environment when the TRE version is 0.10.0 or higher
-    default: "public"
   - name: azure_environment
     type: string
-    # TODO: remove the default value for arm_environment when the TRE version is 0.10.0 or higher
-    default: "AzureCloud"
     description: "Used by Azure CLI to set the Azure environment"
 
   # parameters for configuring the data source
