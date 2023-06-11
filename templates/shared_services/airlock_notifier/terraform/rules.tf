@@ -1,4 +1,4 @@
-resource "azurerm_firewall_policy_rule_collection_group" "core-airlock-notifier" {
+resource "azurerm_firewall_policy_rule_collection_group" "core_airlock_notifier" {
   name               = "rcg-core-airlock-notifier"
   firewall_policy_id = data.azurerm_firewall_policy.core.id
   priority           = 501
