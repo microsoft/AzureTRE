@@ -127,6 +127,18 @@ resource "terraform_data" "postgres_core_dns_link" {
   }
 }
 
+resource "terraform_data" "postgres_subnet_wait" {
+  provisioner "local-exec" {
+    command = "sleep 30"
+  }
+
+  depends_on = [
+    azurerm_subnet.postgres,
+    azurerm_subnet_network_security_group_association.postgres,
+    terraform_data.postgres_core_dns_link
+  ]
+}
+
 resource "azurerm_postgresql_flexible_server" "postgres" {
   name                   = "psql-server-${local.service_suffix}"
   resource_group_name    = data.azurerm_resource_group.ws.name
@@ -145,6 +157,10 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
     # If this doesn't complete in a realistic time, no point in waiting the full/default 60m
     create = "15m"
   }
+
+  depends_on = [
+    terraform_data.postgres_subnet_wait,
+  ]
 }
 
 resource "azurerm_postgresql_flexible_server_database" "db" {
