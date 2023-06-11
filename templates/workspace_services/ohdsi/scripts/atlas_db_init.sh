@@ -5,8 +5,10 @@ set -o nounset
 
 admin_user_password="${OHDSI_ADMIN_PASSWORD}${OHDSI_ADMIN_USERNAME}"
 app_user_password="${OHDSI_APP_PASSWORD}${OHDSI_APP_USERNAME}"
-export admin_md5="'md5$(echo -n "$admin_user_password" | md5sum | awk '{ print $1 }')'"
-export app_md5="'md5$(echo -n "$app_user_password" | md5sum | awk '{ print $1 }')'"
+admin_md5="'md5$(echo -n "$admin_user_password" | md5sum | awk '{ print $1 }')'"
+export admin_md5
+app_md5="'md5$(echo -n "$app_user_password" | md5sum | awk '{ print $1 }')'"
+export app_md5
 
 printf 'Creating roles and users'
 echo "$(cat ../sql/atlas_create_roles_users.sql)" | envsubst | psql -v ON_ERROR_STOP=0 -e "$MAIN_CONNECTION_STRING"
