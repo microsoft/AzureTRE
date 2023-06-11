@@ -37,27 +37,27 @@ JSON_PAYLOAD=$(echo "$JSON_PAYLOAD" | jq '.krbAdminServer = null')
 JSON_PAYLOAD=$(echo "$JSON_PAYLOAD" | jq '.daimons = []')
 
 if [[ -v DAIMON_CDM ]]; then
-  JSON_PAYLOAD=$(echo "$JSON_PAYLOAD" | jq '.daimons += [$DAIMON_CDM]' --argjson DAIMON_CDM "$(build_daimon_object "CDM" ${DAIMON_CDM})")
+  JSON_PAYLOAD=$(echo "$JSON_PAYLOAD" | jq '.daimons += [$DAIMON_CDM]' --argjson DAIMON_CDM "$(build_daimon_object "CDM" "${DAIMON_CDM}")")
 fi
 
 if [[ -v DAIMON_VOCABULARY ]]; then
-  JSON_PAYLOAD=$(echo "$JSON_PAYLOAD" | jq '.daimons += [$DAIMON_VOCABULARY]' --argjson DAIMON_VOCABULARY "$(build_daimon_object "Vocabulary" ${DAIMON_VOCABULARY})")
+  JSON_PAYLOAD=$(echo "$JSON_PAYLOAD" | jq '.daimons += [$DAIMON_VOCABULARY]' --argjson DAIMON_VOCABULARY "$(build_daimon_object "Vocabulary" "${DAIMON_VOCABULARY}")")
 fi
 
 if [[ -v DAIMON_RESULTS ]]; then
-  JSON_PAYLOAD=$(echo "$JSON_PAYLOAD" | jq '.daimons += [$DAIMON_RESULTS]' --argjson DAIMON_RESULTS "$(build_daimon_object "Results" ${DAIMON_RESULTS})")
+  JSON_PAYLOAD=$(echo "$JSON_PAYLOAD" | jq '.daimons += [$DAIMON_RESULTS]' --argjson DAIMON_RESULTS "$(build_daimon_object "Results" "${DAIMON_RESULTS}")")
 fi
 
 if [[ -v DAIMON_CEM ]]; then
-  JSON_PAYLOAD=$(echo "$JSON_PAYLOAD" | jq '.daimons += [$DAIMON_CEM]' --argjson DAIMON_CEM "$(build_daimon_object "CEM" ${DAIMON_CEM})")
+  JSON_PAYLOAD=$(echo "$JSON_PAYLOAD" | jq '.daimons += [$DAIMON_CEM]' --argjson DAIMON_CEM "$(build_daimon_object "CEM" "${DAIMON_CEM}")")
 fi
 
 if [[ -v DAIMON_CEM_RESULTS ]]; then
-  JSON_PAYLOAD=$(echo "$JSON_PAYLOAD" | jq '.daimons += [$DAIMON_CEM_RESULTS]' --argjson DAIMON_CEM_RESULTS "$(build_daimon_object "CEMResults" ${DAIMON_CEM_RESULTS})")
+  JSON_PAYLOAD=$(echo "$JSON_PAYLOAD" | jq '.daimons += [$DAIMON_CEM_RESULTS]' --argjson DAIMON_CEM_RESULTS "$(build_daimon_object "CEMResults" "${DAIMON_CEM_RESULTS}")")
 fi
 
 if [[ -v DAIMON_TEMP ]]; then
-  JSON_PAYLOAD=$(echo "$JSON_PAYLOAD" | jq '.daimons += [$DAIMON_TEMP]' --argjson DAIMON_TEMP "$(build_daimon_object "Temp" ${DAIMON_TEMP})")
+  JSON_PAYLOAD=$(echo "$JSON_PAYLOAD" | jq '.daimons += [$DAIMON_TEMP]' --argjson DAIMON_TEMP "$(build_daimon_object "Temp" "${DAIMON_TEMP}")")
 fi
 
 

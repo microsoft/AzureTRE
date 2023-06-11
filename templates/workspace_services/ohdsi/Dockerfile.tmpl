@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y curl gnupg && \
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
     apt-get update && apt-get install -y git --no-install-recommends
 
-# PosgreSql is required by Atlas
+# PostgreSql is required by Atlas
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
     apt-get update && apt-get install -y postgresql-client gettext apache2-utils curl jq --no-install-recommends
 
