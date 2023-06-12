@@ -1,8 +1,13 @@
 # OHDSI Workspace Service
 
 !!! warning
-    - This workspace service does not work "out of the box". It requires additional networking configuration to work properly. See the [Networking configuration](#networking-configuration) section for more details.
+    - This workspace service does not work "out of the box". It requires additional networking configuration to work properly. See the [networking configuration](#networking-configuration) section for more details.
     - Currently the only CDM data source supported by the workspace service is Azure Synapse.
+
+See the [official OHDSI website](https://www.ohdsi.org/) and [The Book of OHDSI](https://ohdsi.github.io/TheBookOfOhdsi/).
+
+This service installs the following resources into an existing virtual network within the workspace:
+![OHDSI ATLAS Workspace Service](images/ohdsi_service.png)
 
 ## Networking configuration
 Deploying the OHDSI workspace is not enough for it to function properly, in order for it to work properly, the following networking configuration should be in place:
@@ -18,3 +23,7 @@ Since the resource processor is in charge of duplicating the schemas, the CDM da
 In order to access the CDM from ATLAS, the CDM data source should be accessible from the workspace's VNet.
 Since the CDM data source is outside of TRE, this is not part of the template, however, there are many ways in which this can be done,
 one example would be to to deploy a private endpoint for the CDM data source in the workspace's VNet as part of a custom workspace template.
+
+## Setting up a CDM data source
+If you already have an OMOP CDM data source, then all you have to do is to configure the network as described in the [networking configuration](#networking-configuration) section.
+If you're data is in a different format, you can read [here](https://ohdsi.github.io/TheBookOfOhdsi/ExtractTransformLoad.html) how to set up the ETL process to convert your medical data to OMOP format.
