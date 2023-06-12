@@ -7,15 +7,15 @@ import { NotificationPanel } from './notifications/NotificationPanel';
 // Sets the theme for the whole app
 const appTheme: Theme = createTheme({
   palette: {
-    themeDarker: '#A35200',
-    themeDark: '#BB5E00',
+    themeDarker: '#302e2e',
+    themeDark: '#484444',
     themeDarkAlt: '#D26A00',
-    themePrimary: '#EA7600',
+    themePrimary: '#909C3C',
     themeSecondary: '#EC7C0A',
     themeTertiary: '#ED8215',
-    themeLight: '#EE8418',
-    themeLighter: '#F19231',
-    themeLighterAlt: '#F5A049',
+    themeLight: '#97A75A',
+    themeLighter: '#9EB179',
+    themeLighterAlt: '#A5BC97',
   }
 });
 
