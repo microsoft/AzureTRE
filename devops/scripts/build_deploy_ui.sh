@@ -23,8 +23,10 @@ jq --arg rootClientId "${SWAGGER_UI_CLIENT_ID}" \
   '.rootClientId = $rootClientId | .rootTenantId = $rootTenantId | .treApplicationId = $treApplicationId | .treUrl = $treUrl | .treId = $treId | .version = $version | .activeDirectoryUri = $activeDirectoryUri' ./src/config.source.json > ./src/config.json
 
 # build and deploy the app
-yarn install
-yarn build
+
+# NOTE: _slow_ on emulated x64 container. Better to build outside
+#yarn install
+#yarn build
 
 popd
 

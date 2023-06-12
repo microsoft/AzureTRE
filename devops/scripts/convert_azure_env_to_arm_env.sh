@@ -5,6 +5,7 @@
 function convert_azure_env_to_arm_env()
 {
   azure_environment=$1
-  declare -A arm_envs=( ["AzureCloud"]="public" ["AzureUSGovernment"]="usgovernment")
-  echo "${arm_envs[${azure_environment}]}"
+  #declare -A arm_envs=( ["AzureCloud"]="public" ["AzureUSGovernment"]="usgovernment")
+  #echo "${arm_envs[${azure_environment}]}"
+  echo "public"
 }

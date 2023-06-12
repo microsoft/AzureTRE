@@ -378,3 +378,9 @@ db-migrate: api-healthcheck
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/migrate_state_store.sh --tre_url $${TRE_URL} --insecure
+
+compute-gallery:
+	$(call target_title, "Deploying compute gallery") \
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
+	&& cd ${MAKEFILE_DIR}/compute_gallery/terraform \
+	&& ./deploy.sh

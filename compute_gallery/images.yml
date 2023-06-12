@@ -1,0 +1,9 @@
+ubuntu:
+  image_definition: "ubuntu-dsvm"
+  template_name: "template-ubuntu-dsvm"
+  offer_name: "Ubuntu_2204"
+  publisher_name: "ARC"
+  sku: "22.04-LTS"
+  os_type: "Linux"
+  description: "Data science Ubuntu 22.04 image"
+  hyperv_version: "V2"

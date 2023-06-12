@@ -8,8 +8,9 @@ function construct_tre_url()
   location=$2
   azure_environment=$3
 
-  declare -A cloudapp_endpoint_suffixes=( ["AzureCloud"]="cloudapp.azure.com" ["AzureUSGovernment"]="cloudapp.usgovcloudapi.net" )
-  domain=${cloudapp_endpoint_suffixes[${azure_environment}]}
+  #declare -A cloudapp_endpoint_suffixes=( ["AzureCloud"]="cloudapp.azure.com" ["AzureUSGovernment"]="cloudapp.usgovcloudapi.net" )
+  #domain=${cloudapp_endpoint_suffixes[${azure_environment}]}
+  domain="cloudapp.azure.com" 
 
   echo https://"${tre_id}"."${location}"."${domain}"
 }
