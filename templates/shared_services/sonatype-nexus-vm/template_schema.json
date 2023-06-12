@@ -33,8 +33,7 @@
             "arraySubstitutionAction": "replace",
             "arrayMatchField": "name",
             "value": {
-              "name": "shared_subnet_sonatype_nexus",
-              "action": "Allow",
+              "name": "arc_nexus",
               "rules": [
                 {
                   "name": "vm-crl",
@@ -50,7 +49,9 @@
                     }
                   ],
                   "target_fqdns": "{{ resource.properties.workspace_vm_allowed_fqdns_list }}",
-                  "source_addresses": ["*"]
+                  "source_addresses": [
+                    "*"
+                  ]
                 },
                 {
                   "name": "nexus-package-sources",
@@ -66,7 +67,7 @@
                     }
                   ],
                   "target_fqdns": "{{ resource.properties.nexus_allowed_fqdns_list }}",
-                  "source_addresses": "{{ resource.properties.shared_address_prefixes }}"
+                  "source_addresses": "{{ resource.properties.private_ip_addresses }}"
                 }
               ]
             }
@@ -91,7 +92,7 @@
             "arraySubstitutionAction": "replace",
             "arrayMatchField": "name",
             "value": {
-              "name": "shared_subnet_sonatype_nexus",
+              "name": "arc_nexus",
               "action": "Allow",
               "rules": [
                 {
@@ -108,7 +109,9 @@
                     }
                   ],
                   "target_fqdns": "{{ resource.properties.workspace_vm_allowed_fqdns_list }}",
-                  "source_addresses": ["*"]
+                  "source_addresses": [
+                    "*"
+                  ]
                 },
                 {
                   "name": "nexus-package-sources",
@@ -124,7 +127,7 @@
                     }
                   ],
                   "target_fqdns": "{{ resource.properties.nexus_allowed_fqdns_list }}",
-                  "source_addresses": "{{ resource.properties.shared_address_prefixes }}"
+                  "source_addresses": "{{ resource.properties.private_ip_addresses }}"
                 }
               ]
             }
@@ -146,7 +149,7 @@
             "arraySubstitutionAction": "remove",
             "arrayMatchField": "name",
             "value": {
-              "name": "shared_subnet_sonatype_nexus"
+              "name": "arc_nexus"
             }
           }
         ]

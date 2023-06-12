@@ -17,7 +17,6 @@
 				"type": "object",
 				"required": [
 					"name",
-					"action",
 					"rules"
 				],
 				"properties": {
