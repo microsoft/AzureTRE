@@ -31,19 +31,9 @@ resource "azapi_resource" "image_template" {
       },
       "customize": [
         {
-            "type": "File",
-            "name": "VMInitScript",
-            "sourceUri": "${var.share_url}/${azurerm_storage_share_directory.scripts.name}/init.sh",
-            "destination":"/tmp/init.sh"
-        },
-        {
             "type": "Shell",
             "name": "setupVM",
-            "inline": [
-                "cd /tmp",
-                "chmod +x init.sh",
-                "sudo /tmp/init.sh"
-            ]
+            "inline": ${jsonencode(split("\n", file("${local.path_to_scripts}/init.sh")))}
         }
       ],
       "distribute": [

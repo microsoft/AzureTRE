@@ -26,9 +26,3 @@ resource "azurerm_role_assignment" "builder_can_read_writh_images" {
   scope              = azurerm_resource_group.compute_gallery.id
   role_definition_id = azurerm_role_definition.image_builder.role_definition_resource_id
 }
-
-resource "azurerm_role_assignment" "builder_can_read_storage" {
-  principal_id         = azurerm_user_assigned_identity.image_builder.principal_id
-  scope                = azurerm_storage_account.compute_gallery.id
-  role_definition_name = "Storage File Data Privileged Reader"
-}

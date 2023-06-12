@@ -10,18 +10,6 @@ variable "image_identifier" {
   type = string
 }
 
-variable "share_name" {
-  type = string
-}
-
-variable "share_url" {
-  type = string
-}
-
-variable "storage_account_name" {
-  type = string
-}
-
 variable "image_gallery_name" {
   type = string
 }
