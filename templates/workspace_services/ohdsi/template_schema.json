@@ -10,7 +10,7 @@
       "type": "string",
       "title": "Name for the workspace service",
       "description": "The name of the workspace service to be displayed to users",
-      "default": "OHDSI",
+      "default": "OHDSI ATLAS",
       "updateable": true
     },
     "description": {
