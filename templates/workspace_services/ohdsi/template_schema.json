@@ -6,6 +6,27 @@
   "description": "Provides OHDSI within the workspace",
   "required": [],
   "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "default": "OHDSI",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "default": "OHDSI empowers researchers and collaborators to bring out the value of health data through large-scale analytics and open-source solutions.",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace Service Overview",
+      "description": "Long form description of the workspace service, in markdown syntax",
+      "default": "OHDSI (Observational Health Data Sciences and Informatics) is a community-driven open-source project that provides tools and resources to help researchers and clinicians make better decisions about healthcare. OHDSI's Common Data Model (CDM) is a standardized format for storing and analyzing observational health data. The CDM can be used to create a variety of machine learning models, including patient-level prediction models, population-level effect estimation models, and risk prediction models.",
+      "updateable": true
+    },
     "address_space": {
       "$id": "#/properties/address_space",
       "type": "string",
