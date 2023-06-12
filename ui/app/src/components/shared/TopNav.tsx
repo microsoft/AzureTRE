@@ -1,13 +1,21 @@
 import React from 'react';
-import { getTheme, Icon, mergeStyles, Stack, Theme, createTheme, loadTheme } from '@fluentui/react';
+import { getTheme, Icon, mergeStyles, Stack, Theme, createTheme, loadTheme, makeStyles } from '@fluentui/react';
 import { Link } from 'react-router-dom';
 import { UserMenu } from './UserMenu';
 import { NotificationPanel } from './notifications/NotificationPanel';
 
+// Sets the theme for the whole app
 const appTheme: Theme = createTheme({
   palette: {
-    themePrimary: '#4c79d2',
-    themeDark: '#8b9b3c',
+    themeDarker: '#A35200',
+    themeDark: '#BB5E00',
+    themeDarkAlt: '#D26A00',
+    themePrimary: '#EA7600',
+    themeSecondary: '#EC7C0A',
+    themeTertiary: '#ED8215',
+    themeLight: '#EE8418',
+    themeLighter: '#F19231',
+    themeLighterAlt: '#F5A049',
   }
 });
 
