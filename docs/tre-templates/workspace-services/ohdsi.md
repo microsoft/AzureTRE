@@ -25,5 +25,10 @@ Since the CDM data source is outside of TRE, this is not part of the template, h
 one example would be to to deploy a private endpoint for the CDM data source in the workspace's VNet as part of a custom workspace template.
 
 ## Setting up a CDM data source
-If you already have an OMOP CDM data source, then all you have to do is to configure the network as described in the [networking configuration](#networking-configuration) section.
-If you're data is in a different format, you can read [here](https://ohdsi.github.io/TheBookOfOhdsi/ExtractTransformLoad.html) how to set up the ETL process to convert your medical data to OMOP format.
+Currently the only CDM data source supported by the workspace service is Azure Synapse.  
+
+If you already have an OMOP CDM data source, then all you have to do is to configure the network as described in the [networking configuration](#networking-configuration) section.  
+
+If you're data is in a different format, you can read [here](https://ohdsi.github.io/TheBookOfOhdsi/ExtractTransformLoad.html) how to set up the ETL process to convert your medical data to OMOP format.  
+
+If you're new to OHDSI and would like to see a working data set with sample OMOP data, you can checkout the [OHDSI on Azure](https://github.com/microsoft/OHDSIonAzure) repository for a quick start.  
