@@ -8,6 +8,7 @@ FEATURES:
 
 ENHANCEMENTS:
 * Workspace networking peering sync is handled natively by Terraform ([#3534](https://github.com/microsoft/AzureTRE/issues/3534))
+* Use SMTP built in connector vs API connector in Airlock Notifier ([#3572](https://github.com/microsoft/AzureTRE/issues/3572))
 
 BUG FIXES:
 * Nexus might fail to deploy due to wrong identity used in key-vault extension ([#3492](https://github.com/microsoft/AzureTRE/issues/3492))
@@ -20,6 +21,8 @@ BUG FIXES:
 * Add missing `azure_environment` porter parameters ([#3549](https://github.com/microsoft/AzureTRE/issues/3549))
 * Fix airlock_notifier not getting the right smtp password ([#3561](https://github.com/microsoft/AzureTRE/issues/3561))
 * Fix issue with install of TRE CLI and azure-cli-core requiring cryptography<41 ([#3579](https://github.com/microsoft/AzureTRE/issues/3579))
+* Fix issue when deleting failed resources gives no steps ([#3567](https://github.com/microsoft/AzureTRE/issues/3567))
+* Fix airlock_notifier not getting the right smtp password ([#3565](https://github.com/microsoft/AzureTRE/issues/3565))
 
 COMPONENTS:
 

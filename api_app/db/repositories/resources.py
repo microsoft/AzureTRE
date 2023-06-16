@@ -130,7 +130,7 @@ class ResourceRepository(BaseRepository):
         dependent_resources_list = []
 
         # Get all related resources
-        related_resources_query = f"SELECT * FROM c WHERE CONTAINS(c.resourcePath, '{parent_resource_path}') AND c.deploymentStatus != '{Status.Deleted}' and c.deploymentStatus != '{Status.DeploymentFailed}'"
+        related_resources_query = f"SELECT * FROM c WHERE CONTAINS(c.resourcePath, '{parent_resource_path}') AND c.deploymentStatus != '{Status.Deleted}'"
         related_resources = await self.query(query=related_resources_query)
         for resource in related_resources:
             resource_path = resource["resourcePath"]
