@@ -19,6 +19,7 @@ BUG FIXES:
 * Update key in Linux VM deploy script ([#3434](https://github.com/microsoft/AzureTRE/issues/3434))
 * Add missing `azure_environment` porter parameters ([#3549](https://github.com/microsoft/AzureTRE/issues/3549))
 * Fix airlock_notifier not getting the right smtp password ([#3561](https://github.com/microsoft/AzureTRE/issues/3561))
+* Fix issue with install of TRE CLI and azure-cli-core requiring cryptography<41 ([#3579](https://github.com/microsoft/AzureTRE/issues/3579))
 
 COMPONENTS:
 

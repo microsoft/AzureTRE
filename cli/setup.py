@@ -42,6 +42,7 @@ setup(
     install_requires=[
         "click==8.1.3",
         "httpx~=0.23.1",
+        "cryptography<41",
         "msal==1.20.0",
         "jmespath==1.0.1",
         "tabulate==0.9.0",
