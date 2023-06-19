@@ -35,6 +35,7 @@ resource "azurerm_private_endpoint" "blobpe" {
     subresource_names              = ["Blob"]
   }
 
+  # private endpoints in serial
   depends_on = [
     azurerm_private_endpoint.kvpe
   ]
@@ -61,6 +62,7 @@ resource "azurerm_private_endpoint" "filepe" {
     subresource_names              = ["file"]
   }
 
+  # private endpoints in serial
   depends_on = [
     azurerm_private_endpoint.blobpe
   ]
