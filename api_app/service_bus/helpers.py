@@ -64,10 +64,12 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
     parent_template = await resource_template_repo.get_template_by_name_and_version(step_resource.templateName, step_resource.templateVersion, step_resource.resourceType, step_resource_parent_service_name)
 
     # if there are no pipelines, no need to continue with substitutions.
-    if parent_template.pipeline is None:
+    if not parent_template.pipeline:
         return step_resource
 
-    if parent_template.pipeline.dict()[primary_action] is None:
+    pipeline_primary_action = parent_template.pipeline.dict()[primary_action]
+    is_first_main_step = pipeline_primary_action and len(pipeline_primary_action) == 1 and pipeline_primary_action[0]['stepId'] == 'main'
+    if not pipeline_primary_action or is_first_main_step:
         return step_resource
 
     # get the template step
