@@ -6,8 +6,6 @@
 
 See the [official OHDSI website](https://www.ohdsi.org/) and [The Book of OHDSI](https://ohdsi.github.io/TheBookOfOhdsi/).  
 
-If you're new to OHDSI and would like to see a working data set with sample OMOP data, you can checkout the [OHDSI on Azure](https://github.com/microsoft/OHDSIonAzure) repository for a quick start.  
-
 This service installs the following resources into an existing virtual network within the workspace:
 ![OHDSI ATLAS Workspace Service](images/ohdsi_service.png)
 
@@ -32,3 +30,5 @@ Currently the only CDM data source supported by the workspace service is Azure S
 If you already have an OMOP CDM data source, then all you have to do is to configure the network as described in the [networking configuration](#networking-configuration) section.  
 
 If you're data is in a different format, you can read [here](https://ohdsi.github.io/TheBookOfOhdsi/ExtractTransformLoad.html) how to set up the ETL process to convert your medical data to OMOP format.  
+
+If you don't have any data yet, or if you just want a quick start, you can deploy an Azure Synapse CDM data source with sample data using the [OHDSI on Azure](https://github.com/microsoft/OHDSIonAzure) repository.
