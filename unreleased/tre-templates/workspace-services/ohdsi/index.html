@@ -12,27 +12,27 @@
         <meta name="author" content="Microsoft">
       
       
-        <link rel="canonical" href="https://microsoft.github.io/AzureTRE/unreleased/troubleshooting-faq/troubleshooting-rp/">
+        <link rel="canonical" href="https://microsoft.github.io/AzureTRE/unreleased/tre-templates/workspace-services/ohdsi/">
       
       
-        <link rel="prev" href="../app-insights-logs/">
+        <link rel="prev" href="../databricks/">
       
       
-        <link rel="next" href="../manually-editing-resources/">
+        <link rel="next" href="../../shared-services/gitea/">
       
-      <link rel="icon" href="../../assets/ms_icon.png">
+      <link rel="icon" href="../../../assets/ms_icon.png">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.17">
     
     
       
-        <title>Troubleshooting the Resource Processor - Azure TRE</title>
+        <title>OHDSI - Azure TRE</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.26e3688c.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ecc896b0.min.css">
       
       
 
@@ -48,7 +48,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
 <script type="text/javascript">
   (function(c,l,a,r,i,t,y){
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#checking-the-virtual-machine-scale-set-vmss-instance-running-resource-processor" class="md-skip">
+        <a href="#ohdsi-workspace-service" class="md-skip">
           Skip to content
         </a>
       
@@ -93,7 +93,7 @@
             <div class="md-banner__inner md-grid md-typeset">
               
   You're not viewing the latest version.
-  <a href="../../..">
+  <a href="../../../..">
     <strong>Click here to go to latest.</strong>
   </a>
 </script>
@@ -111,9 +111,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Azure TRE" class="md-header__button md-logo" aria-label="Azure TRE" data-md-component="logo">
+    <a href="../../.." title="Azure TRE" class="md-header__button md-logo" aria-label="Azure TRE" data-md-component="logo">
       
-  <img src="../../assets/ms_icon.png" alt="logo">
+  <img src="../../../assets/ms_icon.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -129,7 +129,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Troubleshooting the Resource Processor
+              OHDSI
             
           </span>
         </div>
@@ -210,9 +210,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Azure TRE" class="md-nav__button md-logo" aria-label="Azure TRE" data-md-component="logo">
+    <a href="../../.." title="Azure TRE" class="md-nav__button md-logo" aria-label="Azure TRE" data-md-component="logo">
       
-  <img src="../../assets/ms_icon.png" alt="logo">
+  <img src="../../../assets/ms_icon.png" alt="logo">
 
     </a>
     Azure TRE
@@ -264,7 +264,7 @@
         
         
         <div class="md-nav__link md-nav__link--index ">
-          <a href="../..">Overview</a>
+          <a href="../../..">Overview</a>
           
             <label for="__nav_1">
               <span class="md-nav__icon md-icon"></span>
@@ -287,7 +287,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../azure-tre-overview/user-roles/" class="md-nav__link">
+      <a href="../../../azure-tre-overview/user-roles/" class="md-nav__link">
         User Roles
       </a>
     </li>
@@ -340,7 +340,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../azure-tre-overview/architecture/" class="md-nav__link">
+      <a href="../../../azure-tre-overview/architecture/" class="md-nav__link">
         System Architecture
       </a>
     </li>
@@ -354,7 +354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../azure-tre-overview/networking/" class="md-nav__link">
+      <a href="../../../azure-tre-overview/networking/" class="md-nav__link">
         Network Architecture
       </a>
     </li>
@@ -368,7 +368,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../azure-tre-overview/tre-resources-breakdown/" class="md-nav__link">
+      <a href="../../../azure-tre-overview/tre-resources-breakdown/" class="md-nav__link">
         Azure Resources
       </a>
     </li>
@@ -382,7 +382,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../azure-tre-overview/airlock/" class="md-nav__link">
+      <a href="../../../azure-tre-overview/airlock/" class="md-nav__link">
         Airlock
       </a>
     </li>
@@ -396,7 +396,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../azure-tre-overview/cost-reporting/" class="md-nav__link">
+      <a href="../../../azure-tre-overview/cost-reporting/" class="md-nav__link">
         Cost Reporting
       </a>
     </li>
@@ -417,7 +417,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../using-tre/terms-definitions/" class="md-nav__link">
+      <a href="../../../using-tre/terms-definitions/" class="md-nav__link">
         Terms and Definitions
       </a>
     </li>
@@ -473,7 +473,7 @@
         
         
         <div class="md-nav__link md-nav__link--index ">
-          <a href="../../tre-admins/setup-instructions/">QuickStart</a>
+          <a href="../../../tre-admins/setup-instructions/">QuickStart</a>
           
             <label for="__nav_2">
               <span class="md-nav__icon md-icon"></span>
@@ -496,7 +496,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/prerequisites/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/prerequisites/" class="md-nav__link">
         1. Prerequisites
       </a>
     </li>
@@ -510,7 +510,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/deployment-repo/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/deployment-repo/" class="md-nav__link">
         2. Deployment Repository
       </a>
     </li>
@@ -524,7 +524,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/ad-tenant-choices/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/ad-tenant-choices/" class="md-nav__link">
         3. AD Tenant
       </a>
     </li>
@@ -538,7 +538,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/setup-auth-entities/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/setup-auth-entities/" class="md-nav__link">
         4. Setup Auth
       </a>
     </li>
@@ -618,7 +618,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/manual-pre-deployment-steps/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/manual-pre-deployment-steps/" class="md-nav__link">
         Pre-deployment Steps
       </a>
     </li>
@@ -632,7 +632,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/manual-deployment/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/manual-deployment/" class="md-nav__link">
         Deployment Steps
       </a>
     </li>
@@ -686,7 +686,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/cicd-pre-deployment-steps/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/cicd-pre-deployment-steps/" class="md-nav__link">
         Pre-deployment Steps
       </a>
     </li>
@@ -700,7 +700,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/cicd-deployment/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/cicd-deployment/" class="md-nav__link">
         Deployment Steps
       </a>
     </li>
@@ -728,7 +728,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/configuring-shared-services/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/configuring-shared-services/" class="md-nav__link">
         6. Configure Shared Services
       </a>
     </li>
@@ -742,7 +742,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/ui-install-base-workspace/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/ui-install-base-workspace/" class="md-nav__link">
         7. Install Base Workspace
       </a>
     </li>
@@ -756,7 +756,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/ui-install-ws-and-ur/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/ui-install-ws-and-ur/" class="md-nav__link">
         8. Install Workspace Service and User Resource
       </a>
     </li>
@@ -802,7 +802,7 @@
         
         
         <div class="md-nav__link md-nav__link--index ">
-          <a href="../../using-tre/">Using the Azure TRE</a>
+          <a href="../../../using-tre/">Using the Azure TRE</a>
           
             <label for="__nav_3">
               <span class="md-nav__icon md-icon"></span>
@@ -825,7 +825,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../using-tre/templates/" class="md-nav__link">
+      <a href="../../../using-tre/templates/" class="md-nav__link">
         Custom Templates
       </a>
     </li>
@@ -863,7 +863,7 @@
         
         
         <div class="md-nav__link md-nav__link--index ">
-          <a href="../../using-tre/tre-for-research/">Using AzureTRE for Research</a>
+          <a href="../../../using-tre/tre-for-research/">Using AzureTRE for Research</a>
           
             <label for="__nav_3_3">
               <span class="md-nav__icon md-icon"></span>
@@ -886,7 +886,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../using-tre/tre-for-research/using-vms/" class="md-nav__link">
+      <a href="../../../using-tre/tre-for-research/using-vms/" class="md-nav__link">
         Set up of a Virtual Machine
       </a>
     </li>
@@ -900,7 +900,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../using-tre/tre-for-research/importing-exporting-data-airlock/" class="md-nav__link">
+      <a href="../../../using-tre/tre-for-research/importing-exporting-data-airlock/" class="md-nav__link">
         Importing/exporting data with Airlock
       </a>
     </li>
@@ -914,7 +914,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../using-tre/tre-for-research/review-airlock-request/" class="md-nav__link">
+      <a href="../../../using-tre/tre-for-research/review-airlock-request/" class="md-nav__link">
         Reviewing Airlock Requests
       </a>
     </li>
@@ -941,14 +941,16 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
       
       
         
@@ -967,7 +969,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_4">
           <span class="md-nav__icon md-icon"></span>
           Templates and Services
@@ -1015,7 +1017,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspaces/base/" class="md-nav__link">
+      <a href="../../workspaces/base/" class="md-nav__link">
         Base
       </a>
     </li>
@@ -1029,7 +1031,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspaces/unrestricted/" class="md-nav__link">
+      <a href="../../workspaces/unrestricted/" class="md-nav__link">
         Unrestricted
       </a>
     </li>
@@ -1043,7 +1045,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspaces/airlock-import-review/" class="md-nav__link">
+      <a href="../../workspaces/airlock-import-review/" class="md-nav__link">
         Airlock Import Review
       </a>
     </li>
@@ -1062,14 +1064,16 @@
               
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" checked>
       
       
         
@@ -1096,7 +1100,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_4_2">
           <span class="md-nav__icon md-icon"></span>
           Workspace Services
@@ -1109,7 +1113,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspace-services/azure-ml/" class="md-nav__link">
+      <a href="../azure-ml/" class="md-nav__link">
         Azure ML
       </a>
     </li>
@@ -1123,7 +1127,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspace-services/gitea/" class="md-nav__link">
+      <a href="../gitea/" class="md-nav__link">
         Gitea
       </a>
     </li>
@@ -1137,7 +1141,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspace-services/guacamole/" class="md-nav__link">
+      <a href="../guacamole/" class="md-nav__link">
         Guacamole
       </a>
     </li>
@@ -1151,7 +1155,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspace-services/inner-eye/" class="md-nav__link">
+      <a href="../inner-eye/" class="md-nav__link">
         InnerEye
       </a>
     </li>
@@ -1165,7 +1169,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspace-services/mlflow/" class="md-nav__link">
+      <a href="../mlflow/" class="md-nav__link">
         MLFlow
       </a>
     </li>
@@ -1179,7 +1183,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspace-services/health_services/" class="md-nav__link">
+      <a href="../health_services/" class="md-nav__link">
         Health Services
       </a>
     </li>
@@ -1193,7 +1197,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/workspace-services/databricks/" class="md-nav__link">
+      <a href="../databricks/" class="md-nav__link">
         Azure Databricks
       </a>
     </li>
@@ -1205,11 +1209,86 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../../tre-templates/workspace-services/ohdsi/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          OHDSI
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         OHDSI
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#networking-configuration" class="md-nav__link">
+    Networking configuration
+  </a>
+  
+    <nav class="md-nav" aria-label="Networking configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-the-resource-processor-should-be-able-to-access-the-cdm-data-source" class="md-nav__link">
+    1. The resource processor should be able to access the CDM data source
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-the-workspace-should-be-able-to-access-the-cdm-data-source" class="md-nav__link">
+    2. The workspace should be able to access the CDM data source
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-up-a-cdm-data-source" class="md-nav__link">
+    Setting up a CDM data source
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-a-sample-cdm-data-source" class="md-nav__link">
+    Using a sample CDM data source
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1265,7 +1344,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/shared-services/gitea/" class="md-nav__link">
+      <a href="../../shared-services/gitea/" class="md-nav__link">
         Gitea (Source Mirror)
       </a>
     </li>
@@ -1279,7 +1358,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/shared-services/nexus/" class="md-nav__link">
+      <a href="../../shared-services/nexus/" class="md-nav__link">
         Nexus (Package Mirror)
       </a>
     </li>
@@ -1293,7 +1372,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/shared-services/cyclecloud/" class="md-nav__link">
+      <a href="../../shared-services/cyclecloud/" class="md-nav__link">
         Azure CycleCloud (HPC Compute)
       </a>
     </li>
@@ -1307,7 +1386,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/shared-services/airlock-notifier/" class="md-nav__link">
+      <a href="../../shared-services/airlock-notifier/" class="md-nav__link">
         Airlock Notifier
       </a>
     </li>
@@ -1365,7 +1444,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/user-resources/guacamole-windows-vm/" class="md-nav__link">
+      <a href="../../user-resources/guacamole-windows-vm/" class="md-nav__link">
         Guacamole Windows VM
       </a>
     </li>
@@ -1379,7 +1458,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/user-resources/guacamole-linux-vm/" class="md-nav__link">
+      <a href="../../user-resources/guacamole-linux-vm/" class="md-nav__link">
         Guacamole Linux VM
       </a>
     </li>
@@ -1393,7 +1472,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/user-resources/import-reviewvm/" class="md-nav__link">
+      <a href="../../user-resources/import-reviewvm/" class="md-nav__link">
         Import Review VM
       </a>
     </li>
@@ -1407,7 +1486,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/user-resources/export-reviewvm/" class="md-nav__link">
+      <a href="../../user-resources/export-reviewvm/" class="md-nav__link">
         Export Review VM
       </a>
     </li>
@@ -1434,16 +1513,14 @@
 
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
       
       
         
@@ -1462,7 +1539,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
         <label class="md-nav__title" for="__nav_5">
           <span class="md-nav__icon md-icon"></span>
           Technical Guide
@@ -1524,7 +1601,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/start-stop/" class="md-nav__link">
+      <a href="../../../tre-admins/start-stop/" class="md-nav__link">
         Starting and Stopping Azure TRE Services
       </a>
     </li>
@@ -1538,7 +1615,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/environment-variables/" class="md-nav__link">
+      <a href="../../../tre-admins/environment-variables/" class="md-nav__link">
         Environment Variables
       </a>
     </li>
@@ -1552,7 +1629,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/tear-down/" class="md-nav__link">
+      <a href="../../../tre-admins/tear-down/" class="md-nav__link">
         Tear-down
       </a>
     </li>
@@ -1601,7 +1678,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/auth/" class="md-nav__link">
+      <a href="../../../tre-admins/auth/" class="md-nav__link">
         Introduction
       </a>
     </li>
@@ -1615,7 +1692,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/auth-manual/" class="md-nav__link">
+      <a href="../../../tre-admins/identities/auth-manual/" class="md-nav__link">
         Manual Setup
       </a>
     </li>
@@ -1668,7 +1745,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/application_admin/" class="md-nav__link">
+      <a href="../../../tre-admins/identities/application_admin/" class="md-nav__link">
         Application Admin
       </a>
     </li>
@@ -1682,7 +1759,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/api/" class="md-nav__link">
+      <a href="../../../tre-admins/identities/api/" class="md-nav__link">
         API
       </a>
     </li>
@@ -1696,7 +1773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/client/" class="md-nav__link">
+      <a href="../../../tre-admins/identities/client/" class="md-nav__link">
         Client
       </a>
     </li>
@@ -1710,7 +1787,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/test-account/" class="md-nav__link">
+      <a href="../../../tre-admins/identities/test-account/" class="md-nav__link">
         Automation Test Account
       </a>
     </li>
@@ -1724,7 +1801,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/workspace/" class="md-nav__link">
+      <a href="../../../tre-admins/identities/workspace/" class="md-nav__link">
         Workspaces
       </a>
     </li>
@@ -1752,7 +1829,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/registering-templates/" class="md-nav__link">
+      <a href="../../../tre-admins/registering-templates/" class="md-nav__link">
         Registering Templates
       </a>
     </li>
@@ -1799,7 +1876,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/installing-base-workspace/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/installing-base-workspace/" class="md-nav__link">
         Install Base Workspace
       </a>
     </li>
@@ -1813,7 +1890,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/installing-workspace-service-and-user-resource/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/installing-workspace-service-and-user-resource/" class="md-nav__link">
         Install Workspace Service and User Resource
       </a>
     </li>
@@ -1834,7 +1911,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/upgrading-tre/" class="md-nav__link">
+      <a href="../../../tre-admins/upgrading-tre/" class="md-nav__link">
         Upgrading AzureTRE Version
       </a>
     </li>
@@ -1848,7 +1925,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/upgrading-resources/" class="md-nav__link">
+      <a href="../../../tre-admins/upgrading-resources/" class="md-nav__link">
         Upgrading Resources Version
       </a>
     </li>
@@ -1862,7 +1939,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/configure-airlock-review/" class="md-nav__link">
+      <a href="../../../tre-admins/configure-airlock-review/" class="md-nav__link">
         Configuring Airlock Reviews
       </a>
     </li>
@@ -1876,7 +1953,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/supported-clouds/" class="md-nav__link">
+      <a href="../../../tre-admins/supported-clouds/" class="md-nav__link">
         Supported Clouds
       </a>
     </li>
@@ -1932,7 +2009,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../using-tre/local-development/local-development/" class="md-nav__link">
+      <a href="../../../using-tre/local-development/local-development/" class="md-nav__link">
         Local Development
       </a>
     </li>
@@ -1978,7 +2055,7 @@
         
         
         <div class="md-nav__link md-nav__link--index ">
-          <a href="../../tre-developers/">Contributing to AzureTRE</a>
+          <a href="../../../tre-developers/">Contributing to AzureTRE</a>
           
             <label for="__nav_5_2_2">
               <span class="md-nav__icon md-icon"></span>
@@ -2001,7 +2078,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-developers/api/" class="md-nav__link">
+      <a href="../../../tre-developers/api/" class="md-nav__link">
         API
       </a>
     </li>
@@ -2015,7 +2092,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-developers/ui/" class="md-nav__link">
+      <a href="../../../tre-developers/ui/" class="md-nav__link">
         UI
       </a>
     </li>
@@ -2029,7 +2106,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-developers/resource-processor/" class="md-nav__link">
+      <a href="../../../tre-developers/resource-processor/" class="md-nav__link">
         Resource Processor
       </a>
     </li>
@@ -2043,7 +2120,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-developers/end-to-end-tests/" class="md-nav__link">
+      <a href="../../../tre-developers/end-to-end-tests/" class="md-nav__link">
         End to End Tests
       </a>
     </li>
@@ -2057,7 +2134,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-developers/letsencrypt/" class="md-nav__link">
+      <a href="../../../tre-developers/letsencrypt/" class="md-nav__link">
         Letsencrypt
       </a>
     </li>
@@ -2071,7 +2148,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-developers/release/" class="md-nav__link">
+      <a href="../../../tre-developers/release/" class="md-nav__link">
         Releases
       </a>
     </li>
@@ -2085,7 +2162,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/workflows/" class="md-nav__link">
+      <a href="../../../tre-admins/setup-instructions/workflows/" class="md-nav__link">
         GitHub Actions
       </a>
     </li>
@@ -2141,7 +2218,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-workspace-authors/authoring-workspace-templates/" class="md-nav__link">
+      <a href="../../../tre-workspace-authors/authoring-workspace-templates/" class="md-nav__link">
         Authoring Workspace Templates
       </a>
     </li>
@@ -2155,7 +2232,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-workspace-authors/firewall-rules/" class="md-nav__link">
+      <a href="../../../tre-workspace-authors/firewall-rules/" class="md-nav__link">
         Firewall Rules
       </a>
     </li>
@@ -2202,7 +2279,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/pipeline-templates/overview/" class="md-nav__link">
+      <a href="../../pipeline-templates/overview/" class="md-nav__link">
         Overview
       </a>
     </li>
@@ -2216,7 +2293,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-templates/pipeline-templates/pipeline-schema/" class="md-nav__link">
+      <a href="../../pipeline-templates/pipeline-schema/" class="md-nav__link">
         Pipeline Schema
       </a>
     </li>
@@ -2251,7 +2328,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-developers/CLI/" class="md-nav__link">
+      <a href="../../../tre-developers/CLI/" class="md-nav__link">
         AzureTRE CLI
       </a>
     </li>
@@ -2263,16 +2340,14 @@
               
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" checked>
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" >
       
       
         
@@ -2299,7 +2374,7 @@
         
         
         <div class="md-nav__link md-nav__link--index ">
-          <a href="../">Troubleshooting FAQ</a>
+          <a href="../../../troubleshooting-faq/">Troubleshooting FAQ</a>
           
             <label for="__nav_5_4">
               <span class="md-nav__icon md-icon"></span>
@@ -2307,7 +2382,7 @@
           
         </div>
       
-      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="true">
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
         <label class="md-nav__title" for="__nav_5_4">
           <span class="md-nav__icon md-icon"></span>
           Troubleshooting FAQ
@@ -2322,7 +2397,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../debug-api/" class="md-nav__link">
+      <a href="../../../troubleshooting-faq/debug-api/" class="md-nav__link">
         Enabling Debugging for the API
       </a>
     </li>
@@ -2336,7 +2411,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-logs-deployment-center/" class="md-nav__link">
+      <a href="../../../troubleshooting-faq/api-logs-deployment-center/" class="md-nav__link">
         API logs using deployment center
       </a>
     </li>
@@ -2350,7 +2425,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting-sb/" class="md-nav__link">
+      <a href="../../../troubleshooting-faq/troubleshooting-sb/" class="md-nav__link">
         Checking the Service Bus
       </a>
     </li>
@@ -2364,7 +2439,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../app-insights-logs/" class="md-nav__link">
+      <a href="../../../troubleshooting-faq/app-insights-logs/" class="md-nav__link">
         Checking Logs in Application Insights
       </a>
     </li>
@@ -2376,59 +2451,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Troubleshooting the Resource Processor
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../troubleshooting-faq/troubleshooting-rp/" class="md-nav__link">
         Troubleshooting the Resource Processor
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#logs" class="md-nav__link">
-    Logs
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#updating-the-running-container" class="md-nav__link">
-    Updating the running container
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2440,7 +2467,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../manually-editing-resources/" class="md-nav__link">
+      <a href="../../../troubleshooting-faq/manually-editing-resources/" class="md-nav__link">
         Manually edit resources in Cosmos DB
       </a>
     </li>
@@ -2454,7 +2481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cloud-init/" class="md-nav__link">
+      <a href="../../../troubleshooting-faq/cloud-init/" class="md-nav__link">
         Troubleshooting cloud-init
       </a>
     </li>
@@ -2483,7 +2510,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributing/" class="md-nav__link">
+      <a href="../../../contributing/" class="md-nav__link">
         Contributing
       </a>
     </li>
@@ -2517,15 +2544,42 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#logs" class="md-nav__link">
-    Logs
+  <a href="#networking-configuration" class="md-nav__link">
+    Networking configuration
+  </a>
+  
+    <nav class="md-nav" aria-label="Networking configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-the-resource-processor-should-be-able-to-access-the-cdm-data-source" class="md-nav__link">
+    1. The resource processor should be able to access the CDM data source
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-the-workspace-should-be-able-to-access-the-cdm-data-source" class="md-nav__link">
+    2. The workspace should be able to access the CDM data source
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-up-a-cdm-data-source" class="md-nav__link">
+    Setting up a CDM data source
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#updating-the-running-container" class="md-nav__link">
-    Updating the running container
+  <a href="#using-a-sample-cdm-data-source" class="md-nav__link">
+    Using a sample CDM data source
   </a>
   
 </li>
@@ -2545,62 +2599,36 @@
                   
 
 
-<h1 id="checking-the-virtual-machine-scale-set-vmss-instance-running-resource-processor">Checking the Virtual Machine Scale Set (VMSS) instance running resource processor</h1>
-<p>If you see messages hanging in the service bus queue then the resource processor is not up and running.</p>
-<p>Verify that the VMSS instance is up and healthy.</p>
-<p><img alt="VMSS Running" src="../../assets/vmss_running.png" /></p>
-<p>The processor runs in a VNET, and you cannot connect to it directly.</p>
-<ol>
-<li>
-<p>Connect to the instance using Bastion. Bastion is already deployed, and you can use the username <code>adminuser</code>. The password is stored in the keyvault under the secret <code>resource-processor-vmss-password</code></p>
-<div class="admonition info">
-<p class="admonition-title">Info</p>
-<p>You cannot see secrets unless you are added to a suitable access policy for the Key Vault.</p>
-</div>
-<p><img alt="VMSS Password" src="../../assets/vmss_password.png" /></p>
-<p><img alt="Bastion" src="../../assets/bastion.png" title="Bastion" /></p>
-</li>
-<li>
-<p>After logging in you should check the status of <strong>cloud-init</strong> which is used to bootstrap the machine with docker and start the processor. Log files for cloud init are:</p>
+<h1 id="ohdsi-workspace-service">OHDSI Workspace Service</h1>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
 <ul>
-<li><code>/var/log/cloud-init.log</code></li>
-<li><code>/var/log/cloud-init-output.log</code></li>
+<li>This workspace service does not work "out of the box". It requires additional networking configuration to work properly. See the <a href="#networking-configuration">networking configuration</a> section for more details.</li>
+<li>Currently the only CDM data source supported by the workspace service is Azure Synapse.</li>
 </ul>
-<p>If the Docker container is pulled as shown in logs then the resource processor should start.</p>
-</li>
-<li>
-<p>Check the status of the container using <code>docker ps</code></p>
-<p>If you see nothing (and the container was pulled) then the processor has either not started yet or it has crashed.</p>
-</li>
-<li>
-<p>Check the status of all Docker processes using <code>docker ps -a</code> which should show you if the container terminated prematurely.</p>
-</li>
-<li>Get the logs from the container using <code>docker logs &lt;container_id&gt;</code> command.</li>
-</ol>
-<p>To start a processor container manually:</p>
-<ol>
-<li>Find the <strong>runner_image:tag</strong> by running <code>docker ps</code></li>
-<li>
-<p>Execute the following command from the root (/) of the file system</p>
-<div class="highlight"><pre><span></span><code>docker run -v /var/run/docker.sock:/var/run/docker.sock --env-file .env --name resource_processor_vmss_porter_debug [runner_image:tag]
-</code></pre></div>
-</li>
-</ol>
-<h2 id="logs">Logs</h2>
-<p>All logs from the resource processor are transferred to the App Insights instance, so it is not usually necessary to follow the progress by logging into the instance.</p>
-<p>Logging into the instance and starting a container manually however, is helpful in live debugging.
-When doing so, you can use the following aliases to monitor progress:</p>
-<ul>
-<li><strong>rpstatus</strong> - a split screen with <code>docker ps</code> to show what containers are running (a bundle action run in its own container), the Resource Processor logs, and a <em>free</em> section for you to type any other command you wish (see below).</li>
-<li><strong>dlf</strong> - runs <code>docker logs --since 1m --follow</code>, you should use with the name/id of the container you want to view, e.g. <code>dlf my_container</code></li>
-<li><strong>dlf1</strong> - same as <code>dlf</code> but will auto select the last container in the <code>docker ps</code> list (usually the last one started).</li>
-</ul>
-<h2 id="updating-the-running-container">Updating the running container</h2>
-<p>If you start a container manually you will probably want to install software, for example, an editor. However, the firewall blocks all ingress traffic, so you cannot run <code>sudo apt update</code>. You need to add an override rule in the firewall to allow the traffic.</p>
-<div class="admonition caution">
-<p class="admonition-title">Caution</p>
-<p>Remember to remove this rule when debugging is done.</p>
 </div>
+<p>See the <a href="https://www.ohdsi.org/">official OHDSI website</a> and <a href="https://ohdsi.github.io/TheBookOfOhdsi/">The Book of OHDSI</a>.  </p>
+<p>This service installs the following resources into an existing virtual network within the workspace:
+<img alt="OHDSI ATLAS Workspace Service" src="../images/ohdsi_service.png" /></p>
+<h2 id="networking-configuration">Networking configuration</h2>
+<p>Deploying the OHDSI workspace is not enough for it to function properly, in order for it to work properly, the following networking configuration should be in place:</p>
+<h3 id="1-the-resource-processor-should-be-able-to-access-the-cdm-data-source">1. The resource processor should be able to access the CDM data source</h3>
+<p>Multiple OHDSI workspace services cannot share the same RESULTS and TEMP schemas because each OHDSI instance is changing the schemas, which could potentially cause conflicts.
+To avoid this, every workspace service must work on its own schemas. To do this, we use golden copying.
+This means that the "main" schemas remain untouched, and every workspace service has its own copy of the RESULTS and TEMP schemas, in the CDM data source, which it can modify.</p>
+<p>Since the resource processor is in charge of duplicating the schemas, the CDM data source has to be accessible from the resource processor's VNet in order to be able to create them.</p>
+<h3 id="2-the-workspace-should-be-able-to-access-the-cdm-data-source">2. The workspace should be able to access the CDM data source</h3>
+<p>In order to access the CDM from ATLAS, the CDM data source should be accessible from the workspace's VNet.
+Since the CDM data source is outside of TRE, this is not part of the template, however, there are many ways in which this can be done,
+one example would be to to deploy a private endpoint for the CDM data source in the workspace's VNet as part of a custom workspace template.</p>
+<h2 id="setting-up-a-cdm-data-source">Setting up a CDM data source</h2>
+<p>Currently the only CDM data source supported by the workspace service is Azure Synapse.  </p>
+<p>If you already have an OMOP CDM data source, then all you have to do is to configure the network as described in the <a href="#networking-configuration">networking configuration</a> section.  </p>
+<p>If you're data is in a different format, you can read <a href="https://ohdsi.github.io/TheBookOfOhdsi/ExtractTransformLoad.html">here</a> how to set up the ETL process to convert your medical data to OMOP format.  </p>
+<h2 id="using-a-sample-cdm-data-source">Using a sample CDM data source</h2>
+<p>If you don't have any data yet, or if you just want a quick start, you can deploy an Azure Synapse CDM data source with sample data using the <a href="https://github.com/microsoft/OHDSIonAzure">OHDSI on Azure</a> repository.<br />
+When deploying set <code>OMOP CDM Database Type</code> to <code>Synapse Dedicated Pool</code> as per the <a href="https://github.com/microsoft/OHDSIonAzure/blob/main/docs/DeploymentGuide.md#:~:text=OMOP%20CDM%20Database%20Type">deployment guide</a>.</p>
+<p>Note that you will need to provision a private endpoint into the Azure TRE workspace that connects to the SQL Dedicated Pool as described in the <a href="#networking-configuration">networking configuration</a> section.  </p>
 
 
 
@@ -2638,10 +2666,10 @@ When doing so, you can use the following aliases to monitor progress:</p>
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.instant", "navigation.indexes"], "search": "../../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.b425cdc4.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.b425cdc4.min.js"></script>
       
     
   </body>
