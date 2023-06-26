@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-airlock-notifier
-version: 0.8.0
+version: 0.9.0
 description: "A shared service notifying on Airlock Operations"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
