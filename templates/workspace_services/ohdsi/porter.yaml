@@ -1,0 +1,185 @@
+---
+schemaVersion: 1.0.0
+name: tre-workspace-service-ohdsi
+version: 0.1.94
+description: "An OHDSI workspace service"
+registry: azuretre
+dockerfile: Dockerfile.tmpl
+
+custom:
+  dialects:
+    "Azure Synapse": "synapse"
+
+credentials:
+  - name: azure_tenant_id
+    env: ARM_TENANT_ID
+  - name: azure_subscription_id
+    env: ARM_SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: ARM_CLIENT_ID
+  - name: azure_client_secret
+    env: ARM_CLIENT_SECRET
+
+parameters:
+  - name: workspace_id
+    type: string
+  - name: tre_id
+    type: string
+  - name: address_space
+    type: string
+    description: "Address space for PostgreSQL's subnet"
+
+  - name: id
+    type: string
+    description: "An Id for this installation"
+    env: id
+  - name: tfstate_resource_group_name
+    type: string
+    description: "Resource group containing the Terraform state storage account"
+  - name: tfstate_storage_account_name
+    type: string
+    description: "The name of the Terraform state storage account"
+  - name: tfstate_container_name
+    env: tfstate_container_name
+    type: string
+    default: "tfstate"
+    description: "The name of the Terraform state storage container"
+  - name: arm_use_msi
+    env: ARM_USE_MSI
+    type: boolean
+    default: false
+  - name: arm_environment
+    type: string
+  - name: azure_environment
+    type: string
+    description: "Used by Azure CLI to set the Azure environment"
+
+  # parameters for configuring the data source
+  - name: configure_data_source
+    type: boolean
+    default: false
+  - name: data_source_config
+    type: string
+    default: ""
+  - name: data_source_daimons
+    type: string
+    default: ""
+
+mixins:
+  - terraform:
+      clientVersion: 1.4.6
+  - az:
+      clientVersion: 2.37.0
+
+outputs:
+  - name: connection_uri
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: webapi_uri
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: authentication_callback_uri
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: is_exposed_externally
+    type: boolean
+    applyTo:
+      - install
+      - upgrade
+
+
+install:
+  - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.azure_environment }
+  - az:
+      description: "Login to Azure"
+      arguments:
+        - login
+      flags:
+        identity:
+        username: ${ bundle.credentials.azure_client_id }
+  - terraform:
+      description: "Deploy OHDSI workspace service"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        address_space: ${ bundle.parameters.address_space }
+        arm_environment: ${ bundle.parameters.arm_environment }
+        configure_data_source: ${ bundle.parameters.configure_data_source }
+        data_source_config: ${ bundle.parameters.data_source_config }
+        data_source_daimons: ${ bundle.parameters.data_source_daimons }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-workspace-service-ohdsi-${ bundle.parameters.id }
+      outputs:
+        - name: connection_uri
+        - name: webapi_uri
+        - name: authentication_callback_uri
+        - name: is_exposed_externally
+upgrade:
+  - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.azure_environment }
+  - az:
+      description: "Login to Azure"
+      arguments:
+        - login
+      flags:
+        identity:
+        username: ${ bundle.credentials.azure_client_id }
+  - terraform:
+      description: "Upgrade shared service"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        address_space: ${ bundle.parameters.address_space }
+        arm_environment: ${ bundle.parameters.arm_environment }
+        configure_data_source: ${ bundle.parameters.configure_data_source }
+        data_source_config: ${ bundle.parameters.data_source_config }
+        data_source_daimons: ${ bundle.parameters.data_source_daimons }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-workspace-service-ohdsi-${ bundle.parameters.id }
+      outputs:
+        - name: connection_uri
+        - name: webapi_uri
+        - name: authentication_callback_uri
+        - name: is_exposed_externally
+uninstall:
+  - terraform:
+      description: "Tear down OHDSI workspace service"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        address_space: ${ bundle.parameters.address_space }
+        arm_environment: ${ bundle.parameters.arm_environment }
+        configure_data_source: ${ bundle.parameters.configure_data_source }
+        data_source_config: ${ bundle.parameters.data_source_config }
+        data_source_daimons: ${ bundle.parameters.data_source_daimons }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-workspace-service-ohdsi-${ bundle.parameters.id }
