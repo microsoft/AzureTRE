@@ -31,4 +31,4 @@ If you already have an OMOP CDM data source, then all you have to do is to confi
 
 If you're data is in a different format, you can read [here](https://ohdsi.github.io/TheBookOfOhdsi/ExtractTransformLoad.html) how to set up the ETL process to convert your medical data to OMOP format.  
 
-If you don't have any data yet, or if you just want a quick start, you can deploy an Azure Synapse CDM data source with sample data using the [OHDSI on Azure](https://github.com/microsoft/OHDSIonAzure) repository.
+If you don't have any data yet, or if you just want a quick start, you can deploy an Azure Synapse CDM data source with sample data using the [OHDSI on Azure](https://github.com/microsoft/OHDSIonAzure) repository. When deploying set `OMOP CDM Database Type` to `Synapse Dedicated Pool` as per the [deployment guide](https://github.com/microsoft/OHDSIonAzure/blob/main/docs/DeploymentGuide.md#:~:text=OMOP%20CDM%20Database%20Type).
