@@ -9,6 +9,7 @@ FEATURES:
 ENHANCEMENTS:
 * Workspace networking peering sync is handled natively by Terraform ([#3534](https://github.com/microsoft/AzureTRE/issues/3534))
 * Use SMTP built in connector vs API connector in Airlock Notifier ([#3572](https://github.com/microsoft/AzureTRE/issues/3572))
+* Added OHDSI workspace service ([#3562](https://github.com/microsoft/AzureTRE/issues/3562))
 
 BUG FIXES:
 * Nexus might fail to deploy due to wrong identity used in key-vault extension ([#3492](https://github.com/microsoft/AzureTRE/issues/3492))
