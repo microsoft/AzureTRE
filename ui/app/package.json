@@ -16,7 +16,7 @@
     "@types/jest": "^29.5.0",
     "@types/node": "^18.15.11",
     "@types/react": "^18.0.25",
-    "@types/react-dom": "^18.0.8",
+    "@types/react-dom": "^18.2.6",
     "moment": "^2.29.4",
     "node-sass": "^8.0.0",
     "react": "^18.2.0",
