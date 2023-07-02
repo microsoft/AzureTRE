@@ -70,6 +70,7 @@ mixins:
       clientVersion: 1.4.6
   - az:
       clientVersion: 2.37.0
+  - exec
 
 outputs:
   - name: connection_uri
