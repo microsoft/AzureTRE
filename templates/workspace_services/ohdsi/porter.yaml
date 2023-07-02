@@ -138,7 +138,7 @@ install:
         DATA_SOURCE_CONFIG: ${ bundle.parameters.data_source_config }
         DATA_SOURCE_DIAMONS: ${ bundle.parameters.data_source_daimons }
         TRE_RESOURCE_ID: ${ bundle.parameters.id }
-        SCRIPT_PATH: sql/init_results_and_temp_schemas.sql
+        SCRIPT_PATH: sql/init_synapse_schemas.sql
 upgrade:
   - az:
       description: "Set Azure Cloud Environment"
@@ -200,4 +200,3 @@ uninstall:
         DATA_SOURCE_DIAMONS: ${ bundle.parameters.data_source_daimons }
         TRE_RESOURCE_ID: ${ bundle.parameters.id }
         SCRIPT_PATH: sql/drop_synapse_schemas.sql
-

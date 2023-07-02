@@ -10,6 +10,13 @@ else
   # Parse Data source
   ds_config="$(echo "$DATA_SOURCE_CONFIG" | base64 --decode)"
   ds_daimons="$(echo "$DATA_SOURCE_DIAMONS" | base64 --decode)"
+  dialect="$(jq -r '.dialect' <<< "$ds_config")"
+
+  if [[ $dialect != "Azure Synapse" ]]; then
+    printf 'Not a Synapse data source, no action required.'
+    exit 0
+  fi
+
   origin_results_schema_name="$(jq -r '.daimon_results' <<< "$ds_daimons")"
   origin_temp_schema_name="$(jq -r '.daimon_temp' <<< $ds_daimons)"
   if [[ -z $origin_results_schema_name ]] || [[ -z $origin_temp_schema_name ]]; then
