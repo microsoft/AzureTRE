@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-ohdsi
-version: 0.1.94
+version: 0.2.0
 description: "An OHDSI workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -130,6 +130,14 @@ install:
         - name: webapi_uri
         - name: authentication_callback_uri
         - name: is_exposed_externally
+  - exec:
+      description: "Init Synapse Schemas"
+      command: ./synapse_runner.sh
+      envs:
+        DATA_SOURCE_CONFIG: ${ bundle.parameters.data_source_config }
+        DATA_SOURCE_DIAMONS: ${ bundle.parameters.data_source_daimons }
+        TRE_RESOURCE_ID: ${ bundle.parameters.id }
+        SCRIPT_PATH: sql/init_results_and_temp_schemas.sql
 upgrade:
   - az:
       description: "Set Azure Cloud Environment"
@@ -183,3 +191,12 @@ uninstall:
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: tre-workspace-service-ohdsi-${ bundle.parameters.id }
+  - exec:
+      description: "Drop Synapse Schemas"
+      command: ./synapse_runner.sh
+      envs:
+        DATA_SOURCE_CONFIG: ${ bundle.parameters.data_source_config }
+        DATA_SOURCE_DIAMONS: ${ bundle.parameters.data_source_daimons }
+        TRE_RESOURCE_ID: ${ bundle.parameters.id }
+        SCRIPT_PATH: sql/drop_synapse_schemas.sql
+
