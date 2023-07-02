@@ -18,7 +18,7 @@ else
   fi
 
   origin_results_schema_name="$(jq -r '.daimon_results' <<< "$ds_daimons")"
-  origin_temp_schema_name="$(jq -r '.daimon_temp' <<< $ds_daimons)"
+  origin_temp_schema_name="$(jq -r '.daimon_temp' <<< "$ds_daimons")"
   if [[ -z $origin_results_schema_name ]] || [[ -z $origin_temp_schema_name ]]; then
     printf 'Results and temp schemas are not configured.'
     exit 0
@@ -30,7 +30,7 @@ else
   synapse_server="$([[ $jdbc_connection_string =~ jdbc:sqlserver://(.*):1433 ]] &&  echo "${BASH_REMATCH[1]}")"
   synapse_db="$([[ $jdbc_connection_string =~ database=(.*)(;user) ]] &&  echo "${BASH_REMATCH[1]}")"
   origin_results_schema_name="$(jq -r '.daimon_results' <<< "$ds_daimons")"
-  origin_temp_schema_name="$(jq -r '.daimon_temp' <<< $ds_daimons)"
+  origin_temp_schema_name="$(jq -r '.daimon_temp' <<< "$ds_daimons")"
   parsed_resource_id="$(echo "$TRE_RESOURCE_ID" | tr - _ )"
   results_schema_name="${origin_results_schema_name}_${parsed_resource_id}"
   temp_schema_name="${origin_temp_schema_name}_${parsed_resource_id}"
