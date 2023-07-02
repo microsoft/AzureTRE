@@ -36,6 +36,7 @@ else
   temp_schema_name="${origin_temp_schema_name}_${parsed_resource_id}"
 
   # Export password as required by sqlcmd tool
+  # shellcheck disable=SC2155
   export SQLCMDPASSWORD="$(jq -r '.password' <<< "$ds_config")"
 
   printf 'Execute Synapse SQL script'
