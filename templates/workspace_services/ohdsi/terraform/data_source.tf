@@ -31,22 +31,3 @@ resource "terraform_data" "add_data_source" {
 
   depends_on = [terraform_data.deployment_atlas_security]
 }
-
-resource "terraform_data" "init_synapse_schemas" {
-  count = local.is_synapse_data_source && local.daimon_results != null && local.daimon_temp != null ? 1 : 0
-
-  provisioner "local-exec" {
-    environment = {
-      ADMIN_USERNAME             = local.data_source_config.username
-      ADMIN_USER_PASSWORD        = local.data_source_config.password
-      SCHEMA_NAME                = local.short_service_id
-      SQL_FILE_PATH              = "../sql/init_results_and_temp_schemas.sql"
-      SYNAPSE_SERVER             = tostring(regex("(?:jdbc:sqlserver://)(.*)(:?:1433)", local.data_source_config.connection_string)[0])
-      SYNAPSE_DATABASE           = tostring(regex("(?:database=)(.*)(:?;user)", local.data_source_config.connection_string)[0])
-      RESULTS_SCHEMA_NAME        = local.results_schema_name
-      TEMP_SCHEMA_NAME           = local.temp_schema_name
-      ORIGIN_RESULTS_SCHEMA_NAME = local.data_source_daimons.daimon_results
-    }
-    command = "../scripts/synapse_runner.sh"
-  }
-}
