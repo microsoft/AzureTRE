@@ -23,7 +23,7 @@ BUG FIXES:
 * Fix airlock_notifier not getting the right smtp password ([#3561](https://github.com/microsoft/AzureTRE/issues/3561))
 * Fix issue when deleting failed resources gives no steps ([#3567](https://github.com/microsoft/AzureTRE/issues/3567))
 * Fix airlock_notifier not getting the right smtp password ([#3565](https://github.com/microsoft/AzureTRE/issues/3565))
-* Update CLI install method to fix dependency issue ([#TBD](https://github.com/microsoft/AzureTRE/issues/TBD))
+* Update CLI install method to fix dependency issue ([#3601](https://github.com/microsoft/AzureTRE/issues/3601))
 
 COMPONENTS:
 
