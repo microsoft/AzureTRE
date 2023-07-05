@@ -7,7 +7,7 @@ azure-mgmt-cosmosdb==9.0.0
 azure-mgmt-compute==29.1.0
 azure-mgmt-costmanagement==3.0.0
 azure-storage-blob==12.15.0
-azure-servicebus==7.8.1
+azure-servicebus==7.11.0
 azure-eventgrid==4.9.1
 fastapi[all]==0.95.0
 fastapi-utils==0.2.1
