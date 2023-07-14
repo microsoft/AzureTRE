@@ -3,6 +3,7 @@ data "azuread_client_config" "current" {}
 resource "random_uuid" "oauth2_user_impersonation_id" {}
 resource "random_uuid" "app_role_workspace_owner_id" {}
 resource "random_uuid" "app_role_workspace_researcher_id" {}
+resource "random_uuid" "app_role_workspace_airlock_manager_id" {}
 
 resource "azuread_application" "workspace" {
   display_name    = var.workspace_resource_name_suffix
@@ -43,6 +44,15 @@ resource "azuread_application" "workspace" {
     value                = "WorkspaceResearcher"
   }
 
+  app_role {
+    allowed_member_types = ["User", "Application"]
+    description          = "Provides airlock managers access to the Workspace and ability to review airlock requests."
+    display_name         = "Airlock Manager"
+    enabled              = true
+    id                   = random_uuid.app_role_workspace_airlock_manager_id.result
+    value                = "AirlockManager"
+  }
+
   feature_tags {
     enterprise = true
   }
@@ -75,12 +85,16 @@ resource "azuread_application" "workspace" {
       type = "Scope"                                # Delegated
     }
   }
+
+  web {
+    redirect_uris = jsondecode(base64decode(var.aad_redirect_uris_b64))[*].value
+  }
 }
 
 resource "azuread_service_principal" "workspace" {
   application_id               = azuread_application.workspace.application_id
   app_role_assignment_required = false
-  owners                       = [data.azuread_client_config.current.object_id]
+  owners                       = [data.azuread_client_config.current.object_id, var.workspace_owner_object_id]
 
   feature_tags {
     enterprise = true
@@ -95,16 +109,66 @@ resource "azurerm_key_vault_secret" "client_id" {
   name         = "workspace-client-id"
   value        = azuread_application.workspace.application_id
   key_vault_id = var.key_vault_id
+  tags         = var.tre_workspace_tags
 }
 
 resource "azurerm_key_vault_secret" "client_secret" {
   name         = "workspace-client-secret"
   value        = azuread_service_principal_password.workspace.value
   key_vault_id = var.key_vault_id
+  tags         = var.tre_workspace_tags
 }
 
 resource "azuread_app_role_assignment" "workspace_owner" {
   app_role_id         = azuread_service_principal.workspace.app_role_ids["WorkspaceOwner"]
   principal_object_id = var.workspace_owner_object_id
+  resource_object_id  = azuread_service_principal.workspace.object_id
+}
+
+resource "azuread_group" "workspace_owners" {
+  count            = var.create_aad_groups ? 1 : 0
+  display_name     = "${var.workspace_resource_name_suffix} Workspace Owners"
+  owners           = [var.workspace_owner_object_id]
+  security_enabled = true
+}
+
+resource "azuread_group" "workspace_researchers" {
+  count            = var.create_aad_groups ? 1 : 0
+  display_name     = "${var.workspace_resource_name_suffix} Workspace Researchers"
+  owners           = [var.workspace_owner_object_id]
+  security_enabled = true
+}
+
+resource "azuread_group" "workspace_airlock_managers" {
+  count            = var.create_aad_groups ? 1 : 0
+  display_name     = "${var.workspace_resource_name_suffix} Airlock Managers"
+  owners           = [var.workspace_owner_object_id]
+  security_enabled = true
+}
+
+resource "azuread_group_member" "workspace_owner" {
+  count            = var.create_aad_groups ? 1 : 0
+  group_object_id  = azuread_group.workspace_owners[count.index].id
+  member_object_id = var.workspace_owner_object_id
+}
+
+resource "azuread_app_role_assignment" "workspace_owners_group" {
+  count               = var.create_aad_groups ? 1 : 0
+  app_role_id         = azuread_service_principal.workspace.app_role_ids["WorkspaceOwner"]
+  principal_object_id = azuread_group.workspace_owners[count.index].id
+  resource_object_id  = azuread_service_principal.workspace.object_id
+}
+
+resource "azuread_app_role_assignment" "workspace_researchers_group" {
+  count               = var.create_aad_groups ? 1 : 0
+  app_role_id         = azuread_service_principal.workspace.app_role_ids["WorkspaceResearcher"]
+  principal_object_id = azuread_group.workspace_researchers[count.index].id
+  resource_object_id  = azuread_service_principal.workspace.object_id
+}
+
+resource "azuread_app_role_assignment" "workspace_airlock_managers_group" {
+  count               = var.create_aad_groups ? 1 : 0
+  app_role_id         = azuread_service_principal.workspace.app_role_ids["AirlockManager"]
+  principal_object_id = azuread_group.workspace_airlock_managers[count.index].id
   resource_object_id  = azuread_service_principal.workspace.object_id
 }

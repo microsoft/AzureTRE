@@ -65,6 +65,11 @@ $authHeader = @{
 $ResourceGroups = Get-AzResourceGroup -Tag @{'project'='Azure Trusted Research Environment'}
 foreach ($Group in $ResourceGroups) 
 {
+    if ($Group.ResourceGroupName -like '*-ws-*') {
+      # we deal with the workspace resource groups separately.
+      continue
+    }
+
     $Firewall = Get-AzFirewall -ResourceGroupName $Group.ResourceGroupName
     if ($Firewall -ne $null) {
         $Firewall.Deallocate()
@@ -83,8 +88,33 @@ foreach ($Group in $ResourceGroups)
   {
     # Invoke the REST API
     Write-Output "Stopping $($Server.Name)"
-        $restUri='https://management.azure.com/subscriptions/'+$azContext.Subscription.Id+'/resourceGroups/'+$Group.ResourceGroupName+'/providers/Microsoft.DBForMySQL/servers/'+$Server.Name+'/stop?api-version=2020-01-01'
-        $response = Invoke-RestMethod -Uri $restUri -Method POST -Headers $authHeader
+    $restUri='https://management.azure.com/subscriptions/'+$azContext.Subscription.Id+'/resourceGroups/'+$Group.ResourceGroupName+'/providers/Microsoft.DBForMySQL/servers/'+$Server.Name+'/stop?api-version=2020-01-01'
+    $response = Invoke-RestMethod -Uri $restUri -Method POST -Headers $authHeader
+  }
+
+  $VMSS = Get-AzVMSS -ResourceGroupName $Group.ResourceGroupName
+  foreach ($item in $VMSS)
+  {
+    Write-Output "Stopping $($item.Name)"
+    Stop-AzVmss -ResourceGroupName $item.ResourceGroupName -VMScaleSetName $item.Name -Force
+  }
+
+  $VM = Get-AzVM -ResourceGroupName $Group.ResourceGroupName
+  foreach ($item in $VM)
+  {
+    Write-Output "Stopping $($item.Name)"
+    Stop-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name -Force
+  }
+
+  $WorkspaceResourceGroups = Get-AzResourceGroup -Name "$($Group.ResourceGroupName)-ws-*"
+  foreach ($wsrg in $WorkspaceResourceGroups)
+  {
+    $VM = Get-AzVM -ResourceGroupName $wsrg.ResourceGroupName
+    foreach ($item in $VM)
+    {
+      Write-Output "Stopping $($item.Name)"
+      Stop-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name -Force
+    }
   }
 }
 ```

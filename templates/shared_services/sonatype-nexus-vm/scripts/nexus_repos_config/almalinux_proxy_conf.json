@@ -1,0 +1,32 @@
+{
+    "name": "almalinux",
+    "online": true,
+    "storage": {
+        "blobStoreName": "default",
+        "strictContentTypeValidation": true,
+        "write_policy": "ALLOW"
+    },
+    "proxy": {
+        "remoteUrl": "https://repo.almalinux.org",
+        "contentMaxAge": 1440,
+        "metadataMaxAge": 1440
+    },
+    "negativeCache": {
+        "enabled": true,
+        "timeToLive": 1440
+    },
+    "httpClient": {
+        "blocked": false,
+        "autoBlock": false,
+        "connection": {
+            "retries": 0,
+            "userAgentSuffix": "string",
+            "timeout": 60,
+            "enableCircularRedirects": false,
+            "enableCookies": false,
+            "useTrustStore": false
+        }
+    },
+    "baseType": "yum",
+    "repoType": "proxy"
+}

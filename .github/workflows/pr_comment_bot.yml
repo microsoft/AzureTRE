@@ -10,7 +10,6 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   pr_comment:
     name: PR comment
-    environment: CICD
     # https://docs.github.com/en/graphql/reference/enums#commentauthorassociation
     # (and https://docs.github.com/en/rest/reference/issues#comments)
 
@@ -29,7 +28,7 @@ jobs:
     steps:
       # Ensure we have the script file for the github-script action to use
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
 
@@ -56,7 +55,7 @@ jobs:
       # and will have to send it "manually"
       - name: Bypass E2E check-runs status
         if: ${{ steps.check_command.outputs.command == 'test-force-approve' }}
-        uses: LouisBrunner/checks-action@v1.1.1
+        uses: LouisBrunner/checks-action@v1.6.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # the name must be identical to the one received by the real job
@@ -74,7 +73,7 @@ jobs:
     steps:
       # Ensure we have the script files
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
 
@@ -83,6 +82,7 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+          environment: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
 
       - name: Run deployment cleanup
         env:
@@ -107,7 +107,7 @@ jobs:
     steps:
       # Ensure we have the script files
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
 
@@ -116,6 +116,7 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+          environment: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
 
       - name: Run deployment cleanup
         env:
@@ -134,41 +135,41 @@ jobs:
   run_test:
     # Run the tests with the re-usable workflow
     needs: [pr_comment]
-    if: ${{ needs.pr_comment.outputs.command == 'run-tests' || needs.pr_comment.outputs.command == 'run-tests-extended' || needs.pr_comment.outputs.command == 'run-tests-shared-services' }}
+    if: |
+      needs.pr_comment.outputs.command == 'run-tests' ||
+      needs.pr_comment.outputs.command == 'run-tests-extended' ||
+      needs.pr_comment.outputs.command == 'run-tests-extended-aad' ||
+      needs.pr_comment.outputs.command == 'run-tests-shared-services'
     name: Deploy PR
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
       prRef: ${{ needs.pr_comment.outputs.prRef }}
       prHeadSha: ${{ needs.pr_comment.outputs.prHeadSha }}
       ciGitRef: ${{ needs.pr_comment.outputs.ciGitRef }}
-      runExtendedTests: ${{ needs.pr_comment.outputs.command == 'run-tests-extended' }}
-      runSharedServicesTests: ${{ needs.pr_comment.outputs.command == 'run-tests-shared-services' }}
+      e2eTestsCustomSelector: >-
+        ${{ (needs.pr_comment.outputs.command == 'run-tests-extended' && 'extended') ||
+        (needs.pr_comment.outputs.command == 'run-tests-extended-aad' && 'extended_aad') ||
+        (needs.pr_comment.outputs.command == 'run-tests-shared-services' && 'shared_services') ||
+        (needs.pr_comment.outputs.command == 'run-tests' && '') }}
+      environmentName: CICD
+      E2E_TESTS_NUMBER_PROCESSES: 1
+      DEVCONTAINER_TAG: ${{ needs.pr_comment.outputs.prRefId }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.pr_comment.outputs.prRefId) }}
-      ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-      ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/
-      ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-      ACTIONS_DEVCONTAINER_TAG: ${{ needs.pr_comment.outputs.prRefId }}
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS}}
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
       API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
-      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-      CORE_ADDRESS_SPACE: ${{ secrets.CORE_ADDRESS_SPACE }}
-      LOCATION: ${{ secrets.LOCATION }}
-      MGMT_RESOURCE_GROUP: ${{ format('rg-tre{0}-mgmt', needs.pr_comment.outputs.prRefId) }}
+      APPLICATION_ADMIN_CLIENT_ID: ${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}
+      APPLICATION_ADMIN_CLIENT_SECRET: ${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}
+      MGMT_RESOURCE_GROUP_NAME: ${{ format('rg-tre{0}-mgmt', needs.pr_comment.outputs.prRefId) }}
       MS_TEAMS_WEBHOOK_URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-      STATE_STORAGE_ACCOUNT_NAME: ${{ format('tre{0}mgmt', needs.pr_comment.outputs.prRefId) }}
+      MGMT_STORAGE_ACCOUNT_NAME: ${{ format('tre{0}mgmt', needs.pr_comment.outputs.prRefId) }}
       SWAGGER_UI_CLIENT_ID: ${{ secrets.SWAGGER_UI_CLIENT_ID }}
       TEST_APP_ID: ${{ secrets.TEST_APP_ID }}
       TEST_WORKSPACE_APP_ID: ${{ secrets.TEST_WORKSPACE_APP_ID }}
       TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
       TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
       TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-      TF_STATE_CONTAINER: ${{ secrets.TF_STATE_CONTAINER }}
-      TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
       TRE_ID: ${{ format('tre{0}', needs.pr_comment.outputs.prRefId) }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
-      TF_LOG: ${{ secrets.TF_LOG }}

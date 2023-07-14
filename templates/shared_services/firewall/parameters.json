@@ -1,8 +1,8 @@
 {
-  "schemaVersion": "1.0.0-DRAFT",
-  "name": "base",
-  "created": "2021-06-04T13:37:29.5071039+03:00",
-  "modified": "2021-06-04T13:37:29.5071039+03:00",
+  "schemaType": "ParameterSet",
+  "schemaVersion": "1.0.1",
+  "namespace": "",
+  "name": "tre-shared-service-firewall",
   "parameters": [
     {
       "name": "tre_id",
@@ -32,6 +32,36 @@
       "name": "tfstate_storage_account_name",
       "source": {
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "rule_collections",
+      "source": {
+        "env": "RULE_COLLECTIONS"
+      }
+    },
+    {
+      "name": "network_rule_collections",
+      "source": {
+        "env": "NETWORK_RULE_COLLECTIONS"
+      }
+    },
+    {
+      "name": "sku_tier",
+      "source": {
+        "env": "SKU_TIER"
+      }
+    },
+    {
+      "name": "microsoft_graph_fqdn",
+      "source": {
+        "env": "MICROSOFT_GRAPH_FQDN"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
       }
     }
   ]

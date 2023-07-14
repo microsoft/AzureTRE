@@ -5,7 +5,7 @@ from mock import patch
 from pydantic import parse_obj_as
 from starlette import status
 
-from db.errors import EntityDoesNotExist, EntityVersionExist, UnableToAccessDatabase
+from db.errors import EntityDoesNotExist, EntityVersionExist, InvalidInput, UnableToAccessDatabase
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
@@ -106,3 +106,9 @@ class TestSharedServiceTemplates:
         response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_shared_service_template.dict())
 
         assert response.status_code == status.HTTP_409_CONFLICT
+
+    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template", side_effect=InvalidInput)
+    async def test_creating_a_shared_service_template_raises_http_422_if_step_ids_are_duplicated(self, _, client, app, input_shared_service_template):
+        response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_shared_service_template.dict())
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

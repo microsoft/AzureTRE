@@ -1,11 +1,20 @@
 ---
+schemaVersion: 1.0.0
 name: tre-service-azureml
-version: 0.3.0
+version: 0.8.7
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
 
 credentials:
+  # Credentials for interacting with the AAD Auth tenant
+  - name: auth_client_id
+    env: AUTH_CLIENT_ID
+  - name: auth_client_secret
+    env: AUTH_CLIENT_SECRET
+  - name: auth_tenant_id
+    env: AUTH_TENANT_ID
+  # Credentials for interacting with Azure
   - name: azure_tenant_id
     env: ARM_TENANT_ID
   - name: azure_subscription_id
@@ -23,6 +32,18 @@ parameters:
   - name: id
     type: string
     description: "Resource ID"
+  - name: display_name
+    description: "Display name for the workspace"
+  - name: description
+    description: "Description for the workspace"
+  - name: is_exposed_externally
+    type: boolean
+    default: false
+    env: IS_EXPOSED_EXTERNALLY
+    description: "Determines if the AML workspace will be available over public/internet"
+  - name: address_space
+    type: string
+    description: "Address space for the AML subnets"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -38,65 +59,156 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+  - name: azure_environment
+    env: AZURE_ENVIRONMENT
 
 outputs:
   - name: azureml_workspace_name
     type: string
+    applyTo:
+      - install
+      - upgrade
   - name: azureml_acr_id
     type: string
+    applyTo:
+      - install
+      - upgrade
   - name: azureml_storage_account_id
     type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: connection_uri
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: workspace_address_spaces
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: aml_subnet_address_prefixes
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: storage_tag
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: batch_tag
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: mcr_tag
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: aml_fqdn
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
-  - exec
   - terraform:
-      clientVersion: 1.0.5
+      clientVersion: 1.3.6
+  - az:
+      clientVersion: 2.37.0
 
 install:
   - terraform:
       description: "Deploy Azure ML Service"
       vars:
-        workspace_id: "{{ bundle.parameters.workspace_id }}"
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        display_name: ${ bundle.parameters.display_name }
+        description: ${ bundle.parameters.description }
+        address_space: ${ bundle.parameters.address_space }
+        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
+        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
+        azure_environment: ${ bundle.parameters.azure_environment }
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "tre-service-azureml-{{ bundle.parameters.id }}"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-service-azureml-${ bundle.parameters.id }
       outputs:
         - name: azureml_workspace_name
         - name: azureml_acr_id
         - name: azureml_storage_account_id
+        - name: connection_uri
+        - name: workspace_address_spaces
+        - name: aml_subnet_address_prefixes
+        - name: storage_tag
+        - name: batch_tag
+        - name: mcr_tag
+        - name: aml_fqdn
 
 upgrade:
-  - exec:
+  - terraform:
       description: "Upgrade Azure ML Service"
-      command: echo
-      arguments:
-        - "This workspace service does not implement upgrade action"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        display_name: ${ bundle.parameters.display_name }
+        description: ${ bundle.parameters.description }
+        address_space: ${ bundle.parameters.address_space }
+        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
+        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
+        azure_environment: ${ bundle.parameters.azure_environment }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-service-azureml-${ bundle.parameters.id }
+      outputs:
+        - name: azureml_workspace_name
+        - name: azureml_acr_id
+        - name: azureml_storage_account_id
+        - name: connection_uri
+        - name: workspace_address_spaces
+        - name: aml_subnet_address_prefixes
+        - name: storage_tag
+        - name: batch_tag
+        - name: mcr_tag
+        - name: aml_fqdn
 
 uninstall:
   - terraform:
       description: "Delete the Azure ML Service"
       vars:
-        workspace_id: "{{ bundle.parameters.workspace_id }}"
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        display_name: ${ bundle.parameters.display_name }
+        description: ${ bundle.parameters.description }
+        address_space: ${ bundle.parameters.address_space }
+        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
+        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
+        azure_environment: ${ bundle.parameters.azure_environment }
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "tre-service-azureml-{{ bundle.parameters.id }}"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-service-azureml-${ bundle.parameters.id }

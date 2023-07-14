@@ -2,7 +2,7 @@ resource "random_string" "username" {
   length    = 10
   upper     = true
   lower     = true
-  number    = false
+  numeric   = false
   min_lower = 1
   special   = false
 }
@@ -13,7 +13,7 @@ resource "random_password" "password" {
   min_lower        = 1
   upper            = true
   min_upper        = 1
-  number           = true
+  numeric          = true
   min_numeric      = 1
   special          = true
   min_special      = 1
@@ -24,18 +24,21 @@ resource "azurerm_key_vault_secret" "postgresql_admin_username" {
   name         = "${local.postgresql_server_name}-admin-username"
   value        = random_string.username.result
   key_vault_id = data.azurerm_key_vault.ws.id
+  tags         = local.tre_workspace_service_tags
 }
 
 resource "azurerm_key_vault_secret" "postgresql_admin_password" {
   name         = "${local.postgresql_server_name}-admin-password"
   value        = random_password.password.result
   key_vault_id = data.azurerm_key_vault.ws.id
+  tags         = local.tre_workspace_service_tags
 }
 
 resource "azurerm_postgresql_server" "mlflow" {
   name                = local.postgresql_server_name
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
+  tags                = local.tre_workspace_service_tags
 
   administrator_login          = random_string.username.result
   administrator_login_password = random_password.password.result
@@ -61,11 +64,12 @@ resource "azurerm_postgresql_database" "mlflow" {
   collation           = "English_United States.1252"
 }
 
-resource "azurerm_private_endpoint" "private-endpoint" {
+resource "azurerm_private_endpoint" "private_endpoint" {
   name                = "pe-${azurerm_postgresql_server.mlflow.name}-postgres"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
+  tags                = local.tre_workspace_service_tags
 
   private_service_connection {
     private_connection_resource_id = azurerm_postgresql_server.mlflow.id
@@ -75,7 +79,7 @@ resource "azurerm_private_endpoint" "private-endpoint" {
   }
 
   private_dns_zone_group {
-    name                 = "privatelink.postgres.database.azure.com"
+    name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.postgres.database.azure.com"]
     private_dns_zone_ids = [data.azurerm_private_dns_zone.postgres.id]
   }
 

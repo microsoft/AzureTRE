@@ -128,11 +128,11 @@ Furthermore, Porter provides a set of [mixins](https://porter.sh/mixins/) - anal
 
 ### Porter Azure plugin
 
-Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to store Porter data in TRE management storage account. The storage table, named `porter`, is created during the bootstrapping phase of TRE deployment. The `/resource_processor/run.sh` script generates a `config.toml` file in Porter home folder to enable the Azure plugin when the image is started.
+Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to access secrets in Azure Key Vault.
 
 ### Porter bundle inputs
 
-When Porter runs bundle actions, it passes input parameters. Full set of inputs that Porter passes can be found in [config.py](../../resource_processor/shared/config.py).
+When Porter runs bundle actions, it passes input parameters. Full set of inputs that Porter passes can be found in [config.py](https://github.com/microsoft/AzureTRE/blob/main/resource_processor/shared/config.py).
 
 !!! info
     Note that Resource Processor does not pass any location-related attributes when running bundle actions. Instead, a `location` attribute is passed from the API. This is so that different TRE resources could be potentially deployed to different regions.

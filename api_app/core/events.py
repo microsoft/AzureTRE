@@ -9,7 +9,6 @@ def create_start_app_handler(app: FastAPI) -> Callable:
     async def start_app() -> None:
         app.state.cosmos_client = None
         await bootstrap_database(app)
-
     return start_app
 
 

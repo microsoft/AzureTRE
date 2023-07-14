@@ -1,13 +1,13 @@
 {
-  "schemaVersion": "1.0.0-DRAFT+TODO",
-  "name": "base",
-  "created": "2021-06-04T13:37:29.5071039+03:00",
-  "modified": "2021-06-04T13:37:29.5071039+03:00",
+  "schemaType": "ParameterSet",
+  "schemaVersion": "1.0.1",
+  "namespace": "",
+  "name": "tre-workspace-service-gitea",
   "parameters": [
     {
-      "name": "tre_resource_id",
+      "name": "id",
       "source": {
-        "env": "TRE_RESOURCE_ID"
+        "env": "ID"
       }
     },
     {
@@ -23,27 +23,15 @@
       }
     },
     {
-      "name": "acr_name",
+      "name": "mgmt_acr_name",
       "source": {
         "env": "ACR_NAME"
       }
     },
     {
-      "name": "openid_client_id",
+      "name": "mgmt_resource_group_name",
       "source": {
-        "env": "OPENID_CLIENT_ID"
-      }
-    },
-    {
-      "name": "openid_client_secret",
-      "source": {
-        "env": "OPENID_CLIENT_SECRET"
-      }
-    },
-    {
-      "name": "openid_authority",
-      "source": {
-        "env": "OPENID_AUTHORITY"
+        "env": "MGMT_RESOURCE_GROUP_NAME"
       }
     },
     {
@@ -62,6 +50,18 @@
       "name": "tfstate_storage_account_name",
       "source": {
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "aad_authority_url",
+      "source": {
+        "env": "AAD_AUTHORITY_URL"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
       }
     }
   ]

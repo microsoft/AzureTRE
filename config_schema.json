@@ -1,0 +1,163 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$id": "https://github.com/microsoft/AzureTRE/schema/config_schema.json",
+  "title": "AzureTRE configuration file",
+  "description": "This document contains all the configuration needed to deploy and setup AzureTRE.",
+  "type": "object",
+  "properties": {
+    "location": {
+      "description": "The Azure location (region) for all resources.",
+      "type": "string",
+      "pattern": "[a-z]+"
+    },
+    "tre_id": {
+      "description": "TRE unique identifier",
+      "type": "string",
+      "pattern": "^[a-zA-Z 0-9\\_]*$",
+      "maxLength": 11
+    },
+    "management": {
+      "description": "Management configuration",
+      "type": "object",
+      "properties": {
+        "mgmt_resource_group_name": {
+          "description": "The shared resource group for all management resources, including the storage account.",
+          "type": "string",
+          "pattern": "^[-\\w\\._\\(\\)]+$",
+          "maxLength": 90
+        },
+        "mgmt_storage_account_name": {
+          "description": "The name of the storage account to hold the Terraform state and other deployment artifacts.",
+          "type": "string",
+          "pattern": "[A-Za-z09]+",
+          "minLength": 3,
+          "maxLength": 24
+        },
+        "terraform_state_container_name": {
+          "description": "Optional. The name of the blob container to hold the Terraform state. Default value is `tfstate`.",
+          "type": "string",
+          "pattern": "^[a-z0-9](?!.*--)[a-z0-9-]{1,61}[a-z0-9]$",
+          "minLength": 3,
+          "maxLength": 63
+        },
+        "acr_name": {
+          "description": "A globally unique name for the Azure Container Registry (ACR) that will be created to store deployment images.",
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9]*$",
+          "minLength": 5,
+          "maxLength": 50
+        },
+        "arm_subscription_id": {
+          "description": "The Azure subscription ID for all resources.",
+          "type": "string",
+          "pattern": "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$"
+        }
+      },
+      "required": [
+        "mgmt_resource_group_name",
+        "mgmt_storage_account_name",
+        "terraform_state_container_name",
+        "acr_name",
+        "arm_subscription_id"
+      ]
+    },
+    "tre": {
+      "description": "TRE configuration",
+      "type": "object",
+      "properties": {
+        "enable_airlock_malware_scanning": {
+          "description": "Allow airlock malware scanning.",
+          "type": "boolean"
+        },
+        "core_address_space": {
+          "description": "TRE core address spaces.",
+          "type": "string"
+        },
+        "tre_address_space": {
+          "description": "TRE address spaces.",
+          "type": "string"
+        },
+        "enable_swagger": {
+          "description": "Determines whether the Swagger interface for the API will be available.",
+          "type": "boolean"
+        },
+        "tre_url": {
+          "description": "Url for the TRE environment.",
+          "type": "string",
+          "pattern": "^https?://"
+        }
+      }
+    },
+    "authentication": {
+      "description": "Authentication configuration",
+      "type": "object",
+      "properties": {
+        "aad_tenant_id": {
+          "description": "Tenant id against which auth is performed.",
+          "type": "string",
+          "pattern": "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$"
+        },
+        "auto_workspace_app_registration": {
+          "description": "This identity is used to manage other AAD applications that it owns. Read more about it here: docs/tre-admins/auth.md",
+          "type": "boolean"
+        },
+        "auto_workspace_group_creation": {
+          "description": "This identity can create security groups aligned to each applciation role. Read more about it here: docs/tre-admins/auth.md",
+          "type": "boolean"
+        },
+        "api_client_id": {
+          "description": "API application (client) ID.",
+          "type": "string",
+          "pattern": "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$"
+        },
+        "api_client_secret": {
+          "description": "API application client secret.",
+          "type": "string",
+          "minLength": 11
+        },
+        "swagger_ui_client_id": {
+          "description": "Swagger/UI application (client) ID.",
+          "type": "string",
+          "pattern": "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$"
+        },
+        "application_admin_client_id": {
+          "description": "This client will administer AAD Applications for TRE.",
+          "type": "string",
+          "pattern": "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$"
+        },
+        "application_admin_client_secret": {
+          "description": "Secret to client which will administer AAD Applications for TRE",
+          "type": "string",
+          "minLength": 11
+        },
+        "test_account_client_id": {
+          "description": "This is the app that will run the tests for you.",
+          "type": "string",
+          "pattern": "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$"
+        },
+        "test_account_client_secret": {
+          "description": "This is the secret to an app that will run the tests for you",
+          "type": "string",
+          "minLength": 11
+        },
+        "workspace_api_client_id": {
+          "description": "Workspace AD Application. This will be created for you for future use - when creating workspaces.",
+          "type": "string",
+          "pattern": "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$"
+        },
+        "workspace_api_client_secret": {
+          "description": "Workspace AD Application secret. This will be created for you for future use - when creating workspaces.",
+          "type": "string",
+          "minLength": 11
+        }
+      },
+      "required": [
+        "aad_tenant_id"
+      ]
+    }
+  },
+  "required": [
+    "location",
+    "tre_id"
+  ]
+}

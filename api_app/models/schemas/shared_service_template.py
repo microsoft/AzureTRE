@@ -50,6 +50,7 @@ class SharedServiceTemplateInCreate(ResourceTemplateInCreate):
                     "title": "My Shared Service Template",
                     "description": "These is a test shared service resource template schema",
                     "required": [],
+                    "authorizedRoles": [],
                     "properties": {}
                 },
                 "customActions": [

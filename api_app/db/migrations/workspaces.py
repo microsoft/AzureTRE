@@ -1,17 +1,22 @@
 import logging
 
-from azure.cosmos import CosmosClient
+from azure.cosmos.aio import CosmosClient
 from db.repositories.workspaces import WorkspaceRepository
 import semantic_version
 
 
 class WorkspaceMigration(WorkspaceRepository):
-    def __init__(self, client: CosmosClient):
-        super().__init__(client)
+    @classmethod
+    async def create(cls, client: CosmosClient):
+        cls = WorkspaceMigration()
+        resource_repo = await super().create(client)
+        cls._container = resource_repo._container
+        cls._client = resource_repo._client
+        return cls
 
-    def moveAuthInformationToProperties(self) -> bool:
+    async def moveAuthInformationToProperties(self) -> bool:
         migrated = False
-        for item in self.query(query=WorkspaceRepository.workspaces_query_string()):
+        for item in await self.query(query=WorkspaceRepository.workspaces_query_string()):
             template_version = semantic_version.Version(item["templateVersion"])
             updated = False
             if (template_version < semantic_version.Version('0.2.7')):
@@ -27,7 +32,7 @@ class WorkspaceMigration(WorkspaceRepository):
                     updated = True
 
                 if "authInformation" in item:
-                    logging.INFO(f'Upgrading authInformation in workspace {item["id"]}')
+                    logging.info(f'Upgrading authInformation in workspace {item["id"]}')
 
                     # Copy authInformation into properties
                     item["properties"]["sp_id"] = item["authInformation"]["sp_id"]
@@ -38,8 +43,8 @@ class WorkspaceMigration(WorkspaceRepository):
                     updated = True
 
                 if updated:
-                    self.update_item_dict(item)
-                    logging.INFO(f'Upgraded authentication info for workspace id {item["id"]}')
+                    await self.update_item_dict(item)
+                    logging.info(f'Upgraded authentication info for workspace id {item["id"]}')
                     migrated = True
 
             return migrated

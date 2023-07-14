@@ -14,7 +14,7 @@ jobs:
     environment: CICD
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # This is CRITICAL since we're making decisions based on branch existence
           fetch-depth: 0
@@ -24,10 +24,13 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+          environment: ${{ (secrets.AZURE_ENVIRONMENT != '' && secrets.AZURE_ENVIRONMENT) || 'AzureCloud' }}
 
       - name: Run clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MAIN_TRE_ID: ${{ secrets.TRE_ID }}
-          BRANCH_LAST_ACTIVITY_IN_HOURS: 2
+          GITHUB_REPOSITORY: ${{ github.repository}}
+          BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_STOP: 2
+          BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_DESTROY: 48
         run: devops/scripts/clean_ci_validation_envs.sh

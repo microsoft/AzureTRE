@@ -1,21 +1,39 @@
 ---
-name: Publish docs via Github Pages
-
-on:  # yamllint disable-line rule:truthy
+name: Deploy Documentation
+on:
   workflow_dispatch:
+  release:
+    types: [published]
   push:
-    branches: [main]
     paths:
       - 'docs/**'
-
+      - mkdocs.yml
+    branches:
+      - main
 jobs:
-  build:
-    name: Deploy docs
+  deploy:
+    name: Deploy Documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - name: Checkout main
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.x
-      - run: pip install -r docs/requirements.txt
-      - run: mkdocs gh-deploy --force
+      - name: Install Dependencies
+        run: |
+          pip install -r docs/requirements.txt
+      - name: Configure Git User
+      # Required by mike for the commit it does to the gh-pages branch
+        run: |
+          git config user.name "ci-docs"
+          git config user.email "ci-docs@dummy.com"
+      - name: Deploy the latest documents from new release
+        if: ${{ github.event_name == 'release' }}
+        run: mike deploy --push --update-aliases "${GITHUB_REF#refs/*/}" latest
+      - name: Deploy the development docs
+        if: ${{ github.event_name != 'release' }}
+        run: mike deploy --push unreleased

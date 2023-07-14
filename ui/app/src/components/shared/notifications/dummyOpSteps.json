@@ -1,0 +1,55 @@
+{
+    "id": "ba02d504-47d5-412d-b192-b75d17c65009",
+    "resourceId": "8b6e42a0-e236-46ae-9541-01b462e4b468",
+    "resourcePath": "/workspaces/1e800001-7385-46a1-9f6d-490a6201ea01/workspace-services/8c70974a-5f66-4ae9-9502-7a54e9e0bb86/user-resources/8b6e42a0-e236-46ae-9541-01b462e4b468",
+    "resourceVersion": 0,
+    "status": "pipeline_failed",
+    "action": "install",
+    "message": "Pipeline deployment completed successfully",
+    "createdWhen": 1650653543.343581,
+    "updatedWhen": 1650653543.343581,
+    "user": {
+        "id": "7f9756c3-7925-4b78-a10b-83927ab9c008",
+        "name": "joalmeid@microsoft.com Lopes de Almeida",
+        "email": "",
+        "roles": [
+            "WorkspaceOwner"
+        ],
+        "roleAssignments": []
+    },
+    "steps": [
+        {
+            "stepId": "6d2d7eb7-984e-4330-bd3c-c7ec98658402",
+            "stepTitle": "Update the firewall the first time",
+            "resourceId": "ea079a34-ec53-43e0-9454-84531c96599e",
+            "resourceTemplateName": "tre-shared-service-firewall",
+            "resourceType": "shared-service",
+            "resourceAction": "upgrade",
+            "status": "action_succeeded",
+            "message": "ea079a34-ec53-43e0-9454-84531c96599e: upgrade action completed successfully.",
+            "updatedWhen": 1650898800.932936
+        },
+        {
+            "stepId": "main",
+            "stepTitle": "Main step for 8b6e42a0-e236-46ae-9541-01b462e4b468",
+            "resourceId": "8b6e42a0-e236-46ae-9541-01b462e4b4686",
+            "resourceTemplateName": "tre-service-dev-vm",
+            "resourceType": "user-resource",
+            "resourceAction": "install",
+            "status": "deployment_failed",
+            "message": "8b6e42a0-e236-46ae-9541-01b462e4b468: install action completed successfully.",
+            "updatedWhen": 1650899841.316169
+        },
+        {
+            "stepId": "2fe8a6a7-2c27-4c49-8773-127df8a48b4e",
+            "stepTitle": "Update the firewall the second time",
+            "resourceId": "ea079a34-ec53-43e0-9454-84531c96599e",
+            "resourceTemplateName": "tre-shared-service-firewall",
+            "resourceType": "shared-service",
+            "resourceAction": "upgrade",
+            "status": "awaiting_deployment",
+            "message": "ea079a34-ec53-43e0-9454-84531c96599e: upgrade action in progress",
+            "updatedWhen": 1650899911.042068
+        }
+    ]
+}

@@ -7,6 +7,8 @@ from opencensus.trace import config_integration
 from opencensus.trace.samplers import AlwaysOnSampler
 from opencensus.trace.tracer import Tracer
 
+from shared.config import VERSION
+
 UNWANTED_LOGGERS = [
     "azure.core.pipeline.policies.http_logging_policy",
     "azure.eventhub._eventprocessor.event_processor",
@@ -46,6 +48,11 @@ def disable_unwanted_loggers():
         logging.getLogger(logger_name).disabled = True
 
 
+def telemetry_processor_callback_function(envelope):
+    envelope.tags['ai.cloud.role'] = 'resource_processor'
+    envelope.tags['ai.application.ver'] = VERSION
+
+
 def initialize_logging(logging_level: int, correlation_id: str, add_console_handler: bool = False) -> logging.LoggerAdapter:
     """
     Adds the Application Insights handler for the root logger and sets the given logging level.
@@ -73,9 +80,10 @@ def initialize_logging(logging_level: int, correlation_id: str, add_console_hand
         logger.addHandler(console_handler)
 
     try:
-        azurelog_formatter = AzureLogFormatter()
         # picks up APPLICATIONINSIGHTS_CONNECTION_STRING automatically
         azurelog_handler = AzureLogHandler()
+        azurelog_handler.add_telemetry_processor(telemetry_processor_callback_function)
+        azurelog_formatter = AzureLogFormatter()
         azurelog_handler.setFormatter(azurelog_formatter)
         logger.addHandler(azurelog_handler)
     except ValueError as e:
@@ -119,11 +127,20 @@ def shell_output_logger(console_output: str, prefix_item: str, logger: logging.L
     """
     Logs the shell output (stdout/err) a line at a time with an option to remove ANSI control chars.
     """
-    logger.log(logging_level, prefix_item)
-
     if not console_output:
+        logging.debug("shell console output is empty.")
         return
 
+    console_output = console_output.strip()
+
+    if (logging_level != logging.INFO
+            and len(console_output) < 200
+            and console_output.startswith("Unable to find image '")
+            and console_output.endswith("' locally")):
+        logging.debug("Image not present locally, setting log to INFO.")
+        logging_level = logging.INFO
+
+    logger.log(logging_level, prefix_item)
     logger.log(logging_level, console_output)
 
 

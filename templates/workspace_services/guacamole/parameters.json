@@ -1,8 +1,8 @@
 {
-  "schemaVersion": "1.0.0-DRAFT+TODO",
-  "name": "guacamole",
-  "created": "2021-06-03T11:54:54.0225968Z",
-  "modified": "2021-06-03T11:54:54.0225968Z",
+  "schemaType": "ParameterSet",
+  "schemaVersion": "1.0.1",
+  "namespace": "",
+  "name": "tre-service-guacamole",
   "parameters": [
     {
       "name": "id",
@@ -50,6 +50,74 @@
       "source": {
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
       }
+    },
+
+    {
+      "name": "guac_disable_copy",
+      "source": {
+        "env": "GUAC_DISABLE_COPY"
+      }
+    },
+    {
+      "name": "guac_disable_download",
+      "source": {
+        "env": "GUAC_DISABLE_DOWNLOAD"
+      }
+    },
+    {
+      "name": "guac_disable_upload",
+      "source": {
+        "env": "GUAC_DISABLE_UPLOAD"
+      }
+    },
+    {
+      "name": "guac_disable_paste",
+      "source": {
+        "env": "GUAC_DISABLE_PASTE"
+      }
+    },
+    {
+      "name": "guac_drive_name",
+      "source": {
+        "env": "GUAC_DRIVE_NAME"
+      }
+    },
+    {
+      "name": "guac_drive_path",
+      "source": {
+        "env": "GUAC_DRIVE_PATH"
+      }
+    },
+    {
+      "name": "guac_enable_drive",
+      "source": {
+        "env": "GUAC_ENABLE_DRIVE"
+      }
+    },
+    {
+      "name": "image_tag",
+      "source": {
+        "env": "IMAGE_TAG"
+      }
+    },
+    {
+      "name": "is_exposed_externally",
+      "source": {
+        "env": "IS_EXPOSED_EXTERNALLY"
+      }
+    },
+    {
+      "name": "aad_authority_url",
+      "source": {
+        "env": "AAD_AUTHORITY_URL"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
+      }
     }
   ]
 }
+

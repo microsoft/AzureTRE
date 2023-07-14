@@ -2,45 +2,19 @@
 name: "run_command"
 description: "Run a command in a devcontainer"
 inputs:
-  USE_ENV_VARS_NOT_FILES:
-    description: "Use ENV variables rather than a file."
-    required: false
-    default: "true"
-  TF_INPUT:
-    description: "Make Terraform fail if missing variables."
-    required: false
-    default: "0"
-  TF_IN_AUTOMATION:
-    description: "Terraform should not provide hints in the console."
-    required: false
-    default: "1"
   COMMAND:
     description: "The command you want to run in the Devcontainer."
     required: true
-  ACTIONS_ACR_NAME:
-    description: "The Azure Container registry name that the devcontainer is stored in."
-    required: true
-  ACTIONS_ACR_URI:
-    description: "The full uri of the Azure Container Registry where the devcontainer is stored in."
-    required: true
-  ACTIONS_ACR_PASSWORD:
-    description: "The Azure Container registry password for the devcontainer."
-    required: true
-  ACTIONS_DEVCONTAINER_TAG:
+  DEVCONTAINER_TAG:
     description: "The container label to use when running the command."
     required: true
-  ARM_TENANT_ID:
-    description: "Azure Tenant Id."
+  AZURE_CREDENTIALS:
+    description: "Credentials to access Azure."
     required: true
-  ARM_CLIENT_ID:
-    description: "Azure user Id. This user needs User Access Administrator permission as minimum."
-    required: true
-  ARM_CLIENT_SECRET:
-    description: "Azure user password."
-    required: true
-  ARM_SUBSCRIPTION_ID:
-    description: "Azure Subscription Id."
-    required: true
+  AZURE_ENVIRONMENT:
+    description: "Azure Cloud Environment"
+    default: "AzureCloud"
+    required: false
   API_CLIENT_ID:
     description: "The API Client Id."
     required: false
@@ -65,29 +39,36 @@ inputs:
   TRE_ID:
     description: "The TRE Id."
     required: false
-  TF_VAR_terraform_state_container_name:
+  TERRAFORM_STATE_CONTAINER_NAME:
     description: "The name of the container to store the Terraform state."
     required: false
-  TF_VAR_mgmt_resource_group_name:
+    default: ""
+  MGMT_RESOURCE_GROUP_NAME:
     description: "The resource group used to store the Terraform state."
     required: false
-  TF_VAR_mgmt_storage_account_name:
+  MGMT_STORAGE_ACCOUNT_NAME:
     description: "The storage account used to store the Terraform state."
     required: false
-  TF_VAR_core_address_space:
+  CORE_ADDRESS_SPACE:
     description: "Core address space."
     required: false
-  TF_VAR_tre_address_space:
+  TRE_ADDRESS_SPACE:
     description: "TRE address apace."
     required: false
-  TF_VAR_swagger_ui_client_id:
+  ENABLE_SWAGGER:
+    description: "Determines whether the Swagger interface for the API will be available."
+    required: false
+  SWAGGER_UI_CLIENT_ID:
     description: "The Swagger UI Client ID."
     required: false
-  TF_VAR_api_client_id:
-    description: "The API Client Id. (Same as Resource)"
-    required: false
-  TF_VAR_api_client_secret:
+  API_CLIENT_SECRET:
     description: "The API Client Secret."
+    required: false
+  APPLICATION_ADMIN_CLIENT_ID:
+    description: "The Client ID of an identity that can manage the AAD Applications."
+    required: false
+  APPLICATION_ADMIN_CLIENT_SECRET:
+    description: "The Client secret of an identity that can manage the AAD Applications."
     required: false
   ACR_NAME:
     description: "The Container Registry that holds our Research images."
@@ -98,109 +79,156 @@ inputs:
   BUNDLE_TYPE:
     description: "The Bundle type (workspace / Workspace-service / User Resource)."
     required: false
+  WORKSPACE_SERVICE_NAME:
+    description: "The workspace service name for the bundle you are registering."
+    required: false
   IS_API_SECURED:
     description: "Indicates if the API endpoint has valid TLS certificate and if we validate it during E2E."
     required: false
     default: "true"
-  TF_VAR_keyvault_purge_protection_enabled:
-    description: "A value indicating if keyvaults will have purge protection."
-    required: false
-    default: "true"
-  TF_VAR_stateful_resources_locked:
+  STATEFUL_RESOURCES_LOCKED:
     description: "A value indicating if resources with state will be protected with locks."
     required: false
     default: "true"
+  ENABLE_AIRLOCK_MALWARE_SCANNING:
+    description: "If False, Airlock requests will skip the malware scanning stage."
+    required: false
+    default: "false"
   CI_CACHE_ACR_NAME:
     description: "A secondary ACR used for caching in CI environments"
-    required: false
+    required: true
     default: ""
   TF_LOG:
     description: "Log level for terraform - values are blank | DEBUG | TRACE"
+    required: false
+    default: ""
+  CORE_APP_SERVICE_PLAN_SKU:
+    description: "The AppService plan sku used in core resources"
+    required: false
+    default: ""
+  WORKSPACE_APP_SERVICE_PLAN_SKU:
+    description: "The AppService plan sku used by tests"
+    required: false
+    default: ""
+  RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE:
+    description: "The number of resource processor processes to create for parallel operations"
+    required: false
+  E2E_TESTS_NUMBER_PROCESSES:
+    description: "The number of e2e tests running in parallel"
+    required: false
+    default: ""
+  RP_BUNDLE_VALUES:
+    description: "JSON string containing key/value pairs to injet into the Resource Processor as ENV vars"
     required: false
     default: ""
 
 runs:
   using: composite
   steps:
-    - name: Login to Container Registry
-      uses: docker/login-action@v1
+    - name: Construct AZURE_ENVIRONMENT
+      shell: bash
+      run: |
+        azure_env="${{ (inputs.AZURE_ENVIRONMENT != '' && inputs.AZURE_ENVIRONMENT) || 'AzureCloud' }}"
+        echo "AZURE_ENVIRONMENT=$azure_env" >> $GITHUB_ENV
+
+    - name: Azure Login
+      uses: azure/login@v1
+      if: contains(inputs.COMMAND, 'bootstrap') != true
       with:
-        registry: ${{ inputs.ACTIONS_ACR_URI }}
-        username: ${{ inputs.ACTIONS_ACR_NAME }}
-        password: ${{ inputs.ACTIONS_ACR_PASSWORD }}
+        creds: ${{ inputs.AZURE_CREDENTIALS }}
+        environment: "${{ env.AZURE_ENVIRONMENT }}"
+
+    - name: ACR Login
+      shell: bash
+      if: contains(inputs.COMMAND, 'bootstrap') != true
+      run: |
+        az acr login --name "${{ inputs.CI_CACHE_ACR_NAME }}"
+
+    - name: Construct TRE_URL
+      shell: bash
+      run: |
+        source devops/scripts/construct_tre_url.sh
+        tre_url=$(construct_tre_url "${{ inputs.TRE_ID }}" "${{ inputs.LOCATION }}" "${{ env.AZURE_ENVIRONMENT }}")
+        echo "TRE_URL=$tre_url" >> $GITHUB_ENV
+
+    - name: Construct ARM_ENVIRONMENT
+      shell: bash
+      run: |
+        source devops/scripts/convert_azure_env_to_arm_env.sh
+        arm_environment=$(convert_azure_env_to_arm_env "${{ env.AZURE_ENVIRONMENT }}")
+        echo "ARM_ENVIRONMENT=$arm_environment" >> $GITHUB_ENV
+
+    - name: Construct ACR Domain Suffix
+      shell: bash
+      run: |
+        echo "ACR_DOMAIN_SUFFIX=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)" >> $GITHUB_ENV
 
     - name: Run command in DevContainer
       shell: bash
-      env:
-        ARM_TENANT_ID: "${{ inputs.ARM_TENANT_ID }}"
-        ARM_CLIENT_ID: "${{ inputs.ARM_CLIENT_ID }}"
-        ARM_CLIENT_SECRET: "${{ inputs.ARM_CLIENT_SECRET }}"
-        ARM_SUBSCRIPTION_ID: "${{ inputs.ARM_SUBSCRIPTION_ID }}"
-        API_CLIENT_ID: "${{ inputs.API_CLIENT_ID }}"
-        AAD_TENANT_ID: "${{ inputs.AAD_TENANT_ID }}"
-        TEST_WORKSPACE_APP_ID: "${{ inputs.TEST_WORKSPACE_APP_ID }}"
-        TEST_WORKSPACE_APP_SECRET: "${{ inputs.TEST_WORKSPACE_APP_SECRET }}"
-        TEST_APP_ID: "${{ inputs.TEST_APP_ID }}"
-        TEST_ACCOUNT_CLIENT_ID: "${{ inputs.TEST_ACCOUNT_CLIENT_ID }}"
-        TEST_ACCOUNT_CLIENT_SECRET: "${{ inputs.TEST_ACCOUNT_CLIENT_SECRET }}"
-        ACR_NAME: ${{ inputs.ACR_NAME }}
-        TRE_URL: "https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com"
-        TRE_ID: "${{ inputs.TRE_ID }}"
-        TF_VAR_tre_id: "${{ inputs.TRE_ID }}"
-        TF_VAR_terraform_state_container_name: "${{ inputs.TF_VAR_terraform_state_container_name }}"
-        TF_VAR_mgmt_resource_group_name: "${{ inputs.TF_VAR_mgmt_resource_group_name }}"
-        TF_VAR_mgmt_storage_account_name: "${{ inputs.TF_VAR_mgmt_storage_account_name }}"
-        TF_VAR_core_address_space: "${{ inputs.TF_VAR_core_address_space }}"
-        TF_VAR_tre_address_space: "${{ inputs.TF_VAR_tre_address_space }}"
-        TF_VAR_swagger_ui_client_id: "${{ inputs.TF_VAR_swagger_ui_client_id }}"
-        TF_VAR_aad_tenant_id: "${{ inputs.AAD_TENANT_ID }}"
-        TF_VAR_api_client_id: "${{ inputs.TF_VAR_api_client_id }}"
-        TF_VAR_api_client_secret: "${{ inputs.TF_VAR_api_client_secret }}"
-        TF_VAR_acr_name: ${{ inputs.ACR_NAME }}
-        IS_API_SECURED: ${{ inputs.IS_API_SECURED }}
       run: |
         docker run --rm --mount \
           "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
           -v /var/run/docker.sock:/var/run/docker.sock \
           --workdir /workspaces/tre \
           --user vscode \
-          -e TF_INPUT="${{ inputs.TF_INPUT }}" \
-          -e TF_IN_AUTOMATION="${{ inputs.TF_IN_AUTOMATION }}" \
-          -e USE_ENV_VARS_NOT_FILES="${{ inputs.USE_ENV_VARS_NOT_FILES }}" \
+          -e TF_INPUT="0" \
+          -e TF_IN_AUTOMATION="1" \
+          -e USE_ENV_VARS_NOT_FILES="true" \
           -e BUNDLE_TYPE="${{ inputs.BUNDLE_TYPE }}" \
+          -e WORKSPACE_SERVICE_NAME="${{ inputs.WORKSPACE_SERVICE_NAME }}" \
+          -e ARM_ENVIRONMENT="${{ env.ARM_ENVIRONMENT }}" \
+          -e TF_VAR_arm_environment="${{ env.ARM_ENVIRONMENT }}" \
+          -e AZURE_ENVIRONMENT="${{ env.AZURE_ENVIRONMENT }}" \
           -e LOCATION="${{ inputs.LOCATION }}" \
           -e TF_VAR_location="${{ inputs.LOCATION }}" \
           -e RESOURCE_LOCATION="${{ inputs.LOCATION }}" \
-          -e ARM_CLIENT_ID \
-          -e ARM_CLIENT_SECRET \
-          -e ARM_TENANT_ID \
-          -e ARM_SUBSCRIPTION_ID \
-          -e TF_VAR_terraform_state_container_name \
-          -e TF_VAR_mgmt_storage_account_name \
-          -e TF_VAR_mgmt_resource_group_name \
-          -e ACR_NAME \
-          -e TF_VAR_acr_name \
-          -e TF_VAR_aad_tenant_id \
-          -e TF_VAR_api_client_id \
-          -e TF_VAR_api_client_secret \
-          -e TF_VAR_arm_subscription_id="${{ inputs.ARM_SUBSCRIPTION_ID }}" \
-          -e TF_VAR_swagger_ui_client_id \
-          -e TF_VAR_core_address_space \
-          -e TF_VAR_tre_address_space \
-          -e API_CLIENT_ID \
-          -e AAD_TENANT_ID \
-          -e TRE_ID \
-          -e TF_VAR_tre_id \
-          -e TRE_URL \
-          -e TEST_WORKSPACE_APP_ID \
-          -e TEST_WORKSPACE_APP_SECRET \
-          -e TEST_APP_ID \
-          -e TEST_ACCOUNT_CLIENT_ID \
-          -e TEST_ACCOUNT_CLIENT_SECRET \
-          -e IS_API_SECURED \
+          -e ARM_CLIENT_ID="${{ fromJSON(inputs.AZURE_CREDENTIALS).clientId }}" \
+          -e ARM_CLIENT_SECRET="${{ fromJSON(inputs.AZURE_CREDENTIALS).clientSecret }}" \
+          -e ARM_TENANT_ID="${{ fromJSON(inputs.AZURE_CREDENTIALS).tenantId }}" \
+          -e ARM_SUBSCRIPTION_ID="${{ fromJSON(inputs.AZURE_CREDENTIALS).subscriptionId }}" \
+          -e TF_VAR_terraform_state_container_name="${{ (inputs.TERRAFORM_STATE_CONTAINER_NAME != ''
+            && inputs.TERRAFORM_STATE_CONTAINER_NAME) || 'tfstate' }}" \
+          -e TF_VAR_mgmt_storage_account_name="${{ inputs.MGMT_STORAGE_ACCOUNT_NAME }}" \
+          -e TF_VAR_mgmt_resource_group_name="${{ inputs.MGMT_RESOURCE_GROUP_NAME }}" \
+          -e ACR_NAME=${{ inputs.ACR_NAME }} \
+          -e TF_VAR_acr_name=${{ inputs.ACR_NAME }} \
+          -e TF_VAR_aad_tenant_id="${{ inputs.AAD_TENANT_ID }}" \
+          -e TF_VAR_api_client_id="${{ inputs.API_CLIENT_ID }}" \
+          -e TF_VAR_api_client_secret="${{ inputs.API_CLIENT_SECRET }}" \
+          -e TF_VAR_application_admin_client_id="${{ inputs.APPLICATION_ADMIN_CLIENT_ID }}" \
+          -e TF_VAR_application_admin_client_secret="${{ inputs.APPLICATION_ADMIN_CLIENT_SECRET }}" \
+          -e TF_VAR_arm_subscription_id="${{ fromJSON(inputs.AZURE_CREDENTIALS).subscriptionId }}" \
+          -e TF_VAR_enable_swagger="${{ (inputs.ENABLE_SWAGGER != ''
+            && inputs.ENABLE_SWAGGER) || 'false' }}" \
+          -e SWAGGER_UI_CLIENT_ID="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
+          -e TF_VAR_swagger_ui_client_id="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
+          -e TF_VAR_core_address_space="${{ (inputs.CORE_ADDRESS_SPACE != ''
+            && inputs.CORE_ADDRESS_SPACE) || '10.0.0.0/22' }}" \
+          -e TF_VAR_tre_address_space="${{ (inputs.TRE_ADDRESS_SPACE != ''
+            && inputs.TRE_ADDRESS_SPACE) || '10.0.0.0/16' }}" \
+          -e API_CLIENT_ID="${{ inputs.API_CLIENT_ID }}" \
+          -e AAD_TENANT_ID="${{ inputs.AAD_TENANT_ID }}" \
+          -e TRE_ID="${{ inputs.TRE_ID }}" \
+          -e TF_VAR_tre_id="${{ inputs.TRE_ID }}" \
+          -e TRE_URL="${{ env.TRE_URL }}" \
+          -e TEST_WORKSPACE_APP_ID="${{ inputs.TEST_WORKSPACE_APP_ID }}" \
+          -e TEST_WORKSPACE_APP_SECRET="${{ inputs.TEST_WORKSPACE_APP_SECRET }}" \
+          -e TEST_APP_ID="${{ inputs.TEST_APP_ID }}" \
+          -e TEST_ACCOUNT_CLIENT_ID="${{ inputs.TEST_ACCOUNT_CLIENT_ID }}" \
+          -e TEST_ACCOUNT_CLIENT_SECRET="${{ inputs.TEST_ACCOUNT_CLIENT_SECRET }}" \
+          -e IS_API_SECURED=${{ inputs.IS_API_SECURED }} \
           -e DOCKER_BUILDKIT=1 \
-          -e TF_VAR_keyvault_purge_protection_enabled=${{ inputs.TF_VAR_keyvault_purge_protection_enabled }} \
-          -e TF_VAR_stateful_resources_locked=${{ inputs.TF_VAR_stateful_resources_locked }} \
+          -e TF_VAR_stateful_resources_locked=${{ inputs.STATEFUL_RESOURCES_LOCKED }} \
+          -e TF_VAR_enable_airlock_malware_scanning=${{ inputs.ENABLE_AIRLOCK_MALWARE_SCANNING }} \
           -e CI_CACHE_ACR_NAME="${{ inputs.CI_CACHE_ACR_NAME }}" \
-          '${{ inputs.ACTIONS_ACR_URI }}tredev:${{ inputs.ACTIONS_DEVCONTAINER_TAG }}' \
+          -e TF_VAR_core_app_service_plan_sku="${{ (inputs.CORE_APP_SERVICE_PLAN_SKU != ''
+            && inputs.CORE_APP_SERVICE_PLAN_SKU) || 'P1v2' }}" \
+          -e WORKSPACE_APP_SERVICE_PLAN_SKU="${{ (inputs.WORKSPACE_APP_SERVICE_PLAN_SKU != ''
+            && inputs.WORKSPACE_APP_SERVICE_PLAN_SKU) || 'P1v2' }}" \
+          -e TF_VAR_rp_bundle_values='${{ (toJson(inputs.RP_BUNDLE_VALUES) != '""'
+            && inputs.RP_BUNDLE_VALUES) || '{}' }}' \
+          -e TF_VAR_resource_processor_number_processes_per_instance="${{ (inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE != ''
+            && inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE) || 5 }}" \
+          -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
+          '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"

@@ -1,0 +1,78 @@
+---
+# After you have replaced all the __CHANGE_ME__ values in this file, you need to
+# run `make auth` to setup the Auth.
+tre_id: __CHANGE_ME__
+location: __CHANGE_ME__
+management:
+  mgmt_resource_group_name: __CHANGE_ME__
+  mgmt_storage_account_name: __CHANGE_ME__
+  terraform_state_container_name: tfstate
+  acr_name: __CHANGE_ME__
+  # Azure Resource Manager credentials used for CI/CD pipelines
+  arm_subscription_id: __CHANGE_ME__
+
+  # If you want to override the currently signed in credentials
+  # You would do this if running commands like `make terraform-install DIR=./templates/workspaces/base`
+  # arm_tenant_id: __CHANGE_ME__
+  # arm_client_id: __CHANGE_ME__
+  # arm_client_secret: __CHANGE_ME__
+
+tre:
+  # If your local machine/build agent cannot get the public IP
+  # address from https://ipecho.net/plain, then you can circumvent
+  # this by setting this Environment variable. This blockage can
+  # be caused by trying to deploy TRE in an Office environment where
+  # this website is blocked. This value is the public facing IP
+  # address of the deploying machine.
+  # public_deployment_ip_address: __CHANGE_ME__
+  core_address_space: 10.1.0.0/22
+  tre_address_space: 10.0.0.0/12
+
+  core_app_service_plan_sku: P1v2
+  resource_processor_vmss_sku: Standard_B2s
+  enable_swagger: true
+  enable_airlock_malware_scanning: false
+
+  # TODO: move to RP default with https://github.com/microsoft/AzureTRE/issues/2948
+  workspace_app_service_plan_sku: P1v2
+  # The TRE Web UI is deployed by default.
+  # Uncomment the following to disable deployment of the Web UI.
+  # deploy_ui: false
+  # If you want to use TRE_URL to point to your local TRE API instance or be configured to another cloud provider
+  # uncomment and set this variable
+  # tre_url: __CHANGE_ME__
+
+authentication:
+  aad_tenant_id: __CHANGE_ME__
+  # Setting AUTO_WORKSPACE_APP_REGISTRATION to false will:
+  # create an identity with `Application.ReadWrite.OwnedBy`.
+  # Setting AUTO_WORKSPACE_APP_REGISTRATION to true will:
+  # create an identity with `Application.ReadWrite.All` and `Directory.Read.All`.
+  # When this is true, create Workspaces will also create an AAD Application automatically.
+  # When this is false, the AAD Application will need creating manually.
+  auto_workspace_app_registration: true
+  # Setting AUTO_WORKSPACE_GROUP_CREATION to true will create an identity with `Group.ReadWrite.All`
+  auto_workspace_group_creation: false
+
+resource_processor:
+  # The number of processes to start in the resource processor VMSS image
+  resource_processor_number_processes_per_instance: 5
+
+# This setting provides a way to pass environment values to the resource processor
+# to use as a source of bundle parameter values
+# For example, to specify your image_gallery_id for use in VM user resources with custom VM images:
+# yamllint disable-line rule:line-length
+#  rp_bundle_values: '{"custom_key_1":"custom_value_1","image_gallery_id":"/subscriptions/<subscription-id>/resourceGroups/<your-rg>/providers/Microsoft.Compute/galleries/<your-gallery-name>"}'
+
+developer_settings:
+  # Locks will not be added to stateful resources so they can be easily removed
+  # stateful_resources_locked: false
+
+
+# This setting will enable your local machine to be able to
+# communicate with Service Bus and Cosmos. It will also allow deploying
+# the base workspace.
+#  enable_local_debugging: true
+
+# Used by the API and Resource processor application to change log level
+#  debug: true

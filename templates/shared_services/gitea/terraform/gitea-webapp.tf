@@ -10,22 +10,24 @@ resource "random_password" "gitea_passwd" {
 resource "azurerm_user_assigned_identity" "gitea_id" {
   resource_group_name = local.core_resource_group_name
   location            = data.azurerm_resource_group.rg.location
+  tags                = local.tre_shared_service_tags
 
   name = "id-gitea-${var.tre_id}"
 
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_app_service" "gitea" {
+resource "azurerm_linux_web_app" "gitea" {
   name                            = local.webapp_name
   resource_group_name             = local.core_resource_group_name
   location                        = data.azurerm_resource_group.rg.location
-  app_service_plan_id             = data.azurerm_app_service_plan.core.id
+  service_plan_id                 = data.azurerm_service_plan.core.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.gitea_id.id
+  virtual_network_subnet_id       = data.azurerm_subnet.web_app.id
+  tags                            = local.tre_shared_service_tags
 
   app_settings = {
-    APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
     WEBSITES_PORT                       = "3000"
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
 
@@ -58,27 +60,16 @@ resource "azurerm_app_service" "gitea" {
   }
 
   site_config {
-    linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/gitea:${local.version}"
-    remote_debugging_enabled             = false
-    scm_use_main_ip_restriction          = true
-    acr_use_managed_identity_credentials = true
-    acr_user_managed_identity_client_id  = azurerm_user_assigned_identity.gitea_id.client_id
-    ftps_state                           = "Disabled"
-    websockets_enabled                   = false
-    always_on                            = true
-    min_tls_version                      = "1.2"
-    vnet_route_all_enabled               = true
+    container_registry_use_managed_identity       = true
+    container_registry_managed_identity_client_id = azurerm_user_assigned_identity.gitea_id.client_id
+    ftps_state                                    = "Disabled"
+    always_on                                     = true
+    minimum_tls_version                           = "1.2"
+    vnet_route_all_enabled                        = true
 
-    cors {
-      allowed_origins     = []
-      support_credentials = false
-    }
-
-    ip_restriction {
-      action     = "Deny"
-      ip_address = "0.0.0.0/0"
-      name       = "Deny all"
-      priority   = 2147483647
+    application_stack {
+      docker_image     = "${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/gitea"
+      docker_image_tag = local.version
     }
   }
 
@@ -86,11 +77,9 @@ resource "azurerm_app_service" "gitea" {
     name         = "gitea-data"
     type         = "AzureFiles"
     account_name = data.azurerm_storage_account.gitea.name
-
-    access_key = data.azurerm_storage_account.gitea.primary_access_key
-    share_name = azurerm_storage_share.gitea.name
-
-    mount_path = "/data"
+    access_key   = data.azurerm_storage_account.gitea.primary_access_key
+    share_name   = azurerm_storage_share.gitea.name
+    mount_path   = "/data"
   }
 
   logs {
@@ -116,109 +105,38 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   resource_group_name = local.core_resource_group_name
   location            = data.azurerm_resource_group.rg.location
   subnet_id           = data.azurerm_subnet.shared.id
+  tags                = local.tre_shared_service_tags
 
   private_service_connection {
-    private_connection_resource_id = azurerm_app_service.gitea.id
+    private_connection_resource_id = azurerm_linux_web_app.gitea.id
     name                           = "psc-${local.webapp_name}"
     subresource_names              = ["sites"]
     is_manual_connection           = false
   }
 
   private_dns_zone_group {
-    name                 = "privatelink.azurewebsites.net"
+    name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurewebsites.net"]
     private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
 
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_app_service_virtual_network_swift_connection" "gitea-integrated-vnet" {
-  app_service_id = azurerm_app_service.gitea.id
-  subnet_id      = data.azurerm_subnet.web_app.id
-}
-
 resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
   name                       = "diag-${var.tre_id}"
-  target_resource_id         = azurerm_app_service.gitea.id
+  target_resource_id         = azurerm_linux_web_app.gitea.id
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
-  log {
-    category = "AppServiceHTTPLogs"
-    enabled  = true
+  dynamic "log" {
+    for_each = data.azurerm_monitor_diagnostic_categories.webapp.log_category_types
+    content {
+      category = log.value
+      enabled  = contains(local.webapp_diagnostic_categories_enabled, log.value) ? true : false
 
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceConsoleLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAppLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceFileAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceIPSecAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServicePlatformLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAntivirusScanAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
+      retention_policy {
+        enabled = contains(local.webapp_diagnostic_categories_enabled, log.value) ? true : false
+        days    = 365
+      }
     }
   }
 
@@ -227,7 +145,8 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
     enabled  = true
 
     retention_policy {
-      enabled = false
+      enabled = true
+      days    = 365
     }
   }
 }
@@ -244,6 +163,7 @@ resource "azurerm_key_vault_secret" "gitea_password" {
   name         = "${local.webapp_name}-administrator-password"
   value        = random_password.gitea_passwd.result
   key_vault_id = data.azurerm_key_vault.keyvault.id
+  tags         = local.tre_shared_service_tags
 
   depends_on = [
     azurerm_key_vault_access_policy.gitea_policy

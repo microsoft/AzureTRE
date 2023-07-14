@@ -1,8 +1,8 @@
 {
-  "schemaVersion": "1.0.0-DRAFT+b6c701f",
+  "schemaType": "CredentialSet",
+  "schemaVersion": "1.0.1",
+  "namespace": "",
   "name": "aad_auth",
-  "created": "2022-03-29T20:35:53.517982Z",
-  "modified": "2022-03-29T20:35:53.517982Z",
   "credentials": [
     {
       "name": "auth_tenant_id",
@@ -13,13 +13,13 @@
     {
       "name": "auth_client_id",
       "source": {
-        "env": "API_CLIENT_ID"
+        "env": "APPLICATION_ADMIN_CLIENT_ID"
       }
     },
     {
       "name": "auth_client_secret",
       "source": {
-        "env": "API_CLIENT_SECRET"
+        "env": "APPLICATION_ADMIN_CLIENT_SECRET"
       }
     }
   ]

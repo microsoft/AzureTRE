@@ -26,4 +26,5 @@ When deploying a Guacamole service into a workspace the following properties nee
 | `guac_disable_paste` | `true`/`false` (Default: `false`) | Disable Paste functionality" |
 | `guac_enable_drive` | `true`/`false` (Default: `true`) | Enable mounted drive |
 | `guac_disable_download` | `true`/`false` (Default: `true`) | Disable files download |
+| `guac_disable_upload` | `true`/`false` (Default: `true`) | Disable files upload |
 | `is_exposed_externally` | `true`/`false` (Default: `true`) | Is the Guacamole service exposed outside of the vnet |

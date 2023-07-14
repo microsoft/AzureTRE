@@ -386,6 +386,32 @@ describe('getCommandFromComment', () => {
         });
       });
 
+      describe(`for '/test-extended-aad'`, () => {
+        test(`should set command to 'run-tests-extended-aad'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended-aad',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-extended-aad');
+        });
+
+        test(`should add comment with run link`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended-aad',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /Running extended AAD tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `cbce50da`\)/,
+          });
+        });
+      });
+
       describe(`for '/test-shared-services'`, () => {
         test(`should set command to 'run-tests-shared-services'`, async () => {
           const context = createCommentContext({

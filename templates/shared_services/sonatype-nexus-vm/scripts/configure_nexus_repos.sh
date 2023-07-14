@@ -49,3 +49,13 @@ for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
       fi
     done
 done
+
+# Configure realms required for repo authentication
+echo 'Configuring realms...'
+status_code=$(curl -iu admin:"$1" -XPUT \
+  'http://localhost/service/rest/v1/security/realms/active' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d @"$(dirname "${BASH_SOURCE[0]}")"/nexus_realms_config.json \
+  -k -s -w "%{http_code}" -o /dev/null)
+echo "Response received from Nexus: $status_code"

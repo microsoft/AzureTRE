@@ -1,9 +1,6 @@
 variable "workspace_id" {}
+variable "aad_authority_url" {}
 variable "tre_id" {}
-variable "arm_client_id" {}
-variable "arm_client_secret" {}
-variable "arm_tenant_id" {}
-variable "arm_use_msi" {}
 variable "mgmt_resource_group_name" {}
 variable "mgmt_acr_name" {}
 variable "image_name" {}
@@ -14,6 +11,7 @@ variable "guac_enable_drive" {}
 variable "guac_drive_name" {}
 variable "guac_drive_path" {}
 variable "guac_disable_download" {}
+variable "guac_disable_upload" {}
 variable "is_exposed_externally" {}
 variable "tre_resource_id" {}
-variable "workspace_identifier_uri" {}
+variable "arm_environment" {}

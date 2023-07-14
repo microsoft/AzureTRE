@@ -4,6 +4,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
   private_dns_zone_name = data.azurerm_private_dns_zone.azurewebsites.name
   virtual_network_id    = azurerm_virtual_network.ws.id
   registration_enabled  = false
+  tags                  = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -13,6 +14,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "filecorelink" {
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.filecore.name
   virtual_network_id    = azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -22,6 +24,17 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blobcorelink" {
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.blobcore.name
   virtual_network_id    = azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "dfscorelink" {
+  name                  = "dfscorelink-${local.workspace_resource_name_suffix}"
+  resource_group_name   = local.core_resource_group_name
+  private_dns_zone_name = data.azurerm_private_dns_zone.dfscore.name
+  virtual_network_id    = azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -31,6 +44,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "vaultcorelink" {
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.vaultcore.name
   virtual_network_id    = azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -40,6 +54,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurecrlink" {
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.azurecr.name
   virtual_network_id    = azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -49,6 +64,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azuremllink" {
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.azureml.name
   virtual_network_id    = azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -58,6 +74,27 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azuremlcertlink" {
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.azuremlcert.name
   virtual_network_id    = azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "healthlink" {
+  name                  = "healthlink-${local.workspace_resource_name_suffix}"
+  resource_group_name   = local.core_resource_group_name
+  private_dns_zone_name = data.azurerm_private_dns_zone.health.name
+  virtual_network_id    = azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "dicomlink" {
+  name                  = "dicomlink-${local.workspace_resource_name_suffix}"
+  resource_group_name   = local.core_resource_group_name
+  private_dns_zone_name = data.azurerm_private_dns_zone.dicom.name
+  virtual_network_id    = azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -67,6 +104,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "notebookslink" {
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.notebooks.name
   virtual_network_id    = azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -76,6 +114,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "mysqllink" {
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.mysql.name
   virtual_network_id    = azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -85,6 +124,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "postgreslink" {
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.postgres.name
   virtual_network_id    = azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -94,6 +134,17 @@ resource "azurerm_private_dns_zone_virtual_network_link" "nexuslink" {
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.nexus.name
   virtual_network_id    = azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "databrickslink" {
+  name                  = "databrickslink-${local.workspace_resource_name_suffix}"
+  resource_group_name   = local.core_resource_group_name
+  private_dns_zone_name = data.azurerm_private_dns_zone.databricks.name
+  virtual_network_id    = azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }

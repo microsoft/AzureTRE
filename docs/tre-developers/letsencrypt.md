@@ -48,5 +48,4 @@ flowchart RL
     B --> |6. Acquires certificate  | A
     A --> |7. Stores Certificate    | E
     F --> |8. Pulls Certificate     | E
-      
-  ```
+```

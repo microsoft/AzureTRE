@@ -1,6 +1,6 @@
 # Maintainers
 
-This document is targetted at maintainers of the AzureTRE project.
+This document is targeted at maintainers of the AzureTRE project.
 For information on developing and contributing to AzureTRE, see the [TRE Developers docs](https://microsoft.github.io/AzureTRE/tre-developers/)
 
 ## PR Comment bot commands
@@ -35,7 +35,7 @@ Check for changes to anything that is run during the build/deploy/test cycle, in
 - modifications to scripts
 - new python packages being installed
 
-### `/test-extended [<sha>]` / `/test-shared-services [<sha>]`
+### `/test-extended [<sha>]` / `/test-extended-aad [<sha>]`/ `/test-shared-services [<sha>]`
 
 This command runs the build, deploy, and smoke & extended / shared services tests for a PR.
 
@@ -55,7 +55,7 @@ Before running tests on a PR, run the same checks on the PR code as for `/test`.
 
 When running `/test` multiple times on a PR, the same TRE ID and environment are used by default. The `/test-destroy-env` command destroys a previously created validation environment, allowing you to re-run `/test` with a clean starting point.
 
-The `/test-destroy-env` command also destroys the environmnent associated with the PR branch (created by running the `deploy_tre_branch` workflow).
+The `/test-destroy-env` command also destroys the environment associated with the PR branch (created by running the `deploy_tre_branch` workflow).
 
 ### `/test-force-approve`
 
@@ -66,3 +66,11 @@ This is intended to be used in scenarios where running the tests for a PR doesn'
 ## Granting access to run commands
 
 Currently, the GitHub API to determine whether a user is a collaborator doesn't seem to respect permissions that a user is granted via a group. As a result, users need to be directly granted `write` permission in the repo to be able to run the comment bot commands.
+
+## Periodic tasks
+
+### [quarterly] Upgrade bundles' Terraform providers
+
+Each bundle is using Terraform providers to deploy itself. The providers are set with specific versions for stability and consistency between builds.
+
+This, however, requires us to manually update them by referencing newer versions in the provider blocks and associated lock files (`devops/scripts/upgrade_lock_files.sh` can help).

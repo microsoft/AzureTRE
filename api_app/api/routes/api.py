@@ -1,15 +1,16 @@
 from collections import defaultdict
 from typing import Any, DefaultDict, Dict, Optional
 
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException, status
 from fastapi.openapi.docs import get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
 from fastapi.openapi.utils import get_openapi
 
 from api.dependencies.database import get_repository
 from db.repositories.workspaces import WorkspaceRepository
-from api.routes import health, workspaces, workspace_templates, workspace_service_templates, user_resource_templates, \
-    shared_services, shared_service_templates, migrations
+from api.routes import health, ping, workspaces, workspace_templates, workspace_service_templates, user_resource_templates, \
+    shared_services, shared_service_templates, migrations, costs, airlock, operations, metadata
 from core import config
+from resources import strings
 
 core_tags_metadata = [
     {"name": "health", "description": "Verify that the TRE is up and running"},
@@ -26,21 +27,31 @@ workspace_tags_metadata = [
     {"name": "shared services", "description": "**TRE administratiors** administer shared services"},
 ]
 
+# Root
 router = APIRouter()
+router.include_router(health.router, tags=["health"])
+router.include_router(ping.router, tags=["health"])
+router.include_router(metadata.router, tags=["metadata"])
 
 # Core API
 core_router = APIRouter(prefix=config.API_PREFIX)
 core_router.include_router(health.router, tags=["health"])
+core_router.include_router(ping.router, tags=["health"])
+core_router.include_router(metadata.router, tags=["metadata"])
 core_router.include_router(workspace_templates.workspace_templates_admin_router, tags=["workspace templates"])
 core_router.include_router(workspace_service_templates.workspace_service_templates_core_router, tags=["workspace service templates"])
 core_router.include_router(user_resource_templates.user_resource_templates_core_router, tags=["user resource templates"])
 core_router.include_router(shared_service_templates.shared_service_templates_core_router, tags=["shared service templates"])
 core_router.include_router(shared_services.shared_services_router, tags=["shared services"])
+core_router.include_router(operations.operations_router, tags=["operations"])
 core_router.include_router(workspaces.workspaces_core_router, tags=["workspaces"])
 core_router.include_router(workspaces.workspaces_shared_router, tags=["workspaces"])
 core_router.include_router(migrations.migrations_core_router, tags=["migrations"])
+core_router.include_router(costs.costs_core_router, tags=["costs"])
+core_router.include_router(costs.costs_workspace_router, tags=["costs"])
 
 core_swagger_router = APIRouter()
+swagger_disabled_router = APIRouter()
 
 openapi_definitions: DefaultDict[str, Optional[Dict[str, Any]]] = defaultdict(lambda: None)
 
@@ -61,6 +72,11 @@ async def core_openapi(request: Request):
     return openapi_definitions["core"]
 
 
+@core_swagger_router.get('/docs/oauth2-redirect', include_in_schema=False)
+async def swagger_ui_redirect():
+    return get_swagger_ui_oauth2_redirect_html()
+
+
 @core_swagger_router.get("/docs", include_in_schema=False, name="core_swagger")
 async def get_swagger(request: Request):
     swagger_ui_html = get_swagger_ui_html(
@@ -70,32 +86,33 @@ async def get_swagger(request: Request):
         init_oauth={
             "usePkceWithAuthorizationCodeGrant": True,
             "clientId": config.SWAGGER_UI_CLIENT_ID,
-            "scopes": ["openid", "offline_access", f"api://{config.API_CLIENT_ID}/user_impersonation"]
+            "scopes": ["openid", "offline_access", config.API_ROOT_SCOPE]
         }
     )
 
     return swagger_ui_html
 
 
-@core_swagger_router.get('/docs/oauth2-redirect', include_in_schema=False)
-async def swagger_ui_redirect():
-    return get_swagger_ui_oauth2_redirect_html()
+@swagger_disabled_router.get("/docs", include_in_schema=False, name="swagger_disabled")
+async def get_disabled_swagger():
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.SWAGGER_DISABLED)
 
-core_router.include_router(core_swagger_router)
-router.include_router(core_router)
 
 # Workspace API
 workspace_router = APIRouter(prefix=config.API_PREFIX)
 workspace_router.include_router(workspaces.workspaces_shared_router, tags=["workspaces"])
 workspace_router.include_router(workspaces.workspace_services_workspace_router, tags=["workspace services"])
 workspace_router.include_router(workspaces.user_resources_workspace_router, tags=["user resources"])
+workspace_router.include_router(costs.costs_workspace_router, tags=["workspace costs"])
+workspace_router.include_router(airlock.airlock_workspace_router, tags=["airlock"])
 
 workspace_swagger_router = APIRouter()
+workspace_swagger_disabled_router = APIRouter()
 
 
 def get_scope(workspace) -> str:
     # Cope with the fact that scope id can have api:// at the front.
-    return f"api://{workspace.properties['scope_id'].lstrip('api://')}/user_impersonation"
+    return f"api://{workspace.properties['scope_id'].replace('api://','')}/user_impersonation"
 
 
 @workspace_swagger_router.get("/workspaces/{workspace_id}/openapi.json", include_in_schema=False, name="openapi_definitions")
@@ -112,7 +129,7 @@ async def get_openapi_json(workspace_id: str, request: Request, workspace_repo=D
             tags=workspace_tags_metadata
         )
 
-        workspace = workspace_repo.get_workspace_by_id(workspace_id)
+        workspace = await workspace_repo.get_workspace_by_id(workspace_id)
         scope = {get_scope(workspace): "List and Get TRE Workspaces"}
 
         openapi_definitions[workspace_id]['components']['securitySchemes']['oauth2']['flows']['authorizationCode']['scopes'] = scope
@@ -131,7 +148,7 @@ async def get_openapi_json(workspace_id: str, request: Request, workspace_repo=D
 @workspace_swagger_router.get("/workspaces/{workspace_id}/docs", include_in_schema=False, name="workspace_swagger")
 async def get_workspace_swagger(workspace_id, request: Request, workspace_repo=Depends(get_repository(WorkspaceRepository))):
 
-    workspace = workspace_repo.get_workspace_by_id(workspace_id)
+    workspace = await workspace_repo.get_workspace_by_id(workspace_id)
     scope = get_scope(workspace)
     swagger_ui_html = get_swagger_ui_html(
         openapi_url="openapi.json",
@@ -146,5 +163,18 @@ async def get_workspace_swagger(workspace_id, request: Request, workspace_repo=D
 
     return swagger_ui_html
 
-workspace_router.include_router(workspace_swagger_router)
+
+@workspace_swagger_disabled_router.get("/workspaces/{workspace_id}/docs", include_in_schema=False, name="workspace_swagger_disabled")
+async def get_disabled_workspace_swagger():
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.SWAGGER_DISABLED)
+
+
+if config.ENABLE_SWAGGER:
+    core_router.include_router(core_swagger_router)
+    workspace_router.include_router(workspace_swagger_router)
+else:
+    core_router.include_router(swagger_disabled_router)
+    workspace_router.include_router(workspace_swagger_disabled_router)
+
+router.include_router(core_router)
 router.include_router(workspace_router)

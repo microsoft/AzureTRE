@@ -1,0 +1,26 @@
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "name": "msg",
+      "type": "serviceBusTrigger",
+      "direction": "in",
+      "queueName": "%AIRLOCK_STATUS_CHANGED_QUEUE_NAME%",
+      "connection": "SB_CONNECTION_STRING"
+    },
+    {
+      "type": "eventGrid",
+      "name": "stepResultEvent",
+      "topicEndpointUri": "EVENT_GRID_STEP_RESULT_TOPIC_URI_SETTING",
+      "topicKeySetting": "EVENT_GRID_STEP_RESULT_TOPIC_KEY_SETTING",
+      "direction": "out"
+    },
+    {
+      "type": "eventGrid",
+      "name": "dataDeletionEvent",
+      "topicEndpointUri": "EVENT_GRID_DATA_DELETION_TOPIC_URI_SETTING",
+      "topicKeySetting": "EVENT_GRID_DATA_DELETION_TOPIC_KEY_SETTING",
+      "direction": "out"
+    }
+  ]
+}

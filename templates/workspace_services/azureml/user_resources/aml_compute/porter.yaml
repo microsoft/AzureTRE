@@ -1,11 +1,14 @@
 ---
+schemaVersion: 1.0.0
 name: tre-user-resource-aml-compute-instance
-version: 0.3.0
+version: 0.5.4
 description: "Azure Machine Learning Compute Instance"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
 
 credentials:
+  - name: auth_tenant_id
+    env: AUTH_TENANT_ID
   - name: azure_tenant_id
     env: ARM_TENANT_ID
   - name: azure_subscription_id
@@ -26,9 +29,7 @@ parameters:
     type: string
   - name: vm_size
     type: string
-    default: 'Standard_DS2_v3'
-  - name: auth_tenant_id
-    type: string
+    default: "Standard_DS2_v3"
   - name: user_object_id
     type: string
   - name: tfstate_resource_group_name
@@ -46,42 +47,67 @@ parameters:
     env: TERRAFORM_STATE_CONTAINER_NAME
   - name: arm_use_msi
     env: ARM_USE_MSI
+    type: boolean
     default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+    type: string
+    default: "public"
 
 mixins:
   - exec
-  - az
+  - az:
+      clientVersion: 2.37.0
   - terraform:
-      clientVersion: 1.0.5
-
+      clientVersion: 1.3.6
 
 install:
   - terraform:
       description: "Deploy service"
       vars:
-        workspace_id: "{{ bundle.parameters.workspace_id }}"
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        parent_service_id: "{{ bundle.parameters.parent_service_id }}"
-        vm_size_sku: "{{ bundle.parameters.vm_size }}"
-        auth_tenant_id: "{{ bundle.parameters.auth_tenant_id }}"
-        user_object_id: "{{ bundle.parameters.user_object_id }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        parent_service_id: ${ bundle.parameters.parent_service_id }
+        vm_size_sku: ${ bundle.parameters.vm_size }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        user_object_id: ${ bundle.parameters.user_object_id }
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "tre-user-resource-aml-compute-instance-{{ bundle.parameters.id }}"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-user-resource-aml-compute-instance-${ bundle.parameters.id }
 
+upgrade:
+  - terraform:
+      description: "Deploy service"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        parent_service_id: ${ bundle.parameters.parent_service_id }
+        vm_size_sku: ${ bundle.parameters.vm_size }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        user_object_id: ${ bundle.parameters.user_object_id }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-user-resource-aml-compute-instance-${ bundle.parameters.id }
 
 uninstall:
-  - exec:
-      description: "Delete AML Compute Instance"
-      command: echo
-      arguments:
-        - "This service does not implement uninstall action"
+  - terraform:
+      description: "Uninstall service"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        parent_service_id: ${ bundle.parameters.parent_service_id }
+        vm_size_sku: ${ bundle.parameters.vm_size }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        user_object_id: ${ bundle.parameters.user_object_id }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-user-resource-aml-compute-instance-${ bundle.parameters.id }

@@ -1,6 +1,7 @@
 ---
 #cloud-config
 package_upgrade: true
+package_update: true
 apt:
   sources:
     docker.list:
@@ -40,7 +41,7 @@ runcmd:
   # Give the Nexus process write permissions on the folder mounted as persistent volume
   - chown -R 200 /etc/nexus-data
   # Run the nexus container with mapped volume for nexus config
-  - docker run -d -p 80:8081 -p 443:8443 -v /etc/nexus-data:/nexus-data
+  - docker run -d -p 80:8081 -p 443:8443 -p 8083:8083 -v /etc/nexus-data:/nexus-data
     --restart always
     --name nexus
     --log-driver local

@@ -1,8 +1,8 @@
 {
-  "schemaVersion": "1.0.0-DRAFT+TODO",
-  "name": "avd-aad",
-  "created": "2021-06-03T11:54:54.0225968Z",
-  "modified": "2021-06-03T11:54:54.0225968Z",
+  "schemaType": "ParameterSet",
+  "schemaVersion": "1.0.1",
+  "namespace": "",
+  "name": "tre-user-resource-aml-compute-instance",
   "parameters": [
     {
       "name": "id",
@@ -35,12 +35,6 @@
       }
     },
     {
-      "name": "auth_tenant_id",
-      "source": {
-        "env": "AAD_TENANT_ID"
-      }
-    },
-    {
       "name": "user_object_id",
       "source": {
         "env": "USER_OBJECT_ID"
@@ -62,6 +56,12 @@
       "name": "tfstate_storage_account_name",
       "source": {
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
       }
     }
   ]

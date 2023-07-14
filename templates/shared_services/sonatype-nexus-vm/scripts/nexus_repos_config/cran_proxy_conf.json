@@ -1,0 +1,32 @@
+{
+  "name": "r-proxy",
+  "online": true,
+  "storage": {
+    "blobStoreName": "default",
+    "strictContentTypeValidation": true,
+    "write_policy": "ALLOW"
+  },
+  "proxy": {
+    "remoteUrl": "https://cran.r-project.org/",
+    "contentMaxAge": 1440,
+    "metadataMaxAge": 1440
+  },
+  "negativeCache": {
+    "enabled": true,
+    "timeToLive": 1440
+  },
+  "httpClient": {
+    "blocked": false,
+    "autoBlock": false,
+    "connection": {
+      "retries": 0,
+      "userAgentSuffix": "string",
+      "timeout": 60,
+      "enableCircularRedirects": false,
+      "enableCookies": false,
+      "useTrustStore": false
+    }
+  },
+  "baseType": "r",
+  "repoType": "proxy"
+}

@@ -1,10 +1,11 @@
 # Dev requirements
-flake8==3.9.2
-pre-commit==2.13.0
-semantic-version==2.9.0
+flake8==6.0.0 # same as super linter
+pre-commit==3.2.2
+semantic-version==2.10.0
 
 -r api_app/requirements.txt
 -r api_app/requirements-dev.txt
 -r resource_processor/vmss_porter/requirements.txt
 -r docs/requirements.txt
 -r e2e_tests/requirements.txt
+-r airlock_processor/requirements.txt

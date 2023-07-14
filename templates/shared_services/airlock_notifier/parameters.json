@@ -1,0 +1,92 @@
+{
+  "schemaType": "ParameterSet",
+  "schemaVersion": "1.0.1",
+  "namespace": "",
+  "name": "tre-shared-service-airlock-notifier",
+  "parameters": [
+    {
+      "name": "tre_id",
+      "source": {
+        "env": "TRE_ID"
+      }
+    },
+    {
+      "name": "tre_url",
+      "source": {
+        "env": "TRE_URL"
+      }
+    },
+    {
+      "name": "id",
+      "source": {
+        "env": "ID"
+      }
+    },
+    {
+      "name": "tfstate_container_name",
+      "source": {
+        "env": "TERRAFORM_STATE_CONTAINER_NAME"
+      }
+    },
+    {
+      "name": "tfstate_resource_group_name",
+      "source": {
+        "env": "MGMT_RESOURCE_GROUP_NAME"
+      }
+    },
+    {
+      "name": "tfstate_storage_account_name",
+      "source": {
+        "env": "MGMT_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "smtp_server_address",
+      "source": {
+        "env": "SMTP_SERVER_ADDRESS"
+      }
+    },
+    {
+      "name": "smtp_username",
+      "source": {
+        "env": "SMTP_USERNAME"
+      }
+    },
+    {
+      "name": "smtpPassword",
+      "source": {
+        "env": "SMTP_PASSWORD"
+      }
+    },
+    {
+      "name": "smtp_from_email",
+      "source": {
+        "env": "SMTP_FROM_EMAIL"
+      }
+    },
+    {
+      "name": "smtp_server_port",
+      "source": {
+        "env": "SMTP_SERVER_PORT"
+      }
+    },
+    {
+      "name": "smtp_server_enable_ssl",
+      "source": {
+        "env": "SMTP_SERVER_ENABLE_SSL"
+      }
+    },
+    {
+      "name": "azure_environment",
+      "source": {
+        "env": "AZURE_ENVIRONMENT"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
+      }
+    }
+  ]
+}

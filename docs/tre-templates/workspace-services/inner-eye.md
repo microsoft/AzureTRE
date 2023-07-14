@@ -45,9 +45,9 @@ This will provision Base Workspace, with AML service and InnerEye service, inclu
 1. Log onto a TREAdmin Jumpbox and mirror Github repos needed by InnerEye Helloworld:
 
     ```cmd
-    ./scripts/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/microsoft/InnerEye-DeepLearning
-    ./scripts/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/analysiscenter/radio
-    ./scripts/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/microsoft/InnerEye-Inference
+    ./templates/workspace_services/gitea/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/microsoft/InnerEye-DeepLearning
+    ./templates/workspace_services/gitea/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/analysiscenter/radio
+    ./templates/workspace_services/gitea/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/microsoft/InnerEye-Inference
     ```
 
 ### Setup the InnerEye run from AML Compute Instance

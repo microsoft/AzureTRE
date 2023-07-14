@@ -1,0 +1,365 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/databricks/template_schema.json",
+  "type": "object",
+  "title": "Azure Databricks",
+  "description": "Azure Databricks",
+  "required": [],
+  "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "default": "Azure Databricks",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "default": "Azure Databricks is a fast, easy, and collaborative Apache Spark-based big data analytics service designed for data science and data engineering.",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace Service Overview",
+      "description": "Long form description of the workspace service, in markdown syntax",
+      "default": "The Azure Databricks Lakehouse Platform provides a unified set of tools for building, deploying, sharing, and maintaining enterprise-grade data solutions at scale.\nAzure Databricks integrates with cloud storage and security in your cloud account, and manages and deploys cloud infrastructure on your behalf.\n[Azure Databricks documentation](https://learn.microsoft.com/en-us/azure/databricks/introduction/)",
+      "updateable": true
+    },
+    "is_exposed_externally": {
+      "$id": "#/properties/is_exposed_externally",
+      "type": "boolean",
+      "title": "Expose externally",
+      "description": "Is the Databricks workspace accessible from outside of the workspace network",
+      "default": false
+    },
+    "address_space": {
+      "$id": "#/properties/address_space",
+      "type": "string",
+      "title": "Address space",
+      "description": "The address space of the databricks subnets"
+    }
+  },
+  "uiSchema": {
+    "address_space": {
+      "classNames": "tre-hidden"
+    }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "12ba0dad-ea6c-4d0d-9255-daa6212f5ffa",
+        "stepTitle": "Upgrade to ensure aware of address space",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": []
+      },
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "7ec5fa90-23bd-4809-b0d7-2d32c94016b1",
+        "stepTitle": "Add firewall rules for databricks",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_databricks",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "databricks",
+                  "description": "Communication with Azure Databricks dependancies.",
+                  "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
+                  "destination_addresses": [ "AzureDatabricks"],
+                  "destination_ports": [
+                    "443"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "databricks-sql-metastore",
+                  "description": "Stores metadata for databases and child objects in a Azure Databricks workspace.",
+                  "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
+                  "destination_addresses": "{{ resource.properties.metastore_addresses }}",
+                  "destination_ports": [
+                    "3306"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "databricks-observability-eventhub",
+                  "description": "Transit for Azure Databricks on-cluster service specific telemetry.",
+                  "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
+                  "destination_addresses": "{{ resource.properties.event_hub_endpoint_addresses }}",
+                  "destination_ports": [
+                    "9093"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "AzureAD",
+                  "description": "AAD access",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "destination_addresses": ["AzureActiveDirectory"],
+                  "destination_ports": ["*"],
+                  "protocols": ["TCP"]
+                }
+              ]
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_databricks",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "databricks-spark-log-blob-storage",
+                  "description": "To store Azure Databricks audit and cluster logs (anonymized / masked) for support and troubleshooting.",
+                  "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
+                  "target_fqdns": "{{ resource.properties.log_blob_storage_domains }}",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                },
+                {
+                  "name": "databricks-artifact-blob-storage",
+                  "description": "Stores Databricks Runtime images to be deployed on cluster nodes.",
+                  "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
+                  "target_fqdns": "{{ resource.properties.artifact_blob_storage_domains }}",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                },
+                {
+                  "name": "databricks-dbfs",
+                  "description": "Azure Databricks workspace root storage.",
+                  "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
+                  "target_fqdns": [
+                    "{{ resource.properties.dbfs_blob_storage_domain }}"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                },
+                {
+                  "name": "AAD CDN",
+                  "description": "AAD CDN",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "target_fqdns": [
+                    "aadcdn.msftauth.net"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "12baaaad-ea6c-4d0d-9255-d316212f5ffa",
+        "stepTitle": "Upgrade to ensure aware of address space",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": []
+      },
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "260421b3-7308-491f-b531-e007cdc0aa46",
+        "stepTitle": "Add firewall rules for databricks",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_databricks",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "databricks",
+                  "description": "Communication with Azure Databricks dependancies.",
+                  "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
+                  "destination_addresses": [ "AzureDatabricks"],
+                  "destination_ports": [
+                    "443"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "databricks-sql-metastore",
+                  "description": "Stores metadata for databases and child objects in a Azure Databricks workspace.",
+                  "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
+                  "destination_addresses": "{{ resource.properties.metastore_addresses }}",
+                  "destination_ports": [
+                    "3306"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "databricks-observability-eventhub",
+                  "description": "Transit for Azure Databricks on-cluster service specific telemetry.",
+                  "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
+                  "destination_addresses": "{{ resource.properties.event_hub_endpoint_addresses }}",
+                  "destination_ports": [
+                    "9093"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "AzureAD",
+                  "description": "AAD access",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "destination_addresses": ["AzureActiveDirectory"],
+                  "destination_ports": ["*"],
+                  "protocols": ["TCP"]
+                }
+              ]
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_databricks",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "databricks-spark-log-blob-storage",
+                  "description": "To store Azure Databricks audit and cluster logs (anonymized / masked) for support and troubleshooting.",
+                  "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
+                  "target_fqdns": "{{ resource.properties.log_blob_storage_domains }}",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                },
+                {
+                  "name": "databricks-artifact-blob-storage",
+                  "description": "Stores Databricks Runtime images to be deployed on cluster nodes.",
+                  "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
+                  "target_fqdns": "{{ resource.properties.artifact_blob_storage_domains }}",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                },
+                {
+                  "name": "databricks-dbfs",
+                  "description": "Azure Databricks workspace root storage.",
+                  "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
+                  "target_fqdns": [
+                    "{{ resource.properties.dbfs_blob_storage_domain }}"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                },
+                {
+                  "name": "AAD CDN",
+                  "description": "AAD CDN",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "target_fqdns": [
+                    "aadcdn.msftauth.net"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "da2d99a3-3940-4dcc-a934-53535f2e2451",
+        "stepTitle": "Remove network firewall rules for databricks",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_databricks"
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_databricks"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ]
+  }
+}

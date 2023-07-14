@@ -1,8 +1,8 @@
 {
-  "schemaVersion": "1.0.0-DRAFT+TODO",
-  "name": "azureml",
-  "created": "2021-06-03T11:54:54.0225968Z",
-  "modified": "2021-06-03T11:54:54.0225968Z",
+  "schemaType": "ParameterSet",
+  "schemaVersion": "1.0.1",
+  "namespace": "",
+  "name": "tre-service-azureml",
   "parameters": [
     {
       "name": "workspace_id",
@@ -23,6 +23,30 @@
       }
     },
     {
+      "name": "display_name",
+      "source": {
+        "env": "DISPLAY_NAME"
+      }
+    },
+    {
+      "name": "description",
+      "source": {
+        "env": "DESCRIPTION"
+      }
+    },
+    {
+      "name": "address_space",
+      "source": {
+        "env": "ADDRESS_SPACE"
+      }
+    },
+    {
+      "name": "is_exposed_externally",
+      "source": {
+        "env": "IS_EXPOSED_EXTERNALLY"
+      }
+    },
+    {
       "name": "tfstate_container_name",
       "source": {
         "env": "TERRAFORM_STATE_CONTAINER_NAME"
@@ -38,6 +62,12 @@
       "name": "tfstate_storage_account_name",
       "source": {
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
       }
     }
   ]

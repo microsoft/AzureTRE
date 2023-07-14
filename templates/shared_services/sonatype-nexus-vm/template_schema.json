@@ -11,7 +11,152 @@
     "ssl_cert_name": {
       "type": "string",
       "title": "SSL certificate name",
-      "description": "The name of the certificate to use (located in the core KeyVault) for configuring Nexus SSL"
+      "description": "The name of the certificate to use (located in the core KeyVault) for configuring Nexus SSL",
+      "default": "nexus-ssl"
     }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "42024559-3a88-4518-b1ea-713aebc91cfd",
+        "stepTitle": "Add Nexus rule collection to firewall",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_nexus",
+              "rules": [
+                {
+                  "name": "vm-crl",
+                  "description": "CRLs for workspaces",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    },
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    }
+                  ],
+                  "target_fqdns": "{{ resource.properties.workspace_vm_allowed_fqdns_list }}",
+                  "source_addresses": [
+                    "*"
+                  ]
+                },
+                {
+                  "name": "nexus-package-sources",
+                  "description": "Nexus Package Sources",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    },
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    }
+                  ],
+                  "target_fqdns": "{{ resource.properties.nexus_allowed_fqdns_list }}",
+                  "source_addresses": "{{ resource.properties.private_ip_addresses }}"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "a794e818-0807-4012-90be-3e78f530383c",
+        "stepTitle": "Update Nexus rule collection in firewall",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_nexus",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "vm-crl",
+                  "description": "CRLs for workspaces",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    },
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    }
+                  ],
+                  "target_fqdns": "{{ resource.properties.workspace_vm_allowed_fqdns_list }}",
+                  "source_addresses": [
+                    "*"
+                  ]
+                },
+                {
+                  "name": "nexus-package-sources",
+                  "description": "Nexus Package Sources",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    },
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    }
+                  ],
+                  "target_fqdns": "{{ resource.properties.nexus_allowed_fqdns_list }}",
+                  "source_addresses": "{{ resource.properties.private_ip_addresses }}"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "c3f95f9f-d125-4937-9403-84e4957a26b8",
+        "stepTitle": "Remove Nexus rule collection from firewall",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_nexus"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ]
   }
 }

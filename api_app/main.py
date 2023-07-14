@@ -1,11 +1,13 @@
+import asyncio
 import logging
-import os
 from opencensus.ext.azure.trace_exporter import AzureExporter
 import uvicorn
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi_utils.tasks import repeat_every
+from service_bus.airlock_request_status_update import receive_step_result_message_and_update_status
 
 from services.tracing import RequestTracerMiddleware
 from opencensus.trace.samplers import ProbabilitySampler
@@ -19,8 +21,8 @@ from api.errors.validation_error import http422_error_handler
 from api.errors.generic_error import generic_error_handler
 from core import config
 from core.events import create_start_app_handler, create_stop_app_handler
-from services.logging import disable_unwanted_loggers, initialize_logging
-from service_bus.deployment_status_update import receive_message_and_update_deployment
+from services.logging import disable_unwanted_loggers, initialize_logging, telemetry_processor_callback_function
+from service_bus.deployment_status_updater import DeploymentStatusUpdater
 
 
 def get_application() -> FastAPI:
@@ -38,11 +40,22 @@ def get_application() -> FastAPI:
     application.add_event_handler("shutdown", create_stop_app_handler(application))
 
     try:
-        application.add_middleware(RequestTracerMiddleware, exporter=AzureExporter(connection_string=f'InstrumentationKey={os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")}', sampler=ProbabilitySampler(1.0)))
-    except Exception as e:
-        logging.error(f"Failed to add RequestTracerMiddleware: {e}")
+        exporter = AzureExporter(sampler=ProbabilitySampler(1.0))
+        exporter.add_telemetry_processor(telemetry_processor_callback_function)
+        application.add_middleware(RequestTracerMiddleware, exporter=exporter)
+    except Exception:
+        logging.exception("Failed to add RequestTracerMiddleware")
 
     application.add_middleware(ServerErrorMiddleware, handler=generic_error_handler)
+    # Allow local UI debugging with local API
+    if config.ENABLE_LOCAL_DEBUGGING:
+        application.add_middleware(
+            CORSMiddleware,
+            allow_origins=["http://localhost:3000"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"])
+
     application.add_exception_handler(HTTPException, http_error_handler)
     application.add_exception_handler(RequestValidationError, http422_error_handler)
 
@@ -64,10 +77,19 @@ async def initialize_logging_on_startup():
 
 
 @app.on_event("startup")
+async def watch_deployment_status() -> None:
+    logging.info("Starting deployment status watcher thread")
+    statusWatcher = DeploymentStatusUpdater(app)
+    await statusWatcher.init_repos()
+    current_event_loop = asyncio.get_event_loop()
+    asyncio.run_coroutine_threadsafe(statusWatcher.receive_messages(), loop=current_event_loop)
+
+
+@app.on_event("startup")
 @repeat_every(seconds=20, wait_first=True, logger=logging.getLogger())
-async def update_deployment_status() -> None:
-    await receive_message_and_update_deployment(app)
+async def update_airlock_request_status() -> None:
+    await receive_step_result_message_and_update_status(app)
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, loop="asyncio")

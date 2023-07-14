@@ -25,7 +25,7 @@
   },
   "httpClient": {
       "blocked": false,
-      "autoBlock": true,
+      "autoBlock": false,
       "connection": {
           "retries": 0,
           "userAgentSuffix": "string",

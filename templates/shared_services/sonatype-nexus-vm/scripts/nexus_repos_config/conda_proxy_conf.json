@@ -1,5 +1,5 @@
 {
-  "name": "conda",
+  "name": "conda-repo",
   "online": true,
   "storage": {
     "blobStoreName": "default",
@@ -7,7 +7,7 @@
     "write_policy": "ALLOW"
   },
   "proxy": {
-    "remoteUrl": "https://repo.anaconda.com/pkgs/main",
+    "remoteUrl": "https://repo.anaconda.com/pkgs/",
     "contentMaxAge": 1440,
     "metadataMaxAge": 1440
   },
@@ -17,7 +17,7 @@
   },
   "httpClient": {
     "blocked": false,
-    "autoBlock": true,
+    "autoBlock": false,
     "connection": {
       "retries": 0,
       "userAgentSuffix": "string",

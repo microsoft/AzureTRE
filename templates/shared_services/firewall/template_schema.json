@@ -8,7 +8,7 @@
   "properties": {
     "rule_collections": {
 			"$id": "#properties/rule_collections",
-			"title": "rule_collections",
+			"title": "application rule collections",
 			"type": "array",
 			"default": [],
       "updateable": true,
@@ -17,7 +17,6 @@
 				"type": "object",
 				"required": [
 					"name",
-					"action",
 					"rules"
 				],
 				"properties": {
@@ -29,16 +28,8 @@
 						],
 						"pattern": "^.*$"
 					},
-					"priority": {
-						"title": "priority",
-						"type": "integer",
-            "description": "Numeric priority for rule collection - leave blank for auto numbering",
-						"examples": [
-							110
-						]
-					},
 					"action": {
-						"title": "action",
+						"title": "action DEPRECATED",
 						"type": "string",
 						"examples": [
 							"Allow"
@@ -53,7 +44,7 @@
 						"type": "array",
 						"default": [],
 						"items":{
-							"title": "Items",
+							"title": "items",
 							"type": "object",
 							"required": [
 								"name"
@@ -81,7 +72,7 @@
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "object",
 										"required": [
 											"port",
@@ -112,11 +103,11 @@
 									}
 								},
                 "fqdn_tags": {
-									"title": "fqdn_tags",
+									"title": "fqdn tags",
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "string",
 										"default": "",
                     "enum":[
@@ -135,11 +126,11 @@
 									}
 								},
 								"target_fqdns": {
-									"title": "target_fqdns",
+									"title": "destination fqdns",
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "string",
 										"default": "",
 										"examples": [
@@ -148,15 +139,219 @@
 									}
 								},
 								"source_addresses": {
-									"title": "Source_addresses",
+									"title": "source addresses",
 									"type": "array",
 									"default": [],
 									"items":{
-										"title": "Items",
+										"title": "items",
 										"type": "string",
 										"default": "",
 										"examples": [
 											"172.196.0.0"
+										]
+									}
+								},
+                "source_ip_group_ids": {
+									"title": "source ip group ids",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"some_ip_group_id"
+										]
+									}
+								},
+                "source_ip_groups_in_core": {
+									"title": "source ip group names in core",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"ip_group_name_in_core_resource_group"
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+    },
+    "network_rule_collections": {
+			"$id": "#properties/network_rule_collections",
+			"title": "network rule collections",
+			"type": "array",
+			"default": [],
+      "updateable": true,
+			"items":{
+				"title": "items",
+				"type": "object",
+				"required": [
+					"name",
+					"rules"
+				],
+				"properties": {
+					"name": {
+						"title": "name",
+						"type": "string",
+						"examples": [
+							"my-rule"
+						],
+						"pattern": "^.*$"
+					},
+					"action": {
+						"title": "action DEPRECATED",
+						"type": "string",
+						"examples": [
+							"Allow"
+						],
+            "enum": [
+              "Allow",
+              "Deny"
+            ]
+          },
+					"rules": {
+						"title": "rules",
+						"type": "array",
+						"default": [],
+						"items":{
+							"title": "items",
+							"type": "object",
+							"required": [
+								"name"
+							],
+							"properties": {
+								"name": {
+									"title": "name",
+									"type": "string",
+									"examples": [
+										"rule 1"
+									],
+									"pattern": "^.{5,80}$"
+								},
+								"description": {
+									"title": "description DEPRECATED",
+									"type": "string",
+									"default": "",
+									"examples": [
+										"My rule description here"
+									],
+									"pattern": "^.*$"
+								},
+								"source_addresses": {
+									"title": "source addresses",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"172.196.0.0"
+										]
+									}
+								},
+                "source_ip_group_ids": {
+									"title": "source ip group ids",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"some_ip_group_id"
+										]
+									}
+								},
+                "source_ip_groups_in_core": {
+									"title": "source ip group names in core",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"some_ip_group_name"
+										]
+									}
+								},
+								"destination_addresses": {
+									"title": "destination addresses",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"172.196.0.0"
+										]
+									}
+								},
+                "destination_ip_group_ids": {
+									"title": "destination ip group ids",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"some_ip_group_id"
+										]
+									}
+								},
+                "destination_fqdns": {
+									"title": "destination fqdns",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"one.two.three.com"
+										]
+									}
+								},
+                "destination_ports": {
+									"title": "destination ports",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"80",
+                      "443",
+                      "*"
+										]
+									}
+								},
+								"protocols": {
+									"title": "protocols",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "items",
+										"type": "string",
+                    "enum": [
+                      "Any",
+                      "ICMP",
+                      "TCP",
+                      "UDP"
+                    ],
+										"examples": [
+											"TCP"
 										]
 									}
 								}

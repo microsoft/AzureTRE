@@ -3,7 +3,9 @@ name: Build Validation
 
 on:  # yamllint disable-line rule:truthy
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - 'feature/**'
 
 # for each ref (branch/pr) run just the most recent,
 # cancel other pending/running ones
@@ -17,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           # Full git history is needed to get a proper list of
           # changed files within `super-linter`
@@ -31,6 +33,21 @@ jobs:
             terraform:
               # our Terraform uses more than just *.tf files, so need to check changes in the folder
               - '**/terraform/**/*'
+            core:
+              - 'core/**/*'
+            core_version:
+              - 'core/version.txt'
+            docs:
+              - 'docs/**/*'
+
+            terraform_workspaces:
+              - templates/workspaces/**/terraform/**/*.tf
+
+            terraform_shared_services:
+              - templates/shared_services/**/terraform/**/*.tf
+
+            terraform_workspace_services:
+              - templates/workspace_services/**/terraform/**/*.tf
 
       - name: Terraform format check
         if: ${{ steps.filter.outputs.terraform == 'true' }}
@@ -42,17 +59,20 @@ jobs:
         if: ${{ steps.filter.outputs.terraform == 'true' }}
         run: |
           find . -type d -name 'terraform' -not -path '*cnab*' -print0 \
-          | xargs -0 -I{} sh -c 'echo "***** Validating: {} *****"; \https://github.com/github/super-linter/issues/2433
+          | xargs -0 -I{} sh -c 'echo "***** Validating: {} *****"; \
           terraform -chdir={} init -backend=false; terraform -chdir={} validate'
+
+      - name: "Stale version: core"
+        if: ${{ steps.filter.outputs.core == 'true' &&
+          steps.filter.outputs.core_version == 'false' }}
+        run: echo "::error::Code update without version change" && exit 1
 
       - name: Lint code base
         # the slim image is 2GB smaller and we don't use the extra stuff
-        # Moved this after the Terraform checks above due something similar to this issue: https://github.com/github/super-linter/issues/2433
-        uses: github/super-linter/slim@v4.9.3
+        # Moved this after the Terraform checks above due something similar to this issue:
+        # https://github.com/github/super-linter/issues/2433
+        uses: github/super-linter/slim@v5.0.0
         env:
-          # Until https://github.com/github/super-linter/commit/ec0662756da93f1e3aad4df049712df7d764d143 is released
-          # we need to set the correct plugin directory (which is incorrectly set to github/home/.tflint.d/plugins by default)
-          TFLINT_PLUGIN_DIR: "/root/.tflint.d/plugins"
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -64,7 +84,58 @@ jobs:
           JAVA_FILE_NAME: checkstyle.xml
           VALIDATE_BASH: true
           VALIDATE_BASH_EXEC: true
+          VALIDATE_GITHUB_ACTIONS: true
           VALIDATE_DOCKERFILE_HADOLINT: true
-          # https://github.com/microsoft/AzureTRE/issues/1723 tracks re-instating VALIDATE_GITHUB_ACTIONS
-          # Note: in the meantime, the `.github/scripts/run-test.sh` script includes the `actionlint` checks)
-          # VALIDATE_GITHUB_ACTIONS: true
+          VALIDATE_TSX: true
+          VALIDATE_TYPESCRIPT_ES: true
+
+      - name: Docs validation
+        if: ${{ steps.filter.outputs.docs == 'true' }}
+        run: |
+          pip install -r docs/requirements.txt
+          mkdocs build --strict
+
+      - name: Workspace Tags
+        if: ${{ steps.filter.outputs.terraform_workspaces == 'true' }}
+        uses: github/super-linter/slim@v5.0.0
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_TERRAFORM_TFLINT: true
+          TERRAFORM_TFLINT_CONFIG_FILE: .tflint_workspaces.hcl
+          LINTER_REGEX_INCLUDE: './templates/workspaces/.*'
+
+      - name: Workspace Services Tags
+        if: ${{ steps.filter.outputs.terraform_workspace_services == 'true' }}
+        uses: github/super-linter/slim@v5.0.0
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_TERRAFORM_TFLINT: true
+          TERRAFORM_TFLINT_CONFIG_FILE: .tflint_workspace_services.hcl
+          LINTER_REGEX_INCLUDE: './templates/workspaces/.*'
+          FILTER_REGEX_EXCLUDE: '.*user_resource.*'
+
+      - name: User Resources Tags
+        if: ${{ steps.filter.outputs.terraform_workspace_services == 'true' }}
+        uses: github/super-linter/slim@v5.0.0
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_TERRAFORM_TFLINT: true
+          TERRAFORM_TFLINT_CONFIG_FILE: .tflint_user_resources.hcl
+          LINTER_REGEX_INCLUDE: './templates/workspace_services/.*/user_resources/.*'
+
+      - name: Shared Services Tags
+        if: ${{ steps.filter.outputs.terraform_shared_services == 'true' }}
+        uses: github/super-linter/slim@v5.0.0
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_TERRAFORM_TFLINT: true
+          TERRAFORM_TFLINT_CONFIG_FILE: .tflint_shared_services.hcl
+          LINTER_REGEX_INCLUDE: './templates/shared_services/.*'

@@ -1,0 +1,126 @@
+
+
+ title: Event driven Airlock flow
+
+_: Creating a draft request
+Researcher -> TRE API: create draft request
+
+TRE API -> Azure storage API: create first container
+
+TRE API -> Researcher: OK
+
+_: Uploading files
+Researcher -> TRE API: get request container link (requestId)
+Researcher -> External storage: upload file to container
+
+_: Asking for a container URL
+note: if the signed-in user is not allowed to get the sas token, he/she will be denied
+
+note: The storage account will be chosen based on the current status state.
+
+Airlock processor -> Azure storage API: Generate SAS token + url
+Airlock processor ->TRE API: SAS token + URL
+
+_: Submitting a request
+
+Researcher -> TRE API: submit
+
+TRE API -> External storage: revoke SAS token 
+note:
+[issue 1965](https://github.com/microsoft/AzureTRE/issues/1965)
+TRE API -> Cosmos: Update status of request to 'submitted'
+TRE API -> Event grid: StatusChangeEvent(submitted)
+TRE API -> Researcher: OK
+
+_: Approving/Rejecting a request
+Researcher -> TRE API: approve/reject
+TRE API -> Cosmos: update status to approved/rejected
+TRE API -> Event grid:StatusChangeEvent(approved/rejected)
+TRE API ->  Researcher:OK
+_: An update status event
+
+Servicebus -> Airlock processor: consume UpdateStatusEvent(newstatus) event
+TRE API-> Cosmos: Update status to <newstatus>
+TRE API-> Event grid: StatusChangeEvent(<newstatus>) event
+TRE API-> Event grid: NotificationEvent(status, recipients, etc)
+note: issue [2273](https://github.com/microsoft/AzureTRE/issues/2273)
+
+_: The following 'Airlock' module was built using an Azure function, comprised of 3 different functions
+
+_: Event == StatusChangeEvent
+Servicebus -> Airlock processor: Consume StatusChangeEvent
+
+if: new_status==submitted
+Airlock processor -> Azure storage API: create in-progress container
+Airlock processor -> Azure storage API: copy blob
+External storage -> In-progress storage: copy
+note: copies blob from source to dest. 
+
+In-progress storage-> Event grid: blobCreatedEvent(in-progress-sa)
+
+else: new_status==in_review
+note: do nothing
+
+else: new_status==approval_in_progress
+
+Airlock processor -> Azure storage API: create approved container
+
+Airlock processor -> Azure storage API: copy blob
+In-progress storage -> Approved storage: copy
+
+Approved storage -> Event grid: blobCreatedEvent(approved-sa)
+
+else: new_status==approved
+
+note: do nothing
+
+else: new_status==rejection_in_progress
+Airlock processor -> Azure storage API: create rejected container
+Airlock processor -> Azure storage API: copy blob
+In-progress storage -> Rejected storage: copy
+
+Rejected storage -> Event grid: blobCreatedEvent(rejected-sa)
+
+
+else: new_status==rejected
+note: do nothing
+
+else: new_status==blocking_in_progress
+Airlock processor -> Azure storage API: create blocked container
+Airlock processor -> Azure storage API: copy blob
+In-progress storage -> Blocked storage: copy
+
+Blocked storage -> Event grid: blobCreatedEvent(blocked-sa)
+
+
+else: new_status==blocked
+note: do nothing
+end
+
+
+_: Event == ScanResultEvent(result)
+
+Servicebus -> Airlock processor: Consume ScanResultEvent
+ֿ
+if: threat found
+Airlock processor -> Event grid: UpdateStatusEvent(blocking_in_progress)
+else: no threat found
+Airlock processor -> Event grid: UpdateStatusEvent(in-review)
+
+end
+
+_: Event == BlobCreatedEvent
+
+Servicebus -> Airlock processor: Consume BlobCreatedEvent(<storage acccount>)
+
+if:storageacccount == Approved || Rejected || Blocked
+Airlock processor -> Event grid: UpdateStatusEvent(approved/rejected/blocked)
+
+else: storageacccount == inprogress storage
+if: malware scanning enabled:
+  note: ignore, flow will continue when scanResult arrives
+else:
+Airlock processor -> Event grid: UpdateStatusEvent(in-review)
+end
+end
+

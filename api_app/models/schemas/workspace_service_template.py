@@ -51,6 +51,7 @@ class WorkspaceServiceTemplateInCreate(ResourceTemplateInCreate):
                     "title": "My Workspace Service Template",
                     "description": "These is a test workspace service resource template schema",
                     "required": [],
+                    "authorizedRoles": [],
                     "properties": {}
                 },
                 "customActions": [

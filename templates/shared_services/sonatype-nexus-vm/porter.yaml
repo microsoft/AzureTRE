@@ -1,8 +1,11 @@
 ---
+schemaVersion: 1.0.0
 name: tre-shared-service-sonatype-nexus
-version: 2.0.0
+version: 2.5.2
 description: "A Sonatype Nexus shared service"
+dockerfile: Dockerfile.tmpl
 registry: azuretre
+
 credentials:
   - name: azure_tenant_id
     env: ARM_TENANT_ID
@@ -16,6 +19,12 @@ parameters:
   - name: tre_id
     type: string
     description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
+  - name: id
+    type: string
+    description: "Resource ID"
+  - name: mgmt_acr_name
+    type: string
+    description: "The name of the Azure Container Registry"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -28,48 +37,79 @@ parameters:
     description: "The name of the Terraform state storage container"
   - name: arm_use_msi
     env: ARM_USE_MSI
+    type: boolean
     default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+    type: string
+    default: "public"
   - name: ssl_cert_name
     type: string
     default: "nexus-ssl"
     description: "Name of the certificate for configuring Nexus SSL with (stored in the core KeyVault)"
+outputs:
+  - name: workspace_vm_allowed_fqdns_list
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: nexus_allowed_fqdns_list
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: private_ip_addresses
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
   - exec
-  - az
   - terraform:
-      clientVersion: 1.1.5
+      clientVersion: 1.4.5
+
 install:
   - terraform:
       description: "Deploy shared service"
-      input: false
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        ssl_cert_name: "{{ bundle.parameters.ssl_cert_name }}"
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        ssl_cert_name: ${ bundle.parameters.ssl_cert_name }
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus-vm"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-service-sonatype-nexus-vm
+      outputs:
+        - name: workspace_vm_allowed_fqdns_list
+        - name: nexus_allowed_fqdns_list
+        - name: private_ip_addresses
+
 upgrade:
-  - exec:
+  - terraform:
       description: "Upgrade shared service"
-      command: echo
-      arguments:
-        - "This shared service does not implement upgrade action"
+      vars:
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        ssl_cert_name: ${ bundle.parameters.ssl_cert_name }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-service-sonatype-nexus-vm
+      outputs:
+        - name: workspace_vm_allowed_fqdns_list
+        - name: nexus_allowed_fqdns_list
+        - name: private_ip_addresses
 uninstall:
   - terraform:
       description: "Tear down shared service"
-      input: false
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        ssl_cert_name: "{{ bundle.parameters.ssl_cert_name }}"
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        ssl_cert_name: ${ bundle.parameters.ssl_cert_name }
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus-vm"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-service-sonatype-nexus-vm
