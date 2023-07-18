@@ -6,23 +6,26 @@ resource "random_password" "password" {
   min_special = 2
 }
 
-resource "azurerm_mysql_server" "gitea" {
+resource "azurerm_mysql_flexible_server" "gitea" {
   name                              = "mysql-${var.tre_id}"
   resource_group_name               = local.core_resource_group_name
   location                          = data.azurerm_resource_group.rg.location
   administrator_login               = "mysqladmin"
   administrator_login_password      = random_password.password.result
   sku_name                          = "GP_Gen5_2"
-  storage_mb                        = 5120
-  version                           = "8.0"
-  auto_grow_enabled                 = true
+  version                           = "8.0.21"
   backup_retention_days             = 7
   geo_redundant_backup_enabled      = false
-  infrastructure_encryption_enabled = false
-  public_network_access_enabled     = false
+  delegated_subnet_id               = data.azurerm_subnet.mysql_gitea_shared_service.id
+  private_dns_zone_id               = data.azurerm_private_dns_zone.mysql.id
   ssl_enforcement_enabled           = true
   ssl_minimal_tls_version_enforced  = "TLS1_2"
   tags                              = local.tre_shared_service_tags
+
+  storage {
+    size_gb           = 20
+    auto_grow_enabled = true
+  }
 
   lifecycle { ignore_changes = [tags, threat_detection_policy] }
 }
