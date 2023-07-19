@@ -44,7 +44,7 @@ resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_custo
   storage_account_ids   = [azurerm_storage_account.app_insights.id]
 }
 
-# TODO: Swith to azurerm once the issue is resolved
+# TODO: Switch to azurerm once the followiung issue is resolved: https://github.com/microsoft/AzureTRE/issues/3625
 # resource "azurerm_monitor_private_link_scope" "workspace" {
 #   name                = "ampls-${var.tre_id}-ws-${local.short_workspace_id}"
 #   resource_group_name = var.resource_group_name
