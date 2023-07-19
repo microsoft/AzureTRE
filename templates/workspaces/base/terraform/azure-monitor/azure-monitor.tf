@@ -53,7 +53,7 @@ resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_custo
 #   lifecycle { ignore_changes = [tags] }
 # }
 
-resource "azapi_resource" "pls_workspace" {
+resource "azapi_resource" "ampls_workspace" {
   type      = "microsoft.insights/privateLinkScopes@2021-07-01-preview"
   name      = "ampls-${var.tre_id}-ws-${local.short_workspace_id}"
   parent_id = var.resource_group_id
