@@ -12,11 +12,13 @@ locals {
   mlflow_artefacts_container_name = "mlartefacts"
   image_name                      = "mlflow-server"
   image_tag                       = replace(replace(replace(data.local_file.version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
-  tre_workspace_service_tags = {
-    tre_id                   = var.tre_id
-    tre_workspace_id         = var.workspace_id
-    tre_workspace_service_id = var.tre_resource_id
-  }
+  tre_workspace_service_tags = merge(
+    var.tags, {
+      tre_id                   = var.tre_id
+      tre_workspace_id         = var.workspace_id
+      tre_workspace_service_id = var.tre_resource_id
+    }
+  )
   web_app_diagnostic_categories_enabled = [
     "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
     "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"

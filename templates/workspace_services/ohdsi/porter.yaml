@@ -53,6 +53,11 @@ parameters:
   - name: azure_environment
     type: string
     description: "Used by Azure CLI to set the Azure environment"
+  - name: tags
+    env: TAGS
+    type: string
+    description: "Tags to be applied to all resources"
+    default: "{}"
 
   # parameters for configuring the data source
   - name: configure_data_source
@@ -121,6 +126,7 @@ install:
         configure_data_source: ${ bundle.parameters.configure_data_source }
         data_source_config: ${ bundle.parameters.data_source_config }
         data_source_daimons: ${ bundle.parameters.data_source_daimons }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -165,6 +171,7 @@ upgrade:
         configure_data_source: ${ bundle.parameters.configure_data_source }
         data_source_config: ${ bundle.parameters.data_source_config }
         data_source_daimons: ${ bundle.parameters.data_source_daimons }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -187,6 +194,7 @@ uninstall:
         configure_data_source: ${ bundle.parameters.configure_data_source }
         data_source_config: ${ bundle.parameters.data_source_config }
         data_source_daimons: ${ bundle.parameters.data_source_daimons }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

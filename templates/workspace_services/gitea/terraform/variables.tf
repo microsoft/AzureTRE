@@ -10,3 +10,9 @@ variable "gitea_storage_limit" {
   default     = 100
 }
 variable "arm_environment" {}
+
+variable "tags" {
+  type        = map(string)
+  description = "Tags to be applied to all resources"
+  default = {}
+}

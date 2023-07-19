@@ -20,9 +20,11 @@ locals {
   map_location_url_config = jsondecode(file("${path.module}/databricks-udr.json"))
   storage_name            = lower(replace("stgdbfs${substr(local.service_resource_name_suffix, -8, -1)}", "-", ""))
 
-  tre_workspace_service_tags = {
-    tre_id                   = var.tre_id
-    tre_workspace_id         = var.workspace_id
-    tre_workspace_service_id = var.tre_resource_id
-  }
+  tre_workspace_service_tags = merge(
+    var.tags, {
+      tre_id                   = var.tre_id
+      tre_workspace_id         = var.workspace_id
+      tre_workspace_service_id = var.tre_resource_id
+    }
+  )
 }

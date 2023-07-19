@@ -34,3 +34,9 @@ variable "data_source_daimons" {
   type    = string
   default = null
 }
+
+variable "tags" {
+  type        = map(string)
+  description = "Tags to be applied to all resources"
+  default = {}
+}

@@ -116,6 +116,11 @@ parameters:
     default: true
   - name: arm_environment
     type: string
+  - name: tags
+    env: TAGS
+    type: string
+    description: "Tags to be applied to all resources"
+    default: "{}"
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -177,6 +182,7 @@ install:
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -217,6 +223,7 @@ upgrade:
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -280,6 +287,7 @@ uninstall:
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

@@ -42,6 +42,11 @@ parameters:
     env: ARM_ENVIRONMENT
     type: string
     default: "public"
+  - name: tags
+    env: TAGS
+    type: string
+    description: "Tags to be applied to all resources"
+    default: "{}"
   - name: domain_prefix
     type: string
     description: "The FQDN prefix (prepended to {TRE_ID}.{LOCATION}.cloudapp.azure.com) to generate certificate for"
@@ -67,6 +72,7 @@ install:
         domain_prefix: ${ bundle.parameters.domain_prefix }
         cert_name: ${ bundle.parameters.cert_name }
         tre_resource_id: ${ bundle.parameters.id }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -130,6 +136,7 @@ uninstall:
         domain_prefix: ${ bundle.parameters.domain_prefix }
         cert_name: ${ bundle.parameters.cert_name }
         tre_resource_id: ${ bundle.parameters.id }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

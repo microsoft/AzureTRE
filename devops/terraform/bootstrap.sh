@@ -6,12 +6,16 @@ set -o nounset
 # Baseline Azure resources
 echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e[0m..."
 # shellcheck disable=SC2154
-az group create --resource-group "$TF_VAR_mgmt_resource_group_name" --location "$LOCATION" -o table
+az group create --resource-group "$TF_VAR_mgmt_resource_group_name" \
+  --location "$LOCATION" \
+  -o table \
+  --tags $(echo "$TAGS" | jq -r 'to_entries | map("\(.key)=\(.value)")| join(" ")') 
 # shellcheck disable=SC2154
 az storage account create --resource-group "$TF_VAR_mgmt_resource_group_name" \
   --name "$TF_VAR_mgmt_storage_account_name" --location "$LOCATION" \
   --allow-blob-public-access false \
-  --kind StorageV2 --sku Standard_LRS -o table
+  --kind StorageV2 --sku Standard_LRS -o table \
+  --tags $(echo "$TAGS" | jq -r 'to_entries | map("\(.key)=\(.value)")| join(" ")')
 
 # Blob container
 # shellcheck disable=SC2154

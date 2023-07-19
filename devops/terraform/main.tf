@@ -7,10 +7,10 @@ resource "azurerm_resource_group" "mgmt" {
   name     = var.mgmt_resource_group_name
   location = var.location
 
-  tags = {
+  tags = merge(var.tags, {
     project = "Azure Trusted Research Environment"
     source  = "https://github.com/microsoft/AzureTRE/"
-  }
+  })
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -25,6 +25,8 @@ resource "azurerm_storage_account" "state_storage" {
   account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
 
+  tags = var.tags
+
   lifecycle { ignore_changes = [tags] }
 }
 
@@ -36,6 +38,8 @@ resource "azurerm_container_registry" "shared_acr" {
   sku                 = var.acr_sku
   admin_enabled       = true
 
+  tags = var.tags
+
   lifecycle { ignore_changes = [tags] }
 }
 
@@ -44,6 +48,8 @@ resource "azurerm_container_registry" "shared_acr" {
 resource "azurerm_container_registry_task" "tredev_purge" {
   name                  = "tredev_purge"
   container_registry_id = azurerm_container_registry.shared_acr.id
+  tags                  = var.tags
+  
   platform {
     os           = "Linux"
     architecture = "amd64"

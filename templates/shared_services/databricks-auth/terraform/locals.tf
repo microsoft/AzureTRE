@@ -14,8 +14,10 @@ locals {
   container_subnet_name          = "adb-container-subnet-${local.service_resource_name_suffix}"
   network_security_group_name    = "nsg-${local.service_resource_name_suffix}"
 
-  tre_shared_service_tags = {
-    tre_id                = var.tre_id
-    tre_shared_service_id = var.tre_resource_id
-  }
+  tre_shared_service_tags = merge(
+    var.tags, {
+      tre_id                = var.tre_id
+      tre_shared_service_id = var.tre_resource_id
+    }
+  )
 }

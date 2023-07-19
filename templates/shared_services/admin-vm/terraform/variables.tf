@@ -11,3 +11,9 @@ variable "tre_resource_id" {
 variable "admin_jumpbox_vm_sku" {
   type = string
 }
+
+variable "tags" {
+  type        = map(string)
+  description = "Tags to be applied to all resources"
+  default = {}
+}

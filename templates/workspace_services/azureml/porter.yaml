@@ -61,6 +61,11 @@ parameters:
     default: false
   - name: arm_environment
     env: ARM_ENVIRONMENT
+  - name: tags
+    env: TAGS
+    type: string
+    description: "Tags to be applied to all resources"
+    default: "{}"
   - name: azure_environment
     env: AZURE_ENVIRONMENT
 
@@ -139,6 +144,7 @@ install:
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         arm_environment: ${ bundle.parameters.arm_environment }
         azure_environment: ${ bundle.parameters.azure_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -173,6 +179,7 @@ upgrade:
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         arm_environment: ${ bundle.parameters.arm_environment }
         azure_environment: ${ bundle.parameters.azure_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -207,6 +214,7 @@ uninstall:
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         arm_environment: ${ bundle.parameters.arm_environment }
         azure_environment: ${ bundle.parameters.azure_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

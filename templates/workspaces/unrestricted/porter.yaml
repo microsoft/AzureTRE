@@ -118,6 +118,11 @@ parameters:
   - name: enable_airlock
     type: boolean
     default: false
+  - name: tags
+    env: TAGS
+    type: string
+    description: "Tags to be applied to all resources"
+    default: "{}"
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -182,6 +187,7 @@ install:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -225,6 +231,7 @@ upgrade:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -291,6 +298,7 @@ uninstall:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

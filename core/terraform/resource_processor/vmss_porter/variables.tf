@@ -32,3 +32,9 @@ variable "rp_bundle_values" {
 locals {
   rp_bundle_values_formatted = join("\n      ", [for key in keys(var.rp_bundle_values) : "RP_BUNDLE_${key}=${var.rp_bundle_values[key]}"])
 }
+
+variable "tre_core_tags" {
+  type        = map(string)
+  description = "Tags to be applied to all resources"
+  default = {}
+}

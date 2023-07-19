@@ -180,3 +180,9 @@ variable "is_cosmos_defined_throughput" {
   type    = bool
   default = false
 }
+
+variable "tags" {
+  type        = map(string)
+  description = "Tags to be applied to all resources"
+  default = {}
+}

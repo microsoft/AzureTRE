@@ -60,6 +60,11 @@ parameters:
     env: ARM_ENVIRONMENT
     type: string
     default: "public"
+  - name: tags
+    env: TAGS
+    type: string
+    description: "Tags to be applied to all resources"
+    default: "{}"
   - name: aad_authority_url
     type: string
     default: "https://login.microsoftonline.com"
@@ -97,6 +102,7 @@ install:
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -118,6 +124,7 @@ upgrade:
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -139,6 +146,7 @@ uninstall:
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

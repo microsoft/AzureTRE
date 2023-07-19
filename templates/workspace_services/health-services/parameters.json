@@ -69,6 +69,12 @@
       "source": {
         "env": "ARM_ENVIRONMENT"
       }
+    },
+    {
+      "name": "tags",
+      "source": {
+        "env": "TAGS"
+      }
     }
   ]
 }

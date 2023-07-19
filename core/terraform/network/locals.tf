@@ -22,10 +22,12 @@ locals {
   # FREE = local.core_services_vnet_subnets[11] # .128 - .191
   # FREE = local.core_services_vnet_subnets[12] # .192 - .254
 
-  tre_core_tags = {
-    tre_id              = var.tre_id
-    tre_core_service_id = var.tre_id
-  }
+  tre_core_tags = merge(
+    var.tre_core_tags, {
+      tre_id              = var.tre_id
+      tre_core_service_id = var.tre_id
+    }
+  )
 
 
   private_dns_zone_names = toset([

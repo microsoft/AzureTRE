@@ -42,12 +42,13 @@ provider "azurerm" {
 resource "azurerm_resource_group" "core" {
   location = var.location
   name     = "rg-${var.tre_id}"
-  tags = {
-    project    = "Azure Trusted Research Environment"
-    tre_id     = var.tre_id
-    source     = "https://github.com/microsoft/AzureTRE/"
-    ci_git_ref = var.ci_git_ref # TODO: not include if empty
-  }
+  tags = merge(
+    local.tre_core_tags, {
+      project    = "Azure Trusted Research Environment"
+      tre_id     = var.tre_id
+      source     = "https://github.com/microsoft/AzureTRE/"
+      ci_git_ref = var.ci_git_ref # TODO: not include if empty
+  })
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -91,6 +92,7 @@ module "appgateway" {
   keyvault_id                = azurerm_key_vault.kv.id
   static_web_dns_zone_id     = module.network.static_web_dns_zone_id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
+  tre_core_tags              = local.tre_core_tags
 
   depends_on = [
     module.network,
@@ -159,6 +161,7 @@ module "resource_processor_vmss_porter" {
   resource_processor_vmss_sku                      = var.resource_processor_vmss_sku
   arm_environment                                  = var.arm_environment
   rp_bundle_values                                 = var.rp_bundle_values
+  tre_core_tags                                    = local.tre_core_tags
 
   depends_on = [
     module.network,

@@ -76,3 +76,7 @@ developer_settings:
 
 # Used by the API and Resource processor application to change log level
 #  debug: true
+
+# Specify here tags that should be applied to all resources deployed by the TRE
+# tag_name: "tag_value"
+#  tags: '{"tag_key": "tag_value"}'

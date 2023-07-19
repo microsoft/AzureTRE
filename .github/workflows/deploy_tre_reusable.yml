@@ -243,6 +243,7 @@ jobs:
           TERRAFORM_STATE_CONTAINER_NAME: ${{ vars.TERRAFORM_STATE_CONTAINER_NAME }}
           MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
+          TAGS: ${{ vars.TAGS }}
 
       - name: ACR Login
         # failure in the first attempt indicates a new ACR, so we need to try again after it's been created
@@ -353,6 +354,7 @@ jobs:
           CORE_APP_SERVICE_PLAN_SKU: ${{ vars.CORE_APP_SERVICE_PLAN_SKU }}
           RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE: ${{ vars.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE }}
           RP_BUNDLE_VALUES: ${{ vars.RP_BUNDLE_VALUES }}
+          TAGS: ${{ vars.TAGS }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
@@ -522,6 +524,7 @@ jobs:
           TRE_ID: ${{ secrets.TRE_ID }}
           LOCATION: ${{ vars.LOCATION }}
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
+          TAGS: ${{ vars.TAGS }}
 
   register_bundles:
     name: Register Bundles
@@ -582,6 +585,7 @@ jobs:
           TRE_ID: ${{ secrets.TRE_ID }}
           LOCATION: ${{ vars.LOCATION }}
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
+          TAGS: ${{ vars.TAGS }}
 
   register_user_resource_bundles:
     name: Register User Resource Bundles
@@ -632,6 +636,7 @@ jobs:
           LOCATION: ${{ vars.LOCATION }}
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
           WORKSPACE_SERVICE_NAME: ${{ matrix.WORKSPACE_SERVICE_NAME }}
+          TAGS: ${{ vars.TAGS }}
 
   deploy_shared_services:
     name: Deploy shared services
@@ -662,6 +667,7 @@ jobs:
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: ${{ secrets.TRE_ID }}
           LOCATION: ${{ vars.LOCATION }}
+          TAGS: ${{ vars.TAGS }}
 
       - name: State Store Migrations
         uses: ./.github/actions/devcontainer_run_command
@@ -681,6 +687,7 @@ jobs:
           TERRAFORM_STATE_CONTAINER_NAME: ${{ vars.TERRAFORM_STATE_CONTAINER_NAME }}
           MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
+          TAGS: ${{ vars.TAGS }}
 
   deploy_ui:
     name: Deploy UI
@@ -711,6 +718,7 @@ jobs:
           MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
           SWAGGER_UI_CLIENT_ID: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
+          TAGS: ${{ vars.TAGS }}
 
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"
@@ -746,6 +754,7 @@ jobs:
           TRE_ID: ${{ secrets.TRE_ID }}
           IS_API_SECURED: false
           WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ vars.WORKSPACE_APP_SERVICE_PLAN_SKU }}
+          TAGS: ${{ vars.TAGS }}
 
       - name: Upload Test Results
         if: always()
@@ -790,6 +799,7 @@ jobs:
           IS_API_SECURED: false
           WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ vars.WORKSPACE_APP_SERVICE_PLAN_SKU }}
           E2E_TESTS_NUMBER_PROCESSES: ${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}
+          TAGS: ${{ vars.TAGS }}
 
       - name: Upload Test Results
         if: always()

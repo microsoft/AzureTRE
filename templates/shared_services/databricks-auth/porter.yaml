@@ -42,6 +42,11 @@ parameters:
     env: ARM_ENVIRONMENT
     type: string
     default: "public"
+  - name: tags
+    env: TAGS
+    type: string
+    description: "Tags to be applied to all resources"
+    default: "{}"
 
 outputs:
   - name: databricks_workspace_name
@@ -61,6 +66,7 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         tre_id: ${ bundle.parameters.tre_id }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -76,6 +82,7 @@ upgrade:
         tre_resource_id: ${ bundle.parameters.id }
         tre_id: ${ bundle.parameters.tre_id }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -91,6 +98,7 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         tre_id: ${ bundle.parameters.tre_id }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

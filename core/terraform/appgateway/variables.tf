@@ -8,3 +8,8 @@ variable "api_fqdn" {}
 variable "keyvault_id" {}
 variable "static_web_dns_zone_id" {}
 variable "log_analytics_workspace_id" {}
+variable "tre_core_tags" {
+  type        = map(string)
+  description = "Tags to be applied to all resources"
+  default = {}
+}

@@ -57,6 +57,11 @@ parameters:
     env: ARM_ENVIRONMENT
     type: string
     default: "public"
+  - name: tags
+    env: TAGS
+    type: string
+    description: "Tags to be applied to all resources"
+    default: "{}"
   - name: deploy_fhir
     type: boolean
     default: false
@@ -103,6 +108,7 @@ install:
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -128,6 +134,7 @@ upgrade:
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -153,6 +160,7 @@ uninstall:
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

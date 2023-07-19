@@ -11,3 +11,9 @@ variable "storage_mb" {
   }
 }
 variable "arm_environment" {}
+
+variable "tags" {
+  type        = map(string)
+  description = "Tags to be applied to all resources"
+  default = {}
+}

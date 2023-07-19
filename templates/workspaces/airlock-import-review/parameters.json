@@ -135,6 +135,12 @@
       "source": {
         "env": "AZURE_ENVIRONMENT"
       }
+    },
+    {
+      "name": "tags",
+      "source": {
+        "env": "TAGS"
+      }
     }
   ]
 }

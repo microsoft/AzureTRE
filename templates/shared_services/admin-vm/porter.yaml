@@ -40,6 +40,11 @@ parameters:
     env: ARM_ENVIRONMENT
     type: string
     default: "public"
+  - name: tags
+    env: TAGS
+    type: string
+    description: "Tags to be applied to all resources"
+    default: "{}"
   - name: admin_jumpbox_vm_sku
     env: ADMIN_JUMPBOX_VM_SKU
     type: string
@@ -56,6 +61,7 @@ install:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         admin_jumpbox_vm_sku: ${ bundle.parameters.admin_jumpbox_vm_sku }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -69,6 +75,7 @@ upgrade:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         admin_jumpbox_vm_sku: ${ bundle.parameters.admin_jumpbox_vm_sku }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -82,6 +89,7 @@ uninstall:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         admin_jumpbox_vm_sku: ${ bundle.parameters.admin_jumpbox_vm_sku }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

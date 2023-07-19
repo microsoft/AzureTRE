@@ -55,6 +55,11 @@ parameters:
     env: ARM_ENVIRONMENT
     type: string
     default: "public"
+  - name: tags
+    env: TAGS
+    type: string
+    description: "Tags to be applied to all resources"
+    default: "{}"
 
 mixins:
   - exec
@@ -103,6 +108,7 @@ install:
         arm_client_secret: ${ bundle.credentials.azure_client_secret }
         arm_use_msi: ${ bundle.parameters.arm_use_msi }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -132,6 +138,7 @@ uninstall:
         arm_client_secret: ${ bundle.credentials.azure_client_secret }
         arm_use_msi: ${ bundle.parameters.arm_use_msi }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

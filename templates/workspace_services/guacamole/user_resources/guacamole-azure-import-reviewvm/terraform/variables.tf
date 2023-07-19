@@ -8,3 +8,9 @@ variable "image_gallery_id" {
   default = ""
 }
 variable "airlock_request_sas_url" {}
+
+variable "tags" {
+  type        = map(string)
+  description = "Tags to be applied to all resources"
+  default = {}
+}

@@ -8,12 +8,14 @@ locals {
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   vm_password_secret_name        = "${local.vm_name}-admin-credentials"
-  tre_user_resources_tags = {
-    tre_id                   = var.tre_id
-    tre_workspace_id         = var.workspace_id
-    tre_workspace_service_id = var.parent_service_id
-    tre_user_resource_id     = var.tre_resource_id
-  }
+  tre_user_resources_tags = merge(
+    var.tags, {
+      tre_id                   = var.tre_id
+      tre_workspace_id         = var.workspace_id
+      tre_workspace_service_id = var.parent_service_id
+      tre_user_resource_id     = var.tre_resource_id
+    }
+  )
   nexus_proxy_url = "https://nexus-${data.azurerm_public_ip.app_gateway_ip.fqdn}"
 
   # Load VM SKU/image details from porter.yaml

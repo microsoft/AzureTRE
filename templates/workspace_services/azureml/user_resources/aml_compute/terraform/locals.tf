@@ -7,10 +7,13 @@ locals {
   aml_workspace_name             = lower("ml-${substr(local.service_resource_name_suffix, -30, -1)}")
   aml_compute_id                 = "${local.short_service_id}${local.short_user_resource_id}"
   aml_compute_instance_name      = "ci-${local.aml_compute_id}"
-  tre_user_resources_tags = {
-    tre_id                   = var.tre_id
-    tre_workspace_id         = var.workspace_id
-    tre_workspace_service_id = var.parent_service_id
-    tre_user_resource_id     = var.tre_resource_id
-  }
+
+  tre_user_resources_tags = merge(
+    var.tags, {
+      tre_id                   = var.tre_id
+      tre_workspace_id         = var.workspace_id
+      tre_workspace_service_id = var.parent_service_id
+      tre_user_resource_id     = var.tre_resource_id
+    }
+  )
 }

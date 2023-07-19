@@ -23,3 +23,10 @@ variable "acr_name" {
   type        = string
   description = "Name of ACR"
 }
+
+
+variable "tags" {
+  type        = map(string)
+  description = "Tags to be applied to all resources"
+  default = {}
+}

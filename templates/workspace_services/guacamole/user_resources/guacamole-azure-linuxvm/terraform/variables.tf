@@ -11,3 +11,9 @@ variable "shared_storage_name" {}
 variable "image_gallery_id" {
   default = ""
 }
+
+variable "tags" {
+  type        = map(string)
+  description = "Tags to be applied to all resources"
+  default = {}
+}

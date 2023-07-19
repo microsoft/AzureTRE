@@ -11,9 +11,11 @@ locals {
     "GP | 5GB 6vCores" = { value = "GP_Gen5_6" },
     "GP | 5GB 8vCores" = { value = "GP_Gen5_8" }
   }
-  workspace_service_tags = {
-    tre_id                   = var.tre_id
-    tre_workspace_id         = var.workspace_id
-    tre_workspace_service_id = var.tre_resource_id
-  }
+  workspace_service_tags = merge(
+    var.tags, {
+      tre_id                   = var.tre_id
+      tre_workspace_id         = var.workspace_id
+      tre_workspace_service_id = var.tre_resource_id
+    }
+  )
 }

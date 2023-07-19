@@ -59,6 +59,11 @@ parameters:
     env: ARM_ENVIRONMENT
     type: string
     default: "public"
+  - name: tags
+    env: TAGS
+    type: string
+    description: "Tags to be applied to all resources"
+    default: "{}"
 
 outputs:
   - name: internal_connection_uri
@@ -82,6 +87,7 @@ install:
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -100,6 +106,7 @@ upgrade:
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -118,6 +125,7 @@ uninstall:
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tags: ${ bundle.parameters.tags }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

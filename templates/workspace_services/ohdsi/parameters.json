@@ -75,6 +75,12 @@
       "source": {
         "env": "DATA_SOURCE_DAIMONS"
       }
+    },
+    {
+      "name": "tags",
+      "source": {
+        "env": "TAGS"
+      }
     }
   ]
 }

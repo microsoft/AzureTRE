@@ -14,11 +14,13 @@ locals {
   image_tag_from_file            = replace(replace(replace(data.local_file.version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
   image_tag                      = var.image_tag == "" ? local.image_tag_from_file : var.image_tag
   identity_name                  = "id-${local.webapp_name}"
-  workspace_service_tags = {
-    tre_id                   = var.tre_id
-    tre_workspace_id         = var.workspace_id
-    tre_workspace_service_id = var.tre_resource_id
-  }
+  workspace_service_tags = merge(
+    var.tags, {
+      tre_id                   = var.tre_id
+      tre_workspace_id         = var.workspace_id
+      tre_workspace_service_id = var.tre_resource_id
+    }
+  )
   guacamole_diagnostic_categories_enabled = [
     "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
     "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"

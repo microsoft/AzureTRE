@@ -49,3 +49,9 @@ variable "auth_client_secret" {
 }
 
 variable "arm_environment" {}
+
+variable "tags" {
+  type        = map(string)
+  description = "Tags to be applied to all resources"
+  default = {}
+}
