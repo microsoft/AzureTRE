@@ -101,6 +101,7 @@ nav:
           - MLFlow: tre-templates/workspace-services/mlflow.md
           - Health Services: tre-templates/workspace-services/health_services.md
           - Azure Databricks: tre-templates/workspace-services/databricks.md
+          - OHDSI: tre-templates/workspace-services/ohdsi.md
       - Shared Services:
           - Gitea (Source Mirror): tre-templates/shared-services/gitea.md
           - Nexus (Package Mirror): tre-templates/shared-services/nexus.md

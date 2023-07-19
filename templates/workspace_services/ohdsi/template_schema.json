@@ -1,0 +1,377 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/ohdsi/template_schema.json",
+  "type": "object",
+  "title": "OHDSI Workspace Service",
+  "description": "Provides OHDSI within the workspace",
+  "required": [],
+  "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "default": "OHDSI ATLAS",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "default": "OHDSI empowers researchers and collaborators to bring out the value of health data through large-scale analytics and open-source solutions.",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace Service Overview",
+      "description": "Long form description of the workspace service, in markdown syntax",
+      "default": "OHDSI (Observational Health Data Sciences and Informatics) is a community-driven open-source project that provides tools and resources to help researchers and clinicians make better decisions about healthcare. OHDSI's Common Data Model (CDM) is a standardized format for storing and analyzing observational health data. The CDM can be used to create a variety of machine learning models, including patient-level prediction models, population-level effect estimation models, and risk prediction models.",
+      "updateable": true
+    },
+    "address_space": {
+      "$id": "#/properties/address_space",
+      "type": "string",
+      "title": "Address space",
+      "description": "Address space for PostgreSQL's subnet"
+    },
+    "configure_data_source": {
+      "type": "boolean",
+      "title": "Configure Data Source",
+      "default": true,
+      "updateable": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "configure_data_source": {
+            "const": true
+          }
+        },
+        "required": [
+          "configure_data_source"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data_source_config": {
+            "type": "object",
+            "title": "Data Source Configuration",
+            "default": null,
+            "properties": {
+              "dialect": {
+                "type": "string",
+                "title": "Dialect",
+                "default": "Azure Synapse",
+                "enum": [
+                  "Azure Synapse"
+                ],
+                "updateable": true
+              },
+              "source_name": {
+                "type": "string",
+                "title": "Source Name"
+              },
+              "source_key": {
+                "type": "string",
+                "title": "Source Key",
+                "description": "A unique source key"
+              },
+              "connection_string": {
+                "type": "string",
+                "title": "Connection String"
+              },
+              "username": {
+                "type": "string",
+                "title": "Username"
+              },
+              "password": {
+                "type": "string",
+                "title": "Password",
+                "format": "password"
+              }
+            },
+            "required": [
+              "source_name",
+              "dialect",
+              "source_key",
+              "connection_string",
+              "username",
+              "password"
+            ]
+          },
+          "data_source_daimons": {
+            "type": "object",
+            "title": "Source Daimons",
+            "description": "Configure source daimons",
+            "default": null,
+            "properties": {
+              "daimon_cdm": {
+                "type": "string",
+                "title": "CDM"
+              },
+              "daimon_vocabulary": {
+                "type": "string",
+                "title": "Vocabulary"
+              },
+              "daimon_results": {
+                "type": "string",
+                "title": "Results Schema to copy"
+              },
+              "daimon_cem": {
+                "type": "string",
+                "title": "CEM"
+              },
+              "daimon_cem_results": {
+                "type": "string",
+                "title": "CEMResults"
+              },
+              "daimon_temp": {
+                "type": "string",
+                "title": "Temp Schema to copy"
+              }
+            },
+            "required": [
+              "daimon_cdm",
+              "daimon_vocabulary",
+              "daimon_results"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "uiSchema": {
+    "address_space": {
+      "classNames": "tre-hidden"
+    }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "b9d7370e-c624-4263-921c-632329974872",
+        "stepTitle": "Upgrade workspace to ensure the existence of Postgres' address space",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": []
+      },
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "7276dcc1-7d0e-496a-badf-87c8c25fc06e",
+        "stepTitle": "Add Atlas callback URI as AAD redirect URI",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "aad_redirect_uris",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}",
+              "value": "{{ resource.properties.authentication_callback_uri }}"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "37d7fbde-fd61-4096-ac4d-741960474995",
+        "stepTitle": "Add firewall rules for AAD",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureAD",
+                  "description": "Allow access to AAD",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
+                  "destination_addresses": [
+                    "AzureActiveDirectory"
+                  ],
+                  "destination_ports": [
+                    "*"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "microsoft-aad",
+                  "description": "Allow AAD FQDNs",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
+                  "target_fqdns": [
+                    "*.msftauth.net",
+                    "*.msauth.net",
+                    "login.microsoftonline.com",
+                    "aadcdn.msftauthimages.net",
+                    "aadcdn.msauthimages.net",
+                    "*.login.live.com",
+                    "*.microsoftonline-p.com",
+                    "msft.sts.microsoft.com"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    },
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "01dfec9b-ecc5-42c4-a022-050930a29916",
+        "stepTitle": "Upgrade workspace to ensure the existence of Postgres' address space",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": []
+      },
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "0d3961fd-1538-4b0e-a6ed-bf401b65c034",
+        "stepTitle": "Upgrade Atlas callback URI as AAD redirect URI",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "aad_redirect_uris",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}",
+              "value": "{{ resource.properties.authentication_callback_uri }}"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "3329d760-3e09-4721-8722-f369b123ca77",
+        "stepTitle": "Add firewall rules for AAD",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureAD",
+                  "description": "Allow access to AAD",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
+                  "destination_addresses": [
+                    "AzureActiveDirectory"
+                  ],
+                  "destination_ports": [
+                    "*"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "microsoft-aad",
+                  "description": "Allow AAD FQDNs",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
+                  "target_fqdns": [
+                    "*.msftauth.net",
+                    "*.msauth.net",
+                    "login.microsoftonline.com",
+                    "aadcdn.msftauthimages.net",
+                    "aadcdn.msauthimages.net",
+                    "*.login.live.com",
+                    "*.microsoftonline-p.com",
+                    "msft.sts.microsoft.com"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    },
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "e1986fe8-b1f9-4a9d-abb1-da1ea9a50b41",
+        "stepTitle": "Remove Atlas callback URI as AAD redirect URI",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "aad_redirect_uris",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ]
+  }
+}
