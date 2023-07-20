@@ -24,8 +24,10 @@ BUG FIXES:
 * Fix airlock_notifier not getting the right smtp password ([#3561](https://github.com/microsoft/AzureTRE/issues/3561))
 * Fix issue when deleting failed resources gives no steps ([#3567](https://github.com/microsoft/AzureTRE/issues/3567))
 * Fix airlock_notifier not getting the right smtp password ([#3565](https://github.com/microsoft/AzureTRE/issues/3565))
+* Fix issues with networking dependencies and AMPLS deployment ([#3433](https://github.com/microsoft/AzureTRE/issues/3433))
 * Update CLI install method to fix dependency issue ([#3601](https://github.com/microsoft/AzureTRE/issues/3601))
 * Update Databricks UDRs for west europe and switch to DFS private endpoint. ([[#3582](https://github.com/microsoft/AzureTRE/issues/3582))
+
 
 COMPONENTS:
 
