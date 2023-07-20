@@ -1226,7 +1226,7 @@
     ],
     "artifactBlobStoragePrimaryDomains": [
       "dbartifactsprodwesteu.blob.core.windows.net",
-      "dbartifactsprodwesteu1.blob.core.windows.net",
+      "arprodwesteua1.blob.core.windows.net",
       "arprodwesteua2.blob.core.windows.net",
       "arprodwesteua3.blob.core.windows.net",
       "arprodwesteua4.blob.core.windows.net",
@@ -1259,6 +1259,7 @@
       "prod-westeuc2-observabilityeventhubs.servicebus.windows.net"
     ],
     "metastoreDomains": [
+      "consolidated-westeurope-prod-metastore.mysql.database.azure.com",
       "consolidated-westeurope-prod-metastore-addl-1.mysql.database.azure.com",
       "consolidated-westeurope-prod-metastore-addl-2.mysql.database.azure.com",
       "consolidated-westeurope-prod-metastore-addl-3.mysql.database.azure.com",
