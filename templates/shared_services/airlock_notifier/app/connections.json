@@ -8,6 +8,19 @@
         "id": "/serviceProviders/serviceBus"
       },
       "displayName": "core-service-bus"
+    },
+    "Smtp": {
+      "displayName": "smtp",
+      "parameterValues": {
+        "enableSSL": "@appsetting('smtp_server_enable_ssl')",
+        "port": "@appsetting('smtp_server_port')",
+        "password": "@appsetting('smtp_password')",
+        "serverAddress": "@appsetting('smtp_server_address')",
+        "username": "@appsetting('smtp_username')"
+      },
+      "serviceProvider": {
+        "id": "/serviceProviders/Smtp"
+      }
     }
   },
   "managedApiConnections": {

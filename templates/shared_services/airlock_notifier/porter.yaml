@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-airlock-notifier
-version: 0.6.0
+version: 0.9.0
 description: "A shared service notifying on Airlock Operations"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -44,6 +44,10 @@ parameters:
   - name: smtp_server_address
     env: SMTP_SERVER_ADDRESS
     type: string
+  - name: smtp_server_port
+    env: SMTP_SERVER_PORT
+    type: string
+    default: "25"
   - name: smtp_username
     env: SMTP_USERNAME
     type: string
@@ -51,6 +55,10 @@ parameters:
     env: SMTP_PASSWORD
     type: string
     sensitive: true
+  - name: smtp_server_enable_ssl
+    env: SMTP_SERVER_ENABLE_SSL
+    type: boolean
+    default: true
   - name: smtp_from_email
     env: SMTP_FROM_EMAIL
     type: string
@@ -78,8 +86,10 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         tre_url: ${ bundle.parameters.tre_url }
         smtp_server_address: ${ bundle.parameters.smtp_server_address }
+        smtp_server_port: ${ bundle.parameters.smtp_server_port }
         smtp_username: ${ bundle.parameters.smtp_username }
         smtp_password: ${ bundle.parameters.smtpPassword }
+        smtp_server_enable_ssl: ${ bundle.parameters.smtp_server_enable_ssl }
         smtp_from_email: ${ bundle.parameters.smtp_from_email }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
@@ -154,8 +164,10 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         tre_url: ${ bundle.parameters.tre_url }
         smtp_server_address: ${ bundle.parameters.smtp_server_address }
+        smtp_server_port: ${ bundle.parameters.smtp_server_port }
         smtp_username: ${ bundle.parameters.smtp_username }
         smtp_password: ${ bundle.parameters.smtpPassword }
+        smtp_server_enable_ssl: ${ bundle.parameters.smtp_server_enable_ssl }
         smtp_from_email: ${ bundle.parameters.smtp_from_email }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }

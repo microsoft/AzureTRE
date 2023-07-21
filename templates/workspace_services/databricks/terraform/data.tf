@@ -24,7 +24,7 @@ data "azurerm_private_dns_zone" "databricks" {
 
 data "azurerm_subscription" "current" {}
 
-data "azurerm_private_dns_zone" "blobcore" {
-  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.blob.core.windows.net"]
+data "azurerm_private_dns_zone" "dfscore" {
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.dfs.core.windows.net"]
   resource_group_name = local.core_resource_group_name
 }

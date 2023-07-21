@@ -5,9 +5,12 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 FEATURES:
+* OHDSI workspace service ([#3562](https://github.com/microsoft/AzureTRE/issues/3562))
 
 ENHANCEMENTS:
 * Workspace networking peering sync is handled natively by Terraform ([#3534](https://github.com/microsoft/AzureTRE/issues/3534))
+* Use SMTP built in connector vs API connector in Airlock Notifier ([#3572](https://github.com/microsoft/AzureTRE/issues/3572))
+* Update Guacamole dependencies ([#3602](https://github.com/microsoft/AzureTRE/issues/3602))
 
 BUG FIXES:
 * Nexus might fail to deploy due to wrong identity used in key-vault extension ([#3492](https://github.com/microsoft/AzureTRE/issues/3492))
@@ -18,6 +21,13 @@ BUG FIXES:
 * Azure ML connection URI is an object, not string ([#3486](https://github.com/microsoft/AzureTRE/issues/3486))
 * Update key in Linux VM deploy script ([#3434](https://github.com/microsoft/AzureTRE/issues/3434))
 * Add missing `azure_environment` porter parameters ([#3549](https://github.com/microsoft/AzureTRE/issues/3549))
+* Fix airlock_notifier not getting the right smtp password ([#3561](https://github.com/microsoft/AzureTRE/issues/3561))
+* Fix issue when deleting failed resources gives no steps ([#3567](https://github.com/microsoft/AzureTRE/issues/3567))
+* Fix airlock_notifier not getting the right smtp password ([#3565](https://github.com/microsoft/AzureTRE/issues/3565))
+* Fix issues with networking dependencies and AMPLS deployment ([#3433](https://github.com/microsoft/AzureTRE/issues/3433))
+* Update CLI install method to fix dependency issue ([#3601](https://github.com/microsoft/AzureTRE/issues/3601))
+* Update Databricks UDRs for west europe and switch to DFS private endpoint. ([[#3582](https://github.com/microsoft/AzureTRE/issues/3582))
+
 
 COMPONENTS:
 

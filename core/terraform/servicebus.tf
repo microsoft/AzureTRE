@@ -66,6 +66,11 @@ resource "azurerm_private_endpoint" "sbpe" {
     is_manual_connection           = false
     subresource_names              = ["namespace"]
   }
+
+  # private endpoints in serial
+  depends_on = [
+    azurerm_private_endpoint.filepe
+  ]
 }
 
 # Block public access

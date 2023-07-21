@@ -1,5 +1,11 @@
 {
   "name": "AzureTRE",
+  // Uncomment when debugging using Jetbrains
+  // "features": {
+  //   "ghcr.io/devcontainers/features/sshd:1": {
+  //       "version": "latest"
+  //   }
+  // },
   "build": {
     "context": "..",
     "dockerfile": "Dockerfile",
