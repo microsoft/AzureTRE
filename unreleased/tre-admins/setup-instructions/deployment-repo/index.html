@@ -546,8 +546,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#getting-started" class="md-nav__link">
-    Getting Started
+  <a href="#create-your-own-copy-of-the-azure-tre-deployment-repo" class="md-nav__link">
+    Create your own copy of the Azure TRE deployment repo
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#clone-the-azure-tre-deployment-git-repository" class="md-nav__link">
+    Clone the Azure TRE Deployment git repository
   </a>
   
 </li>
@@ -2515,8 +2522,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#getting-started" class="md-nav__link">
-    Getting Started
+  <a href="#create-your-own-copy-of-the-azure-tre-deployment-repo" class="md-nav__link">
+    Create your own copy of the Azure TRE deployment repo
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#clone-the-azure-tre-deployment-git-repository" class="md-nav__link">
+    Clone the Azure TRE Deployment git repository
   </a>
   
 </li>
@@ -2552,8 +2566,12 @@ It contains all the required tooling to develop your custom templates and deploy
 <li>Directories setup for: workspace, workspace service and user resource template definitions</li>
 <li>Devcontainer setup</li>
 </ul>
-<h2 id="getting-started">Getting Started</h2>
+<h2 id="create-your-own-copy-of-the-azure-tre-deployment-repo">Create your own copy of the Azure TRE deployment repo</h2>
 <p>To get started with AzureTRE follow the next steps:</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+</div>
+<p>The following steps in this guide should be done using the deployment repo.</p>
 <ol>
 <li>Go to <a href="https://github.com/microsoft/AzureTRE-Deployment">AzureTRE Deployment repository</a></li>
 <li>
@@ -2564,10 +2582,25 @@ It contains all the required tooling to develop your custom templates and deploy
 <p>Follow the steps in this <a href="https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template">Github templates guide</a> to set up the repo.</p>
 </li>
 </ol>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
+<h2 id="clone-the-azure-tre-deployment-git-repository">Clone the Azure TRE Deployment git repository</h2>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If using Windows please clone the repository to a Linux file system, i.e. to <code>/xxx</code> rather than <code>c:\</code>, for example within Windows Subsytem for Linux. If you clone the repository to a Windows file system you will likely hit issues with file permissions as described in this issue: <a href="https://github.com/microsoft/AzureTRE/issues/1395">https://github.com/microsoft/AzureTRE/issues/1395</a></p>
 </div>
-<p>The following steps in this guide should be done using the deployment repo.</p>
+<div class="highlight"><pre><span></span><code>git clone https://github.com/&lt;your_username&gt;/AzureTRE-Deployment.git
+</code></pre></div>
+<ol>
+<li>
+<p>Open the cloned repository in Visual Studio Code and connect to the development container.</p>
+<div class="highlight"><pre><span></span><code>code .
+</code></pre></div>
+</li>
+</ol>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Visual Studio Code should recognize the available development container and ask you to open the folder using it. For additional details on connecting to remote containers, please see the <a href="https://code.visualstudio.com/docs/remote/containers#_quick-start-open-an-existing-folder-in-a-container">Open an existing folder in a container</a> quickstart.</p>
+</div>
+<p>When you start the development container for the first time, the container will be built. This usually takes a few minutes. <strong>Please use the development container for all further steps.</strong></p>
 <h2 id="next-steps">Next steps</h2>
 <ul>
 <li><a href="../ad-tenant-choices/">AD Tenant Choices</a></li>
