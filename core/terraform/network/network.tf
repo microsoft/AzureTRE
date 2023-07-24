@@ -146,6 +146,24 @@ resource "azurerm_subnet" "firewall_management" {
   depends_on           = [azurerm_subnet.airlock_events]
 }
 
+resource "azurerm_subnet" "mysql_gitea_shared_service" {
+  name                 = "MysqlGiteaSharedServiceSubnet"
+  virtual_network_name = azurerm_virtual_network.core.name
+  resource_group_name  = var.resource_group_name
+  address_prefixes     = [local.mysql_gitea_shared_service_subnet_address_prefix]
+  depends_on           = [azurerm_subnet.firewall_management]
+  service_endpoints    = ["Microsoft.Storage"]
+
+  delegation {
+    name = "delegation"
+
+    service_delegation {
+      name    = "Microsoft.DBforMySQL/flexibleServers"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+    }
+  }
+}
+
 resource "azurerm_ip_group" "resource_processor" {
   name                = "ipg-resource-processor"
   location            = var.location
