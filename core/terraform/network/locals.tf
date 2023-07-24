@@ -17,9 +17,9 @@ locals {
   airlock_notifications_subnet_address_prefix = local.core_services_vnet_subnets[8] # .192 - .254
 
   # .3
-  resource_processor_subnet_address_prefix  = local.core_services_vnet_subnets[9]  # .0 - .63
-  firewall_management_subnet_address_prefix = local.core_services_vnet_subnets[10] # .64 - .127
-  # FREE = local.core_services_vnet_subnets[11] # .128 - .191
+  resource_processor_subnet_address_prefix         = local.core_services_vnet_subnets[9]  # .0 - .63
+  firewall_management_subnet_address_prefix        = local.core_services_vnet_subnets[10] # .64 - .127
+  mysql_gitea_shared_service_subnet_address_prefix = local.core_services_vnet_subnets[11] # .128 - .191
   # FREE = local.core_services_vnet_subnets[12] # .192 - .254
 
   tre_core_tags = {

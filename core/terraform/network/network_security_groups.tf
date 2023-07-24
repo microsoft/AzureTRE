@@ -199,3 +199,9 @@ resource "azurerm_subnet_network_security_group_association" "airlock_notificati
   network_security_group_id = azurerm_network_security_group.default_rules.id
   depends_on                = [azurerm_subnet_network_security_group_association.airlock_events]
 }
+
+resource "azurerm_subnet_network_security_group_association" "mysql_gitea_shared_service" {
+  subnet_id                 = azurerm_subnet.mysql_gitea_shared_service.id
+  network_security_group_id = azurerm_network_security_group.default_rules.id
+  depends_on                = [azurerm_subnet_network_security_group_association.airlock_notification]
+}

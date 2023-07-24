@@ -20,6 +20,12 @@ data "azurerm_subnet" "web_app" {
   name                 = "WebAppSubnet"
 }
 
+data "azurerm_subnet" "mysql_gitea_shared_service" {
+  resource_group_name  = local.core_resource_group_name
+  virtual_network_name = local.core_vnet
+  name                 = "MysqlGiteaSharedServiceSubnet"
+}
+
 data "azurerm_private_dns_zone" "mysql" {
   name                = "privatelink.mysql.database.azure.com"
   resource_group_name = local.core_resource_group_name

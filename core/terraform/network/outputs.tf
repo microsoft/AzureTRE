@@ -38,6 +38,10 @@ output "resource_processor_subnet_id" {
   value = azurerm_subnet.resource_processor.id
 }
 
+output "mysql_gitea_shared_service_subnet_id" {
+  value = azurerm_subnet.mysql_gitea_shared_service.id
+}
+
 # DNS Zones
 
 output "azure_monitor_dns_zone_id" {
