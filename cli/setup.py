@@ -4,7 +4,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 PROJECT = 'azure-tre-cli'
-VERSION = '0.1.3'
+VERSION = '0.1.4'
 
 try:
     long_description = open('README.md', 'rt').read()
