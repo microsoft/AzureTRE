@@ -12,7 +12,6 @@ echo '*' > "$DIR/script_tmp/.gitignore"
 function call_and_parse() {
   response_code=$($command)
   if [[ $1 = true ]]; then
-  echo "here..."
     response_code=$(jq '.services| .[] | select(.status!="OK") | length' "$api_response_file")
   fi
 }
