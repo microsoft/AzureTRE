@@ -57,6 +57,7 @@ write_files:
       AZURE_ENVIRONMENT=${azure_environment}
       AAD_AUTHORITY_URL=${aad_authority_url}
       MICROSOFT_GRAPH_FQDN=${microsoft_graph_fqdn}
+      RP_BUNDLE_tags=${tags}
       ${rp_bundle_values}
   - path: /etc/cron.hourly/docker-prune
     # An hourly cron job to have docker free disk space. Running this frquently

@@ -30,6 +30,7 @@ data "template_file" "cloudconfig" {
     aad_authority_url                                = module.terraform_azurerm_environment_configuration.active_directory_endpoint
     microsoft_graph_fqdn                             = regex("(?:(?P<scheme>[^:/?#]+):)?(?://(?P<fqdn>[^/?#:]*))?", module.terraform_azurerm_environment_configuration.microsoft_graph_endpoint).fqdn
     rp_bundle_values                                 = local.rp_bundle_values_formatted
+    tags                                             = replace(jsonencode(local.tre_core_tags), "\"", "'")
   }
 }
 
