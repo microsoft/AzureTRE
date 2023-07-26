@@ -41,7 +41,7 @@ function call_with_retry() {
 }
 
 api_response_file="$DIR/script_tmp/api_response.txt"
-command="curl --insecure --silent --output $api_response_file --write-out "%{http_code}" ${TRE_URL}/api/health"
+command="curl --insecure --silent --output $api_response_file --write-out %{http_code} ${TRE_URL}/api/health"
 call_with_retry "200" false
 
 if [[ $call_ok = true ]]; then
