@@ -9,6 +9,7 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 0
 
   - package-ecosystem: "npm"
     directory: "/ui/app"
@@ -17,6 +18,7 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 0
 
   - package-ecosystem: "pip"
     directory: "/"
@@ -25,6 +27,7 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 0
 
   - package-ecosystem: "maven"
     directory: "/templates/workspace_services/guacamole/guacamole-server/guacamole-auth-azure"
@@ -33,6 +36,7 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 0
 
   - package-ecosystem: "terraform"
     directory: "/devops/terraform"
@@ -41,6 +45,7 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 0
 
   - package-ecosystem: "terraform"
     directory: "/core/terraform"
@@ -49,3 +54,4 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 0
