@@ -25,7 +25,12 @@ resource "azurerm_mysql_flexible_server" "gitea" {
     auto_grow_enabled = true
   }
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { 
+    ignore_changes = [
+      tags,
+      zone
+    ] 
+  }
 }
 
 resource "azurerm_mysql_flexible_database" "gitea" {
