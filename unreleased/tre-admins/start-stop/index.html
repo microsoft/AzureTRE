@@ -21,7 +21,7 @@
         <link rel="next" href="../environment-variables/">
       
       <link rel="icon" href="../../assets/ms_icon.png">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.19">
+      <meta name="generator" content="mkdocs-1.5.1, mkdocs-material-9.1.21">
     
     
       
@@ -1589,8 +1589,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#runbook-script" class="md-nav__link">
-    Runbook Script
+  <a href="#stop-runbook-script" class="md-nav__link">
+    Stop Runbook Script
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automating-start" class="md-nav__link">
+    Automating start
   </a>
   
 </li>
@@ -2573,8 +2580,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#runbook-script" class="md-nav__link">
-    Runbook Script
+  <a href="#stop-runbook-script" class="md-nav__link">
+    Stop Runbook Script
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automating-start" class="md-nav__link">
+    Automating start
   </a>
   
 </li>
@@ -2600,11 +2614,11 @@
 
 
 <h1 id="startstop-azure-tre">Start/Stop Azure TRE</h1>
-<p>Once you've provisioned an Azure TRE instance it will begin to incurr running costs of the underlying Azure services.</p>
-<p>Within evaluation or development, you may want to "pause" the TRE environment during out of hours or weekends, to reduce costs without having to completely destroy the environment.  The following <code>make targets</code> provide a simple way to start and stop both the Azure Firewall and Azure Application Gateway instances, considerably reducing the Azure TRE instance running costs.</p>
+<p>Once you've provisioned an Azure TRE instance it will begin to incur running costs of the underlying Azure services.</p>
+<p>Within evaluation or development, you may want to "pause" the TRE environment during out of office hours or weekends, to reduce costs without having to completely destroy the environment.  The following <code>make</code> targets provide a simple way to start and stop both the Azure Firewall and Azure Application Gateway instances, considerably reducing the Azure TRE instance running costs.</p>
 <div class="admonition info">
 <p class="admonition-title">Info</p>
-<p>After running <code>make all</code> underlying Azure TRE services are automatically started, billing will start.</p>
+<p>After running <code>make all</code> underlying Azure TRE services are automatically started and billing will start.</p>
 </div>
 <h2 id="start-azure-tre">Start Azure TRE</h2>
 <p>This will allocate the Azure Firewall settings with a public IP and start the Azure Application Gateway service, starting billing of both services.</p>
@@ -2618,13 +2632,92 @@
 <p>In certain situations, you might want to stop any TRE running on a schedule to reduce costs in a wider way.
 We have this procedure setup in our development subscriptions where each night we stop all our environments after which each developer would need to <em>manually</em> start their TRE when they need it again.</p>
 <h3 id="requirements">Requirements</h3>
-<p>We use <a href="https://docs.microsoft.com/en-us/azure/automation/overview">Azure Automation</a> to run this procedure.</p>
-<p>Be sure to create a runbook with Powershell 7.1 enabled and an identity with contributor permissions on the subscription. Note that the script below uses a system managed identity and if you use something different then you might need to update the authentication part.</p>
+<p>We use <a href="https://learn.microsoft.com/azure/automation/overview">Azure Automation</a> to run this procedure.</p>
+<p>Be sure to create a runbook with PowerShell 7.1 or PowerShell 7.2 enabled and an identity with contributor permissions on the subscription. Note that the script below uses a system managed identity and if you use something different then you might need to update the authentication part.</p>
 <p>If you create a new Automation account, you will have the required modules preinstalled.</p>
 <p>Finally, schedule it to run when it makes sense for you.</p>
-<h3 id="runbook-script">Runbook Script</h3>
-<div class="highlight"><pre><span></span><code><span class="k">try</span>
-<span class="p">{</span>
+<h3 id="stop-runbook-script">Stop Runbook Script</h3>
+<div class="highlight"><pre><span></span><code><span class="k">try</span> <span class="p">{</span>
+  <span class="s2">&quot;Logging in to Azure...&quot;</span>
+  <span class="nb">Connect-AzAccount</span> <span class="n">-Identity</span>
+<span class="p">}</span>
+<span class="k">catch</span> <span class="p">{</span>
+  <span class="nb">Write-Error</span> <span class="n">-Message</span> <span class="nv">$_</span><span class="p">.</span><span class="n">Exception</span>
+  <span class="k">throw</span> <span class="nv">$_</span><span class="p">.</span><span class="n">Exception</span>
+<span class="p">}</span>
+
+<span class="nv">$azContext</span> <span class="p">=</span> <span class="nb">Get-AzContext</span>
+<span class="nv">$azProfile</span> <span class="p">=</span> <span class="no">[Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]</span><span class="p">::</span><span class="n">Instance</span><span class="p">.</span><span class="n">Profile</span>
+<span class="nv">$profileClient</span> <span class="p">=</span> <span class="nb">New-Object</span> <span class="n">-TypeName</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">Azure</span><span class="p">.</span><span class="n">Commands</span><span class="p">.</span><span class="n">ResourceManager</span><span class="p">.</span><span class="n">Common</span><span class="p">.</span><span class="n">RMProfileClient</span> <span class="n">-ArgumentList</span> <span class="p">(</span><span class="nv">$azProfile</span><span class="p">)</span>
+<span class="nv">$token</span> <span class="p">=</span> <span class="nv">$profileClient</span><span class="p">.</span><span class="n">AcquireAccessToken</span><span class="p">(</span><span class="nv">$azContext</span><span class="p">.</span><span class="n">Subscription</span><span class="p">.</span><span class="n">TenantId</span><span class="p">)</span>
+
+<span class="nv">$authHeader</span> <span class="p">=</span> <span class="p">@{</span>
+  <span class="s1">&#39;Content-Type&#39;</span>  <span class="p">=</span> <span class="s1">&#39;application/json&#39;</span>
+  <span class="s1">&#39;Authorization&#39;</span> <span class="p">=</span> <span class="s1">&#39;Bearer &#39;</span> <span class="p">+</span> <span class="nv">$token</span><span class="p">.</span><span class="n">AccessToken</span>
+<span class="p">}</span>
+
+<span class="c"># Get all resource groups that have the default Azure TRE project tag value</span>
+<span class="nv">$ResourceGroups</span> <span class="p">=</span> <span class="nb">Get-AzResourceGroup</span> <span class="n">-Tag</span> <span class="p">@{</span><span class="s1">&#39;project&#39;</span> <span class="p">=</span> <span class="s1">&#39;Azure Trusted Research Environment&#39;</span> <span class="p">}</span>
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$Group</span> <span class="k">in</span> <span class="nv">$ResourceGroups</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="o">-like</span> <span class="s1">&#39;*-ws-*&#39;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c"># Deal with the workspace resource groups separately (below)</span>
+    <span class="k">continue</span>
+  <span class="p">}</span>
+
+  <span class="c"># Deallocate the Azure Firewall (expecting only one per TRE instance)</span>
+  <span class="nv">$Firewall</span> <span class="p">=</span> <span class="nb">Get-AzFirewall</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nv">$null</span> <span class="o">-ne</span> <span class="nv">$Firewall</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$Firewall</span><span class="p">.</span><span class="n">Deallocate</span><span class="p">()</span>
+    <span class="nb">Write-Output</span> <span class="s2">&quot;Deallocating Firewall &#39;</span><span class="p">$(</span><span class="nv">$Firewall</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&#39;&quot;</span>
+    <span class="nb">Set-AzFirewall</span> <span class="n">-AzureFirewall</span> <span class="nv">$Firewall</span>
+  <span class="p">}</span>
+
+  <span class="c"># Stop the Application Gateway(s)</span>
+  <span class="c"># Multiple Application Gateways may exist if the certs shared service is installed</span>
+  <span class="nv">$Gateways</span> <span class="p">=</span> <span class="nb">Get-AzApplicationGateway</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span>
+  <span class="k">foreach</span> <span class="p">(</span><span class="nv">$Gateway</span> <span class="k">in</span> <span class="nv">$Gateways</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">Write-Output</span> <span class="s2">&quot;Stopping Application Gateway &#39;</span><span class="p">$(</span><span class="nv">$Gateway</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&#39;&quot;</span>
+    <span class="nb">Stop-AzApplicationGateway</span> <span class="n">-ApplicationGateway</span> <span class="nv">$Gateway</span>
+  <span class="p">}</span>
+
+  <span class="c"># Stop the MySQL servers</span>
+  <span class="nv">$MySQLServers</span> <span class="p">=</span> <span class="nb">Get-AzResource</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="n">-ResourceType</span> <span class="s2">&quot;Microsoft.DBforMySQL/servers&quot;</span>
+  <span class="k">foreach</span> <span class="p">(</span><span class="nv">$Server</span> <span class="k">in</span> <span class="nv">$MySQLServers</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c"># Invoke the REST API</span>
+    <span class="nb">Write-Output</span> <span class="s2">&quot;Stopping MySQL &#39;</span><span class="p">$(</span><span class="nv">$Server</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&#39;&quot;</span>
+    <span class="nv">$restUri</span> <span class="p">=</span> <span class="s1">&#39;https://management.azure.com/subscriptions/&#39;</span> <span class="p">+</span> <span class="nv">$azContext</span><span class="p">.</span><span class="n">Subscription</span><span class="p">.</span><span class="n">Id</span> <span class="p">+</span> <span class="s1">&#39;/resourceGroups/&#39;</span> <span class="p">+</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="p">+</span> <span class="s1">&#39;/providers/Microsoft.DBForMySQL/servers/&#39;</span> <span class="p">+</span> <span class="nv">$Server</span><span class="p">.</span><span class="n">Name</span> <span class="p">+</span> <span class="s1">&#39;/stop?api-version=2020-01-01&#39;</span>
+    <span class="nv">$response</span> <span class="p">=</span> <span class="nb">Invoke-RestMethod</span> <span class="n">-Uri</span> <span class="nv">$restUri</span> <span class="n">-Method</span> <span class="n">POST</span> <span class="n">-Headers</span> <span class="nv">$authHeader</span>
+  <span class="p">}</span>
+
+  <span class="c"># Deallocate all the virtual machine scale sets (resource processor)</span>
+  <span class="nv">$VMSS</span> <span class="p">=</span> <span class="nb">Get-AzVMSS</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span>
+  <span class="k">foreach</span> <span class="p">(</span><span class="nv">$item</span> <span class="k">in</span> <span class="nv">$VMSS</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">Write-Output</span> <span class="s2">&quot;Stopping VMSS &#39;</span><span class="p">$(</span><span class="nv">$item</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&#39;&quot;</span>
+    <span class="nb">Stop-AzVmss</span> <span class="n">-ResourceGroupName</span> <span class="nv">$item</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="n">-VMScaleSetName</span> <span class="nv">$item</span><span class="p">.</span><span class="n">Name</span> <span class="n">-Force</span>
+  <span class="p">}</span>
+
+  <span class="c"># Deallocate all the VMs</span>
+  <span class="nv">$VM</span> <span class="p">=</span> <span class="nb">Get-AzVM</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span>
+  <span class="k">foreach</span> <span class="p">(</span><span class="nv">$item</span> <span class="k">in</span> <span class="nv">$VM</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">Write-Output</span> <span class="s2">&quot;Stopping VM &#39;</span><span class="p">$(</span><span class="nv">$item</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&#39;&quot;</span>
+    <span class="nb">Stop-AzVm</span> <span class="n">-ResourceGroupName</span> <span class="nv">$item</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="n">-Name</span> <span class="nv">$item</span><span class="p">.</span><span class="n">Name</span> <span class="n">-Force</span>
+  <span class="p">}</span>
+
+  <span class="c"># Process all the workspace resource groups for this TRE instance</span>
+  <span class="nv">$WorkspaceResourceGroups</span> <span class="p">=</span> <span class="nb">Get-AzResourceGroup</span> <span class="n">-Name</span> <span class="s2">&quot;</span><span class="p">$(</span><span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span><span class="p">)</span><span class="s2">-ws-*&quot;</span>
+  <span class="k">foreach</span> <span class="p">(</span><span class="nv">$wsrg</span> <span class="k">in</span> <span class="nv">$WorkspaceResourceGroups</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c"># Deallocate all the VMs</span>
+    <span class="nv">$VM</span> <span class="p">=</span> <span class="nb">Get-AzVM</span> <span class="n">-ResourceGroupName</span> <span class="nv">$wsrg</span><span class="p">.</span><span class="n">ResourceGroupName</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$item</span> <span class="k">in</span> <span class="nv">$VM</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nb">Write-Output</span> <span class="s2">&quot;Stopping workspace VM &#39;</span><span class="p">$(</span><span class="nv">$item</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&#39;&quot;</span>
+      <span class="nb">Stop-AzVm</span> <span class="n">-ResourceGroupName</span> <span class="nv">$item</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="n">-Name</span> <span class="nv">$item</span><span class="p">.</span><span class="n">Name</span> <span class="n">-Force</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="automating-start">Automating <code>start</code></h3>
+<p>To restart the TRE core services (Firewall, Application Gateway(s), Virtual Machine Scale Sets, and MySQL), you can use <code>make tre-start</code>. Depending on your workflow, you might not be able to easily execute the <code>make</code> target. Alternatively, you can create a second Runbook and execute it manually. The PowerShell code to start TRE core services is below:</p>
+<div class="highlight"><pre><span></span><code><span class="k">try</span> <span class="p">{</span>
     <span class="s2">&quot;Logging in to Azure...&quot;</span>
     <span class="nb">Connect-AzAccount</span> <span class="n">-Identity</span>
 <span class="p">}</span>
@@ -2639,65 +2732,55 @@ We have this procedure setup in our development subscriptions where each night w
 <span class="nv">$token</span> <span class="p">=</span> <span class="nv">$profileClient</span><span class="p">.</span><span class="n">AcquireAccessToken</span><span class="p">(</span><span class="nv">$azContext</span><span class="p">.</span><span class="n">Subscription</span><span class="p">.</span><span class="n">TenantId</span><span class="p">)</span>
 
 <span class="nv">$authHeader</span> <span class="p">=</span> <span class="p">@{</span>
-    <span class="s1">&#39;Content-Type&#39;</span><span class="p">=</span><span class="s1">&#39;application/json&#39;</span>
-    <span class="s1">&#39;Authorization&#39;</span><span class="p">=</span><span class="s1">&#39;Bearer &#39;</span> <span class="p">+</span> <span class="nv">$token</span><span class="p">.</span><span class="n">AccessToken</span>
+    <span class="s1">&#39;Content-Type&#39;</span>  <span class="p">=</span> <span class="s1">&#39;application/json&#39;</span>
+    <span class="s1">&#39;Authorization&#39;</span> <span class="p">=</span> <span class="s1">&#39;Bearer &#39;</span> <span class="p">+</span> <span class="nv">$token</span><span class="p">.</span><span class="n">AccessToken</span>
 <span class="p">}</span>
 
-
-<span class="nv">$ResourceGroups</span> <span class="p">=</span> <span class="nb">Get-AzResourceGroup</span> <span class="n">-Tag</span> <span class="p">@{</span><span class="s1">&#39;project&#39;</span><span class="p">=</span><span class="s1">&#39;Azure Trusted Research Environment&#39;</span><span class="p">}</span>
-<span class="k">foreach</span> <span class="p">(</span><span class="nv">$Group</span> <span class="k">in</span> <span class="nv">$ResourceGroups</span><span class="p">)</span> 
-<span class="p">{</span>
+<span class="c"># Get all resource groups that have the default Azure TRE project tag value</span>
+<span class="nv">$ResourceGroups</span> <span class="p">=</span> <span class="nb">Get-AzResourceGroup</span> <span class="n">-Tag</span> <span class="p">@{</span><span class="s1">&#39;project&#39;</span> <span class="p">=</span> <span class="s1">&#39;Azure Trusted Research Environment&#39;</span> <span class="p">}</span>
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$Group</span> <span class="k">in</span> <span class="nv">$ResourceGroups</span><span class="p">)</span> <span class="p">{</span>
     <span class="k">if</span> <span class="p">(</span><span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="o">-like</span> <span class="s1">&#39;*-ws-*&#39;</span><span class="p">)</span> <span class="p">{</span>
-      <span class="c"># we deal with the workspace resource groups separately.</span>
-      <span class="k">continue</span>
+        <span class="c"># Don&#39;t deal with the workspace resource groups</span>
+        <span class="k">continue</span>
     <span class="p">}</span>
 
+    <span class="nv">$azureTreId</span> <span class="p">=</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">Tags</span><span class="p">[</span><span class="s1">&#39;tre_id&#39;</span><span class="p">]</span>
+    <span class="nb">Write-Output</span> <span class="s2">&quot;Starting TRE core resources for &#39;$azureTreId&#39;&quot;</span>
+
+    <span class="c"># Allocate the Azure Firewall (expecting only one per TRE instance)</span>
     <span class="nv">$Firewall</span> <span class="p">=</span> <span class="nb">Get-AzFirewall</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nv">$Firewall</span> <span class="o">-ne</span> <span class="nv">$null</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$Firewall</span><span class="p">.</span><span class="n">Deallocate</span><span class="p">()</span>
-        <span class="nb">Write-Output</span> <span class="s2">&quot;Deallocating </span><span class="p">$(</span><span class="nv">$Firewall</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$null</span> <span class="o">-ne</span> <span class="nv">$Firewall</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c"># Find the firewall&#39;s public IP and virtual network</span>
+        <span class="nv">$pip</span> <span class="p">=</span> <span class="nb">Get-AzPublicIpAddress</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="n">-Name</span> <span class="s2">&quot;pip-fw-$azureTreId&quot;</span>
+        <span class="nv">$vnet</span> <span class="p">=</span> <span class="nb">Get-AzVirtualNetwork</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="n">-Name</span> <span class="s2">&quot;vnet-$azureTreId&quot;</span>
+        <span class="nv">$Firewall</span><span class="p">.</span><span class="n">Allocate</span><span class="p">(</span><span class="nv">$vnet</span><span class="p">,</span> <span class="nv">$pip</span><span class="p">)</span>
+        <span class="nb">Write-Output</span> <span class="s2">&quot;Allocating Firewall &#39;</span><span class="p">$(</span><span class="nv">$Firewall</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&#39; with public IP &#39;</span><span class="p">$(</span><span class="nv">$pip</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&#39;&quot;</span>
         <span class="nb">Set-AzFirewall</span> <span class="n">-AzureFirewall</span> <span class="nv">$Firewall</span>
     <span class="p">}</span>
 
-    <span class="nv">$Gateway</span> <span class="p">=</span> <span class="nb">Get-AzApplicationGateway</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nv">$Gateway</span> <span class="o">-ne</span> <span class="nv">$null</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nb">Write-Output</span> <span class="s2">&quot;Stopping </span><span class="p">$(</span><span class="nv">$Gateway</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&quot;</span>
-        <span class="nb">Stop-AzApplicationGateway</span> <span class="n">-ApplicationGateway</span> <span class="nv">$Gateway</span>
+    <span class="c"># Start the Application Gateway(s)</span>
+    <span class="c"># Multiple Application Gateways may exist if the certs shared service is installed</span>
+    <span class="nv">$Gateways</span> <span class="p">=</span> <span class="nb">Get-AzApplicationGateway</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$Gateway</span> <span class="k">in</span> <span class="nv">$Gateways</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nb">Write-Output</span> <span class="s2">&quot;Starting Application Gateway &#39;</span><span class="p">$(</span><span class="nv">$Gateway</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&#39;&quot;</span>
+        <span class="nb">Start-AzApplicationGateway</span> <span class="n">-ApplicationGateway</span> <span class="nv">$Gateway</span>
     <span class="p">}</span>
 
-  <span class="nv">$MySQLServers</span> <span class="p">=</span> <span class="nb">Get-AzResource</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="n">-ResourceType</span> <span class="s2">&quot;Microsoft.DBforMySQL/servers&quot;</span>
-  <span class="k">foreach</span> <span class="p">(</span><span class="nv">$Server</span> <span class="k">in</span> <span class="nv">$MySQLServers</span><span class="p">)</span>
-  <span class="p">{</span>
-    <span class="c"># Invoke the REST API</span>
-    <span class="nb">Write-Output</span> <span class="s2">&quot;Stopping </span><span class="p">$(</span><span class="nv">$Server</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&quot;</span>
-    <span class="nv">$restUri</span><span class="p">=</span><span class="s1">&#39;https://management.azure.com/subscriptions/&#39;</span><span class="p">+</span><span class="nv">$azContext</span><span class="p">.</span><span class="n">Subscription</span><span class="p">.</span><span class="n">Id</span><span class="p">+</span><span class="s1">&#39;/resourceGroups/&#39;</span><span class="p">+</span><span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span><span class="p">+</span><span class="s1">&#39;/providers/Microsoft.DBForMySQL/servers/&#39;</span><span class="p">+</span><span class="nv">$Server</span><span class="p">.</span><span class="n">Name</span><span class="p">+</span><span class="s1">&#39;/stop?api-version=2020-01-01&#39;</span>
-    <span class="nv">$response</span> <span class="p">=</span> <span class="nb">Invoke-RestMethod</span> <span class="n">-Uri</span> <span class="nv">$restUri</span> <span class="n">-Method</span> <span class="n">POST</span> <span class="n">-Headers</span> <span class="nv">$authHeader</span>
-  <span class="p">}</span>
-
-  <span class="nv">$VMSS</span> <span class="p">=</span> <span class="nb">Get-AzVMSS</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span>
-  <span class="k">foreach</span> <span class="p">(</span><span class="nv">$item</span> <span class="k">in</span> <span class="nv">$VMSS</span><span class="p">)</span>
-  <span class="p">{</span>
-    <span class="nb">Write-Output</span> <span class="s2">&quot;Stopping </span><span class="p">$(</span><span class="nv">$item</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&quot;</span>
-    <span class="nb">Stop-AzVmss</span> <span class="n">-ResourceGroupName</span> <span class="nv">$item</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="n">-VMScaleSetName</span> <span class="nv">$item</span><span class="p">.</span><span class="n">Name</span> <span class="n">-Force</span>
-  <span class="p">}</span>
-
-  <span class="nv">$VM</span> <span class="p">=</span> <span class="nb">Get-AzVM</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span>
-  <span class="k">foreach</span> <span class="p">(</span><span class="nv">$item</span> <span class="k">in</span> <span class="nv">$VM</span><span class="p">)</span>
-  <span class="p">{</span>
-    <span class="nb">Write-Output</span> <span class="s2">&quot;Stopping </span><span class="p">$(</span><span class="nv">$item</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&quot;</span>
-    <span class="nb">Stop-AzVm</span> <span class="n">-ResourceGroupName</span> <span class="nv">$item</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="n">-Name</span> <span class="nv">$item</span><span class="p">.</span><span class="n">Name</span> <span class="n">-Force</span>
-  <span class="p">}</span>
-
-  <span class="nv">$WorkspaceResourceGroups</span> <span class="p">=</span> <span class="nb">Get-AzResourceGroup</span> <span class="n">-Name</span> <span class="s2">&quot;</span><span class="p">$(</span><span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span><span class="p">)</span><span class="s2">-ws-*&quot;</span>
-  <span class="k">foreach</span> <span class="p">(</span><span class="nv">$wsrg</span> <span class="k">in</span> <span class="nv">$WorkspaceResourceGroups</span><span class="p">)</span>
-  <span class="p">{</span>
-    <span class="nv">$VM</span> <span class="p">=</span> <span class="nb">Get-AzVM</span> <span class="n">-ResourceGroupName</span> <span class="nv">$wsrg</span><span class="p">.</span><span class="n">ResourceGroupName</span>
-    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$item</span> <span class="k">in</span> <span class="nv">$VM</span><span class="p">)</span>
-    <span class="p">{</span>
-      <span class="nb">Write-Output</span> <span class="s2">&quot;Stopping </span><span class="p">$(</span><span class="nv">$item</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&quot;</span>
-      <span class="nb">Stop-AzVm</span> <span class="n">-ResourceGroupName</span> <span class="nv">$item</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="n">-Name</span> <span class="nv">$item</span><span class="p">.</span><span class="n">Name</span> <span class="n">-Force</span>
+    <span class="c"># Start the MySQL servers</span>
+    <span class="nv">$MySQLServers</span> <span class="p">=</span> <span class="nb">Get-AzResource</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="n">-ResourceType</span> <span class="s2">&quot;Microsoft.DBforMySQL/servers&quot;</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$Server</span> <span class="k">in</span> <span class="nv">$MySQLServers</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c"># Invoke the REST API</span>
+        <span class="nb">Write-Output</span> <span class="s2">&quot;Starting MySQL &#39;</span><span class="p">$(</span><span class="nv">$Server</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&#39;&quot;</span>
+        <span class="nv">$restUri</span> <span class="p">=</span> <span class="s1">&#39;https://management.azure.com/subscriptions/&#39;</span> <span class="p">+</span> <span class="nv">$azContext</span><span class="p">.</span><span class="n">Subscription</span><span class="p">.</span><span class="n">Id</span> <span class="p">+</span> <span class="s1">&#39;/resourceGroups/&#39;</span> <span class="p">+</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="p">+</span> <span class="s1">&#39;/providers/Microsoft.DBForMySQL/servers/&#39;</span> <span class="p">+</span> <span class="nv">$Server</span><span class="p">.</span><span class="n">Name</span> <span class="p">+</span> <span class="s1">&#39;/start?api-version=2020-01-01&#39;</span>
+        <span class="nv">$response</span> <span class="p">=</span> <span class="nb">Invoke-RestMethod</span> <span class="n">-Uri</span> <span class="nv">$restUri</span> <span class="n">-Method</span> <span class="n">POST</span> <span class="n">-Headers</span> <span class="nv">$authHeader</span>
     <span class="p">}</span>
-  <span class="p">}</span>
+
+    <span class="c"># Allocate all the virtual machine scale sets (resource processor)</span>
+    <span class="nv">$VMSS</span> <span class="p">=</span> <span class="nb">Get-AzVMSS</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$item</span> <span class="k">in</span> <span class="nv">$VMSS</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nb">Write-Output</span> <span class="s2">&quot;Starting VMSS &#39;</span><span class="p">$(</span><span class="nv">$item</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&#39;&quot;</span>
+        <span class="nb">Start-AzVmss</span> <span class="n">-ResourceGroupName</span> <span class="nv">$item</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="n">-VMScaleSetName</span> <span class="nv">$item</span><span class="p">.</span><span class="n">Name</span>
+    <span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
 
