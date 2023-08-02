@@ -38,7 +38,7 @@ If you create a new Automation account, you will have the required modules prein
 
 Finally, schedule it to run when it makes sense for you.
 
-### Runbook Script
+### Stop Runbook Script
 
 ```powershell
 try {
@@ -117,5 +117,75 @@ foreach ($Group in $ResourceGroups) {
       Stop-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name -Force
     }
   }
+}
+```
+
+### Automating `start`
+
+To restart the TRE core services (Firewall, Application Gateway(s), Virtual Machine Scale Sets, and MySQL), you can use `make tre-start`. Depending on your workflow, you might not be able to easily execute the `make` target. Alternatively, you can create a second Runbook and execute it manually. The PowerShell code to start TRE core services is below:
+
+```powershell
+try {
+    "Logging in to Azure..."
+    Connect-AzAccount -Identity
+}
+catch {
+    Write-Error -Message $_.Exception
+    throw $_.Exception
+}
+
+$azContext = Get-AzContext
+$azProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
+$profileClient = New-Object -TypeName Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient -ArgumentList ($azProfile)
+$token = $profileClient.AcquireAccessToken($azContext.Subscription.TenantId)
+
+$authHeader = @{
+    'Content-Type'  = 'application/json'
+    'Authorization' = 'Bearer ' + $token.AccessToken
+}
+
+# Get all resource groups that have the default Azure TRE project tag value
+$ResourceGroups = Get-AzResourceGroup -Tag @{'project' = 'Azure Trusted Research Environment' }
+foreach ($Group in $ResourceGroups) {
+    if ($Group.ResourceGroupName -like '*-ws-*') {
+        # Don't deal with the workspace resource groups
+        continue
+    }
+
+    $azureTreId = 'actredemo01'
+    # Allocate the Azure Firewall (expecting only one per TRE instance)
+    $Firewall = Get-AzFirewall -ResourceGroupName $Group.ResourceGroupName
+    if ($null -ne $Firewall) {
+        # Find the firewall's public IP and virtual network
+        $pip = Get-AzPublicIpAddress -ResourceGroupName $Group.ResourceGroupName -Name "pip-fw-$azureTreId"
+        $vnet = Get-AzVirtualNetwork -ResourceGroupName $Group.ResourceGroupName -Name "vnet-$azureTreId"
+        $Firewall.Allocate($vnet, $pip)
+        Write-Output "Allocating Firewall '$($Firewall.Name)'"
+        Set-AzFirewall -AzureFirewall $Firewall
+    }
+
+    # Start the Application Gateway(s)
+    # Multiple Application Gateways may exist if the certs shared service is installed
+    $Gateways = Get-AzApplicationGateway -ResourceGroupName $Group.ResourceGroupName
+    foreach ($Gateway in $Gateways) {
+        Write-Output "Starting Application Gateway '$($Gateway.Name)'"
+        Start-AzApplicationGateway -ApplicationGateway $Gateway
+    }
+
+    # Start the MySQL servers
+    $MySQLServers = Get-AzResource -ResourceGroupName $Group.ResourceGroupName -ResourceType "Microsoft.DBforMySQL/servers"
+    foreach ($Server in $MySQLServers) {
+        # Invoke the REST API
+        Write-Output "Starting MySQL '$($Server.Name)'"
+        $restUri = 'https://management.azure.com/subscriptions/' + $azContext.Subscription.Id + '/resourceGroups/' + $Group.ResourceGroupName + '/providers/Microsoft.DBForMySQL/servers/' + $Server.Name + '/start?api-version=2020-01-01'
+        $response = Invoke-RestMethod -Uri $restUri -Method POST -Headers $authHeader
+    }
+
+    # Allocate all the virtual machine scale sets (resource processor)
+    $VMSS = Get-AzVMSS -ResourceGroupName $Group.ResourceGroupName
+    foreach ($item in $VMSS) {
+        Write-Output "Starting VMSS '$($item.Name)'"
+        Start-AzVmss -ResourceGroupName $item.ResourceGroupName -VMScaleSetName $item.Name
+    }
 }
 ```
