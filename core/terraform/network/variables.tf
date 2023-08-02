@@ -6,5 +6,5 @@ variable "arm_environment" {}
 variable "tre_core_tags" {
   type        = map(string)
   description = "Tags to be applied to all resources"
-  default = {}
+  default     = {}
 }

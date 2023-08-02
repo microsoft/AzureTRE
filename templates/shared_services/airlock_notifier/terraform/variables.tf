@@ -43,5 +43,5 @@ variable "smtp_server_enable_ssl" {
 variable "tags" {
   type        = map(string)
   description = "Tags to be applied to all resources"
-  default = {}
+  default     = {}
 }

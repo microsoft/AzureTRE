@@ -49,7 +49,7 @@ resource "azurerm_container_registry_task" "tredev_purge" {
   name                  = "tredev_purge"
   container_registry_id = azurerm_container_registry.shared_acr.id
   tags                  = var.tags
-  
+
   platform {
     os           = "Linux"
     architecture = "amd64"
