@@ -1,11 +1,11 @@
 # Start/Stop Azure TRE
 
-Once you've provisioned an Azure TRE instance it will begin to incurr running costs of the underlying Azure services.
+Once you've provisioned an Azure TRE instance it will begin to incur running costs of the underlying Azure services.
 
-Within evaluation or development, you may want to "pause" the TRE environment during out of hours or weekends, to reduce costs without having to completely destroy the environment.  The following `make targets` provide a simple way to start and stop both the Azure Firewall and Azure Application Gateway instances, considerably reducing the Azure TRE instance running costs.
+Within evaluation or development, you may want to "pause" the TRE environment during out of office hours or weekends, to reduce costs without having to completely destroy the environment.  The following `make` targets provide a simple way to start and stop both the Azure Firewall and Azure Application Gateway instances, considerably reducing the Azure TRE instance running costs.
 
 !!! info
-    After running `make all` underlying Azure TRE services are automatically started, billing will start.
+    After running `make all` underlying Azure TRE services are automatically started and billing will start.
 
 ## Start Azure TRE
 
@@ -32,7 +32,7 @@ We have this procedure setup in our development subscriptions where each night w
 
 We use [Azure Automation](https://docs.microsoft.com/en-us/azure/automation/overview) to run this procedure.
 
-Be sure to create a runbook with Powershell 7.1 enabled and an identity with contributor permissions on the subscription. Note that the script below uses a system managed identity and if you use something different then you might need to update the authentication part.
+Be sure to create a runbook with PowerShell 7.1 or PowerShell 7.2 enabled and an identity with contributor permissions on the subscription. Note that the script below uses a system managed identity and if you use something different then you might need to update the authentication part.
 
 If you create a new Automation account, you will have the required modules preinstalled.
 
@@ -41,14 +41,13 @@ Finally, schedule it to run when it makes sense for you.
 ### Runbook Script
 
 ```powershell
-try
-{
-    "Logging in to Azure..."
-    Connect-AzAccount -Identity
+try {
+  "Logging in to Azure..."
+  Connect-AzAccount -Identity
 }
 catch {
-    Write-Error -Message $_.Exception
-    throw $_.Exception
+  Write-Error -Message $_.Exception
+  throw $_.Exception
 }
 
 $azContext = Get-AzContext
@@ -57,62 +56,64 @@ $profileClient = New-Object -TypeName Microsoft.Azure.Commands.ResourceManager.C
 $token = $profileClient.AcquireAccessToken($azContext.Subscription.TenantId)
 
 $authHeader = @{
-    'Content-Type'='application/json'
-    'Authorization'='Bearer ' + $token.AccessToken
+  'Content-Type'  = 'application/json'
+  'Authorization' = 'Bearer ' + $token.AccessToken
 }
 
+# Get all resource groups that have the default Azure TRE project tag value
+$ResourceGroups = Get-AzResourceGroup -Tag @{'project' = 'Azure Trusted Research Environment' }
+foreach ($Group in $ResourceGroups) {
+  if ($Group.ResourceGroupName -like '*-ws-*') {
+    # Deal with the workspace resource groups separately (below)
+    continue
+  }
 
-$ResourceGroups = Get-AzResourceGroup -Tag @{'project'='Azure Trusted Research Environment'}
-foreach ($Group in $ResourceGroups) 
-{
-    if ($Group.ResourceGroupName -like '*-ws-*') {
-      # we deal with the workspace resource groups separately.
-      continue
-    }
+  # Deallocate the Azure Firewall (expecting only one per TRE instance)
+  $Firewall = Get-AzFirewall -ResourceGroupName $Group.ResourceGroupName
+  if ($null -ne $Firewall) {
+    $Firewall.Deallocate()
+    Write-Output "Deallocating Firewall '$($Firewall.Name)'"
+    Set-AzFirewall -AzureFirewall $Firewall
+  }
 
-    $Firewall = Get-AzFirewall -ResourceGroupName $Group.ResourceGroupName
-    if ($Firewall -ne $null) {
-        $Firewall.Deallocate()
-        Write-Output "Deallocating $($Firewall.Name)"
-        Set-AzFirewall -AzureFirewall $Firewall
-    }
+  # Stop the Application Gateway(s)
+  # Multiple Application Gateways may exist if the certs shared service is installed
+  $Gateways = Get-AzApplicationGateway -ResourceGroupName $Group.ResourceGroupName
+  foreach ($Gateway in $Gateways) {
+    Write-Output "Stopping Application Gateway '$($Gateway.Name)'"
+    Stop-AzApplicationGateway -ApplicationGateway $Gateway
+  }
 
-    $Gateway = Get-AzApplicationGateway -ResourceGroupName $Group.ResourceGroupName
-    if ($Gateway -ne $null) {
-        Write-Output "Stopping $($Gateway.Name)"
-        Stop-AzApplicationGateway -ApplicationGateway $Gateway
-    }
-
+  # Stop the MySQL servers
   $MySQLServers = Get-AzResource -ResourceGroupName $Group.ResourceGroupName -ResourceType "Microsoft.DBforMySQL/servers"
-  foreach ($Server in $MySQLServers)
-  {
+  foreach ($Server in $MySQLServers) {
     # Invoke the REST API
-    Write-Output "Stopping $($Server.Name)"
-    $restUri='https://management.azure.com/subscriptions/'+$azContext.Subscription.Id+'/resourceGroups/'+$Group.ResourceGroupName+'/providers/Microsoft.DBForMySQL/servers/'+$Server.Name+'/stop?api-version=2020-01-01'
+    Write-Output "Stopping MySQL '$($Server.Name)'"
+    $restUri = 'https://management.azure.com/subscriptions/' + $azContext.Subscription.Id + '/resourceGroups/' + $Group.ResourceGroupName + '/providers/Microsoft.DBForMySQL/servers/' + $Server.Name + '/stop?api-version=2020-01-01'
     $response = Invoke-RestMethod -Uri $restUri -Method POST -Headers $authHeader
   }
 
+  # Deallocate all the virtual machine scale sets (resource processor)
   $VMSS = Get-AzVMSS -ResourceGroupName $Group.ResourceGroupName
-  foreach ($item in $VMSS)
-  {
-    Write-Output "Stopping $($item.Name)"
+  foreach ($item in $VMSS) {
+    Write-Output "Stopping VMSS '$($item.Name)'"
     Stop-AzVmss -ResourceGroupName $item.ResourceGroupName -VMScaleSetName $item.Name -Force
   }
 
+  # Deallocate all the VMs
   $VM = Get-AzVM -ResourceGroupName $Group.ResourceGroupName
-  foreach ($item in $VM)
-  {
-    Write-Output "Stopping $($item.Name)"
+  foreach ($item in $VM) {
+    Write-Output "Stopping VM '$($item.Name)'"
     Stop-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name -Force
   }
 
+  # Process all the workspace resource groups for this TRE instance
   $WorkspaceResourceGroups = Get-AzResourceGroup -Name "$($Group.ResourceGroupName)-ws-*"
-  foreach ($wsrg in $WorkspaceResourceGroups)
-  {
+  foreach ($wsrg in $WorkspaceResourceGroups) {
+    # Deallocate all the VMs
     $VM = Get-AzVM -ResourceGroupName $wsrg.ResourceGroupName
-    foreach ($item in $VM)
-    {
-      Write-Output "Stopping $($item.Name)"
+    foreach ($item in $VM) {
+      Write-Output "Stopping workspace VM '$($item.Name)'"
       Stop-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name -Force
     }
   }
