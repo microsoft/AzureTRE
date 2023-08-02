@@ -152,7 +152,9 @@ foreach ($Group in $ResourceGroups) {
         continue
     }
 
-    $azureTreId = 'actredemo01'
+    $azureTreId = $Group.Tags['tre_id']
+    Write-Output "Starting TRE core resources for '$azureTreId'"
+
     # Allocate the Azure Firewall (expecting only one per TRE instance)
     $Firewall = Get-AzFirewall -ResourceGroupName $Group.ResourceGroupName
     if ($null -ne $Firewall) {
@@ -160,7 +162,7 @@ foreach ($Group in $ResourceGroups) {
         $pip = Get-AzPublicIpAddress -ResourceGroupName $Group.ResourceGroupName -Name "pip-fw-$azureTreId"
         $vnet = Get-AzVirtualNetwork -ResourceGroupName $Group.ResourceGroupName -Name "vnet-$azureTreId"
         $Firewall.Allocate($vnet, $pip)
-        Write-Output "Allocating Firewall '$($Firewall.Name)'"
+        Write-Output "Allocating Firewall '$($Firewall.Name)' with public IP '$($pip.Name)'"
         Set-AzFirewall -AzureFirewall $Firewall
     }
 
