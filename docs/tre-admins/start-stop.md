@@ -30,7 +30,7 @@ We have this procedure setup in our development subscriptions where each night w
 
 ### Requirements
 
-We use [Azure Automation](https://docs.microsoft.com/en-us/azure/automation/overview) to run this procedure.
+We use [Azure Automation](https://learn.microsoft.com/azure/automation/overview) to run this procedure.
 
 Be sure to create a runbook with PowerShell 7.1 or PowerShell 7.2 enabled and an identity with contributor permissions on the subscription. Note that the script below uses a system managed identity and if you use something different then you might need to update the authentication part.
 
