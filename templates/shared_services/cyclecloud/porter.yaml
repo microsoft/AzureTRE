@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-cyclecloud
-version: 0.5.1
+version: 0.6.0
 description: "An Azure TRE Shared Service Template for Azure Cyclecloud"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
