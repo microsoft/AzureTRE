@@ -6,6 +6,7 @@ FEATURES:
 ENHANCEMENTS:
 
 BUG FIXES:
+* Cusotm actions fail on resources with a pipline ([#3646](https://github.com/microsoft/AzureTRE/issues/3646))
 
 ## 0.12.0 (July 27, 2023)
 
