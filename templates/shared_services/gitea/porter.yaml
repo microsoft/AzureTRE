@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-gitea
-version: 0.6.1
+version: 0.6.2
 description: "A Gitea shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
