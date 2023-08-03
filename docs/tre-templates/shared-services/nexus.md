@@ -24,11 +24,11 @@ You can use the Certs Shared Service to set one up by following these steps:
 3. Select the Certs template, then fill in the required details. *Domain prefix* should be set to `nexus` and *Cert name* should be `nexus-ssl`.
 
 !!! caution
-    If you have KeyVault Purge Protection enabled and are re-deploying your environment using the same `cert_name`, you may encounter this: `Status=409 Code=\"Conflict\" Message=\"Certificate nexus-ssl is currently in a deleted but recoverable state`. You need to either manually recover the certificate or purge it before redeploying.
+    If you have Key Vault Purge Protection enabled and are re-deploying your environment using the same `cert_name`, you may encounter this: `Status=409 Code=\"Conflict\" Message=\"Certificate nexus-ssl is currently in a deleted but recoverable state`. You need to either manually recover the certificate or purge it before redeploying.
 
-Once deployed, the certs service will use Letsencrypt to generate a certificate for the specified domain prefix followed by `-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, so in our case, having entered `nexus`, this will be `nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, which will be the public domain for our Nexus service.
+Once deployed, the certs service will use Let's Encrypt to generate a certificate for the specified domain prefix followed by `-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, so in our case, having entered `nexus`, this will be `nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, which will be the public domain for our Nexus service.
 
-You can verify whether this has been successful by navigating to your core keyvault (`kv-{TRE_ID}`) and looking for a certificate called `nexus-ssl` (or whatever you called it).
+You can verify whether this has been successful by navigating to your core Key Vault (`kv-{TRE_ID}`) and looking for a certificate called `nexus-ssl` (or whatever you called it).
 
 After verifying the certificate has been generated, you can deploy Nexus:
 
@@ -40,13 +40,13 @@ After verifying the certificate has been generated, you can deploy Nexus:
 
 1. Navigate back to the TRE UI, and click *Create new* again within the Shared Services page.
 
-1. Select the Nexus template then fill in the required details. The *SSL certificate name* should default to `nexus-ssl`, so there's no need to change it unless you gave it a different name in the previous step.
+1. Select the Nexus template, then fill in the required details. The *SSL certificate name* should default to `nexus-ssl`, so there's no need to change it unless you gave it a different name in the previous step.
 
 This will deploy the infrastructure required for Nexus, then start the service and configure it with the repository configurations located in the `./templates/shared_services/sonatype-nexus-vm/scripts/nexus_repos_config` folder. It will also set up HTTPS using the certificate you generated in the previous section, so proxies can be served at `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`.
 
 ## Setup and usage
 
-1. A TRE Administrator can access Nexus though the admin jumpbox provisioned as part of the TRE deployment. The username is `adminuser` and the password is located in the KeyVault under `vm-<tre-id>-jumpbox-password`
+1. A TRE Administrator can access Nexus though the admin jumpbox provisioned as part of the TRE deployment. The username is `adminuser` and the password is located in the Key Vault under `vm-<tre-id>-jumpbox-password`
 2. A researcher can access Nexus from within the workspace by using the internal Nexus URL of `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`
 3. To fetch Python packages from the PyPI proxy, a researcher can use `pip install` while specifying the proxy server:
 
@@ -55,7 +55,7 @@ This will deploy the infrastructure required for Nexus, then start the service a
     ```
 
 !!! info
-    In the built-in Linux and Windows Guacamole VM bundles, PyPI and several other package managers are already configured to use the Nexus proxy by default, so manually specifying in the install commands isn't neccesary.
+    In the built-in Linux and Windows Guacamole VM bundles, PyPI and several other package managers are already configured to use the Nexus proxy by default, so manually specifying in the install commands isn't necessary.
 
 ## Network requirements
 
@@ -108,6 +108,6 @@ If you still have an existing Nexus installation based on App Service (from the 
 
 ## Renewing certificates for Nexus
 
-The Nexus service checks Keyvault regularly for the latest certificate matching the name you passed on deploy (`nexus-ssl` by default).
+The Nexus service checks Key Vault regularly for the latest certificate matching the name you passed on deploy (`nexus-ssl` by default).
 
-When approaching expiry, you can either provide an updated certificate into the TRE core KeyVault (with the name you specified when installing Nexus) if you brought your own, or if you used the certs shared service to generate one, just call the `renew` custom action on that service. This will generate a new certificate and persist it to the Keyvault, replacing the expired one.
+When approaching expiry, you can either provide an updated certificate into the TRE core KeyVault (with the name you specified when installing Nexus) if you brought your own, or if you used the certs shared service to generate one, just call the `renew` custom action on that service. This will generate a new certificate and persist it to the Key Vault, replacing the expired one.
