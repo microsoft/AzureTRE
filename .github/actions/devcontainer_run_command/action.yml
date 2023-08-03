@@ -232,10 +232,10 @@ runs:
             && inputs.RP_BUNDLE_VALUES) || '{}' }}' \
           -e TF_VAR_resource_processor_number_processes_per_instance="${{ (inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE != ''
             && inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE) || 5 }}" \
-          -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
-          '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
           -e TAGS='${{ (toJson(inputs.TAGS) != '""'
             && inputs.TAGS) || '{}' }}' \
           -e TF_VAR_tags='${{ (toJson(inputs.TAGS) != '""'
             && inputs.TAGS) || '{}' }}' \
+          -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
+          '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"
