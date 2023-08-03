@@ -21,7 +21,7 @@
         <link rel="next" href="../cyclecloud/">
       
       <link rel="icon" href="../../../assets/ms_icon.png">
-      <meta name="generator" content="mkdocs-1.5.1, mkdocs-material-9.1.21">
+      <meta name="generator" content="mkdocs-1.5.2, mkdocs-material-9.1.21">
     
     
       
@@ -2638,10 +2638,10 @@
 </ol>
 <div class="admonition caution">
 <p class="admonition-title">Caution</p>
-<p>If you have KeyVault Purge Protection enabled and are re-deploying your environment using the same <code>cert_name</code>, you may encounter this: <code>Status=409 Code=\"Conflict\" Message=\"Certificate nexus-ssl is currently in a deleted but recoverable state</code>. You need to either manually recover the certificate or purge it before redeploying.</p>
+<p>If you have Key Vault Purge Protection enabled and are re-deploying your environment using the same <code>cert_name</code>, you may encounter this: <code>Status=409 Code=\"Conflict\" Message=\"Certificate nexus-ssl is currently in a deleted but recoverable state</code>. You need to either manually recover the certificate or purge it before redeploying.</p>
 </div>
-<p>Once deployed, the certs service will use Letsencrypt to generate a certificate for the specified domain prefix followed by <code>-{TRE_ID}.{LOCATION}.cloudapp.azure.com</code>, so in our case, having entered <code>nexus</code>, this will be <code>nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com</code>, which will be the public domain for our Nexus service.</p>
-<p>You can verify whether this has been successful by navigating to your core keyvault (<code>kv-{TRE_ID}</code>) and looking for a certificate called <code>nexus-ssl</code> (or whatever you called it).</p>
+<p>Once deployed, the certs service will use Let's Encrypt to generate a certificate for the specified domain prefix followed by <code>-{TRE_ID}.{LOCATION}.cloudapp.azure.com</code>, so in our case, having entered <code>nexus</code>, this will be <code>nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com</code>, which will be the public domain for our Nexus service.</p>
+<p>You can verify whether this has been successful by navigating to your core Key Vault (<code>kv-{TRE_ID}</code>) and looking for a certificate called <code>nexus-ssl</code> (or whatever you called it).</p>
 <p>After verifying the certificate has been generated, you can deploy Nexus:</p>
 <ol>
 <li>
@@ -2653,13 +2653,13 @@
 <p>Navigate back to the TRE UI, and click <em>Create new</em> again within the Shared Services page.</p>
 </li>
 <li>
-<p>Select the Nexus template then fill in the required details. The <em>SSL certificate name</em> should default to <code>nexus-ssl</code>, so there's no need to change it unless you gave it a different name in the previous step.</p>
+<p>Select the Nexus template, then fill in the required details. The <em>SSL certificate name</em> should default to <code>nexus-ssl</code>, so there's no need to change it unless you gave it a different name in the previous step.</p>
 </li>
 </ol>
 <p>This will deploy the infrastructure required for Nexus, then start the service and configure it with the repository configurations located in the <code>./templates/shared_services/sonatype-nexus-vm/scripts/nexus_repos_config</code> folder. It will also set up HTTPS using the certificate you generated in the previous section, so proxies can be served at <code>https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com</code>.</p>
 <h2 id="setup-and-usage">Setup and usage</h2>
 <ol>
-<li>A TRE Administrator can access Nexus though the admin jumpbox provisioned as part of the TRE deployment. The username is <code>adminuser</code> and the password is located in the KeyVault under <code>vm-&lt;tre-id&gt;-jumpbox-password</code></li>
+<li>A TRE Administrator can access Nexus though the admin jumpbox provisioned as part of the TRE deployment. The username is <code>adminuser</code> and the password is located in the Key Vault under <code>vm-&lt;tre-id&gt;-jumpbox-password</code></li>
 <li>A researcher can access Nexus from within the workspace by using the internal Nexus URL of <code>https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com</code></li>
 <li>To fetch Python packages from the PyPI proxy, a researcher can use <code>pip install</code> while specifying the proxy server:<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>packagename<span class="w"> </span>--index-url<span class="w"> </span>https://nexus-<span class="o">{</span>TRE_ID<span class="o">}</span>.<span class="o">{</span>LOCATION<span class="o">}</span>.cloudapp.azure.com/repository/apt-pypi/simple
 </code></pre></div>
@@ -2667,7 +2667,7 @@
 </ol>
 <div class="admonition info">
 <p class="admonition-title">Info</p>
-<p>In the built-in Linux and Windows Guacamole VM bundles, PyPI and several other package managers are already configured to use the Nexus proxy by default, so manually specifying in the install commands isn't neccesary.</p>
+<p>In the built-in Linux and Windows Guacamole VM bundles, PyPI and several other package managers are already configured to use the Nexus proxy by default, so manually specifying in the install commands isn't necessary.</p>
 </div>
 <h2 id="network-requirements">Network requirements</h2>
 <p>Nexus Shared Service requires access to resources outside of the Azure TRE VNET. These are set as part of the firewall provisioning pipeline via explicit allow on <a href="https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview">Service Tags</a> or URLs.</p>
@@ -2849,8 +2849,8 @@
 </li>
 </ol>
 <h2 id="renewing-certificates-for-nexus">Renewing certificates for Nexus</h2>
-<p>The Nexus service checks Keyvault regularly for the latest certificate matching the name you passed on deploy (<code>nexus-ssl</code> by default).</p>
-<p>When approaching expiry, you can either provide an updated certificate into the TRE core KeyVault (with the name you specified when installing Nexus) if you brought your own, or if you used the certs shared service to generate one, just call the <code>renew</code> custom action on that service. This will generate a new certificate and persist it to the Keyvault, replacing the expired one.</p>
+<p>The Nexus service checks Key Vault regularly for the latest certificate matching the name you passed on deploy (<code>nexus-ssl</code> by default).</p>
+<p>When approaching expiry, you can either provide an updated certificate into the TRE core KeyVault (with the name you specified when installing Nexus) if you brought your own, or if you used the certs shared service to generate one, just call the <code>renew</code> custom action on that service. This will generate a new certificate and persist it to the Key Vault, replacing the expired one.</p>
 
 
 

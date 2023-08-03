@@ -21,7 +21,7 @@
         <link rel="next" href="../upgrading-resources/">
       
       <link rel="icon" href="../../assets/ms_icon.png">
-      <meta name="generator" content="mkdocs-1.5.1, mkdocs-material-9.1.21">
+      <meta name="generator" content="mkdocs-1.5.2, mkdocs-material-9.1.21">
     
     
       
@@ -1877,8 +1877,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-to-upgrade-azuretre-version" class="md-nav__link">
-    How to upgrade AzureTRE version
+  <a href="#how-to-upgrade-the-azure-tre-version" class="md-nav__link">
+    How to upgrade the Azure TRE version
   </a>
   
 </li>
@@ -2531,8 +2531,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-to-upgrade-azuretre-version" class="md-nav__link">
-    How to upgrade AzureTRE version
+  <a href="#how-to-upgrade-the-azure-tre-version" class="md-nav__link">
+    How to upgrade the Azure TRE version
   </a>
   
 </li>
@@ -2560,33 +2560,35 @@
 
 
 <h1 id="upgrading-azuretre-version">Upgrading AzureTRE version</h1>
-<p>This document will cover how AzureTRE is referenced and how to upgrade its version in the <a href="https://github.com/microsoft/AzureTRE-Deployment">AzureTRE deployment repository</a></p>
+<p>This document will cover how Azure TRE is referenced and how to upgrade its version in the <a href="https://github.com/microsoft/AzureTRE-Deployment">Azure TRE deployment repository</a></p>
 <h2 id="introduction">Introduction</h2>
-<p>AzureTRE referenced as an external folder in <a href="https://github.com/microsoft/AzureTRE-Deployment">AzureTRE deployment repository</a> (which is used as a template for your project in the quick start guide). A specific version of AzureTRE is downloaded as part of devcontainer setup.</p>
+<p>Azure TRE is referenced as an external folder in the <a href="https://github.com/Microsoft/AzureTRE-Deployment">Azure TRE deployment repository</a> (which is used as a template for your project in the quick start guide). A specific version of Azure TRE is downloaded as part of the devcontainer setup.</p>
 <p>A symlink is then created making it available to reference in the directory itself (it is available only for reference, any changes to it are gitignored).</p>
-<h2 id="how-to-upgrade-azuretre-version">How to upgrade AzureTRE version</h2>
+<h2 id="how-to-upgrade-the-azure-tre-version">How to upgrade the Azure TRE version</h2>
 <blockquote>
 <p>Please check the release notes before upgrading.</p>
 </blockquote>
 <ul>
-<li>If using the <a href="https://github.com/microsoft/AzureTRE-Deployment">AzureTRE deployment repository</a> directly (not one created using a Template), you need to git pull the latest version.</li>
+<li>If using the <a href="https://github.com/microsoft/AzureTRE-Deployment">Azure TRE deployment repository</a> directly (not one created using a Template), you need to git pull the latest version.</li>
 </ul>
 <ul>
-<li>If using a repository created from the <code>AzureTRE-Deployment</code> template then run following git command in your own repo:
-<div class="highlight"><pre><span></span><code>git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>upstream<span class="w"> </span>https://github.com/microsoft/AzureTRE-Deployment
+<li>If using a repository created from the <code>AzureTRE-Deployment</code> template, then run the following git commands in your own repo:
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>upstream<span class="w"> </span>https://github.com/Microsoft/AzureTRE-Deployment
 git<span class="w"> </span>pull<span class="w"> </span>upstream<span class="w"> </span>main<span class="w"> </span>--allow-unrelated-histories
 </code></pre></div>
-This will pull the latest version of AzureTRE to your copy of the repository. You may need to resovle merge conflicts if you have made edits.</li>
+This will pull the latest version of AzureTRE to your copy of the repository. You may need to resolve merge conflicts if you have made edits.
+The <code>git remote add</code> command is only necessary the first time you upgrade your TRE version. After the first time, you only need to execute the <code>git pull</code> command.</li>
 </ul>
-<p>Once the code is merged follow same process used to initally deploy the TRE to upgrade the TRE. This might mean running a command such as <code>make all</code>, or running your CI/CD pipeline(s).</p>
+<p>Once the code is merged, follow the same process used to initially deploy the TRE to upgrade the TRE. This might mean running a command such as <code>make all</code>, or running your CI/CD pipeline(s).</p>
 <blockquote>
 <p>If running commands manually, please ensure that you build and push the container images. Running <code>make tre-deploy</code> alone will update the infrastructure but not the container images. <code>make all</code> runs all the required commands.</p>
 </blockquote>
 <h2 id="deploying-a-specific-version-of-azure-tre">Deploying a specific version of Azure TRE</h2>
-<p>If you wish to upgrade or deploy a specific version, or unreleased version of Azure TRE and are using the <a href="https://github.com/microsoft/AzureTRE-Deployment">AzureTRE deployment repository</a> you can change the value of <code>OSS_VERSION</code> in <code>.devcontainer/devcontainer.json</code>, for example:</p>
+<p>If you wish to upgrade or deploy a specific version, or unreleased version of Azure TRE and are using the <a href="https://github.com/Microsoft/AzureTRE-Deployment">Azure TRE deployment repository</a> you can change the value of <code>OSS_VERSION</code> in <code>.devcontainer/devcontainer.json</code>, for example:</p>
 <ul>
-<li><code>"OSS_VERSION": "v0.9.0"</code></li>
-<li><code>"OSS_VERSION": "main"</code></li>
+<li><code>"OSS_VERSION": "v0.9.0"</code> (to use the specified tag; be sure to specify the complete tag name (prefixed with <code>v</code> and not the release name)</li>
+<li><code>"OSS_VERSION": "main"</code> (to use the latest code in the "main" branch)</li>
+<li><code>"OSS_VERSION": "1c6ff35ec9246e53b86e93b9da5b97911edc71c1"</code> (to use the code at the time of the commit identified by the hash)</li>
 </ul>
 
 
