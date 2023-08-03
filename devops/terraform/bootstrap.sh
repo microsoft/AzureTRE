@@ -10,7 +10,7 @@ az group create --resource-group "$TF_VAR_mgmt_resource_group_name" \
   --location "$LOCATION" \
   -o table \
   --tags $(echo "$TAGS" | jq -r 'to_entries | map("\(.key)=\(.value)")| join(" ")') 
-# shellcheck disable=SC2154
+# shellcheck disable=SC2154,SC2046
 az storage account create --resource-group "$TF_VAR_mgmt_resource_group_name" \
   --name "$TF_VAR_mgmt_storage_account_name" --location "$LOCATION" \
   --allow-blob-public-access false \
@@ -18,7 +18,7 @@ az storage account create --resource-group "$TF_VAR_mgmt_resource_group_name" \
   --tags $(echo "$TAGS" | jq -r 'to_entries | map("\(.key)=\(.value)")| join(" ")')
 
 # Blob container
-# shellcheck disable=SC2154
+# shellcheck disable=SC2154,SC2046
 az storage container create --account-name "$TF_VAR_mgmt_storage_account_name" --name "$TF_VAR_terraform_state_container_name" --auth-mode login -o table
 
 # logs container
