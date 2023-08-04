@@ -53,7 +53,7 @@ resource "azurerm_container_registry_task" "tredev_purge" {
   container_registry_id = azurerm_container_registry.shared_acr.id
 
   # tflint-ignore: azurerm_resource_missing_tags
-  tags                  = var.tags
+  tags = var.tags
 
   platform {
     os           = "Linux"
