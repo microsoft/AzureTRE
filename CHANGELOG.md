@@ -7,6 +7,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Custom actions fail on resources with a pipeline ([#3646](https://github.com/microsoft/AzureTRE/issues/3646))
+* Fix ability to debug resource processor locally ([#3426](https://github.com/microsoft/AzureTRE/issues/4426))
 
 ## 0.12.0 (July 27, 2023)
 
