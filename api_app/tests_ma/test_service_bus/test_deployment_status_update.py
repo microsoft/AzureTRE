@@ -1,6 +1,7 @@
 import copy
 import json
 from unittest.mock import MagicMock, ANY
+from pydantic import parse_obj_as
 import pytest
 import uuid
 
@@ -11,7 +12,7 @@ from models.domain.resource import ResourceType
 
 from db.errors import EntityDoesNotExist
 from models.domain.workspace import Workspace
-from models.domain.operation import Operation, OperationStep, Status
+from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
 from resources import strings
 from service_bus.deployment_status_updater import DeploymentStatusUpdater
 
@@ -41,8 +42,13 @@ test_sb_message_with_outputs = {
     "status": Status.Deployed,
     "message": "test message",
     "outputs": [
-        {"Name": "name1", "Value": "value1", "Type": "type1"},
-        {"Name": "name2", "Value": "\"value2\"", "Type": "type2"}
+        {"Name": "string1", "Value": "value1", "Type": "string"},
+        {"Name": "string2", "Value": "\"value2\"", "Type": "string"},
+        {"Name": "boolean1", "Value": "True", "Type": "boolean"},
+        {"Name": "boolean2", "Value": "true", "Type": "boolean"},
+        {"Name": "boolean3", "Value": "\"true\"", "Type": "boolean"},
+        {"Name": "list1", "Value": "['one', 'two']", "Type": "string"},
+        {"Name": "list2", "Value": ['one', 'two'], "Type": "string"}
     ]
 }
 
@@ -385,3 +391,27 @@ async def test_multi_step_operation_ends_at_last_step(app, sb_sender_client, res
 
     # check it did _not_ enqueue another message
     sb_sender_client().get_queue_sender().send_messages.assert_not_called()
+
+
+@patch('fastapi.FastAPI')
+async def test_convert_outputs_to_dict(app):
+    # Test case 1: Empty list of outputs
+    outputs_list = []
+    expected_result = {}
+
+    status_updater = DeploymentStatusUpdater(app)
+    assert status_updater.convert_outputs_to_dict(outputs_list) == expected_result
+
+    # Test case 2: List of outputs with mixed types
+    deployment_status_update_message = parse_obj_as(DeploymentStatusUpdateMessage, test_sb_message_with_outputs)
+
+    expected_result = {
+        'string1': 'value1',
+        'string2': 'value2',
+        'boolean1': True,
+        'boolean2': True,
+        'boolean3': True,
+        'list1': "['one', 'two']",
+        'list2': ['one', 'two']
+    }
+    assert status_updater.convert_outputs_to_dict(deployment_status_update_message.outputs) == expected_result

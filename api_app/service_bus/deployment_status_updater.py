@@ -7,6 +7,7 @@ from pydantic import ValidationError, parse_obj_as
 
 from api.dependencies.database import get_db_client
 from api.routes.resource_helpers import get_timestamp
+from api_app.models.domain.resource import Output
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.request_action import RequestAction
 from db.repositories.resource_templates import ResourceTemplateRepository
@@ -244,7 +245,33 @@ class DeploymentStatusUpdater():
 
         # although outputs are likely to be relevant when resources are moving to "deployed" status,
         # lets not limit when we update them and have the resource process make that decision.
-        output_dict = {output.Name: output.Value.strip("'").strip('"') if isinstance(output.Value, str) else output.Value for output in message.outputs}
+        # need to convert porter outputs to dict so boolean values are converted to bools, not strings
+        output_dict = self.convert_outputs_to_dict(message.outputs)
         resource["properties"].update(output_dict)
 
         return resource
+
+    def convert_outputs_to_dict(self, outputs_list: [Output]):
+        """
+        Convert a list of Porter outputs to a dictionary
+        """
+
+        result_dict = {}
+        for msg in outputs_list:
+            if msg.Value is None:
+                continue
+            name = msg.Name
+            value = msg.Value
+            obj_type = msg.Type
+
+            #
+            if obj_type == 'string' and isinstance(value, str):
+                value = value.strip("'").strip('"')
+            elif obj_type == 'boolean':
+                if isinstance(value, str):
+                    value = value.strip("'").strip('"')
+                value = (value.lower() == 'true')
+
+            result_dict[name] = value
+
+        return result_dict
