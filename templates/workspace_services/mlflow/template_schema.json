@@ -2,8 +2,8 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/mlflow/template_schema.json",
   "type": "object",
-  "title": "MLflow machine learning lifecycle",
-  "description": "Deploys MLflow server to manage machine learning lifecycle.",
+  "title": "MLflow",
+  "description": "MLflow server to manage machine learning lifecycle.",
   "required": [],
   "properties": {
     "display_name": {

@@ -10,7 +10,7 @@ pip-install: ## install required dependencides
 
 install-cli: ## install CLI (note, run `source <(_TRE_COMPLETE=bash_source tre)` to set up bash completion)
 	sudo rm -rf build dist tre.egg-info
-	sudo python setup.py install
+	sudo pip install .
 
 build-package: ## build package
 	./scripts/build.sh
