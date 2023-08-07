@@ -244,7 +244,15 @@ async def test_outputs_are_added_to_resource_item(app, resource_repo, operations
     resource.properties = {"exitingName": "exitingValue"}
     resource_repo.return_value.get_resource_dict_by_id.return_value = resource.dict()
 
-    new_params = {"name1": "value1", "name2": "value2"}
+    new_params = {
+        "string1": "value1",
+        "string2": "value2",
+        "boolean1": True,
+        "boolean2": True,
+        "boolean3": True,
+        "list1": "['one', 'two']",
+        "list2": ["one", "two"],
+    }
 
     expected_resource = resource
     expected_resource.properties = {**resource.properties, **new_params}
