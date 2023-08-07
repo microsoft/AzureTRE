@@ -7,7 +7,7 @@ from pydantic import ValidationError, parse_obj_as
 
 from api.dependencies.database import get_db_client
 from api.routes.resource_helpers import get_timestamp
-from api_app.models.domain.resource import Output
+from models.domain.resource import Output
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.request_action import RequestAction
 from db.repositories.resource_templates import ResourceTemplateRepository
