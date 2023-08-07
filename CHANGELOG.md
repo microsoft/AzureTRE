@@ -7,6 +7,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Custom actions fail on resources with a pipeline ([#3646](https://github.com/microsoft/AzureTRE/issues/3646))
+* Outputs of type boolean are stored as strings ([#3655](https://github.com/microsoft/AzureTRE/pulls/3655))
 
 ## 0.12.0 (July 27, 2023)
 
