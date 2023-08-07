@@ -13,6 +13,18 @@
       "title": "SSL certificate name",
       "description": "The name of the certificate to use (located in the core KeyVault) for configuring Nexus SSL",
       "default": "nexus-ssl"
+    },
+    "is_exposed_externally": {
+      "$id": "#/properties/is_exposed_externally",
+      "type": "boolean",
+      "title": "Expose externally",
+      "description": "Is the Sonatype Nexus accessible from outside of the TRE network.",
+      "default": false
+    }
+  },
+  "uiSchema": {
+    "is_exposed_externally": {
+      "classNames": "tre-hidden"
     }
   },
   "pipeline": {

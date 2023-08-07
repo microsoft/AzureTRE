@@ -5,7 +5,41 @@
   "title": "Gitea Shared Service",
   "description": "Provides Gitea shared service",
   "required": [],
-  "properties": {},
+  "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "default": "Git Mirror",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "default": "Access mirrored Git repositories.",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace Service Overview",
+      "description": "Long form description of the workspace service, in markdown syntax",
+      "default": "The Gitea shared service is used for mirroring external Git repositories. For instructions on how to create Git mirrors see [https://docs.gitea.com/usage/repo-mirror](https://docs.gitea.com/usage/repo-mirror).",
+      "updateable": true
+    },
+    "is_exposed_externally": {
+      "$id": "#/properties/is_exposed_externally",
+      "type": "boolean",
+      "title": "Expose externally",
+      "description": "Is the Gitea accessible from outside of the TRE network.",
+      "default": false
+    }
+  },
+  "uiSchema": {
+    "is_exposed_externally": {
+      "classNames": "tre-hidden"
+    }
+  },
   "pipeline": {
     "install": [
       {
