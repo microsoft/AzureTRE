@@ -10,7 +10,7 @@ plugin "azurerm" {
 }
 
 rule "terraform_typed_variables" {
-  enabled = false
+  enabled = true
 }
 
 rule "azurerm_resource_missing_tags" {
