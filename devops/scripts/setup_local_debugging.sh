@@ -127,7 +127,7 @@ az role assignment create \
 # Assign get permissions on the keyvault
 az keyvault set-policy \
   --name "${KEYVAULT}" \
-  --application-id "${RP_TESTING_SP_APP_ID}" \
+  --spn "${RP_TESTING_SP_APP_ID}" \
   --secret-permissions get
 
 
