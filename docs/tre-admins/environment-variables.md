@@ -38,6 +38,7 @@
 | `CORE_APP_SERVICE_PLAN_SKU` | The SKU of AppService plans created for the core infrastructure. |
 | `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests unless otherwise specified. Default value is `P1v2`. |
 | `RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE` | Optional. The number of processes to instantiate when the Resource Processor starts. Equates to the number of parallel deployment operations possible in your TRE. Defaults to `5`. |
+| `TAGS` |  Tags that should be applied to all resources deployed by the TRE in JSON string format `'{"tag_key":"tag_value"}'` |
 
 ## For authentication in `/config.yaml`
 
