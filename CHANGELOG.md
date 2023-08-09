@@ -7,6 +7,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Custom actions fail on resources with a pipeline ([#3646](https://github.com/microsoft/AzureTRE/issues/3646))
+* Upgrade airlock and unrestricted workspaces to base workspace version 0.12.0 ([#3659](https://github.com/microsoft/AzureTRE/pull/3659))
 
 ## 0.12.0 (July 27, 2023)
 
