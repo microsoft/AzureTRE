@@ -1,12 +1,30 @@
-variable "workspace_id" {}
-variable "tre_id" {}
-variable "tre_resource_id" {}
-variable "arm_tenant_id" {}
-variable "arm_client_id" {}
-variable "arm_client_secret" {}
+variable "workspace_id" {
+  type        = string
+}
+variable "tre_id" {
+  type        = string
+}
+variable "tre_resource_id" {
+  type        = string
+}
+variable "arm_tenant_id" {
+  type        = string
+}
+variable "arm_client_id" {
+  type        = string
+}
+variable "arm_client_secret" {
+  type        = string
+}
 variable "arm_use_msi" {
   type = bool
 }
-variable "inference_sp_client_id" {}
-variable "inference_sp_client_secret" {}
-variable "arm_environment" {}
+variable "inference_sp_client_id" {
+  type        = string
+}
+variable "inference_sp_client_secret" {
+  type        = string
+}
+variable "arm_environment" {
+  type        = string
+}

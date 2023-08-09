@@ -36,6 +36,10 @@ variable "auth_client_secret" {
   description = "Used to authenticate into the AAD Tenant to get app role members"
 }
 
-variable "arm_environment" {}
+variable "arm_environment" {
+  type        = string
+}
 
-variable "azure_environment" {}
+variable "azure_environment" {
+  type        = string
+}

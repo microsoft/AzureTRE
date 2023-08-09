@@ -1,10 +1,28 @@
 
-variable "tre_id" {}
-variable "location" {}
-variable "resource_group_name" {}
-variable "app_gw_subnet" {}
-variable "shared_subnet" {}
-variable "api_fqdn" {}
-variable "keyvault_id" {}
-variable "static_web_dns_zone_id" {}
-variable "log_analytics_workspace_id" {}
+variable "tre_id" {
+     type        = string
+}
+variable "location" {
+     type        = string
+}
+variable "resource_group_name" {
+     type        = string
+}
+variable "app_gw_subnet" {
+    type        = string
+}
+variable "shared_subnet" {
+        type        = string
+}
+variable "api_fqdn" {
+        type        = string
+}
+variable "keyvault_id" {
+     type        = string
+}
+variable "static_web_dns_zone_id" {
+     type        = string
+}
+variable "log_analytics_workspace_id" {
+     type        = string
+}

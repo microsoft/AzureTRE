@@ -1,5 +1,15 @@
-variable "tre_id" {}
-variable "location" {}
-variable "resource_group_name" {}
-variable "core_address_space" {}
-variable "arm_environment" {}
+variable "tre_id" {
+     type        = string
+}
+variable "location" {
+     type        = string
+}
+variable "resource_group_name" {
+     type        = string
+}
+variable "core_address_space" {
+     type        = string
+}
+variable "arm_environment" {
+     type        = string
+}

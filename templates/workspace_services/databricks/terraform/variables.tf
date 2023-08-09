@@ -23,4 +23,6 @@ variable "is_exposed_externally" {
   description = "If the databricks workspace is exposed externally or not."
 }
 
-variable "arm_environment" {}
+variable "arm_environment" {
+  type        = string
+}

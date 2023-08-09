@@ -1,17 +1,51 @@
-variable "workspace_id" {}
-variable "aad_authority_url" {}
-variable "tre_id" {}
-variable "mgmt_resource_group_name" {}
-variable "mgmt_acr_name" {}
-variable "image_name" {}
-variable "image_tag" {}
-variable "guac_disable_copy" {}
-variable "guac_disable_paste" {}
-variable "guac_enable_drive" {}
-variable "guac_drive_name" {}
-variable "guac_drive_path" {}
-variable "guac_disable_download" {}
-variable "guac_disable_upload" {}
-variable "is_exposed_externally" {}
-variable "tre_resource_id" {}
-variable "arm_environment" {}
+variable "workspace_id" {
+    type        = string
+}
+variable "aad_authority_url" {
+    type        = string
+}
+variable "tre_id" {
+    type        = string
+}
+variable "mgmt_resource_group_name" {
+    type        = string
+}
+variable "mgmt_acr_name" {
+    type        = string
+}
+variable "image_name" {
+    type        = string
+}
+variable "image_tag" {
+    type        = string
+}
+variable "guac_disable_copy" {
+    type        = bool
+}
+variable "guac_disable_paste" {
+    type        = bool
+}
+variable "guac_enable_drive" {
+    type        = bool
+}
+variable "guac_drive_name" {
+    type        = string
+}
+variable "guac_drive_path" {
+    type        = string
+}
+variable "guac_disable_download" {
+    type        = bool
+}
+variable "guac_disable_upload" {
+    type        = bool
+}
+variable "is_exposed_externally" {
+    type        = bool
+}
+variable "tre_resource_id" {
+    type        = string
+}
+variable "arm_environment" {
+    type        = string
+}
