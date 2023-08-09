@@ -85,6 +85,11 @@
           "description": "Url for the TRE environment.",
           "type": "string",
           "pattern": "^https?://"
+        },
+        "tags": {
+          "description": "Tags that should be applied to all resources deployed by the TRE in JSON string format",
+          "type": "string",
+          "pattern": "^{([\"'][a-zA-Z0-9_-]*[\"']:[\"'][a-zA-Z0-9_-]*[\"'],?)+}$"
         }
       }
     },

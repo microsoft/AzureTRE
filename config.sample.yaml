@@ -41,6 +41,8 @@ tre:
   # If you want to use TRE_URL to point to your local TRE API instance or be configured to another cloud provider
   # uncomment and set this variable
   # tre_url: __CHANGE_ME__
+  # Specify here tags that should be applied to all resources deployed by the TRE in JSON string format
+  # tags: '{"tag_key":"tag_value"}'
 
 authentication:
   aad_tenant_id: __CHANGE_ME__
@@ -76,6 +78,3 @@ developer_settings:
 
 # Used by the API and Resource processor application to change log level
 #  debug: true
-
-# Specify here tags that should be applied to all resources deployed by the TRE in JSON string format
-#  tags: '{"tag_key":"tag_value"}'
