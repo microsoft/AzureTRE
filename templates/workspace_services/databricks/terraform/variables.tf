@@ -24,5 +24,5 @@ variable "is_exposed_externally" {
 }
 
 variable "arm_environment" {
-  type        = string
+  type = string
 }

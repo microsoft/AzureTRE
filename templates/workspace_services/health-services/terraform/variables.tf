@@ -49,5 +49,5 @@ variable "auth_client_secret" {
 }
 
 variable "arm_environment" {
-  type        = string
+  type = string
 }

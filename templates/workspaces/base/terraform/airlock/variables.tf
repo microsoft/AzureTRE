@@ -1,27 +1,27 @@
 variable "location" {
-    type        = string
+  type = string
 }
 variable "tre_id" {
-    type        = string
+  type = string
 }
 variable "ws_resource_group_name" {
-    type        = string
+  type = string
 }
 variable "enable_local_debugging" {
-    type        = string
+  type = bool
 }
 variable "services_subnet_id" {
-    type        = string
+  type = string
 }
 variable "airlock_processor_subnet_id" {
-    type        = string
+  type = string
 }
 variable "short_workspace_id" {
-    type        = string
+  type = string
 }
 variable "tre_workspace_tags" {
-    type        = map(string)
+  type = map(string)
 }
 variable "arm_environment" {
-    type        = string
+  type = string
 }

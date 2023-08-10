@@ -1,26 +1,26 @@
 variable "tre_id" {
-   type        = string
+  type = string
 }
 variable "location" {
-   type        = string
+  type = string
 }
 variable "resource_group_name" {
-   type        = string
+  type = string
 }
 variable "airlock_storage_subnet_id" {
-   type        = string
+  type = string
 }
 variable "airlock_events_subnet_id" {
-   type        = string
+  type = string
 }
 variable "enable_local_debugging" {
-   type        = string
+  type = bool
 }
 variable "myip" {
-   type        = string
+  type = string
 }
 variable "api_principal_id" {
-   type        = string
+  type = string
 }
 
 variable "docker_registry_server" {
@@ -50,17 +50,17 @@ variable "airlock_app_service_plan_sku" {
 }
 
 variable "airlock_processor_subnet_id" {
-   type        = string
+  type = string
 }
 
 variable "applicationinsights_connection_string" {
-   type        = string
+  type = string
 }
 variable "airlock_servicebus" {
-   type        = string
+  type = string
 }
 variable "tre_core_tags" {
-  type        = map(string)
+  type = map(string)
 }
 
 variable "enable_malware_scanning" {
@@ -69,22 +69,22 @@ variable "enable_malware_scanning" {
 }
 
 variable "arm_environment" {
-    type        = string
+  type = string
 }
 
 variable "log_analytics_workspace_id" {
-   type        = string
+  type = string
 }
 
 variable "blob_core_dns_zone_id" {
-   type        = string
+  type = string
 }
 variable "file_core_dns_zone_id" {
-   type        = string
+  type = string
 }
 variable "queue_core_dns_zone_id" {
-   type        = string
+  type = string
 }
 variable "table_core_dns_zone_id" {
-   type        = string
+  type = string
 }

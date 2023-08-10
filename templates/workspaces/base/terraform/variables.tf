@@ -120,5 +120,5 @@ variable "workspace_owner_object_id" {
 }
 
 variable "arm_environment" {
-  type        = string
+  type = string
 }

@@ -1,17 +1,17 @@
 variable "workspace_id" {
-  type        = string
+  type = string
 }
 variable "tre_id" {
-  type        = string
+  type = string
 }
 variable "tre_resource_id" {
-  type        = string
+  type = string
 }
 variable "sql_sku" {
-  type        = string
+  type = string
 }
 variable "db_name" {
-  type        = string
+  type = string
 }
 variable "storage_mb" {
   type = number
@@ -21,5 +21,5 @@ variable "storage_mb" {
   }
 }
 variable "arm_environment" {
-  type        = string
+  type = string
 }

@@ -1,21 +1,21 @@
 variable "workspace_id" {
-    type        = string
+  type = string
 }
 variable "tre_id" {
-    type        = string
+  type = string
 }
 variable "vm_size_sku" {
-    type        = string
+  type = string
 }
 variable "tre_resource_id" {
-    type        = string
+  type = string
 }
 variable "parent_service_id" {
-    type        = string
+  type = string
 }
 variable "auth_tenant_id" {
-    type        = string
+  type = string
 }
 variable "user_object_id" {
-    type        = string
+  type = string
 }

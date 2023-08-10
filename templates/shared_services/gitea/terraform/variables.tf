@@ -31,5 +31,5 @@ variable "acr_name" {
 }
 
 variable "arm_environment" {
-  type        = string
+  type = string
 }

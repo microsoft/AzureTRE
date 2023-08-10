@@ -1,18 +1,18 @@
 variable "workspace_id" {
-  type        = string
+  type = string
 }
 variable "tre_id" {
-  type        = string
+  type = string
 }
 variable "tre_resource_id" {
-  type        = string
+  type = string
 }
 
 variable "mgmt_acr_name" {
-  type        = string
+  type = string
 }
 variable "mgmt_resource_group_name" {
-  type        = string
+  type = string
 }
 
 variable "is_exposed_externally" {
@@ -21,5 +21,5 @@ variable "is_exposed_externally" {
   default     = false
 }
 variable "arm_environment" {
-  type        = string
+  type = string
 }

@@ -1,21 +1,21 @@
 variable "location" {
-    type        = string
+  type = string
 }
 variable "tre_id" {
-    type        = string
+  type = string
 }
 variable "address_spaces" {
-    type        = string
+  type = string
 }
 variable "ws_resource_group_name" {
-    type        = string
+  type = string
 }
 variable "tre_workspace_tags" {
-    type        = map(string)
+  type = map(string)
 }
 variable "tre_resource_id" {
-    type        = string
+  type = string
 }
 variable "arm_environment" {
-    type        = string
+  type = string
 }

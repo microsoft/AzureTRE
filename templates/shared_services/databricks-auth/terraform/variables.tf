@@ -9,5 +9,5 @@ variable "tre_resource_id" {
 }
 
 variable "arm_environment" {
-  type        = string
+  type = string
 }

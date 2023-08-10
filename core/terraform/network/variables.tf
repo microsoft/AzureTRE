@@ -1,15 +1,15 @@
 variable "tre_id" {
-     type        = string
+  type = string
 }
 variable "location" {
-     type        = string
+  type = string
 }
 variable "resource_group_name" {
-     type        = string
+  type = string
 }
 variable "core_address_space" {
-     type        = string
+  type = string
 }
 variable "arm_environment" {
-     type        = string
+  type = string
 }
