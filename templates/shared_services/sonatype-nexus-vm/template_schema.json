@@ -2,17 +2,37 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/sonatype-nexus-vm/template_schema.json",
   "type": "object",
-  "title": "Nexus Shared Service",
-  "description": "Provides Nexus shared service",
+  "title": "Sonatype Nexus Repository Manager",
+  "description": "Sonatype Nexus is a repository manager that helps you manage components, binaries and build artifacts. It's proxy functionality enables users without public Internet connectivity to access software packages.",
   "required": [
     "ssl_cert_name"
   ],
   "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "default": "Package Mirror",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "default": "Access software packages via Sonatype Nexus Repository Manager.",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace Service Overview",
+      "description": "Long form description of the workspace service, in markdown syntax",
+      "default": "Sonatype Nexus is a repository manager that helps you manage components, binaries and build artifacts. It's proxy functionality enables users without public Internet connectivity to access software packages. To understand how to work with different package formats, please review the documentation here: [https://help.sonatype.com/repomanager3/nexus-repository-administration/formats](https://help.sonatype.com/repomanager3/nexus-repository-administration/formats).",
+      "updateable": true
+    },
     "ssl_cert_name": {
       "type": "string",
       "title": "SSL certificate name",
-      "description": "The name of the certificate to use (located in the core KeyVault) for configuring Nexus SSL",
-      "default": "nexus-ssl"
+      "description": "The name of the certificate to use (located in the core KeyVault) for configuring Nexus SSL"
     }
   },
   "pipeline": {

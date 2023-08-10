@@ -1,10 +1,11 @@
 {
   "name": "AzureTRE",
-  "features": {
-    "ghcr.io/devcontainers/features/sshd:1": {
-        "version": "latest"
-    }
-  },
+  // Uncomment when debugging using Jetbrains
+  // "features": {
+  //   "ghcr.io/devcontainers/features/sshd:1": {
+  //       "version": "latest"
+  //   }
+  // },
   "build": {
     "context": "..",
     "dockerfile": "Dockerfile",
@@ -63,8 +64,10 @@
         "python.testing.unittestEnabled": false,
         "python.testing.pytestEnabled": true,
         "python.testing.pytestArgs": [
-          "api_app"
+          "--ignore=e2e_tests",
+          "-W ignore::DeprecationWarning"
         ],
+        "python.testing.cwd": "${workspaceFolder}",
         "files.associations": {
           "*.terraform": "terraform"
         },
