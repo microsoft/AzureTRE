@@ -140,7 +140,8 @@ def shell_output_logger(console_output: str, prefix_item: str, logger: logging.L
         logging.debug("Image not present locally, setting log to INFO.")
         logging_level = logging.INFO
 
-    logger.log(logging_level, f"{prefix_item} {console_output}")
+    logger.log(logging_level, prefix_item)
+    logger.log(logging_level, console_output)
 
 
 class AzureLogFormatter(logging.Formatter):
