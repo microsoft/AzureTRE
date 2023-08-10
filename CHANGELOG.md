@@ -5,6 +5,7 @@ FEATURES:
 ENHANCEMENTS:
 
 BUG FIXES:
+- Add temporary workaround for when id with last 4 chars exists ([#3667](https://github.com/microsoft/AzureTRE/pull/3667))
 
 
 ## 0.13.0 (August 9, 2023)
