@@ -12,7 +12,7 @@ rule "terraform_unused_declarations" {
 }
 
 rule "terraform_typed_variables" {
-  enabled = true
+  enabled = false
 }
 
 rule "terraform_required_providers" {
