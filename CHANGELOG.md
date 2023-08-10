@@ -3,6 +3,7 @@
 FEATURES:
 
 ENHANCEMENTS:
+* Reduce logging noise ([#2135](https://github.com/microsoft/AzureTRE/issues/2135))
 
 BUG FIXES:
 
