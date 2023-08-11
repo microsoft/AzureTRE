@@ -5,7 +5,7 @@ FEATURES:
 ENHANCEMENTS:
 
 BUG FIXES:
-
+* Apply missing lifecycle blocks. ([#3670](https://github.com/microsoft/AzureTRE/issues/3670))
 
 ## 0.13.0 (August 9, 2023)
 
