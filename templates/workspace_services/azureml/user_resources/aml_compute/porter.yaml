@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-user-resource-aml-compute-instance
-version: 0.5.4
+version: 0.5.5
 description: "Azure Machine Learning Compute Instance"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
