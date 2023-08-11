@@ -57,7 +57,10 @@ variable "applicationinsights_connection_string" {
   type = string
 }
 variable "airlock_servicebus" {
-  type = string
+  type = object({
+    id                                = string
+    default_primary_connection_string = string
+  })
 }
 variable "tre_core_tags" {
   type = map(string)
