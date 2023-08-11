@@ -10,6 +10,8 @@ resource "azurerm_storage_account" "aml" {
   }
 
 
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 data "azurerm_private_dns_zone" "blobcore" {

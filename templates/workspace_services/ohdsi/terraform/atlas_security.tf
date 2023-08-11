@@ -8,6 +8,8 @@ resource "azurerm_key_vault_secret" "atlas_security_admin_password" {
   key_vault_id = data.azurerm_key_vault.ws.id
   value        = random_password.atlas_security_admin_password.result
   tags         = local.tre_workspace_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "terraform_data" "deployment_atlas_security" {

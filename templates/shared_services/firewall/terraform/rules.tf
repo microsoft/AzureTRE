@@ -259,4 +259,6 @@ resource "azurerm_firewall_policy_rule_collection_group" "dynamic_application" {
   depends_on = [
     azurerm_firewall_policy_rule_collection_group.dynamic_network
   ]
+
+  lifecycle { ignore_changes = [tags] }
 }
