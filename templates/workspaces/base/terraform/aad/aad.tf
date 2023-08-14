@@ -110,6 +110,8 @@ resource "azurerm_key_vault_secret" "client_id" {
   value        = azuread_application.workspace.application_id
   key_vault_id = var.key_vault_id
   tags         = var.tre_workspace_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_key_vault_secret" "client_secret" {
@@ -117,6 +119,8 @@ resource "azurerm_key_vault_secret" "client_secret" {
   value        = azuread_service_principal_password.workspace.value
   key_vault_id = var.key_vault_id
   tags         = var.tre_workspace_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azuread_app_role_assignment" "workspace_owner" {

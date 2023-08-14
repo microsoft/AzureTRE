@@ -18,6 +18,8 @@ resource "azurerm_key_vault_secret" "postgres_admin_password" {
   key_vault_id = data.azurerm_key_vault.ws.id
   value        = random_password.postgres_admin_password.result
   tags         = local.tre_workspace_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_key_vault_secret" "postgres_webapi_admin_password" {
@@ -25,6 +27,8 @@ resource "azurerm_key_vault_secret" "postgres_webapi_admin_password" {
   key_vault_id = data.azurerm_key_vault.ws.id
   value        = random_password.postgres_webapi_admin_password.result
   tags         = local.tre_workspace_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_key_vault_secret" "postgres_webapi_app_password" {
@@ -32,6 +36,8 @@ resource "azurerm_key_vault_secret" "postgres_webapi_app_password" {
   key_vault_id = data.azurerm_key_vault.ws.id
   value        = random_password.postgres_webapi_app_password.result
   tags         = local.tre_workspace_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_network_security_group" "postgres" {
@@ -161,6 +167,8 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   depends_on = [
     terraform_data.postgres_subnet_wait,
   ]
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_postgresql_flexible_server_database" "db" {

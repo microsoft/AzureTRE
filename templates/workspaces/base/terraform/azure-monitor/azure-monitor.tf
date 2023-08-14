@@ -73,6 +73,8 @@ resource "azapi_resource" "ampls_workspace" {
     "id"
   ]
 
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_monitor_private_link_scoped_service" "ampls_log_anaytics" {
@@ -124,6 +126,8 @@ resource "azapi_resource" "appinsights" {
     "id",
     "properties.ConnectionString",
   ]
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_monitor_private_link_scoped_service" "ampls_app_insights" {

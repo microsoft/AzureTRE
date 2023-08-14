@@ -9,6 +9,8 @@ resource "azurerm_network_interface" "nexus" {
     subnet_id                     = data.azurerm_subnet.shared.id
     private_ip_address_allocation = "Dynamic"
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "nexus_core_vnet" {
@@ -17,6 +19,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "nexus_core_vnet" {
   private_dns_zone_name = data.azurerm_private_dns_zone.nexus.name
   virtual_network_id    = data.azurerm_virtual_network.core.id
   tags                  = local.tre_shared_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_a_record" "nexus_vm" {
@@ -26,6 +30,8 @@ resource "azurerm_private_dns_a_record" "nexus_vm" {
   ttl                 = 300
   records             = [azurerm_linux_virtual_machine.nexus.private_ip_address]
   tags                = local.tre_shared_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "random_password" "nexus_vm_password" {
@@ -59,6 +65,8 @@ resource "azurerm_key_vault_secret" "nexus_vm_password" {
   value        = random_password.nexus_vm_password.result
   key_vault_id = data.azurerm_key_vault.kv.id
   tags         = local.tre_shared_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_key_vault_secret" "nexus_admin_password" {
@@ -66,6 +74,8 @@ resource "azurerm_key_vault_secret" "nexus_admin_password" {
   value        = random_password.nexus_admin_password.result
   key_vault_id = data.azurerm_key_vault.kv.id
   tags         = local.tre_shared_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_user_assigned_identity" "nexus_msi" {
@@ -222,4 +232,6 @@ resource "azurerm_virtual_machine_extension" "keyvault" {
       "msiClientId" : azurerm_user_assigned_identity.nexus_msi.client_id
     }
   })
+
+  lifecycle { ignore_changes = [tags] }
 }

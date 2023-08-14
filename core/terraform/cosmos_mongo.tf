@@ -99,4 +99,6 @@ resource "azurerm_key_vault_secret" "cosmos_mongo_connstr" {
   depends_on = [
     azurerm_key_vault_access_policy.deployer
   ]
+
+  lifecycle { ignore_changes = [tags] }
 }
