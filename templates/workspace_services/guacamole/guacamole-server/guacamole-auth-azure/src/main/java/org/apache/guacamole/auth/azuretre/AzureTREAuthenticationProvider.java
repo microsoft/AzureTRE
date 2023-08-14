@@ -83,7 +83,7 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
             return null;
         }
         if (Strings.isNullOrEmpty(prefUsername)) {
-            LOGGER.error("username was not provided");
+            LOGGER.error("preferred username was not present in the token");
             return null;
         }
 
