@@ -1,13 +1,50 @@
 <!-- markdownlint-disable MD041 -->
-
-## 0.13.0 (Unreleased)
+## 0.14.0 (Unreleased)
 FEATURES:
 
 ENHANCEMENTS:
 
 BUG FIXES:
-* Custom actions fail on resources with a pipeline ([#3646](https://github.com/microsoft/AzureTRE/issues/3646))
 * Outputs of type boolean are stored as strings ([#3655](https://github.com/microsoft/AzureTRE/pulls/3655))
+
+## 0.13.0 (August 9, 2023)
+
+BUG FIXES:
+* Custom actions fail on resources with a pipeline ([#3646](https://github.com/microsoft/AzureTRE/issues/3646))
+* Fix ability to debug resource processor locally ([#3426](https://github.com/microsoft/AzureTRE/issues/4426))
+* Upgrade airlock and unrestricted workspaces to base workspace version 0.12.0 ([#3659](https://github.com/microsoft/AzureTRE/pull/3659))
+
+COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.5.1 |
+| core | 0.8.3 |
+| tre-workspace-base | 1.4.4 |
+| tre-workspace-unrestricted | 0.10.2 |
+| tre-workspace-airlock-import-review | 0.11.2 |
+| tre-service-mlflow | 0.7.2 |
+| tre-workspace-service-health | 0.2.1 |
+| tre-service-databricks | 1.0.0 |
+| tre-service-innereye | 0.6.1 |
+| tre-workspace-service-gitea | 0.8.2 |
+| tre-workspace-service-mysql | 0.4.1 |
+| tre-workspace-service-ohdsi | 0.2.0 |
+| tre-service-guacamole-linuxvm | 0.6.5 |
+| tre-service-guacamole-export-reviewvm | 0.1.4 |
+| tre-service-guacamole-windowsvm | 0.7.5 |
+| tre-service-guacamole-import-reviewvm | 0.2.4 |
+| tre-service-guacamole | 0.9.4 |
+| tre-user-resource-aml-compute-instance | 0.5.4 |
+| tre-service-azureml | 0.8.7 |
+| tre-shared-service-cyclecloud | 0.5.1 |
+| tre-shared-service-databricks-private-auth | 0.1.2 |
+| tre-shared-service-gitea | 0.6.2 |
+| tre-shared-service-airlock-notifier | 0.9.0 |
+| tre-shared-service-admin-vm | 0.4.0 |
+| tre-shared-service-certs | 0.5.1 |
+| tre-shared-service-sonatype-nexus | 2.5.3 |
+| tre-shared-service-firewall | 1.1.1 |
+
 
 ## 0.12.0 (July 27, 2023)
 
