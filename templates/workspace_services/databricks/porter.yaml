@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-databricks
-version: 1.0.0
+version: 1.0.1
 description: "An Azure TRE service for Azure Databricks."
 registry: azuretre
 dockerfile: Dockerfile.tmpl
