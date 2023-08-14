@@ -9,7 +9,7 @@ resource "azurerm_storage_account" "aml" {
     default_action = "Deny"
   }
 
-
+  lifecycle { ignore_changes = [tags] }
 }
 
 data "azurerm_private_dns_zone" "blobcore" {

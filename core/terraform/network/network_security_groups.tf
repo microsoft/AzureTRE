@@ -101,6 +101,8 @@ resource "azurerm_network_security_group" "bastion" {
     source_address_prefix      = "*"
     destination_address_prefix = "Internet"
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_subnet_network_security_group_association" "bastion" {
@@ -141,6 +143,8 @@ resource "azurerm_network_security_group" "app_gw" {
     source_address_prefix      = "Internet"
     destination_address_prefix = "*"
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_subnet_network_security_group_association" "app_gw" {
@@ -156,6 +160,8 @@ resource "azurerm_network_security_group" "default_rules" {
   location            = var.location
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_subnet_network_security_group_association" "shared" {

@@ -168,6 +168,8 @@ resource "azurerm_key_vault_secret" "gitea_password" {
   depends_on = [
     azurerm_key_vault_access_policy.gitea_policy
   ]
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_storage_share" "gitea" {
