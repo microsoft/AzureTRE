@@ -5,6 +5,8 @@ resource "azurerm_storage_account" "cyclecloud" {
   account_tier             = "Standard"
   account_replication_type = "GRS"
   tags                     = local.tre_shared_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 data "azurerm_private_dns_zone" "blobcore" {

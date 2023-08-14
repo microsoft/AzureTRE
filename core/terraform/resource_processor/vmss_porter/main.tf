@@ -38,6 +38,8 @@ resource "azurerm_key_vault_secret" "resource_processor_vmss_password" {
   value        = random_password.password.result
   key_vault_id = var.key_vault_id
   tags         = local.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_user_assigned_identity" "vmss_msi" {

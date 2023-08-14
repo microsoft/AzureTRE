@@ -51,6 +51,11 @@ resource "azurerm_virtual_network_peering" "ws_core_peer" {
   triggers = {
     remote_address_space = join(",", data.azurerm_virtual_network.core.address_space)
   }
+
+  # meant to resolve AnotherOperation errors with one operation in the vnet at a time
+  depends_on = [
+    azurerm_subnet.webapps
+  ]
 }
 
 moved {
@@ -67,6 +72,12 @@ resource "azurerm_virtual_network_peering" "core_ws_peer" {
   triggers = {
     remote_address_space = join(",", azurerm_virtual_network.ws.address_space)
   }
+
+  # meant to resolve AnotherOperation errors with one operation in the vnet at a time
+  depends_on = [
+    azurerm_virtual_network_peering.ws_core_peer
+  ]
+
 }
 
 moved {
@@ -79,7 +90,7 @@ resource "azurerm_subnet_route_table_association" "rt_services_subnet_associatio
   subnet_id      = azurerm_subnet.services.id
   depends_on = [
     # meant to resolve AnotherOperation errors with one operation in the vnet at a time
-    azurerm_subnet.webapps
+    azurerm_virtual_network_peering.core_ws_peer
   ]
 }
 

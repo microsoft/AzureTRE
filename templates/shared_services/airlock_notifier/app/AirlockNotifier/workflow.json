@@ -149,26 +149,25 @@
       },
       "Send_Email_with_SMTP": {
         "inputs": {
-          "body": {
-            "Body": "<a href=\"@{parameters('tre_url')}/workspaces/@{body('Parse_JSON')?['data']?['workspace']?['id']}/requests/@{body('Parse_JSON')?['data']?['request']?['id']}\">View the request</a>",
-            "From": "@parameters('smtp_from_email')",
-            "Subject": "@variables('message')",
-            "To": "@{join(variables('recipients'), ';')}"
+          "parameters": {
+            "body": "<a href=\"@{parameters('tre_url')}/workspaces/@{body('Parse_JSON')?['data']?['workspace']?['id']}/requests/@{body('Parse_JSON')?['data']?['request']?['id']}\">View the request</a>",
+            "from": "@parameters('smtp_from_email')",
+            "importance": "Normal",
+            "subject": "@variables('message')",
+            "to": "@{join(variables('recipients'), ';')}"
           },
-          "host": {
-            "connection": {
-              "referenceName": "smtp"
-            }
-          },
-          "method": "post",
-          "path": "/SendEmailV3"
+          "serviceProviderConfiguration": {
+            "connectionName": "Smtp",
+            "operationId": "sendEmail",
+            "serviceProviderId": "/serviceProviders/Smtp"
+          }
         },
         "runAfter": {
           "Switch_on_request_status": [
             "Succeeded"
           ]
         },
-        "type": "ApiConnection"
+        "type": "ServiceProvider"
       },
       "Succeeded": {
         "inputs": {
