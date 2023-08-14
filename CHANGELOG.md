@@ -4,7 +4,7 @@
 FEATURES:
 
 ENHANCEMENTS:
-* Change Guacamole username claim to `preffered_username`, so email not required ([#3539](https://github.com/microsoft/AzureTRE/issues/3539))
+* Change Guacamole username claim to `preferred_username`, so email not required ([#3539](https://github.com/microsoft/AzureTRE/issues/3539))
 
 BUG FIXES:
 * Apply missing lifecycle blocks. ([#3670](https://github.com/microsoft/AzureTRE/issues/3670))
