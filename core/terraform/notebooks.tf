@@ -12,4 +12,6 @@ resource "azurerm_application_insights_workbook" "firewall" {
   display_name        = "Azure Firewall Workbook ${var.tre_id}"
   data_json           = data.http.firewall_workbook_json.response_body
   tags                = local.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
 }

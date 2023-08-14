@@ -118,6 +118,8 @@ resource "azurerm_key_vault_secret" "aad_tenant_id" {
     azurerm_key_vault_access_policy.resource_processor,
     terraform_data.wait_for_dns_vault
   ]
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 # This secret only gets written if Terraform is not responsible for
@@ -133,6 +135,8 @@ resource "azurerm_key_vault_secret" "client_id" {
     azurerm_key_vault_access_policy.resource_processor,
     terraform_data.wait_for_dns_vault
   ]
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 data "azurerm_key_vault_secret" "client_secret" {
@@ -154,4 +158,6 @@ resource "azurerm_key_vault_secret" "client_secret" {
     azurerm_key_vault_access_policy.resource_processor,
     terraform_data.wait_for_dns_vault
   ]
+
+  lifecycle { ignore_changes = [tags] }
 }

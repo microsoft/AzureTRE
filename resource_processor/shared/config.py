@@ -17,7 +17,7 @@ def get_config(logger_adapter) -> dict:
     config["service_bus_namespace"] = os.environ["SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"]
     config["vmss_msi_id"] = os.environ.get("VMSS_MSI_ID", None)
     config["number_processes"] = os.environ.get("NUMBER_PROCESSES", "1")
-    config["key_vault_url"] = os.environ.get("KEY_VAULT_URL", os.environ.get("KEYVAULT", None))
+    config["key_vault_url"] = os.environ.get("KEY_VAULT_URL", os.environ.get("KEYVAULT_URI", None))
     config["arm_environment"] = os.environ.get("ARM_ENVIRONMENT", "public")
     config["azure_environment"] = os.environ.get("AZURE_ENVIRONMENT", "AzureCloud")
     config["aad_authority_url"] = os.environ.get("AAD_AUTHORITY_URL", "https://login.microsoftonline.com")
@@ -45,6 +45,10 @@ def get_config(logger_adapter) -> dict:
     else:
         config["arm_client_secret"] = ""  # referenced in the credential set
 
+    # when running in vscode devcontainer
+    if "DEVCONTAINER" in os.environ:
+        config["remote_containers_ipc"] = os.environ["REMOTE_CONTAINERS_IPC"]
+
     # Create env dict for porter
     config["porter_env"] = {
         "HOME": os.environ["HOME"],
@@ -66,6 +70,14 @@ def get_config(logger_adapter) -> dict:
                 "AAD_TENANT_ID": config["aad_tenant_id"],
                 "APPLICATION_ADMIN_CLIENT_ID": config["application_admin_client_id"],
                 "APPLICATION_ADMIN_CLIENT_SECRET": config["application_admin_client_secret"],
+            }
+        )
+
+    # when running in vscode devcontainer
+    if "DEVCONTAINER" in os.environ:
+        config["porter_env"].update(
+            {
+                "REMOTE_CONTAINERS_IPC": config["remote_containers_ipc"]
             }
         )
 

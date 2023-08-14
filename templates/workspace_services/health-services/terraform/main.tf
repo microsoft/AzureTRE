@@ -25,6 +25,8 @@ resource "azurerm_healthcare_fhir_service" "fhir" {
     type = "SystemAssigned"
   }
 
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_healthcare_dicom_service" "dicom" {
@@ -37,6 +39,8 @@ resource "azurerm_healthcare_dicom_service" "dicom" {
   identity {
     type = "SystemAssigned"
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_endpoint" "health_services_private_endpoint" {

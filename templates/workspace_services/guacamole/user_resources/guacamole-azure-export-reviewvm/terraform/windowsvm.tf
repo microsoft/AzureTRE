@@ -9,6 +9,8 @@ resource "azurerm_network_interface" "internal" {
     subnet_id                     = data.azurerm_subnet.services.id
     private_ip_address_allocation = "Dynamic"
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_network_security_group" "vm_nsg" {
@@ -16,6 +18,8 @@ resource "azurerm_network_security_group" "vm_nsg" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   tags                = local.tre_user_resources_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_network_security_rule" "allow_outbound_airlock_exip_storage_pe" {
@@ -146,6 +150,8 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   }
 
   tags = local.tre_user_resources_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_virtual_machine_extension" "config_script" {
@@ -161,6 +167,8 @@ resource "azurerm_virtual_machine_extension" "config_script" {
       "commandToExecute": "powershell -ExecutionPolicy Unrestricted -NoProfile -NonInteractive -command \"cp c:/azuredata/customdata.bin c:/azuredata/configure.ps1; c:/azuredata/configure.ps1 \""
     }
 PROT
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_key_vault_secret" "windowsvm_password" {
@@ -168,6 +176,8 @@ resource "azurerm_key_vault_secret" "windowsvm_password" {
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
   tags         = local.tre_user_resources_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 data "template_file" "download_review_data_script" {
