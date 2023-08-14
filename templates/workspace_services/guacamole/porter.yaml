@@ -77,7 +77,7 @@ parameters:
     env: GUAC_DISABLE_UPLOAD
   - name: is_exposed_externally
     type: boolean
-    default: false
+    default: true
     env: IS_EXPOSED_EXTERNALLY
     description: "Determines if the web app will be available over public/internet or private networks"
   - name: aad_authority_url

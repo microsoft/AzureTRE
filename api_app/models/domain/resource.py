@@ -84,3 +84,4 @@ class Resource(AzureTREModel):
 class Output(AzureTREModel):
     Name: str = Field(title="", description="", alias="name")
     Value: Union[list, dict, str] = Field(None, title="", description="", alias="value")
+    Type: str = Field(title="", description="", alias="type")

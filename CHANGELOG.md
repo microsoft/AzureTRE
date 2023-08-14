@@ -1,11 +1,14 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.14.0 (Unreleased)
+
 FEATURES:
 
 ENHANCEMENTS:
 
 BUG FIXES:
 * Apply missing lifecycle blocks. ([#3670](https://github.com/microsoft/AzureTRE/issues/3670))
+* Outputs of type boolean are stored as strings ([#3655](https://github.com/microsoft/AzureTRE/pulls/3655))
+
 
 ## 0.13.0 (August 9, 2023)
 
@@ -44,6 +47,7 @@ COMPONENTS:
 | tre-shared-service-certs | 0.5.1 |
 | tre-shared-service-sonatype-nexus | 2.5.3 |
 | tre-shared-service-firewall | 1.1.1 |
+
 
 ## 0.12.0 (July 27, 2023)
 
