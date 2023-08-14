@@ -1,5 +1,5 @@
 variable "workspace_id" {
-  type = string
+  type        = string
   description = "The workspace ID"
 }
 variable "aad_authority_url" {
