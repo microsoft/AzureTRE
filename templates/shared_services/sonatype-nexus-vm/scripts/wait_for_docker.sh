@@ -1,8 +1,7 @@
 #!/bin/bash
 
 while true; do
-    docker pull sonatype/nexus3
-    if [ $? -eq 0 ]; then
+    if docker pull sonatype/nexus3; then
         echo "Image pulled successfully"
         break
     else
