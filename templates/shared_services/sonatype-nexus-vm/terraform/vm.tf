@@ -111,8 +111,8 @@ resource "azurerm_linux_virtual_machine" "nexus" {
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts-gen2"
     version   = "latest"
   }
 
@@ -147,7 +147,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
 
   provisioner "file" {
     source      = "${path.module}/../scripts/nexus_repos_config"
-    destination = "/tmp/nexus_repos_config"
+    destination = "/etc/nexus-data/install_scripts/nexus_repos_config"
   }
 }
 
@@ -166,12 +166,17 @@ data "template_cloudinit_config" "nexus_config" {
       write_files = [
         {
           content     = file("${path.module}/../scripts/configure_nexus_repos.sh")
-          path        = "/tmp/configure_nexus_repos.sh"
+          path        = "/etc/nexus-data/install_scripts/configure_nexus_repos.sh"
+          permissions = "0744"
+        },
+        {
+          content     = file("${path.module}/../scripts/wait_for_docker.sh")
+          path        = "/etc/nexus-data/install_scripts/wait_for_docker.sh"
           permissions = "0744"
         },
         {
           content     = file("${path.module}/../scripts/nexus_realms_config.json")
-          path        = "/tmp/nexus_realms_config.json"
+          path        = "/etc/nexus-data/install_scripts/nexus_realms_config.json"
           permissions = "0744"
         },
         {
@@ -186,7 +191,7 @@ data "template_cloudinit_config" "nexus_config" {
         },
         {
           content     = file("${path.module}/../scripts/reset_nexus_password.sh")
-          path        = "/tmp/reset_nexus_password.sh"
+          path        = "/etc/nexus-data/install_scripts/reset_nexus_password.sh"
           permissions = "0744"
         }
       ]
