@@ -145,10 +145,6 @@ resource "azurerm_linux_virtual_machine" "nexus" {
     timeout  = "10m"
   }
 
-  provisioner "file" {
-    source      = "${path.module}/../scripts/nexus_repos_config"
-    destination = "/etc/nexus-data/nexus_repos_config"
-  }
 }
 
 data "template_cloudinit_config" "nexus_config" {
@@ -161,22 +157,34 @@ data "template_cloudinit_config" "nexus_config" {
   }
 
   part {
+    content_type = "text/x-shellscript"
+    content      = <<-EOF
+      # Create directory
+      mkdir /etc/nexus-data/scripts/nexus_repos_config
+
+      # Create files
+      ${join("\n", [for file in fileset("${path.module}/../scripts/nexus_repos_config", "*") : "cat ${path.module}/../scripts/nexus_repos_config/${file}\" > \"/etc/nexus-data/scripts/nexus_repos_config/${file}\""])}
+    EOF
+  }
+
+  part {
     content_type = "text/cloud-config"
     content = jsonencode({
       write_files = [
+
         {
           content     = file("${path.module}/../scripts/configure_nexus_repos.sh")
-          path        = "/etc/nexus-data/configure_nexus_repos.sh"
+          path        = "/etc/nexus-data/scripts/configure_nexus_repos.sh"
           permissions = "0744"
         },
         {
           content     = file("${path.module}/../scripts/wait_for_docker.sh")
-          path        = "/etc/nexus-data/wait_for_docker.sh"
+          path        = "/etc/nexus-data/scripts/wait_for_docker.sh"
           permissions = "0744"
         },
         {
           content     = file("${path.module}/../scripts/nexus_realms_config.json")
-          path        = "/etc/nexus-data/nexus_realms_config.json"
+          path        = "/etc/nexus-data/scripts/nexus_realms_config.json"
           permissions = "0744"
         },
         {
@@ -191,7 +199,7 @@ data "template_cloudinit_config" "nexus_config" {
         },
         {
           content     = file("${path.module}/../scripts/reset_nexus_password.sh")
-          path        = "/etc/nexus-data/reset_nexus_password.sh"
+          path        = "/etc/nexus-data/scripts/reset_nexus_password.sh"
           permissions = "0744"
         }
       ]
