@@ -40,6 +40,8 @@ runcmd:
   - export DEBIAN_FRONTEND=noninteractive
   # Give the Nexus process write permissions on the folder mounted as persistent volume
   - chown -R 200 /etc/nexus-data
+  # fix to check docker is up
+  - bash /tmp/wait_for_docker.sh
   # Run the nexus container with mapped volume for nexus config
   - docker run -d -p 80:8081 -p 443:8443 -p 8083:8083 -v /etc/nexus-data:/nexus-data
     --restart always

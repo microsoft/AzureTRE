@@ -188,6 +188,11 @@ data "template_cloudinit_config" "nexus_config" {
           content     = file("${path.module}/../scripts/reset_nexus_password.sh")
           path        = "/tmp/reset_nexus_password.sh"
           permissions = "0744"
+        },
+        {
+          content     = file("${path.module}/../scripts/wait_for_docker.sh")
+          path        = "/tmp/wait_for_docker.sh"
+          permissions = "0744"
         }
       ]
     })
