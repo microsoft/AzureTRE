@@ -190,8 +190,8 @@ data "template_cloudinit_config" "nexus_config" {
           permissions = "0744"
         },
         {
-          content     = file("${path.module}/../scripts/wait_for_docker.sh")
-          path        = "/tmp/wait_for_docker.sh"
+          content     = file("${path.module}/../scripts/deploy_nexus_container.sh")
+          path        = "/tmp/deploy_nexus_container.sh"
           permissions = "0744"
         }
       ]
