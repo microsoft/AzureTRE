@@ -145,10 +145,6 @@ resource "azurerm_linux_virtual_machine" "nexus" {
     timeout  = "10m"
   }
 
-  provisioner "file" {
-    source      = "${path.module}/../scripts/nexus_repos_config"
-    destination = "/tmp/nexus_repos_config"
-  }
 }
 
 data "template_cloudinit_config" "nexus_config" {
@@ -157,22 +153,29 @@ data "template_cloudinit_config" "nexus_config" {
 
   part {
     content_type = "text/cloud-config"
+    merge_type = "list(append)+dict(no_replace,recurse_list)+str()"
     content      = data.template_file.nexus_bootstrapping.rendered
   }
 
-  # part {
-  #   content_type = "text/x-shellscript"
-  #   content      = <<-EOF
-  #     # Create directory for the repo config files
-  #     mkdir -p /etc/nexus-data/scripts/nexus_repos_config
-  #
-  #     # Copy the repo configuration JSON files to the VM
-  #      ${join("\n", [for file in fileset("${path.module}/../scripts/nexus_repos_config", "*") : "cat ${path.module}/../scripts/nexus_repos_config/${file}\" > \"/etc/nexus-data/scripts/nexus_repos_config/${file}\""])}
-  #     EOF
-  # }
+  part {
+    content_type = "text/cloud-config"
+    merge_type = "list(append)+dict(no_replace,recurse_list)+str()"
+    content = jsonencode({
+      write_files = [
+        for file in fileset("${path.module}/../scripts/nexus_repos_config", "*") : {
+
+          content     = file("${path.module}/../scripts/nexus_repos_config/${file}")
+          path        = "/etc/nexus-data/scripts/nexus_repos_config/${file}"
+          permissions = "0744"
+        }
+      ]
+    })
+  }
+
 
   part {
     content_type = "text/cloud-config"
+    merge_type = "list(append)+dict(no_replace,recurse_list)+str()"
     content = jsonencode({
       write_files = [
         {
