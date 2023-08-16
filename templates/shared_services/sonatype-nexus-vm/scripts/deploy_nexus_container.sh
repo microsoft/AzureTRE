@@ -1,6 +1,6 @@
 #!/bin/bash
 
-docker_pull_timeout=30
+docker_pull_timeout=10
 
 while true; do
   if [ $docker_pull_timeout == 0 ]; then
