@@ -9,9 +9,10 @@ if [ -z "$1" ]
 fi
 
 timeout=300
-echo 'Checking for ./nexus_repos_config directory...'
-while [ ! -d "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config ]; do
-  # Wait for /nexus_repos_config with json config files to be copied into vm
+echo 'Checking for /tmp/nexus_repos_config directory...'
+#while [ ! -d "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config ]; do
+while [ ! -d /tmp/nexus_repos_config ]; do
+  # Wait for /tmp/nexus_repos_config with json config files to be copied into vm
   if [ $timeout == 0 ]; then
     echo 'ERROR - Timeout while waiting for nexus_repos_config directory'
     exit 1
@@ -21,7 +22,8 @@ while [ ! -d "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config ]; do
 done
 
 # Create proxy for each .json file
-for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
+#for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
+for filename in /tmp/nexus_repos_config/*.json; do
     echo "Found config file: $filename. Sending to Nexus..."
     # Check if apt proxy
     base_type=$( jq .baseType "$filename" | sed 's/"//g')

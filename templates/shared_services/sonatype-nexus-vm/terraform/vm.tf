@@ -160,18 +160,29 @@ data "template_cloudinit_config" "nexus_config" {
     content      = data.template_file.nexus_bootstrapping.rendered
   }
 
+  # part {
+  #   content_type = "text/x-shellscript"
+  #   content      = <<-EOF
+  #     # Create directory for the repo config files
+  #     mkdir -p /etc/nexus-data/scripts/nexus_repos_config
+  #
+  #     # Copy the repo configuration JSON files to the VM
+  #      ${join("\n", [for file in fileset("${path.module}/../scripts/nexus_repos_config", "*") : "cat ${path.module}/../scripts/nexus_repos_config/${file}\" > \"/etc/nexus-data/scripts/nexus_repos_config/${file}\""])}
+  #     EOF
+  # }
+
   part {
     content_type = "text/cloud-config"
     content = jsonencode({
       write_files = [
         {
           content     = file("${path.module}/../scripts/configure_nexus_repos.sh")
-          path        = "/tmp/configure_nexus_repos.sh"
+          path        = "/etc/nexus-data/scripts/configure_nexus_repos.sh"
           permissions = "0744"
         },
         {
           content     = file("${path.module}/../scripts/nexus_realms_config.json")
-          path        = "/tmp/nexus_realms_config.json"
+          path        = "/etc/nexus-data/scripts/nexus_realms_config.json"
           permissions = "0744"
         },
         {
@@ -186,12 +197,12 @@ data "template_cloudinit_config" "nexus_config" {
         },
         {
           content     = file("${path.module}/../scripts/reset_nexus_password.sh")
-          path        = "/tmp/reset_nexus_password.sh"
+          path        = "/etc/nexus-data/scripts/reset_nexus_password.sh"
           permissions = "0744"
         },
         {
           content     = file("${path.module}/../scripts/deploy_nexus_container.sh")
-          path        = "/tmp/deploy_nexus_container.sh"
+          path        = "/etc/nexus-data/scripts/deploy_nexus_container.sh"
           permissions = "0744"
         }
       ]

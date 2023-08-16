@@ -41,10 +41,10 @@ runcmd:
   # Give the Nexus process write permissions on the folder mounted as persistent volume
   - chown -R 200 /etc/nexus-data
   # fix to check docker is up
-  - bash /tmp/deploy_nexus_container.sh
-  # Reset the admin password of Nexus to the one created by TF and stored in KeyVault
-  - bash /tmp/reset_nexus_password.sh "${NEXUS_ADMIN_PASSWORD}"
+  - bash /etc/nexus-data/scripts/deploy_nexus_container.sh
+  # Reset the admin password of Nexus to the one created by TF and stored in Key Vault
+  - bash /etc/nexus-data/scripts/reset_nexus_password.sh "${NEXUS_ADMIN_PASSWORD}"
   # Invoke Nexus SSL configuration (which will also be ran as CRON daily to renew cert)
   - bash /etc/cron.daily/configure_nexus_ssl.sh
   # Configure Nexus repositories
-  - bash /tmp/configure_nexus_repos.sh "${NEXUS_ADMIN_PASSWORD}"
+  - bash /etc/nexus-data/scripts/configure_nexus_repos.sh "${NEXUS_ADMIN_PASSWORD}"
