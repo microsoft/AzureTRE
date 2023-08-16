@@ -144,7 +144,6 @@ resource "azurerm_linux_virtual_machine" "nexus" {
     agent    = false
     timeout  = "10m"
   }
-
 }
 
 data "template_cloudinit_config" "nexus_config" {
@@ -153,17 +152,16 @@ data "template_cloudinit_config" "nexus_config" {
 
   part {
     content_type = "text/cloud-config"
-    merge_type = "list(append)+dict(no_replace,recurse_list)+str()"
+    merge_type   = "list(append)+dict(no_replace,recurse_list)+str()"
     content      = data.template_file.nexus_bootstrapping.rendered
   }
 
   part {
     content_type = "text/cloud-config"
-    merge_type = "list(append)+dict(no_replace,recurse_list)+str()"
+    merge_type   = "list(append)+dict(no_replace,recurse_list)+str()"
     content = jsonencode({
       write_files = [
         for file in fileset("${path.module}/../scripts/nexus_repos_config", "*") : {
-
           content     = file("${path.module}/../scripts/nexus_repos_config/${file}")
           path        = "/etc/nexus-data/scripts/nexus_repos_config/${file}"
           permissions = "0744"
@@ -172,10 +170,9 @@ data "template_cloudinit_config" "nexus_config" {
     })
   }
 
-
   part {
     content_type = "text/cloud-config"
-    merge_type = "list(append)+dict(no_replace,recurse_list)+str()"
+    merge_type   = "list(append)+dict(no_replace,recurse_list)+str()"
     content = jsonencode({
       write_files = [
         {
