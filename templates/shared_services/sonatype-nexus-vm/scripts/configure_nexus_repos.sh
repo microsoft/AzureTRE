@@ -11,7 +11,7 @@ fi
 timeout=300
 echo 'Checking for ./nexus_repos_config directory...'
 while [ ! -d "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config ]; do
-  # Wait for /tmp/nexus_repos_config with json config files to be copied into vm
+  # Wait for ./nexus_repos_config with json config files to be copied into vm
   if [ $timeout == 0 ]; then
     echo 'ERROR - Timeout while waiting for nexus_repos_config directory'
     exit 1
