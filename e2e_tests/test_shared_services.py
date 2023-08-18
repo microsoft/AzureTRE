@@ -180,10 +180,10 @@ async def test_create_certs_nexus_shared_service(verify) -> None:
         access_token=admin_token,
         verify=verify,
     )
-# TODO - reinstate once tested
-#    await disable_and_delete_tre_resource(nexus_shared_service_path, verify)
 
-#    await disable_and_delete_tre_resource(certs_shared_service_path, verify)
+    await disable_and_delete_tre_resource(nexus_shared_service_path, verify)
+
+    await disable_and_delete_tre_resource(certs_shared_service_path, verify)
 
 
 async def disable_and_delete_shared_service_if_exists(shared_service_name, verify) -> None:
