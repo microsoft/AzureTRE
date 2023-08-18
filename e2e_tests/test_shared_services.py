@@ -92,7 +92,8 @@ async def test_patch_firewall(verify):
 shared_service_templates_to_create = [
     strings.GITEA_SHARED_SERVICE,
     strings.ADMIN_VM_SHARED_SERVICE,
-
+    # Tested in test_create_certs_nexus_shared_service
+    # strings.NEXUS_SHARED_SERVICE,
     strings.AIRLOCK_NOTIFIER_SHARED_SERVICE,
 
     # TODO: fix cyclecloud and enable this
