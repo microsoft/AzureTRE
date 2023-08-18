@@ -151,8 +151,10 @@ data "template_cloudinit_config" "nexus_config" {
   base64_encode = true
 
   part {
-    content_type = "text/cloud-config"
+    # Ref: https://cloudinit.readthedocs.io/en/latest/reference/merging.html
+    # Important: merge_type must be defined on each part, contrary to what cloud-init docs say about a "stack" aproach
     merge_type   = "list(append)+dict(no_replace,recurse_list)+str()"
+    content_type = "text/cloud-config"
     content      = data.template_file.nexus_bootstrapping.rendered
   }
 

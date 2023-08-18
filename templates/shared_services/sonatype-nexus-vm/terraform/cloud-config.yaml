@@ -40,7 +40,7 @@ runcmd:
   - export DEBIAN_FRONTEND=noninteractive
   # Give the Nexus process write permissions on the folder mounted as persistent volume
   - chown -R 200 /etc/nexus-data
-  # fix to check docker is up
+  # Deploy Nexus by pulling and running the container
   - bash /etc/nexus-data/scripts/deploy_nexus_container.sh
   # Reset the admin password of Nexus to the one created by TF and stored in Key Vault
   - bash /etc/nexus-data/scripts/reset_nexus_password.sh "${NEXUS_ADMIN_PASSWORD}"
