@@ -10,6 +10,7 @@ ENHANCEMENTS:
 BUG FIXES:
 * Apply missing lifecycle blocks. ([#3670](https://github.com/microsoft/AzureTRE/issues/3670))
 * Outputs of type boolean are stored as strings ([#3655](https://github.com/microsoft/AzureTRE/pulls/3655))
+* Add dependency on firewall deployment to rule collection ([#3672](https://github.com/microsoft/AzureTRE/pulls/3672))
 * Check docker return code in set docker sock permissions file ([#3674](https://github.com/microsoft/AzureTRE/pulls/3674))
 * Increase reliability of Nexus deployment ([[#3642](https://github.com/microsoft/AzureTRE/issues/3642))
 
