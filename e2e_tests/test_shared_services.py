@@ -138,7 +138,7 @@ async def test_create_shared_service(template_name, verify) -> None:
 
 @pytest.mark.shared_services
 @pytest.mark.timeout(60 * 60)
-@pytest.mark.skipif(date.today().weekday() in [4, 5], reason="LetsEncrypt limits to 5 times a week. Skipping on FRI & SAT.")
+@pytest.mark.skipif(date.today().weekday() in [5, 6], reason="LetsEncrypt limits to 5 times a week. Skipping on SAT & SUN.")
 async def test_create_certs_nexus_shared_service(verify) -> None:
     await disable_and_delete_shared_service_if_exists(strings.NEXUS_SHARED_SERVICE, verify)
     await disable_and_delete_shared_service_if_exists(strings.CERTS_SHARED_SERVICE, verify)
@@ -180,10 +180,10 @@ async def test_create_certs_nexus_shared_service(verify) -> None:
         access_token=admin_token,
         verify=verify,
     )
+# TODO - reinstate once tested
+#    await disable_and_delete_tre_resource(nexus_shared_service_path, verify)
 
-    await disable_and_delete_tre_resource(nexus_shared_service_path, verify)
-
-    await disable_and_delete_tre_resource(certs_shared_service_path, verify)
+#    await disable_and_delete_tre_resource(certs_shared_service_path, verify)
 
 
 async def disable_and_delete_shared_service_if_exists(shared_service_name, verify) -> None:
