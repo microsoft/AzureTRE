@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole
-version: 0.9.5
+version: 0.10.4
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -107,10 +107,6 @@ parameters:
     type: string
 
 outputs:
-  - name: connection_uri
-    type: string
-    applyTo:
-      - install
   - name: authentication_callback_uri
     type: string
     applyTo:
@@ -151,7 +147,6 @@ install:
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: tre-service-guacamole-${ bundle.parameters.id }
       outputs:
-        - name: connection_uri
         - name: authentication_callback_uri
         - name: web_apps_addresses
 
@@ -182,7 +177,6 @@ upgrade:
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: tre-service-guacamole-${ bundle.parameters.id }
       outputs:
-        - name: connection_uri
         - name: authentication_callback_uri
         - name: web_apps_addresses
 

@@ -7,4 +7,6 @@ resource "azurerm_service_plan" "workspace" {
   os_type             = "Linux"
   sku_name            = var.app_service_plan_sku
   tags                = local.tre_workspace_tags
+
+  lifecycle { ignore_changes = [tags] }
 }

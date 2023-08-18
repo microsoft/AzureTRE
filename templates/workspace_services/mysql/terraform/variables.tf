@@ -1,8 +1,18 @@
-variable "workspace_id" {}
-variable "tre_id" {}
-variable "tre_resource_id" {}
-variable "sql_sku" {}
-variable "db_name" {}
+variable "workspace_id" {
+  type = string
+}
+variable "tre_id" {
+  type = string
+}
+variable "tre_resource_id" {
+  type = string
+}
+variable "sql_sku" {
+  type = string
+}
+variable "db_name" {
+  type = string
+}
 variable "storage_mb" {
   type = number
   validation {
@@ -10,4 +20,6 @@ variable "storage_mb" {
     error_message = "The storage value is out of range."
   }
 }
-variable "arm_environment" {}
+variable "arm_environment" {
+  type = string
+}
