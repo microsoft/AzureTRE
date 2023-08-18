@@ -95,7 +95,6 @@ shared_service_templates_to_create = [
     # Tested in test_create_certs_nexus_shared_service
     # strings.NEXUS_SHARED_SERVICE,
     strings.AIRLOCK_NOTIFIER_SHARED_SERVICE,
-
     # TODO: fix cyclecloud and enable this
     # strings.CYCLECLOUD_SHARED_SERVICE,
 ]
