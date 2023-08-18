@@ -9,7 +9,7 @@ ENHANCEMENTS:
 BUG FIXES:
 * Apply missing lifecycle blocks. ([#3670](https://github.com/microsoft/AzureTRE/issues/3670))
 * Outputs of type boolean are stored as strings ([#3655](https://github.com/microsoft/AzureTRE/pulls/3655))
-
+* Add dependency on firewall deployment to rule collection ([#3672](https://github.com/microsoft/AzureTRE/pulls/3672))
 
 ## 0.13.0 (August 9, 2023)
 
