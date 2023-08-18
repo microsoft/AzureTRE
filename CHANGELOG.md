@@ -5,11 +5,14 @@ FEATURES:
 
 ENHANCEMENTS:
 * Change Guacamole username claim to `preferred_username`, so email not required ([#3539](https://github.com/microsoft/AzureTRE/issues/3539))
+* Upgrade Ubuntu version for Sonatype Nexus VM to 22.04 LTS ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
 
 BUG FIXES:
 * Apply missing lifecycle blocks. ([#3670](https://github.com/microsoft/AzureTRE/issues/3670))
 * Outputs of type boolean are stored as strings ([#3655](https://github.com/microsoft/AzureTRE/pulls/3655))
 * Add dependency on firewall deployment to rule collection ([#3672](https://github.com/microsoft/AzureTRE/pulls/3672))
+* Increase reliability of Nexus deployment ([[#3642](https://github.com/microsoft/AzureTRE/issues/3642))
+
 
 ## 0.13.0 (August 9, 2023)
 
