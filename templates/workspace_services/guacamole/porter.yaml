@@ -111,10 +111,17 @@ outputs:
     type: string
     applyTo:
       - install
+      - upgrade
   - name: web_apps_addresses
     type: string
     applyTo:
       - install
+      - upgrade
+  - name: admin_connection_uri
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
   - terraform:
@@ -149,6 +156,7 @@ install:
       outputs:
         - name: authentication_callback_uri
         - name: web_apps_addresses
+        - name: admin_connection_uri
 
 upgrade:
   - terraform:
@@ -179,6 +187,7 @@ upgrade:
       outputs:
         - name: authentication_callback_uri
         - name: web_apps_addresses
+        - name: admin_connection_uri
 
 uninstall:
   - terraform:
