@@ -65,3 +65,18 @@ data "azurerm_monitor_diagnostic_categories" "webapp" {
     azurerm_linux_web_app.gitea,
   ]
 }
+
+data "azurerm_key_vault_secret" "aad_tenant_id" {
+  name         = "auth-tenant-id"
+  key_vault_id = data.azurerm_key_vault.keyvault.id
+}
+
+data "azurerm_key_vault_secret" "client_id" {
+  name         = "api-client-id"
+  key_vault_id = data.azurerm_key_vault.keyvault.id
+}
+
+data "azurerm_key_vault_secret" "client_secret" {
+  name         = "api-client-secret"
+  key_vault_id = data.azurerm_key_vault.keyvault.id
+}

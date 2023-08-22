@@ -31,18 +31,25 @@ resource "azurerm_linux_web_app" "gitea" {
     WEBSITES_PORT                       = "3000"
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
 
-    GITEA_USERNAME = "giteaadmin"
-    GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
-    GITEA_EMAIL    = "giteaadmin@azuretre.com"
+    GITEA_USERNAME                      = "giteaadmin"
+    GITEA_PASSWD                        = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
+    GITEA_EMAIL                         = "giteaadmin@azuretre.com"
+    GITEA_OPENID_CLIENT_ID              = data.azurerm_key_vault_secret.client_id.value
+    GITEA_OPENID_CLIENT_SECRET          = data.azurerm_key_vault_secret.client_secret.value
+    GITEA_OPENID_AUTHORITY              = "https://login.microsoftonline.com/${data.azurerm_key_vault_secret.aad_tenant_id.value}/v2.0"
+    GITEA__openid__ENABLE_OPENID_SIGNIN = "true"
+    GITEA__openid__ENABLE_OPENID_SIGNUP = "false"
 
-    GITEA__server__ROOT_URL              = "https://${local.webapp_name}.azurewebsites.net/"
-    GITEA__server__LFS_START_SERVER      = "true"
-    GITEA__lfs__PATH                     = "/data/lfs"
-    GITEA__lfs__STORAGE_TYPE             = "local"
-    GITEA__log_0x2E_console__COLORIZE    = "false" # Azure monitor doens't show colors, so this is easier to read.
-    GITEA__picture__DISABLE_GRAVATAR     = "true"  # external avaters are not available due to network restrictions
-    GITEA__security__INSTALL_LOCK        = true
-    GITEA__service__DISABLE_REGISTRATION = true
+    GITEA__server__ROOT_URL                           = "https://${local.webapp_name}.azurewebsites.net/"
+    GITEA__server__LFS_START_SERVER                   = "true"
+    GITEA__lfs__PATH                                  = "/data/lfs"
+    GITEA__lfs__STORAGE_TYPE                          = "local"
+    GITEA__log_0x2E_console__COLORIZE                 = "false" # Azure monitor doens't show colors, so this is easier to read.
+    GITEA__picture__DISABLE_GRAVATAR                  = "true"  # external avaters are not available due to network restrictions
+    GITEA__security__INSTALL_LOCK                     = true
+    GITEA__service__DISABLE_REGISTRATION              = false
+    GITEA__service__DEFAULT_ALLOW_CREATE_ORGANIZATION = false
+    GITEA__repository__MAX_CREATION_LIMIT             = 0
 
     GITEA__database__SSL_MODE = "true"
     GITEA__database__DB_TYPE  = "mysql"
