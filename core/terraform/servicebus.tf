@@ -106,22 +106,12 @@ resource "azurerm_monitor_diagnostic_setting" "sb" {
     for_each = setintersection(data.azurerm_monitor_diagnostic_categories.sb.log_category_types, local.servicebus_diagnostic_categories_enabled)
     content {
       category = enabled_log.value
-
-      retention_policy {
-        enabled = true
-        days    = 365
-      }
     }
   }
 
   metric {
     category = "AllMetrics"
     enabled  = true
-
-    retention_policy {
-      enabled = true
-      days    = 365
-    }
   }
 
   lifecycle { ignore_changes = [log_analytics_destination_type] }

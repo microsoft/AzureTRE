@@ -106,20 +106,11 @@ resource "azurerm_monitor_diagnostic_setting" "atlas_ui" {
     for_each = local.atals_ui_log_analytics_categories
     content {
       category = enabled_log.value
-      retention_policy {
-        enabled = true
-        days    = 30
-      }
     }
   }
 
   metric {
     category = "AllMetrics"
     enabled  = true
-
-    retention_policy {
-      enabled = true
-      days    = 365
-    }
   }
 }
