@@ -20,10 +20,6 @@ az storage container create --account-name "$TF_VAR_mgmt_storage_account_name" -
 # logs container
 az storage container create --account-name "$TF_VAR_mgmt_storage_account_name" --name "tflogs" --auth-mode login -o table
 
-id
-
-ls -la .
-
 cat > bootstrap_backend.tf <<BOOTSTRAP_BACKEND
 terraform {
   backend "azurerm" {
