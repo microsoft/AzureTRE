@@ -8,7 +8,11 @@ FROM --platform="${TARGETPLATFORM}" mcr.microsoft.com/vscode/devcontainers/pytho
 # This will be set to true when running in VSCode
 ARG INTERACTIVE="false"
 
+ARG USER_UID=1000
 ARG USERNAME=vscode
+
+# make user ID match user ID on host machine
+RUN usermod --uid $USER_UID $USERNAME
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
