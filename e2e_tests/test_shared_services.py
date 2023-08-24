@@ -92,9 +92,9 @@ async def test_patch_firewall(verify):
 shared_service_templates_to_create = [
     strings.GITEA_SHARED_SERVICE,
     strings.ADMIN_VM_SHARED_SERVICE,
-
+    # Tested in test_create_certs_nexus_shared_service
+    # strings.NEXUS_SHARED_SERVICE,
     strings.AIRLOCK_NOTIFIER_SHARED_SERVICE,
-
     # TODO: fix cyclecloud and enable this
     # strings.CYCLECLOUD_SHARED_SERVICE,
 ]
@@ -138,7 +138,7 @@ async def test_create_shared_service(template_name, verify) -> None:
 
 @pytest.mark.shared_services
 @pytest.mark.timeout(60 * 60)
-@pytest.mark.skipif(date.today().weekday() in [4, 5], reason="LetsEncrypt limits to 5 times a week. Skipping on FRI & SAT.")
+@pytest.mark.skipif(date.today().weekday() in [5, 6], reason="LetsEncrypt limits to 5 times a week. Skipping on SAT & SUN.")
 async def test_create_certs_nexus_shared_service(verify) -> None:
     await disable_and_delete_shared_service_if_exists(strings.NEXUS_SHARED_SERVICE, verify)
     await disable_and_delete_shared_service_if_exists(strings.CERTS_SHARED_SERVICE, verify)

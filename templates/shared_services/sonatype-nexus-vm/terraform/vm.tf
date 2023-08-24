@@ -111,8 +111,8 @@ resource "azurerm_linux_virtual_machine" "nexus" {
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts-gen2"
     version   = "latest"
   }
 
@@ -144,11 +144,6 @@ resource "azurerm_linux_virtual_machine" "nexus" {
     agent    = false
     timeout  = "10m"
   }
-
-  provisioner "file" {
-    source      = "${path.module}/../scripts/nexus_repos_config"
-    destination = "/tmp/nexus_repos_config"
-  }
 }
 
 data "template_cloudinit_config" "nexus_config" {
@@ -156,22 +151,40 @@ data "template_cloudinit_config" "nexus_config" {
   base64_encode = true
 
   part {
+    # Ref: https://cloudinit.readthedocs.io/en/latest/reference/merging.html
+    # Important: merge_type must be defined on each part, contrary to what cloud-init docs say about a "stack" aproach
+    merge_type   = "list(append)+dict(no_replace,recurse_list)+str()"
     content_type = "text/cloud-config"
     content      = data.template_file.nexus_bootstrapping.rendered
   }
 
   part {
     content_type = "text/cloud-config"
+    merge_type   = "list(append)+dict(no_replace,recurse_list)+str()"
+    content = jsonencode({
+      write_files = [
+        for file in fileset("${path.module}/../scripts/nexus_repos_config", "*") : {
+          content     = file("${path.module}/../scripts/nexus_repos_config/${file}")
+          path        = "/etc/nexus-data/scripts/nexus_repos_config/${file}"
+          permissions = "0744"
+        }
+      ]
+    })
+  }
+
+  part {
+    content_type = "text/cloud-config"
+    merge_type   = "list(append)+dict(no_replace,recurse_list)+str()"
     content = jsonencode({
       write_files = [
         {
           content     = file("${path.module}/../scripts/configure_nexus_repos.sh")
-          path        = "/tmp/configure_nexus_repos.sh"
+          path        = "/etc/nexus-data/scripts/configure_nexus_repos.sh"
           permissions = "0744"
         },
         {
           content     = file("${path.module}/../scripts/nexus_realms_config.json")
-          path        = "/tmp/nexus_realms_config.json"
+          path        = "/etc/nexus-data/scripts/nexus_realms_config.json"
           permissions = "0744"
         },
         {
@@ -186,7 +199,12 @@ data "template_cloudinit_config" "nexus_config" {
         },
         {
           content     = file("${path.module}/../scripts/reset_nexus_password.sh")
-          path        = "/tmp/reset_nexus_password.sh"
+          path        = "/etc/nexus-data/scripts/reset_nexus_password.sh"
+          permissions = "0744"
+        },
+        {
+          content     = file("${path.module}/../scripts/deploy_nexus_container.sh")
+          path        = "/etc/nexus-data/scripts/deploy_nexus_container.sh"
           permissions = "0744"
         }
       ]

@@ -67,22 +67,12 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
     for_each = setintersection(data.azurerm_monitor_diagnostic_categories.firewall.log_category_types, local.firewall_diagnostic_categories_enabled)
     content {
       category = enabled_log.value
-
-      retention_policy {
-        enabled = true
-        days    = 365
-      }
     }
   }
 
   metric {
     category = "AllMetrics"
     enabled  = true
-
-    retention_policy {
-      enabled = true
-      days    = 365
-    }
   }
 }
 

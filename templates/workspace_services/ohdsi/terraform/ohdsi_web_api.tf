@@ -151,20 +151,11 @@ resource "azurerm_monitor_diagnostic_setting" "ohdsi_webapi" {
     for_each = local.ohdsi_api_log_analytics_categories
     content {
       category = enabled_log.value
-      retention_policy {
-        enabled = true
-        days    = 30
-      }
     }
   }
 
   metric {
     category = "AllMetrics"
     enabled  = true
-
-    retention_policy {
-      enabled = true
-      days    = 365
-    }
   }
 }
