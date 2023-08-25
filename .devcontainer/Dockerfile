@@ -8,15 +8,13 @@ FROM --platform="${TARGETPLATFORM}" mcr.microsoft.com/vscode/devcontainers/pytho
 # This will be set to true when running in VSCode
 ARG INTERACTIVE="false"
 
-ARG USERNAME=vscode
 ARG USER_UID=1000
-ARG USER_GID=$USER_UID
+ARG USERNAME=vscode
+
+# make user ID match user ID on host machine
+RUN usermod --uid $USER_UID $USERNAME
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-# Set up non-root user
-COPY .devcontainer/scripts/non-root-user.sh /tmp/
-RUN bash /tmp/non-root-user.sh "${USERNAME}" "${USER_UID}" "${USER_GID}"
 
 # Set env for tracking that we're running in a devcontainer
 ENV DEVCONTAINER=true
