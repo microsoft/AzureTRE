@@ -13,6 +13,7 @@ BUG FIXES:
 * Add dependency on firewall deployment to rule collection ([#3672](https://github.com/microsoft/AzureTRE/pulls/3672))
 * Check docker return code in set docker sock permissions file ([#3674](https://github.com/microsoft/AzureTRE/pulls/3674))
 * Increase reliability of Nexus deployment ([[#3642](https://github.com/microsoft/AzureTRE/issues/3642))
+* Added missing region entries in `databricks-udr.json` ([[#3688](https://github.com/microsoft/AzureTRE/pull/3688))
 
 
 ## 0.13.0 (August 9, 2023)
