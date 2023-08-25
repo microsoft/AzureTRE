@@ -139,22 +139,12 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
     content {
       category = log.value
       enabled  = contains(local.webapp_diagnostic_categories_enabled, log.value) ? true : false
-
-      retention_policy {
-        enabled = contains(local.webapp_diagnostic_categories_enabled, log.value) ? true : false
-        days    = 365
-      }
     }
   }
 
   metric {
     category = "AllMetrics"
     enabled  = true
-
-    retention_policy {
-      enabled = true
-      days    = 365
-    }
   }
 }
 

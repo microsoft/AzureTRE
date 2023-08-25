@@ -52,22 +52,12 @@ resource "azurerm_monitor_diagnostic_setting" "kv" {
     for_each = ["AuditEvent", "AzurePolicyEvaluationDetails"]
     content {
       category = enabled_log.value
-
-      retention_policy {
-        enabled = true
-        days    = 365
-      }
     }
   }
 
   metric {
     category = "AllMetrics"
     enabled  = true
-
-    retention_policy {
-      enabled = true
-      days    = 365
-    }
   }
 }
 

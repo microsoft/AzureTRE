@@ -96,11 +96,6 @@ resource "azurerm_monitor_diagnostic_setting" "mlflow" {
     content {
       category = log.value
       enabled  = contains(local.web_app_diagnostic_categories_enabled, log.value) ? true : false
-
-      retention_policy {
-        enabled = contains(local.web_app_diagnostic_categories_enabled, log.value) ? true : false
-        days    = 365
-      }
     }
   }
 }

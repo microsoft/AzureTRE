@@ -104,22 +104,12 @@ resource "azurerm_monitor_diagnostic_setting" "guacamole" {
     for_each = setintersection(data.azurerm_monitor_diagnostic_categories.guacamole.log_category_types, local.guacamole_diagnostic_categories_enabled)
     content {
       category = enabled_log.value
-
-      retention_policy {
-        enabled = true
-        days    = 365
-      }
     }
   }
 
   metric {
     category = "AllMetrics"
     enabled  = true
-
-    retention_policy {
-      enabled = false
-    }
-  }
 }
 
 resource "azurerm_role_assignment" "guac_acr_pull" {

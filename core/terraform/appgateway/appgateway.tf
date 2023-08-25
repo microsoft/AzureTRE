@@ -203,22 +203,12 @@ resource "azurerm_monitor_diagnostic_setting" "agw" {
     for_each = ["ApplicationGatewayAccessLog", "ApplicationGatewayPerformanceLog", "ApplicationGatewayFirewallLog"]
     content {
       category = enabled_log.value
-
-      retention_policy {
-        enabled = true
-        days    = 365
-      }
     }
   }
 
   metric {
     category = "AllMetrics"
     enabled  = true
-
-    retention_policy {
-      enabled = true
-      days    = 365
-    }
   }
 
   lifecycle { ignore_changes = [log_analytics_destination_type] }
