@@ -110,6 +110,7 @@ resource "azurerm_monitor_diagnostic_setting" "guacamole" {
   metric {
     category = "AllMetrics"
     enabled  = true
+ }
 }
 
 resource "azurerm_role_assignment" "guac_acr_pull" {
