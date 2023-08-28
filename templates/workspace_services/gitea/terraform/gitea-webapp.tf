@@ -132,6 +132,7 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
 
   lifecycle { ignore_changes = [tags] }
 }
+
 resource "azurerm_monitor_diagnostic_setting" "gitea" {
   name                       = "diag-${local.service_resource_name_suffix}"
   target_resource_id         = azurerm_linux_web_app.gitea.id
