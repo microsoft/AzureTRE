@@ -7,18 +7,18 @@ resource "random_password" "password" {
 }
 
 resource "azurerm_mysql_flexible_server" "gitea" {
-  name                              = "mysql-${local.service_resource_name_suffix}"
-  resource_group_name               = data.azurerm_resource_group.ws.name
-  location                          = data.azurerm_resource_group.ws.location
-  administrator_login               = "mysqladmin"
-  administrator_password            = random_password.password.result
-  sku_name                          = "GP_Standard_D2ds_v4"
-  version                           = "8.0.21"
-  backup_retention_days             = 7
-  geo_redundant_backup_enabled      = false
-  delegated_subnet_id               = data.azurerm_subnet.mysql_gitea.id
-  private_dns_zone_id               = data.azurerm_private_dns_zone.mysql.id
-  tags                              = local.workspace_service_tags
+  name                         = "mysql-${local.service_resource_name_suffix}"
+  resource_group_name          = data.azurerm_resource_group.ws.name
+  location                     = data.azurerm_resource_group.ws.location
+  administrator_login          = "mysqladmin"
+  administrator_password       = random_password.password.result
+  sku_name                     = "GP_Standard_D2ds_v4"
+  version                      = "8.0.21"
+  backup_retention_days        = 7
+  geo_redundant_backup_enabled = false
+  delegated_subnet_id          = data.azurerm_subnet.mysql_gitea.id
+  private_dns_zone_id          = data.azurerm_private_dns_zone.mysql.id
+  tags                         = local.workspace_service_tags
 
   storage {
     size_gb           = 20

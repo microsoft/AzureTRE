@@ -21,14 +21,14 @@ resource "azurerm_firewall_policy_rule_collection_group" "airlock_collection_gro
     priority = 300
     action   = "Dnat"
     rule {
-      name                = "smtp-nat-rule-${var.tre_id}"
-      protocols           = ["TCP"]
-      source_addresses    = ["*"]
+      name             = "smtp-nat-rule-${var.tre_id}"
+      protocols        = ["TCP"]
+      source_addresses = ["*"]
 
-      destination_ports   = [ "2525" ]
+      destination_ports   = ["2525"]
       destination_address = data.azurerm_public_ip.fwtransit.ip_address
-      translated_port     = "${var.smtp_server_port}"
-      translated_address  = "${var.smtp_server_address}"
+      translated_port     = var.smtp_server_port
+      translated_address  = var.smtp_server_address
     }
   }
 }

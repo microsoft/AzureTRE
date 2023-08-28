@@ -148,6 +148,7 @@ resource "azurerm_monitor_diagnostic_setting" "gitea" {
   metric {
     category = "AllMetrics"
     enabled  = true
+  }
 }
 
 resource "azurerm_key_vault_access_policy" "gitea_policy" {
