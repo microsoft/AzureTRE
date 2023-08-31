@@ -422,7 +422,7 @@ def primary_resource() -> Resource:
         properties={
             "display_name": "test_resource name",
             "address_prefix": ["172.0.0.1", "192.168.0.1"],
-            "fqdn": ["*.pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
+            "fqdn": ["pypi.org", "*.pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
             "my_protocol": "MyCoolProtocol",
         },
     )
@@ -441,7 +441,7 @@ def primary_user_resource() -> Resource:
         properties={
             "display_name": "test_resource name",
             "address_prefix": ["172.0.0.1", "192.168.0.1"],
-            "fqdn": ["*.pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
+            "fqdn": ["pypi.org", "*.pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
             "my_protocol": "MyCoolProtocol",
         },
     )
@@ -460,7 +460,7 @@ def primary_workspace_service_resource() -> Resource:
         properties={
             "display_name": "test_workspace_service_resource name",
             "address_prefix": ["172.0.0.1", "192.168.0.1"],
-            "fqdn": ["*.pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
+            "fqdn": ["pypi.org", "*.pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
             "my_protocol": "MyCoolProtocol",
         },
     )
@@ -479,7 +479,7 @@ def resource_ws_parent() -> Resource:
         properties={
             "display_name": "ImTheParentWS",
             "address_prefix": ["172.1.1.1", "192.168.1.1"],
-            "fqdn": ["*.pypi.org", "security.ubuntu.com"],
+            "fqdn": ["pypi.org", "*.pypi.org", "security.ubuntu.com"],
             "my_protocol": "MyWSCoolProtocol",
         },
     )
@@ -498,7 +498,7 @@ def resource_ws_svc_parent() -> Resource:
         properties={
             "display_name": "ImTheParentWSSvc",
             "address_prefix": ["172.2.2.2", "192.168.2.2"],
-            "fqdn": ["*.pypi.org", "files.pythonhosted.org"],
+            "fqdn": ["pypi.org", "*.pypi.org", "files.pythonhosted.org"],
             "my_protocol": "MyWSSvcCoolProtocol",
         },
     )

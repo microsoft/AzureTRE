@@ -23,7 +23,7 @@ def test_substitution_for_primary_resource_no_parents(primary_resource):
     # array val to inject, with text. Text will be dropped.
     val_to_sub = "{{ resource.properties.fqdn }} - this text will be removed because fqdn is a list and shouldn't be concatenated into a string"
     val = substitute_value(val_to_sub, resource_dict, None, None)
-    assert val == ["*.pypi.org", "files.pythonhosted.org", "security.ubuntu.com"]
+    assert val == ["pypi.org", "*.pypi.org", "files.pythonhosted.org", "security.ubuntu.com"]
 
     # single string val, with text. Will be concatenated into text.
     val_to_sub = "I think {{ resource.templateName }} is the best template!"
@@ -56,7 +56,7 @@ def test_substitution_for_user_resource_primary_resource_with_parents(
     val = substitute_value(
         val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None
     )
-    assert val == ["*.pypi.org", "security.ubuntu.com"]
+    assert val == ["pypi.org", "*.pypi.org", "security.ubuntu.com"]
 
     # single string val, with text. Will be concatenated into text.
     val_to_sub = (
@@ -94,7 +94,7 @@ def test_substitution_for_user_resource_primary_resource_with_parents(
     val = substitute_value(
         val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict
     )
-    assert val == ["*.pypi.org", "files.pythonhosted.org"]
+    assert val == ["pypi.org", "*.pypi.org", "files.pythonhosted.org"]
 
     # single string val, with text. Will be concatenated into text.
     val_to_sub = "I think {{ resource.parent.templateName }} is the best template!"
@@ -270,6 +270,7 @@ def test_substitution_props(pipeline_step, primary_resource, resource_to_update)
     )
 
     assert obj["rule_collections"][0]["rules"][0]["target_fqdns"] == [
+        "pypi.org",
         "*.pypi.org",
         "files.pythonhosted.org",
         "security.ubuntu.com",
