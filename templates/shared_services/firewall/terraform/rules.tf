@@ -173,6 +173,28 @@ resource "azurerm_firewall_policy_rule_collection_group" "core" {
       source_ip_groups = [data.azurerm_ip_group.web.id]
     }
   }
+
+  application_rule_collection {
+    name     = "arc-airlock-processor-subnet"
+    priority = 304
+    action   = "Allow"
+
+    rule {
+      name = "functions-runtime"
+      protocols {
+        port = "443"
+        type = "Https"
+      }
+      destination_fqdns = [
+        "functionscdn.azureedge.net"
+      ]
+      source_ip_groups = [data.azurerm_ip_group.airlock_processor.id]
+    }
+  }
+
+  depends_on = [
+    azurerm_firewall.fw
+  ]
 }
 
 

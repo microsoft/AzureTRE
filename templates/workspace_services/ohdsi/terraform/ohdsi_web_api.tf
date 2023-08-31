@@ -3,6 +3,8 @@ resource "azurerm_key_vault_secret" "jdbc_connection_string_webapi_admin" {
   key_vault_id = data.azurerm_key_vault.ws.id
   value        = "jdbc:postgresql://${azurerm_postgresql_flexible_server.postgres.fqdn}:5432/${local.postgres_webapi_database_name}?user=${local.postgres_webapi_admin_username}&password=${azurerm_key_vault_secret.postgres_webapi_admin_password.value}&sslmode=require"
   tags         = local.tre_workspace_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_user_assigned_identity" "ohdsi_webapi_id" {
@@ -10,6 +12,8 @@ resource "azurerm_user_assigned_identity" "ohdsi_webapi_id" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   tags                = local.tre_workspace_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_key_vault_access_policy" "ohdsi_webapi" {
@@ -112,6 +116,8 @@ resource "azurerm_linux_web_app" "ohdsi_webapi" {
   depends_on = [
     terraform_data.deployment_ohdsi_webapi_init
   ]
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_endpoint" "webapi_private_endpoint" {
@@ -132,6 +138,8 @@ resource "azurerm_private_endpoint" "webapi_private_endpoint" {
     name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurewebsites.net"]
     private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_monitor_diagnostic_setting" "ohdsi_webapi" {
@@ -143,20 +151,11 @@ resource "azurerm_monitor_diagnostic_setting" "ohdsi_webapi" {
     for_each = local.ohdsi_api_log_analytics_categories
     content {
       category = enabled_log.value
-      retention_policy {
-        enabled = true
-        days    = 30
-      }
     }
   }
 
   metric {
     category = "AllMetrics"
     enabled  = true
-
-    retention_policy {
-      enabled = true
-      days    = 365
-    }
   }
 }

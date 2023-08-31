@@ -104,21 +104,12 @@ resource "azurerm_monitor_diagnostic_setting" "guacamole" {
     for_each = setintersection(data.azurerm_monitor_diagnostic_categories.guacamole.log_category_types, local.guacamole_diagnostic_categories_enabled)
     content {
       category = enabled_log.value
-
-      retention_policy {
-        enabled = true
-        days    = 365
-      }
     }
   }
 
   metric {
     category = "AllMetrics"
     enabled  = true
-
-    retention_policy {
-      enabled = false
-    }
   }
 }
 
@@ -148,6 +139,8 @@ resource "azurerm_private_endpoint" "guacamole" {
     name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurewebsites.net"]
     private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_key_vault_access_policy" "guacamole_policy" {

@@ -3,6 +3,8 @@ resource "azurerm_log_analytics_query_pack" "tre" {
   resource_group_name = var.resource_group_name
   location            = var.location
   tags                = var.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_log_analytics_query_pack_query" "rp_logs" {

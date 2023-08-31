@@ -71,6 +71,8 @@ resource "azurerm_linux_web_app" "atlas_ui" {
   ]
 
   tags = local.tre_workspace_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_endpoint" "atlas_ui_private_endpoint" {
@@ -91,6 +93,8 @@ resource "azurerm_private_endpoint" "atlas_ui_private_endpoint" {
     name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurewebsites.net"]
     private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_monitor_diagnostic_setting" "atlas_ui" {
@@ -102,20 +106,11 @@ resource "azurerm_monitor_diagnostic_setting" "atlas_ui" {
     for_each = local.atals_ui_log_analytics_categories
     content {
       category = enabled_log.value
-      retention_policy {
-        enabled = true
-        days    = 30
-      }
     }
   }
 
   metric {
     category = "AllMetrics"
     enabled  = true
-
-    retention_policy {
-      enabled = true
-      days    = 365
-    }
   }
 }
