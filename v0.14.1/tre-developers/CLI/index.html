@@ -1,0 +1,3678 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Azure TRE">
+      
+      
+        <meta name="author" content="Microsoft">
+      
+      
+        <link rel="canonical" href="https://microsoft.github.io/AzureTRE/v0.14.1/tre-developers/CLI/">
+      
+      
+        <link rel="prev" href="../../tre-templates/pipeline-templates/pipeline-schema/">
+      
+      
+        <link rel="next" href="../../troubleshooting-faq/">
+      
+      
+      <link rel="icon" href="../../assets/ms_icon.png">
+      <meta name="generator" content="mkdocs-1.5.2, mkdocs-material-9.2.6">
+    
+    
+      
+        <title>AzureTRE CLI - Azure TRE</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.0e669242.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.85d0ee34.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+<script type="text/javascript">
+  (function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+  })(window, document, "clarity", "script", "7gescazz1m");
+</script>
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tre-cli" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+          <aside class="md-banner md-banner--warning">
+            <div class="md-banner__inner md-grid md-typeset">
+              
+  You're not viewing the latest version.
+  <a href="../../..">
+    <strong>Click here to go to latest.</strong>
+  </a>
+</script>
+
+            </div>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),outdated=__md_get("__outdated",sessionStorage);!0===outdated&&el&&(el.hidden=!1)</script>
+          </aside>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Azure TRE" class="md-header__button md-logo" aria-label="Azure TRE" data-md-component="logo">
+      
+  <img src="../../assets/ms_icon.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Azure TRE
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              AzureTRE CLI
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/microsoft/AzureTre/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Azure TRE" class="md-nav__button md-logo" aria-label="Azure TRE" data-md-component="logo">
+      
+  <img src="../../assets/ms_icon.png" alt="logo">
+
+    </a>
+    Azure TRE
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/microsoft/AzureTre/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../.." class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_1">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Overview
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../azure-tre-overview/user-roles/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    User Roles
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Architecture
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../azure-tre-overview/architecture/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    System Architecture
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../azure-tre-overview/networking/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Network Architecture
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../azure-tre-overview/tre-resources-breakdown/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Azure Resources
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../azure-tre-overview/airlock/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Airlock
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../azure-tre-overview/cost-reporting/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cost Reporting
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../using-tre/terms-definitions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Terms and Definitions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../tre-admins/setup-instructions/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    QuickStart
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_2">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            QuickStart
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/setup-instructions/prerequisites/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    1. Prerequisites
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/setup-instructions/deployment-repo/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2. Deployment Repository
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/setup-instructions/ad-tenant-choices/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    3. AD Tenant
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/setup-instructions/setup-auth-entities/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    4. Setup Auth
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6" >
+        
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    5. Deployment
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            5. Deployment
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6_1" >
+        
+          <label class="md-nav__link" for="__nav_2_6_1" id="__nav_2_6_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Manual
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/setup-instructions/manual-pre-deployment-steps/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pre-deployment Steps
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/setup-instructions/manual-deployment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deployment Steps
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6_2" >
+        
+          <label class="md-nav__link" for="__nav_2_6_2" id="__nav_2_6_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    CI/CD
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            CI/CD
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/setup-instructions/cicd-pre-deployment-steps/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pre-deployment Steps
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/setup-instructions/cicd-deployment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deployment Steps
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/setup-instructions/configuring-shared-services/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    6. Configure Shared Services
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/setup-instructions/ui-install-base-workspace/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    7. Install Base Workspace
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/setup-instructions/ui-install-ws-and-ur/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    8. Install Workspace Service and User Resource
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../using-tre/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Using the Azure TRE
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_3">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Using the Azure TRE
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../using-tre/templates/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Custom Templates
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../using-tre/tre-for-research/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Using AzureTRE for Research
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_3_3">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Using AzureTRE for Research
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../using-tre/tre-for-research/using-vms/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Set up of a Virtual Machine
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../using-tre/tre-for-research/importing-exporting-data-airlock/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Importing/exporting data with Airlock
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../using-tre/tre-for-research/review-airlock-request/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reviewing Airlock Requests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Templates and Services
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Templates and Services
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_1" >
+        
+          <label class="md-nav__link" for="__nav_4_1" id="__nav_4_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Workspaces
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            Workspaces
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspaces/base/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Base
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspaces/unrestricted/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Unrestricted
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspaces/airlock-import-review/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Airlock Import Review
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Workspace Services
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Workspace Services
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspace-services/azure-ml/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Azure ML
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspace-services/gitea/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Gitea
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspace-services/guacamole/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Guacamole
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspace-services/inner-eye/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    InnerEye
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspace-services/mlflow/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MLFlow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspace-services/health_services/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Health Services
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspace-services/databricks/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Azure Databricks
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/workspace-services/ohdsi/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OHDSI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Shared Services
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            Shared Services
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/shared-services/gitea/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Gitea (Source Mirror)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/shared-services/nexus/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Nexus (Package Mirror)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/shared-services/cyclecloud/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Azure CycleCloud (HPC Compute)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/shared-services/airlock-notifier/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Airlock Notifier
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    User Resources
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            User Resources
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/user-resources/guacamole-windows-vm/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Guacamole Windows VM
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/user-resources/guacamole-linux-vm/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Guacamole Linux VM
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/user-resources/import-reviewvm/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Import Review VM
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/user-resources/export-reviewvm/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Export Review VM
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Technical Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Technical Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1" >
+        
+          <label class="md-nav__link" for="__nav_5_1" id="__nav_5_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Administration
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1">
+            <span class="md-nav__icon md-icon"></span>
+            Administration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/start-stop/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Starting and Stopping Azure TRE Services
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/environment-variables/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Environment Variables
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/tear-down/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tear-down
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_4" >
+        
+          <label class="md-nav__link" for="__nav_5_1_4" id="__nav_5_1_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Authentication and Authorization
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_1_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_4">
+            <span class="md-nav__icon md-icon"></span>
+            Authentication and Authorization
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/auth/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/identities/auth-manual/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Manual Setup
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_4_3" >
+        
+          <label class="md-nav__link" for="__nav_5_1_4_3" id="__nav_5_1_4_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Identities
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_1_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            Identities
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/identities/application_admin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Application Admin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/identities/api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    API
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/identities/client/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Client
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/identities/test-account/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Automation Test Account
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/identities/workspace/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Workspaces
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/registering-templates/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Registering Templates
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_6" >
+        
+          <label class="md-nav__link" for="__nav_5_1_6" id="__nav_5_1_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Install Resources via API
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_1_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_6">
+            <span class="md-nav__icon md-icon"></span>
+            Install Resources via API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/setup-instructions/installing-base-workspace/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install Base Workspace
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/setup-instructions/installing-workspace-service-and-user-resource/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install Workspace Service and User Resource
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/upgrading-tre/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Upgrading AzureTRE Version
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/upgrading-resources/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Upgrading Resources Version
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/configure-airlock-review/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuring Airlock Reviews
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/supported-clouds/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Supported Clouds
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
+        
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Development
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../using-tre/local-development/local-development/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Local Development
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2_2" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Contributing to AzureTRE
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_5_2_2">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing to AzureTRE
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    API
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ui/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    UI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../resource-processor/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Resource Processor
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../end-to-end-tests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    End to End Tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../letsencrypt/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Letsencrypt
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Releases
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/setup-instructions/workflows/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GitHub Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2_3" >
+        
+          <label class="md-nav__link" for="__nav_5_2_3" id="__nav_5_2_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Developing Workspace Templates
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Developing Workspace Templates
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-workspace-authors/authoring-workspace-templates/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Authoring Workspace Templates
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-workspace-authors/firewall-rules/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Firewall Rules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2_3_3" >
+        
+          <label class="md-nav__link" for="__nav_5_2_3_3" id="__nav_5_2_3_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Pipeline Templates
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_2_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Pipeline Templates
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/pipeline-templates/overview/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-templates/pipeline-templates/pipeline-schema/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pipeline Schema
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    AzureTRE CLI
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    AzureTRE CLI
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    Installation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shell-completion" class="md-nav__link">
+    Shell completion
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#login" class="md-nav__link">
+    Login
+  </a>
+  
+    <nav class="md-nav" aria-label="Login">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#device-code-flow-interactive" class="md-nav__link">
+    Device code flow (interactive)
+  </a>
+  
+    <nav class="md-nav" aria-label="Device code flow (interactive)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workspace-authentication" class="md-nav__link">
+    Workspace authentication
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#client-credentials-service" class="md-nav__link">
+    Client credentials (service)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#general-command-structure" class="md-nav__link">
+    General command structure
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#asynchronous-operations" class="md-nav__link">
+    Asynchronous operations
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-output" class="md-nav__link">
+    Command output
+  </a>
+  
+    <nav class="md-nav" aria-label="Command output">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#output-formats" class="md-nav__link">
+    Output formats
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#querying-output" class="md-nav__link">
+    Querying output
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capturing-results" class="md-nav__link">
+    Capturing results
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#passing-definitions" class="md-nav__link">
+    Passing definitions
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overriding-the-api-url" class="md-nav__link">
+    Overriding the API URL
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-usage" class="md-nav__link">
+    Example usage
+  </a>
+  
+    <nav class="md-nav" aria-label="Example usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-an-import-airlock-request" class="md-nav__link">
+    Creating an import airlock request
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../troubleshooting-faq/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Troubleshooting FAQ
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_5_4">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            Troubleshooting FAQ
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting-faq/debug-api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Enabling Debugging for the API
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting-faq/api-logs-deployment-center/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    API logs using deployment center
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting-faq/troubleshooting-sb/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Checking the Service Bus
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting-faq/app-insights-logs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Checking Logs in Application Insights
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting-faq/troubleshooting-rp/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Troubleshooting the Resource Processor
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting-faq/manually-editing-resources/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Manually edit resources in Cosmos DB
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting-faq/cloud-init/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Troubleshooting cloud-init
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    Installation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shell-completion" class="md-nav__link">
+    Shell completion
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#login" class="md-nav__link">
+    Login
+  </a>
+  
+    <nav class="md-nav" aria-label="Login">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#device-code-flow-interactive" class="md-nav__link">
+    Device code flow (interactive)
+  </a>
+  
+    <nav class="md-nav" aria-label="Device code flow (interactive)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workspace-authentication" class="md-nav__link">
+    Workspace authentication
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#client-credentials-service" class="md-nav__link">
+    Client credentials (service)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#general-command-structure" class="md-nav__link">
+    General command structure
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#asynchronous-operations" class="md-nav__link">
+    Asynchronous operations
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-output" class="md-nav__link">
+    Command output
+  </a>
+  
+    <nav class="md-nav" aria-label="Command output">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#output-formats" class="md-nav__link">
+    Output formats
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#querying-output" class="md-nav__link">
+    Querying output
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capturing-results" class="md-nav__link">
+    Capturing results
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#passing-definitions" class="md-nav__link">
+    Passing definitions
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overriding-the-api-url" class="md-nav__link">
+    Overriding the API URL
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-usage" class="md-nav__link">
+    Example usage
+  </a>
+  
+    <nav class="md-nav" aria-label="Example usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-an-import-airlock-request" class="md-nav__link">
+    Creating an import airlock request
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="tre-cli">TRE CLI</h1>
+<p><strong>WARNING - this CLI is currently experimental</strong></p>
+<p>This guide will cover various components of AzureTRE CLI such as installation, login, general command structure and other components that enable operating the CLI.</p>
+<h2 id="installation">Installation</h2>
+<p>It is recommended to use CLI within the dev container. It should be installed automatically. To install it manually, run <code>make install-cli</code>.</p>
+<h2 id="shell-completion">Shell completion</h2>
+<p>The <code>tre</code> cli supports shell completion. To enable, run <code>source &lt;(_TRE_COMPLETE=bash_source tre)</code> (or add to your profile).</p>
+<p>Other shells are supported, see <a href="https://click.palletsprojects.com/en/8.1.x/shell-completion/#enabling-completion">the click docs</a>.</p>
+<h2 id="login">Login</h2>
+<p>The CLI allows you to log in using either a device code flow or client credentials flow.</p>
+<h3 id="device-code-flow-interactive">Device code flow (interactive)</h3>
+<p>To log in using device code flow, run:</p>
+<div class="highlight"><pre><span></span><code>tre<span class="w"> </span>login<span class="w"> </span>device-code<span class="w"> </span>--base-url<span class="w"> </span>https://mytre.westeurope.cloudapp.azure.com/<span class="w"> </span>
+</code></pre></div>
+<p>This will prompt you to copy a device code and nagivate to <a href="https://microsoft.com/devicelogin">https://microsoft.com/devicelogin</a> to complete the login flow interactively.</p>
+<p>You can specify <code>--no-verify</code> to disable SSL cert verification.</p>
+<p>On versions of the API prior to '0.5.7', you will need to pass some additional parameters:</p>
+<div class="highlight"><pre><span></span><code>tre<span class="w"> </span>login<span class="w"> </span>device-code<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--base-url<span class="w"> </span>https://mytre.westeurope.cloudapp.azure.com/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--client-id<span class="w"> </span>&lt;API_CLIENT_ID&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--aad-tenant-id<span class="w"> </span>&lt;AAD_TENANT_ID&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--api-scope<span class="w"> </span>&lt;ROOT_API_SCOPE&gt;
+</code></pre></div>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>the API scope is usually of the form  <code>api://&lt;API_CLIENT_ID&gt;/user_impersonation</code></p>
+</div>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>when using device code flow, you need to ensure that the app registrations for the root API and any workspaces you access have device code flow enabled. (Automating this is tracked in <a href="https://github.com/microsoft/AzureTRE/issues/2709">#2709</a> )</p>
+</div>
+<h4 id="workspace-authentication">Workspace authentication</h4>
+<p>Since the API scope for each workspace is different, the token returned when authenticating against the root API isn't valid against a workspace.
+When running interactively, the CLI will prompt you when it needs to reauthenticate for a workspace API.</p>
+<p>You can pre-emptively get an authentication token for a workspace using the <code>--workspace</code> option. This can be specified multiple times to authenticate against multiple workspaces at once. You can also using <code>--all-workspaces</code> to get a token for all workspaces in one command.</p>
+<h3 id="client-credentials-service">Client credentials (service)</h3>
+<p>To log in using client credentials flow (for a service principal), run:</p>
+<div class="highlight"><pre><span></span><code>tre<span class="w"> </span>login<span class="w"> </span>client-credentials<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--base-url<span class="w"> </span>https://mytre.westeurope.cloudapp.azure.com/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--client-id<span class="w"> </span>&lt;SERVICE_PRINICPAL_CLIENT_ID&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--client-secret<span class="w"> </span>&lt;SERVICE_PRINCIPAL_CLIENT_SECRET&gt;
+</code></pre></div>
+<p>You can specify <code>--no-verify</code> to disable SSL cert verification.</p>
+<p>On versions of the API prior to '0.5.7', you will need to pass some additional parameters:</p>
+<div class="highlight"><pre><span></span><code>tre<span class="w"> </span>login<span class="w"> </span>client-credentials<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--base-url<span class="w"> </span>https://mytre.westeurope.cloudapp.azure.com/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--client-id<span class="w"> </span>&lt;SERVICE_PRINICPAL_CLIENT_ID&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--client-secret<span class="w"> </span>&lt;SERVICE_PRINCIPAL_CLIENT_SECRET&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--aad-tenant-id<span class="w"> </span>&lt;AAD_TENANT_ID&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--api-scope<span class="w"> </span>&lt;ROOT_API_SCOPE&gt;
+</code></pre></div>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>the API scope is usually of the form  <code>api://&lt;API_CLIENT_ID&gt;/user_impersonation</code></p>
+</div>
+<h2 id="general-command-structure">General command structure</h2>
+<p>The general command structure for the CLI is:</p>
+<div class="highlight"><pre><span></span><code>tre<span class="w"> </span>plural_noun<span class="w"> </span>cmd
+<span class="c1"># or </span>
+tre<span class="w"> </span>singular_noun<span class="w"> </span>id<span class="w"> </span>cmd
+</code></pre></div>
+<p>For example:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># list workspaces</span>
+tre<span class="w"> </span>workspaces<span class="w"> </span>list
+
+<span class="c1">## show an individual workspace</span>
+tre<span class="w"> </span>workspace<span class="w"> </span>567f17d6-1abb-450f-991a-19398f89b3c2<span class="w"> </span>show
+</code></pre></div>
+<p>This pattern is nested for sub-resources, e.g. operations for a workspace:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">## list operations for a workspace</span>
+tre<span class="w"> </span>workspace<span class="w"> </span>567f17d6-1abb-450f-991a-19398f89b3c2<span class="w"> </span>operations<span class="w"> </span>list
+
+<span class="c1">## show an individual operation for a workspace</span>
+tre<span class="w"> </span>workspace<span class="w"> </span>567f17d6-1abb-450f-991a-19398f89b3c2<span class="w"> </span>operation<span class="w"> </span>0f66839f-8727-43db-b2d6-6c7197712e36<span class="w"> </span>show
+</code></pre></div>
+<h2 id="asynchronous-operations">Asynchronous operations</h2>
+<p>Many operations in TRE are asynchronous, and the corresponding API endpoints return a <code>202 Accepted</code> response with a <code>Location</code> header pointing to an operation endpoint.</p>
+<p>The commands corresponding to these asynchronous operations will poll this resulting operation and wait until it has completed. If you don't want this behaviour, you can pass the <code>--no-wait</code> option.</p>
+<h2 id="command-output">Command output</h2>
+<h3 id="output-formats">Output formats</h3>
+<p>Most commands support formatting output as <code>table</code> (default), <code>json</code>, <code>jsonc</code>, <code>raw</code>, or <code>none</code> via the <code>--output</code> option. This can also be controlled using the <code>TRECLI_OUTPUT</code> environment variable, i.e. set <code>TRECLI_OUTPUT</code> to <code>table</code> to default to the table output format.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>table</code></td>
+<td>Works well for interactive use</td>
+</tr>
+<tr>
+<td><code>json</code></td>
+<td>Plain JSON output, ideal for parsing via <code>jq</code> or other tools</td>
+</tr>
+<tr>
+<td><code>jsonc</code></td>
+<td>Coloured, formatted JSON</td>
+</tr>
+<tr>
+<td><code>raw</code></td>
+<td>Results are output as-is. Useful with <code>--query</code> when capturing a single value</td>
+</tr>
+<tr>
+<td><code>none</code></td>
+<td>No output</td>
+</tr>
+</tbody>
+</table>
+<h3 id="querying-output">Querying output</h3>
+<p>Most commands support <a href="https://jmespath.org/">JMESPath</a> queries for the output via the <code>--query</code> option.</p>
+<p>For example, to get a list of workspace IDs run <code>tre workspaces list --query workspaces[].id</code>.</p>
+<p>This can be combined with <code>--output table</code>, e.g. <code>tre workspaces list -o table --query "workspaces[].{id:id, name: properties.display_name}"</code>. Note that the query result must be an object with named properties (or an array of such objects)</p>
+<h3 id="capturing-results">Capturing results</h3>
+<p>Some of the commands in the CLI output progress information (e.g. <code>tre workspace new ...</code>).</p>
+<p>When the CLI outputs progress information, it outputs it to stderr. The final result of the command is output to stdout.</p>
+<p>This gives a good experience when chaining commands together, e.g.:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Set the workspace to use</span>
+<span class="nv">WORKSPACE_ID</span><span class="o">=</span>567f17d6-1abb-450f-991a-19398f89b3c2
+<span class="c1"># Get the workspace etag</span>
+<span class="nv">ETAG</span><span class="o">=</span><span class="k">$(</span>tre<span class="w"> </span>workspace<span class="w"> </span><span class="nv">$WORKSPACE_ID</span><span class="w"> </span>show<span class="w"> </span>--query<span class="w"> </span>workspace._etag<span class="w"> </span>--output<span class="w"> </span>json<span class="k">)</span>
+<span class="c1"># Disable the workspace (this is an asynchronous operation)</span>
+<span class="nv">OPERATION</span><span class="o">=</span><span class="k">$(</span>tre<span class="w"> </span>workspace<span class="w"> </span><span class="nv">$WORKSPACE_ID</span><span class="w"> </span>set-enabled<span class="w"> </span>--etag<span class="w"> </span><span class="nv">$ETAG</span><span class="w"> </span>--enable<span class="w"> </span>--output<span class="w"> </span>json<span class="k">)</span>
+<span class="c1"># ^ this last command will output progress information while waiting for the operation to complete.</span>
+<span class="c1"># And OPERATION contains the JSON describing the completed operation</span>
+<span class="c1"># allowing you to query the status property etc</span>
+<span class="nb">echo</span><span class="w"> </span><span class="nv">$OPERATION</span>
+</code></pre></div>
+<h2 id="passing-definitions">Passing definitions</h2>
+<p>When creating new resources (e.g. workspaces), you need to pass in a definition. This can be passed in various ways: as an inline value, from a file, or from stdin.</p>
+<p>To pass a definition inline, use the <code>--definition</code> option and include the JSON content, e.g. <code>tre workspace new --definition '{"templateName":...}'</code></p>
+<p>To load a definition from a file, use the <code>--definition-file</code> option, e.g. <code>tre workspace new --definition-file my-worspace.json</code></p>
+<p>To pass a definition via stdin, use <code>--definition-file -</code> (note the <code>-</code> to signal reading from stdin).</p>
+<p>Reading from stdin allows you to take some interesting approaches to specifying the definition.</p>
+<p>For example, you can use HEREDOC syntax to describe the JSON payload over multiple lines:</p>
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span><span class="s">&lt;&lt; EOF | tre workspaces new --definition-file -</span>
+<span class="s">{</span>
+<span class="s">  &quot;templateName&quot;: &quot;my-workspace&quot;,</span>
+<span class="s">  &quot;properties&quot;: {</span>
+<span class="s">    &quot;display_name&quot;: $DISPLAY_NAME,</span>
+<span class="s">    ...</span>
+<span class="s">  }</span>
+<span class="s">}</span>
+<span class="s">EOF</span>
+</code></pre></div>
+<p>Or you can load the content from a file that contains embedded environment variables and use <code>envsubst</code> to substitute them:</p>
+<p><code>cat my-workspace.json | envsubst | tre workspace new --definition file -</code></p>
+<h2 id="overriding-the-api-url">Overriding the API URL</h2>
+<p>When you run <code>tre login</code> you specify the base URL for the API, but when you are developing AzureTRE you may want to make calls against the locally running API.</p>
+<p>To support this, you can set the <code>TRECLI_BASE_URL</code> environment variable and that will override the API endpoint used by the CLI.</p>
+<h2 id="example-usage">Example usage</h2>
+<h3 id="creating-an-import-airlock-request">Creating an import airlock request</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Set the ID of the workspace to create the import request for</span>
+<span class="nv">WORKSPACE_ID</span><span class="o">=</span>__ADD_ID_HERE__
+
+<span class="c1"># Create the airlock request - change the justification as appropriate</span>
+<span class="nv">request</span><span class="o">=</span><span class="k">$(</span>tre<span class="w"> </span>workspace<span class="w"> </span><span class="nv">$WORKSPACE_ID</span><span class="w"> </span>airlock-requests<span class="w"> </span>new<span class="w"> </span>--type<span class="w"> </span>import<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Ant&quot;</span><span class="w"> </span>--justification<span class="w"> </span><span class="s2">&quot;It&#39;s import-ant&quot;</span><span class="w"> </span>--output<span class="w"> </span>json<span class="k">)</span>
+<span class="nv">request_id</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span><span class="w"> </span><span class="nv">$request</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span>.airlockRequest.id<span class="k">)</span>
+
+<span class="c1"># Get the storage upload URL</span>
+<span class="nv">upload_url</span><span class="o">=</span><span class="k">$(</span>tre<span class="w"> </span>workspace<span class="w"> </span><span class="nv">$WORKSPACE_ID</span><span class="w"> </span>airlock-request<span class="w"> </span><span class="nv">$request_id</span><span class="w"> </span>get-url<span class="w"> </span>--query<span class="w"> </span>containerUrl<span class="w"> </span>--output<span class="w"> </span>raw<span class="k">)</span>
+
+<span class="c1"># Use the az CLI to upload ant.txt from the current directory (change as required)</span>
+az<span class="w"> </span>storage<span class="w"> </span>blob<span class="w"> </span>upload-batch<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--pattern<span class="w"> </span>ant.txt<span class="w"> </span>--destination<span class="w"> </span><span class="nv">$upload_url</span>
+
+<span class="c1"># Submit the request for review</span>
+tre<span class="w"> </span>workspace<span class="w"> </span><span class="nv">$WORKSPACE_ID</span><span class="w"> </span>airlock-request<span class="w"> </span><span class="nv">$request_id</span><span class="w"> </span>submit
+</code></pre></div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.dfff1995.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.78eede0e.min.js"></script>
+      
+    
+  </body>
+</html>
