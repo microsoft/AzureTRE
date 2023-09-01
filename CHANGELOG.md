@@ -8,7 +8,7 @@ ENHANCEMENTS:
 BUG FIXES:
 
 
-## 0.14.1 (Unreleased)
+## 0.14.1 (September 1, 2023)
 
 BUG FIXES:
 * Fix firewall config related to Nexus so that `pypi.org` is added to the allow-list  ([#3694](https://github.com/microsoft/AzureTRE/issues/3694))
