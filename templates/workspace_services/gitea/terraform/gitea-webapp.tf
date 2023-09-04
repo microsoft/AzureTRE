@@ -141,21 +141,12 @@ resource "azurerm_monitor_diagnostic_setting" "gitea" {
     content {
       category = log.value
       enabled  = contains(local.web_app_diagnostic_categories_enabled, log.value) ? true : false
-
-      retention_policy {
-        enabled = contains(local.web_app_diagnostic_categories_enabled, log.value) ? true : false
-        days    = 365
-      }
     }
   }
 
   metric {
     category = "AllMetrics"
     enabled  = true
-
-    retention_policy {
-      enabled = false
-    }
   }
 }
 
@@ -176,6 +167,8 @@ resource "azurerm_key_vault_secret" "gitea_password" {
   depends_on = [
     azurerm_key_vault_access_policy.gitea_policy
   ]
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_role_assignment" "gitea_acrpull_role" {

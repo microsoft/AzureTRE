@@ -8,6 +8,8 @@ resource "azurerm_network_interface" "internal" {
     subnet_id                     = data.azurerm_subnet.services.id
     private_ip_address_allocation = "Dynamic"
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "random_string" "username" {
@@ -68,6 +70,8 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   }
 
   tags = local.tre_user_resources_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 data "template_cloudinit_config" "config" {
@@ -135,6 +139,8 @@ resource "azurerm_key_vault_secret" "linuxvm_password" {
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
   tags         = local.tre_user_resources_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 data "azurerm_storage_account" "stg" {

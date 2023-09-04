@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole
-version: 0.9.4
+version: 0.10.5
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -77,7 +77,7 @@ parameters:
     env: GUAC_DISABLE_UPLOAD
   - name: is_exposed_externally
     type: boolean
-    default: false
+    default: true
     env: IS_EXPOSED_EXTERNALLY
     description: "Determines if the web app will be available over public/internet or private networks"
   - name: aad_authority_url
@@ -107,18 +107,21 @@ parameters:
     type: string
 
 outputs:
-  - name: connection_uri
-    type: string
-    applyTo:
-      - install
   - name: authentication_callback_uri
     type: string
     applyTo:
       - install
+      - upgrade
   - name: web_apps_addresses
     type: string
     applyTo:
       - install
+      - upgrade
+  - name: admin_connection_uri
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
   - terraform:
@@ -151,9 +154,9 @@ install:
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: tre-service-guacamole-${ bundle.parameters.id }
       outputs:
-        - name: connection_uri
         - name: authentication_callback_uri
         - name: web_apps_addresses
+        - name: admin_connection_uri
 
 upgrade:
   - terraform:
@@ -182,9 +185,9 @@ upgrade:
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: tre-service-guacamole-${ bundle.parameters.id }
       outputs:
-        - name: connection_uri
         - name: authentication_callback_uri
         - name: web_apps_addresses
+        - name: admin_connection_uri
 
 uninstall:
   - terraform:

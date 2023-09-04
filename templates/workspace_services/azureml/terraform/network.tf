@@ -56,6 +56,8 @@ resource "azapi_resource" "aml_service_endpoint_policy" {
       ]
     }
   })
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_subnet" "aml" {
