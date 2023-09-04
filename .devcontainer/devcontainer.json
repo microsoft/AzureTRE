@@ -87,7 +87,8 @@
               "justMyCode": false,
               "console": "integratedTerminal",
               "preLaunchTask": "Copy_env_file_for_api_debug",
-              "cwd": "${workspaceFolder}/api_app"
+              "cwd": "${workspaceFolder}/api_app",
+              "envFile": "${workspaceFolder}/api_app/.env"
             },
             {
               "name": "E2E Extended",
