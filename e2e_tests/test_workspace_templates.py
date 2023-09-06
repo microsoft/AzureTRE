@@ -13,7 +13,9 @@ pytestmark = pytest.mark.asyncio
 
 
 workspace_templates = [
-    (strings.BASE_WORKSPACE)
+    (strings.BASE_WORKSPACE),
+    (strings.UNRESTRICTED_WORKSPACE),
+    (strings.AIRLOCK_IMPORT_REVIEW_WORKSPACE)
 ]
 
 
