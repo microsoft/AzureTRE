@@ -10,7 +10,7 @@ API_WORKSPACE_SERVICES = "workspace-services"
 API_USER_RESOURCES = "user-resources"
 
 BASE_WORKSPACE = "tre-workspace-base"
-UNRESTRICTED_WORKSPACE = "tre-workspoace-unrestricted"
+UNRESTRICTED_WORKSPACE = "tre-workspace-unrestricted"
 AIRLOCK_IMPORT_REVIEW_WORKSPACE = "tre-workspace-airlock-import-review"
 
 AZUREML_SERVICE = "tre-service-azureml"
