@@ -1,6 +1,4 @@
 #!/bin/bash
-set -e
-
 # By default the docker.sock file is not associated with docker group on codespaces or macOS
 # which causes a permission issue when docker is run without sudo.
 
