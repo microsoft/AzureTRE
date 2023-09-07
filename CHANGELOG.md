@@ -7,7 +7,7 @@ ENHANCEMENTS:
 * Reduce logging noise ([#2135](https://github.com/microsoft/AzureTRE/issues/2135))
 
 BUG FIXES:
-
+* Upgrade unresticted and airlock base template versions due to diagnostic settings retention period being depreciated ([#3704](https://github.com/microsoft/AzureTRE/pull/3704))
 
 ## 0.14.1 (September 1, 2023)
 
