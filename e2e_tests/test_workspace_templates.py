@@ -15,7 +15,11 @@ pytestmark = pytest.mark.asyncio
 
 
 workspace_templates = [
-    (strings.BASE_WORKSPACE),
+    (strings.BASE_WORKSPACE)
+]
+
+workspace_templates_test_create = [
+    # Base workspace template is excluded as covered by other extended tests
     (strings.UNRESTRICTED_WORKSPACE),
     (strings.AIRLOCK_IMPORT_REVIEW_WORKSPACE)
 ]
@@ -41,7 +45,7 @@ async def test_get_workspace_template(template_name, verify) -> None:
 
 
 @pytest.mark.extended
-@pytest.mark.parametrize("template_name", workspace_templates)
+@pytest.mark.parametrize("template_name", workspace_templates_test_create)
 async def test_create_workspace_templates(template_name, verify) -> None:
 
     workspace_path, workspace_id = await create_or_get_test_workspace(auth_type="Automatic", verify=verify, template_name=template_name)
