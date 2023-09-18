@@ -52,6 +52,7 @@ ENHANCEMENTS:
 * Upgrade Ubuntu version for Sonatype Nexus VM to 22.04 LTS ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
 
 BUG FIXES:
+* Add temporary workaround for when id with last 4 chars exists ([#3667](https://github.com/microsoft/AzureTRE/pull/3667))
 * Apply missing lifecycle blocks. ([#3670](https://github.com/microsoft/AzureTRE/issues/3670))
 * Outputs of type boolean are stored as strings ([#3655](https://github.com/microsoft/AzureTRE/pulls/3655))
 * Add dependency on firewall deployment to rule collection ([#3672](https://github.com/microsoft/AzureTRE/pulls/3672))
