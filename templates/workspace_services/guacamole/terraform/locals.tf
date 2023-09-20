@@ -23,4 +23,7 @@ locals {
     "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
     "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"
   ]
+
+  webapp_access_prefix     = var.is_exposed_externally ? "${var.tre_url}/${var.tre_resource_id}" : "https://${local.webapp_name}.${local.webapp_suffix}"
+  webapp_auth_callback_url = "${local.webapp_access_prefix}/oauth2/callback"
 }

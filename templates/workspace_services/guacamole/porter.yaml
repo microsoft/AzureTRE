@@ -1,7 +1,8 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole
-version: 0.10.5
+version: 0.11.0
+
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -83,7 +84,6 @@ parameters:
   - name: aad_authority_url
     type: string
     default: "https://login.microsoftonline.com"
-  # the following are added automatically by the resource processor
   - name: id
     type: string
     description: "An Id for this installation"
@@ -105,14 +105,26 @@ parameters:
     default: false
   - name: arm_environment
     type: string
+  - name: tre_url
+    type: string
 
 outputs:
-  - name: authentication_callback_uri
-    type: string
-    applyTo:
-      - install
-      - upgrade
-  - name: web_apps_addresses
+  # - name: authentication_callback_uri
+  #   type: string
+  #   applyTo:
+  #     - install
+  #     - upgrade
+  # - name: connection_uri
+  #   type: string
+  #   applyTo:
+  #     - install
+  #     - upgrade
+  # - name: web_apps_addresses
+  #   type: string
+  #   applyTo:
+  #     - install
+  #     - upgrade
+  - name: internals
     type: string
     applyTo:
       - install
@@ -148,15 +160,18 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tre_url: ${ bundle.parameters.tre_url }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: tre-service-guacamole-${ bundle.parameters.id }
       outputs:
-        - name: authentication_callback_uri
-        - name: web_apps_addresses
+        # - name: authentication_callback_uri
+        # - name: web_apps_addresses
         - name: admin_connection_uri
+        # - name: connection_uri
+        - name: internals
 
 upgrade:
   - terraform:
@@ -179,15 +194,18 @@ upgrade:
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tre_url: ${ bundle.parameters.tre_url }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: tre-service-guacamole-${ bundle.parameters.id }
       outputs:
-        - name: authentication_callback_uri
-        - name: web_apps_addresses
+        # - name: authentication_callback_uri
+        # - name: web_apps_addresses
         - name: admin_connection_uri
+        # - name: connection_uri
+        - name: internals
 
 uninstall:
   - terraform:
@@ -210,6 +228,7 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        tre_url: ${ bundle.parameters.tre_url }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

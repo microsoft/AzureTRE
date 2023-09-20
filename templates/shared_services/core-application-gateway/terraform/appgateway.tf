@@ -1,28 +1,7 @@
-resource "azurerm_public_ip" "appgwpip" {
-  name                = "pip-agw-${var.tre_id}"
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  allocation_method   = "Static" # Static IPs are allocated immediately
-  sku                 = "Standard"
-  domain_name_label   = var.tre_id
-  tags                = local.tre_core_tags
-
-  lifecycle { ignore_changes = [tags, zones] }
-}
-
-resource "azurerm_user_assigned_identity" "agw_id" {
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  name                = "id-agw-${var.tre_id}"
-  tags                = local.tre_core_tags
-
-  lifecycle { ignore_changes = [tags] }
-}
-
 resource "azurerm_application_gateway" "agw" {
   name                = "agw-${var.tre_id}"
-  resource_group_name = var.resource_group_name
-  location            = var.location
+  resource_group_name = local.core_resource_group_name
+  location            = data.azurerm_resource_group.core.location
   tags                = local.tre_core_tags
 
   sku {
@@ -34,13 +13,13 @@ resource "azurerm_application_gateway" "agw" {
   # User-assign managed identify id required to access certificate in KeyVault
   identity {
     type         = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.agw_id.id]
+    identity_ids = [data.azurerm_user_assigned_identity.agw.id]
   }
 
   # Internal subnet for gateway backend.
   gateway_ip_configuration {
     name      = "gateway-ip-configuration"
-    subnet_id = var.app_gw_subnet
+    subnet_id = data.azurerm_subnet.agw.id
   }
 
   frontend_port {
@@ -56,25 +35,27 @@ resource "azurerm_application_gateway" "agw" {
   # Public front-end
   frontend_ip_configuration {
     name                 = local.frontend_ip_configuration_name
-    public_ip_address_id = azurerm_public_ip.appgwpip.id
-  }
-
-  # Primary SSL cert linked to KeyVault
-  ssl_certificate {
-    name                = local.certificate_name
-    key_vault_secret_id = azurerm_key_vault_certificate.tlscert.secret_id
+    public_ip_address_id = data.azurerm_public_ip.agw.id
   }
 
   # Backend pool with the static website in storage account.
   backend_address_pool {
     name  = local.staticweb_backend_pool_name
-    fqdns = [azurerm_storage_account.staticweb.primary_web_host]
+    fqdns = [data.azurerm_storage_account.staticweb.primary_web_host]
   }
 
   # Backend pool with the API App Service.
   backend_address_pool {
     name  = local.api_backend_pool_name
-    fqdns = [var.api_fqdn]
+    fqdns = [data.azurerm_linux_web_app.api.default_hostname]
+  }
+
+  dynamic "backend_address_pool" {
+    for_each = { for i, v in local.dynamic_backends : i => v }
+    content {
+      name  = "beap-${backend_address_pool.value.name}"
+      fqdns = [regex(local.url_parts_pattern, "//${trimprefix(trimprefix(backend_address_pool.value.fqdn, "http://"), "https://")}").fqdn]
+    }
   }
 
   # Backend settings for api.
@@ -87,6 +68,14 @@ resource "azurerm_application_gateway" "agw" {
     request_timeout                     = 60
     pick_host_name_from_backend_address = true
     probe_name                          = local.api_probe_name
+  }
+
+  backend_http_settings {
+    name                                = local.dynamic_backend_settings_name
+    cookie_based_affinity               = "Disabled"
+    port                                = 443
+    protocol                            = "Https"
+    pick_host_name_from_backend_address = true
   }
 
   # Backend settings for static web.
@@ -163,6 +152,16 @@ resource "azurerm_application_gateway" "agw" {
       backend_http_settings_name = local.api_http_setting_name
     }
 
+    dynamic "path_rule" {
+      for_each = { for i, v in local.dynamic_backends : i => v if v.fqdn != "" }
+      content {
+        name                       = path_rule.value.name
+        paths                      = ["/${path_rule.value.name}*"]
+        backend_address_pool_name  = "beap-${path_rule.value.name}"
+        backend_http_settings_name = local.dynamic_backend_settings_name
+        rewrite_rule_set_name      = local.dynamic_rewrite_set
+      }
+    }
   }
 
   # Redirect any HTTP traffic to HTTPS unless its the ACME challenge path used for LetsEncrypt validation.
@@ -187,29 +186,36 @@ resource "azurerm_application_gateway" "agw" {
     include_query_string = true
   }
 
-  # We don't want Terraform to revert certificate cycle changes. We assume the certificate will be renewed in keyvault.
-  lifecycle { ignore_changes = [ssl_certificate, tags, url_path_map, backend_http_settings, backend_address_pool, rewrite_rule_set] }
-
-}
-
-resource "azurerm_monitor_diagnostic_setting" "agw" {
-  name                       = "diagnostics-agw-${var.tre_id}"
-  target_resource_id         = azurerm_application_gateway.agw.id
-  log_analytics_workspace_id = var.log_analytics_workspace_id
-
-  dynamic "enabled_log" {
-    for_each = setintersection(data.azurerm_monitor_diagnostic_categories.agw.log_category_types, local.appgateway_diagnostic_categories_enabled)
+  dynamic "rewrite_rule_set" {
+    for_each = length(local.dynamic_backends) == 0 ? [0] : [1]
     content {
-      category = enabled_log.value
+      name = local.dynamic_rewrite_set
+      rewrite_rule {
+        name          = "X-Forwarded-Uri"
+        rule_sequence = 100
+        request_header_configuration {
+          header_name  = "X-Forwarded-Uri"
+          header_value = "{var_request_uri}"
+        }
+      }
+      rewrite_rule {
+        name          = "URL-remove-first-part"
+        rule_sequence = 200
+        condition {
+          pattern     = "^\\/(.+?)\\/(.*)"
+          variable    = "var_uri_path"
+          ignore_case = true
+        }
+        url {
+          components = "path_only"
+          path       = "{var_uri_path_2}"
+          reroute    = false
+        }
+      }
     }
   }
 
-  metric {
-    category = "AllMetrics"
-    enabled  = true
-  }
+  # We don't want Terraform to revert certificate cycle changes. We assume the certificate will be renewed in keyvault.
+  lifecycle { ignore_changes = [ssl_certificate, tags] }
 
-  lifecycle { ignore_changes = [log_analytics_destination_type] }
 }
-
-

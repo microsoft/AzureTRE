@@ -26,3 +26,6 @@ variable "image_gallery_id" {
   type    = string
   default = ""
 }
+variable "tre_url" {
+  type = string
+}

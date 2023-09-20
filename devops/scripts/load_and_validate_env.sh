@@ -78,11 +78,13 @@ else
 
     # The ARM Environment is required by terraform to indicate the destination cloud.
     ARM_ENVIRONMENT=$(convert_azure_env_to_arm_env "${AZURE_ENVIRONMENT}")
-    export ARM_ENVIRONMENT
+    export ARM_ENVIRONMENT #TODO: isn't used by scripts, right?
     export TF_VAR_arm_environment="${ARM_ENVIRONMENT}"
 
+    #TODO: this can't be set via config which means DNS CNAMEs can't be used.
     TRE_URL=$(construct_tre_url "${TRE_ID}" "${LOCATION}" "${AZURE_ENVIRONMENT}")
     export TRE_URL
+    export TF_VAR_tre_url="${TRE_URL}"
 fi
 
 set +o nounset

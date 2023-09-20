@@ -78,6 +78,25 @@
         "stepId": "main"
       },
       {
+        "stepId": "f8259f78-8659-4393-b602-ce2dec677a41",
+        "stepTitle": "Update AppGW",
+        "resourceTemplateName": "tre-shared-service-application-gateway",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "backend_collection",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}",
+              "fqdn": "{{ resource.properties.internals.routing_fqdn }}"
+            }
+          }
+        ]
+      },
+      {
         "stepId": "12ba0dad-ea6c-4d0d-9255-d316212f5ffa",
         "stepTitle": "Add Guacamole URI as AAD redirect URI",
         "resourceType": "workspace",
@@ -90,7 +109,7 @@
             "arrayMatchField": "name",
             "value": {
               "name": "{{ resource.id }}",
-              "value": "{{ resource.properties.authentication_callback_uri }}"
+              "value": "{{ resource.properties.internals.authentication_callback_uri }}"
             }
           }
         ]
@@ -114,7 +133,7 @@
                 {
                   "name": "AzureAD",
                   "description": "AAD access for authNZ",
-                  "source_addresses": "{{ resource.properties.web_apps_addresses }}",
+                  "source_addresses": "{{ resource.properties.internals.web_apps_addresses }}",
                   "destination_addresses": [
                     "AzureActiveDirectory"
                   ],
@@ -136,6 +155,25 @@
         "stepId": "main"
       },
       {
+        "stepId": "a9e993ac-0128-4a9d-b22f-e49bdf153ac4",
+        "stepTitle": "Update AppGW",
+        "resourceTemplateName": "tre-shared-service-application-gateway",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "backend_collection",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}",
+              "fqdn": "{{ resource.properties.internals.routing_fqdn }}"
+            }
+          }
+        ]
+      },
+      {
         "stepId": "741c7ff2-eff5-47b2-bf62-2b410d65c96b",
         "stepTitle": "Update Guacamole URI in AAD",
         "resourceType": "workspace",
@@ -148,7 +186,42 @@
             "arrayMatchField": "name",
             "value": {
               "name": "{{ resource.id }}",
-              "value": "{{ resource.properties.authentication_callback_uri }}"
+              "value": "{{ resource.properties.internals.authentication_callback_uri }}"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "d16688d7-3801-487d-a8eb-04a91b0a0629",
+        "stepTitle": "Update network firewall rules for guacamole",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_guacamole",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureAD",
+                  "description": "AAD access for authNZ",
+                  "source_addresses": "{{ resource.properties.internals.web_apps_addresses }}",
+                  "destination_addresses": [
+                    "AzureActiveDirectory"
+                  ],
+                  "destination_ports": [
+                    "*"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                }
+              ]
             }
           }
         ]
@@ -181,6 +254,24 @@
         "properties": [
           {
             "name": "aad_redirect_uris",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "62d9f3b7-bc49-456f-b909-23011ad6d448",
+        "stepTitle": "Update AppGW",
+        "resourceTemplateName": "tre-shared-service-application-gateway",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "backend_collection",
             "type": "array",
             "arraySubstitutionAction": "remove",
             "arrayMatchField": "name",

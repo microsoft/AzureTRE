@@ -180,3 +180,8 @@ variable "is_cosmos_defined_throughput" {
   type    = bool
   default = false
 }
+
+variable "tre_url" {
+  type    = string
+  default = ""
+}
