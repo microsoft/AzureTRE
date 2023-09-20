@@ -56,7 +56,12 @@ if [[ -n "${deployed_shared_service}" ]]; then
   # Get template version of the service already deployed
   deployed_version=$(echo "${deployed_shared_service}" | jq -r ".templateVersion")
 
-  if [[ "${template_version}" == "${deployed_version}" ]]; then
+  # need to check if the shared service deployment has failed, if so then we can try an update
+  deployment_status=$(echo "${deployed_shared_service}" | jq -r ".deploymentStatus")
+  if [[ "${deployment_status}" == "deployment_failed" ]]; then
+    echo "Shared service ${template_name} of version ${template_version} has failed to deploy. Trying to update..."
+    is_update=1
+  elif [[ "${template_version}" == "${deployed_version}" ]]; then
     echo "Shared service ${template_name} of version ${template_version} has already been deployed"
     exit 0
   else
@@ -94,7 +99,7 @@ EOF
 
 else
 
-  echo "An older version is already deloyed. Trying to update..."
+  echo "An older or failed version is already deloyed. Trying to update..."
   deployed_id=$(echo "${deployed_shared_service}" | jq -r ".id")
   deployed_etag=$(echo "${deployed_shared_service}" | jq -r "._etag")
   tre shared-service "${deployed_id}" update --etag "${deployed_etag}" --definition "{\"templateVersion\": \"${template_version}\"}"

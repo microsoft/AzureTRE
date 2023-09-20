@@ -3,7 +3,7 @@
   "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/sonatype-nexus-vm/template_schema.json",
   "type": "object",
   "title": "Sonatype Nexus Repository Manager",
-  "description": "Sonatype Nexus is a repository manager that helps you manage components, binaries and build artifacts. It's proxy functionality enables users without public Internet connectivity to access software packages.",
+  "description": "Sonatype Nexus is a repository manager that helps you manage components, binaries, and build artifacts. Its proxy functionality enables users without public Internet connectivity to access software packages.",
   "required": [
     "ssl_cert_name"
   ],
