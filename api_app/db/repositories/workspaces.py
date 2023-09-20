@@ -66,8 +66,19 @@ class WorkspaceRepository(ResourceRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Workspace, workspaces[0])
 
+    # Remove this method once not using last 4 digits for naming - https://github.com/microsoft/AzureTRE/issues/3666
+    async def is_workspace_with_last_4_id(self, workspace_id: str) -> bool:
+        query = self.workspaces_query_string() + f' AND ENDSWITH(c.id, "{workspace_id[-4:]}")'
+        workspaces = await self.query(query=query)
+        return len(workspaces) > 0
+
     async def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str, user_roles: List[str]) -> Tuple[Workspace, ResourceTemplate]:
+
         full_workspace_id = str(uuid.uuid4())
+
+        # Ensure workspace with last four digits of ID does not already exist - remove when https://github.com/microsoft/AzureTRE/issues/3666 is resolved
+        while await self.is_workspace_with_last_4_id(full_workspace_id):
+            full_workspace_id = str(uuid.uuid4())
 
         template = await self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
 

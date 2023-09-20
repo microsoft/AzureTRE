@@ -8,7 +8,6 @@ from opencensus.trace.tracer import Tracer
 
 from core.config import VERSION
 
-
 UNWANTED_LOGGERS = [
     "azure.core.pipeline.policies.http_logging_policy",
     "azure.eventhub._eventprocessor.event_processor",
@@ -18,7 +17,10 @@ UNWANTED_LOGGERS = [
     "azure.identity.aio._internal.decorators",
     "azure.identity.aio._credentials.chained",
     "azure.identity",
-    "msal.token_cache",
+    "msal.token_cache"
+]
+
+LOGGERS_FOR_ERRORS_ONLY = [
     "uamqp",
     "uamqp.authentication.cbs_auth_async",
     "uamqp.async_ops.client_async",
@@ -27,7 +29,11 @@ UNWANTED_LOGGERS = [
     "uamqp.authentication",
     "uamqp.c_uamqp",
     "uamqp.connection",
-    "uamqp.receiver"
+    "uamqp.receiver",
+    "uamqp.async_ops.session_async",
+    "uamqp.sender",
+    "uamqp.client",
+    "azure.servicebus.aio._base_handler_async"
 ]
 
 
@@ -37,6 +43,9 @@ def disable_unwanted_loggers():
     """
     for logger_name in UNWANTED_LOGGERS:
         logging.getLogger(logger_name).disabled = True
+
+    for logger_name in LOGGERS_FOR_ERRORS_ONLY:
+        logging.getLogger(logger_name).setLevel(logging.ERROR)
 
 
 def telemetry_processor_callback_function(envelope):
@@ -69,6 +78,8 @@ def initialize_logging(logging_level: int, correlation_id: Optional[str] = None)
     :returns: A newly created logger adapter.
     """
     logger = logging.getLogger()
+
+    disable_unwanted_loggers()
 
     try:
         # picks up APPLICATIONINSIGHTS_CONNECTION_STRING automatically
