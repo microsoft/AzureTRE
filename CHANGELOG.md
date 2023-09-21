@@ -10,6 +10,7 @@ ENHANCEMENTS:
 BUG FIXES:
 * Upgrade unresticted and airlock base template versions due to diagnostic settings retention period being depreciated ([#3704](https://github.com/microsoft/AzureTRE/pull/3704))
 * Fix TRE Admin not being able to view operations log when workspace has no auth provisioned ([#2363](https://github.com/microsoft/AzureTRE/issues/2363))
+* Fix grey box appearing on resource card when costs are not available. ([#3254](https://github.com/microsoft/AzureTRE/issues/3254))
 
 ## 0.14.1 (September 1, 2023)
 

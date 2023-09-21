@@ -43,7 +43,6 @@ export const App: React.FunctionComponent = () => {
     setAppRolesOnLoad();
   }, [apiCall]);
 
-  // initiliase filetype icons
   useEffect(() => initializeFileTypeIcons(), []);
 
   return (

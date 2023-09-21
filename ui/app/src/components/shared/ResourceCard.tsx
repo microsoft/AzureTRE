@@ -13,7 +13,9 @@ import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { CostsTag } from './CostsTag';
 import { ConfirmCopyUrlToClipboard } from './ConfirmCopyUrlToClipboard';
 import { AppRolesContext } from '../../contexts/AppRolesContext';
-import { RoleName } from '../../models/roleNames';
+import { SecuredByRole } from './SecuredByRole';
+import { RoleName, WorkspaceRoleName } from '../../models/roleNames';
+
 
 interface ResourceCardProps {
   resource: Resource,
@@ -37,20 +39,24 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   );
   const navigate = useNavigate();
 
-  const goToResource = useCallback(() => {
-    let resourceUrl = '';
-    switch(props.resource.resourceType) {
-      case ResourceType.Workspace:
-      case ResourceType.WorkspaceService:
-      case ResourceType.UserResource:
-        resourceUrl = props.resource.resourcePath;
-        break;
-      case ResourceType.SharedService: // shared services are accessed from the root and the workspace, have to handle the URL differently
-        resourceUrl = workspaceCtx.workspace ? props.resource.id : props.resource.resourcePath;
-        break;
-    }
+  const costTagRolesByResourceType = {
+    [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
+    [ResourceType.SharedService]: [RoleName.TREAdmin],
+    [ResourceType.WorkspaceService]: [], // WokspaceRole.WorkspaceOwner when implemented
+    [ResourceType.UserResource]: [] // WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher when implemented
+  };
 
-    props.selectResource && props.selectResource(props.resource);
+  const costsTagsRoles = costTagRolesByResourceType[props.resource.resourceType];
+  const workspaceAuthContext = workspaceCtx.workspace.id ? true : false;
+
+  const goToResource = useCallback(() => {
+    const { resource } = props;
+    const { resourceType, resourcePath, id } = resource;
+
+    // shared services are accessed from the root and the workspace, have to handle the URL differently
+    const resourceUrl = (ResourceType.SharedService === resourceType) && (workspaceCtx.workspace.id) ? id : resourcePath;
+
+    props.selectResource?.(resource);
     navigate(resourceUrl);
   }, [navigate, props, workspaceCtx.workspace]);
 
@@ -144,12 +150,17 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                   </Stack.Item>
                 </Stack>
               </Stack.Item>
-              <CostsTag resourceId={props.resource.id} />
+              <SecuredByRole allowedRoles={costsTagsRoles} workspaceAuth={workspaceAuthContext} element={
+               <CostsTag resourceId={props.resource.id} />
+              }
+              />
               {
                 connectUri && <PrimaryButton
                   onClick={(e) => {e.stopPropagation(); props.isExposedExternally === false ? setShowCopyUrl(true) : window.open(connectUri)}}
                   disabled={shouldDisable()}
-                  title={shouldDisable() ? 'Resource must be enabled, successfully deployed & powered on to connect' : 'Connect to resource'}>
+                  title={shouldDisable() ? 'Resource must be enabled, successfully deployed & powered on to connect' : 'Connect to resource'}
+                  className={styles.button}
+                >
                   Connect
                 </PrimaryButton>
               }
@@ -247,6 +258,7 @@ const calloutValueStyles: React.CSSProperties = {
 const styles = mergeStyleSets({
   button: {
     width: 130,
+    margin: 10
   },
   callout: {
     width: 350,
