@@ -18,6 +18,8 @@ import { Airlock } from '../shared/airlock/Airlock';
 import { APIError } from '../../models/exceptions';
 import { LoadingState } from '../../models/loadingState';
 import { ExceptionLayout } from '../shared/ExceptionLayout';
+import { AppRolesContext } from '../../contexts/AppRolesContext';
+import { RoleName } from '../../models/roleNames';
 
 export const WorkspaceProvider: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
@@ -26,9 +28,11 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
   const [sharedServices, setSharedServices] = useState([] as Array<SharedService>)
   const workspaceCtx = useRef(useContext(WorkspaceContext));
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
-  const [ apiError, setApiError ] = useState({} as APIError);
+  const [apiError, setApiError] = useState({} as APIError);
   const { workspaceId } = useParams();
 
+  const appRoles = useContext(AppRolesContext);
+  const authProvisionedRef = useRef(false);
 
   // set workspace context from url
   useEffect(() => {
@@ -36,32 +40,39 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
       try {
         // get the workspace - first we get the scope_id so we can auth against the right aad app
         let scopeId = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}/scopeid`, HttpMethod.Get)).workspaceAuth.scopeId;
-        if (scopeId === "") {
-          console.error("Unable to get scope_id from workspace - authentication not set up.");
+
+        authProvisionedRef.current = scopeId !== "";
+
+        if (authProvisionedRef.current) {
+          const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, scopeId)).workspace;
+          workspaceCtx.current.setWorkspace(ws);
+          const ws_application_id_uri = ws.properties.scope_id;
+
+          // use the client ID to get a token against the workspace (tokenOnly), and set the workspace roles in the context
+          let wsRoles: Array<string> = [];
+          await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, ws_application_id_uri, undefined, ResultType.JSON, (roles: Array<string>) => {
+            workspaceCtx.current.setRoles(roles);
+            wsRoles = roles;
+          }, true);
+
+          // get workspace services to pass to nav + ws services page
+          const workspaceServices = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, ws_application_id_uri);
+          setWorkspaceServices(workspaceServices.workspaceServices);
+          setLoadingState(wsRoles && wsRoles.length > 0 ? LoadingState.Ok : LoadingState.AccessDenied);
+
+          // get shared services to pass to nav shared services pages
+          const sharedServices = await apiCall(ApiEndpoint.SharedServices, HttpMethod.Get);
+          setSharedServices(sharedServices.sharedServices);
+        } else {
+          if (appRoles.roles.includes(RoleName.TREAdmin)) {
+            const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get)).workspace;
+            workspaceCtx.current.setWorkspace(ws);
+            setLoadingState(LoadingState.Ok);
+          } else {
+            setLoadingState(LoadingState.AccessDenied);
+          }
         }
-
-        const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, scopeId)).workspace;
-        workspaceCtx.current.setWorkspace(ws);
-        const ws_application_id_uri = ws.properties.scope_id;
-
-        // use the client ID to get a token against the workspace (tokenOnly), and set the workspace roles in the context
-        let wsRoles: Array<string> = [];
-        console.log('Getting workspace');
-        await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, ws_application_id_uri, undefined, ResultType.JSON, (roles: Array<string>) => {
-          workspaceCtx.current.setRoles(roles);
-          wsRoles = roles;
-        }, true);
-
-        // get workspace services to pass to nav + ws services page
-        const workspaceServices = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, ws_application_id_uri);
-        setWorkspaceServices(workspaceServices.workspaceServices);
-        setLoadingState(wsRoles && wsRoles.length > 0 ? LoadingState.Ok : LoadingState.AccessDenied);
-
-        // get shared services to pass to nav shared services pages
-        const sharedServices = await apiCall(ApiEndpoint.SharedServices, HttpMethod.Get);
-        setSharedServices(sharedServices.sharedServices);
-
-      } catch (e: any){
+      } catch (e: any) {
         e.userMessage = 'Error retrieving workspace';
         setApiError(e);
         setLoadingState(LoadingState.Error);
@@ -76,7 +87,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
       ctx.setRoles([]);
       ctx.setWorkspace({} as Workspace);
     });
-  }, [apiCall, workspaceId]);
+  }, [apiCall, workspaceId, appRoles.roles]);
 
   const addWorkspaceService = (w: WorkspaceService) => {
     let ws = [...workspaceServices]
@@ -111,41 +122,48 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                 sharedServices={sharedServices}
                 setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}
                 addWorkspaceService={(ws: WorkspaceService) => addWorkspaceService(ws)} />
-            </Stack.Item><Stack.Item className='tre-body-content'>
+            </Stack.Item>
+            <Stack.Item className='tre-body-content'>
               <Stack>
                 <Stack.Item grow={100}>
                   <Routes>
                     <Route path="/" element={<>
                       <WorkspaceItem />
-                      <WorkspaceServices workspaceServices={workspaceServices}
-                        setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}
-                        addWorkspaceService={(ws: WorkspaceService) => addWorkspaceService(ws)}
-                        updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws)}
-                        removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws)} />
+                      {authProvisionedRef.current && (
+                        <WorkspaceServices workspaceServices={workspaceServices}
+                          setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}
+                          addWorkspaceService={(ws: WorkspaceService) => addWorkspaceService(ws)}
+                          updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws)}
+                          removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws)} />
+                      )}
                     </>} />
-                    <Route path="workspace-services" element={
-                      <WorkspaceServices workspaceServices={workspaceServices}
-                        setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}
-                        addWorkspaceService={(ws: WorkspaceService) => addWorkspaceService(ws)}
-                        updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws)}
-                        removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws)}
-                      />
-                    } />
-                    <Route path="workspace-services/:workspaceServiceId/*" element={
-                      <WorkspaceServiceItem
-                        workspaceService={selectedWorkspaceService}
-                        updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws)}
-                        removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws)} />
-                    } />
-                    <Route path="shared-services" element={
-                      <SharedServices readonly={true} />
-                    } />
-                    <Route path="shared-services/:sharedServiceId/*" element={
-                      <SharedServiceItem readonly={true} />
-                    } />
-                    <Route path="requests/*" element={
-                      <Airlock/>
-                    } />
+                    {authProvisionedRef.current && (
+                      <>
+                        <Route path="workspace-services" element={
+                          <WorkspaceServices workspaceServices={workspaceServices}
+                            setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}
+                            addWorkspaceService={(ws: WorkspaceService) => addWorkspaceService(ws)}
+                            updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws)}
+                            removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws)}
+                          />
+                        } />
+                        <Route path="workspace-services/:workspaceServiceId/*" element={
+                          <WorkspaceServiceItem
+                            workspaceService={selectedWorkspaceService}
+                            updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws)}
+                            removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws)} />
+                        } />
+                        <Route path="shared-services" element={
+                          <SharedServices readonly={true} />
+                        } />
+                        <Route path="shared-services/:sharedServiceId/*" element={
+                          <SharedServiceItem readonly={true} />
+                        } />
+                        <Route path="requests/*" element={
+                          <Airlock />
+                        } />
+                      </>
+                    )}
                   </Routes>
                 </Stack.Item>
               </Stack>
