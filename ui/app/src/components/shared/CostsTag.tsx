@@ -1,4 +1,4 @@
-import { Stack, Shimmer } from "@fluentui/react";
+import { Stack, Shimmer, TooltipHost, Icon } from "@fluentui/react";
 import { useContext } from "react";
 import { CostsContext } from "../../contexts/CostsContext";
 import { LoadingState } from "../../models/loadingState";
@@ -27,6 +27,14 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (props: CostsTag
           maximumFractionDigits: 2
         }).format(resourceCosts?.costs[0].cost);
         costBadge = <Stack.Item style={{maxHeight: 18}} className="tre-badge">{formattedCost}</Stack.Item>
+      } else {
+        costBadge = (
+          <Stack.Item style={{maxHeight: 18}} className="tre-badge">
+            <TooltipHost content="Cost data not yet available">
+              <Icon iconName="Clock" />
+            </TooltipHost>
+          </Stack.Item>
+        );
       }
       break;
   }
