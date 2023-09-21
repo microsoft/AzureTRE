@@ -45,7 +45,7 @@ export const App: React.FunctionComponent = () => {
   }, [apiCall]);
 
   // initiliase icons
-  useEffect(() => initializeIcons(), []);
+  //useEffect(() => initializeIcons(), []);
   useEffect(() => initializeFileTypeIcons(), []);
 
   return (

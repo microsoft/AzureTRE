@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useState } from 'react';
 import { ComponentAction, VMPowerStates, Resource } from '../../models/resource';
 import { Callout, DefaultPalette, FontWeights, IconButton, IStackStyles, IStyle, mergeStyleSets, PrimaryButton, Shimmer, Stack, Text, TooltipHost } from '@fluentui/react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import { ResourceContextMenu } from './ResourceContextMenu';
 import { useComponentManager } from '../../hooks/useComponentManager';
@@ -37,43 +37,24 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   );
   const navigate = useNavigate();
 
-  let costsTagsRoles: string[] = []
+  const costTagRolesByResourceType = {
+    [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
+    [ResourceType.SharedService]: [RoleName.TREAdmin],
+    [ResourceType.WorkspaceService]: [], // WokspaceRole.WorkspaceOwner when implemented
+    [ResourceType.UserResource]: [] // WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher when implemented
+  };
 
-  switch(props.resource.resourceType) {
-    case ResourceType.Workspace:
-      costsTagsRoles =  [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner]
-      break;
-    case ResourceType.WorkspaceService:
-      // costsTagsRoles =  [WorkspaceRoleName.WorkspaceOwner]
-      // TODO: add this when workspace service costs have been implemneted
-      break;
-    case ResourceType.UserResource:
-      // costsTagsRoles = [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher]
-      // TODO: add this when user resource costs have been implemneted
-      break;
-    case ResourceType.SharedService:
-      costsTagsRoles = [RoleName.TREAdmin]
-      break;
-  }
-
-  let workspaceAuthContext = false;
-  const location = useLocation();
-  if (location.pathname.startsWith('/workspaces/')) workspaceAuthContext = true;
+  const costsTagsRoles = costTagRolesByResourceType[props.resource.resourceType];
+  const workspaceAuthContext = workspaceCtx.workspace.id ? true : false;
 
   const goToResource = useCallback(() => {
-    let resourceUrl = '';
-    switch(props.resource.resourceType) {
-      case ResourceType.Workspace:
-      case ResourceType.WorkspaceService:
-      case ResourceType.UserResource:
-        resourceUrl = props.resource.resourcePath;
-        break;
-      case ResourceType.SharedService: // shared services are accessed from the root and the workspace, have to handle the URL differently
-        resourceUrl = workspaceCtx.workspace ? props.resource.id : props.resource.resourcePath;
-        break;
-    }
+    const { resource } = props;
+    const { resourceType, resourcePath, id } = resource;
 
-    props.selectResource && props.selectResource(props.resource);
+    // shared services are accessed from the root and the workspace, have to handle the URL differently
+    const resourceUrl = (ResourceType.SharedService === resourceType) && (workspaceCtx.workspace.id) ? id : resourcePath;
+
+    props.selectResource?.(resource);
     navigate(resourceUrl);
   }, [navigate, props, workspaceCtx.workspace]);
 
