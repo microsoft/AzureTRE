@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useState } from 'react';
 import { ComponentAction, VMPowerStates, Resource } from '../../models/resource';
 import { Callout, DefaultPalette, FontWeights, IconButton, IStackStyles, IStyle, mergeStyleSets, PrimaryButton, Shimmer, Stack, Text, TooltipHost } from '@fluentui/react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import { ResourceContextMenu } from './ResourceContextMenu';
 import { useComponentManager } from '../../hooks/useComponentManager';
@@ -12,6 +12,8 @@ import { ResourceType } from '../../models/resourceType';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { CostsTag } from './CostsTag';
 import { ConfirmCopyUrlToClipboard } from './ConfirmCopyUrlToClipboard';
+import { SecuredByRole } from './SecuredByRole';
+import { RoleName, WorkspaceRoleName } from '../../models/roleNames';
 
 interface ResourceCardProps {
   resource: Resource,
@@ -34,6 +36,29 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
     (r: Resource) => { props.onDelete(r) }
   );
   const navigate = useNavigate();
+
+  let costsTagsRoles: string[] = []
+
+  switch(props.resource.resourceType) {
+    case ResourceType.Workspace:
+      costsTagsRoles =  [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner]
+      break;
+    case ResourceType.WorkspaceService:
+      // costsTagsRoles =  [WorkspaceRoleName.WorkspaceOwner]
+      // TODO: add this when workspace service costs have been implemneted
+      break;
+    case ResourceType.UserResource:
+      // costsTagsRoles = [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher]
+      // TODO: add this when user resource costs have been implemneted
+      break;
+    case ResourceType.SharedService:
+      costsTagsRoles = [RoleName.TREAdmin]
+      break;
+  }
+
+  let workspaceAuthContext = false;
+  const location = useLocation();
+  if (location.pathname.startsWith('/workspaces/')) workspaceAuthContext = true;
 
   const goToResource = useCallback(() => {
     let resourceUrl = '';
@@ -139,12 +164,17 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                   </Stack.Item>
                 </Stack>
               </Stack.Item>
-              <CostsTag resourceId={props.resource.id} />
+              <SecuredByRole allowedRoles={costsTagsRoles} workspaceAuth={workspaceAuthContext} element={
+               <CostsTag resourceId={props.resource.id} />
+              }
+              />
               {
                 connectUri && <PrimaryButton
                   onClick={(e) => {e.stopPropagation(); props.isExposedExternally === false ? setShowCopyUrl(true) : window.open(connectUri)}}
                   disabled={shouldDisable()}
-                  title={shouldDisable() ? 'Resource must be enabled, successfully deployed & powered on to connect' : 'Connect to resource'}>
+                  title={shouldDisable() ? 'Resource must be enabled, successfully deployed & powered on to connect' : 'Connect to resource'}
+                  className={styles.button}
+                >
                   Connect
                 </PrimaryButton>
               }
@@ -242,6 +272,7 @@ const calloutValueStyles: React.CSSProperties = {
 const styles = mergeStyleSets({
   button: {
     width: 130,
+    margin: 10
   },
   callout: {
     width: 350,
