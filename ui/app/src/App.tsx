@@ -17,7 +17,6 @@ import { CreateUpdateResource } from './components/shared/create-update-resource
 import { CreateUpdateResourceContext } from './contexts/CreateUpdateResourceContext';
 import { CreateFormResource, ResourceType } from './models/resourceType';
 import { Footer } from './components/shared/Footer';
-import { initializeIcons } from '@fluentui/react/lib/Icons';
 import { initializeFileTypeIcons } from '@fluentui/react-file-type-icons';
 import { CostResource } from './models/costs';
 import { CostsContext } from './contexts/CostsContext';
@@ -44,8 +43,6 @@ export const App: React.FunctionComponent = () => {
     setAppRolesOnLoad();
   }, [apiCall]);
 
-  // initiliase icons
-  //useEffect(() => initializeIcons(), []);
   useEffect(() => initializeFileTypeIcons(), []);
 
   return (
