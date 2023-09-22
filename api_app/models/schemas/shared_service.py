@@ -43,8 +43,22 @@ class RestrictedSharedServiceInResponse(BaseModel):
         }
 
 
-class SharedServicesInList(BaseModel):
+class RestrictedSharedServicesInList(BaseModel):
     sharedServices: List[RestrictedResource] = Field([], title="shared services")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "sharedServices": [
+                    get_sample_shared_service("2fdc9fba-726e-4db6-a1b8-9018a2165748"),
+                    get_sample_shared_service("abcc9fba-726e-4db6-a1b8-9018a2165748")
+                ]
+            }
+        }
+
+
+class SharedServicesInList(BaseModel):
+    sharedServices: List[SharedService] = Field([], title="shared services")
 
     class Config:
         schema_extra = {
