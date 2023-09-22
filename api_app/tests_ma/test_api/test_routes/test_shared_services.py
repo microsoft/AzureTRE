@@ -86,7 +86,7 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
     # [GET] /shared-services
     @patch("api.routes.shared_services.SharedServiceRepository.get_active_shared_services", return_value=None)
     @patch("api.routes.shared_services.enrich_resource_with_available_upgrades", return_value=None)
-    async def test_get_shared_services_returns_list_of_shared_services(self, _, get_active_shared_services_mock, app, client):
+    async def test_get_shared_services_returns_list_of_shared_services_for_user(self, _, get_active_shared_services_mock, app, client):
         shared_services = [sample_shared_service()]
         get_active_shared_services_mock.return_value = shared_services
 
@@ -94,6 +94,10 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["sharedServices"][0]["id"] == sample_shared_service().id
+
+        # check that as a user we only get the restricted resource model
+        assert 'private_field_1' not in response.json()["sharedServices"][0]["properties"]
+        assert 'private_field_2' not in response.json()["sharedServices"][0]["properties"]
 
     # [GET] /shared-services/<shared-service-id>
     @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service())
@@ -122,6 +126,22 @@ class TestSharedServiceRoutesThatRequireAdminRights:
             app.dependency_overrides[get_current_admin_user] = admin_user
             yield
             app.dependency_overrides = {}
+
+    # [GET] /shared-services
+    @patch("api.routes.shared_services.SharedServiceRepository.get_active_shared_services", return_value=None)
+    @patch("api.routes.shared_services.enrich_resource_with_available_upgrades", return_value=None)
+    async def test_get_shared_services_returns_list_of_shared_services_for_admin_user(self, _, get_active_shared_services_mock, app, client):
+        shared_services = [sample_shared_service()]
+        get_active_shared_services_mock.return_value = shared_services
+
+        response = await client.get(app.url_path_for(strings.API_GET_ALL_SHARED_SERVICES))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["sharedServices"][0]["id"] == sample_shared_service().id
+
+        # check that as a user we only get the restricted resource model
+        assert response.json()["sharedServices"][0]["properties"]["private_field_1"] == "value_1"
+        assert response.json()["sharedServices"][0]["properties"]["private_field_2"] == "value_2"
 
     # [GET] /shared-services/{shared_service_id}
     @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service())
