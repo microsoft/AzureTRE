@@ -48,6 +48,8 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
 
   useEffect(() => {
     const getData = async () => {
+      if(workspaceCtx.workspace.id === undefined) return;
+
       setHasUserResourceTemplates(false);
       try {
         let svc = props.workspaceService || {} as WorkspaceService;

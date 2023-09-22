@@ -45,9 +45,9 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
 
       try {
         if (op.resourcePath.indexOf(ApiEndpoint.Workspaces) !== -1) {
-          // we need the workspace to get auth details
           const wsId = op.resourcePath.split('/')[2];
-          ws = (await apiCall(`${ApiEndpoint.Workspaces}/${wsId}`, HttpMethod.Get)).workspace;
+          let scopeId = (await apiCall(`${ApiEndpoint.Workspaces}/${wsId}/scopeid`, HttpMethod.Get)).workspaceAuth.scopeId;
+          ws = (await apiCall(`${ApiEndpoint.Workspaces}/${wsId}`, HttpMethod.Get, scopeId)).workspace;
 
           if (op.resourcePath.split('/').length === 3) {
             isWs = true;
