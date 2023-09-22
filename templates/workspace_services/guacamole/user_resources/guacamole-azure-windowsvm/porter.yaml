@@ -106,14 +106,17 @@ outputs:
     type: string
     applyTo:
       - install
+      - upgrade
   - name: hostname
     type: string
     applyTo:
       - install
+      - upgrade
   - name: connection_uri
     type: string
     applyTo:
       - install
+      - upgrade
   - name: azure_resource_id
     type: string
     applyTo:

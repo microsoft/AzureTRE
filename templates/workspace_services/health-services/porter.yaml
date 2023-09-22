@@ -72,10 +72,12 @@ outputs:
     type: string
     applyTo:
       - install
+      - upgrade
   - name: dicom_url
     type: string
     applyTo:
       - install
+      - upgrade
   - name: workspace_address_space
     type: string
     applyTo:
