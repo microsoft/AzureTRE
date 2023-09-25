@@ -16,7 +16,7 @@ import { useAppDispatch } from '../../../hooks/customReduxHooks';
 
 interface NotificationItemProps {
   operation: Operation,
-  showCallout: (o: Operation, r: Resource) => void
+  showCallout: (o: Operation, r: Resource) => void;
 }
 
 export const NotificationItem: React.FunctionComponent<NotificationItemProps> = (props: NotificationItemProps) => {
@@ -32,30 +32,28 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
 
   const getRelativeTime = (createdWhen: number) => {
     return (moment.utc(moment.unix(createdWhen))).from(now);
-  }
+  };
 
   useEffect(() => {
     const setupNotification = async (op: Operation) => {
       // ignore if we've already set this operation up
       if (notification.resource) return;
 
-      let isWs = false;
       let ws = null;
       let resource = null;
 
       try {
+        // is this a workspace, or workspace child resource operation?
         if (op.resourcePath.indexOf(ApiEndpoint.Workspaces) !== -1) {
           const wsId = op.resourcePath.split('/')[2];
           let scopeId = (await apiCall(`${ApiEndpoint.Workspaces}/${wsId}/scopeid`, HttpMethod.Get)).workspaceAuth.scopeId;
-          ws = (await apiCall(`${ApiEndpoint.Workspaces}/${wsId}`, HttpMethod.Get, scopeId)).workspace;
 
+          // is actually a workspace operation or workspace child resource operation
           if (op.resourcePath.split('/').length === 3) {
-            isWs = true;
+            ws = (await apiCall(`${ApiEndpoint.Workspaces}/${wsId}`, HttpMethod.Get, scopeId)).workspace;
             resource = ws;
-          }
-
-          if (!isWs) {
-            let r = await apiCall(op.resourcePath, HttpMethod.Get, ws.properties.scope_id);
+          } else {
+            let r = await apiCall(op.resourcePath, HttpMethod.Get, scopeId);
             resource = getResourceFromResult(r);
           }
         } else {
@@ -64,12 +62,12 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
         }
         setNotification({ operation: op, resource: resource, workspace: ws });
       } catch (err: any) {
-        err.userMessage = `Error retrieving operation details for ${props.operation.id}`
+        err.userMessage = `Error retrieving operation details for ${props.operation.id}`;
         setApiError(err);
         setErrorNotification(true);
       }
       setLoadingNotification(false);
-    }
+    };
 
     setupNotification(props.operation);
 
@@ -85,14 +83,14 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
     if (completedStates.includes(status)) return ['SkypeCheck', 'green'];
     if (awaitingStates.includes(status)) return ['Clock', '#cccccc'];
     return ['ProgressLoopInner', DefaultPalette.themePrimary];
-  }
+  };
 
   const updateOperation = (operation: Operation) => {
     dispatch(addUpdateOperation(operation));
     if (completedStates.includes(operation.status)) {
       props.showCallout(operation, notification.resource);
     }
-  }
+  };
 
   return (
     <>
@@ -133,7 +131,7 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
                   <Stack.Item grow={5}>
                     {
                       props.operation.steps && props.operation.steps.length > 0 && !(props.operation.steps.length === 1 && props.operation.steps[0].templateStepId === 'main') ?
-                        <FluentLink title={isExpanded ? 'Show less' : 'Show more'} href="#" onClick={() => { setIsExpanded(!isExpanded) }} style={{ position: 'relative', top: '2px' }}>{isExpanded ? <Icon iconName='ChevronUp' aria-label='Expand Steps' /> : <Icon iconName='ChevronDown' aria-label='Collapse Steps' />}</FluentLink>
+                        <FluentLink title={isExpanded ? 'Show less' : 'Show more'} href="#" onClick={() => { setIsExpanded(!isExpanded); }} style={{ position: 'relative', top: '2px' }}>{isExpanded ? <Icon iconName='ChevronUp' aria-label='Expand Steps' /> : <Icon iconName='ChevronDown' aria-label='Collapse Steps' />}</FluentLink>
                         :
                         ' '
                     }
@@ -154,7 +152,7 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
                                 <>{notification.resource.properties.display_name}: {props.operation.action}</> :
                                 s.stepTitle
                             }
-                          </li>)
+                          </li>);
                       })
                       }
                     </ul>
