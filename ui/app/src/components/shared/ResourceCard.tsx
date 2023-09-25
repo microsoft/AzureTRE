@@ -89,7 +89,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   const cardStyles = authNotProvisioned ? noNavCardStyles : clickableCardStyles;
 
   const appRoles = useContext(AppRolesContext);
-  const enableClickOnCard = !authNotProvisioned || appRoles.roles.includes(RoleName.TREAdmin) ;
+  const enableClickOnCard = !authNotProvisioned || appRoles.roles.includes(RoleName.TREAdmin);
 
   return (
     <>
