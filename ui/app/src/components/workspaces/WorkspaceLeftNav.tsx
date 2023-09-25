@@ -25,7 +25,7 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
   useEffect(() => {
     const getWorkspaceServices = async () => {
       // get the workspace services
-      if(workspaceCtx.workspace.id === undefined) return;
+      if(!workspaceCtx.workspace.id) return;
       let serviceLinkArray: Array<any> = [];
       props.workspaceServices.forEach((service: WorkspaceService) => {
         serviceLinkArray.push(
