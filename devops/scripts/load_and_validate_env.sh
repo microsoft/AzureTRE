@@ -85,4 +85,12 @@ else
     export TRE_URL
 fi
 
+# if local debugging is configured, then set vars required by ~/.porter/config.yaml
+if [ -f "$DIR/../../core/private.env" ]; then
+  # shellcheck disable=SC1091
+  source "$DIR/../../core/private.env"
+  KEY_VAULT_URL=$KEYVAULT_URI
+  export KEY_VAULT_URL
+fi
+
 set +o nounset
