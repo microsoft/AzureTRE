@@ -89,6 +89,7 @@ fi
 if [ -f "$DIR/../../core/private.env" ]; then
   # shellcheck disable=SC1091
   source "$DIR/../../core/private.env"
+  # shellcheck diasble=SC2153
   KEY_VAULT_URL=$KEYVAULT_URI
   export KEY_VAULT_URL
 fi
