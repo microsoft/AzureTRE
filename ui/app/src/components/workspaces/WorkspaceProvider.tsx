@@ -24,8 +24,8 @@ import { RoleName } from '../../models/roleNames';
 export const WorkspaceProvider: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
   const [selectedWorkspaceService, setSelectedWorkspaceService] = useState({} as WorkspaceService);
-  const [workspaceServices, setWorkspaceServices] = useState([] as Array<WorkspaceService>)
-  const [sharedServices, setSharedServices] = useState([] as Array<SharedService>)
+  const [workspaceServices, setWorkspaceServices] = useState([] as Array<WorkspaceService>);
+  const [sharedServices, setSharedServices] = useState([] as Array<SharedService>);
   const workspaceCtx = useRef(useContext(WorkspaceContext));
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const [apiError, setApiError] = useState({} as APIError);
@@ -47,24 +47,21 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
         let ws: Workspace = {} as Workspace;
 
         if (authProvisioned) {
-          try {
-            ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, scopeId)).workspace;
-            workspaceCtx.current.setWorkspace(ws);
-            // use the client ID to get a token against the workspace (tokenOnly), and set the workspace roles in the context
-
-            await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, ws.properties.scope_id, undefined, ResultType.JSON, (roles: Array<string>) => {
-              workspaceCtx.current.setRoles(roles);
+          // use the client ID to get a token against the workspace (tokenOnly), and set the workspace roles in the context
+          await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, scopeId,
+            undefined, ResultType.JSON, (roles: Array<string>) => {
               wsRoles = roles;
             }, true);
-          } catch (e: any) {
-            // do nothing, we need to try as TRE Admin
-          }
         }
 
-        if (wsRoles.length > 0) {
+        if (wsRoles && wsRoles.length > 0) {
+          ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, scopeId)).workspace;
+          workspaceCtx.current.setWorkspace(ws);
+          workspaceCtx.current.setRoles(wsRoles);
 
           // get workspace services to pass to nav + ws services page
-          const workspaceServices = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, ws.properties.scope_id);
+          const workspaceServices = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.WorkspaceServices}`,
+            HttpMethod.Get, ws.properties.scope_id);
           setWorkspaceServices(workspaceServices.workspaceServices);
           setLoadingState(LoadingState.Ok);
           // get shared services to pass to nav shared services pages
@@ -87,15 +84,13 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
       } catch (e: any) {
         if (e.status === 401 || e.status === 403) {
           setApiError(e);
-          setLoadingState(LoadingState.AccessDenied)
+          setLoadingState(LoadingState.AccessDenied);
         } else {
           e.userMessage = 'Error retrieving workspace';
           setApiError(e);
           setLoadingState(LoadingState.Error);
         }
       }
-
-      console.log('loading state: ' + loadingState);
 
     };
     getWorkspace();
@@ -110,24 +105,24 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
   }, [apiCall, workspaceId, appRoles.roles, loadingState]);
 
   const addWorkspaceService = (w: WorkspaceService) => {
-    let ws = [...workspaceServices]
+    let ws = [...workspaceServices];
     ws.push(w);
     setWorkspaceServices(ws);
-  }
+  };
 
   const updateWorkspaceService = (w: WorkspaceService) => {
     let i = workspaceServices.findIndex((f: WorkspaceService) => f.id === w.id);
-    let ws = [...workspaceServices]
+    let ws = [...workspaceServices];
     ws.splice(i, 1, w);
     setWorkspaceServices(ws);
-  }
+  };
 
   const removeWorkspaceService = (w: WorkspaceService) => {
     let i = workspaceServices.findIndex((f: WorkspaceService) => f.id === w.id);
     let ws = [...workspaceServices];
     ws.splice(i, 1);
     setWorkspaceServices(ws);
-  }
+  };
 
   switch (loadingState) {
     case LoadingState.Ok:
@@ -207,13 +202,13 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
     case LoadingState.AccessDenied:
       return (
         <ExceptionLayout e={apiError} />
-      )
+      );
     default:
       return (
         <div style={{ marginTop: '20px' }}>
           <Spinner label="Loading Workspace" ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
         </div>
-      )
+      );
   }
 };
 

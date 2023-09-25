@@ -85,11 +85,10 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
     headerBadge = <StatusBadge resource={props.resource} status={resourceStatus} />
   }
 
-  const authNotProvisioned = props.resource.resourceType === ResourceType.Workspace && !props.resource.properties.scope_id;
-  const cardStyles = authNotProvisioned ? noNavCardStyles : clickableCardStyles;
-
   const appRoles = useContext(AppRolesContext);
+  const authNotProvisioned = props.resource.resourceType === ResourceType.Workspace && !props.resource.properties.scope_id;
   const enableClickOnCard = !authNotProvisioned || appRoles.roles.includes(RoleName.TREAdmin);
+  const cardStyles = enableClickOnCard ? noNavCardStyles : clickableCardStyles;
 
   return (
     <>
