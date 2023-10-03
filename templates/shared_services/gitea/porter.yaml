@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-gitea
-version: 0.6.6
+version: 0.6.10
 description: "A Gitea shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -69,6 +69,16 @@ outputs:
     applyTo:
       - install
       - upgrade
+  - name: connection_uri
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: is_exposed_externally
+    type: boolean
+    applyTo:
+      - install
+      - upgrade
 
 install:
   - terraform:
@@ -87,6 +97,8 @@ install:
       outputs:
         - name: gitea_allowed_fqdns_list
         - name: address_prefixes
+        - name: connection_uri
+        - name: is_exposed_externally
 
 upgrade:
   - terraform:
@@ -105,6 +117,8 @@ upgrade:
       outputs:
         - name: gitea_allowed_fqdns_list
         - name: address_prefixes
+        - name: connection_uri
+        - name: is_exposed_externally
 
 uninstall:
   - terraform:
