@@ -13,7 +13,7 @@ from db.repositories.resources_history import ResourceHistoryRepository
 from db.repositories.shared_services import SharedServiceRepository
 from models.domain.resource import ResourceType
 from models.schemas.operation import OperationInList, OperationInResponse
-from models.schemas.shared_service import RestrictedSharedServiceInResponse, SharedServiceInCreate, SharedServicesInList, SharedServiceInResponse
+from models.schemas.shared_service import RestrictedSharedServiceInResponse, RestrictedSharedServicesInList, SharedServiceInCreate, SharedServicesInList, SharedServiceInResponse
 from models.schemas.resource import ResourceHistoryInList, ResourcePatch
 from resources import strings
 from .workspaces import save_and_deploy_resource, construct_location_header
@@ -33,10 +33,13 @@ def user_is_tre_admin(user):
 
 
 @shared_services_router.get("/shared-services", response_model=SharedServicesInList, name=strings.API_GET_ALL_SHARED_SERVICES, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
-async def retrieve_shared_services(shared_services_repo=Depends(get_repository(SharedServiceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> SharedServicesInList:
+async def retrieve_shared_services(shared_services_repo=Depends(get_repository(SharedServiceRepository)), user=Depends(get_current_tre_user_or_tre_admin), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> SharedServicesInList:
     shared_services = await shared_services_repo.get_active_shared_services()
     await asyncio.gather(*[enrich_resource_with_available_upgrades(shared_service, resource_template_repo) for shared_service in shared_services])
-    return SharedServicesInList(sharedServices=shared_services)
+    if user_is_tre_admin(user):
+        return SharedServicesInList(sharedServices=shared_services)
+    else:
+        return RestrictedSharedServicesInList(sharedServices=shared_services)
 
 
 @shared_services_router.get("/shared-services/{shared_service_id}", response_model=SharedServiceInResponse, name=strings.API_GET_SHARED_SERVICE_BY_ID, dependencies=[Depends(get_current_tre_user_or_tre_admin), Depends(get_shared_service_by_id_from_path)])
