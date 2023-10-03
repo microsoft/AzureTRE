@@ -27,6 +27,18 @@
       "description": "Long form description of the workspace service, in markdown syntax",
       "default": "Gitea is a lightweight DevOps platform. Features include code hosting, code review, CI/CD, project management and package management. Documentation can be found here: [https://docs.gitea.com/](https://docs.gitea.com/).",
       "updateable": true
+    },
+    "is_exposed_externally": {
+      "$id": "#/properties/is_exposed_externally",
+      "type": "boolean",
+      "title": "Expose externally",
+      "description": "Is Gitea accessible from outside of the TRE network.",
+      "default": false
+    }
+  },
+  "uiSchema": {
+    "is_exposed_externally": {
+      "classNames": "tre-hidden"
     }
   },
   "pipeline": {
