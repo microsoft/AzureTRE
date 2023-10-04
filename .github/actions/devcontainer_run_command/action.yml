@@ -219,6 +219,7 @@ runs:
           -e TRE_ID="${{ inputs.TRE_ID }}" \
           -e TF_VAR_tre_id="${{ inputs.TRE_ID }}" \
           -e TRE_URL="${{ env.TRE_URL }}" \
+          -e TF_VAR_tre_url="${{ env.TRE_URL }}" \
           -e TEST_WORKSPACE_APP_ID="${{ inputs.TEST_WORKSPACE_APP_ID }}" \
           -e TEST_WORKSPACE_APP_SECRET="${{ inputs.TEST_WORKSPACE_APP_SECRET }}" \
           -e TEST_APP_ID="${{ inputs.TEST_APP_ID }}" \
