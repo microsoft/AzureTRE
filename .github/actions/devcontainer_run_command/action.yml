@@ -151,12 +151,12 @@ runs:
     - name: Construct TRE_URL
       shell: bash
       run: |
-        if [ "${{ secrets.TRE_URL}}" == '' ]; then
+        if [ "${{ inputs.TRE_URL}}" == '' ]; then
           source devops/scripts/construct_tre_url.sh
           tre_url=$(construct_tre_url "${{ inputs.TRE_ID }}" "${{ inputs.LOCATION }}" "${{ env.AZURE_ENVIRONMENT }}")
           echo "TRE_URL=$tre_url" >> $GITHUB_ENV
         else
-          echo "TRE_URL=${{ secrets.TRE_URL }}" >> $GITHUB_ENV
+          echo "TRE_URL=${{ inputs.TRE_URL }}" >> $GITHUB_ENV
         fi
 
     - name: Construct ARM_ENVIRONMENT
