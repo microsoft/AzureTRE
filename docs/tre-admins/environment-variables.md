@@ -38,6 +38,7 @@
 | `CORE_APP_SERVICE_PLAN_SKU` | The SKU of AppService plans created for the core infrastructure. |
 | `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests unless otherwise specified. Default value is `P1v2`. |
 | `RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE` | Optional. The number of processes to instantiate when the Resource Processor starts. Equates to the number of parallel deployment operations possible in your TRE. Defaults to `5`. |
+| `TRE_URL` | Optional. A custom URL for the TRE as registered in the DNS. Defaults to the DNS name used by Azure Application Gateway.|
 
 ## For authentication in `/config.yaml`
 

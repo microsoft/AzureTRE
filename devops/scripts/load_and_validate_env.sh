@@ -81,9 +81,10 @@ else
     export ARM_ENVIRONMENT #TODO: isn't used by scripts, right?
     export TF_VAR_arm_environment="${ARM_ENVIRONMENT}"
 
-    #TODO: this can't be set via config which means DNS CNAMEs can't be used.
-    TRE_URL=$(construct_tre_url "${TRE_ID}" "${LOCATION}" "${AZURE_ENVIRONMENT}")
-    export TRE_URL
+    if [ -z "${TRE_URL:-}" ]; then
+      TRE_URL=$(construct_tre_url "${TRE_ID}" "${LOCATION}" "${AZURE_ENVIRONMENT}")
+      export TRE_URL
+    fi
     export TF_VAR_tre_url="${TRE_URL}"
 fi
 
