@@ -442,6 +442,8 @@ jobs:
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/firewall/"}
           - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/core-application-gateway"}
+          - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea/"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/admin-vm/"}
@@ -487,6 +489,8 @@ jobs:
         include:
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/firewall"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/core-application-gateway"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea"}
           - {BUNDLE_TYPE: "shared_service",
