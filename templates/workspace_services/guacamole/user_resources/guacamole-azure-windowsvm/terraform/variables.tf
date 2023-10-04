@@ -28,4 +28,8 @@ variable "image_gallery_id" {
 }
 variable "tre_url" {
   type = string
+  validation {
+    condition     = startswith(var.tre_url, "http") && length(var.tre_url) > 10
+    error_message = "Invalid tre_url. Must start with http or https."
+  }
 }

@@ -91,7 +91,7 @@
             "arrayMatchField": "name",
             "value": {
               "name": "{{ resource.id }}",
-              "fqdn": "{{ resource.properties.internals.routing_fqdn }}"
+              "fqdn": "{{ resource.properties.routing_fqdn }}"
             }
           }
         ]
@@ -109,7 +109,7 @@
             "arrayMatchField": "name",
             "value": {
               "name": "{{ resource.id }}",
-              "value": "{{ resource.properties.internals.authentication_callback_uri }}"
+              "value": "{{ resource.properties.authentication_callback_uri }}"
             }
           }
         ]
@@ -133,7 +133,7 @@
                 {
                   "name": "AzureAD",
                   "description": "AAD access for authNZ",
-                  "source_addresses": "{{ resource.properties.internals.web_apps_addresses }}",
+                  "source_addresses": "{{ resource.properties.web_apps_addresses }}",
                   "destination_addresses": [
                     "AzureActiveDirectory"
                   ],
@@ -168,7 +168,7 @@
             "arrayMatchField": "name",
             "value": {
               "name": "{{ resource.id }}",
-              "fqdn": "{{ resource.properties.internals.routing_fqdn }}"
+              "fqdn": "{{ resource.properties.routing_fqdn }}"
             }
           }
         ]
@@ -186,7 +186,7 @@
             "arrayMatchField": "name",
             "value": {
               "name": "{{ resource.id }}",
-              "value": "{{ resource.properties.internals.authentication_callback_uri }}"
+              "value": "{{ resource.properties.authentication_callback_uri }}"
             }
           }
         ]
@@ -210,7 +210,7 @@
                 {
                   "name": "AzureAD",
                   "description": "AAD access for authNZ",
-                  "source_addresses": "{{ resource.properties.internals.web_apps_addresses }}",
+                  "source_addresses": "{{ resource.properties.web_apps_addresses }}",
                   "destination_addresses": [
                     "AzureActiveDirectory"
                   ],

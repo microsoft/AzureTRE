@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole
-version: 0.11.0
+version: 0.11.1
 
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
@@ -109,22 +109,17 @@ parameters:
     type: string
 
 outputs:
-  # - name: authentication_callback_uri
-  #   type: string
-  #   applyTo:
-  #     - install
-  #     - upgrade
-  # - name: connection_uri
-  #   type: string
-  #   applyTo:
-  #     - install
-  #     - upgrade
-  # - name: web_apps_addresses
-  #   type: string
-  #   applyTo:
-  #     - install
-  #     - upgrade
-  - name: internals
+  - name: authentication_callback_uri
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: web_apps_addresses
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: routing_fqdn
     type: string
     applyTo:
       - install
@@ -167,11 +162,10 @@ install:
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: tre-service-guacamole-${ bundle.parameters.id }
       outputs:
-        # - name: authentication_callback_uri
-        # - name: web_apps_addresses
+        - name: authentication_callback_uri
+        - name: web_apps_addresses
         - name: admin_connection_uri
-        # - name: connection_uri
-        - name: internals
+        - name: routing_fqdn
 
 upgrade:
   - terraform:
@@ -201,11 +195,11 @@ upgrade:
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: tre-service-guacamole-${ bundle.parameters.id }
       outputs:
-        # - name: authentication_callback_uri
-        # - name: web_apps_addresses
+        - name: authentication_callback_uri
+        - name: web_apps_addresses
         - name: admin_connection_uri
-        # - name: connection_uri
-        - name: internals
+        - name: routing_fqdn
+
 
 uninstall:
   - terraform:
