@@ -57,6 +57,8 @@ async def submit_airlock_import_request(workspace_path: str, workspace_owner_tok
             i += 1
             LOGGER.info(f"sleeping for {wait_time} sec until container would be created")
             await asyncio.sleep(wait_time)
+        if upload_response.status_code == 403:
+            assert False, "The account used to generate the token (API MSI or local user running the API) does not have permissions to upload blobs to the container"
         else:
             assert upload_response.status_code == 201
             LOGGER.info("upload blob succeeded")
@@ -218,3 +220,18 @@ async def test_airlock_flow(setup_test_workspace, verify) -> None:
     container_url = request_result["containerUrl"]
     # we can't test any more the export flow since we don't have the network
     # access to upload the file from within the workspace.
+
+
+@pytest.mark.airlock
+@pytest.mark.performance
+@pytest.mark.timeout(35 * 60)
+async def test_airlock_submit_request_batch(setup_test_workspace, verify) -> None:
+    # 1. Get the workspace set up
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+    requests_to_submit = 10
+
+    # 2. create and submit `requests_to_submit` airlock requests concurrently
+    tasks = [submit_airlock_import_request(workspace_path, workspace_owner_token, verify) for _ in range(requests_to_submit)]
+    results = await asyncio.gather(*tasks)
+    assert len(results) == requests_to_submit

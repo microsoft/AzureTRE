@@ -25,8 +25,6 @@ class BaseRepository:
         try:
             database = cls._client.get_database_client(config.STATE_STORE_DATABASE)
             container = await database.create_container_if_not_exists(id=container_name, partition_key=partition_key_obj)
-            properties = await container.read()
-            print(properties['partitionKey'])
             return container
         except Exception:
             raise UnableToAccessDatabase

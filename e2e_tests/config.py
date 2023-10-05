@@ -17,6 +17,7 @@ TEST_ACCOUNT_CLIENT_SECRET: str = config("TEST_ACCOUNT_CLIENT_SECRET", default="
 TEST_WORKSPACE_APP_ID: str = config("TEST_WORKSPACE_APP_ID", default="")
 TEST_WORKSPACE_APP_SECRET: str = config("TEST_WORKSPACE_APP_SECRET", default="")
 TEST_WORKSPACE_APP_PLAN: str = config("WORKSPACE_APP_SERVICE_PLAN_SKU", default="")
+AUTO_WORKSPACE_APP_REGISTRATION: bool = config("AUTO_WORKSPACE_APP_REGISTRATION", cast=bool, default=False)
 
 # Set workspace id of an existing workspace to skip creation of a workspace during E2E tests
 TEST_WORKSPACE_ID: str = config("TEST_WORKSPACE_ID", default="")

@@ -64,9 +64,9 @@ def get_application() -> FastAPI:
 
 
 if config.DEBUG:
-    initialize_logging(logging.DEBUG)
+    initialize_logging(logging.DEBUG, add_console_handler=True)
 else:
-    initialize_logging(logging.INFO)
+    initialize_logging(logging.INFO, add_console_handler=False)
 
 app = get_application()
 

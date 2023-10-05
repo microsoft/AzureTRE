@@ -264,10 +264,8 @@ async def _handle_existing_review_resource(existing_resource: AirlockReviewUserR
 
 async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, workspace: Workspace):
 
-    # First check we have some email addresses so we can notify people.
     access_service = get_access_service()
     role_assignment_details = access_service.get_workspace_role_assignment_details(workspace)
-    check_email_exists(role_assignment_details)
 
     try:
         logging.debug(f"Saving airlock request item: {airlock_request.id}")

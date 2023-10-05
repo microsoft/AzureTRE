@@ -243,6 +243,8 @@ class AzureADAuthorization(AccessService):
     def _get_user_emails(self, roles_graph_data, msgraph_token):
         batch_endpoint = self._get_batch_endpoint()
         batch_request_body = self._get_batch_users_by_role_assignments_body(roles_graph_data)
+        if len(batch_request_body["requests"]) == 0:
+            return {"responses": []}
         headers = self._get_auth_header(msgraph_token)
         headers["Content-type"] = "application/json"
         users_graph_data = requests.post(batch_endpoint, json=batch_request_body, headers=headers).json()
@@ -297,13 +299,13 @@ class AzureADAuthorization(AccessService):
                     batch_url = self._get_users_endpoint(role_assignment["principalId"])
                 elif role_assignment["principalType"] == "Group":
                     batch_url = self._get_group_members_endpoint(role_assignment["principalId"])
-                else:
-                    continue
-                request_body["requests"].append(
-                    {"method": "GET",
-                        "url": batch_url,
-                        "id": role_assignment["principalId"]})
-                met_principal_ids.add(role_assignment["principalId"])
+
+                if batch_url != "":
+                    request_body["requests"].append(
+                        {"method": "GET",
+                            "url": batch_url,
+                            "id": role_assignment["principalId"]})
+                    met_principal_ids.add(role_assignment["principalId"])
 
         return request_body
 

@@ -68,7 +68,7 @@ class ExceptionTracebackFilter(logging.Filter):
         return True
 
 
-def initialize_logging(logging_level: int, correlation_id: Optional[str] = None) -> logging.LoggerAdapter:
+def initialize_logging(logging_level: int, correlation_id: Optional[str] = None, add_console_handler: bool = False) -> logging.LoggerAdapter:
     """
     Adds the Application Insights handler for the root logger and sets the given logging level.
     Creates and returns a logger adapter that integrates the correlation ID, if given, to the log messages.
@@ -80,6 +80,20 @@ def initialize_logging(logging_level: int, correlation_id: Optional[str] = None)
     logger = logging.getLogger()
 
     disable_unwanted_loggers()
+
+    # When using sessions and NEXT_AVAILABLE_SESSION we see regular exceptions which are actually expected
+    # See https://github.com/Azure/azure-sdk-for-python/issues/9402
+    # Other log entries such as 'link detach' also confuse the logs, and are expected.
+    # We don't want these making the logs any noisier so we raise the logging level for that logger here
+    # To inspect all the loggers, use -> loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+    for logger_name in LOGGERS_FOR_ERRORS_ONLY:
+        logging.getLogger(logger_name).setLevel(logging.ERROR)
+
+    if add_console_handler:
+        console_formatter = logging.Formatter(fmt='%(module)-7s %(name)-7s %(process)-7s %(asctime)s %(levelname)-7s %(message)s')
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(console_formatter)
+        logger.addHandler(console_handler)
 
     try:
         # picks up APPLICATIONINSIGHTS_CONNECTION_STRING automatically

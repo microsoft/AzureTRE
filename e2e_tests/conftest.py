@@ -111,9 +111,9 @@ async def clean_up_test_workspace_service(pre_created_workspace_service_id: str,
 @pytest.fixture(scope="session")
 async def setup_test_workspace(verify) -> Tuple[str, str, str]:
     pre_created_workspace_id = config.TEST_WORKSPACE_ID
-    # Set up
+    auth_type = "Manual" if not config.AUTO_WORKSPACE_APP_REGISTRATION else "Automatic"
     workspace_path, workspace_id = await create_or_get_test_workspace(
-        auth_type="Manual", verify=verify, pre_created_workspace_id=pre_created_workspace_id, client_id=config.TEST_WORKSPACE_APP_ID, client_secret=config.TEST_WORKSPACE_APP_SECRET)
+        auth_type=auth_type, verify=verify, pre_created_workspace_id=pre_created_workspace_id, client_id=config.TEST_WORKSPACE_APP_ID, client_secret=config.TEST_WORKSPACE_APP_SECRET)
 
     yield workspace_path, workspace_id
 
