@@ -9,6 +9,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Upgrade unresticted and airlock base template versions due to diagnostic settings retention period being depreciated ([#3704](https://github.com/microsoft/AzureTRE/pull/3704))
+* Enable TRE Admins to view workspace details when don't have a workspace role ([#2363](https://github.com/microsoft/AzureTRE/issues/2363))
 * Fix shared services list return restricted resource for admins causing issues with updates ([#3716](https://github.com/microsoft/AzureTRE/issues/3716))
 * Fix grey box appearing on resource card when costs are not available. ([#3254](https://github.com/microsoft/AzureTRE/issues/3254))
 * Fix notification panel not passing the workspace scope id to the API hence UI not updating ([#3353](https://github.com/microsoft/AzureTRE/issues/3353))

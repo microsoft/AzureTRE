@@ -12,8 +12,10 @@ import { ResourceType } from '../../models/resourceType';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { CostsTag } from './CostsTag';
 import { ConfirmCopyUrlToClipboard } from './ConfirmCopyUrlToClipboard';
+import { AppRolesContext } from '../../contexts/AppRolesContext';
 import { SecuredByRole } from './SecuredByRole';
 import { RoleName, WorkspaceRoleName } from '../../models/roleNames';
+
 
 interface ResourceCardProps {
   resource: Resource,
@@ -83,8 +85,10 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
     headerBadge = <StatusBadge resource={props.resource} status={resourceStatus} />
   }
 
+  const appRoles = useContext(AppRolesContext);
   const authNotProvisioned = props.resource.resourceType === ResourceType.Workspace && !props.resource.properties.scope_id;
-  const cardStyles = authNotProvisioned ? noNavCardStyles : clickableCardStyles;
+  const enableClickOnCard = !authNotProvisioned || appRoles.roles.includes(RoleName.TREAdmin);
+  const cardStyles = enableClickOnCard ? noNavCardStyles : clickableCardStyles;
 
   return (
     <>
@@ -110,7 +114,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
           <Stack
             styles={cardStyles}
             aria-labelledby={`card-${props.resource.id}`}
-            onClick={() => {if (!authNotProvisioned) goToResource()}}
+            onClick={() => {if (enableClickOnCard) goToResource()}}
           >
             <Stack horizontal>
               <Stack.Item grow={5} style={headerStyles}>{props.resource.properties.display_name}</Stack.Item>
