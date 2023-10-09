@@ -48,16 +48,21 @@ export const RootLayout: React.FunctionComponent = () => {
   useEffect(() => {
     const getCosts = async () => {
       try {
-        costsWriteCtx.current.setLoadingState(LoadingState.Loading)
-        const r = await apiCall(ApiEndpoint.Costs, HttpMethod.Get, undefined, undefined, ResultType.JSON);
+        if (appRolesCtx.roles.includes(RoleName.TREAdmin)) {
+          costsWriteCtx.current.setLoadingState(LoadingState.Loading)
+          const r = await apiCall(ApiEndpoint.Costs, HttpMethod.Get, undefined, undefined, ResultType.JSON);
 
-        costsWriteCtx.current.setCosts([
-          ...r.workspaces,
-          ...r.shared_services
-        ]);
+          costsWriteCtx.current.setCosts([
+            ...r.workspaces,
+            ...r.shared_services
+          ]);
 
-        costsWriteCtx.current.setLoadingState(LoadingState.Ok)
-        setLoadingCostState(LoadingState.Ok);
+          costsWriteCtx.current.setLoadingState(LoadingState.Ok)
+          setLoadingCostState(LoadingState.Ok);
+        } else {
+          costsWriteCtx.current.setLoadingState(LoadingState.AccessDenied)
+          setLoadingCostState(LoadingState.AccessDenied);
+        }
       }
       catch (e: any) {
         if (e instanceof APIError) {
@@ -86,9 +91,7 @@ export const RootLayout: React.FunctionComponent = () => {
       }
     };
 
-    if (appRolesCtx.roles && appRolesCtx.roles.includes(RoleName.TREAdmin)) {
-      getCosts();
-    }
+   getCosts();
 
     const ctx = costsWriteCtx.current;
 
@@ -139,8 +142,8 @@ export const RootLayout: React.FunctionComponent = () => {
               <Route path="/admin" element={<Admin />} />
               <Route path="/shared-services/*" element={
                 <Routes>
-                  <Route path="/" element={<SecuredByRole element={<SharedServices />} allowedRoles={[RoleName.TREAdmin]} errorString={"You must be a TRE Admin to access this area"}/>} />
-                  <Route path=":sharedServiceId" element={<SecuredByRole element={<SharedServiceItem />} allowedRoles={[RoleName.TREAdmin]} errorString={"You must be a TRE Admin to access this area"}/>} />
+                  <Route path="/" element={<SecuredByRole element={<SharedServices />} allowedAppRoles={[RoleName.TREAdmin]} errorString={"You must be a TRE Admin to access this area"}/>} />
+                  <Route path=":sharedServiceId" element={<SecuredByRole element={<SharedServiceItem />} allowedAppRoles={[RoleName.TREAdmin]} errorString={"You must be a TRE Admin to access this area"}/>} />
                 </Routes>
               } />
             </Routes>

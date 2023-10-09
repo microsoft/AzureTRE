@@ -6,6 +6,7 @@ FEATURES:
 ENHANCEMENTS:
 * Reduce logging noise ([#2135](https://github.com/microsoft/AzureTRE/issues/2135))
 * Update workspace template to use Terraform's AzureRM 3.73 ([#3715](https://github.com/microsoft/AzureTRE/pull/3715))
+* Enable cost tags for worksapce services adn user resources ([#2932](https://github.com/microsoft/AzureTRE/issues/2932))
 
 BUG FIXES:
 * Upgrade unresticted and airlock base template versions due to diagnostic settings retention period being depreciated ([#3704](https://github.com/microsoft/AzureTRE/pull/3704))
@@ -13,6 +14,7 @@ BUG FIXES:
 * Fix shared services list return restricted resource for admins causing issues with updates ([#3716](https://github.com/microsoft/AzureTRE/issues/3716))
 * Fix grey box appearing on resource card when costs are not available. ([#3254](https://github.com/microsoft/AzureTRE/issues/3254))
 * Fix notification panel not passing the workspace scope id to the API hence UI not updating ([#3353](https://github.com/microsoft/AzureTRE/issues/3353))
+* Fix issue with cost tags not displaying correctly for some user roles ([#3721](https://github.com/microsoft/AzureTRE/issues/3721))
 
 ## 0.14.1 (September 1, 2023)
 
