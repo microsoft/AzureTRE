@@ -37,7 +37,7 @@ export const SecuredByRole: React.FunctionComponent<SecuredByRoleProps> = (props
       }
     };
 
-    if (!workspaceCtx.current.roles && props.workspaceId !== undefined){
+    if (workspaceCtx.current.roles.length === 0 && props.workspaceId !== undefined){
       getWorkspaceRoles();
     }
     else {
@@ -48,7 +48,7 @@ export const SecuredByRole: React.FunctionComponent<SecuredByRoleProps> = (props
 
   if (workspaceRoles.some(x => props.allowedWorkspaceRoles?.includes(x))) return props.element;
 
-  if ( appRoles.roles.some(x => props.allowedAppRoles?.includes(x))) return props.element;
+  if (appRoles.roles.some(x => props.allowedAppRoles?.includes(x))) return props.element;
 
   return props.errorString ? (
     <MessageBar messageBarType={MessageBarType.error} isMultiline={true}>
