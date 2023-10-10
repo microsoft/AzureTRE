@@ -19,7 +19,7 @@ import { APIError } from '../../models/exceptions';
 import { LoadingState } from '../../models/loadingState';
 import { ExceptionLayout } from '../shared/ExceptionLayout';
 import { AppRolesContext } from '../../contexts/AppRolesContext';
-import { RoleName } from '../../models/roleNames';
+import { RoleName, WorkspaceRoleName } from '../../models/roleNames';
 
 export const WorkspaceProvider: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
@@ -39,16 +39,19 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
   useEffect(() => {
     const getWorkspaceCosts = async () => {
       try {
-        let scopeId = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}/scopeid`, HttpMethod.Get)).workspaceAuth.scopeId;
-        const r = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.Costs}`, HttpMethod.Get, scopeId, undefined, ResultType.JSON);
-        const costs = [
-          ...r.costs,
-          ...r.workspace_services,
-          ...r.workspace_services.flatMap((ws: { user_resources: any; }) => [
-            ...ws.user_resources
-          ])
-        ];
-        workspaceCtx.current.setCosts(costs);
+        // TODO: amend when costs enabled in API for WorkspaceRoleName.Researcher
+        if(workspaceCtx.current.roles.includes(WorkspaceRoleName.WorkspaceOwner)){
+          let scopeId = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}/scopeid`, HttpMethod.Get)).workspaceAuth.scopeId;
+          const r = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.Costs}`, HttpMethod.Get, scopeId, undefined, ResultType.JSON);
+          const costs = [
+            ...r.costs,
+            ...r.workspace_services,
+            ...r.workspace_services.flatMap((ws: { user_resources: any; }) => [
+              ...ws.user_resources
+            ])
+          ];
+          workspaceCtx.current.setCosts(costs);
+        }
       }
       catch (e: any) {
         if (e instanceof APIError) {
