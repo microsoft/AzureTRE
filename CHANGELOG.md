@@ -6,7 +6,7 @@ FEATURES:
 ENHANCEMENTS:
 * Reduce logging noise ([#2135](https://github.com/microsoft/AzureTRE/issues/2135))
 * Update workspace template to use Terraform's AzureRM 3.73 ([#3715](https://github.com/microsoft/AzureTRE/pull/3715))
-* Enable cost tags for worksapce services adn user resources ([#2932](https://github.com/microsoft/AzureTRE/issues/2932))
+* Enable cost tags for workspace services and user resources ([#2932](https://github.com/microsoft/AzureTRE/issues/2932))
 
 BUG FIXES:
 * Upgrade unresticted and airlock base template versions due to diagnostic settings retention period being depreciated ([#3704](https://github.com/microsoft/AzureTRE/pull/3704))
