@@ -11,7 +11,7 @@ import { ResourceBody } from '../shared/ResourceBody';
 
 interface UserResourceItemProps {
   userResource?: UserResource;
-  updateUserResource: (u: UserResource) => void,
+  updateUserResource: (u: UserResource) => void;
   removeUserResource: (u: UserResource) => void;
 }
 
