@@ -49,7 +49,7 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
           let scopeId = (await apiCall(`${ApiEndpoint.Workspaces}/${wsId}/scopeid`, HttpMethod.Get)).workspaceAuth.scopeId;
 
           // is actually a workspace operation or workspace child resource operation
-          if (op.resourcePath.split('/').length === 3) {
+          if (op.resourcePath.split('/').length >= 3) {
             ws = (await apiCall(`${ApiEndpoint.Workspaces}/${wsId}`, HttpMethod.Get, scopeId)).workspace;
             resource = ws;
           } else {
