@@ -25,7 +25,7 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (props: CostsTag
         costs = workspaceCtx.costs;
       } else if (costsCtx.costs.length > 0) {
         costs = costsCtx.costs;
-      } else {
+      } else if(!workspaceCtx.workspace.id) {
         let scopeId = (await apiCall(`${ApiEndpoint.Workspaces}/${props.resourceId}/scopeid`, HttpMethod.Get)).workspaceAuth.scopeId;
         const r = await apiCall(`${ApiEndpoint.Workspaces}/${props.resourceId}/${ApiEndpoint.Costs}`, HttpMethod.Get, scopeId, undefined, ResultType.JSON);
         costs = [{costs: r.costs, id: r.id, name: r.name }];
@@ -44,11 +44,11 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (props: CostsTag
           maximumFractionDigits: 2
         }).format(resourceCosts.costs[0].cost);
         setFormattedCost(formattedCost);
-        setLoadingState(LoadingState.Ok);
       }
+      setLoadingState(LoadingState.Ok);
     }
     fetchCostData();
-  }, [apiCall, costsCtx.loadingState, props.resourceId, workspaceCtx.costs, costsCtx.costs]);
+  }, [apiCall, props.resourceId, workspaceCtx.costs, costsCtx.costs, workspaceCtx.workspace.id]);
 
   const costBadge = (
     <Stack.Item style={{ maxHeight: 18 }} className="tre-badge">
