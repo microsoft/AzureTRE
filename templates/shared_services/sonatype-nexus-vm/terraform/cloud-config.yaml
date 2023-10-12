@@ -45,6 +45,6 @@ runcmd:
   # Reset the admin password of Nexus to the one created by TF and stored in Key Vault
   - bash /etc/nexus-data/scripts/reset_nexus_password.sh "${NEXUS_ADMIN_PASSWORD}"
   # Invoke Nexus SSL configuration (which will also be ran as CRON daily to renew cert)
-  - bash /etc/cron.daily/configure_nexus_ssl.sh
+  - bash /etc/cron.daily/configure_nexus_ssl
   # Configure Nexus repositories
   - bash /etc/nexus-data/scripts/configure_nexus_repos.sh "${NEXUS_ADMIN_PASSWORD}"

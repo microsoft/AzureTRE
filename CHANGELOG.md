@@ -6,6 +6,7 @@ FEATURES:
 ENHANCEMENTS:
 
 BUG FIXES:
+* Remove .sh extension from nexus renewal script so CRON job executes ([#3742](https://github.com/microsoft/AzureTRE/issues/3742))
 
 COMPONENTS:
 
