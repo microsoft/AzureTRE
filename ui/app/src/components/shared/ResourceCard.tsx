@@ -149,7 +149,6 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                   </Stack.Item>
                 </Stack>
               </Stack.Item>
-              {console.log("costTagsToles", costsTagsRoles)}
               <SecuredByRole allowedAppRoles={costsTagsRoles} allowedWorkspaceRoles={costsTagsRoles} workspaceId={workspaceId} element={
                 <CostsTag resourceId={props.resource.id} />
               }

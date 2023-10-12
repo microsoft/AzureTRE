@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { AppRolesContext } from '../../contexts/AppRolesContext';
 import { MessageBar, MessageBarType } from '@fluentui/react';
@@ -18,44 +18,42 @@ export const SecuredByRole: React.FunctionComponent<SecuredByRoleProps> = (props
   const apiCall = useAuthApiCall();
 
   const appRoles = useContext(AppRolesContext);
-  const workspaceCtx = useRef(useContext(WorkspaceContext));
-  let [workspaceRoles, setRoles] = useState([] as Array<string>);
+  const workspaceCtx = useContext(WorkspaceContext);
+  const [workspaceRoles, setRoles] = useState([] as Array<string>);
 
   useEffect(() => {
     const getWorkspaceRoles = async () => {
-      if (!workspaceCtx.current.workspace.id && props.workspaceId !== "") {
-        let workspaceRoles = [] as Array<string>;
+      if (!workspaceCtx.workspace.id && props.workspaceId !== "") {
+        let r = [] as Array<string>;
 
         let workspaceAuth = (await apiCall(`${ApiEndpoint.Workspaces}/${props.workspaceId}/scopeid`, HttpMethod.Get)).workspaceAuth;
         if (workspaceAuth) {
           await apiCall(`${ApiEndpoint.Workspaces}/${props.workspaceId}`, HttpMethod.Get, workspaceAuth.scopeId,
-          undefined, ResultType.JSON, (roles: Array<string>) => {
-            workspaceRoles = roles;
-          }, true);
+            undefined, ResultType.JSON, (roles: Array<string>) => {
+              r = roles;
+            }, true);
         }
-        setRoles(workspaceRoles);
+        setRoles(r);
       }
     };
 
-    if (workspaceCtx.current.roles.length === 0 && props.workspaceId !== undefined){
+    if (workspaceCtx.roles.length === 0 && props.workspaceId !== undefined) {
       getWorkspaceRoles();
     }
     else {
-      setRoles(workspaceCtx.current.roles);
+      setRoles(workspaceCtx.roles);
     }
 
-  }, [apiCall, workspaceCtx.current.workspace.id , props.workspaceId, workspaceCtx.current.roles]);
+  }, [apiCall, workspaceCtx.workspace.id, props.workspaceId, workspaceCtx.roles]);
 
-  if (workspaceRoles.some(x => props.allowedWorkspaceRoles?.includes(x))) return props.element;
-
-  if (appRoles.roles.some(x => props.allowedAppRoles?.includes(x))) return props.element;
-
-  return props.errorString ? (
-    <MessageBar messageBarType={MessageBarType.error} isMultiline={true}>
-      <h3>Access Denied</h3>
-      <p>{props.errorString}</p>
-    </MessageBar>
-  ) : (
-    <></>
+  return (
+    (workspaceRoles.some(x => props.allowedWorkspaceRoles?.includes(x)) || appRoles.roles.some(x => props.allowedAppRoles?.includes(x)))
+      ? props.element
+      : (props.errorString && (workspaceRoles.length > 0 || appRoles.roles.length > 0)
+          ? <MessageBar messageBarType={MessageBarType.error} isMultiline={true}>
+              <h3>Access Denied</h3>
+              <p>{props.errorString}</p>
+            </MessageBar>
+          : null)
   );
 };
