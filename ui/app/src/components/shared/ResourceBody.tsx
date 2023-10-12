@@ -62,19 +62,19 @@ export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: 
       }
       {
         !props.readonly &&
-        <SecuredByRole allowedAppRoles={historyRoles} allowedWorkspaceRoles={historyRoles} workspaceId={workspaceId} element={
-          <PivotItem headerText="History">
+        <PivotItem headerText="History">
+          <SecuredByRole allowedAppRoles={historyRoles} allowedWorkspaceRoles={historyRoles} workspaceId={workspaceId} errorString={`Must have ${historyRoles.join(" or ")} role`} element={
             <ResourceHistoryList resource={props.resource} />
-          </PivotItem>
-        } />
+          } />
+        </PivotItem>
       }
       {
         !props.readonly &&
-        <SecuredByRole allowedAppRoles={operationsRoles} allowedWorkspaceRoles={operationsRoles} workspaceId={workspaceId} element={
-          <PivotItem headerText="Operations">
+        <PivotItem headerText="Operations">
+          <SecuredByRole allowedAppRoles={operationsRoles} allowedWorkspaceRoles={operationsRoles} workspaceId={workspaceId} errorString={`Must have ${operationsRoles.join(" or ")} role`} element={
             <ResourceOperationsList resource={props.resource} />
-          </PivotItem>
-        } />
+          } />
+        </PivotItem>
       }
     </Pivot>
   );
