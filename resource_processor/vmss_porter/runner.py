@@ -213,7 +213,7 @@ async def get_porter_outputs(msg_body: dict, message_logger_adapter: logging.Log
     if returncode != 0:
         error_message = "Error context message = " + " ".join(err.split('\n'))
         message_logger_adapter.info(f"{get_installation_id(msg_body)}: Failed to get outputs with error = {error_message}")
-        return False, ""
+        return False, {}
     else:
         outputs_json = {}
         try:
