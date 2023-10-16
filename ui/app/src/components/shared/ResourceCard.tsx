@@ -12,8 +12,10 @@ import { ResourceType } from '../../models/resourceType';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { CostsTag } from './CostsTag';
 import { ConfirmCopyUrlToClipboard } from './ConfirmCopyUrlToClipboard';
+import { AppRolesContext } from '../../contexts/AppRolesContext';
 import { SecuredByRole } from './SecuredByRole';
 import { RoleName, WorkspaceRoleName } from '../../models/roleNames';
+
 
 interface ResourceCardProps {
   resource: Resource,
@@ -21,8 +23,8 @@ interface ResourceCardProps {
   selectResource?: (resource: Resource) => void,
   onUpdate: (resource: Resource) => void,
   onDelete: (resource: Resource) => void,
-  readonly?: boolean
-  isExposedExternally?: boolean
+  readonly?: boolean;
+  isExposedExternally?: boolean;
 }
 
 export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: ResourceCardProps) => {
@@ -32,20 +34,19 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   const workspaceCtx = useContext(WorkspaceContext);
   const latestUpdate = useComponentManager(
     props.resource,
-    (r: Resource) => { props.onUpdate(r) },
-    (r: Resource) => { props.onDelete(r) }
+    (r: Resource) => { props.onUpdate(r); },
+    (r: Resource) => { props.onDelete(r); }
   );
   const navigate = useNavigate();
 
   const costTagRolesByResourceType = {
     [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
     [ResourceType.SharedService]: [RoleName.TREAdmin],
-    [ResourceType.WorkspaceService]: [], // WokspaceRole.WorkspaceOwner when implemented
-    [ResourceType.UserResource]: [] // WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher when implemented
+    [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner],
+    [ResourceType.UserResource]: [WorkspaceRoleName.WorkspaceOwner] // when implemented WorkspaceRoleName.WorkspaceResearcher]
   };
 
   const costsTagsRoles = costTagRolesByResourceType[props.resource.resourceType];
-  const workspaceAuthContext = workspaceCtx.workspace.id ? true : false;
 
   const goToResource = useCallback(() => {
     const { resource } = props;
@@ -63,12 +64,12 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
     return latestUpdate.componentAction === ComponentAction.Lock
       || actionsDisabledStates.includes(props.resource.deploymentStatus)
       || !props.resource.isEnabled
-      || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== VMPowerStates.Running)
-  }
+      || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== VMPowerStates.Running);
+  };
 
   const resourceStatus = latestUpdate.operation?.status
     ? latestUpdate.operation.status
-    : props.resource.deploymentStatus
+    : props.resource.deploymentStatus;
 
   // Decide what to show as the top-right header badge
   let headerBadge = <></>;
@@ -78,13 +79,16 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
     successStates.includes(resourceStatus) &&
     props.resource.isEnabled
   ) {
-    headerBadge = <PowerStateBadge state={props.resource.azureStatus.powerState} />
+    headerBadge = <PowerStateBadge state={props.resource.azureStatus.powerState} />;
   } else {
-    headerBadge = <StatusBadge resource={props.resource} status={resourceStatus} />
+    headerBadge = <StatusBadge resource={props.resource} status={resourceStatus} />;
   }
 
+  const appRoles = useContext(AppRolesContext);
   const authNotProvisioned = props.resource.resourceType === ResourceType.Workspace && !props.resource.properties.scope_id;
-  const cardStyles = authNotProvisioned ? noNavCardStyles : clickableCardStyles;
+  const enableClickOnCard = !authNotProvisioned || appRoles.roles.includes(RoleName.TREAdmin);
+  const workspaceId = props.resource.resourceType === ResourceType.Workspace ? props.resource.id : "";
+  const cardStyles = enableClickOnCard ? noNavCardStyles : clickableCardStyles;
 
   return (
     <>
@@ -105,12 +109,12 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
         </Stack> : <TooltipHost
           content={authNotProvisioned ? "Authentication has not yet been provisioned for this resource." : ""}
           id={`card-${props.resource.id}`}
-          styles={{root: {width:'100%'}}}
+          styles={{ root: { width: '100%' } }}
         >
           <Stack
             styles={cardStyles}
             aria-labelledby={`card-${props.resource.id}`}
-            onClick={() => {if (!authNotProvisioned) goToResource()}}
+            onClick={() => { if (enableClickOnCard) goToResource(); }}
           >
             <Stack horizontal>
               <Stack.Item grow={5} style={headerStyles}>{props.resource.properties.display_name}</Stack.Item>
@@ -126,7 +130,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                 <Stack horizontal>
                   <Stack.Item>
                     <IconButton
-                      iconProps={{iconName: 'Info'}}
+                      iconProps={{ iconName: 'Info' }}
                       id={`item-${props.itemId}`}
                       onClick={(e) => {
                         // Stop onClick triggering parent handler
@@ -145,13 +149,13 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                   </Stack.Item>
                 </Stack>
               </Stack.Item>
-              <SecuredByRole allowedRoles={costsTagsRoles} workspaceAuth={workspaceAuthContext} element={
-               <CostsTag resourceId={props.resource.id} />
+              <SecuredByRole allowedAppRoles={costsTagsRoles} allowedWorkspaceRoles={costsTagsRoles} workspaceId={workspaceId} element={
+                <CostsTag resourceId={props.resource.id} />
               }
               />
               {
                 connectUri && <PrimaryButton
-                  onClick={(e) => {e.stopPropagation(); props.isExposedExternally === false ? setShowCopyUrl(true) : window.open(connectUri)}}
+                  onClick={(e) => { e.stopPropagation(); props.isExposedExternally === false ? setShowCopyUrl(true) : window.open(connectUri); }}
                   disabled={shouldDisable()}
                   title={shouldDisable() ? 'Resource must be enabled, successfully deployed & powered on to connect' : 'Connect to resource'}
                   className={styles.button}
@@ -160,7 +164,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                 </PrimaryButton>
               }
               {
-                 showCopyUrl && <ConfirmCopyUrlToClipboard onDismiss={() => setShowCopyUrl(false)} resource={props.resource} />
+                showCopyUrl && <ConfirmCopyUrlToClipboard onDismiss={() => setShowCopyUrl(false)} resource={props.resource} />
               }
             </Stack>
           </Stack>
@@ -183,15 +187,15 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
           <Text block variant="small" id={`item-${props.itemId}-description`}>
             <Stack>
               <Stack.Item>
-                <Stack horizontal tokens={{childrenGap: 5}}>
+                <Stack horizontal tokens={{ childrenGap: 5 }}>
                   <Stack.Item style={calloutKeyStyles}>Resource Id:</Stack.Item>
                   <Stack.Item style={calloutValueStyles}>{props.resource.id}</Stack.Item>
                 </Stack>
-                <Stack horizontal tokens={{childrenGap: 5}}>
+                <Stack horizontal tokens={{ childrenGap: 5 }}>
                   <Stack.Item style={calloutKeyStyles}>Last Modified By:</Stack.Item>
                   <Stack.Item style={calloutValueStyles}>{props.resource.user.name}</Stack.Item>
                 </Stack>
-                <Stack horizontal tokens={{childrenGap: 5}}>
+                <Stack horizontal tokens={{ childrenGap: 5 }}>
                   <Stack.Item style={calloutKeyStyles}>Last Updated:</Stack.Item>
                   <Stack.Item style={calloutValueStyles}>{moment.unix(props.resource.updatedWhen).toDate().toDateString()}</Stack.Item>
                 </Stack>
@@ -201,7 +205,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
         </Callout>
       }
     </>
-  )
+  );
 };
 
 const baseCardStyles: IStyle = {
@@ -210,11 +214,11 @@ const baseCardStyles: IStyle = {
   boxShadow: '0 1.6px 3.6px 0 rgba(0,0,0,.132),0 .3px .9px 0 rgba(0,0,0,.108)',
   backgroundColor: DefaultPalette.white,
   padding: 10
-}
+};
 
 const noNavCardStyles: IStackStyles = {
   root: { ...baseCardStyles }
-}
+};
 
 const clickableCardStyles: IStackStyles = {
   root: {
@@ -225,7 +229,7 @@ const clickableCardStyles: IStackStyles = {
       cursor: 'pointer'
     }
   }
-}
+};
 
 const headerStyles: React.CSSProperties = {
   padding: '5px 10px',
@@ -235,20 +239,20 @@ const headerStyles: React.CSSProperties = {
 const bodyStyles: React.CSSProperties = {
   padding: '10px 10px',
   minHeight: '40px'
-}
+};
 
 const footerStyles: React.CSSProperties = {
   minHeight: '30px',
   alignItems: 'center'
-}
+};
 
 const calloutKeyStyles: React.CSSProperties = {
   width: 160
-}
+};
 
 const calloutValueStyles: React.CSSProperties = {
   width: 180
-}
+};
 
 const styles = mergeStyleSets({
   button: {

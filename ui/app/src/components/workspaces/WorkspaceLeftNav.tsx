@@ -74,7 +74,7 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
       ];
 
       // Only show airlock link if enabled for workspace
-      if (workspaceCtx.workspace.properties.enable_airlock !== undefined && workspaceCtx.workspace.properties.enable_airlock) {
+      if (workspaceCtx.workspace.properties !== undefined && workspaceCtx.workspace.properties.enable_airlock) {
         serviceNavLinks[0].links.push({
           name: 'Airlock',
           key: ApiEndpoint.AirlockRequests,
@@ -85,7 +85,7 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
       setServiceLinks(serviceNavLinks);
     };
     getWorkspaceServices();
-  }, [props.workspaceServices, props.sharedServices, workspaceCtx.workspace]);
+  }, [props.workspaceServices, props.sharedServices, workspaceCtx.workspace.id, workspaceCtx.workspace.properties]);
 
   return (
     <>

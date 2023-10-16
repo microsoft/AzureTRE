@@ -38,7 +38,6 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   const createFormCtx = useContext(CreateUpdateResourceContext);
   const [parentResource, setParentResource] = useState({} as WorkspaceService | Workspace);
   const [roles, setRoles] = useState([] as Array<string>);
-  const [wsAuth, setWsAuth] = useState(false);
   const appRoles = useContext(AppRolesContext); // the user is in these roles which apply across the app
   const dispatch = useAppDispatch();
 
@@ -85,7 +84,6 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
           r = [RoleName.TREAdmin];
           break;
       }
-      setWsAuth(wsAuth);
       setRoles(r);
 
       // should we bother getting the template? if the user isn't in the right role they won't see the menu at all.
@@ -96,7 +94,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       }
     };
     getTemplate();
-  }, [apiCall, props.resource, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI, appRoles.roles, workspaceCtx.roles]);
+  }, [apiCall, props.resource, workspaceCtx, appRoles]);
 
   const doAction = async (actionName: string) => {
     const action = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.InvokeAction}?action=${actionName}`, HttpMethod.Post, workspaceCtx.workspaceApplicationIdURI);
@@ -217,7 +215,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
 
   return (
     <>
-      <SecuredByRole allowedRoles={roles} workspaceAuth={wsAuth} element={
+      <SecuredByRole allowedWorkspaceRoles={roles} allowedAppRoles={roles} element={
         props.commandBar ?
         <CommandBar
           items={menuItems}

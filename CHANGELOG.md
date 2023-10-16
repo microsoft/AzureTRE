@@ -1,19 +1,100 @@
 <!-- markdownlint-disable MD041 -->
-## 0.15.0 (Unreleased)
+## 0.16.0 (Unreleased)
+
+FEATURES:
+
+ENHANCEMENTS:
+
+BUG FIXES:
+* Fix issue where updates fail as read only is not configured consistently on schema fields ([#3691](https://github.com/microsoft/AzureTRE/issues/3691))
+* When geting avaialble address spaces allow those allocated to deleted workspaces to be reassigned ([#3691](https://github.com/microsoft/AzureTRE/issues/3691))
+
+COMPONENTS:
+
+## 0.15.1 (October 12, 2023)
+
+BUG FIXES:
+* SecuredByRole failing if roles are null ([#3740](https://github.com/microsoft/AzureTRE/issues/3740  ))
+
+COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.5.1 |
+| core | 0.8.9 |
+| ui | 0.5.11 |
+| tre-workspace-base | 1.5.0 |
+| tre-workspace-unrestricted | 0.11.1 |
+| tre-workspace-airlock-import-review | 0.12.7 |
+| tre-service-mlflow | 0.7.7 |
+| tre-workspace-service-health | 0.2.5 |
+| tre-service-databricks | 1.0.3 |
+| tre-service-innereye | 0.6.4 |
+| tre-workspace-service-gitea | 0.8.7 |
+| tre-workspace-service-mysql | 0.4.5 |
+| tre-workspace-service-ohdsi | 0.2.4 |
+| tre-service-guacamole-linuxvm | 0.6.9 |
+| tre-service-guacamole-export-reviewvm | 0.1.8 |
+| tre-service-guacamole-windowsvm | 0.7.9 |
+| tre-service-guacamole-import-reviewvm | 0.2.8 |
+| tre-service-guacamole | 0.10.5 |
+| tre-user-resource-aml-compute-instance | 0.5.7 |
+| tre-service-azureml | 0.8.10 |
+| tre-shared-service-cyclecloud | 0.5.5 |
+| tre-shared-service-databricks-private-auth | 0.1.5 |
+| tre-shared-service-gitea | 0.6.10 |
+| tre-shared-service-airlock-notifier | 0.9.0 |
+| tre-shared-service-admin-vm | 0.4.3 |
+| tre-shared-service-certs | 0.5.1 |
+| tre-shared-service-sonatype-nexus | 2.8.12 |
+| tre-shared-service-firewall | 1.1.5 |
+
+## 0.15.0 (October 10, 2023)
 
 FEATURES:
 
 ENHANCEMENTS:
 * Reduce logging noise ([#2135](https://github.com/microsoft/AzureTRE/issues/2135))
 * Update workspace template to use Terraform's AzureRM 3.73 ([#3715](https://github.com/microsoft/AzureTRE/pull/3715))
+* Enable cost tags for workspace services and user resources ([#2932](https://github.com/microsoft/AzureTRE/issues/2932))
 
 BUG FIXES:
 * Upgrade unresticted and airlock base template versions due to diagnostic settings retention period being depreciated ([#3704](https://github.com/microsoft/AzureTRE/pull/3704))
-* Fix issue where updates fail as read only is not configured consistently on schema fields ([#3691](https://github.com/microsoft/AzureTRE/issues/3691))
-* When geting avaialble address spaces allow those allocated to deleted workspaces to be reassigned ([#3691](https://github.com/microsoft/AzureTRE/issues/3691))
+* Enable TRE Admins to view workspace details when don't have a workspace role ([#2363](https://github.com/microsoft/AzureTRE/issues/2363))
 * Fix shared services list return restricted resource for admins causing issues with updates ([#3716](https://github.com/microsoft/AzureTRE/issues/3716))
 * Fix grey box appearing on resource card when costs are not available. ([#3254](https://github.com/microsoft/AzureTRE/issues/3254))
 * Fix notification panel not passing the workspace scope id to the API hence UI not updating ([#3353](https://github.com/microsoft/AzureTRE/issues/3353))
+* Fix issue with cost tags not displaying correctly for some user roles ([#3721](https://github.com/microsoft/AzureTRE/issues/3721))
+
+COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.5.1 |
+| core | 0.8.9 |
+| tre-workspace-base | 1.5.0 |
+| tre-workspace-unrestricted | 0.11.1 |
+| tre-workspace-airlock-import-review | 0.12.7 |
+| tre-service-mlflow | 0.7.7 |
+| tre-workspace-service-health | 0.2.5 |
+| tre-service-databricks | 1.0.3 |
+| tre-service-innereye | 0.6.4 |
+| tre-workspace-service-gitea | 0.8.7 |
+| tre-workspace-service-mysql | 0.4.5 |
+| tre-workspace-service-ohdsi | 0.2.4 |
+| tre-service-guacamole-linuxvm | 0.6.9 |
+| tre-service-guacamole-export-reviewvm | 0.1.8 |
+| tre-service-guacamole-windowsvm | 0.7.9 |
+| tre-service-guacamole-import-reviewvm | 0.2.8 |
+| tre-service-guacamole | 0.10.5 |
+| tre-user-resource-aml-compute-instance | 0.5.7 |
+| tre-service-azureml | 0.8.10 |
+| tre-shared-service-cyclecloud | 0.5.5 |
+| tre-shared-service-databricks-private-auth | 0.1.5 |
+| tre-shared-service-gitea | 0.6.10 |
+| tre-shared-service-airlock-notifier | 0.9.0 |
+| tre-shared-service-admin-vm | 0.4.3 |
+| tre-shared-service-certs | 0.5.1 |
+| tre-shared-service-sonatype-nexus | 2.8.12 |
+| tre-shared-service-firewall | 1.1.5 |
 
 ## 0.14.1 (September 1, 2023)
 
