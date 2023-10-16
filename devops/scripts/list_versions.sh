@@ -20,10 +20,18 @@ function component_version () {
   echo -e "| $1 | $version |"
 }
 
+function ui_version () {
+  # get version from ./ui/app/package.json
+  version=$(yq -oy eval ".version" "./ui/app/package.json")
+  echo -e "| ui | $version |"
+}
+
+
 echo -e "| name | version |\n| ----- | ----- |"
 
 component_version "devops" "devops/version.txt"
 component_version "core" "core/version.txt"
+ui_version
 
 find . -type f -name "porter.yaml" -not -path "*/.cnab/*" -print0 | sort | while read -r -d $'\0' file
 do
