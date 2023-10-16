@@ -47,7 +47,7 @@ export const SecuredByRole: React.FunctionComponent<SecuredByRoleProps> = (props
   }, [apiCall, workspaceCtx.workspace.id, props.workspaceId, workspaceCtx.roles]);
 
   return (
-    (workspaceRoles.some(x => props.allowedWorkspaceRoles?.includes(x)) || appRoles.roles.some(x => props.allowedAppRoles?.includes(x)))
+    ((workspaceRoles && workspaceRoles.some(x => props.allowedWorkspaceRoles?.includes(x))) || (appRoles && appRoles.roles.some(x => props.allowedAppRoles?.includes(x))))
       ? props.element
       : (props.errorString && (workspaceRoles.length > 0 || appRoles.roles.length > 0)
           ? <MessageBar messageBarType={MessageBarType.error} isMultiline={true}>
