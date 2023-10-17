@@ -14,12 +14,15 @@ UNRESTRICTED_WORKSPACE = "tre-workspace-unrestricted"
 AIRLOCK_IMPORT_REVIEW_WORKSPACE = "tre-workspace-airlock-import-review"
 
 AZUREML_SERVICE = "tre-service-azureml"
-INNEREYE_SERVICE = "tre-service-innereye"
-GUACAMOLE_SERVICE = "tre-service-guacamole"
+DATABRICKS_SERVICE = "tre-service-databricks"
 GITEA_SERVICE = "tre-workspace-service-gitea"
+GUACAMOLE_SERVICE = "tre-service-guacamole"
+INNEREYE_SERVICE = "tre-service-innereye"
+HEALTH_SERVICE = "tre-workspace-service-health"
 MLFLOW_SERVICE = "tre-service-mlflow"
 MYSQL_SERVICE = "tre-workspace-service-mysql"
-HEALTH_SERVICE = "tre-workspace-service-health"
+OHDSI_SERVICE = "tre-workspace-service-ohdsi"
+
 
 FIREWALL_SHARED_SERVICE = "tre-shared-service-firewall"
 GITEA_SHARED_SERVICE = "tre-shared-service-gitea"

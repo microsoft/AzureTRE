@@ -32,7 +32,7 @@ jobs:
         ${{ (github.event_name == 'push' && 'extended or extended_aad')
         || 'extended or extended_aad or shared_services or airlock' }}
       environmentName: ${{ github.event.inputs.environment || 'CICD' }}
-      E2E_TESTS_NUMBER_PROCESSES: 1
+      E2E_TESTS_NUMBER_PROCESSES: 5
       DEVCONTAINER_TAG: 'latest'
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}

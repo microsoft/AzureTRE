@@ -9,8 +9,11 @@ pytestmark = pytest.mark.asyncio
 
 workspace_services = [
     strings.AZUREML_SERVICE,
-    # strings.INNEREYE_SERVICE,
+    strings.DATABRICKS_SERVICE,
+    strings.GUACAMOLE_SERVICE,
     strings.GITEA_SERVICE,
+    # strings.INNEREYE_SERVICE,
+    # strings.OHDSI_SERVICE,
     strings.MLFLOW_SERVICE,
     strings.MYSQL_SERVICE,
     strings.HEALTH_SERVICE,
@@ -63,6 +66,7 @@ async def ping_guacamole_workspace_service(workspace_service_path, access_token,
     await check_aad_auth_redirect(endpoint, verify)
 
 
+@pytest.mark.extended
 @pytest.mark.workspace_services
 @pytest.mark.timeout(45 * 60)
 @pytest.mark.parametrize("template_name", workspace_services)

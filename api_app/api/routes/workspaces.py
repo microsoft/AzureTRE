@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 
 from fastapi import APIRouter, Depends, HTTPException, Header, status, Request, Response
 
@@ -256,12 +257,25 @@ async def create_workspace_service(response: Response, workspace_service_input: 
         workspace_patch = ResourcePatch()
         workspace_patch.properties = {"address_spaces": workspace.properties["address_spaces"] + [workspace_service.properties["address_space"]]}
         # IP address allocation is managed by the API. Ideally this request would happen as a result of the workspace
-        # service deployment via the reosurce processor. there is no such functionality so the database is being
+        # service deployment via the resource processor. there is no such functionality so the database is being
         # updated directly, and an "update" on the workspace is called by the workspace service pipeline.
-        try:
-            await workspace_repo.patch_workspace(workspace, workspace_patch, workspace.etag, resource_template_repo, resource_history_repo, user, False)
-        except CosmosAccessConditionFailedError:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
+        MAX_RETRIES = 3
+        RETRY_DELAY = 1
+
+        retries = 0
+        while retries < MAX_RETRIES:
+            try:
+                await workspace_repo.patch_workspace(workspace, workspace_patch, workspace.etag, resource_template_repo, resource_history_repo, user, False)
+                break
+            except CosmosAccessConditionFailedError:
+                workspace = await workspace_repo.get_workspace(workspace.id)
+                workspace.etag = workspace.etag.strip('"')
+                workspace_patch = ResourcePatch()
+                workspace_patch.properties = {"address_spaces": workspace.properties["address_spaces"] + [workspace_service.properties["address_space"]]}
+                retries += 1
+                if retries == MAX_RETRIES:
+                    raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
+                time.sleep(RETRY_DELAY)
 
     operation = await save_and_deploy_resource(
         resource=workspace_service,
