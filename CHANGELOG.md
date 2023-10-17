@@ -7,6 +7,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Fix notifications displaying workspace name rather than actual resource ([#3746](https://github.com/microsoft/AzureTRE/issues/3746))
+* Fix SecuredByRole fails if app roles are not loaded  ([#3752](https://github.com/microsoft/AzureTRE/issues/3752))
 
 COMPONENTS:
 
