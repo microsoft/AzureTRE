@@ -6,6 +6,7 @@ FEATURES:
 ENHANCEMENTS:
 
 BUG FIXES:
+* Upgrade porter version to v1.0.15 and on error getting porter outputs return dict ([#3744](https://github.com/microsoft/AzureTRE/issues/3744))
 * Fix notifications displaying workspace name rather than actual resource ([#3746](https://github.com/microsoft/AzureTRE/issues/3746))
 
 COMPONENTS:

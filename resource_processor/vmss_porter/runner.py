@@ -165,18 +165,19 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, mess
     message_logger_adapter.debug("Starting to run porter execution command...")
     returncode, _, err = await run_porter(porter_command, message_logger_adapter, config)
     message_logger_adapter.debug("Finished running porter execution command.")
+    action_completed_without_error = True
 
     # Handle command output
     if returncode != 0:
         error_message = "Error message: " + " ".join(err.split('\n')) + "; Command executed: " + " ".join(porter_command)
+        action_completed_without_error = False
 
-        pass_despite_error = False
         if "uninstall" == action and "could not find installation" in err:
             message_logger_adapter.warning("The installation doesn't exist. Treating as a successful action to allow the flow to proceed.")
-            pass_despite_error = True
+            action_completed_without_error = True
             error_message = f"A success despite of underlying error. {error_message}"
 
-        if pass_despite_error:
+        if action_completed_without_error:
             status_for_sb_message = statuses.pass_status_string_for[action]
         else:
             status_for_sb_message = statuses.failed_status_string_for[action]
@@ -184,21 +185,27 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, mess
         resource_request_message = service_bus_message_generator(msg_body, status_for_sb_message, error_message)
 
         # Post message on sb queue to notify receivers of action failure
-        await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]))
         message_logger_adapter.info(f"{installation_id}: Porter action failed with error = {error_message}")
-        return pass_despite_error
 
     else:
         # Get the outputs
-        # TODO: decide if this should "fail" the deployment
-        _, outputs = await get_porter_outputs(msg_body, message_logger_adapter, config)
+        get_porter_outputs_successful, outputs = await get_porter_outputs(msg_body, message_logger_adapter, config)
 
-        success_message = f"{action} action completed successfully."
-        resource_request_message = service_bus_message_generator(msg_body, statuses.pass_status_string_for[action], success_message, outputs)
+        if get_porter_outputs_successful:
+            status_for_sb_message = statuses.pass_status_string_for[action]
+            status_message = f"{action} action completed successfully."
+        else:
+            action_completed_without_error = False
+            status_for_sb_message = statuses.failed_status_string_for[action]
+            status_message = f"{action} action completed successfully, but failed to get outputs."
 
-        await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]))
-        message_logger_adapter.info(f"Sent status message for {installation_id}: {success_message}")
-        return True
+        resource_request_message = service_bus_message_generator(msg_body, status_for_sb_message, status_message, outputs)
+
+    await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]))
+    message_logger_adapter.info(f"Sent status message for {installation_id}: {status_for_sb_message}")
+
+    # return true as want to continue processing the message
+    return action_completed_without_error
 
 
 async def get_porter_outputs(msg_body: dict, message_logger_adapter: logging.LoggerAdapter, config: dict):
@@ -213,7 +220,7 @@ async def get_porter_outputs(msg_body: dict, message_logger_adapter: logging.Log
     if returncode != 0:
         error_message = "Error context message = " + " ".join(err.split('\n'))
         message_logger_adapter.info(f"{get_installation_id(msg_body)}: Failed to get outputs with error = {error_message}")
-        return False, ""
+        return False, {}
     else:
         outputs_json = {}
         try:

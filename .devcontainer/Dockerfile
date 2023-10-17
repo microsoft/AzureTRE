@@ -49,7 +49,7 @@ RUN if [ "${INTERACTIVE}" = "true" ]; then \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/* ; fi
 
 ARG PORTER_HOME_V1=/home/$USERNAME/.porter/
-ARG PORTER_VERSION=v1.0.11
+ARG PORTER_VERSION=v1.0.15
 ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.2
 ARG PORTER_AZ_MIXIN_VERSION=v1.0.1
 ARG PORTER_AZURE_PLUGIN_VERSION=v1.2.0
