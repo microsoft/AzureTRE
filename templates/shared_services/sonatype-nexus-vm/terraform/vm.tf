@@ -189,7 +189,7 @@ data "template_cloudinit_config" "nexus_config" {
         },
         {
           content     = data.template_file.configure_nexus_ssl.rendered
-          path        = "/etc/cron.daily/configure_nexus_ssl.sh"
+          path        = "/etc/cron.daily/configure_nexus_ssl"
           permissions = "0755"
         },
         {
