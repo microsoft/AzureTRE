@@ -47,14 +47,15 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
         if (op.resourcePath.indexOf(ApiEndpoint.Workspaces) !== -1) {
           const wsId = op.resourcePath.split('/')[2];
           let scopeId = (await apiCall(`${ApiEndpoint.Workspaces}/${wsId}/scopeid`, HttpMethod.Get)).workspaceAuth.scopeId;
+          ws = (await apiCall(`${ApiEndpoint.Workspaces}/${wsId}`, HttpMethod.Get, scopeId)).workspace;
 
-          // is actually a workspace operation or workspace child resource operation
+          // is a workspace child resource operation
           if (op.resourcePath.split('/').length >= 3) {
-            ws = (await apiCall(`${ApiEndpoint.Workspaces}/${wsId}`, HttpMethod.Get, scopeId)).workspace;
-            resource = ws;
-          } else {
             let r = await apiCall(op.resourcePath, HttpMethod.Get, scopeId);
             resource = getResourceFromResult(r);
+          // is a workspace operation
+          } else {
+            resource = ws;
           }
         } else {
           let r = await apiCall(op.resourcePath, HttpMethod.Get);
