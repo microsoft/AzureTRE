@@ -1,6 +1,6 @@
 {
   "name": "tre-ui",
-  "version": "0.5.14",
+  "version": "0.5.15",
   "private": true,
   "dependencies": {
     "@azure/msal-browser": "^2.35.0",
