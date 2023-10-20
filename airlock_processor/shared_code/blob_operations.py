@@ -9,7 +9,10 @@ from azure.core.exceptions import ResourceExistsError
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import ContainerSasPermissions, generate_container_sas, BlobServiceClient
 
-from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
+from exceptions import NoFilesInRequestException, TooManyFilesInRequestException, NotAllowedFileExtension
+
+# Define a list of allowed file extensions
+ALLOWED_EXTENSIONS = [".json", ".csv", ".txt", ".md", ".rst", ".tex", ".pdf", ".py", ".sql", ".gz", ".zip", ".excel", ".jpg", ".jpeg", ".svg", ".png", ".gif", ".notebook", ".r"]
 
 
 def get_account_url(account_name: str) -> str:
@@ -68,6 +71,13 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
         msg = "Request with id {} did not contain any files. flow aborted.".format(request_id)
         logging.error(msg)
         raise NoFilesInRequestException(msg)
+
+    # Check if the file extension is allowed
+    file_extension = os.path.splitext(blob_name)[1]
+    if file_extension not in ALLOWED_EXTENSIONS:
+        msg = f"File extension {file_extension} is not allowed for copying."
+        logging.error(msg)
+        raise NotAllowedFileExtension(msg)
 
     udk = source_blob_service_client.get_user_delegation_key(datetime.datetime.utcnow() - datetime.timedelta(hours=1),
                                                              datetime.datetime.utcnow() + datetime.timedelta(hours=1))
