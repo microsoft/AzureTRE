@@ -6,6 +6,7 @@ FEATURES:
 ENHANCEMENTS:
 
 BUG FIXES:
+* Enabling support for more than 20 users/groups in Workspace API ([#3759](https://github.com/microsoft/AzureTRE/pull/3759  ))
 
 COMPONENTS:
 
@@ -51,11 +52,10 @@ COMPONENTS:
 | tre-shared-service-firewall | 1.1.5 |
 
 
-## 0.15.1 (October 18, 2023)
+## 0.15.1 (October 12, 2023)
 
 BUG FIXES:
 * SecuredByRole failing if roles are null ([#3740](https://github.com/microsoft/AzureTRE/issues/3740  ))
-* Enabling support for more than 20 users/groups in Workspace API ([#3759](https://github.com/microsoft/AzureTRE/pull/3759  ))
 
 COMPONENTS:
 | name | version |
