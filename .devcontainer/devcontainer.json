@@ -88,7 +88,10 @@
               "console": "integratedTerminal",
               "preLaunchTask": "Copy_env_file_for_api_debug",
               "cwd": "${workspaceFolder}/api_app",
-              "envFile": "${workspaceFolder}/api_app/.env"
+              "envFile": "${workspaceFolder}/api_app/.env",
+              "env": {
+                "OTEL_RESOURCE_ATTRIBUTES": "service.name=api,service.instance.id=local_debug,service.version=dev"
+              }
             },
             {
               "name": "E2E Extended",
@@ -190,7 +193,8 @@
               "cwd": "${workspaceFolder}/resource_processor",
               "envFile": "${workspaceFolder}/core/private.env",
               "env": {
-                "PYTHONPATH": "."
+                "PYTHONPATH": ".",
+                "OTEL_RESOURCE_ATTRIBUTES": "service.name=resource_processor,service.instance.id=local_debug,service.version=dev"
               }
             },
             {

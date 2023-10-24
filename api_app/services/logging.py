@@ -1,12 +1,12 @@
 import logging
-from typing import Optional
+import os
+import re
+from opentelemetry.instrumentation.logging import LoggingInstrumentor
+from azure.monitor.opentelemetry import configure_azure_monitor
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
 
-from opencensus.ext.azure.log_exporter import AzureLogHandler
-from opencensus.trace import config_integration
-from opencensus.trace.samplers import AlwaysOnSampler
-from opencensus.trace.tracer import Tracer
-
-from core.config import VERSION
+from fastapi import FastAPI
 
 UNWANTED_LOGGERS = [
     "azure.core.pipeline.policies.http_logging_policy",
@@ -33,14 +33,18 @@ LOGGERS_FOR_ERRORS_ONLY = [
     "uamqp.async_ops.session_async",
     "uamqp.sender",
     "uamqp.client",
-    "azure.servicebus.aio._base_handler_async"
+    "azure.servicebus.aio._base_handler_async",
+    "azure.servicebus._pyamqp.aio._connection_async",
+    "azure.servicebus._pyamqp.aio._link_async",
+    "opentelemetry.attributes"
 ]
 
 
-def disable_unwanted_loggers():
-    """
-    Disables the unwanted loggers.
-    """
+debug = os.environ.get("DEBUG", "False").lower() in ("true", "1")
+
+
+def configure_loggers():
+
     for logger_name in UNWANTED_LOGGERS:
         logging.getLogger(logger_name).disabled = True
 
@@ -48,59 +52,91 @@ def disable_unwanted_loggers():
         logging.getLogger(logger_name).setLevel(logging.ERROR)
 
 
-def telemetry_processor_callback_function(envelope):
-    envelope.tags['ai.cloud.role'] = 'api'
-    envelope.tags['ai.application.ver'] = VERSION
+def initialize_logging(logging_level: int, add_console_handler: bool, application: FastAPI) -> logging.Logger:
 
-
-class ExceptionTracebackFilter(logging.Filter):
-    """
-    If a record contains 'exc_info', it will only show in the 'exceptions' section of Application Insights without showing
-    in the 'traces' section. In order to show it also in the 'traces' section, we need another log that does not contain 'exc_info'.
-    """
-    def filter(self, record):
-        if record.exc_info:
-            logger = logging.getLogger(record.name)
-            _, exception_value, _ = record.exc_info
-            message = f"{record.getMessage()}\nException message: '{exception_value}'"
-            logger.log(record.levelno, message)
-
-        return True
-
-
-def initialize_logging(logging_level: int, correlation_id: Optional[str] = None) -> logging.LoggerAdapter:
-    """
-    Adds the Application Insights handler for the root logger and sets the given logging level.
-    Creates and returns a logger adapter that integrates the correlation ID, if given, to the log messages.
-
-    :param logging_level: The logging level to set e.g., logging.WARNING.
-    :param correlation_id: Optional. The correlation ID that is passed on to the operation_Id in App Insights.
-    :returns: A newly created logger adapter.
-    """
     logger = logging.getLogger()
+    logger.setLevel(logging_level)
 
-    disable_unwanted_loggers()
+    if add_console_handler:
+        console_formatter = logging.Formatter(
+            fmt="%(module)-7s %(name)-7s %(process)-7s %(asctime)s %(otelServiceName)-7s %(otelTraceID)-7s %(otelSpanID)-7s %(levelname)-7s %(message)s"
+        )
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging_level)
+        console_handler.setFormatter(console_formatter)
+        logger.addHandler(console_handler)
 
     try:
-        # picks up APPLICATIONINSIGHTS_CONNECTION_STRING automatically
-        azurelog_handler = AzureLogHandler()
-        azurelog_handler.add_telemetry_processor(telemetry_processor_callback_function)
-        azurelog_handler.addFilter(ExceptionTracebackFilter())
-        logger.addHandler(azurelog_handler)
+        configure_azure_monitor()
     except ValueError as e:
         logger.error(f"Failed to set Application Insights logger handler: {e}")
 
-    config_integration.trace_integrations(['logging'])
-    logging.basicConfig(level=logging_level, format='%(asctime)s traceId=%(traceId)s spanId=%(spanId)s %(message)s')
-    Tracer(sampler=AlwaysOnSampler())
-    logger.setLevel(logging_level)
+    LoggingInstrumentor().instrument(
+        set_logging_format=True,
+        level=logging_level
+    )
 
-    extra = {}
+    FastAPIInstrumentor.instrument_app(application)
+    RequestsInstrumentor().instrument()
 
-    if correlation_id:
-        extra = {'traceId': correlation_id}
+    return logger
 
-    adapter = logging.LoggerAdapter(logger, extra)
-    adapter.debug(f"Logger adapter initialized with extra: {extra}")
 
-    return adapter
+def shell_output_logger(
+    console_output: str,
+    prefix_item: str,
+    logger: logging.LoggerAdapter,
+    logging_level: int,
+):
+
+    if not console_output:
+        logging.debug("shell console output is empty.")
+        return
+
+    console_output = console_output.strip()
+
+    if (
+        logging_level != logging.INFO
+        and len(console_output) < 200
+        and console_output.startswith("Unable to find image '")
+        and console_output.endswith("' locally")
+    ):
+        logging.debug("Image not present locally, setting log to INFO.")
+        logging_level = logging.INFO
+
+    logger.log(logging_level, f"{prefix_item} {console_output}")
+
+
+class AzureLogFormatter(logging.Formatter):
+    # 7-bit C1 ANSI sequences
+    ansi_escape = re.compile(
+        r"""
+        \x1B  # ESC
+        (?:   # 7-bit C1 Fe (except CSI)
+            [@-Z\\-_]
+        |     # or [ for CSI, followed by a control sequence
+            \[
+            [0-?]*  # Parameter bytes
+            [ -/]*  # Intermediate bytes
+            [@-~]   # Final byte
+        )
+    """,
+        re.VERBOSE,
+    )
+
+    MAX_MESSAGE_LENGTH = 32000
+    TRUNCATION_TEXT = "MESSAGE TOO LONG, TAILING..."
+
+    def format(self, record):
+        s = super().format(record)
+        s = AzureLogFormatter.ansi_escape.sub("", s)
+
+        # not doing this here might produce errors if we try to log empty strings.
+        if s == "":
+            s = "EMPTY MESSAGE!"
+
+        # azure monitor is limiting the message size.
+        if len(s) > AzureLogFormatter.MAX_MESSAGE_LENGTH:
+            s = f"{AzureLogFormatter.TRUNCATION_TEXT}\n{s[-1 * AzureLogFormatter.MAX_MESSAGE_LENGTH:]}"
+
+        return s

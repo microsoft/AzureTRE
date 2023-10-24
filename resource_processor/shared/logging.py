@@ -1,17 +1,14 @@
 import logging
 import os
 import re
-
-from opencensus.ext.azure.log_exporter import AzureLogHandler
-from opencensus.trace import config_integration
-from opencensus.trace.samplers import AlwaysOnSampler
-from opencensus.trace.tracer import Tracer
-
-from shared.config import VERSION
+from opentelemetry.instrumentation.logging import LoggingInstrumentor
+from azure.monitor.opentelemetry import configure_azure_monitor
 
 UNWANTED_LOGGERS = [
     "azure.core.pipeline.policies.http_logging_policy",
     "azure.eventhub._eventprocessor.event_processor",
+    # suppressing, have support case open
+    "azure.servicebus._pyamqp.aio._session_async",
     "azure.identity.aio._credentials.managed_identity",
     "azure.identity.aio._credentials.environment",
     "azure.identity.aio._internal.get_token_mixin",
@@ -34,96 +31,58 @@ LOGGERS_FOR_ERRORS_ONLY = [
     "uamqp.async_ops.session_async",
     "uamqp.sender",
     "uamqp.client",
-    "azure.servicebus.aio._base_handler_async"
+    "azure.servicebus.aio._base_handler_async",
+    "azure.monitor.opentelemetry.exporter.export._base",
+    "azure.servicebus.aio._base_handler_async",
+    "azure.servicebus._pyamqp.aio._connection_async",
+    "azure.servicebus._pyamqp.aio._link_async",
+    "opentelemetry.attributes",
+    "azure.servicebus._pyamqp.aio._management_link_async",
+    "azure.servicebus._pyamqp.aio._cbs_async",
+    "azure.servicebus._pyamqp.aio._client_async"
 ]
 
-debug = os.environ.get('DEBUG', 'False').lower() in ('true', '1')
+debug = os.environ.get("DEBUG", "False").lower() in ("true", "1")
+
+logger = logging.getLogger()
 
 
-def disable_unwanted_loggers():
-    """
-    Disables the unwanted loggers.
-    """
+def configure_loggers():
+
     for logger_name in UNWANTED_LOGGERS:
         logging.getLogger(logger_name).disabled = True
 
-
-def telemetry_processor_callback_function(envelope):
-    envelope.tags['ai.cloud.role'] = 'resource_processor'
-    envelope.tags['ai.application.ver'] = VERSION
-
-
-def initialize_logging(logging_level: int, correlation_id: str, add_console_handler: bool = False) -> logging.LoggerAdapter:
-    """
-    Adds the Application Insights handler for the root logger and sets the given logging level.
-    Creates and returns a logger adapter that integrates the correlation ID, if given, to the log messages.
-    Note: This should be called only once, otherwise duplicate log entries could be produced.
-
-    :param logging_level: The logging level to set e.g., logging.WARNING.
-    :param correlation_id: Optional. The correlation ID that is passed on to the operation_Id in App Insights.
-    :returns: A newly created logger adapter.
-    """
-    logger = logging.getLogger()
-
-    # When using sessions and NEXT_AVAILABLE_SESSION we see regular exceptions which are actually expected
-    # See https://github.com/Azure/azure-sdk-for-python/issues/9402
-    # Other log entries such as 'link detach' also confuse the logs, and are expected.
-    # We don't want these making the logs any noisier so we raise the logging level for that logger here
-    # To inspect all the loggers, use -> loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
     for logger_name in LOGGERS_FOR_ERRORS_ONLY:
         logging.getLogger(logger_name).setLevel(logging.ERROR)
 
+
+def initialize_logging(logging_level: int, add_console_handler: bool = False) -> logging.Logger:
+
+    logger.setLevel(logging_level)
+
     if add_console_handler:
-        console_formatter = logging.Formatter(fmt='%(module)-7s %(name)-7s %(process)-7s %(asctime)s %(levelname)-7s %(message)s')
+        console_formatter = logging.Formatter(
+            fmt="%(module)-7s %(name)-7s %(process)-7s %(asctime)s %(otelServiceName)-7s %(otelTraceID)-7s %(otelSpanID)-7s %(levelname)-7s %(message)s"
+        )
         console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging_level)
         console_handler.setFormatter(console_formatter)
         logger.addHandler(console_handler)
 
     try:
-        # picks up APPLICATIONINSIGHTS_CONNECTION_STRING automatically
-        azurelog_handler = AzureLogHandler()
-        azurelog_handler.add_telemetry_processor(telemetry_processor_callback_function)
-        azurelog_formatter = AzureLogFormatter()
-        azurelog_handler.setFormatter(azurelog_formatter)
-        logger.addHandler(azurelog_handler)
+        configure_azure_monitor()
     except ValueError as e:
         logger.error(f"Failed to set Application Insights logger handler: {e}")
 
-    config_integration.trace_integrations(['logging'])
-    logging.basicConfig(level=logging_level, format='%(asctime)s traceId=%(traceId)s spanId=%(spanId)s %(message)s')
-    Tracer(sampler=AlwaysOnSampler())
-    logger.setLevel(logging_level)
+    LoggingInstrumentor().instrument(
+        set_logging_format=True,
+        level=logging_level
+    )
 
-    extra = None
-
-    if correlation_id:
-        extra = {'traceId': correlation_id}
-
-    adapter = logging.LoggerAdapter(logger, extra)
-    adapter.debug(f"Logger adapter initialized with extra: {extra}")
-
-    return adapter
+    return logger
 
 
-def get_message_id_logger(correlation_id: str) -> logging.LoggerAdapter:
-    """
-    Gets a logger that includes message id for easy correlation between log entries.
-    :param correlation_id: Optional. The correlation ID that is passed on to the operation_Id in App Insights.
-    :returns: A modified logger adapter (from the original initiated one).
-    """
-    logger = logging.getLogger()
-    extra = None
-
-    if correlation_id:
-        extra = {'traceId': correlation_id}
-
-    adapter = logging.LoggerAdapter(logger, extra)
-    adapter.debug(f"Logger adapter now includes extra: {extra}")
-
-    return adapter
-
-
-def shell_output_logger(console_output: str, prefix_item: str, logger: logging.LoggerAdapter, logging_level: int):
+def shell_output_logger(console_output: str, prefix_item: str, logging_level: int):
     """
     Logs the shell output (stdout/err) a line at a time with an option to remove ANSI control chars.
     """

@@ -10,21 +10,34 @@ from shared.logging import shell_output_logger
 
 
 def azure_login_command(config):
-    set_cloud_command = f"az cloud set --name {config['azure_environment']}"
+    set_cloud_command = f"az cloud set --name {config['azure_environment']} >/dev/null "
 
     if config["vmss_msi_id"]:
         # Use the Managed Identity when in VMSS context
-        login_command = f"az login --identity -u {config['vmss_msi_id']}"
+        login_command = f"az login --identity -u {config['vmss_msi_id']} >/dev/null "
+
     else:
         # Use a Service Principal when running locally
-        login_command = f"az login --service-principal --username {config['arm_client_id']} --password {config['arm_client_secret']} --tenant {config['arm_tenant_id']}"
+        login_command = f"az login --service-principal --username {config['arm_client_id']} --password {config['arm_client_secret']} --tenant {config['arm_tenant_id']} >/dev/null"
 
     return f"{set_cloud_command} && {login_command}"
 
 
+def apply_porter_credentials_sets_command(config):
+    if config["vmss_msi_id"]:
+        # Use the Managed Identity when in VMSS context
+        porter_credential_sets = "porter credentials apply vmss_porter/arm_auth.json >/dev/null 2>&1 && porter credentials apply vmss_porter/aad_auth.json >/dev/null 2>&1"
+
+    else:
+        # Use a Service Principal when running locally
+        porter_credential_sets = "porter credentials apply vmss_porter/arm_auth_local_debugging.json >/dev/null 2>&1 && porter credentials apply vmss_porter/aad_auth_local_debugging.json >/dev/null 2>&1"
+
+    return f"{porter_credential_sets}"
+
+
 def azure_acr_login_command(config):
     acr_name = _get_acr_name(acr_fqdn=config['registry_server'])
-    return f"az acr login --name {acr_name}"
+    return f"az acr login --name {acr_name} >/dev/null "
 
 
 async def build_porter_command(config, logger, msg_body, custom_action=False):
@@ -87,8 +100,8 @@ async def build_porter_command_for_outputs(msg_body):
 
 
 async def get_porter_parameter_keys(config, logger, msg_body):
-    command = [f"{azure_login_command(config)} >/dev/null && \
-        {azure_acr_login_command(config)} >/dev/null && \
+    command = [f"{azure_login_command(config)} && \
+        {azure_acr_login_command(config)} && \
         porter explain --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']} --output json"]
 
     proc = await asyncio.create_subprocess_shell(

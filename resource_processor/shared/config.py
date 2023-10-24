@@ -1,12 +1,16 @@
+import logging
 import os
-
+from opentelemetry import trace
 from _version import __version__
 
 VERSION = __version__
 
+logger = logging.getLogger()
 
-def get_config(logger_adapter) -> dict:
-    config = {}
+
+def get_config(tracer: trace.Tracer) -> dict:
+    with tracer.start_as_current_span("get_config"):
+        config = {}
 
     config["registry_server"] = os.environ["REGISTRY_SERVER"]
     config["tfstate_container_name"] = os.environ["TERRAFORM_STATE_CONTAINER_NAME"]
@@ -26,7 +30,7 @@ def get_config(logger_adapter) -> dict:
     try:
         config["number_processes_int"] = int(config["number_processes"])
     except ValueError:
-        logger_adapter.info("Invalid setting for NUMBER_PROCESSES, will default to 1")
+        logger.info("Invalid setting for NUMBER_PROCESSES, will default to 1")
         config["number_processes_int"] = 1
 
     # Needed for running porter
