@@ -6,6 +6,7 @@ FEATURES:
 ENHANCEMENTS:
 
 BUG FIXES:
+* Enabling support for more than 20 users/groups in Workspace API ([#3759](https://github.com/microsoft/AzureTRE/pull/3759  ))
 
 COMPONENTS:
 
