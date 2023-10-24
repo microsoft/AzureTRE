@@ -5,7 +5,6 @@ from enum import Enum
 from typing import List, Optional
 import jwt
 import requests
-import rsa
 
 from fastapi import Request, HTTPException, status
 from msal import ConfidentialClientApplication
@@ -18,6 +17,10 @@ from models.domain.workspace import Workspace, WorkspaceRole
 from resources import strings
 from api.dependencies.database import get_db_client_from_request
 from db.repositories.workspaces import WorkspaceRepository
+
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 
 MICROSOFT_GRAPH_URL = config.MICROSOFT_GRAPH_URL.strip("/")
 
@@ -179,9 +182,12 @@ class AzureADAuthorization(AccessService):
                     for key in keys['keys']:
                         n = int.from_bytes(base64.urlsafe_b64decode(self._ensure_b64padding(key['n'])), "big")
                         e = int.from_bytes(base64.urlsafe_b64decode(self._ensure_b64padding(key['e'])), "big")
-                        pub_key = rsa.PublicKey(n, e)
+                        pub_key = rsa.RSAPublicNumbers(e, n).public_key(default_backend())
                         # Cache the PEM formatted public key.
-                        AzureADAuthorization._jwt_keys[key['kid']] = pub_key.save_pkcs1()
+                        AzureADAuthorization._jwt_keys[key['kid']] = pub_key.public_bytes(
+                            encoding=serialization.Encoding.PEM,
+                            format=serialization.PublicFormat.PKCS1
+                        )
 
         return AzureADAuthorization._jwt_keys[key_id]
 
