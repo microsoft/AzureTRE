@@ -40,12 +40,4 @@ Once you're done, click Submit.
 
 Verify that the configuration is working by creating Review VMs for existing import export and export requests (configuration is not verified on update).
 
-
-## Troubleshooting
-
-### Users cannot create Review VMs
-
-If a user sees an error when creating Review VMs, this most likely means that the configuration isn't correct.
-Double-check that all GUIDs don't have any symbols missing, and the names of templates are correct.
-
-[![Review VM Error](../assets/using-review-vm-errors.png)](../assets/using-review-vm-errors.png)
+For troubleshooting guidance please review [the airlock troubleshooting FAQ](../troubleshooting-faq/airlock-troubleshooting.md)
