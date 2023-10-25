@@ -1,5 +1,5 @@
 import pytest
-from mock import patch
+from mock import call, patch
 
 from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace import Workspace, WorkspaceRole
@@ -552,6 +552,66 @@ def test_get_workspace_role_assignment_details_with_groups_and_users_assigned_re
     assert len(role_assignment_details) == 1
     assert "test_user2@email.com" in role_assignment_details["WorkspaceOwner"]
     assert "test_user1@email.com" in role_assignment_details["WorkspaceOwner"]
+
+
+@patch("services.aad_authentication.AzureADAuthorization._get_auth_header")
+@patch("services.aad_authentication.AzureADAuthorization._get_batch_users_by_role_assignments_body")
+@patch("requests.post")
+def test_get_user_emails_with_batch_of_more_than_20_requests(mock_graph_post, mock_get_batch_users_by_role_assignments_body, mock_headers):
+    # Arrange
+    access_service = AzureADAuthorization()
+    roles_graph_data = [{"id": "role1"}, {"id": "role2"}]
+    msgraph_token = "token"
+    batch_endpoint = access_service._get_batch_endpoint()
+
+    # mock the response of _get_auth_header
+    headers = {"Authorization": f"Bearer {msgraph_token}"}
+    mock_headers.return_value = headers
+    headers["Content-type"] = "application/json"
+
+    # mock the response of the get batch request for 30 users
+    batch_request_body_first_20 = {
+        "requests": [
+            {"id": f"{i}", "method": "GET", "url": f"/users/{i}"} for i in range(20)
+        ]
+    }
+
+    batch_request_body_last_10 = {
+        "requests": [
+            {"id": f"{i}", "method": "GET", "url": f"/users/{i}"} for i in range(20, 30)
+        ]
+    }
+
+    batch_request_body = {
+        "requests": [
+            {"id": f"{i}", "method": "GET", "url": f"/users/{i}"} for i in range(30)
+        ]
+    }
+
+    mock_get_batch_users_by_role_assignments_body.return_value = batch_request_body
+
+    # Mock the response of the post request
+    mock_graph_post_response = {"responses": [{"id": "user1"}, {"id": "user2"}]}
+    mock_graph_post.return_value.json.return_value = mock_graph_post_response
+
+    # Act
+    users_graph_data = access_service._get_user_emails(roles_graph_data, msgraph_token)
+
+    # Assert
+    assert len(users_graph_data["responses"]) == 4
+    calls = [
+        call(
+            f"{batch_endpoint}",
+            json=batch_request_body_first_20,
+            headers=headers
+        ),
+        call(
+            f"{batch_endpoint}",
+            json=batch_request_body_last_10,
+            headers=headers
+        )
+    ]
+    mock_graph_post.assert_has_calls(calls, any_order=True)
 
 
 def get_mock_batch_response(user_principals, group_principals):
