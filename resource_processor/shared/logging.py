@@ -34,7 +34,12 @@ LOGGERS_FOR_ERRORS_ONLY = [
     "uamqp.async_ops.session_async",
     "uamqp.sender",
     "uamqp.client",
-    "azure.servicebus.aio._base_handler_async"
+    "azure.servicebus.aio._base_handler_async",
+    "azure.servicebus._pyamqp.aio._cbs_async",
+    "azure.servicebus._pyamqp.aio._connection_async",
+    "azure.servicebus._pyamqp.aio._link_async",
+    "azure.servicebus._pyamqp.aio._management_link_async",
+    "azure.servicebus._pyamqp.aio._session_async"
 ]
 
 debug = os.environ.get('DEBUG', 'False').lower() in ('true', '1')
