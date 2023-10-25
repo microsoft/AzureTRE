@@ -65,7 +65,7 @@ ENV PATH ${PORTER_HOME_V1}:$PATH
 
 # Install requirements
 ARG PIP_VERSION=23.3.1
-RUN  pip3 install pip==${PIP_VERSION} && pip3 config set global.disable-pip-version-check true
+RUN  pip3 --no-cache-dir install pip==${PIP_VERSION} && pip3 config set global.disable-pip-version-check true
 COPY ["requirements.txt", "/tmp/pip-tmp/" ]
 COPY ["api_app/requirements.txt", "api_app/requirements-dev.txt", "/tmp/pip-tmp/api_app/" ]
 COPY ["resource_processor/vmss_porter/requirements.txt", "/tmp/pip-tmp/resource_processor/vmss_porter/" ]
