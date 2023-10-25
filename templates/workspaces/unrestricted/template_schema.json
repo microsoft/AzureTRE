@@ -207,14 +207,14 @@
             "type": "string",
             "title": "Application (Client) ID",
             "description": "The AAD Application Registration ID for the workspace.",
-            "updatable": true
+            "updateable": true
           },
           "client_secret": {
             "type": "string",
             "title": "Application (Client) Secret",
             "description": "The AAD Application Registration secret for the workspace. This value will be stored in the Workspace Key Vault.",
             "sensitive": true,
-            "updatable": true
+            "updateable": true
           }
         },
         "required": [
