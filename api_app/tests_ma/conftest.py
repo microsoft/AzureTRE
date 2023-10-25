@@ -580,5 +580,5 @@ def no_database():
             with patch(
                 "db.repositories.base.BaseRepository._get_container", return_value=None
             ):
-                with patch("core.events.bootstrap_database", return_value=None):
+                with patch("db.events.bootstrap_database", return_value=None):
                     yield
