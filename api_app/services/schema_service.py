@@ -50,20 +50,16 @@ def enrich_template(original_template, extra_properties, is_update: bool = False
     # this will help the UI render fields appropriately and know what it can send in a PATCH
     if is_update:
         for prop in template["properties"].values():
-            if "updateable" not in prop.keys() or prop["updateable"] is not True:
+            if not prop.get("updateable", True):
                 prop["readOnly"] = True
 
-        # for any properties under allOf and then, under properties, mark them as readOnly
         if "allOf" in template:
             for conditional_property in template["allOf"]:
-                if "then" in conditional_property and "properties" in conditional_property["then"]:
-                    for prop in conditional_property["then"]["properties"].values():
-                        if "updateable" not in prop.keys() or prop["updateable"] is not True:
-                            prop["readOnly"] = True
-                if "else" in conditional_property and "properties" in conditional_property["else"]:
-                    for prop in conditional_property["else"]["properties"].values():
-                        if "updateable" not in prop.keys() or prop["updateable"] is not True:
-                            prop["readOnly"] = True
+                for condition in ["then", "else"]:
+                    if condition in conditional_property and "properties" in conditional_property[condition]:
+                        for prop in conditional_property[condition]["properties"].values():
+                            if not prop.get("updateable", True):
+                                prop["readOnly"] = True
 
     # if there is an 'allOf' property which is empty, the validator fails - so remove the key
     if "allOf" in template and template["allOf"] is None:
