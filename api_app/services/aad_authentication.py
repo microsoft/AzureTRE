@@ -184,13 +184,12 @@ class AzureADAuthorization(AccessService):
                         n = int.from_bytes(base64.urlsafe_b64decode(self._ensure_b64padding(key['n'])), "big")
                         e = int.from_bytes(base64.urlsafe_b64decode(self._ensure_b64padding(key['e'])), "big")
                         pub_key = rsa.RSAPublicNumbers(e, n).public_key(default_backend())
-                        pub_key_pkcs1 = pub_key.public_bytes(
+
+                        # Cache the PEM formatted public key.
+                        AzureADAuthorization._jwt_keys[key['kid']] = pub_key.public_bytes(
                             encoding=serialization.Encoding.PEM,
                             format=serialization.PublicFormat.PKCS1
                         )
-
-                        # Cache the PEM formatted public key.
-                        AzureADAuthorization._jwt_keys[key['kid']] = pub_key_pkcs1
 
         return AzureADAuthorization._jwt_keys[key_id]
 
@@ -254,7 +253,18 @@ class AzureADAuthorization(AccessService):
         batch_request_body = self._get_batch_users_by_role_assignments_body(roles_graph_data)
         headers = self._get_auth_header(msgraph_token)
         headers["Content-type"] = "application/json"
-        users_graph_data = requests.post(batch_endpoint, json=batch_request_body, headers=headers).json()
+        max_number_request = 20
+        requests_from_batch = batch_request_body["requests"]
+        # We split the original batch request body in sub-lits with at most max_number_request elements
+        batch_request_body_list = [requests_from_batch[i:i + max_number_request] for i in range(0, len(requests_from_batch), max_number_request)]
+        users_graph_data = {"responses": []}
+
+        # For each sub-list it's required to call the batch endpoint for retrieveing user/group information
+        for request_body_element in batch_request_body_list:
+            batch_request_body_tmp = {"requests": request_body_element}
+            users_graph_data_tmp = requests.post(batch_endpoint, json=batch_request_body_tmp, headers=headers).json()
+            users_graph_data["responses"] = users_graph_data["responses"] + users_graph_data_tmp["responses"]
+
         return users_graph_data
 
     def _get_user_emails_from_response(self, users_graph_data):
