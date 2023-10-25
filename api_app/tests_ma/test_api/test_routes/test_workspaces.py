@@ -503,7 +503,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json=workspace_patch)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-        assert ("header -> etag" in response.text and "field required" in response.text)
+        assert ("('header', 'etag')" in response.text and "field required" in response.text)
 
     # [PATCH] /workspaces/{workspace_id}
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)

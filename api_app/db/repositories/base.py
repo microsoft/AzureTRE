@@ -30,7 +30,7 @@ class BaseRepository:
             raise UnableToAccessDatabase
 
     async def query(self, query: str, parameters: Optional[dict] = None):
-        items = self.container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True)
+        items = self.container.query_items(query=query, parameters=parameters)
         return [i async for i in items]
 
     async def read_item_by_id(self, item_id: str) -> dict:

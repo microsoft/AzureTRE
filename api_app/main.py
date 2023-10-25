@@ -6,7 +6,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi_utils.tasks import repeat_every
+from fastapi.concurrency import asynccontextmanager
 from service_bus.airlock_request_status_update import receive_step_result_message_and_update_status
 
 from services.tracing import RequestTracerMiddleware
@@ -20,9 +20,28 @@ from api.errors.http_error import http_error_handler
 from api.errors.validation_error import http422_error_handler
 from api.errors.generic_error import generic_error_handler
 from core import config
-from core.events import create_start_app_handler, create_stop_app_handler
+from db.events import bootstrap_database
 from services.logging import initialize_logging, telemetry_processor_callback_function
 from service_bus.deployment_status_updater import DeploymentStatusUpdater
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.cosmos_client = None
+    await bootstrap_database(app)
+
+    statusWatcher = DeploymentStatusUpdater(app)
+    await statusWatcher.init_repos()
+
+    async def update_airlock_request_status():
+        while True:
+            await receive_step_result_message_and_update_status(app)
+            await asyncio.sleep(20)
+
+    current_event_loop = asyncio.get_event_loop()
+    asyncio.ensure_future(statusWatcher.receive_messages(), loop=current_event_loop)
+    asyncio.ensure_future(update_airlock_request_status(), loop=current_event_loop)
+    yield
 
 
 def get_application() -> FastAPI:
@@ -33,11 +52,9 @@ def get_application() -> FastAPI:
         version=config.VERSION,
         docs_url=None,
         redoc_url=None,
-        openapi_url=None
+        openapi_url=None,
+        lifespan=lifespan
     )
-
-    application.add_event_handler("startup", create_start_app_handler(application))
-    application.add_event_handler("shutdown", create_stop_app_handler(application))
 
     try:
         exporter = AzureExporter(sampler=ProbabilitySampler(1.0))
@@ -69,21 +86,6 @@ else:
     initialize_logging(logging.INFO)
 
 app = get_application()
-
-
-@app.on_event("startup")
-async def watch_deployment_status() -> None:
-    logging.info("Starting deployment status watcher thread")
-    statusWatcher = DeploymentStatusUpdater(app)
-    await statusWatcher.init_repos()
-    current_event_loop = asyncio.get_event_loop()
-    asyncio.run_coroutine_threadsafe(statusWatcher.receive_messages(), loop=current_event_loop)
-
-
-@app.on_event("startup")
-@repeat_every(seconds=20, wait_first=True, logger=logging.getLogger())
-async def update_airlock_request_status() -> None:
-    await receive_step_result_message_and_update_status(app)
 
 
 if __name__ == "__main__":

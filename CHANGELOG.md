@@ -6,6 +6,7 @@ FEATURES:
 ENHANCEMENTS:
 
 BUG FIXES:
+* Update Python packages, and fix breaking changes ([#3764](https://github.com/microsoft/AzureTRE/issues/3764))
 * Enabling support for more than 20 users/groups in Workspace API ([#3759](https://github.com/microsoft/AzureTRE/pull/3759  ))
 
 COMPONENTS:
