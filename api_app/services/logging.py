@@ -18,6 +18,10 @@ UNWANTED_LOGGERS = [
     "azure.identity.aio._credentials.chained",
     "azure.identity",
     "msal.token_cache"
+    # Remove these once the following PR is merged:
+    # https://github.com/Azure/azure-sdk-for-python/pull/30832
+    # Issue: https://github.com/microsoft/AzureTRE/issues/3766
+    "azure.servicebus._pyamqp.aio._session_async"
 ]
 
 LOGGERS_FOR_ERRORS_ONLY = [
@@ -33,7 +37,12 @@ LOGGERS_FOR_ERRORS_ONLY = [
     "uamqp.async_ops.session_async",
     "uamqp.sender",
     "uamqp.client",
-    "azure.servicebus.aio._base_handler_async"
+    "azure.servicebus.aio._base_handler_async",
+    "azure.servicebus._pyamqp.aio._cbs_async",
+    "azure.servicebus._pyamqp.aio._connection_async",
+    "azure.servicebus._pyamqp.aio._link_async",
+    "azure.servicebus._pyamqp.aio._management_link_async",
+    "azure.servicebus._pyamqp.aio._session_async"
 ]
 
 
