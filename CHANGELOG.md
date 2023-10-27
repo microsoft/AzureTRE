@@ -1,12 +1,16 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.16.0 (Unreleased)
 
+**BREAKING CHANGES & MIGRATIONS**:
+To resolve the Airlock import issue described in ([#3767](https://github.com/microsoft/AzureTRE/pull/3767)) any existing airlock import review workspaces will need upgrading or recreating. After upgrade run `make deploy-core` to reinstate the DNS record.
+
 FEATURES:
 
 ENHANCEMENTS:
 
 BUG FIXES:
 * Enabling support for more than 20 users/groups in Workspace API ([#3759](https://github.com/microsoft/AzureTRE/pull/3759  ))
+* Airlock Import Review workspace uses dedicated DNS zone to prevent conflict with core ([#3767](https://github.com/microsoft/AzureTRE/pull/3767))
 
 COMPONENTS:
 
