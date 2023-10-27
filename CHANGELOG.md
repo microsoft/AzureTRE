@@ -2,7 +2,7 @@
 ## 0.16.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
-To resolve the Airlock import issue described in ([#3767](https://github.com/microsoft/AzureTRE/pull/3767)) any existing airlock import review workspaces will need upgrading or recreating. After upgrade run `make deploy-core` to reinstate the DNS record.
+To resolve the Airlock import issue described in ([#3767](https://github.com/microsoft/AzureTRE/pull/3767)) the new airlock import review tempalte will need registering using `make workspace_bundle BUNDLE=airlock-import-review` and any existing airlock import review workspaces will need upgrading. After upgrade run `make deploy-core` to reinstate and deleted DNS records.
 
 FEATURES:
 
