@@ -23,6 +23,7 @@ locals {
   status_changed_topic_name = "evgt-airlock-status-changed-${local.topic_name_suffix}"
   notification_topic_name   = "evgt-airlock-notification-${local.topic_name_suffix}"
   data_deletion_topic_name  = "evgt-airlock-data-deletion-${local.topic_name_suffix}"
+  scan_result_topic_name    = "evgt-airlock-scan-result-${local.topic_name_suffix}"
 
   step_result_queue_name    = "airlock-step-result"
   status_changed_queue_name = "airlock-status-changed"
@@ -39,6 +40,7 @@ locals {
   import_rejected_eventgrid_subscription_name   = "evgs-airlock-import-rejected-blob-created"
   import_blocked_eventgrid_subscription_name    = "evgs-airlock-import-blocked-blob-created"
   export_approved_eventgrid_subscription_name   = "evgs-airlock-export-approved-blob-created"
+  scan_result_eventgrid_subscription_name       = "evgs-airlock-scan-result"
 
   airlock_function_app_name = "func-airlock-processor-${var.tre_id}"
   airlock_function_sa_name  = lower(replace("stairlockp${var.tre_id}", "-", ""))
