@@ -111,6 +111,32 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
   lifecycle { ignore_changes = [tags] }
 }
 
+
+# Enable Airlock Malware Scanning on Core TRE
+resource "azapi_resource_action" "enable_defender_for_Storage" {
+  count       = var.enable_malware_scanning ? 1 : 0
+  type        = "Microsoft.Security/defenderForStorageSettings@2022-12-01-preview"
+  resource_id = "${azurerm_storage_account.sa_import_in_progress.id}/providers/Microsoft.Security/defenderForStorageSettings/current"
+  method      = "PUT"
+
+  body = jsonencode({
+    properties = {
+      isEnabled = true
+      malwareScanning = {
+        onUpload = {
+          isEnabled     = true
+          capGBPerMonth = 5000
+        },
+        scanResultsEventGridTopicResourceId = azurerm_eventgrid_topic.scan_result[0].id
+      }
+      sensitiveDataDiscovery = {
+        isEnabled = true
+      }
+      overrideSubscriptionLevelSettings = true
+    }
+  })
+}
+
 resource "azurerm_private_endpoint" "stg_import_inprogress_pe" {
   name                = "pe-stg-import-inprogress-blob-${var.tre_id}"
   location            = var.location

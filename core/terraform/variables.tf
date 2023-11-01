@@ -130,6 +130,13 @@ variable "arm_environment" {
   description = "Used as an environment variable in the VMSS to set the Azure cloud for Terraform"
 }
 
+variable "arm_use_msi" {
+  type        = bool
+  default     = false
+  description = "Used as an environment variable to determine if Terraform should use a managed identity"
+}
+
+
 variable "stateful_resources_locked" {
   type        = bool
   default     = true

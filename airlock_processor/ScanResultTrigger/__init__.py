@@ -14,7 +14,7 @@ def main(msg: func.ServiceBusMessage,
 
     logging.info("Python ServiceBus queue trigger processed message - Malware scan result arrived!")
     body = msg.get_body().decode('utf-8')
-    logging.info('Python ServiceBus queue trigger processed message: %s', body)
+    logging.info('Python ServiceBus queue trigger processed message: {0}'.format(body))
     status_message = None
 
     try:
@@ -34,9 +34,9 @@ def main(msg: func.ServiceBusMessage,
     try:
         json_body = json.loads(body)
         blob_uri = json_body["data"]["blobUri"]
-        verdict = json_body["data"]["verdict"]
+        verdict = json_body["data"]["scanResultType"]
     except KeyError as e:
-        logging.error("body was not as expected {}", e)
+        logging.error(f'body was not as expected {e}')
         raise e
 
     # Extract request id
@@ -46,10 +46,10 @@ def main(msg: func.ServiceBusMessage,
     # Otherwise, move the request to the blocked stage
     completed_step = constants.STAGE_SUBMITTED
     if verdict == constants.NO_THREATS:
-        logging.info('No malware were found in request id %s, moving to %s stage', request_id, constants.STAGE_IN_REVIEW)
+        logging.info('No malware were found in request id {0}, moving to {1} stage'.format(request_id, constants.STAGE_IN_REVIEW))
         new_status = constants.STAGE_IN_REVIEW
     else:
-        logging.info('Malware was found in request id %s, moving to %s stage', request_id, constants.STAGE_BLOCKING_INPROGRESS)
+        logging.info('Malware was found in request id {0}, moving to {1} stage'.format(request_id, constants.STAGE_BLOCKING_INPROGRESS))
         new_status = constants.STAGE_BLOCKING_INPROGRESS
         status_message = verdict
 

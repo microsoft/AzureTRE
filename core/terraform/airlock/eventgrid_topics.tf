@@ -161,6 +161,35 @@ resource "azurerm_private_endpoint" "eg_data_deletion" {
   }
 }
 
+resource "azurerm_eventgrid_topic" "scan_result" {
+  count                         = var.enable_malware_scanning ? 1 : 0
+  name                          = local.scan_result_topic_name
+  location                      = var.location
+  resource_group_name           = var.resource_group_name
+  public_network_access_enabled = var.enable_local_debugging
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  tags = merge(var.tre_core_tags, {
+    Publishers = "Airlock Processor;"
+  })
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_role_assignment" "servicebus_sender_scan_result" {
+  count                = var.enable_malware_scanning ? 1 : 0
+  scope                = var.airlock_servicebus.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_topic.scan_result[0].identity[0].principal_id
+
+  depends_on = [
+    azurerm_eventgrid_topic.scan_result
+  ]
+}
+
 # System topic
 resource "azurerm_eventgrid_system_topic" "import_inprogress_blob_created" {
   name                   = local.import_inprogress_sys_topic_name
@@ -392,6 +421,23 @@ resource "azurerm_eventgrid_event_subscription" "data_deletion" {
   depends_on = [
     azurerm_eventgrid_topic.data_deletion,
     azurerm_role_assignment.servicebus_sender_data_deletion
+  ]
+}
+
+resource "azurerm_eventgrid_event_subscription" "scan_result" {
+  count = var.enable_malware_scanning ? 1 : 0
+  name  = local.scan_result_eventgrid_subscription_name
+  scope = azurerm_eventgrid_topic.scan_result[0].id
+
+  service_bus_queue_endpoint_id = azurerm_servicebus_queue.scan_result.id
+
+  delivery_identity {
+    type = "SystemAssigned"
+  }
+
+  depends_on = [
+    azurerm_eventgrid_topic.scan_result,
+    azurerm_role_assignment.servicebus_sender_scan_result
   ]
 }
 
