@@ -20,7 +20,7 @@ RUN curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/re
 
 # Copy and change the file extension of .terraform file to .tf
 COPY ./terraform/import_review_resources.terraform "${BUNDLE_DIR}"/terraform/import_review_resources.tf
-# Remove once base workspace includes this change
+# HACK: PR #3769: Remove once base workspace includes this change
 COPY ./terraform/network_output.terraform "${BUNDLE_DIR}"/terraform/network/temp_output.tf
 
 # PORTER_MIXINS
