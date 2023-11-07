@@ -8,7 +8,6 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import asynccontextmanager
-from service_bus.airlock_request_status_update import receive_step_result_message_and_update_status
 
 from services.tracing import RequestTracerMiddleware
 from opencensus.trace.samplers import ProbabilitySampler
@@ -24,24 +23,22 @@ from core import config
 from db.events import bootstrap_database
 from services.logging import initialize_logging, telemetry_processor_callback_function
 from service_bus.deployment_status_updater import DeploymentStatusUpdater
-
+from service_bus.airlock_request_status_update import AirlockStatusUpdater
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.cosmos_client = None
     await bootstrap_database(app)
 
-    statusWatcher = DeploymentStatusUpdater(app)
-    await statusWatcher.init_repos()
+    deploymentStatusUpdater = DeploymentStatusUpdater(app)
+    await deploymentStatusUpdater.init_repos()
 
-    async def update_airlock_request_status():
-        while True:
-            await receive_step_result_message_and_update_status(app)
-            await asyncio.sleep(20)
+    airlockStatusUpdater = AirlockStatusUpdater(app)
+    await airlockStatusUpdater.init_repos()
 
     current_event_loop = asyncio.get_event_loop()
-    asyncio.ensure_future(statusWatcher.receive_messages(), loop=current_event_loop)
-    asyncio.ensure_future(update_airlock_request_status(), loop=current_event_loop)
+    asyncio.ensure_future(deploymentStatusUpdater.receive_messages(), loop=current_event_loop)
+    asyncio.ensure_future(airlockStatusUpdater.receive_messages(), loop=current_event_loop)
     yield
 
 
