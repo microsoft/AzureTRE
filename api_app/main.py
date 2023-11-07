@@ -25,6 +25,7 @@ from services.logging import initialize_logging, telemetry_processor_callback_fu
 from service_bus.deployment_status_updater import DeploymentStatusUpdater
 from service_bus.airlock_request_status_update import AirlockStatusUpdater
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.cosmos_client = None
