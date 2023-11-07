@@ -17,6 +17,7 @@ from models.domain.airlock_operations import StepResultStatusUpdateMessage
 from core import config, credentials
 from resources import strings
 
+
 class AirlockStatusUpdater():
 
     def __init__(self, app):
@@ -63,7 +64,6 @@ class AirlockStatusUpdater():
                 # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
                 logging.exception(f"Unknown exception. Will retry - {e}")
 
-
     async def process_message(self, msg):
         complete_message = False
         message = ""
@@ -79,7 +79,6 @@ class AirlockStatusUpdater():
             logging.exception(f"Exception processing message: {msg.correlation_id}")
 
             return complete_message
-
 
     async def update_status_in_database(self, step_result_message: StepResultStatusUpdateMessage):
         """
@@ -118,4 +117,3 @@ class AirlockStatusUpdater():
             logging.exception("Failed updating request status")
 
         return result
-
