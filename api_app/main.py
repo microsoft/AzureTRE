@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from opencensus.ext.azure.trace_exporter import AzureExporter
+import os
 import uvicorn
 
 from fastapi import FastAPI
@@ -57,9 +58,10 @@ def get_application() -> FastAPI:
     )
 
     try:
-        exporter = AzureExporter(sampler=ProbabilitySampler(1.0))
-        exporter.add_telemetry_processor(telemetry_processor_callback_function)
-        application.add_middleware(RequestTracerMiddleware, exporter=exporter)
+        if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+            exporter = AzureExporter(sampler=ProbabilitySampler(1.0))
+            exporter.add_telemetry_processor(telemetry_processor_callback_function)
+            application.add_middleware(RequestTracerMiddleware, exporter=exporter)
     except Exception:
         logging.exception("Failed to add RequestTracerMiddleware")
 

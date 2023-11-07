@@ -2,11 +2,16 @@ import pytest
 import pytest_asyncio
 from mock import patch
 
-from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
 from models.domain.authentication import User
+
+
+@pytest.fixture(autouse=True, scope='module')
+def no_lifespan_events():
+    with patch("main.lifespan"):
+        yield
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -128,18 +133,11 @@ def no_workspace_role_user():
 @pytest_asyncio.fixture(scope='module')
 def app() -> FastAPI:
     from main import get_application
-
     the_app = get_application()
     return the_app
 
-
 @pytest_asyncio.fixture
-async def initialized_app(app: FastAPI) -> FastAPI:
-    async with LifespanManager(app):
-        yield app
+async def client(app: FastAPI) -> AsyncClient:
 
-
-@pytest_asyncio.fixture
-async def client(initialized_app: FastAPI) -> AsyncClient:
-    async with AsyncClient(app=initialized_app, base_url="http://testserver", headers={"Content-Type": "application/json"}) as client:
+    async with AsyncClient(app=app, base_url="http://testserver", headers={"Content-Type": "application/json"}) as client:
         yield client

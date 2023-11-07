@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Optional
 
 from opencensus.ext.azure.log_exporter import AzureLogHandler
@@ -92,10 +93,11 @@ def initialize_logging(logging_level: int, correlation_id: Optional[str] = None)
 
     try:
         # picks up APPLICATIONINSIGHTS_CONNECTION_STRING automatically
-        azurelog_handler = AzureLogHandler()
-        azurelog_handler.add_telemetry_processor(telemetry_processor_callback_function)
-        azurelog_handler.addFilter(ExceptionTracebackFilter())
-        logger.addHandler(azurelog_handler)
+        if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+            azurelog_handler = AzureLogHandler()
+            azurelog_handler.add_telemetry_processor(telemetry_processor_callback_function)
+            azurelog_handler.addFilter(ExceptionTracebackFilter())
+            logger.addHandler(azurelog_handler)
     except ValueError as e:
         logger.error(f"Failed to set Application Insights logger handler: {e}")
 
