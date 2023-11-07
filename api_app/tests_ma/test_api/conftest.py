@@ -133,8 +133,10 @@ def no_workspace_role_user():
 @pytest_asyncio.fixture(scope='module')
 def app() -> FastAPI:
     from main import get_application
+
     the_app = get_application()
     return the_app
+
 
 @pytest_asyncio.fixture
 async def client(app: FastAPI) -> AsyncClient:
