@@ -4,7 +4,7 @@ import pytest
 import time
 
 from mock import AsyncMock, patch
-from api_app.service_bus.airlock_request_status_update import AirlockStatusUpdater
+from service_bus.airlock_request_status_update import AirlockStatusUpdater
 from models.domain.events import AirlockNotificationUserData, AirlockFile
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
 from models.domain.workspace import Workspace
