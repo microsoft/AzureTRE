@@ -60,19 +60,19 @@ class AirlockStatusUpdater():
 
     async def process_message(self, msg):
         complete_message = False
-        message = ""
 
         try:
-            message = parse_obj_as(StepResultStatusUpdateMessage, json.loads(str(message)))
-            logging.info(f"Received and parsed JSON for: {msg.correlation_id}")
+            message = parse_obj_as(StepResultStatusUpdateMessage, json.loads(str(msg)))
+            logging.info(f"Received step_result status update message with correlation ID {message.id}: {message}")
             complete_message = await self.update_status_in_database(message)
-            logging.info(f"Update status in DB for {message.operationId} - {message.status}")
+            logging.info(f"Update status in DB for {message.id}")
         except (json.JSONDecodeError, ValidationError):
-            logging.exception(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id}")
+            logging.exception(f"{strings.STEP_RESULT_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id}")
+            complete_message = True
         except Exception:
             logging.exception(f"Exception processing message: {msg.correlation_id}")
 
-            return complete_message
+        return complete_message
 
     async def update_status_in_database(self, step_result_message: StepResultStatusUpdateMessage):
         """
