@@ -1,6 +1,9 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.16.0 (Unreleased)
 
+**BREAKING CHANGES & MIGRATIONS**:
+To resolve the Airlock import issue described in ([#3767](https://github.com/microsoft/AzureTRE/pull/3767)), the new airlock import review tempalte will need to be registered using `make workspace_bundle BUNDLE=airlock-import-review`. Any existing airlock import review workspaces will need to be upgraded. After upgrading, run `make deploy-core` to reinstate any deleted DNS records.
+
 FEATURES:
 
 ENHANCEMENTS:
@@ -9,6 +12,7 @@ BUG FIXES:
 * Fix issue where updates fail as read only is not configured consistently on schema fields ([#3691](https://github.com/microsoft/AzureTRE/issues/3691))
 * When geting avaialble address spaces allow those allocated to deleted workspaces to be reassigned ([#3691](https://github.com/microsoft/AzureTRE/issues/3691))
 * Enabling support for more than 20 users/groups in Workspace API ([#3759](https://github.com/microsoft/AzureTRE/pull/3759  ))
+* Airlock Import Review workspace uses dedicated DNS zone to prevent conflict with core ([#3767](https://github.com/microsoft/AzureTRE/pull/3767))
 
 COMPONENTS:
 
