@@ -29,7 +29,10 @@ from service_bus.airlock_request_status_update import AirlockStatusUpdater
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.cosmos_client = None
-    await bootstrap_database(app)
+
+    while not await bootstrap_database(app):
+        await asyncio.sleep(5)
+        logging.warning("Database connection could not be established")
 
     deploymentStatusUpdater = DeploymentStatusUpdater(app)
     await deploymentStatusUpdater.init_repos()
@@ -37,9 +40,10 @@ async def lifespan(app: FastAPI):
     airlockStatusUpdater = AirlockStatusUpdater(app)
     await airlockStatusUpdater.init_repos()
 
-    current_event_loop = asyncio.get_event_loop()
-    asyncio.ensure_future(deploymentStatusUpdater.receive_messages(), loop=current_event_loop)
-    asyncio.ensure_future(airlockStatusUpdater.receive_messages(), loop=current_event_loop)
+    loop = asyncio.get_event_loop()
+    coroutines = [deploymentStatusUpdater.receive_messages(), airlockStatusUpdater.receive_messages()]
+    loop.create_task(asyncio.wait(coroutines))
+
     yield
 
 
