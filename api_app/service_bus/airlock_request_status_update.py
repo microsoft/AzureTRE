@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 
-from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
+from azure.servicebus.aio import ServiceBusClient
 from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
 from fastapi import HTTPException
 from pydantic import ValidationError, parse_obj_as
