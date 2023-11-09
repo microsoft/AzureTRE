@@ -113,7 +113,7 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
 
 
 # Enable Airlock Malware Scanning on Core TRE
-resource "azapi_resource_action" "enable_defender_for_Storage" {
+resource "azapi_resource_action" "enable_defender_for_storage" {
   count       = var.enable_malware_scanning ? 1 : 0
   type        = "Microsoft.Security/defenderForStorageSettings@2022-12-01-preview"
   resource_id = "${azurerm_storage_account.sa_import_in_progress.id}/providers/Microsoft.Security/defenderForStorageSettings/current"
