@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 
-from azure.servicebus.aio import ServiceBusClient
+from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
 from fastapi import HTTPException
 from pydantic import ValidationError, parse_obj_as
@@ -38,14 +38,17 @@ class AirlockStatusUpdater():
                     service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
                     receiver = service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_STEP_RESULT_QUEUE)
                     logging.info(f"Looking for new messages on {config.SERVICE_BUS_STEP_RESULT_QUEUE} queue...")
-                    received_msgs = await receiver.receive_messages(max_message_count=10, max_wait_time=60)
-                    for msg in received_msgs:
-                        complete_message = await self.process_message(msg)
-                        if complete_message:
-                            await receiver.complete_message(msg)
-                        else:
-                            # could have been any kind of transient issue, we'll abandon back to the queue, and retry
-                            await receiver.abandon_message(msg)
+                    async with receiver:
+                        received_msgs = await receiver.receive_messages(max_message_count=10, max_wait_time=5)
+                        for msg in received_msgs:
+                            async with AutoLockRenewer() as renewer:
+                                renewer.register(receiver, msg, max_lock_renewal_duration=60)
+                                complete_message = await self.process_message(msg)
+                                if complete_message:
+                                    await receiver.complete_message(msg)
+                                else:
+                                    # could have been any kind of transient issue, we'll abandon back to the queue, and retry
+                                    await receiver.abandon_message(msg)
 
             except OperationTimeoutError:
                 # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available

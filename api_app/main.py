@@ -40,10 +40,8 @@ async def lifespan(app: FastAPI):
     airlockStatusUpdater = AirlockStatusUpdater(app)
     await airlockStatusUpdater.init_repos()
 
-    loop = asyncio.get_event_loop()
-    coroutines = [deploymentStatusUpdater.receive_messages(), airlockStatusUpdater.receive_messages()]
-    loop.create_task(asyncio.wait(coroutines))
-
+    asyncio.create_task(deploymentStatusUpdater.receive_messages())
+    asyncio.create_task(airlockStatusUpdater.receive_messages())
     yield
 
 
