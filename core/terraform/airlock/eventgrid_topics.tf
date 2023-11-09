@@ -162,11 +162,12 @@ resource "azurerm_private_endpoint" "eg_data_deletion" {
 }
 
 resource "azurerm_eventgrid_topic" "scan_result" {
-  count                         = var.enable_malware_scanning ? 1 : 0
-  name                          = local.scan_result_topic_name
-  location                      = var.location
-  resource_group_name           = var.resource_group_name
-  public_network_access_enabled = var.enable_local_debugging
+  count               = var.enable_malware_scanning ? 1 : 0
+  name                = local.scan_result_topic_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  # This is mandatory for the scan result to be published since private networks are not supported yet
+  public_network_access_enabled = true
 
   identity {
     type = "SystemAssigned"
