@@ -28,8 +28,9 @@ class AirlockStatusUpdater():
         self.airlock_request_repo = await AirlockRequestRepository.create(db_client)
         self.workspace_repo = await WorkspaceRepository.create(db_client)
 
-    def run(self, *args, **kwargs):
-        asyncio.run(self.receive_messages())
+    import time
+
+    ...
 
     async def receive_messages(self):
         while True:
@@ -39,7 +40,7 @@ class AirlockStatusUpdater():
                     receiver = service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_STEP_RESULT_QUEUE)
                     logging.info(f"Looking for new messages on {config.SERVICE_BUS_STEP_RESULT_QUEUE} queue...")
                     async with receiver:
-                        received_msgs = await receiver.receive_messages(max_message_count=10, max_wait_time=5)
+                        received_msgs = await receiver.receive_messages(max_message_count=10, max_wait_time=1)
                         for msg in received_msgs:
                             async with AutoLockRenewer() as renewer:
                                 renewer.register(receiver, msg, max_lock_renewal_duration=60)
@@ -49,6 +50,8 @@ class AirlockStatusUpdater():
                                 else:
                                     # could have been any kind of transient issue, we'll abandon back to the queue, and retry
                                     await receiver.abandon_message(msg)
+
+                    await asyncio.sleep(10)
 
             except OperationTimeoutError:
                 # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
