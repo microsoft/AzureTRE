@@ -124,6 +124,12 @@ variable "resource_processor_vmss_sku" {
   description = "The SKU of the resource processor VMSS."
 }
 
+variable "arm_use_msi" {
+  type        = bool
+  default     = false
+  description = "Used as an environment variable to determine if Terraform should use a managed identity"
+}
+
 variable "stateful_resources_locked" {
   type        = bool
   default     = true
@@ -155,9 +161,6 @@ variable "public_deployment_ip_address" {
   default     = ""
 }
 
-# Important note: it is NOT enough to simply enable the malware scanning on. Further, manual, steps are required
-# in order to actually set up the scanner. Setting this property to True without supplying a scanner will result
-# in airlock requests being stuck in the in-progress stage.
 variable "enable_airlock_malware_scanning" {
   type        = bool
   default     = false

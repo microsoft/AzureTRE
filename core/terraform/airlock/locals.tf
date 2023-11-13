@@ -36,11 +36,11 @@ locals {
   step_result_eventgrid_subscription_name       = "evgs-airlock-update-status"
   status_changed_eventgrid_subscription_name    = "evgs-airlock-status-changed"
   data_deletion_eventgrid_subscription_name     = "evgs-airlock-data-deletion"
+  scan_result_eventgrid_subscription_name       = "evgs-airlock-scan-result"
   import_inprogress_eventgrid_subscription_name = "evgs-airlock-import-in-progress-blob-created"
   import_rejected_eventgrid_subscription_name   = "evgs-airlock-import-rejected-blob-created"
   import_blocked_eventgrid_subscription_name    = "evgs-airlock-import-blocked-blob-created"
   export_approved_eventgrid_subscription_name   = "evgs-airlock-export-approved-blob-created"
-  scan_result_eventgrid_subscription_name       = "evgs-airlock-scan-result"
 
   airlock_function_app_name = "func-airlock-processor-${var.tre_id}"
   airlock_function_sa_name  = lower(replace("stairlockp${var.tre_id}", "-", ""))
