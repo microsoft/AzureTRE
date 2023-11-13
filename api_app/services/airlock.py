@@ -114,7 +114,7 @@ def get_airlock_request_container_sas_token(account_name: str,
     try:
         udk = blob_service_client.get_user_delegation_key(key_start_time=start, key_expiry_time=expiry)
     except Exception:
-       raise  Exception("Failed getting user delegation key, has the API identity been granted 'Storage Blob Data Contributor' access to the storage account {account_name}?")
+       raise  Exception(f"Failed getting user delegation key, has the API identity been granted 'Storage Blob Data Contributor' access to the storage account {account_name}?")
 
     required_permission = get_required_permission(airlock_request)
 

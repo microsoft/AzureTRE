@@ -67,7 +67,6 @@ async def submit_airlock_import_request(workspace_path: str, workspace_owner_tok
             LOGGER.error(f"upload blob failed with exception: {e}")
             raise e
 
-
     # submit request
     LOGGER.info("Submitting airlock request")
     request_result = await post_request(None, f'/api{workspace_path}/requests/{request_id}/submit', workspace_owner_token, verify, 200)

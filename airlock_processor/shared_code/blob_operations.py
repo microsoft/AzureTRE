@@ -1,8 +1,8 @@
 import os
-import datetime
 import logging
 import json
 import re
+from datetime import datetime, timedelta
 from typing import Tuple
 
 from azure.core.exceptions import ResourceExistsError
@@ -73,12 +73,12 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
     # Remove sas token if not needed: https://github.com/microsoft/AzureTRE/issues/2034
     start = datetime.utcnow() - timedelta(minutes=15)
     expiry = datetime.utcnow() + timedelta(hours=1)
-    udk = blob_service_client.get_user_delegation_key(key_start_time=start, key_expiry_time=expiry)
+    udk = source_blob_service_client.get_user_delegation_key(key_start_time=start, key_expiry_time=expiry)
 
-    token = generate_container_sas(container_name=airlock_request.id,
-                                   account_name=account_name,
+    sas_token = generate_container_sas(container_name=container_name,
+                                   account_name=source_account_name,
                                    user_delegation_key=udk,
-                                   permission=required_permission,
+                                   permission=ContainerSasPermissions(read=True),
                                    start=start,
                                    expiry=expiry)
 
