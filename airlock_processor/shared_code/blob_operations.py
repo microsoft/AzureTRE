@@ -69,16 +69,19 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
         logging.error(msg)
         raise NoFilesInRequestException(msg)
 
-    udk = source_blob_service_client.get_user_delegation_key(datetime.datetime.utcnow() - datetime.timedelta(hours=1),
-                                                             datetime.datetime.utcnow() + datetime.timedelta(hours=1))
-
     # token geneation with expiry of 1 hour. since its not shared, we can leave it to expire (no need to track/delete)
     # Remove sas token if not needed: https://github.com/microsoft/AzureTRE/issues/2034
-    sas_token = generate_container_sas(account_name=source_account_name,
-                                       container_name=container_name,
-                                       user_delegation_key=udk,
-                                       permission=ContainerSasPermissions(read=True),
-                                       expiry=datetime.datetime.utcnow() + datetime.timedelta(hours=1))
+    start = datetime.utcnow() - timedelta(minutes=15)
+    expiry = datetime.utcnow() + timedelta(hours=1)
+    udk = blob_service_client.get_user_delegation_key(key_start_time=start, key_expiry_time=expiry)
+
+    token = generate_container_sas(container_name=airlock_request.id,
+                                   account_name=account_name,
+                                   user_delegation_key=udk,
+                                   permission=required_permission,
+                                   start=start,
+                                   expiry=expiry)
+
 
     source_blob = source_container_client.get_blob_client(blob_name)
     source_url = f'{source_blob.url}?{sas_token}'

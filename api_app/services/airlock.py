@@ -107,14 +107,22 @@ def get_airlock_request_container_sas_token(account_name: str,
                                             airlock_request: AirlockRequest):
     blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
                                             credential=credentials.get_credential())
+
+    start = datetime.utcnow() - timedelta(minutes=15)
     expiry = datetime.utcnow() + timedelta(hours=config.AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS)
-    udk = blob_service_client.get_user_delegation_key(datetime.utcnow(), expiry)
+
+    try:
+        udk = blob_service_client.get_user_delegation_key(key_start_time=start, key_expiry_time=expiry)
+    except Exception:
+       raise  Exception("Failed getting user delegation key, has the API identity been granted 'Storage Blob Data Contributor' access to the storage account {account_name}?")
+
     required_permission = get_required_permission(airlock_request)
 
     token = generate_container_sas(container_name=airlock_request.id,
                                    account_name=account_name,
                                    user_delegation_key=udk,
                                    permission=required_permission,
+                                   start=start,
                                    expiry=expiry)
 
     return "https://{}.blob.{}/{}?{}" \
@@ -267,7 +275,6 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
     # First check we have some email addresses so we can notify people.
     access_service = get_access_service()
     role_assignment_details = access_service.get_workspace_role_assignment_details(workspace)
-    check_email_exists(role_assignment_details)
 
     try:
         logging.debug(f"Saving airlock request item: {airlock_request.id}")

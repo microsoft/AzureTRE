@@ -51,16 +51,22 @@ async def submit_airlock_import_request(workspace_path: str, workspace_owner_tok
     wait_time = 30
     while not blob_uploaded:
         LOGGER.info(f"try #{i} to upload a blob to container [{container_url}]")
-        upload_response = await upload_blob_using_sas(BLOB_FILE_PATH, container_url)
-
-        if upload_response.status_code == 404:
+        try:
+            await asyncio.sleep(5)
+            upload_response = await upload_blob_using_sas(BLOB_FILE_PATH, container_url)
+            if "etag" in upload_response:
+                blob_uploaded = True
+            else:
+                raise Exception("upload failed")
+        except ResourceNotFoundError:
             i += 1
             LOGGER.info(f"sleeping for {wait_time} sec until container would be created")
             await asyncio.sleep(wait_time)
-        else:
-            assert upload_response.status_code == 201
-            LOGGER.info("upload blob succeeded")
-            blob_uploaded = True
+            pass
+        except Exception as e:
+            LOGGER.error(f"upload blob failed with exception: {e}")
+            raise e
+
 
     # submit request
     LOGGER.info("Submitting airlock request")

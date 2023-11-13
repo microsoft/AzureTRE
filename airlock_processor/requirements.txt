@@ -1,7 +1,7 @@
 # Do not include azure-functions-worker as it may conflict with the Azure Functions platform
 azure-core==1.29.5
 azure-functions==1.17.0
-azure-storage-blob==12.15.0
+azure-storage-blob==12.19.0
 azure-identity==1.14.1
 azure-mgmt-storage==21.1.0
 azure-mgmt-resource==23.0.1

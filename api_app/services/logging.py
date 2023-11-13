@@ -26,6 +26,7 @@ UNWANTED_LOGGERS = [
 ]
 
 LOGGERS_FOR_ERRORS_ONLY = [
+    "urllib3.connectionpool",
     "uamqp",
     "uamqp.authentication.cbs_auth_async",
     "uamqp.async_ops.client_async",
@@ -38,12 +39,14 @@ LOGGERS_FOR_ERRORS_ONLY = [
     "uamqp.async_ops.session_async",
     "uamqp.sender",
     "uamqp.client",
+    "azure.identity._persistent_cache",
     "azure.servicebus.aio._base_handler_async",
     "azure.servicebus._pyamqp.aio._cbs_async",
     "azure.servicebus._pyamqp.aio._connection_async",
     "azure.servicebus._pyamqp.aio._link_async",
     "azure.servicebus._pyamqp.aio._management_link_async",
-    "azure.servicebus._pyamqp.aio._session_async"
+    "azure.servicebus._pyamqp.aio._session_async",
+    "azure.servicebus._pyamqp.aio._client_async"
 ]
 
 
@@ -51,11 +54,11 @@ def disable_unwanted_loggers():
     """
     Disables the unwanted loggers.
     """
-    for logger_name in UNWANTED_LOGGERS:
-        logging.getLogger(logger_name).disabled = True
-
     for logger_name in LOGGERS_FOR_ERRORS_ONLY:
         logging.getLogger(logger_name).setLevel(logging.ERROR)
+
+    for logger_name in UNWANTED_LOGGERS:
+        logging.getLogger(logger_name).disabled = True
 
 
 def telemetry_processor_callback_function(envelope):
