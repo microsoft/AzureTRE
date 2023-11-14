@@ -307,10 +307,10 @@ async def test_save_and_publish_event_airlock_request_raises_503_if_publish_even
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('role_assignment_details_mock_return', [{},
-                                               {"AirlockManager": ["owner@outlook.com"]},
-                                               {"WorkspaceResearcher": [], "AirlockManager": ["owner@outlook.com"]},
-                                               {"WorkspaceResearcher": ["researcher@outlook.com"], "owner_emails": []},
-                                               {"WorkspaceResearcher": ["researcher@outlook.com"] }])
+                         {"AirlockManager": ["owner@outlook.com"]},
+                         {"WorkspaceResearcher": [], "AirlockManager": ["owner@outlook.com"]},
+                         {"WorkspaceResearcher": ["researcher@outlook.com"], "owner_emails": []},
+                         {"WorkspaceResearcher": ["researcher@outlook.com"]}])
 async def test_check_email_exists_raises_417_if_email_not_present(role_assignment_details_mock_return):
     role_assignment_details = role_assignment_details_mock_return
     with pytest.raises(HTTPException) as ex:

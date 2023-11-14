@@ -76,12 +76,11 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
     udk = source_blob_service_client.get_user_delegation_key(key_start_time=start, key_expiry_time=expiry)
 
     sas_token = generate_container_sas(container_name=container_name,
-                                   account_name=source_account_name,
-                                   user_delegation_key=udk,
-                                   permission=ContainerSasPermissions(read=True),
-                                   start=start,
-                                   expiry=expiry)
-
+                                       account_name=source_account_name,
+                                       user_delegation_key=udk,
+                                       permission=ContainerSasPermissions(read=True),
+                                       start=start,
+                                       expiry=expiry)
 
     source_blob = source_container_client.get_blob_client(blob_name)
     source_url = f'{source_blob.url}?{sas_token}'
