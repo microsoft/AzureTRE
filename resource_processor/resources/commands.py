@@ -81,17 +81,14 @@ async def build_porter_command(config, logger, msg_body, custom_action=False):
 
     installation_id = get_installation_id(msg_body)
 
-    command_line = [
-                    {azure_login_command(config)},
-                    {azure_acr_login_command(config)},
-                    # If a custom action (i.e. not install, uninstall, upgrade) we need to use 'invoke'
-                    f"""porter {' invoke --action' if custom_action else ''}"
+    # If a custom action (i.e. not install, uninstall, upgrade) we need to use 'invoke'
+    command_line = f"""porter {' invoke --action' if custom_action else ''}"
                     " {msg_body['action']} \"{installation_id}\""
                     " --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
                     " {porter_parameters} --force"
                     " --credential-set arm_auth"
                     " --credential-set aad_auth"""
-                ]
+
     return command_line
 
 

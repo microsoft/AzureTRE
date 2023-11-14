@@ -5,7 +5,7 @@ import socket
 import asyncio
 import logging
 import sys
-from resources.commands import build_porter_command, build_porter_command_for_outputs, apply_porter_credentials_sets_command
+from resources.commands import azure_acr_login_command, azure_login_command, build_porter_command, build_porter_command_for_outputs, apply_porter_credentials_sets_command
 from shared.config import get_config
 from resources.helpers import get_installation_id
 from resources.httpserver import start_server
@@ -167,8 +167,9 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
     porter_command = await build_porter_command(config, logger, msg_body, is_custom_action)
+
     logger.debug("Starting to run porter execution command...")
-    returncode, _, err = await run_porter(" && ".join(porter_command), config)
+    returncode, _, err = await run_porter(porter_command, config)
     logger.debug("Finished running porter execution command.")
     action_completed_without_error = True
 
@@ -261,9 +262,10 @@ async def check_runners(processes: list, httpserver: Process):
             httpserver.kill()
 
 
-def apply_porter_credential_sets(config: dict):
-    porter_credential_command = apply_porter_credentials_sets_command(config)
-    run_porter(porter_credential_command, config)
+def porter_initialization_commands(config: dict):
+    run_porter(apply_porter_credentials_sets_command(config), config)
+    run_porter(azure_login_command(config), config)
+    run_porter(azure_acr_login_command(config), config)
 
 
 if __name__ == "__main__":
@@ -276,7 +278,7 @@ if __name__ == "__main__":
     httpserver.start()
     logger.info("Started http server")
 
-    apply_porter_credential_sets(config)
+    porter_initialization_commands(config)
     logger.info("Applied porter credential sets")
 
     processes = []
