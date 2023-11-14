@@ -64,6 +64,11 @@ def initialize_logging(logging_level: int, add_console_handler: bool = False) ->
 
     logger.setLevel(logging_level)
 
+    try:
+        configure_azure_monitor()
+    except ValueError as e:
+        logger.error(f"Failed to set Application Insights logger handler: {e}")
+
     if add_console_handler:
         console_formatter = logging.Formatter(
             fmt="%(module)-7s %(name)-7s %(process)-7s %(asctime)s %(otelServiceName)-7s %(otelTraceID)-7s %(otelSpanID)-7s %(levelname)-7s %(message)s"
@@ -72,11 +77,6 @@ def initialize_logging(logging_level: int, add_console_handler: bool = False) ->
         console_handler.setLevel(logging_level)
         console_handler.setFormatter(console_formatter)
         logger.addHandler(console_handler)
-
-    try:
-        configure_azure_monitor()
-    except ValueError as e:
-        logger.error(f"Failed to set Application Insights logger handler: {e}")
 
     LoggingInstrumentor().instrument(
         set_logging_format=True,

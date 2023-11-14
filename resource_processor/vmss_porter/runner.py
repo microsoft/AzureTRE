@@ -175,7 +175,7 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
 
     # Handle command output
     if returncode != 0:
-        error_message = "Error message: " + " ".join(err.split('\n')) + "; Command executed: " + porter_command[2]
+        error_message = "Error message: " + " ".join(err.split('\n')) + "; Command executed: " + " ".join(porter_command)
         action_completed_without_error = False
 
         if "uninstall" == action and "could not find installation" in err:
@@ -262,10 +262,10 @@ async def check_runners(processes: list, httpserver: Process):
             httpserver.kill()
 
 
-def porter_initialization_commands(config: dict):
-    run_porter(apply_porter_credentials_sets_command(config), config)
-    run_porter(azure_login_command(config), config)
-    run_porter(azure_acr_login_command(config), config)
+async def porter_initialization_commands(config: dict):
+    await run_porter(apply_porter_credentials_sets_command(config), config)
+    await run_porter(azure_login_command(config), config)
+    await run_porter(azure_acr_login_command(config), config)
 
 
 if __name__ == "__main__":
@@ -278,8 +278,8 @@ if __name__ == "__main__":
     httpserver.start()
     logger.info("Started http server")
 
-    porter_initialization_commands(config)
-    logger.info("Applied porter credential sets")
+    asyncio.run(porter_initialization_commands(config))
+    logger.info("Initialized porter")
 
     processes = []
     num = config["number_processes_int"]

@@ -63,10 +63,17 @@ async def build_porter_command(config, logger, msg_body, custom_action=False):
             elif parameter_name in msg_body:
                 parameter_value = msg_body[parameter_name]
 
+            # 4. if starts user_ then look in user object
+            elif parameter_name.startswith("user_") and "user" in msg_body and parameter_name[5:] in msg_body["user"]:
+                parameter_value = msg_body["user"][parameter_name[5:]]
+
             # if still not found, might be a special case
             # (we give a chance to the method above to allow override of the special handeling done below)
             else:
                 parameter_value = get_special_porter_param_value(config, parameter_name, msg_body)
+
+
+
 
             # only append if we have a value, porter will complain anyway about missing parameters
             if parameter_value is not None:
@@ -81,13 +88,15 @@ async def build_porter_command(config, logger, msg_body, custom_action=False):
 
     installation_id = get_installation_id(msg_body)
 
-    # If a custom action (i.e. not install, uninstall, upgrade) we need to use 'invoke'
-    command_line = f"""porter {' invoke --action' if custom_action else ''}"
-                    " {msg_body['action']} \"{installation_id}\""
-                    " --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
-                    " {porter_parameters} --force"
-                    " --credential-set arm_auth"
-                    " --credential-set aad_auth"""
+    command_line = [f"porter"
+                    # If a custom action (i.e. not install, uninstall, upgrade) we need to use 'invoke'
+                    f"{' invoke --action' if custom_action else ''}"
+                    f" {msg_body['action']} \"{installation_id}\""
+                    f" --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
+                    f" {porter_parameters} --force"
+                    f" --credential-set arm_auth"
+                    f" --credential-set aad_auth"
+                    ]
 
     return command_line
 
@@ -99,9 +108,7 @@ async def build_porter_command_for_outputs(msg_body):
 
 
 async def get_porter_parameter_keys(config, logger, msg_body):
-    command = [f"{azure_login_command(config)} && \
-        {azure_acr_login_command(config)} && \
-        porter explain --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']} --output json"]
+    command = [f"porter explain --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']} --output json"]
 
     proc = await asyncio.create_subprocess_shell(
         ''.join(command),
