@@ -7,7 +7,7 @@ azure-mgmt-compute==30.3.0
 azure-mgmt-cosmosdb==9.3.0
 azure-mgmt-costmanagement==4.0.1
 azure-mgmt-resource==23.0.1
-azure-monitor-opentelemetry==1.0.0
+azure-monitor-opentelemetry==1.1.0
 azure-servicebus==7.11.3
 azure-storage-blob==12.19.0
 fastapi==0.104.0

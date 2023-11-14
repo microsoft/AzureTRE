@@ -119,38 +119,3 @@ def shell_output_logger(
         logging_level = logging.INFO
 
     logger.log(logging_level, f"{prefix_item} {console_output}")
-
-
-class AzureLogFormatter(logging.Formatter):
-    # 7-bit C1 ANSI sequences
-    ansi_escape = re.compile(
-        r"""
-        \x1B  # ESC
-        (?:   # 7-bit C1 Fe (except CSI)
-            [@-Z\\-_]
-        |     # or [ for CSI, followed by a control sequence
-            \[
-            [0-?]*  # Parameter bytes
-            [ -/]*  # Intermediate bytes
-            [@-~]   # Final byte
-        )
-    """,
-        re.VERBOSE,
-    )
-
-    MAX_MESSAGE_LENGTH = 32000
-    TRUNCATION_TEXT = "MESSAGE TOO LONG, TAILING..."
-
-    def format(self, record):
-        s = super().format(record)
-        s = AzureLogFormatter.ansi_escape.sub("", s)
-
-        # not doing this here might produce errors if we try to log empty strings.
-        if s == "":
-            s = "EMPTY MESSAGE!"
-
-        # azure monitor is limiting the message size.
-        if len(s) > AzureLogFormatter.MAX_MESSAGE_LENGTH:
-            s = f"{AzureLogFormatter.TRUNCATION_TEXT}\n{s[-1 * AzureLogFormatter.MAX_MESSAGE_LENGTH:]}"
-
-        return s

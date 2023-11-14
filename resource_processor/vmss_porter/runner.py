@@ -78,7 +78,7 @@ async def receive_message(tracer: trace.Tracer, service_bus_client, config: dict
                             current_span.set_attribute("operation_id", message["operationId"])
                             logger.info(f"Message received for resource_id={message['id']}, operation_id={message['operationId']}, step_id={message['stepId']}")
 
-                            result = await invoke_porter_action(tracer, message, service_bus_client, config)
+                            result = await invoke_porter_action(message, service_bus_client, config)
 
                             if result:
                                 logger.info(f"Resource request for {message} is complete")
@@ -149,7 +149,7 @@ def service_bus_message_generator(sb_message: dict, status: str, deployment_mess
     return resource_request_message
 
 
-async def invoke_porter_action(tracer: trace.Tracer, msg_body: dict, sb_client: ServiceBusClient, config: dict) -> bool:
+async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, config: dict) -> bool:
     """
     Handle resource message by invoking specified porter action (i.e. install, uninstall)
     """
@@ -168,13 +168,13 @@ async def invoke_porter_action(tracer: trace.Tracer, msg_body: dict, sb_client: 
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
     porter_command = await build_porter_command(config, logger, msg_body, is_custom_action)
     logger.debug("Starting to run porter execution command...")
-    returncode, _, err = await run_porter(porter_command, config)
+    returncode, _, err = await run_porter(" && ".join(porter_command), config)
     logger.debug("Finished running porter execution command.")
     action_completed_without_error = True
 
     # Handle command output
     if returncode != 0:
-        error_message = "Error message: " + " ".join(err.split('\n')) + "; Command executed: " + " ".join(porter_command)
+        error_message = "Error message: " + " ".join(err.split('\n')) + "; Command executed: " + porter_command[2]
         action_completed_without_error = False
 
         if "uninstall" == action and "could not find installation" in err:
