@@ -5,8 +5,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi_utils.tasks import repeat_every
-from service_bus.airlock_request_status_update import receive_step_result_message_and_update_status
+from fastapi.concurrency import asynccontextmanager
 
 from starlette.exceptions import HTTPException
 from starlette.middleware.errors import ServerErrorMiddleware
@@ -16,9 +15,29 @@ from api.errors.http_error import http_error_handler
 from api.errors.validation_error import http422_error_handler
 from api.errors.generic_error import generic_error_handler
 from core import config
-from core.events import create_start_app_handler, create_stop_app_handler
+from db.events import bootstrap_database
 from services.logging import initialize_logging
 from service_bus.deployment_status_updater import DeploymentStatusUpdater
+from service_bus.airlock_request_status_update import AirlockStatusUpdater
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.cosmos_client = None
+
+    while not await bootstrap_database(app):
+        await asyncio.sleep(5)
+        logging.warning("Database connection could not be established")
+
+    deploymentStatusUpdater = DeploymentStatusUpdater(app)
+    await deploymentStatusUpdater.init_repos()
+
+    airlockStatusUpdater = AirlockStatusUpdater(app)
+    await airlockStatusUpdater.init_repos()
+
+    asyncio.create_task(deploymentStatusUpdater.receive_messages())
+    asyncio.create_task(airlockStatusUpdater.receive_messages())
+    yield
 
 
 logger = logging.getLogger()
@@ -40,9 +59,6 @@ def get_application() -> FastAPI:
     else:
         initialize_logging(logging.INFO, False, application)
 
-    application.add_event_handler("startup", create_start_app_handler(application))
-    application.add_event_handler("shutdown", create_stop_app_handler(application))
-
     application.add_middleware(ServerErrorMiddleware, handler=generic_error_handler)
 
     # Allow local UI debugging with local API
@@ -62,22 +78,6 @@ def get_application() -> FastAPI:
 
 
 app = get_application()
-
-
-@app.on_event("startup")
-async def watch_deployment_status() -> None:
-    logger.info("Starting deployment status watcher thread")
-    statusWatcher = DeploymentStatusUpdater(app)
-    await statusWatcher.init_repos()
-    current_event_loop = asyncio.get_event_loop()
-    asyncio.run_coroutine_threadsafe(statusWatcher.receive_messages(), loop=current_event_loop)
-
-
-@app.on_event("startup")
-@repeat_every(seconds=20, wait_first=True, logger=logging.getLogger())
-async def update_airlock_request_status() -> None:
-    await receive_step_result_message_and_update_status(app)
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, loop="asyncio")

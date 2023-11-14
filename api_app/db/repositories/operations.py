@@ -192,6 +192,6 @@ class OperationRepository(BaseRepository):
         return parse_obj_as(List[Operation], operations)
 
     async def resource_has_deployed_operation(self, resource_id: str) -> bool:
-        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND c.action = "{RequestAction.Install}" AND c.status = "{Status.Deployed}"'
+        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND ((c.action = "{RequestAction.Install}" AND c.status = "{Status.Deployed}") OR (c.action = "{RequestAction.Upgrade}" AND c.status = "{Status.Updated}"))'
         operations = await self.query(query=query)
         return len(operations) > 0

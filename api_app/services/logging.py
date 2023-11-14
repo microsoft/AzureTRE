@@ -18,9 +18,14 @@ UNWANTED_LOGGERS = [
     "azure.identity.aio._credentials.chained",
     "azure.identity",
     "msal.token_cache"
+    # Remove these once the following PR is merged:
+    # https://github.com/Azure/azure-sdk-for-python/pull/30832
+    # Issue: https://github.com/microsoft/AzureTRE/issues/3766
+    "azure.servicebus._pyamqp.aio._session_async"
 ]
 
 LOGGERS_FOR_ERRORS_ONLY = [
+    "urllib3.connectionpool",
     "uamqp",
     "uamqp.authentication.cbs_auth_async",
     "uamqp.async_ops.client_async",
@@ -51,6 +56,9 @@ def configure_loggers():
     for logger_name in LOGGERS_FOR_ERRORS_ONLY:
         logging.getLogger(logger_name).setLevel(logging.ERROR)
 
+    for logger_name in UNWANTED_LOGGERS:
+        logging.getLogger(logger_name).disabled = True
+
 
 def initialize_logging(logging_level: int, add_console_handler: bool, application: FastAPI) -> logging.Logger:
 
@@ -63,6 +71,12 @@ def initialize_logging(logging_level: int, add_console_handler: bool, applicatio
         )
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging_level)
+        console_handler.setFormatter(console_formatter)
+        logger.addHandler(console_handler)
+
+    if add_console_handler:
+        console_formatter = logging.Formatter(fmt='%(module)-7s %(name)-7s %(process)-7s %(asctime)s %(levelname)-7s %(message)s')
+        console_handler = logging.StreamHandler()
         console_handler.setFormatter(console_formatter)
         logger.addHandler(console_handler)
 
