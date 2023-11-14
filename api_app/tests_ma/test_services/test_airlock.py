@@ -4,7 +4,7 @@ import pytest_asyncio
 import time
 from resources import strings
 from services.airlock import validate_user_allowed_to_access_storage_account, get_required_permission, \
-    validate_request_status, cancel_request, delete_review_user_resource
+    validate_request_status, cancel_request, delete_review_user_resource, check_email_exists
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReview, AirlockReviewDecision, AirlockActions, AirlockReviewUserResource
 from tests_ma.test_api.conftest import create_workspace_owner_user, create_workspace_researcher_user, get_required_roles
 from mock import AsyncMock, patch, MagicMock
@@ -303,6 +303,19 @@ async def test_save_and_publish_event_airlock_request_raises_503_if_publish_even
             user=create_test_user(),
             workspace=sample_workspace())
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('role_assignment_details_mock_return', [{},
+                                               {"AirlockManager": ["owner@outlook.com"]},
+                                               {"WorkspaceResearcher": [], "AirlockManager": ["owner@outlook.com"]},
+                                               {"WorkspaceResearcher": ["researcher@outlook.com"], "owner_emails": []},
+                                               {"WorkspaceResearcher": ["researcher@outlook.com"] }])
+async def test_check_email_exists_raises_417_if_email_not_present(role_assignment_details_mock_return):
+    role_assignment_details = role_assignment_details_mock_return
+    with pytest.raises(HTTPException) as ex:
+        check_email_exists(role_assignment_details)
+    assert ex.value.status_code == status.HTTP_417_EXPECTATION_FAILED
 
 
 @pytest.mark.asyncio
