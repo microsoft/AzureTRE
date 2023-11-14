@@ -345,4 +345,4 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-        assert response.text == '1 validation error for Request\nbody -> fakeField\n  extra fields not permitted (type=value_error.extra)'
+        assert response.text == "[{'loc': ('body', 'fakeField'), 'msg': 'extra fields not permitted', 'type': 'value_error.extra'}]"
