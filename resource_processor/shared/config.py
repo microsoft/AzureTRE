@@ -1,11 +1,9 @@
-import logging
 import os
 from opentelemetry import trace
 from _version import __version__
+from shared.logging import logger
 
 VERSION = __version__
-
-logger = logging.getLogger()
 
 
 def get_config(tracer: trace.Tracer) -> dict:

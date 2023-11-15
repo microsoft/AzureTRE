@@ -33,7 +33,7 @@ class TestMigrationRoutesThatRequireAdminRights:
             app.dependency_overrides = {}
 
     # [POST] /migrations/
-    @ patch("api.routes.migrations.logging.info")
+    @ patch("api.routes.migrations.logger.info")
     @ patch("api.routes.migrations.OperationRepository")
     @ patch("api.routes.migrations.ResourceMigration.archive_history")
     @ patch("api.routes.migrations.ResourceMigration.add_deployment_status_field")
@@ -67,7 +67,7 @@ class TestMigrationRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_202_ACCEPTED
 
     # [POST] /migrations/
-    @ patch("api.routes.migrations.logging.info")
+    @ patch("api.routes.migrations.logger.info")
     @ patch("api.routes.migrations.ResourceRepository.rename_field_name", side_effect=ValueError)
     @ patch("api.routes.migrations.SharedServiceMigration.deleteDuplicatedSharedServices")
     @ patch("api.routes.migrations.WorkspaceMigration.moveAuthInformationToProperties")

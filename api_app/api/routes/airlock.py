@@ -1,4 +1,3 @@
-import logging
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status as status_code, Response
@@ -27,6 +26,7 @@ from .resource_helpers import construct_location_header
 
 from services.airlock import create_review_vm, review_airlock_request, get_airlock_container_link, get_allowed_actions, save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, \
     enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace, cancel_request
+from services.logging import logger
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 
@@ -46,7 +46,7 @@ async def create_draft_request(airlock_request_input: AirlockRequestInCreate, us
         allowed_actions = get_allowed_actions(airlock_request, user, airlock_request_repo)
         return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request, allowedUserActions=allowed_actions)
     except (ValidationError, ValueError) as e:
-        logging.exception("Failed creating airlock request model instance")
+        logger.exception("Failed creating airlock request model instance")
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
@@ -69,7 +69,7 @@ async def get_all_airlock_requests_by_workspace(
         airlock_requests_with_allowed_user_actions = enrich_requests_with_allowed_actions(airlock_requests, user, airlock_request_repo)
         return AirlockRequestWithAllowedUserActionsInList(airlockRequests=airlock_requests_with_allowed_user_actions)
     except (ValidationError, ValueError) as e:
-        logging.exception("Failed retrieving all the airlock requests for a workspace")
+        logger.exception("Failed retrieving all the airlock requests for a workspace")
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
@@ -137,17 +137,17 @@ async def create_review_user_resource(
         response.headers["Location"] = construct_location_header(operation)
         return AirlockRequestAndOperationInResponse(airlockRequest=updated_resource, operation=operation)
     except (KeyError, TypeError, EntityDoesNotExist) as e:
-        logging.exception("Failed to retrieve Airlock Review configuration for workspace %s", workspace.id)
+        logger.exception("Failed to retrieve Airlock Review configuration for workspace %s", workspace.id)
         raise HTTPException(status_code=status_code.HTTP_422_UNPROCESSABLE_ENTITY,
                             detail=f"Failed to retrieve Airlock Review configuration for workspace {workspace.id}.\
                             Please ask your TRE administrator to check the configuration. Details: {str(e)}")
     except (ValidationError, ValueError) as e:
-        logging.exception("Failed create user resource model instance due to validation error")
+        logger.exception("Failed create user resource model instance due to validation error")
         raise HTTPException(status_code=status_code.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f"Invalid configuration for creating user resource. Please contact your TRE administrator. \
                             Details: {str(e)}")
     except UserNotAuthorizedToUseTemplate as e:
-        logging.exception("User not authorized to use template")
+        logger.exception("User not authorized to use template")
         raise HTTPException(status_code=status_code.HTTP_403_FORBIDDEN, detail=str(e))
 
 
@@ -171,7 +171,7 @@ async def create_airlock_review(
         allowed_actions = get_allowed_actions(updated_airlock_request, user, airlock_request_repo)
         return AirlockRequestWithAllowedUserActions(airlockRequest=updated_airlock_request, allowedUserActions=allowed_actions)
     except (ValidationError, ValueError) as e:
-        logging.exception("Failed creating airlock review model instance")
+        logger.exception("Failed creating airlock review model instance")
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
 
 

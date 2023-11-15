@@ -1,6 +1,5 @@
 import asyncio
 import json
-import logging
 import uuid
 
 from pydantic import ValidationError, parse_obj_as
@@ -21,6 +20,7 @@ from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
 from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
 from resources import strings
+from services.logging import logger
 
 
 class DeploymentStatusUpdater():
@@ -43,10 +43,10 @@ class DeploymentStatusUpdater():
                 async with credentials.get_credential_async() as credential:
                     service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
 
-                    logging.info("Looking for new session...")
+                    logger.info(f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue...")
                     # max_wait_time=1 -> don't hold the session open after processing of the message has finished
                     async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
-                        logging.info(f"Got a session containing messages: {receiver.session.session_id}")
+                        logger.info(f"Got a session containing messages: {receiver.session.session_id}")
                         async with AutoLockRenewer() as renewer:
                             renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
                             async for msg in receiver:
@@ -56,19 +56,19 @@ class DeploymentStatusUpdater():
                                 else:
                                     # could have been any kind of transient issue, we'll abandon back to the queue, and retry
                                     await receiver.abandon_message(msg)
-                        logging.info(f"Closing session: {receiver.session.session_id}")
+                        logger.info(f"Closing session: {receiver.session.session_id}")
 
             except OperationTimeoutError:
                 # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
-                logging.debug("No sessions for this process. Will look again...")
+                logger.debug("No sessions for this process. Will look again...")
 
             except ServiceBusConnectionError:
                 # Occasionally there will be a transient / network-level error in connecting to SB.
-                logging.info("Unknown Service Bus connection error. Will retry...")
+                logger.info("Unknown Service Bus connection error. Will retry...")
 
             except Exception as e:
                 # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
-                logging.exception(f"Unknown exception. Will retry - {e}")
+                logger.exception(f"Unknown exception. Will retry - {e}")
 
     async def process_message(self, msg):
         complete_message = False
@@ -76,13 +76,13 @@ class DeploymentStatusUpdater():
 
         try:
             message = parse_obj_as(DeploymentStatusUpdateMessage, json.loads(str(msg)))
-            logging.info(f"Received and parsed JSON for: {msg.correlation_id}")
+            logger.info(f"Received and parsed JSON for: {msg.correlation_id}")
             complete_message = await self.update_status_in_database(message)
-            logging.info(f"Update status in DB for {message.operationId} - {message.status}")
+            logger.info(f"Update status in DB for {message.operationId} - {message.status}")
         except (json.JSONDecodeError, ValidationError):
-            logging.exception(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id}")
+            logger.exception(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id}")
         except Exception:
-            logging.exception(f"Exception processing message: {msg.correlation_id}")
+            logger.exception(f"Exception processing message: {msg.correlation_id}")
 
         return complete_message
 
@@ -161,11 +161,11 @@ class DeploymentStatusUpdater():
                         user=operation.user)
 
                     # create + send the message
-                    logging.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.templateStepId}, action: {next_step.resourceAction}")
+                    logger.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.templateStepId}, action: {next_step.resourceAction}")
                     content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.id, action=next_step.resourceAction))
                     await send_deployment_message(content=content, correlation_id=operation.id, session_id=resource_to_send.id, action=next_step.resourceAction)
                 except Exception as e:
-                    logging.exception("Unable to send update for resource in pipeline step")
+                    logger.exception("Unable to send update for resource in pipeline step")
                     next_step.message = repr(e)
                     next_step.status = Status.UpdatingFailed
                     await self.update_overall_operation_status(operation, next_step, is_last_step)
@@ -176,9 +176,9 @@ class DeploymentStatusUpdater():
         except EntityDoesNotExist:
             # Marking as true as this message will never succeed anyways and should be removed from the queue.
             result = True
-            logging.exception(strings.DEPLOYMENT_STATUS_ID_NOT_FOUND.format(message.id))
+            logger.exception(strings.DEPLOYMENT_STATUS_ID_NOT_FOUND.format(message.id))
         except Exception:
-            logging.exception("Failed to update status")
+            logger.exception("Failed to update status")
 
         return result
 

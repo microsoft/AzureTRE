@@ -10,9 +10,9 @@ from shared.config import get_config
 from resources.helpers import get_installation_id
 from resources.httpserver import start_server
 
-from shared.logging import initialize_logging, configure_loggers, shell_output_logger  # pylint: disable=import-error # noqa
+from shared.logging import initialize_logging, logger, shell_output_logger
 from shared.config import VERSION
-from resources import strings, statuses  # pylint: disable=import-error # noqa
+from resources import statuses
 from contextlib import asynccontextmanager
 from azure.servicebus import ServiceBusMessage, NEXT_AVAILABLE_SESSION
 from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
@@ -20,8 +20,6 @@ from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from azure.identity.aio import DefaultAzureCredential
 
 from opentelemetry import trace
-
-logger = logging.getLogger()
 
 
 def set_up_config(tracer: trace.Tracer) -> Optional[dict]:
@@ -69,7 +67,7 @@ async def receive_message(tracer: trace.Tracer, service_bus_client, config: dict
                         try:
                             message = json.loads(str(msg))
                         except (json.JSONDecodeError) as e:
-                            logging.error(f"Received bad service bus resource request message: {e}")
+                            logger.error(f"Received bad service bus resource request message: {e}")
 
                         with tracer.start_as_current_span("invoke_porter_action") as current_span:
                             current_span.set_attribute("resource_id", message["id"])
@@ -114,7 +112,7 @@ async def run_porter(command, config: dict):
         env=config["porter_env"])
 
     stdout, stderr = await proc.communicate()
-    logging.info(f'run porter exited with {proc.returncode}')
+    logger.info(f'run porter exited with {proc.returncode}')
     result_stdout = None
     result_stderr = None
 
@@ -166,7 +164,7 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
 
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
-    porter_command = await build_porter_command(config, logger, msg_body, is_custom_action)
+    porter_command = await build_porter_command(config, msg_body, is_custom_action)
 
     logger.debug("Starting to run porter execution command...")
     returncode, _, err = await run_porter(porter_command, config)
@@ -269,8 +267,7 @@ async def porter_initialization_commands(config: dict):
 
 
 if __name__ == "__main__":
-    configure_loggers()
-    logger = initialize_logging(logging.INFO, True)
+    initialize_logging()
     tracer = trace.get_tracer(f"{socket.gethostname()}_main")
     config = set_up_config(tracer)
 

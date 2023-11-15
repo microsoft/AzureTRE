@@ -1,12 +1,11 @@
 import asyncio
 import json
-import logging
 import base64
+import logging
 from urllib.parse import urlparse
 
-
 from resources.helpers import get_installation_id
-from shared.logging import shell_output_logger
+from shared.logging import logger, shell_output_logger
 
 
 def azure_login_command(config):
@@ -40,8 +39,8 @@ def azure_acr_login_command(config):
     return f"az acr login --name {acr_name} >/dev/null "
 
 
-async def build_porter_command(config, logger, msg_body, custom_action=False):
-    porter_parameter_keys = await get_porter_parameter_keys(config, logger, msg_body)
+async def build_porter_command(config, msg_body, custom_action=False):
+    porter_parameter_keys = await get_porter_parameter_keys(config, msg_body)
     porter_parameters = ""
 
     if porter_parameter_keys is None:
@@ -71,9 +70,6 @@ async def build_porter_command(config, logger, msg_body, custom_action=False):
             # (we give a chance to the method above to allow override of the special handeling done below)
             else:
                 parameter_value = get_special_porter_param_value(config, parameter_name, msg_body)
-
-
-
 
             # only append if we have a value, porter will complain anyway about missing parameters
             if parameter_value is not None:
@@ -107,7 +103,7 @@ async def build_porter_command_for_outputs(msg_body):
     return command_line
 
 
-async def get_porter_parameter_keys(config, logger, msg_body):
+async def get_porter_parameter_keys(config, msg_body):
     command = [f"porter explain --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']} --output json"]
 
     proc = await asyncio.create_subprocess_shell(
@@ -117,7 +113,7 @@ async def get_porter_parameter_keys(config, logger, msg_body):
         env=config["porter_env"])
 
     stdout, stderr = await proc.communicate()
-    logging.info(f'get_porter_parameter_keys exited with {proc.returncode}')
+    logger.info(f'get_porter_parameter_keys exited with {proc.returncode}')
     result_stdout = None
     result_stderr = None
 
@@ -128,7 +124,7 @@ async def get_porter_parameter_keys(config, logger, msg_body):
         return porter_parameter_keys
     if stderr:
         result_stderr = stderr.decode()
-        shell_output_logger(result_stderr, '[stderr]', logger, logging.WARN)
+        shell_output_logger(result_stderr, '[stderr]', logging.WARN)
 
 
 def get_special_porter_param_value(config, parameter_name: str, msg_body):

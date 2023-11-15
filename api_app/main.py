@@ -1,11 +1,12 @@
 import asyncio
-import logging
 import uvicorn
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import asynccontextmanager
+
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from starlette.exceptions import HTTPException
 from starlette.middleware.errors import ServerErrorMiddleware
@@ -16,7 +17,7 @@ from api.errors.validation_error import http422_error_handler
 from api.errors.generic_error import generic_error_handler
 from core import config
 from db.events import bootstrap_database
-from services.logging import initialize_logging
+from services.logging import initialize_logging, logger
 from service_bus.deployment_status_updater import DeploymentStatusUpdater
 from service_bus.airlock_request_status_update import AirlockStatusUpdater
 
@@ -27,7 +28,7 @@ async def lifespan(app: FastAPI):
 
     while not await bootstrap_database(app):
         await asyncio.sleep(5)
-        logging.warning("Database connection could not be established")
+        logger.warning("Database connection could not be established")
 
     deploymentStatusUpdater = DeploymentStatusUpdater(app)
     await deploymentStatusUpdater.init_repos()
@@ -40,9 +41,6 @@ async def lifespan(app: FastAPI):
     yield
 
 
-logger = logging.getLogger()
-
-
 def get_application() -> FastAPI:
     application = FastAPI(
         title=config.PROJECT_NAME,
@@ -51,13 +49,9 @@ def get_application() -> FastAPI:
         version=config.VERSION,
         docs_url=None,
         redoc_url=None,
-        openapi_url=None
+        openapi_url=None,
+        lifespan=lifespan
     )
-
-    if config.DEBUG:
-        initialize_logging(logging.DEBUG, True, application)
-    else:
-        initialize_logging(logging.INFO, False, application)
 
     application.add_middleware(ServerErrorMiddleware, handler=generic_error_handler)
 
@@ -77,7 +71,9 @@ def get_application() -> FastAPI:
     return application
 
 
+initialize_logging()
 app = get_application()
+FastAPIInstrumentor.instrument_app(app)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, loop="asyncio")

@@ -42,7 +42,7 @@ def get_sample_old_workspace(workspace_id: str = "7ab18f7e-ee8f-4202-8d46-747818
     }]
 
 
-@ patch('logging.info')
+@ patch('logger.info')
 async def test_workspace_migration_moves_fields(logging, workspace_migrator):
     workspace_migrator.query = AsyncMock(return_value=get_sample_old_workspace())
 

@@ -1,6 +1,4 @@
 import logging
-import os
-import re
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from azure.monitor.opentelemetry import configure_azure_monitor
 
@@ -46,37 +44,36 @@ LOGGERS_FOR_ERRORS_ONLY = [
     "azure.servicebus._pyamqp.aio._client_async"
 ]
 
-debug = os.environ.get("DEBUG", "False").lower() in ("true", "1")
-
-logger = logging.getLogger()
+logger = logging.getLogger("resource_processor")
 
 
 def configure_loggers():
-
-    for logger_name in UNWANTED_LOGGERS:
-        logging.getLogger(logger_name).disabled = True
-
     for logger_name in LOGGERS_FOR_ERRORS_ONLY:
         logging.getLogger(logger_name).setLevel(logging.ERROR)
 
+    for logger_name in UNWANTED_LOGGERS:
+        logging.getLogger(logger_name).setLevel(logging.CRITICAL)
 
-def initialize_logging(logging_level: int, add_console_handler: bool = False) -> logging.Logger:
 
-    logger.setLevel(logging_level)
+def initialize_logging() -> logging.Logger:
+
+    configure_loggers()
+
+    # Resource Processor has no way to change the logging level, so we set it to INFO
+    logging_level = logging.INFO
 
     try:
-        configure_azure_monitor()
+        configure_azure_monitor(
+            logger_name="azuretre",
+            instrumentation_options={
+                "azure_sdk": {"enabled": True},
+                "flask": {"enabled": False},
+                "django": {"enabled": False},
+                "fastapi": {"enabled": True},
+            }
+        )
     except ValueError as e:
         logger.error(f"Failed to set Application Insights logger handler: {e}")
-
-    if add_console_handler:
-        console_formatter = logging.Formatter(
-            fmt="%(module)-7s %(name)-7s %(process)-7s %(asctime)s %(otelServiceName)-7s %(otelTraceID)-7s %(otelSpanID)-7s %(levelname)-7s %(message)s"
-        )
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging_level)
-        console_handler.setFormatter(console_formatter)
-        logger.addHandler(console_handler)
 
     LoggingInstrumentor().instrument(
         set_logging_format=True,
@@ -91,7 +88,7 @@ def shell_output_logger(console_output: str, prefix_item: str, logging_level: in
     Logs the shell output (stdout/err) a line at a time with an option to remove ANSI control chars.
     """
     if not console_output:
-        logging.debug("shell console output is empty.")
+        logger.debug("shell console output is empty.")
         return
 
     console_output = console_output.strip()
@@ -100,7 +97,7 @@ def shell_output_logger(console_output: str, prefix_item: str, logging_level: in
             and len(console_output) < 200
             and console_output.startswith("Unable to find image '")
             and console_output.endswith("' locally")):
-        logging.debug("Image not present locally, setting log to INFO.")
+        logger.debug("Image not present locally, setting log to INFO.")
         logging_level = logging.INFO
 
     logger.log(logging_level, f"{prefix_item} {console_output}")

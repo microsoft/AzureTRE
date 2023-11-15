@@ -1,5 +1,4 @@
 import asyncio
-import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Header, status, Request, Response
 
@@ -36,6 +35,8 @@ from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from .resource_helpers import cascaded_update_resource, delete_validation, enrich_resource_with_available_upgrades, get_identity_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, \
     send_custom_action_message, send_resource_request_message, update_user_resource
 from models.domain.request_action import RequestAction
+from services.logging import logger
+
 
 workspaces_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 workspaces_shared_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin)])
@@ -102,10 +103,10 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
         auth_info = extract_auth_information(workspace_create.properties)
         workspace, resource_template = await workspace_repo.create_workspace_item(workspace_create, auth_info, user.id, user.roles)
     except (ValidationError, ValueError) as e:
-        logging.exception("Failed to create workspace model instance")
+        logger.exception("Failed to create workspace model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except UserNotAuthorizedToUseTemplate as e:
-        logging.exception("User not authorized to use template")
+        logger.exception("User not authorized to use template")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
     operation = await save_and_deploy_resource(
@@ -241,10 +242,10 @@ async def create_workspace_service(response: Response, workspace_service_input: 
     try:
         workspace_service, resource_template = await workspace_service_repo.create_workspace_service_item(workspace_service_input, workspace.id, user.roles)
     except (ValidationError, ValueError) as e:
-        logging.exception("Failed create workspace service model instance")
+        logger.exception("Failed create workspace service model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except UserNotAuthorizedToUseTemplate as e:
-        logging.exception("User not authorized to use template")
+        logger.exception("User not authorized to use template")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
     # if template has address_space get an address space
@@ -405,10 +406,10 @@ async def create_user_resource(
     try:
         user_resource, resource_template = await user_resource_repo.create_user_resource_item(user_resource_create, workspace.id, workspace_service.id, workspace_service.templateName, user.id, user.roles)
     except (ValidationError, ValueError) as e:
-        logging.exception("Failed create user resource model instance")
+        logger.exception("Failed create user resource model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except UserNotAuthorizedToUseTemplate as e:
-        logging.exception("User not authorized to use template")
+        logger.exception("User not authorized to use template")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
     operation = await save_and_deploy_resource(

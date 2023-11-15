@@ -1,6 +1,6 @@
 import asyncio
 import json
-import logging
+from services.logging import logger
 
 from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
@@ -28,17 +28,13 @@ class AirlockStatusUpdater():
         self.airlock_request_repo = await AirlockRequestRepository.create(db_client)
         self.workspace_repo = await WorkspaceRepository.create(db_client)
 
-    import time
-
-    ...
-
     async def receive_messages(self):
         while True:
             try:
                 async with credentials.get_credential_async() as credential:
                     service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
                     receiver = service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_STEP_RESULT_QUEUE)
-                    logging.info(f"Looking for new messages on {config.SERVICE_BUS_STEP_RESULT_QUEUE} queue...")
+                    logger.info(f"Looking for new messages on {config.SERVICE_BUS_STEP_RESULT_QUEUE} queue...")
                     async with receiver:
                         received_msgs = await receiver.receive_messages(max_message_count=10, max_wait_time=1)
                         for msg in received_msgs:
@@ -55,29 +51,29 @@ class AirlockStatusUpdater():
 
             except OperationTimeoutError:
                 # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
-                logging.debug("No sessions for this process. Will look again...")
+                logger.debug("No sessions for this process. Will look again...")
 
             except ServiceBusConnectionError:
                 # Occasionally there will be a transient / network-level error in connecting to SB.
-                logging.info("Unknown Service Bus connection error. Will retry...")
+                logger.info("Unknown Service Bus connection error. Will retry...")
 
             except Exception as e:
                 # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
-                logging.exception(f"Unknown exception. Will retry - {e}")
+                logger.exception(f"Unknown exception. Will retry - {e}")
 
     async def process_message(self, msg):
         complete_message = False
 
         try:
             message = parse_obj_as(StepResultStatusUpdateMessage, json.loads(str(msg)))
-            logging.info(f"Received step_result status update message with correlation ID {message.id}: {message}")
+            logger.info(f"Received step_result status update message with correlation ID {message.id}: {message}")
             complete_message = await self.update_status_in_database(message)
-            logging.info(f"Update status in DB for {message.id}")
+            logger.info(f"Update status in DB for {message.id}")
         except (json.JSONDecodeError, ValidationError):
-            logging.exception(f"{strings.STEP_RESULT_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id}")
+            logger.exception(f"{strings.STEP_RESULT_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id}")
             complete_message = True
         except Exception:
-            logging.exception(f"Exception processing message: {msg.correlation_id}")
+            logger.exception(f"Exception processing message: {msg.correlation_id}")
 
         return complete_message
 
@@ -103,18 +99,18 @@ class AirlockStatusUpdater():
                 await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=self.airlock_request_repo, updated_by=airlock_request.updatedBy, workspace=workspace, new_status=new_status, request_files=request_files, status_message=status_message)
                 result = True
             else:
-                logging.error(strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, current_status, airlock_request.status))
+                logger.error(strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, current_status, airlock_request.status))
         except HTTPException as e:
             if e.status_code == 404:
                 # Marking as true as this message will never succeed anyways and should be removed from the queue.
                 result = True
-                logging.exception(strings.STEP_RESULT_ID_NOT_FOUND.format(airlock_request_id))
+                logger.exception(strings.STEP_RESULT_ID_NOT_FOUND.format(airlock_request_id))
             if e.status_code == 400:
                 result = True
-                logging.exception(strings.STEP_RESULT_MESSAGE_INVALID_STATUS.format(airlock_request_id, current_status, new_status))
+                logger.exception(strings.STEP_RESULT_MESSAGE_INVALID_STATUS.format(airlock_request_id, current_status, new_status))
             if e.status_code == 503:
-                logging.exception(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+                logger.exception(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
         except Exception:
-            logging.exception("Failed updating request status")
+            logger.exception("Failed updating request status")
 
         return result
