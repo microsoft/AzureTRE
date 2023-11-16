@@ -152,4 +152,4 @@ async def test_get_airlock_requests_queries_db(airlock_request_repo):
     ]
 
     await airlock_request_repo.get_airlock_requests(WORKSPACE_ID)
-    airlock_request_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=expected_parameters, enable_cross_partition_query=True)
+    airlock_request_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=expected_parameters)
