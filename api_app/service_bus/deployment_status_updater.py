@@ -20,7 +20,7 @@ from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
 from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
 from resources import strings
-from services.logging import logger
+from services.logging import logger, tracer
 
 
 class DeploymentStatusUpdater():
@@ -38,51 +38,58 @@ class DeploymentStatusUpdater():
         asyncio.run(self.receive_messages())
 
     async def receive_messages(self):
-        while True:
-            try:
-                async with credentials.get_credential_async() as credential:
-                    service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
+        with tracer.start_as_current_span("deployment_status_receive_messages") as current_span:
+            while True:
+                try:
+                    async with credentials.get_credential_async() as credential:
+                        service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
 
-                    logger.info(f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue...")
-                    # max_wait_time=1 -> don't hold the session open after processing of the message has finished
-                    async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
-                        logger.info(f"Got a session containing messages: {receiver.session.session_id}")
-                        async with AutoLockRenewer() as renewer:
-                            renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
-                            async for msg in receiver:
-                                complete_message = await self.process_message(msg)
-                                if complete_message:
-                                    await receiver.complete_message(msg)
-                                else:
-                                    # could have been any kind of transient issue, we'll abandon back to the queue, and retry
-                                    await receiver.abandon_message(msg)
-                        logger.info(f"Closing session: {receiver.session.session_id}")
+                        logger.info(f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue...")
+                        # max_wait_time=1 -> don't hold the session open after processing of the message has finished
+                        async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
+                            logger.info(f"Got a session containing messages: {receiver.session.session_id}")
+                            async with AutoLockRenewer() as renewer:
+                                renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
+                                async for msg in receiver:
+                                    complete_message = await self.process_message(msg)
+                                    if complete_message:
+                                        await receiver.complete_message(msg)
+                                    else:
+                                        # could have been any kind of transient issue, we'll abandon back to the queue, and retry
+                                        await receiver.abandon_message(msg)
+                            logger.info(f"Closing session: {receiver.session.session_id}")
 
-            except OperationTimeoutError:
-                # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
-                logger.debug("No sessions for this process. Will look again...")
+                except OperationTimeoutError:
+                    # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
+                    logger.debug("No sessions for this process. Will look again...")
 
-            except ServiceBusConnectionError:
-                # Occasionally there will be a transient / network-level error in connecting to SB.
-                logger.info("Unknown Service Bus connection error. Will retry...")
+                except ServiceBusConnectionError:
+                    # Occasionally there will be a transient / network-level error in connecting to SB.
+                    logger.info("Unknown Service Bus connection error. Will retry...")
 
-            except Exception as e:
-                # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
-                logger.exception(f"Unknown exception. Will retry - {e}")
+                except Exception as e:
+                    # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
+                    logger.exception(f"Unknown exception. Will retry - {e}")
 
     async def process_message(self, msg):
         complete_message = False
         message = ""
 
-        try:
-            message = parse_obj_as(DeploymentStatusUpdateMessage, json.loads(str(msg)))
-            logger.info(f"Received and parsed JSON for: {msg.correlation_id}")
-            complete_message = await self.update_status_in_database(message)
-            logger.info(f"Update status in DB for {message.operationId} - {message.status}")
-        except (json.JSONDecodeError, ValidationError):
-            logger.exception(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id}")
-        except Exception:
-            logger.exception(f"Exception processing message: {msg.correlation_id}")
+        with tracer.start_as_current_span("process_message") as current_span:
+            try:
+                message = parse_obj_as(DeploymentStatusUpdateMessage, json.loads(str(msg)))
+
+                current_span.set_attribute("step_id", message.stepId)
+                current_span.set_attribute("operation_id", message.operationId)
+                current_span.set_attribute("status", message.status)
+
+                logger.info(f"Received and parsed JSON for: {msg.correlation_id}")
+                complete_message = await self.update_status_in_database(message)
+                logger.info(f"Update status in DB for {message.operationId} - {message.status}")
+            except (json.JSONDecodeError, ValidationError):
+                logger.exception(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id}")
+            except Exception:
+                logger.exception(f"Exception processing message: {msg.correlation_id}")
 
         return complete_message
 

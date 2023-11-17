@@ -1,8 +1,9 @@
 import logging
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
+from opentelemetry import trace
 from azure.monitor.opentelemetry import configure_azure_monitor
 
-from core.config import DEBUG
+from core.config import APPLICATIONINSIGHTS_CONNECTION_STRING, DEBUG
 
 UNWANTED_LOGGERS = [
     "azure.core.pipeline.policies.http_logging_policy",
@@ -24,6 +25,7 @@ LOGGERS_FOR_ERRORS_ONLY = [
     "azure.monitor.opentelemetry.exporter.export._base",
     "azure.servicebus.aio._base_handler_async",
     "azure.servicebus._pyamqp.aio._cbs_async",
+    "azure.servicebus._pyamqp.aio._client_async",
     "azure.servicebus._pyamqp.aio._connection_async",
     "azure.servicebus._pyamqp.aio._link_async",
     "azure.servicebus._pyamqp.aio._management_link_async",
@@ -43,8 +45,8 @@ LOGGERS_FOR_ERRORS_ONLY = [
     "urllib3.connectionpool"
 ]
 
-
 logger = logging.getLogger("azuretre_api")
+tracer = trace.get_tracer("azuretre_api")
 
 
 def configure_loggers():
@@ -64,22 +66,22 @@ def initialize_logging() -> logging.Logger:
     else:
         logging_level = logging.INFO
 
-    try:
+    if APPLICATIONINSIGHTS_CONNECTION_STRING:
         configure_azure_monitor(
-            logger_name="azuretre",
+            logger_name="azuretre_api",
             instrumentation_options={
-                "azure_sdk": {"enabled": True},
+                "azure_sdk": {"enabled": False},
                 "flask": {"enabled": False},
                 "django": {"enabled": False},
                 "fastapi": {"enabled": True},
+                "psycopg2": {"enabled": False},
             }
         )
-    except ValueError as e:
-        logger.error(f"Failed to set Application Insights logger handler: {e}")
 
     LoggingInstrumentor().instrument(
         set_logging_format=True,
-        level=logging_level
+        log_level=logging_level,
+        tracer_provider=tracer._real_tracer
     )
 
     return logger

@@ -54,6 +54,9 @@ CREDENTIAL_SCOPES: List[str] = [f"{RESOURCE_MANAGER_ENDPOINT}/.default"]
 MICROSOFT_GRAPH_URL: str = config("MICROSOFT_GRAPH_URL", default="https://graph.microsoft.com")
 STORAGE_ENDPOINT_SUFFIX: str = config("STORAGE_ENDPOINT_SUFFIX", default="core.windows.net")
 
+# Monitoring
+APPLICATIONINSIGHTS_CONNECTION_STRING: str = config("APPLICATIONINSIGHTS_CONNECTION_STRING", default=None)
+
 # Authentication
 API_CLIENT_ID: str = config("API_CLIENT_ID", default="")
 API_CLIENT_SECRET: str = config("API_CLIENT_SECRET", default="")

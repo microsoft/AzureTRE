@@ -1,12 +1,12 @@
 import os
-from opentelemetry import trace
 from _version import __version__
-from shared.logging import logger
+from shared.logging import logger, tracer
+
 
 VERSION = __version__
 
 
-def get_config(tracer: trace.Tracer) -> dict:
+def get_config() -> dict:
     with tracer.start_as_current_span("get_config"):
         config = {}
 

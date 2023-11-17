@@ -1,5 +1,7 @@
 import logging
+import os
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
+from opentelemetry import trace
 from azure.monitor.opentelemetry import configure_azure_monitor
 
 UNWANTED_LOGGERS = [
@@ -44,7 +46,8 @@ LOGGERS_FOR_ERRORS_ONLY = [
     "azure.servicebus._pyamqp.aio._client_async"
 ]
 
-logger = logging.getLogger("resource_processor")
+logger = logging.getLogger("azuretre_resource_processor")
+tracer = trace.get_tracer("azuretre_resource_processor")
 
 
 def configure_loggers():
@@ -62,22 +65,22 @@ def initialize_logging() -> logging.Logger:
     # Resource Processor has no way to change the logging level, so we set it to INFO
     logging_level = logging.INFO
 
-    try:
+    if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
         configure_azure_monitor(
-            logger_name="azuretre",
+            logger_name="azuretre_resource_processor",
             instrumentation_options={
-                "azure_sdk": {"enabled": True},
+                "azure_sdk": {"enabled": False},
                 "flask": {"enabled": False},
                 "django": {"enabled": False},
                 "fastapi": {"enabled": True},
+                "psycopg2": {"enabled": False},
             }
         )
-    except ValueError as e:
-        logger.error(f"Failed to set Application Insights logger handler: {e}")
 
     LoggingInstrumentor().instrument(
         set_logging_format=True,
-        level=logging_level
+        log_level=logging_level,
+        tracer_provider=tracer._real_tracer
     )
 
     return logger

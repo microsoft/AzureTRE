@@ -10,6 +10,7 @@ from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus
 from models.domain.workspace import Workspace
 from services.logging import logger
 
+
 async def send_status_changed_event(airlock_request: AirlockRequest, previous_status: Optional[AirlockRequestStatus]):
     request_id = airlock_request.id
     new_status = airlock_request.status.value

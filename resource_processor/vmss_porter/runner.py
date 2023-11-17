@@ -1,7 +1,6 @@
 from typing import Optional
 from multiprocessing import Process
 import json
-import socket
 import asyncio
 import logging
 import sys
@@ -10,7 +9,7 @@ from shared.config import get_config
 from resources.helpers import get_installation_id
 from resources.httpserver import start_server
 
-from shared.logging import initialize_logging, logger, shell_output_logger
+from shared.logging import initialize_logging, logger, shell_output_logger, tracer
 from shared.config import VERSION
 from resources import statuses
 from contextlib import asynccontextmanager
@@ -19,13 +18,11 @@ from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnect
 from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from azure.identity.aio import DefaultAzureCredential
 
-from opentelemetry import trace
 
-
-def set_up_config(tracer: trace.Tracer) -> Optional[dict]:
+def set_up_config() -> Optional[dict]:
 
     try:
-        config = get_config(tracer)
+        config = get_config()
         return config
     except KeyError as e:
         logger.error(f"Environment variable {e} is not set correctly...Exiting")
@@ -42,7 +39,7 @@ async def default_credentials(msi_id):
     await credential.close()
 
 
-async def receive_message(tracer: trace.Tracer, service_bus_client, config: dict):
+async def receive_message(service_bus_client, config: dict):
     """
     This method is run per process. Each process will connect to service bus and try to establish a session.
     If messages are there, the process will continue to receive all the messages associated with that session.
@@ -69,7 +66,7 @@ async def receive_message(tracer: trace.Tracer, service_bus_client, config: dict
                         except (json.JSONDecodeError) as e:
                             logger.error(f"Received bad service bus resource request message: {e}")
 
-                        with tracer.start_as_current_span("invoke_porter_action") as current_span:
+                        with tracer.start_as_current_span("receive_message") as current_span:
                             current_span.set_attribute("resource_id", message["id"])
                             current_span.set_attribute("action", message["action"])
                             current_span.set_attribute("step_id", message["stepId"])
@@ -243,11 +240,10 @@ async def get_porter_outputs(msg_body: dict, config: dict):
 
 
 async def runner(process_number: int, config: dict):
-    tracer = trace.get_tracer(f"{socket.gethostname()}_{process_number}")
     with tracer.start_as_current_span(process_number):
         async with default_credentials(config["vmss_msi_id"]) as credential:
             service_bus_client = ServiceBusClient(config["service_bus_namespace"], credential)
-            await receive_message(tracer, service_bus_client, config)
+            await receive_message(service_bus_client, config)
 
 
 async def check_runners(processes: list, httpserver: Process):
@@ -268,27 +264,27 @@ async def porter_initialization_commands(config: dict):
 
 if __name__ == "__main__":
     initialize_logging()
-    tracer = trace.get_tracer(f"{socket.gethostname()}_main")
-    config = set_up_config(tracer)
+    with tracer.start_as_current_span("resource_processor_main"):
+        config = set_up_config()
 
-    httpserver = Process(target=start_server)
-    httpserver.start()
-    logger.info("Started http server")
+        httpserver = Process(target=start_server)
+        httpserver.start()
+        logger.info("Started http server")
 
-    asyncio.run(porter_initialization_commands(config))
-    logger.info("Initialized porter")
+        asyncio.run(porter_initialization_commands(config))
+        logger.info("Initialized porter")
 
-    processes = []
-    num = config["number_processes_int"]
-    logger.info(f"Starting {num} processes...")
-    for i in range(num):
-        logger.info(f"Starting process {str(i)}")
-        process = Process(target=lambda: asyncio.run(runner(i, config)))
-        processes.append(process)
-        process.start()
+        processes = []
+        num = config["number_processes_int"]
+        logger.info(f"Starting {num} processes...")
+        for i in range(num):
+            logger.info(f"Starting process {str(i)}")
+            process = Process(target=lambda: asyncio.run(runner(i, config)))
+            processes.append(process)
+            process.start()
 
-    logger.info("All processes have been started. Version is: %s", VERSION)
+        logger.info("All processes have been started. Version is: %s", VERSION)
 
-    asyncio.run(check_runners(processes, httpserver))
+        asyncio.run(check_runners(processes, httpserver))
 
-    logger.warn("Exiting main...")
+        logger.warn("Exiting main...")
