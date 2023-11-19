@@ -130,7 +130,7 @@ resource "azapi_resource_action" "enable_defender_for_storage" {
         scanResultsEventGridTopicResourceId = azurerm_eventgrid_topic.scan_result[0].id
       }
       sensitiveDataDiscovery = {
-        isEnabled = true
+        isEnabled = false
       }
       overrideSubscriptionLevelSettings = true
     }
