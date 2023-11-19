@@ -3,8 +3,7 @@ import logging
 from httpx import AsyncClient, Timeout
 import os
 from urllib.parse import urlparse
-import mimetypes
-from azure.storage.blob import ContentSettings
+from azure.storage.blob import BlobClient
 from airlock import strings
 from e2e_tests.helpers import get_auth_header, get_full_endpoint
 
@@ -66,21 +65,12 @@ async def upload_blob_using_sas(file_path: str, sas_url: str):
 
         blob_url = f"{storage_account_url}{container_name}/{file_name}?{parsed_sas_url.query}"
         LOGGER.info(f"uploading [{file_name}] to container [{blob_url}]")
-        with open(file_path, "rb") as fh:
-            headers = {"x-ms-blob-type": "BlockBlob"}
-            content_type = ""
-            if file_ext != "":
-                content_type = ContentSettings(
-                    content_type=mimetypes.types_map[file_ext]
-                ).content_type
 
-            response = await client.put(
-                url=blob_url,
-                files={'upload-file': (file_name, fh, content_type)},
-                headers=headers
-            )
-            LOGGER.info(f"response code: {response.status_code}")
-            return response
+        client = BlobClient.from_blob_url(blob_url)
+        with open(file_name, 'rb') as data:
+            response = client.upload_blob(data)
+
+        return response
 
 
 async def wait_for_status(

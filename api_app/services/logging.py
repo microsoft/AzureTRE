@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Optional
 
 from opencensus.ext.azure.log_exporter import AzureLogHandler
@@ -18,9 +19,14 @@ UNWANTED_LOGGERS = [
     "azure.identity.aio._credentials.chained",
     "azure.identity",
     "msal.token_cache"
+    # Remove these once the following PR is merged:
+    # https://github.com/Azure/azure-sdk-for-python/pull/30832
+    # Issue: https://github.com/microsoft/AzureTRE/issues/3766
+    "azure.servicebus._pyamqp.aio._session_async"
 ]
 
 LOGGERS_FOR_ERRORS_ONLY = [
+    "urllib3.connectionpool",
     "uamqp",
     "uamqp.authentication.cbs_auth_async",
     "uamqp.async_ops.client_async",
@@ -33,7 +39,14 @@ LOGGERS_FOR_ERRORS_ONLY = [
     "uamqp.async_ops.session_async",
     "uamqp.sender",
     "uamqp.client",
-    "azure.servicebus.aio._base_handler_async"
+    "azure.identity._persistent_cache",
+    "azure.servicebus.aio._base_handler_async",
+    "azure.servicebus._pyamqp.aio._cbs_async",
+    "azure.servicebus._pyamqp.aio._connection_async",
+    "azure.servicebus._pyamqp.aio._link_async",
+    "azure.servicebus._pyamqp.aio._management_link_async",
+    "azure.servicebus._pyamqp.aio._session_async",
+    "azure.servicebus._pyamqp.aio._client_async"
 ]
 
 
@@ -41,11 +54,11 @@ def disable_unwanted_loggers():
     """
     Disables the unwanted loggers.
     """
-    for logger_name in UNWANTED_LOGGERS:
-        logging.getLogger(logger_name).disabled = True
-
     for logger_name in LOGGERS_FOR_ERRORS_ONLY:
         logging.getLogger(logger_name).setLevel(logging.ERROR)
+
+    for logger_name in UNWANTED_LOGGERS:
+        logging.getLogger(logger_name).disabled = True
 
 
 def telemetry_processor_callback_function(envelope):
@@ -68,7 +81,7 @@ class ExceptionTracebackFilter(logging.Filter):
         return True
 
 
-def initialize_logging(logging_level: int, correlation_id: Optional[str] = None) -> logging.LoggerAdapter:
+def initialize_logging(logging_level: int, correlation_id: Optional[str] = None, add_console_handler: bool = False) -> logging.LoggerAdapter:
     """
     Adds the Application Insights handler for the root logger and sets the given logging level.
     Creates and returns a logger adapter that integrates the correlation ID, if given, to the log messages.
@@ -81,12 +94,19 @@ def initialize_logging(logging_level: int, correlation_id: Optional[str] = None)
 
     disable_unwanted_loggers()
 
+    if add_console_handler:
+        console_formatter = logging.Formatter(fmt='%(module)-7s %(name)-7s %(process)-7s %(asctime)s %(levelname)-7s %(message)s')
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(console_formatter)
+        logger.addHandler(console_handler)
+
     try:
         # picks up APPLICATIONINSIGHTS_CONNECTION_STRING automatically
-        azurelog_handler = AzureLogHandler()
-        azurelog_handler.add_telemetry_processor(telemetry_processor_callback_function)
-        azurelog_handler.addFilter(ExceptionTracebackFilter())
-        logger.addHandler(azurelog_handler)
+        if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+            azurelog_handler = AzureLogHandler()
+            azurelog_handler.add_telemetry_processor(telemetry_processor_callback_function)
+            azurelog_handler.addFilter(ExceptionTracebackFilter())
+            logger.addHandler(azurelog_handler)
     except ValueError as e:
         logger.error(f"Failed to set Application Insights logger handler: {e}")
 
