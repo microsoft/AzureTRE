@@ -69,21 +69,23 @@ def main(msg: func.ServiceBusMessage,
 
     send_delete_event(dataDeletionEvent, json_body, request_id)
 
-    def send_delete_event(dataDeletionEvent: func.Out[func.EventGridOutputEvent], json_body, request_id):
-        blob_client = get_blob_client_from_blob_info(
-            *get_blob_info_from_topic_and_subject(topic=json_body["topic"], subject=json_body["subject"]))
-        blob_metadata = blob_client.get_blob_properties()["metadata"]
-        copied_from = json.loads(blob_metadata["copied_from"])
-        logging.info(f"copied from history: {copied_from}")
 
-        # signal that the container where we copied from can now be deleted
-        dataDeletionEvent.set(
-            func.EventGridOutputEvent(
-                id=str(uuid.uuid4()),
-                data={"blob_to_delete": copied_from[-1]},  # last container in copied_from is the one we just copied from
-                subject=request_id,
-                event_type="Airlock.DataDeletion",
-                event_time=datetime.datetime.utcnow(),
-                data_version=constants.DATA_DELETION_EVENT_DATA_VERSION
-            )
+def send_delete_event(dataDeletionEvent: func.Out[func.EventGridOutputEvent], json_body, request_id):
+    # check blob metadata to find the blob it was copied from
+    blob_client = get_blob_client_from_blob_info(
+        *get_blob_info_from_topic_and_subject(topic=json_body["topic"], subject=json_body["subject"]))
+    blob_metadata = blob_client.get_blob_properties()["metadata"]
+    copied_from = json.loads(blob_metadata["copied_from"])
+    logging.info(f"copied from history: {copied_from}")
+
+    # signal that the container where we copied from can now be deleted
+    dataDeletionEvent.set(
+        func.EventGridOutputEvent(
+            id=str(uuid.uuid4()),
+            data={"blob_to_delete": copied_from[-1]},  # last container in copied_from is the one we just copied from
+            subject=request_id,
+            event_type="Airlock.DataDeletion",
+            event_time=datetime.datetime.utcnow(),
+            data_version=constants.DATA_DELETION_EVENT_DATA_VERSION
         )
+    )

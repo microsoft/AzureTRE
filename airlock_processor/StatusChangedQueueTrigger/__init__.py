@@ -7,7 +7,7 @@ import os
 import uuid
 import json
 
-from exceptions import NoFilesInRequestException, TooManyFilesInRequestException, NotAllowedFileExtension
+from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
 
 from shared_code import blob_operations, constants
 from pydantic import BaseModel, parse_obj_as
@@ -40,8 +40,6 @@ def main(msg: func.ServiceBusMessage, stepResultEvent: func.Out[func.EventGridOu
         set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.NO_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
     except TooManyFilesInRequestException:
         set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.TOO_MANY_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
-    except NotAllowedFileExtension:
-        set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.NOT_ALLWOED_FILE_EXTENSION, request_files=request_files)
     except Exception:
         set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.UNKNOWN_REASON_MESSAGE, request_files=request_files)
 

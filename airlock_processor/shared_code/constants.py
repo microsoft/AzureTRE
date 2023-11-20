@@ -34,7 +34,6 @@ STAGE_FAILED = "failed"
 # Messages
 NO_FILES_IN_REQUEST_MESSAGE = "Request did not contain any files."
 TOO_MANY_FILES_IN_REQUEST_MESSAGE = "Request contained more than 1 file."
-NOT_ALLWOED_FILE_EXTENSION = "File extension is not allowed for copying."
 UNKNOWN_REASON_MESSAGE = "Request failed due to an unknown reason."
 
 # Event Grid
