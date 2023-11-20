@@ -36,6 +36,7 @@ def main(msg: func.ServiceBusMessage,
             # If malware scanning is enabled, the fact that the blob was created can be dismissed.
             # It will be consumed by the malware scanning service
             logging.info('Malware scanning is enabled. no action to perform.')
+            send_delete_event(dataDeletionEvent, json_body, request_id)
             return
         else:
             logging.info('Malware scanning is disabled. Completing the submitted stage (moving to in_review).')
@@ -66,21 +67,23 @@ def main(msg: func.ServiceBusMessage,
             event_time=datetime.datetime.utcnow(),
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
-    # check blob metadata to find the blob it was copied from
-    blob_client = get_blob_client_from_blob_info(
-        *get_blob_info_from_topic_and_subject(topic=json_body["topic"], subject=json_body["subject"]))
-    blob_metadata = blob_client.get_blob_properties()["metadata"]
-    copied_from = json.loads(blob_metadata["copied_from"])
-    logging.info(f"copied from history: {copied_from}")
+    send_delete_event(dataDeletionEvent, json_body, request_id)
 
-    # signal that the container where we copied from can now be deleted
-    dataDeletionEvent.set(
-        func.EventGridOutputEvent(
-            id=str(uuid.uuid4()),
-            data={"blob_to_delete": copied_from[-1]},  # last container in copied_from is the one we just copied from
-            subject=request_id,
-            event_type="Airlock.DataDeletion",
-            event_time=datetime.datetime.utcnow(),
-            data_version=constants.DATA_DELETION_EVENT_DATA_VERSION
+    def send_delete_event(dataDeletionEvent: func.Out[func.EventGridOutputEvent], json_body, request_id):
+        blob_client = get_blob_client_from_blob_info(
+            *get_blob_info_from_topic_and_subject(topic=json_body["topic"], subject=json_body["subject"]))
+        blob_metadata = blob_client.get_blob_properties()["metadata"]
+        copied_from = json.loads(blob_metadata["copied_from"])
+        logging.info(f"copied from history: {copied_from}")
+
+        # signal that the container where we copied from can now be deleted
+        dataDeletionEvent.set(
+            func.EventGridOutputEvent(
+                id=str(uuid.uuid4()),
+                data={"blob_to_delete": copied_from[-1]},  # last container in copied_from is the one we just copied from
+                subject=request_id,
+                event_type="Airlock.DataDeletion",
+                event_time=datetime.datetime.utcnow(),
+                data_version=constants.DATA_DELETION_EVENT_DATA_VERSION
+            )
         )
-    )

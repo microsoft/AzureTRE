@@ -31,7 +31,7 @@ tre:
   core_app_service_plan_sku: P1v2
   resource_processor_vmss_sku: Standard_B2s
   enable_swagger: true
-  enable_airlock_malware_scanning: false
+  enable_airlock_malware_scanning: true
 
   # TODO: move to RP default with https://github.com/microsoft/AzureTRE/issues/2948
   workspace_app_service_plan_sku: P1v2
