@@ -23,6 +23,9 @@ def main(msg: func.ServiceBusMessage,
     json_body = json.loads(body)
     topic = json_body["topic"]
     request_id = re.search(r'/blobServices/default/containers/(.*?)/blobs', json_body["subject"]).group(1)
+    event_type = None
+    if "eventType" in json_body:
+        event_type = json_body["eventType"]
 
     # message originated from in-progress blob creation
     if constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS in topic:
@@ -36,7 +39,8 @@ def main(msg: func.ServiceBusMessage,
             # If malware scanning is enabled, the fact that the blob was created can be dismissed.
             # It will be consumed by the malware scanning service
             logging.info('Malware scanning is enabled. no action to perform.')
-            send_delete_event(dataDeletionEvent, json_body, request_id)
+            if event_type is None or event_type != 'Microsoft.Storage.BlobDeleted':
+                send_delete_event(dataDeletionEvent, json_body, request_id)
             return
         else:
             logging.info('Malware scanning is disabled. Completing the submitted stage (moving to in_review).')
