@@ -208,10 +208,7 @@ class AzureADAuthorization(AccessService):
             logger.debug('No suitable token exists in cache, getting a new one from AAD')
             result = app.acquire_token_for_client(scopes=scopes)
         if "access_token" not in result:
-            logger.debug(result.get('error'))
-            logger.debug(result.get('error_description'))
-            logger.debug(result.get('correlation_id'))
-            raise Exception(f"API app registration access token cannot be retrieved: {result.get('error_description')}")
+            raise Exception(f"API app registration access token cannot be retrieved. {result.get('error')}: {result.get('error_description')}")
         return result["access_token"]
 
     @staticmethod
