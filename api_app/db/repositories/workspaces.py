@@ -140,11 +140,11 @@ class WorkspaceRepository(ResourceRepository):
         if (address_space is None):
             raise InvalidInput("Missing 'address_space' from properties.")
 
-        allocated_networks = [x.properties["address_space"] for x in await self.get_workspaces()]
+        allocated_networks = [x.properties["address_space"] for x in await self.get_active_workspaces()]
         return is_network_available(allocated_networks, address_space)
 
     async def get_new_address_space(self, cidr_netmask: int = 24):
-        workspaces = await self.get_workspaces()
+        workspaces = await self.get_active_workspaces()
         networks = [[x.properties.get("address_space")] for x in workspaces]
         networks = networks + [x.properties.get("address_spaces", []) for x in workspaces]
         networks = [i for s in networks for i in s if i is not None]
