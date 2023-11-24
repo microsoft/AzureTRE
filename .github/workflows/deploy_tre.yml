@@ -31,7 +31,7 @@ jobs:
       e2eTestsCustomSelector: >-
         ${{ (github.event_name == 'push' && 'extended or extended_aad')
         || 'extended or extended_aad or shared_services or airlock' }}
-      environmentName: ${{ github.event.inputs.environment || 'CICD' }}
+      environmentName: ${{ github.event.inputs.environment || 'poc' }}
       E2E_TESTS_NUMBER_PROCESSES: 1
       DEVCONTAINER_TAG: 'latest'
     secrets:
