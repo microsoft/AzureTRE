@@ -50,9 +50,9 @@ authentication:
   # create an identity with `Application.ReadWrite.All` and `Directory.Read.All`.
   # When this is true, create Workspaces will also create an AAD Application automatically.
   # When this is false, the AAD Application will need creating manually.
-  auto_workspace_app_registration: true
+  auto_workspace_app_registration: false
   # Setting AUTO_WORKSPACE_GROUP_CREATION to true will create an identity with `Group.ReadWrite.All`
-  auto_workspace_group_creation: false
+  auto_workspace_group_creation: true
 
 resource_processor:
   # The number of processes to start in the resource processor VMSS image
