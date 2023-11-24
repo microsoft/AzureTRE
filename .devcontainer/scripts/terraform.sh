@@ -2,8 +2,8 @@
 set -e
 
 get_latest_release() {
-  curl --silent "https://api.github.com/repos/$1/releases/latest" |
-  grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/'
+    curl --silent "https://api.github.com/repos/$1/releases/latest" |
+    grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/'
 }
 
 VERSION=${1:-"$(get_latest_release hashicorp/terraform)"}

@@ -278,7 +278,9 @@
         "mikestead.dotenv",
         "humao.rest-client",
         "timonwong.shellcheck",
-        "ms-azuretools.vscode-azurefunctions"
+        "ms-azuretools.vscode-azurefunctions",
+        "github.vscode-github-actions",
+        "ms-vscode.makefile-tools"
       ]
     }
   },
