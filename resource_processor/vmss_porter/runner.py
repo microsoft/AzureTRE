@@ -108,8 +108,6 @@ async def run_porter(command, config: dict):
         *command
     ]
 
-    logger.debug(f'Porter command: {command}')
-
     proc = await asyncio.create_subprocess_shell(''.join(command),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
