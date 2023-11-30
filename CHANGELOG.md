@@ -7,7 +7,7 @@ To resolve the Airlock import issue described in ([#3767](https://github.com/mic
 FEATURES:
 
 ENHANCEMENTS:
-
+* Security updates aligning to Dependabot, MS Defender for Cloud and Synk ([#3796](https://github.com/microsoft/AzureTRE/issues/3796))
 BUG FIXES:
 * Fix issue where updates fail as read only is not configured consistently on schema fields ([#3691](https://github.com/microsoft/AzureTRE/issues/3691))
 * When geting avaialble address spaces allow those allocated to deleted workspaces to be reassigned ([#3691](https://github.com/microsoft/AzureTRE/issues/3691))
