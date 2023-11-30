@@ -1,8 +1,8 @@
 ---
 schemaVersion: 1.0.0
-name: tre-workspace-base
-version: 1.5.3
-description: "A base Azure TRE workspace"
+name: tre-workspace-machine-learning
+version: 0.0.1
+description: "A workspace for machine learning"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
 
@@ -86,7 +86,7 @@ parameters:
   - name: scope_id
     type: string
     default: ""
-    description: "The Service Principal Name or identifierUri (e.g. api://GUID"
+    description: "The Service Principal Name or identifierUri (e.g. api://GUID)"
   - name: sp_id
     type: string
     default: ""
