@@ -1,6 +1,6 @@
 # API
 azure-core==1.29.5
-aiohttp==3.8.6
+aiohttp==3.9.0
 azure-cosmos==4.5.1
 azure-identity==1.14.1
 azure-mgmt-cosmosdb==9.3.0

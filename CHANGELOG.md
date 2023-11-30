@@ -7,7 +7,7 @@ To resolve the Airlock import issue described in ([#3767](https://github.com/mic
 FEATURES:
 
 ENHANCEMENTS:
-
+* Security updates aligning to Dependabot, MS Defender for Cloud and Synk ([#3796](https://github.com/microsoft/AzureTRE/issues/3796))
 BUG FIXES:
 * Update Python packages, and fix breaking changes ([#3764](https://github.com/microsoft/AzureTRE/issues/3764))
 * Enabling support for more than 20 users/groups in Workspace API ([#3759](https://github.com/microsoft/AzureTRE/pull/3759  ))
