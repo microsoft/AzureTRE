@@ -75,4 +75,5 @@ developer_settings:
 #  enable_local_debugging: true
 
 # Used by the API and Resource processor application to change log level
-#  debug: true
+# Can be "ERROR", "WARNING", "INFO", "DEBUG"
+#  logging_level: "INFO"

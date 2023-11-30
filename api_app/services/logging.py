@@ -3,7 +3,7 @@ from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry import trace
 from azure.monitor.opentelemetry import configure_azure_monitor
 
-from core.config import APPLICATIONINSIGHTS_CONNECTION_STRING, DEBUG
+from core.config import APPLICATIONINSIGHTS_CONNECTION_STRING, LOGGING_LEVEL
 
 UNWANTED_LOGGERS = [
     "azure.core.pipeline.policies.http_logging_policy",
@@ -61,10 +61,16 @@ def initialize_logging() -> logging.Logger:
 
     configure_loggers()
 
-    if DEBUG:
-        logging_level = logging.DEBUG
-    else:
+    logging_level = logging.INFO
+
+    if LOGGING_LEVEL == "INFO":
         logging_level = logging.INFO
+    elif LOGGING_LEVEL == "DEBUG":
+        logging_level = logging.DEBUG
+    elif LOGGING_LEVEL == "WARNING":
+        logging_level = logging.WARNING
+    elif LOGGING_LEVEL == "ERROR":
+        logging_level = logging.ERROR
 
     if APPLICATIONINSIGHTS_CONNECTION_STRING:
         configure_azure_monitor(
@@ -83,5 +89,7 @@ def initialize_logging() -> logging.Logger:
         log_level=logging_level,
         tracer_provider=tracer._real_tracer
     )
+
+    logger.info("Logging initialized with level: %s", LOGGING_LEVEL)
 
     return logger

@@ -195,7 +195,8 @@
               "env": {
                 "PYTHONPATH": ".",
                 "OTEL_RESOURCE_ATTRIBUTES": "service.name=resource_processor,service.instance.id=local_debug,service.version=dev"
-              }
+              },
+              "justMyCode": false
             },
             {
               "name": "Debug Python file",

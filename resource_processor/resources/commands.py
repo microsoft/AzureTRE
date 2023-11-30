@@ -25,7 +25,7 @@ def azure_login_command(config):
 def apply_porter_credentials_sets_command(config):
     if config["vmss_msi_id"]:
         # Use the Managed Identity when in VMSS context
-        porter_credential_sets = "porter credentials apply vmss_porter/arm_auth.json >/dev/null 2>&1 && porter credentials apply vmss_porter/aad_auth.json >/dev/null 2>&1"
+        porter_credential_sets = "porter credentials apply vmss_porter/arm_auth_local_debugging.json >/dev/null 2>&1 && porter credentials apply vmss_porter/aad_auth.json >/dev/null 2>&1"
 
     else:
         # Use a Service Principal when running locally
@@ -113,7 +113,7 @@ async def get_porter_parameter_keys(config, msg_body):
         env=config["porter_env"])
 
     stdout, stderr = await proc.communicate()
-    logger.info(f'get_porter_parameter_keys exited with {proc.returncode}')
+    logger.debug(f'get_porter_parameter_keys exited with {proc.returncode}')
     result_stdout = None
     result_stderr = None
 

@@ -16,7 +16,7 @@ from services.logging import logger
 async def create_state_store_status(credential) -> Tuple[StatusEnum, str]:
     status = StatusEnum.ok
     message = ""
-    debug = True if config.DEBUG == "true" else False
+    debug = True if config.LOGGING_LEVEL == "DEBUG" else False
     try:
         primary_master_key = await get_store_key(credential)
         cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key, connection_verify=debug)

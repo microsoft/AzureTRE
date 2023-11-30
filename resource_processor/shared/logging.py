@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry import trace
 from azure.monitor.opentelemetry import configure_azure_monitor
@@ -62,8 +63,17 @@ def initialize_logging() -> logging.Logger:
 
     configure_loggers()
 
-    # Resource Processor has no way to change the logging level, so we set it to INFO
-    logging_level = logging.INFO
+    logging_level = os.environ.get("LOGGING_LEVEL", "INFO")
+
+    if logging_level == "INFO":
+        logging_level = logging.INFO
+    elif logging_level == "DEBUG":
+        logging_level = logging.DEBUG
+    elif logging_level == "WARNING":
+        logging_level = logging.WARNING
+    elif logging_level == "ERROR":
+        logging_level = logging.ERROR
+
 
     if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
         configure_azure_monitor(
@@ -87,20 +97,26 @@ def initialize_logging() -> logging.Logger:
 
 
 def shell_output_logger(console_output: str, prefix_item: str, logging_level: int):
-    """
-    Logs the shell output (stdout/err) a line at a time with an option to remove ANSI control chars.
-    """
     if not console_output:
         logger.debug("shell console output is empty.")
         return
 
-    console_output = console_output.strip()
-
     if (logging_level != logging.INFO
-            and len(console_output) < 200
             and console_output.startswith("Unable to find image '")
-            and console_output.endswith("' locally")):
-        logger.debug("Image not present locally, setting log to INFO.")
+            and "' locally" in console_output):
+        console_output = console_output.strip()
+        console_output = re.sub(r"Unable to find image '.*' locally", '', console_output)
+        if console_output.startswith("\n"):
+            console_output = console_output[1:]
+        logger.debug("Image not present locally, removing text from console output.")
         logging_level = logging.INFO
 
-    logger.log(logging_level, f"{prefix_item} {console_output}")
+    if (logging_level != logging.INFO
+            and len(console_output) < 34
+            and "execution completed successfully!" in console_output):
+        logging_level = logging.INFO
+
+    console_output = console_output.strip()
+
+    if console_output:
+        logger.log(logging_level, f"{prefix_item} {console_output}")

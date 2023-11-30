@@ -20,7 +20,6 @@ from azure.identity.aio import DefaultAzureCredential
 
 
 def set_up_config() -> Optional[dict]:
-
     try:
         config = get_config()
         return config
@@ -102,14 +101,22 @@ async def run_porter(command, config: dict):
     """
     Run a Porter command
     """
-    proc = await asyncio.create_subprocess_shell(
-        ''.join(command),
+    command = [
+        f"{azure_login_command(config)} && ",
+        f"{azure_acr_login_command(config)} && ",
+        f"{apply_porter_credentials_sets_command(config)} && ",
+        *command
+    ]
+
+    logger.debug(f'Porter command: {command}')
+
+    proc = await asyncio.create_subprocess_shell(''.join(command),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         env=config["porter_env"])
 
     stdout, stderr = await proc.communicate()
-    logger.info(f'run porter exited with {proc.returncode}')
+    logger.debug(f'run porter exited with {proc.returncode}')
     result_stdout = None
     result_stderr = None
 
@@ -140,7 +147,7 @@ def service_bus_message_generator(sb_message: dict, status: str, deployment_mess
         message_dict["outputs"] = outputs
 
     resource_request_message = json.dumps(message_dict)
-    logger.info(f"Deployment Status Message: {resource_request_message}")
+    logger.debug(f"Deployment Status Message: {resource_request_message}")
     return resource_request_message
 
 
@@ -151,7 +158,7 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
 
     installation_id = get_installation_id(msg_body)
     action = msg_body["action"]
-    logger.info(f"{installation_id}: {action} action starting...")
+    logger.info(f"{action} action starting for {installation_id}...")
     sb_sender = sb_client.get_queue_sender(queue_name=config["deployment_status_queue"])
 
     # post an update message to set the status to an 'in progress' one
@@ -169,7 +176,7 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
     action_completed_without_error = True
 
     # Handle command output
-    if returncode != 0:
+    if returncode != 0 and err is not None:
         error_message = "Error message: " + " ".join(err.split('\n')) + "; Command executed: " + " ".join(porter_command)
         action_completed_without_error = False
 
@@ -256,23 +263,18 @@ async def check_runners(processes: list, httpserver: Process):
             httpserver.kill()
 
 
-async def porter_initialization_commands(config: dict):
-    await run_porter(apply_porter_credentials_sets_command(config), config)
-    await run_porter(azure_login_command(config), config)
-    await run_porter(azure_acr_login_command(config), config)
-
-
 if __name__ == "__main__":
     initialize_logging()
+    logger.info("Resource processor starting...")
     with tracer.start_as_current_span("resource_processor_main"):
         config = set_up_config()
+
+        logger.info("Verifying Azure CLI and Porter functionality...")
+        asyncio.run(run_porter(["az account show -o table"], config))
 
         httpserver = Process(target=start_server)
         httpserver.start()
         logger.info("Started http server")
-
-        asyncio.run(porter_initialization_commands(config))
-        logger.info("Initialized porter")
 
         processes = []
         num = config["number_processes_int"]

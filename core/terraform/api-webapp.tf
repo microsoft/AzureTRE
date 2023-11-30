@@ -58,6 +58,7 @@ resource "azurerm_linux_web_app" "api" {
     RESOURCE_MANAGER_ENDPOINT                        = module.terraform_azurerm_environment_configuration.resource_manager_endpoint
     MICROSOFT_GRAPH_URL                              = module.terraform_azurerm_environment_configuration.microsoft_graph_endpoint
     STORAGE_ENDPOINT_SUFFIX                          = module.terraform_azurerm_environment_configuration.storage_suffix
+    LOGGING_LEVEL                                    = var.logging_level
     OTEL_RESOURCE_ATTRIBUTES                         = "service.name=api,service.version=${local.version}"
   }
 
