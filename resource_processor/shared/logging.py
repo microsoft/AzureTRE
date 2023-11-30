@@ -74,7 +74,6 @@ def initialize_logging() -> logging.Logger:
     elif logging_level == "ERROR":
         logging_level = logging.ERROR
 
-
     if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
         configure_azure_monitor(
             logger_name="azuretre_resource_processor",

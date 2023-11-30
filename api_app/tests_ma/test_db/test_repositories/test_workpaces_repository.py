@@ -102,7 +102,7 @@ async def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
 @patch('core.config.RESOURCE_LOCATION', "useast2")
 @patch('core.config.TRE_ID', "9876")
-async def test_create_workspace_item_creates_a_workspace_with_the_right_values(validate_input_mock, new_cidr_mock,  workspace_repo, basic_workspace_request, basic_resource_template):
+async def test_create_workspace_item_creates_a_workspace_with_the_right_values(validate_input_mock, new_cidr_mock, workspace_repo, basic_workspace_request, basic_resource_template):
     workspace_to_create = basic_workspace_request
     # make sure the input has 'None' for values that we expect to be set
     workspace_to_create.properties.pop("address_space", None)

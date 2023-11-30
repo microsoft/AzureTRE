@@ -29,7 +29,7 @@ class AirlockStatusUpdater():
         self.workspace_repo = await WorkspaceRepository.create(db_client)
 
     async def receive_messages(self):
-        with tracer.start_as_current_span("airlock_receive_messages") as current_span:
+        with tracer.start_as_current_span("airlock_receive_messages"):
             while True:
                 try:
                     async with credentials.get_credential_async() as credential:

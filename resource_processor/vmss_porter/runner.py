@@ -108,10 +108,12 @@ async def run_porter(command, config: dict):
         *command
     ]
 
-    proc = await asyncio.create_subprocess_shell(''.join(command),
+    proc = await asyncio.create_subprocess_shell(
+        ''.join(command),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
-        env=config["porter_env"])
+        env=config["porter_env"]
+    )
 
     stdout, stderr = await proc.communicate()
     logger.debug(f'run porter exited with {proc.returncode}')

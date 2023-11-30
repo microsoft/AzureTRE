@@ -38,7 +38,7 @@ class DeploymentStatusUpdater():
         asyncio.run(self.receive_messages())
 
     async def receive_messages(self):
-        with tracer.start_as_current_span("deployment_status_receive_messages") as current_span:
+        with tracer.start_as_current_span("deployment_status_receive_messages"):
             while True:
                 try:
                     async with credentials.get_credential_async() as credential:
