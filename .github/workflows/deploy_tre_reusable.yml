@@ -844,7 +844,7 @@ jobs:
           ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
           notification-summary: "Failed to deploy from main"
           notification-color: dc3545
-          timezone: Europe/Zurich
+          timezone: America/Toronto
 
       - name: Download Artifacts
         uses: actions/download-artifact@v3
