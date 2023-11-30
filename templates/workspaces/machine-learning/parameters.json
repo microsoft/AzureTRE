@@ -2,7 +2,7 @@
   "schemaType": "ParameterSet",
   "schemaVersion": "1.0.1",
   "namespace": "",
-  "name": "tre-workspace-base",
+  "name": "tre-workspace-machine-learning",
   "parameters": [
     {
       "name": "address_spaces",
