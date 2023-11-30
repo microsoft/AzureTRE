@@ -67,7 +67,7 @@ variable "subscription_id" {
   default     = ""
 }
 variable "logging_level" {
-  type    = string
+  type = string
 }
 variable "rp_bundle_values" {
   type = map(string)
