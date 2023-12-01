@@ -4,7 +4,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 PROJECT = 'azure-tre-cli'
-VERSION = '0.1.4'
+VERSION = '0.2.0'
 
 try:
     long_description = open('README.md', 'rt').read()
@@ -41,15 +41,15 @@ setup(
     provides=[],
     install_requires=[
         "click==8.1.3",
-        "httpx~=0.23.1",
-        "msal==1.20.0",
+        "httpx==0.25.0",
+        "msal==1.22.0",
         "jmespath==1.0.1",
         "tabulate==0.9.0",
-        "pygments==2.15.0",
-        "PyJWT==2.6.0",
-        "azure-cli-core==2.47.0",
-        "azure-identity==1.12.0",
-        "aiohttp==3.8.5"
+        "pygments==2.16.1",
+        "PyJWT==2.8.0",
+        "azure-cli-core==2.50.0",
+        "azure-identity==1.14.1",
+        "aiohttp==3.9.0"
     ],
 
     namespace_packages=[],

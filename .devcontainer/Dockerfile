@@ -49,7 +49,7 @@ RUN if [ "${INTERACTIVE}" = "true" ]; then \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/* ; fi
 
 ARG PORTER_HOME_V1=/home/$USERNAME/.porter/
-ARG PORTER_VERSION=v1.0.11
+ARG PORTER_VERSION=v1.0.15
 ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.2
 ARG PORTER_AZ_MIXIN_VERSION=v1.0.1
 ARG PORTER_AZURE_PLUGIN_VERSION=v1.2.0
@@ -64,6 +64,8 @@ RUN export PORTER_VERSION=${PORTER_VERSION} \
 ENV PATH ${PORTER_HOME_V1}:$PATH
 
 # Install requirements
+ARG PIP_VERSION=23.3.1
+RUN  pip3 --no-cache-dir install pip==${PIP_VERSION} && pip3 config set global.disable-pip-version-check true
 COPY ["requirements.txt", "/tmp/pip-tmp/" ]
 COPY ["api_app/requirements.txt", "api_app/requirements-dev.txt", "/tmp/pip-tmp/api_app/" ]
 COPY ["resource_processor/vmss_porter/requirements.txt", "/tmp/pip-tmp/resource_processor/vmss_porter/" ]
@@ -73,7 +75,7 @@ COPY ["airlock_processor/requirements.txt", "/tmp/pip-tmp/airlock_processor/"]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt
 
 # Install azure-cli
-ARG AZURE_CLI_VERSION=2.37.0-1~bullseye
+ARG AZURE_CLI_VERSION=2.50.0-1~bullseye
 COPY .devcontainer/scripts/azure-cli.sh /tmp/
 RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh

@@ -17,9 +17,17 @@ terraform {
       source  = "hashicorp/http"
       version = "~> 3.2.0"
     }
+    azapi = {
+      source  = "Azure/azapi"
+      version = "~> 1.9.0"
+    }
   }
 
   backend "azurerm" {}
+}
+
+provider "azapi" {
+  use_msi = var.arm_use_msi
 }
 
 provider "azurerm" {

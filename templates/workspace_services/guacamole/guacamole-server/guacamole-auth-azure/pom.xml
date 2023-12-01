@@ -6,7 +6,7 @@
 
     <groupId>org.apache.guacamole</groupId>
     <artifactId>guacamole-auth-tre</artifactId>
-    <version>0.3.3</version>
+    <version>0.3.4</version>
     <packaging>jar</packaging>
     <name>guacamole-azure-tre</name>
 
@@ -41,14 +41,14 @@
         <dependency>
             <groupId>org.apache.guacamole</groupId>
             <artifactId>guacamole-ext</artifactId>
-            <version>1.5.2</version>
+            <version>1.5.3</version>
             <scope>provided</scope>
         </dependency>
         <!-- MS Azure dependencies -->
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-security-keyvault-secrets</artifactId>
-            <version>4.6.3</version>
+            <version>4.7.2</version>
         </dependency>
         <dependency>
             <groupId>com.azure</groupId>
@@ -59,7 +59,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20230618</version>
+            <version>20231013</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>

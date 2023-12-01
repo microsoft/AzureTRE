@@ -1,14 +1,63 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.16.0 (Unreleased)
 
+**BREAKING CHANGES & MIGRATIONS**:
+To resolve the Airlock import issue described in ([#3767](https://github.com/microsoft/AzureTRE/pull/3767)), the new airlock import review tempalte will need to be registered using `make workspace_bundle BUNDLE=airlock-import-review`. Any existing airlock import review workspaces will need to be upgraded. After upgrading, run `make deploy-core` to reinstate any deleted DNS records.
+
 FEATURES:
 
 ENHANCEMENTS:
-
+* Security updates aligning to Dependabot, MS Defender for Cloud and Synk ([#3796](https://github.com/microsoft/AzureTRE/issues/3796))
 BUG FIXES:
-* Fix notifications displaying workspace name rather than actual resource ([#3746](https://github.com/microsoft/AzureTRE/issues/3746))
+* Fix issue where updates fail as read only is not configured consistently on schema fields ([#3691](https://github.com/microsoft/AzureTRE/issues/3691))
+* When geting avaialble address spaces allow those allocated to deleted workspaces to be reassigned ([#3691](https://github.com/microsoft/AzureTRE/issues/3691))
+* Update Python packages, and fix breaking changes ([#3764](https://github.com/microsoft/AzureTRE/issues/3764))
+* Enabling support for more than 20 users/groups in Workspace API ([#3759](https://github.com/microsoft/AzureTRE/pull/3759  ))
+* Airlock Import Review workspace uses dedicated DNS zone to prevent conflict with core ([#3767](https://github.com/microsoft/AzureTRE/pull/3767))
 
 COMPONENTS:
+
+## 0.15.2 (October 24, 2023)
+
+BUG FIXES:
+* Remove .sh extension from nexus renewal script so CRON job executes ([#3742](https://github.com/microsoft/AzureTRE/issues/3742))
+* Upgrade porter version to v1.0.15 and on error getting porter outputs return dict ([#3744](https://github.com/microsoft/AzureTRE/issues/3744))
+* Fix notifications displaying workspace name rather than actual resource ([#3746](https://github.com/microsoft/AzureTRE/issues/3746))
+* Fix SecuredByRole fails if app roles are not loaded  ([#3752](https://github.com/microsoft/AzureTRE/issues/3752))
+* Fix workspace not loading fails if operation or history roles are not loaded  ([#3755](https://github.com/microsoft/AzureTRE/issues/3755))
+
+COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.5.1 |
+| core | 0.8.9 |
+| ui | 0.5.15 |
+| tre-workspace-base | 1.5.0 |
+| tre-workspace-unrestricted | 0.11.1 |
+| tre-workspace-airlock-import-review | 0.12.7 |
+| tre-service-mlflow | 0.7.7 |
+| tre-workspace-service-health | 0.2.5 |
+| tre-service-databricks | 1.0.3 |
+| tre-service-innereye | 0.6.4 |
+| tre-workspace-service-gitea | 0.8.7 |
+| tre-workspace-service-mysql | 0.4.5 |
+| tre-workspace-service-ohdsi | 0.2.4 |
+| tre-service-guacamole-linuxvm | 0.6.9 |
+| tre-service-guacamole-export-reviewvm | 0.1.8 |
+| tre-service-guacamole-windowsvm | 0.7.9 |
+| tre-service-guacamole-import-reviewvm | 0.2.8 |
+| tre-service-guacamole | 0.10.5 |
+| tre-user-resource-aml-compute-instance | 0.5.7 |
+| tre-service-azureml | 0.8.10 |
+| tre-shared-service-cyclecloud | 0.5.5 |
+| tre-shared-service-databricks-private-auth | 0.1.5 |
+| tre-shared-service-gitea | 0.6.10 |
+| tre-shared-service-airlock-notifier | 0.9.0 |
+| tre-shared-service-admin-vm | 0.4.3 |
+| tre-shared-service-certs | 0.5.1 |
+| tre-shared-service-sonatype-nexus | 2.8.13 |
+| tre-shared-service-firewall | 1.1.5 |
+
 
 ## 0.15.1 (October 12, 2023)
 
