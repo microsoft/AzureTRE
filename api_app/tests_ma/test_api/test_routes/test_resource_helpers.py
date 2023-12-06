@@ -297,7 +297,7 @@ class TestResourceHelpers:
         send_deployment_message_mock.assert_called_once_with(
             content=json.dumps(resource.get_resource_request_message_payload(operation_id=operation_id, step_id=step_id, action="install")),
             correlation_id=operation_id,
-            session_id=resource.id,
+            resource=resource,
             action="install")
 
         # Checking that the item saved had a secret redacted

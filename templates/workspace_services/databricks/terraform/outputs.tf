@@ -49,3 +49,7 @@ data "dns_a_record_set" "event_hub_endpoint_addresses" {
 output "event_hub_endpoint_addresses" {
   value = setunion(flatten([for addr in data.dns_a_record_set.event_hub_endpoint_addresses : addr.addrs]))
 }
+
+output "is_exposed_externally" {
+  value = var.is_exposed_externally
+}

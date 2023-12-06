@@ -163,7 +163,7 @@ class DeploymentStatusUpdater():
                     # create + send the message
                     logging.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.templateStepId}, action: {next_step.resourceAction}")
                     content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.id, action=next_step.resourceAction))
-                    await send_deployment_message(content=content, correlation_id=operation.id, session_id=resource_to_send.id, action=next_step.resourceAction)
+                    await send_deployment_message(content=content, correlation_id=operation.id, resource=resource_to_send, action=next_step.resourceAction)
                 except Exception as e:
                     logging.exception("Unable to send update for resource in pipeline step")
                     next_step.message = repr(e)
