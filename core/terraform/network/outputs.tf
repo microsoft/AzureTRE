@@ -42,6 +42,10 @@ output "mysql_gitea_shared_service_subnet_id" {
   value = azurerm_subnet.mysql_gitea_shared_service.id
 }
 
+output "gateway_subnet_address_prefix" {
+  value = local.gateway_subnet_address_prefix
+}
+
 # DNS Zones
 
 output "azure_monitor_dns_zone_id" {
