@@ -41,4 +41,4 @@ If you wish to deploy the Azure TRE from a forked repository you can change the 
 - `"OSS_REPO": "microsoft/AzureTRE"` (the default)
 - `"OSS_REPO": "myorg/AzureTRE"` (to point to fork of the Azure TRE in your GitHub organisation)
 
-When changing `OSS_REPO` ensure the `OSS_VERSION` variable refers to a GitHub ref on the repository fork. 
+When changing `OSS_REPO` ensure the `OSS_VERSION` variable refers to a GitHub ref on the repository fork.
