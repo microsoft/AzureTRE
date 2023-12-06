@@ -1,12 +1,11 @@
 import logging
 from typing import Tuple
 from azure.core import exceptions
-from azure.cosmos.aio import CosmosClient
 from azure.servicebus.aio import ServiceBusClient
 from azure.mgmt.compute.aio import ComputeManagementClient
 from azure.cosmos.exceptions import CosmosHttpResponseError
 from azure.servicebus.exceptions import ServiceBusConnectionError, ServiceBusAuthenticationError
-from api.dependencies.database import get_store_key
+from api.dependencies.database import connect_to_db
 
 from core import config
 from models.schemas.status import StatusEnum
@@ -16,10 +15,8 @@ from resources import strings
 async def create_state_store_status(credential) -> Tuple[StatusEnum, str]:
     status = StatusEnum.ok
     message = ""
-    debug = True if config.DEBUG == "true" else False
     try:
-        primary_master_key = await get_store_key(credential)
-        cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key, connection_verify=debug)
+        cosmos_client = connect_to_db()
         async with cosmos_client:
             list_databases_response = cosmos_client.list_databases()
             [database async for database in list_databases_response]

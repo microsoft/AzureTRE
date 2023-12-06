@@ -16,5 +16,6 @@ async def bootstrap_database(app) -> bool:
             await ResourceRepository.create(client)
             return True
     except Exception as e:
-        logging.debug(e)
+        logger.exception("Could not bootstrap database")
+        logger.debug(e)
         return False
