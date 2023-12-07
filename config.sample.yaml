@@ -65,9 +65,8 @@ resource_processor:
 #  rp_bundle_values: '{"custom_key_1":"custom_value_1","image_gallery_id":"/subscriptions/<subscription-id>/resourceGroups/<your-rg>/providers/Microsoft.Compute/galleries/<your-gallery-name>"}'
 
 developer_settings:
-  # Locks will not be added to stateful resources so they can be easily removed
-  # stateful_resources_locked: false
-
+# Locks will not be added to stateful resources so they can be easily removed
+# stateful_resources_locked: false
 
 # This setting will enable your local machine to be able to
 # communicate with Service Bus and Cosmos. It will also allow deploying
