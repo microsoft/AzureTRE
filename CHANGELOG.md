@@ -1,21 +1,66 @@
 <!-- markdownlint-disable MD041 -->
-## 0.16.0 (Unreleased)
+## 0.17.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
-To resolve the Airlock import issue described in ([#3767](https://github.com/microsoft/AzureTRE/pull/3767)), the new airlock import review tempalte will need to be registered using `make workspace_bundle BUNDLE=airlock-import-review`. Any existing airlock import review workspaces will need to be upgraded. After upgrading, run `make deploy-core` to reinstate any deleted DNS records.
 
 FEATURES:
 
 ENHANCEMENTS:
 
 BUG FIXES:
+
+COMPONENTS:
+
+
+## 0.16.0 (December 1, 2023)
+
+**BREAKING CHANGES & MIGRATIONS**:
+To resolve the Airlock import issue described in ([#3767](https://github.com/microsoft/AzureTRE/pull/3767)), the new airlock import review template will need to be registered using `make workspace_bundle BUNDLE=airlock-import-review`. Any existing airlock import review workspaces will need to be upgraded.
+
+Once you have upgraded the import review workspaces, delete the private endpoint, named `pe-stg-import-inprogress-blob-*` in the core resource group, and then run `make deploy-core` to reinstate the private endpoint and DNS records.
+
+ENHANCEMENTS:
+* Security updates aligning to Dependabot, MS Defender for Cloud and Synk ([#3796](https://github.com/microsoft/AzureTRE/issues/3796))
+
+BUG FIXES:
 * Fix issue where updates fail as read only is not configured consistently on schema fields ([#3691](https://github.com/microsoft/AzureTRE/issues/3691))
-* When geting avaialble address spaces allow those allocated to deleted workspaces to be reassigned ([#3691](https://github.com/microsoft/AzureTRE/issues/3691))
+* When getting available address spaces allow those allocated to deleted workspaces to be reassigned ([#3691](https://github.com/microsoft/AzureTRE/issues/3691))
 * Update Python packages, and fix breaking changes ([#3764](https://github.com/microsoft/AzureTRE/issues/3764))
 * Enabling support for more than 20 users/groups in Workspace API ([#3759](https://github.com/microsoft/AzureTRE/pull/3759  ))
 * Airlock Import Review workspace uses dedicated DNS zone to prevent conflict with core ([#3767](https://github.com/microsoft/AzureTRE/pull/3767))
 
 COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.5.1 |
+| core | 0.9.0 |
+| ui | 0.5.17 |
+| tre-workspace-base | 1.5.3 |
+| tre-workspace-unrestricted | 0.11.4 |
+| tre-workspace-airlock-import-review | 0.12.16 |
+| tre-service-mlflow | 0.7.7 |
+| tre-workspace-service-health | 0.2.5 |
+| tre-service-databricks | 1.0.3 |
+| tre-service-innereye | 0.6.4 |
+| tre-workspace-service-gitea | 0.8.7 |
+| tre-workspace-service-mysql | 0.4.5 |
+| tre-workspace-service-ohdsi | 0.2.4 |
+| tre-service-guacamole-linuxvm | 0.6.9 |
+| tre-service-guacamole-export-reviewvm | 0.1.8 |
+| tre-service-guacamole-windowsvm | 0.7.9 |
+| tre-service-guacamole-import-reviewvm | 0.2.8 |
+| tre-service-guacamole | 0.10.6 |
+| tre-user-resource-aml-compute-instance | 0.5.7 |
+| tre-service-azureml | 0.8.10 |
+| tre-shared-service-cyclecloud | 0.5.5 |
+| tre-shared-service-databricks-private-auth | 0.1.5 |
+| tre-shared-service-gitea | 0.6.10 |
+| tre-shared-service-airlock-notifier | 0.9.0 |
+| tre-shared-service-admin-vm | 0.4.3 |
+| tre-shared-service-certs | 0.5.1 |
+| tre-shared-service-sonatype-nexus | 2.8.13 |
+| tre-shared-service-firewall | 1.1.5 |
+
 
 ## 0.15.2 (October 24, 2023)
 
