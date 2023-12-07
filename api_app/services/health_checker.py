@@ -1,4 +1,3 @@
-import logging
 from typing import Tuple
 from azure.core import exceptions
 from azure.cosmos.aio import CosmosClient
@@ -11,12 +10,13 @@ from api.dependencies.database import get_store_key
 from core import config
 from models.schemas.status import StatusEnum
 from resources import strings
+from services.logging import logger
 
 
 async def create_state_store_status(credential) -> Tuple[StatusEnum, str]:
     status = StatusEnum.ok
     message = ""
-    debug = True if config.DEBUG == "true" else False
+    debug = True if config.LOGGING_LEVEL == "DEBUG" else False
     try:
         primary_master_key = await get_store_key(credential)
         cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key, connection_verify=debug)
@@ -30,7 +30,7 @@ async def create_state_store_status(credential) -> Tuple[StatusEnum, str]:
         status = StatusEnum.not_ok
         message = strings.STATE_STORE_ENDPOINT_NOT_ACCESSIBLE
     except Exception:
-        logging.exception("Failed to query cosmos db status")
+        logger.exception("Failed to query cosmos db status")
         status = StatusEnum.not_ok
         message = strings.UNSPECIFIED_ERROR
     return status, message
@@ -52,7 +52,7 @@ async def create_service_bus_status(credential) -> Tuple[StatusEnum, str]:
         status = StatusEnum.not_ok
         message = strings.SERVICE_BUS_AUTHENTICATION_ERROR
     except Exception:
-        logging.exception("Failed to query service bus status")
+        logger.exception("Failed to query service bus status")
         status = StatusEnum.not_ok
         message = strings.UNSPECIFIED_ERROR
     return status, message
@@ -76,7 +76,7 @@ async def create_resource_processor_status(credential) -> Tuple[StatusEnum, str]
                     status = StatusEnum.not_ok
                     message = strings.RESOURCE_PROCESSOR_GENERAL_ERROR_MESSAGE
     except Exception:
-        logging.exception("Failed to query resource processor status")
+        logger.exception("Failed to query resource processor status")
         status = StatusEnum.not_ok
         message = strings.UNSPECIFIED_ERROR
     return status, message
