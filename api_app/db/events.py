@@ -1,10 +1,9 @@
-import logging
-
 from azure.cosmos.aio import CosmosClient
 
 from api.dependencies.database import get_db_client
 from db.repositories.resources import ResourceRepository
 from core import config
+from services.logging import logger
 
 
 async def bootstrap_database(app) -> bool:

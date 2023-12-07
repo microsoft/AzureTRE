@@ -1,4 +1,3 @@
-import logging
 from typing import Callable, Type
 
 from azure.cosmos.aio import CosmosClient
@@ -10,6 +9,7 @@ from core import config, credentials
 from db.errors import UnableToAccessDatabase
 from db.repositories.base import BaseRepository
 from resources import strings
+from services.logging import logger
 
 
 async def connect_to_db() -> CosmosClient:
@@ -61,7 +61,7 @@ async def get_store_key(credential) -> str:
 
 
 async def get_db_client(app: FastAPI) -> CosmosClient:
-    if not app.state.cosmos_client:
+    if not hasattr(app.state, 'cosmos_client') or not app.state.cosmos_client:
         app.state.cosmos_client = await connect_to_db()
     return app.state.cosmos_client
 
@@ -79,7 +79,7 @@ def get_repository(
         try:
             return await repo_type.create(client)
         except UnableToAccessDatabase:
-            logging.exception(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+            logger.exception(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING,

@@ -1,13 +1,9 @@
 import logging
-import os
-from typing import Optional
+from opentelemetry.instrumentation.logging import LoggingInstrumentor
+from opentelemetry import trace
+from azure.monitor.opentelemetry import configure_azure_monitor
 
-from opencensus.ext.azure.log_exporter import AzureLogHandler
-from opencensus.trace import config_integration
-from opencensus.trace.samplers import AlwaysOnSampler
-from opencensus.trace.tracer import Tracer
-
-from core.config import VERSION
+from core.config import APPLICATIONINSIGHTS_CONNECTION_STRING, LOGGING_LEVEL
 
 UNWANTED_LOGGERS = [
     "azure.core.pipeline.policies.http_logging_policy",
@@ -18,7 +14,7 @@ UNWANTED_LOGGERS = [
     "azure.identity.aio._internal.decorators",
     "azure.identity.aio._credentials.chained",
     "azure.identity",
-    "msal.token_cache"
+    "msal.token_cache",
     # Remove these once the following PR is merged:
     # https://github.com/Azure/azure-sdk-for-python/pull/30832
     # Issue: https://github.com/microsoft/AzureTRE/issues/3766
@@ -26,101 +22,74 @@ UNWANTED_LOGGERS = [
 ]
 
 LOGGERS_FOR_ERRORS_ONLY = [
-    "urllib3.connectionpool",
-    "uamqp",
-    "uamqp.authentication.cbs_auth_async",
-    "uamqp.async_ops.client_async",
-    "uamqp.async_ops.connection_async",
-    "uamqp.async_ops",
-    "uamqp.authentication",
-    "uamqp.c_uamqp",
-    "uamqp.connection",
-    "uamqp.receiver",
-    "uamqp.async_ops.session_async",
-    "uamqp.sender",
-    "uamqp.client",
-    "azure.identity._persistent_cache",
+    "azure.monitor.opentelemetry.exporter.export._base",
     "azure.servicebus.aio._base_handler_async",
     "azure.servicebus._pyamqp.aio._cbs_async",
+    "azure.servicebus._pyamqp.aio._client_async",
     "azure.servicebus._pyamqp.aio._connection_async",
     "azure.servicebus._pyamqp.aio._link_async",
     "azure.servicebus._pyamqp.aio._management_link_async",
-    "azure.servicebus._pyamqp.aio._session_async",
-    "azure.servicebus._pyamqp.aio._client_async"
+    "opentelemetry.attributes",
+    "uamqp",
+    "uamqp.async_ops",
+    "uamqp.async_ops.client_async",
+    "uamqp.async_ops.connection_async",
+    "uamqp.async_ops.session_async",
+    "uamqp.authentication",
+    "uamqp.authentication.cbs_auth_async",
+    "uamqp.c_uamqp",
+    "uamqp.client",
+    "uamqp.connection",
+    "uamqp.receiver",
+    "uamqp.sender",
+    "urllib3.connectionpool"
 ]
 
+logger = logging.getLogger("azuretre_api")
+tracer = trace.get_tracer("azuretre_api")
 
-def disable_unwanted_loggers():
-    """
-    Disables the unwanted loggers.
-    """
+
+def configure_loggers():
     for logger_name in LOGGERS_FOR_ERRORS_ONLY:
         logging.getLogger(logger_name).setLevel(logging.ERROR)
 
     for logger_name in UNWANTED_LOGGERS:
-        logging.getLogger(logger_name).disabled = True
+        logging.getLogger(logger_name).setLevel(logging.CRITICAL)
 
 
-def telemetry_processor_callback_function(envelope):
-    envelope.tags['ai.cloud.role'] = 'api'
-    envelope.tags['ai.application.ver'] = VERSION
+def initialize_logging() -> logging.Logger:
 
+    configure_loggers()
 
-class ExceptionTracebackFilter(logging.Filter):
-    """
-    If a record contains 'exc_info', it will only show in the 'exceptions' section of Application Insights without showing
-    in the 'traces' section. In order to show it also in the 'traces' section, we need another log that does not contain 'exc_info'.
-    """
-    def filter(self, record):
-        if record.exc_info:
-            logger = logging.getLogger(record.name)
-            _, exception_value, _ = record.exc_info
-            message = f"{record.getMessage()}\nException message: '{exception_value}'"
-            logger.log(record.levelno, message)
+    logging_level = logging.INFO
 
-        return True
+    if LOGGING_LEVEL == "INFO":
+        logging_level = logging.INFO
+    elif LOGGING_LEVEL == "DEBUG":
+        logging_level = logging.DEBUG
+    elif LOGGING_LEVEL == "WARNING":
+        logging_level = logging.WARNING
+    elif LOGGING_LEVEL == "ERROR":
+        logging_level = logging.ERROR
 
+    if APPLICATIONINSIGHTS_CONNECTION_STRING:
+        configure_azure_monitor(
+            logger_name="azuretre_api",
+            instrumentation_options={
+                "azure_sdk": {"enabled": False},
+                "flask": {"enabled": False},
+                "django": {"enabled": False},
+                "fastapi": {"enabled": True},
+                "psycopg2": {"enabled": False},
+            }
+        )
 
-def initialize_logging(logging_level: int, correlation_id: Optional[str] = None, add_console_handler: bool = False) -> logging.LoggerAdapter:
-    """
-    Adds the Application Insights handler for the root logger and sets the given logging level.
-    Creates and returns a logger adapter that integrates the correlation ID, if given, to the log messages.
+    LoggingInstrumentor().instrument(
+        set_logging_format=True,
+        log_level=logging_level,
+        tracer_provider=tracer._real_tracer
+    )
 
-    :param logging_level: The logging level to set e.g., logging.WARNING.
-    :param correlation_id: Optional. The correlation ID that is passed on to the operation_Id in App Insights.
-    :returns: A newly created logger adapter.
-    """
-    logger = logging.getLogger()
+    logger.info("Logging initialized with level: %s", LOGGING_LEVEL)
 
-    disable_unwanted_loggers()
-
-    if add_console_handler:
-        console_formatter = logging.Formatter(fmt='%(module)-7s %(name)-7s %(process)-7s %(asctime)s %(levelname)-7s %(message)s')
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(console_formatter)
-        logger.addHandler(console_handler)
-
-    try:
-        # picks up APPLICATIONINSIGHTS_CONNECTION_STRING automatically
-        if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
-            azurelog_handler = AzureLogHandler()
-            azurelog_handler.add_telemetry_processor(telemetry_processor_callback_function)
-            azurelog_handler.addFilter(ExceptionTracebackFilter())
-            logger.addHandler(azurelog_handler)
-    except ValueError as e:
-        logger.error(f"Failed to set Application Insights logger handler: {e}")
-
-    config_integration.trace_integrations(['logging'])
-    logging.basicConfig(level=logging_level, format='%(asctime)s traceId=%(traceId)s spanId=%(spanId)s %(message)s')
-    Tracer(sampler=AlwaysOnSampler())
-    logger.setLevel(logging_level)
-
-    extra = {}
-
-    if correlation_id:
-        extra = {'traceId': correlation_id}
-
-    adapter = logging.LoggerAdapter(logger, extra)
-    adapter.debug(f"Logger adapter initialized with extra: {extra}")
-
-    return adapter
+    return logger
