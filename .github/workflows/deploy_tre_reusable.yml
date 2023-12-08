@@ -378,8 +378,6 @@ jobs:
              BUNDLE_DIR: "./templates/workspaces/unrestricted"}
           - {BUNDLE_TYPE: "workspace",
              BUNDLE_DIR: "./templates/workspaces/airlock-import-review"}
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/machine-learning"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/guacamole"}
           - {BUNDLE_TYPE: "workspace_service",
@@ -388,6 +386,8 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/innereye"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/gitea"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/rshiny"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/mlflow"}
           - {BUNDLE_TYPE: "workspace_service",
@@ -541,8 +541,6 @@ jobs:
              BUNDLE_DIR: "./templates/workspaces/unrestricted"}
           - {BUNDLE_TYPE: "workspace",
              BUNDLE_DIR: "./templates/workspaces/airlock-import-review"}
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/machine-learning"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/guacamole"}
           - {BUNDLE_TYPE: "workspace_service",
@@ -551,6 +549,8 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/innereye"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/gitea"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/rshiny"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/mlflow"}
           - {BUNDLE_TYPE: "workspace_service",
