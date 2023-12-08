@@ -22,7 +22,13 @@ def get_credential() -> TokenCredential:
             ManagedIdentityCredential(client_id=managed_identity)
         )
     else:
-        return DefaultAzureCredential(authority=urlparse(config.AAD_AUTHORITY_URL).netloc)
+        return DefaultAzureCredential(authority=urlparse(config.AAD_AUTHORITY_URL).netloc,
+                                      exclude_shared_token_cache_credential=True,
+                                      exclude_workload_identity_credential=True,
+                                      exclude_developer_cli_credential=True,
+                                      exclude_managed_identity_credential=True,
+                                      exclude_powershell_credential=True
+                                      )
 
 
 @asynccontextmanager
@@ -36,7 +42,13 @@ async def get_credential_async() -> TokenCredential:
             ManagedIdentityCredentialASync(client_id=managed_identity)
         )
         if managed_identity
-        else DefaultAzureCredentialASync(authority=urlparse(config.AAD_AUTHORITY_URL).netloc)
+        else DefaultAzureCredentialASync(authority=urlparse(config.AAD_AUTHORITY_URL).netloc,
+                                         exclude_shared_token_cache_credential=True,
+                                         exclude_workload_identity_credential=True,
+                                         exclude_developer_cli_credential=True,
+                                         exclude_managed_identity_credential=True,
+                                         exclude_powershell_credential=True
+                                         )
     )
     yield credential
     await credential.close()

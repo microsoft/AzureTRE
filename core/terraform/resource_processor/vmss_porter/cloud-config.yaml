@@ -1,5 +1,5 @@
 ---
-#cloud-config
+# cloud-config
 package_upgrade: true
 apt:
   sources:
@@ -57,6 +57,8 @@ write_files:
       AZURE_ENVIRONMENT=${azure_environment}
       AAD_AUTHORITY_URL=${aad_authority_url}
       MICROSOFT_GRAPH_FQDN=${microsoft_graph_fqdn}
+      OTEL_RESOURCE_ATTRIBUTES=service.name=resource_processor,service.version=${resource_processor_vmss_porter_image_tag}
+      LOGGING_LEVEL=${logging_level}
       ${rp_bundle_values}
   - path: /etc/cron.hourly/docker-prune
     # An hourly cron job to have docker free disk space. Running this frquently
@@ -77,8 +79,11 @@ runcmd:
   # (https://microsoft.github.io/AzureTRE/troubleshooting-faq/troubleshooting-rp/#Logs)
   - printf '\nalias dlf="docker logs --since 1m --follow"' >> /etc/bash.bashrc
   - printf '\nalias dlf1='\''dlf $(docker ps -q | head -n 1)'\''' >> /etc/bash.bashrc
-  - printf '\nalias rpstatus='\''tmux new-session -d "watch docker ps"; tmux split-window -p 100 -v "docker logs --since 1m --follow resource_processor1"; tmux split-window -v -p 90; tmux -2 attach-session -d'\''\n' >> /etc/bash.bashrc
-
+  - >
+    printf '\nalias rpstatus='\''tmux new-session -d "watch docker ps"; \
+    tmux split-window -p 100 -v "docker logs --since 1m --follow resource_processor1"; \
+    tmux split-window -v -p 90; \
+    tmux -2 attach-session -d'\''\n' >> /etc/bash.bashrc
   - export DEBIAN_FRONTEND=noninteractive
   - az cloud set --name ${azure_environment}
   - az login --identity -u ${vmss_msi_id}

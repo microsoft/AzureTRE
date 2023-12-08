@@ -1,5 +1,4 @@
 import asyncio
-import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Header, status, Response
 from jsonschema.exceptions import ValidationError
@@ -21,6 +20,7 @@ from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from .resource_helpers import enrich_resource_with_available_upgrades, send_custom_action_message, send_uninstall_message, send_resource_request_message
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
 from models.domain.request_action import RequestAction
+from services.logging import logger
 
 
 shared_services_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
@@ -56,13 +56,13 @@ async def create_shared_service(response: Response, shared_service_input: Shared
     try:
         shared_service, resource_template = await shared_services_repo.create_shared_service_item(shared_service_input, user.roles)
     except (ValidationError, ValueError) as e:
-        logging.exception("Failed create shared service model instance")
+        logger.exception("Failed create shared service model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except DuplicateEntity as e:
-        logging.exception("Shared service already exists")
+        logger.exception("Shared service already exists")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except UserNotAuthorizedToUseTemplate as e:
-        logging.exception("User not authorized to use template")
+        logger.exception("User not authorized to use template")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
     operation = await save_and_deploy_resource(

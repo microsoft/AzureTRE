@@ -1,8 +1,8 @@
-import logging
-
 from azure.cosmos.aio import CosmosClient
-from db.repositories.workspaces import WorkspaceRepository
 import semantic_version
+
+from db.repositories.workspaces import WorkspaceRepository
+from services.logging import logger
 
 
 class WorkspaceMigration(WorkspaceRepository):
@@ -32,7 +32,7 @@ class WorkspaceMigration(WorkspaceRepository):
                     updated = True
 
                 if "authInformation" in item:
-                    logging.info(f'Upgrading authInformation in workspace {item["id"]}')
+                    logger.info(f'Upgrading authInformation in workspace {item["id"]}')
 
                     # Copy authInformation into properties
                     item["properties"]["sp_id"] = item["authInformation"]["sp_id"]
@@ -44,7 +44,7 @@ class WorkspaceMigration(WorkspaceRepository):
 
                 if updated:
                     await self.update_item_dict(item)
-                    logging.info(f'Upgraded authentication info for workspace id {item["id"]}')
+                    logger.info(f'Upgraded authentication info for workspace id {item["id"]}')
                     migrated = True
 
             return migrated

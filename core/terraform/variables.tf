@@ -184,3 +184,13 @@ variable "is_cosmos_defined_throughput" {
   type    = bool
   default = false
 }
+
+variable "logging_level" {
+  type        = string
+  default     = "INFO"
+  description = "The logging level for the API and Resource Processor"
+  validation {
+    condition     = contains(["INFO", "DEBUG", "WARNING", "ERROR"], var.logging_level)
+    error_message = "logging_level must be one of ERROR, WARNING, INFO, DEBUG"
+  }
+}

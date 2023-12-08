@@ -75,7 +75,7 @@ There, you can run a query like
 
 ```cmd
 AppTraces 
-| where AppRoleName == "uvicorn"
+| where AppRoleName == "api"
 | order by TimeGenerated desc 
 ```
 
@@ -99,22 +99,6 @@ To deploy a new version of the API to your TRE deployment, do this:
 make build-and-push-api
 make deploy-core
 ```
-
-### Enabling DEBUG mode on the API
-
-For security, the API is by default configured to not show detailed error messages and stack trace when an error occurs.
-
-You can enable debugging via one of the two ways:
-
-1. Set `debug=true` under developer_settings section in your`config.yaml` file (see [])
-
-To enable debugging on an already running instance:
-
-1. Go to App Service for the API and select **Settings > Configuration**.
-1. Click **New Application Setting**.
-1. in the new dialog box set **Name=DEBUG** and **Value=true**
-
-![API Debug True](../assets/api_debug_true.png)
 
 ## Using Swagger UI
 

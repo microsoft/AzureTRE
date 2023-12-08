@@ -1,4 +1,3 @@
-import logging
 from typing import Callable, Type
 
 from azure.cosmos.aio import CosmosClient
@@ -9,10 +8,11 @@ from core import config, credentials
 from db.errors import UnableToAccessDatabase
 from db.repositories.base import BaseRepository
 from resources import strings
+from services.logging import logger
 
 
 async def connect_to_db() -> CosmosClient:
-    logging.debug(f"Connecting to {config.STATE_STORE_ENDPOINT}")
+    logger.debug(f"Connecting to {config.STATE_STORE_ENDPOINT}")
 
     try:
         async with credentials.get_credential_async() as credential:
@@ -27,10 +27,10 @@ async def connect_to_db() -> CosmosClient:
             cosmos_client = CosmosClient(
                 config.STATE_STORE_ENDPOINT, primary_master_key, connection_verify=False
             )
-        logging.debug("Connection established")
+        logger.debug("Connection established")
         return cosmos_client
     except Exception:
-        logging.exception("Connection to state store could not be established.")
+        logger.exception("Connection to state store could not be established.")
 
 
 async def get_store_key(credential) -> str:
@@ -53,7 +53,7 @@ async def get_store_key(credential) -> str:
 
 
 async def get_db_client(app: FastAPI) -> CosmosClient:
-    if not app.state.cosmos_client:
+    if not hasattr(app.state, 'cosmos_client') or not app.state.cosmos_client:
         app.state.cosmos_client = await connect_to_db()
     return app.state.cosmos_client
 
@@ -71,7 +71,7 @@ def get_repository(
         try:
             return await repo_type.create(client)
         except UnableToAccessDatabase:
-            logging.exception(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+            logger.exception(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING,
