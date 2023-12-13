@@ -32,7 +32,9 @@ locals {
     "privatelink.notebooks.azure.net",
     "privatelink.postgres.database.azure.com",
     "privatelink.mysql.database.azure.com",
-    "privatelink.azuredatabricks.net"
+    "privatelink.azuredatabricks.net",
+    "privatelink.openai.azure.com",
+    "privatelink.cognitiveservices.azure.com"
   ])
 
   # The followig regex extracts different parts of the service bus endpoint: scheme, fqdn, port, path, query and fragment. This allows us to extract the needed fqdn part.

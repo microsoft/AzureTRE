@@ -1,0 +1,15 @@
+---
+default-storage: mydb
+default-secrets: mysecrets
+
+storage:
+  - name: mydb
+    plugin: mongodb
+    config:
+      url: ${secret.porter-db-connection-string}
+
+secrets:
+  - name: mysecrets
+    plugin: azure.keyvault
+    config:
+      vault-url: ${env.KEY_VAULT_URL}
