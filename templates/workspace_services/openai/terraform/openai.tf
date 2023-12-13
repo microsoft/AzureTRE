@@ -43,8 +43,8 @@ resource "azurerm_private_endpoint" "openai_private_endpoint" {
 
   private_dns_zone_group {
     # name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.mysql.database.azure.com"]
-    name                  = "privatelink.openai.azure.com"
-    private_dns_zone_ids  = [azurerm_private_dns_zone.openai.id]
+    name                 = "privatelink.openai.azure.com"
+    private_dns_zone_ids = [azurerm_private_dns_zone.openai.id]
   }
 
   lifecycle { ignore_changes = [tags] }
