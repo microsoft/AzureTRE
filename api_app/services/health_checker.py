@@ -16,7 +16,7 @@ async def create_state_store_status(credential) -> Tuple[StatusEnum, str]:
     status = StatusEnum.ok
     message = ""
     try:
-        cosmos_client = connect_to_db()
+        cosmos_client = await connect_to_db()
         async with cosmos_client:
             list_databases_response = cosmos_client.list_databases()
             [database async for database in list_databases_response]
