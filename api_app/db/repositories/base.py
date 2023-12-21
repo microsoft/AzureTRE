@@ -1,6 +1,5 @@
 from typing import Optional
 from azure.cosmos.aio import CosmosClient, ContainerProxy
-from azure.cosmos import PartitionKey
 from azure.core import MatchConditions
 from pydantic import BaseModel
 
