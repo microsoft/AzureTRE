@@ -14,7 +14,7 @@ class ResourceHistoryRepository(BaseRepository):
     @classmethod
     async def create(cls, client: CosmosClient):
         cls = ResourceHistoryRepository()
-        await super().create(client, config.STATE_STORE_RESOURCES_HISTORY_CONTAINER, "/resourceId")
+        await super().create(client, config.STATE_STORE_RESOURCES_HISTORY_CONTAINER)
         return cls
 
     @staticmethod
