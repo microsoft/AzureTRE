@@ -24,7 +24,7 @@ async def test_get_state_store_status_responding(_, get_store_key_mock, get_cred
 
 @patch("core.credentials.get_credential_async")
 @patch("api.dependencies.database.get_store_key")
-@patch("api.dependencies.database.CosmosClient")
+@patch("api.dependencies.database.get_db_client")
 async def test_get_state_store_status_not_responding(cosmos_client_mock, get_store_key_mock, get_credential_async) -> None:
     get_credential_async.return_value = AsyncMock()
     get_store_key_mock.return_value = None
@@ -38,7 +38,7 @@ async def test_get_state_store_status_not_responding(cosmos_client_mock, get_sto
 
 @patch("core.credentials.get_credential_async")
 @patch("api.dependencies.database.get_store_key")
-@patch("api.dependencies.database.CosmosClient")
+@patch("api.dependencies.database.get_db_client")
 async def test_get_state_store_status_other_exception(cosmos_client_mock, get_store_key_mock, get_credential_async) -> None:
     get_credential_async.return_value = AsyncMock()
     get_store_key_mock.return_value = None

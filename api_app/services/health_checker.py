@@ -4,7 +4,7 @@ from azure.servicebus.aio import ServiceBusClient
 from azure.mgmt.compute.aio import ComputeManagementClient
 from azure.cosmos.exceptions import CosmosHttpResponseError
 from azure.servicebus.exceptions import ServiceBusConnectionError, ServiceBusAuthenticationError
-from api.dependencies.database import connect_to_db
+from api.dependencies.database import get_db_client_from_request
 
 from core import config
 from models.schemas.status import StatusEnum
@@ -12,11 +12,11 @@ from resources import strings
 from services.logging import logger
 
 
-async def create_state_store_status(credential) -> Tuple[StatusEnum, str]:
+async def create_state_store_status(request) -> Tuple[StatusEnum, str]:
     status = StatusEnum.ok
     message = ""
     try:
-        cosmos_client = await connect_to_db()
+        cosmos_client = await get_db_client_from_request(request)
         async with cosmos_client:
             list_databases_response = cosmos_client.list_databases()
             [database async for database in list_databases_response]
