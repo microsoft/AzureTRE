@@ -14,7 +14,7 @@ async def health_check(request: Request) -> HealthCheck:
     # The health endpoint checks the status of key components of the system.
     # Note that Resource Processor checks incur Azure management calls, so
     # calling this endpoint frequently may result in API throttling.
-    async with credentials.get_credential_async() as credential:
+    async with credentials.get_credential_async_cm() as credential:
         cosmos, sb, rp = await asyncio.gather(
             create_state_store_status(),
             create_service_bus_status(credential),

@@ -4,7 +4,7 @@ from azure.cosmos.aio import CosmosClient
 from azure.mgmt.cosmosdb.aio import CosmosDBManagementClient
 from fastapi import HTTPException, status
 from core.config import MANAGED_IDENTITY_CLIENT_ID, STATE_STORE_ENDPOINT, STATE_STORE_KEY, STATE_STORE_SSL_VERIFY, SUBSCRIPTION_ID, RESOURCE_MANAGER_ENDPOINT, CREDENTIAL_SCOPES, RESOURCE_GROUP_NAME, COSMOSDB_ACCOUNT_NAME
-from core.credentials import get_credential
+from core.credentials import get_credential_async
 from db.errors import UnableToAccessDatabase
 from db.repositories.base import BaseRepository
 from resources import strings
@@ -30,7 +30,7 @@ class Database(metaclass=Singleton):
     async def _connect_to_db(self) -> CosmosClient:
         logger.debug(f"Connecting to {STATE_STORE_ENDPOINT}")
 
-        credential = get_credential()
+        credential = await get_credential_async()
         if MANAGED_IDENTITY_CLIENT_ID:
             logger.debug("Connecting with managed identity")
             cosmos_client = CosmosClient(
