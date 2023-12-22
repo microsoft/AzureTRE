@@ -17,8 +17,8 @@ def no_lifespan_events():
 @pytest_asyncio.fixture(autouse=True)
 def no_database():
     """ overrides connecting to the database for all tests"""
-    with patch('api.dependencies.database.connect_to_db', return_value=None):
-        with patch('api.dependencies.database.get_db_client', return_value=None):
+    with patch('api.dependencies.database.Database._connect_to_db', return_value=None):
+        with patch('api.dependencies.database.Database.get_db_client', return_value=None):
             with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
                 with patch('db.events.bootstrap_database', return_value=None):
                     yield

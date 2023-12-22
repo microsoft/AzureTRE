@@ -575,8 +575,8 @@ def simple_pipeline_step() -> PipelineStep:
 @pytest_asyncio.fixture()
 def no_database():
     """overrides connecting to the database"""
-    with patch("api.dependencies.database.connect_to_db", return_value=None):
-        with patch("api.dependencies.database.get_db_client", return_value=None):
+    with patch("api.dependencies.database.Database._connect_to_db", return_value=None):
+        with patch("api.dependencies.database.Database.get_db_client", return_value=None):
             with patch(
                 "db.repositories.base.BaseRepository._get_container", return_value=None
             ):

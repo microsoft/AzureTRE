@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, Path, status
 from pydantic import UUID4
 
-from api.dependencies.database import get_repository
+from api.dependencies.database import Database
 from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.airlock_request import AirlockRequest
 from db.errors import EntityDoesNotExist, UnableToAccessDatabase
@@ -17,5 +17,5 @@ async def get_airlock_request_by_id(airlock_request_id: UUID4, airlock_request_r
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
 
-async def get_airlock_request_by_id_from_path(airlock_request_id: UUID4 = Path(...), airlock_request_repo=Depends(get_repository(AirlockRequestRepository))) -> AirlockRequest:
+async def get_airlock_request_by_id_from_path(airlock_request_id: UUID4 = Path(...), airlock_request_repo=Depends(Database().get_repository(AirlockRequestRepository))) -> AirlockRequest:
     return await get_airlock_request_by_id(airlock_request_id, airlock_request_repo)

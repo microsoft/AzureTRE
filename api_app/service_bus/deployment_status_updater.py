@@ -4,7 +4,7 @@ import uuid
 
 from pydantic import ValidationError, parse_obj_as
 
-from api.dependencies.database import get_db_client
+from api.dependencies.database import Database
 from api.routes.resource_helpers import get_timestamp
 from models.domain.resource import Output
 from db.repositories.resources_history import ResourceHistoryRepository
@@ -24,11 +24,11 @@ from services.logging import logger, tracer
 
 
 class DeploymentStatusUpdater():
-    def __init__(self, app):
-        self.app = app
+    def __init__(self):
+        pass
 
     async def init_repos(self):
-        db_client = await get_db_client(self.app)
+        db_client = await Database().get_db_client()
         self.operations_repo = await OperationRepository.create(db_client)
         self.resource_repo = await ResourceRepository.create(db_client)
         self.resource_template_repo = await ResourceTemplateRepository.create(db_client)

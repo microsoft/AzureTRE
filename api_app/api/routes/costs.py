@@ -7,7 +7,7 @@ from typing import Optional
 from pydantic import UUID4
 
 from models.schemas.costs import get_cost_report_responses, get_workspace_cost_report_responses
-from api.dependencies.database import get_repository
+from api.dependencies.database import Database
 from core import config
 from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.user_resources import UserResourceRepository
@@ -56,8 +56,8 @@ class CostsQueryParams:
 async def costs(
         params: CostsQueryParams = Depends(),
         cost_service: CostService = Depends(cost_service_factory),
-        workspace_repo=Depends(get_repository(WorkspaceRepository)),
-        shared_services_repo=Depends(get_repository(SharedServiceRepository))) -> CostReport:
+        workspace_repo=Depends(Database().get_repository(WorkspaceRepository)),
+        shared_services_repo=Depends(Database().get_repository(SharedServiceRepository))) -> CostReport:
 
     validate_report_period(params.from_date, params.to_date)
     try:
@@ -90,9 +90,9 @@ async def costs(
                             responses=get_workspace_cost_report_responses())
 async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depends(),
                           cost_service: CostService = Depends(cost_service_factory),
-                          workspace_repo=Depends(get_repository(WorkspaceRepository)),
-                          workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository)),
-                          user_resource_repo=Depends(get_repository(UserResourceRepository))) -> WorkspaceCostReport:
+                          workspace_repo=Depends(Database().get_repository(WorkspaceRepository)),
+                          workspace_services_repo=Depends(Database().get_repository(WorkspaceServiceRepository)),
+                          user_resource_repo=Depends(Database().get_repository(UserResourceRepository))) -> WorkspaceCostReport:
 
     validate_report_period(params.from_date, params.to_date)
     try:

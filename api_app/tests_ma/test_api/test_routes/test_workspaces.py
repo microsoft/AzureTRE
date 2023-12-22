@@ -676,7 +676,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     # [DELETE] /workspaces/{workspace_id}
     @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list")
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
-    @ patch("api.dependencies.workspaces.get_repository")
+    @ patch("api.dependencies.database.Database.get_repository")
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace", return_value=[])
     @ patch('azure.cosmos.CosmosClient')
@@ -692,7 +692,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     # [DELETE] /workspaces/{workspace_id}
     @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list")
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
-    @ patch("api.dependencies.workspaces.get_repository")
+    @ patch("api.dependencies.database.Database.get_repository")
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
     @ patch('azure.cosmos.CosmosClient')
