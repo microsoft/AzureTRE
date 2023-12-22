@@ -4,7 +4,7 @@ from azure.cosmos.aio import CosmosClient
 from azure.mgmt.cosmosdb.aio import CosmosDBManagementClient
 from fastapi import HTTPException, status
 from core.config import MANAGED_IDENTITY_CLIENT_ID, STATE_STORE_ENDPOINT, STATE_STORE_KEY, STATE_STORE_SSL_VERIFY, SUBSCRIPTION_ID, RESOURCE_MANAGER_ENDPOINT, CREDENTIAL_SCOPES, RESOURCE_GROUP_NAME, COSMOSDB_ACCOUNT_NAME
-from core.credentials import get_credential_async
+from core.credentials import get_credential
 from db.errors import UnableToAccessDatabase
 from db.repositories.base import BaseRepository
 from resources import strings
@@ -30,28 +30,31 @@ class Database(metaclass=Singleton):
     async def _connect_to_db(self) -> CosmosClient:
         logger.debug(f"Connecting to {STATE_STORE_ENDPOINT}")
 
-        async with get_credential_async() as credential:
-            if MANAGED_IDENTITY_CLIENT_ID:
-                logger.debug("Connecting with managed identity")
+        credential = get_credential()
+        if MANAGED_IDENTITY_CLIENT_ID:
+            logger.debug("Connecting with managed identity")
+            cosmos_client = CosmosClient(
+                url=STATE_STORE_ENDPOINT,
+                credential=credential
+            )
+        else:
+            logger.debug("Connecting with key")
+            primary_master_key = await self._get_store_key(credential)
+
+            if STATE_STORE_SSL_VERIFY:
+                logger.debug("Connecting with SSL verification")
                 cosmos_client = CosmosClient(
                     url=STATE_STORE_ENDPOINT,
-                    credential=credential
+                    credential=primary_master_key
                 )
             else:
-                logger.debug("Connecting with key")
-                primary_master_key = await self._get_store_key(credential)
-
-                if STATE_STORE_SSL_VERIFY:
-                    logger.debug("Connecting with SSL verification")
-                    cosmos_client = CosmosClient(
-                        url=STATE_STORE_ENDPOINT, credential=primary_master_key
-                    )
-                else:
-                    logger.debug("Connecting without SSL verification")
-                    # ignore TLS (setup is a pain) when using local Cosmos emulator.
-                    cosmos_client = CosmosClient(
-                        STATE_STORE_ENDPOINT, primary_master_key, connection_verify=False
-                    )
+                logger.debug("Connecting without SSL verification")
+                # ignore TLS (setup is a pain) when using local Cosmos emulator.
+                cosmos_client = CosmosClient(
+                    url=STATE_STORE_ENDPOINT,
+                    credential=primary_master_key,
+                    connection_verify=False
+                )
         logger.debug("Connection established")
         return cosmos_client
 

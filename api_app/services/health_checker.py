@@ -12,14 +12,13 @@ from resources import strings
 from services.logging import logger
 
 
-async def create_state_store_status(request) -> Tuple[StatusEnum, str]:
+async def create_state_store_status() -> Tuple[StatusEnum, str]:
     status = StatusEnum.ok
     message = ""
     try:
         cosmos_client = await Database().get_db_client()
-        async with cosmos_client:
-            list_databases_response = cosmos_client.list_databases()
-            [database async for database in list_databases_response]
+        list_databases_response = cosmos_client.list_databases()
+        [database async for database in list_databases_response]
     except exceptions.ServiceRequestError:
         status = StatusEnum.not_ok
         message = strings.STATE_STORE_ENDPOINT_NOT_RESPONDING

@@ -16,7 +16,7 @@ async def health_check(request: Request) -> HealthCheck:
     # calling this endpoint frequently may result in API throttling.
     async with credentials.get_credential_async() as credential:
         cosmos, sb, rp = await asyncio.gather(
-            create_state_store_status(request),
+            create_state_store_status(),
             create_service_bus_status(credential),
             create_resource_processor_status(credential)
         )
