@@ -2,7 +2,7 @@ from typing import Callable, Type
 
 from azure.cosmos.aio import CosmosClient
 from azure.mgmt.cosmosdb.aio import CosmosDBManagementClient
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import HTTPException, status
 from core.config import MANAGED_IDENTITY_CLIENT_ID, STATE_STORE_ENDPOINT, STATE_STORE_KEY, STATE_STORE_SSL_VERIFY, SUBSCRIPTION_ID, RESOURCE_MANAGER_ENDPOINT, CREDENTIAL_SCOPES, RESOURCE_GROUP_NAME, COSMOSDB_ACCOUNT_NAME
 from core.credentials import get_credential_async
 from db.errors import UnableToAccessDatabase
@@ -13,6 +13,7 @@ from services.logging import logger
 
 class Singleton(type):
     _instances = {}
+
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
@@ -81,12 +82,8 @@ class Database(metaclass=Singleton):
             Database.cosmos_client = await self._connect_to_db()
         return self.cosmos_client
 
-
     @classmethod
-    def get_repository(self,
-        repo_type: Type[BaseRepository],
-    ) -> Callable[[CosmosClient], BaseRepository]:
-
+    def get_repository(self, repo_type: Type[BaseRepository]) -> Callable[[CosmosClient], BaseRepository]:
         async def _get_repo() -> BaseRepository:
             try:
                 return await repo_type.create(self.cosmos_client)
