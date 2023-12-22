@@ -1,9 +1,9 @@
-import logging
-
 from azure.cosmos.aio import CosmosClient
+import semantic_version
+
 from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.resources import IS_ACTIVE_RESOURCE
-import semantic_version
+from services.logging import logger
 
 
 class SharedServiceMigration(SharedServiceRepository):
@@ -25,7 +25,7 @@ class SharedServiceMigration(SharedServiceRepository):
                                            ORDER BY c.updatedWhen ASC OFFSET 1 LIMIT 10000'):
                 template_version = semantic_version.Version(item["templateVersion"])
                 if (template_version < semantic_version.Version('0.3.0')):
-                    logging.info(f'Deleting element {item["id"]}')
+                    logger.info(f'Deleting element {item["id"]}')
                     await self.delete_item(item["id"])
                     migrated = True
 

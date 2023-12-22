@@ -1,34 +1,46 @@
 import asyncio
 import json
-import logging
 import base64
+import logging
 from urllib.parse import urlparse
 
-
 from resources.helpers import get_installation_id
-from shared.logging import shell_output_logger
+from shared.logging import logger, shell_output_logger
 
 
 def azure_login_command(config):
-    set_cloud_command = f"az cloud set --name {config['azure_environment']}"
+    set_cloud_command = f"az cloud set --name {config['azure_environment']} >/dev/null "
 
     if config["vmss_msi_id"]:
         # Use the Managed Identity when in VMSS context
-        login_command = f"az login --identity -u {config['vmss_msi_id']}"
+        login_command = f"az login --identity -u {config['vmss_msi_id']} >/dev/null "
+
     else:
         # Use a Service Principal when running locally
-        login_command = f"az login --service-principal --username {config['arm_client_id']} --password {config['arm_client_secret']} --tenant {config['arm_tenant_id']}"
+        login_command = f"az login --service-principal --username {config['arm_client_id']} --password {config['arm_client_secret']} --tenant {config['arm_tenant_id']} >/dev/null"
 
     return f"{set_cloud_command} && {login_command}"
 
 
+def apply_porter_credentials_sets_command(config):
+    if config["vmss_msi_id"]:
+        # Use the Managed Identity when in VMSS context
+        porter_credential_sets = "porter credentials apply vmss_porter/arm_auth_local_debugging.json >/dev/null 2>&1 && porter credentials apply vmss_porter/aad_auth.json >/dev/null 2>&1"
+
+    else:
+        # Use a Service Principal when running locally
+        porter_credential_sets = "porter credentials apply vmss_porter/arm_auth_local_debugging.json >/dev/null 2>&1 && porter credentials apply vmss_porter/aad_auth_local_debugging.json >/dev/null 2>&1"
+
+    return f"{porter_credential_sets}"
+
+
 def azure_acr_login_command(config):
     acr_name = _get_acr_name(acr_fqdn=config['registry_server'])
-    return f"az acr login --name {acr_name}"
+    return f"az acr login --name {acr_name} >/dev/null "
 
 
-async def build_porter_command(config, logger, msg_body, custom_action=False):
-    porter_parameter_keys = await get_porter_parameter_keys(config, logger, msg_body)
+async def build_porter_command(config, msg_body, custom_action=False):
+    porter_parameter_keys = await get_porter_parameter_keys(config, msg_body)
     porter_parameters = ""
 
     if porter_parameter_keys is None:
@@ -50,6 +62,10 @@ async def build_porter_command(config, logger, msg_body, custom_action=False):
             elif parameter_name in msg_body:
                 parameter_value = msg_body[parameter_name]
 
+            # 4. if starts user_ then look in user object
+            elif parameter_name.startswith("user_") and "user" in msg_body and parameter_name[5:] in msg_body["user"]:
+                parameter_value = msg_body["user"][parameter_name[5:]]
+
             # if still not found, might be a special case
             # (we give a chance to the method above to allow override of the special handeling done below)
             else:
@@ -68,7 +84,7 @@ async def build_porter_command(config, logger, msg_body, custom_action=False):
 
     installation_id = get_installation_id(msg_body)
 
-    command_line = [f"{azure_login_command(config)} && {azure_acr_login_command(config)} && porter"
+    command_line = [f"porter"
                     # If a custom action (i.e. not install, uninstall, upgrade) we need to use 'invoke'
                     f"{' invoke --action' if custom_action else ''}"
                     f" {msg_body['action']} \"{installation_id}\""
@@ -77,6 +93,7 @@ async def build_porter_command(config, logger, msg_body, custom_action=False):
                     f" --credential-set arm_auth"
                     f" --credential-set aad_auth"
                     ]
+
     return command_line
 
 
@@ -86,10 +103,8 @@ async def build_porter_command_for_outputs(msg_body):
     return command_line
 
 
-async def get_porter_parameter_keys(config, logger, msg_body):
-    command = [f"{azure_login_command(config)} >/dev/null && \
-        {azure_acr_login_command(config)} >/dev/null && \
-        porter explain --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']} --output json"]
+async def get_porter_parameter_keys(config, msg_body):
+    command = [f"porter explain --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']} --output json"]
 
     proc = await asyncio.create_subprocess_shell(
         ''.join(command),
@@ -98,7 +113,7 @@ async def get_porter_parameter_keys(config, logger, msg_body):
         env=config["porter_env"])
 
     stdout, stderr = await proc.communicate()
-    logging.info(f'get_porter_parameter_keys exited with {proc.returncode}')
+    logger.debug(f'get_porter_parameter_keys exited with {proc.returncode}')
     result_stdout = None
     result_stderr = None
 
@@ -109,7 +124,7 @@ async def get_porter_parameter_keys(config, logger, msg_body):
         return porter_parameter_keys
     if stderr:
         result_stderr = stderr.decode()
-        shell_output_logger(result_stderr, '[stderr]', logger, logging.WARN)
+        shell_output_logger(result_stderr, '[stderr]', logging.WARN)
 
 
 def get_special_porter_param_value(config, parameter_name: str, msg_body):

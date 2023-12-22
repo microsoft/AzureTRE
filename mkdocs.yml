@@ -156,7 +156,7 @@ nav:
 
       - Troubleshooting FAQ: # General Troubleshooting Section for Development
           - troubleshooting-faq/index.md
-          - Enabling Debugging for the API: troubleshooting-faq/debug-api.md
+          - Enabling DEBUG logs: troubleshooting-faq/debug-logs.md
           - API logs using deployment center: troubleshooting-faq/api-logs-deployment-center.md
           - Checking the Service Bus: troubleshooting-faq/troubleshooting-sb.md
           - Checking Logs in Application Insights: troubleshooting-faq/app-insights-logs.md
