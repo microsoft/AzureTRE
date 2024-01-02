@@ -14,7 +14,6 @@ from db.errors import EntityDoesNotExist
 from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace import Workspace, WorkspaceRole
 from resources import strings
-from api.dependencies.database import Database
 from db.repositories.workspaces import WorkspaceRepository
 from services.logging import logger
 

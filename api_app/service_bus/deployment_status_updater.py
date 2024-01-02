@@ -4,7 +4,6 @@ import uuid
 
 from pydantic import ValidationError, parse_obj_as
 
-from api.dependencies.database import Database
 from api.routes.resource_helpers import get_timestamp
 from models.domain.resource import Output
 from db.repositories.resources_history import ResourceHistoryRepository

@@ -6,7 +6,6 @@ from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnect
 from fastapi import HTTPException
 from pydantic import ValidationError, parse_obj_as
 
-from api.dependencies.database import Database
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from services.airlock import update_and_publish_event_airlock_request
 from services.logging import logger, tracer
