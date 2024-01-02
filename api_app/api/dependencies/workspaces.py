@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, Path, status
 from pydantic import UUID4
 
-from api_app.api.helpers import get_repository
+from api.helpers import get_repository
 from db.errors import EntityDoesNotExist, ResourceIsNotDeployed
 from db.repositories.operations import OperationRepository
 from db.repositories.user_resources import UserResourceRepository

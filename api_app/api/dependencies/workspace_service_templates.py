@@ -1,6 +1,6 @@
 from fastapi import Depends, HTTPException, Path, status
 
-from api_app.api.helpers import get_repository
+from api.helpers import get_repository
 from db.errors import EntityDoesNotExist
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
