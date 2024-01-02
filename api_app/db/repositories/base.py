@@ -21,7 +21,7 @@ class BaseRepository:
     async def _get_container(cls, container_name) -> ContainerProxy:
         try:
             database = await Database().get_db_client()
-            container = await database.create_container_if_not_exists(id=container_name)
+            container = await database.get_container_client(container=container_name)
             return container
         except Exception:
             raise UnableToAccessDatabase
