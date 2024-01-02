@@ -21,9 +21,9 @@ from services.logging import logger
 
 class AirlockRequestRepository(BaseRepository):
     @classmethod
-    async def create(cls, client: CosmosClient):
+    async def create(cls):
         cls = AirlockRequestRepository()
-        await super().create(client, config.STATE_STORE_AIRLOCK_REQUESTS_CONTAINER)
+        await super().create(config.STATE_STORE_AIRLOCK_REQUESTS_CONTAINER)
         return cls
 
     @staticmethod

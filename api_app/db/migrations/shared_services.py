@@ -1,4 +1,3 @@
-from azure.cosmos.aio import CosmosClient
 import semantic_version
 
 from db.repositories.shared_services import SharedServiceRepository
@@ -8,11 +7,10 @@ from services.logging import logger
 
 class SharedServiceMigration(SharedServiceRepository):
     @classmethod
-    async def create(cls, client: CosmosClient):
+    async def create(cls):
         cls = SharedServiceMigration()
-        resource_repo = await super().create(client)
+        resource_repo = await super().create()
         cls._container = resource_repo._container
-        cls._client = resource_repo._client
         return cls
 
     async def deleteDuplicatedSharedServices(self) -> bool:

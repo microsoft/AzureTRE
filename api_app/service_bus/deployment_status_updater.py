@@ -28,11 +28,10 @@ class DeploymentStatusUpdater():
         pass
 
     async def init_repos(self):
-        db_client = await Database().get_db_client()
-        self.operations_repo = await OperationRepository.create(db_client)
-        self.resource_repo = await ResourceRepository.create(db_client)
-        self.resource_template_repo = await ResourceTemplateRepository.create(db_client)
-        self.resource_history_repo = await ResourceHistoryRepository.create(db_client)
+        self.operations_repo = await OperationRepository.create()
+        self.resource_repo = await ResourceRepository.create()
+        self.resource_template_repo = await ResourceTemplateRepository.create()
+        self.resource_history_repo = await ResourceHistoryRepository.create()
 
     def run(self, *args, **kwargs):
         asyncio.run(self.receive_messages())

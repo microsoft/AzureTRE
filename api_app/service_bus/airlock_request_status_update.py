@@ -24,9 +24,8 @@ class AirlockStatusUpdater():
         pass
 
     async def init_repos(self):
-        db_client = await Database().get_db_client()
-        self.airlock_request_repo = await AirlockRequestRepository.create(db_client)
-        self.workspace_repo = await WorkspaceRepository.create(db_client)
+        self.airlock_request_repo = await AirlockRequestRepository.create()
+        self.workspace_repo = await WorkspaceRepository.create()
 
     async def receive_messages(self):
         with tracer.start_as_current_span("airlock_receive_messages"):

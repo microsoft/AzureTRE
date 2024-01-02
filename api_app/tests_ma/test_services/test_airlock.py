@@ -32,7 +32,7 @@ ALL_ROLES = AzureADAuthorization.WORKSPACE_ROLES_DICT.keys()
 async def airlock_request_repo_mock(no_database):
     _ = no_database
     with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-        airlock_request_repo_mock = await AirlockRequestRepository.create(cosmos_client_mock)
+        airlock_request_repo_mock = await AirlockRequestRepository.create()
         yield airlock_request_repo_mock
 
 

@@ -24,8 +24,6 @@ from service_bus.airlock_request_status_update import AirlockStatusUpdater
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.cosmos_client = None
-
     while not await bootstrap_database():
         await asyncio.sleep(5)
         logger.warning("Database connection could not be established")

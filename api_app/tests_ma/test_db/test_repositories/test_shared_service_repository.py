@@ -18,17 +18,15 @@ SHARED_SERVICE_ID = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
 @pytest_asyncio.fixture
 async def shared_service_repo():
     with patch('db.repositories.base.BaseRepository._get_container', return_value=AsyncMock()):
-        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-            shared_service_repo = await SharedServiceRepository.create(cosmos_client_mock)
-            yield shared_service_repo
+        shared_service_repo = await SharedServiceRepository.create()
+        yield shared_service_repo
 
 
 @pytest_asyncio.fixture
 async def operations_repo():
     with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
-        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-            operations_repo = await OperationRepository.create(cosmos_client_mock)
-            yield operations_repo
+        operations_repo = await OperationRepository.create()
+        yield operations_repo
 
 
 @pytest.fixture

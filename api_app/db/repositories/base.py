@@ -1,5 +1,5 @@
 from typing import Optional
-from azure.cosmos.aio import CosmosClient, ContainerProxy
+from azure.cosmos.aio import ContainerProxy
 from azure.core import MatchConditions
 from pydantic import BaseModel
 
@@ -9,8 +9,7 @@ from db.errors import UnableToAccessDatabase
 
 class BaseRepository:
     @classmethod
-    async def create(cls, client: CosmosClient, container_name: Optional[str] = None):
-        cls._client: CosmosClient = client
+    async def create(cls, container_name: Optional[str] = None):
         cls._container: ContainerProxy = await cls._get_container(container_name)
         return cls
 

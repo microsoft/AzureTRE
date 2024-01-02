@@ -15,9 +15,8 @@ pytestmark = pytest.mark.asyncio
 @pytest_asyncio.fixture
 async def resource_template_repo():
     with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
-        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-            resource_template_repo = await ResourceTemplateRepository.create(cosmos_client_mock)
-            yield resource_template_repo
+        resource_template_repo = await ResourceTemplateRepository.create()
+        yield resource_template_repo
 
 
 def sample_resource_template_as_dict(name: str, version: str = "1.0", resource_type: ResourceType = ResourceType.Workspace) -> ResourceTemplate:

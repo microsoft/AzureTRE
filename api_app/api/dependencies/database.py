@@ -86,10 +86,10 @@ class Database(metaclass=Singleton):
         return self.cosmos_client
 
     @classmethod
-    def get_repository(self, repo_type: Type[BaseRepository]) -> Callable[[CosmosClient], BaseRepository]:
+    def get_repository(self, repo_type: Type[BaseRepository]) -> Callable:
         async def _get_repo() -> BaseRepository:
             try:
-                return await repo_type.create(self.cosmos_client)
+                return await repo_type.create()
             except UnableToAccessDatabase:
                 logger.exception(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
                 raise HTTPException(

@@ -21,17 +21,15 @@ def basic_workspace_request():
 @pytest_asyncio.fixture
 async def workspace_repo():
     with patch('db.repositories.base.BaseRepository._get_container', return_value=MagicMock()):
-        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-            workspace_repo = await WorkspaceRepository.create(cosmos_client_mock)
-            yield workspace_repo
+        workspace_repo = await WorkspaceRepository.create()
+        yield workspace_repo
 
 
 @pytest_asyncio.fixture
 async def operations_repo():
     with patch('db.repositories.base.BaseRepository._get_container', return_value=MagicMock()):
-        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-            operations_repo = await OperationRepository.create(cosmos_client_mock)
-            yield operations_repo
+        operations_repo = await OperationRepository.create()
+        yield operations_repo
 
 
 @pytest.fixture

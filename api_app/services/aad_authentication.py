@@ -121,8 +121,7 @@ class AzureADAuthorization(AccessService):
         try:
             workspace_id = request.path_params['workspace_id']
 
-            db_client = Database().get_db_client()
-            ws_repo = await WorkspaceRepository.create(db_client)
+            ws_repo = await WorkspaceRepository.create()
             workspace = await ws_repo.get_workspace_by_id(workspace_id)
 
             ws_app_reg_id = ""
