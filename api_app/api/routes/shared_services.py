@@ -5,6 +5,7 @@ from jsonschema.exceptions import ValidationError
 
 from db.repositories.operations import OperationRepository
 from db.errors import DuplicateEntity, MajorVersionUpdateDenied, UserNotAuthorizedToUseTemplate, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied
+from api.helpers import get_repository
 from api.dependencies.shared_services import get_shared_service_by_id_from_path, get_operation_by_id_from_path
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources_history import ResourceHistoryRepository
@@ -32,7 +33,7 @@ def user_is_tre_admin(user):
 
 
 @shared_services_router.get("/shared-services", response_model=SharedServicesInList, name=strings.API_GET_ALL_SHARED_SERVICES, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
-async def retrieve_shared_services(shared_services_repo=Depends(SharedServiceRepository.get_repository()), user=Depends(get_current_tre_user_or_tre_admin), resource_template_repo=Depends(ResourceTemplateRepository.get_repository())) -> SharedServicesInList:
+async def retrieve_shared_services(shared_services_repo=Depends(get_repository(SharedServiceRepository)), user=Depends(get_current_tre_user_or_tre_admin), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> SharedServicesInList:
     shared_services = await shared_services_repo.get_active_shared_services()
     await asyncio.gather(*[enrich_resource_with_available_upgrades(shared_service, resource_template_repo) for shared_service in shared_services])
     if user_is_tre_admin(user):
@@ -42,7 +43,7 @@ async def retrieve_shared_services(shared_services_repo=Depends(SharedServiceRep
 
 
 @shared_services_router.get("/shared-services/{shared_service_id}", response_model=SharedServiceInResponse, name=strings.API_GET_SHARED_SERVICE_BY_ID, dependencies=[Depends(get_current_tre_user_or_tre_admin), Depends(get_shared_service_by_id_from_path)])
-async def retrieve_shared_service_by_id(shared_service=Depends(get_shared_service_by_id_from_path), user=Depends(get_current_tre_user_or_tre_admin), resource_template_repo=Depends(ResourceTemplateRepository.get_repository())):
+async def retrieve_shared_service_by_id(shared_service=Depends(get_shared_service_by_id_from_path), user=Depends(get_current_tre_user_or_tre_admin), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))):
     await enrich_resource_with_available_upgrades(shared_service, resource_template_repo)
     if user_is_tre_admin(user):
         return SharedServiceInResponse(sharedService=shared_service)
@@ -51,7 +52,7 @@ async def retrieve_shared_service_by_id(shared_service=Depends(get_shared_servic
 
 
 @shared_services_router.post("/shared-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
-async def create_shared_service(response: Response, shared_service_input: SharedServiceInCreate, user=Depends(get_current_admin_user), shared_services_repo=Depends(SharedServiceRepository.get_repository()), resource_template_repo=Depends(ResourceTemplateRepository.get_repository()), operations_repo=Depends(OperationRepository.get_repository()), resource_history_repo=Depends(ResourceHistoryRepository.get_repository())) -> OperationInResponse:
+async def create_shared_service(response: Response, shared_service_input: SharedServiceInCreate, user=Depends(get_current_admin_user), shared_services_repo=Depends(get_repository(SharedServiceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
     try:
         shared_service, resource_template = await shared_services_repo.create_shared_service_item(shared_service_input, user.roles)
     except (ValidationError, ValueError) as e:
@@ -82,7 +83,7 @@ async def create_shared_service(response: Response, shared_service_input: Shared
                               response_model=OperationInResponse,
                               name=strings.API_UPDATE_SHARED_SERVICE,
                               dependencies=[Depends(get_current_admin_user), Depends(get_shared_service_by_id_from_path)])
-async def patch_shared_service(shared_service_patch: ResourcePatch, response: Response, user=Depends(get_current_admin_user), shared_service_repo=Depends(SharedServiceRepository.get_repository()), resource_history_repo=Depends(ResourceHistoryRepository.get_repository()), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(ResourceTemplateRepository.get_repository()), operations_repo=Depends(OperationRepository.get_repository()), etag: str = Header(...), force_version_update: bool = False) -> SharedServiceInResponse:
+async def patch_shared_service(shared_service_patch: ResourcePatch, response: Response, user=Depends(get_current_admin_user), shared_service_repo=Depends(get_repository(SharedServiceRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(...), force_version_update: bool = False) -> SharedServiceInResponse:
     try:
         patched_shared_service, _ = await shared_service_repo.patch_shared_service(shared_service, shared_service_patch, etag, resource_template_repo, resource_history_repo, user, force_version_update)
         operation = await send_resource_request_message(
@@ -105,7 +106,7 @@ async def patch_shared_service(shared_service_patch: ResourcePatch, response: Re
 
 
 @shared_services_router.delete("/shared-services/{shared_service_id}", response_model=OperationInResponse, name=strings.API_DELETE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
-async def delete_shared_service(response: Response, user=Depends(get_current_admin_user), shared_service=Depends(get_shared_service_by_id_from_path), operations_repo=Depends(OperationRepository.get_repository()), shared_service_repo=Depends(SharedServiceRepository.get_repository()), resource_template_repo=Depends(ResourceTemplateRepository.get_repository()), resource_history_repo=Depends(ResourceHistoryRepository.get_repository())) -> OperationInResponse:
+async def delete_shared_service(response: Response, user=Depends(get_current_admin_user), shared_service=Depends(get_shared_service_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), shared_service_repo=Depends(get_repository(SharedServiceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
     if shared_service.isEnabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.SHARED_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
 
@@ -124,7 +125,7 @@ async def delete_shared_service(response: Response, user=Depends(get_current_adm
 
 
 @shared_services_router.post("/shared-services/{shared_service_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
-async def invoke_action_on_shared_service(response: Response, action: str, user=Depends(get_current_admin_user), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(ResourceTemplateRepository.get_repository()), operations_repo=Depends(OperationRepository.get_repository()), shared_service_repo=Depends(SharedServiceRepository.get_repository()), resource_history_repo=Depends(ResourceHistoryRepository.get_repository())) -> OperationInResponse:
+async def invoke_action_on_shared_service(response: Response, action: str, user=Depends(get_current_admin_user), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), shared_service_repo=Depends(get_repository(SharedServiceRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
     operation = await send_custom_action_message(
         resource=shared_service,
         resource_repo=shared_service_repo,
@@ -142,7 +143,7 @@ async def invoke_action_on_shared_service(response: Response, action: str, user=
 
 # Shared service operations
 @shared_services_router.get("/shared-services/{shared_service_id}/operations", response_model=OperationInList, name=strings.API_GET_RESOURCE_OPERATIONS, dependencies=[Depends(get_current_admin_user), Depends(get_shared_service_by_id_from_path)])
-async def retrieve_shared_service_operations_by_shared_service_id(shared_service=Depends(get_shared_service_by_id_from_path), operations_repo=Depends(OperationRepository.get_repository())) -> OperationInList:
+async def retrieve_shared_service_operations_by_shared_service_id(shared_service=Depends(get_shared_service_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInList:
     return OperationInList(operations=await operations_repo.get_operations_by_resource_id(resource_id=shared_service.id))
 
 
@@ -153,5 +154,5 @@ async def retrieve_shared_service_operation_by_shared_service_id_and_operation_i
 
 # Shared service history
 @shared_services_router.get("/shared-services/{shared_service_id}/history", response_model=ResourceHistoryInList, name=strings.API_GET_RESOURCE_HISTORY, dependencies=[Depends(get_current_admin_user)])
-async def retrieve_shared_service_history_by_shared_service_id(shared_service=Depends(get_shared_service_by_id_from_path), resource_history_repo=Depends(ResourceHistoryRepository.get_repository())) -> ResourceHistoryInList:
+async def retrieve_shared_service_history_by_shared_service_id(shared_service=Depends(get_shared_service_by_id_from_path), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> ResourceHistoryInList:
     return ResourceHistoryInList(resource_history=await resource_history_repo.get_resource_history_by_resource_id(resource_id=shared_service.id))

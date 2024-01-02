@@ -5,6 +5,7 @@ from fastapi import APIRouter, Request, Depends, HTTPException, status
 from fastapi.openapi.docs import get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
 from fastapi.openapi.utils import get_openapi
 
+from api.helpers import get_repository
 from db.repositories.workspaces import WorkspaceRepository
 from api.routes import health, ping, workspaces, workspace_templates, workspace_service_templates, user_resource_templates, \
     shared_services, shared_service_templates, migrations, costs, airlock, operations, metadata
@@ -115,7 +116,7 @@ def get_scope(workspace) -> str:
 
 
 @workspace_swagger_router.get("/workspaces/{workspace_id}/openapi.json", include_in_schema=False, name="openapi_definitions")
-async def get_openapi_json(workspace_id: str, request: Request, workspace_repo=Depends(WorkspaceRepository.get_repository())):
+async def get_openapi_json(workspace_id: str, request: Request, workspace_repo=Depends(get_repository(WorkspaceRepository))):
     global openapi_definitions
 
     if openapi_definitions[workspace_id] is None:
@@ -145,7 +146,7 @@ async def get_openapi_json(workspace_id: str, request: Request, workspace_repo=D
 
 
 @workspace_swagger_router.get("/workspaces/{workspace_id}/docs", include_in_schema=False, name="workspace_swagger")
-async def get_workspace_swagger(workspace_id, request: Request, workspace_repo=Depends(WorkspaceRepository.get_repository())):
+async def get_workspace_swagger(workspace_id, request: Request, workspace_repo=Depends(get_repository(WorkspaceRepository))):
 
     workspace = await workspace_repo.get_workspace_by_id(workspace_id)
     scope = get_scope(workspace)
