@@ -5,7 +5,6 @@ from db.repositories.operations import OperationRepository
 from db.repositories.resources_history import ResourceHistoryRepository
 from services.authentication import get_current_admin_user
 from resources import strings
-from api.dependencies.database import Database
 from db.migrations.shared_services import SharedServiceMigration
 from db.migrations.workspaces import WorkspaceMigration
 from db.repositories.resources import ResourceRepository
@@ -20,13 +19,13 @@ migrations_core_router = APIRouter(dependencies=[Depends(get_current_admin_user)
                              name=strings.API_MIGRATE_DATABASE,
                              response_model=MigrationOutList,
                              dependencies=[Depends(get_current_admin_user)])
-async def migrate_database(resources_repo=Depends(Database().get_repository(ResourceRepository)),
-                           operations_repo=Depends(Database().get_repository(OperationRepository)),
-                           resource_history_repo=Depends(Database().get_repository(ResourceHistoryRepository)),
-                           shared_services_migration=Depends(Database().get_repository(SharedServiceMigration)),
-                           workspace_migration=Depends(Database().get_repository(WorkspaceMigration)),
-                           resource_migration=Depends(Database().get_repository(ResourceMigration)),
-                           airlock_migration=Depends(Database().get_repository(AirlockMigration)),):
+async def migrate_database(resources_repo=Depends(ResourceRepository.get_repository()),
+                           operations_repo=Depends(OperationRepository.get_repository()),
+                           resource_history_repo=Depends(ResourceHistoryRepository.get_repository()),
+                           shared_services_migration=Depends(SharedServiceMigration().get_repository()),
+                           workspace_migration=Depends(WorkspaceMigration().get_repository()),
+                           resource_migration=Depends(ResourceMigration().get_repository()),
+                           airlock_migration=Depends(AirlockMigration().get_repository())):
     try:
         migrations = list()
         logger.info("PR 1030")

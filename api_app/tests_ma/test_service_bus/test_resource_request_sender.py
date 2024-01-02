@@ -40,11 +40,11 @@ def create_test_resource():
 @pytest.mark.parametrize(
     "request_action", [RequestAction.Install, RequestAction.UnInstall]
 )
-@patch("service_bus.resource_request_sender.ResourceHistoryRepository.create")
-@patch("service_bus.resource_request_sender.OperationRepository.create")
+@patch("service_bus.resource_request_sender.ResourceHistoryRepository")
+@patch("service_bus.resource_request_sender.OperationRepository")
 @patch("service_bus.helpers.ServiceBusClient")
-@patch("service_bus.resource_request_sender.ResourceRepository.create")
-@patch("service_bus.resource_request_sender.ResourceTemplateRepository.create")
+@patch("service_bus.resource_request_sender.ResourceRepository")
+@patch("service_bus.resource_request_sender.ResourceTemplateRepository")
 async def test_resource_request_message_generated_correctly(
     resource_template_repo,
     resource_repo,
@@ -84,10 +84,10 @@ async def test_resource_request_message_generated_correctly(
     assert sent_message_as_json["action"] == request_action
 
 
-@patch("service_bus.resource_request_sender.ResourceHistoryRepository.create")
-@patch("service_bus.resource_request_sender.OperationRepository.create")
-@patch("service_bus.resource_request_sender.ResourceRepository.create")
-@patch("service_bus.resource_request_sender.ResourceTemplateRepository.create")
+@patch("service_bus.resource_request_sender.ResourceHistoryRepository")
+@patch("service_bus.resource_request_sender.OperationRepository")
+@patch("service_bus.resource_request_sender.ResourceRepository")
+@patch("service_bus.resource_request_sender.ResourceTemplateRepository")
 async def test_multi_step_document_sends_first_step(
     resource_template_repo,
     resource_repo,
@@ -146,9 +146,9 @@ async def test_multi_step_document_sends_first_step(
     )
 
 
-@patch("service_bus.resource_request_sender.ResourceHistoryRepository.create")
-@patch("service_bus.resource_request_sender.ResourceRepository.create")
-@patch("service_bus.resource_request_sender.ResourceTemplateRepository.create")
+@patch("service_bus.resource_request_sender.ResourceHistoryRepository")
+@patch("service_bus.resource_request_sender.ResourceRepository")
+@patch("service_bus.resource_request_sender.ResourceTemplateRepository")
 async def test_multi_step_document_retries(
     resource_template_repo,
     resource_repo,

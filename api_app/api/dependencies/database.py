@@ -1,13 +1,8 @@
-from typing import Callable, Type
-
 from azure.cosmos.aio import CosmosClient
 from azure.mgmt.cosmosdb.aio import CosmosDBManagementClient
-from fastapi import HTTPException, status
+
 from core.config import MANAGED_IDENTITY_CLIENT_ID, STATE_STORE_ENDPOINT, STATE_STORE_KEY, STATE_STORE_SSL_VERIFY, SUBSCRIPTION_ID, RESOURCE_MANAGER_ENDPOINT, CREDENTIAL_SCOPES, RESOURCE_GROUP_NAME, COSMOSDB_ACCOUNT_NAME
 from core.credentials import get_credential_async
-from db.errors import UnableToAccessDatabase
-from db.repositories.base import BaseRepository
-from resources import strings
 from services.logging import logger
 
 
@@ -84,17 +79,3 @@ class Database(metaclass=Singleton):
         if not Database.cosmos_client:
             Database.cosmos_client = await self._connect_to_db()
         return self.cosmos_client
-
-    @classmethod
-    def get_repository(self, repo_type: Type[BaseRepository]) -> Callable:
-        async def _get_repo() -> BaseRepository:
-            try:
-                return await repo_type.create()
-            except UnableToAccessDatabase:
-                logger.exception(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING,
-                )
-
-        return _get_repo

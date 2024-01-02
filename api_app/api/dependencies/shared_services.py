@@ -1,7 +1,6 @@
 from fastapi import Depends, HTTPException, Path, status
 from pydantic import UUID4
 
-from api.dependencies.database import Database
 from db.errors import EntityDoesNotExist
 from resources import strings
 from models.domain.shared_service import SharedService
@@ -17,11 +16,11 @@ async def get_shared_service_by_id(shared_service_id: UUID4, shared_services_rep
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.SHARED_SERVICE_DOES_NOT_EXIST)
 
 
-async def get_shared_service_by_id_from_path(shared_service_id: UUID4 = Path(...), shared_service_repo=Depends(Database().get_repository(SharedServiceRepository))) -> SharedService:
+async def get_shared_service_by_id_from_path(shared_service_id: UUID4 = Path(...), shared_service_repo=Depends(SharedServiceRepository.get_repository())) -> SharedService:
     return await get_shared_service_by_id(shared_service_id, shared_service_repo)
 
 
-async def get_operation_by_id_from_path(operation_id: UUID4 = Path(...), operations_repo=Depends(Database().get_repository(OperationRepository))) -> Operation:
+async def get_operation_by_id_from_path(operation_id: UUID4 = Path(...), operations_repo=Depends(OperationRepository.get_repository())) -> Operation:
     try:
         return await operations_repo.get_operation_by_id(operation_id=operation_id)
     except EntityDoesNotExist:

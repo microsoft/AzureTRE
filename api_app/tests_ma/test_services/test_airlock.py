@@ -31,7 +31,7 @@ ALL_ROLES = AzureADAuthorization.WORKSPACE_ROLES_DICT.keys()
 @pytest_asyncio.fixture
 async def airlock_request_repo_mock(no_database):
     _ = no_database
-    airlock_request_repo_mock = await AirlockRequestRepository.create()
+    airlock_request_repo_mock = await AirlockRequestRepository().create()
     yield airlock_request_repo_mock
 
 

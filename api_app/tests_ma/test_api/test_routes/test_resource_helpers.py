@@ -30,19 +30,19 @@ FAKE_UPDATE_TIMESTAMP: float = FAKE_UPDATE_TIME.timestamp()
 @pytest_asyncio.fixture
 async def resource_repo() -> ResourceRepository:
     with patch('db.repositories.base.BaseRepository._get_container', return_value=AsyncMock()):
-        resource_repo_mock = await ResourceRepository.create()
+        resource_repo_mock = await ResourceRepository().create()
         yield resource_repo_mock
 
 
 @pytest_asyncio.fixture
 async def operations_repo() -> OperationRepository:
-    operation_repo_mock = await OperationRepository.create()
+    operation_repo_mock = await OperationRepository().create()
     yield operation_repo_mock
 
 
 @pytest_asyncio.fixture
 async def resource_history_repo() -> ResourceHistoryRepository:
-    resource_history_repo_mock = await ResourceHistoryRepository.create()
+    resource_history_repo_mock = await ResourceHistoryRepository().create()
     yield resource_history_repo_mock
 
 

@@ -40,15 +40,14 @@ class AirlockMigration(AirlockRequestRepository):
         num_updated = 0
         for request in await self.query('SELECT * FROM c'):
             # Only migrate if airlockReviewResources property present and is a list
-            if 'reviewUserResources' in request:
-                if type(request['reviewUserResources']) == list:
-                    updated_review_resources = {}
-                    for i, resource in enumerate(request['reviewUserResources']):
-                        updated_review_resources['UNKNOWN' + str(i)] = resource
+            if 'reviewUserResources' in request and isinstance(request['reviewUserResources'], list):
+                updated_review_resources = {}
+                for i, resource in enumerate(request['reviewUserResources']):
+                    updated_review_resources['UNKNOWN' + str(i)] = resource
 
-                    request['reviewUserResources'] = updated_review_resources
-                    await self.update_item_dict(request)
-                    num_updated += 1
+                request['reviewUserResources'] = updated_review_resources
+                await self.update_item_dict(request)
+                num_updated += 1
 
         return num_updated
 

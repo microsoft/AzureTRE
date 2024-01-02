@@ -17,7 +17,7 @@ RESOURCE_VERSION = 1
 @pytest_asyncio.fixture
 async def resource_history_repo():
     with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
-        resource_history_repo = await ResourceHistoryRepository.create()
+        resource_history_repo = await ResourceHistoryRepository().create()
         yield resource_history_repo
 
 

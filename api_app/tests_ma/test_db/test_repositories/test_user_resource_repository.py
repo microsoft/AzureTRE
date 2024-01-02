@@ -27,7 +27,7 @@ def basic_user_resource_request():
 @pytest_asyncio.fixture
 async def user_resource_repo():
     with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
-        user_resource_repo = await UserResourceRepository.create()
+        user_resource_repo = await UserResourceRepository().create()
         yield user_resource_repo
 
 

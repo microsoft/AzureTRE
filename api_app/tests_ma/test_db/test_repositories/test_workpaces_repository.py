@@ -21,14 +21,14 @@ def basic_workspace_request():
 @pytest_asyncio.fixture
 async def workspace_repo():
     with patch('db.repositories.base.BaseRepository._get_container', return_value=MagicMock()):
-        workspace_repo = await WorkspaceRepository.create()
+        workspace_repo = await WorkspaceRepository().create()
         yield workspace_repo
 
 
 @pytest_asyncio.fixture
 async def operations_repo():
     with patch('db.repositories.base.BaseRepository._get_container', return_value=MagicMock()):
-        operations_repo = await OperationRepository.create()
+        operations_repo = await OperationRepository().create()
         yield operations_repo
 
 
