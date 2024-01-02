@@ -679,9 +679,8 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.dependencies.database.Database.get_repository")
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace", return_value=[])
-    @ patch('azure.cosmos.CosmosClient')
     @ patch('api.routes.resource_helpers.send_resource_request_message', return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
-    async def test_delete_workspace_sends_a_request_message_to_uninstall_the_workspace(self, send_request_message_mock, cosmos_client_mock, __, get_workspace_mock, get_repository_mock, resource_template_repo, ___, disabled_workspace, app, client, basic_resource_template):
+    async def test_delete_workspace_sends_a_request_message_to_uninstall_the_workspace(self, send_request_message_mock, __, get_workspace_mock, get_repository_mock, resource_template_repo, ___, disabled_workspace, app, client, basic_resource_template):
         get_workspace_mock.return_value = disabled_workspace
         get_repository_mock.side_effects = [await WorkspaceRepository.create(), await WorkspaceServiceRepository.create()]
         resource_template_repo.return_value = basic_resource_template
@@ -695,8 +694,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.dependencies.database.Database.get_repository")
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
-    @ patch('azure.cosmos.CosmosClient')
-    async def test_delete_workspace_raises_503_if_marking_the_resource_as_deleted_in_the_db_fails(self, __, ___, get_workspace_mock, _____, resource_template_repo, ______, client, app, disabled_workspace, basic_resource_template):
+    async def test_delete_workspace_raises_503_if_marking_the_resource_as_deleted_in_the_db_fails(self, ___, get_workspace_mock, _____, resource_template_repo, ______, client, app, disabled_workspace, basic_resource_template):
         get_workspace_mock.return_value = disabled_workspace
         resource_template_repo.return_value = basic_resource_template
         response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE, workspace_id=WORKSPACE_ID))

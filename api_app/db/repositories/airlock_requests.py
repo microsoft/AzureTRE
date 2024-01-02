@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
-from azure.cosmos.aio import CosmosClient
 from fastapi import HTTPException, status
 from pydantic import parse_obj_as
 from models.domain.authentication import User

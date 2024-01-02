@@ -31,9 +31,8 @@ ALL_ROLES = AzureADAuthorization.WORKSPACE_ROLES_DICT.keys()
 @pytest_asyncio.fixture
 async def airlock_request_repo_mock(no_database):
     _ = no_database
-    with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-        airlock_request_repo_mock = await AirlockRequestRepository.create()
-        yield airlock_request_repo_mock
+    airlock_request_repo_mock = await AirlockRequestRepository.create()
+    yield airlock_request_repo_mock
 
 
 def sample_workspace():
