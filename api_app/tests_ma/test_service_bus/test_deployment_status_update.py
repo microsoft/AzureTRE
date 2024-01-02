@@ -134,9 +134,9 @@ async def test_receiving_bad_json_logs_error(cosmos_client, logging_mock, payloa
 
 
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
-@patch('service_bus.deployment_status_updater.ResourceTemplateRepository')
-@patch('service_bus.deployment_status_updater.OperationRepository')
-@patch('service_bus.deployment_status_updater.ResourceRepository')
+@patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
+@patch('service_bus.deployment_status_updater.OperationRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceRepository.create')
 @patch('services.logging.logger.exception')
 @patch("api.dependencies.database.Database.get_db_client")
 async def test_receiving_good_message(cosmos_client, logging_mock, resource_repo, operation_repo, _, __):
@@ -296,7 +296,7 @@ async def test_properties_dont_change_with_no_outputs(cosmos_client, resource_re
 
 
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
-@patch('service_bus.deployment_status_updater.ResourceTemplateRepository'.create)
+@patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.update_resource_for_step')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')

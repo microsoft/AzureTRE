@@ -676,7 +676,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     # [DELETE] /workspaces/{workspace_id}
     @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list")
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
-    @ patch("db.repositories.base.BaseRepository.get_repository")
+    @ patch("api.helpers.get_repository")
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace", return_value=[])
     @ patch('api.routes.resource_helpers.send_resource_request_message', return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
@@ -691,7 +691,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     # [DELETE] /workspaces/{workspace_id}
     @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list")
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
-    @ patch("db.repositories.base.BaseRepository.get_repository")
+    @ patch("api.helpers.get_repository")
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
     async def test_delete_workspace_raises_503_if_marking_the_resource_as_deleted_in_the_db_fails(self, ___, get_workspace_mock, _____, resource_template_repo, ______, client, app, disabled_workspace, basic_resource_template):

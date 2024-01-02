@@ -119,7 +119,6 @@ class AzureADAuthorization(AccessService):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS)
         try:
             workspace_id = request.path_params['workspace_id']
-
             ws_repo = await WorkspaceRepository.create()
             workspace = await ws_repo.get_workspace_by_id(workspace_id)
 

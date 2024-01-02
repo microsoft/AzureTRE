@@ -1,13 +1,10 @@
-from typing import Callable, Optional
+from typing import Optional
 from azure.cosmos.aio import ContainerProxy
 from azure.core import MatchConditions
-from fastapi import HTTPException, status
 from pydantic import BaseModel
 
 from api.dependencies.database import Database
-from resources.strings import STATE_STORE_ENDPOINT_NOT_RESPONDING
 from db.errors import UnableToAccessDatabase
-from services.logging import logger
 
 
 class BaseRepository:
@@ -15,20 +12,6 @@ class BaseRepository:
     async def create(cls, container_name: Optional[str] = None):
         cls._container: ContainerProxy = await cls._get_container(container_name)
         return cls
-
-    @classmethod
-    def get_repository(cls) -> Callable:
-        async def _get_repo() -> BaseRepository:
-            try:
-                return await cls.create()
-            except UnableToAccessDatabase:
-                logger.exception(STATE_STORE_ENDPOINT_NOT_RESPONDING)
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail=STATE_STORE_ENDPOINT_NOT_RESPONDING,
-                )
-
-        return _get_repo
 
     @property
     def container(self) -> ContainerProxy:
