@@ -30,12 +30,12 @@ def get_credential() -> TokenCredential:
                                       )
 
 
-async def get_credential_async(managed_identity):
+async def get_credential_async():
     return (
         ChainedTokenCredentialASync(
-            ManagedIdentityCredentialASync(client_id=managed_identity)
+            ManagedIdentityCredentialASync(client_id=MANAGED_IDENTITY_CLIENT_ID)
         )
-        if managed_identity
+        if MANAGED_IDENTITY_CLIENT_ID
         else DefaultAzureCredentialASync(authority=urlparse(AAD_AUTHORITY_URL).netloc,
                                          exclude_shared_token_cache_credential=True,
                                          exclude_workload_identity_credential=True,
@@ -51,6 +51,6 @@ async def get_credential_async_context() -> TokenCredential:
     """
     Context manager which yields the default credentials.
     """
-    credential = await get_credential_async(MANAGED_IDENTITY_CLIENT_ID)
+    credential = await get_credential_async()
     yield credential
     await credential.close()
