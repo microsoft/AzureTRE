@@ -1,11 +1,9 @@
-from unittest.mock import MagicMock, patch
-from urllib.parse import urlparse
+from mock import patch
 import pytest
 
 from azure.identity.aio import (
     DefaultAzureCredential as DefaultAzureCredentialASync,
-    ManagedIdentityCredential as ManagedIdentityCredentialASync,
-    ChainedTokenCredential as ChainedTokenCredentialASync,
+    ManagedIdentityCredential as ManagedIdentityCredentialASync
 )
 
 from core.credentials import get_credential_async
