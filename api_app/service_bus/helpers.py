@@ -24,7 +24,7 @@ async def _send_message(message: ServiceBusMessage, queue: str):
     :param queue: The Service Bus queue to send the message to.
     :type queue: str
     """
-    async with credentials.get_credential_async_cm() as credential:
+    async with credentials.get_credential_async_context() as credential:
         service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
 
         async with service_bus_client:

@@ -3,6 +3,7 @@ from azure.core import exceptions
 from azure.servicebus.aio import ServiceBusClient
 from azure.mgmt.compute.aio import ComputeManagementClient
 from azure.cosmos.exceptions import CosmosHttpResponseError
+from azure.cosmos.aio import ContainerProxy
 from azure.servicebus.exceptions import ServiceBusConnectionError, ServiceBusAuthenticationError
 from api.dependencies.database import Database
 from core.config import STATE_STORE_RESOURCES_CONTAINER
@@ -17,7 +18,7 @@ async def create_state_store_status() -> Tuple[StatusEnum, str]:
     status = StatusEnum.ok
     message = ""
     try:
-        container = await Database().get_container_proxy(STATE_STORE_RESOURCES_CONTAINER)
+        container: ContainerProxy = await Database().get_container_proxy(STATE_STORE_RESOURCES_CONTAINER)
         container.query_items("SELECT TOP 1 * FROM c")
     except exceptions.ServiceRequestError:
         status = StatusEnum.not_ok

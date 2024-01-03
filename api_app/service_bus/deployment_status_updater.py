@@ -39,7 +39,7 @@ class DeploymentStatusUpdater():
         with tracer.start_as_current_span("deployment_status_receive_messages"):
             while True:
                 try:
-                    async with credentials.get_credential_async_cm() as credential:
+                    async with credentials.get_credential_async_context() as credential:
                         service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
 
                         logger.info(f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue...")
