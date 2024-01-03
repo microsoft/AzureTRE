@@ -10,21 +10,16 @@ from db.errors import UnableToAccessDatabase
 class BaseRepository:
     @classmethod
     async def create(cls, container_name: Optional[str] = None):
-        cls._container: ContainerProxy = await cls._get_container(container_name)
+        try:
+            cls._container: ContainerProxy = await Database().get_container_proxy(container_name)
+        except Exception:
+            raise UnableToAccessDatabase
+
         return cls
 
     @property
     def container(self) -> ContainerProxy:
         return self._container
-
-    @classmethod
-    async def _get_container(cls, container_name) -> ContainerProxy:
-        try:
-            database = await Database().get_db_client()
-            container = await database.get_container_client(container=container_name)
-            return container
-        except Exception:
-            raise UnableToAccessDatabase
 
     async def query(self, query: str, parameters: Optional[dict] = None):
         items = self.container.query_items(query=query, parameters=parameters)

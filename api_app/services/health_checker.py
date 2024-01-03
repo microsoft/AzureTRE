@@ -5,6 +5,7 @@ from azure.mgmt.compute.aio import ComputeManagementClient
 from azure.cosmos.exceptions import CosmosHttpResponseError
 from azure.servicebus.exceptions import ServiceBusConnectionError, ServiceBusAuthenticationError
 from api.dependencies.database import Database
+from core.config import STATE_STORE_RESOURCES_CONTAINER
 
 from core import config
 from models.schemas.status import StatusEnum
@@ -16,9 +17,8 @@ async def create_state_store_status() -> Tuple[StatusEnum, str]:
     status = StatusEnum.ok
     message = ""
     try:
-        cosmos_client = await Database().get_db_client()
-        list_databases_response = cosmos_client.list_databases()
-        [database async for database in list_databases_response]
+        container = await Database().get_container_proxy(STATE_STORE_RESOURCES_CONTAINER)
+        await container.query_items("SELECT TOP 1 * FROM c")
     except exceptions.ServiceRequestError:
         status = StatusEnum.not_ok
         message = strings.STATE_STORE_ENDPOINT_NOT_RESPONDING

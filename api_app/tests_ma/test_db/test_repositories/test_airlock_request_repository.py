@@ -46,7 +46,7 @@ ALLOWED_STATUS_CHANGES = {
 
 @pytest_asyncio.fixture
 async def airlock_request_repo():
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=AsyncMock()):
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=AsyncMock()):
         airlock_request_repo_mock = await AirlockRequestRepository.create()
         yield airlock_request_repo_mock
 

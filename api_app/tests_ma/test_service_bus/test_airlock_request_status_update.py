@@ -108,9 +108,8 @@ class ServiceBusReceivedMessageMock:
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
 @patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
 @patch('logging.exception')
-@patch("api.dependencies.database.Database.get_db_client")
 @patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
-async def test_receiving_good_message(_, cosmos_client, logging_mock, workspace_repo, airlock_request_repo, eg_client):
+async def test_receiving_good_message(_, logging_mock, workspace_repo, airlock_request_repo, eg_client):
 
     eg_client().send = AsyncMock()
     expected_airlock_request = sample_airlock_request()
@@ -140,8 +139,7 @@ async def test_receiving_good_message(_, cosmos_client, logging_mock, workspace_
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
 @patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
 @patch('services.logging.logger.exception')
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_receiving_bad_json_logs_error(cosmos_client, logging_mock, workspace_repo, airlock_request_repo, payload):
+async def test_receiving_bad_json_logs_error(logging_mock, workspace_repo, airlock_request_repo, payload):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(payload)
     airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
@@ -156,8 +154,7 @@ async def test_receiving_bad_json_logs_error(cosmos_client, logging_mock, worksp
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
 @patch('services.logging.logger.exception')
 @patch('service_bus.airlock_request_status_update.ServiceBusClient')
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_updating_non_existent_airlock_request_error_is_logged(cosmos_client, sb_client, logging_mock, airlock_request_repo, _):
+async def test_updating_non_existent_airlock_request_error_is_logged(sb_client, logging_mock, airlock_request_repo, _):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message)
 
     airlock_request_repo.return_value.get_airlock_request_by_id.side_effect = EntityDoesNotExist
@@ -173,8 +170,7 @@ async def test_updating_non_existent_airlock_request_error_is_logged(cosmos_clie
 @patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
 @patch('services.logging.logger.exception')
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_when_updating_and_state_store_exception_error_is_logged(cosmos_client, logging_mock, airlock_request_repo, _):
+async def test_when_updating_and_state_store_exception_error_is_logged(logging_mock, airlock_request_repo, _):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message)
 
     airlock_request_repo.return_value.get_airlock_request_by_id.side_effect = Exception
@@ -189,8 +185,7 @@ async def test_when_updating_and_state_store_exception_error_is_logged(cosmos_cl
 @patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
 @patch('services.logging.logger.error')
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_when_updating_and_current_status_differs_from_status_in_state_store_error_is_logged(cosmos_client, logging_mock, airlock_request_repo, _):
+async def test_when_updating_and_current_status_differs_from_status_in_state_store_error_is_logged(logging_mock, airlock_request_repo, _):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message)
 
     expected_airlock_request = sample_airlock_request(AirlockRequestStatus.Draft)
@@ -208,8 +203,7 @@ async def test_when_updating_and_current_status_differs_from_status_in_state_sto
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
 @patch('services.logging.logger.exception')
 @patch('service_bus.airlock_request_status_update.ServiceBusClient')
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_when_updating_and_status_update_is_illegal_error_is_logged(cosmos_client, sb_client, logging_mock, airlock_request_repo, _):
+async def test_when_updating_and_status_update_is_illegal_error_is_logged(sb_client, logging_mock, airlock_request_repo, _):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message_with_invalid_status)
 
     airlock_request_repo.return_value.get_airlock_request_by_id.side_effect = HTTPException(status_code=status.HTTP_400_BAD_REQUEST)

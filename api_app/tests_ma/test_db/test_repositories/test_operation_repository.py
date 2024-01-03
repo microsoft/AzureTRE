@@ -18,21 +18,21 @@ pytestmark = pytest.mark.asyncio
 
 @pytest_asyncio.fixture
 async def operations_repo():
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=None):
         operations_repo = await OperationRepository.create()
         yield operations_repo
 
 
 @pytest_asyncio.fixture
 async def resource_repo():
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=None):
         resource_repo = await ResourceRepository.create()
         yield resource_repo
 
 
 @pytest_asyncio.fixture
 async def resource_template_repo():
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=None):
         resource_template_repo = await ResourceTemplateRepository.create()
         yield resource_template_repo
 

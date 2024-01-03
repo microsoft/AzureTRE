@@ -17,14 +17,14 @@ SHARED_SERVICE_ID = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
 
 @pytest_asyncio.fixture
 async def shared_service_repo():
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=AsyncMock()):
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=AsyncMock()):
         shared_service_repo = await SharedServiceRepository().create()
         yield shared_service_repo
 
 
 @pytest_asyncio.fixture
 async def operations_repo():
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=None):
         operations_repo = await OperationRepository().create()
         yield operations_repo
 

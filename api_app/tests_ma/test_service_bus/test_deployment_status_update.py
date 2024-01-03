@@ -118,8 +118,7 @@ def create_sample_operation(resource_id, request_action):
 
 @pytest.mark.parametrize("payload", test_data)
 @patch('services.logging.logger.exception')
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_receiving_bad_json_logs_error(cosmos_client, logging_mock, payload):
+async def test_receiving_bad_json_logs_error(logging_mock, payload):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(payload)
 
     status_updater = DeploymentStatusUpdater()
@@ -138,8 +137,7 @@ async def test_receiving_bad_json_logs_error(cosmos_client, logging_mock, payloa
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
 @patch('services.logging.logger.exception')
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_receiving_good_message(cosmos_client, logging_mock, resource_repo, operation_repo, _, __):
+async def test_receiving_good_message(logging_mock, resource_repo, operation_repo, _, __):
     expected_workspace = create_sample_workspace_object(test_sb_message["id"])
     resource_repo.return_value.get_resource_dict_by_id.return_value = expected_workspace.dict()
 
@@ -161,8 +159,7 @@ async def test_receiving_good_message(cosmos_client, logging_mock, resource_repo
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
 @patch('services.logging.logger.exception')
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_when_updating_non_existent_workspace_error_is_logged(cosmos_client, logging_mock, resource_repo, operation_repo, _, __):
+async def test_when_updating_non_existent_workspace_error_is_logged(logging_mock, resource_repo, operation_repo, _, __):
     resource_repo.return_value.get_resource_dict_by_id.side_effect = EntityDoesNotExist
 
     operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
@@ -182,8 +179,7 @@ async def test_when_updating_non_existent_workspace_error_is_logged(cosmos_clien
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
 @patch('services.logging.logger.exception')
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_when_updating_and_state_store_exception(cosmos_client, logging_mock, resource_repo, operation_repo, _, __):
+async def test_when_updating_and_state_store_exception(logging_mock, resource_repo, operation_repo, _, __):
     resource_repo.return_value.get_resource_dict_by_id.side_effect = Exception
 
     operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
@@ -202,8 +198,7 @@ async def test_when_updating_and_state_store_exception(cosmos_client, logging_mo
 @patch("service_bus.deployment_status_updater.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_state_transitions_from_deployed_to_deleted(cosmos_client, resource_repo, operations_repo_mock, _, __, ___):
+async def test_state_transitions_from_deployed_to_deleted(resource_repo, operations_repo_mock, _, __, ___):
     updated_message = test_sb_message
     updated_message["status"] = Status.Deleted
     updated_message["message"] = "Has been deleted"
@@ -234,8 +229,7 @@ async def test_state_transitions_from_deployed_to_deleted(cosmos_client, resourc
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_outputs_are_added_to_resource_item(cosmos_client, resource_repo, operations_repo, _, __):
+async def test_outputs_are_added_to_resource_item(resource_repo, operations_repo, _, __):
     received_message = test_sb_message_with_outputs
     received_message["status"] = Status.Deployed
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
@@ -272,8 +266,7 @@ async def test_outputs_are_added_to_resource_item(cosmos_client, resource_repo, 
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_properties_dont_change_with_no_outputs(cosmos_client, resource_repo, operations_repo, _, __):
+async def test_properties_dont_change_with_no_outputs(resource_repo, operations_repo, _, __):
     received_message = test_sb_message
     received_message["status"] = Status.Deployed
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
@@ -301,8 +294,7 @@ async def test_properties_dont_change_with_no_outputs(cosmos_client, resource_re
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
 @patch('service_bus.helpers.ServiceBusClient')
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_multi_step_operation_sends_next_step(cosmos_client, sb_sender_client, resource_repo, operations_repo, update_resource_for_step, _, __, multi_step_operation, user_resource_multi, basic_shared_service):
+async def test_multi_step_operation_sends_next_step(sb_sender_client, resource_repo, operations_repo, update_resource_for_step, _, __, multi_step_operation, user_resource_multi, basic_shared_service):
     received_message = test_sb_message_multi_step_1_complete
     received_message["status"] = Status.Updated
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
@@ -356,8 +348,7 @@ async def test_multi_step_operation_sends_next_step(cosmos_client, sb_sender_cli
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
 @patch('service_bus.helpers.ServiceBusClient')
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_multi_step_operation_ends_at_last_step(cosmos_client, sb_sender_client, resource_repo, operations_repo, _, __, multi_step_operation, user_resource_multi, basic_shared_service):
+async def test_multi_step_operation_ends_at_last_step(sb_sender_client, resource_repo, operations_repo, _, __, multi_step_operation, user_resource_multi, basic_shared_service):
     received_message = test_sb_message_multi_step_3_complete
     received_message["status"] = Status.Updated
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
@@ -401,8 +392,7 @@ async def test_multi_step_operation_ends_at_last_step(cosmos_client, sb_sender_c
     sb_sender_client().get_queue_sender().send_messages.assert_not_called()
 
 
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_convert_outputs_to_dict(cosmos_client):
+async def test_convert_outputs_to_dict():
     # Test case 1: Empty list of outputs
     outputs_list = []
     expected_result = {}

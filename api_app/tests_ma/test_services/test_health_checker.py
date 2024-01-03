@@ -11,34 +11,29 @@ from services import health_checker
 pytestmark = pytest.mark.asyncio
 
 
-@patch("api.dependencies.database.Database._get_store_key")
-@patch("api.dependencies.database.Database.cosmos_client")
-async def test_get_state_store_status_responding(_, get_store_key_mock) -> None:
-    get_store_key_mock.return_value = None
+@patch("api.dependencies.database.Database.get_container_proxy", return_value=AsyncMock())
+async def test_get_state_store_status_responding(_) -> None:
+    # get_store_key_mock.return_value = None
     status, message = await health_checker.create_state_store_status()
 
     assert status == StatusEnum.ok
     assert message == ""
 
 
-@patch("api.dependencies.database.Database._get_store_key")
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_get_state_store_status_not_responding(cosmos_client_mock, get_store_key_mock) -> None:
-    get_store_key_mock.return_value = None
-    cosmos_client_mock.return_value = None
-    cosmos_client_mock.side_effect = ServiceRequestError(message="some message")
+@patch("api.dependencies.database.Database.get_container_proxy")
+async def test_get_state_store_status_not_responding(container_proxy_mock) -> None:
+    container_proxy_mock.return_value = None
+    container_proxy_mock.side_effect = ServiceRequestError(message="some message")
     status, message = await health_checker.create_state_store_status()
 
     assert status == StatusEnum.not_ok
     assert message == strings.STATE_STORE_ENDPOINT_NOT_RESPONDING
 
 
-@patch("api.dependencies.database.Database._get_store_key")
-@patch("api.dependencies.database.Database.get_db_client")
-async def test_get_state_store_status_other_exception(cosmos_client_mock, get_store_key_mock) -> None:
-    get_store_key_mock.return_value = None
-    cosmos_client_mock.return_value = None
-    cosmos_client_mock.side_effect = Exception()
+@patch("api.dependencies.database.Database.get_container_proxy")
+async def test_get_state_store_status_other_exception(container_proxy_mock) -> None:
+    container_proxy_mock.return_value = None
+    container_proxy_mock.side_effect = Exception()
     status, message = await health_checker.create_state_store_status()
 
     assert status == StatusEnum.not_ok
