@@ -29,6 +29,7 @@ def get_credential() -> TokenCredential:
                                       exclude_powershell_credential=True
                                       )
 
+
 async def get_credential_async(managed_identity):
     return (
         ChainedTokenCredentialASync(
@@ -43,6 +44,7 @@ async def get_credential_async(managed_identity):
                                          exclude_powershell_credential=True
                                          )
     )
+
 
 @asynccontextmanager
 async def get_credential_async_context() -> TokenCredential:
