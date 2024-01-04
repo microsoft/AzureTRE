@@ -1,5 +1,5 @@
 import asyncio
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from core import credentials
 from models.schemas.status import HealthCheck, ServiceStatus, StatusEnum
 from resources import strings
@@ -10,13 +10,13 @@ router = APIRouter()
 
 
 @router.get("/health", name=strings.API_GET_HEALTH_STATUS)
-async def health_check() -> HealthCheck:
+async def health_check(request: Request) -> HealthCheck:
     # The health endpoint checks the status of key components of the system.
     # Note that Resource Processor checks incur Azure management calls, so
     # calling this endpoint frequently may result in API throttling.
-    async with credentials.get_credential_async() as credential:
+    async with credentials.get_credential_async_context() as credential:
         cosmos, sb, rp = await asyncio.gather(
-            create_state_store_status(credential),
+            create_state_store_status(),
             create_service_bus_status(credential),
             create_resource_processor_status(credential)
         )

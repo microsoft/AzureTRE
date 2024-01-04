@@ -11,10 +11,9 @@ pytestmark = pytest.mark.asyncio
 
 @pytest_asyncio.fixture
 async def workspace_migrator():
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=AsyncMock()):
-        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-            workspace_migrator = await WorkspaceMigration.create(cosmos_client_mock)
-            yield workspace_migrator
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=AsyncMock()):
+        workspace_migrator = await WorkspaceMigration.create()
+        yield workspace_migrator
 
 
 def get_sample_old_workspace(workspace_id: str = "7ab18f7e-ee8f-4202-8d46-747818ec76f4", spec_workspace_id: str = "0001") -> dict:

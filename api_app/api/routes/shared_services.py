@@ -5,7 +5,7 @@ from jsonschema.exceptions import ValidationError
 
 from db.repositories.operations import OperationRepository
 from db.errors import DuplicateEntity, MajorVersionUpdateDenied, UserNotAuthorizedToUseTemplate, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied
-from api.dependencies.database import get_repository
+from api.helpers import get_repository
 from api.dependencies.shared_services import get_shared_service_by_id_from_path, get_operation_by_id_from_path
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources_history import ResourceHistoryRepository

@@ -7,6 +7,7 @@ FEATURES:
 
 ENHANCEMENTS:
 * Switch from OpenCensus to OpenTelemetry for logging ([#3762](https://github.com/microsoft/AzureTRE/pull/3762))
+* Use managed identity for API connection to CosmosDB ([#345](https://github.com/microsoft/AzureTRE/issues/345))
 * Switch to Structured Firewall Logs ([#3816](https://github.com/microsoft/AzureTRE/pull/3816))
 
 BUG FIXES:

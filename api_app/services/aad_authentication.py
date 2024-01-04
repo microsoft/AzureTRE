@@ -14,7 +14,6 @@ from db.errors import EntityDoesNotExist
 from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace import Workspace, WorkspaceRole
 from resources import strings
-from api.dependencies.database import get_db_client_from_request
 from db.repositories.workspaces import WorkspaceRepository
 from services.logging import logger
 
@@ -120,8 +119,7 @@ class AzureADAuthorization(AccessService):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS)
         try:
             workspace_id = request.path_params['workspace_id']
-            db_client = await get_db_client_from_request(request)
-            ws_repo = await WorkspaceRepository.create(db_client)
+            ws_repo = await WorkspaceRepository.create()
             workspace = await ws_repo.get_workspace_by_id(workspace_id)
 
             ws_app_reg_id = ""
