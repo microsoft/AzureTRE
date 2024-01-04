@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
-from azure.cosmos.aio import CosmosClient
 from fastapi import HTTPException, status
 from pydantic import parse_obj_as
 from models.domain.authentication import User
@@ -16,14 +15,14 @@ from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReview
 from core import config
 from resources import strings
 from db.repositories.base import BaseRepository
-import logging
+from services.logging import logger
 
 
 class AirlockRequestRepository(BaseRepository):
     @classmethod
-    async def create(cls, client: CosmosClient):
+    async def create(cls):
         cls = AirlockRequestRepository()
-        await super().create(client, config.STATE_STORE_AIRLOCK_REQUESTS_CONTAINER)
+        await super().create(config.STATE_STORE_AIRLOCK_REQUESTS_CONTAINER)
         return cls
 
     @staticmethod
@@ -159,7 +158,7 @@ class AirlockRequestRepository(BaseRepository):
         try:
             db_response = await self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
         except CosmosAccessConditionFailedError:
-            logging.warning(f"ETag mismatch for request ID: '{original_request.id}'. Retrying.")
+            logger.warning(f"ETag mismatch for request ID: '{original_request.id}'. Retrying.")
             original_request = await self.get_airlock_request_by_id(original_request.id)
             updated_request = self._build_updated_request(original_request=original_request, new_status=new_status, request_files=request_files, status_message=status_message, airlock_review=airlock_review)
             db_response = await self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})

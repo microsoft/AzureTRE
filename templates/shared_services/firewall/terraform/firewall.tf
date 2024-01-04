@@ -61,7 +61,7 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
   name                           = "diagnostics-fw-${var.tre_id}"
   target_resource_id             = azurerm_firewall.fw.id
   log_analytics_workspace_id     = data.azurerm_log_analytics_workspace.tre.id
-  log_analytics_destination_type = "AzureDiagnostics"
+  log_analytics_destination_type = "Dedicated"
 
   dynamic "enabled_log" {
     for_each = setintersection(data.azurerm_monitor_diagnostic_categories.firewall.log_category_types, local.firewall_diagnostic_categories_enabled)

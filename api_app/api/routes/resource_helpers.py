@@ -1,5 +1,4 @@
 from datetime import datetime
-import logging
 import semantic_version
 from copy import deepcopy
 from typing import Dict, Any, Optional
@@ -26,6 +25,7 @@ from service_bus.resource_request_sender import (
     RequestAction,
 )
 from services.authentication import get_access_service
+from services.logging import logger
 
 
 async def delete_validation(resource: Resource, resource_repo: ResourceRepository):
@@ -75,7 +75,7 @@ async def save_and_deploy_resource(
         )
         await resource_repo.save_item(masked_resource)
     except Exception:
-        logging.exception(f"Failed saving resource item {resource.id}")
+        logger.exception(f"Failed saving resource item {resource.id}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING,
@@ -94,7 +94,7 @@ async def save_and_deploy_resource(
         return operation
     except Exception:
         await resource_repo.delete_item(resource.id)
-        logging.exception("Failed send resource request message")
+        logger.exception("Failed send resource request message")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
@@ -189,7 +189,7 @@ async def send_uninstall_message(
         )
         return operation
     except Exception:
-        logging.exception(f"Failed to send {resource_type} resource delete message")
+        logger.exception(f"Failed to send {resource_type} resource delete message")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
@@ -240,7 +240,7 @@ async def send_custom_action_message(
         )
         return operation
     except Exception:
-        logging.exception(f"Failed to send {resource_type} resource custom action message")
+        logger.exception(f"Failed to send {resource_type} resource custom action message")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
@@ -278,7 +278,7 @@ async def get_template(
             detail=strings.NO_UNIQUE_CURRENT_FOR_TEMPLATE,
         )
     except Exception as e:
-        logging.debug(e)
+        logger.debug(e)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING,

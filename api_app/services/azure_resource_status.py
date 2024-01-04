@@ -1,5 +1,5 @@
 from core import config, credentials
-import logging
+from services.logging import logger
 
 from azure.mgmt.compute import ComputeManagementClient, models
 from azure.core.exceptions import ResourceNotFoundError
@@ -21,7 +21,7 @@ def get_azure_resource_status(resource_id):
                     power_state = power_states[0].display_status
             return {"powerState": power_state}
     except ResourceNotFoundError:
-        logging.warning(f"Unable to query resource status for {resource_id}, as the resource was not found.")
+        logger.warning(f"Unable to query resource status for {resource_id}, as the resource was not found.")
 
     return {}
 

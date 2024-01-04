@@ -11,7 +11,7 @@ from models.domain.authentication import User
 from models.schemas.resource import ResourcePatch
 from db.repositories.resources import ResourceRepository
 from core import config, credentials
-import logging
+from services.logging import logger
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 
@@ -24,7 +24,7 @@ async def _send_message(message: ServiceBusMessage, queue: str):
     :param queue: The Service Bus queue to send the message to.
     :type queue: str
     """
-    async with credentials.get_credential_async() as credential:
+    async with credentials.get_credential_async_context() as credential:
         service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
 
         async with service_bus_client:
@@ -36,7 +36,7 @@ async def _send_message(message: ServiceBusMessage, queue: str):
 
 async def send_deployment_message(content, correlation_id, session_id, action):
     resource_request_message = ServiceBusMessage(body=content, correlation_id=correlation_id, session_id=session_id)
-    logging.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}, action: {action}")
+    logger.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}, action: {action}")
     await _send_message(resource_request_message, config.SERVICE_BUS_RESOURCE_REQUEST_QUEUE)
 
 
@@ -119,7 +119,7 @@ async def try_update_with_retries(num_retries: int, attempt_count: int, resource
             primary_parent_workspace_svc=primary_parent_workspace_svc
         )
     except CosmosAccessConditionFailedError as e:
-        logging.warning(f"Etag mismatch for {resource_to_update_id}. Retrying.")
+        logger.warning(f"Etag mismatch for {resource_to_update_id}. Retrying.")
         if attempt_count < num_retries:
             await try_update_with_retries(
                 num_retries=num_retries,

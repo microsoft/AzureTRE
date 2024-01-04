@@ -21,7 +21,12 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope="session")
 def event_loop():
-    return asyncio.get_event_loop()
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
 
 
 @pytest.fixture(scope="session")
@@ -111,7 +116,7 @@ async def clean_up_test_workspace_service(pre_created_workspace_service_id: str,
 @pytest.fixture(scope="session")
 async def setup_test_workspace(verify) -> Tuple[str, str, str]:
     pre_created_workspace_id = config.TEST_WORKSPACE_ID
-    auth_type = "Manual" if not config.AUTO_WORKSPACE_APP_REGISTRATION else "Automatic"
+    # Set up - uses a pre created app reg as has appropriate roles assigned
     workspace_path, workspace_id = await create_or_get_test_workspace(
         auth_type=auth_type, verify=verify, pre_created_workspace_id=pre_created_workspace_id, client_id=config.TEST_WORKSPACE_APP_ID, client_secret=config.TEST_WORKSPACE_APP_SECRET)
 

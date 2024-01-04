@@ -1,4 +1,4 @@
-import { FontIcon, Icon, Label, Spinner, SpinnerSize, Stack, getTheme, mergeStyles } from '@fluentui/react';
+import { FontIcon, Spinner, SpinnerSize, Stack, getTheme, mergeStyles } from '@fluentui/react';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Route, Routes, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
@@ -19,7 +19,7 @@ import { APIError } from '../../models/exceptions';
 import { LoadingState } from '../../models/loadingState';
 import { ExceptionLayout } from '../shared/ExceptionLayout';
 import { AppRolesContext } from '../../contexts/AppRolesContext';
-import { RoleName } from '../../models/roleNames';
+import { RoleName, WorkspaceRoleName } from '../../models/roleNames';
 
 export const WorkspaceProvider: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
@@ -27,15 +27,18 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
   const [workspaceServices, setWorkspaceServices] = useState([] as Array<WorkspaceService>);
   const [sharedServices, setSharedServices] = useState([] as Array<SharedService>);
   const workspaceCtx = useRef(useContext(WorkspaceContext));
+  const [wsRoles, setWSRoles] = useState([] as Array<string>);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const [apiError, setApiError] = useState({} as APIError);
   const { workspaceId } = useParams();
+  const [costApiError, setCostApiError] = useState({} as APIError);
 
   const appRoles = useContext(AppRolesContext);
-  const refIsTREAdminUser = useRef(false);
+  const [isTREAdminUser, setIsTREAdminUser] = useState(false);
 
   // set workspace context from url
   useEffect(() => {
+
     const getWorkspace = async () => {
       try {
         // get the workspace - first we get the scope_id so we can auth against the right aad app
@@ -58,21 +61,21 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
           ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, scopeId)).workspace;
           workspaceCtx.current.setWorkspace(ws);
           workspaceCtx.current.setRoles(wsRoles);
+          setWSRoles(wsRoles);
 
           // get workspace services to pass to nav + ws services page
           const workspaceServices = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.WorkspaceServices}`,
             HttpMethod.Get, ws.properties.scope_id);
           setWorkspaceServices(workspaceServices.workspaceServices);
-          setLoadingState(LoadingState.Ok);
           // get shared services to pass to nav shared services pages
           const sharedServices = await apiCall(ApiEndpoint.SharedServices, HttpMethod.Get);
           setSharedServices(sharedServices.sharedServices);
+          setLoadingState(LoadingState.Ok);
         } else if (appRoles.roles.includes(RoleName.TREAdmin)) {
-
           ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get)).workspace;
           workspaceCtx.current.setWorkspace(ws);
           setLoadingState(LoadingState.Ok);
-          refIsTREAdminUser.current = true;
+          setIsTREAdminUser(true);
         } else {
           let e = new APIError();
           e.status = 403;
@@ -91,18 +94,57 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
           setLoadingState(LoadingState.Error);
         }
       }
-
     };
     getWorkspace();
 
     let ctx = workspaceCtx.current;
 
-    // run this on onmount - to clear the context
-    return (() => {
+    // Return a function to clear the context on unmount
+    return () => {
       ctx.setRoles([]);
       ctx.setWorkspace({} as Workspace);
-    });
-  }, [apiCall, workspaceId, appRoles.roles, loadingState]);
+    };
+  }, [apiCall, workspaceId, isTREAdminUser, appRoles.roles]);
+
+  useEffect(() => {
+    const getWorkspaceCosts = async () => {
+      try {
+        // TODO: amend when costs enabled in API for WorkspaceRoleName.Researcher
+        if(wsRoles.includes(WorkspaceRoleName.WorkspaceOwner)){
+          let scopeId = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}/scopeid`, HttpMethod.Get)).workspaceAuth.scopeId;
+          const r = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.Costs}`, HttpMethod.Get, scopeId, undefined, ResultType.JSON);
+          const costs = [
+            ...r.costs,
+            ...r.workspace_services,
+            ...r.workspace_services.flatMap((ws: { user_resources: any; }) => [
+              ...ws.user_resources
+            ])
+          ];
+          workspaceCtx.current.setCosts(costs);
+        }
+      }
+      catch (e: any) {
+        if (e instanceof APIError) {
+          if (e.status === 404 /*subscription not supported*/) {
+          }
+          else if (e.status === 429 /*too many requests*/ || e.status === 503 /*service unavaiable*/) {
+            let msg = JSON.parse(e.message);
+            let retryAfter = Number(msg.error["retry-after"]);
+            setTimeout(getWorkspaceCosts, retryAfter * 1000);
+          }
+          else {
+            e.userMessage = 'Error retrieving costs';
+          }
+        }
+        else {
+          e.userMessage = 'Error retrieving costs';
+        }
+        setCostApiError(e);
+      }
+    };
+
+    getWorkspaceCosts();
+  },[apiCall, workspaceId, wsRoles]);
 
   const addWorkspaceService = (w: WorkspaceService) => {
     let ws = [...workspaceServices];
@@ -128,24 +170,28 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
     case LoadingState.Ok:
       return (
         <>
+          {
+            costApiError.message &&
+            <ExceptionLayout e={costApiError} />
+          }
           <WorkspaceHeader />
           <Stack horizontal className='tre-body-inner'>
-            {!refIsTREAdminUser.current && (
-              <Stack.Item className='tre-left-nav'>
+            <Stack.Item className='tre-left-nav'>
+              {!isTREAdminUser && (
                 <WorkspaceLeftNav
                   workspaceServices={workspaceServices}
                   sharedServices={sharedServices}
                   setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}
                   addWorkspaceService={(ws: WorkspaceService) => addWorkspaceService(ws)} />
-              </Stack.Item>
-            )}
+              )}
+            </Stack.Item>
             <Stack.Item className='tre-body-content'>
               <Stack>
                 <Stack.Item grow={100}>
                   <Routes>
                     <Route path="/" element={<>
                       <WorkspaceItem />
-                      {!refIsTREAdminUser.current ? (
+                      {!isTREAdminUser ? (
                         <WorkspaceServices workspaceServices={workspaceServices}
                           setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}
                           addWorkspaceService={(ws: WorkspaceService) => addWorkspaceService(ws)}
@@ -157,13 +203,13 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                             <FontIcon iconName="WarningSolid"
                               className={warningIcon}
                             />
-                            You are currently accessing this workspace using a TRE Admin role. Additional funcitonality requires a workspace role, such as Workspace Owner.
+                            You are currently accessing this workspace using the TRE Admin role. Additional functionality requires a workspace role, such as Workspace Owner.
                           </Stack.Item>
                         </Stack>
                       )}
                     </>}
                     />
-                    {!refIsTREAdminUser.current && (
+                    {!isTREAdminUser && (
                       <>
                         <Route path="workspace-services" element={
                           <WorkspaceServices workspaceServices={workspaceServices}

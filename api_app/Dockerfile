@@ -19,4 +19,4 @@ COPY . /api
 WORKDIR /api
 RUN groupadd -r api && useradd -r -s /bin/false -g api api_user
 USER api_user
-CMD ["gunicorn", "main:app", "--bind", "0.0.0.0:8000", "-k", "uvicorn.workers.UvicornWorker","--timeout", "300", "--workers", "5"]
+CMD ["gunicorn", "main:app", "--bind", "0.0.0.0:8000", "-k", "uvicorn.workers.UvicornWorker","--timeout", "60", "--workers", "5"]

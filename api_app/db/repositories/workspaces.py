@@ -1,7 +1,6 @@
 import uuid
 from typing import List, Tuple
 
-from azure.cosmos.aio import CosmosClient
 from pydantic import parse_obj_as
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
@@ -28,9 +27,9 @@ class WorkspaceRepository(ResourceRepository):
     predefined_address_spaces = {"small": 24, "medium": 22, "large": 16}
 
     @classmethod
-    async def create(cls, client: CosmosClient):
+    async def create(cls):
         cls = WorkspaceRepository()
-        await super().create(client)
+        await super().create()
         return cls
 
     @staticmethod
@@ -140,11 +139,11 @@ class WorkspaceRepository(ResourceRepository):
         if (address_space is None):
             raise InvalidInput("Missing 'address_space' from properties.")
 
-        allocated_networks = [x.properties["address_space"] for x in await self.get_workspaces()]
+        allocated_networks = [x.properties["address_space"] for x in await self.get_active_workspaces()]
         return is_network_available(allocated_networks, address_space)
 
     async def get_new_address_space(self, cidr_netmask: int = 24):
-        workspaces = await self.get_workspaces()
+        workspaces = await self.get_active_workspaces()
         networks = [[x.properties.get("address_space")] for x in workspaces]
         networks = networks + [x.properties.get("address_spaces", []) for x in workspaces]
         networks = [i for s in networks for i in s if i is not None]

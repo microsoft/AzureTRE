@@ -1,36 +1,28 @@
 from typing import Optional
-from azure.cosmos.aio import CosmosClient, ContainerProxy
-from azure.cosmos import PartitionKey
+from azure.cosmos.aio import ContainerProxy
 from azure.core import MatchConditions
 from pydantic import BaseModel
 
-from core import config
+from api.dependencies.database import Database
 from db.errors import UnableToAccessDatabase
 
 
 class BaseRepository:
     @classmethod
-    async def create(cls, client: CosmosClient, container_name: Optional[str] = None, partition_key: str = "/id"):
-        partition_key_obj = PartitionKey(path=partition_key)
-        cls._client: CosmosClient = client
-        cls._container: ContainerProxy = await cls._get_container(container_name, partition_key_obj)
+    async def create(cls, container_name: Optional[str] = None):
+        try:
+            cls._container: ContainerProxy = await Database().get_container_proxy(container_name)
+        except Exception:
+            raise UnableToAccessDatabase
+
         return cls
 
     @property
     def container(self) -> ContainerProxy:
         return self._container
 
-    @classmethod
-    async def _get_container(cls, container_name, partition_key_obj) -> ContainerProxy:
-        try:
-            database = cls._client.get_database_client(config.STATE_STORE_DATABASE)
-            container = await database.create_container_if_not_exists(id=container_name, partition_key=partition_key_obj)
-            return container
-        except Exception:
-            raise UnableToAccessDatabase
-
     async def query(self, query: str, parameters: Optional[dict] = None):
-        items = self.container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True)
+        items = self.container.query_items(query=query, parameters=parameters)
         return [i async for i in items]
 
     async def read_item_by_id(self, item_id: str) -> dict:
