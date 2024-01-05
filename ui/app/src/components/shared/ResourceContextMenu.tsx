@@ -142,25 +142,27 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   }
 
   // add 'connect' button if we have a URL to connect to
-  if (props.resource.properties.is_exposed_externally === true && props.resource.properties.connection_uri) {
-    menuItems.push({
-      key: 'connect',
-      text: 'Connect',
-      title: shouldDisableConnect() ? 'Resource must be deployed, enabled & powered on to connect' : 'Connect to resource',
-      iconProps: { iconName: 'PlugConnected' },
-      onClick: () => { window.open(props.resource.properties.connection_uri, '_blank') },
-      disabled: shouldDisableConnect()
-    })
-  }
-  else if (props.resource.properties.is_exposed_externally === false && props.resource.properties.connection_uri) {
-    menuItems.push({
-      key: 'connect',
-      text: 'Connect',
-      title: shouldDisableConnect() ? 'Resource must be deployed, enabled & powered on to connect' : 'Connect to resource',
-      iconProps: { iconName: 'PlugConnected' },
-      onClick: () => setShowCopyUrl(true),
-      disabled: shouldDisableConnect()
-    })
+  if(props.resource.properties.connection_uri){
+    if (props.resource.properties.is_exposed_externally === true) {
+      menuItems.push({
+        key: 'connect',
+        text: 'Connect',
+        title: shouldDisableConnect() ? 'Resource must be deployed, enabled & powered on to connect' : 'Connect to resource',
+        iconProps: { iconName: 'PlugConnected' },
+        onClick: () => { window.open(props.resource.properties.connection_uri, '_blank') },
+        disabled: shouldDisableConnect()
+      })
+    }
+    else if (props.resource.properties.is_exposed_externally === false) {
+      menuItems.push({
+        key: 'connect',
+        text: 'Connect',
+        title: shouldDisableConnect() ? 'Resource must be deployed, enabled & powered on to connect' : 'Connect to resource',
+        iconProps: { iconName: 'PlugConnected' },
+        onClick: () => setShowCopyUrl(true),
+        disabled: shouldDisableConnect()
+      })
+    }
   }
 
 
