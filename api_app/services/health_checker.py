@@ -1,11 +1,12 @@
 from typing import Tuple
 from azure.core import exceptions
-from azure.cosmos.aio import CosmosClient
 from azure.servicebus.aio import ServiceBusClient
 from azure.mgmt.compute.aio import ComputeManagementClient
 from azure.cosmos.exceptions import CosmosHttpResponseError
+from azure.cosmos.aio import ContainerProxy
 from azure.servicebus.exceptions import ServiceBusConnectionError, ServiceBusAuthenticationError
-from api.dependencies.database import get_store_key
+from api.dependencies.database import Database
+from core.config import STATE_STORE_RESOURCES_CONTAINER
 
 from core import config
 from models.schemas.status import StatusEnum
@@ -13,16 +14,12 @@ from resources import strings
 from services.logging import logger
 
 
-async def create_state_store_status(credential) -> Tuple[StatusEnum, str]:
+async def create_state_store_status() -> Tuple[StatusEnum, str]:
     status = StatusEnum.ok
     message = ""
-    debug = True if config.LOGGING_LEVEL == "DEBUG" else False
     try:
-        primary_master_key = await get_store_key(credential)
-        cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key, connection_verify=debug)
-        async with cosmos_client:
-            list_databases_response = cosmos_client.list_databases()
-            [database async for database in list_databases_response]
+        container: ContainerProxy = await Database().get_container_proxy(STATE_STORE_RESOURCES_CONTAINER)
+        container.query_items("SELECT TOP 1 * FROM c")
     except exceptions.ServiceRequestError:
         status = StatusEnum.not_ok
         message = strings.STATE_STORE_ENDPOINT_NOT_RESPONDING

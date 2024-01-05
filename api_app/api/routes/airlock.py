@@ -3,6 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status as status_code, Response
 
 from jsonschema.exceptions import ValidationError
+from api.helpers import get_repository
 from db.repositories.resources_history import ResourceHistoryRepository
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
@@ -11,7 +12,6 @@ from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.airlock_requests import AirlockRequestRepository
 from db.errors import EntityDoesNotExist, UserNotAuthorizedToUseTemplate
 
-from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType

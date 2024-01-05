@@ -7,8 +7,8 @@ from typing import Optional
 from pydantic import UUID4
 
 from models.schemas.costs import get_cost_report_responses, get_workspace_cost_report_responses
-from api.dependencies.database import get_repository
 from core import config
+from api.helpers import get_repository
 from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository

@@ -1,6 +1,5 @@
 from typing import List
 import uuid
-from azure.cosmos.aio import CosmosClient
 from pydantic import parse_obj_as
 
 from db.errors import EntityDoesNotExist
@@ -12,9 +11,9 @@ from services.logging import logger
 
 class ResourceHistoryRepository(BaseRepository):
     @classmethod
-    async def create(cls, client: CosmosClient):
+    async def create(cls):
         cls = ResourceHistoryRepository()
-        await super().create(client, config.STATE_STORE_RESOURCES_HISTORY_CONTAINER, "/resourceId")
+        await super().create(config.STATE_STORE_RESOURCES_HISTORY_CONTAINER)
         return cls
 
     @staticmethod

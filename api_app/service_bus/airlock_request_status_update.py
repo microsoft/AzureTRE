@@ -6,7 +6,6 @@ from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnect
 from fastapi import HTTPException
 from pydantic import ValidationError, parse_obj_as
 
-from api.dependencies.database import get_db_client
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from services.airlock import update_and_publish_event_airlock_request
 from services.logging import logger, tracer
@@ -20,19 +19,18 @@ from resources import strings
 
 class AirlockStatusUpdater():
 
-    def __init__(self, app):
-        self.app = app
+    def __init__(self):
+        pass
 
     async def init_repos(self):
-        db_client = await get_db_client(self.app)
-        self.airlock_request_repo = await AirlockRequestRepository.create(db_client)
-        self.workspace_repo = await WorkspaceRepository.create(db_client)
+        self.airlock_request_repo = await AirlockRequestRepository.create()
+        self.workspace_repo = await WorkspaceRepository.create()
 
     async def receive_messages(self):
         with tracer.start_as_current_span("airlock_receive_messages"):
             while True:
                 try:
-                    async with credentials.get_credential_async() as credential:
+                    async with credentials.get_credential_async_context() as credential:
                         service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
                         receiver = service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_STEP_RESULT_QUEUE)
                         logger.info(f"Looking for new messages on {config.SERVICE_BUS_STEP_RESULT_QUEUE} queue...")

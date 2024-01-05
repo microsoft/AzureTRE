@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from db.migrations.airlock import AirlockMigration
 from db.migrations.resources import ResourceMigration
+from api.helpers import get_repository
 from db.repositories.operations import OperationRepository
 from db.repositories.resources_history import ResourceHistoryRepository
 from services.authentication import get_current_admin_user
 from resources import strings
-from api.dependencies.database import get_repository
 from db.migrations.shared_services import SharedServiceMigration
 from db.migrations.workspaces import WorkspaceMigration
 from db.repositories.resources import ResourceRepository
