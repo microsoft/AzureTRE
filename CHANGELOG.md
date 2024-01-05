@@ -11,6 +11,8 @@ ENHANCEMENTS:
 * Switch to Structured Firewall Logs ([#3816](https://github.com/microsoft/AzureTRE/pull/3816))
 
 BUG FIXES:
+* Fix issue with workspace menu not working correctly([#3819](https://github.com/microsoft/AzureTRE/issues/3819))
+* Fix issue with connect button showing when no uri([#3820](https://github.com/microsoft/AzureTRE/issues/3820))
 
 COMPONENTS:
 

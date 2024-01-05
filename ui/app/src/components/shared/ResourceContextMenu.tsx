@@ -142,7 +142,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   }
 
   // add 'connect' button if we have a URL to connect to
-  if (props.resource.properties.is_exposed_externally === true) {
+  if (props.resource.properties.is_exposed_externally === true && props.resource.properties.connection_uri) {
     menuItems.push({
       key: 'connect',
       text: 'Connect',
@@ -152,7 +152,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       disabled: shouldDisableConnect()
     })
   }
-  else if (props.resource.properties.is_exposed_externally === false) {
+  else if (props.resource.properties.is_exposed_externally === false && props.resource.properties.connection_uri) {
     menuItems.push({
       key: 'connect',
       text: 'Connect',
