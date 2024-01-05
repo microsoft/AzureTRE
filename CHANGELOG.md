@@ -7,6 +7,7 @@ FEATURES:
 
 ENHANCEMENTS:
 * Switch from OpenCensus to OpenTelemetry for logging ([#3762](https://github.com/microsoft/AzureTRE/pull/3762))
+* Extend PowerShell auto start script to start core VMs ([#3811](https://github.com/microsoft/AzureTRE/issues/3811))
 
 BUG FIXES:
 
