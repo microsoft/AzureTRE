@@ -2,452 +2,452 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/coming-soon/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/contributing/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/azure-tre-overview/airlock/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/azure-tre-overview/architecture/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/azure-tre-overview/compliance-info/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/azure-tre-overview/cost-reporting/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/azure-tre-overview/networking/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/azure-tre-overview/tre-resources-breakdown/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/azure-tre-overview/user-roles/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/auth/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/configure-airlock-review/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/environment-variables/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/registering-templates/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/start-stop/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/supported-clouds/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/tear-down/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/upgrading-resources/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/upgrading-tre/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/identities/api/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/identities/application_admin/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/identities/auth-manual/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/identities/client/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/identities/test-account/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/identities/workspace/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/setup-instructions/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/setup-instructions/ad-tenant-choices/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/setup-instructions/cicd-deployment/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/setup-instructions/cicd-pre-deployment-steps/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/setup-instructions/configuring-shared-services/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/setup-instructions/deployment-repo/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/setup-instructions/installing-base-workspace/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/setup-instructions/installing-workspace-service-and-user-resource/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/setup-instructions/manual-deployment/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/setup-instructions/manual-pre-deployment-steps/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/setup-instructions/prerequisites/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/setup-instructions/setup-auth-entities/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/setup-instructions/ui-install-base-workspace/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/setup-instructions/ui-install-ws-and-ur/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-admins/setup-instructions/workflows/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-developers/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-developers/CLI/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-developers/api-permissions-map/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-developers/api/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-developers/end-to-end-tests/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-developers/letsencrypt/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-developers/release/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-developers/resource-processor/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-developers/ui/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/pipeline-templates/overview/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/pipeline-templates/pipeline-schema/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/shared-services/airlock-notifier/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/shared-services/cyclecloud/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/shared-services/gitea/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/shared-services/nexus/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/user-resources/export-reviewvm/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/user-resources/guacamole-linux-vm/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/user-resources/guacamole-windows-vm/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/user-resources/import-reviewvm/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/workspace-services/azure-ml/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/workspace-services/databricks/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/workspace-services/gitea/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/workspace-services/guacamole/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/workspace-services/health_services/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/workspace-services/inner-eye/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/workspace-services/mlflow/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/workspace-services/ohdsi/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/workspaces/airlock-import-review/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/workspaces/base/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-templates/workspaces/unrestricted/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-workspace-authors/authoring-workspace-templates/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/tre-workspace-authors/firewall-rules/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/troubleshooting-faq/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/troubleshooting-faq/airlock-troubleshooting/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/troubleshooting-faq/api-logs-deployment-center/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/troubleshooting-faq/app-insights-logs/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/troubleshooting-faq/cloud-init/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/troubleshooting-faq/debug-logs/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/troubleshooting-faq/manually-editing-resources/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/troubleshooting-faq/troubleshooting-rp/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/troubleshooting-faq/troubleshooting-sb/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/using-tre/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/using-tre/terms-definitions/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/using-tre/local-development/local-development/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/using-tre/templates/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/using-tre/tre-for-research/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/using-tre/tre-for-research/importing-exporting-data-airlock/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/using-tre/tre-for-research/review-airlock-request/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://microsoft.github.io/AzureTRE/unreleased/using-tre/tre-for-research/using-vms/</loc>
-         <lastmod>2023-12-07</lastmod>
+         <lastmod>2024-01-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>

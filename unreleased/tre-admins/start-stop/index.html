@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../assets/ms_icon.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.0">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.3">
     
     
       
@@ -30,7 +30,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.45e1311d.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.50c56a3b.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -3585,7 +3585,7 @@ We have this procedure setup in our development subscriptions where each night w
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="automating-start">Automating <code>start</code></h3>
-<p>To restart the TRE core services (Firewall, Application Gateway(s), Virtual Machine Scale Sets, and MySQL), you can use <code>make tre-start</code>. Depending on your workflow, you might not be able to easily execute the <code>make</code> target. Alternatively, you can create a second Runbook and execute it manually. The PowerShell code to start TRE core services is below:</p>
+<p>To restart the TRE core services (Firewall, Application Gateway(s), Virtual Machine Scale Sets, Virtual Machines, and MySQL), you can use <code>make tre-start</code>. Depending on your workflow, you might not be able to easily execute the <code>make</code> target. Alternatively, you can create a second Runbook and execute it manually. The PowerShell code to start TRE core services is below:</p>
 <div class="highlight"><pre><span></span><code><span class="k">try</span> <span class="p">{</span>
     <span class="s2">&quot;Logging in to Azure...&quot;</span>
     <span class="nb">Connect-AzAccount</span> <span class="n">-Identity</span>
@@ -3649,6 +3649,13 @@ We have this procedure setup in our development subscriptions where each night w
     <span class="k">foreach</span> <span class="p">(</span><span class="nv">$item</span> <span class="k">in</span> <span class="nv">$VMSS</span><span class="p">)</span> <span class="p">{</span>
         <span class="nb">Write-Output</span> <span class="s2">&quot;Starting VMSS &#39;</span><span class="p">$(</span><span class="nv">$item</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&#39;&quot;</span>
         <span class="nb">Start-AzVmss</span> <span class="n">-ResourceGroupName</span> <span class="nv">$item</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="n">-VMScaleSetName</span> <span class="nv">$item</span><span class="p">.</span><span class="n">Name</span>
+    <span class="p">}</span>
+
+    <span class="c"># Start VMs</span>
+    <span class="nv">$VM</span> <span class="p">=</span> <span class="nb">Get-AzVM</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$item</span> <span class="k">in</span> <span class="nv">$VM</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nb">Write-Output</span> <span class="s2">&quot;Starting VM &#39;</span><span class="p">$(</span><span class="nv">$item</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&#39;&quot;</span>
+      <span class="nb">Start-AzVm</span> <span class="n">-ResourceGroupName</span> <span class="nv">$item</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="n">-Name</span> <span class="nv">$item</span><span class="p">.</span><span class="n">Name</span>
     <span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
