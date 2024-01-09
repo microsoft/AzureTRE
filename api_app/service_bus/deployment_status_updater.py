@@ -4,7 +4,6 @@ import uuid
 
 from pydantic import ValidationError, parse_obj_as
 
-from api.dependencies.database import get_db_client
 from api.routes.resource_helpers import get_timestamp
 from models.domain.resource import Output
 from db.repositories.resources_history import ResourceHistoryRepository
@@ -24,15 +23,14 @@ from services.logging import logger, tracer
 
 
 class DeploymentStatusUpdater():
-    def __init__(self, app):
-        self.app = app
+    def __init__(self):
+        pass
 
     async def init_repos(self):
-        db_client = await get_db_client(self.app)
-        self.operations_repo = await OperationRepository.create(db_client)
-        self.resource_repo = await ResourceRepository.create(db_client)
-        self.resource_template_repo = await ResourceTemplateRepository.create(db_client)
-        self.resource_history_repo = await ResourceHistoryRepository.create(db_client)
+        self.operations_repo = await OperationRepository.create()
+        self.resource_repo = await ResourceRepository.create()
+        self.resource_template_repo = await ResourceTemplateRepository.create()
+        self.resource_history_repo = await ResourceHistoryRepository.create()
 
     def run(self, *args, **kwargs):
         asyncio.run(self.receive_messages())
@@ -41,7 +39,7 @@ class DeploymentStatusUpdater():
         with tracer.start_as_current_span("deployment_status_receive_messages"):
             while True:
                 try:
-                    async with credentials.get_credential_async() as credential:
+                    async with credentials.get_credential_async_context() as credential:
                         service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
 
                         logger.info(f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue...")

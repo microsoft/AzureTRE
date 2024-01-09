@@ -3,7 +3,6 @@ import semantic_version
 from datetime import datetime
 from typing import Optional, Tuple, List
 
-from azure.cosmos.aio import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from core import config
 from db.errors import VersionDowngradeDenied, EntityDoesNotExist, MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, UserNotAuthorizedToUseTemplate
@@ -25,9 +24,9 @@ from pydantic import UUID4, parse_obj_as
 
 class ResourceRepository(BaseRepository):
     @classmethod
-    async def create(cls, client: CosmosClient):
+    async def create(cls):
         cls = ResourceRepository()
-        await super().create(client, config.STATE_STORE_RESOURCES_CONTAINER)
+        await super().create(config.STATE_STORE_RESOURCES_CONTAINER)
         return cls
 
     @staticmethod
@@ -46,7 +45,7 @@ class ResourceRepository(BaseRepository):
         validate(instance=resource_input["properties"], schema=resource_template)
 
     async def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = "") -> dict:
-        template_repo = await ResourceTemplateRepository.create(self._client)
+        template_repo = await ResourceTemplateRepository.create()
         template = await template_repo.get_current_template(template_name, resource_type, parent_template_name)
         return template_repo.enrich_template(template)
 
