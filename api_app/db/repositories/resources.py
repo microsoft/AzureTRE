@@ -140,9 +140,14 @@ class ResourceRepository(BaseRepository):
         return [resource[0] for resource in sorted_list]
 
     async def validate_template_version_patch(self, resource: Resource, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, force_version_update: bool = False):
-        parent_resource_id = None
+        parent_service_template_name = None
         if resource.resourceType == ResourceType.UserResource:
-            parent_resource_id = resource.parentWorkspaceServiceId
+            try:
+                resource_repo = await ResourceRepository.create()
+                parent_service = await resource_repo.get_resource_by_id(resource.parentWorkspaceServiceId)
+                parent_service_template_name = parent_service.templateName
+            except EntityDoesNotExist:
+                raise ValueError(f'Parent workspace service {resource.parentWorkspaceServiceId} not found')
 
         # validate Major upgrade
         try:
@@ -159,7 +164,7 @@ class ResourceRepository(BaseRepository):
 
         # validate if target template with desired version is registered
         try:
-            await resource_template_repo.get_template_by_name_and_version(resource.templateName, resource_patch.templateVersion, resource_template.resourceType, parent_resource_id)
+            await resource_template_repo.get_template_by_name_and_version(resource.templateName, resource_patch.templateVersion, resource_template.resourceType, parent_service_template_name)
         except EntityDoesNotExist:
             raise TargetTemplateVersionDoesNotExist(f"Template '{resource_template.name}' not found for resource type '{resource_template.resourceType}' with target template version '{resource_patch.templateVersion}'")
 
