@@ -14,9 +14,9 @@ ENHANCEMENTS:
 BUG FIXES:
 * Fix issue with workspace menu not working correctly([#3819](https://github.com/microsoft/AzureTRE/issues/3819))
 * Fix issue with connect button showing when no uri([#3820](https://github.com/microsoft/AzureTRE/issues/3820))
+* Fix user resource upgrade validation: use the parent_service_template_name instead of the parent_resource_id. ([#3824](https://github.com/microsoft/AzureTRE/issues/3824))
 
 COMPONENTS:
-
 
 ## 0.16.0 (December 1, 2023)
 
