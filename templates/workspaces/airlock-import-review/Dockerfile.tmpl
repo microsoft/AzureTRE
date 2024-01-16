@@ -13,7 +13,7 @@ ARG AZURE_TRE_VERSION="0.15.2"
 
 WORKDIR ${BUNDLE_DIR}
 
-# Copy all files FROM --platform=linux/amd64 base workspace (note: some of them will be overwritten with the following COPY command)
+# Copy all files from base workspace (note: some of them will be overwritten with the following COPY command)
 RUN curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/refs/tags/v${AZURE_TRE_VERSION}.tar.gz" \
   && tar -xzf azuretre.tar.gz "AzureTRE-${AZURE_TRE_VERSION}/templates/workspaces/base" --strip-components=4 --skip-old-files \
   && rm -rf azuretre.tar.gz
