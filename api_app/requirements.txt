@@ -15,6 +15,7 @@ fastapi-utils==0.2.1
 gunicorn==21.2.0
 jsonschema[format_nongpl]==4.19.1
 msal==1.22.0
+opentelemetry.instrumentation.logging==0.43b0
 pandas==2.0.3
 PyJWT==2.8.0
 pytz==2022.7
