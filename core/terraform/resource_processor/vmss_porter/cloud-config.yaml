@@ -58,6 +58,7 @@ write_files:
       AAD_AUTHORITY_URL=${aad_authority_url}
       MICROSOFT_GRAPH_FQDN=${microsoft_graph_fqdn}
       OTEL_RESOURCE_ATTRIBUTES=service.name=resource_processor,service.version=${resource_processor_vmss_porter_image_tag}
+      OTEL_EXPERIMENTAL_RESOURCE_DETECTORS=azure_vm
       LOGGING_LEVEL=${logging_level}
       ${rp_bundle_values}
   - path: /etc/cron.hourly/docker-prune
