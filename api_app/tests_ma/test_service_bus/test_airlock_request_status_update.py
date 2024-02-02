@@ -108,9 +108,8 @@ class ServiceBusReceivedMessageMock:
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
 @patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
 @patch('logging.exception')
-@patch('fastapi.FastAPI')
 @patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
-async def test_receiving_good_message(_, app, logging_mock, workspace_repo, airlock_request_repo, eg_client):
+async def test_receiving_good_message(_, logging_mock, workspace_repo, airlock_request_repo, eg_client):
 
     eg_client().send = AsyncMock()
     expected_airlock_request = sample_airlock_request()
@@ -118,7 +117,7 @@ async def test_receiving_good_message(_, app, logging_mock, workspace_repo, airl
     airlock_request_repo.return_value.update_airlock_request.return_value = sample_airlock_request(status=AirlockRequestStatus.InReview)
     workspace_repo.return_value.get_workspace_by_id.return_value = sample_workspace()
 
-    airlockStatusUpdater = AirlockStatusUpdater(app)
+    airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
     complete_message = await airlockStatusUpdater.process_message(ServiceBusReceivedMessageMock(test_sb_step_result_message))
 
@@ -139,29 +138,27 @@ async def test_receiving_good_message(_, app, logging_mock, workspace_repo, airl
 @pytest.mark.parametrize("payload", test_data)
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
 @patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
-@patch('logging.exception')
-@patch('fastapi.FastAPI')
-async def test_receiving_bad_json_logs_error(app, logging_mock, workspace_repo, airlock_request_repo, payload):
+@patch('services.logging.logger.exception')
+async def test_receiving_bad_json_logs_error(logging_mock, workspace_repo, airlock_request_repo, payload):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(payload)
-    airlockStatusUpdater = AirlockStatusUpdater(app)
+    airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
     complete_message = await airlockStatusUpdater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True
-    error_message = logging_mock.call_args.args[0]
-    assert error_message.startswith(strings.STEP_RESULT_MESSAGE_FORMAT_INCORRECT)
+    expected_error_message = f"{strings.STEP_RESULT_MESSAGE_FORMAT_INCORRECT}: {service_bus_received_message_mock.correlation_id}"
+    logging_mock.assert_called_once_with(expected_error_message)
 
 
 @patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
-@patch('logging.exception')
+@patch('services.logging.logger.exception')
 @patch('service_bus.airlock_request_status_update.ServiceBusClient')
-@patch('fastapi.FastAPI')
-async def test_updating_non_existent_airlock_request_error_is_logged(app, sb_client, logging_mock, airlock_request_repo, _):
+async def test_updating_non_existent_airlock_request_error_is_logged(sb_client, logging_mock, airlock_request_repo, _):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message)
 
     airlock_request_repo.return_value.get_airlock_request_by_id.side_effect = EntityDoesNotExist
-    airlockStatusUpdater = AirlockStatusUpdater(app)
+    airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
     complete_message = await airlockStatusUpdater.process_message(service_bus_received_message_mock)
 
@@ -172,13 +169,12 @@ async def test_updating_non_existent_airlock_request_error_is_logged(app, sb_cli
 
 @patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
-@patch('logging.exception')
-@patch('fastapi.FastAPI')
-async def test_when_updating_and_state_store_exception_error_is_logged(app, logging_mock, airlock_request_repo, _):
+@patch('services.logging.logger.exception')
+async def test_when_updating_and_state_store_exception_error_is_logged(logging_mock, airlock_request_repo, _):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message)
 
     airlock_request_repo.return_value.get_airlock_request_by_id.side_effect = Exception
-    airlockStatusUpdater = AirlockStatusUpdater(app)
+    airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
     complete_message = await airlockStatusUpdater.process_message(service_bus_received_message_mock)
 
@@ -188,14 +184,13 @@ async def test_when_updating_and_state_store_exception_error_is_logged(app, logg
 
 @patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
-@patch('logging.error')
-@patch('fastapi.FastAPI')
-async def test_when_updating_and_current_status_differs_from_status_in_state_store_error_is_logged(app, logging_mock, airlock_request_repo, _):
+@patch('services.logging.logger.error')
+async def test_when_updating_and_current_status_differs_from_status_in_state_store_error_is_logged(logging_mock, airlock_request_repo, _):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message)
 
     expected_airlock_request = sample_airlock_request(AirlockRequestStatus.Draft)
     airlock_request_repo.return_value.get_airlock_request_by_id.return_value = expected_airlock_request
-    airlockStatusUpdater = AirlockStatusUpdater(app)
+    airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
     complete_message = await airlockStatusUpdater.process_message(service_bus_received_message_mock)
 
@@ -206,14 +201,13 @@ async def test_when_updating_and_current_status_differs_from_status_in_state_sto
 
 @patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
-@patch('logging.exception')
+@patch('services.logging.logger.exception')
 @patch('service_bus.airlock_request_status_update.ServiceBusClient')
-@patch('fastapi.FastAPI')
-async def test_when_updating_and_status_update_is_illegal_error_is_logged(app, sb_client, logging_mock, airlock_request_repo, _):
+async def test_when_updating_and_status_update_is_illegal_error_is_logged(sb_client, logging_mock, airlock_request_repo, _):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message_with_invalid_status)
 
     airlock_request_repo.return_value.get_airlock_request_by_id.side_effect = HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
-    airlockStatusUpdater = AirlockStatusUpdater(app)
+    airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
     complete_message = await airlockStatusUpdater.process_message(service_bus_received_message_mock)
 

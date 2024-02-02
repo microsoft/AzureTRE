@@ -7,7 +7,7 @@ config = Config(".env")
 # API settings
 API_PREFIX = "/api"
 PROJECT_NAME: str = config("PROJECT_NAME", default="Azure TRE API")
-DEBUG: bool = config("DEBUG", cast=bool, default=False)
+LOGGING_LEVEL: str = config("LOGGING_LEVEL", default="INFO")
 ENABLE_LOCAL_DEBUGGING: bool = config("ENABLE_LOCAL_DEBUGGING", cast=bool, default=False)
 ENABLE_SWAGGER: bool = config("ENABLE_SWAGGER", cast=bool, default=False)
 VERSION = __version__
@@ -53,6 +53,9 @@ RESOURCE_MANAGER_ENDPOINT: str = config("RESOURCE_MANAGER_ENDPOINT", default="ht
 CREDENTIAL_SCOPES: List[str] = [f"{RESOURCE_MANAGER_ENDPOINT}/.default"]
 MICROSOFT_GRAPH_URL: str = config("MICROSOFT_GRAPH_URL", default="https://graph.microsoft.com")
 STORAGE_ENDPOINT_SUFFIX: str = config("STORAGE_ENDPOINT_SUFFIX", default="core.windows.net")
+
+# Monitoring
+APPLICATIONINSIGHTS_CONNECTION_STRING: str = config("APPLICATIONINSIGHTS_CONNECTION_STRING", default=None)
 
 # Authentication
 API_CLIENT_ID: str = config("API_CLIENT_ID", default="")
