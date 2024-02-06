@@ -2,11 +2,11 @@
 azure-core==1.29.5
 aiohttp==3.8.3
 azure-cosmos==4.3.0
-azure-identity==1.12.0
+azure-identity==1.14.1
 azure-mgmt-cosmosdb==8.0.0
 azure-mgmt-compute==29.1.0
 azure-mgmt-costmanagement==3.0.0
-azure-storage-blob==12.14.1
+azure-storage-blob==12.19.0
 azure-servicebus==7.8.1
 azure-eventgrid==4.9.1
 fastapi[all]==0.89.1
@@ -21,5 +21,5 @@ uvicorn[standard]==0.20.0
 semantic-version==2.10.0
 pytz~=2022.7
 python-dateutil~=2.8.2
-azure-mgmt-resource==22.0.0
+azure-mgmt-resource==23.0.1
 pandas==1.5.2
