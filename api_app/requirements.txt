@@ -1,5 +1,5 @@
 # API
-azure-core==1.26.1
+azure-core==1.29.5
 aiohttp==3.8.3
 azure-cosmos==4.3.0
 azure-identity==1.12.0
