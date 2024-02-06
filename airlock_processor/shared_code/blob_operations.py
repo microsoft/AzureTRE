@@ -9,7 +9,10 @@ from azure.core.exceptions import ResourceExistsError
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import ContainerSasPermissions, generate_container_sas, BlobServiceClient
 
-from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
+from exceptions import NoFilesInRequestException, TooManyFilesInRequestException, NotAllowedFileExtension
+
+# Define a list of allowed file extensions
+ALLOWED_EXTENSIONS = [".json", ".csv", ".txt", ".md", ".rst", ".tex", ".pdf", ".py", ".sql", ".gz", ".zip", ".xls", ".xlsx", ".xlsm", ".xlsb", ".jpg", ".jpeg", ".svg", ".png", ".gif", ".notebook", ".r", ".do", ".ado", ".sthlp", ".smcl", ".log"]
 
 
 def get_account_url(account_name: str) -> str:
@@ -68,6 +71,13 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
         msg = "Request with id {} did not contain any files. flow aborted.".format(request_id)
         logging.error(msg)
         raise NoFilesInRequestException(msg)
+
+    # Check if the file extension is allowed
+    file_extension = os.path.splitext(blob_name)[1]
+    if file_extension not in ALLOWED_EXTENSIONS:
+        msg = f"File extension {file_extension} is not allowed for copying."
+        logging.error(msg)
+        raise NotAllowedFileExtension(msg)
 
     # token geneation with expiry of 1 hour. since its not shared, we can leave it to expire (no need to track/delete)
     # Remove sas token if not needed: https://github.com/microsoft/AzureTRE/issues/2034
