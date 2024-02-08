@@ -99,6 +99,9 @@ jobs:
   deploy_management:
     name: Deploy Management
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Show inputs
@@ -173,7 +176,7 @@ jobs:
 
       - name: Report check status start
         if: inputs.prHeadSha != ''
-        uses: LouisBrunner/checks-action@v1.6.0
+        uses: LouisBrunner/checks-action@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sha: ${{ inputs.prHeadSha }}
@@ -806,6 +809,9 @@ jobs:
     name: Summary
     needs: [e2e_tests_smoke, e2e_tests_custom]
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     if: always()
     environment: ${{ inputs.environmentName }}
     steps:
@@ -816,7 +822,7 @@ jobs:
       # If prHeadSha is specified then explicity mark the checks for that SHA
       - name: Report check status
         if: inputs.prHeadSha != ''
-        uses: LouisBrunner/checks-action@v1.6.0
+        uses: LouisBrunner/checks-action@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # the name must be identical to the one received by the real job
