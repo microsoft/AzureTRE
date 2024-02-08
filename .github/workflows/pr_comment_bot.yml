@@ -150,6 +150,8 @@ jobs:
       needs.pr_comment.outputs.command == 'run-tests-shared-services'
     name: Deploy PR
     uses: ./.github/workflows/deploy_tre_reusable.yml
+    permissions:
+      checks: write
     with:
       prRef: ${{ needs.pr_comment.outputs.prRef }}
       prHeadSha: ${{ needs.pr_comment.outputs.prHeadSha }}
