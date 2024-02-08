@@ -18,6 +18,9 @@ jobs:
     # - the commenting user has write permissions (i.e. is OWNER or COLLABORATOR)
     if: ${{ github.event.issue.pull_request }}
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      checks: write
     outputs:
       command: ${{ steps.check_command.outputs.command }}
       prRef: ${{ steps.check_command.outputs.prRef }}
@@ -68,6 +71,8 @@ jobs:
     needs: [pr_comment]
     if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' }}
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     environment: CICD
     name: Destroy PR env
     steps:
@@ -102,6 +107,8 @@ jobs:
     needs: [pr_comment]
     if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' && needs.pr_comment.outputs.branchRefId != '' }}
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     environment: CICD
     name: Destroy branch env
     steps:
