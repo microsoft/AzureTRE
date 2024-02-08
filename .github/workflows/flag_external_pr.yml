@@ -10,6 +10,8 @@ jobs:
   check_author:
     name: Check PR author
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       # Ensure we have the script file for the github-script action to use
       - name: Checkout
