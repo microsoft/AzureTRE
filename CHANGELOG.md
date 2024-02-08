@@ -1,6 +1,9 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.17.0 (Unreleased)
 
+BUG FIXES:
+* Airlock: Creating an import/export request causes a routing error ([#3830](https://github.com/microsoft/AzureTRE/issues/3830))
+
 **BREAKING CHANGES & MIGRATIONS**:
 
 FEATURES:
