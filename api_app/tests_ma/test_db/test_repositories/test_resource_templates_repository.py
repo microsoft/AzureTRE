@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 from mock import patch
-from models.domain.user_resource_template import UserResourceTemplate
+from models.domain.user_resource_template import UserResourceTemplate, WorkspaceTemplateInCreate
 
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.errors import EntityDoesNotExist, InvalidInput
@@ -31,6 +31,7 @@ def sample_resource_template_as_dict(name: str, version: str = "1.0", resource_t
         customActions=[],
         required=[]
     ).dict()
+
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
 @patch('uuid.uuid4')
@@ -70,6 +71,7 @@ async def test_create_workspace_template_succeeds_without_required(uuid_mock, sa
     )
     save_item_mock.assert_called_once_with(expected_resource_template)
     assert expected_resource_template == returned_template
+
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 async def test_get_by_name_and_version_queries_db(query_mock, resource_template_repo):
