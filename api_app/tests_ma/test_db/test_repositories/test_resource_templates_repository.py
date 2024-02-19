@@ -32,6 +32,44 @@ def sample_resource_template_as_dict(name: str, version: str = "1.0", resource_t
         required=[]
     ).dict()
 
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
+@patch('uuid.uuid4')
+async def test_create_workspace_template_succeeds_without_required(uuid_mock, save_item_mock, resource_template_repo):
+    uuid_mock.return_value = "1234"
+    expected_type = ResourceType.Workspace
+    input_workspace_template = WorkspaceTemplateInCreate(
+        name="my-tre-workspace",
+        version="0.0.1",
+        current=True,
+        json_schema={
+            "title": "My Workspace Template",
+            "description": "This is a test workspace template schema.",
+            "properties": {
+                "updateable_property": {
+                    "type": "string",
+                    "title": "Test updateable property",
+                    "updateable": True,
+                },
+            },
+        },
+        customActions=[],
+    )
+    returned_template = await resource_template_repo.create_template(input_workspace_template, expected_type)
+    expected_resource_template = ResourceTemplate(
+        id="1234",
+        name=input_workspace_template.name,
+        title=input_workspace_template.json_schema["title"],
+        description=input_workspace_template.json_schema["description"],
+        version=input_workspace_template.version,
+        resourceType=expected_type,
+        properties=input_workspace_template.json_schema["properties"],
+        customActions=input_workspace_template.customActions,
+        required=[],
+        authorizedRoles=[],
+        current=input_workspace_template.current
+    )
+    save_item_mock.assert_called_once_with(expected_resource_template)
+    assert expected_resource_template == returned_template
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 async def test_get_by_name_and_version_queries_db(query_mock, resource_template_repo):
