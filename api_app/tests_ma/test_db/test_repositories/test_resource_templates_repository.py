@@ -1,12 +1,13 @@
 import pytest
 import pytest_asyncio
 from mock import patch
-from models.domain.user_resource_template import UserResourceTemplate, WorkspaceTemplateInCreate
+from models.domain.user_resource_template import UserResourceTemplate
 
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.errors import EntityDoesNotExist, InvalidInput
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
+from models.schemas.workspace_template import WorkspaceTemplateInCreate
 
 
 pytestmark = pytest.mark.asyncio
