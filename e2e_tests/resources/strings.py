@@ -14,7 +14,6 @@ UNRESTRICTED_WORKSPACE = "tre-workspace-unrestricted"
 AIRLOCK_IMPORT_REVIEW_WORKSPACE = "tre-workspace-airlock-import-review"
 
 AZUREML_SERVICE = "tre-service-azureml"
-INNEREYE_SERVICE = "tre-service-innereye"
 GUACAMOLE_SERVICE = "tre-service-guacamole"
 GITEA_SERVICE = "tre-workspace-service-gitea"
 MLFLOW_SERVICE = "tre-service-mlflow"
