@@ -1,7 +1,7 @@
 ---
 name: Deploy Azure TRE Reusable
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   workflow_call:
     inputs:
       prRef:
@@ -252,8 +252,8 @@ jobs:
         if: steps.ci_cache_cr_login.outcome != 'success'
         run: |
           # shellcheck disable=SC2034,SC2015,SC2125
-          for i in {1..4}; do
-            az acr login --name "${{ secrets.CI_CACHE_ACR_NAME }}" && ec=0 && break || ec=\$? && sleep 60
+          for i in {1..10}; do
+            az acr login --name "${{ secrets.CI_CACHE_ACR_NAME }}" && ec=0 && break || ec=\$? && sleep 30
           done
           # shellcheck disable=SC2242
           (exit ${ec})
@@ -375,36 +375,33 @@ jobs:
     strategy:
       matrix:
         include:
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/base"}
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/unrestricted"}
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/airlock-import-review"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/azureml"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/gitea"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/mlflow"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/mysql"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/health-services"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/databricks"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/ohdsi"}
-          - {BUNDLE_TYPE: "user_resource",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"}
-          - {BUNDLE_TYPE: "user_resource",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm"}
-          - {BUNDLE_TYPE: "user_resource",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm"}
-          - {BUNDLE_TYPE: "user_resource",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm"}
+          - { BUNDLE_TYPE: "workspace", BUNDLE_DIR: "./templates/workspaces/base" }
+          - { BUNDLE_TYPE: "workspace", BUNDLE_DIR: "./templates/workspaces/unrestricted" }
+          - { BUNDLE_TYPE: "workspace", BUNDLE_DIR: "./templates/workspaces/airlock-import-review" }
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/guacamole" }
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/azureml" }
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/gitea" }
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/mlflow" }
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/mysql" }
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/health-services" }
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/databricks" }
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/ohdsi" }
+          - {
+              BUNDLE_TYPE: "user_resource",
+              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm",
+            }
+          - {
+              BUNDLE_TYPE: "user_resource",
+              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm",
+            }
+          - {
+              BUNDLE_TYPE: "user_resource",
+              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm",
+            }
+          - {
+              BUNDLE_TYPE: "user_resource",
+              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm",
+            }
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
@@ -435,22 +432,14 @@ jobs:
     strategy:
       matrix:
         include:
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/firewall/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/gitea/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/admin-vm/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/airlock_notifier/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/certs/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/cyclecloud/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/sonatype-nexus-vm/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/databricks-auth/"}
+          - { BUNDLE_TYPE: "shared_service", BUNDLE_DIR: "./templates/shared_services/firewall/" }
+          - { BUNDLE_TYPE: "shared_service", BUNDLE_DIR: "./templates/shared_services/gitea/" }
+          - { BUNDLE_TYPE: "shared_service", BUNDLE_DIR: "./templates/shared_services/admin-vm/" }
+          - { BUNDLE_TYPE: "shared_service", BUNDLE_DIR: "./templates/shared_services/airlock_notifier/" }
+          - { BUNDLE_TYPE: "shared_service", BUNDLE_DIR: "./templates/shared_services/certs/" }
+          - { BUNDLE_TYPE: "shared_service", BUNDLE_DIR: "./templates/shared_services/cyclecloud/" }
+          - { BUNDLE_TYPE: "shared_service", BUNDLE_DIR: "./templates/shared_services/sonatype-nexus-vm/" }
+          - { BUNDLE_TYPE: "shared_service", BUNDLE_DIR: "./templates/shared_services/databricks-auth/" }
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
@@ -481,22 +470,14 @@ jobs:
     strategy:
       matrix:
         include:
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/firewall"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/gitea"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/admin-vm/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/airlock_notifier/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/certs/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/cyclecloud/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/sonatype-nexus-vm/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/databricks-auth/"}
+          - { BUNDLE_TYPE: "shared_service", BUNDLE_DIR: "./templates/shared_services/firewall" }
+          - { BUNDLE_TYPE: "shared_service", BUNDLE_DIR: "./templates/shared_services/gitea" }
+          - { BUNDLE_TYPE: "shared_service", BUNDLE_DIR: "./templates/shared_services/admin-vm/" }
+          - { BUNDLE_TYPE: "shared_service", BUNDLE_DIR: "./templates/shared_services/airlock_notifier/" }
+          - { BUNDLE_TYPE: "shared_service", BUNDLE_DIR: "./templates/shared_services/certs/" }
+          - { BUNDLE_TYPE: "shared_service", BUNDLE_DIR: "./templates/shared_services/cyclecloud/" }
+          - { BUNDLE_TYPE: "shared_service", BUNDLE_DIR: "./templates/shared_services/sonatype-nexus-vm/" }
+          - { BUNDLE_TYPE: "shared_service", BUNDLE_DIR: "./templates/shared_services/databricks-auth/" }
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
@@ -534,28 +515,17 @@ jobs:
       matrix:
         include:
           # bundles type can be inferred from the bundle dir (but this is more explicit)
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/base"}
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/unrestricted"}
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/airlock-import-review"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/azureml"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/gitea"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/mlflow"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/mysql"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/health-services"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/databricks"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/ohdsi"}
+          - { BUNDLE_TYPE: "workspace", BUNDLE_DIR: "./templates/workspaces/base" }
+          - { BUNDLE_TYPE: "workspace", BUNDLE_DIR: "./templates/workspaces/unrestricted" }
+          - { BUNDLE_TYPE: "workspace", BUNDLE_DIR: "./templates/workspaces/airlock-import-review" }
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/guacamole" }
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/azureml" }
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/gitea" }
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/mlflow" }
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/mysql" }
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/health-services" }
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/databricks" }
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/ohdsi" }
 
     environment: ${{ inputs.environmentName }}
     steps:
@@ -594,18 +564,26 @@ jobs:
     strategy:
       matrix:
         include:
-          - {BUNDLE_TYPE: "user_resource",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm",
-             WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
-          - {BUNDLE_TYPE: "user_resource",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm",
-             WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
-          - {BUNDLE_TYPE: "user_resource",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm",
-             WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
-          - {BUNDLE_TYPE: "user_resource",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm",
-             WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
+          - {
+              BUNDLE_TYPE: "user_resource",
+              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm",
+              WORKSPACE_SERVICE_NAME: "tre-service-guacamole",
+            }
+          - {
+              BUNDLE_TYPE: "user_resource",
+              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm",
+              WORKSPACE_SERVICE_NAME: "tre-service-guacamole",
+            }
+          - {
+              BUNDLE_TYPE: "user_resource",
+              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm",
+              WORKSPACE_SERVICE_NAME: "tre-service-guacamole",
+            }
+          - {
+              BUNDLE_TYPE: "user_resource",
+              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm",
+              WORKSPACE_SERVICE_NAME: "tre-service-guacamole",
+            }
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
