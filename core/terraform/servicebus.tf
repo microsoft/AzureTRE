@@ -9,7 +9,7 @@ resource "azurerm_servicebus_namespace" "sb" {
   # Block public access
   # See https://docs.microsoft.com/azure/service-bus-messaging/service-bus-service-endpoints
   network_rule_set {
-    ip_rules     = var.enable_local_debugging ? [local.myip] : null
+    ip_rules = var.enable_local_debugging ? [local.myip] : null
 
     # Allows the Eventgrid to access the SB
     trusted_services_allowed = true
