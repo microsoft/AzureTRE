@@ -112,8 +112,8 @@ class ResourceTemplateRepository(BaseRepository):
             "version": template_input.version,
             "resourceType": resource_type,
             "current": template_input.current,
-            "required": template_input.json_schema["required"],
-            "authorizedRoles": template_input.json_schema["authorizedRoles"] if "authorizedRoles" in template_input.json_schema else [],
+            "required": template_input.json_schema.get("required", []),
+            "authorizedRoles": template_input.json_schema.get("authorizedRoles", []),
             "properties": template_input.json_schema["properties"],
             "customActions": template_input.customActions
         }

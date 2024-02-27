@@ -17,6 +17,7 @@ BUG FIXES:
 * Fix issue with connect button showing when no uri([#3820](https://github.com/microsoft/AzureTRE/issues/3820))
 * Fix user resource upgrade validation: use the parent_service_template_name instead of the parent_resource_id. ([#3824](https://github.com/microsoft/AzureTRE/issues/3824))
 * Airlock: Creating an import/export request causes a routing error ([#3830](https://github.com/microsoft/AzureTRE/issues/3830))
+* Fix registration of templates with no 'authorizedRoles' or 'required' defined ([#3849](https://github.com/microsoft/AzureTRE/pull/3849))
 
 COMPONENTS:
 
