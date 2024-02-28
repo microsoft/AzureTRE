@@ -217,4 +217,13 @@ if [ "${state_store_serverless}" == "false" ]; then
   export TF_VAR_is_cosmos_defined_throughput
 fi
 
+# prep for migration of azurerm_servicebus_namespace_network_rule_set https://github.com/microsoft/AzureTRE/pull/3858
+# as described https://github.com/hashicorp/terraform-provider-azurerm/issues/23954
+state_store_servicebus_network_rule_set=$(echo "${terraform_show_json}" \
+  | jq 'select(.values.root_module.resources != null) | .values.root_module.resources[] | select(.address=="azurerm_servicebus_namespace_network_rule_set.servicebus_network_rule_set") | .values.id')
+if [ -n "${state_store_servicebus_network_rule_set}" ]; then
+  echo "Removing state of azurerm_servicebus_namespace_network_rule_set"
+  terraform state rm azurerm_servicebus_namespace_network_rule_set.servicebus_network_rule_set
+fi
+
 echo "*** Migration is done. ***"
