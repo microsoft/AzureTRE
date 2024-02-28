@@ -122,7 +122,7 @@ foreach ($Group in $ResourceGroups) {
 
 ### Automating `start`
 
-To restart the TRE core services (Firewall, Application Gateway(s), Virtual Machine Scale Sets, and MySQL), you can use `make tre-start`. Depending on your workflow, you might not be able to easily execute the `make` target. Alternatively, you can create a second Runbook and execute it manually. The PowerShell code to start TRE core services is below:
+To restart the TRE core services (Firewall, Application Gateway(s), Virtual Machine Scale Sets, Virtual Machines, and MySQL), you can use `make tre-start`. Depending on your workflow, you might not be able to easily execute the `make` target. Alternatively, you can create a second Runbook and execute it manually. The PowerShell code to start TRE core services is below:
 
 ```powershell
 try {
@@ -188,6 +188,13 @@ foreach ($Group in $ResourceGroups) {
     foreach ($item in $VMSS) {
         Write-Output "Starting VMSS '$($item.Name)'"
         Start-AzVmss -ResourceGroupName $item.ResourceGroupName -VMScaleSetName $item.Name
+    }
+
+    # Start VMs
+    $VM = Get-AzVM -ResourceGroupName $Group.ResourceGroupName
+    foreach ($item in $VM) {
+      Write-Output "Starting VM '$($item.Name)'"
+      Start-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name
     }
 }
 ```

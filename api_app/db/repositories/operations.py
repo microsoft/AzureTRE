@@ -2,7 +2,6 @@ from datetime import datetime
 import uuid
 from typing import List
 
-from azure.cosmos.aio import CosmosClient
 from pydantic import parse_obj_as
 from db.repositories.resource_templates import ResourceTemplateRepository
 from resources import strings
@@ -19,9 +18,9 @@ from models.domain.operation import Operation, OperationStep, Status
 
 class OperationRepository(BaseRepository):
     @classmethod
-    async def create(cls, client: CosmosClient):
+    async def create(cls):
         cls = OperationRepository()
-        await super().create(client, config.STATE_STORE_OPERATIONS_CONTAINER)
+        await super().create(config.STATE_STORE_OPERATIONS_CONTAINER)
         return cls
 
     @staticmethod
@@ -192,6 +191,6 @@ class OperationRepository(BaseRepository):
         return parse_obj_as(List[Operation], operations)
 
     async def resource_has_deployed_operation(self, resource_id: str) -> bool:
-        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND c.action = "{RequestAction.Install}" AND c.status = "{Status.Deployed}"'
+        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND ((c.action = "{RequestAction.Install}" AND c.status = "{Status.Deployed}") OR (c.action = "{RequestAction.Upgrade}" AND c.status = "{Status.Updated}"))'
         operations = await self.query(query=query)
         return len(operations) > 0

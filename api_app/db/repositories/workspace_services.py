@@ -1,7 +1,6 @@
 import uuid
 from typing import List, Tuple
 
-from azure.cosmos.aio import CosmosClient
 from pydantic import parse_obj_as
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
@@ -19,9 +18,9 @@ from models.domain.resource import ResourceType
 
 class WorkspaceServiceRepository(ResourceRepository):
     @classmethod
-    async def create(cls, client: CosmosClient):
+    async def create(cls):
         cls = WorkspaceServiceRepository()
-        await super().create(client)
+        await super().create()
         return cls
 
     @staticmethod

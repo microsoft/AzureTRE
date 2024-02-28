@@ -203,7 +203,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                             <FontIcon iconName="WarningSolid"
                               className={warningIcon}
                             />
-                            You are currently accessing this workspace using a TRE Admin role. Additional funcitonality requires a workspace role, such as Workspace Owner.
+                            You are currently accessing this workspace using the TRE Admin role. Additional functionality requires a workspace role, such as Workspace Owner.
                           </Stack.Item>
                         </Stack>
                       )}

@@ -33,3 +33,12 @@ If you wish to upgrade or deploy a specific version, or unreleased version of Az
 - `"OSS_VERSION": "v0.9.0"` (to use the specified tag; be sure to specify the complete tag name (prefixed with `v` and not the release name)
 - `"OSS_VERSION": "main"` (to use the latest code in the "main" branch)
 - `"OSS_VERSION": "1c6ff35ec9246e53b86e93b9da5b97911edc71c1"` (to use the code at the time of the commit identified by the hash)
+
+## Deploying a fork of Azure TRE
+
+If you wish to deploy the Azure TRE from a forked repository you can change the value of `OSS_REPO` in `.devcontainer/devcontainer.json`, for example:
+
+- `"OSS_REPO": "microsoft/AzureTRE"` (the default)
+- `"OSS_REPO": "myorg/AzureTRE"` (to point to fork of the Azure TRE in your GitHub organisation)
+
+When changing `OSS_REPO` ensure the `OSS_VERSION` variable refers to a GitHub ref on the repository fork.
