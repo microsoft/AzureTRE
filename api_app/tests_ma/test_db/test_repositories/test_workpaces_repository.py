@@ -108,7 +108,6 @@ async def test_create_workspace_item_creates_a_workspace_with_the_right_values(m
     workspace_to_create.properties.pop("address_spaces", None)
     workspace_to_create.properties.pop("workspace_owner_object_id", None)
 
-
     mock_is_workspace_storage_account_available.return_value = AsyncMock().return_value
     mock_is_workspace_storage_account_available.return_value.return_value = False
     validate_input_mock.return_value = basic_resource_template
@@ -309,7 +308,7 @@ async def test_is_worksapce_storage_account_available_when_name_available(mock_s
     result = await workspace_repo.is_workspace_with_last_4_id(workspace_id)
 
     mock_storage_client.return_value.storage_accounts.check_name_availability.assert_called_once_with({"name": f"stgws{workspace_id[-4:]}"})
-    assert result == False
+    assert result is False
 
 
 @patch('azure.mgmt.storage.StorageManagementClient')
@@ -322,4 +321,4 @@ async def test_is_worksapce_storage_account_available_when_name_not_available(mo
     result = await workspace_repo.is_workspace_with_last_4_id(workspace_id)
 
     mock_storage_client.return_value.storage_accounts.check_name_availability.assert_called_once_with({"name": f"stgws{workspace_id[-4:]}"})
-    assert result == True
+    assert result is True
