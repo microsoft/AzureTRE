@@ -1,7 +1,11 @@
 from starlette.config import Config
 
 
-config = Config(".env")
+try:
+    config = Config('.env')
+# Workaround needed until FastAPI uses Starlette >= 3.7.1
+except FileNotFoundError:
+    config = Config()
 
 # Resource Info
 RESOURCE_LOCATION: str = config("RESOURCE_LOCATION", default="")
