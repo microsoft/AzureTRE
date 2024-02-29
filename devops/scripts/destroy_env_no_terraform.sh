@@ -114,13 +114,13 @@ if [ "${keyvault}" != "0" ]; then
 
   keys=$(az keyvault key list --vault-name "${keyvault_name}" -o json | jq -r '.[].id')
   for key_id in ${keys}; do
-    echo "Deleting ${secret_id}"
+    echo "Deleting ${key_id}"
     az keyvault key delete --id "${key_id}"
   done
 
   certificates=$(az keyvault certificate list --vault-name "${keyvault_name}" -o json | jq -r '.[].id')
   for certificate_id in ${certificates}; do
-    echo "Deleting ${secret_id}"
+    echo "Deleting ${certificate_id}"
     az keyvault certificate delete --id "${certificate_id}"
   done
 
