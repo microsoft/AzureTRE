@@ -7,6 +7,30 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
+if [ -f /etc/cron.daily/nexus-ssl.pfx ]; then
+  rm -r /etc/cron.daily/nexus-ssl.pfx
+fi
+
+if [ -f nexus-ssl.pfx ]; then
+  rm -r nexus-ssl.pfx
+fi
+
+if [ -f /etc/cron.daily/temp.pem ]; then
+  rm -r /etc/cron.daily/temp.pem
+fi
+
+if [ -f temp.pem ]; then
+  rm -r temp.pem
+fi
+
+if [ -f /etc/cron.daily/temp.pfx ]; then
+  rm -r /etc/cron.daily/temp.pfx
+fi
+
+if [ -f temp.pfx ]; then
+  rm -r temp.pfx
+fi
+
 # Prepare ssl certificate
 az login --identity -u "${MSI_ID}" --allow-no-subscriptions
 # -- get cert from kv as secret so it contains private key
@@ -30,6 +54,9 @@ while [ ! -d /etc/nexus-data/keystores ]; do
   sleep 1
   ((keystore_timeout--))
 done
+if [ -f /etc/nexus-data/keystores/keystore.jks ]; then
+  rm -r /etc/nexus-data/keystores/keystore.jks
+fi
 echo 'Directory found. Importing ssl cert into nexus-data/keystores/keystore.jks...'
 keytool -v -importkeystore -noprompt -srckeystore nexus-ssl.pfx -srcstoretype PKCS12 \
   -destkeystore /etc/nexus-data/keystores/keystore.jks \
