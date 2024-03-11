@@ -11,5 +11,6 @@ class User(BaseModel):
     id: str
     name: str
     email: str
+    username: str
     roles: List[str] = Field([])
     roleAssignments: List[RoleAssignment] = Field([])

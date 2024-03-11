@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 0.7.9
+version: 0.8.4
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -98,6 +98,14 @@ parameters:
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
+  - name: user_id
+    type: string
+  - name: user_name
+    type: string
+  - name: user_email
+    type: string
+  - name: user_username
+    type: string
   - name: arm_environment
     type: string
 
@@ -145,6 +153,10 @@ install:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        user_id: ${ bundle.parameters.user_id }
+        user_name: ${ bundle.parameters.user_name }
+        user_email: ${ bundle.parameters.user_email }
+        user_username: ${ bundle.parameters.user_username }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -169,6 +181,10 @@ upgrade:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        user_id: ${ bundle.parameters.user_id }
+        user_name: ${ bundle.parameters.user_name }
+        user_email: ${ bundle.parameters.user_email }
+        user_username: ${ bundle.parameters.user_username }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -202,6 +218,10 @@ uninstall:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        user_id: ${ bundle.parameters.user_id }
+        user_name: ${ bundle.parameters.user_name }
+        user_email: ${ bundle.parameters.user_email }
+        user_username: ${ bundle.parameters.user_username }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
