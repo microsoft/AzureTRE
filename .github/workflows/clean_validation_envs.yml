@@ -1,7 +1,7 @@
 ---
 name: Clean Validation Environments
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   schedule:
     # Every 2 hours
     - cron: "0 */2 * * *"
@@ -21,7 +21,7 @@ jobs:
           persist-credentials: false
 
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           environment: ${{ (secrets.AZURE_ENVIRONMENT != '' && secrets.AZURE_ENVIRONMENT) || 'AzureCloud' }}
