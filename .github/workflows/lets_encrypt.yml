@@ -1,7 +1,7 @@
 ---
 name: Renew Lets Encrypt Certificates
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   schedule:
     # 3am each month https://crontab.guru/#0_3_1_*_*
     - cron: "0 3 1 * *"
@@ -13,8 +13,8 @@ concurrency: letsencrypt
 
 env:
   USE_ENV_VARS_NOT_FILES: true
-  TF_INPUT: 0  # interactive is off
-  TF_IN_AUTOMATION: 1  # Run in headless mode
+  TF_INPUT: 0 # interactive is off
+  TF_IN_AUTOMATION: 1 # Run in headless mode
 
 jobs:
   renew_letsencrypt_certs:
@@ -23,12 +23,12 @@ jobs:
     environment: CICD
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       - name: Install Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.2.9
           terraform_wrapper: false
@@ -41,8 +41,7 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
           ARM_TENANT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}
           TRE_ID: ${{ secrets.TRE_ID }}
-          TERRAFORM_STATE_CONTAINER_NAME:
-            ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME && secrets.TERRAFORM_STATE_CONTAINER_NAME || 'tfstate' }}
+          TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME && secrets.TERRAFORM_STATE_CONTAINER_NAME || 'tfstate' }}
           MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
         run: |
