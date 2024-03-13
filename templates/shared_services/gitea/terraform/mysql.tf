@@ -7,22 +7,16 @@ resource "random_password" "password" {
 }
 
 resource "azurerm_mysql_flexible_server" "gitea" {
-  name                              = "mysql-${var.tre_id}"
-  resource_group_name               = local.core_resource_group_name
-  location                          = data.azurerm_resource_group.rg.location
-  administrator_login               = "mysqladmin"
-  administrator_login_password      = random_password.password.result
-  sku_name                          = "Standard_D2s_v3"
-  storage_mb                        = 5120
-  version                           = "8.0"
-  auto_grow_enabled                 = true
-  backup_retention_days             = 7
-  geo_redundant_backup_enabled      = false
-  infrastructure_encryption_enabled = false
-  public_network_access_enabled     = false
-  ssl_enforcement_enabled           = true
-  ssl_minimal_tls_version_enforced  = "TLS1_2"
-  tags                              = local.tre_shared_service_tags
+  name                          = "mysql-${var.tre_id}"
+  resource_group_name           = local.core_resource_group_name
+  location                      = data.azurerm_resource_group.rg.location
+  administrator_login           = "mysqladmin"
+  sku_name                      = "Standard_D2s_v3"
+  version                       = "8.0"
+  backup_retention_days         = 7
+  geo_redundant_backup_enabled  = false
+  public_network_access_enabled = false
+  tags                          = local.tre_shared_service_tags
 
   lifecycle { ignore_changes = [tags, threat_detection_policy] }
 }
