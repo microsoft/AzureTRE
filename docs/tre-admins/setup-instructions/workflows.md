@@ -74,7 +74,7 @@ Configure the TRE API and Swagger UI repository secrets
 
 | <div style="width: 230px">Secret name</div> | Description |
 | ----------- | ----------- |
-| `AAD_TENANT_ID` | The tenant ID of the Azure AD. |
+| `AAD_TENANT_ID` | The tenant ID of the Microsoft Entra Workforce ID. |
 | `SWAGGER_UI_CLIENT_ID` | The application (client) ID of the TRE Swagger UI app. |
 | `API_CLIENT_ID` | The application (client) ID of the TRE API app. |
 | `API_CLIENT_SECRET` | The application password (client secret) of the TRE API app. |

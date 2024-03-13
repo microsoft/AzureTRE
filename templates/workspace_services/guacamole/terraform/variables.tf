@@ -4,7 +4,7 @@ variable "workspace_id" {
 }
 variable "aad_authority_url" {
   type        = string
-  description = "The Azure AD authority URL"
+  description = "The Microsoft Entra Workforce ID authority URL"
 }
 variable "tre_id" {
   type        = string

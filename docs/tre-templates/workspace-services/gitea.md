@@ -7,7 +7,7 @@ See: [https://gitea.io/](https://gitea.io)
 The Gitea worskpace service opens outbound access to:
 
 - AzureActiveDirectory
-- Azure AD CDN - `https://aadcdn.msftauth.net`
+- Microsoft Entra Workforce ID CDN - `https://aadcdn.msftauth.net`
 
 ## Prerequisites
 

@@ -18,7 +18,7 @@ Usage: $0 --name "MYTRE" --application-permission "Application.ReadWrite.OwnedBy
 Options:
     -n,--name                   Required. The prefix for the app (registration) names e.g., "TRE".
     -a,--admin-consent          Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
-                                Requires directory admin privileges to the Azure AD in question.
+                                Requires directory admin privileges to the Microsoft Entra Workforce ID in question.
     -p,--application-permission The API Permission that this identity will be granted.
     -r,--reset-password         Optional, switch to automatically reset the password. Default 0
 
@@ -85,7 +85,7 @@ currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-
 msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
-echo -e "\e[96mCreating the Application Admin in the \"${tenant}\" Azure AD tenant.\e[0m"
+echo -e "\e[96mCreating the Application Admin in the \"${tenant}\" Microsoft Entra Workforce ID tenant.\e[0m"
 
 # Load in helper functions
 # shellcheck disable=SC1091

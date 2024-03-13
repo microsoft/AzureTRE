@@ -19,7 +19,7 @@ Options:
     -n,--name                   Required. The prefix for the app (registration) names e.g., "TRE", or "Workspace One".
     -u,--tre-url                TRE URL, used to construct auth redirection URLs for the UI and Swagger app.
     -a,--admin-consent          Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
-                                Requires directory admin privileges to the Azure AD in question.
+                                Requires directory admin privileges to the Microsoft Entra Workforce ID in question.
     -t,--automation-clientid    Optional, when --workspace is specified the client ID of the automation account can be added to the TRE workspace.
     -r,--reset-password         Optional, switch to automatically reset the password. Default 0
 
@@ -102,7 +102,7 @@ currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-
 msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
-echo -e "\e[96mCreating the API/UX Application in the \"${tenant}\" Azure AD tenant.\e[0m"
+echo -e "\e[96mCreating the API/UX Application in the \"${tenant}\" Microsoft Entra Workforce ID tenant.\e[0m"
 
 # Load in helper functions
 # shellcheck disable=SC1091

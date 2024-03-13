@@ -43,7 +43,7 @@ def login():
               + 'https://<id>.<location>.cloudapp.azure.com/')
 @click.option('--client-id',
               required=False,
-              help='The Client ID of the Azure AD application for the API (optional for API versions >= v0.5.7)')
+              help='The Client ID of the Microsoft Entra Workforce ID application for the API (optional for API versions >= v0.5.7)')
 @click.option('--aad-tenant-id',
               required=False,
               help='The Tenant ID for the AAD tenant to authenticate with (optional for API versions >= v0.5.7)')

@@ -2,7 +2,7 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://github.com/microsoft/AzureTRE/schema/azuread.json",
     "type": "object",
-    "title": "Azure AD Authorisation Schema",
+    "title": "Microsoft Entra Workforce ID Authorisation Schema",
     "default": {},
     "required": [
     ],

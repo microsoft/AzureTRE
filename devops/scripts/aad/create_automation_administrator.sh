@@ -70,7 +70,7 @@ currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-
 msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
-echo -e "\e[96mCreating the Automation Admin in the \"${tenant}\" Azure AD tenant.\e[0m"
+echo -e "\e[96mCreating the Automation Admin in the \"${tenant}\" Microsoft Entra Workforce ID tenant.\e[0m"
 
 # Load in helper functions
 # shellcheck disable=SC1091
