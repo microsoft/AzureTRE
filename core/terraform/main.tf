@@ -93,16 +93,16 @@ module "network" {
 
 module "virtual_network_gateway" {
   # count               = var.resource_processor_type == "vmss_porter" ? 1 : 0
-  source              = "./virtual_network_gateway"
-  tre_id              = var.tre_id
-  location            = var.location
-  resource_group_name = azurerm_resource_group.core.name
-  core_vnet_id        = module.network.core_vnet_id
+  source                        = "./virtual_network_gateway"
+  tre_id                        = var.tre_id
+  location                      = var.location
+  resource_group_name           = azurerm_resource_group.core.name
+  core_vnet_id                  = module.network.core_vnet_id
   gateway_subnet_address_prefix = module.network.gateway_subnet_address_prefix
 
   # If a VPN connection is to be used, we have to wait all the network
   # configuration to be applied.
-  depends_on           = [module.network]
+  depends_on = [module.network]
 }
 
 module "appgateway" {

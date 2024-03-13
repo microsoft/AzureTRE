@@ -40,34 +40,37 @@ resource "azurerm_route_table" "virtual_network_gateway" {
   tags                          = local.tre_core_tags
 
   route {
-    name           = "route-WebAppSubnet"
-    address_prefix = data.azurerm_subnet.web_app.address_prefixes[0]
-    next_hop_type  = "VirtualAppliance"
+    name                   = "route-WebAppSubnet"
+    address_prefix         = data.azurerm_subnet.web_app.address_prefixes[0]
+    next_hop_type          = "VirtualAppliance"
     next_hop_in_ip_address = data.azurerm_firewall.fw.ip_configuration[0].private_ip_address
   }
 
   route {
-    name           = "route-SharedSubnet"
-    address_prefix = data.azurerm_subnet.shared.address_prefixes[0]
-    next_hop_type  = "VirtualAppliance"
+    name                   = "route-SharedSubnet"
+    address_prefix         = data.azurerm_subnet.shared.address_prefixes[0]
+    next_hop_type          = "VirtualAppliance"
     next_hop_in_ip_address = data.azurerm_firewall.fw.ip_configuration[0].private_ip_address
   }
 
   route {
-    name           = "route-AirlockStorageSubnet"
-    address_prefix = data.azurerm_subnet.airlock_storage.address_prefixes[0]
-    next_hop_type  = "VirtualAppliance"
+    name                   = "route-AirlockStorageSubnet"
+    address_prefix         = data.azurerm_subnet.airlock_storage.address_prefixes[0]
+    next_hop_type          = "VirtualAppliance"
     next_hop_in_ip_address = data.azurerm_firewall.fw.ip_configuration[0].private_ip_address
   }
 
   route {
-    name           = "route-AirlockEventsSubnet"
-    address_prefix = data.azurerm_subnet.airlock_events.address_prefixes[0]
-    next_hop_type  = "VirtualAppliance"
+    name                   = "route-AirlockEventsSubnet"
+    address_prefix         = data.azurerm_subnet.airlock_events.address_prefixes[0]
+    next_hop_type          = "VirtualAppliance"
     next_hop_in_ip_address = data.azurerm_firewall.fw.ip_configuration[0].private_ip_address
   }
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [
+    tags,
+    route
+  ] }
 }
 
 resource "azurerm_subnet" "gateway" {
@@ -86,14 +89,15 @@ resource "azurerm_virtual_network_gateway" "virtual_network_gateway" {
   name                = "vng-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
-  type     = "ExpressRoute"
+  type                = "ExpressRoute"
+  tags                = local.tre_core_tags
 
   active_active = false
   enable_bgp    = false
   sku           = "Standard"
 
   ip_configuration {
-    public_ip_address_id          = azurerm_public_ip.virtual_network_gateway.id
-    subnet_id                     = azurerm_subnet.gateway.id
+    public_ip_address_id = azurerm_public_ip.virtual_network_gateway.id
+    subnet_id            = azurerm_subnet.gateway.id
   }
 }
