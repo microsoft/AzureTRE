@@ -6,7 +6,7 @@ resource "random_password" "password" {
   min_special = 2
 }
 
-resource "azurerm_mysql_server" "mysql" {
+resource "azurerm_mysql_flexible_server" "mysql" {
   name                              = "mysql-${local.service_resource_name_suffix}"
   resource_group_name               = data.azurerm_resource_group.ws.name
   location                          = data.azurerm_resource_group.ws.location
@@ -30,21 +30,21 @@ resource "azurerm_mysql_server" "mysql" {
 resource "azurerm_mysql_database" "db" {
   name                = var.db_name
   resource_group_name = data.azurerm_resource_group.ws.name
-  server_name         = azurerm_mysql_server.mysql.name
+  server_name         = azurerm_mysql_flexible_server.mysql.name
   charset             = "utf8"
   collation           = "utf8_unicode_ci"
 }
 
 resource "azurerm_private_endpoint" "mysql_private_endpoint" {
-  name                = "pe-${azurerm_mysql_server.mysql.name}"
+  name                = "pe-${azurerm_mysql_flexible_server.mysql.name}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
   tags                = local.workspace_service_tags
 
   private_service_connection {
-    private_connection_resource_id = azurerm_mysql_server.mysql.id
-    name                           = "psc-${azurerm_mysql_server.mysql.name}"
+    private_connection_resource_id = azurerm_mysql_flexible_server.mysql.id
+    name                           = "psc-${azurerm_mysql_flexible_server.mysql.name}"
     subresource_names              = ["mysqlServer"]
     is_manual_connection           = false
   }
@@ -58,7 +58,7 @@ resource "azurerm_private_endpoint" "mysql_private_endpoint" {
 }
 
 resource "azurerm_key_vault_secret" "db_password" {
-  name         = "${azurerm_mysql_server.mysql.name}-administrator-password"
+  name         = "${azurerm_mysql_flexible_server.mysql.name}-administrator-password"
   value        = random_password.password.result
   key_vault_id = data.azurerm_key_vault.ws.id
   tags         = local.workspace_service_tags
