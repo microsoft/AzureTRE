@@ -21,16 +21,16 @@ resource "azurerm_public_ip" "virtual_network_gateway" {
 
 # There should already exist this route table. However, we must update it,
 # so that traffic is routed through the Virtual network gateway.
-resource "azapi_update_resource" "rt" {
-  type        = "Microsoft.Network/routeTables@2023-05-01"
-  resource_id = data.azurerm_route_table.rt.id
+# resource "azapi_update_resource" "rt" {
+#   type        = "Microsoft.Network/routeTables@2023-05-01"
+#   resource_id = data.azurerm_route_table.rt.id
 
-  body = jsonencode({
-    properties = {
-      disableBgpRoutePropagation = true
-    }
-  })
-}
+#   body = jsonencode({
+#     properties = {
+#       disableBgpRoutePropagation = true
+#     }
+#   })
+# }
 
 resource "azurerm_route_table" "virtual_network_gateway" {
   name                          = "rt-vng-${var.tre_id}"
@@ -43,28 +43,28 @@ resource "azurerm_route_table" "virtual_network_gateway" {
     name                   = "route-WebAppSubnet"
     address_prefix         = data.azurerm_subnet.web_app.address_prefixes[0]
     next_hop_type          = "VirtualAppliance"
-    next_hop_in_ip_address = data.azurerm_firewall.fw.ip_configuration[0].private_ip_address
+    next_hop_in_ip_address = local.next_hop_address
   }
 
   route {
     name                   = "route-SharedSubnet"
     address_prefix         = data.azurerm_subnet.shared.address_prefixes[0]
     next_hop_type          = "VirtualAppliance"
-    next_hop_in_ip_address = data.azurerm_firewall.fw.ip_configuration[0].private_ip_address
+    next_hop_in_ip_address = local.next_hop_address
   }
 
   route {
     name                   = "route-AirlockStorageSubnet"
     address_prefix         = data.azurerm_subnet.airlock_storage.address_prefixes[0]
     next_hop_type          = "VirtualAppliance"
-    next_hop_in_ip_address = data.azurerm_firewall.fw.ip_configuration[0].private_ip_address
+    next_hop_in_ip_address = local.next_hop_address
   }
 
   route {
     name                   = "route-AirlockEventsSubnet"
     address_prefix         = data.azurerm_subnet.airlock_events.address_prefixes[0]
     next_hop_type          = "VirtualAppliance"
-    next_hop_in_ip_address = data.azurerm_firewall.fw.ip_configuration[0].private_ip_address
+    next_hop_in_ip_address = local.next_hop_address
   }
 
   lifecycle { ignore_changes = [
