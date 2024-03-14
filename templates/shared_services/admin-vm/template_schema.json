@@ -11,10 +11,10 @@
       "type": "string",
       "enum": [
         "Standard_B2s",
-        "GP_Standard_D2ads_v5",
+        "Standard_B1ms",
         "Standard_D2s_v4",
         "Standard_D2s_v5",
-        "GP_Standard_D2ads_v5"
+        "Standard_B1ms"
       ],
       "default": "Standard_B2s",
       "title": "VM SKU",
