@@ -19,19 +19,6 @@ resource "azurerm_public_ip" "virtual_network_gateway" {
   lifecycle { ignore_changes = [tags, zones] }
 }
 
-# There should already exist this route table. However, we must update it,
-# so that traffic is routed through the Virtual network gateway.
-# resource "azapi_update_resource" "rt" {
-#   type        = "Microsoft.Network/routeTables@2023-05-01"
-#   resource_id = data.azurerm_route_table.rt.id
-
-#   body = jsonencode({
-#     properties = {
-#       disableBgpRoutePropagation = true
-#     }
-#   })
-# }
-
 resource "azurerm_route_table" "virtual_network_gateway" {
   name                          = "rt-vng-${var.tre_id}"
   location                      = var.location
@@ -71,6 +58,26 @@ resource "azurerm_route_table" "virtual_network_gateway" {
     tags,
     route
   ] }
+}
+
+# When creating a new environment, the core route table named rt-<tre_id>
+# doesn't exist yet, when the code in this file is executed. The core route table
+# is created when the Firewall Shared service is deployed. However, when updating
+# an already existing environment, this core route table does exist. In this
+# we are going to check if the core route table exists, and if so, we'll disable
+# route propagation for it.
+resource "null_resource" "disable_core_rt_route_propagation" {
+  provisioner "local-exec" {
+    command    = "az resource update --name ${local.core_rt_name} --resource-group ${var.resource_group_name} --resource-type ${local.core_rt_type} --set properties.disableBgpRoutePropagation=true"
+    on_failure = continue
+  }
+
+  # We force this null_resource to always run.
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+
+  depends_on = [azurerm_public_ip.virtual_network_gateway]
 }
 
 resource "azurerm_subnet" "gateway" {

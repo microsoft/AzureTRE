@@ -190,7 +190,7 @@ resource "azurerm_role_assignment" "servicebus_sender_scan_result" {
   ]
 }
 
-   # System topic
+# System topic
 resource "azurerm_eventgrid_system_topic" "import_inprogress_blob_created" {
   name                   = local.import_inprogress_sys_topic_name
   location               = var.location
