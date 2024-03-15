@@ -1,8 +1,8 @@
 # Introduction to Authentication and Authorization
 
-[Azure Active Directory (AAD)](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis) is the backbone of Authentication and Authorization in the Trusted Research Environment. AAD holds the identities of all the TRE/workspace users, including administrators, and connects the identities with applications which define the permissions for each user role.
+[Microsoft Entra Workforce ID (AAD)](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis) is the backbone of Authentication and Authorization in the Trusted Research Environment. AAD holds the identities of all the TRE/workspace users, including administrators, and connects the identities with applications which define the permissions for each user role.
 
-It is common that the Azure Administrator is not necessarily the Azure Active Directory Administrator. Due to this, this step may have to be carried out by a different individual/team. We have automated this into a simple command, but should you wish, you can run these steps manually.
+It is common that the Azure Administrator is not necessarily the Microsoft Entra Workforce ID Administrator. Due to this, this step may have to be carried out by a different individual/team. We have automated this into a simple command, but should you wish, you can run these steps manually.
 
 This page describes the automated Auth setup for TRE.
 
@@ -38,16 +38,16 @@ The contents of your authentication section in `config.yaml` file should contain
   | `WORKSPACE_API_CLIENT_ID` | Each workspace is secured behind it's own AD Application|
   | `WORKSPACE_API_CLIENT_SECRET` | Each workspace is secured behind it's own AD Application. This is the secret for that application.|
 
-### Using a separate Azure Active Directory tenant
+### Using a separate Microsoft Entra Workforce ID tenant
 
 !!! caution
-    This section is only relevant it you are setting up a separate Azure Active Directory tenant for use.
-    This is only recommended for development environments when you don't have the required permissions to register applications in Azure Active Directory.
-    Using a separate Azure Active Directory tenant will prevent you from using certain Azure Active Directory integrated services.
-    For production deployments, work with your Azure Active Directory administrator to perform the required registration
+    This section is only relevant it you are setting up a separate Microsoft Entra Workforce ID tenant for use.
+    This is only recommended for development environments when you don't have the required permissions to register applications in Microsoft Entra Workforce ID.
+    Using a separate Microsoft Entra Workforce ID tenant will prevent you from using certain Microsoft Entra Workforce ID integrated services.
+    For production deployments, work with your Microsoft Entra Workforce ID administrator to perform the required registration
 
-1. Create an Azure Active Directory tenant
-    To create a new Azure Active Directory tenant, [follow the steps here](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-create-new-tenant)
+1. Create an Microsoft Entra Workforce ID tenant
+    To create a new Microsoft Entra Workforce ID tenant, [follow the steps here](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-create-new-tenant)
 
 1. Follow the steps outlined above. `make auth` should logon to the correct tenant. Make sure you logon back to the correct tenant before running `make all`.
 

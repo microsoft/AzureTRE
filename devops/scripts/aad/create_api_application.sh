@@ -11,7 +11,7 @@ function show_usage()
 
 Utility script for creating app registrations required by Azure TRE. This script will create the API and Client
 Applications. The Client Application is the public facing app, whereas the API is an internal AAD Application.
-You must be logged in using Azure CLI with sufficient privileges to modify Azure Active Directory to run this script.
+You must be logged in using Azure CLI with sufficient privileges to modify Microsoft Entra Workforce ID to run this script.
 
 Usage: $0 -n <app-name> [-r <reply-url>] [-a] [-s] [--automation-account]
 

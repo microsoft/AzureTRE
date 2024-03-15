@@ -1,4 +1,4 @@
-# Azure Active Directory Tenant Choices
+# Microsoft Entra Workforce ID Tenant Choices
 
 ## Dedicated Tenant for TRE
 
@@ -14,7 +14,7 @@ It is possible to use your corporate tenant for TRE. This does have the advantag
 
 [![TRE Tenant](../../assets/corp-tenant.png)](../../assets/corp-tenant.png)
 
-## Create Dedicated Azure Active Directory Tenant
+## Create Dedicated Microsoft Entra Workforce ID Tenant
 
 Follow [this guide](https://learn.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-access-create-new-tenant) to create new dedicated tenant.
 

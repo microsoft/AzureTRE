@@ -63,7 +63,7 @@ Nexus Shared Service requires access to resources outside of the Azure TRE VNET.
 
 | Service Tag / Destination | Justification |
 | --- | --- |
-| AzureActiveDirectory | Authorize the signed in user against Azure Active Directory. |
+| AzureActiveDirectory | Authorize the signed in user against Microsoft Entra Workforce ID. |
 | AzureContainerRegistry | Pull the Nexus container image, as it is located in Azure Container Registry.  |
 | pypi.org, *.pypi.org | Enables Nexus to "proxy" python packages to use inside of workspaces. |
 | repo.anaconda.com | Enables Nexus to "proxy" conda packages to use inside of workspaces. |

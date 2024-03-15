@@ -11,7 +11,7 @@ function show_usage()
 Utility script for creating an application administrator for TRE. This is mandatory and is used
 to manage AAD Application creation within TRE. This script is called when you run "make auth" and
 the environment variable AUTO_WORKSPACE_APP_REGISTRATION determines the permission this identity has.
-You must be logged in using Azure CLI with sufficient privileges to modify Azure Active Directory to run this script.
+You must be logged in using Azure CLI with sufficient privileges to modify Microsoft Entra Workforce ID to run this script.
 
 Usage: $0 --name "MYTRE" --application-permission "Application.ReadWrite.OwnedBy" [--admin-consent]
 

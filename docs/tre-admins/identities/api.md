@@ -4,7 +4,7 @@
 The API Identity is typically called `<TRE_ID> API` within the AAD Portal.
 
 ## Purpose
-This identity's credentials are stored in the `core` Key Vault and mandatory for the running of the Trusted Research Environment (TRE). It is required for the API Application, hosted in Azure App Service, to authenticate to Azure Active Directory and authorize the various operations.
+This identity's credentials are stored in the `core` Key Vault and mandatory for the running of the Trusted Research Environment (TRE). It is required for the API Application, hosted in Azure App Service, to authenticate to Microsoft Entra Workforce ID and authorize the various operations.
 
 ## Application Roles
 
@@ -60,7 +60,7 @@ Below is a sample where `TRE_ID` has value `mytre`:
 
 You can create an automation account which will aid your development flow, if you don't want to do this you can omit the `--automation-clientid` switch.
 
-You can run the script without the `--admin-consent` and ask your admin to grant consent. If you don't have permissions and just want to create a development environment then skip this step and see the steps in the "Using a separate Azure Active Directory tenant) below.
+You can run the script without the `--admin-consent` and ask your admin to grant consent. If you don't have permissions and just want to create a development environment then skip this step and see the steps in the "Using a separate Microsoft Entra Workforce ID tenant) below.
 
 ## Environment Variables
 | Variable | Description | Location |

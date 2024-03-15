@@ -41,8 +41,8 @@
     },
     "user_object_id": {
       "type": "string",
-      "title": "Azure Active Directory User Object ID",
-      "description": "The Azure Active Directory user object ID of User who will be using the compute instance",
+      "title": "Microsoft Entra Workforce ID User Object ID",
+      "description": "The Microsoft Entra Workforce ID user object ID of User who will be using the compute instance",
       "default": "",
       "minLength": 1
     }

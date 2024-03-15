@@ -10,7 +10,7 @@ function show_usage()
 
 Utility script for creating an automation administrator for TRE. This is optional and is used when you
 want to run the E2E tests locally or automatically register bundles in the TRE.
-You must be logged in using Azure CLI with sufficient privileges to modify Azure Active Directory to run this script.
+You must be logged in using Azure CLI with sufficient privileges to modify Microsoft Entra Workforce ID to run this script.
 
 Usage: $0 --name "mytre" [--admin-consent]
 

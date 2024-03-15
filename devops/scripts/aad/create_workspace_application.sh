@@ -10,7 +10,7 @@ function show_usage()
 
 Utility script for creating a workspace TRE. You would typically have one of these per workspace
 for a security boundary.
-You must be logged in using Azure CLI with sufficient privileges to modify Azure Active Directory to run this script.
+You must be logged in using Azure CLI with sufficient privileges to modify Microsoft Entra Workforce ID to run this script.
 
 Usage: $0 [--admin-consent]
 
