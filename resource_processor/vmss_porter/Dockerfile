@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM python:3.8-slim-bullseye
+FROM python:3.13.0a4-slim
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
