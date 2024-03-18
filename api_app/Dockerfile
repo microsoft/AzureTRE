@@ -1,4 +1,4 @@
-FROM python:3.8-slim-bullseye as base
+FROM python:3.13.0a4-slim as base
 COPY requirements.txt /.
 RUN pip3 install --no-cache-dir -r requirements.txt
 

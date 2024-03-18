@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile-upstream:1.4.0
-FROM --platform=linux/amd64 debian:bullseye-slim
+FROM --platform=linux/amd64 debian:bookworm-20240211-slim
 
 # PORTER_INIT
 
@@ -7,7 +7,7 @@ RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloa
 
 # Git is required for terraform_azurerm_environment_configuration
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
-    apt-get update && apt-get install -y git jq curl ca-certificates patch --no-install-recommends
+  apt-get update && apt-get install -y git jq curl ca-certificates patch --no-install-recommends
 
 ARG AZURE_TRE_VERSION="0.15.2"
 
