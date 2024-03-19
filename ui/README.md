@@ -7,7 +7,7 @@ The UI was built using Create React App and Microsoft Fluent UI. Further details
 ## Run the UI
 - Ensure `deploy_ui=false` is not set in your `./config.yaml` file
 - In the root of the repo, run `make tre-deploy`. This will provision the necessary resources in Azure, build and deploy the UI to Azure blob storage, behind the App Gateway used for the API. The deployment process will also create the necessary `config.json`, using the `config.source.json` as a template.
-- In Azure AD, locate the TRE Client Apps app (possibly called Swagger App). In the Authentication section add reply URIs for:
+- In Microsoft Entra Workforce ID, locate the TRE Client Apps app (possibly called Swagger App). In the Authentication section add reply URIs for:
   - `http://localhost:3000` (if wanting to run locally)
   - Your deployed App Url - `https://{TRE_ID}.{LOCATION}.cloudapp.azure.com`.
 
