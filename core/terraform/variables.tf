@@ -102,13 +102,13 @@ variable "api_client_secret" {
 
 variable "application_admin_client_id" {
   type        = string
-  description = "The client id (app id) of the registration in Microsoft Entra ID for creating AAD Applications."
+  description = "The client id (app id) of the registration in Microsoft Entra ID for creating Microsoft Entra ID Applications."
   sensitive   = true
 }
 
 variable "application_admin_client_secret" {
   type        = string
-  description = "A client secret used by the Resource Processor to authenticate with Microsoft Entra ID to create AAD Applications."
+  description = "A client secret used by the Resource Processor to authenticate with Microsoft Entra ID to create Microsoft Entra ID Applications."
   sensitive   = true
 }
 

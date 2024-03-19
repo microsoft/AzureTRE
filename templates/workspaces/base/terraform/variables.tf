@@ -44,13 +44,13 @@ variable "enable_local_debugging" {
 variable "register_aad_application" {
   type        = bool
   default     = false
-  description = "Create an AAD application automatically for the Workspace."
+  description = "Create an Microsoft Entra ID application automatically for the Workspace."
 }
 
 variable "create_aad_groups" {
   type        = bool
   default     = false
-  description = "Create AAD groups automatically for the Workspace Application Roles."
+  description = "Create Microsoft Entra ID groups automatically for the Workspace Application Roles."
 }
 
 variable "enable_airlock" {
@@ -65,18 +65,18 @@ variable "aad_redirect_uris_b64" {
 
 variable "auth_tenant_id" {
   type        = string
-  description = "Used to authenticate into the AAD Tenant to create the AAD App"
+  description = "Used to authenticate into the Microsoft Entra ID Tenant to create the Microsoft Entra ID App"
 }
 variable "auth_client_id" {
   type        = string
-  description = "Used to authenticate into the AAD Tenant to create the AAD App"
+  description = "Used to authenticate into the Microsoft Entra ID Tenant to create the Microsoft Entra ID App"
 }
 variable "auth_client_secret" {
   type        = string
-  description = "Used to authenticate into the AAD Tenant to create the AAD App"
+  description = "Used to authenticate into the Microsoft Entra ID Tenant to create the Microsoft Entra ID App"
 }
 
-# These variables are only passed in if you are not registering an AAD
+# These variables are only passed in if you are not registering an Microsoft Entra ID
 # application as they need passing back out
 variable "app_role_id_workspace_owner" {
   type        = string

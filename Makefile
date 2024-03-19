@@ -334,8 +334,8 @@ test-e2e-extended: ## 🧪 Run E2E extended tests
 	$(call target_title, "Running E2E extended tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=extended
 
-test-e2e-extended-aad: ## 🧪 Run E2E extended AAD tests
-	$(call target_title, "Running E2E extended AAD tests") && \
+test-e2e-extended-aad: ## 🧪 Run E2E extended Microsoft Entra ID tests
+	$(call target_title, "Running E2E extended Microsoft Entra ID tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=extended_aad
 
 test-e2e-shared-services: ## 🧪 Run E2E shared service tests

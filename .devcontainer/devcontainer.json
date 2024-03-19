@@ -109,7 +109,7 @@
               ]
             },
             {
-              "name": "E2E Extended AAD",
+              "name": "E2E Extended Microsoft Entra ID",
               "type": "python",
               "request": "launch",
               "module": "pytest",

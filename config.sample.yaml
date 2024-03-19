@@ -48,8 +48,8 @@ authentication:
   # create an identity with `Application.ReadWrite.OwnedBy`.
   # Setting AUTO_WORKSPACE_APP_REGISTRATION to true will:
   # create an identity with `Application.ReadWrite.All` and `Directory.Read.All`.
-  # When this is true, create Workspaces will also create an AAD Application automatically.
-  # When this is false, the AAD Application will need creating manually.
+  # When this is true, create Workspaces will also create an Microsoft Entra ID Application automatically.
+  # When this is false, the Microsoft Entra ID Application will need creating manually.
   auto_workspace_app_registration: true
   # Setting AUTO_WORKSPACE_GROUP_CREATION to true will create an identity with `Group.ReadWrite.All`
   auto_workspace_group_creation: false

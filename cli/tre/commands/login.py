@@ -46,7 +46,7 @@ def login():
               help='The Client ID of the Microsoft Entra ID application for the API (optional for API versions >= v0.5.7)')
 @click.option('--aad-tenant-id',
               required=False,
-              help='The Tenant ID for the AAD tenant to authenticate with (optional for API versions >= v0.5.7)')
+              help='The Tenant ID for the Microsoft Entra ID tenant to authenticate with (optional for API versions >= v0.5.7)')
 @click.option('--api-scope',
               required=False,
               help='The API scope for the base API (optional for API versions >= v0.5.7)')
@@ -173,7 +173,7 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
 @click.option(
     "--aad-tenant-id",
     required=False,
-    help="The Tenant ID for the AAD tenant to authenticate with (optional for API versions >= v0.5.7)",
+    help="The Tenant ID for the Microsoft Entra ID tenant to authenticate with (optional for API versions >= v0.5.7)",
 )
 @click.option("--api-scope", required=False, help="The API scope for the base API (optional for API versions >= v0.5.7)")
 @click.option(

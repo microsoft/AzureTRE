@@ -19,9 +19,9 @@ Next, you will set the configuration variables for the specific Azure TRE instan
 
     The rest of the variables can have their default values.
 
-1. Decide on a name for your `tre_id` ID for the Azure TRE instance. The value will be used in various Azure resources and AAD application names. It **needs to be globally unique and less than 12 characters in length**. Use **only** lowercase alphanumerics. Choose wisely!
+1. Decide on a name for your `tre_id` ID for the Azure TRE instance. The value will be used in various Azure resources and Microsoft Entra ID application names. It **needs to be globally unique and less than 12 characters in length**. Use **only** lowercase alphanumerics. Choose wisely!
 1. Once you have decided on which AD Tenant paradigm, then you should be able to set `aad_tenant_id` in the authentication section in your `config.yaml` file.
-1. Your AAD Tenant Admin can now use the terminal window in Visual Studio Code to execute the following script from within the development container to create all the AAD Applications that are used for TRE. The details of the script are covered in the [auth document](../auth.md).
+1. Your Microsoft Entra ID Tenant Admin can now use the terminal window in Visual Studio Code to execute the following script from within the development container to create all the Microsoft Entra ID Applications that are used for TRE. The details of the script are covered in the [auth document](../auth.md).
 
    ```bash
    make auth

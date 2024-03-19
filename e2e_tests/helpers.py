@@ -72,7 +72,7 @@ async def get_shared_service_by_name(template_name: str, verify, token) -> Optio
 
 
 async def check_aad_auth_redirect(endpoint, verify) -> None:
-    LOGGER.info(f"Checking AAD AuthN redirect on: {endpoint}")
+    LOGGER.info(f"Checking Microsoft Entra ID AuthN redirect on: {endpoint}")
 
     terminal_http_status = [status.HTTP_200_OK,
                             status.HTTP_401_UNAUTHORIZED,

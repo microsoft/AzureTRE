@@ -65,10 +65,10 @@ inputs:
     description: "The API Client Secret."
     required: false
   APPLICATION_ADMIN_CLIENT_ID:
-    description: "The Client ID of an identity that can manage the AAD Applications."
+    description: "The Client ID of an identity that can manage the Microsoft Entra ID Applications."
     required: false
   APPLICATION_ADMIN_CLIENT_SECRET:
-    description: "The Client secret of an identity that can manage the AAD Applications."
+    description: "The Client secret of an identity that can manage the Microsoft Entra ID Applications."
     required: false
   ACR_NAME:
     description: "The Container Registry that holds our Research images."

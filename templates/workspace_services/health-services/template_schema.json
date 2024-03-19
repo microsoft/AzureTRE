@@ -88,7 +88,7 @@
               "rules": [
                 {
                   "name": "AzureAD",
-                  "description": "AAD access",
+                  "description": "Microsoft Entra ID access",
                   "source_addresses": "{{ resource.properties.workspace_address_space }}",
                   "destination_addresses": ["AzureActiveDirectory"],
                   "destination_ports": ["*"],
@@ -107,8 +107,8 @@
               "action": "Allow",
               "rules": [
                 {
-                  "name": "AAD CDN",
-                  "description": "AAD CDN",
+                  "name": "Microsoft Entra ID CDN",
+                  "description": "Microsoft Entra ID CDN",
                   "source_addresses": "{{ resource.properties.workspace_address_space }}",
                   "target_fqdns": [
                     "aadcdn.msftauth.net"
@@ -148,7 +148,7 @@
               "rules": [
                 {
                   "name": "AzureAD",
-                  "description": "AAD access for authNZ",
+                  "description": "Microsoft Entra ID access for authNZ",
                   "source_addresses": "{{ resource.properties.workspace_address_space }}",
                   "destination_addresses": ["AzureActiveDirectory"],
                   "destination_ports": ["*"],
@@ -167,8 +167,8 @@
               "action": "Allow",
               "rules": [
                 {
-                  "name": "AAD CDN",
-                  "description": "AAD CDN",
+                  "name": "Microsoft Entra ID CDN",
+                  "description": "Microsoft Entra ID CDN",
                   "source_addresses": "{{ resource.properties.workspace_address_space }}",
                   "target_fqdns": [
                     "aadcdn.msftauth.net"

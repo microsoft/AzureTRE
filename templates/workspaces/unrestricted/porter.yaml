@@ -7,7 +7,7 @@ dockerfile: Dockerfile.tmpl
 registry: azuretre
 
 credentials:
-  # Credentials for interacting with the AAD Auth tenant
+  # Credentials for interacting with the Microsoft Entra ID Auth tenant
   - name: auth_client_id
     env: AUTH_CLIENT_ID
   - name: auth_client_secret
@@ -67,11 +67,11 @@ parameters:
   - name: register_aad_application
     type: boolean
     default: false
-    description: "Whether this bundle should register the workspace in AAD"
+    description: "Whether this bundle should register the workspace in Microsoft Entra ID"
   - name: create_aad_groups
     type: boolean
     default: false
-    description: "Whether this bundle should create AAD groups for the workspace app roles"
+    description: "Whether this bundle should create Microsoft Entra ID groups for the workspace app roles"
   - name: workspace_owner_object_id
     type: string
     description: "The object id of the user that will be granted WorkspaceOwner after it is created."
@@ -245,7 +245,7 @@ upgrade:
       flags:
         name: ${ bundle.parameters.azure_environment }
   - az:
-      description: "AAD Application Admin Login"
+      description: "Microsoft Entra ID Application Admin Login"
       arguments:
         - login
       flags:

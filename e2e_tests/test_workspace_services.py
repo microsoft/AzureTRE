@@ -39,7 +39,7 @@ async def test_create_guacamole_service_into_base_workspace(setup_test_workspace
 @pytest.mark.extended_aad
 @pytest.mark.timeout(75 * 60)
 async def test_create_guacamole_service_into_aad_workspace(setup_test_aad_workspace, verify) -> None:
-    """This test will create a Guacamole service but will create a workspace and automatically register the AAD Application"""
+    """This test will create a Guacamole service but will create a workspace and automatically register the Microsoft Entra ID Application"""
     workspace_path, workspace_id = setup_test_aad_workspace
     workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
 

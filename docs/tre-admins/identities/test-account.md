@@ -1,7 +1,7 @@
 # TRE Automation Admin Application
 
 ## Name
-The Automation Application is typically called `<TRE_ID> Automation Admin` within the AAD Portal.
+The Automation Application is typically called `<TRE_ID> Automation Admin` within the Microsoft Entra ID Portal.
 
 ## Purpose
 This application is used to authorize end-to-end test scenarios.

@@ -7,7 +7,7 @@ registry: azuretre
 dockerfile: Dockerfile.tmpl
 
 credentials:
-  # Credentials for interacting with the AAD Auth tenant
+  # Credentials for interacting with the Microsoft Entra ID Auth tenant
   - name: auth_client_id
     env: AUTH_CLIENT_ID
   - name: auth_client_secret
