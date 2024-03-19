@@ -2,7 +2,7 @@ resource "azurerm_servicebus_namespace" "sb" {
   name                = "sb-${var.tre_id}"
   location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
-  sku                 = "Premium"
+  sku                 = "Standard"
   capacity            = "1"
   tags                = local.tre_core_tags
 
