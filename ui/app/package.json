@@ -63,5 +63,8 @@
   "resolutions": {
     "nth-check": "^2.0.1",
     "node-sass/**/ip": "^2.0.1"
+  },
+  "overrides": {
+    "postcss": "^8.4.31"
   }
 }
