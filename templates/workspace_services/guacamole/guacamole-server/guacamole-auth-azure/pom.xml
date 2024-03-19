@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.apache.guacamole</groupId>
             <artifactId>guacamole-ext</artifactId>
-            <version>1.5.3</version>
+            <version>1.5.4</version>
             <scope>provided</scope>
         </dependency>
         <!-- MS Azure dependencies -->
