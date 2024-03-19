@@ -24,3 +24,7 @@ variable "gitea_storage_limit" {
 variable "arm_environment" {
   type = string
 }
+
+variable "sql_sku" {
+  type = string
+}
