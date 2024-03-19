@@ -45,6 +45,12 @@
       "source": {
         "env": "ARM_ENVIRONMENT"
       }
+    },
+    {
+      "name": "gitea_sku",
+      "source": {
+        "env": "GITEA_SKU"
+      }
     }
   ]
 }

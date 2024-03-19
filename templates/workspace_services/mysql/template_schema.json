@@ -12,10 +12,9 @@
       "title": "MySQL server SKU",
       "description": "MySQL server SKU",
       "enum": [
-        "GP | 5GB 2vCores",
-        "GP | 5GB 4vCores",
-        "GP | 5GB 6vCores",
-        "GP | 5GB 8vCores"
+        "B | 4GB 2vCores",
+        "GP | 8GB 2vCores",
+        "BC | 16GB 2vCores"
       ],
       "default": "GP | 5GB 2vCores"
     },
