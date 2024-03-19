@@ -60,6 +60,9 @@ parameters:
     env: ARM_ENVIRONMENT
     type: string
     default: "public"
+  - name: gitea_sku
+    type: string
+    default: "B | 4GB 2vCores"
   - name: aad_authority_url
     type: string
     default: "https://login.microsoftonline.com"
@@ -102,6 +105,7 @@ install:
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        gitea_sku: ${ bundle.parameters.gitea_sku }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -146,6 +150,7 @@ uninstall:
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        gitea_sku: ${ bundle.parameters.gitea_sku }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

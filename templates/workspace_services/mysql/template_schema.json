@@ -16,7 +16,7 @@
         "GP | 8GB 2vCores",
         "BC | 16GB 2vCores"
       ],
-      "default": "GP | 5GB 2vCores"
+      "default": "B | 4GB 2vCores"
     },
     "storage_mb": {
       "$id": "#/properties/storage_mb",

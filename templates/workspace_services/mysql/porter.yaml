@@ -47,7 +47,7 @@ parameters:
     default: "public"
   - name: sql_sku
     type: string
-    default: "GP | 5GB 2vCores"
+    default: "B | 4GB 2vCores"
   - name: storage_mb
     type: integer
     default: 5120
