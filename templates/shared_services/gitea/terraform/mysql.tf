@@ -7,16 +7,15 @@ resource "random_password" "password" {
 }
 
 resource "azurerm_mysql_flexible_server" "gitea" {
-  name                          = "mysql-${var.tre_id}"
-  resource_group_name           = local.core_resource_group_name
-  location                      = data.azurerm_resource_group.rg.location
-  administrator_login           = "mysqladmin"
-  sku_name                      = local.gitea_sku[var.gitea_sku].value
-  version                       = "8.0"
-  backup_retention_days         = 7
-  geo_redundant_backup_enabled  = false
-  public_network_access_enabled = false
-  tags                          = local.tre_shared_service_tags
+  name                         = "mysql-${var.tre_id}"
+  resource_group_name          = local.core_resource_group_name
+  location                     = data.azurerm_resource_group.rg.location
+  administrator_login          = "mysqladmin"
+  sku_name                     = local.gitea_sku[var.gitea_sku].value
+  version                      = "8.0.21"
+  backup_retention_days        = 7
+  geo_redundant_backup_enabled = false
+  tags                         = local.tre_shared_service_tags
 
   lifecycle { ignore_changes = [tags] }
 }
