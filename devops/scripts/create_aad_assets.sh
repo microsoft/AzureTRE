@@ -12,7 +12,7 @@ CHANGED_TENANT=0
 LOGGED_IN_TENANT_ID=$(az account show --query tenantId -o tsv)
 
 if [ "${LOGGED_IN_TENANT_ID}" != "${AAD_TENANT_ID}" ]; then
-  echo "Attempting to sign you onto ${AAD_TENANT_ID} to setup Microsoft Entra Workforce ID assets."
+  echo "Attempting to sign you onto ${AAD_TENANT_ID} to setup Microsoft Entra ID assets."
 
   # First we need to login to the AAD tenant (as it is different to the subscription tenant)
   az login --tenant "${AAD_TENANT_ID}" --allow-no-subscriptions --use-device-code

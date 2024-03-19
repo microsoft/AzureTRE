@@ -3,7 +3,7 @@
 To deploy an Azure TRE instance, the following assets and tools are required:
 
 * [Azure subscription](https://azure.microsoft.com)
-* [Microsoft Entra Workforce ID (AAD)](https://docs.microsoft.com/azure/active-directory/fundamentals/active-directory-whatis) tenant in which you can create application registrations
+* [Microsoft Entra ID (AAD)](https://docs.microsoft.com/azure/active-directory/fundamentals/active-directory-whatis) tenant in which you can create application registrations
 * Git client such as [Git](https://git-scm.com/) or [GitHub Desktop](https://desktop.github.com/)
 * [Docker Desktop](https://www.docker.com/products/docker-desktop)
 

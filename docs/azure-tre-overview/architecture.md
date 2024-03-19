@@ -8,7 +8,7 @@ All traffic has to be explicitly allowed by the Application Gateway or the Firew
 
 [![Architecture overview](../assets/archtecture-overview.png)](../assets/archtecture-overview.png)
 
-The Azure resources outside the network boundries of the Azure TRE are Microsoft Entra Workforce ID, Microsoft Graph and TRE Management. TRE Management are resources used during deployment.
+The Azure resources outside the network boundries of the Azure TRE are Microsoft Entra ID, Microsoft Graph and TRE Management. TRE Management are resources used during deployment.
 
 The Azure TRE core plane consists of two groups of components:
 

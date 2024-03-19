@@ -362,8 +362,8 @@ setup-local-debugging: ## 🛠️ Setup local debugging
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/setup_local_debugging.sh
 
-auth: ## 🔐 Create the necessary Microsoft Entra Workforce ID assets
-	$(call target_title,"Setting up Microsoft Entra Workforce ID") \
+auth: ## 🔐 Create the necessary Microsoft Entra ID assets
+	$(call target_title,"Setting up Microsoft Entra ID") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
 	&& ${MAKEFILE_DIR}/devops/scripts/create_aad_assets.sh
 

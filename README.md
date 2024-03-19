@@ -22,7 +22,7 @@ Core features include:
 - Self-service provisioning of research tooling for research teams
 - Package and repository mirroring - PyPi, R-CRAN, Apt and more.
 - Extensible architecture - build your own service templates as required
-- Microsoft Entra Workforce ID integration
+- Microsoft Entra ID integration
 - Airlock - import and export
 - Cost reporting
 - Ready to workspace templates including:  

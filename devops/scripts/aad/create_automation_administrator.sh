@@ -10,7 +10,7 @@ function show_usage()
 
 Utility script for creating an automation administrator for TRE. This is optional and is used when you
 want to run the E2E tests locally or automatically register bundles in the TRE.
-You must be logged in using Azure CLI with sufficient privileges to modify Microsoft Entra Workforce ID to run this script.
+You must be logged in using Azure CLI with sufficient privileges to modify Microsoft Entra ID to run this script.
 
 Usage: $0 --name "mytre" [--admin-consent]
 
@@ -70,7 +70,7 @@ currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-
 msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
-echo -e "\e[96mCreating the Automation Admin in the \"${tenant}\" Microsoft Entra Workforce ID tenant.\e[0m"
+echo -e "\e[96mCreating the Automation Admin in the \"${tenant}\" Microsoft Entra ID tenant.\e[0m"
 
 # Load in helper functions
 # shellcheck disable=SC1091

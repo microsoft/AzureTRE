@@ -10,7 +10,7 @@ function show_usage()
 
 Utility script for creating a workspace TRE. You would typically have one of these per workspace
 for a security boundary.
-You must be logged in using Azure CLI with sufficient privileges to modify Microsoft Entra Workforce ID to run this script.
+You must be logged in using Azure CLI with sufficient privileges to modify Microsoft Entra ID to run this script.
 
 Usage: $0 [--admin-consent]
 
@@ -20,7 +20,7 @@ Options:
     -y,--application-admin-clientid Required. The client ID of the Application Administrator that will be able to update this application.
                                     e.g. updating a redirect URI.
     -a,--admin-consent              Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
-                                    Requires directory admin privileges to the Microsoft Entra Workforce ID in question.
+                                    Requires directory admin privileges to the Microsoft Entra ID in question.
     -z,--automation-clientid        Optional, the client ID of the automation account can be added to the TRE workspace.
     -r,--reset-password             Optional, switch to automatically reset the password. Default 0
 
@@ -103,7 +103,7 @@ currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-
 msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
-echo -e "\e[96mCreating a Workspace Application in the \"${tenant}\" Microsoft Entra Workforce ID tenant.\e[0m"
+echo -e "\e[96mCreating a Workspace Application in the \"${tenant}\" Microsoft Entra ID tenant.\e[0m"
 
 # Load in helper functions
 # shellcheck disable=SC1091

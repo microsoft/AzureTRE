@@ -11,14 +11,14 @@ function show_usage()
 Utility script for creating an application administrator for TRE. This is mandatory and is used
 to manage AAD Application creation within TRE. This script is called when you run "make auth" and
 the environment variable AUTO_WORKSPACE_APP_REGISTRATION determines the permission this identity has.
-You must be logged in using Azure CLI with sufficient privileges to modify Microsoft Entra Workforce ID to run this script.
+You must be logged in using Azure CLI with sufficient privileges to modify Microsoft Entra ID to run this script.
 
 Usage: $0 --name "MYTRE" --application-permission "Application.ReadWrite.OwnedBy" [--admin-consent]
 
 Options:
     -n,--name                   Required. The prefix for the app (registration) names e.g., "TRE".
     -a,--admin-consent          Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
-                                Requires directory admin privileges to the Microsoft Entra Workforce ID in question.
+                                Requires directory admin privileges to the Microsoft Entra ID in question.
     -p,--application-permission The API Permission that this identity will be granted.
     -r,--reset-password         Optional, switch to automatically reset the password. Default 0
 
@@ -85,7 +85,7 @@ currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-
 msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
-echo -e "\e[96mCreating the Application Admin in the \"${tenant}\" Microsoft Entra Workforce ID tenant.\e[0m"
+echo -e "\e[96mCreating the Application Admin in the \"${tenant}\" Microsoft Entra ID tenant.\e[0m"
 
 # Load in helper functions
 # shellcheck disable=SC1091

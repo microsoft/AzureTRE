@@ -1,8 +1,8 @@
 # Introduction to Authentication and Authorization
 
-[Microsoft Entra Workforce ID (AAD)](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis) is the backbone of Authentication and Authorization in the Trusted Research Environment. AAD holds the identities of all the TRE/workspace users, including administrators, and connects the identities with applications which define the permissions for each user role.
+[Microsoft Entra ID (AAD)](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis) is the backbone of Authentication and Authorization in the Trusted Research Environment. AAD holds the identities of all the TRE/workspace users, including administrators, and connects the identities with applications which define the permissions for each user role.
 
-It is common that the Azure Administrator is not necessarily the Microsoft Entra Workforce ID Administrator. Due to this, this step may have to be carried out by a different individual/team. We have automated this into a simple command, but should you wish, you can run these steps manually.
+It is common that the Azure Administrator is not necessarily the Microsoft Entra ID Administrator. Due to this, this step may have to be carried out by a different individual/team. We have automated this into a simple command, but should you wish, you can run these steps manually.
 
 This page describes the automated Auth setup for TRE.
 
@@ -15,7 +15,7 @@ The automation utilises a `make` command, which reads a few environment variable
 |AAD_TENANT_ID|The tenant id of where your AAD identities will be placed. This can be different to the tenant where your Azure resources are created.|
 | LOCATION | Where your Azure assets will be provisioned (eg. westeurope). This is used to add a redirect URI from the Swagger UI to the API Application.
 |AUTO_WORKSPACE_APP_REGISTRATION| Default of `false`. Setting this to true grants the `Application.ReadWrite.All` and `Directory.Read.All` permission to the *Application Admin* identity. This identity is used to manage other AAD applications that it owns, e.g. Workspaces. If you do not set this, the identity will have `Application.ReadWrite.OwnedBy`. Further information can be found [here](./identities/application_admin.md).
-|AUTO_WORKSPACE_GROUP_CREATION| Default of `false`. Setting this to true grants the `Group.ReadWrite.All` permission to the *Application Admin* identity. This identity can then create security groups aligned to each applciation role. Microsoft Entra Workforce ID licencing implications need to be considered as Group assignment is a [premium feature](https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/app-roles#roles-using-azure-ad-app-roles).
+|AUTO_WORKSPACE_GROUP_CREATION| Default of `false`. Setting this to true grants the `Group.ReadWrite.All` permission to the *Application Admin* identity. This identity can then create security groups aligned to each applciation role. Microsoft Entra ID licencing implications need to be considered as Group assignment is a [premium feature](https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/app-roles#roles-using-azure-ad-app-roles).
 
 ## Create Authentication assets
 You can build all of the Identity assets by running the following at the command line
@@ -38,16 +38,16 @@ The contents of your authentication section in `config.yaml` file should contain
   | `WORKSPACE_API_CLIENT_ID` | Each workspace is secured behind it's own AD Application|
   | `WORKSPACE_API_CLIENT_SECRET` | Each workspace is secured behind it's own AD Application. This is the secret for that application.|
 
-### Using a separate Microsoft Entra Workforce ID tenant
+### Using a separate Microsoft Entra ID tenant
 
 !!! caution
-    This section is only relevant it you are setting up a separate Microsoft Entra Workforce ID tenant for use.
-    This is only recommended for development environments when you don't have the required permissions to register applications in Microsoft Entra Workforce ID.
-    Using a separate Microsoft Entra Workforce ID tenant will prevent you from using certain Microsoft Entra Workforce ID integrated services.
-    For production deployments, work with your Microsoft Entra Workforce ID administrator to perform the required registration
+    This section is only relevant it you are setting up a separate Microsoft Entra ID tenant for use.
+    This is only recommended for development environments when you don't have the required permissions to register applications in Microsoft Entra ID.
+    Using a separate Microsoft Entra ID tenant will prevent you from using certain Microsoft Entra ID integrated services.
+    For production deployments, work with your Microsoft Entra ID administrator to perform the required registration
 
-1. Create an Microsoft Entra Workforce ID tenant
-    To create a new Microsoft Entra Workforce ID tenant, [follow the steps here](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-create-new-tenant)
+1. Create an Microsoft Entra ID tenant
+    To create a new Microsoft Entra ID tenant, [follow the steps here](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-create-new-tenant)
 
 1. Follow the steps outlined above. `make auth` should logon to the correct tenant. Make sure you logon back to the correct tenant before running `make all`.
 
@@ -72,7 +72,7 @@ We strongly recommend that you use `make auth` to create the AAD assets as this 
 
 For a user to gain access to the system, they have to:
 
-1. Have an identity in Microsoft Entra Workforce ID
+1. Have an identity in Microsoft Entra ID
 1. Be linked with an app registration and assigned a role
 
 When these requirements are met, the user can sign-in using their credentials and use their privileges to use the API, login to workspace environment etc. based on their specific roles.
