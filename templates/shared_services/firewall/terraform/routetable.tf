@@ -5,7 +5,7 @@ resource "azurerm_route_table" "rt" {
   disable_bgp_route_propagation = false
   tags                          = local.tre_shared_service_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags,disable_bgp_route_propagation] }
 
   route {
     name                   = "DefaultRoute"
