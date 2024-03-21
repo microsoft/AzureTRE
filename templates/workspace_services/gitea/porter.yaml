@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-gitea
-version: 0.8.7
+version: 0.8.12
 description: "A Gitea workspace service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre

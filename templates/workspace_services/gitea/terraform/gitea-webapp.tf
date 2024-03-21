@@ -44,7 +44,7 @@ resource "azurerm_linux_web_app" "gitea" {
     GITEA__server__ROOT_URL                          = "https://${local.webapp_name}.azurewebsites.net/"
     GITEA__server__LFS_START_SERVER                  = "true"
     GITEA__server__OFFLINE_MODE                      = true
-    GITEA__lfs__PATH                                 = "/data/gitea/lfs"
+    GITEA__lfs__PATH                                 = "/data/lfs"
     GITEA__lfs__STORAGE_TYPE                         = "local"
     GITEA__log_0x2E_console__COLORIZE                = "false" # Azure monitor doens't show colors, so this is easier to read.
     GITEA__openid__ENABLE_OPENID_SIGNIN              = "true"
@@ -90,7 +90,7 @@ resource "azurerm_linux_web_app" "gitea" {
     account_name = azurerm_storage_account.gitea.name
     access_key   = azurerm_storage_account.gitea.primary_access_key
     share_name   = azurerm_storage_share.gitea.name
-    mount_path   = "/data/gitea/"
+    mount_path   = "/data"
   }
 
   logs {
