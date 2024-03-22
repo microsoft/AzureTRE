@@ -334,8 +334,8 @@ test-e2e-extended: ## 🧪 Run E2E extended tests
 	$(call target_title, "Running E2E extended tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=extended
 
-test-e2e-extended-aad: ## 🧪 Run E2E extended Microsoft Entra ID tests
-	$(call target_title, "Running E2E extended Microsoft Entra ID tests") && \
+test-e2e-extended-aad: ## 🧪 Run E2E extended AAD tests
+	$(call target_title, "Running E2E extended AAD tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=extended_aad
 
 test-e2e-shared-services: ## 🧪 Run E2E shared service tests
@@ -362,8 +362,8 @@ setup-local-debugging: ## 🛠️ Setup local debugging
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/setup_local_debugging.sh
 
-auth: ## 🔐 Create the necessary Microsoft Entra ID assets
-	$(call target_title,"Setting up Microsoft Entra ID") \
+auth: ## 🔐 Create the necessary Azure Active Directory assets
+	$(call target_title,"Setting up Azure Active Directory") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
 	&& ${MAKEFILE_DIR}/devops/scripts/create_aad_assets.sh
 

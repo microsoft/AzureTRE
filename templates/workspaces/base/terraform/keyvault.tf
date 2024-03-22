@@ -113,7 +113,7 @@ resource "azurerm_key_vault_secret" "aad_tenant_id" {
 }
 
 # This secret only gets written if Terraform is not responsible for
-# registering the Microsoft Entra ID Application
+# registering the AAD Application
 resource "azurerm_key_vault_secret" "client_id" {
   name         = "workspace-client-id"
   value        = var.client_id
@@ -136,7 +136,7 @@ data "azurerm_key_vault_secret" "client_secret" {
 }
 
 # This secret only gets written if Terraform is not responsible for
-# registering the Microsoft Entra ID Application
+# registering the AAD Application
 resource "azurerm_key_vault_secret" "client_secret" {
   name         = "workspace-client-secret"
   value        = var.client_secret == local.redacted_senstive_value ? data.azurerm_key_vault_secret.client_secret[0].value : var.client_secret

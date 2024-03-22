@@ -10,8 +10,8 @@ function show_usage()
     cat << USAGE
 
 Utility script for creating app registrations required by Azure TRE. This script will create the API and Client
-Applications. The Client Application is the public facing app, whereas the API is an internal Microsoft Entra ID Application.
-You must be logged in using Azure CLI with sufficient privileges to modify Microsoft Entra ID to run this script.
+Applications. The Client Application is the public facing app, whereas the API is an internal AAD Application.
+You must be logged in using Azure CLI with sufficient privileges to modify Azure Active Directory to run this script.
 
 Usage: $0 -n <app-name> [-r <reply-url>] [-a] [-s] [--automation-account]
 
@@ -19,7 +19,7 @@ Options:
     -n,--name                   Required. The prefix for the app (registration) names e.g., "TRE", or "Workspace One".
     -u,--tre-url                TRE URL, used to construct auth redirection URLs for the UI and Swagger app.
     -a,--admin-consent          Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
-                                Requires directory admin privileges to the Microsoft Entra ID in question.
+                                Requires directory admin privileges to the Azure AD in question.
     -t,--automation-clientid    Optional, when --workspace is specified the client ID of the automation account can be added to the TRE workspace.
     -r,--reset-password         Optional, switch to automatically reset the password. Default 0
 
@@ -102,7 +102,7 @@ currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-
 msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
-echo -e "\e[96mCreating the API/UX Application in the \"${tenant}\" Microsoft Entra ID tenant.\e[0m"
+echo -e "\e[96mCreating the API/UX Application in the \"${tenant}\" Azure AD tenant.\e[0m"
 
 # Load in helper functions
 # shellcheck disable=SC1091

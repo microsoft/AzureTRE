@@ -35,17 +35,17 @@ variable "deploy_dicom" {
 
 variable "auth_tenant_id" {
   type        = string
-  description = "Used to authenticate into the Microsoft Entra ID Tenant to get app role members"
+  description = "Used to authenticate into the AAD Tenant to get app role members"
 }
 
 variable "auth_client_id" {
   type        = string
-  description = "Used to authenticate into the Microsoft Entra ID Tenant to get app role members"
+  description = "Used to authenticate into the AAD Tenant to get app role members"
 }
 
 variable "auth_client_secret" {
   type        = string
-  description = "Used to authenticate into the Microsoft Entra ID Tenant to get app role members"
+  description = "Used to authenticate into the AAD Tenant to get app role members"
 }
 
 variable "arm_environment" {

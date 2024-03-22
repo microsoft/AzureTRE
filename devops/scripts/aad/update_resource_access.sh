@@ -4,7 +4,7 @@
 
 # Utility function that retrieves all of the 'requiredResourceAccess' from an application,
 # it then removes any access for a given `resourceAppId`, merges in a new element into the
-# array and then posts it back to Microsoft Entra ID.
+# array and then posts it back to AAD.
 function update_resource_access()
 {
   local msGraphUri=$1

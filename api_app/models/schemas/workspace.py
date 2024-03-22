@@ -27,11 +27,11 @@ class AuthProvider(str, Enum):
     """
     Auth Provider
     """
-    Microsoft Entra ID = "Microsoft Entra ID"
+    AAD = "AAD"
 
 
 class AuthenticationConfiguration(BaseModel):
-    provider: AuthProvider = Field(AuthProvider.Microsoft Entra ID, title="Authentication Provider")
+    provider: AuthProvider = Field(AuthProvider.AAD, title="Authentication Provider")
     data: dict = Field({}, title="Authentication information")
 
 

@@ -41,8 +41,8 @@
     },
     "user_object_id": {
       "type": "string",
-      "title": "Microsoft Entra ID User Object ID",
-      "description": "The Microsoft Entra ID user object ID of User who will be using the compute instance",
+      "title": "Azure Active Directory User Object ID",
+      "description": "The Azure Active Directory user object ID of User who will be using the compute instance",
       "default": "",
       "minLength": 1
     }

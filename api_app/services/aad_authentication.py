@@ -168,7 +168,7 @@ class AzureADAuthorization(AccessService):
 
     def _get_token_key(self, key_id: str) -> str:
         """
-        Rather tha use PyJWKClient.get_signing_key_from_jwt every time, we'll get all the keys from Microsoft Entra ID and cache them.
+        Rather tha use PyJWKClient.get_signing_key_from_jwt every time, we'll get all the keys from AAD and cache them.
         """
         if key_id not in AzureADAuthorization._jwt_keys:
             response = requests.get(f"{self.aad_instance}/{config.AAD_TENANT_ID}/v2.0/.well-known/openid-configuration")
@@ -203,7 +203,7 @@ class AzureADAuthorization(AccessService):
         except Exception:
             result = None
         if not result:
-            logger.debug('No suitable token exists in cache, getting a new one from Microsoft Entra ID')
+            logger.debug('No suitable token exists in cache, getting a new one from AAD')
             result = app.acquire_token_for_client(scopes=scopes)
         if "access_token" not in result:
             raise Exception(f"API app registration access token cannot be retrieved. {result.get('error')}: {result.get('error_description')}")
@@ -321,8 +321,8 @@ class AzureADAuthorization(AccessService):
 
         return request_body
 
-    # This method is called when you create a workspace and you already have an Microsoft Entra ID App Registration
-    # to link it to. You pass in the client_id and go and get the extra information you need from Microsoft Entra ID
+    # This method is called when you create a workspace and you already have an AAD App Registration
+    # to link it to. You pass in the client_id and go and get the extra information you need from AAD
     # If the auth_type is `Automatic`, then these values will be written by Terraform.
     def _get_app_auth_info(self, client_id: str) -> dict:
         graph_data = self._get_app_sp_graph_data(client_id)
@@ -396,7 +396,7 @@ class AzureADAuthorization(AccessService):
             raise AuthConfigValidationError(strings.ACCESS_PLEASE_SUPPLY_CLIENT_ID)
 
         auth_info = {}
-        # The user may want us to create the Microsoft Entra ID workspace app and therefore they
+        # The user may want us to create the AAD workspace app and therefore they
         # don't know the client_id yet.
         if data["auth_type"] != "Automatic":
             auth_info = self._get_app_auth_info(data["client_id"])

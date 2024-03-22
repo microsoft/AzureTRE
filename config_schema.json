@@ -98,7 +98,7 @@
           "pattern": "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$"
         },
         "auto_workspace_app_registration": {
-          "description": "This identity is used to manage other Microsoft Entra ID applications that it owns. Read more about it here: docs/tre-admins/auth.md",
+          "description": "This identity is used to manage other AAD applications that it owns. Read more about it here: docs/tre-admins/auth.md",
           "type": "boolean"
         },
         "auto_workspace_group_creation": {
@@ -121,12 +121,12 @@
           "pattern": "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$"
         },
         "application_admin_client_id": {
-          "description": "This client will administer Microsoft Entra ID Applications for TRE.",
+          "description": "This client will administer AAD Applications for TRE.",
           "type": "string",
           "pattern": "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$"
         },
         "application_admin_client_secret": {
-          "description": "Secret to client which will administer Microsoft Entra ID Applications for TRE",
+          "description": "Secret to client which will administer AAD Applications for TRE",
           "type": "string",
           "minLength": 11
         },

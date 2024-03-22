@@ -112,7 +112,7 @@
                 },
                 {
                   "name": "AzureAD",
-                  "description": "Microsoft Entra ID access",
+                  "description": "AAD access",
                   "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
                   "destination_addresses": ["AzureActiveDirectory"],
                   "destination_ports": ["*"],
@@ -169,8 +169,8 @@
                   ]
                 },
                 {
-                  "name": "Microsoft Entra ID CDN",
-                  "description": "Microsoft Entra ID CDN",
+                  "name": "AAD CDN",
+                  "description": "AAD CDN",
                   "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
                   "target_fqdns": [
                     "aadcdn.msftauth.net"
@@ -253,7 +253,7 @@
                 },
                 {
                   "name": "AzureAD",
-                  "description": "Microsoft Entra ID access",
+                  "description": "AAD access",
                   "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
                   "destination_addresses": ["AzureActiveDirectory"],
                   "destination_ports": ["*"],
@@ -310,8 +310,8 @@
                   ]
                 },
                 {
-                  "name": "Microsoft Entra ID CDN",
-                  "description": "Microsoft Entra ID CDN",
+                  "name": "AAD CDN",
+                  "description": "AAD CDN",
                   "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
                   "target_fqdns": [
                     "aadcdn.msftauth.net"

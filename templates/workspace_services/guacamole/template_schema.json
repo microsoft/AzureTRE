@@ -79,7 +79,7 @@
       },
       {
         "stepId": "12ba0dad-ea6c-4d0d-9255-d316212f5ffa",
-        "stepTitle": "Add Guacamole URI as Microsoft Entra ID redirect URI",
+        "stepTitle": "Add Guacamole URI as AAD redirect URI",
         "resourceType": "workspace",
         "resourceAction": "upgrade",
         "properties": [
@@ -113,7 +113,7 @@
               "rules": [
                 {
                   "name": "AzureAD",
-                  "description": "Microsoft Entra ID access for authNZ",
+                  "description": "AAD access for authNZ",
                   "source_addresses": "{{ resource.properties.web_apps_addresses }}",
                   "destination_addresses": [
                     "AzureActiveDirectory"
@@ -137,7 +137,7 @@
       },
       {
         "stepId": "741c7ff2-eff5-47b2-bf62-2b410d65c96b",
-        "stepTitle": "Update Guacamole URI in Microsoft Entra ID",
+        "stepTitle": "Update Guacamole URI in AAD",
         "resourceType": "workspace",
         "resourceAction": "upgrade",
         "properties": [
@@ -175,7 +175,7 @@
       },
       {
         "stepId": "9a1d6b95-26c8-4165-8010-573dd4e2b45c",
-        "stepTitle": "Update guacamole URI to Microsoft Entra ID redirect URI",
+        "stepTitle": "Update guacamole URI to AAD redirect URI",
         "resourceType": "workspace",
         "resourceAction": "upgrade",
         "properties": [

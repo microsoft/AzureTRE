@@ -242,7 +242,7 @@ def test_substitution_list_strings(primary_resource, resource_to_update):
                     "rules": [
                         {
                             "name": "AllowAzureAD",
-                            "description": "Microsoft Entra ID access for authNZ",
+                            "description": "AAD access for authNZ",
                             "source_addresses": "",
                             "destination_addresses": ["AzureActiveDirectory"],
                             "destination_ports": ["*", "{{resource.id}}"],
