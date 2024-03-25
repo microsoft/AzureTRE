@@ -1,6 +1,6 @@
 # Introduction to Authentication and Authorization
 
-[Microsoft Entra ID (Microsoft Entra ID)](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis) is the backbone of Authentication and Authorization in the Trusted Research Environment. Microsoft Entra ID holds the identities of all the TRE/workspace users, including administrators, and connects the identities with applications which define the permissions for each user role.
+[Microsoft Entra ID](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis) is the backbone of Authentication and Authorization in the Trusted Research Environment. Microsoft Entra ID holds the identities of all the TRE/workspace users, including administrators, and connects the identities with applications which define the permissions for each user role.
 
 It is common that the Azure Administrator is not necessarily the Microsoft Entra ID Administrator. Due to this, this step may have to be carried out by a different individual/team. We have automated this into a simple command, but should you wish, you can run these steps manually.
 
