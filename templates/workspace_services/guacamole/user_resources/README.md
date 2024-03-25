@@ -2,7 +2,7 @@
 
 This folder contains user resources that can be deployed with the Guacamole workspace service:
 
-- linuxvm - a Linux-based virtual machine (expects an Ubuntu 18.04-based VM)
+- linuxvm - a Linux-based virtual machine (expects an Ubuntu 18.Ubuntu 22.04 LTS-based VM)
 - windowsvm - A Windows-based virtual machine
 
 
@@ -29,19 +29,19 @@ custom:
     "8 CPU | 32GB RAM": Standard_D8s_v5
     "16 CPU | 64GB RAM": Standard_D16s_v5
   image_options:
-    "Ubuntu 18.04":
+    "Ubuntu 22.04 LTS":
       source_image_reference:
         publisher: canonical
         offer: ubuntuserver
-        sku: 18_04-lts-gen2
+        sku: 22_04-lts-gen2
         version: latest
       install_ui: true
       conda_config: false
-    "Ubuntu 18.04 Data Science VM":
+    "Ubuntu 22.04 LTS Data Science VM":
       source_image_reference:
         publisher: microsoft-dsvm
-        offer: ubuntu-1804
-        sku: 1804-gen2
+        offer: ubuntuserver
+        sku: 22_04-lts-gen2
         version: latest
       install_ui: false
       conda_config: true
