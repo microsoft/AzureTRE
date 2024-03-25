@@ -11,8 +11,9 @@
       "type": "string",
       "enum": [
         "Standard_B2s",
-        "Standard_D2ads_v5",
-        "Standard_E2ds_v4"
+        "Standard_D2s_v3",
+        "Standard_D2s_v4",
+        "Standard_D2s_v5"
       ],
       "default": "Standard_B2s",
       "title": "VM SKU",
