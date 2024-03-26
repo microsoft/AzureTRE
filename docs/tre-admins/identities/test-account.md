@@ -1,7 +1,7 @@
 # TRE Automation Admin Application
 
 ## Name
-The Automation Application is typically called `<TRE_ID> Automation Admin` within the AAD Portal.
+The Automation Application is typically called `<TRE_ID> Automation Admin` within the Microsoft Entra ID Portal.
 
 ## Purpose
 This application is used to authorize end-to-end test scenarios.
@@ -48,10 +48,10 @@ Example on how to run the script:
 
 
 ### Create this application from the portal (optional)
-To create an application registration for automation, open the Azure Active Directory tenant for your TRE in the portal and navigate to "App Registrations".
+To create an application registration for automation, open the Microsoft Entra ID tenant for your TRE in the portal and navigate to "App Registrations".
 Click "New registration" as shown in the image below.
 
-![Screenshot of Azure portal showing "New registration" in Azure Active Directory](../../assets/tre-automation-new-app-registration.png)
+![Screenshot of Azure portal showing "New registration" in Microsoft Entra ID](../../assets/tre-automation-new-app-registration.png)
 
 Enter a name for the application registration and click "Register".
 

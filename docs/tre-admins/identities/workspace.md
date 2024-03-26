@@ -25,7 +25,7 @@ This identity should only be used by the API Application.
 
 ## How to create
 There are two mechanisms for creating Workspace Applications
-- Manually by your AAD Tenant Admin (default)
+- Manually by your Microsoft Entra ID Tenant Admin (default)
 - Automatically by TRE. Please see this [guide](./application_admin.md) if you wish this to be automatic.
 
 !!! caution
@@ -46,9 +46,9 @@ Example on how to run the script:
 | -------- | ----------- |
 | `--name` | The name of the application. This will be suffixed with 'API' by the script. |
 | `--ux-clientid` | This value is one of the outputs when you first ran the script. It is mandatory if you use admin-consent. |
-| `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
+| `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires Microsoft Entra ID admin privileges. |
 | `--automation-clientid` | This is an optional parameter but will grant the Automation App (created in step 1) permission to the new workspace app. |
-| `--application-admin-clientid` | This is a required parameter , and should be a client id that will be added to the Owners of the AAD Application so that it can be administered within TRE. |
+| `--application-admin-clientid` | This is a required parameter , and should be a client id that will be added to the Owners of the Microsoft Entra ID Application so that it can be administered within TRE. |
 | `--reset-password` | Optional, default is 0. When run in a headless fashion, 1 is passed in to always reset the password. |
 
 
@@ -64,4 +64,4 @@ If you do not wish to grant the Automation App permission to your workspace, jus
 |WORKSPACE_API_CLIENT_SECRET|The client secret|`./config.yaml`|
 
 ## Comments
-When the Workspace AAD app is registered by running `make auth`, the `Workspace Scope Id` is the same as the Client Id. When the Workspace AAD app is created by the base workspace, the `Workspace Scope Id` will be in this format `api://<TRE_ID>_ws_<WORKSPACE_SHORT_IDENTIFIER>`
+When the Workspace Microsoft Entra ID app is registered by running `make auth`, the `Workspace Scope Id` is the same as the Client Id. When the Workspace Microsoft Entra ID app is created by the base workspace, the `Workspace Scope Id` will be in this format `api://<TRE_ID>_ws_<WORKSPACE_SHORT_IDENTIFIER>`

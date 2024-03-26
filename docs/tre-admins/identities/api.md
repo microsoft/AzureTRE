@@ -1,10 +1,10 @@
 # The API Identity
 
 ## Name
-The API Identity is typically called `<TRE_ID> API` within the AAD Portal.
+The API Identity is typically called `<TRE_ID> API` within the Microsoft Entra ID Portal.
 
 ## Purpose
-This identity's credentials are stored in the `core` Key Vault and mandatory for the running of the Trusted Research Environment (TRE). It is required for the API Application, hosted in Azure App Service, to authenticate to Azure Active Directory and authorize the various operations.
+This identity's credentials are stored in the `core` Key Vault and mandatory for the running of the Trusted Research Environment (TRE). It is required for the API Application, hosted in Azure App Service, to authenticate to Microsoft Entra ID and authorize the various operations.
 
 ## Application Roles
 
@@ -49,7 +49,7 @@ Below is a sample where `TRE_ID` has value `mytre`:
 | -------- | ----------- |
 | `--name` | The prefix of the name of the app registrations. `TRE` will give you `TRE API`. |
 | `--tre-url` | Used to construct auth redirection URLs for the UI and Swagger app. Use the values of the [environment variables](../environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/api/docs/oauth2-redirect`, will be added by default. |
-| `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
+| `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires Microsoft Entra ID admin privileges. |
 | `--automation-clientid` | This is an optional parameter but will grant TREAdmin permission to the Service Principal of the Automation Admin.|
 | `--reset-password` | Optional, default is 0. When run in a headless fashion, 1 is passed in to always reset the password. |
 
@@ -60,7 +60,7 @@ Below is a sample where `TRE_ID` has value `mytre`:
 
 You can create an automation account which will aid your development flow, if you don't want to do this you can omit the `--automation-clientid` switch.
 
-You can run the script without the `--admin-consent` and ask your admin to grant consent. If you don't have permissions and just want to create a development environment then skip this step and see the steps in the "Using a separate Azure Active Directory tenant) below.
+You can run the script without the `--admin-consent` and ask your admin to grant consent. If you don't have permissions and just want to create a development environment then skip this step and see the steps in the "Using a separate Microsoft Entra ID tenant) below.
 
 ## Environment Variables
 | Variable | Description | Location |

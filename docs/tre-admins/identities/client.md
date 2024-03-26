@@ -1,7 +1,7 @@
 # TRE Client UX
 
 ## Name
-The Client Identity is typically called `<TRE_ID> UX` within the AAD Portal.
+The Client Identity is typically called `<TRE_ID> UX` within the Microsoft Entra ID Portal.
 
 ## Purpose
 This identity is used by any public facing client application so that user impersonation can occur to the Core API and any Workspace Applications.
@@ -38,9 +38,9 @@ Example on how to run the script:
 | -------- | ----------- |
 | `--name` | The prefix of the name of the app registrations. `TRE` will give you `TRE API`. |
 | `--tre-url` | Used to construct auth redirection URLs for the UI and Swagger app. Use the values of the [environment variables](../environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/api/docs/oauth2-redirect`, will be added by default. |
-| `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
+| `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires Microsoft Entra ID admin privileges. |
 | `--automation-clientid` | This is an optional parameter but will create an application with test users with permission to use the `TRE API` and `TRE Swagger UI` |
-| `--reset-password` | Optional, default is 0. This flag has no relevance when creating the UX as there is no password for the AAD Application. |
+| `--reset-password` | Optional, default is 0. This flag has no relevance when creating the UX as there is no password for the Microsoft Entra ID Application. |
 
 
 ## Redirect URLs
