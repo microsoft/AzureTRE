@@ -13,6 +13,10 @@ terraform {
       source  = "hashicorp/local"
       version = "=2.2.3"
     }
+    azapi = {
+      source  = "Azure/azapi"
+      version = "~> 1.9.0"
+    }
   }
 
   backend "azurerm" {}

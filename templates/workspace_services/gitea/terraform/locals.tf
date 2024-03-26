@@ -17,4 +17,11 @@ locals {
     "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
     "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"
   ]
+
+  rsv_name          = "rsv-${local.workspace_resource_name_suffix}"
+  rsv_policy_name   = "rsv-policy-${local.service_resource_name_suffix}"
+  rsv_resource_type = "Microsoft.RecoveryServices/vaults"
+  resource_list     = jsondecode(data.azapi_resource_action.ds.output).value
+  rsv               = [for rsv in local.resource_list : rsv.name if lower(rsv.name) == lower(local.rsv_name) && lower(rsv.type) == lower(local.rsv_resource_type)]
+  enableBackup      = (local.rsv != null || local.rsv != []) && contains(local.rsv, local.rsv_name) ? true : false
 }

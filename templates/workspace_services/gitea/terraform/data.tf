@@ -80,3 +80,12 @@ data "azurerm_monitor_diagnostic_categories" "gitea" {
     azurerm_linux_web_app.gitea,
   ]
 }
+
+data "azapi_resource_action" "ds" {
+  type                   = "Microsoft.Resources/resourceGroups@2022-09-01"
+  resource_id            = data.azurerm_resource_group.ws.id
+  action                 = "resources"
+  method                 = "GET"
+  response_export_values = ["*"]
+}
+
