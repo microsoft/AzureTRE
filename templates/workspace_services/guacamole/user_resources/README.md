@@ -5,7 +5,6 @@ This folder contains user resources that can be deployed with the Guacamole work
 - linuxvm - a Linux-based virtual machine (expects an Ubuntu 18.Ubuntu 22.04 LTS-based VM)
 - windowsvm - A Windows-based virtual machine
 
-
 ## Customising the user resources
 
 The `guacamole-azure-linuxvm` and `guacamole-azure-windowsvm` folders follow a consistent layout.
@@ -33,7 +32,7 @@ custom:
       source_image_reference:
         publisher: canonical
         offer: ubuntuserver
-        sku: 22_04-lts-gen2
+        sku: 22_04-lts
         version: latest
       install_ui: true
       conda_config: false
@@ -41,7 +40,7 @@ custom:
       source_image_reference:
         publisher: microsoft-dsvm
         offer: ubuntuserver
-        sku: 22_04-lts-gen2
+        sku: 22_04-lts
         version: latest
       install_ui: false
       conda_config: true
@@ -68,8 +67,6 @@ When specifying images using `source_image_name`, the image must be stored in an
 To enable re-using built user resource templates across environments where the image may vary, the image gallery is configured via the `RP_BUNDLE_VALUES` environment variable when deploying the TRE.
 The `RP_BUNDLE_VALUES` variable is a JSON object, and the `image_gallery_id` property within it identifies the image gallery that contains the images specified by `source_image_name`:
 
-
 ```bash
 RP_BUNDLE_VALUES='{"image_gallery_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/<your-rg>/providers/Microsoft.Compute/galleries/<your-gallery-name>"}
 ```
-

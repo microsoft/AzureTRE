@@ -18,7 +18,7 @@ custom:
       source_image_reference:
         publisher: canonical
         offer: ubuntuserver
-        sku: 22_04-lts-gen2
+        sku: 22_04-lts
         version: latest
       install_ui: true
       conda_config: false
@@ -26,7 +26,7 @@ custom:
       source_image_reference:
         publisher: microsoft-dsvm
         offer: ubuntuserver
-        sku: 22_04-lts-gen2
+        sku: 22_04-lts
         version: latest
       install_ui: false
       conda_config: true
@@ -35,7 +35,6 @@ custom:
     #   source_image_name: your-image
     #   install_ui: true
     #   conda_config: true
-
 
 credentials:
   - name: azure_tenant_id
