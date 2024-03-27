@@ -32,3 +32,8 @@ data "azurerm_monitor_diagnostic_categories" "sb" {
     azurerm_servicebus_namespace.sb
   ]
 }
+
+data "azurerm_storage_account" "sadataplatform" {
+  name                = var.dataplatform_sa_name
+  resource_group_name = var.dataplatform_rg_name
+}
