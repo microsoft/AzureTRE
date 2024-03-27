@@ -31,7 +31,7 @@ custom:
     "Ubuntu 22.04 LTS":
       source_image_reference:
         publisher: canonical
-        offer: ubuntuserver
+        offer: 0001-com-ubuntu-server-jammy
         sku: 22_04-lts
         version: latest
       install_ui: true
@@ -39,7 +39,7 @@ custom:
     "Ubuntu 22.04 LTS Data Science VM":
       source_image_reference:
         publisher: microsoft-dsvm
-        offer: ubuntuserver
+        offer: 0001-com-ubuntu-server-jammy
         sku: 22_04-lts
         version: latest
       install_ui: false
