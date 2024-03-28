@@ -3,6 +3,7 @@
 **Azure TRE documentation site**: <https://microsoft.github.io/AzureTRE/>
 
 ## Background
+
 <img align="right" src="./docs/assets/azure-tre-logo.svg" width="33%" />
 
 Across the health industry, be it a pharmaceutical company interrogating clinical trial results, or a public health provider analyzing electronic health records, there is the need to enable researchers, analysts, and developers to work with sensitive data sets.
@@ -18,6 +19,7 @@ This project is typically implemented alongside a data platform that provides re
 TREs are not “one size fits all”, hence although the Azure TRE has a number of out of the box features, the project has been built be extensible, and hence tooling and data platform agnostic.
 
 Core features include:
+
 - Self-service workspace management for TRE administrators
 - Self-service provisioning of research tooling for research teams
 - Package and repository mirroring - PyPi, R-CRAN, Apt and more.
@@ -25,7 +27,7 @@ Core features include:
 - Azure Active Directory integration
 - Airlock - import and export
 - Cost reporting
-- Ready to workspace templates including:  
+- Ready to workspace templates including:
   - Restricted with data exfiltration control
   - Unrestricted for open data
 - Ready to go workspace service templates including:
@@ -36,7 +38,7 @@ Core features include:
 
 ## Project Status and Support
 
-***This project's code base is still under development and breaking changes will happen. Whilst the maintainers will do our best to minimise disruption to existing deployments, this may not always be possible. Stable releases will be published when the project is more mature.***
+**_This project's code base is still under development and breaking changes will happen. Whilst the maintainers will do our best to minimise disruption to existing deployments, this may not always be possible. Stable releases will be published when the project is more mature._**
 
 The aim is to bring together learnings from past customer engagements where TREs have been built into a single reference solution. This is a solution accelerator aiming to be a great starting point for a customized TRE solution. You're encouraged to download and customize the solution to meet your requirements
 
@@ -46,7 +48,7 @@ It is important before deployment of the solution that the [Support Policy](SUPP
 
 ## Contributing
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
+This project welcomes contributions and suggestions. Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
 the rights to use your contribution. For details, visit [https://cla.opensource.microsoft.com](https://cla.opensource.microsoft.com).
 
@@ -65,7 +67,6 @@ Note: maintainers should refer to the [maintainers guide](maintainers.md)
 This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft trademarks or logos is subject to and must follow [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 Any use of third-party trademarks or logos are subject to those third-party's policies.
-
 
 ## Repository structure
 

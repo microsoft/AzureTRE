@@ -1,3 +1,3 @@
 output "mysql_fqdn" {
-  value = azurerm_mysql_server.mysql.fqdn
+  value = azurerm_mysql_flexible_server.mysql.fqdn
 }

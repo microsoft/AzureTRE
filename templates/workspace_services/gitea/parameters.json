@@ -63,6 +63,12 @@
       "source": {
         "env": "ARM_ENVIRONMENT"
       }
+    },
+    {
+      "name": "sql_sku",
+      "source": {
+        "env": "SQL_SKU"
+      }
     }
   ]
 }
