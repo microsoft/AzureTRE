@@ -6,9 +6,9 @@ locals {
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   core_resource_group_name       = "rg-${var.tre_id}"
   sql_sku = {
-    "B | 4GB 2vCores"   = { value = "Standard_B2s" },
-    "GP | 8GB 2vCores"  = { value = "Standard_D2ads_v5" },
-    "BC | 16GB 2vCores" = { value = "Standard_E2ds_v4" }
+    "B | 4GB 2vCores"   = { value = "B_Standard_B2s" },
+    "GP | 8GB 2vCores"  = { value = "GP_Standard_D2ads_v5" },
+    "BC | 16GB 2vCores" = { value = "MO_Standard_E2ds_v4" }
   }
   workspace_service_tags = {
     tre_id                   = var.tre_id

@@ -34,6 +34,6 @@ variable "arm_environment" {
   type = string
 }
 
-variable "gitea_sku" {
+variable "sql_sku" {
   type = string
 }

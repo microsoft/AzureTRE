@@ -27,6 +27,18 @@
       "default": "The Gitea shared service is used for mirroring external Git repositories. For instructions on how to create Git mirrors see [https://docs.gitea.com/usage/repo-mirror](https://docs.gitea.com/usage/repo-mirror).",
       "updateable": true
     },
+    "sql_sku": {
+      "$id": "#/properties/sql_sku",
+      "type": "string",
+      "title": "MySQL server SKU",
+      "description": "MySQL server SKU",
+      "enum": [
+        "B | 4GB 2vCores",
+        "GP | 8GB 2vCores",
+        "BC | 16GB 2vCores"
+      ],
+      "default": "B | 4GB 2vCores"
+    },
     "is_exposed_externally": {
       "$id": "#/properties/is_exposed_externally",
       "type": "boolean",
