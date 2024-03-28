@@ -11,7 +11,8 @@ resource "azurerm_mysql_flexible_server" "gitea" {
   resource_group_name          = data.azurerm_resource_group.ws.name
   location                     = data.azurerm_resource_group.ws.location
   administrator_login          = "mysqladmin"
-  sku_name                     = local.gitea_sku[var.gitea_sku].value
+  administrator_login_password = random_password.password.result
+  sku_name                     = local.sql_sku[var.sql_sku].value
   version                      = "8.0.21"
   backup_retention_days        = 7
   geo_redundant_backup_enabled = false
