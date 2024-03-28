@@ -1,0 +1,300 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/base/template_schema.json",
+  "type": "object",
+  "title": "Base Workspace",
+  "description": "This workspace template is the foundation for TRE workspaces.",
+  "required": [
+    "auth_type",
+    "address_space_size"
+  ],
+  "authorizedRoles": [],
+  "properties": {
+    "shared_storage_quota": {
+      "type": "integer",
+      "title": "Shared Storage Quota",
+      "description": "Quota (in GB) to set for the VM Shared Storage."
+    },
+    "enable_airlock": {
+      "type": "boolean",
+      "title": "Enable Airlock",
+      "description": "Allow safe import and export to the workspace",
+      "default": true,
+      "updateable": true
+    },
+    "app_service_plan_sku": {
+      "type": "string",
+      "title": "App Service Plan SKU",
+      "description": "The SKU that will be used when deploying an Azure App Service Plan.",
+      "default": "P1v3",
+      "enum": [
+        "P1v3",
+        "P1v2",
+        "S1"
+      ]
+    },
+    "address_space_size": {
+      "type": "string",
+      "title": "Address space size",
+      "description": "Network address size (small, medium, large or custom) to be used by the workspace.",
+      "default": "small",
+      "enum": [
+        "small",
+        "medium",
+        "large",
+        "custom"
+      ]
+    },
+    "address_spaces": {
+      "type": "array",
+      "title": "Address spaces",
+      "description": "Network address space to be used by the workspace.",
+      "updateable": true
+    },
+    "auth_type": {
+      "type": "string",
+      "title": "Workspace Authentication Type",
+      "description": "",
+      "default": "Automatic",
+      "enum": [
+        "Automatic",
+        "Manual"
+      ],
+      "updateable": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "enable_airlock": {
+            "const": true
+          }
+        },
+        "required": [
+          "enable_airlock"
+        ]
+      },
+      "then": {
+        "properties": {
+          "configure_review_vms": {
+            "type": "boolean",
+            "title": "Configure Review VMs",
+            "description": "Allow TRE to automatically create and delete review VMs for airlock approvals",
+            "default": false,
+            "updateable": true
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "enable_airlock": {
+            "const": true
+          },
+          "configure_review_vms": {
+            "const": true
+          }
+        },
+        "required": [
+          "enable_airlock",
+          "configure_review_vms"
+        ]
+      },
+      "then": {
+        "properties": {
+          "airlock_review_config": {
+            "type": "object",
+            "title": "Airlock Review Config",
+            "default": null,
+            "description": "Configuration for Airlock Review feature. Needs to be set up after workspace creation",
+            "updateable": true,
+            "properties": {
+              "import": {
+                "title": "Import Review Settings",
+                "required": [
+                  "import_vm_workspace_id",
+                  "import_vm_workspace_service_id",
+                  "import_vm_user_resource_template_name"
+                ],
+                "properties": {
+                  "import_vm_workspace_id": {
+                    "title": "Import Review Workspace ID",
+                    "type": "string",
+                    "description": "ID for Import Review workspace"
+                  },
+                  "import_vm_workspace_service_id": {
+                    "title": "Import Review Workspace Service ID",
+                    "type": "string",
+                    "description": "ID for Workspace Service ID where to deploy Review user resources"
+                  },
+                  "import_vm_user_resource_template_name": {
+                    "title": "Import Review VM User Resource Template Name",
+                    "type": "string",
+                    "description": "Template Name for User Resource for reviewing Import Requests",
+                    "examples": [
+                      "tre-service-guacamole-import-reviewvm"
+                    ]
+                  }
+                }
+              },
+              "export": {
+                "title": "Export Review VM Settings",
+                "required": [
+                  "export_vm_workspace_service_id",
+                  "export_vm_user_resource_template_name"
+                ],
+                "properties": {
+                  "export_vm_workspace_service_id": {
+                    "title": "Export Review Workspace Service ID",
+                    "type": "string",
+                    "description": "ID for Workspace Service ID where to deploy Review user resources"
+                  },
+                  "export_vm_user_resource_template_name": {
+                    "title": "Export Review VM User Resource Template Name",
+                    "type": "string",
+                    "description": "Template Name for User Resource for reviewing Export Requests",
+                    "examples": [
+                      "tre-service-guacamole-export-reviewvm"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "address_space_size": {
+            "enum": [
+              "custom"
+            ]
+          }
+        },
+        "required": [
+          "address_space_size"
+        ]
+      },
+      "then": {
+        "properties": {
+          "address_space": {
+            "type": "string",
+            "title": "Address space",
+            "description": "Network address space to be used by the workspace if 'Address space size' is custom."
+          }
+        },
+        "required": [
+          "address_space"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "auth_type": {
+            "const": "Manual"
+          }
+        },
+        "required": [
+          "auth_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "title": "Application (Client) ID",
+            "description": "The AAD Application Registration ID for the workspace.",
+            "updateable": true
+          },
+          "client_secret": {
+            "type": "string",
+            "title": "Application (Client) Secret",
+            "description": "The AAD Application Registration secret for the workspace. This value will be stored in the Workspace Key Vault.",
+            "sensitive": true,
+            "updateable": true
+          }
+        },
+        "required": [
+          "client_id"
+        ]
+      },
+      "else": {
+        "properties": {
+          "create_aad_groups": {
+            "type": "boolean",
+            "title": "Create AAD Groups for each workspace role",
+            "description": "Create AAD Groups for the workspace roles. If this is set to true, the workspace will create new AAD Groups.",
+            "default": false,
+            "updateable": true
+          },
+          "aad_redirect_uris": {
+            "type": "array",
+            "title": "AAD Redirect URIs",
+            "description": "Redirect URIs for the AAD app in Automatic Auth mode",
+            "updateable": true,
+            "items": {
+              "title": "items",
+              "type": "object",
+              "required": [
+                "name",
+                "value"
+              ],
+              "properties": {
+                "name": {
+                  "title": "name",
+                  "type": "string",
+                  "description": "Redirect URI Name",
+                  "examples": [
+                    "My Redirect URI"
+                  ],
+                  "pattern": "^.*$"
+                },
+                "value": {
+                  "title": "value",
+                  "type": "string",
+                  "description": "Redirect URI Value",
+                  "examples": [
+                    "https://a-domain-name.com/oauth/"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "actions": [],
+  "customActions": [],
+  "pipeline": null,
+  "uiSchema": {
+    "aad_redirect_uris": {
+      "classNames": "tre-hidden"
+    },
+    "address_spaces": {
+      "classNames": "tre-hidden"
+    },
+    "ui:order": [
+      "display_name",
+      "description",
+      "overview",
+      "shared_storage_quota",
+      "app_service_plan_sku",
+      "address_space_size",
+      "address_space",
+      "auth_type",
+      "create_aad_groups",
+      "client_id",
+      "client_secret",
+      "enable_airlock",
+      "configure_review_vms",
+      "airlock_review_config",
+      "*"
+    ]
+  }
+}
