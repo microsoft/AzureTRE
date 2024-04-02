@@ -18,7 +18,7 @@ resource "azurerm_mysql_flexible_server" "gitea" {
   geo_redundant_backup_enabled = false
   tags                         = local.tre_shared_service_tags
 
-  lifecycle { ignore_changes = [tags, zones] }
+  lifecycle { ignore_changes = [tags, zone] }
 }
 
 resource "azurerm_mysql_database" "gitea" {
