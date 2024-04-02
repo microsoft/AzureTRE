@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base-adf
-version: 0.0.1
+version: 0.0.4
 description: "The base Azure TRE workspace that connects to ADF"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
