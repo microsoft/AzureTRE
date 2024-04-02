@@ -27,6 +27,18 @@
       "description": "Long form description of the workspace service, in markdown syntax",
       "default": "Gitea is a lightweight DevOps platform. Features include code hosting, code review, CI/CD, project management and package management. Documentation can be found here: [https://docs.gitea.com/](https://docs.gitea.com/).",
       "updateable": true
+    },    
+    "sql_sku": {
+      "$id": "#/properties/sql_sku",
+      "type": "string",
+      "title": "MySQL server SKU",
+      "description": "MySQL server SKU",
+      "enum": [
+        "B | 4GB 2vCores",
+        "GP | 8GB 2vCores",
+        "BC | 16GB 2vCores"
+      ],
+      "default": "B | 4GB 2vCores"
     },
     "is_exposed_externally": {
       "$id": "#/properties/is_exposed_externally",
