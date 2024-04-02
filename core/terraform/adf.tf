@@ -6,6 +6,7 @@ resource "azurerm_data_factory" "adf_core" {
   location                        = azurerm_resource_group.core.location
   resource_group_name             = azurerm_resource_group.core.name
   managed_virtual_network_enabled = true
+  tags                            = local.tre_core_tags
 }
 
 # Create a managed integration runtime
@@ -16,7 +17,7 @@ resource "azurerm_data_factory_integration_runtime_azure" "adf_ir" {
   virtual_network_enabled = true
 }
 
-# Create a private endpoint to the storage account
+# Create a private endpoint to the storage account from the data platform
 resource "azurerm_data_factory_managed_private_endpoint" "adf_dataplatform_pe" {
   name                = "pe-adf-sadataplatform"
   data_factory_id     = azurerm_data_factory.adf_core.id

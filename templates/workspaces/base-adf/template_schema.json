@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/base/template_schema.json",
+  "$id": "https://github.com/Barts-Life-Science/AzureTRE/templates/workspaces/base-adf/template_schema.json",
   "type": "object",
-  "title": "Base Workspace",
-  "description": "This workspace template is the foundation for TRE workspaces.",
+  "title": "Base Workspace with ADF Connection",
+  "description": "This workspace template builds on the base by connecting the shared storage account to the ADF",
   "required": [
     "auth_type",
     "address_space_size"
