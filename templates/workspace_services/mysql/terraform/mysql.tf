@@ -20,7 +20,7 @@ resource "azurerm_mysql_flexible_server" "mysql" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_mysql_database" "db" {
+resource "azurerm_mysql_flexible_database" "db" {
   name                = var.db_name
   resource_group_name = data.azurerm_resource_group.ws.name
   server_name         = azurerm_mysql_flexible_server.mysql.name

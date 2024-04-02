@@ -21,7 +21,7 @@ resource "azurerm_mysql_flexible_server" "gitea" {
   lifecycle { ignore_changes = [tags, zone] }
 }
 
-resource "azurerm_mysql_database" "gitea" {
+resource "azurerm_mysql_flexible_database" "gitea" {
   name                = "gitea"
   resource_group_name = local.core_resource_group_name
   server_name         = azurerm_mysql_flexible_server.gitea.name
