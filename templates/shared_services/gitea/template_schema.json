@@ -32,6 +32,7 @@
       "type": "string",
       "title": "MySQL server SKU",
       "description": "MySQL server SKU",
+      "updateable": true,
       "enum": [
         "B | 4GB 2vCores",
         "GP | 8GB 2vCores",
