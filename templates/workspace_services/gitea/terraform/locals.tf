@@ -10,7 +10,7 @@ locals {
   version                        = replace(replace(replace(data.local_file.version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
   sql_sku = {
     "B | 4GB 2vCores"   = { value = "B_Standard_B2s" },
-    "GP | 8GB 2vCores"  = { value = "GP_Standard_D2ads_v5" },
+    "GP | 8GB 2vCores"  = { value = "GP_Standard_D2ds_v4" },
     "BC | 16GB 2vCores" = { value = "MO_Standard_E2ds_v4" }
   }
   workspace_service_tags = {
