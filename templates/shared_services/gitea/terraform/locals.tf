@@ -8,7 +8,7 @@ locals {
   gitea_allowed_fqdns_list = distinct(compact(split(",", replace(var.gitea_allowed_fqdns, " ", ""))))
   sql_sku = {
     "B | 4GB 2vCores"   = { value = "B_Standard_B2s" },
-    "GP | 8GB 2vCores"  = { value = "GP_Standard_D2ads_v5" },
+    "GP | 8GB 2vCores"  = { value = "GP_Standard_D2ds_v4" },
     "BC | 16GB 2vCores" = { value = "MO_Standard_E2ds_v4" }
   }
   tre_shared_service_tags = {
