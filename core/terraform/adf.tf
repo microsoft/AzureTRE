@@ -18,6 +18,7 @@ resource "azurerm_data_factory_integration_runtime_azure" "adf_ir" {
 }
 
 # Create a private endpoint to the storage account from the data platform
+# Will need to make this dynamic / comment out in future pushes so that it works in different environments
 resource "azurerm_data_factory_managed_private_endpoint" "adf_dataplatform_pe" {
   name                = "pe-adf-sadataplatform"
   data_factory_id     = azurerm_data_factory.adf_core.id

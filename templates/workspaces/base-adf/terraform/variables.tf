@@ -75,6 +75,18 @@ variable "auth_client_secret" {
   type        = string
   description = "Used to authenticate into the AAD Tenant to create the AAD App"
 }
+variable "arm_tenant_id" {
+  type        = string
+  description = "The tenant ID of the TRE"
+}
+variable "arm_client_id" {
+  type        = string
+  description = "The Service Princiapl ID for managing Azure resources"
+}
+variable "arm_client_secret" {
+  type        = string
+  description = "The Service Princiapl client secret for managing Azure resources"
+}
 
 # These variables are only passed in if you are not registering an AAD
 # application as they need passing back out
@@ -118,7 +130,6 @@ variable "workspace_owner_object_id" {
   default     = ""
   description = "The Object Id of the user that you wish to be the Workspace Owner. E.g. the TEST_AUTOMATION_ACCOUNT."
 }
-
 variable "arm_environment" {
   type = string
 }

@@ -12,14 +12,21 @@ resource "azurerm_data_factory_managed_private_endpoint" "adf_dataplatform_pe" {
   subresource_name    = "file"
 }
 
-# TODO - trial the below bash script (null_resource) that approves the private endpoint connection
+# Approve the private endpoint connection
 resource "null_resource" "approve_private_endpoint" {
   triggers = {
     endpoint_id = azurerm_data_factory_managed_private_endpoint.adf_dataplatform_pe.id
   }
-
   provisioner "local-exec" {
-    command = "az datafactory private-endpoint-connection approve --id ${azurerm_data_factory_managed_private_endpoint.adf_dataplatform_pe.id} --resource-group ${azurerm_resource_group.ws.name}"
+    command = <<-EOT
+      az login --service-principal -u "$ARM_CLIENT_ID" -p "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID" &&
+      az network private-endpoint-connection approve --id ${azurerm_data_factory_managed_private_endpoint.adf_dataplatform_pe.id} --resource-group ${azurerm_resource_group.ws.name}
+    EOT
+    environment = {
+      ARM_CLIENT_ID       = var.arm_client_id
+      ARM_CLIENT_SECRET   = var.arm_client_secret
+      ARM_TENANT_ID       = var.arm_tenant_id
+    }
   }
 }
 
@@ -32,3 +39,4 @@ resource "azurerm_data_factory_linked_service_azure_file_storage" "ls_shared_fil
   file_share               = "vm-shared-storage"
 }
 
+# Create a data source in the data factory
