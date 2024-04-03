@@ -19,6 +19,7 @@ BUG FIXES:
 * Airlock: Creating an import/export request causes a routing error ([#3830](https://github.com/microsoft/AzureTRE/issues/3830))
 * Fix registration of templates with no 'authorizedRoles' or 'required' defined ([#3849](https://github.com/microsoft/AzureTRE/pull/3849))
 * Update terraform for services bus to move network rules into namespace resource to avoid depreciation warning, and update setup_local_debugging.sh to use network_rule_sets ([#3858](https://github.com/microsoft/AzureTRE/pull/3858))
+* Update terraform MySQL resources to MySQL Flexible resources to fix depricating recources. ([#3892](https://github.com/microsoft/AzureTRE/pull/3892))
 
 COMPONENTS:
 
