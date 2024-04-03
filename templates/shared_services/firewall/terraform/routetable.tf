@@ -31,7 +31,7 @@ resource "azurerm_subnet_route_table_association" "rt_resource_processor_subnet_
   subnet_id      = data.azurerm_subnet.resource_processor.id
   route_table_id = azurerm_route_table.rt.id
 
-  # Not waiting for Pthe rules will block traffic prematurally.
+  # Not waiting for the rules will block traffic prematurally.
   depends_on = [
     azurerm_firewall.fw,
     azurerm_firewall_policy_rule_collection_group.core,
