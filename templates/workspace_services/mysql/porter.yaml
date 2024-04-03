@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-mysql
-version: 0.4.5
+version: 1.0.1
 description: "A MySQL workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -47,7 +47,7 @@ parameters:
     default: "public"
   - name: sql_sku
     type: string
-    default: "GP | 5GB 2vCores"
+    default: "B | 4GB 2vCores"
   - name: storage_mb
     type: integer
     default: 5120
@@ -65,6 +65,7 @@ outputs:
     type: string
     applyTo:
       - install
+      - upgrade
 
 install:
   - terraform:
@@ -85,11 +86,23 @@ install:
       outputs:
         - name: mysql_fqdn
 upgrade:
-  - exec:
-      description: "Upgrade shared service"
-      command: echo
-      arguments:
-        - "This shared service does not implement upgrade action"
+  - terraform:
+      description: "Upgrade MySQL workspace service"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        sql_sku: ${ bundle.parameters.sql_sku }
+        storage_mb: ${ bundle.parameters.storage_mb }
+        db_name: ${ bundle.parameters.db_name }
+        arm_environment: ${ bundle.parameters.arm_environment }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-workspace-service-mysql-${ bundle.parameters.id }
+      outputs:
+        - name: mysql_fqdn
 uninstall:
   - terraform:
       description: "Tear down MySQL workspace service"
