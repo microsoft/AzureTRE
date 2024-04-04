@@ -132,7 +132,7 @@ runs:
         echo "AZURE_ENVIRONMENT=$azure_env" >> $GITHUB_ENV
 
     - name: Azure Login
-      uses: azure/login@v1
+      uses: azure/login@v2
       if: contains(inputs.COMMAND, 'bootstrap') != true
       with:
         creds: ${{ inputs.AZURE_CREDENTIALS }}
