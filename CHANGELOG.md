@@ -1,9 +1,20 @@
 <!-- markdownlint-disable MD041 -->
-## 0.17.0 (Unreleased)
+## 0.18.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
 
 FEATURES:
+
+ENHANCEMENTS:
+
+BUG FIXES:
+
+COMPONENTS:
+
+## 0.17.0
+
+**BREAKING CHANGES & MIGRATIONS**:
+* Update terraform MySQL resources to MySQL Flexible resources to fix depricating recources. ([#3892](https://github.com/microsoft/AzureTRE/pull/3892)) - Migration to new version of Gitea and MySQL, needs to be carried out manually, details to be included in a later release.
 
 ENHANCEMENTS:
 * Switch from OpenCensus to OpenTelemetry for logging ([#3762](https://github.com/microsoft/AzureTRE/pull/3762))
@@ -23,6 +34,36 @@ BUG FIXES:
 * Fix issue with firewall failing to deploy on a new TRE deploy ([#3775](https://github.com/microsoft/AzureTRE/issues/3775))
 
 COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.5.1 |
+| core | 0.9.6 |
+| ui | 0.5.21 |
+| tre-service-guacamole-linuxvm | 0.6.9 |
+| tre-service-guacamole-import-reviewvm | 0.2.8 |
+| tre-service-guacamole-export-reviewvm | 0.1.8 |
+| tre-service-guacamole-windowsvm | 0.7.9 |
+| tre-service-guacamole | 0.10.6 |
+| tre-service-databricks | 1.0.3 |
+| tre-service-mlflow | 0.7.7 |
+| tre-service-innereye | 0.6.4 |
+| tre-workspace-service-ohdsi | 0.2.4 |
+| tre-workspace-service-gitea | 1.0.1 |
+| tre-workspace-service-mysql | 1.0.1 |
+| tre-user-resource-aml-compute-instance | 0.5.7 |
+| tre-service-azureml | 0.8.10 |
+| tre-workspace-service-health | 0.2.5 |
+| tre-workspace-airlock-import-review | 0.12.16 |
+| tre-workspace-unrestricted | 0.11.4 |
+| tre-workspace-base | 1.5.3 |
+| tre-shared-service-cyclecloud | 0.5.5 |
+| tre-shared-service-databricks-private-auth | 0.1.5 |
+| tre-shared-service-sonatype-nexus | 2.8.13 |
+| tre-shared-service-admin-vm | 0.4.3 |
+| tre-shared-service-firewall | 1.1.7 |
+| tre-shared-service-gitea | 1.0.1 |
+| tre-shared-service-certs | 0.5.1 |
+| tre-shared-service-airlock-notifier | 0.9.0 |
 
 ## 0.16.0 (December 1, 2023)
 
