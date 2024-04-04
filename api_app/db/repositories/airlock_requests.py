@@ -103,7 +103,8 @@ class AirlockRequestRepository(BaseRepository):
             updatedBy=user,
             updatedWhen=datetime.utcnow().timestamp(),
             properties=resource_spec_parameters,
-            reviews=[]
+            reviews=[],
+            triageStatements=[]
         )
 
         return airlock_request

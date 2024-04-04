@@ -117,3 +117,24 @@ class AirlockReviewInCreate(BaseModel):
                 "decisionExplanation": "the reason why this request was approved/rejected"
             }
         }
+
+
+# class AirlockRequestTriageStatements(BaseModel):
+#     rdgConsistent: bool = Field("", title="Statement 1", description="Requested outputs are consistent with the RDG approved protocol associated with this workspace.")
+#     noPatientLevelData: bool = Field("Statement 2", title="No event or patient level data are included in the requested outputs.")
+#     requestedOutputsClear: bool = Field("", title="Statement 3", description="All requested outputs are sufficiently clear and comprehensible to permit output checking without the need for dataset- or project-specific knowledge.")
+#     requestedOutputsStatic: bool = Field("", title="Statement 4", description="All requested outputs are static.")
+#     requestedOutputsPermittedFiles: bool = Field("", title="Statement 5", description="All requested outputs use permitted file types.")
+#     noHiddenInformation: bool = Field("", title="Statement 6", description="No hidden information has been included (e.g., embedded files), comments, track changes).")
+
+#     class Config:
+#         schema_extra = {
+#             "example": {
+#                 "rdgConsistent": "True",
+#                 "noPatientLevelData": "True",
+#                 "requestedOutputsClear": "True",
+#                 "requestedOutputsStatic": "True",
+#                 "requestedOutputsPermittedFiles": "True",
+#                 "noHiddenInformation": "True"
+#             }
+#         }

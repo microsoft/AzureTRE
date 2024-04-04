@@ -76,6 +76,18 @@ class AirlockReviewUserResource(AzureTREModel):
     userResourceId: str = Field(title="User Resource ID")
 
 
+class AirlockRequestTriageStatements(AzureTREModel):
+    """
+    MHRA's specific triage user statements for Export requests
+    """
+    rdgConsistent: bool = Field(title="Statement 1", description="Requested outputs are consistent with the RDG approved protocol associated with this workspace.")
+    noPatientLevelData: bool = Field("Statement 2", title="No event or patient level data are included in the requested outputs.")
+    requestedOutputsClear: bool = Field(title="Statement 3", description="All requested outputs are sufficiently clear and comprehensible to permit output checking without the need for dataset- or project-specific knowledge.")
+    requestedOutputsStatic: bool = Field(title="Statement 4", description="All requested outputs are static.")
+    requestedOutputsPermittedFiles: bool = Field(title="Statement 5", description="All requested outputs use permitted file types.")
+    noHiddenInformation: bool = Field(title="Statement 6", description="No hidden information has been included (e.g., embedded files), comments, track changes).")
+
+
 class AirlockRequest(AzureTREModel):
     """
     Airlock request
@@ -97,6 +109,7 @@ class AirlockRequest(AzureTREModel):
     reviews: Optional[List[AirlockReview]]
     etag: Optional[str] = Field(title="_etag", alias="_etag")
     reviewUserResources: Dict[str, AirlockReviewUserResource] = Field({}, title="User resources created for Airlock Reviews")
+    triageStatements: List[AirlockRequestTriageStatements] = Field("Triage Statements for Airlock Export requests", title="User given statements for acceptance.")
 
     # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931
     @validator("etag", pre=True)
