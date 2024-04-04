@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-gitea
-version: 0.6.10
+version: 1.0.1
 description: "A Gitea shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -51,6 +51,9 @@ parameters:
     env: ARM_ENVIRONMENT
     type: string
     default: "public"
+  - name: sql_sku
+    type: string
+    default: "B | 4GB 2vCores"
 
 mixins:
   - terraform:
@@ -89,6 +92,7 @@ install:
         mgmt_resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         acr_name: ${ bundle.parameters.mgmt_acr_name }
         arm_environment: ${ bundle.parameters.arm_environment }
+        sql_sku: ${ bundle.parameters.sql_sku }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -109,6 +113,7 @@ upgrade:
         mgmt_resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         acr_name: ${ bundle.parameters.mgmt_acr_name }
         arm_environment: ${ bundle.parameters.arm_environment }
+        sql_sku: ${ bundle.parameters.sql_sku }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -129,6 +134,7 @@ uninstall:
         mgmt_resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         acr_name: ${ bundle.parameters.mgmt_acr_name }
         arm_environment: ${ bundle.parameters.arm_environment }
+        sql_sku: ${ bundle.parameters.sql_sku }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
