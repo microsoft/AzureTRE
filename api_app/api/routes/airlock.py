@@ -18,7 +18,7 @@ from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestWithAllowedUserActions, \
-    AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate
+    AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate, AirlockRequestTriageStatements
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
     get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user
@@ -184,3 +184,17 @@ async def get_airlock_container_link_method(workspace=Depends(get_deployed_works
                                             user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)) -> AirlockRequestTokenInResponse:
     container_url = get_airlock_container_link(airlock_request, user, workspace)
     return AirlockRequestTokenInResponse(containerUrl=container_url)
+
+
+@airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/triage", status_code=status_code.HTTP_200_OK,
+                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_CHECK_TRIAGE_STATEMENTS,
+                               dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
+async def review_triage_statements(airlock_request_triage_statements_input: AirlockRequestTriageStatements,
+                               airlock_request=Depends(get_airlock_request_by_id_from_path),
+                               airlock_request_repo=Depends(get_repository(AirlockRequestRepository))) -> AirlockRequestWithAllowedUserActions:
+    try:
+        await airlock_request_repo.save_and_check_triage_statements(airlock_request, airlock_request_triage_statements_input)
+        return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request)
+    except (ValidationError, ValueError) as e:
+        logging.exception("Failed saving triage statements")
+        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))

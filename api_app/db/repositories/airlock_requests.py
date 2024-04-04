@@ -12,7 +12,7 @@ from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
 from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, \
     AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType, AirlockReviewUserResource
-from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate
+from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate, AirlockRequestTriageStatements
 from core import config
 from resources import strings
 from db.repositories.base import BaseRepository
@@ -219,3 +219,19 @@ class AirlockRequestRepository(BaseRepository):
     def _validate_status_update(self, current_status, new_status):
         if not self.validate_status_update(current_status=current_status, new_status=new_status):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
+
+    async def save_and_check_triage_statements(self, request: AirlockRequest, airlock_request_triage_statements_input: AirlockRequestTriageStatements) -> AirlockRequest:
+        triageStatements = AirlockRequestTriageStatements(
+            rdgConsistent=airlock_request_triage_statements_input.rdgConsistent,
+            noPatientLevelData=airlock_request_triage_statements_input.noPatientLevelData,
+            requestedOutputsClear=airlock_request_triage_statements_input.requestedOutputsClear,
+            requestedOutputsStatic=airlock_request_triage_statements_input.requestedOutputsStatic,
+            requestedOutputsPermittedFiles=airlock_request_triage_statements_input.requestedOutputsPermittedFiles,
+            noHiddenInformation=airlock_request_triage_statements_input.noHiddenInformation
+        )
+
+        request.triageStatements.clear()
+        request.triageStatements.append(triageStatements)
+
+        await self.update_item(request)
+        return request
