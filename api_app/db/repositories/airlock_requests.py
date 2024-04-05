@@ -12,7 +12,7 @@ from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
 from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, \
     AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType, AirlockReviewUserResource
-from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate
+from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestStatisticsStatements
 from core import config
 from resources import strings
 from db.repositories.base import BaseRepository
@@ -103,7 +103,9 @@ class AirlockRequestRepository(BaseRepository):
             updatedBy=user,
             updatedWhen=datetime.utcnow().timestamp(),
             properties=resource_spec_parameters,
-            reviews=[]
+            reviews=[],
+            triageStatements=[],
+            statisticsStatements=[]
         )
 
         return airlock_request
@@ -218,3 +220,47 @@ class AirlockRequestRepository(BaseRepository):
     def _validate_status_update(self, current_status, new_status):
         if not self.validate_status_update(current_status=current_status, new_status=new_status):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
+
+
+    async def save_and_check_triage_statements(self, request: AirlockRequest, airlock_request_triage_statements_input: AirlockRequestTriageStatements) -> AirlockRequest:
+        triageStatements = AirlockRequestTriageStatements(
+            rdgConsistent=airlock_request_triage_statements_input.rdgConsistent,
+            noPatientLevelData=airlock_request_triage_statements_input.noPatientLevelData,
+            requestedOutputsClear=airlock_request_triage_statements_input.requestedOutputsClear,
+            requestedOutputsStatic=airlock_request_triage_statements_input.requestedOutputsStatic,
+            requestedOutputsPermittedFiles=airlock_request_triage_statements_input.requestedOutputsPermittedFiles,
+            noHiddenInformation=airlock_request_triage_statements_input.noHiddenInformation
+        )
+
+        request.triageStatements.clear()
+        request.triageStatements.append(triageStatements)
+
+        await self.update_item(request)
+        return request
+
+
+    async def save_and_check_statistics_statements(self, request: AirlockRequest, airlock_request_statistics_statements_input: AirlockRequestStatisticsStatements) -> AirlockRequest:
+        statisticsStatements = AirlockRequestStatisticsStatements(
+            codeLists=airlock_request_statistics_statements_input.codeLists,
+            safeStatistics=airlock_request_statistics_statements_input.safeStatistics,
+            statisticalTests=airlock_request_statistics_statements_input.statisticalTests,
+            coefficientsAssociation=airlock_request_statistics_statements_input.coefficientsAssociation,
+            shape=airlock_request_statistics_statements_input.shape,
+            mode=airlock_request_statistics_statements_input.mode,
+            ratios=airlock_request_statistics_statements_input.ratios,
+            giniCoefficients=airlock_request_statistics_statements_input.giniCoefficients,
+            unsafeStatistics=airlock_request_statistics_statements_input.unsafeStatistics,
+            frequencies=airlock_request_statistics_statements_input.frequencies,
+            position=airlock_request_statistics_statements_input.position,
+            extremeValues=airlock_request_statistics_statements_input.extremeValues,
+            linearAggregates=airlock_request_statistics_statements_input.linearAggregates,
+            riskRatios=airlock_request_statistics_statements_input.riskRatios,
+            survivalTables =airlock_request_statistics_statements_input.survivalTables,
+            other =airlock_request_statistics_statements_input.other
+        )
+
+        request.statisticsStatements.clear()
+        request.statisticsStatements.append(statisticsStatements)
+
+        await self.update_item(request)
+        return request
