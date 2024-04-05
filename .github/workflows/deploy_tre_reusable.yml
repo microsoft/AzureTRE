@@ -811,8 +811,11 @@ jobs:
     if: always()
     environment: ${{ inputs.environmentName }}
     steps:
-      - uses: technote-space/workflow-conclusion-action@v3
-
+      # - uses: technote-space/workflow-conclusion-action@v3 (removed due to archived repo and deprecated node.js version)
+      - uses: im-open/workflow-conclusion@v2.2.2
+        id: conclusion
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       # For PR builds triggered from comment builds, the GITHUB_REF is set to main
       # so the checks aren't automatically associated with the PR
       # If prHeadSha is specified then explicity mark the checks for that SHA
@@ -828,29 +831,13 @@ jobs:
           conclusion: ${{ env.WORKFLOW_CONCLUSION }}
           details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-      - name: Notify teams channel
-        env:
-          MS_TEAMS_WEBHOOK_URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-        # notify only if failure
-        if: |
-          env.WORKFLOW_CONCLUSION == 'failure' &&
-          env.MS_TEAMS_WEBHOOK_URI != '' &&
-          (github.ref == 'refs/heads/main' && inputs.prRef == '')
-        uses: sachinkundu/ms-teams-notification@1.4
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Failed to deploy from main"
-          notification-color: dc3545
-          timezone: Europe/Zurich
-
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
       - name: Publish E2E Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: EnricoMi/publish-unit-test-result-action@v2.16.1
         with:
           junit_files: "artifacts/**/*.xml"
           check_name: "E2E Test Results"
