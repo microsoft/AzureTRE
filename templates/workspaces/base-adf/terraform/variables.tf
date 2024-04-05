@@ -87,6 +87,10 @@ variable "arm_client_secret" {
   type        = string
   description = "The Service Princiapl client secret for managing Azure resources"
 }
+variable "arm_subscription_id" {
+  type        = string
+  description = "The Subscription ID of the TRE"
+}
 
 # These variables are only passed in if you are not registering an AAD
 # application as they need passing back out

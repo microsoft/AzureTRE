@@ -12,23 +12,14 @@ resource "azurerm_data_factory_managed_private_endpoint" "adf_dataplatform_pe" {
   subresource_name    = "file"
 }
 
-# Approve the private endpoint connection
+
 resource "null_resource" "approve_private_endpoint" {
-  triggers = {
-    endpoint_id = azurerm_data_factory_managed_private_endpoint.adf_dataplatform_pe.id
-  }
   provisioner "local-exec" {
-    command = <<-EOT
-      az login --service-principal -u "$ARM_CLIENT_ID" -p "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID" &&
-      az network private-endpoint-connection approve --id ${azurerm_data_factory_managed_private_endpoint.adf_dataplatform_pe.id} --resource-group ${azurerm_resource_group.ws.name}
-    EOT
-    environment = {
-      ARM_CLIENT_ID       = var.arm_client_id
-      ARM_CLIENT_SECRET   = var.arm_client_secret
-      ARM_TENANT_ID       = var.arm_tenant_id
-    }
+    command = "sh approve_pe.sh '${azurerm_resource_group.ws.name}' '${local.storage_name}' '${local.workspace_resource_name_suffix}' '${var.arm_client_id}' '${var.arm_subscription_id}'"
   }
+  depends_on = [azurerm_data_factory_managed_private_endpoint.adf_dataplatform_pe]
 }
+
 
 # Create a linked service in the data factory to the file storage
 resource "azurerm_data_factory_linked_service_azure_file_storage" "ls_shared_file" {

@@ -26,7 +26,7 @@ resource "azurerm_data_factory_managed_private_endpoint" "adf_dataplatform_pe" {
   subresource_name    = "blob"
 }
 
-# TODO - could potentially create a linked service here
+# TODO - potentially create a linked service here
 # resource "azurerm_data_factory_linked_service_azure_blob_storage" "adf_ls_dataplatform" {
 #   name            = "adf-ls-${var.tre_id}"
 #   data_factory_id = azurerm_
