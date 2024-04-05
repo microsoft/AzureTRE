@@ -32,14 +32,14 @@ jobs:
     steps:
       # Ensure we have the script file for the github-script action to use
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       # Determine whether the comment is a command
       - id: check_command
         name: Check for a command using GitHub script
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const script = require('./.github/scripts/build.js')
@@ -79,7 +79,7 @@ jobs:
     steps:
       # Ensure we have the script files
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
@@ -115,7 +115,7 @@ jobs:
     steps:
       # Ensure we have the script files
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 

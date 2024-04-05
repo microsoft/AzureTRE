@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout (GitHub)
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build and run dev container task
         uses: ./.github/actions/devcontainer_run_command
@@ -50,7 +50,7 @@ jobs:
           AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
 
       - name: Upload Wheel as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tre-cli
           path: dist/tre-*.whl
