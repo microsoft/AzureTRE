@@ -88,6 +88,15 @@ class AirlockRequestTriageStatements(AzureTREModel):
     noHiddenInformation: bool = Field(title="Statement 6", description="No hidden information has been included (e.g., embedded files), comments, track changes).")
 
 
+class AirlockRequestContactTeamForm(AzureTREModel):
+    """
+    MHRA's specific fields for sending messages to Contact Team
+    """
+    requiredDisclosureAlignment: str = Field("", title="Question 1", description="Why are outputs required that do not align with the disclosure control rules?")
+    measuresTakenMinimiseDisclosure: str = Field("Question 2", title="What measures have been taken to minimise the risk of potentially disclosive outputs?")
+    transferToThirdParty: str = Field("", title="Question 3", description="Will the outputs be transferred to any other third party?")
+
+
 class AirlockRequest(AzureTREModel):
     """
     Airlock request
@@ -110,6 +119,7 @@ class AirlockRequest(AzureTREModel):
     etag: Optional[str] = Field(title="_etag", alias="_etag")
     reviewUserResources: Dict[str, AirlockReviewUserResource] = Field({}, title="User resources created for Airlock Reviews")
     triageStatements: List[AirlockRequestTriageStatements] = Field("Triage Statements for Airlock Export requests", title="User given statements for acceptance.")
+    contactTeamForm: List[AirlockRequestContactTeamForm] = Field("Contact Team Form for Airlock Export requests", title="User given information regarding Airlock Export requests.")
 
     # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931
     @validator("etag", pre=True)

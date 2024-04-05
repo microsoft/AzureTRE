@@ -138,3 +138,17 @@ class AirlockRequestTriageStatements(BaseModel):
                 "noHiddenInformation": "True"
             }
         }
+
+class AirlockRequestContactTeamForm(BaseModel):
+    requiredDisclosureAlignment: str = Field("", title="Question 1", description="Why are outputs required that do not align with the disclosure control rules?")
+    measuresTakenMinimiseDisclosure: str = Field("Question 2", title="What measures have been taken to minimise the risk of potentially disclosive outputs?")
+    transferToThirdParty: str = Field("", title="Question 3", description="Will the outputs be transferred to any other third party?")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "requiredDisclosureAlignment": "I need this output because it'll be used in a very important publication.",
+                "measuresTakenMinimiseDisclosure": "I took measures 1, 2, 3, 4, etc. for minimising diclosure information.",
+                "transferToThirdParty": "The output generated will not be transferred to thrid parties."
+            }
+        }

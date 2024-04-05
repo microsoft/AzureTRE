@@ -12,7 +12,7 @@ from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
 from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, \
     AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType, AirlockReviewUserResource
-from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate, AirlockRequestTriageStatements
+from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestContactTeamForm
 from core import config
 from resources import strings
 from db.repositories.base import BaseRepository
@@ -104,7 +104,8 @@ class AirlockRequestRepository(BaseRepository):
             updatedWhen=datetime.utcnow().timestamp(),
             properties=resource_spec_parameters,
             reviews=[],
-            triageStatements=[]
+            triageStatements=[],
+            contactTeamForm=[]
         )
 
         return airlock_request
@@ -232,6 +233,19 @@ class AirlockRequestRepository(BaseRepository):
 
         request.triageStatements.clear()
         request.triageStatements.append(triageStatements)
+
+        await self.update_item(request)
+        return request
+
+    async def save_and_check_contact_team_form(self, request: AirlockRequest, airlock_request_contact_form_input: AirlockRequestContactTeamForm) -> AirlockRequest:
+        contactTeamForm = AirlockRequestContactTeamForm(
+            requiredDisclosureAlignment=airlock_request_contact_form_input.requiredDisclosureAlignment,
+            measuresTakenMinimiseDisclosure=airlock_request_contact_form_input.measuresTakenMinimiseDisclosure,
+            transferToThirdParty=airlock_request_contact_form_input.transferToThirdParty
+        )
+
+        request.contactTeamForm.clear()
+        request.contactTeamForm.append(contactTeamForm)
 
         await self.update_item(request)
         return request
