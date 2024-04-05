@@ -6,7 +6,7 @@ on:
     types: [published]
   push:
     paths:
-      - 'docs/**'
+      - "docs/**"
       - mkdocs.yml
     branches:
       - main
@@ -14,6 +14,8 @@ jobs:
   deploy:
     name: Deploy Documentation
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -27,7 +29,7 @@ jobs:
         run: |
           pip install -r docs/requirements.txt
       - name: Configure Git User
-      # Required by mike for the commit it does to the gh-pages branch
+        # Required by mike for the commit it does to the gh-pages branch
         run: |
           git config user.name "ci-docs"
           git config user.email "ci-docs@dummy.com"
