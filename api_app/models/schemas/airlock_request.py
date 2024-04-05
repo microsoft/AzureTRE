@@ -142,7 +142,7 @@ class AirlockRequestTriageStatements(BaseModel):
 
 class AirlockRequestStatisticsStatements(BaseModel):
     codeLists: bool = Field("", title="Statement 1", description="Code lists or programming code")
-    safeStatistics: bool = Field("", "Statement 2", title="Safe statistics")
+    safeStatistics: bool = Field("", title="Statement 2", description="Safe statistics")
     statisticalTests: bool = Field("", title="Statement 3", description="Statistical hypothesis tests (e.g., t-test, chi-square, R-square, standard errors)")
     coefficientsAssociation: bool = Field("", title="Statement 4", description="Coefficients of association (e.g., estimated coefficients, models, AN(C)OVA, correlation tables, density plots, kernel density plots)")
     shape: bool = Field("", title="Statement 5", description="Shape (e.g., standard deviation, skewness, kurtosis)")
