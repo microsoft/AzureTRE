@@ -831,6 +831,22 @@ jobs:
           conclusion: ${{ env.WORKFLOW_CONCLUSION }}
           details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
+      - name: Notify teams channel
+        env:
+          MS_TEAMS_WEBHOOK_URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        # notify only if failure
+        if: |
+          env.WORKFLOW_CONCLUSION == 'failure' &&
+          env.MS_TEAMS_WEBHOOK_URI != '' &&
+          (github.ref == 'refs/heads/main' && inputs.prRef == '')
+        uses: sachinkundu/ms-teams-notification@1.4
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "Failed to deploy from main"
+          notification-color: dc3545
+          timezone: Europe/Zurich
+
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
