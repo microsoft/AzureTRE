@@ -124,6 +124,57 @@ class AirlockRequestOtherStatisticsStatements(AzureTREModel):
     exitDatesRelatives: bool = Field("", title="Statement 10", description="Exit dates are relative, not absolute.")
     noDatesWithSingleExit: bool = Field("", title="Statement 11", description="There are no dates with a single exit.")
 
+
+class AirlockRequestStatisticsStatements(AzureTREModel):
+    """
+    MHRA's specific statistics user statements for Export requests
+    """
+    codeLists: bool = Field(title="Statement 1", description="Code lists or programming code")
+    safeStatistics: bool = Field(title="Statement 2", description="Safe statistics")
+    statisticalTests: bool = Field(title="Statement 3", description="Statistical hypothesis tests (e.g., t-test, chi-square, R-square, standard errors)")
+    coefficientsAssociation: bool = Field(title="Statement 4", description="Coefficients of association (e.g., estimated coefficients, models, AN(C)OVA, correlation tables, density plots, kernel density plots)")
+    shape: bool = Field(title="Statement 5", description="Shape (e.g., standard deviation, skewness, kurtosis)")
+    mode: bool = Field(title="Statement 6", description="Mode")
+    ratios: bool = Field(title="Statement 7", description="Non-linear concentration ratios (e.g., Herfindahl-Hirchsmann index, diversity index)")
+    giniCoefficients: bool = Field(title="Statement 8", description="Gini coefficients or Lorenz curves")
+    unsafeStatistics: bool = Field(title="Statement 9", description="Unsafe statistics")
+    frequencies: bool = Field(title="Statement 10", description="Frequencies (e.g. frequency tables, histograms, shares, alluvial flow graphs, heat maps, line graphs, pie charts, scatter graphs, scatter plots, smoothed histograms, waterfall charts)")
+    position: bool = Field(title="Statement 11", description="Position (e.g., median, percentiles, box plots)")
+    extremeValues: bool = Field(title="Statement 12", description="Extreme values (e.g., maxima, minima)")
+    linearAggregates: bool = Field(title="Statement 13", description="Linear aggregates (e.g., means, totals, simple indexes, linear correlation ratios, bar graphs, mean plots)")
+    riskRatios: bool = Field(title="Statement 14", description="Odds ratios, risk ratios or other proportionate risks")
+    survivalTables: bool = Field(title="Statement 15", description="Hazard and survival tables (e.g., tables of survival/death rates, Kaplan-Meier graphs)")
+    other: bool = Field(title="Statement 16", description="Other")
+
+
+class AirlockRequestSafeStatisticsStatements(AzureTREModel):
+    """
+    MHRA's safe specific statistics user statements for Export requests
+    """
+    testConfirmation: bool = Field(title="Statement 1", description="You stated that your requested outputs include statistical hypothesis tests")
+    coefficientsConfirmation: bool = Field(title="Statement 2", description="You stated that your requested outputs include coefficients of association")
+    residualDegrees: bool = Field(title="Statement 3", description="The residual degrees of freedom (number of observations less number of variables) exceeds five")
+    modelNotSaturated: bool = Field(title="Statement 4", description="The model is not saturated (i.e., not all variables are categorical and fully interacted)")
+    regressionNotIncluded: bool = Field(title="Statement 5", description="Your outputs do not include a regression with a single binary explanatory variable")
+    shapeConfirmation: bool = Field(title="Statement 6", description="You stated that your requested outputs include statistics of shape")
+    standardDeviations: bool = Field(title="Statement 7", description="Any standard deviations are greater than zero")
+    shapeMinFive: bool = Field(title="Statement 8", description="All statistics of shape were calculated for a minimum of five patients or GP practices")
+    modeConfirmation: bool = Field(title="Statement 9", description="You stated that your requested outputs include modes")
+    ratiosConfirmation: bool = Field(title="Statement 10", description="You stated that your requested outputs include non-linear concentration ratios")
+    nRatio: bool = Field(title="Statement 11", description="N>2")
+    hRatio: bool = Field(title="Statement 12", description="H<0.81")
+    giniCoefficientsConfirmation: bool = Field(title="Statement 13", description="You stated that your requested outputs include Gini coefficients or Lorenz curves")
+    nGiniCoefficient: bool = Field(title="Statement 14", description="N>2")
+    coefficientLessThan: bool = Field(title="Statement 15", description="The coefficient is less than 100%")
+
+
+class AirlockRequestAcroConfirmation(AzureTREModel):
+    """
+    MHRA's acro confirmation user statements for Export requests
+    """
+    isAcroUsed: bool = Field(title="Statement 1", description="Is Acro used")
+
+
 class AirlockRequest(AzureTREModel):
     """
     Airlock request
@@ -149,6 +200,9 @@ class AirlockRequest(AzureTREModel):
     contactTeamForm: Optional[List[AirlockRequestContactTeamForm]] = Field("Contact Team Form for Airlock Export requests", title="User given information regarding Airlock Export requests.")
     unsafeStatistics: Optional[List[AirlockRequestUnsafeStatisticsStatements]] = Field("Specific details about unsafe provided statistics", title="Specific user given details about unsafe provided statistics.")
     otherStatistics: Optional[List[AirlockRequestOtherStatisticsStatements]] = Field("Specific details about unsafe provided statistics", title="Specific user given details about unsafe provided statistics.")
+    statisticsStatements: Optional[List[AirlockRequestStatisticsStatements]] = Field("Statistics Statements for Airlock Export requests", title="User given statements for acceptance.")
+    safeStatisticsStatements: Optional[List[AirlockRequestSafeStatisticsStatements]] = Field("Safe Statistics Statements for Airlock Export requests", title="User given statements for acceptance.")
+    acroConfirmation: Optional[List[AirlockRequestAcroConfirmation]] = Field("Acro confirmation for Airlock Export requests", title="User given statements for acceptance.")
 
     # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931
     @validator("etag", pre=True)

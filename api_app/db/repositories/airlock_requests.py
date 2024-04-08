@@ -13,7 +13,8 @@ from db.errors import EntityDoesNotExist
 from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, \
     AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType, AirlockReviewUserResource, \
     AirlockRequestUnsafeStatisticsStatements, AirlockRequestOtherStatisticsStatements
-from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestContactTeamForm
+from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestContactTeamForm, \
+    AirlockRequestStatisticsStatements, AirlockRequestSafeStatisticsStatements, AirlockRequestAcroConfirmation
 from core import config
 from resources import strings
 from db.repositories.base import BaseRepository
@@ -106,7 +107,12 @@ class AirlockRequestRepository(BaseRepository):
             properties=resource_spec_parameters,
             reviews=[],
             triageStatements=[],
-            contactTeamForm=[]
+            contactTeamForm=[],
+            unsafeStatistics=[],
+            otherStatistics=[],
+            statisticsStatements=[],
+            safeStatisticsStatements=[],
+            acroConfirmation=[]
         )
 
         return airlock_request
@@ -248,6 +254,29 @@ class AirlockRequestRepository(BaseRepository):
         request.contactTeamForm.clear()
         request.contactTeamForm.append(contactTeamForm)
 
+    async def save_and_check_statistics_statements(self, request: AirlockRequest, airlock_request_statistics_statements_input: AirlockRequestStatisticsStatements) -> AirlockRequest:
+        statisticsStatements = AirlockRequestStatisticsStatements(
+            codeLists=airlock_request_statistics_statements_input.codeLists,
+            safeStatistics=airlock_request_statistics_statements_input.safeStatistics,
+            statisticalTests=airlock_request_statistics_statements_input.statisticalTests,
+            coefficientsAssociation=airlock_request_statistics_statements_input.coefficientsAssociation,
+            shape=airlock_request_statistics_statements_input.shape,
+            mode=airlock_request_statistics_statements_input.mode,
+            ratios=airlock_request_statistics_statements_input.ratios,
+            giniCoefficients=airlock_request_statistics_statements_input.giniCoefficients,
+            unsafeStatistics=airlock_request_statistics_statements_input.unsafeStatistics,
+            frequencies=airlock_request_statistics_statements_input.frequencies,
+            position=airlock_request_statistics_statements_input.position,
+            extremeValues=airlock_request_statistics_statements_input.extremeValues,
+            linearAggregates=airlock_request_statistics_statements_input.linearAggregates,
+            riskRatios=airlock_request_statistics_statements_input.riskRatios,
+            survivalTables=airlock_request_statistics_statements_input.survivalTables,
+            other=airlock_request_statistics_statements_input.other
+        )
+
+        request.statisticsStatements.clear()
+        request.statisticsStatements.append(statisticsStatements)
+
         await self.update_item(request)
         return request
 
@@ -262,6 +291,28 @@ class AirlockRequestRepository(BaseRepository):
 
         request.unsafeStatistics.clear()
         request.unsafeStatistics.append(unsafeStatistics)
+
+    async def save_and_check_safe_statistics_statements(self, request: AirlockRequest, airlock_request_safe_statistics_statements_input: AirlockRequestSafeStatisticsStatements) -> AirlockRequest:
+        safeStatisticsStatements = AirlockRequestSafeStatisticsStatements(
+            testConfirmation=airlock_request_safe_statistics_statements_input.testConfirmation,
+            coefficientsConfirmation=airlock_request_safe_statistics_statements_input.coefficientsConfirmation,
+            residualDegrees=airlock_request_safe_statistics_statements_input.residualDegrees,
+            modelNotSaturated=airlock_request_safe_statistics_statements_input.modelNotSaturated,
+            regressionNotIncluded=airlock_request_safe_statistics_statements_input.regressionNotIncluded,
+            shapeConfirmation=airlock_request_safe_statistics_statements_input.shapeConfirmation,
+            standardDeviations=airlock_request_safe_statistics_statements_input.standardDeviations,
+            shapeMinFive=airlock_request_safe_statistics_statements_input.shapeMinFive,
+            modeConfirmation=airlock_request_safe_statistics_statements_input.modeConfirmation,
+            ratiosConfirmation=airlock_request_safe_statistics_statements_input.ratiosConfirmation,
+            nRatio=airlock_request_safe_statistics_statements_input.nRatio,
+            hRatio=airlock_request_safe_statistics_statements_input.hRatio,
+            giniCoefficientsConfirmation=airlock_request_safe_statistics_statements_input.giniCoefficientsConfirmation,
+            nGiniCoefficient=airlock_request_safe_statistics_statements_input.nGiniCoefficient,
+            coefficientLessThan =airlock_request_safe_statistics_statements_input.coefficientLessThan
+        )
+
+        request.safeStatisticsStatements.clear()
+        request.safeStatisticsStatements.append(safeStatisticsStatements)
 
         await self.update_item(request)
         return request
@@ -284,5 +335,14 @@ class AirlockRequestRepository(BaseRepository):
         request.otherStatistics.clear()
         request.otherStatistics.append(otherStatistics)
 
+    async def save_and_check_acro_confirmation(self, request: AirlockRequest, airlock_request_acro_confirmation_input: AirlockRequestAcroConfirmation) -> AirlockRequest:
+        acroConfirmation = AirlockRequestAcroConfirmation(
+            isAcroUsed=airlock_request_acro_confirmation_input.isAcroUsed
+        )
+
+        request.acroConfirmation.clear()
+        request.acroConfirmation.append(acroConfirmation)
+
         await self.update_item(request)
         return request
+
