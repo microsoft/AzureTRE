@@ -121,7 +121,7 @@ class AirlockReviewInCreate(BaseModel):
 
 class AirlockRequestTriageStatements(BaseModel):
     rdgConsistent: bool = Field("", title="Statement 1", description="Requested outputs are consistent with the RDG approved protocol associated with this workspace.")
-    noPatientLevelData: bool = Field("Statement 2", title="No event or patient level data are included in the requested outputs.")
+    noPatientLevelData: bool = Field("", title="Statement 2", description="No event or patient level data are included in the requested outputs.")
     requestedOutputsClear: bool = Field("", title="Statement 3", description="All requested outputs are sufficiently clear and comprehensible to permit output checking without the need for dataset- or project-specific knowledge.")
     requestedOutputsStatic: bool = Field("", title="Statement 4", description="All requested outputs are static.")
     requestedOutputsPermittedFiles: bool = Field("", title="Statement 5", description="All requested outputs use permitted file types.")
@@ -139,10 +139,11 @@ class AirlockRequestTriageStatements(BaseModel):
             }
         }
 
+
 class AirlockRequestContactTeamForm(BaseModel):
-    requiredDisclosureAlignment: str = Field("", title="Question 1", description="Why are outputs required that do not align with the disclosure control rules?")
+    requiredDisclosureAlignment: str = Field("Question 1", title="Why are outputs required that do not align with the disclosure control rules?")
     measuresTakenMinimiseDisclosure: str = Field("Question 2", title="What measures have been taken to minimise the risk of potentially disclosive outputs?")
-    transferToThirdParty: str = Field("", title="Question 3", description="Will the outputs be transferred to any other third party?")
+    transferToThirdParty: str = Field("Question 3", title="Will the outputs be transferred to any other third party?")
 
     class Config:
         schema_extra = {
@@ -150,5 +151,55 @@ class AirlockRequestContactTeamForm(BaseModel):
                 "requiredDisclosureAlignment": "I need this output because it'll be used in a very important publication.",
                 "measuresTakenMinimiseDisclosure": "I took measures 1, 2, 3, 4, etc. for minimising diclosure information.",
                 "transferToThirdParty": "The output generated will not be transferred to thrid parties."
+            }
+        }
+
+
+class AirlockRequestUnsafeStatisticsStatements(BaseModel):
+    requestedOutputsStatisticsPosition: bool = Field("", title="Statement 1", description="You stated that your requested outputs include statistics of position. Please confirm the numbers for each group (and complementary groups) are ≥5.")
+    requestedOutputsLinearAggregates: bool = Field("", title="Statement 2", description="You stated that your requested outputs include linear aggregates.")
+    linearAggregatesDerivedGroups: bool = Field("", title="Statement 3", description="The linear aggregates have been derived from groups containing ≥5 patients or GP practices.")
+    pRatioDominanceRule: bool = Field("", title="Statement 4", description="The P-ratio dominance rule has been calculated and is greater than 10%. (NB: ACRO will check this automatically).")
+    nkDominanceRule: bool = Field("", title="Statement 5", description="The N-K dominance rule has been calculated for the 2 largest values and is less than 90%. (NB: ACRO will check this automatically).")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "requestedOutputsStatisticsPosition": "True",
+                "requestedOutputsLinearAggregates": "True",
+                "linearAggregatesDerivedGroups": "True",
+                "pRatioDominanceRule": "False",
+                "nkDominanceRule": "True"
+            }
+        }
+
+
+class AirlockRequestOtherStatisticsStatements(BaseModel):
+    requestedOutputsIncludeFrequencies: bool = Field("", title="Statement 1", description="You stated that your requested outputs include frequencies. Please confirm the following.")
+    smallFrequenciesSuppressed: bool = Field("", title="Statement 2", description="All counts <5 and frequencies derived from groups containing <5 patients or GP practices have been suppressed.")
+    zerosFullCells: bool = Field("", title="Statement 3", description="All zeroes and full cells (100%) are evidential or structural (i.e., something you would expect).")
+    underlyingValuesIndependent: bool = Field("", title="Statement 4", description="Underlying values are genuinely independent (i.e., they do not come from the same patient, the patients do not all have the same family number and do not all come from the same GP practice).")
+    categoriesComprehensiveData: bool = Field("", title="Statement 5", description="The categories are comprehensive and apply to all data (i.e., all categories of each categorical variable are presented).")
+    requestedOutputsExtremeValues: bool = Field("", title="Statement 6", description="You stated that your requested outputs include extreme values. Please confirm the maximum or minimum presented are non-informative and structural.")
+    requestedOutputsRatios: bool = Field("", title="Statement 7", description="You stated that your requested outputs include odds ratios, risk ratios or other proportionate risks. Please confirm the underlying contingency table has been produced and is included in the requested outputs.")
+    requestedOutputsHazard: bool = Field("", title="Statement 8", description="You stated that your requested outputs include hazard or survival tables. Please confirm the following.")
+    numberPatientsSurvived: bool = Field("", title="Statement 9", description="The number of patients who survived is ≥5.")
+    exitDatesRelatives: bool = Field("", title="Statement 10", description="Exit dates are relative, not absolute.")
+    noDatesWithSingleExit: bool = Field("", title="Statement 11", description="There are no dates with a single exit.")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "requestedOutputsIncludeFrequencies": "True",
+                "smallFrequenciesSuppressed": "True",
+                "zerosFullCells": "True",
+                "underlyingValuesIndependent": "False",
+                "categoriesComprehensiveData": "True",
+                "requestedOutputsExtremeValues": "True",
+                "requestedOutputsRatios": "True",
+                "requestedOutputsHazard": "False",
+                "numberPatientsSurvived": "True",
+                "exitDatesRelatives": "True",
+                "noDatesWithSingleExit": "True"
             }
         }

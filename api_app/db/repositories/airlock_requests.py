@@ -11,7 +11,8 @@ from pydantic import parse_obj_as
 from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
 from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, \
-    AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType, AirlockReviewUserResource
+    AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType, AirlockReviewUserResource, \
+    AirlockRequestUnsafeStatisticsStatements, AirlockRequestOtherStatisticsStatements
 from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestContactTeamForm
 from core import config
 from resources import strings
@@ -246,6 +247,42 @@ class AirlockRequestRepository(BaseRepository):
 
         request.contactTeamForm.clear()
         request.contactTeamForm.append(contactTeamForm)
+
+        await self.update_item(request)
+        return request
+
+    async def save_and_check_unsafe_statistics(self, request: AirlockRequest, airlock_request_unsafe_statistics_input: AirlockRequestUnsafeStatisticsStatements) -> AirlockRequest:
+        unsafeStatistics = AirlockRequestUnsafeStatisticsStatements(
+            requestedOutputsStatisticsPosition=airlock_request_unsafe_statistics_input.requestedOutputsStatisticsPosition,
+            requestedOutputsLinearAggregates=airlock_request_unsafe_statistics_input.requestedOutputsLinearAggregates,
+            linearAggregatesDerivedGroups=airlock_request_unsafe_statistics_input.linearAggregatesDerivedGroups,
+            pRatioDominanceRule=airlock_request_unsafe_statistics_input.pRatioDominanceRule,
+            nkDominanceRule=airlock_request_unsafe_statistics_input.nkDominanceRule
+        )
+
+        request.unsafeStatistics.clear()
+        request.unsafeStatistics.append(unsafeStatistics)
+
+        await self.update_item(request)
+        return request
+
+    async def save_and_check_other_statistics(self, request: AirlockRequest, airlock_request_other_statistics_input: AirlockRequestOtherStatisticsStatements) -> AirlockRequest:
+        otherStatistics = AirlockRequestOtherStatisticsStatements(
+            requestedOutputsIncludeFrequencies=airlock_request_other_statistics_input.requestedOutputsIncludeFrequencies,
+            smallFrequenciesSuppressed=airlock_request_other_statistics_input.smallFrequenciesSuppressed,
+            zerosFullCells=airlock_request_other_statistics_input.zerosFullCells,
+            underlyingValuesIndependent=airlock_request_other_statistics_input.underlyingValuesIndependent,
+            categoriesComprehensiveData=airlock_request_other_statistics_input.categoriesComprehensiveData,
+            requestedOutputsExtremeValues=airlock_request_other_statistics_input.requestedOutputsExtremeValues,
+            requestedOutputsRatios=airlock_request_other_statistics_input.requestedOutputsRatios,
+            requestedOutputsHazard=airlock_request_other_statistics_input.requestedOutputsHazard,
+            numberPatientsSurvived=airlock_request_other_statistics_input.numberPatientsSurvived,
+            exitDatesRelatives=airlock_request_other_statistics_input.exitDatesRelatives,
+            noDatesWithSingleExit=airlock_request_other_statistics_input.noDatesWithSingleExit
+        )
+
+        request.otherStatistics.clear()
+        request.otherStatistics.append(otherStatistics)
 
         await self.update_item(request)
         return request
