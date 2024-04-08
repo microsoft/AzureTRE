@@ -218,3 +218,14 @@ class AirlockRequestSafeStatisticsStatements(BaseModel):
                 "coefficientLessThan": "True"
             }
         }
+
+
+class AirlockRequestAcroConfirmation(BaseModel):
+    isAcroUsed: bool = Field("", title="Statement 1", description="Is Acro used")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "isAcroUsed": "True"
+            }
+        }

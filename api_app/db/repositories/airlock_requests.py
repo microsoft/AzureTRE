@@ -12,7 +12,7 @@ from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
 from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, \
     AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType, AirlockReviewUserResource
-from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestStatisticsStatements, AirlockRequestSafeStatisticsStatements
+from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestStatisticsStatements, AirlockRequestSafeStatisticsStatements, AirlockRequestAcroConfirmation
 from core import config
 from resources import strings
 from db.repositories.base import BaseRepository
@@ -106,7 +106,8 @@ class AirlockRequestRepository(BaseRepository):
             reviews=[],
             triageStatements=[],
             statisticsStatements=[],
-            safeStatisticsStatements=[]
+            safeStatisticsStatements=[],
+            acroConfirmation=[]
         )
 
         return airlock_request
@@ -288,6 +289,18 @@ class AirlockRequestRepository(BaseRepository):
 
         request.safeStatisticsStatements.clear()
         request.safeStatisticsStatements.append(safeStatisticsStatements)
+
+        await self.update_item(request)
+        return request
+
+
+    async def save_and_check_acro_confirmation(self, request: AirlockRequest, airlock_request_acro_confirmation_input: AirlockRequestAcroConfirmation) -> AirlockRequest:
+        acroConfirmation = AirlockRequestAcroConfirmation(
+            isAcroUsed=airlock_request_acro_confirmation_input.isAcroUsed
+        )
+
+        request.acroConfirmation.clear()
+        request.acroConfirmation.append(acroConfirmation)
 
         await self.update_item(request)
         return request

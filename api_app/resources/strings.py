@@ -43,6 +43,7 @@ API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE = "Create an Airlock Review User Resourc
 API_CHECK_TRIAGE_STATEMENTS = "Check triage statements"
 API_CHECK_STATISTICS_STATEMENTS = "Check statistics statements"
 API_CHECK_SAFE_STATISTICS_STATEMENTS = "Check safe statistics statements"
+API_CHECK_ACRO_CONFIRMATION = "Check Acro confirmation"
 
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"

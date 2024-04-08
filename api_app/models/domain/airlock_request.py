@@ -131,6 +131,13 @@ class AirlockRequestSafeStatisticsStatements(AzureTREModel):
     coefficientLessThan: bool = Field(title="Statement 15", description="The coefficient is less than 100%")
 
 
+class AirlockRequestAcroConfirmation(AzureTREModel):
+    """
+    MHRA's acro confirmation user statements for Export requests
+    """
+    isAcroUsed: bool = Field(title="Statement 1", description="Is Acro used")
+
+
 class AirlockRequest(AzureTREModel):
     """
     Airlock request
@@ -155,6 +162,7 @@ class AirlockRequest(AzureTREModel):
     triageStatements: List[AirlockRequestTriageStatements] = Field("Triage Statements for Airlock Export requests", title="User given statements for acceptance.")
     statisticsStatements: List[AirlockRequestStatisticsStatements] = Field("Statistics Statements for Airlock Export requests", title="User given statements for acceptance.")
     safeStatisticsStatements: List[AirlockRequestSafeStatisticsStatements] = Field("Safe Statistics Statements for Airlock Export requests", title="User given statements for acceptance.")
+    acroConfirmation: List[AirlockRequestAcroConfirmation] = Field("Acro confirmation for Airlock Export requests", title="User given statements for acceptance.")
 
     # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931
     @validator("etag", pre=True)
