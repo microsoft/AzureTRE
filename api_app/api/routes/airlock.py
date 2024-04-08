@@ -18,7 +18,7 @@ from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestWithAllowedUserActions, \
-    AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestSafeStatisticsStatements
+    AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestStatisticsStatements, AirlockRequestSafeStatisticsStatements
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
     get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user
