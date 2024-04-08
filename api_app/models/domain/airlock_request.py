@@ -81,7 +81,7 @@ class AirlockRequestTriageStatements(AzureTREModel):
     MHRA's specific triage user statements for Export requests
     """
     rdgConsistent: bool = Field(title="Statement 1", description="Requested outputs are consistent with the RDG approved protocol associated with this workspace.")
-    noPatientLevelData: bool = Field("Statement 2", title="No event or patient level data are included in the requested outputs.")
+    noPatientLevelData: bool = Field(title="Statement 2", description="No event or patient level data are included in the requested outputs.")
     requestedOutputsClear: bool = Field(title="Statement 3", description="All requested outputs are sufficiently clear and comprehensible to permit output checking without the need for dataset- or project-specific knowledge.")
     requestedOutputsStatic: bool = Field(title="Statement 4", description="All requested outputs are static.")
     requestedOutputsPermittedFiles: bool = Field(title="Statement 5", description="All requested outputs use permitted file types.")
@@ -93,7 +93,7 @@ class AirlockRequestStatisticsStatements(AzureTREModel):
     MHRA's specific statistics user statements for Export requests
     """
     codeLists: bool = Field(title="Statement 1", description="Code lists or programming code")
-    safeStatistics: bool = Field("Statement 2", title="Safe statistics")
+    safeStatistics: bool = Field(title="Statement 2", description="Safe statistics")
     statisticalTests: bool = Field(title="Statement 3", description="Statistical hypothesis tests (e.g., t-test, chi-square, R-square, standard errors)")
     coefficientsAssociation: bool = Field(title="Statement 4", description="Coefficients of association (e.g., estimated coefficients, models, AN(C)OVA, correlation tables, density plots, kernel density plots)")
     shape: bool = Field(title="Statement 5", description="Shape (e.g., standard deviation, skewness, kurtosis)")
@@ -108,6 +108,27 @@ class AirlockRequestStatisticsStatements(AzureTREModel):
     riskRatios: bool = Field(title="Statement 14", description="Odds ratios, risk ratios or other proportionate risks")
     survivalTables: bool = Field(title="Statement 15", description="Hazard and survival tables (e.g., tables of survival/death rates, Kaplan-Meier graphs)")
     other: bool = Field(title="Statement 16", description="Other")
+
+
+class AirlockRequestSafeStatisticsStatements(AzureTREModel):
+    """
+    MHRA's safe specific statistics user statements for Export requests
+    """
+    testConfirmation: bool = Field(title="Statement 1", description="You stated that your requested outputs include statistical hypothesis tests")
+    coefficientsConfirmation: bool = Field(title="Statement 2", description="You stated that your requested outputs include coefficients of association")
+    residualDegrees: bool = Field(title="Statement 3", description="The residual degrees of freedom (number of observations less number of variables) exceeds five")
+    modelNotSaturated: bool = Field(title="Statement 4", description="The model is not saturated (i.e., not all variables are categorical and fully interacted)")
+    regressionNotIncluded: bool = Field(title="Statement 5", description="Your outputs do not include a regression with a single binary explanatory variable")
+    shapeConfirmation: bool = Field(title="Statement 6", description="You stated that your requested outputs include statistics of shape")
+    standardDeviations: bool = Field(title="Statement 7", description="Any standard deviations are greater than zero")
+    shapeMinFive: bool = Field(title="Statement 8", description="All statistics of shape were calculated for a minimum of five patients or GP practices")
+    modeConfirmation: bool = Field(title="Statement 9", description="You stated that your requested outputs include modes")
+    ratiosConfirmation: bool = Field(title="Statement 10", description="You stated that your requested outputs include non-linear concentration ratios")
+    nRatio: bool = Field(title="Statement 11", description="N>2")
+    hRatio: bool = Field(title="Statement 12", description="H<0.81")
+    giniCoefficientsConfirmation: bool = Field(title="Statement 13", description="You stated that your requested outputs include Gini coefficients or Lorenz curves")
+    nGiniCoefficient: bool = Field(title="Statement 14", description="N>2")
+    coefficientLessThan: bool = Field(title="Statement 15", description="The coefficient is less than 100%")
 
 
 class AirlockRequest(AzureTREModel):
@@ -133,6 +154,7 @@ class AirlockRequest(AzureTREModel):
     reviewUserResources: Dict[str, AirlockReviewUserResource] = Field({}, title="User resources created for Airlock Reviews")
     triageStatements: List[AirlockRequestTriageStatements] = Field("Triage Statements for Airlock Export requests", title="User given statements for acceptance.")
     statisticsStatements: List[AirlockRequestStatisticsStatements] = Field("Statistics Statements for Airlock Export requests", title="User given statements for acceptance.")
+    safeStatisticsStatements: List[AirlockRequestSafeStatisticsStatements] = Field("Safe Statistics Statements for Airlock Export requests", title="User given statements for acceptance.")
 
     # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931
     @validator("etag", pre=True)

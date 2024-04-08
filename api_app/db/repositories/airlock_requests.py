@@ -12,7 +12,7 @@ from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
 from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, \
     AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType, AirlockReviewUserResource
-from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestStatisticsStatements
+from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestStatisticsStatements, AirlockRequestSafeStatisticsStatements
 from core import config
 from resources import strings
 from db.repositories.base import BaseRepository
@@ -105,7 +105,8 @@ class AirlockRequestRepository(BaseRepository):
             properties=resource_spec_parameters,
             reviews=[],
             triageStatements=[],
-            statisticsStatements=[]
+            statisticsStatements=[],
+            safeStatisticsStatements=[]
         )
 
         return airlock_request
@@ -261,6 +262,32 @@ class AirlockRequestRepository(BaseRepository):
 
         request.statisticsStatements.clear()
         request.statisticsStatements.append(statisticsStatements)
+
+        await self.update_item(request)
+        return request
+
+
+    async def save_and_check_safe_statistics_statements(self, request: AirlockRequest, airlock_request_safe_statistics_statements_input: AirlockRequestSafeStatisticsStatements) -> AirlockRequest:
+        safeStatisticsStatements = AirlockRequestSafeStatisticsStatements(
+            testConfirmation=airlock_request_safe_statistics_statements_input.testConfirmation,
+            coefficientsConfirmation=airlock_request_safe_statistics_statements_input.coefficientsConfirmation,
+            residualDegrees=airlock_request_safe_statistics_statements_input.residualDegrees,
+            modelNotSaturated=airlock_request_safe_statistics_statements_input.modelNotSaturated,
+            regressionNotIncluded=airlock_request_safe_statistics_statements_input.regressionNotIncluded,
+            shapeConfirmation=airlock_request_safe_statistics_statements_input.shapeConfirmation,
+            standardDeviations=airlock_request_safe_statistics_statements_input.standardDeviations,
+            shapeMinFive=airlock_request_safe_statistics_statements_input.shapeMinFive,
+            modeConfirmation=airlock_request_safe_statistics_statements_input.modeConfirmation,
+            ratiosConfirmation=airlock_request_safe_statistics_statements_input.ratiosConfirmation,
+            nRatio=airlock_request_safe_statistics_statements_input.nRatio,
+            hRatio=airlock_request_safe_statistics_statements_input.hRatio,
+            giniCoefficientsConfirmation=airlock_request_safe_statistics_statements_input.giniCoefficientsConfirmation,
+            nGiniCoefficient=airlock_request_safe_statistics_statements_input.nGiniCoefficient,
+            coefficientLessThan =airlock_request_safe_statistics_statements_input.coefficientLessThan
+        )
+
+        request.safeStatisticsStatements.clear()
+        request.safeStatisticsStatements.append(safeStatisticsStatements)
 
         await self.update_item(request)
         return request

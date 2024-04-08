@@ -42,6 +42,7 @@ API_AIRLOCK_REQUEST_LINK = "Get a token to access airlock request"
 API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE = "Create an Airlock Review User Resource"
 API_CHECK_TRIAGE_STATEMENTS = "Check triage statements"
 API_CHECK_STATISTICS_STATEMENTS = "Check statistics statements"
+API_CHECK_SAFE_STATISTICS_STATEMENTS = "Check safe statistics statements"
 
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"

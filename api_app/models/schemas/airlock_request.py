@@ -179,3 +179,42 @@ class AirlockRequestStatisticsStatements(BaseModel):
                 "other": "True"
             }
         }
+
+
+class AirlockRequestSafeStatisticsStatements(BaseModel):
+    testConfirmation: bool = Field("", title="Statement 1", description="You stated that your requested outputs include statistical hypothesis tests")
+    coefficientsConfirmation: bool = Field("", title="Statement 2", description="You stated that your requested outputs include coefficients of association")
+    residualDegrees: bool = Field("", title="Statement 3", description="The residual degrees of freedom (number of observations less number of variables) exceeds five")
+    modelNotSaturated: bool = Field("", title="Statement 4", description="The model is not saturated (i.e., not all variables are categorical and fully interacted)")
+    regressionNotIncluded: bool = Field("", title="Statement 5", description="Your outputs do not include a regression with a single binary explanatory variable")
+    shapeConfirmation: bool = Field("", title="Statement 6", description="You stated that your requested outputs include statistics of shape")
+    standardDeviations: bool = Field("", title="Statement 7", description="Any standard deviations are greater than zero")
+    shapeMinFive: bool = Field("", title="Statement 8", description="All statistics of shape were calculated for a minimum of five patients or GP practices")
+    modeConfirmation: bool = Field("", title="Statement 9", description="You stated that your requested outputs include modes")
+    ratiosConfirmation: bool = Field("", title="Statement 10", description="You stated that your requested outputs include non-linear concentration ratios")
+    nRatio: bool = Field("", title="Statement 11", description="N>2")
+    hRatio: bool = Field("", title="Statement 12", description="H<0.81")
+    giniCoefficientsConfirmation: bool = Field("", title="Statement 13", description="You stated that your requested outputs include Gini coefficients or Lorenz curves")
+    nGiniCoefficient: bool = Field("", title="Statement 14", description="N>2")
+    coefficientLessThan: bool = Field("", title="Statement 15", description="The coefficient is less than 100%")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "testConfirmation": "True",
+                "coefficientsConfirmation": "True",
+                "residualDegrees": "True",
+                "modelNotSaturated": "True",
+                "regressionNotIncluded": "True",
+                "shapeConfirmation": "True",
+                "standardDeviations": "True",
+                "shapeMinFive": "True",
+                "modeConfirmation": "True",
+                "ratiosConfirmation": "True",
+                "nRatio": "True",
+                "hRatio": "True",
+                "giniCoefficientsConfirmation": "True",
+                "nGiniCoefficient": "True",
+                "coefficientLessThan": "True"
+            }
+        }
