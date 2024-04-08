@@ -192,6 +192,9 @@ async def get_airlock_container_link_method(workspace=Depends(get_deployed_works
 async def review_triage_statements(airlock_request_triage_statements_input: AirlockRequestTriageStatements,
                                airlock_request=Depends(get_airlock_request_by_id_from_path),
                                airlock_request_repo=Depends(get_repository(AirlockRequestRepository))) -> AirlockRequestWithAllowedUserActions:
+    if airlock_request.type == AirlockRequestType.Import:
+        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
+                            details="Endpoint not available for Import Airlock requests.")
     try:
         await airlock_request_repo.save_and_check_triage_statements(airlock_request, airlock_request_triage_statements_input)
         return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request)
@@ -206,6 +209,9 @@ async def review_triage_statements(airlock_request_triage_statements_input: Airl
 async def review_statistics_statements(airlock_request_statistics_statements_input: AirlockRequestStatisticsStatements,
                                airlock_request=Depends(get_airlock_request_by_id_from_path),
                                airlock_request_repo=Depends(get_repository(AirlockRequestRepository))) -> AirlockRequestWithAllowedUserActions:
+    if airlock_request.type == AirlockRequestType.Import:
+        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
+                            details="Endpoint not available for Import Airlock requests.")
     try:
         await airlock_request_repo.save_and_check_statistics_statements(airlock_request, airlock_request_statistics_statements_input)
         return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request)
@@ -220,6 +226,9 @@ async def review_statistics_statements(airlock_request_statistics_statements_inp
 async def review_safe_statistics_statements(airlock_request_safe_statistics_statements_input: AirlockRequestSafeStatisticsStatements,
                                airlock_request=Depends(get_airlock_request_by_id_from_path),
                                airlock_request_repo=Depends(get_repository(AirlockRequestRepository))) -> AirlockRequestWithAllowedUserActions:
+    if airlock_request.type == AirlockRequestType.Import:
+        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
+                            details="Endpoint not available for Import Airlock requests.")
     try:
         await airlock_request_repo.save_and_check_safe_statistics_statements(airlock_request, airlock_request_safe_statistics_statements_input)
         return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request)
@@ -234,6 +243,9 @@ async def review_safe_statistics_statements(airlock_request_safe_statistics_stat
 async def review_acro_confirmation(airlock_request_acro_confirmation_input: AirlockRequestAcroConfirmation,
                                airlock_request=Depends(get_airlock_request_by_id_from_path),
                                airlock_request_repo=Depends(get_repository(AirlockRequestRepository))) -> AirlockRequestWithAllowedUserActions:
+    if airlock_request.type == AirlockRequestType.Import:
+        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
+                            details="Endpoint not available for Import Airlock requests.")
     try:
         await airlock_request_repo.save_and_check_acro_confirmation(airlock_request, airlock_request_acro_confirmation_input)
         return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request)
