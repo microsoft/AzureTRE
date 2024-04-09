@@ -17,7 +17,8 @@
       "description": "Select Linux image to use for VM",
       "enum": [
         "Ubuntu 22.04 LTS",
-        "Ubuntu 22.04 LTS Data Science VM"
+        "Ubuntu 20.04 LTS",
+        "Ubuntu 20.04 LTS Data Science VM"
       ]
     },
     "vm_size": {
