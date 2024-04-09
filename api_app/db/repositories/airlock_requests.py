@@ -108,8 +108,8 @@ class AirlockRequestRepository(BaseRepository):
             reviews=[],
             triageStatements=[],
             contactTeamForm=[],
-            unsafeStatistics=[],
-            otherStatistics=[],
+            unsafeStatisticsStatements=[],
+            otherStatisticsStatements=[],
             statisticsStatements=[],
             safeStatisticsStatements=[],
             acroConfirmation=[]
@@ -254,6 +254,9 @@ class AirlockRequestRepository(BaseRepository):
         request.contactTeamForm.clear()
         request.contactTeamForm.append(contactTeamForm)
 
+        await self.update_item(request)
+        return request
+
     async def save_and_check_statistics_statements(self, request: AirlockRequest, airlock_request_statistics_statements_input: AirlockRequestStatisticsStatements) -> AirlockRequest:
         statisticsStatements = AirlockRequestStatisticsStatements(
             codeLists=airlock_request_statistics_statements_input.codeLists,
@@ -264,7 +267,7 @@ class AirlockRequestRepository(BaseRepository):
             mode=airlock_request_statistics_statements_input.mode,
             ratios=airlock_request_statistics_statements_input.ratios,
             giniCoefficients=airlock_request_statistics_statements_input.giniCoefficients,
-            unsafeStatistics=airlock_request_statistics_statements_input.unsafeStatistics,
+            unsafeStatisticsStatements=airlock_request_statistics_statements_input.unsafeStatisticsStatements,
             frequencies=airlock_request_statistics_statements_input.frequencies,
             position=airlock_request_statistics_statements_input.position,
             extremeValues=airlock_request_statistics_statements_input.extremeValues,
@@ -280,8 +283,8 @@ class AirlockRequestRepository(BaseRepository):
         await self.update_item(request)
         return request
 
-    async def save_and_check_unsafe_statistics(self, request: AirlockRequest, airlock_request_unsafe_statistics_input: AirlockRequestUnsafeStatisticsStatements) -> AirlockRequest:
-        unsafeStatistics = AirlockRequestUnsafeStatisticsStatements(
+    async def save_and_check_unsafe_statistics_statements(self, request: AirlockRequest, airlock_request_unsafe_statistics_input: AirlockRequestUnsafeStatisticsStatements) -> AirlockRequest:
+        unsafeStatisticsStatements = AirlockRequestUnsafeStatisticsStatements(
             requestedOutputsStatisticsPosition=airlock_request_unsafe_statistics_input.requestedOutputsStatisticsPosition,
             requestedOutputsLinearAggregates=airlock_request_unsafe_statistics_input.requestedOutputsLinearAggregates,
             linearAggregatesDerivedGroups=airlock_request_unsafe_statistics_input.linearAggregatesDerivedGroups,
@@ -289,8 +292,11 @@ class AirlockRequestRepository(BaseRepository):
             nkDominanceRule=airlock_request_unsafe_statistics_input.nkDominanceRule
         )
 
-        request.unsafeStatistics.clear()
-        request.unsafeStatistics.append(unsafeStatistics)
+        request.unsafeStatisticsStatements.clear()
+        request.unsafeStatisticsStatements.append(unsafeStatisticsStatements)
+
+        await self.update_item(request)
+        return request
 
     async def save_and_check_safe_statistics_statements(self, request: AirlockRequest, airlock_request_safe_statistics_statements_input: AirlockRequestSafeStatisticsStatements) -> AirlockRequest:
         safeStatisticsStatements = AirlockRequestSafeStatisticsStatements(
@@ -317,23 +323,26 @@ class AirlockRequestRepository(BaseRepository):
         await self.update_item(request)
         return request
 
-    async def save_and_check_other_statistics(self, request: AirlockRequest, airlock_request_other_statistics_input: AirlockRequestOtherStatisticsStatements) -> AirlockRequest:
-        otherStatistics = AirlockRequestOtherStatisticsStatements(
-            requestedOutputsIncludeFrequencies=airlock_request_other_statistics_input.requestedOutputsIncludeFrequencies,
-            smallFrequenciesSuppressed=airlock_request_other_statistics_input.smallFrequenciesSuppressed,
-            zerosFullCells=airlock_request_other_statistics_input.zerosFullCells,
-            underlyingValuesIndependent=airlock_request_other_statistics_input.underlyingValuesIndependent,
-            categoriesComprehensiveData=airlock_request_other_statistics_input.categoriesComprehensiveData,
-            requestedOutputsExtremeValues=airlock_request_other_statistics_input.requestedOutputsExtremeValues,
-            requestedOutputsRatios=airlock_request_other_statistics_input.requestedOutputsRatios,
-            requestedOutputsHazard=airlock_request_other_statistics_input.requestedOutputsHazard,
-            numberPatientsSurvived=airlock_request_other_statistics_input.numberPatientsSurvived,
-            exitDatesRelatives=airlock_request_other_statistics_input.exitDatesRelatives,
-            noDatesWithSingleExit=airlock_request_other_statistics_input.noDatesWithSingleExit
+    async def save_and_check_other_statistics_statements(self, request: AirlockRequest, airlock_request_other_statistics_statements_input: AirlockRequestOtherStatisticsStatements) -> AirlockRequest:
+        otherStatisticsStatements = AirlockRequestOtherStatisticsStatements(
+            requestedOutputsIncludeFrequencies=airlock_request_other_statistics_statements_input.requestedOutputsIncludeFrequencies,
+            smallFrequenciesSuppressed=airlock_request_other_statistics_statements_input.smallFrequenciesSuppressed,
+            zerosFullCells=airlock_request_other_statistics_statements_input.zerosFullCells,
+            underlyingValuesIndependent=airlock_request_other_statistics_statements_input.underlyingValuesIndependent,
+            categoriesComprehensiveData=airlock_request_other_statistics_statements_input.categoriesComprehensiveData,
+            requestedOutputsExtremeValues=airlock_request_other_statistics_statements_input.requestedOutputsExtremeValues,
+            requestedOutputsRatios=airlock_request_other_statistics_statements_input.requestedOutputsRatios,
+            requestedOutputsHazard=airlock_request_other_statistics_statements_input.requestedOutputsHazard,
+            numberPatientsSurvived=airlock_request_other_statistics_statements_input.numberPatientsSurvived,
+            exitDatesRelatives=airlock_request_other_statistics_statements_input.exitDatesRelatives,
+            noDatesWithSingleExit=airlock_request_other_statistics_statements_input.noDatesWithSingleExit
         )
 
-        request.otherStatistics.clear()
-        request.otherStatistics.append(otherStatistics)
+        request.otherStatisticsStatements.clear()
+        request.otherStatisticsStatements.append(otherStatisticsStatements)
+
+        await self.update_item(request)
+        return request
 
     async def save_and_check_acro_confirmation(self, request: AirlockRequest, airlock_request_acro_confirmation_input: AirlockRequestAcroConfirmation) -> AirlockRequest:
         acroConfirmation = AirlockRequestAcroConfirmation(

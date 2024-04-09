@@ -144,6 +144,7 @@ class AirlockRequestContactTeamForm(BaseModel):
     requiredDisclosureAlignment: str = Field("Question 1", title="Why are outputs required that do not align with the disclosure control rules?")
     measuresTakenMinimiseDisclosure: str = Field("Question 2", title="What measures have been taken to minimise the risk of potentially disclosive outputs?")
     transferToThirdParty: str = Field("Question 3", title="Will the outputs be transferred to any other third party?")
+
     class Config:
         schema_extra = {
             "example": {
@@ -163,7 +164,7 @@ class AirlockRequestStatisticsStatements(BaseModel):
     mode: bool = Field("", title="Statement 6", description="Mode")
     ratios: bool = Field("", title="Statement 7", description="Non-linear concentration ratios (e.g., Herfindahl-Hirchsmann index, diversity index)")
     giniCoefficients: bool = Field("", title="Statement 8", description="Gini coefficients or Lorenz curves")
-    unsafeStatistics: bool = Field("", title="Statement 9", description="Unsafe statistics")
+    unsafeStatisticsStatements: bool = Field("", title="Statement 9", description="Unsafe statistics")
     frequencies: bool = Field("", title="Statement 10", description="Frequencies (e.g. frequency tables, histograms, shares, alluvial flow graphs, heat maps, line graphs, pie charts, scatter graphs, scatter plots, smoothed histograms, waterfall charts)")
     position: bool = Field("", title="Statement 11", description="Position (e.g., median, percentiles, box plots)")
     extremeValues: bool = Field("", title="Statement 12", description="Extreme values (e.g., maxima, minima)")
@@ -183,7 +184,7 @@ class AirlockRequestStatisticsStatements(BaseModel):
                 "mode": "True",
                 "ratios": "True",
                 "giniCoefficients": "True",
-                "unsafeStatistics": "True",
+                "unsafeStatisticsStatements": "True",
                 "frequencies": "True",
                 "position": "True",
                 "extremeValues": "True",
@@ -201,7 +202,7 @@ class AirlockRequestUnsafeStatisticsStatements(BaseModel):
     linearAggregatesDerivedGroups: bool = Field("", title="Statement 3", description="The linear aggregates have been derived from groups containing ≥5 patients or GP practices.")
     pRatioDominanceRule: bool = Field("", title="Statement 4", description="The P-ratio dominance rule has been calculated and is greater than 10%. (NB: ACRO will check this automatically).")
     nkDominanceRule: bool = Field("", title="Statement 5", description="The N-K dominance rule has been calculated for the 2 largest values and is less than 90%. (NB: ACRO will check this automatically).")
-    
+
     class Config:
         schema_extra = {
             "example": {

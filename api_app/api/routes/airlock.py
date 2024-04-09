@@ -254,7 +254,7 @@ async def review_unsafe_statistics(airlock_request_unsafe_statistics_input: Airl
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
                             detail="Endpoint not available for Import Airlock requests.")
     try:
-        await airlock_request_repo.save_and_check_unsafe_statistics(airlock_request, airlock_request_unsafe_statistics_input)
+        await airlock_request_repo.save_and_check_unsafe_statistics_statements(airlock_request, airlock_request_unsafe_statistics_input)
         return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request)
     except (ValidationError, ValueError) as e:
         logging.exception("Failed saving triage statements")
@@ -264,14 +264,14 @@ async def review_unsafe_statistics(airlock_request_unsafe_statistics_input: Airl
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/other-statistics", status_code=status_code.HTTP_200_OK,
                                response_model=AirlockRequestWithAllowedUserActions, name=strings.API_OTHER_STATISTICS_STATEMENTS,
                                dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
-async def review_unsafe_statistics(airlock_request_other_statistics_input: AirlockRequestOtherStatisticsStatements,
+async def review_unsafe_statistics(airlock_request_other_statistics_statements_input: AirlockRequestOtherStatisticsStatements,
                                airlock_request=Depends(get_airlock_request_by_id_from_path),
                                airlock_request_repo=Depends(get_repository(AirlockRequestRepository))) -> AirlockRequestWithAllowedUserActions:
     if airlock_request.type == AirlockRequestType.Import:
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
                             detail="Endpoint not available for Import Airlock requests.")
     try:
-        await airlock_request_repo.save_and_check_other_statistics(airlock_request, airlock_request_other_statistics_input)
+        await airlock_request_repo.save_and_check_other_statistics_statements(airlock_request, airlock_request_other_statistics_statements_input)
         return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request)
     except (ValidationError, ValueError) as e:
         logging.exception("Failed saving triage statements")
@@ -288,7 +288,7 @@ async def review_safe_statistics_statements(airlock_request_safe_statistics_stat
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
                             detail="Endpoint not available for Import Airlock requests.")
     try:
-        await airlock_request_repo.save_and_check_other_statistics(airlock_request, airlock_request_other_statistics_input)
+        await airlock_request_repo.save_and_check_safe_statistics_statements(airlock_request, airlock_request_safe_statistics_statements_input)
         return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request)
     except (ValidationError, ValueError) as e:
         logging.exception("Failed saving triage statements")
