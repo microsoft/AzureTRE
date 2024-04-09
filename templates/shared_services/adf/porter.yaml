@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-adf
-version: 0.0.1
+version: 0.0.2
 description: "An Azure Data Factory workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -55,25 +55,25 @@ install:
       vars:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
-        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: tre-shared-service-adf-${ bundle.parameters.id }
+
 upgrade:
   - exec:
       description: "Upgrade shared service"
       command: echo
       arguments:
         - "This shared service does not implement upgrade action"
+
 uninstall:
   - terraform:
       description: "Tear down adf shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
-        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
