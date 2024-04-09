@@ -11,13 +11,13 @@
       "type": "string",
       "title": "MySQL server SKU",
       "description": "MySQL server SKU",
+      "updateable": true,
       "enum": [
-        "GP | 5GB 2vCores",
-        "GP | 5GB 4vCores",
-        "GP | 5GB 6vCores",
-        "GP | 5GB 8vCores"
+        "B | 4GB 2vCores",
+        "GP | 8GB 2vCores",
+        "BC | 16GB 2vCores"
       ],
-      "default": "GP | 5GB 2vCores"
+      "default": "B | 4GB 2vCores"
     },
     "storage_mb": {
       "$id": "#/properties/storage_mb",
@@ -30,7 +30,8 @@
       "$id": "#/properties/db_name",
       "type": "string",
       "title": "Database name",
-      "description": "Database name"
+      "description": "Database name",
+      "default": "tredb"
     }
   }
 }
