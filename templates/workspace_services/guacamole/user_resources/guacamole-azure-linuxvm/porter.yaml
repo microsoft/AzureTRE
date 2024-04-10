@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-linuxvm
-version: 0.6.11
+version: 0.6.12
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -36,7 +36,7 @@ custom:
         offer: ubuntu-2004
         sku: 2004
         version: latest
-      install_ui: false
+      install_ui: true
       conda_config: true
     # For information on using custom images, see README.me in the guacamole/user-resources folder
     # "Custom Image From Gallery":
