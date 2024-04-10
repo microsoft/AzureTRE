@@ -14,7 +14,6 @@ apt:
     deb [trusted=yes] $PRIMARY $RELEASE main restricted universe multiverse
     deb [trusted=yes] $PRIMARY $RELEASE-updates main restricted universe multiverse
     deb [trusted=yes] $SECURITY $RELEASE main restricted universe multiverse
-    deb [signed-by=/etc/apt/trusted.gpg.d/microsoft.gpg] ${nexus_proxy_url}/repository/microsoft-apt/ubuntu/22.04/prod $RELEASE main
-    deb [signed-by=/etc/apt/trusted.gpg.d/microsoft.gpg] ${nexus_proxy_url}/repository/microsoft-apt/ubuntu/20.04/prod $RELEASE main
+    deb [signed-by=/etc/apt/trusted.gpg.d/microsoft.gpg] ${nexus_proxy_url}/repository/microsoft-apt/ubuntu/${sku}/prod $RELEASE main
     deb [signed-by=/etc/apt/trusted.gpg.d/microsoft.gpg] ${nexus_proxy_url}/repository/microsoft-apt/repos/edge stable main
     deb [signed-by=/etc/apt/trusted.gpg.d/docker-archive-keyring.gpg] ${nexus_proxy_url}/repository/docker/ $RELEASE stable

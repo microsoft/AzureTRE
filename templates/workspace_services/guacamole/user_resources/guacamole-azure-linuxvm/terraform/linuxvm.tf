@@ -131,6 +131,7 @@ data "template_file" "apt_sources_config" {
   template = file("${path.module}/apt_sources_config.yml")
   vars = {
     nexus_proxy_url = local.nexus_proxy_url
+    sku             = local.apt_sku
   }
 }
 
