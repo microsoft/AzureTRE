@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-linuxvm
-version: 0.6.12
+version: 0.6.13
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -34,7 +34,7 @@ custom:
       source_image_reference:
         publisher: microsoft-dsvm
         offer: ubuntu-2004
-        sku: 2004
+        sku: 2004-gen2
         version: latest
       install_ui: true
       conda_config: true
