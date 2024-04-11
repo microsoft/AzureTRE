@@ -13,6 +13,8 @@ BUG FIXES:
 * Update to Resource Processor Image, now using Ubuntu 22.04 (jammy). Part of ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
 * Remove TLS1.0/1.1 support from Application Gateway
 
+* Update Guacomole Linux VM Images to 22.04 and 20.04 Data Science VM. Part of ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
+  
 COMPONENTS:
 
 ## 0.17.0
