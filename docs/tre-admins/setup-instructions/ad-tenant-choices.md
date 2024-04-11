@@ -16,7 +16,7 @@ It is possible to use your corporate tenant for TRE. This does have the advantag
 
 ## Create Dedicated Microsoft Entra ID Tenant
 
-Follow [this guide](https://learn.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-access-create-new-tenant) to create new dedicated tenant.
+Follow [this guide](https://learn.microsoft.com/en-us/entra/fundamentals/create-new-tenant) to create new dedicated tenant.
 
 ## Next steps
 
