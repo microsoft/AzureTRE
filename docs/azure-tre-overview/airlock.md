@@ -117,7 +117,7 @@ Whenever the airlock process changes to a state of **Draft**, **Submitted**, **A
 When the state changes to `In-progress` the Workspace Owner (Airlock Manager) gets notified.
 
 > * The Notification mechanism is also data-driven, allowing an organization to extend the notifications behavior. The mechanism is exemplified with a Logic App determining the notifications logic.
-> * Notifications will work with All TRE users being AAD users (guests or not), with email defined – if not, notifications will not be sent.
+> * Notifications will work with All TRE users being Microsoft Entra ID users (guests or not), with email defined – if not, notifications will not be sent.
 
 ## Architecture
 
