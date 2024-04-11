@@ -86,6 +86,7 @@ if [ "${CONDA_CONFIG}" -eq 1 ]; then
 fi
 
 # Docker install and config
+sudo apt-get install -y r-base-core
 sudo apt-get install -y ca-certificates curl gnupg lsb-release
 sudo apt-get install -y docker-compose-plugin docker-ce-cli containerd.io jq
 sudo apt-get install -y docker-ce
@@ -95,3 +96,4 @@ sudo systemctl restart docker
 
 # R config
 sudo echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- \"""${NEXUS_PROXY_URL}\"/repository/r-proxy/\"\n    options(repos = r)\n})" | sudo tee /etc/R/Rprofile.site
+sudo shutdown -r now
