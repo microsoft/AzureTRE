@@ -32,7 +32,7 @@ custom:
       source_image_reference:
         publisher: canonical
         offer: 0001-com-ubuntu-server-jammy
-        sku: 22_04-lts
+        sku: 22_04-lts-gen2
         version: latest
       install_ui: true
       conda_config: false
@@ -40,7 +40,7 @@ custom:
       source_image_reference:
         publisher: canonical
         offer: 0001-com-ubuntu-server-focal
-        sku: 20_04-lts
+        sku: 20_04-lts-gen2
         version: latest
       install_ui: true
       conda_config: false
@@ -48,7 +48,7 @@ custom:
       source_image_reference:
         publisher: microsoft-dsvm
         offer: ubuntu-2004
-        sku: 2004
+        sku: 2004-gen2
         version: latest
       install_ui: true
       conda_config: true
