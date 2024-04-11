@@ -39,7 +39,7 @@ custom:
         sku: 2004-gen2
         version: latest
         apt-sku: 20.04
-      install_ui: true
+      install_ui: false
       conda_config: true
     # For information on using custom images, see README.me in the guacamole/user-resources folder
     # "Custom Image From Gallery":
