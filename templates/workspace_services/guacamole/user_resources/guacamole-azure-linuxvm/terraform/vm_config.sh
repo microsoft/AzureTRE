@@ -86,6 +86,7 @@ if [ "${CONDA_CONFIG}" -eq 1 ]; then
 fi
 
 # Docker install and config
+sudo apt-get remove -y moby-tini
 sudo apt-get install -y r-base-core
 sudo apt-get install -y ca-certificates curl gnupg lsb-release
 sudo apt-get install -y docker-compose-plugin docker-ce-cli containerd.io jq
