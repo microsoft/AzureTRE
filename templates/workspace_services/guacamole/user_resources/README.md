@@ -2,7 +2,7 @@
 
 This folder contains user resources that can be deployed with the Guacamole workspace service:
 
-- linuxvm - a Linux-based virtual machine (expects an Ubuntu 18.Ubuntu 22.04 LTS-based VM)
+- linuxvm - a Linux-based virtual machine
 - windowsvm - A Windows-based virtual machine
 
 ## Customising the user resources
