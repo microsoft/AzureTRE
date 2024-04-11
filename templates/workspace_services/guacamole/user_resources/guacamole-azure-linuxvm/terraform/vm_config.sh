@@ -86,7 +86,8 @@ fi
 
 # Docker install and config
 sudo apt-get install -y ca-certificates curl gnupg lsb-release
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin jq
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io jq
+sudo apt-get install -y docker-compose-plugin
 jq -n --arg proxy "${NEXUS_PROXY_URL}:8083" '{"registry-mirrors": [$proxy]}' > /etc/docker/daemon.json
 sudo systemctl daemon-reload
 sudo systemctl restart docker
