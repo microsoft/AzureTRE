@@ -3446,7 +3446,7 @@
   - Typescript
   - React Router v6 for client side routing
 - Fluent UI <a href="https://developer.microsoft.com/en-us/fluentui#/controls/web">Fluent UI Docs</a>
-- MSAL v2: AAD authentication <a href="https://github.com/AzureAD/microsoft-authentication-library-for-js/tree/dev/lib/msal-react">msal-react docs</a></p>
+- MSAL v2: Microsoft Entra ID authentication <a href="https://github.com/AzureAD/microsoft-authentication-library-for-js/tree/dev/lib/msal-react">msal-react docs</a></p>
 <h3 id="folder-structure">Folder structure</h3>
 <div class="highlight"><pre><span></span><code>ui
 ├── app                    - Root of the React application
@@ -3459,7 +3459,7 @@
 </code></pre></div>
 <h3 id="authn-authz">AuthN + AuthZ</h3>
 <p>For further details on the auth setup, see <a href="../../tre-admins/auth/">Auth</a>.</p>
-<p>As stated above, AAD is used for Authentication and Authorization. There are 3 AAD apps involved here:
+<p>As stated above, Microsoft Entra ID is used for Authentication and Authorization. There are 3 Microsoft Entra ID apps involved here:
 - <strong>TRE UX</strong>. This is the app that the user authenticates against. Once authenticated, the client will request an access token for the <code>TRE Api</code>.
 - <strong>TRE Api</strong>. In the access token response from this app we get the user's role membership for TRE-level roles (<code>TREAdmin</code> / <code>TREUser</code>). Based on these role memberships, aspects of the UI will be made available. If the user is in a <code>TREAdmin</code> role, they will see buttons to create workspaces for instance.
 When the user navigates into a Workspace, the client will request an access token for that <code>Workspace App</code>.
@@ -3469,7 +3469,7 @@ From this access token we can find the Workspace-level roles the user is in (<co
 <h3 id="react-contexts">React Contexts</h3>
 <p>The React Context API is a clean way to handle a limited amount of global state, and is used for a few scenarios in this project:
 - TRE Roles Context: A context provides details of the base TRE roles a user is in, which can be consumed anywhere throughout the app
-- Workspace Context: Tracks the currently selected Workspace, and the roles the user is in for that Workspace. This context is used for nested components to be able to authenticate against the correct AAD App via <code>workspaceCtx.workspaceApplicationIdURI</code>.
+- Workspace Context: Tracks the currently selected Workspace, and the roles the user is in for that Workspace. This context is used for nested components to be able to authenticate against the correct Microsoft Entra ID App via <code>workspaceCtx.workspaceApplicationIdURI</code>.
 - Create Form Context: A context to control the Create / Update form behaviour.
 - Notifications Context: Tracks all the in-progress operations currently running. For each operation, the Notifications panel also uses this context to broadcast Component 'actions' which are subscribed to by downstream components. This way, a resource component does not have to track it's own changes, and can be 'told' by the Notifications Context whether it should refresh / lock etc.</p>
 <h3 id="custom-hooks">Custom Hooks</h3>

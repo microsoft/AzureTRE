@@ -3375,11 +3375,11 @@
 <p>The rest of the variables can have their default values.</p>
 </li>
 <li>
-<p>Decide on a name for your <code>tre_id</code> ID for the Azure TRE instance. The value will be used in various Azure resources and AAD application names. It <strong>needs to be globally unique and less than 12 characters in length</strong>. Use <strong>only</strong> lowercase alphanumerics. Choose wisely!</p>
+<p>Decide on a name for your <code>tre_id</code> ID for the Azure TRE instance. The value will be used in various Azure resources and Microsoft Entra ID application names. It <strong>needs to be globally unique and less than 12 characters in length</strong>. Use <strong>only</strong> lowercase alphanumerics. Choose wisely!</p>
 </li>
 <li>Once you have decided on which AD Tenant paradigm, then you should be able to set <code>aad_tenant_id</code> in the authentication section in your <code>config.yaml</code> file.</li>
 <li>
-<p>Your AAD Tenant Admin can now use the terminal window in Visual Studio Code to execute the following script from within the development container to create all the AAD Applications that are used for TRE. The details of the script are covered in the <a href="../../auth/">auth document</a>.</p>
+<p>Your Microsoft Entra ID Tenant Admin can now use the terminal window in Visual Studio Code to execute the following script from within the development container to create all the Microsoft Entra ID Applications that are used for TRE. The details of the script are covered in the <a href="../../auth/">auth document</a>.</p>
 <div class="highlight"><pre><span></span><code>make<span class="w"> </span>auth
 </code></pre></div>
 <div class="admonition note">
@@ -3392,7 +3392,7 @@
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The full functionality of the script requires directory admin privileges. You may need to contact your friendly Azure Active Directory admin to complete this step. The app registrations can be created manually in Azure Portal too. For more information, see <a href="../../auth/">Authentication and authorization</a>.</p>
+<p>The full functionality of the script requires directory admin privileges. You may need to contact your friendly Microsoft Entra ID admin to complete this step. The app registrations can be created manually in Azure Portal too. For more information, see <a href="../../auth/">Authentication and authorization</a>.</p>
 </div>
 </li>
 </ol>

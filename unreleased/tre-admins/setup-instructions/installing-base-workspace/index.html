@@ -3424,7 +3424,7 @@
 </code></pre></div>
 <div class="admonition caution">
 <p class="admonition-title">Caution</p>
-<p>If you're using a separate tenant for AAD app registrations to the one where you've deployed the TRE infrastructure resources, ensure you've signed into that tenant in the <code>az cli</code> before running the above command. See <strong>Using a separate Azure Active Directory tenant</strong> in <a href="../setup-auth-entities/">Setup Auth configuration</a> for more details.</p>
+<p>If you're using a separate tenant for Microsoft Entra ID app registrations to the one where you've deployed the TRE infrastructure resources, ensure you've signed into that tenant in the <code>az cli</code> before running the above command. See <strong>Using a separate Microsoft Entra ID tenant</strong> in <a href="../setup-auth-entities/">Setup Auth configuration</a> for more details.</p>
 </div>
 <p>Running the script will report <code>workspace_api_client_id</code> and <code>workspace_api_client_secret</code> for the generated app. Add these under the authenrication section in <code>/config.yaml</code> so that automated testing will work. You also need to use <code>workspace_api_client_id</code> in the POST body below.</p>
 <h3 id="create-workspace-using-the-api">Create workspace using the API</h3>

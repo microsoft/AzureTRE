@@ -3430,7 +3430,7 @@
 
 <h1 id="the-application-administrator-identity">The Application Administrator Identity</h1>
 <h2 id="purpose">Purpose</h2>
-<p>This identity's credentials are stored in the core key vault and are used when you wish to update AAD Applications. For instance, when you add Guacamole as a Workspace Service, you would need to add the URI of the Guacamole Service as a Redirect URI to the Workspace App to complete the login flow.</p>
+<p>This identity's credentials are stored in the core key vault and are used when you wish to update Microsoft Entra ID Applications. For instance, when you add Guacamole as a Workspace Service, you would need to add the URI of the Guacamole Service as a Redirect URI to the Workspace App to complete the login flow.</p>
 <h2 id="application-roles">Application Roles</h2>
 <p>This application does not have any roles defined.</p>
 <h2 id="microsoft-graph-permissions">Microsoft Graph Permissions</h2>
@@ -3448,25 +3448,25 @@
 <td>Application.ReadWrite.OwnedBy</td>
 <td>Application</td>
 <td>Yes</td>
-<td>This user has <code>Application.ReadWrite.OwnedBy</code> as a minimum permission for it to function. If the tenant is managed by a customer administrator, then this user must be added to the <strong>Owners</strong> of every workspace that is created. This will allow TRE to manage the AAD Application. This will be a manual process for the Tenant Admin.</td>
+<td>This user has <code>Application.ReadWrite.OwnedBy</code> as a minimum permission for it to function. If the tenant is managed by a customer administrator, then this user must be added to the <strong>Owners</strong> of every workspace that is created. This will allow TRE to manage the Microsoft Entra ID Application. This will be a manual process for the Tenant Admin.</td>
 </tr>
 <tr>
 <td>Application.ReadWrite.All</td>
 <td>Application</td>
 <td>Yes</td>
-<td>This permission is required to create workspace applications and administer any applications in the tenant. This is needed if the AAD Administrator has delegated AAD administrative operations to the TRE. There will be no need for the Tenant Admin to manually create workspace applications in the Tenant.</td>
+<td>This permission is required to create workspace applications and administer any applications in the tenant. This is needed if the Microsoft Entra ID Administrator has delegated Microsoft Entra ID administrative operations to the TRE. There will be no need for the Tenant Admin to manually create workspace applications in the Tenant.</td>
 </tr>
 <tr>
 <td>Directory.Read.All</td>
 <td>Application</td>
 <td>Yes</td>
-<td>This permission is required to read User details from Azure Active Directory. This is needed if the AAD Administrator has delegated AAD administrative operations to the TRE.</td>
+<td>This permission is required to read User details from Microsoft Entra ID. This is needed if the Microsoft Entra ID Administrator has delegated Microsoft Entra ID administrative operations to the TRE.</td>
 </tr>
 <tr>
 <td>Group.ReadWrite.All</td>
 <td>Application</td>
 <td>Yes</td>
-<td>This permission is required to create and update Azure AD groups. This is requried if Azure AD groups are to be created automatically by the TRE.</td>
+<td>This permission is required to create and update Microsoft Entra ID groups. This is requried if Microsoft Entra ID groups are to be created automatically by the TRE.</td>
 </tr>
 </tbody>
 </table>
@@ -3491,7 +3491,7 @@
 </tr>
 <tr>
 <td><code>--admin-consent</code></td>
-<td>If you have the appropriate permission to grant admin consent, then pass in this argument. If you do not, you will have to ask an AAD Admin to consent after you have created the identity. Consent is required for this permission.</td>
+<td>If you have the appropriate permission to grant admin consent, then pass in this argument. If you do not, you will have to ask an Microsoft Entra ID Admin to consent after you have created the identity. Consent is required for this permission.</td>
 </tr>
 <tr>
 <td><code>--application-permission</code></td>

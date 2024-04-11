@@ -2128,9 +2128,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#using-a-separate-azure-active-directory-tenant" class="md-nav__link">
+  <a href="#using-a-separate-microsoft-entra-id-tenant" class="md-nav__link">
     <span class="md-ellipsis">
-      Using a separate Azure Active Directory tenant
+      Using a separate Microsoft Entra ID tenant
     </span>
   </a>
   
@@ -3380,9 +3380,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#using-a-separate-azure-active-directory-tenant" class="md-nav__link">
+  <a href="#using-a-separate-microsoft-entra-id-tenant" class="md-nav__link">
     <span class="md-ellipsis">
-      Using a separate Azure Active Directory tenant
+      Using a separate Microsoft Entra ID tenant
     </span>
   </a>
   
@@ -3433,11 +3433,11 @@
 
 
 <h1 id="introduction-to-authentication-and-authorization">Introduction to Authentication and Authorization</h1>
-<p><a href="https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis">Azure Active Directory (AAD)</a> is the backbone of Authentication and Authorization in the Trusted Research Environment. AAD holds the identities of all the TRE/workspace users, including administrators, and connects the identities with applications which define the permissions for each user role.</p>
-<p>It is common that the Azure Administrator is not necessarily the Azure Active Directory Administrator. Due to this, this step may have to be carried out by a different individual/team. We have automated this into a simple command, but should you wish, you can run these steps manually.</p>
+<p><a href="https://learn.microsoft.com/en-us/entra/fundamentals/whatis">Microsoft Entra ID</a> is the backbone of Authentication and Authorization in the Trusted Research Environment. Microsoft Entra ID holds the identities of all the TRE/workspace users, including administrators, and connects the identities with applications which define the permissions for each user role.</p>
+<p>It is common that the Azure Administrator is not necessarily the Microsoft Entra ID Administrator. Due to this, this step may have to be carried out by a different individual/team. We have automated this into a simple command, but should you wish, you can run these steps manually.</p>
 <p>This page describes the automated Auth setup for TRE.</p>
 <h2 id="pre-requisites">Pre-requisites</h2>
-<p>The automation utilises a <code>make</code> command, which reads a few environment variables and creates the AAD assets. The following values are needed to be in place before you run the creation process. (<code>/config.yaml</code>)</p>
+<p>The automation utilises a <code>make</code> command, which reads a few environment variables and creates the Microsoft Entra ID assets. The following values are needed to be in place before you run the creation process. (<code>/config.yaml</code>)</p>
 <table>
 <thead>
 <tr>
@@ -3452,7 +3452,7 @@
 </tr>
 <tr>
 <td>AAD_TENANT_ID</td>
-<td>The tenant id of where your AAD identities will be placed. This can be different to the tenant where your Azure resources are created.</td>
+<td>The tenant id of where your Microsoft Entra ID identities will be placed. This can be different to the tenant where your Azure resources are created.</td>
 </tr>
 <tr>
 <td>LOCATION</td>
@@ -3460,11 +3460,11 @@
 </tr>
 <tr>
 <td>AUTO_WORKSPACE_APP_REGISTRATION</td>
-<td>Default of <code>false</code>. Setting this to true grants the <code>Application.ReadWrite.All</code> and <code>Directory.Read.All</code> permission to the <em>Application Admin</em> identity. This identity is used to manage other AAD applications that it owns, e.g. Workspaces. If you do not set this, the identity will have <code>Application.ReadWrite.OwnedBy</code>. Further information can be found <a href="../identities/application_admin/">here</a>.</td>
+<td>Default of <code>false</code>. Setting this to true grants the <code>Application.ReadWrite.All</code> and <code>Directory.Read.All</code> permission to the <em>Application Admin</em> identity. This identity is used to manage other Microsoft Entra ID applications that it owns, e.g. Workspaces. If you do not set this, the identity will have <code>Application.ReadWrite.OwnedBy</code>. Further information can be found&nbsp;<a href="../identities/application_admin/">here</a>.</td>
 </tr>
 <tr>
 <td>AUTO_WORKSPACE_GROUP_CREATION</td>
-<td>Default of <code>false</code>. Setting this to true grants the <code>Group.ReadWrite.All</code> permission to the <em>Application Admin</em> identity. This identity can then create security groups aligned to each applciation role. Active Directory licencing implications need to be considered as Group assignment is a <a href="https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/app-roles#roles-using-azure-ad-app-roles">premium feature</a>.</td>
+<td>Default of <code>false</code>. Setting this to true grants the <code>Group.ReadWrite.All</code> permission to the <em>Application Admin</em> identity. This identity can then create security groups aligned to each applciation role. Microsoft Entra ID licencing implications need to be considered as Group assignment is a <a href="https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/app-roles#roles-using-azure-ad-app-roles">premium feature</a>.</td>
 </tr>
 </tbody>
 </table>
@@ -3484,11 +3484,11 @@ This will create five identities, and if successful will write the outputs to at
 <tbody>
 <tr>
 <td><code>APPLICATION_ADMIN_CLIENT_ID</code></td>
-<td>This client will administer AAD Applications for TRE</td>
+<td>This client will administer Microsoft Entra ID Applications for TRE</td>
 </tr>
 <tr>
 <td><code>APPLICATION_ADMIN_CLIENT_SECRET</code></td>
-<td>This client will administer AAD Applications for TRE</td>
+<td>This client will administer Microsoft Entra ID Applications for TRE</td>
 </tr>
 <tr>
 <td><code>TEST_ACCOUNT_CLIENT_ID</code></td>
@@ -3520,18 +3520,18 @@ This will create five identities, and if successful will write the outputs to at
 </tr>
 </tbody>
 </table>
-<h3 id="using-a-separate-azure-active-directory-tenant">Using a separate Azure Active Directory tenant</h3>
+<h3 id="using-a-separate-microsoft-entra-id-tenant">Using a separate Microsoft Entra ID tenant</h3>
 <div class="admonition caution">
 <p class="admonition-title">Caution</p>
-<p>This section is only relevant it you are setting up a separate Azure Active Directory tenant for use.
-This is only recommended for development environments when you don't have the required permissions to register applications in Azure Active Directory.
-Using a separate Azure Active Directory tenant will prevent you from using certain Azure Active Directory integrated services.
-For production deployments, work with your Azure Active Directory administrator to perform the required registration</p>
+<p>This section is only relevant it you are setting up a separate Microsoft Entra ID tenant for use.
+This is only recommended for development environments when you don't have the required permissions to register applications in Microsoft Entra ID.
+Using a separate Microsoft Entra ID tenant will prevent you from using certain Microsoft Entra ID integrated services.
+For production deployments, work with your Microsoft Entra ID administrator to perform the required registration</p>
 </div>
 <ol>
 <li>
-<p>Create an Azure Active Directory tenant
-    To create a new Azure Active Directory tenant, <a href="https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-create-new-tenant">follow the steps here</a></p>
+<p>Create an Microsoft Entra ID tenant
+    To create a new Microsoft Entra ID tenant, <a href="https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-create-new-tenant">follow the steps here</a></p>
 </li>
 <li>
 <p>Follow the steps outlined above. <code>make auth</code> should logon to the correct tenant. Make sure you logon back to the correct tenant before running <code>make all</code>.</p>
@@ -3542,7 +3542,7 @@ For production deployments, work with your Azure Active Directory administrator 
 <table>
 <thead>
 <tr>
-<th>AAD Application</th>
+<th>Microsoft Entra ID Application</th>
 <th>Description</th>
 </tr>
 </thead>
@@ -3557,7 +3557,7 @@ For production deployments, work with your Azure Active Directory administrator 
 </tr>
 <tr>
 <td>Application Admin</td>
-<td>There are times when workspace services need to update the AAD Application. For example, Guacamole needs to add a redirect URI to the Workspace AAD Application. This identity is used to manage AAD Applications.</td>
+<td>There are times when workspace services need to update the Microsoft Entra ID Application. For example, Guacamole needs to add a redirect URI to the Workspace Microsoft Entra ID Application. This identity is used to manage Microsoft Entra ID Applications.</td>
 </tr>
 <tr>
 <td>Automation App</td>
@@ -3569,12 +3569,12 @@ For production deployments, work with your Azure Active Directory administrator 
 </tr>
 </tbody>
 </table>
-<p>Some of the applications require <strong>admin consent</strong> to allow them to validate users against the AAD. Check the Microsoft Docs on <a href="https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/configure-admin-consent-workflow">Configure the admin consent workflow</a> on how to request admin consent and handle admin consent requests.</p>
-<p>We strongly recommend that you use <code>make auth</code> to create the AAD assets as this has been tested extensively. Should you wish to create these manually via the <a href="https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app">Azure Portal</a>; more information can be found <a href="../identities/auth-manual/">here</a>.</p>
+<p>Some of the applications require <strong>admin consent</strong> to allow them to validate users against the Microsoft Entra ID. Check the Microsoft Docs on <a href="https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-admin-consent-workflow">Configure the admin consent workflow</a> on how to request admin consent and handle admin consent requests.</p>
+<p>We strongly recommend that you use <code>make auth</code> to create the Microsoft Entra ID assets as this has been tested extensively. Should you wish to create these manually via the <a href="https://learn.microsoft.com/en-gb/entra/identity-platform/quickstart-register-app">Azure Portal</a>; more information can be found <a href="../identities/auth-manual/">here</a>.</p>
 <h3 id="enabling-users">Enabling users</h3>
 <p>For a user to gain access to the system, they have to:</p>
 <ol>
-<li>Have an identity in Azure AD</li>
+<li>Have an identity in Microsoft Entra ID</li>
 <li>Be linked with an app registration and assigned a role</li>
 </ol>
 <p>When these requirements are met, the user can sign-in using their credentials and use their privileges to use the API, login to workspace environment etc. based on their specific roles.</p>

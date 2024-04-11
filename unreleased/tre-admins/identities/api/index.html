@@ -3466,9 +3466,9 @@
 
 <h1 id="the-api-identity">The API Identity</h1>
 <h2 id="name">Name</h2>
-<p>The API Identity is typically called <code>&lt;TRE_ID&gt; API</code> within the AAD Portal.</p>
+<p>The API Identity is typically called <code>&lt;TRE_ID&gt; API</code> within the Microsoft Entra ID Portal.</p>
 <h2 id="purpose">Purpose</h2>
-<p>This identity's credentials are stored in the <code>core</code> Key Vault and mandatory for the running of the Trusted Research Environment (TRE). It is required for the API Application, hosted in Azure App Service, to authenticate to Azure Active Directory and authorize the various operations.</p>
+<p>This identity's credentials are stored in the <code>core</code> Key Vault and mandatory for the running of the Trusted Research Environment (TRE). It is required for the API Application, hosted in Azure App Service, to authenticate to Microsoft Entra ID and authorize the various operations.</p>
 <h2 id="application-roles">Application Roles</h2>
 <table>
 <thead>
@@ -3570,7 +3570,7 @@ Below is a sample where <code>TRE_ID</code> has value <code>mytre</code>:</p>
 </tr>
 <tr>
 <td><code>--admin-consent</code></td>
-<td>Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges.</td>
+<td>Grants admin consent for the app registrations. This is required for them to function properly, but requires Microsoft Entra ID admin privileges.</td>
 </tr>
 <tr>
 <td><code>--automation-clientid</code></td>
@@ -3587,7 +3587,7 @@ Below is a sample where <code>TRE_ID</code> has value <code>mytre</code>:</p>
 <p>The script will create an app password (client secret) for the <strong>TRE API</strong> app and the <strong>Automation App</strong> and write them to <code>/config.yaml</code> file. These values are only shown once, if you lose them, the script will create new secrets if run again.</p>
 </div>
 <p>You can create an automation account which will aid your development flow, if you don't want to do this you can omit the <code>--automation-clientid</code> switch.</p>
-<p>You can run the script without the <code>--admin-consent</code> and ask your admin to grant consent. If you don't have permissions and just want to create a development environment then skip this step and see the steps in the "Using a separate Azure Active Directory tenant) below.</p>
+<p>You can run the script without the <code>--admin-consent</code> and ask your admin to grant consent. If you don't have permissions and just want to create a development environment then skip this step and see the steps in the "Using a separate Microsoft Entra ID tenant) below.</p>
 <h2 id="environment-variables">Environment Variables</h2>
 <table>
 <thead>

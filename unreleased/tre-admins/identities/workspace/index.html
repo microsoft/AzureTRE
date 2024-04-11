@@ -3516,7 +3516,7 @@
 <p>This identity should only be used by the API Application.</p>
 <h2 id="how-to-create">How to create</h2>
 <p>There are two mechanisms for creating Workspace Applications
-- Manually by your AAD Tenant Admin (default)
+- Manually by your Microsoft Entra ID Tenant Admin (default)
 - Automatically by TRE. Please see this <a href="../application_admin/">guide</a> if you wish this to be automatic.</p>
 <div class="admonition caution">
 <p class="admonition-title">Caution</p>
@@ -3548,7 +3548,7 @@
 </tr>
 <tr>
 <td><code>--admin-consent</code></td>
-<td>Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges.</td>
+<td>Grants admin consent for the app registrations. This is required for them to function properly, but requires Microsoft Entra ID admin privileges.</td>
 </tr>
 <tr>
 <td><code>--automation-clientid</code></td>
@@ -3556,7 +3556,7 @@
 </tr>
 <tr>
 <td><code>--application-admin-clientid</code></td>
-<td>This is a required parameter , and should be a client id that will be added to the Owners of the AAD Application so that it can be administered within TRE.</td>
+<td>This is a required parameter , and should be a client id that will be added to the Owners of the Microsoft Entra ID Application so that it can be administered within TRE.</td>
 </tr>
 <tr>
 <td><code>--reset-password</code></td>
@@ -3592,7 +3592,7 @@
 </tbody>
 </table>
 <h2 id="comments">Comments</h2>
-<p>When the Workspace AAD app is registered by running <code>make auth</code>, the <code>Workspace Scope Id</code> is the same as the Client Id. When the Workspace AAD app is created by the base workspace, the <code>Workspace Scope Id</code> will be in this format <code>api://&lt;TRE_ID&gt;_ws_&lt;WORKSPACE_SHORT_IDENTIFIER&gt;</code></p>
+<p>When the Workspace Microsoft Entra ID app is registered by running <code>make auth</code>, the <code>Workspace Scope Id</code> is the same as the Client Id. When the Workspace Microsoft Entra ID app is created by the base workspace, the <code>Workspace Scope Id</code> will be in this format <code>api://&lt;TRE_ID&gt;_ws_&lt;WORKSPACE_SHORT_IDENTIFIER&gt;</code></p>
 
 
 
