@@ -27,6 +27,7 @@ sudo sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
 
 # Make sure xrdp service starts up with the system
 sudo systemctl enable xrdp
+sudo service xrdp restart
 
 if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   # Install required packages
