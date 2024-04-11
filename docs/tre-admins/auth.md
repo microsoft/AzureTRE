@@ -1,6 +1,6 @@
 # Introduction to Authentication and Authorization
 
-[Microsoft Entra ID](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis) is the backbone of Authentication and Authorization in the Trusted Research Environment. Microsoft Entra ID holds the identities of all the TRE/workspace users, including administrators, and connects the identities with applications which define the permissions for each user role.
+[Microsoft Entra ID](https://learn.microsoft.com/en-us/entra/fundamentals/whatis) is the backbone of Authentication and Authorization in the Trusted Research Environment. Microsoft Entra ID holds the identities of all the TRE/workspace users, including administrators, and connects the identities with applications which define the permissions for each user role.
 
 It is common that the Azure Administrator is not necessarily the Microsoft Entra ID Administrator. Due to this, this step may have to be carried out by a different individual/team. We have automated this into a simple command, but should you wish, you can run these steps manually.
 
@@ -47,7 +47,7 @@ The contents of your authentication section in `config.yaml` file should contain
     For production deployments, work with your Microsoft Entra ID administrator to perform the required registration
 
 1. Create an Microsoft Entra ID tenant
-    To create a new Microsoft Entra ID tenant, [follow the steps here](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-create-new-tenant)
+    To create a new Microsoft Entra ID tenant, [follow the steps here](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-create-new-tenant)
 
 1. Follow the steps outlined above. `make auth` should logon to the correct tenant. Make sure you logon back to the correct tenant before running `make all`.
 
@@ -64,9 +64,9 @@ App registrations (represented by service principals) define the various access 
 | Automation App | This application is created so that you can run the tests or any CI/CD capability without the need to divulge a user password. This is particularly important if your tenant is MFA enabled. |
 | Workspace API | Typically you would have an application securing one or more workspaces that are created by TRE. |
 
-Some of the applications require **admin consent** to allow them to validate users against the Microsoft Entra ID. Check the Microsoft Docs on [Configure the admin consent workflow](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/configure-admin-consent-workflow) on how to request admin consent and handle admin consent requests.
+Some of the applications require **admin consent** to allow them to validate users against the Microsoft Entra ID. Check the Microsoft Docs on [Configure the admin consent workflow](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-admin-consent-workflow) on how to request admin consent and handle admin consent requests.
 
-We strongly recommend that you use `make auth` to create the Microsoft Entra ID assets as this has been tested extensively. Should you wish to create these manually via the [Azure Portal](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app); more information can be found [here](./identities/auth-manual.md).
+We strongly recommend that you use `make auth` to create the Microsoft Entra ID assets as this has been tested extensively. Should you wish to create these manually via the [Azure Portal](https://learn.microsoft.com/en-gb/entra/identity-platform/quickstart-register-app); more information can be found [here](./identities/auth-manual.md).
 
 ### Enabling users
 
