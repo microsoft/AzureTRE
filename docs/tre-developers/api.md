@@ -144,7 +144,7 @@ make auth
 ```
 
 Alternatively, in Azure Portal you can add the redirect URL to the App Registration.
-Under AAD, find App Registrations, and find the App Registration with the ID shown in the error message.
+Under Microsoft Entra ID, find App Registrations, and find the App Registration with the ID shown in the error message.
 There, go to Redirect URL and add the URL given to you by the error message (it will have a form of
 `https://${TRE_ID}.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect`).
 
