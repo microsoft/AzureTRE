@@ -8,6 +8,7 @@ FEATURES:
 ENHANCEMENTS:
 
 BUG FIXES:
+* Update to Resource Processor Image, now using Ubuntu 22.04 (jammy). Part of ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
 
 COMPONENTS:
 
