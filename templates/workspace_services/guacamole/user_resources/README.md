@@ -34,6 +34,7 @@ custom:
         offer: 0001-com-ubuntu-server-jammy
         sku: 22_04-lts-gen2
         version: latest
+        apt_sku: 22.04
       install_ui: true
       conda_config: false
     "Ubuntu 20.04 LTS":
@@ -42,6 +43,7 @@ custom:
         offer: 0001-com-ubuntu-server-focal
         sku: 20_04-lts-gen2
         version: latest
+        apt_sku: 20.04
       install_ui: true
       conda_config: false
     "Ubuntu 20.04 LTS Data Science VM":
@@ -50,6 +52,7 @@ custom:
         offer: ubuntu-2004
         sku: 2004-gen2
         version: latest
+        apt_sku: 20.04
       install_ui: true
       conda_config: true
     # "Custom Image From Gallery":
