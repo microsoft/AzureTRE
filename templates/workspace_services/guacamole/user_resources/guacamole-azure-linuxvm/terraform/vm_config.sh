@@ -3,9 +3,9 @@
 set -o errexit
 set -o pipefail
 set -vx
-# set -o nounset
+set -o nounset
 # Uncomment this line to see each command for debugging (careful: this will show secrets!)
-# set -o xtrace
+set -o xtrace
 
 # Remove apt sources not included in sources.list file
 sudo rm -f /etc/apt/sources.list.d/*
@@ -14,18 +14,19 @@ sudo rm -f /etc/apt/sources.list.d/*
 sudo apt-get update
 
 # Install xrdp so Guacamole can connect via RDP
-sudo apt-get install xrdp -y
 sudo adduser xrdp ssl-cert
 
-# Install desktop environment if image doesn't have one already
-if [ "${INSTALL_UI}" -eq 1 ]; then
-  sudo apt-get install -y xorg 
-  sudo apt-get install -y xfce4 
-  sudo apt-get install -y xfce4-goodies 
-  sudo apt-get install -y dbus-x11 
-  sudo apt-get install -y x11-xserver-utils
-  sudo -u ${VM_USER} -i bash -c 'echo xfce4-session > ~/.xsession'
-fi
+# # Install desktop environment if image doesn't have one already
+# if [ "${INSTALL_UI}" -eq 1 ]; then
+#   sudo apt-get install xrdp -y
+#   sudo apt-get install -y xorg 
+#   sudo apt-get install -y xfce4 
+#   sudo apt-get install -y xfce4-goodies 
+#   sudo apt-get install -y dbus-x11 
+#   sudo apt-get install -y x11-xserver-utils
+# fi
+
+sudo -u ${VM_USER} -i bash -c 'echo xfce4-session > ~/.xsession'
 
 # Fix for blank screen on DSVM (/sh -> /bash due to conflict with profile.d scripts)
 sudo sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
