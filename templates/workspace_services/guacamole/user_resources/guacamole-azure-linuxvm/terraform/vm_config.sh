@@ -20,6 +20,7 @@ sudo adduser xrdp ssl-cert
 if [ "${INSTALL_UI}" -eq 1 ]; then
   sudo apt-get install xorg xfce4 xfce4-goodies dbus-x11 x11-xserver-utils -y
   echo xfce4-session > ~/.xsession
+  sudo su - ${VM_USER} -c "echo xfce4-session > ~/.xsession"
 fi
 
 # Fix for blank screen on DSVM (/sh -> /bash due to conflict with profile.d scripts)
