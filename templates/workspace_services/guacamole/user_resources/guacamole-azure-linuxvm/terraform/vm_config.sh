@@ -2,6 +2,7 @@
 
 set -o errexit
 set -o pipefail
+set -vx
 # set -o nounset
 # Uncomment this line to see each command for debugging (careful: this will show secrets!)
 # set -o xtrace
@@ -12,16 +13,18 @@ sudo rm -f /etc/apt/sources.list.d/*
 # Update apt packages from configured Nexus sources
 sudo apt-get update
 
-sudo dpkg --configure lightdm
 # Install xrdp so Guacamole can connect via RDP
 sudo apt-get install xrdp -y
 sudo adduser xrdp ssl-cert
 
 # Install desktop environment if image doesn't have one already
 if [ "${INSTALL_UI}" -eq 1 ]; then
-  sudo apt-get install xorg xfce4 xfce4-goodies dbus-x11 x11-xserver-utils -y
-  echo xfce4-session > ~/.xsession
-  sudo su - ${VM_USER} -c "echo xfce4-session > ~/.xsession"
+  sudo apt-get install -y xorg 
+  sudo apt-get install -y xfce4 
+  sudo apt-get install -y xfce4-goodies 
+  sudo apt-get install -y dbus-x11 
+  sudo apt-get install -y x11-xserver-utils
+  sudo -u ${VM_USER} -i bash -c 'echo xfce4-session > ~/.xsession'
 fi
 
 # Fix for blank screen on DSVM (/sh -> /bash due to conflict with profile.d scripts)
