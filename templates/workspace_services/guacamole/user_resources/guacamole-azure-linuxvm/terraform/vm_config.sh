@@ -13,17 +13,17 @@ sudo rm -f /etc/apt/sources.list.d/*
 sudo apt-get update
 
 # Install xrdp so Guacamole can connect via RDP
+sudo apt-get install xrdp -y
 sudo adduser xrdp ssl-cert
 
 # # Install desktop environment if image doesn't have one already
-# if [ "${INSTALL_UI}" -eq 1 ]; then
-#   sudo apt-get install xrdp -y
-#   sudo apt-get install -y xorg 
-#   sudo apt-get install -y xfce4 
-#   sudo apt-get install -y xfce4-goodies 
-#   sudo apt-get install -y dbus-x11 
-#   sudo apt-get install -y x11-xserver-utils
-# fi
+if [ "${INSTALL_UI}" -eq 1 ]; then
+  sudo apt-get install -y xorg 
+  sudo apt-get install -y xfce4 
+  sudo apt-get install -y xfce4-goodies 
+  sudo apt-get install -y dbus-x11 
+  sudo apt-get install -y x11-xserver-utils
+fi
 
 sudo -u ${VM_USER} -i bash -c 'echo xfce4-session > ~/.xsession'
 
