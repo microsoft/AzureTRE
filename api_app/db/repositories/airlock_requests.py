@@ -11,10 +11,8 @@ from pydantic import parse_obj_as
 from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
 from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, \
-    AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType, AirlockReviewUserResource, \
-    AirlockRequestUnsafeStatisticsStatements, AirlockRequestOtherStatisticsStatements
-from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestContactTeamForm, \
-    AirlockRequestStatisticsStatements, AirlockRequestSafeStatisticsStatements, AirlockRequestAcroConfirmation
+    AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType, AirlockReviewUserResource
+from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestContactTeamForm, AirlockRequestStatisticsStatements
 from core import config
 from resources import strings
 from db.repositories.base import BaseRepository
@@ -108,11 +106,7 @@ class AirlockRequestRepository(BaseRepository):
             reviews=[],
             triageStatements=[],
             contactTeamForm=[],
-            unsafeStatisticsStatements=[],
-            otherStatisticsStatements=[],
-            statisticsStatements=[],
-            safeStatisticsStatements=[],
-            acroConfirmation=[]
+            statisticsStatements=[]
         )
 
         return airlock_request
@@ -260,20 +254,43 @@ class AirlockRequestRepository(BaseRepository):
     async def save_and_check_statistics_statements(self, request: AirlockRequest, airlock_request_statistics_statements_input: AirlockRequestStatisticsStatements) -> AirlockRequest:
         statisticsStatements = AirlockRequestStatisticsStatements(
             codeLists=airlock_request_statistics_statements_input.codeLists,
-            safeStatistics=airlock_request_statistics_statements_input.safeStatistics,
             statisticalTests=airlock_request_statistics_statements_input.statisticalTests,
+            statisticalTestsConfirmation=airlock_request_statistics_statements_input.statisticalTestsConfirmation,
             coefficientsAssociation=airlock_request_statistics_statements_input.coefficientsAssociation,
+            coefficientsAssociationResidualDegrees=airlock_request_statistics_statements_input.coefficientsAssociationResidualDegrees,
+            coefficientsAssociationModelNotSaturated=airlock_request_statistics_statements_input.coefficientsAssociationModelNotSaturated,
+            coefficientsAssociationRegressionNotIncluded=airlock_request_statistics_statements_input.coefficientsAssociationRegressionNotIncluded,
             shape=airlock_request_statistics_statements_input.shape,
+            shapeStandardDeviations=airlock_request_statistics_statements_input.shapeStandardDeviations,
+            shapeMinFive=airlock_request_statistics_statements_input.shapeMinFive,
             mode=airlock_request_statistics_statements_input.mode,
+            modeConfirmation=airlock_request_statistics_statements_input.modeConfirmation,
             ratios=airlock_request_statistics_statements_input.ratios,
+            ratiosConfirmationNRatios=airlock_request_statistics_statements_input.ratiosConfirmationNRatios,
+            ratiosConfirmationHRatios=airlock_request_statistics_statements_input.ratiosConfirmationHRatios,
             giniCoefficients=airlock_request_statistics_statements_input.giniCoefficients,
-            unsafeStatisticsStatements=airlock_request_statistics_statements_input.unsafeStatisticsStatements,
+            giniCoefficientsConfirmationN=airlock_request_statistics_statements_input.giniCoefficientsConfirmationN,
+            giniCoefficientsConfirmationLessThan=airlock_request_statistics_statements_input.giniCoefficientsConfirmationLessThan,
             frequencies=airlock_request_statistics_statements_input.frequencies,
+            frequenciesSmallFrequenciesSuppressed=airlock_request_statistics_statements_input.frequenciesSmallFrequenciesSuppressed,
+            frequenciesZerosFullCells=airlock_request_statistics_statements_input.frequenciesZerosFullCells,
+            frequenciesUnderlyingValuesIndependent=airlock_request_statistics_statements_input.frequenciesUnderlyingValuesIndependent,
+            frequenciesCategoriesComprehensiveData=airlock_request_statistics_statements_input.frequenciesCategoriesComprehensiveData,
             position=airlock_request_statistics_statements_input.position,
+            positionConfirmation=airlock_request_statistics_statements_input.positionConfirmation,
             extremeValues=airlock_request_statistics_statements_input.extremeValues,
+            extremeValuesConfirmation=airlock_request_statistics_statements_input.extremeValuesConfirmation,
             linearAggregates=airlock_request_statistics_statements_input.linearAggregates,
-            riskRatios=airlock_request_statistics_statements_input.riskRatios,
-            survivalTables=airlock_request_statistics_statements_input.survivalTables,
+            linearAggregatesDerivedGroups=airlock_request_statistics_statements_input.linearAggregatesDerivedGroups,
+            linearAggregatesPRatioDominanceRule=airlock_request_statistics_statements_input.linearAggregatesPRatioDominanceRule,
+            linearAggregatesNKDominanceRule=airlock_request_statistics_statements_input.linearAggregatesNKDominanceRule,
+            oddsRatios=airlock_request_statistics_statements_input.oddsRatios,
+            oddsRatiosConfirmation=airlock_request_statistics_statements_input.oddsRatiosConfirmation,
+            hazardSurvivalTables=airlock_request_statistics_statements_input.hazardSurvivalTables,
+            hazardSurvivalTablesNumberPatientsSurvived=airlock_request_statistics_statements_input.hazardSurvivalTablesNumberPatientsSurvived,
+            hazardSurvivalTablesExitDatesRelatives=airlock_request_statistics_statements_input.hazardSurvivalTablesExitDatesRelatives,
+            hazardSurvivalTablesNoDatesWithSingleExit=airlock_request_statistics_statements_input.hazardSurvivalTablesNoDatesWithSingleExit,
+            isAcroUsed=airlock_request_statistics_statements_input.isAcroUsed,
             other=airlock_request_statistics_statements_input.other
         )
 
@@ -283,75 +300,4 @@ class AirlockRequestRepository(BaseRepository):
         await self.update_item(request)
         return request
 
-    async def save_and_check_unsafe_statistics_statements(self, request: AirlockRequest, airlock_request_unsafe_statistics_input: AirlockRequestUnsafeStatisticsStatements) -> AirlockRequest:
-        unsafeStatisticsStatements = AirlockRequestUnsafeStatisticsStatements(
-            requestedOutputsStatisticsPosition=airlock_request_unsafe_statistics_input.requestedOutputsStatisticsPosition,
-            requestedOutputsLinearAggregates=airlock_request_unsafe_statistics_input.requestedOutputsLinearAggregates,
-            linearAggregatesDerivedGroups=airlock_request_unsafe_statistics_input.linearAggregatesDerivedGroups,
-            pRatioDominanceRule=airlock_request_unsafe_statistics_input.pRatioDominanceRule,
-            nkDominanceRule=airlock_request_unsafe_statistics_input.nkDominanceRule
-        )
-
-        request.unsafeStatisticsStatements.clear()
-        request.unsafeStatisticsStatements.append(unsafeStatisticsStatements)
-
-        await self.update_item(request)
-        return request
-
-    async def save_and_check_safe_statistics_statements(self, request: AirlockRequest, airlock_request_safe_statistics_statements_input: AirlockRequestSafeStatisticsStatements) -> AirlockRequest:
-        safeStatisticsStatements = AirlockRequestSafeStatisticsStatements(
-            testConfirmation=airlock_request_safe_statistics_statements_input.testConfirmation,
-            coefficientsConfirmation=airlock_request_safe_statistics_statements_input.coefficientsConfirmation,
-            residualDegrees=airlock_request_safe_statistics_statements_input.residualDegrees,
-            modelNotSaturated=airlock_request_safe_statistics_statements_input.modelNotSaturated,
-            regressionNotIncluded=airlock_request_safe_statistics_statements_input.regressionNotIncluded,
-            shapeConfirmation=airlock_request_safe_statistics_statements_input.shapeConfirmation,
-            standardDeviations=airlock_request_safe_statistics_statements_input.standardDeviations,
-            shapeMinFive=airlock_request_safe_statistics_statements_input.shapeMinFive,
-            modeConfirmation=airlock_request_safe_statistics_statements_input.modeConfirmation,
-            ratiosConfirmation=airlock_request_safe_statistics_statements_input.ratiosConfirmation,
-            nRatio=airlock_request_safe_statistics_statements_input.nRatio,
-            hRatio=airlock_request_safe_statistics_statements_input.hRatio,
-            giniCoefficientsConfirmation=airlock_request_safe_statistics_statements_input.giniCoefficientsConfirmation,
-            nGiniCoefficient=airlock_request_safe_statistics_statements_input.nGiniCoefficient,
-            coefficientLessThan =airlock_request_safe_statistics_statements_input.coefficientLessThan
-        )
-
-        request.safeStatisticsStatements.clear()
-        request.safeStatisticsStatements.append(safeStatisticsStatements)
-
-        await self.update_item(request)
-        return request
-
-    async def save_and_check_other_statistics_statements(self, request: AirlockRequest, airlock_request_other_statistics_statements_input: AirlockRequestOtherStatisticsStatements) -> AirlockRequest:
-        otherStatisticsStatements = AirlockRequestOtherStatisticsStatements(
-            requestedOutputsIncludeFrequencies=airlock_request_other_statistics_statements_input.requestedOutputsIncludeFrequencies,
-            smallFrequenciesSuppressed=airlock_request_other_statistics_statements_input.smallFrequenciesSuppressed,
-            zerosFullCells=airlock_request_other_statistics_statements_input.zerosFullCells,
-            underlyingValuesIndependent=airlock_request_other_statistics_statements_input.underlyingValuesIndependent,
-            categoriesComprehensiveData=airlock_request_other_statistics_statements_input.categoriesComprehensiveData,
-            requestedOutputsExtremeValues=airlock_request_other_statistics_statements_input.requestedOutputsExtremeValues,
-            requestedOutputsRatios=airlock_request_other_statistics_statements_input.requestedOutputsRatios,
-            requestedOutputsHazard=airlock_request_other_statistics_statements_input.requestedOutputsHazard,
-            numberPatientsSurvived=airlock_request_other_statistics_statements_input.numberPatientsSurvived,
-            exitDatesRelatives=airlock_request_other_statistics_statements_input.exitDatesRelatives,
-            noDatesWithSingleExit=airlock_request_other_statistics_statements_input.noDatesWithSingleExit
-        )
-
-        request.otherStatisticsStatements.clear()
-        request.otherStatisticsStatements.append(otherStatisticsStatements)
-
-        await self.update_item(request)
-        return request
-
-    async def save_and_check_acro_confirmation(self, request: AirlockRequest, airlock_request_acro_confirmation_input: AirlockRequestAcroConfirmation) -> AirlockRequest:
-        acroConfirmation = AirlockRequestAcroConfirmation(
-            isAcroUsed=airlock_request_acro_confirmation_input.isAcroUsed
-        )
-
-        request.acroConfirmation.clear()
-        request.acroConfirmation.append(acroConfirmation)
-
-        await self.update_item(request)
-        return request
 

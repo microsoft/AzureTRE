@@ -18,9 +18,7 @@ from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestWithAllowedUserActions, \
-    AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestStatisticsStatements, \
-    AirlockRequestSafeStatisticsStatements, AirlockRequestAcroConfirmation, AirlockRequestContactTeamForm, \
-    AirlockRequestUnsafeStatisticsStatements, AirlockRequestOtherStatisticsStatements
+    AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestContactTeamForm, AirlockRequestStatisticsStatements
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
     get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user
@@ -241,76 +239,4 @@ async def review_statistics_statements(airlock_request_statistics_statements_inp
         return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request)
     except (ValidationError, ValueError) as e:
         logging.exception("Failed saving statistics statements")
-        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
-
-
-@airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/unsafe-statistics", status_code=status_code.HTTP_200_OK,
-                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_UNSAFE_STATISTICS_STATEMENTS,
-                               dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
-async def review_unsafe_statistics(airlock_request_unsafe_statistics_input: AirlockRequestUnsafeStatisticsStatements,
-                               airlock_request=Depends(get_airlock_request_by_id_from_path),
-                               airlock_request_repo=Depends(get_repository(AirlockRequestRepository))) -> AirlockRequestWithAllowedUserActions:
-    if airlock_request.type == AirlockRequestType.Import:
-        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
-                            detail="Endpoint not available for Import Airlock requests.")
-    try:
-        await airlock_request_repo.save_and_check_unsafe_statistics_statements(airlock_request, airlock_request_unsafe_statistics_input)
-        return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request)
-    except (ValidationError, ValueError) as e:
-        logging.exception("Failed saving triage statements")
-        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
-
-
-@airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/other-statistics", status_code=status_code.HTTP_200_OK,
-                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_OTHER_STATISTICS_STATEMENTS,
-                               dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
-async def review_unsafe_statistics(airlock_request_other_statistics_statements_input: AirlockRequestOtherStatisticsStatements,
-                               airlock_request=Depends(get_airlock_request_by_id_from_path),
-                               airlock_request_repo=Depends(get_repository(AirlockRequestRepository))) -> AirlockRequestWithAllowedUserActions:
-    if airlock_request.type == AirlockRequestType.Import:
-        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
-                            detail="Endpoint not available for Import Airlock requests.")
-    try:
-        await airlock_request_repo.save_and_check_other_statistics_statements(airlock_request, airlock_request_other_statistics_statements_input)
-        return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request)
-    except (ValidationError, ValueError) as e:
-        logging.exception("Failed saving triage statements")
-        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
-
-
-@airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/safe-statistics", status_code=status_code.HTTP_200_OK,
-                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_CHECK_SAFE_STATISTICS_STATEMENTS,
-                               dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
-async def review_safe_statistics_statements(airlock_request_safe_statistics_statements_input: AirlockRequestSafeStatisticsStatements,
-                               airlock_request=Depends(get_airlock_request_by_id_from_path),
-                               airlock_request_repo=Depends(get_repository(AirlockRequestRepository))) -> AirlockRequestWithAllowedUserActions:
-    if airlock_request.type == AirlockRequestType.Import:
-        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
-                            detail="Endpoint not available for Import Airlock requests.")
-    try:
-        await airlock_request_repo.save_and_check_safe_statistics_statements(airlock_request, airlock_request_safe_statistics_statements_input)
-        return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request)
-    except (ValidationError, ValueError) as e:
-        logging.exception("Failed saving triage statements")
-        await airlock_request_repo.save_and_check_safe_statistics_statements(airlock_request, airlock_request_safe_statistics_statements_input)
-        return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request)
-    except (ValidationError, ValueError) as e:
-        logging.exception("Failed saving safe statistics statements")
-        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
-
-
-@airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/acro-confirmation", status_code=status_code.HTTP_200_OK,
-                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_CHECK_ACRO_CONFIRMATION,
-                               dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
-async def review_acro_confirmation(airlock_request_acro_confirmation_input: AirlockRequestAcroConfirmation,
-                               airlock_request=Depends(get_airlock_request_by_id_from_path),
-                               airlock_request_repo=Depends(get_repository(AirlockRequestRepository))) -> AirlockRequestWithAllowedUserActions:
-    if airlock_request.type == AirlockRequestType.Import:
-        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
-                            detail="Endpoint not available for Import Airlock requests.")
-    try:
-        await airlock_request_repo.save_and_check_acro_confirmation(airlock_request, airlock_request_acro_confirmation_input)
-        return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request)
-    except (ValidationError, ValueError) as e:
-        logging.exception("Failed saving acro confirmation")
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
