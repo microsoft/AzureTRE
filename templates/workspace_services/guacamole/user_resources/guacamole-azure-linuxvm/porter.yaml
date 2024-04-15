@@ -30,7 +30,7 @@ custom:
         sku: 20_04-lts-gen2
         version: latest
         apt_sku: 20.04
-      install_ui: true
+      install_ui: false
       conda_config: false
     "Ubuntu 20.04 LTS Data Science VM":
       source_image_reference:
