@@ -9,8 +9,11 @@ from azure.mgmt.costmanagement import CostManagementClient
 from azure.mgmt.costmanagement.models import QueryGrouping, QueryAggregation, QueryDataset, QueryDefinition, \
     TimeframeType, ExportType, QueryTimePeriod, QueryFilter, QueryComparisonExpression, QueryResult
 from azure.core.exceptions import ResourceNotFoundError, HttpResponseError
+from azure.core.credentials import AzureNamedKeyCredential
 
 from azure.mgmt.resource import ResourceManagementClient
+
+from azure.data.tables import TableClient
 
 from core import config, credentials
 from db.errors import EntityDoesNotExist
@@ -19,9 +22,10 @@ from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.costs import GranularityEnum, CostReport, WorkspaceCostReport, CostItem, WorkspaceServiceCostItem, \
-    CostRow
+    CostRow, MHRAWorkspaceCosts, MHRACostItem
 from models.domain.resource import Resource
 
+from resources import constants
 
 class ResultColumnDaily(Enum):
     Cost = 0
@@ -396,6 +400,44 @@ class CostService:
     def __parse_cost_management_date_value(self, date_value: int):
         return datetime.strptime(str(date_value), "%Y%m%d").date()
 
+    def get_workspace_costs_custom(self) -> MHRAWorkspaceCosts:
+        tre_id = config.TRE_ID
+        account_name = constants.STORAGE_ACCOUNT_NAME_CORE_RESOURCE_GROUP.format(tre_id)
+        account_endpoint = f"https://{account_name}.table.core.windows.net"
+        workspace_costs_table = constants.WORKSPACE_COSTS_TABLE_NAME
+
+        try:
+            workspace_costs:  MHRAWorkspaceCosts = MHRAWorkspaceCosts()
+            table_client = TableClient(endpoint=account_endpoint,table_name=workspace_costs_table,credential=credentials.get_credential())
+            workspace_costs.workspace_costs_items.append(
+                MHRACostItem(partition_key="None",
+                             row_key="aa0ef4e2-0b45-4d41-988b-e0ec59e0272e",
+                             timestamp="2024-04-15T08:45:03.0516138Z",
+                             workspace_id="aa0ef4e2-0b45-4d41-988b-e0ec59e0272e",
+                             credit_limit="1000.0",
+                             available_credit="300.0",
+                             credit_percentage_usage="70",
+                             update_time="1708593415")
+            )
+
+            workspace_costs.workspace_costs_items.append(
+                MHRACostItem(partition_key="None",
+                             row_key="035ec2c0-cc74-456b-a4ac-e774d66420e0",
+                             timestamp="2024-04-15T08:47:22.8229331Z",
+                             workspace_id="035ec2c0-cc74-456b-a4ac-e774d66420e0",
+                             credit_limit="2000.0",
+                             available_credit="1500.0",
+                             credit_percentage_usage="75",
+                             update_time="1713170821")
+            )
+
+            return workspace_costs
+        except HttpResponseError:
+            logging.exception("HTTP error when calling table_client.")
+            raise HttpResponseError
+        except:
+            logging.exception("Unknown error when calling table_client.")
+            raise Exception("Unknown error when calling table_client.")
 
 @lru_cache(maxsize=None)
 def cost_service_factory() -> CostService:

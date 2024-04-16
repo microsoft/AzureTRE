@@ -120,3 +120,35 @@ def get_workspace_cost_report_responses():
             }
         }
     }
+
+
+def get_mhra_workspace_costs_responses():
+    return {
+        200: {
+            "description": "Success",
+            "content": {
+                "application/json": {
+                    "workspace_costs_items": {
+                        "workspace_1": {
+                            "partition_key": "None",
+                            "row_key": "aa0ef4e2-0b45-4d41-988b-e0ec59e0272e",
+                            "timestamp": "2024-04-15T08:45:03.0516138Z",
+                            "workspace_id": "aa0ef4e2-0b45-4d41-988b-e0ec59e0272e",
+                            "credit_limit": "1000.0",
+                            "available_credit": "300.0",
+                            "credit_percentage_usage": "70",
+                            "update_time": "1708593415"
+                        }
+                    }
+                }
+            }
+        },
+        401: {
+            "description": "Unauthorized",
+            "content": {
+                "text/plain": {
+                    "example": "Not authenticated"
+                }
+            }
+        }
+    }

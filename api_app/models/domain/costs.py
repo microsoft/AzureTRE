@@ -114,3 +114,18 @@ class WorkspaceServiceCostItem(CostItem):
 
 class WorkspaceCostReport(CostItem):
     workspace_services: List[WorkspaceServiceCostItem]
+
+
+class MHRACostItem(BaseModel):
+    partition_key: str
+    row_key: str
+    timestamp: str
+    workspace_id: str
+    credit_limit: str
+    available_credit: str
+    credit_percentage_usage: str
+    update_time: str
+
+
+class MHRAWorkspaceCosts(BaseModel):
+    workspace_costs_items: List[MHRACostItem] = []

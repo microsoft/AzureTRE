@@ -79,6 +79,8 @@ API_GET_COSTS_SUBSCRIPTION_NOT_SUPPORTED = "Azure subscription doesn't support c
 API_GET_COSTS_TOO_MANY_REQUESTS = "Too many requests to Azure cost management API. Please retry."
 API_GET_COSTS_SERVICE_UNAVAILABLE = "Azure cost management API is temporarily unavailable. Please retry."
 API_GET_COSTS_INTERNAL_SERVER_ERROR = "Failed to query Azure TRE costs."
+API_GET_COSTS_MHRA_CLIENTS = "Return MHRA clients costs."
+API_GET_COSTS_MHRA_CLIENTS_INTERNAL_SERVER_ERROR = "Error returning MHRA clients costs."
 
 
 # State store status

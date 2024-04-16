@@ -2,6 +2,7 @@
 azure-core==1.29.5
 aiohttp==3.8.3
 azure-cosmos==4.3.0
+azure-data-tables==12.4.1
 azure-identity==1.14.1
 azure-mgmt-cosmosdb==8.0.0
 azure-mgmt-compute==29.1.0
