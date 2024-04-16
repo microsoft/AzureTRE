@@ -194,17 +194,3 @@ variable "logging_level" {
     error_message = "logging_level must be one of ERROR, WARNING, INFO, DEBUG"
   }
 }
-
-variable "dataplatform_rg_name" {
-  type        = string
-  default     = "rg-nontrecore"
-  description = "The name of the data platform resource group"
-}
-
-variable "dataplatform_sa_name" {
-  type        = string
-  default     = "sabartstestdata"
-  description = "The name of the storage account that will hold the data to be transfered from the data platform"
-}
-
-
