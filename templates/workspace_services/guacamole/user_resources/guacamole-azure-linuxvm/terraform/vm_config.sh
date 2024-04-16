@@ -25,7 +25,7 @@ if [ "${INSTALL_UI}" -eq 1 ]; then
   sudo apt-get install -y x11-xserver-utils
 fi
 
-sudo -u ${VM_USER} -i bash -c 'echo xfce4-session > ~/.xsession'
+sudo -u "${VM_USER}" -i bash -c 'echo xfce4-session > ~/.xsession'
 
 # Fix for blank screen on DSVM (/sh -> /bash due to conflict with profile.d scripts)
 sudo sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
