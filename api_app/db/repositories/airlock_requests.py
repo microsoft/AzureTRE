@@ -225,11 +225,11 @@ class AirlockRequestRepository(BaseRepository):
     async def save_and_check_triage_statements(self, request: AirlockRequest, airlock_request_triage_statements_input: AirlockRequestTriageStatements) -> AirlockRequest:
         triageStatements = AirlockRequestTriageStatements(
             rdgConsistent=airlock_request_triage_statements_input.rdgConsistent,
-            noPatientLevelData=airlock_request_triage_statements_input.noPatientLevelData,
+            patientLevelData=airlock_request_triage_statements_input.patientLevelData,
             requestedOutputsClear=airlock_request_triage_statements_input.requestedOutputsClear,
             requestedOutputsStatic=airlock_request_triage_statements_input.requestedOutputsStatic,
             requestedOutputsPermittedFiles=airlock_request_triage_statements_input.requestedOutputsPermittedFiles,
-            noHiddenInformation=airlock_request_triage_statements_input.noHiddenInformation
+            hiddenInformation=airlock_request_triage_statements_input.hiddenInformation
         )
 
         request.triageStatements.clear()

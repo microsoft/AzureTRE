@@ -407,7 +407,7 @@ class CostService:
         workspace_costs_table = constants.WORKSPACE_COSTS_TABLE_NAME
 
         try:
-            workspace_costs:  MHRAWorkspaceCosts = MHRAWorkspaceCosts()
+            workspace_costs: MHRAWorkspaceCosts = MHRAWorkspaceCosts()
             table_client = TableClient(endpoint=account_endpoint,table_name=workspace_costs_table,credential=credentials.get_credential())
             workspace_costs.workspace_costs_items.append(
                 MHRACostItem(partition_key="None",

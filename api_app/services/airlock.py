@@ -13,6 +13,7 @@ from models.domain.resource import ResourceType
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.airlock_request import AirlockReviewInCreate
 from models.schemas.airlock_request import AirlockRequestWithAllowedUserActions
+from models.schemas.airlock_request import AirlockRequestTriageStatements
 from models.schemas.resource import ResourcePatch
 from typing import Tuple, List, Optional
 from models.schemas.user_resource import UserResourceInCreate
@@ -469,3 +470,71 @@ async def cancel_request(airlock_request: AirlockRequest, user: User, workspace:
 
 def _user_has_one_of_roles(user: User, roles) -> bool:
     return any(role in roles for role in user.roles)
+
+
+async def save_and_check_triage_statements(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository,
+                                           airlock_request_triage_statements_input: AirlockRequestTriageStatements) -> AirlockRequest:
+
+    # Save the triage questions on CosmosDB.
+    airlock_request = await airlock_request_repo.save_and_check_triage_statements(airlock_request, airlock_request_triage_statements_input)
+    return airlock_request
+
+
+async def exit_and_reject_airlock_request(airlock_request: AirlockRequest,
+                                          airlock_request_repo: AirlockRequestRepository,
+                                          user: User) -> AirlockRequest:
+
+    if airlock_request.triageStatements == None or airlock_request.triageStatements == []:
+         raiseMessage = f"Request {airlock_request.id} does not have triage statements."
+         logging.info(raiseMessage)
+         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=raiseMessage)
+
+    # Check MHRA's validation criteria.
+    criteriumCheck1 = (airlock_request.triageStatements[0].rdgConsistent and
+                       airlock_request.triageStatements[0].requestedOutputsClear and
+                       airlock_request.triageStatements[0].requestedOutputsStatic and
+                       airlock_request.triageStatements[0].requestedOutputsPermittedFiles)
+
+    criteriumCheck2 = (not airlock_request.triageStatements[0].patientLevelData and
+                       not airlock_request.triageStatements[0].hiddenInformation)
+
+    if criteriumCheck1 and criteriumCheck2:
+        return airlock_request
+    else:
+        try:
+            logging.info(f"Auto-rejecting airlock request item: {airlock_request.id}")
+            submitted_airlock_request = await airlock_request_repo.update_airlock_request(
+                original_request=airlock_request,
+                updated_by=user,
+                new_status=AirlockRequestStatus.Submitted
+            )
+
+            in_review_airlock_request = await airlock_request_repo.update_airlock_request(
+                original_request=submitted_airlock_request,
+                updated_by=user,
+                new_status=AirlockRequestStatus.InReview)
+
+            decisionReject = "Triage statements don't comply with all requiered criteria."
+            airlock_review_input: AirlockReviewInCreate = AirlockReviewInCreate(approval=False, decisionExplanation=decisionReject)
+            airlock_review_rejection = airlock_request_repo.create_airlock_review_item(airlock_review_input, user)
+
+            rejection_in_progress_airlock_request = await airlock_request_repo.update_airlock_request(
+                original_request=in_review_airlock_request,
+                updated_by=user,
+                new_status=AirlockRequestStatus.RejectionInProgress,
+                airlock_review=airlock_review_rejection)
+
+            rejected_airlock_request = await airlock_request_repo.update_airlock_request(
+                original_request=rejection_in_progress_airlock_request,
+                updated_by=user,
+                new_status=AirlockRequestStatus.Rejected)
+
+            return rejected_airlock_request
+
+        except Exception as e:
+            logging.exception(f'Failed updating airlock_request item {airlock_request}')
+            # If the validation failed, the error was not related to the saving itself
+            if hasattr(e, 'status_code'):
+                if e.status_code == 400:  # type: ignore
+                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
