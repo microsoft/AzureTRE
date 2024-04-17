@@ -7,14 +7,14 @@ from typing import Optional
 
 from pydantic import UUID4
 
-from models.schemas.costs import get_cost_report_responses, get_workspace_cost_report_responses
+from models.schemas.costs import get_cost_report_responses, get_workspace_cost_report_responses, get_mhra_workspace_costs_responses
 from api.dependencies.database import get_repository
 from core import config
 from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.workspaces import WorkspaceRepository
-from models.domain.costs import CostReport, GranularityEnum, WorkspaceCostReport
+from models.domain.costs import CostReport, GranularityEnum, WorkspaceCostReport, MHRAWorkspaceCosts
 from resources import strings
 from services.authentication import get_current_admin_user, get_current_workspace_owner_or_tre_admin
 from services.cost_service import CostService, ServiceUnavailable, SubscriptionNotSupported, TooManyRequests, WorkspaceDoesNotExist, cost_service_factory
@@ -119,3 +119,16 @@ async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depend
     except Exception:
         logging.exception("Failed to query Azure TRE costs")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.API_GET_COSTS_INTERNAL_SERVER_ERROR)
+
+
+@costs_core_router.get("/workspace_costs", response_model=MHRAWorkspaceCosts,
+                       status_code=status.HTTP_200_OK,
+                       name=strings.API_GET_COSTS_MHRA_CLIENTS,
+                       dependencies=[Depends(get_current_workspace_owner_or_tre_admin)],
+                       responses=get_mhra_workspace_costs_responses())
+async def get_workspace_costs_custom_method(cost_service: CostService = Depends(cost_service_factory)) -> MHRAWorkspaceCosts:
+    try:
+        return await cost_service.get_workspace_costs_custom()
+    except:
+        logging.exception("Failed to retrieve MHRA clients costs.")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.API_GET_COSTS_MHRA_CLIENTS_INTERNAL_SERVER_ERROR)
