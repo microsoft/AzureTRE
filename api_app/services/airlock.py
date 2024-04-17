@@ -13,7 +13,7 @@ from models.domain.resource import ResourceType
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.airlock_request import AirlockReviewInCreate
 from models.schemas.airlock_request import AirlockRequestWithAllowedUserActions
-from models.schemas.airlock_request import AirlockRequestTriageStatements
+from models.schemas.airlock_request import AirlockRequestTriageStatements, AirlockRequestStatisticsStatements
 from models.schemas.resource import ResourcePatch
 from typing import Tuple, List, Optional
 from models.schemas.user_resource import UserResourceInCreate
@@ -538,3 +538,112 @@ async def exit_and_reject_airlock_request(airlock_request: AirlockRequest,
                 if e.status_code == 400:  # type: ignore
                     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+
+
+async def save_and_check_statistics_statements(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository,
+                                           airlock_request_statistics_statements_input: AirlockRequestStatisticsStatements) -> AirlockRequest:
+
+    # Save the statistics questions on CosmosDB.
+    airlock_request = await airlock_request_repo.save_and_check_statistics_statements(airlock_request, airlock_request_statistics_statements_input)
+    return airlock_request
+
+
+async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockRequest,
+                                          airlock_request_repo: AirlockRequestRepository,
+                                          user: User) -> AirlockRequest:
+
+    if airlock_request.statisticsStatements == None or airlock_request.statisticsStatements == []:
+         raiseMessage = f"Request {airlock_request.id} does not have statistics statements."
+         logging.info(raiseMessage)
+         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=raiseMessage)
+
+    # Check MHRA's validation criteria.
+    criteriumCheck1 = (airlock_request.statisticsStatements[0].statisticalTests and
+                       not airlock_request.statisticsStatements[0].statisticalTestsConfirmation)
+
+    criteriumCheck2 = (airlock_request.statisticsStatements[0].coefficientsAssociation or
+                       not airlock_request.statisticsStatements[0].coefficientsAssociationResidualDegrees or
+                       not airlock_request.statisticsStatements[0].coefficientsAssociationModelNotSaturated or
+                       not airlock_request.statisticsStatements[0].coefficientsAssociationRegressionNotIncluded)
+
+    criteriumCheck3 = (airlock_request.statisticsStatements[0].shape or
+                       not airlock_request.statisticsStatements[0].shapeStandardDeviations or
+                       not airlock_request.statisticsStatements[0].shapeMinFive)
+
+    criteriumCheck4 = (airlock_request.statisticsStatements[0].mode and
+                       not airlock_request.statisticsStatements[0].modeConfirmation)
+
+    criteriumCheck5 = (airlock_request.statisticsStatements[0].ratios or
+                       not airlock_request.statisticsStatements[0].ratiosConfirmationNRatios or
+                       not airlock_request.statisticsStatements[0].ratiosConfirmationHRatios)
+
+    criteriumCheck6 = (airlock_request.statisticsStatements[0].giniCoefficients or
+                       not airlock_request.statisticsStatements[0].giniCoefficientsConfirmationN or
+                       not airlock_request.statisticsStatements[0].giniCoefficientsConfirmationLessThan)
+
+    criteriumCheck7 = (airlock_request.statisticsStatements[0].frequencies or
+                       not airlock_request.statisticsStatements[0].frequenciesSmallFrequenciesSuppressed or
+                       not airlock_request.statisticsStatements[0].frequenciesZerosFullCells or
+                       not airlock_request.statisticsStatements[0].frequenciesUnderlyingValuesIndependent or
+                       not airlock_request.statisticsStatements[0].frequenciesCategoriesComprehensiveData)
+
+    criteriumCheck8 = (airlock_request.statisticsStatements[0].position and
+                       not airlock_request.statisticsStatements[0].positionConfirmation)
+
+    criteriumCheck9 = (airlock_request.statisticsStatements[0].extremeValues and
+                       not airlock_request.statisticsStatements[0].extremeValuesConfirmation)
+
+    criteriumCheck10 = (airlock_request.statisticsStatements[0].linearAggregates or
+                       not airlock_request.statisticsStatements[0].linearAggregatesDerivedGroups or
+                       not airlock_request.statisticsStatements[0].linearAggregatesPRatioDominanceRule or
+                       not airlock_request.statisticsStatements[0].linearAggregatesNKDominanceRule)
+
+    criteriumCheck11 = (airlock_request.statisticsStatements[0].oddsRatios and
+                       not airlock_request.statisticsStatements[0].oddsRatiosConfirmation)
+
+    criteriumCheck12 = (airlock_request.statisticsStatements[0].hazardSurvivalTables or
+                       not airlock_request.statisticsStatements[0].hazardSurvivalTablesNumberPatientsSurvived or
+                       not airlock_request.statisticsStatements[0].hazardSurvivalTablesExitDatesRelatives or
+                       not airlock_request.statisticsStatements[0].hazardSurvivalTablesNoDatesWithSingleExit)
+
+    if criteriumCheck1 or criteriumCheck2 or criteriumCheck3 or criteriumCheck4 or criteriumCheck5 or criteriumCheck6 or criteriumCheck7 or criteriumCheck8 or criteriumCheck9 or criteriumCheck10 or criteriumCheck11 or criteriumCheck12:
+        try:
+            logging.info(f"Auto-rejecting airlock request item: {airlock_request.id}")
+            submitted_airlock_request = await airlock_request_repo.update_airlock_request(
+                original_request=airlock_request,
+                updated_by=user,
+                new_status=AirlockRequestStatus.Submitted
+            )
+
+            in_review_airlock_request = await airlock_request_repo.update_airlock_request(
+                original_request=submitted_airlock_request,
+                updated_by=user,
+                new_status=AirlockRequestStatus.InReview)
+
+            decisionReject = "Statistics statements don't comply with all requiered criteria."
+            airlock_review_input: AirlockReviewInCreate = AirlockReviewInCreate(approval=False, decisionExplanation=decisionReject)
+            airlock_review_rejection = airlock_request_repo.create_airlock_review_item(airlock_review_input, user)
+
+            rejection_in_progress_airlock_request = await airlock_request_repo.update_airlock_request(
+                original_request=in_review_airlock_request,
+                updated_by=user,
+                new_status=AirlockRequestStatus.RejectionInProgress,
+                airlock_review=airlock_review_rejection)
+
+            rejected_airlock_request = await airlock_request_repo.update_airlock_request(
+                original_request=rejection_in_progress_airlock_request,
+                updated_by=user,
+                new_status=AirlockRequestStatus.Rejected)
+
+            return rejected_airlock_request
+
+        except Exception as e:
+            logging.exception(f'Failed updating airlock_request item {airlock_request}')
+            # If the validation failed, the error was not related to the saving itself
+            if hasattr(e, 'status_code'):
+                if e.status_code == 400:  # type: ignore
+                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+
+    else:
+        return airlock_request
