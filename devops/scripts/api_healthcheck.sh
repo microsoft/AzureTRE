@@ -17,7 +17,7 @@ function call_and_parse() {
 }
 
 function call_with_retry() {
-  retries_left=4
+  retries_left=6
 
   echo "$command"
   call_and_parse "$2"

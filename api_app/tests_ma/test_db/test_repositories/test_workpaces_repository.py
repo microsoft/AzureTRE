@@ -20,18 +20,16 @@ def basic_workspace_request():
 
 @pytest_asyncio.fixture
 async def workspace_repo():
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=MagicMock()):
-        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-            workspace_repo = await WorkspaceRepository.create(cosmos_client_mock)
-            yield workspace_repo
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=MagicMock()):
+        workspace_repo = await WorkspaceRepository().create()
+        yield workspace_repo
 
 
 @pytest_asyncio.fixture
 async def operations_repo():
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=MagicMock()):
-        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-            operations_repo = await OperationRepository.create(cosmos_client_mock)
-            yield operations_repo
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=MagicMock()):
+        operations_repo = await OperationRepository().create()
+        yield operations_repo
 
 
 @pytest.fixture
@@ -53,7 +51,7 @@ async def test_get_workspaces_queries_db(workspace_repo):
     expected_query = workspace_repo.workspaces_query_string()
 
     await workspace_repo.get_workspaces()
-    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=None, enable_cross_partition_query=True)
+    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=None)
 
 
 @pytest.mark.asyncio
@@ -62,7 +60,7 @@ async def test_get_active_workspaces_queries_db(workspace_repo):
     expected_query = workspace_repo.active_workspaces_query_string()
 
     await workspace_repo.get_active_workspaces()
-    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=None, enable_cross_partition_query=True)
+    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=None)
 
 
 @pytest.mark.asyncio
@@ -94,7 +92,7 @@ async def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
     expected_query = f'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.id = "{workspace.id}"'
 
     await workspace_repo.get_workspace_by_id(workspace.id)
-    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=None, enable_cross_partition_query=True)
+    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=None)
 
 
 @pytest.mark.asyncio
@@ -209,16 +207,16 @@ async def test_get_address_space_based_on_size_with_custom_address_space_and_mis
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.workspaces.WorkspaceRepository.get_workspaces')
+@patch('db.repositories.workspaces.WorkspaceRepository.get_active_workspaces')
 @patch('core.config.RESOURCE_LOCATION', "useast2")
 @patch('core.config.TRE_ID', "9876")
 @patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
 @patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
-async def test_get_address_space_based_on_size_with_address_space_only(get_workspaces_mock, workspace_repo, basic_workspace_request, workspace):
+async def test_get_address_space_based_on_size_with_address_space_only(get_active_workspaces_mock, workspace_repo, basic_workspace_request, workspace):
     workspace_with_address_space = copy.deepcopy(workspace)
     workspace_with_address_space.properties["address_space"] = "10.1.4.0/24"
 
-    get_workspaces_mock.return_value = [workspace_with_address_space]
+    get_active_workspaces_mock.return_value = [workspace_with_address_space]
     workspace_to_create = basic_workspace_request
     address_space = await workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
 
@@ -226,12 +224,12 @@ async def test_get_address_space_based_on_size_with_address_space_only(get_works
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.workspaces.WorkspaceRepository.get_workspaces')
+@patch('db.repositories.workspaces.WorkspaceRepository.get_active_workspaces')
 @patch('core.config.RESOURCE_LOCATION', "useast2")
 @patch('core.config.TRE_ID', "9876")
 @patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
 @patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
-async def test_get_address_space_based_on_size_with_address_space_and_address_spaces(get_workspaces_mock, workspace_repo, basic_workspace_request, workspace):
+async def test_get_address_space_based_on_size_with_address_space_and_address_spaces(get_active_workspaces_mock, workspace_repo, basic_workspace_request, workspace):
     workspace_with_address_space = copy.deepcopy(workspace)
     workspace_with_address_space.properties["address_space"] = "10.1.4.0/24"
 
@@ -242,7 +240,7 @@ async def test_get_address_space_based_on_size_with_address_space_and_address_sp
     workspace_with_both.properties["address_spaces"] = ["10.1.7.0/24", "10.1.8.0/24"]
     workspace_with_both.properties["address_space"] = "10.1.7.0/24"
 
-    get_workspaces_mock.return_value = [workspace_with_address_space, workspace_with_address_spaces, workspace_with_both]
+    get_active_workspaces_mock.return_value = [workspace_with_address_space, workspace_with_address_spaces, workspace_with_both]
     workspace_to_create = basic_workspace_request
     address_space = await workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
 

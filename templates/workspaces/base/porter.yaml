@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 1.4.8
+version: 1.5.3
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -122,26 +122,32 @@ outputs:
     type: string
     applyTo:
       - install
+      - upgrade
   - name: app_role_id_workspace_researcher
     type: string
     applyTo:
       - install
+      - upgrade
   - name: app_role_id_workspace_airlock_manager
     type: string
     applyTo:
       - install
+      - upgrade
   - name: client_id
     type: string
     applyTo:
       - install
+      - upgrade
   - name: scope_id
     type: string
     applyTo:
       - install
+      - upgrade
   - name: sp_id
     type: string
     applyTo:
       - install
+      - upgrade
 
 mixins:
   - exec

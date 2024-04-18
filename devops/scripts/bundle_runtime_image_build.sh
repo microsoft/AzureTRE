@@ -32,7 +32,15 @@ if [ -n "${CI_CACHE_ACR_NAME:-}" ]; then
 	docker_cache+=("--cache-from" "${CI_CACHE_ACR_NAME}${acr_domain_suffix}/${IMAGE_NAME_PREFIX}/${image_name}:${version}")
 fi
 
-docker build --build-arg BUILDKIT_INLINE_CACHE=1 \
+ARCHITECTURE=$(docker info --format "{{ .Architecture }}" )
+
+if [ "${ARCHITECTURE}" == "aarch64" ]; then
+    DOCKER_BUILD_COMMAND="docker buildx build --platform linux/amd64"
+else
+    DOCKER_BUILD_COMMAND="docker build"
+fi
+
+${DOCKER_BUILD_COMMAND} --build-arg BUILDKIT_INLINE_CACHE=1 \
   -t "${FULL_IMAGE_NAME_PREFIX}/${image_name}:${version}" \
   "${docker_cache[@]}" -f "${docker_file}" "${docker_context}"
 

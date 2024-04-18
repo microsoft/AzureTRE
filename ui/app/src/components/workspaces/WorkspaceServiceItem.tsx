@@ -48,6 +48,8 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
 
   useEffect(() => {
     const getData = async () => {
+      if(!workspaceCtx.workspace.id) return;
+
       setHasUserResourceTemplates(false);
       try {
         let svc = props.workspaceService || {} as WorkspaceService;
@@ -112,7 +114,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
                     <Stack.Item>
                       <Stack horizontal horizontalAlign="space-between">
                         <h1>Resources</h1>
-                        <SecuredByRole allowedRoles={[WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher, WorkspaceRoleName.AirlockManager]} workspaceAuth={true} element={
+                        <SecuredByRole allowedWorkspaceRoles={[WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher, WorkspaceRoleName.AirlockManager]} element={
                           <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new"
                             disabled={!workspaceService.isEnabled || latestUpdate.componentAction === ComponentAction.Lock || successStates.indexOf(workspaceService.deploymentStatus) === -1}
                             title={(!workspaceService.isEnabled || latestUpdate.componentAction === ComponentAction.Lock || successStates.indexOf(workspaceService.deploymentStatus) === -1) ? 'Service must be enabled, successfully deployed, and not locked' : 'Create a User Resource'}

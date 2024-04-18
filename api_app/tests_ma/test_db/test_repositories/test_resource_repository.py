@@ -26,18 +26,16 @@ RESOURCE_ID = str(uuid.uuid4())
 
 @pytest_asyncio.fixture
 async def resource_repo():
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
-        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-            resource_repo = await ResourceRepository.create(cosmos_client_mock)
-            yield resource_repo
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=None):
+        resource_repo = await ResourceRepository().create()
+        yield resource_repo
 
 
 @pytest_asyncio.fixture
 async def resource_history_repo():
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
-        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-            resource_history_repo = await ResourceHistoryRepository.create(cosmos_client_mock)
-            yield resource_history_repo
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=None):
+        resource_history_repo = await ResourceHistoryRepository().create()
+        yield resource_history_repo
 
 
 @pytest.fixture
