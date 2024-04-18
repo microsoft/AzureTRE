@@ -502,8 +502,8 @@ async def exit_and_reject_airlock_request(airlock_request: AirlockRequest,
         return airlock_request
     else:
         try:
-            triageLevelInput = "L4"
-            airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triageLevelInput)
+            triage_level_input = "L4"
+            airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
             logging.info(f"Auto-rejecting airlock request item: {airlock_request.id}")
             submitted_airlock_request = await airlock_request_repo.update_airlock_request(
                 original_request=airlock_request,
