@@ -25,6 +25,18 @@
       "title": "Workspace Service Overview",
       "description": "Long form description of the workspace service, in markdown syntax",
       "default": "MLflow is an open source platform to manage the ML lifecycle, including experimentation, reproducibility, deployment, and a central model registry. Documentation can be found here: [https://mlflow.org/docs/latest/index.html](https://mlflow.org/docs/latest/index.html)"
+    },
+    "is_exposed_externally": {
+      "$id": "#/properties/is_exposed_externally",
+      "type": "boolean",
+      "title": "Expose externally",
+      "description": "Is MLflow accessible from outside of the workspace network.",
+      "default": false
+    }
+  },
+  "uiSchema": {
+    "is_exposed_externally": {
+      "classNames": "tre-hidden"
     }
   }
 }

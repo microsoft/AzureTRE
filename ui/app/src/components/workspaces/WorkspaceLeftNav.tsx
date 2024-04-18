@@ -31,8 +31,8 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
         serviceLinkArray.push(
           {
             name: service.properties.display_name,
-            url: `${ApiEndpoint.WorkspaceServices}/${service.id}`,
-            key: `${ApiEndpoint.WorkspaceServices}/${service.id}`
+            url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${service.id}`,
+            key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${service.id}`
           });
       });
 
@@ -41,8 +41,8 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
         sharedServiceLinkArray.push(
           {
             name: service.properties.display_name,
-            url: `${ApiEndpoint.SharedServices}/${service.id}`,
-            key: `${ApiEndpoint.SharedServices}/${service.id}`
+            url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}/${service.id}`,
+            key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}/${service.id}`
           });
       });
 
@@ -57,15 +57,15 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
             },
             {
               name: 'Services',
-              key: ApiEndpoint.WorkspaceServices,
-              url: ApiEndpoint.WorkspaceServices,
+              key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}`,
+              url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}`,
               isExpanded: true,
               links: serviceLinkArray
             },
             {
               name: 'Shared Services',
-              key: ApiEndpoint.SharedServices,
-              url: ApiEndpoint.SharedServices,
+              key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}`,
+              url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}`,
               isExpanded: false,
               links: sharedServiceLinkArray
             }
@@ -74,18 +74,18 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
       ];
 
       // Only show airlock link if enabled for workspace
-      if (workspaceCtx.workspace.properties.enable_airlock !== undefined && workspaceCtx.workspace.properties.enable_airlock) {
+      if (workspaceCtx.workspace.properties !== undefined && workspaceCtx.workspace.properties.enable_airlock) {
         serviceNavLinks[0].links.push({
           name: 'Airlock',
-          key: ApiEndpoint.AirlockRequests,
-          url: ApiEndpoint.AirlockRequests
+          key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}`,
+          url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}`,
         });
       }
 
       setServiceLinks(serviceNavLinks);
     };
     getWorkspaceServices();
-  }, [props.workspaceServices, props.sharedServices, workspaceCtx.workspace]);
+  }, [props.workspaceServices, props.sharedServices, workspaceCtx.workspace.id, workspaceCtx.workspace.properties]);
 
   return (
     <>

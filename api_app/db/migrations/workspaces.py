@@ -1,17 +1,15 @@
-import logging
-
-from azure.cosmos.aio import CosmosClient
-from db.repositories.workspaces import WorkspaceRepository
 import semantic_version
+
+from db.repositories.workspaces import WorkspaceRepository
+from services.logging import logger
 
 
 class WorkspaceMigration(WorkspaceRepository):
     @classmethod
-    async def create(cls, client: CosmosClient):
+    async def create(cls):
         cls = WorkspaceMigration()
-        resource_repo = await super().create(client)
+        resource_repo = await super().create()
         cls._container = resource_repo._container
-        cls._client = resource_repo._client
         return cls
 
     async def moveAuthInformationToProperties(self) -> bool:
@@ -32,7 +30,7 @@ class WorkspaceMigration(WorkspaceRepository):
                     updated = True
 
                 if "authInformation" in item:
-                    logging.info(f'Upgrading authInformation in workspace {item["id"]}')
+                    logger.info(f'Upgrading authInformation in workspace {item["id"]}')
 
                     # Copy authInformation into properties
                     item["properties"]["sp_id"] = item["authInformation"]["sp_id"]
@@ -44,7 +42,7 @@ class WorkspaceMigration(WorkspaceRepository):
 
                 if updated:
                     await self.update_item_dict(item)
-                    logging.info(f'Upgraded authentication info for workspace id {item["id"]}')
+                    logger.info(f'Upgraded authentication info for workspace id {item["id"]}')
                     migrated = True
 
             return migrated

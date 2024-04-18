@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-airlock-import-review
-version: 0.12.6
+version: 0.12.16
 description: "A workspace to do Airlock Data Import Reviews for Azure TRE"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -118,26 +118,32 @@ outputs:
     type: string
     applyTo:
       - install
+      - upgrade
   - name: app_role_id_workspace_researcher
     type: string
     applyTo:
       - install
+      - upgrade
   - name: app_role_id_workspace_airlock_manager
     type: string
     applyTo:
       - install
+      - upgrade
   - name: client_id
     type: string
     applyTo:
       - install
+      - upgrade
   - name: scope_id
     type: string
     applyTo:
       - install
+      - upgrade
   - name: sp_id
     type: string
     applyTo:
       - install
+      - upgrade
 
 mixins:
   - exec

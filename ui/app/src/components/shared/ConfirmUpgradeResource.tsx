@@ -1,4 +1,4 @@
-import { Dialog, DialogFooter, PrimaryButton, DialogType, Spinner, Dropdown, MessageBar, MessageBarType, DropdownMenuItemType, IDropdownOption, Icon, Stack, Label, IconButton, IDropdownProps } from '@fluentui/react';
+import { Dialog, DialogFooter, PrimaryButton, DialogType, Spinner, Dropdown, MessageBar, MessageBarType, Icon } from '@fluentui/react';
 import React, { useContext, useState } from 'react';
 import { AvailableUpgrade, Resource } from '../../models/resource';
 import { HttpMethod, ResultType, useAuthApiCall } from '../../hooks/useAuthApiCall';

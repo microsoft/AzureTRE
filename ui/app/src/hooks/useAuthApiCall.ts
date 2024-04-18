@@ -115,7 +115,6 @@ export const useAuthApiCall = () => {
     try {
       resp = await fetch(`${config.treUrl}/${endpoint}`, opts);
     } catch (err: any) {
-      console.error(err);
       let e = err as APIError;
       e.name = 'API call failure';
       e.message = 'Unable to make call to API Backend';

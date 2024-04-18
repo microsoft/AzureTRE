@@ -26,10 +26,9 @@ def basic_user_resource_request():
 
 @pytest_asyncio.fixture
 async def user_resource_repo():
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
-        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-            user_resource_repo = await UserResourceRepository.create(cosmos_client_mock)
-            yield user_resource_repo
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=None):
+        user_resource_repo = await UserResourceRepository().create()
+        yield user_resource_repo
 
 
 @pytest.fixture
