@@ -163,6 +163,7 @@ class AirlockRequest(AzureTREModel):
     reviews: Optional[List[AirlockReview]]
     etag: Optional[str] = Field(title="_etag", alias="_etag")
     reviewUserResources: Dict[str, AirlockReviewUserResource] = Field({}, title="User resources created for Airlock Reviews")
+    triageLevel: Optional[str] = Field("Triage Level assigned to Airlock Export requests", title="Triage Level assigned to Airlock Export requests.")
     triageStatements: Optional[List[AirlockRequestTriageStatements]] = Field("Triage Statements for Airlock Export requests", title="User given statements for acceptance.")
     contactTeamForm: Optional[List[AirlockRequestContactTeamForm]] = Field("Contact Team Form for Airlock Export requests", title="User given information regarding Airlock Export requests.")
     statisticsStatements: Optional[List[AirlockRequestStatisticsStatements]] = Field("Statistics Statements for Airlock Export requests", title="User given statements for acceptance.")

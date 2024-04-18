@@ -104,6 +104,7 @@ class AirlockRequestRepository(BaseRepository):
             updatedWhen=datetime.utcnow().timestamp(),
             properties=resource_spec_parameters,
             reviews=[],
+            triageLevel = "",
             triageStatements=[],
             contactTeamForm=[],
             statisticsStatements=[]
@@ -221,6 +222,11 @@ class AirlockRequestRepository(BaseRepository):
     def _validate_status_update(self, current_status, new_status):
         if not self.validate_status_update(current_status=current_status, new_status=new_status):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
+
+    async def set_triage_level(self, request: AirlockRequest, triage_level_input: str) -> AirlockRequest:
+        request.triageLevel = triage_level_input
+        await self.update_item(request)
+        return request
 
     async def save_and_check_triage_statements(self, request: AirlockRequest, airlock_request_triage_statements_input: AirlockRequestTriageStatements) -> AirlockRequest:
         triageStatements = AirlockRequestTriageStatements(

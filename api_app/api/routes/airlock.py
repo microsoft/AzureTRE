@@ -204,7 +204,7 @@ async def review_triage_statements(airlock_request_triage_statements_input: Airl
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/exit", status_code=status_code.HTTP_200_OK,
+@airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/exit-triage", status_code=status_code.HTTP_200_OK,
                                response_model=AirlockRequestWithAllowedUserActions, name=strings.API_CHECK_TRIAGE_STATEMENTS,
                                dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
 # async def exit_and_reject(airlock_request_triage_statements_input: AirlockRequestTriageStatements,
