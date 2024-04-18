@@ -57,3 +57,35 @@ resource "azurerm_private_endpoint" "filepe" {
     subresource_names              = ["file"]
   }
 }
+
+resource "azurerm_private_endpoint" "tablepe" {
+  name                = "pe-table-${var.tre_id}"
+  location            = azurerm_resource_group.core.location
+  resource_group_name = azurerm_resource_group.core.name
+  subnet_id           = module.network.shared_subnet_id
+  tags                = local.tre_core_tags
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "private-dns-zone-group-tablecore"
+    private_dns_zone_ids = [module.network.table_core_dns_zone_id]
+  }
+
+  private_service_connection {
+    name                           = "psc-tablestg-${var.tre_id}"
+    private_connection_resource_id = azurerm_storage_account.stg.id
+    is_manual_connection           = false
+    subresource_names              = ["Table"]
+  }
+}
+
+resource "azurerm_storage_table" "workspacecosts" {
+  name                 = "workspacecosts"
+  storage_account_name = azurerm_storage_account.stg.name
+}
+
+resource "azurerm_role_assignment" "workspace_costs_table_reader" {
+  scope                = azurerm_storage_account.stg.id
+  role_definition_name = "Storage Table Data Reader"
+  principal_id         = azurerm_user_assigned_identity.id.principal_id
+}

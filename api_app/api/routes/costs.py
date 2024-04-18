@@ -128,7 +128,7 @@ async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depend
                        responses=get_mhra_workspace_costs_responses())
 async def get_workspace_costs_custom_method(cost_service: CostService = Depends(cost_service_factory)) -> MHRAWorkspaceCosts:
     try:
-        return cost_service.get_workspace_costs_custom()
+        return await cost_service.get_workspace_costs_custom()
     except:
         logging.exception("Failed to retrieve MHRA clients costs.")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.API_GET_COSTS_MHRA_CLIENTS_INTERNAL_SERVER_ERROR)

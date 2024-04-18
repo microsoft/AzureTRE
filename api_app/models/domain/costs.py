@@ -119,7 +119,6 @@ class WorkspaceCostReport(CostItem):
 class MHRACostItem(BaseModel):
     partition_key: str
     row_key: str
-    timestamp: str
     workspace_id: str
     credit_limit: str
     available_credit: str
@@ -128,4 +127,4 @@ class MHRACostItem(BaseModel):
 
 
 class MHRAWorkspaceCosts(BaseModel):
-    workspace_costs_items: List[MHRACostItem] = []
+    workspace_costs_items: List[MHRACostItem]

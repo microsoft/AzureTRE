@@ -132,7 +132,6 @@ def get_mhra_workspace_costs_responses():
                         "workspace_1": {
                             "partition_key": "None",
                             "row_key": "aa0ef4e2-0b45-4d41-988b-e0ec59e0272e",
-                            "timestamp": "2024-04-15T08:45:03.0516138Z",
                             "workspace_id": "aa0ef4e2-0b45-4d41-988b-e0ec59e0272e",
                             "credit_limit": "1000.0",
                             "available_credit": "300.0",
