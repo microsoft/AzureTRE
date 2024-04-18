@@ -408,7 +408,9 @@ class CostService:
 
         try:
             costs_items = []
-            table_client = TableClient(endpoint=account_endpoint,table_name=workspace_costs_table,credential=credentials.get_credential())
+            azure_credentials=credentials.get_credential()
+            logging.info(f"azure_credentials === {azure_credentials}")
+            table_client = TableClient(endpoint=account_endpoint,table_name=workspace_costs_table,credential=azure_credentials)
             entities = table_client.list_entities()
 
             for entity in entities:
