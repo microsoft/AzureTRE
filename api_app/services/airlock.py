@@ -561,31 +561,31 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
     criteriumCheck1 = (airlock_request.statisticsStatements[0].statisticalTests and
                        not airlock_request.statisticsStatements[0].statisticalTestsConfirmation)
 
-    criteriumCheck2 = (airlock_request.statisticsStatements[0].coefficientsAssociation or
-                       not airlock_request.statisticsStatements[0].coefficientsAssociationResidualDegrees or
+    criteriumCheck2 = (airlock_request.statisticsStatements[0].coefficientsAssociation and
+                       (not airlock_request.statisticsStatements[0].coefficientsAssociationResidualDegrees or
                        not airlock_request.statisticsStatements[0].coefficientsAssociationModelNotSaturated or
-                       not airlock_request.statisticsStatements[0].coefficientsAssociationRegressionNotIncluded)
+                       not airlock_request.statisticsStatements[0].coefficientsAssociationRegressionNotIncluded))
 
-    criteriumCheck3 = (airlock_request.statisticsStatements[0].shape or
-                       not airlock_request.statisticsStatements[0].shapeStandardDeviations or
-                       not airlock_request.statisticsStatements[0].shapeMinFive)
+    criteriumCheck3 = (airlock_request.statisticsStatements[0].shape and
+                       (not airlock_request.statisticsStatements[0].shapeStandardDeviations or
+                       not airlock_request.statisticsStatements[0].shapeMinFive))
 
     criteriumCheck4 = (airlock_request.statisticsStatements[0].mode and
                        not airlock_request.statisticsStatements[0].modeConfirmation)
 
-    criteriumCheck5 = (airlock_request.statisticsStatements[0].ratios or
-                       not airlock_request.statisticsStatements[0].ratiosConfirmationNRatios or
-                       not airlock_request.statisticsStatements[0].ratiosConfirmationHRatios)
+    criteriumCheck5 = (airlock_request.statisticsStatements[0].ratios and
+                       (not airlock_request.statisticsStatements[0].ratiosConfirmationNRatios or
+                       not airlock_request.statisticsStatements[0].ratiosConfirmationHRatios))
 
-    criteriumCheck6 = (airlock_request.statisticsStatements[0].giniCoefficients or
-                       not airlock_request.statisticsStatements[0].giniCoefficientsConfirmationN or
-                       not airlock_request.statisticsStatements[0].giniCoefficientsConfirmationLessThan)
+    criteriumCheck6 = (airlock_request.statisticsStatements[0].giniCoefficients and
+                       (not airlock_request.statisticsStatements[0].giniCoefficientsConfirmationN or
+                       not airlock_request.statisticsStatements[0].giniCoefficientsConfirmationLessThan))
 
-    criteriumCheck7 = (airlock_request.statisticsStatements[0].frequencies or
-                       not airlock_request.statisticsStatements[0].frequenciesSmallFrequenciesSuppressed or
+    criteriumCheck7 = (airlock_request.statisticsStatements[0].frequencies and
+                       (not airlock_request.statisticsStatements[0].frequenciesSmallFrequenciesSuppressed or
                        not airlock_request.statisticsStatements[0].frequenciesZerosFullCells or
                        not airlock_request.statisticsStatements[0].frequenciesUnderlyingValuesIndependent or
-                       not airlock_request.statisticsStatements[0].frequenciesCategoriesComprehensiveData)
+                       not airlock_request.statisticsStatements[0].frequenciesCategoriesComprehensiveData))
 
     criteriumCheck8 = (airlock_request.statisticsStatements[0].position and
                        not airlock_request.statisticsStatements[0].positionConfirmation)
@@ -593,18 +593,18 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
     criteriumCheck9 = (airlock_request.statisticsStatements[0].extremeValues and
                        not airlock_request.statisticsStatements[0].extremeValuesConfirmation)
 
-    criteriumCheck10 = (airlock_request.statisticsStatements[0].linearAggregates or
-                       not airlock_request.statisticsStatements[0].linearAggregatesDerivedGroups or
+    criteriumCheck10 = (airlock_request.statisticsStatements[0].linearAggregates and
+                       (not airlock_request.statisticsStatements[0].linearAggregatesDerivedGroups or
                        not airlock_request.statisticsStatements[0].linearAggregatesPRatioDominanceRule or
-                       not airlock_request.statisticsStatements[0].linearAggregatesNKDominanceRule)
+                       not airlock_request.statisticsStatements[0].linearAggregatesNKDominanceRule))
 
     criteriumCheck11 = (airlock_request.statisticsStatements[0].oddsRatios and
                        not airlock_request.statisticsStatements[0].oddsRatiosConfirmation)
 
-    criteriumCheck12 = (airlock_request.statisticsStatements[0].hazardSurvivalTables or
-                       not airlock_request.statisticsStatements[0].hazardSurvivalTablesNumberPatientsSurvived or
+    criteriumCheck12 = (airlock_request.statisticsStatements[0].hazardSurvivalTables and
+                       (not airlock_request.statisticsStatements[0].hazardSurvivalTablesNumberPatientsSurvived or
                        not airlock_request.statisticsStatements[0].hazardSurvivalTablesExitDatesRelatives or
-                       not airlock_request.statisticsStatements[0].hazardSurvivalTablesNoDatesWithSingleExit)
+                       not airlock_request.statisticsStatements[0].hazardSurvivalTablesNoDatesWithSingleExit))
 
     if criteriumCheck1 or criteriumCheck2 or criteriumCheck3 or criteriumCheck4 or criteriumCheck5 or criteriumCheck6 or criteriumCheck7 or criteriumCheck8 or criteriumCheck9 or criteriumCheck10 or criteriumCheck11 or criteriumCheck12:
         try:
