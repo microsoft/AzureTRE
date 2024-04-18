@@ -16,4 +16,6 @@ apt:
     deb [trusted=yes] $SECURITY $RELEASE main restricted universe multiverse
     deb [signed-by=/etc/apt/trusted.gpg.d/microsoft.gpg] ${nexus_proxy_url}/repository/microsoft-apt/ubuntu/${apt_sku}/prod $RELEASE main
     deb [signed-by=/etc/apt/trusted.gpg.d/microsoft.gpg] ${nexus_proxy_url}/repository/microsoft-apt/repos/edge stable main
+    deb [signed-by=/etc/apt/trusted.gpg.d/microsoft.gpg] ${nexus_proxy_url}/repository/microsoft-apt/repos/vscode stable main
+    deb [signed-by=/etc/apt/trusted.gpg.d/microsoft.gpg] ${nexus_proxy_url}/repository/microsoft-apt/repos/azure-cli stable main
     deb [signed-by=/etc/apt/trusted.gpg.d/docker-archive-keyring.gpg] ${nexus_proxy_url}/repository/docker/ $RELEASE stable

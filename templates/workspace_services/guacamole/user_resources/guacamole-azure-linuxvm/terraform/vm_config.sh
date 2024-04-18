@@ -10,11 +10,59 @@ set -o xtrace
 sudo rm -f /etc/apt/sources.list.d/*
 
 # Update apt packages from configured Nexus sources
+echo "init_vm.sh: START"
+sudo apt update
+sudo apt upgrade -y
+sudo apt install -y gnupg2 software-properties-common apt-transport-https wget dirmngr gdebi-core
 sudo apt-get update
 
-# Install xrdp so Guacamole can connect via RDP
-sudo apt-get install xrdp -y
+## Desktop
+echo "init_vm.sh: Desktop"
+sudo DEBIAN_FRONTEND=noninteractive
+sudo apt install -y xfce4 xfce4-goodies xorg dbus-x11 x11-xserver-utils
+
+
+## Install xrdp so Guacamole can connect via RDP
+echo "init_vm.sh: xrdp"
+sudo apt install -y xrdp xorgxrdp xfce4-session
 sudo adduser xrdp ssl-cert
+sudo systemctl enable xrdp
+
+
+## Python 3.8 and Jupyter
+# sudo apt install -y python3.8 python3.8-venv python3.8-dev jupyter-notebook
+
+## VS Code
+echo "init_vm.sh: Folders"
+sudo mkdir /opt/vscode/user-data
+sudo mkdir /opt/vscode/extensions
+
+echo "init_vm.sh: VS Code"
+sudo apt install -y code gvfs-bin
+
+## VSCode Extensions
+echo "init_vm.sh: VSCode extensions"
+code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension ms-python.python
+code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension REditorSupport.r
+code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension RDebugger.r-debugger
+
+## R
+echo "init_vm.sh: R Setup"
+wget -q https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc -O- | sudo apt-key add -
+sudo add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
+sudo apt update
+sudo apt install -y r-base
+
+## RStudio Desktop
+echo "init_vm.sh: RStudio"
+wget https://download1.rstudio.org/desktop/bionic/amd64/rstudio-2022.07.2-576-amd64.deb -P /tmp
+sudo gdebi --non-interactive /tmp/rstudio-2022.07.2-576-amd64.deb
+
+## Azure Storage Explorer
+sudo apt install gnome-keyring -y
+sudo snap install storage-explorer
+sudo snap connect storage-explorer:password-manager-service :password-manager-service
+
 
 # # Install desktop environment if image doesn't have one already
 if [ "${INSTALL_UI}" -eq 1 ]; then
@@ -81,6 +129,7 @@ fi
 
 ### Anaconda Config
 if [ "${CONDA_CONFIG}" -eq 1 ]; then
+  echo "init_vm.sh: Anaconda"
   export PATH="/anaconda/condabin":$PATH
   export PATH="/anaconda/bin":$PATH
   export PATH="/anaconda/envs/py38_default/bin":$PATH
@@ -102,4 +151,38 @@ sudo systemctl restart docker
 
 # R config
 sudo echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- \"""${NEXUS_PROXY_URL}\"/repository/r-proxy/\"\n    options(repos = r)\n})" | sudo tee /etc/R/Rprofile.site
-sudo shutdown -r now
+
+## Add ouh_researcher group for directory permissions
+echo "init_vm.sh: directory permissions"
+getent group ouh_researcher || sudo groupadd ouh_researcher
+sudo chgrp -R ouh_researcher /opt/anaconda
+sudo chgrp -R ouh_researcher /opt/prom-tools
+sudo chgrp -R ouh_researcher /opt/vscode/user-data
+sudo chgrp -R ouh_researcher /opt/vscode/extensions
+
+sudo chmod -R g+w /opt/anaconda
+sudo chmod -R g+w /opt/prom-tools
+sudo chmod -R g+w /opt/vscode/user-data
+sudo chmod -R g+w /opt/vscode/extensions
+
+
+## Add ouh_researcher as default extra group when creating new users
+# echo "init_vm.sh: Add OUH User Group"
+# sudo cp -f /tmp/adduser.conf /etc/adduser.conf
+
+
+# ## Install script to run at user login
+# echo "init_vm.sh: User Login Script"
+# sudo cp -f /tmp/init_user_profile.sh /etc/profile.d/init_user_profile.sh
+
+
+# ## Cleanup
+echo "init_vm.sh: Cleanup"
+# sudo rm -R /tmp/init_vm.sh
+# sudo rm -R /tmp/init_user_profile.sh
+# sudo rm -R /tmp/adduser.conf
+# sudo rm -R /tmp/Anaconda3-2022.05-Linux-x86_64.sh
+# sudo rm -R /tmp/rstudio-2022.07.2-576-amd64.deb
+# sudo rm -R /tmp/google-chrome-stable_current_amd64.deb
+sudo apt -y autoremove
+sudo apt install unattended-upgrades
