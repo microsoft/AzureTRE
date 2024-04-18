@@ -9,7 +9,6 @@ from azure.mgmt.costmanagement import CostManagementClient
 from azure.mgmt.costmanagement.models import QueryGrouping, QueryAggregation, QueryDataset, QueryDefinition, \
     TimeframeType, ExportType, QueryTimePeriod, QueryFilter, QueryComparisonExpression, QueryResult
 from azure.core.exceptions import ResourceNotFoundError, HttpResponseError
-from azure.core.credentials import AzureNamedKeyCredential
 
 from azure.mgmt.resource import ResourceManagementClient
 
@@ -408,9 +407,9 @@ class CostService:
 
         try:
             costs_items = []
-            azure_credentials=credentials.get_credential()
-            logging.info(f"azure_credentials === {azure_credentials}")
-            table_client = TableClient(endpoint=account_endpoint,table_name=workspace_costs_table,credential=azure_credentials)
+            # For performing this operation, the identity used for running the API must have the role
+            # "Storage Table Data Reader" (the scope is the storage account holding the table).
+            table_client = TableClient(endpoint=account_endpoint,table_name=workspace_costs_table,credential=credentials.get_credential())
             entities = table_client.list_entities()
 
             for entity in entities:
