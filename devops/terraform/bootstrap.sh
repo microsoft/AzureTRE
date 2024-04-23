@@ -3,7 +3,6 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-
 # Baseline Azure resources
 echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e[0m..."
 # shellcheck disable=SC2154
