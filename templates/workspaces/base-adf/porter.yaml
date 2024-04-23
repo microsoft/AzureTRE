@@ -230,6 +230,7 @@ upgrade:
         arm_client_id: ${ bundle.credentials.azure_client_id }
         arm_client_secret: ${ bundle.credentials.azure_client_secret }
         arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
+        arm_subscription_id: ${ bundle.credentials.azure_subscription_id}
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -296,6 +297,7 @@ uninstall:
         arm_client_id: ${ bundle.credentials.azure_client_id }
         arm_client_secret: ${ bundle.credentials.azure_client_secret }
         arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
+        arm_subscription_id: ${ bundle.credentials.azure_subscription_id}
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
