@@ -21,16 +21,14 @@ echo "init_vm.sh: Desktop"
 sudo DEBIAN_FRONTEND=noninteractive
 sudo apt install -y xfce4 xfce4-goodies xorg dbus-x11 x11-xserver-utils
 
-
 ## Install xrdp so Guacamole can connect via RDP
 echo "init_vm.sh: xrdp"
 sudo apt install -y xrdp xorgxrdp xfce4-session
 sudo adduser xrdp ssl-cert
 sudo systemctl enable xrdp
 
-
 ## Python 3.8 and Jupyter
-# sudo apt install -y python3.8 python3.8-venv python3.8-dev jupyter-notebook
+sudo apt install -y python3.8 python3.8-venv python3.8-dev jupyter-notebook
 
 ## VS Code
 echo "init_vm.sh: Folders"
@@ -40,29 +38,31 @@ sudo mkdir /opt/vscode/extensions
 echo "init_vm.sh: VS Code"
 sudo apt install -y code gvfs-bin
 
+# TODO: need to look at proxy extentions
 ## VSCode Extensions
-echo "init_vm.sh: VSCode extensions"
-code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension ms-python.python
-code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension REditorSupport.r
-code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension RDebugger.r-debugger
+# echo "init_vm.sh: VSCode extensions"
+# code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension ms-python.python
+# code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension REditorSupport.r
+# code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension RDebugger.r-debugger
 
 ## R
-echo "init_vm.sh: R Setup"
-wget -q https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc -O- | sudo apt-key add -
-sudo add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
-sudo apt update
-sudo apt install -y r-base
+# echo "init_vm.sh: R Setup"
+# wget -q https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc -O- | sudo apt-key add -
+# sudo add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
+# sudo apt update
+# sudo apt install -y r-base
 
 ## RStudio Desktop
-echo "init_vm.sh: RStudio"
-wget https://download1.rstudio.org/desktop/bionic/amd64/rstudio-2022.07.2-576-amd64.deb -P /tmp
-sudo gdebi --non-interactive /tmp/rstudio-2022.07.2-576-amd64.deb
+# echo "init_vm.sh: RStudio"
+# wget https://download1.rstudio.org/desktop/bionic/amd64/rstudio-2022.07.2-576-amd64.deb -P /tmp
+# sudo gdebi --non-interactive /tmp/rstudio-2022.07.2-576-amd64.deb
 
 ## Azure Storage Explorer
 sudo apt install gnome-keyring -y
-sudo snap install storage-explorer
-sudo snap connect storage-explorer:password-manager-service :password-manager-service
-
+wget -q ${NEXUS_PROXY_URL}/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
+sudo mkdir /opt/storage-explorer
+tar -xf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
+sudo chmod +x /opt/storage-explorer/*.sh
 
 # # Install desktop environment if image doesn't have one already
 if [ "${INSTALL_UI}" -eq 1 ]; then
@@ -165,24 +165,7 @@ sudo chmod -R g+w /opt/prom-tools
 sudo chmod -R g+w /opt/vscode/user-data
 sudo chmod -R g+w /opt/vscode/extensions
 
-
-## Add ouh_researcher as default extra group when creating new users
-# echo "init_vm.sh: Add OUH User Group"
-# sudo cp -f /tmp/adduser.conf /etc/adduser.conf
-
-
-# ## Install script to run at user login
-# echo "init_vm.sh: User Login Script"
-# sudo cp -f /tmp/init_user_profile.sh /etc/profile.d/init_user_profile.sh
-
-
 # ## Cleanup
 echo "init_vm.sh: Cleanup"
-# sudo rm -R /tmp/init_vm.sh
-# sudo rm -R /tmp/init_user_profile.sh
-# sudo rm -R /tmp/adduser.conf
-# sudo rm -R /tmp/Anaconda3-2022.05-Linux-x86_64.sh
-# sudo rm -R /tmp/rstudio-2022.07.2-576-amd64.deb
-# sudo rm -R /tmp/google-chrome-stable_current_amd64.deb
 sudo apt -y autoremove
 sudo apt install unattended-upgrades
