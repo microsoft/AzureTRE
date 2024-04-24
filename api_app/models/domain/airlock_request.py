@@ -166,6 +166,7 @@ class AirlockRequest(AzureTREModel):
     triageLevel: Optional[str] = Field("Triage Level assigned to Airlock Export requests", title="Triage Level assigned to Airlock Export requests.")
     triageStatements: Optional[List[AirlockRequestTriageStatements]] = Field("Triage Statements for Airlock Export requests", title="User given statements for acceptance.")
     contactTeamForm: Optional[List[AirlockRequestContactTeamForm]] = Field("Contact Team Form for Airlock Export requests", title="User given information regarding Airlock Export requests.")
+    statisticsLevel: Optional[str] = Field("Statistics Level assigned to Airlock Export requests", title="Statistics Level assigned to Airlock Export requests.")
     statisticsStatements: Optional[List[AirlockRequestStatisticsStatements]] = Field("Statistics Statements for Airlock Export requests", title="User given statements for acceptance.")
 
     # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931

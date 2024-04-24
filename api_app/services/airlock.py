@@ -610,6 +610,8 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
 
     if criteriumCheck1 or criteriumCheck2 or criteriumCheck3 or criteriumCheck4 or criteriumCheck5 or criteriumCheck6 or criteriumCheck7 or criteriumCheck8 or criteriumCheck9 or criteriumCheck10 or criteriumCheck11 or criteriumCheck12:
         try:
+            statistics_level_input = "L4"
+            airlock_request = await airlock_request_repo.set_statistics_level(airlock_request, statistics_level_input)
             logging.info(f"Auto-rejecting airlock request item: {airlock_request.id}")
             submitted_airlock_request = await airlock_request_repo.update_airlock_request(
                 original_request=airlock_request,
