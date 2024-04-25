@@ -107,8 +107,7 @@ class AirlockRequestRepository(BaseRepository):
             triageLevel = "",
             triageStatements=[],
             contactTeamForm=[],
-            statisticsStatements=[],
-            statisticsLevel = ""
+            statisticsStatements=[]
         )
 
         return airlock_request
@@ -226,12 +225,6 @@ class AirlockRequestRepository(BaseRepository):
 
     async def set_triage_level(self, request: AirlockRequest, triage_level_input: str) -> AirlockRequest:
         request.triageLevel = triage_level_input
-        await self.update_item(request)
-        return request
-
-
-    async def set_statistics_level(self, request: AirlockRequest, statistics_level_input: str) -> AirlockRequest:
-        request.statisticsLevel = statistics_level_input
         await self.update_item(request)
         return request
 

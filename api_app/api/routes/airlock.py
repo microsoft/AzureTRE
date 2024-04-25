@@ -238,6 +238,8 @@ async def review_contact_team_form(airlock_request_contact_form_input: AirlockRe
                             detail="One or more fields have more than 100 characters.")
     try:
         await airlock_request_repo.save_and_check_contact_team_form(airlock_request, airlock_request_contact_form_input)
+        triage_level_input = "L3: Exemption"
+        airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
         return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request)
     except (ValidationError, ValueError) as e:
         logging.exception("Failed saving triage statements")

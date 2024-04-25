@@ -502,7 +502,7 @@ async def exit_and_reject_airlock_request(airlock_request: AirlockRequest,
         return airlock_request
     else:
         try:
-            triage_level_input = "L4"
+            triage_level_input = "L4a: Rejected"
             airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
             logging.info(f"Auto-rejecting airlock request item: {airlock_request.id}")
             submitted_airlock_request = await airlock_request_repo.update_airlock_request(
@@ -608,10 +608,49 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
                        not airlock_request.statisticsStatements[0].hazardSurvivalTablesExitDatesRelatives or
                        not airlock_request.statisticsStatements[0].hazardSurvivalTablesNoDatesWithSingleExit))
 
-    if criteriumCheck1 or criteriumCheck2 or criteriumCheck3 or criteriumCheck4 or criteriumCheck5 or criteriumCheck6 or criteriumCheck7 or criteriumCheck8 or criteriumCheck9 or criteriumCheck10 or criteriumCheck11 or criteriumCheck12:
+    criteriumCheck13 = (airlock_request.statisticsStatements[0].frequencies and
+                       airlock_request.statisticsStatements[0].frequenciesSmallFrequenciesSuppressed and
+                       airlock_request.statisticsStatements[0].frequenciesZerosFullCells and
+                       airlock_request.statisticsStatements[0].frequenciesUnderlyingValuesIndependent and
+                       airlock_request.statisticsStatements[0].frequenciesCategoriesComprehensiveData)
+
+    criteriumCheck14 = (airlock_request.statisticsStatements[0].position and
+                        airlock_request.statisticsStatements[0].positionConfirmation and
+                        airlock_request.statisticsStatements[0].isAcroUsed)
+
+    criteriumCheck15 = (airlock_request.statisticsStatements[0].position and
+                        airlock_request.statisticsStatements[0].positionConfirmation and
+                        not airlock_request.statisticsStatements[0].isAcroUsed)
+
+    criteriumCheck16 = (airlock_request.statisticsStatements[0].extremeValues and
+                       airlock_request.statisticsStatements[0].extremeValuesConfirmation)
+
+    criteriumCheck17 = (airlock_request.statisticsStatements[0].linearAggregates and
+                       airlock_request.statisticsStatements[0].linearAggregatesDerivedGroups and
+                       airlock_request.statisticsStatements[0].linearAggregatesPRatioDominanceRule and
+                       airlock_request.statisticsStatements[0].linearAggregatesNKDominanceRule and
+                       airlock_request.statisticsStatements[0].isAcroUsed)
+
+    criteriumCheck18 = (airlock_request.statisticsStatements[0].linearAggregates and
+                       airlock_request.statisticsStatements[0].linearAggregatesDerivedGroups and
+                       airlock_request.statisticsStatements[0].linearAggregatesPRatioDominanceRule and
+                       airlock_request.statisticsStatements[0].linearAggregatesNKDominanceRule and
+                       not airlock_request.statisticsStatements[0].isAcroUsed)
+
+    criteriumCheck19 = (airlock_request.statisticsStatements[0].oddsRatios and
+                       airlock_request.statisticsStatements[0].oddsRatiosConfirmation)
+
+    criteriumCheck20 = (airlock_request.statisticsStatements[0].hazardSurvivalTables and
+                       airlock_request.statisticsStatements[0].hazardSurvivalTablesNumberPatientsSurvived and
+                       airlock_request.statisticsStatements[0].hazardSurvivalTablesExitDatesRelatives and
+                       airlock_request.statisticsStatements[0].hazardSurvivalTablesNoDatesWithSingleExit)
+
+    criteriumCheck21 = (airlock_request.statisticsStatements[0].other)
+
+    if criteriumCheck1 or criteriumCheck2 or criteriumCheck3 or criteriumCheck6:
         try:
-            statistics_level_input = "L4"
-            airlock_request = await airlock_request_repo.set_statistics_level(airlock_request, statistics_level_input)
+            triage_level_input = "L4: Rejected"
+            airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
             logging.info(f"Auto-rejecting airlock request item: {airlock_request.id}")
             submitted_airlock_request = await airlock_request_repo.update_airlock_request(
                 original_request=airlock_request,
@@ -649,5 +688,22 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
                     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
+    if criteriumCheck4 or criteriumCheck5 or criteriumCheck7 or criteriumCheck8 or criteriumCheck9 or criteriumCheck10 or criteriumCheck11 or criteriumCheck12 or criteriumCheck21:
+        triage_level_input = "L3: Exemption"
+        airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
+        return airlock_request
+
+    if criteriumCheck13 or criteriumCheck14 or criteriumCheck16 or criteriumCheck17 or criteriumCheck19 or criteriumCheck20:
+        triage_level_input = "L2b: ACRO"
+        airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
+        return airlock_request
+
+    if criteriumCheck15 or criteriumCheck18:
+        triage_level_input = "L2a: No ACRO"
+        airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
+        return airlock_request
+
     else:
+        triage_level_input = "L1: Accepted"
+        airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
         return airlock_request
