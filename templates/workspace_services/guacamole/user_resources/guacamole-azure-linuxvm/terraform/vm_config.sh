@@ -11,10 +11,10 @@ sudo rm -f /etc/apt/sources.list.d/*
 
 # Update apt packages from configured Nexus sources
 echo "init_vm.sh: START"
-sudo apt update
+sudo apt update || continue
 sudo apt upgrade -y
 sudo apt install -y gnupg2 software-properties-common apt-transport-https wget dirmngr gdebi-core
-sudo apt-get update
+sudo apt-get update || continue
 
 ## Desktop
 echo "init_vm.sh: Desktop"
@@ -38,6 +38,9 @@ sudo mkdir /opt/vscode/extensions
 echo "init_vm.sh: VS Code"
 sudo apt install -y code gvfs-bin
 
+echo "init_vm.sh: azure-cli"
+sudo apt install azure-cli -y
+
 # TODO: need to look at proxy extentions
 ## VSCode Extensions
 # echo "init_vm.sh: VSCode extensions"
@@ -59,7 +62,7 @@ sudo apt install -y code gvfs-bin
 
 ## Azure Storage Explorer
 sudo apt install gnome-keyring -y
-wget -q ${NEXUS_PROXY_URL}/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
+wget -q ${NEXUS_PROXY_URL}/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
 sudo mkdir /opt/storage-explorer
 tar -xf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
 sudo chmod +x /opt/storage-explorer/*.sh
