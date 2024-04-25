@@ -12,13 +12,16 @@ sudo rm -f /etc/apt/sources.list.d/*
 # Update apt packages from configured Nexus sources
 echo "init_vm.sh: START"
 sudo apt update || continue
-sudo apt upgrade -y
 sudo apt install -y gnupg2 software-properties-common apt-transport-https wget dirmngr gdebi-core
 sudo apt-get update || continue
 
 ## Desktop
 echo "init_vm.sh: Desktop"
-sudo DEBIAN_FRONTEND=noninteractive
+echo /usr/sbin/gdm3 > /etc/X11/default-display-manager
+DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true dpkg-reconfigure gdm3
+echo set shared/default-x-display-manager gdm3 | debconf-communicate &> /dev/null 
+
+sudo DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true 
 sudo apt install -y xfce4 xfce4-goodies xorg dbus-x11 x11-xserver-utils
 
 ## Install xrdp so Guacamole can connect via RDP
@@ -28,20 +31,20 @@ sudo adduser xrdp ssl-cert
 sudo systemctl enable xrdp
 
 ## Python 3.8 and Jupyter
-sudo apt install -y python3.8 python3.8-venv python3.8-dev jupyter-notebook
+sudo apt install -y jupyter-notebook
 
 ## VS Code
-echo "init_vm.sh: Folders"
-sudo mkdir /opt/vscode/user-data
-sudo mkdir /opt/vscode/extensions
-
 echo "init_vm.sh: VS Code"
-sudo apt install -y code gvfs-bin
+sudo apt install -y code 
+sudo apt install -y gvfs-bin || contine
 
 echo "init_vm.sh: azure-cli"
 sudo apt install azure-cli -y
 
 # TODO: need to look at proxy extentions
+# echo "init_vm.sh: Folders"
+# sudo mkdir /opt/vscode/user-data
+# sudo mkdir /opt/vscode/extensions
 ## VSCode Extensions
 # echo "init_vm.sh: VSCode extensions"
 # code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension ms-python.python
@@ -49,11 +52,11 @@ sudo apt install azure-cli -y
 # code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension RDebugger.r-debugger
 
 ## R
-# echo "init_vm.sh: R Setup"
+echo "init_vm.sh: R Setup"
 # wget -q https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc -O- | sudo apt-key add -
 # sudo add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
 # sudo apt update
-# sudo apt install -y r-base
+sudo apt install -y r-base
 
 ## RStudio Desktop
 # echo "init_vm.sh: RStudio"
@@ -66,15 +69,6 @@ wget -q ${NEXUS_PROXY_URL}/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B
 sudo mkdir /opt/storage-explorer
 tar -xf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
 sudo chmod +x /opt/storage-explorer/*.sh
-
-# # Install desktop environment if image doesn't have one already
-if [ "${INSTALL_UI}" -eq 1 ]; then
-  sudo apt-get install -y xorg 
-  sudo apt-get install -y xfce4 
-  sudo apt-get install -y xfce4-goodies 
-  sudo apt-get install -y dbus-x11 
-  sudo apt-get install -y x11-xserver-utils
-fi
 
 sudo -u "${VM_USER}" -i bash -c 'echo xfce4-session > ~/.xsession'
 
@@ -157,16 +151,11 @@ sudo echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- \"""${
 
 ## Add ouh_researcher group for directory permissions
 echo "init_vm.sh: directory permissions"
-getent group ouh_researcher || sudo groupadd ouh_researcher
 sudo chgrp -R ouh_researcher /opt/anaconda
 sudo chgrp -R ouh_researcher /opt/prom-tools
-sudo chgrp -R ouh_researcher /opt/vscode/user-data
-sudo chgrp -R ouh_researcher /opt/vscode/extensions
 
 sudo chmod -R g+w /opt/anaconda
 sudo chmod -R g+w /opt/prom-tools
-sudo chmod -R g+w /opt/vscode/user-data
-sudo chmod -R g+w /opt/vscode/extensions
 
 # ## Cleanup
 echo "init_vm.sh: Cleanup"
