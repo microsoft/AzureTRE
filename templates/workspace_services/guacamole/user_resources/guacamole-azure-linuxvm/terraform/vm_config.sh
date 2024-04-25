@@ -28,7 +28,7 @@ sudo apt install -y xfce4 xfce4-goodies xorg dbus-x11 x11-xserver-utils
 echo "init_vm.sh: xrdp"
 sudo apt install -y xrdp xorgxrdp xfce4-session
 sudo adduser xrdp ssl-cert
-sudo systemctl enable xrdp
+sudo -u "${VM_USER}" -i bash -c 'echo xfce4-session > ~/.xsession'
 
 ## Python 3.8 and Jupyter
 sudo apt install -y jupyter-notebook
@@ -38,8 +38,8 @@ echo "init_vm.sh: VS Code"
 sudo apt install -y code 
 sudo apt install -y gvfs-bin || contine
 
-echo "init_vm.sh: azure-cli"
-sudo apt install azure-cli -y
+# echo "init_vm.sh: azure-cli"
+# sudo apt install azure-cli -y
 
 # TODO: need to look at proxy extentions
 # echo "init_vm.sh: Folders"
@@ -69,8 +69,6 @@ wget -q ${NEXUS_PROXY_URL}/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B
 sudo mkdir /opt/storage-explorer
 tar -xf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
 sudo chmod +x /opt/storage-explorer/*.sh
-
-sudo -u "${VM_USER}" -i bash -c 'echo xfce4-session > ~/.xsession'
 
 # Fix for blank screen on DSVM (/sh -> /bash due to conflict with profile.d scripts)
 sudo sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
@@ -152,10 +150,7 @@ sudo echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- \"""${
 ## Add ouh_researcher group for directory permissions
 echo "init_vm.sh: directory permissions"
 sudo chgrp -R ouh_researcher /opt/anaconda
-sudo chgrp -R ouh_researcher /opt/prom-tools
-
 sudo chmod -R g+w /opt/anaconda
-sudo chmod -R g+w /opt/prom-tools
 
 # ## Cleanup
 echo "init_vm.sh: Cleanup"
