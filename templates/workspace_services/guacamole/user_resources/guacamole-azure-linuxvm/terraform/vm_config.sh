@@ -18,7 +18,7 @@ sudo apt-get update || continue
 ## Desktop
 echo "init_vm.sh: Desktop"
 DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true 
-sudo apt install -y xfce4 xfce4-goodies xorg dbus-x11 x11-xserver-utils
+sudo apt install -y xfce4 xfce4-goodies xorg dbus-x11 x11-xserver-utils chromium-browser
 echo /usr/sbin/gdm3 > /etc/X11/default-display-manager
 
 ## Install xrdp so Guacamole can connect via RDP
@@ -27,13 +27,17 @@ sudo apt install -y xrdp xorgxrdp xfce4-session
 sudo adduser xrdp ssl-cert
 sudo -u "${VM_USER}" -i bash -c 'echo xfce4-session > ~/.xsession'
 
+# Make sure xrdp service starts up with the system
+sudo systemctl enable xrdp
+sudo service xrdp restart
+
 ## Python 3.8 and Jupyter
 sudo apt install -y jupyter-notebook
 
 ## VS Code
 echo "init_vm.sh: VS Code"
 sudo apt install -y code 
-sudo apt install -y gvfs-bin || contine
+sudo apt install -y gvfs-bin || continue
 
 # echo "init_vm.sh: azure-cli"
 # sudo apt install azure-cli -y
@@ -69,10 +73,6 @@ sudo chmod +x /opt/storage-explorer/*.sh
 
 # Fix for blank screen on DSVM (/sh -> /bash due to conflict with profile.d scripts)
 sudo sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
-
-# Make sure xrdp service starts up with the system
-sudo systemctl enable xrdp
-sudo service xrdp restart
 
 if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   # Install required packages
