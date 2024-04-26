@@ -148,7 +148,9 @@ sudo systemctl restart docker
 # R config
 sudo echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- \"""${NEXUS_PROXY_URL}\"/repository/r-proxy/\"\n    options(repos = r)\n})" | sudo tee /etc/R/Rprofile.site
 
-# ## Cleanup
-echo "init_vm.sh: Cleanup"
-sudo apt -y autoremove
-sudo apt install unattended-upgrades
+# # ## Cleanup
+# echo "init_vm.sh: Cleanup"
+# sudo apt -y autoremove
+# sudo apt install unattended-upgrades
+
+sudo shutdown -r now
