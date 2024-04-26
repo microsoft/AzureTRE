@@ -19,10 +19,7 @@ sudo apt-get update || continue
 echo "init_vm.sh: Desktop"
 DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true 
 sudo apt install -y xfce4 xfce4-goodies xorg dbus-x11 x11-xserver-utils
-
 echo /usr/sbin/gdm3 > /etc/X11/default-display-manager
-DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true dpkg-reconfigure gdm3
-echo set shared/default-x-display-manager gdm3 | debconf-communicate &> /dev/null 
 
 ## Install xrdp so Guacamole can connect via RDP
 echo "init_vm.sh: xrdp"
