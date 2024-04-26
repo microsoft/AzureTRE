@@ -27,9 +27,13 @@ sudo apt install -y xrdp xorgxrdp xfce4-session
 sudo adduser xrdp ssl-cert
 sudo -u "${VM_USER}" -i bash -c 'echo xfce4-session > ~/.xsession'
 
+sleep 10
+
 # Make sure xrdp service starts up with the system
 sudo systemctl enable xrdp
 sudo service xrdp restart
+
+sleep 10
 
 ## Python 3.8 and Jupyter
 sudo apt install -y jupyter-notebook microsoft-edge-dev
