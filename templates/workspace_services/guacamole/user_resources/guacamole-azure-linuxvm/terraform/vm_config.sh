@@ -12,6 +12,7 @@ sudo rm -f /etc/apt/sources.list.d/*
 # Update apt packages from configured Nexus sources
 echo "init_vm.sh: START"
 sudo apt update || true
+sudo apy upgrade -y
 sudo apt install -y gnupg2 software-properties-common apt-transport-https wget dirmngr gdebi-core
 sudo apt-get update || true
 
@@ -28,11 +29,12 @@ echo "init_vm.sh: xrdp"
 sudo apt install -y xrdp xorgxrdp xfce4-session
 sudo adduser xrdp ssl-cert
 sudo -u "${VM_USER}" -i bash -c 'echo xfce4-session > ~/.xsession'
-sudo -u "${VM_USER}" -i bash -c 'echo xset s off > ~/.xsession'
+sudo -u "${VM_USER}" -i bash -c 'echo xset s off >> ~/.xsession'
+sudo -u "${VM_USER}" -i bash -c 'echo xset -dpms >> ~/.xsession'
 
 # Make sure xrdp service starts up with the system
-sudo service xrdp restart
 sudo systemctl enable xrdp
+sudo service xrdp restart
 
 ## Python 3.8 and Jupyter
 sudo apt install -y jupyter-notebook microsoft-edge-dev
@@ -145,12 +147,7 @@ sudo systemctl restart docker
 # R config
 sudo echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- \"""${NEXUS_PROXY_URL}\"/repository/r-proxy/\"\n    options(repos = r)\n})" | sudo tee /etc/R/Rprofile.site
 
-# # ## Cleanup
-# echo "init_vm.sh: Cleanup"
-# sudo apt -y autoremove
-# sudo apt install unattended-upgrades
-
+## Cleanup
+echo "init_vm.sh: Cleanup"
+sudo apt -y autoremove
 sudo shutdown -r now
-
-sudo service xrdp restart
-sudo systemctl enable xrdp
