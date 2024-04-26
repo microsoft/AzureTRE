@@ -29,7 +29,6 @@ sudo apt install -y xrdp xorgxrdp xfce4-session
 sudo adduser xrdp ssl-cert
 sudo -u "${VM_USER}" -i bash -c 'echo xfce4-session > ~/.xsession'
 sudo -u "${VM_USER}" -i bash -c 'echo xset s off > ~/.xsession'
-sudo -u "${VM_USER}" -i bash -c 'echo xset -dpms > ~/.xsession'
 
 # Make sure xrdp service starts up with the system
 sudo systemctl enable xrdp
@@ -152,3 +151,6 @@ sudo echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- \"""${
 # sudo apt install unattended-upgrades
 
 sudo shutdown -r now
+
+sudo systemctl enable xrdp
+sudo service xrdp restart
