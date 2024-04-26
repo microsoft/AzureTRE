@@ -11,14 +11,14 @@ sudo rm -f /etc/apt/sources.list.d/*
 
 # Update apt packages from configured Nexus sources
 echo "init_vm.sh: START"
-sudo apt update || continue
+sudo apt update || true
 sudo apt install -y gnupg2 software-properties-common apt-transport-https wget dirmngr gdebi-core
-sudo apt-get update || continue
+sudo apt-get update || true
 
 ## Desktop
 echo "init_vm.sh: Desktop"
 DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true 
-sudo apt install -y xfce4 xfce4-goodies xorg dbus-x11 x11-xserver-utils chromium-browser
+sudo apt install -y xfce4 xfce4-goodies xorg dbus-x11 x11-xserver-utils
 echo /usr/sbin/gdm3 > /etc/X11/default-display-manager
 
 ## Install xrdp so Guacamole can connect via RDP
@@ -32,12 +32,12 @@ sudo systemctl enable xrdp
 sudo service xrdp restart
 
 ## Python 3.8 and Jupyter
-sudo apt install -y jupyter-notebook
+sudo apt install -y jupyter-notebook microsoft-edge-dev
 
 ## VS Code
 echo "init_vm.sh: VS Code"
 sudo apt install -y code 
-sudo apt install -y gvfs-bin || continue
+sudo apt install -y gvfs-bin || true
 
 # echo "init_vm.sh: azure-cli"
 # sudo apt install azure-cli -y
@@ -54,9 +54,6 @@ sudo apt install -y gvfs-bin || continue
 
 ## R
 echo "init_vm.sh: R Setup"
-# wget -q https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc -O- | sudo apt-key add -
-# sudo add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
-# sudo apt update
 sudo apt install -y r-base
 
 ## RStudio Desktop
@@ -65,11 +62,11 @@ sudo apt install -y r-base
 # sudo gdebi --non-interactive /tmp/rstudio-2022.07.2-576-amd64.deb
 
 ## Azure Storage Explorer
-sudo apt install gnome-keyring -y
-wget -q ${NEXUS_PROXY_URL}/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
-sudo mkdir /opt/storage-explorer
-tar -xf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
-sudo chmod +x /opt/storage-explorer/*.sh
+# sudo apt install gnome-keyring -y
+# wget -q ${NEXUS_PROXY_URL}/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
+# sudo mkdir /opt/storage-explorer
+# tar -xf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
+# sudo chmod +x /opt/storage-explorer/*.sh
 
 # Fix for blank screen on DSVM (/sh -> /bash due to conflict with profile.d scripts)
 sudo sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
