@@ -616,11 +616,11 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
 
     criteriumCheck14 = (airlock_request.statisticsStatements[0].position and
                         airlock_request.statisticsStatements[0].positionConfirmation and
-                        airlock_request.statisticsStatements[0].isAcroUsed)
+                        airlock_request.statisticsStatements[0].isAcroUsedPosition)
 
     criteriumCheck15 = (airlock_request.statisticsStatements[0].position and
                         airlock_request.statisticsStatements[0].positionConfirmation and
-                        not airlock_request.statisticsStatements[0].isAcroUsed)
+                        not airlock_request.statisticsStatements[0].isAcroUsedPosition)
 
     criteriumCheck16 = (airlock_request.statisticsStatements[0].extremeValues and
                        airlock_request.statisticsStatements[0].extremeValuesConfirmation)
@@ -629,13 +629,13 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
                        airlock_request.statisticsStatements[0].linearAggregatesDerivedGroups and
                        airlock_request.statisticsStatements[0].linearAggregatesPRatioDominanceRule and
                        airlock_request.statisticsStatements[0].linearAggregatesNKDominanceRule and
-                       airlock_request.statisticsStatements[0].isAcroUsed)
+                       airlock_request.statisticsStatements[0].isAcroUsedLinearAggregates)
 
     criteriumCheck18 = (airlock_request.statisticsStatements[0].linearAggregates and
                        airlock_request.statisticsStatements[0].linearAggregatesDerivedGroups and
                        airlock_request.statisticsStatements[0].linearAggregatesPRatioDominanceRule and
                        airlock_request.statisticsStatements[0].linearAggregatesNKDominanceRule and
-                       not airlock_request.statisticsStatements[0].isAcroUsed)
+                       not airlock_request.statisticsStatements[0].isAcroUsedLinearAggregates)
 
     criteriumCheck19 = (airlock_request.statisticsStatements[0].oddsRatios and
                        airlock_request.statisticsStatements[0].oddsRatiosConfirmation)
@@ -693,13 +693,13 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
         airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
         return airlock_request
 
-    if criteriumCheck13 or criteriumCheck14 or criteriumCheck16 or criteriumCheck17 or criteriumCheck19 or criteriumCheck20:
-        triage_level_input = "L2b: ACRO"
+    if criteriumCheck15 or criteriumCheck18:
+        triage_level_input = "L2a: No ACRO"
         airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
         return airlock_request
 
-    if criteriumCheck15 or criteriumCheck18:
-        triage_level_input = "L2a: No ACRO"
+    if criteriumCheck13 or criteriumCheck14 or criteriumCheck16 or criteriumCheck17 or criteriumCheck19 or criteriumCheck20:
+        triage_level_input = "L2b: ACRO"
         airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
         return airlock_request
 

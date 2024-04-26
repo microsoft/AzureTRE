@@ -297,7 +297,8 @@ class AirlockRequestRepository(BaseRepository):
             hazardSurvivalTablesNumberPatientsSurvived=airlock_request_statistics_statements_input.hazardSurvivalTablesNumberPatientsSurvived,
             hazardSurvivalTablesExitDatesRelatives=airlock_request_statistics_statements_input.hazardSurvivalTablesExitDatesRelatives,
             hazardSurvivalTablesNoDatesWithSingleExit=airlock_request_statistics_statements_input.hazardSurvivalTablesNoDatesWithSingleExit,
-            isAcroUsed=airlock_request_statistics_statements_input.isAcroUsed,
+            isAcroUsedPosition=airlock_request_statistics_statements_input.isAcroUsedPosition,
+            isAcroUsedLinearAggregates=airlock_request_statistics_statements_input.isAcroUsedLinearAggregates,
             other=airlock_request_statistics_statements_input.other
         )
 

@@ -138,8 +138,9 @@ class AirlockRequestStatisticsStatements(AzureTREModel):
     hazardSurvivalTablesNumberPatientsSurvived: bool = Field("", title="Statement 35", description="The number of patients who survived is ≥5.")
     hazardSurvivalTablesExitDatesRelatives: bool = Field("", title="Statement 36", description="Exit dates are relative, not absolute.")
     hazardSurvivalTablesNoDatesWithSingleExit: bool = Field("", title="Statement 37", description="There are no dates with a single exit.")
-    isAcroUsed: bool = Field("", title="Statement 38", description="Is Acro used")
-    other: bool = Field("", title="Statement 39", description="Other")
+    isAcroUsedPosition: bool = Field("", title="Statement 38", description="Is Acro used for Position")
+    isAcroUsedLinearAggregates: bool = Field("", title="Statement 39", description="Is Acro used for Linear Aggregates")
+    other: bool = Field("", title="Statement 40", description="Other")
 
 
 class AirlockRequest(AzureTREModel):
