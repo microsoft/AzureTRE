@@ -43,13 +43,14 @@ echo "init_vm.sh: VS Code"
 sudo apt install -y code 
 sudo apt install -y gvfs-bin || true
 
+echo "init_vm.sh: Folders"
+sudo mkdir -p /opt/vscode/user-data
+sudo mkdir -p /opt/vscode/extensions
+
 # echo "init_vm.sh: azure-cli"
 # sudo apt install azure-cli -y
 
 # TODO: need to look at proxy extentions
-# echo "init_vm.sh: Folders"
-# sudo mkdir /opt/vscode/user-data
-# sudo mkdir /opt/vscode/extensions
 ## VSCode Extensions
 # echo "init_vm.sh: VSCode extensions"
 # code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension ms-python.python
