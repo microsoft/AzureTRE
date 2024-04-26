@@ -48,7 +48,7 @@ sudo mkdir -p /opt/vscode/user-data
 sudo mkdir -p /opt/vscode/extensions
 
 # echo "init_vm.sh: azure-cli"
-# sudo apt install azure-cli -y
+sudo apt install azure-cli -y
 
 # TODO: need to look at proxy extentions
 ## VSCode Extensions
