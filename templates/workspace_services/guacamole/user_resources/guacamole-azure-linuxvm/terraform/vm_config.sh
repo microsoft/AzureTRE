@@ -17,7 +17,9 @@ sudo apt-get update || true
 
 ## Desktop
 echo "init_vm.sh: Desktop"
-sudo DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true dpkg-reconfigure gdm3 || true
+sudo systemctl start gdm3 || true
+DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true
+DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true dpkg-reconfigure gdm3 || true
 sudo apt install -y xfce4 xfce4-goodies xorg dbus-x11 x11-xserver-utils
 echo /usr/sbin/gdm3 > /etc/X11/default-display-manager
 
@@ -29,13 +31,9 @@ sudo -u "${VM_USER}" -i bash -c 'echo xfce4-session > ~/.xsession'
 sudo -u "${VM_USER}" -i bash -c 'echo xset s off > ~/.xsession'
 sudo -u "${VM_USER}" -i bash -c 'echo xset -dpms > ~/.xsession'
 
-sleep 10
-
 # Make sure xrdp service starts up with the system
 sudo systemctl enable xrdp
 sudo service xrdp restart
-
-sleep 10
 
 ## Python 3.8 and Jupyter
 sudo apt install -y jupyter-notebook microsoft-edge-dev
