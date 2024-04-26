@@ -12,7 +12,7 @@ sudo rm -f /etc/apt/sources.list.d/*
 # Update apt packages from configured Nexus sources
 echo "init_vm.sh: START"
 sudo apt update || true
-sudo apy upgrade -y
+sudo apt upgrade -y
 sudo apt install -y gnupg2 software-properties-common apt-transport-https wget dirmngr gdebi-core
 sudo apt-get update || true
 
