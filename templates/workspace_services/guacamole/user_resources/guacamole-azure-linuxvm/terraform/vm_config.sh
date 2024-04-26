@@ -17,7 +17,7 @@ sudo apt-get update || true
 
 ## Desktop
 echo "init_vm.sh: Desktop"
-DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true 
+sudo DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true dpkg-reconfigure gdm3 || true
 sudo apt install -y xfce4 xfce4-goodies xorg dbus-x11 x11-xserver-utils
 echo /usr/sbin/gdm3 > /etc/X11/default-display-manager
 
