@@ -26,6 +26,8 @@ echo "init_vm.sh: xrdp"
 sudo apt install -y xrdp xorgxrdp xfce4-session
 sudo adduser xrdp ssl-cert
 sudo -u "${VM_USER}" -i bash -c 'echo xfce4-session > ~/.xsession'
+sudo -u "${VM_USER}" -i bash -c 'echo xset s off > ~/.xsession'
+sudo -u "${VM_USER}" -i bash -c 'echo xset -dpms > ~/.xsession'
 
 sleep 10
 
@@ -145,11 +147,6 @@ sudo systemctl restart docker
 
 # R config
 sudo echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- \"""${NEXUS_PROXY_URL}\"/repository/r-proxy/\"\n    options(repos = r)\n})" | sudo tee /etc/R/Rprofile.site
-
-## Add ouh_researcher group for directory permissions
-echo "init_vm.sh: directory permissions"
-sudo chgrp -R ouh_researcher /opt/anaconda
-sudo chmod -R g+w /opt/anaconda
 
 # ## Cleanup
 echo "init_vm.sh: Cleanup"
