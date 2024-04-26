@@ -152,5 +152,5 @@ sudo echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- \"""${
 
 sudo shutdown -r now
 
-sudo systemctl enable xrdp
 sudo service xrdp restart
+sudo systemctl enable xrdp
