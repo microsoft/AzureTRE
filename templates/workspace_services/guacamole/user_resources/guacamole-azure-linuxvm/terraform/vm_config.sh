@@ -31,8 +31,8 @@ sudo -u "${VM_USER}" -i bash -c 'echo xfce4-session > ~/.xsession'
 sudo -u "${VM_USER}" -i bash -c 'echo xset s off > ~/.xsession'
 
 # Make sure xrdp service starts up with the system
-sudo systemctl enable xrdp
 sudo service xrdp restart
+sudo systemctl enable xrdp
 
 ## Python 3.8 and Jupyter
 sudo apt install -y jupyter-notebook microsoft-edge-dev
