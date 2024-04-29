@@ -91,6 +91,10 @@ sudo gdebi --non-interactive /tmp/${APT_SKU}/rstudio-2023.12.1-402-amd64.deb
 # Fix for blank screen on DSVM (/sh -> /bash due to conflict with profile.d scripts)
 sudo sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
 
+# Prevent screen timeout 
+sudo gsettings set org.gnome.desktop.screensaver lock-enabled false
+sudo gsettings set org.gnome.desktop.session idle-delay 0
+
 if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   # Install required packages
   sudo apt-get install autofs -y
