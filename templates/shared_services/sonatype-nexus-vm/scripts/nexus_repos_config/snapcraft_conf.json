@@ -7,7 +7,7 @@
         "write_policy": "ALLOW"
     },
     "proxy": {
-        "remoteUrl": "https://*.snapcraftcontent.com",
+        "remoteUrl": "https://snapcraftcontent.com",
         "contentMaxAge": 1440,
         "metadataMaxAge": 1440
     },
