@@ -13,7 +13,7 @@ sudo rm -f /etc/apt/sources.list.d/*
 echo "init_vm.sh: START"
 sudo apt update || true
 sudo apt upgrade -y
-sudo apt install -y gnupg software-properties-common apt-transport-https wget dirmngr gdebi-core
+sudo apt install -y gnupg2 software-properties-common apt-transport-https wget dirmngr gdebi-core
 sudo apt-get update || true
 
 ## Desktop
@@ -37,7 +37,7 @@ sudo systemctl enable xrdp
 sudo service xrdp restart
 
 ## Python 3.8 and Jupyter
-sudo apt install -y jupyter-notebook microsoft-edge-dev
+sudo apt install -y jupyter-notebook microsoft-edge-dev chromium-browser
 
 ## VS Code
 echo "init_vm.sh: VS Code"
