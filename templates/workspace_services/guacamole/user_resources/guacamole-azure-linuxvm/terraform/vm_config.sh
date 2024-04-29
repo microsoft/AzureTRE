@@ -58,9 +58,35 @@ sudo apt install azure-cli -y
 # code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension REditorSupport.r
 # code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension RDebugger.r-debugger
 
+# Azure Storage Explorer
+sudo apt install gnome-keyring dotnet-sdk-7.0 -y
+wget -q ${NEXUS_PROXY_URL}/repository/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
+sudo mkdir /opt/storage-explorer
+sudo tar xvf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
+sudo chmod +x /opt/storage-explorer/*
+
+sudo tee /usr/share/applications/storage-explorer.desktop << END
+[Desktop Entry]
+Name=Storage Explorer
+Comment=Azure Storage Explorer
+Exec=/opt/storage-explorer/StorageExplorer
+Icon=/opt/storage-explorer/resources/app/out/app/icon.png
+Terminal=false
+Type=Application
+StartupNotify=false
+StartupWMClass=Code
+Categories=Development;
+END
+
 ## R
 echo "init_vm.sh: R Setup"
 sudo apt install -y r-base
+
+# RStudio Desktop
+echo "init_vm.sh: RStudio"
+wget ${NEXUS_PROXY_URL}/repository/r-studio-download/electron/jammy/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2204
+wget ${NEXUS_PROXY_URL}/repository/r-studio-download/electron/focal/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2004
+sudo gdebi --non-interactive /tmp/${APT_SKU}/rstudio-2023.12.1-402-amd64.deb
 
 # Fix for blank screen on DSVM (/sh -> /bash due to conflict with profile.d scripts)
 sudo sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
@@ -134,29 +160,6 @@ sudo systemctl restart docker
 
 # R config
 sudo echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- \"""${NEXUS_PROXY_URL}\"/repository/r-proxy/\"\n    options(repos = r)\n})" | sudo tee /etc/R/Rprofile.site
-
-# RStudio Desktop
-echo "init_vm.sh: RStudio"
-wget ${NEXUS_PROXY_URL}/repository/r-studio-download/electron/jammy/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2204
-wget ${NEXUS_PROXY_URL}/repository/r-studio-download/electron/focal/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2004
-sudo gdebi --non-interactive /tmp/${APT_SKU}/rstudio-2023.12.1-402-amd64.deb
-
-# Azure Storage Explorer
-sudo apt install gnome-keyring dotnet-sdk-7.0 -y
-wget -q ${NEXUS_PROXY_URL}/repository/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
-sudo mkdir /opt/storage-explorer
-sudo tar xvf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
-sudo chmod +x /opt/storage-explorer/*
-
-cat >> /usr/share/applications/storage-explorer.desktop<< EOF
-[Desktop Entry]
-Type=Application
-Name=Storage Explorer
-Comment=Azure Storage Explorer
-Exec=/opt/storage-explorer/StorageExplorer
-Icon=/home/merilyn/App/waterfox/browser/chrome/icons/default/default128.png
-Terminal=false
-EOF
 
 ## Cleanup
 echo "init_vm.sh: Cleanup"
