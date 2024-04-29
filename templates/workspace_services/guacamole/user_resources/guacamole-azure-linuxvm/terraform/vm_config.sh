@@ -142,7 +142,7 @@ wget ${NEXUS_PROXY_URL}/electron/focal/amd64/rstudio-2023.12.1-402-amd64.deb -P 
 sudo gdebi --non-interactive /tmp/${APT_SKU}/rstudio-2023.12.1-402-amd64.deb
 
 # Azure Storage Explorer
-sudo snap set system proxy.https="${NEXUS_PROXY_URL}/repository/snapcraft:<proxy_port>"
+sudo snap set system proxy.https="${NEXUS_PROXY_URL}/repository/snapcraft:443"
 sudo apt install gnome-keyring -y
 wget -q ${NEXUS_PROXY_URL}/repository/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
 sudo mkdir /opt/storage-explorer
