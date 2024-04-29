@@ -62,18 +62,6 @@ sudo apt install azure-cli -y
 echo "init_vm.sh: R Setup"
 sudo apt install -y r-base
 
-## RStudio Desktop
-# echo "init_vm.sh: RStudio"
-# wget https://download1.rstudio.org/desktop/bionic/amd64/rstudio-2022.07.2-576-amd64.deb -P /tmp
-# sudo gdebi --non-interactive /tmp/rstudio-2022.07.2-576-amd64.deb
-
-## Azure Storage Explorer
-# sudo apt install gnome-keyring -y
-# wget -q ${NEXUS_PROXY_URL}/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
-# sudo mkdir /opt/storage-explorer
-# tar -xf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
-# sudo chmod +x /opt/storage-explorer/*.sh
-
 # Fix for blank screen on DSVM (/sh -> /bash due to conflict with profile.d scripts)
 sudo sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
 
@@ -146,6 +134,21 @@ sudo systemctl restart docker
 
 # R config
 sudo echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- \"""${NEXUS_PROXY_URL}\"/repository/r-proxy/\"\n    options(repos = r)\n})" | sudo tee /etc/R/Rprofile.site
+
+# RStudio Desktop
+echo "init_vm.sh: RStudio"
+wget ${NEXUS_PROXY_URL}/electron/jammy/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2204
+wget ${NEXUS_PROXY_URL}/electron/focal/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2004
+sudo gdebi --non-interactive /tmp/${APT_SKU}/rstudio-2023.12.1-402-amd64.deb
+
+# Azure Storage Explorer
+sudo snap set system proxy.https="${NEXUS_PROXY_URL}/repository/snapcraft:<proxy_port>"
+sudo apt install gnome-keyring -y
+wget -q ${NEXUS_PROXY_URL}/repository/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
+sudo mkdir /opt/storage-explorer
+tar -xf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
+sudo chmod +x /opt/storage-explorer/*.sh
+
 
 ## Cleanup
 echo "init_vm.sh: Cleanup"
