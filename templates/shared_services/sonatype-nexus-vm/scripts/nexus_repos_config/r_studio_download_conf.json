@@ -1,5 +1,5 @@
 {
-    "name": "r_studio_download",
+    "name": "r-studio-download",
     "online": true,
     "storage": {
         "blobStoreName": "default",

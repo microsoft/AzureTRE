@@ -37,7 +37,7 @@ sudo systemctl enable xrdp
 sudo service xrdp restart
 
 ## Python 3.8 and Jupyter
-sudo apt install -y jupyter-notebook microsoft-edge-dev chromium-browser
+sudo apt install -y jupyter-notebook microsoft-edge-dev
 
 ## VS Code
 echo "init_vm.sh: VS Code"
@@ -137,20 +137,27 @@ sudo echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- \"""${
 
 # RStudio Desktop
 echo "init_vm.sh: RStudio"
-wget ${NEXUS_PROXY_URL}/electron/jammy/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2204
-wget ${NEXUS_PROXY_URL}/electron/focal/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2004
+wget ${NEXUS_PROXY_URL}/repository/r-studio-download/electron/jammy/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2204
+wget ${NEXUS_PROXY_URL}/repository/r-studio-download/electron/focal/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2004
 sudo gdebi --non-interactive /tmp/${APT_SKU}/rstudio-2023.12.1-402-amd64.deb
 
 # Azure Storage Explorer
-sudo snap set system proxy.https="${NEXUS_PROXY_URL}/repository/snapcraft:443"
-sudo apt install gnome-keyring -y
+sudo apt install gnome-keyring dotnet-sdk-7.0 -y
 wget -q ${NEXUS_PROXY_URL}/repository/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
 sudo mkdir /opt/storage-explorer
-tar -xf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
-sudo chmod +x /opt/storage-explorer/*.sh
+sudo tar xvf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
+sudo chmod +x /opt/storage-explorer/*
 
+cat >> /usr/share/applications/storage-explorer.desktop<< EOF
+[Desktop Entry]
+Type=Application
+Name=Storage Explorer
+Comment=Azure Storage Explorer
+Exec=/opt/storage-explorer/StorageExplorer
+Icon=/home/merilyn/App/waterfox/browser/chrome/icons/default/default128.png
+Terminal=false
+EOF
 
 ## Cleanup
 echo "init_vm.sh: Cleanup"
-sudo apt -y autoremove
 sudo shutdown -r now
