@@ -92,8 +92,7 @@ sudo gdebi --non-interactive /tmp/${APT_SKU}/rstudio-2023.12.1-402-amd64.deb
 sudo sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
 
 # Prevent screen timeout 
-sudo gsettings set org.gnome.desktop.screensaver lock-enabled false
-sudo gsettings set org.gnome.desktop.session idle-delay 0
+sudo sed -i -e 's/<property name="lock" type="empty"><property name="enabled" type="bool" value="true"\/><\/property>/<property name="lock" type="empty"><property name="enabled" type="bool" value="false"\/><\/property>/g' /home/${VM_USER}/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
 
 if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   # Install required packages
@@ -164,6 +163,12 @@ sudo systemctl restart docker
 
 # R config
 sudo echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- \"""${NEXUS_PROXY_URL}\"/repository/r-proxy/\"\n    options(repos = r)\n})" | sudo tee /etc/R/Rprofile.site
+
+# Jupiter Notebook Config
+sudo sed -i -e 's/Terminal=true/Terminal=false/g' /usr/share/applications/jupyter-notebook.desktop
+
+#Default Browser
+sudo update-alternatives --config x-www-browser
 
 ## Cleanup
 echo "init_vm.sh: Cleanup"
