@@ -91,20 +91,6 @@ sudo gdebi --non-interactive /tmp/${APT_SKU}/rstudio-2023.12.1-402-amd64.deb
 # Fix for blank screen on DSVM (/sh -> /bash due to conflict with profile.d scripts)
 sudo sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
 
-# Prevent screen timeout 
-sudo tee /home/${VM_USER}/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml << END
-<?xml version="1.0" encoding="UTF-8"?>
-<channel name="xfce4-screensaver" version="1.0">
-  <property name="saver" type="empty">
-    <property name="mode" type="int" value="0"/>
-    <property name="enabled" type="bool" value="false"/>
-  </property>
-  <property name="lock" type="empty">
-    <property name="enabled" type="bool" value="false"/>
-  </property>
-</ channel>
-END
-
 if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   # Install required packages
   sudo apt-get install autofs -y
@@ -184,3 +170,17 @@ sudo update-alternatives --config x-www-browser
 ## Cleanup
 echo "init_vm.sh: Cleanup"
 sudo shutdown -r now
+
+# Prevent screen timeout 
+sudo tee /home/${VM_USER}/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml << END
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-screensaver" version="1.0">
+  <property name="saver" type="empty">
+    <property name="mode" type="int" value="0"/>
+    <property name="enabled" type="bool" value="false"/>
+  </property>
+  <property name="lock" type="empty">
+    <property name="enabled" type="bool" value="false"/>
+  </property>
+</ channel>
+END
