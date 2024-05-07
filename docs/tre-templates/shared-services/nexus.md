@@ -87,10 +87,12 @@ Nexus Shared Service requires access to resources outside of the Azure TRE VNET.
 | Ubuntu Security Packages | apt | [http://security.ubuntu.com/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu-security/` | Provide access to Ubuntu Security apt packages on Ubuntu systems. |
 | Almalinux | yum | [https://repo.almalinux.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/almalinux` | Install Almalinux packages |
 | R-Proxy | r | [https://cran.r-project.org/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/r-proxy` | Provide access to CRAN packages for R |
+| R-Studio Download | raw | [https://download1.rstudio.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/r-studio-download` | Provide access to download R Studio |
 | Fedora Project | yum | [https://download-ib01.fedoraproject.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/fedoraproject` | Install Fedora Project Linux packages |
 | Microsoft Apt | apt | [https://packages.microsoft.com] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-apt` | Provide access to Microsoft Apt packages |
 | Microsoft Keys | raw | [https://packages.microsoft.com/keys/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-keys` | Provide access to Microsoft keys |
 | Microsoft Yum | yum | [https://packages.microsoft.com/yumrepos] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-yum` | Provide access to Microsoft Yum packages |
+| Microsoft Download | raw | [https://download.microsoft.com/download] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-download` | Provide access to Microsoft Downloads |
 
 ### Migrate from an existing V1 Nexus service (hosted on App Service)
 
@@ -111,3 +113,18 @@ If you still have an existing Nexus installation based on App Service (from the 
 The Nexus service checks Key Vault regularly for the latest certificate matching the name you passed on deploy (`nexus-ssl` by default).
 
 When approaching expiry, you can either provide an updated certificate into the TRE core KeyVault (with the name you specified when installing Nexus) if you brought your own, or if you used the certs shared service to generate one, just call the `renew` custom action on that service. This will generate a new certificate and persist it to the Key Vault, replacing the expired one.
+
+## Updating to v3.0.0
+The newest version of Nexus is a significant update for the service.
+As a result, a new installation of Nexus will be necessary.
+
+We are currently in the process of developing an upgrade path for upcoming releases.
+
+## Using Docker Hub
+When using Docker with a VM, the image URL should be constructed as follows: {NEXUS_URL}:{port}/docker-image
+
+```bash
+sudo docker pull {NEXUS_URL}:8083/hello-world
+```
+
+the default port out of the box is 8083
