@@ -13,7 +13,7 @@ BUG FIXES:
 * Update to Resource Processor Image, now using Ubuntu 22.04 (jammy). Part of ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
 * Remove TLS1.0/1.1 support from Application Gateway ([#3914](https://github.com/microsoft/AzureTRE/issues/3914))
 * GitHub Actions version updates. ([#3847](https://github.com/microsoft/AzureTRE/issues/3847))
-  
+
 COMPONENTS:
 
 ## 0.17.0
