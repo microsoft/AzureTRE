@@ -34,24 +34,6 @@ custom:
         apt_sku: 22.04
       install_ui: true
       conda_config: false
-    "Ubuntu 20.04 LTS":
-      source_image_reference:
-        publisher: canonical
-        offer: 0001-com-ubuntu-server-focal
-        sku: 20_04-lts-gen2
-        version: latest
-        apt_sku: 20.04
-      install_ui: true
-      conda_config: false
-    "Ubuntu 20.04 LTS Data Science VM":
-      source_image_reference:
-        publisher: microsoft-dsvm
-        offer: ubuntu-2004
-        sku: 2004-gen2
-        version: latest
-        apt_sku: 20.04
-      install_ui: true
-      conda_config: true
     # "Custom Image From Gallery":
     #   source_image_name: your-image
     #   install_ui: true

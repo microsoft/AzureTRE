@@ -23,15 +23,6 @@ custom:
         apt_sku: 22.04
       install_ui: true
       conda_config: false
-    "Ubuntu 20.04 LTS Data Science VM":
-      source_image_reference:
-        publisher: microsoft-dsvm
-        offer: ubuntu-2004
-        sku: 2004-gen2
-        version: latest
-        apt_sku: 20.04
-      install_ui: false
-      conda_config: true
     # For information on using custom images, see README.me in the guacamole/user-resources folder
     # "Custom Image From Gallery":
     #   source_image_name: your-image
