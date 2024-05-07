@@ -83,6 +83,7 @@ resource "azurerm_user_assigned_identity" "nexus_msi" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = local.core_resource_group_name
   tags                = local.tre_shared_service_tags
+
   lifecycle { ignore_changes = [tags] }
 }
 
@@ -112,7 +113,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   source_image_reference {
     publisher = "Canonical"
     offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-lts-gen2"
+    sku       = "22_04-lts"
     version   = "latest"
   }
 

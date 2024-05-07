@@ -7,3 +7,12 @@ It blocks all inbound and outbound traffic to the internet and allows only RDP c
 
 - [A base workspace bundle installed](../workspaces/base.md)
 - [A guacamole workspace service bundle installed](../workspace-services/guacamole.md)
+- [A Nexus shared service has been deployed](../shared-services/nexus.md)
+
+## Notes
+- Nexus is a prerequisite of installing the Linux VMs given the additional commands in the bootstrap scripts.
+- In production we recommend using VM images to avoid transient issues downloading and installing packages.
+- Snap hasn't been configured to work via the nexus proxy
+
+## Using Custom Images
+For custom image usage, visit this [page](./custom.md).
