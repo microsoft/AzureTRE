@@ -172,10 +172,10 @@ sudo shutdown -r now
 
 # Prevent screen timeout 
 echo "init_vm.sh: Preventing Timeout"
-sudo touch /home/${VM_USER}/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
-sudo chmod 664 /home/${VM_USER}/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
-sudo chown ${VM_USER}:${VM_USER} /home/${VM_USER}/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
-sudo tee /home/${VM_USER}/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml << END
+sudo touch /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
+sudo chmod 664 /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
+sudo chown "${VM_USER}":"${VM_USER}" /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
+sudo tee /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml << END
 <?xml version="1.0" encoding="UTF-8"?>
 <channel name="xfce4-screensaver" version="1.0">
   <property name="saver" type="empty">
