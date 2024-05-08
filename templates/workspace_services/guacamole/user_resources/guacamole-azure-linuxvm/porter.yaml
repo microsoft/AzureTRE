@@ -83,7 +83,7 @@ parameters:
     default: "public"
   - name: os_image
     type: string
-    default: "Ubuntu 22.04 LTS Data Science VM"
+    default: "Ubuntu 22.04 LTS"
   - name: vm_size
     type: string
     default: "2 CPU | 8GB RAM"

@@ -9,7 +9,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Update Guacomole Linux VM Images to Ubuntu 22.04 LTS. Part of ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
-* Update Nexus Shared Service with new proxys. Part of ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
+* Update Nexus Shared Service with new proxies. Part of ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
 * Update to Resource Processor Image, now using Ubuntu 22.04 (jammy). Part of ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
 * Remove TLS1.0/1.1 support from Application Gateway ([#3914](https://github.com/microsoft/AzureTRE/issues/3914))
 * GitHub Actions version updates. ([#3847](https://github.com/microsoft/AzureTRE/issues/3847))
