@@ -10,6 +10,7 @@ It blocks all inbound and outbound traffic to the internet and allows only RDP c
 - [A Nexus shared service has been deployed](../shared-services/nexus.md)
 
 ## Notes
+
 - Nexus is a prerequisite of installing the Linux VMs given the additional commands in the bootstrap scripts.
 - In production we recommend using VM images to avoid transient issues downloading and installing packages.
 - Snap hasn't been configured to work via the nexus proxy
