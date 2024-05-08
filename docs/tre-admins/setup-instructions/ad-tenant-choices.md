@@ -1,4 +1,4 @@
-# Azure Active Directory Tenant Choices
+# Microsoft Entra ID Tenant Choices
 
 ## Dedicated Tenant for TRE
 
@@ -10,13 +10,13 @@ Users from your corporate tenant can be guested into this new TRE tenant.
 
 ## Corporate Tenant
 
-It is possible to use your corporate tenant for TRE. This does have the advantage of only managing a single tenant, but your AAD Tenant Admin must be aware of what TRE brings to your organization and must be prepared to carry out some admin tasks, like creating an AAD Application every time a new Workspace is created.
+It is possible to use your corporate tenant for TRE. This does have the advantage of only managing a single tenant, but your Microsoft Entra ID Tenant Admin must be aware of what TRE brings to your organization and must be prepared to carry out some admin tasks, like creating an Microsoft Entra ID Application every time a new Workspace is created.
 
 [![TRE Tenant](../../assets/corp-tenant.png)](../../assets/corp-tenant.png)
 
-## Create Dedicated Azure Active Directory Tenant
+## Create Dedicated Microsoft Entra ID Tenant
 
-Follow [this guide](https://learn.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-access-create-new-tenant) to create new dedicated tenant.
+Follow [this guide](https://learn.microsoft.com/en-us/entra/fundamentals/create-new-tenant) to create new dedicated tenant.
 
 ## Next steps
 
