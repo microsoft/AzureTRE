@@ -12,7 +12,7 @@ It blocks all inbound and outbound traffic to the internet and allows only RDP c
 ## Notes
 
 - Nexus is a prerequisite of installing the Linux VMs given the additional commands in the bootstrap scripts.
-- In production we recommend using VM images to avoid transient issues downloading and installing packages.
+- In production we recommend using VM images to avoid transient issues downloading and installing packages. The included user resource templates for VMs with bootstrap scripts should only be used for trial/demonstration purposes.
 - Snap hasn't been configured to work via the nexus proxy
 
 ## Using Custom Images
