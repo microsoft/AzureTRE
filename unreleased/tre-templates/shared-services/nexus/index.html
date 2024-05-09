@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../../assets/ms_icon.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.18">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.21">
     
     
       
@@ -1743,6 +1743,24 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#updating-to-v300" class="md-nav__link">
+    <span class="md-ellipsis">
+      Updating to v3.0.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-docker-hub" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Docker Hub
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3421,6 +3439,24 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#updating-to-v300" class="md-nav__link">
+    <span class="md-ellipsis">
+      Updating to v3.0.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-docker-hub" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Docker Hub
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3623,6 +3659,13 @@
 <td>Provide access to CRAN packages for R</td>
 </tr>
 <tr>
+<td>R-Studio Download</td>
+<td>raw</td>
+<td>[https://download1.rstudio.org]</td>
+<td><code>https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/r-studio-download</code></td>
+<td>Provide access to download R Studio</td>
+</tr>
+<tr>
 <td>Fedora Project</td>
 <td>yum</td>
 <td>[https://download-ib01.fedoraproject.org]</td>
@@ -3650,6 +3693,13 @@
 <td><code>https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-yum</code></td>
 <td>Provide access to Microsoft Yum packages</td>
 </tr>
+<tr>
+<td>Microsoft Download</td>
+<td>raw</td>
+<td>[https://download.microsoft.com/download]</td>
+<td><code>https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-download</code></td>
+<td>Provide access to Microsoft Downloads</td>
+</tr>
 </tbody>
 </table>
 <h3 id="migrate-from-an-existing-v1-nexus-service-hosted-on-app-service">Migrate from an existing V1 Nexus service (hosted on App Service)</h3>
@@ -3674,6 +3724,16 @@
 <h2 id="renewing-certificates-for-nexus">Renewing certificates for Nexus</h2>
 <p>The Nexus service checks Key Vault regularly for the latest certificate matching the name you passed on deploy (<code>nexus-ssl</code> by default).</p>
 <p>When approaching expiry, you can either provide an updated certificate into the TRE core KeyVault (with the name you specified when installing Nexus) if you brought your own, or if you used the certs shared service to generate one, just call the <code>renew</code> custom action on that service. This will generate a new certificate and persist it to the Key Vault, replacing the expired one.</p>
+<h2 id="updating-to-v300">Updating to v3.0.0</h2>
+<p>The newest version of Nexus is a significant update for the service.
+As a result, a new installation of Nexus will be necessary.</p>
+<p>We are currently in the process of developing an upgrade path for upcoming releases.</p>
+<h2 id="using-docker-hub">Using Docker Hub</h2>
+<p>When using Docker with a VM, the image URL should be constructed as follows: {NEXUS_URL}:{port}/docker-image</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>docker<span class="w"> </span>pull<span class="w"> </span><span class="o">{</span>NEXUS_URL<span class="o">}</span>:8083/hello-world
+</code></pre></div>
+<p>the default port out of the box is 8083</p>
+<p>Nexus will also need "Anonymous Access" set to "Enable". This can be done by logging into the Nexus Portal with the Admin user and following the prompts.</p>
 
 
 
@@ -3723,7 +3783,7 @@
     <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.instant", "navigation.indexes"], "search": "../../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.3220b9d7.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.a7c05c9e.min.js"></script>
       
     
   </body>
