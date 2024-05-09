@@ -128,3 +128,5 @@ sudo docker pull {NEXUS_URL}:8083/hello-world
 ```
 
 the default port out of the box is 8083
+
+Nexus will also need "Anonymous Access" set to "Enable". This can be done by logging into the Nexus Portal with the Admin user and following the prompts.
