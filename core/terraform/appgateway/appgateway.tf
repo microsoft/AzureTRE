@@ -65,6 +65,12 @@ resource "azurerm_application_gateway" "agw" {
     key_vault_secret_id = azurerm_key_vault_certificate.tlscert.secret_id
   }
 
+  # SSL policy
+  ssl_policy {
+    policy_type = "Predefined"
+    policy_name = "AppGwSslPolicy20220101"
+  }
+
   # Backend pool with the static website in storage account.
   backend_address_pool {
     name  = local.staticweb_backend_pool_name
