@@ -6,7 +6,7 @@
 
     <groupId>org.apache.guacamole</groupId>
     <artifactId>guacamole-auth-tre</artifactId>
-    <version>0.3.5</version>
+    <version>0.3.4</version>
     <packaging>jar</packaging>
     <name>guacamole-azure-tre</name>
 
