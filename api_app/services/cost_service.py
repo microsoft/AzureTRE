@@ -411,13 +411,28 @@ class CostService:
             # "Storage Table Data Reader" (the scope is the storage account holding the table).
             table_client = TableClient(endpoint=account_endpoint,table_name=workspace_costs_table,credential=credentials.get_credential())
             entities = table_client.list_entities()
+            filtered_entities = {}
 
             for entity in entities:
-            # for i, entity in enumerate(entities):
+                # for i, entity in enumerate(entities):
+                workspace_id = entity['WorkspaceID']
+                if workspace_id in filtered_entities.keys():
+                    if entity['UpdateTime'] > filtered_entities[workspace_id]['UpdateTime']:
+                        filtered_entities[workspace_id]['CreditLimit'] = entity['CreditLimit']
+                        filtered_entities[workspace_id]['AvailableCredit'] = entity['AvailableCredit']
+                        filtered_entities[workspace_id]['CreditPorcentageUsage'] = entity['CreditPorcentageUsage']
+                        filtered_entities[workspace_id]['UpdateTime'] = entity['UpdateTime']
+                else:
+                    filtered_entities[workspace_id] = {
+                        'CreditLimit': entity['CreditLimit'],
+                        'AvailableCredit': entity['AvailableCredit'],
+                        'CreditPorcentageUsage': entity['CreditPorcentageUsage'],
+                        'UpdateTime': entity['UpdateTime']
+                    }
+
+            for key, entity in filtered_entities.items():
                 costs_items.append(
-                    MHRACostItem(partition_key=entity['PartitionKey'],
-                                 row_key=entity['RowKey'],
-                                 workspace_id=entity['WorkspaceID'],
+                    MHRACostItem(workspace_id=key,
                                  credit_limit=entity['CreditLimit'],
                                  available_credit=entity['AvailableCredit'],
                                  credit_percentage_usage=entity['CreditPorcentageUsage'],

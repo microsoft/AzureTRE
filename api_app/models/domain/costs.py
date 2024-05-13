@@ -117,8 +117,6 @@ class WorkspaceCostReport(CostItem):
 
 
 class MHRACostItem(BaseModel):
-    partition_key: str
-    row_key: str
     workspace_id: str
     credit_limit: str
     available_credit: str
