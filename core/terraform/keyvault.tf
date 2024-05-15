@@ -10,6 +10,7 @@ resource "azurerm_key_vault" "kv" {
   lifecycle { ignore_changes = [access_policy, tags] }
 }
 
+
 resource "azurerm_key_vault_access_policy" "deployer" {
   key_vault_id = azurerm_key_vault.kv.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
