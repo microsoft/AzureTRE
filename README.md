@@ -1,5 +1,6 @@
 # Azure Trusted Research Environment
 
+
 **Azure TRE documentation site**: <https://microsoft.github.io/AzureTRE/>
 
 ## Background
