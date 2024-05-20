@@ -43,6 +43,11 @@ API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE = "Create an Airlock Review User Resourc
 API_CHECK_TRIAGE_STATEMENTS = "Check triage statements"
 API_CONTACT_TEAM_FORM = "Contact Team form for providing detailed information on Airlock Export requests"
 API_CHECK_STATISTICS_STATEMENTS = "Check statistics statements"
+API_TRIAGE_LEVEL1 = "L1: Accepted"
+API_TRIAGE_LEVEL2A = "L2a: No ACRO"
+API_TRIAGE_LEVEL2B = "L2b: ACRO"
+API_TRIAGE_LEVEL3 = "L3: Exemption"
+API_TRIAGE_LEVEL4 = "L4: Rejected"
 
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"

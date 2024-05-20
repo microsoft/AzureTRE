@@ -9,6 +9,7 @@ from event_grid.helpers import publish_event
 from core import config
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus
 from models.domain.workspace import Workspace
+from resources import strings, constants
 
 
 async def send_status_changed_event(airlock_request: AirlockRequest, previous_status: Optional[AirlockRequestStatus]):
@@ -31,6 +32,18 @@ async def send_status_changed_event(airlock_request: AirlockRequest, previous_st
 async def send_airlock_notification_event(airlock_request: AirlockRequest, workspace: Workspace, role_assignment_details: Dict[str, str]):
     def to_snake_case(string: str):
         return re.sub(r'(?<!^)(?=[A-Z])', '_', string).lower()
+
+    if airlock_request.type == constants.EXPORT_TYPE:
+        logging.info(f"Roles details original -----> {role_assignment_details}")
+        if airlock_request.triageLevel == strings.API_TRIAGE_LEVEL1:
+            role_assignment_details["AirlockManager"] = role_assignment_details["AirlockManagerL1"]
+        elif airlock_request.triageLevel == strings.API_TRIAGE_LEVEL2A:
+            role_assignment_details["AirlockManager"] = role_assignment_details["AirlockManagerL2A"]
+        elif airlock_request.triageLevel == strings.API_TRIAGE_LEVEL2B:
+            role_assignment_details["AirlockManager"] = role_assignment_details["AirlockManagerL2B"]
+        elif airlock_request.triageLevel == strings.API_TRIAGE_LEVEL3:
+            role_assignment_details["AirlockManager"] = role_assignment_details["AirlockManagerL3"]
+        logging.info(f"Roles details changed -----> {role_assignment_details}")
 
     request_id = airlock_request.id
     status = airlock_request.status.value
