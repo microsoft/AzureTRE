@@ -185,7 +185,7 @@ jobs:
           details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -193,10 +193,10 @@ jobs:
           ref: ${{ inputs.prRef }}
 
       - name: Set up Docker BuildKit
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           environment: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
@@ -274,7 +274,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -298,7 +298,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -322,7 +322,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -408,7 +408,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -454,7 +454,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -500,7 +500,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -560,7 +560,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -609,7 +609,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -643,7 +643,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -692,7 +692,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -723,7 +723,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -752,7 +752,7 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: E2E Test (Smoke) Results
           path: "./e2e_tests/pytest_e2e_smoke.xml"
@@ -766,7 +766,7 @@ jobs:
     timeout-minutes: 300
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -796,7 +796,7 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: E2E Test Results
           path: "./e2e_tests/pytest_e2e_custom.xml"
@@ -811,8 +811,11 @@ jobs:
     if: always()
     environment: ${{ inputs.environmentName }}
     steps:
-      - uses: technote-space/workflow-conclusion-action@v3
-
+      # - uses: technote-space/workflow-conclusion-action@v3 (removed due to archived repo and deprecated node.js version)
+      - uses: im-open/workflow-conclusion@v2.2.2
+        id: conclusion
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       # For PR builds triggered from comment builds, the GITHUB_REF is set to main
       # so the checks aren't automatically associated with the PR
       # If prHeadSha is specified then explicity mark the checks for that SHA
@@ -845,12 +848,12 @@ jobs:
           timezone: Europe/Zurich
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
 
       - name: Publish E2E Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: EnricoMi/publish-unit-test-result-action@v2.16.1
         with:
           junit_files: "artifacts/**/*.xml"
           check_name: "E2E Test Results"

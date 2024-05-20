@@ -1,7 +1,5 @@
 # Guacamole User Resources
 
-This folder contains user resources that can be deployed with the Guacamole workspace service:
-
 - linuxvm - a Linux-based virtual machine
 - windowsvm - A Windows-based virtual machine
 
@@ -21,7 +19,6 @@ In `porter.yaml`, the `custom` section contains a couple of sub-sections (shown 
 
 ```yaml
 custom:
-  # For information on vm_sizes and image_options, see README.me in the guacamole/user-resources folder
   vm_sizes:
     "2 CPU | 8GB RAM": Standard_D2s_v5
     "4 CPU | 16GB RAM": Standard_D4s_v5

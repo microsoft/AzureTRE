@@ -1,4 +1,4 @@
-# Manually creating AAD identities
+# Manually creating Microsoft Entra ID identities
 
 This guide is here if you wanted to create these Application Registrations manually.
 

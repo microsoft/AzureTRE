@@ -15,13 +15,13 @@ jobs:
     steps:
       # Ensure we have the script file for the github-script action to use
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       - id: check_command
         name: Check for a command using GitHub script
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           result-encoding: string
           script: |
