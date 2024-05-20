@@ -27,9 +27,9 @@ The manifest of a workspace bundle is the `porter.yaml` file (see [Author Bundle
 
 A workspace bundle requires the following [credentials](https://porter.sh/author-bundles/#credentials) to provision resources in Azure:
 
-* [Azure tenant ID](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-to-find-tenant)
+* [Azure tenant ID](https://learn.microsoft.com/en-us/entra/fundamentals/how-to-find-tenant)
 * Azure subscription ID
-* The client ID of a [service principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals) with privileges to provision resources
+* The client ID of a [service principal](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser) with privileges to provision resources
 * The client secret (password) of a service principal
 
 The credentials are provided as environment variables by the deployment runner. The bundle author must use the following environment variable names:
