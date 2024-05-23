@@ -185,6 +185,12 @@ variable "is_cosmos_defined_throughput" {
   default = false
 }
 
+variable "kv_purge_protection_enabled" {
+  type    = bool
+  description = "A boolean indicating if the purge protection will be enabled on the core keyvault."
+  default = true
+}
+
 variable "logging_level" {
   type        = string
   default     = "INFO"
