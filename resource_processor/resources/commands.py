@@ -107,7 +107,7 @@ async def get_porter_parameter_keys(config, msg_body):
     command = [f"{azure_login_command(config)} && \
         {azure_acr_login_command(config)} && \
         porter explain --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']} --output json"]
-    
+
     proc = await asyncio.create_subprocess_shell(
         ''.join(command),
         stdout=asyncio.subprocess.PIPE,
