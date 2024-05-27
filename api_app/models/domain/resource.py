@@ -52,6 +52,7 @@ class Resource(AzureTREModel):
             "operationId": operation_id,
             "stepId": step_id,
             "action": action,
+            "user_email": self.user.email,
             "id": self.id,
             "name": self.templateName,
             "version": self.templateVersion,

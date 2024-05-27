@@ -139,7 +139,7 @@ class AzureADAuthorization(AccessService):
 
         return User(id=user_id,
                     name=decoded_token.get('name', ''),
-                    email=decoded_token.get('email', ''),
+                    email=decoded_token.get('preferred_username', ''),
                     roles=decoded_token.get('roles', []))
 
     def _decode_token(self, token: str, ws_app_reg_id: str) -> dict:
