@@ -48,11 +48,12 @@ class Resource(AzureTREModel):
     updatedWhen: float = 0
 
     def get_resource_request_message_payload(self, operation_id: str, step_id: str, action: RequestAction) -> dict:
+        user_email = self.user.get("email") if isinstance(self.user, dict) else self.user.email
         payload = {
             "operationId": operation_id,
             "stepId": step_id,
             "action": action,
-            "user_email": self.user.email,
+            "user_email": user_email,
             "id": self.id,
             "name": self.templateName,
             "version": self.templateVersion,
