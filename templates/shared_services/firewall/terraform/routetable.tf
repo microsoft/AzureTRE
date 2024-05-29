@@ -18,6 +18,13 @@ resource "azurerm_route_table" "rt" {
 resource "azurerm_subnet_route_table_association" "rt_shared_subnet_association" {
   subnet_id      = data.azurerm_subnet.shared.id
   route_table_id = azurerm_route_table.rt.id
+
+  depends_on = [
+    azurerm_firewall.fw,
+    azurerm_firewall_policy_rule_collection_group.core,
+    azurerm_firewall_policy_rule_collection_group.dynamic_network,
+    azurerm_firewall_policy_rule_collection_group.dynamic_application
+  ]
 }
 
 resource "azurerm_subnet_route_table_association" "rt_resource_processor_subnet_association" {
@@ -28,25 +35,55 @@ resource "azurerm_subnet_route_table_association" "rt_resource_processor_subnet_
   depends_on = [
     azurerm_firewall.fw,
     azurerm_firewall_policy_rule_collection_group.core,
+    azurerm_firewall_policy_rule_collection_group.dynamic_network,
+    azurerm_firewall_policy_rule_collection_group.dynamic_application
   ]
 }
 
 resource "azurerm_subnet_route_table_association" "rt_web_app_subnet_association" {
   subnet_id      = data.azurerm_subnet.web_app.id
   route_table_id = azurerm_route_table.rt.id
+
+  depends_on = [
+    azurerm_firewall.fw,
+    azurerm_firewall_policy_rule_collection_group.core,
+    azurerm_firewall_policy_rule_collection_group.dynamic_network,
+    azurerm_firewall_policy_rule_collection_group.dynamic_application
+  ]
 }
 
 resource "azurerm_subnet_route_table_association" "rt_airlock_processor_subnet_association" {
   subnet_id      = data.azurerm_subnet.airlock_processor.id
   route_table_id = azurerm_route_table.rt.id
+
+  depends_on = [
+    azurerm_firewall.fw,
+    azurerm_firewall_policy_rule_collection_group.core,
+    azurerm_firewall_policy_rule_collection_group.dynamic_network,
+    azurerm_firewall_policy_rule_collection_group.dynamic_application
+  ]
 }
 
 resource "azurerm_subnet_route_table_association" "rt_airlock_storage_subnet_association" {
   subnet_id      = data.azurerm_subnet.airlock_storage.id
   route_table_id = azurerm_route_table.rt.id
+
+  depends_on = [
+    azurerm_firewall.fw,
+    azurerm_firewall_policy_rule_collection_group.core,
+    azurerm_firewall_policy_rule_collection_group.dynamic_network,
+    azurerm_firewall_policy_rule_collection_group.dynamic_application
+  ]
 }
 
 resource "azurerm_subnet_route_table_association" "rt_airlock_events_subnet_association" {
   subnet_id      = data.azurerm_subnet.airlock_events.id
   route_table_id = azurerm_route_table.rt.id
+
+  depends_on = [
+    azurerm_firewall.fw,
+    azurerm_firewall_policy_rule_collection_group.core,
+    azurerm_firewall_policy_rule_collection_group.dynamic_network,
+    azurerm_firewall_policy_rule_collection_group.dynamic_application
+  ]
 }

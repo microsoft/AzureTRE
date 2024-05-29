@@ -7,7 +7,7 @@ See: [https://gitea.io/](https://gitea.io)
 The Gitea worskpace service opens outbound access to:
 
 - AzureActiveDirectory
-- Azure AD CDN - `https://aadcdn.msftauth.net`
+- Microsoft Entra ID CDN - `https://aadcdn.msftauth.net`
 
 ## Prerequisites
 
@@ -24,3 +24,7 @@ The Gitea worskpace service opens outbound access to:
 3. Click sign in with OpenID button and sign in with the same credentials used to access the workspace.
 4. Once succesfully signed in choose a username.
 5. Navigate to the user settings and under the account tab set a password for your account( `https://<gitea_url>/user/settings/account` ). This username and passowrd should be used to authenticate against Gitea when carrying out git operations.
+
+## Upgrading to version 1.0.0
+
+Migrating existing Gitea services to the major version 1.0.0 is not currently supported. This is due to the breaking change in the Terraform to migrate from the deprecated mysql_server to the new mysql_flexible_server.
