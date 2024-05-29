@@ -67,6 +67,8 @@ resource_processor:
 developer_settings:
 # Locks will not be added to stateful resources so they can be easily removed
 # stateful_resources_locked: false
+# TRE Core Key Vault purge protection will be disabled so it can be reused upon deletion
+# kv_purge_protection_enabled: false
 
 # This setting will enable your local machine to be able to
 # communicate with Service Bus and Cosmos. It will also allow deploying
