@@ -121,6 +121,10 @@ inputs:
     description: "JSON string containing key/value pairs to injet into the Resource Processor as ENV vars"
     required: false
     default: ""
+  KV_PURGE_PROTECTION_ENABLED:
+    description: "A boolean indicating if the purge protection will be enabled on the core keyvault."
+    required: false
+    default: "true"
 
 runs:
   using: composite
@@ -219,6 +223,7 @@ runs:
           -e IS_API_SECURED=${{ inputs.IS_API_SECURED }} \
           -e DOCKER_BUILDKIT=1 \
           -e TF_VAR_stateful_resources_locked=${{ inputs.STATEFUL_RESOURCES_LOCKED }} \
+          -e TF_VAR_kv_purge_protection_enabled="${{ inputs.KV_PURGE_PROTECTION_ENABLED }}" \
           -e TF_VAR_enable_airlock_malware_scanning=${{ inputs.ENABLE_AIRLOCK_MALWARE_SCANNING }} \
           -e CI_CACHE_ACR_NAME="${{ inputs.CI_CACHE_ACR_NAME }}" \
           -e TF_VAR_core_app_service_plan_sku="${{ (inputs.CORE_APP_SERVICE_PLAN_SKU != ''
