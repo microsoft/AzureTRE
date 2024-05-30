@@ -210,12 +210,13 @@ async def review_triage_statements(airlock_request_triage_statements_input: Airl
 # async def exit_and_reject(airlock_request_triage_statements_input: AirlockRequestTriageStatements,
 async def exit_and_reject(airlock_request=Depends(get_airlock_request_by_id_from_path),
                           airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
-                          user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)) -> AirlockRequestWithAllowedUserActions:
+                          user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager),
+                          workspace=Depends(get_deployed_workspace_by_id_from_path)) -> AirlockRequestWithAllowedUserActions:
     if airlock_request.type == AirlockRequestType.Import:
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
                             detail="Endpoint not available for Import Airlock requests.")
     try:
-        rejected_airlock_request = await exit_and_reject_airlock_request(airlock_request, airlock_request_repo, user)
+        rejected_airlock_request = await exit_and_reject_airlock_request(airlock_request, airlock_request_repo, user, workspace)
         return AirlockRequestWithAllowedUserActions(airlockRequest=rejected_airlock_request)
     except (ValidationError, ValueError) as e:
         logging.exception("Failed exiting and auto-reject export request.")

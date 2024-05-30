@@ -482,7 +482,8 @@ async def save_and_check_triage_statements(airlock_request: AirlockRequest, airl
 
 async def exit_and_reject_airlock_request(airlock_request: AirlockRequest,
                                           airlock_request_repo: AirlockRequestRepository,
-                                          user: User) -> AirlockRequest:
+                                          user: User,
+                                          workspace: Workspace) -> AirlockRequest:
 
     if airlock_request.triageStatements == None or airlock_request.triageStatements == []:
          raiseMessage = f"Request {airlock_request.id} does not have triage statements."
@@ -526,9 +527,10 @@ async def exit_and_reject_airlock_request(airlock_request: AirlockRequest,
                 new_status=AirlockRequestStatus.RejectionInProgress,
                 airlock_review=airlock_review_rejection)
 
-            rejected_airlock_request = await airlock_request_repo.update_airlock_request(
-                original_request=rejection_in_progress_airlock_request,
+            rejected_airlock_request = await update_and_publish_event_airlock_request(airlock_request=rejection_in_progress_airlock_request,
+                airlock_request_repo=airlock_request_repo,
                 updated_by=user,
+                workspace=workspace,
                 new_status=AirlockRequestStatus.Rejected)
 
             return rejected_airlock_request

@@ -1,278 +1,307 @@
 {
   "definition": {
-    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
-    "actions": {
-      "Initialize_message_variable": {
-        "inputs": {
-          "variables": [
-            {
-              "name": "message",
-              "type": "string"
-            }
-          ]
-        },
-        "runAfter": {
-          "Parse_JSON": [
-            "Succeeded"
-          ]
-        },
-        "type": "InitializeVariable"
-      },
-      "Initialize_recipients_variable": {
-        "inputs": {
-          "variables": [
-            {
-              "name": "recipients",
-              "type": "array"
-            }
-          ]
-        },
-        "runAfter": {
-          "Initialize_message_variable": [
-            "Succeeded"
-          ]
-        },
-        "type": "InitializeVariable"
-      },
-      "Parse_JSON": {
-        "inputs": {
-          "content": "@triggerOutputs()?['body']?['contentData']",
-          "schema": {
-            "properties": {
-              "data": {
-                "properties": {
-                  "event_type": {
-                    "type": "string"
-                  },
-                  "request": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "createdWhen": {
-                        "type": "number"
-                      },
-                      "createdBy": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string"
-                          },
-                          "email": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      "updatedWhen": {
-                        "type": "number"
-                      },
-                      "updatedBy": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string"
-                          },
-                          "email": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      "requestType": {
-                        "type": "string"
-                      },
-                      "files": {
-                        "type": "array",
-                        "items": {
-                          "name": {
-                            "type": "string"
-                          },
-                          "size": {
-                            "type": "number"
-                          }
-                        }
-                      },
-                      "status": {
-                        "type": "string"
-                      },
-                      "business_justification": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "workspace": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "display_name": {
-                        "type": "string"
-                      },
-                      "description": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "recipient_emails_by_role": {
-                    "type": "object",
-                    "properties": {
-                      "workspace_researcher": {
-                          "type": "array",
-                          "items": {
-                              "type": "string"
-                          }
-                      },
-                      "workspace_owner": {
-                          "type": "array",
-                          "items": {
-                              "type": "string"
-                          }
-                      },
-                      "airlock_manager": {
-                          "type": "array",
-                          "items": {
-                              "type": "string"
-                          }
-                      }
-                    }
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "runAfter": {},
-        "type": "ParseJson"
-      },
-      "Send_Email_with_SMTP": {
-        "inputs": {
-          "body": {
-            "Body": "<p>Testing custom message.</p><a href=\"@{parameters('tre_url')}/workspaces/@{body('Parse_JSON')?['data']?['workspace']?['id']}/requests/@{body('Parse_JSON')?['data']?['request']?['id']}\">View the request</a>",
-            "From": "@parameters('smtp_from_email')",
-            "Subject": "@variables('message')",
-            "To": "@{join(variables('recipients'), ';')}"
-          },
-          "host": {
-            "connection": {
-              "referenceName": "smtp"
-            }
-          },
-          "method": "post",
-          "path": "/SendEmailV3"
-        },
-        "runAfter": {
-          "Switch_on_request_status": [
-            "Succeeded"
-          ]
-        },
-        "type": "ApiConnection"
-      },
-      "Succeeded": {
-        "inputs": {
-          "runStatus": "Succeeded"
-        },
-        "runAfter": {
-          "Send_Email_with_SMTP": [
-            "Succeeded"
-          ]
-        },
-        "type": "Terminate"
-      },
-      "Switch_on_request_status": {
-        "cases": {
-          "Case_approved": {
-            "actions": {
-              "Set_approved_message": {
-                "inputs": {
-                  "name": "message",
-                  "value": "Your Airlock request from Workspace @{body('Parse_JSON')?['data']?['workspace']?['id']} was approved"
-                },
-                "runAfter": {
-                  "Set_recipients_as_researchers_emails": [
-                    "Succeeded"
-                  ]
-                },
-                "type": "SetVariable"
-              },
-              "Set_recipients_as_researchers_emails": {
-                "inputs": {
-                  "name": "recipients",
-                  "value": "@body('Parse_JSON')?['data']?['recipient_emails_by_role']?['workspace_researcher']"
-                },
-                "runAfter": {},
-                "type": "SetVariable"
-              }
-            },
-            "case": "approved"
-          },
-          "Case_in_review": {
-            "actions": {
-              "Set_in_review_message": {
-                "inputs": {
-                  "name": "message",
-                  "value": "An Airlock request from Workspace @{body('Parse_JSON')?['data']?['workspace']?['id']} needs your review"
-                },
-                "runAfter": {
-                  "Set_recipients_as_owners_emails": [
-                    "Succeeded"
-                  ]
-                },
-                "type": "SetVariable"
-              },
-              "Set_recipients_as_owners_emails": {
-                "inputs": {
-                  "name": "recipients",
-                  "value": "@body('Parse_JSON')?['data']?['recipient_emails_by_role']?['airlock_manager']"
-                },
-                "runAfter": {},
-                "type": "SetVariable"
-              }
-            },
-            "case": "in_review"
-          }
-        },
-        "default": {
-          "actions": {
-            "Cancelled": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "actions": {
+          "Initialize_message_variable": {
               "inputs": {
-                "runStatus": "Cancelled"
+                  "variables": [
+                      {
+                          "name": "message",
+                          "type": "string"
+                      }
+                  ]
+              },
+              "runAfter": {
+                  "Parse_JSON": [
+                      "Succeeded"
+                  ]
+              },
+              "type": "InitializeVariable"
+          },
+          "Initialize_recipients_variable": {
+              "inputs": {
+                  "variables": [
+                      {
+                          "name": "recipients",
+                          "type": "array"
+                      }
+                  ]
+              },
+              "runAfter": {
+                  "Initialize_message_variable": [
+                      "Succeeded"
+                  ]
+              },
+              "type": "InitializeVariable"
+          },
+          "Parse_JSON": {
+              "inputs": {
+                  "content": "@triggerOutputs()?['body']?['contentData']",
+                  "schema": {
+                      "properties": {
+                          "data": {
+                              "properties": {
+                                  "event_type": {
+                                      "type": "string"
+                                  },
+                                  "recipient_emails_by_role": {
+                                      "properties": {
+                                          "airlock_manager": {
+                                              "items": {
+                                                  "type": "string"
+                                              },
+                                              "type": "array"
+                                          },
+                                          "workspace_owner": {
+                                              "items": {
+                                                  "type": "string"
+                                              },
+                                              "type": "array"
+                                          },
+                                          "workspace_researcher": {
+                                              "items": {
+                                                  "type": "string"
+                                              },
+                                              "type": "array"
+                                          }
+                                      },
+                                      "type": "object"
+                                  },
+                                  "request": {
+                                      "properties": {
+                                          "business_justification": {
+                                              "type": "string"
+                                          },
+                                          "createdBy": {
+                                              "properties": {
+                                                  "email": {
+                                                      "type": "string"
+                                                  },
+                                                  "name": {
+                                                      "type": "string"
+                                                  }
+                                              },
+                                              "type": "object"
+                                          },
+                                          "createdWhen": {
+                                              "type": "number"
+                                          },
+                                          "files": {
+                                              "items": {
+                                                  "name": {
+                                                      "type": "string"
+                                                  },
+                                                  "size": {
+                                                      "type": "number"
+                                                  }
+                                              },
+                                              "type": "array"
+                                          },
+                                          "id": {
+                                              "type": "string"
+                                          },
+                                          "requestType": {
+                                              "type": "string"
+                                          },
+                                          "status": {
+                                              "type": "string"
+                                          },
+                                          "updatedBy": {
+                                              "properties": {
+                                                  "email": {
+                                                      "type": "string"
+                                                  },
+                                                  "name": {
+                                                      "type": "string"
+                                                  }
+                                              },
+                                              "type": "object"
+                                          },
+                                          "updatedWhen": {
+                                              "type": "number"
+                                          }
+                                      },
+                                      "type": "object"
+                                  },
+                                  "workspace": {
+                                      "properties": {
+                                          "description": {
+                                              "type": "string"
+                                          },
+                                          "display_name": {
+                                              "type": "string"
+                                          },
+                                          "id": {
+                                              "type": "string"
+                                          }
+                                      },
+                                      "type": "object"
+                                  }
+                              },
+                              "type": "object"
+                          }
+                      },
+                      "type": "object"
+                  }
               },
               "runAfter": {},
-              "type": "Terminate"
-            }
-          }
-        },
-        "expression": "@body('Parse_JSON')?['data']?['request']?['status']",
-        "runAfter": {
-          "Initialize_recipients_variable": [
-            "Succeeded"
-          ]
-        },
-        "type": "Switch"
-      }
-    },
-    "contentVersion": "1.0.0.0",
-    "outputs": {},
-    "triggers": {
-      "When_messages_are_available_in_a_queue": {
-        "inputs": {
-          "parameters": {
-            "isSessionsEnabled": false,
-            "queueName": "notifications"
+              "type": "ParseJson"
           },
-          "serviceProviderConfiguration": {
-            "connectionName": "serviceBus",
-            "operationId": "receiveQueueMessages",
-            "serviceProviderId": "/serviceProviders/serviceBus"
+          "Send_Email_with_SMTP": {
+              "inputs": {
+                  "body": {
+                      "Body": "<p>Testing custom message.</p><a href=\"@{parameters('tre_url')}/workspaces/@{body('Parse_JSON')?['data']?['workspace']?['id']}/requests/@{body('Parse_JSON')?['data']?['request']?['id']}\">View the request</a>",
+                      "From": "@parameters('smtp_from_email')",
+                      "Subject": "@variables('message')",
+                      "To": "@{join(variables('recipients'), ';')}"
+                  },
+                  "host": {
+                      "connection": {
+                          "referenceName": "smtp"
+                      }
+                  },
+                  "method": "post",
+                  "path": "/SendEmailV3"
+              },
+              "runAfter": {
+                  "Switch_on_request_status": [
+                      "Succeeded"
+                  ]
+              },
+              "type": "ApiConnection"
+          },
+          "Succeeded": {
+              "inputs": {
+                  "runStatus": "Succeeded"
+              },
+              "runAfter": {
+                  "Send_Email_with_SMTP": [
+                      "Succeeded"
+                  ]
+              },
+              "type": "Terminate"
+          },
+          "Switch_on_request_status": {
+              "cases": {
+                  "Case_approved": {
+                      "actions": {
+                          "Set_approved_message": {
+                              "inputs": {
+                                  "name": "message",
+                                  "value": "Your Airlock request from Workspace @{body('Parse_JSON')?['data']?['workspace']?['id']} was approved"
+                              },
+                              "runAfter": {
+                                  "Set_recipients_as_researchers_emails": [
+                                      "Succeeded"
+                                  ]
+                              },
+                              "type": "SetVariable"
+                          },
+                          "Set_recipients_as_researchers_emails": {
+                              "inputs": {
+                                  "name": "recipients",
+                                  "value": [
+                                      "@body('Parse_JSON')?['data']?['request']?['created_by']?['email']"
+                                  ]
+                              },
+                              "runAfter": {},
+                              "type": "SetVariable"
+                          }
+                      },
+                      "case": "approved"
+                  },
+                  "Case_in_review": {
+                      "actions": {
+                          "Set_in_review_message": {
+                              "inputs": {
+                                  "name": "message",
+                                  "value": "An Airlock request from Workspace @{body('Parse_JSON')?['data']?['workspace']?['id']} needs your review"
+                              },
+                              "runAfter": {
+                                  "Set_recipients_as_owners_emails": [
+                                      "Succeeded"
+                                  ]
+                              },
+                              "type": "SetVariable"
+                          },
+                          "Set_recipients_as_owners_emails": {
+                              "inputs": {
+                                  "name": "recipients",
+                                  "value": "@body('Parse_JSON')?['data']?['recipient_emails_by_role']?['airlock_manager']"
+                              },
+                              "runAfter": {},
+                              "type": "SetVariable"
+                          }
+                      },
+                      "case": "in_review"
+                  },
+                  "Case_rejected": {
+                      "actions": {
+                          "Set_recipients_as_researchers_emails_rejected": {
+                              "inputs": {
+                                  "name": "recipients",
+                                  "value": [
+                                      "@body('Parse_JSON')?['data']?['request']?['created_by']?['email']"
+                                  ]
+                              },
+                              "runAfter": {},
+                              "type": "SetVariable"
+                          },
+                          "Set_rejected_message": {
+                              "inputs": {
+                                  "name": "message",
+                                  "value": "Your Airlock request from Workspace @{body('Parse_JSON')?['data']?['workspace']?['id']} was rejected"
+                              },
+                              "runAfter": {
+                                  "Set_recipients_as_researchers_emails_rejected": [
+                                      "Succeeded"
+                                  ]
+                              },
+                              "type": "SetVariable"
+                          }
+                      },
+                      "case": "rejected"
+                  }
+              },
+              "default": {
+                  "actions": {
+                      "Cancelled": {
+                          "inputs": {
+                              "runStatus": "Cancelled"
+                          },
+                          "runAfter": {},
+                          "type": "Terminate"
+                      }
+                  }
+              },
+              "expression": "@body('Parse_JSON')?['data']?['request']?['status']",
+              "runAfter": {
+                  "Initialize_recipients_variable": [
+                      "Succeeded"
+                  ]
+              },
+              "type": "Switch"
           }
-        },
-        "splitOn": "@triggerOutputs()?['body']",
-        "type": "ServiceProvider"
+      },
+      "contentVersion": "1.0.0.0",
+      "outputs": {},
+      "triggers": {
+          "When_messages_are_available_in_a_queue": {
+              "inputs": {
+                  "parameters": {
+                      "isSessionsEnabled": false,
+                      "queueName": "notifications"
+                  },
+                  "serviceProviderConfiguration": {
+                      "connectionName": "serviceBus",
+                      "operationId": "receiveQueueMessages",
+                      "serviceProviderId": "/serviceProviders/serviceBus"
+                  }
+              },
+              "splitOn": "@triggerOutputs()?['body']",
+              "type": "ServiceProvider"
+          }
       }
-    }
   },
   "kind": "Stateful"
 }
