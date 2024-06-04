@@ -57,6 +57,12 @@
       "source": {
         "env": "WORKSPACE_ID"
       }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
+      }
     }
   ]
 }
