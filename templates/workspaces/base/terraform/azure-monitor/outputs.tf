@@ -1,6 +1,6 @@
 output "app_insights_connection_string" {
-  # value = azurerm_application_insights.workspace.connection_string
-  value     = jsondecode(azapi_resource.appinsights.output).properties.ConnectionString
+  value = azurerm_application_insights.workspace.connection_string
+  # value     = jsondecode(azapi_resource.appinsights.output).properties.ConnectionString
   sensitive = true
 }
 
