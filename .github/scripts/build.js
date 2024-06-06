@@ -292,7 +292,7 @@ function getRefIdForBranch(branchName) {
   return createShortHash(`refs/heads/${branchName}\n`);
 }
 function createShortHash(ref) {
-  const hash = createHash('sha1').update(ref, 'utf8').digest('hex')
+  const hash = createHash('sha2').update(ref, 'utf8').digest('hex')
   return hash.substring(0, 8);
 }
 
