@@ -45,42 +45,42 @@ resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_custo
 }
 
 # TODO: Switch to azurerm once the followiung issue is resolved: https://github.com/microsoft/AzureTRE/issues/3625
-# resource "azurerm_monitor_private_link_scope" "workspace" {
-#   name                = "ampls-${var.tre_id}-ws-${local.short_workspace_id}"
-#   resource_group_name = var.resource_group_name
-#   tags                = var.tre_workspace_tags
-
-#   lifecycle { ignore_changes = [tags] }
-# }
-
-resource "azapi_resource" "ampls_workspace" {
-  type      = "microsoft.insights/privateLinkScopes@2021-07-01-preview"
-  name      = "ampls-${var.tre_id}-ws-${local.short_workspace_id}"
-  parent_id = var.resource_group_id
-  location  = "global"
-  tags      = var.tre_workspace_tags
-
-  body = jsonencode({
-    properties = {
-      accessModeSettings = {
-        ingestionAccessMode = "PrivateOnly"
-        queryAccessMode     = "PrivateOnly"
-      }
-    }
-  })
-
-  response_export_values = [
-    "id"
-  ]
-
+resource "azurerm_monitor_private_link_scope" "workspace" {
+  name                = "ampls-${var.tre_id}-ws-${local.short_workspace_id}"
+  resource_group_name = var.resource_group_name
+  tags                = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
 
+# resource "azapi_resource" "ampls_workspace" {
+#   type      = "microsoft.insights/privateLinkScopes@2021-07-01-preview"
+#   name      = "ampls-${var.tre_id}-ws-${local.short_workspace_id}"
+#   parent_id = var.resource_group_id
+#   location  = "global"
+#   tags      = var.tre_workspace_tags
+
+#   body = jsonencode({
+#     properties = {
+#       accessModeSettings = {
+#         ingestionAccessMode = "PrivateOnly"
+#         queryAccessMode     = "PrivateOnly"
+#       }
+#     }
+#   })
+
+#   response_export_values = [
+#     "id"
+#   ]
+
+
+#   lifecycle { ignore_changes = [tags] }
+# }
+
 resource "azurerm_monitor_private_link_scoped_service" "ampls_log_anaytics" {
   name                = "ampls-log-anaytics-service"
   resource_group_name = var.resource_group_name
-  scope_name          = azapi_resource.ampls_workspace.name
+  scope_name          = azurerm_monitor_private_link_scope.workspace.name
   linked_resource_id  = azurerm_log_analytics_workspace.workspace.id
 }
 
@@ -89,54 +89,53 @@ resource "azurerm_monitor_private_link_scoped_service" "ampls_log_anaytics" {
 # Application Insights
 
 # TODO: switch from the azapi implementation to azurerm when resolved https://github.com/microsoft/AzureTRE/issues/3200
-# resource "azurerm_application_insights" "workspace" {
-#   name                                = local.app_insights_name
-#   location                            = var.location
-#   resource_group_name                 = var.resource_group_name
-#   workspace_id                        = azurerm_log_analytics_workspace.workspace.id
-#   application_type                    = "web"
-#   internet_ingestion_enabled          = var.enable_local_debugging ? true : false
-#   force_customer_storage_for_profiler = true
-#   tags                                = var.tre_workspace_tags
-
-#   lifecycle { ignore_changes = [tags] }
-# }
-
-resource "azapi_resource" "appinsights" {
-  type      = "Microsoft.Insights/components@2020-02-02"
-  name      = local.app_insights_name
-  parent_id = var.resource_group_id
-  location  = var.location
-  tags      = var.tre_workspace_tags
-
-  body = jsonencode({
-    kind = "web"
-    properties = {
-      Application_Type                = "web"
-      Flow_Type                       = "Bluefield"
-      Request_Source                  = "rest"
-      IngestionMode                   = "LogAnalytics"
-      WorkspaceResourceId             = azurerm_log_analytics_workspace.workspace.id
-      ForceCustomerStorageForProfiler = true
-      publicNetworkAccessForIngestion = var.enable_local_debugging ? "Enabled" : "Disabled"
-    }
-  })
-
-  response_export_values = [
-    "id",
-    "properties.ConnectionString",
-  ]
+resource "azurerm_application_insights" "workspace" {
+  name                                = local.app_insights_name
+  location                            = var.location
+  resource_group_name                 = var.resource_group_name
+  workspace_id                        = azurerm_log_analytics_workspace.workspace.id
+  application_type                    = "web"
+  internet_ingestion_enabled          = var.enable_local_debugging ? true : false
+  force_customer_storage_for_profiler = true
+  tags                                = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
 
+# resource "azapi_resource" "appinsights" {
+#   type      = "Microsoft.Insights/components@2020-02-02"
+#   name      = local.app_insights_name
+#   parent_id = var.resource_group_id
+#   location  = var.location
+#   tags      = var.tre_workspace_tags
+
+#   body = jsonencode({
+#     kind = "web"
+#     properties = {
+#       Application_Type                = "web"
+#       Flow_Type                       = "Bluefield"
+#       Request_Source                  = "rest"
+#       IngestionMode                   = "LogAnalytics"
+#       WorkspaceResourceId             = azurerm_log_analytics_workspace.workspace.id
+#       ForceCustomerStorageForProfiler = true
+#       publicNetworkAccessForIngestion = var.enable_local_debugging ? "Enabled" : "Disabled"
+#     }
+#   })
+
+#   response_export_values = [
+#     "id",
+#     "properties.ConnectionString",
+#   ]
+
+#   lifecycle { ignore_changes = [tags] }
+# }
+
 resource "azurerm_monitor_private_link_scoped_service" "ampls_app_insights" {
   name                = "ampls-app-insights-service"
   resource_group_name = var.resource_group_name
-  scope_name          = azapi_resource.ampls_workspace.name
-
-  # linked_resource_id  = azurerm_application_insights.workspace.id
-  linked_resource_id = jsondecode(azapi_resource.appinsights.output).id
+  scope_name          = azurerm_monitor_private_link_scope.workspace.name
+  linked_resource_id  = azurerm_application_insights.workspace.id
+  # linked_resource_id = jsondecode(azapi_resource.appinsights.output).id
 }
 
 resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
@@ -149,7 +148,8 @@ resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
   lifecycle { ignore_changes = [tags] }
 
   private_service_connection {
-    private_connection_resource_id = jsondecode(azapi_resource.ampls_workspace.output).id
+    # private_connection_resource_id = jsondecode(azapi_resource.ampls_workspace.output).id
+    private_connection_resource_id = azurerm_application_insights.workspace.id
     name                           = "psc-ampls-${var.tre_id}-ws-${local.short_workspace_id}"
     subresource_names              = ["azuremonitor"]
     is_manual_connection           = false
@@ -180,8 +180,8 @@ resource "azurerm_monitor_action_group" "failure_anomalies" {
   short_name          = "Failures"
   tags                = var.tre_workspace_tags
   depends_on = [
-    # azurerm_application_insights.workspace
-    azapi_resource.appinsights
+    azurerm_application_insights.workspace
+    # azapi_resource.appinsights
   ]
 
   lifecycle { ignore_changes = [tags] }
@@ -194,8 +194,8 @@ resource "azurerm_monitor_smart_detector_alert_rule" "failure_anomalies" {
   resource_group_name = var.resource_group_name
   severity            = "Sev3"
   scope_resource_ids = [
-    # azurerm_application_insights.workspace.id
-    jsondecode(azapi_resource.appinsights.output).id
+    azurerm_application_insights.workspace.id
+    # jsondecode(azapi_resource.appinsights.output).id
   ]
   frequency     = "PT1M"
   detector_type = "FailureAnomaliesDetector"
