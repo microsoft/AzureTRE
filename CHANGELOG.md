@@ -6,6 +6,7 @@
 FEATURES:
 
 ENHANCEMENTS:
+* Additional DataBrick IPs added ([#3901](https://github.com/microsoft/AzureTRE/issues/3901))
 
 BUG FIXES:
 * Update Guacamole Linux VM Images to Ubuntu 22.04 LTS. Part of ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
