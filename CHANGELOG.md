@@ -7,6 +7,7 @@ FEATURES:
 
 ENHANCEMENTS:
 * Additional DataBrick IPs added ([#3901](https://github.com/microsoft/AzureTRE/issues/3901))
+* Add KeyVault Purge Protection Variable ([#3922](https://github.com/microsoft/AzureTRE/issues/3922))
 
 BUG FIXES:
 * Update Guacamole Linux VM Images to Ubuntu 22.04 LTS. Part of ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
@@ -15,6 +16,7 @@ BUG FIXES:
 * Remove TLS1.0/1.1 support from Application Gateway ([#3914](https://github.com/microsoft/AzureTRE/issues/3914))
 * GitHub Actions version updates. ([#3847](https://github.com/microsoft/AzureTRE/issues/3847))
 * Add workaround to avoid name clashes for storage accounts([#3863](https://github.com/microsoft/AzureTRE/pull/3858))
+* Resource processor fails to deploy first workspace on fresh TRE deployment ([#3950](https://github.com/microsoft/AzureTRE/issues/3950))
 * Dependency and Vulnerability updates
 
 COMPONENTS:
