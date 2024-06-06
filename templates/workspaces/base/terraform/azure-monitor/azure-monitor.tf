@@ -72,8 +72,6 @@ resource "azurerm_monitor_private_link_scope" "workspace" {
 #   response_export_values = [
 #     "id"
 #   ]
-
-
 #   lifecycle { ignore_changes = [tags] }
 # }
 
@@ -83,8 +81,6 @@ resource "azurerm_monitor_private_link_scoped_service" "ampls_log_anaytics" {
   scope_name          = azurerm_monitor_private_link_scope.workspace.name
   linked_resource_id  = azurerm_log_analytics_workspace.workspace.id
 }
-
-
 
 # Application Insights
 
