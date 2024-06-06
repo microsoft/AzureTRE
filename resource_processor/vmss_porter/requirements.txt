@@ -1,6 +1,6 @@
-aiohttp==3.9.0
-azure-cli-core==2.50.0
+aiohttp==3.9.4
+azure-cli-core==2.57.0
 azure-identity==1.14.1
-azure-monitor-opentelemetry==1.1.1
+azure-monitor-opentelemetry==1.2.0
 azure-servicebus==7.11.3
-opentelemetry.instrumentation.logging==0.43b0
+opentelemetry.instrumentation.logging==0.44b0
