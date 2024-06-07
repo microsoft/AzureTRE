@@ -41,7 +41,7 @@ resource "azurerm_private_dns_zone" "stg_import_inprogress_blob" {
 
   tags = local.tre_workspace_tags
 
-  depends_on = [ azurerm_private_endpoint.sa_import_inprogress_pe ]
+  depends_on = [azurerm_private_endpoint.sa_import_inprogress_pe]
 }
 
 resource "azurerm_private_dns_a_record" "stg_import_inprogress_blob" {
@@ -63,5 +63,5 @@ resource "azurerm_private_dns_zone_virtual_network_link" "stg_import_inprogress_
 
   tags = local.tre_workspace_tags
 
-  depends_on = [ azurerm_private_dns_a_record.stg_import_inprogress_blob ]
+  depends_on = [azurerm_private_dns_a_record.stg_import_inprogress_blob]
 }
