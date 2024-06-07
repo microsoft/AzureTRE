@@ -1,0 +1,67 @@
+# This file has a .terraform file extension in order to avoid 'terraform init's validation checks that are executed by the 'make bundle-build' command.
+# The Dockerfile includes a RUN command to change the extension from .terraform to .tf after the files from the base workspace are copied to this directory.
+
+locals {
+  core_resource_group_name = "rg-${var.tre_id}"
+  # STorage AirLock IMport InProgress
+  import_in_progress_storage_name = lower(replace("stalimip${var.tre_id}", "-", ""))
+}
+
+module "terraform_azurerm_environment_configuration" {
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
+  arm_environment = var.arm_environment
+}
+
+data "azurerm_storage_account" "sa_import_inprogress" {
+  name                = local.import_in_progress_storage_name
+  resource_group_name = local.core_resource_group_name
+}
+
+resource "azurerm_private_endpoint" "sa_import_inprogress_pe" {
+  name                = "stg-ip-import-blob-${local.workspace_resource_name_suffix}"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.ws.name
+  subnet_id           = module.network.services_subnet_id
+
+  lifecycle { ignore_changes = [tags] }
+
+  private_service_connection {
+    name                           = "psc-stg-ip-import-blob-${local.workspace_resource_name_suffix}"
+    private_connection_resource_id = data.azurerm_storage_account.sa_import_inprogress.id
+    is_manual_connection           = false
+    subresource_names              = ["Blob"]
+  }
+
+  tags = local.tre_workspace_tags
+}
+
+resource "azurerm_private_dns_zone" "stg_import_inprogress_blob" {
+  name                = "${data.azurerm_storage_account.sa_import_inprogress.name}.${module.terraform_azurerm_environment_configuration.private_links["privatelink.blob.core.windows.net"]}"
+  resource_group_name = azurerm_resource_group.ws.name
+
+  tags = local.tre_workspace_tags
+
+  depends_on = [ azurerm_private_endpoint.sa_import_inprogress_pe ]
+}
+
+resource "azurerm_private_dns_a_record" "stg_import_inprogress_blob" {
+  name                = "@" # Root record
+  zone_name           = azurerm_private_dns_zone.stg_import_inprogress_blob.name
+  resource_group_name = azurerm_resource_group.ws.name
+  ttl                 = 300
+  records             = [azurerm_private_endpoint.sa_import_inprogress_pe.private_service_connection[0].private_ip_address]
+
+  tags = local.tre_workspace_tags
+
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "stg_import_inprogress_blob" {
+  name                  = "vnl-stg-ip-import-blob-${local.workspace_resource_name_suffix}"
+  resource_group_name   = azurerm_resource_group.ws.name
+  private_dns_zone_name = azurerm_private_dns_zone.stg_import_inprogress_blob.name
+  virtual_network_id    = module.network.vnet_id
+
+  tags = local.tre_workspace_tags
+
+  depends_on = [ azurerm_private_dns_a_record.stg_import_inprogress_blob ]
+}
