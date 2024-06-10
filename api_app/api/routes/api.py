@@ -8,7 +8,7 @@ from fastapi.openapi.utils import get_openapi
 from api.dependencies.database import get_repository
 from db.repositories.workspaces import WorkspaceRepository
 from api.routes import health, ping, workspaces, workspace_templates, workspace_service_templates, user_resource_templates, \
-    shared_services, shared_service_templates, migrations, costs, airlock, operations, metadata
+    shared_services, shared_service_templates, migrations, costs, airlock, operations, metadata, notify
 from core import config
 from resources import strings
 
@@ -49,6 +49,7 @@ core_router.include_router(workspaces.workspaces_shared_router, tags=["workspace
 core_router.include_router(migrations.migrations_core_router, tags=["migrations"])
 core_router.include_router(costs.costs_core_router, tags=["costs"])
 core_router.include_router(costs.costs_workspace_router, tags=["costs"])
+core_router.include_router(notify.send_message_support_team, tags=["support"])
 
 core_swagger_router = APIRouter()
 swagger_disabled_router = APIRouter()

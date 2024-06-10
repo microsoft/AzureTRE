@@ -261,3 +261,6 @@ PARAMETERS_WITH_WRONG_TYPE = "Parameters with wrong type"
 
 # Value that a sensitive is replaced with in Cosmos
 REDACTED_SENSITIVE_VALUE = "REDACTED"
+
+# Notify UK Platform
+API_MESSAGE_SUPPORT_TEAM = "Send messages to Support Team"
