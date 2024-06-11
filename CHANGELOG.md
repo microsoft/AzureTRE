@@ -4,6 +4,7 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 FEATURES:
+* Azure SQL Workspace Service ([#3969](https://github.com/microsoft/AzureTRE/issues/3969))
 
 ENHANCEMENTS:
 * Add KeyVault Purge Protection Variable ([#3922](https://github.com/microsoft/AzureTRE/issues/3922))
