@@ -37,20 +37,24 @@ if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   storageAccountKey="${STORAGE_ACCOUNT_KEY}"
   httpEndpoint="${HTTP_ENDPOINT}"
   fileShareName="${FILESHARE_NAME}"
-  mntRoot="/fileshares"
+
+  # Configure for permanent mount instead of autofs
+  # mntRoot="/fileshares"
+  mntRoot="/shared-storage"
+
   credentialRoot="/etc/smbcredentials"
 
-  mntPath="$mntRoot/$fileShareName"
+  # mntPath="$mntRoot/$fileShareName"
   # shellcheck disable=SC2308
   smbPath=$(echo "$httpEndpoint" | cut -c7-"$(expr length "$httpEndpoint")")$fileShareName
   smbCredentialFile="$credentialRoot/$storageAccountName.cred"
 
-  # Create required file paths
-  sudo mkdir -p "$mntPath"
+  # # Create required file paths
+  # sudo mkdir -p "$mntPath"
   sudo mkdir -p "/etc/smbcredentials"
   sudo mkdir -p $mntRoot
 
-  ### Auto FS to persist storage
+  # ### Auto FS to persist storage
   # Create credential file
   if [ ! -f "$smbCredentialFile" ]; then
       echo "username=$storageAccountName" | sudo tee "$smbCredentialFile" > /dev/null
@@ -62,15 +66,19 @@ if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   # Change permissions on the credential file so only root can read or modify the password file.
   sudo chmod 600 "$smbCredentialFile"
 
-  # Configure autofs
-  echo "$fileShareName -fstype=cifs,rw,dir_mode=0777,credentials=$smbCredentialFile :$smbPath" | sudo tee /etc/auto.fileshares > /dev/null
-  echo "$mntRoot /etc/auto.fileshares --timeout=60" | sudo tee /etc/auto.master > /dev/null
+  # # Configure autofs
+  # echo "$fileShareName -fstype=cifs,rw,dir_mode=0777,file_mode=0777,uid=1000,gid=1000,credentials=$smbCredentialFile :$smbPath" | sudo tee /etc/auto.fileshares > /dev/null
+  # echo "$mntRoot /etc/auto.fileshares --timeout=60" | sudo tee /etc/auto.master > /dev/null
 
-  # Restart service to register changes
-  sudo systemctl restart autofs
+  # # Restart service to register changes
+  # sudo systemctl restart autofs
 
-  # Autofs mounts when accessed for 60 seconds.  Folder created for constant visible mount
-  sudo ln -s "$mntPath" "/$fileShareName"
+  # # Autofs mounts when accessed for 60 seconds.  Folder created for constant visible mount
+  # sudo ln -s "$mntPath" "/$fileShareName"
+
+  sudo mkdir -p $mntRoot
+  echo "$smbPath $mntRoot cifs rw,vers=default,dir_mode=0777,file_mode=0777,uid=1000,gid=1000,credentials=$smbCredentialFile 0 0" | sudo tee -a /etc/fstab >/dev/null
+  sudo mount $mntRoot
 fi
 
 ### Anaconda Config
