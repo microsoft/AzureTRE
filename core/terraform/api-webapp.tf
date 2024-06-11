@@ -50,6 +50,10 @@ resource "azurerm_linux_web_app" "api" {
     "AAD_TENANT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.auth_tenant_id.id})"
     "API_CLIENT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_id.id})"
     "API_CLIENT_SECRET"                              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_secret.id})"
+    "NOTIFY_UK_TEMPLATE_ID"                          = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.notify_uk_template_id.id})"
+    "NOTIFY_UK_URL"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.notify_uk_url.id})"
+    "NOTIFY_UK_SECRET"                               = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.notify_uk_secret.id})"
+    "NOTIFY_UK_ISS_ID"                               = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.notify_uk_iss_id.id})"
     "RESOURCE_GROUP_NAME"                            = azurerm_resource_group.core.name
     "SUBSCRIPTION_ID"                                = data.azurerm_subscription.current.subscription_id
     CORE_ADDRESS_SPACE                               = var.core_address_space

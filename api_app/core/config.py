@@ -58,3 +58,9 @@ API_AUDIENCE: str = config("API_AUDIENCE", default=API_CLIENT_ID)
 AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS: int = config("AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS", default=1)
 
 API_ROOT_SCOPE: str = f"api://{API_CLIENT_ID}/user_impersonation"
+
+# Notify UK Platform
+NOTIFY_UK_TEMPLATE_ID: str = config("NOTIFY_UK_TEMPLATE_ID", default="")
+NOTIFY_UK_URL: str = config("NOTIFY_UK_URL", default="")
+NOTIFY_UK_SECRET: str = config("NOTIFY_UK_SECRET", default="")
+NOTIFY_UK_ISS_ID: str = config("NOTIFY_UK_ISS_ID", default="")

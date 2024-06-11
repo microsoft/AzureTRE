@@ -112,6 +112,54 @@ resource "azurerm_key_vault_secret" "application_admin_client_secret" {
   ]
 }
 
+resource "azurerm_key_vault_secret" "notify_uk_template_id" {
+  name         = "notify-uk-template-id"
+  value        = ""
+  key_vault_id = azurerm_key_vault.kv.id
+  tags         = local.tre_core_tags
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
+
+  lifecycle { ignore_changes = [ value ] }
+}
+
+resource "azurerm_key_vault_secret" "notify_uk_url" {
+  name         = "notify-uk-url"
+  value        = ""
+  key_vault_id = azurerm_key_vault.kv.id
+  tags         = local.tre_core_tags
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
+
+  lifecycle { ignore_changes = [ value ] }
+}
+
+resource "azurerm_key_vault_secret" "notify_uk_secret" {
+  name         = "notify-uk-secret"
+  value        = ""
+  key_vault_id = azurerm_key_vault.kv.id
+  tags         = local.tre_core_tags
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
+
+  lifecycle { ignore_changes = [ value ] }
+}
+
+resource "azurerm_key_vault_secret" "notify_uk_iss_id" {
+  name         = "notify-uk-iss-id"
+  value        = ""
+  key_vault_id = azurerm_key_vault.kv.id
+  tags         = local.tre_core_tags
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
+
+  lifecycle { ignore_changes = [ value ] }
+}
+
 resource "azurerm_monitor_diagnostic_setting" "kv" {
   name                       = "diagnostics-kv-${var.tre_id}"
   target_resource_id         = azurerm_key_vault.kv.id
