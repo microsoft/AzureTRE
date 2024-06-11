@@ -105,6 +105,6 @@ resource "azurerm_subnet_route_table_association" "rt_webapps_subnet_association
 }
 
 module "terraform_azurerm_environment_configuration" {
-  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git" # ?ref=0.5.0  # add specific ref once release 0.5.0 has been created
   arm_environment = var.arm_environment
 }
