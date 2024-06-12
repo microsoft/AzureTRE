@@ -38,9 +38,9 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
         if airlock_request.triageLevel == strings.API_TRIAGE_LEVEL1:
             role_assignment_details["AirlockManager"] = role_assignment_details["AirlockManagerL1"]
         elif airlock_request.triageLevel == strings.API_TRIAGE_LEVEL2A:
-            role_assignment_details["AirlockManager"] = role_assignment_details["AirlockManagerL2A"]
+            role_assignment_details["AirlockManager"] = role_assignment_details["AirlockManagerL2a"]
         elif airlock_request.triageLevel == strings.API_TRIAGE_LEVEL2B:
-            role_assignment_details["AirlockManager"] = role_assignment_details["AirlockManagerL2B"]
+            role_assignment_details["AirlockManager"] = role_assignment_details["AirlockManagerL2b"]
         elif airlock_request.triageLevel == strings.API_TRIAGE_LEVEL3:
             role_assignment_details["AirlockManager"] = role_assignment_details["AirlockManagerL3"]
         logging.info(f"Roles details changed -----> {role_assignment_details}")
