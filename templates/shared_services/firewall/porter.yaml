@@ -45,7 +45,7 @@ parameters:
     type: string
     default: "W10=" # b64 for []
     description: "Network rule collection array"
-  - name: sku_tier
+  - name: firewall_sku
     type: string
     default: Standard
     description: The firewall and its policy SKU tier
@@ -67,7 +67,7 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
-        sku_tier: ${ bundle.parameters.sku_tier }
+        firewall_sku: ${ bundle.parameters.firewall_sku }
         microsoft_graph_fqdn: ${ bundle.parameters.microsoft_graph_fqdn }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
@@ -83,7 +83,7 @@ upgrade:
         tre_resource_id: ${ bundle.parameters.id }
         api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
-        sku_tier: ${ bundle.parameters.sku_tier }
+        firewall_sku: ${ bundle.parameters.firewall_sku }
         microsoft_graph_fqdn: ${ bundle.parameters.microsoft_graph_fqdn }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
@@ -99,7 +99,7 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
-        sku_tier: ${ bundle.parameters.sku_tier }
+        firewall_sku: ${ bundle.parameters.firewall_sku }
         microsoft_graph_fqdn: ${ bundle.parameters.microsoft_graph_fqdn }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }

@@ -174,6 +174,12 @@ variable "enable_airlock_malware_scanning" {
   description = "If False, Airlock requests will skip the malware scanning stage"
 }
 
+variable "firewall_sku" {
+  description = "Azure Firewall SKU"
+  type = string
+  default = ""
+}
+
 variable "rp_bundle_values" {
   description = "Additional environment values to set on the resource processor that can be supplied to template bundles"
   type        = map(string)
