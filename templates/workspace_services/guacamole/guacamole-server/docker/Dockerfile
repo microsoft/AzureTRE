@@ -1,5 +1,4 @@
-#FROM maven:3-jdk-11-slim AS client_build
-FROM maven:3.9.7-amazoncorretto-11-debian-bookworm AS client_build
+FROM maven:3-jdk-11-slim AS client_build
 
 COPY ./guacamole-auth-azure/pom.xml /pom.xml
 COPY ./guacamole-auth-azure/src /src
