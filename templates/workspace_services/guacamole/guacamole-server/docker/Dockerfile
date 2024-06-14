@@ -20,7 +20,7 @@ USER root
 
 # Fixing a problem regarding buster-backports.
 # We don't want to update guacd image for now.
-RUN sed -i 's/deb http:\/\/deb.debian.org\/debian buster-backports main contrib non-free/deb http:\/\/deb.debian.org\/debian buster-backports main contrib non-free/g' /etc/apt/sources.list
+RUN sed 's/deb.debian.org\/debian buster-backports/archive.debian.org\/debian buster-backports/g' /etc/apt/sources.list
 # dependencies
 RUN apt-get update && apt-get install wget curl openssh-server apt-transport-https gnupg -y --no-install-recommends && \
     apt-get autoclean && apt-get autoremove && rm -rf /var/lib/apt/lists/*
