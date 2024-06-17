@@ -176,8 +176,8 @@ variable "enable_airlock_malware_scanning" {
 
 variable "firewall_sku" {
   description = "Azure Firewall SKU"
-  type = string
-  default = ""
+  type        = string
+  default     = ""
 }
 
 variable "rp_bundle_values" {
