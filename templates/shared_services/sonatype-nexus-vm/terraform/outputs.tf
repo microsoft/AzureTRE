@@ -1,7 +1,3 @@
-output "nexus_fqdn" {
-  value = azurerm_private_dns_a_record.nexus_vm.fqdn
-}
-
 output "nexus_allowed_fqdns_list" {
   value = jsonencode(local.nexus_allowed_fqdns_list)
 }

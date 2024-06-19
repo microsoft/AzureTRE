@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-sonatype-nexus
-version: 2.3.1
+version: 2.8.13
 description: "A Sonatype Nexus shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -39,6 +39,10 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+    type: string
+    default: "public"
   - name: ssl_cert_name
     type: string
     default: "nexus-ssl"
@@ -62,9 +66,7 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.3.6
-  - az:
-      clientVersion: 2.37.0
+      clientVersion: 1.4.5
 
 install:
   - terraform:
