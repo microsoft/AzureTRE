@@ -14,7 +14,7 @@ resource "azurerm_subnet" "services" {
   resource_group_name  = var.ws_resource_group_name
   address_prefixes     = [local.services_subnet_address_prefix]
   # notice that private endpoints do not adhere to NSG rules
-  private_endpoint_network_policies_enabled     = false
+  private_endpoint_network_policies             = "Disabled"
   private_link_service_network_policies_enabled = true
 }
 
@@ -24,7 +24,7 @@ resource "azurerm_subnet" "webapps" {
   resource_group_name  = var.ws_resource_group_name
   address_prefixes     = [local.webapps_subnet_address_prefix]
   # notice that private endpoints do not adhere to NSG rules
-  private_endpoint_network_policies_enabled     = false
+  private_endpoint_network_policies             = "Disabled"
   private_link_service_network_policies_enabled = true
 
   delegation {
