@@ -1,20 +1,26 @@
 ---
 #cloud-config
+bootcmd:
+  - wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/packages.microsoft.gpg
+  - install -D -o root -g root -m 644 /tmp/packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  - chmod a+r /etc/apt/keyrings/docker.asc
+
 package_upgrade: true
 apt:
   sources:
     docker.list:
-      source: deb [arch=amd64]
+      source: deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc]
         https://download.docker.com/linux/ubuntu $RELEASE stable
-        #keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
-      key: 7EA0A9C3F273FCD8
-      keyserver: hkp://keyserver.ubuntu.com:80
+      # keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+      # key: 7EA0A9C3F273FCD8
+      # keyserver: hkp://keyserver.ubuntu.com:80
     azure-cli.list:
-      source: deb [arch=amd64]
+      source: deb [arch=amd64 signed-by=/etc/apt/keyrings/packages.microsoft.gpg]
         https://packages.microsoft.com/repos/azure-cli/ $RELEASE main
-        #keyid: BC528686B50D79E339D3721CEB3E94ADBE1229CF
-      key: EB3E94ADBE1229CF
-      keyserver: hkp://keyserver.ubuntu.com:80
+      # keyid: BC528686B50D79E339D3721CEB3E94ADBE1229CF
+      # key: EB3E94ADBE1229CF
+      # keyserver: hkp://keyserver.ubuntu.com:80
 
 packages:
   - docker-ce
