@@ -2,7 +2,12 @@ from pydantic import BaseModel, Field
 
 class NotifyUkMessageInput(BaseModel):
     recipients: str = Field("Recipient list to be sent to Notify UK Platform", title="Recipient list to be sent to Notify UK Platform")
-    message: str = Field("Content of the message to be sent to Notify UK", title="Content of the message to be sent to Notify UK")
+    name: str = Field("Name of the Researcher who sent the support request", title="Name of the Researcher who sent the support request")
+    email: str = Field("Email address of the Researcher who sent the support request", title="Email address of the Researcher who sent the support request")
+    workspace: str = Field("Workspace ID of the workspace where the problem happened", title="Workspace ID of the workspace where the problem happened")
+    issue_type: str = Field("Issue type related to the problem reported", title="Issue type related to the problem reported")
+    error_message: str = Field("Error message received by the Researcher", title="Error message received by the Researcher")
+    issue_description: str = Field("Issue description given by the Researcher", title="Issue description given by the Researcher")
 
     class Config:
         schema_extra = {
