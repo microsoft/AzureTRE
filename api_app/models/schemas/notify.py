@@ -8,7 +8,12 @@ class NotifyUkMessageInput(BaseModel):
         schema_extra = {
             "example": {
                 "recipients": "email@domain.com",
-                "message": "This is the content of the message."
+                "name": "John Smith",
+                "email": "john.smith@email.com",
+                "workspace": "b0aec2c5-658a-4a74-b48e-e0ee6cd1d8a4",
+                "issue_type": "Issue type 1",
+                "error_message": "Error message received by user",
+                "issue_description": "I have an error"
             }
         }
 

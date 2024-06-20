@@ -15,7 +15,15 @@ async def send_message_notify_platform(message_properties: NotifyUkMessageInput)
     headers = {'Content-type':'application/json', 'Authorization': 'Bearer ' + jwt_token }
 
     async with httpx.AsyncClient() as client:
-        personalisation_data = { "message": message_properties.message }
+        personalisation_data = {
+            "name": message_properties.name,
+            "email": message_properties.email,
+            "workspace": message_properties.workspace,
+            "issue_type": message_properties.issue_type,
+            "error_message": message_properties.error_message,
+            "issue_description": message_properties.issue_description
+        }
+
         template_data = {
             "email_address": message_properties.recipients,
             "template_id": config.NOTIFY_UK_TEMPLATE_ID,
