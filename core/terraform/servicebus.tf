@@ -3,7 +3,7 @@ resource "azurerm_servicebus_namespace" "sb" {
   location                     = azurerm_resource_group.core.location
   resource_group_name          = azurerm_resource_group.core.name
   sku                          = "Premium"
-  premium_messaging_partitions = 1
+  premium_messaging_partitions = "1"
   capacity                     = "1"
   tags                         = local.tre_core_tags
 
