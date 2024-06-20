@@ -319,9 +319,9 @@ async def test_check_email_exists_raises_417_if_email_not_present(role_assignmen
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('role_assignment_details_mock_return', [
-                         {"AirlockManager": ["manager@outlook.com"], "WorkspaceResearcher": ["researcher@outlook.com"],},
-                          {"AirlockManager": ["manager@outlook.com"], "WorkspaceOwner": ["researcher@outlook.com"],},
-                           {"AirlockManager": ["manager@outlook.com"], "WorkspaceResearcher": ["researcher@outlook.com"],"WorkspaceOwner": ["owner@outlook.com"]}])
+                         {"AirlockManager": ["manager@outlook.com"], "WorkspaceResearcher": ["researcher@outlook.com"], },
+                         {"AirlockManager": ["manager@outlook.com"], "WorkspaceOwner": ["researcher@outlook.com"], },
+                         {"AirlockManager": ["manager@outlook.com"], "WorkspaceResearcher": ["researcher@outlook.com"], "WorkspaceOwner": ["owner@outlook.com"]}])
 async def test_check_email_exists_passes_if_researcher_or_owner_and_airlock_manager_email_present(role_assignment_details_mock_return):
     role_assignment_details = role_assignment_details_mock_return
     result = check_email_exists(role_assignment_details)
