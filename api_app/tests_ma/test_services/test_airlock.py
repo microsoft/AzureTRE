@@ -351,6 +351,26 @@ async def test_save_and_publish_event_airlock_request_raises_417_if_email_not_pr
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize('email_mock_return', [{},
+                                               {"WorkspaceResearcher": [], "AirlockManager": []}])
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details")
+@patch("event_grid.event_sender.publish_event", return_value=AsyncMock())
+async def test_save_and_publish_event_airlock_notification_if_email_not_present(publish_event_mock, get_workspace_role_assignment_details_patched, email_mock_return, airlock_request_repo_mock):
+
+    get_workspace_role_assignment_details_patched.return_value = email_mock_return
+    airlock_request_mock = sample_airlock_request()
+    airlock_request_repo_mock.save_item = AsyncMock()
+
+    await save_and_publish_event_airlock_request(
+        airlock_request=airlock_request_mock,
+        airlock_request_repo=airlock_request_repo_mock,
+        user=create_test_user(),
+        workspace=sample_workspace())
+
+    assert publish_event_mock.call_count == 2
+
+
+@pytest.mark.asyncio
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
 @patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"WorkspaceResearcher": ["researcher@outlook.com"], "WorkspaceOwner": ["owner@outlook.com"], "AirlockManager": ["manager@outlook.com"]})
 async def test_update_and_publish_event_airlock_request_updates_item(_, event_grid_publisher_client_mock,
