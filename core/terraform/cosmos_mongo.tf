@@ -4,6 +4,7 @@ resource "azurerm_cosmosdb_account" "mongo" {
   resource_group_name       = azurerm_resource_group.core.name
   offer_type                = "Standard"
   kind                      = "MongoDB"
+  enable_automatic_failover = false
   mongo_server_version      = 4.2
   ip_range_filter           = "${local.azure_portal_cosmos_ips}${var.enable_local_debugging ? ",${local.myip}" : ""}"
 
