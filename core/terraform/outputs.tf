@@ -59,7 +59,7 @@ output "state_store_endpoint" {
 }
 
 output "cosmosdb_mongo_endpoint" {
-  value     = azurerm_cosmosdb_account.mongo.connection_strings[0]
+  value     = azurerm_cosmosdb_account.mongo.primary_sql_connection_string
   sensitive = true
 }
 
