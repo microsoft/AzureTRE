@@ -2,7 +2,8 @@
 ## 0.18.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
-
+* Update Core Terraform Provider versions ([[#3919](https://github.com/microsoft/AzureTRE/issues/3919)])
+  
 FEATURES:
 
 ENHANCEMENTS:
