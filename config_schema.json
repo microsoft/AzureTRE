@@ -85,6 +85,10 @@
           "description": "Url for the TRE environment.",
           "type": "string",
           "pattern": "^https?://"
+        },
+        "firewall_sku": {
+          "description": "SKU of the Azure Firewall.",
+          "type": "string"
         }
       }
     },
