@@ -2,11 +2,14 @@
 ## 0.18.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
+* Update Core Terraform Provider versions ([[#3919](https://github.com/microsoft/AzureTRE/issues/3919)])
+* Introduction of config value `enable_airlock_email_check`, which defaults to `false`, this is a change in behaviour. If you require email addresses for users before an airlock request is created, set to `true`. ([#3904](https://github.com/microsoft/AzureTRE/issues/3904))
 
 FEATURES:
 
 ENHANCEMENTS:
 * Add KeyVault Purge Protection Variable ([#3922](https://github.com/microsoft/AzureTRE/issues/3922))
+* Make check for email addresses prior to an airlock request being created optional. ([#3904](https://github.com/microsoft/AzureTRE/issues/3904))
 
 BUG FIXES:
 * Update Guacamole Linux VM Images to Ubuntu 22.04 LTS. Part of ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
@@ -17,6 +20,8 @@ BUG FIXES:
 * Add workaround to avoid name clashes for storage accounts([#3863](https://github.com/microsoft/AzureTRE/pull/3858))
 * Resource processor fails to deploy first workspace on fresh TRE deployment ([#3950](https://github.com/microsoft/AzureTRE/issues/3950))
 * Dependency and Vulnerability updates
+* Add lifecycle rule to MySQL resources to stop them recreating on `update` ([#3993](https://github.com/microsoft/AzureTRE/issues/3993))
+* Fixes broken links on 'Using the Azure TRE -> Custom Templates' page of documentation ([[#4003](https://github.com/microsoft/AzureTRE/issues/4003)])
 
 COMPONENTS:
 
