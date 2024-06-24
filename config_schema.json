@@ -69,6 +69,10 @@
           "description": "Allow airlock malware scanning.",
           "type": "boolean"
         },
+        "enable_airlock_email_check": {
+          "description": "Require email check for airlock.",
+          "type": "boolean"
+        },
         "core_address_space": {
           "description": "TRE core address spaces.",
           "type": "string"
