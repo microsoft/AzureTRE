@@ -2,7 +2,8 @@
 ## 0.18.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
-
+* Update Core Terraform Provider versions ([[#3919](https://github.com/microsoft/AzureTRE/issues/3919)])
+  
 FEATURES:
 
 ENHANCEMENTS:
@@ -17,6 +18,7 @@ BUG FIXES:
 * Add workaround to avoid name clashes for storage accounts([#3863](https://github.com/microsoft/AzureTRE/pull/3858))
 * Resource processor fails to deploy first workspace on fresh TRE deployment ([#3950](https://github.com/microsoft/AzureTRE/issues/3950))
 * Dependency and Vulnerability updates
+* Add lifecycle rule to MySQL resources to stop them recreating on `update` ([#3993](https://github.com/microsoft/AzureTRE/issues/3993))
 
 COMPONENTS:
 
