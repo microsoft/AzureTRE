@@ -180,6 +180,12 @@ variable "enable_airlock_email_check" {
   description = "If True, prior to airlock requests creation will check users have email addresses"
 }
 
+variable "firewall_sku" {
+  description = "Azure Firewall SKU"
+  type        = string
+  default     = ""
+}
+
 variable "rp_bundle_values" {
   description = "Additional environment values to set on the resource processor that can be supplied to template bundles"
   type        = map(string)
