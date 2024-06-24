@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../assets/ms_icon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.25">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
     
     
       
@@ -170,7 +170,7 @@
       
     </form>
     <div class="md-search__output">
-      <div class="md-search__scrollwrap" data-md-scrollfix>
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
             Initializing search
@@ -3576,7 +3576,9 @@ We have this procedure setup in our development subscriptions where each night w
         <span class="c"># Find the firewall&#39;s public IP and virtual network</span>
         <span class="nv">$pip</span> <span class="p">=</span> <span class="nb">Get-AzPublicIpAddress</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="n">-Name</span> <span class="s2">&quot;pip-fw-$azureTreId&quot;</span>
         <span class="nv">$vnet</span> <span class="p">=</span> <span class="nb">Get-AzVirtualNetwork</span> <span class="n">-ResourceGroupName</span> <span class="nv">$Group</span><span class="p">.</span><span class="n">ResourceGroupName</span> <span class="n">-Name</span> <span class="s2">&quot;vnet-$azureTreId&quot;</span>
-        <span class="nv">$Firewall</span><span class="p">.</span><span class="n">Allocate</span><span class="p">(</span><span class="nv">$vnet</span><span class="p">,</span> <span class="nv">$pip</span><span class="p">)</span>
+        <span class="c"># Find the firewall&#39;s public management IP - note this will only be present for a firewall with a Basic SKU</span>
+        <span class="nv">$mgmtPip</span> <span class="p">=</span> <span class="nb">Get-AzPublicIpAddress</span> <span class="n">-ResourceGroupName</span> <span class="s2">&quot;rg-$azureTreId&quot;</span> <span class="n">-Name</span> <span class="s2">&quot;pip-fw-management-$azureTreId&quot;</span> <span class="n">-ErrorAction</span> <span class="n">SilentlyContinue</span>
+        <span class="nv">$Firewall</span><span class="p">.</span><span class="n">Allocate</span><span class="p">(</span><span class="nv">$vnet</span><span class="p">,</span> <span class="nv">$pip</span><span class="p">,</span> <span class="nv">$mgmtPip</span><span class="p">)</span>
         <span class="nb">Write-Output</span> <span class="s2">&quot;Allocating Firewall &#39;</span><span class="p">$(</span><span class="nv">$Firewall</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&#39; with public IP &#39;</span><span class="p">$(</span><span class="nv">$pip</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span><span class="s2">&#39;&quot;</span>
         <span class="nb">Set-AzFirewall</span> <span class="n">-AzureFirewall</span> <span class="nv">$Firewall</span>
     <span class="p">}</span>
@@ -3662,7 +3664,7 @@ We have this procedure setup in our development subscriptions where each night w
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.081f42fc.min.js"></script>
+      <script src="../../assets/javascripts/bundle.ad660dcc.min.js"></script>
       
     
   </body>
