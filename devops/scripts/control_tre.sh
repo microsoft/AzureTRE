@@ -12,6 +12,8 @@ fi
 core_rg_name="rg-${TRE_ID}"
 fw_name="fw-${TRE_ID}"
 agw_name="agw-$TRE_ID"
+fw_pip_name="pip-${fw_name}"
+vnet_name="vnet-${TRE_ID}"
 
 # if the resource group doesn't exist, no need to continue this script.
 # most likely this is an automated execution before calling make tre-deploy.
@@ -27,8 +29,14 @@ if [[ "$1" == *"start"* ]]; then
   if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
     CURRENT_PUBLIC_IP=$(az network firewall ip-config list -f "${fw_name}" -g "${core_rg_name}" --query "[0].publicIpAddress" -o tsv)
     if [ -z "$CURRENT_PUBLIC_IP" ]; then
-      echo "Starting Firewall - creating ip-config"
-      az network firewall ip-config create -f "${fw_name}" -g "${core_rg_name}" -n "fw-ip-configuration" --public-ip-address "pip-${fw_name}" --vnet-name "vnet-$TRE_ID" > /dev/null &
+      FW_SKU_TIER=$(az network firewall show --n "${fw_name}" -g "${core_rg_name}" --query "sku.tier" -o tsv)
+      if [ "$FW_SKU_TIER" == "Basic" ]; then
+        echo "Starting Firewall (Basic SKU) - creating ip-config and management-ip-config"
+        az network firewall ip-config create -f "${fw_name}" -g "${core_rg_name}" -n "fw-ip-configuration" --public-ip-address "${fw_pip_name}" --vnet-name "${vnet_name}" --m-name "fw-management-ip-configuration" --m-public-ip-address "pip-fw-management-$TRE_ID" --m-vnet-name "${vnet_name}"> /dev/null &
+      else
+        echo "Starting Firewall - creating ip-config"
+        az network firewall ip-config create -f "${fw_name}" -g "${core_rg_name}" -n "fw-ip-configuration" --public-ip-address "${fw_pip_name}" --vnet-name "${vnet_name}" > /dev/null &
+      fi
     else
       echo "Firewall ip-config already exists"
     fi
@@ -66,14 +74,13 @@ if [[ "$1" == *"start"* ]]; then
 
 elif [[ "$1" == *"stop"* ]]; then
   if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
-    fw_sku=$(az network firewall show -n "${fw_name}" -g "${core_rg_name}" --query "sku.tier" -o tsv)
     IPCONFIG_NAME=$(az network firewall ip-config list -f "${fw_name}" -g "${core_rg_name}" --query "[0].name" -o tsv)
 
-    if [ -n "$IPCONFIG_NAME" ] && [ "${fw_sku}" != "Basic" ]; then
-      echo "Deleting Firewall ip-config: $IPCONFIG_NAME"
-      az network firewall ip-config delete -f "${fw_name}" -n "$IPCONFIG_NAME" -g "${core_rg_name}" &
+    if [ -n "$IPCONFIG_NAME" ]; then
+      echo "Deleting Firewall ip-config"
+      az network firewall update --name "${fw_name}" --resource-group "${core_rg_name}" --remove ipConfigurations --remove managementIpConfiguration &
     else
-      echo "No Firewall ip-config found or SKU (${fw_sku}) doesn't allow deallocation"
+      echo "No Firewall ip-config found"
     fi
   fi
 
