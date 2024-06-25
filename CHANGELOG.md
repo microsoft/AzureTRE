@@ -23,7 +23,7 @@ BUG FIXES:
 * Dependency and Vulnerability updates
 * Add lifecycle rule to MySQL resources to stop them recreating on `update` ([#3993](https://github.com/microsoft/AzureTRE/issues/3993))
 * Fixes broken links on 'Using the Azure TRE -> Custom Templates' page of documentation ([[#4003](https://github.com/microsoft/AzureTRE/issues/4003)])
-* Fix 'Renew Lets Encrypt Certificates' GitHub Action ([#3978](https://github.com/microsoft/AzureTRE/issues/3978)) 
+* Fix 'Renew Lets Encrypt Certificates' GitHub Action ([#3978](https://github.com/microsoft/AzureTRE/issues/3978))
 
 COMPONENTS:
 
