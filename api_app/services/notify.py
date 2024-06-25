@@ -41,7 +41,6 @@ async def send_message_notify_platform(message_properties: NotifyUkMessageInput)
 
         try:
             for recipient in validated_secondary_recipients_list:
-                logging.info("Sending email to %s", recipient)
                 template_data = {
                     "email_address": recipient,
                     "template_id": config.NOTIFY_UK_TEMPLATE_ID,
