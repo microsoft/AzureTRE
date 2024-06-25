@@ -272,10 +272,10 @@ async def _handle_existing_review_resource(existing_resource: AirlockReviewUserR
 
 async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, workspace: Workspace):
 
-    # First check we have some email addresses so we can notify people.
     access_service = get_access_service()
     role_assignment_details = access_service.get_workspace_role_assignment_details(workspace)
-    check_email_exists(role_assignment_details)
+    if config.ENABLE_AIRLOCK_EMAIL_CHECK:
+        check_email_exists(role_assignment_details)
 
     try:
         logger.debug(f"Saving airlock request item: {airlock_request.id}")
@@ -345,11 +345,11 @@ def get_timestamp() -> float:
 
 
 def check_email_exists(role_assignment_details: defaultdict(list)):
-    if "WorkspaceResearcher" not in role_assignment_details or not role_assignment_details["WorkspaceResearcher"]:
-        logger.error('Creating an airlock request but the researcher does not have an email address.')
-        raise HTTPException(status_code=status.HTTP_417_EXPECTATION_FAILED, detail=strings.AIRLOCK_NO_RESEARCHER_EMAIL)
-    if "AirlockManager" not in role_assignment_details or not role_assignment_details["AirlockManager"]:
-        logger.error('Creating an airlock request but the airlock manager does not have an email address.')
+    if not role_assignment_details.get("WorkspaceResearcher") and not role_assignment_details.get("WorkspaceOwner"):
+        logger.error(strings.AIRLOCK_NO_EMAIL)
+        raise HTTPException(status_code=status.HTTP_417_EXPECTATION_FAILED, detail=strings.AIRLOCK_NO_EMAIL)
+    if not role_assignment_details.get("AirlockManager"):
+        logger.error(strings.AIRLOCK_NO_AIRLOCK_MANAGER_EMAIL)
         raise HTTPException(status_code=status.HTTP_417_EXPECTATION_FAILED, detail=strings.AIRLOCK_NO_AIRLOCK_MANAGER_EMAIL)
 
 

@@ -33,6 +33,10 @@ tre:
   enable_swagger: true
   enable_airlock_malware_scanning: true
 
+  # Set to true if want to ensure users have an email address before airlock request is created
+  # Used if rely on email notifications for governance purposes
+  # enable_airlock_email_check: true
+
   # TODO: move to RP default with https://github.com/microsoft/AzureTRE/issues/2948
   workspace_app_service_plan_sku: P1v2
   # The TRE Web UI is deployed by default.
@@ -41,6 +45,7 @@ tre:
   # If you want to use TRE_URL to point to your local TRE API instance or be configured to another cloud provider
   # uncomment and set this variable
   # tre_url: __CHANGE_ME__
+  firewall_sku: Standard
 
 authentication:
   aad_tenant_id: __CHANGE_ME__
