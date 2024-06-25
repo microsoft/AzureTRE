@@ -2,14 +2,16 @@
 ## 0.18.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
-* Update Core Terraform Provider versions ([[#3919](https://github.com/microsoft/AzureTRE/issues/3919)])
+* Update Core Terraform Provider versions ([#3919](https://github.com/microsoft/AzureTRE/issues/3919))
 * Introduction of config value `enable_airlock_email_check`, which defaults to `false`, this is a change in behaviour. If you require email addresses for users before an airlock request is created, set to `true`. ([#3904](https://github.com/microsoft/AzureTRE/issues/3904))
 
 FEATURES:
 
 ENHANCEMENTS:
 * Add KeyVault Purge Protection Variable ([#3922](https://github.com/microsoft/AzureTRE/issues/3922))
+* Update Guacamole Windows 11 VM Image to 2Win11-23h2-pro ([#3995](https://github.com/microsoft/AzureTRE/issues/3995))
 * Make check for email addresses prior to an airlock request being created optional. ([#3904](https://github.com/microsoft/AzureTRE/issues/3904))
+* Add Firewall SKU variable ([#3961](https://github.com/microsoft/AzureTRE/issues/3961))
 
 BUG FIXES:
 * Update Guacamole Linux VM Images to Ubuntu 22.04 LTS. Part of ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
@@ -23,6 +25,8 @@ BUG FIXES:
 * Add lifecycle rule to MySQL resources to stop them recreating on `update` ([#3993](https://github.com/microsoft/AzureTRE/issues/3993))
 * Updated Workspace App Insight resources to use AzureRM provider
 * Fixes broken links on 'Using the Azure TRE -> Custom Templates' page of documentation ([[#4003](https://github.com/microsoft/AzureTRE/issues/4003)])
+* Fix 'Renew Lets Encrypt Certificates' GitHub Action ([#3978](https://github.com/microsoft/AzureTRE/issues/3978))
+* Add lifecycle rule to the Gitea Shared Service template for the MySQL resource to stop it recreating on `update` ([#4006](https://github.com/microsoft/AzureTRE/issues/4006))
 
 COMPONENTS:
 
