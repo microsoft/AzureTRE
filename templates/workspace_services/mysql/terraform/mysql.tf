@@ -27,6 +27,8 @@ resource "azurerm_mysql_flexible_database" "db" {
   server_name         = azurerm_mysql_flexible_server.mysql.name
   charset             = "utf8"
   collation           = "utf8_unicode_ci"
+
+  lifecycle { ignore_changes = [charset, collation] }
 }
 
 resource "azurerm_private_endpoint" "mysql_private_endpoint" {
