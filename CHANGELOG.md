@@ -9,6 +9,7 @@ FEATURES:
 
 ENHANCEMENTS:
 * Add KeyVault Purge Protection Variable ([#3922](https://github.com/microsoft/AzureTRE/issues/3922))
+* Update Guacamole Windows 11 VM Image to 2Win11-23h2-pro ([#3995](https://github.com/microsoft/AzureTRE/issues/3995))
 * Make check for email addresses prior to an airlock request being created optional. ([#3904](https://github.com/microsoft/AzureTRE/issues/3904))
 * Add Firewall SKU variable ([#3961](https://github.com/microsoft/AzureTRE/issues/3961))
 
