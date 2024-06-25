@@ -1,5 +1,5 @@
 import logging
-import httpx, jwt, time
+import httpx, jwt, re, time
 from models.schemas.notify import NotifyUkMessageInput, NotifyUkResponse
 from core import config
 from fastapi import HTTPException
@@ -14,6 +14,21 @@ async def send_message_notify_platform(message_properties: NotifyUkMessageInput)
 
     headers = {'Content-type':'application/json', 'Authorization': 'Bearer ' + jwt_token }
 
+    # Remove empty chars from the input, split the secondary recipients string and create the final list.
+    replaced_secondary_recipients = message_properties.secondary_recipients.replace(" ", "")
+    secondary_recipients_list = replaced_secondary_recipients.split(",")
+
+    # This list will contain at least the Support Team email address.
+    validated_secondary_recipients_list = []
+    validated_secondary_recipients_list.append(message_properties.recipients)
+
+    # Remove malformed email addresses.
+    # This regex will validate email addresses sent to the API.
+    email_regex_validation = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
+    for item in secondary_recipients_list:
+        if(re.fullmatch(email_regex_validation, item)):
+            validated_secondary_recipients_list.append(item)
+
     async with httpx.AsyncClient() as client:
         personalisation_data = {
             "name": message_properties.name,
@@ -24,26 +39,29 @@ async def send_message_notify_platform(message_properties: NotifyUkMessageInput)
             "issue_description": message_properties.issue_description
         }
 
-        template_data = {
-            "email_address": message_properties.recipients,
-            "template_id": config.NOTIFY_UK_TEMPLATE_ID,
-            "personalisation": personalisation_data
-        }
-
         try:
-            response = await client.post(
-                config.NOTIFY_UK_URL,
-                headers=headers,
-                json=template_data
-            )
+            for recipient in validated_secondary_recipients_list:
+                logging.info("Sending email to %s", recipient)
+                template_data = {
+                    "email_address": recipient,
+                    "template_id": config.NOTIFY_UK_TEMPLATE_ID,
+                    "personalisation": personalisation_data
+                }
 
-            response.raise_for_status()
-            notify_response = response.json()
+                response = await client.post(
+                    config.NOTIFY_UK_URL,
+                    headers=headers,
+                    json=template_data
+                )
 
-            return NotifyUkResponse(response=notify_response)
+                response.raise_for_status()
 
         except httpx.HTTPStatusError:
             logging.info("Error contacting Notify UK API with error code %s", response.status_code)
             raise HTTPException(status_code=response.status_code,
                                 detail="Error contacting Notify UK API.")
+
+        notify_response = response.json()
+        return NotifyUkResponse(response=notify_response)
+
 
