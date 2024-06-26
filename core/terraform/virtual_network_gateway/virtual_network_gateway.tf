@@ -109,8 +109,7 @@ resource "azurerm_virtual_network_gateway" "virtual_network_gateway" {
   }
 }
 
-# There should already exist this route table. However, we must update it,
-# so that traffic is routed through the Virtual network gateway.
+# This options must be enabled, so that the VNG can connect to other resources in MHRA network.
 resource "azapi_update_resource" "virtual_network_gateway" {
   type        = "Microsoft.Network/virtualNetworkGateways@2023-09-01"
   resource_id = azurerm_virtual_network_gateway.virtual_network_gateway.id
