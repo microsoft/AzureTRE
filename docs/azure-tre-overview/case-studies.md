@@ -14,4 +14,3 @@ Click [here]("https://www.databricks.com/blog/2023/03/27/trusted-research-enviro
 The UK Government's investment in secure data environments (SDEs) aims to make health data more accessible for research, enhancing patient outcomes and accelerating life sciences research. Key lessons from implementing SDEs include leveraging cloud technologies for scalability, publicising access and pricing to facilitate research, and improving communication to drive public consent. Establishing clear data roles and shared services, building trust through transparency, and starting small to scale effectively are critical for success. These steps ensure that health data can be used ethically and efficiently, transforming care and services in the UK.
 
 Click [here]("https://www.paconsulting.com/insights/data-saves-lives-lessons-to-enable-healthcare-research") to see the full case study.
-
