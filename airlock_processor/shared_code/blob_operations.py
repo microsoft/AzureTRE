@@ -12,7 +12,7 @@ from azure.storage.blob import ContainerSasPermissions, generate_container_sas, 
 from exceptions import NoFilesInRequestException, TooManyFilesInRequestException, NotAllowedFileExtension
 
 # Define a list of allowed file extensions
-ALLOWED_EXTENSIONS = [".json", ".csv", ".txt", ".md", ".rst", ".tex", ".pdf", ".py", ".sql", ".gz", ".zip", ".xls", ".xlsx", ".xlsm", ".xlsb", ".jpg", ".jpeg", ".svg", ".png", ".gif", ".notebook", ".r", ".do", ".ado", ".sthlp", ".smcl", ".log"]
+ALLOWED_EXTENSIONS = [".ado", ".bmp", ".csv", ".do", ".dta", ".gif", ".gph", ".ipynb", ".jpeg", ".jpg", ".json", ".log", ".mata", ".md", ".notebook", ".pdf", ".pkg", ".png", ".py", ".py3", ".r", ".rda", ".rdata", ".rds", ".rst", ".smcl", ".sql", ".sthlp", ".svg", ".tex", ".toc", ".tsv", ".txt", ".xls", ".xlsm", ".xlsx", ".ppb", ".pmb"]
 
 
 def get_account_url(account_name: str) -> str:
