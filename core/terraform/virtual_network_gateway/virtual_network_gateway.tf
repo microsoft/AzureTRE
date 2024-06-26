@@ -108,3 +108,17 @@ resource "azurerm_virtual_network_gateway" "virtual_network_gateway" {
     subnet_id            = azurerm_subnet.gateway.id
   }
 }
+
+# There should already exist this route table. However, we must update it,
+# so that traffic is routed through the Virtual network gateway.
+resource "azapi_update_resource" "virtual_network_gateway" {
+  type        = "Microsoft.Network/virtualNetworkGateways@2023-09-01"
+  resource_id = azurerm_virtual_network_gateway.virtual_network_gateway.id
+
+  body = jsonencode({
+    properties = {
+      allowRemoteVnetTraffic = true
+      allowVirtualWanTraffic = true
+    }
+  })
+}
