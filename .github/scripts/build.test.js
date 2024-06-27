@@ -1,4 +1,4 @@
-const { getCommandFromComment, labelAsExternalIfAuthorDoesNotHaveWriteAccess } = require('./build.js')
+const { getCommandFromComment, labelAsExternalIfAuthorDoesNotHaveWriteAccess, createShortHash } = require('./build.js')
 const { createGitHubContext, PR_NUMBER, outputFor, toHaveComment } = require('./test-helpers.js')
 
 expect.extend({
@@ -146,7 +146,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `cbce50da`\)/,
+            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
           });
         });
       });
@@ -326,7 +326,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
-            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `6db070b1`\)/,
+            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `607c7437`\)/,
           });
         });
       })
@@ -355,7 +355,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
-            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `6db070b1`\)/,
+            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `607c7437`\)/,
           });
         });
       })
@@ -381,7 +381,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `cbce50da`\)/,
+            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
           });
         });
       });
@@ -407,7 +407,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running extended AAD tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `cbce50da`\)/,
+            bodyMatcher: /Running extended AAD tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
           });
         });
       });
@@ -433,7 +433,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running shared service tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `cbce50da`\)/,
+            bodyMatcher: /Running shared service tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
           });
         });
       });
@@ -549,7 +549,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
-            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `6db070b1`\)/,
+            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `607c7437`\)/,
           });
         });
       })
@@ -679,13 +679,13 @@ goes here`,
       });
 
       test('should set prRefId output', async () => {
-        // Using a PR number of 123 should give a refid of 'cbce50da'
+        // Using a PR number of 123 should give a refid of '291ae84f'
         // Based on running `echo "refs/pull/123/merge" | shasum | cut -c1-8` (as per the original bash scripts)
         const context = createCommentContext({
           pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES
         });
         await getCommandFromComment({ core, context, github });
-        expect(outputFor(mockCoreSetOutput, 'prRefId')).toBe('cbce50da');
+        expect(outputFor(mockCoreSetOutput, 'prRefId')).toBe('291ae84f');
       });
 
       test('should not set branchRefId output for PR from forked repo', async () => {
@@ -701,13 +701,13 @@ goes here`,
 
       test('should set branchRefId for PR from upstream repo', async () => {
         // Using PR 123 which is faked as a PR from the upstream repo
-        // The Using a PR number of 123 should give a refid of '71f7c907'
+        // The Using a PR number of 123 should give a refid of '6b751c8f'
         // Based on running `echo "refs/heads/pr-head-ref" | shasum | cut -c1-8` (as per the original bash scripts)
         const context = createCommentContext({
           pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES
         });
         await getCommandFromComment({ core, context, github });
-        expect(outputFor(mockCoreSetOutput, 'branchRefId')).toBe('71f7c907');
+        expect(outputFor(mockCoreSetOutput, 'branchRefId')).toBe('6b751c8f');
       });
 
       test('should set prHeadSha output', async () => {
@@ -768,6 +768,15 @@ goes here`,
       await labelAsExternalIfAuthorDoesNotHaveWriteAccess({ core, context, github });
       expect(mockGithubRestIssuesAddLabels).toHaveBeenCalledTimes(0); // shouldn't set the label for contributor
     });
+  });
+
+  describe('createShortHash creates a short hash from a long hash', () => {
+    test('should return the first 8 characters of the hash', () => {
+      const longHash = '0123456789abcdef';
+      const shortHash = '1c043fbe';
+      expect(createShortHash(longHash)).toBe(shortHash);
+    }
+    );
   });
 
 });
