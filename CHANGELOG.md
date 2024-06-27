@@ -22,7 +22,6 @@ BUG FIXES:
 * Add workaround to avoid name clashes for storage accounts([#3863](https://github.com/microsoft/AzureTRE/pull/3858))
 * Resource processor fails to deploy first workspace on fresh TRE deployment ([#3950](https://github.com/microsoft/AzureTRE/issues/3950))
 * Dependency and Vulnerability updates
-* Fix Weak hashes ([#3931](https://github.com/microsoft/AzureTRE/issues/3931))
 * Add lifecycle rule to MySQL resources to stop them recreating on `update` ([#3993](https://github.com/microsoft/AzureTRE/issues/3993))
 * Fixes broken links on 'Using the Azure TRE -> Custom Templates' page of documentation ([[#4003](https://github.com/microsoft/AzureTRE/issues/4003)])
 * Fix 'Renew Lets Encrypt Certificates' GitHub Action ([#3978](https://github.com/microsoft/AzureTRE/issues/3978))
