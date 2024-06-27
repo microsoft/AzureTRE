@@ -5,6 +5,7 @@
 // These tests can be run from the dev container using the run-tests.sh script
 //
 const { createHash } = require('crypto');
+const { create } = require('domain');
 
 async function getCommandFromComment({ core, context, github }) {
   const commentUsername = context.payload.comment.user.login;
@@ -292,11 +293,12 @@ function getRefIdForBranch(branchName) {
   return createShortHash(`refs/heads/${branchName}\n`);
 }
 function createShortHash(ref) {
-  const hash = createHash('sha2').update(ref, 'utf8').digest('hex')
+  const hash = createHash('sha512').update(ref, 'utf8').digest('hex');
   return hash.substring(0, 8);
 }
 
 module.exports = {
   getCommandFromComment,
-  labelAsExternalIfAuthorDoesNotHaveWriteAccess
+  labelAsExternalIfAuthorDoesNotHaveWriteAccess,
+  createShortHash
 }
