@@ -72,6 +72,35 @@ resource "azurerm_storage_account" "sa_export_approved" {
   lifecycle { ignore_changes = [tags] }
 }
 
+# Blob storage containers will be deleted automatically after 60 days.
+resource "azurerm_storage_management_policy" "sa_export_approved" {
+  storage_account_id = azurerm_storage_account.sa_export_approved.id
+  rule {
+    name = "auto_delete_after_given_period"
+    enabled = true
+    filters {
+      blob_types = ["blockBlob"]
+    }
+    actions {
+      base_blob {
+        delete_after_days_since_creation_greater_than = 60
+      }
+    }
+  }
+  rule {
+    name = "auto_delete_after_1day"
+    enabled = true
+    filters {
+      blob_types = ["blockBlob"]
+    }
+    actions {
+      base_blob {
+        delete_after_days_since_creation_greater_than = 1
+      }
+    }
+  }
+}
+
 resource "azurerm_private_endpoint" "stg_export_approved_pe" {
   name                = "stg-app-export-blob-${var.tre_id}"
   location            = var.location
@@ -192,6 +221,35 @@ resource "azurerm_storage_account" "sa_import_rejected" {
   lifecycle { ignore_changes = [tags] }
 }
 
+# Blob storage containers will be deleted automatically after 60 days.
+resource "azurerm_storage_management_policy" "sa_import_rejected" {
+  storage_account_id = azurerm_storage_account.sa_import_rejected.id
+  rule {
+    name = "auto_delete_after_given_period"
+    enabled = true
+    filters {
+      blob_types = ["blockBlob"]
+    }
+    actions {
+      base_blob {
+        delete_after_days_since_creation_greater_than = 60
+      }
+    }
+  }
+  rule {
+    name = "auto_delete_after_1day"
+    enabled = true
+    filters {
+      blob_types = ["blockBlob"]
+    }
+    actions {
+      base_blob {
+        delete_after_days_since_creation_greater_than = 1
+      }
+    }
+  }
+}
+
 resource "azurerm_private_endpoint" "stg_import_rejected_pe" {
   name                = "stg-import-rej-blob-${var.tre_id}"
   location            = var.location
@@ -238,6 +296,35 @@ resource "azurerm_storage_account" "sa_import_blocked" {
   }
 
   lifecycle { ignore_changes = [tags] }
+}
+
+# Blob storage containers will be deleted automatically after 60 days.
+resource "azurerm_storage_management_policy" "sa_import_blocked" {
+  storage_account_id = azurerm_storage_account.sa_import_blocked.id
+  rule {
+    name = "auto_delete_after_given_period"
+    enabled = true
+    filters {
+      blob_types = ["blockBlob"]
+    }
+    actions {
+      base_blob {
+        delete_after_days_since_creation_greater_than = 60
+      }
+    }
+  }
+  rule {
+    name = "auto_delete_after_1day"
+    enabled = true
+    filters {
+      blob_types = ["blockBlob"]
+    }
+    actions {
+      base_blob {
+        delete_after_days_since_creation_greater_than = 1
+      }
+    }
+  }
 }
 
 resource "azurerm_private_endpoint" "stg_import_blocked_pe" {
