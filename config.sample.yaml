@@ -42,11 +42,10 @@ tre:
   # The TRE Web UI is deployed by default.
   # Uncomment the following to disable deployment of the Web UI.
   # deploy_ui: false
-  # If you want to use TRE_URL to point to your local TRE API instance or be configured to another cloud provider
-  # uncomment and set this variable
-  # tre_url: __CHANGE_ME__
   firewall_sku: Standard
 
+  # Uncomment to deploy to a custom domain
+  # custom_domain: __CHANGE_ME__
 authentication:
   aad_tenant_id: __CHANGE_ME__
   # Setting AUTO_WORKSPACE_APP_REGISTRATION to false will:
@@ -83,3 +82,7 @@ developer_settings:
 # Used by the API and Resource processor application to change log level
 # Can be "ERROR", "WARNING", "INFO", "DEBUG"
 #  logging_level: "INFO"
+
+# If you want to use TRE_URL to point to your local TRE API instance or be configured to another cloud provider
+# uncomment and set this variable
+#  tre_url: __CHANGE_ME__
