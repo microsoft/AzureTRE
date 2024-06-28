@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/azuresql/template_schema.json",
+  "type": "object",
+  "title": "Azure SQL",
+  "description": "Provides Azure SQL within the workspace",
+  "required": [],
+  "properties": {
+    "sql_sku": {
+      "$id": "#/properties/sql_sku",
+      "type": "string",
+      "title": "Azure SQL SKU",
+      "description": "Azure SQL SKU",
+      "updateable": true,
+      "enum": [
+        "S1 | 20 DTUs",
+        "S2 | 50 DTUs",
+        "S3 | 100 DTUs",
+        "S4 | 200 DTUs",
+        "S6 | 400 DTUs"
+      ],
+      "default": "S2 | 50 DTUs"
+    },
+    "storage_gb": {
+      "$id": "#/properties/storage_gb",
+      "type": "number",
+      "title": "Max storage allowed for a database (GB)",
+      "description": "Max storage allowed for a database (GB)",
+      "default": 5
+    },
+    "db_name": {
+      "$id": "#/properties/db_name",
+      "type": "string",
+      "title": "Database name",
+      "description": "Database name",
+      "default": "tredb"
+    }
+  }
+}

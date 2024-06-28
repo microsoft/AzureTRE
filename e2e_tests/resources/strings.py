@@ -19,6 +19,7 @@ GITEA_SERVICE = "tre-workspace-service-gitea"
 MLFLOW_SERVICE = "tre-service-mlflow"
 MYSQL_SERVICE = "tre-workspace-service-mysql"
 HEALTH_SERVICE = "tre-workspace-service-health"
+AZURESQL_SERVICE = "tre-workspace-service-azuresql"
 
 FIREWALL_SHARED_SERVICE = "tre-shared-service-firewall"
 GITEA_SHARED_SERVICE = "tre-shared-service-gitea"

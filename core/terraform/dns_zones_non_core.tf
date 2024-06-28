@@ -21,6 +21,17 @@ resource "azurerm_private_dns_zone_virtual_network_link" "mysql" {
   lifecycle { ignore_changes = [tags] }
 }
 
+# since shared services are in the core network, their dns link could exist once and must be defined here.
+resource "azurerm_private_dns_zone_virtual_network_link" "azuresql" {
+  resource_group_name   = azurerm_resource_group.core.name
+  virtual_network_id    = module.network.core_vnet_id
+  private_dns_zone_name = azurerm_private_dns_zone.non_core["privatelink.database.windows.net"].name
+  name                  = azurerm_private_dns_zone.non_core["privatelink.database.windows.net"].name
+  registration_enabled  = false
+  tags                  = local.tre_core_tags
+  lifecycle { ignore_changes = [tags] }
+}
+
 # Once the deployment of the app gateway is complete, we can proceed to include the required DNS zone for Nexus, which is dependent on the FQDN of the app gateway.
 resource "azurerm_private_dns_zone" "nexus" {
   name                = "nexus-${module.appgateway.app_gateway_fqdn}"
