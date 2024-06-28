@@ -87,18 +87,6 @@ resource "azurerm_storage_management_policy" "sa_export_approved" {
       }
     }
   }
-  rule {
-    name = "auto_delete_after_1day"
-    enabled = true
-    filters {
-      blob_types = ["blockBlob"]
-    }
-    actions {
-      base_blob {
-        delete_after_days_since_creation_greater_than = 1
-      }
-    }
-  }
 }
 
 resource "azurerm_private_endpoint" "stg_export_approved_pe" {
@@ -236,18 +224,6 @@ resource "azurerm_storage_management_policy" "sa_import_rejected" {
       }
     }
   }
-  rule {
-    name = "auto_delete_after_1day"
-    enabled = true
-    filters {
-      blob_types = ["blockBlob"]
-    }
-    actions {
-      base_blob {
-        delete_after_days_since_creation_greater_than = 1
-      }
-    }
-  }
 }
 
 resource "azurerm_private_endpoint" "stg_import_rejected_pe" {
@@ -310,18 +286,6 @@ resource "azurerm_storage_management_policy" "sa_import_blocked" {
     actions {
       base_blob {
         delete_after_days_since_creation_greater_than = 60
-      }
-    }
-  }
-  rule {
-    name = "auto_delete_after_1day"
-    enabled = true
-    filters {
-      blob_types = ["blockBlob"]
-    }
-    actions {
-      base_blob {
-        delete_after_days_since_creation_greater_than = 1
       }
     }
   }

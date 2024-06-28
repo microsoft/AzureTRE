@@ -93,11 +93,13 @@ resource "azurerm_subnet_route_table_association" "gateway_route_table" {
 }
 
 resource "azurerm_virtual_network_gateway" "virtual_network_gateway" {
-  name                = "vng-${var.tre_id}"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  type                = "ExpressRoute"
-  tags                = local.tre_core_tags
+  name                        = "vng-${var.tre_id}"
+  location                    = var.location
+  resource_group_name         = var.resource_group_name
+  type                        = "ExpressRoute"
+  remote_vnet_traffic_enabled = true
+  virtual_wan_traffic_enabled = true
+  tags                        = local.tre_core_tags
 
   active_active = false
   enable_bgp    = false
@@ -110,14 +112,17 @@ resource "azurerm_virtual_network_gateway" "virtual_network_gateway" {
 }
 
 # This options must be enabled, so that the VNG can connect to other resources in MHRA network.
-resource "azapi_update_resource" "virtual_network_gateway" {
-  type        = "Microsoft.Network/virtualNetworkGateways@2023-09-01"
-  resource_id = azurerm_virtual_network_gateway.virtual_network_gateway.id
+# We use a null_resource to have the possibility to force execution in all deployments.s
+resource "null_resource" "change_vng_configurations" {
+  provisioner "local-exec" {
+    command    = "az resource update --name ${local.core_vng_name} --resource-group ${var.resource_group_name} --resource-type ${local.core_vng_type} --set properties.allowRemoteVnetTraffic=true --set properties.allowVirtualWanTraffic=true"
+    on_failure = continue
+  }
 
-  body = jsonencode({
-    properties = {
-      allowRemoteVnetTraffic = true
-      allowVirtualWanTraffic = true
-    }
-  })
+  # We force this null_resource to always run.
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+
+  depends_on = [azurerm_virtual_network_gateway.virtual_network_gateway]
 }
