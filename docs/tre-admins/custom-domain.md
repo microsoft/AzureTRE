@@ -8,9 +8,9 @@ In order to use a custom domain name with the Azure TRE:
 
 3. Update the *TRE UX* App Registration redirect URIs:
 
-  a. If you haven't deployed your TRE yet, this is done automatically for you using the `make auth` command.  Refer to the setup instructions to deploy your TRE.
+   a. If you haven't deployed your TRE yet, this is done automatically for you using the `make auth` command.  Refer to the setup instructions to deploy your TRE.
 
-  b. If your TRE has already been deployed, manually add the following redirect URIs in Entra ID > App Registrations > *TRE_ID UX* > Authentication > Single-page application Redirect URIs:
+   b. If your TRE has already been deployed, manually add the following redirect URIs in Entra ID > App Registrations > *TRE_ID UX* > Authentication > Single-page application Redirect URIs:
 
 ```text
   https://mytre-domain-name.org
