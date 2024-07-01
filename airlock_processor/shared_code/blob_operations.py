@@ -73,7 +73,7 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
         raise NoFilesInRequestException(msg)
 
     # Check if the file extension is allowed
-    file_extension = os.path.splitext(blob_name)[1]
+    file_extension = os.path.splitext(blob_name)[1].lower()  # Convert to lowercase
     if file_extension not in ALLOWED_EXTENSIONS:
         msg = f"File extension {file_extension} is not allowed for copying."
         logging.error(msg)
