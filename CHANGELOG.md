@@ -8,6 +8,7 @@ FEATURES:
 ENHANCEMENTS:
 
 BUG FIXES:
+* Disable public network access to the API App Service ([#3986](https://github.com/microsoft/AzureTRE/issues/3986))
 
 COMPONENTS:
 
