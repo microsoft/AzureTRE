@@ -1,6 +1,6 @@
 # Dev requirements
-flake8==6.0.0 # same as super linter
-pre-commit==3.0.4
+flake8==6.0.0 # ensure same as super linter
+pre-commit==3.5.0
 semantic-version==2.10.0
 
 -r api_app/requirements.txt

@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-mlflow
-version: 0.6.4
+version: 0.7.7
 description: "An Azure TRE service for MLflow machine learning lifecycle"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -55,10 +55,19 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+    type: string
+    default: "public"
 
 outputs:
-  - name: internal_connection_uri
+  - name: connection_uri
     type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: is_exposed_externally
+    type: boolean
     applyTo:
       - install
       - upgrade
@@ -77,13 +86,15 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: tre-service-mlflow-${ bundle.parameters.id }
       outputs:
-        - name: internal_connection_uri
+        - name: connection_uri
+        - name: is_exposed_externally
 
 upgrade:
   - terraform:
@@ -94,13 +105,15 @@ upgrade:
         tre_resource_id: ${ bundle.parameters.id }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: tre-service-mlflow-${ bundle.parameters.id }
       outputs:
-        - name: internal_connection_uri
+        - name: connection_uri
+        - name: is_exposed_externally
 
 uninstall:
   - terraform:
@@ -111,6 +124,7 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

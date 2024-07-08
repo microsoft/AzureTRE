@@ -55,7 +55,7 @@ resource "azurerm_management_lock" "mongo" {
 }
 
 resource "azurerm_private_dns_zone" "mongo" {
-  name                = "privatelink.mongo.cosmos.azure.com"
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.mongo.cosmos.azure.com"]
   resource_group_name = azurerm_resource_group.core.name
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
@@ -99,4 +99,6 @@ resource "azurerm_key_vault_secret" "cosmos_mongo_connstr" {
   depends_on = [
     azurerm_key_vault_access_policy.deployer
   ]
+
+  lifecycle { ignore_changes = [tags] }
 }

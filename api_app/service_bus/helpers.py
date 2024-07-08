@@ -11,7 +11,7 @@ from models.domain.authentication import User
 from models.schemas.resource import ResourcePatch
 from db.repositories.resources import ResourceRepository
 from core import config, credentials
-import logging
+from services.logging import logger
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 
@@ -24,7 +24,7 @@ async def _send_message(message: ServiceBusMessage, queue: str):
     :param queue: The Service Bus queue to send the message to.
     :type queue: str
     """
-    async with credentials.get_credential_async() as credential:
+    async with credentials.get_credential_async_context() as credential:
         service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
 
         async with service_bus_client:
@@ -36,7 +36,7 @@ async def _send_message(message: ServiceBusMessage, queue: str):
 
 async def send_deployment_message(content, correlation_id, session_id, action):
     resource_request_message = ServiceBusMessage(body=content, correlation_id=correlation_id, session_id=session_id)
-    logging.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}, action: {action}")
+    logger.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}, action: {action}")
     await _send_message(resource_request_message, config.SERVICE_BUS_RESOURCE_REQUEST_QUEUE)
 
 
@@ -63,16 +63,24 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
 
     parent_template = await resource_template_repo.get_template_by_name_and_version(step_resource.templateName, step_resource.templateVersion, step_resource.resourceType, step_resource_parent_service_name)
 
-    # if there are no pipelines, no need to continue with substitutions.
-    if parent_template.pipeline is None:
+    # if there are no pipelines, or custom action, no need to continue with substitutions.
+    if not parent_template.pipeline:
         return step_resource
 
-    if parent_template.pipeline.dict()[primary_action] is None:
+    parent_template_pipeline_dict = parent_template.pipeline.dict()
+
+    # if action not defined as a pipeline, custom action, no need to continue with substitutions.
+    if primary_action not in parent_template_pipeline_dict:
+        return step_resource
+
+    pipeline_primary_action = parent_template_pipeline_dict[primary_action]
+    is_first_main_step = pipeline_primary_action and len(pipeline_primary_action) == 1 and pipeline_primary_action[0]['stepId'] == 'main'
+    if not pipeline_primary_action or is_first_main_step:
         return step_resource
 
     # get the template step
     template_step = None
-    for step in parent_template.pipeline.dict()[primary_action]:
+    for step in parent_template_pipeline_dict[primary_action]:
         if step["stepId"] == operation_step.templateStepId:
             template_step = parse_obj_as(PipelineStep, step)
             break
@@ -111,7 +119,7 @@ async def try_update_with_retries(num_retries: int, attempt_count: int, resource
             primary_parent_workspace_svc=primary_parent_workspace_svc
         )
     except CosmosAccessConditionFailedError as e:
-        logging.warning(f"Etag mismatch for {resource_to_update_id}. Retrying.")
+        logger.warning(f"Etag mismatch for {resource_to_update_id}. Retrying.")
         if attempt_count < num_retries:
             await try_update_with_retries(
                 num_retries=num_retries,

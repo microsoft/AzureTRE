@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
+from api.helpers import get_repository
 from db.repositories.operations import OperationRepository
-from api.dependencies.database import get_repository
 from models.schemas.operation import OperationInList
 from resources import strings
 from services.authentication import get_current_tre_user_or_tre_admin

@@ -56,6 +56,8 @@ resource "azapi_resource" "aml_service_endpoint_policy" {
       ]
     }
   })
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_subnet" "aml" {
@@ -282,7 +284,7 @@ resource "azurerm_route_table" "aml" {
 
 resource "azurerm_route" "firewall" {
   count                  = var.is_exposed_externally ? 1 : 0
-  name                   = "rt-aml-${var.tre_id}-${local.short_service_id}"
+  name                   = "rt-firewall-${var.tre_id}-${local.short_service_id}"
   resource_group_name    = data.azurerm_resource_group.ws.name
   route_table_name       = azurerm_route_table.aml[count.index].name
   address_prefix         = data.azurerm_route_table.rt.route[0].address_prefix
@@ -301,7 +303,7 @@ resource "azurerm_route" "aml" {
 
 resource "azurerm_route" "batch" {
   count               = var.is_exposed_externally ? 1 : 0
-  name                = "rt-aml-${var.tre_id}-${local.short_service_id}"
+  name                = "rt-batch-${var.tre_id}-${local.short_service_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
   route_table_name    = azurerm_route_table.aml[count.index].name
   address_prefix      = "BatchNodeManagement"

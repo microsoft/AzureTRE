@@ -19,9 +19,9 @@ Next, you will set the configuration variables for the specific Azure TRE instan
 
     The rest of the variables can have their default values.
 
-1. Decide on a name for your `tre_id`, which is an alphanumeric (with underscores allowed) ID for the Azure TRE instance. The value will be used in various Azure resources and AAD application names. It **needs to be globally unique and less than 12 characters in length**. Use only lowercase letters. Choose wisely!
+1. Decide on a name for your `tre_id` ID for the Azure TRE instance. The value will be used in various Azure resources and Microsoft Entra ID application names. It **needs to be globally unique and less than 12 characters in length**. Use **only** lowercase alphanumerics. Choose wisely!
 1. Once you have decided on which AD Tenant paradigm, then you should be able to set `aad_tenant_id` in the authentication section in your `config.yaml` file.
-1. Your AAD Tenant Admin can now use the terminal window in Visual Studio Code to execute the following script from within the development container to create all the AAD Applications that are used for TRE. The details of the script are covered in the [auth document](../auth.md).
+1. Your Microsoft Entra ID Tenant Admin can now use the terminal window in Visual Studio Code to execute the following script from within the development container to create all the Microsoft Entra ID Applications that are used for TRE. The details of the script are covered in the [auth document](../auth.md).
 
    ```bash
    make auth
@@ -33,7 +33,7 @@ Next, you will set the configuration variables for the specific Azure TRE instan
       In case you have several subscriptions and would like to change your default subscription use `az account set --subscription <desired subscription ID>`
 
   !!! note
-      The full functionality of the script requires directory admin privileges. You may need to contact your friendly Azure Active Directory admin to complete this step. The app registrations can be created manually in Azure Portal too. For more information, see [Authentication and authorization](../auth.md).
+      The full functionality of the script requires directory admin privileges. You may need to contact your friendly Microsoft Entra ID admin to complete this step. The app registrations can be created manually in Azure Portal too. For more information, see [Authentication and authorization](../auth.md).
   
 
 All other variables can have their default values for now.

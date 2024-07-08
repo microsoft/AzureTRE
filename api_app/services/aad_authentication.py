@@ -1,11 +1,9 @@
 import base64
-import logging
 from collections import defaultdict
 from enum import Enum
 from typing import List, Optional
 import jwt
 import requests
-import rsa
 
 from fastapi import Request, HTTPException, status
 from msal import ConfidentialClientApplication
@@ -16,8 +14,15 @@ from db.errors import EntityDoesNotExist
 from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace import Workspace, WorkspaceRole
 from resources import strings
-from api.dependencies.database import get_db_client_from_request
 from db.repositories.workspaces import WorkspaceRepository
+from services.logging import logger
+
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+
+
+MICROSOFT_GRAPH_URL = config.MICROSOFT_GRAPH_URL.strip("/")
 
 
 class PrincipalType(Enum):
@@ -30,6 +35,7 @@ class AzureADAuthorization(AccessService):
     _jwt_keys: dict = {}
 
     require_one_of_roles = None
+    aad_instance = config.AAD_AUTHORITY_URL
 
     TRE_CORE_ROLES = ['TREAdmin', 'TREUser']
     WORKSPACE_ROLES_DICT = {'WorkspaceOwner': 'app_role_id_workspace_owner', 'WorkspaceResearcher': 'app_role_id_workspace_researcher', 'AirlockManager': 'app_role_id_workspace_airlock_manager'}
@@ -53,7 +59,7 @@ class AzureADAuthorization(AccessService):
         # Try workspace app registration if appropriate
         if 'workspace_id' in request.path_params and any(role in self.require_one_of_roles for role in self.WORKSPACE_ROLES_DICT.keys()):
             # as we have a workspace_id not given, try decoding token
-            logging.debug("Workspace ID was provided. Getting Workspace API app registration")
+            logger.debug("Workspace ID was provided. Getting Workspace API app registration")
             try:
                 # get the app reg id - which might be blank if the workspace hasn't fully created yet.
                 # if it's blank, don't use workspace auth, use core auth - and a TRE Admin can still get it
@@ -63,8 +69,8 @@ class AzureADAuthorization(AccessService):
             except HTTPException as h:
                 raise h
             except Exception as e:
-                logging.debug(e)
-                logging.debug("Failed to decode using workspace_id, trying with TRE API app registration")
+                logger.debug(e)
+                logger.debug("Failed to decode using workspace_id, trying with TRE API app registration")
                 pass
 
         # Try TRE API app registration if appropriate
@@ -72,18 +78,18 @@ class AzureADAuthorization(AccessService):
             try:
                 decoded_token = self._decode_token(token, API_AUDIENCE)
             except jwt.exceptions.InvalidSignatureError:
-                logging.debug("Failed to decode using TRE API app registration (Invalid Signatrue)")
+                logger.debug("Failed to decode using TRE API app registration (Invalid Signatrue)")
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.INVALID_SIGNATURE)
             except jwt.exceptions.ExpiredSignatureError:
-                logging.debug("Failed to decode using TRE API app registration (Expired Signature)")
+                logger.debug("Failed to decode using TRE API app registration (Expired Signature)")
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.EXPIRED_SIGNATURE)
             except jwt.exceptions.InvalidTokenError:
                 # any other token validation exception, we want to catch all of these...
-                logging.debug("Failed to decode using TRE API app registration (Invalid token)")
+                logger.debug("Failed to decode using TRE API app registration (Invalid token)")
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.INVALID_TOKEN)
             except Exception as e:
                 # Unexpected token decoding/validation exception. making sure we are not crashing (with 500)
-                logging.debug(e)
+                logger.debug(e)
                 pass
 
         # Failed to decode token using either app registration
@@ -93,14 +99,14 @@ class AzureADAuthorization(AccessService):
         try:
             user = self._get_user_from_token(decoded_token)
         except Exception as e:
-            logging.debug(e)
+            logger.debug(e)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER, headers={"WWW-Authenticate": "Bearer"})
 
         try:
             if not any(role in self.require_one_of_roles for role in user.roles):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f'{strings.ACCESS_USER_DOES_NOT_HAVE_REQUIRED_ROLE}: {self.require_one_of_roles}', headers={"WWW-Authenticate": "Bearer"})
         except Exception as e:
-            logging.debug(e)
+            logger.debug(e)
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f'{strings.ACCESS_USER_DOES_NOT_HAVE_REQUIRED_ROLE}: {self.require_one_of_roles}', headers={"WWW-Authenticate": "Bearer"})
 
         return user
@@ -109,12 +115,11 @@ class AzureADAuthorization(AccessService):
     async def _fetch_ws_app_reg_id_from_ws_id(request: Request) -> str:
         workspace_id = None
         if "workspace_id" not in request.path_params:
-            logging.error("Neither a workspace ID nor a default app registration id were provided")
+            logger.error("Neither a workspace ID nor a default app registration id were provided")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS)
         try:
             workspace_id = request.path_params['workspace_id']
-            db_client = await get_db_client_from_request(request)
-            ws_repo = await WorkspaceRepository.create(db_client)
+            ws_repo = await WorkspaceRepository.create()
             workspace = await ws_repo.get_workspace_by_id(workspace_id)
 
             ws_app_reg_id = ""
@@ -123,10 +128,10 @@ class AzureADAuthorization(AccessService):
 
             return ws_app_reg_id
         except EntityDoesNotExist:
-            logging.exception(strings.WORKSPACE_DOES_NOT_EXIST)
+            logger.exception(strings.WORKSPACE_DOES_NOT_EXIST)
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_DOES_NOT_EXIST)
         except Exception:
-            logging.exception(f"Failed to get workspace app registration ID for workspace {workspace_id}")
+            logger.exception(f"Failed to get workspace app registration ID for workspace {workspace_id}")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS)
 
     @staticmethod
@@ -142,7 +147,7 @@ class AzureADAuthorization(AccessService):
         key_id = self._get_key_id(token)
         key = self._get_token_key(key_id)
 
-        logging.debug("workspace app registration id: %s", ws_app_reg_id)
+        logger.debug("workspace app registration id: %s", ws_app_reg_id)
         return jwt.decode(token, key, options={"verify_signature": True}, algorithms=['RS256'], audience=ws_app_reg_id)
 
     @staticmethod
@@ -176,9 +181,13 @@ class AzureADAuthorization(AccessService):
                     for key in keys['keys']:
                         n = int.from_bytes(base64.urlsafe_b64decode(self._ensure_b64padding(key['n'])), "big")
                         e = int.from_bytes(base64.urlsafe_b64decode(self._ensure_b64padding(key['e'])), "big")
-                        pub_key = rsa.PublicKey(n, e)
+                        pub_key = rsa.RSAPublicNumbers(e, n).public_key(default_backend())
+
                         # Cache the PEM formatted public key.
-                        AzureADAuthorization._jwt_keys[key['kid']] = pub_key.save_pkcs1()
+                        AzureADAuthorization._jwt_keys[key['kid']] = pub_key.public_bytes(
+                            encoding=serialization.Encoding.PEM,
+                            format=serialization.PublicFormat.PKCS1
+                        )
 
         return AzureADAuthorization._jwt_keys[key_id]
 
@@ -191,13 +200,10 @@ class AzureADAuthorization(AccessService):
         app = ConfidentialClientApplication(client_id=API_CLIENT_ID, client_credential=API_CLIENT_SECRET, authority=f"{AAD_INSTANCE}/{AAD_TENANT_ID}")
         result = app.acquire_token_silent(scopes=scopes, account=None)
         if not result:
-            logging.debug('No suitable token exists in cache, getting a new one from AAD')
+            logger.debug('No suitable token exists in cache, getting a new one from AAD')
             result = app.acquire_token_for_client(scopes=scopes)
         if "access_token" not in result:
-            logging.debug(result.get('error'))
-            logging.debug(result.get('error_description'))
-            logging.debug(result.get('correlation_id'))
-            raise Exception(result.get('error'))
+            raise Exception(f"API app registration access token cannot be retrieved. {result.get('error')}: {result.get('error_description')}")
         return result["access_token"]
 
     @staticmethod
@@ -206,15 +212,15 @@ class AzureADAuthorization(AccessService):
 
     @staticmethod
     def _get_service_principal_endpoint(client_id) -> str:
-        return f"https://graph.microsoft.com/v1.0/serviceprincipals?$filter=appid eq '{client_id}'"
+        return f"{MICROSOFT_GRAPH_URL}/v1.0/serviceprincipals?$filter=appid eq '{client_id}'"
 
     @staticmethod
     def _get_service_principal_assigned_roles_endpoint(client_id) -> str:
-        return f"https://graph.microsoft.com/v1.0/serviceprincipals/{client_id}/appRoleAssignedTo?$select=appRoleId,principalId,principalType"
+        return f"{MICROSOFT_GRAPH_URL}/v1.0/serviceprincipals/{client_id}/appRoleAssignedTo?$select=appRoleId,principalId,principalType"
 
     @staticmethod
     def _get_batch_endpoint() -> str:
-        return "https://graph.microsoft.com/v1.0/$batch"
+        return f"{MICROSOFT_GRAPH_URL}/v1.0/$batch"
 
     @staticmethod
     def _get_users_endpoint(user_object_id) -> str:
@@ -239,7 +245,18 @@ class AzureADAuthorization(AccessService):
         batch_request_body = self._get_batch_users_by_role_assignments_body(roles_graph_data)
         headers = self._get_auth_header(msgraph_token)
         headers["Content-type"] = "application/json"
-        users_graph_data = requests.post(batch_endpoint, json=batch_request_body, headers=headers).json()
+        max_number_request = 20
+        requests_from_batch = batch_request_body["requests"]
+        # We split the original batch request body in sub-lits with at most max_number_request elements
+        batch_request_body_list = [requests_from_batch[i:i + max_number_request] for i in range(0, len(requests_from_batch), max_number_request)]
+        users_graph_data = {"responses": []}
+
+        # For each sub-list it's required to call the batch endpoint for retrieveing user/group information
+        for request_body_element in batch_request_body_list:
+            batch_request_body_tmp = {"requests": request_body_element}
+            users_graph_data_tmp = requests.post(batch_endpoint, json=batch_request_body_tmp, headers=headers).json()
+            users_graph_data["responses"] = users_graph_data["responses"] + users_graph_data_tmp["responses"]
+
         return users_graph_data
 
     def _get_user_emails_from_response(self, users_graph_data):
@@ -307,7 +324,7 @@ class AzureADAuthorization(AccessService):
     def _get_app_auth_info(self, client_id: str) -> dict:
         graph_data = self._get_app_sp_graph_data(client_id)
         if 'value' not in graph_data or len(graph_data['value']) == 0:
-            logging.debug(graph_data)
+            logger.debug(graph_data)
             raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_INFO_FOR_APP} {client_id}")
 
         app_info = graph_data['value'][0]
@@ -327,7 +344,7 @@ class AzureADAuthorization(AccessService):
         while True:
             if not url:
                 break
-            logging.debug(f"Making request to: {url}")
+            logger.debug(f"Making request to: {url}")
             if json:
                 response = requests.request(method=http_method, url=url, json=json, headers=auth_headers)
             else:
@@ -339,34 +356,34 @@ class AzureADAuthorization(AccessService):
                 if '@odata.nextLink' in json_response:
                     url = json_response['@odata.nextLink']
             else:
-                logging.error(f"MS Graph query to: {url} failed with status code {response.status_code}")
-                logging.error(f"Full response: {response}")
+                logger.error(f"MS Graph query to: {url} failed with status code {response.status_code}")
+                logger.error(f"Full response: {response}")
         return graph_data
 
     def _get_role_assignment_graph_data_for_user(self, user_id: str) -> dict:
-        user_endpoint = f"https://graph.microsoft.com/v1.0/users/{user_id}/appRoleAssignments"
+        user_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}/appRoleAssignments"
         graph_data = self._ms_graph_query(user_endpoint, "GET")
         return graph_data
 
     def _get_role_assignment_graph_data_for_service_principal(self, principal_id: str) -> dict:
-        svc_principal_endpoint = f"https://graph.microsoft.com/v1.0/servicePrincipals/{principal_id}/appRoleAssignments"
+        svc_principal_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{principal_id}/appRoleAssignments"
         graph_data = self._ms_graph_query(svc_principal_endpoint, "GET")
         return graph_data
 
     def _get_identity_type(self, id: str) -> str:
-        objects_endpoint = "https://graph.microsoft.com/v1.0/directoryObjects/getByIds"
+        objects_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/directoryObjects/getByIds"
         request_body = {"ids": [id], "types": ["user", "servicePrincipal"]}
         graph_data = self._ms_graph_query(objects_endpoint, "POST", json=request_body)
 
-        logging.debug(graph_data)
+        logger.debug(graph_data)
 
         if "value" not in graph_data or len(graph_data["value"]) != 1:
-            logging.debug(graph_data)
+            logger.debug(graph_data)
             raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ACCOUNT_TYPE} {id}")
 
         object_info = graph_data["value"][0]
         if "@odata.type" not in object_info:
-            logging.debug(object_info)
+            logger.debug(object_info)
             raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ACCOUNT_TYPE} {id}")
 
         return object_info["@odata.type"]
@@ -401,10 +418,10 @@ class AzureADAuthorization(AccessService):
             raise AuthConfigValidationError(f"{strings.ACCESS_UNHANDLED_ACCOUNT_TYPE} {identity_type}")
 
         if 'value' not in graph_data:
-            logging.debug(graph_data)
+            logger.debug(graph_data)
             raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER} {user_id}")
 
-        logging.debug(graph_data)
+        logger.debug(graph_data)
 
         return [RoleAssignment(role_assignment['resourceId'], role_assignment['appRoleId']) for role_assignment in graph_data['value']]
 

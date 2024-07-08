@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole
-version: 0.7.2
+version: 0.10.7
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -77,9 +77,12 @@ parameters:
     env: GUAC_DISABLE_UPLOAD
   - name: is_exposed_externally
     type: boolean
-    default: false
+    default: true
     env: IS_EXPOSED_EXTERNALLY
     description: "Determines if the web app will be available over public/internet or private networks"
+  - name: aad_authority_url
+    type: string
+    default: "https://login.microsoftonline.com"
   # the following are added automatically by the resource processor
   - name: id
     type: string
@@ -100,25 +103,29 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: arm_environment
+    type: string
 
 outputs:
-  - name: connection_uri
-    type: string
-    applyTo:
-      - install
   - name: authentication_callback_uri
     type: string
     applyTo:
       - install
+      - upgrade
   - name: web_apps_addresses
     type: string
     applyTo:
       - install
+      - upgrade
+  - name: admin_connection_uri
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
-  - exec
   - terraform:
-      clientVersion: 1.3.6
+      clientVersion: 1.4.6
 
 install:
   - terraform:
@@ -139,15 +146,17 @@ install:
         guac_disable_upload: ${ bundle.parameters.guac_disable_upload }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
+        aad_authority_url: ${ bundle.parameters.aad_authority_url }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: tre-service-guacamole-${ bundle.parameters.id }
       outputs:
-        - name: connection_uri
         - name: authentication_callback_uri
         - name: web_apps_addresses
+        - name: admin_connection_uri
 
 upgrade:
   - terraform:
@@ -168,16 +177,17 @@ upgrade:
         guac_disable_upload: ${ bundle.parameters.guac_disable_upload }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
+        aad_authority_url: ${ bundle.parameters.aad_authority_url }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: tre-service-guacamole-${ bundle.parameters.id }
       outputs:
-        - name: connection_uri
         - name: authentication_callback_uri
         - name: web_apps_addresses
-
+        - name: admin_connection_uri
 
 uninstall:
   - terraform:
@@ -198,6 +208,8 @@ uninstall:
         guac_disable_upload: ${ bundle.parameters.guac_disable_upload }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
+        aad_authority_url: ${ bundle.parameters.aad_authority_url }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

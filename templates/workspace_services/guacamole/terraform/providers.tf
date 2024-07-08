@@ -2,11 +2,11 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.41.0"
+      version = "=3.57.0"
     }
     local = {
       source  = "hashicorp/local"
-      version = "=2.2.3"
+      version = "=2.4.0"
     }
   }
   backend "azurerm" {
@@ -28,4 +28,9 @@ provider "azurerm" {
       recover_soft_deleted_keys         = true
     }
   }
+}
+
+module "terraform_azurerm_environment_configuration" {
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
+  arm_environment = var.arm_environment
 }

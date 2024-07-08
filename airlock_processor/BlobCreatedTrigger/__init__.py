@@ -32,10 +32,11 @@ def main(msg: func.ServiceBusMessage,
             logging.error("environment variable 'ENABLE_MALWARE_SCANNING' does not exists. Cannot continue.")
             raise
 
-        if enable_malware_scanning:
+        if enable_malware_scanning and constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS in topic:
             # If malware scanning is enabled, the fact that the blob was created can be dismissed.
             # It will be consumed by the malware scanning service
             logging.info('Malware scanning is enabled. no action to perform.')
+            send_delete_event(dataDeletionEvent, json_body, request_id)
             return
         else:
             logging.info('Malware scanning is disabled. Completing the submitted stage (moving to in_review).')
@@ -66,6 +67,10 @@ def main(msg: func.ServiceBusMessage,
             event_time=datetime.datetime.utcnow(),
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
+    send_delete_event(dataDeletionEvent, json_body, request_id)
+
+
+def send_delete_event(dataDeletionEvent: func.Out[func.EventGridOutputEvent], json_body, request_id):
     # check blob metadata to find the blob it was copied from
     blob_client = get_blob_client_from_blob_info(
         *get_blob_info_from_topic_and_subject(topic=json_body["topic"], subject=json_body["subject"]))

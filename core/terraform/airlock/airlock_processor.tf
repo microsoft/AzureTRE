@@ -60,9 +60,11 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
     "AIRLOCK_SCAN_RESULT_QUEUE_NAME"             = local.scan_result_queue_name
     "AIRLOCK_DATA_DELETION_QUEUE_NAME"           = local.data_deletion_queue_name
     "ENABLE_MALWARE_SCANNING"                    = var.enable_malware_scanning
+    "ARM_ENVIRONMENT"                            = var.arm_environment
     "MANAGED_IDENTITY_CLIENT_ID"                 = azurerm_user_assigned_identity.airlock_id.client_id
     "TRE_ID"                                     = var.tre_id
     "WEBSITE_CONTENTOVERVNET"                    = 1
+    "STORAGE_ENDPOINT_SUFFIX"                    = module.terraform_azurerm_environment_configuration.storage_suffix
   }
 
   site_config {
@@ -97,21 +99,11 @@ resource "azurerm_monitor_diagnostic_setting" "airlock_function_app" {
 
   enabled_log {
     category = "FunctionAppLogs"
-
-    retention_policy {
-      enabled = true
-      days    = 365
-    }
   }
 
   metric {
     category = "AllMetrics"
     enabled  = true
-
-    retention_policy {
-      enabled = true
-      days    = 365
-    }
   }
 
   lifecycle { ignore_changes = [log_analytics_destination_type] }

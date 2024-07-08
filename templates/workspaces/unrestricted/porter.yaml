@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-unrestricted
-version: 0.9.0
+version: 0.12.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -31,6 +31,10 @@ parameters:
   - name: id
     type: string
     description: "the resource ID for this installation"
+  - name: azure_environment
+    type: string
+    default: "AzureCloud"
+    description: "Used by Azure CLI to set the Azure environment"
   - name: azure_location
     type: string
     description: "Azure location (region) to deploy to"
@@ -50,6 +54,10 @@ parameters:
   - name: arm_use_msi
     type: boolean
     default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+    type: string
+    default: "public"
   - name: shared_storage_quota
     type: integer
     default: 50
@@ -116,33 +124,39 @@ outputs:
     type: string
     applyTo:
       - install
+      - upgrade
   - name: app_role_id_workspace_researcher
     type: string
     applyTo:
       - install
+      - upgrade
   - name: app_role_id_workspace_airlock_manager
     type: string
     applyTo:
       - install
+      - upgrade
   - name: client_id
     type: string
     applyTo:
       - install
+      - upgrade
   - name: scope_id
     type: string
     applyTo:
       - install
+      - upgrade
   - name: sp_id
     type: string
     applyTo:
       - install
+      - upgrade
 
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.3.6
+      clientVersion: 1.4.6
   - az:
-      clientVersion: 2.37.0
+      clientVersion: 2.49.0
 
 install:
   - terraform:
@@ -156,10 +170,6 @@ install:
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
         register_aad_application: ${ bundle.parameters.register_aad_application }
         create_aad_groups: ${ bundle.parameters.create_aad_groups }
-        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
         auth_client_id: ${ bundle.credentials.auth_client_id }
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
@@ -174,6 +184,7 @@ install:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -199,10 +210,6 @@ upgrade:
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
         register_aad_application: ${ bundle.parameters.register_aad_application }
         create_aad_groups: ${ bundle.parameters.create_aad_groups }
-        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
         auth_client_id: ${ bundle.credentials.auth_client_id }
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
@@ -217,6 +224,7 @@ upgrade:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -229,6 +237,13 @@ upgrade:
         - name: client_id
         - name: scope_id
         - name: sp_id
+  - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.azure_environment }
   - az:
       description: "AAD Application Admin Login"
       arguments:
@@ -259,10 +274,6 @@ uninstall:
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
         register_aad_application: ${ bundle.parameters.register_aad_application }
         create_aad_groups: ${ bundle.parameters.create_aad_groups }
-        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
         auth_client_id: ${ bundle.credentials.auth_client_id }
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
@@ -276,6 +287,7 @@ uninstall:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

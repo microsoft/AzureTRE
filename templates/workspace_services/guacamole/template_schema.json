@@ -2,10 +2,31 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/template_schema.json",
   "type": "object",
-  "title": "Virtual Desktop Service",
+  "title": "Apache Guacamole - Virtual Desktop Service",
   "description": "Enables Windows and Linux virtual machines to be accessed via Apache Guacamole.",
   "required": [],
   "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "default": "Virtual Desktops",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "default": "Access Windows and Linux virtual machines via Apache Guacamole",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace Service Overview",
+      "description": "Long form description of the workspace service, in markdown syntax",
+      "default": "Access Windows and Linux virtual machines via Apache Guacamole. Documentation for using this service can be found here: [https://guacamole.apache.org/doc/gug/using-guacamole.html](https://guacamole.apache.org/doc/gug/using-guacamole.html)",
+      "updateable": true
+    },
     "guac_disable_copy": {
       "$id": "#/properties/guac_disable_copy",
       "type": "boolean",

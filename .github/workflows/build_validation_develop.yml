@@ -19,14 +19,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # Full git history is needed to get a proper list of
           # changed files within `super-linter`
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
@@ -71,7 +71,7 @@ jobs:
         # the slim image is 2GB smaller and we don't use the extra stuff
         # Moved this after the Terraform checks above due something similar to this issue:
         # https://github.com/github/super-linter/issues/2433
-        uses: github/super-linter/slim@v4.10.0
+        uses: github/super-linter/slim@v5.0.0
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
@@ -97,7 +97,7 @@ jobs:
 
       - name: Workspace Tags
         if: ${{ steps.filter.outputs.terraform_workspaces == 'true' }}
-        uses: github/super-linter/slim@v4.10.0
+        uses: github/super-linter/slim@v5.0.0
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
@@ -108,7 +108,7 @@ jobs:
 
       - name: Workspace Services Tags
         if: ${{ steps.filter.outputs.terraform_workspace_services == 'true' }}
-        uses: github/super-linter/slim@v4.10.0
+        uses: github/super-linter/slim@v5.0.0
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
@@ -120,7 +120,7 @@ jobs:
 
       - name: User Resources Tags
         if: ${{ steps.filter.outputs.terraform_workspace_services == 'true' }}
-        uses: github/super-linter/slim@v4.10.0
+        uses: github/super-linter/slim@v5.0.0
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
@@ -131,7 +131,7 @@ jobs:
 
       - name: Shared Services Tags
         if: ${{ steps.filter.outputs.terraform_shared_services == 'true' }}
-        uses: github/super-linter/slim@v4.10.0
+        uses: github/super-linter/slim@v5.0.0
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main

@@ -40,15 +40,11 @@ runcmd:
   - export DEBIAN_FRONTEND=noninteractive
   # Give the Nexus process write permissions on the folder mounted as persistent volume
   - chown -R 200 /etc/nexus-data
-  # Run the nexus container with mapped volume for nexus config
-  - docker run -d -p 80:8081 -p 443:8443 -p 8083:8083 -v /etc/nexus-data:/nexus-data
-    --restart always
-    --name nexus
-    --log-driver local
-    sonatype/nexus3
-  # Reset the admin password of Nexus to the one created by TF and stored in KeyVault
-  - bash /tmp/reset_nexus_password.sh "${NEXUS_ADMIN_PASSWORD}"
+  # Deploy Nexus by pulling and running the container
+  - bash /etc/nexus-data/scripts/deploy_nexus_container.sh
+  # Reset the admin password of Nexus to the one created by TF and stored in Key Vault
+  - bash /etc/nexus-data/scripts/reset_nexus_password.sh "${NEXUS_ADMIN_PASSWORD}"
   # Invoke Nexus SSL configuration (which will also be ran as CRON daily to renew cert)
-  - bash /etc/cron.daily/configure_nexus_ssl.sh
+  - bash /etc/cron.daily/configure_nexus_ssl
   # Configure Nexus repositories
-  - bash /tmp/configure_nexus_repos.sh "${NEXUS_ADMIN_PASSWORD}"
+  - bash /etc/nexus-data/scripts/configure_nexus_repos.sh "${NEXUS_ADMIN_PASSWORD}"

@@ -63,6 +63,18 @@
       "source": {
         "env": "airlock_request_sas_url"
       }
+    },
+    {
+      "name": "azure_environment",
+      "source": {
+        "env": "AZURE_ENVIRONMENT"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
+      }
     }
   ]
 }

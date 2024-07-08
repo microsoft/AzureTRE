@@ -18,6 +18,10 @@ jobs:
     # - the commenting user has write permissions (i.e. is OWNER or COLLABORATOR)
     if: ${{ github.event.issue.pull_request }}
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      checks: write
+      contents: read
     outputs:
       command: ${{ steps.check_command.outputs.command }}
       prRef: ${{ steps.check_command.outputs.prRef }}
@@ -28,14 +32,14 @@ jobs:
     steps:
       # Ensure we have the script file for the github-script action to use
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       # Determine whether the comment is a command
       - id: check_command
         name: Check for a command using GitHub script
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const script = require('./.github/scripts/build.js')
@@ -55,7 +59,7 @@ jobs:
       # and will have to send it "manually"
       - name: Bypass E2E check-runs status
         if: ${{ steps.check_command.outputs.command == 'test-force-approve' }}
-        uses: LouisBrunner/checks-action@v1.6.0
+        uses: LouisBrunner/checks-action@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # the name must be identical to the one received by the real job
@@ -68,20 +72,23 @@ jobs:
     needs: [pr_comment]
     if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' }}
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     environment: CICD
     name: Destroy PR env
     steps:
       # Ensure we have the script files
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       # Perform az login for destroy env script to be able to run
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+          environment: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
 
       - name: Run deployment cleanup
         env:
@@ -101,20 +108,23 @@ jobs:
     needs: [pr_comment]
     if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' && needs.pr_comment.outputs.branchRefId != '' }}
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     environment: CICD
     name: Destroy branch env
     steps:
       # Ensure we have the script files
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       # Perform az login for destroy env script to be able to run
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+          environment: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
 
       - name: Run deployment cleanup
         env:
@@ -140,6 +150,10 @@ jobs:
       needs.pr_comment.outputs.command == 'run-tests-shared-services'
     name: Deploy PR
     uses: ./.github/workflows/deploy_tre_reusable.yml
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
     with:
       prRef: ${{ needs.pr_comment.outputs.prRef }}
       prHeadSha: ${{ needs.pr_comment.outputs.prHeadSha }}
@@ -151,10 +165,10 @@ jobs:
         (needs.pr_comment.outputs.command == 'run-tests' && '') }}
       environmentName: CICD
       E2E_TESTS_NUMBER_PROCESSES: 1
+      DEVCONTAINER_TAG: ${{ needs.pr_comment.outputs.prRefId }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.pr_comment.outputs.prRefId) }}
-      DEVCONTAINER_TAG: ${{ needs.pr_comment.outputs.prRefId }}
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS}}
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
       API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
@@ -173,10 +187,5 @@ jobs:
       TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
       TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
       TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-      TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME }}
-      TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
-      ENABLE_SWAGGER: ${{ secrets.ENABLE_SWAGGER }}
       TRE_ID: ${{ format('tre{0}', needs.pr_comment.outputs.prRefId) }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
-      TF_LOG: ${{ secrets.TF_LOG }}
-      RP_BUNDLE_VALUES: ${{ secrets.RP_BUNDLE_VALUES }}

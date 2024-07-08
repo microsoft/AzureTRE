@@ -1,5 +1,4 @@
 import uuid
-from azure.cosmos.aio import CosmosClient
 from db.repositories.operations import OperationRepository
 from db.repositories.resources import ResourceRepository
 from db.repositories.resources_history import ResourceHistoryRepository
@@ -7,11 +6,10 @@ from db.repositories.resources_history import ResourceHistoryRepository
 
 class ResourceMigration(ResourceRepository):
     @classmethod
-    async def create(cls, client: CosmosClient):
+    async def create(cls):
         cls = ResourceMigration()
-        resource_repo = await super().create(client)
+        resource_repo = await super().create()
         cls._container = resource_repo._container
-        cls._client = resource_repo._client
         return cls
 
     async def add_deployment_status_field(self, operations_repository: OperationRepository) -> int:

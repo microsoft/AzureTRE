@@ -58,16 +58,20 @@ jobs:
     if: ${{ github.ref != 'refs/heads/main' }}
     needs: [prepare-not-main]
     uses: ./.github/workflows/deploy_tre_reusable.yml
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
     with:
       ciGitRef: ${{ github.ref }}
       prHeadSha: ${{ github.sha }}
       e2eTestsCustomSelector: ${{ github.event.inputs.e2eTestsCustomSelector }}
       environmentName: ${{ github.event.inputs.environment }}
       E2E_TESTS_NUMBER_PROCESSES: ${{ fromJSON(github.event.inputs.e2eProcesses) }}
+      DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
-      DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
       API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
@@ -86,13 +90,5 @@ jobs:
       TEST_WORKSPACE_APP_SECRET: ${{ secrets.TEST_WORKSPACE_APP_SECRET }}
       TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
       TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-      TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME }}
-      TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
-      ENABLE_SWAGGER: ${{ secrets.ENABLE_SWAGGER }}
       TRE_ID: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
-      TF_LOG: ${{ secrets.TF_LOG }}
-      CORE_APP_SERVICE_PLAN_SKU: ${{ secrets.CORE_APP_SERVICE_PLAN_SKU }}
-      WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ secrets.WORKSPACE_APP_SERVICE_PLAN_SKU }}
-      RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE: ${{ secrets.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE }}
-      RP_BUNDLE_VALUES: ${{ secrets.RP_BUNDLE_VALUES }}

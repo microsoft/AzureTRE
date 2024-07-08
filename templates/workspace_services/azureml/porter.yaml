@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-azureml
-version: 0.7.27
+version: 0.8.10
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -59,6 +59,10 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+  - name: azure_environment
+    env: AZURE_ENVIRONMENT
 
 outputs:
   - name: azureml_workspace_name
@@ -77,11 +81,6 @@ outputs:
       - install
       - upgrade
   - name: connection_uri
-    type: string
-    applyTo:
-      - install
-      - upgrade
-  - name: internal_connection_uri
     type: string
     applyTo:
       - install
@@ -111,6 +110,11 @@ outputs:
     applyTo:
       - install
       - upgrade
+  - name: aml_fqdn
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
   - terraform:
@@ -133,6 +137,8 @@ install:
         auth_client_id: ${ bundle.credentials.auth_client_id }
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
+        azure_environment: ${ bundle.parameters.azure_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -143,12 +149,12 @@ install:
         - name: azureml_acr_id
         - name: azureml_storage_account_id
         - name: connection_uri
-        - name: internal_connection_uri
         - name: workspace_address_spaces
         - name: aml_subnet_address_prefixes
         - name: storage_tag
         - name: batch_tag
         - name: mcr_tag
+        - name: aml_fqdn
 
 upgrade:
   - terraform:
@@ -165,6 +171,8 @@ upgrade:
         auth_client_id: ${ bundle.credentials.auth_client_id }
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
+        azure_environment: ${ bundle.parameters.azure_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -175,12 +183,12 @@ upgrade:
         - name: azureml_acr_id
         - name: azureml_storage_account_id
         - name: connection_uri
-        - name: internal_connection_uri
         - name: workspace_address_spaces
         - name: aml_subnet_address_prefixes
         - name: storage_tag
         - name: batch_tag
         - name: mcr_tag
+        - name: aml_fqdn
 
 uninstall:
   - terraform:
@@ -197,6 +205,8 @@ uninstall:
         auth_client_id: ${ bundle.credentials.auth_client_id }
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
+        azure_environment: ${ bundle.parameters.azure_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

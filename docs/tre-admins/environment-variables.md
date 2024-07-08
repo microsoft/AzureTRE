@@ -15,13 +15,13 @@
 | `ARM_SUBSCRIPTION_ID` | *Optional for manual deployment. If not specified the `az cli` selected subscription will be used.* The Azure subscription ID for all resources. |
 | `ARM_CLIENT_ID` | *Optional for manual deployment without logged-in credentials.* The client whose azure identity will be used to deploy the solution. |
 | `ARM_CLIENT_SECRET` | *Optional for manual deployment without logged-in credentials.* The password of the client defined in `ARM_CLIENT_ID`. |
-| `ARM_TENANT_ID` | *Optional for manual deployment. If not specified the `az cli` selected subscription will be used.* The AAD tenant of the client defined in `ARM_CLIENT_ID`. |
+| `ARM_TENANT_ID` | *Optional for manual deployment. If not specified the `az cli` selected subscription will be used.* The Microsoft Entra ID tenant of the client defined in `ARM_CLIENT_ID`. |
 
 ## For Azure TRE instance in `/config.yaml`
 
 | <div style="width: 330px">Environment variable name</div> | Description |
 | ------------------------- | ----------- |
-| `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `mytre-dev` will result in a resource group name for Azure TRE instance of `rg-mytre-dev`. This must be less than 12 characters. Allowed characters: Alphanumeric and underscores|
+| `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `mytre-dev` will result in a resource group name for Azure TRE instance of `rg-mytre-dev`. This must be less than 12 characters. Allowed characters: lowercase alphanumerics|
 | `TRE_URL`| This will be generated for you by populating your `TRE_ID`. This is used so that you can automatically register bundles |
 | `CORE_ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. `/22` or larger. |
 | `TRE_ADDRESS_SPACE` | The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). E.g. `10.0.0.0/12`|
@@ -31,20 +31,23 @@
 | `API_CLIENT_ID` | Generated when following [pre-deployment steps](./setup-instructions/setup-auth-entities.md) guide. Client id of the "TRE API". |
 | `API_CLIENT_SECRET` | Generated when following [pre-deployment steps](./setup-instructions/setup-auth-entities.md) guide. Client secret of the "TRE API". |
 | `STATEFUL_RESOURCES_LOCKED` | If set to `false` locks on stateful resources won't be created. A recommended setting for developers. |
-| `ENABLE_AIRLOCK_MALWARE_SCANNING` | If False, Airlock requests will skip the malware scanning stage. If set to True, Setting up a scanner manually is required! |
+| `KV_PURGE_PROTECTION_ENABLED` | If set to `false` the core Key Vault's purge protection will be disabled so it can be reused upon deletion. A recommended setting for developers. |
+| `ENABLE_AIRLOCK_MALWARE_SCANNING` | If False, Airlock requests will skip the malware scanning stage. If set to True, Defender for Storage will be enabled. |
 | `ENABLE_LOCAL_DEBUGGING` | Set to `false` by default. Setting this to `true` will ensure that Azure resources are accessible from your local development machine. (e.g. ServiceBus and Cosmos) |
 | `PUBLIC_DEPLOYMENT_IP_ADDRESS` | The public IP address of the machine that is deploying TRE. (Your desktop or the build agents). In certain locations a dynamic script to retrieve this from [https://ipecho.net/plain](https://ipecho.net/plain) does not work. If this is the case, then you can 'hardcode' your IP. |
 | `RESOURCE_PROCESSOR_VMSS_SKU` | The SKU of the VMMS to use for the resource processing VM. |
 | `CORE_APP_SERVICE_PLAN_SKU` | The SKU of AppService plans created for the core infrastructure. |
 | `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests unless otherwise specified. Default value is `P1v2`. |
 | `RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE` | Optional. The number of processes to instantiate when the Resource Processor starts. Equates to the number of parallel deployment operations possible in your TRE. Defaults to `5`. |
+| `FIREWALL_SKU` | Optional. The SKU of the Azure Firewall instance. Default value is `Standard`. Allowed values [`Basic`, `Standard`, `Premium`]. See [Azure Firewall SKU feature comparison](https://learn.microsoft.com/en-us/azure/firewall/choose-firewall-sku). |
+
 
 ## For authentication in `/config.yaml`
 
   | Variable | Description |
   | -------- | ----------- |
-  | `APPLICATION_ADMIN_CLIENT_ID`| This client will administer AAD Applications for TRE |
-  | `APPLICATION_ADMIN_CLIENT_SECRET`| This client will administer AAD Applications for TRE |
+  | `APPLICATION_ADMIN_CLIENT_ID`| This client will administer Microsoft Entra ID Applications for TRE |
+  | `APPLICATION_ADMIN_CLIENT_SECRET`| This client will administer Microsoft Entra ID Applications for TRE |
   | `TEST_ACCOUNT_CLIENT_ID`| This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
   | `TEST_ACCOUNT_CLIENT_SECRET` | This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
   | `API_CLIENT_ID` | API application (client) ID. |

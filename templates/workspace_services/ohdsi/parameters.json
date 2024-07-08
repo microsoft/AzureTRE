@@ -1,0 +1,80 @@
+{
+  "schemaType": "ParameterSet",
+  "schemaVersion": "1.0.1",
+  "namespace": "",
+  "name": "tre-workspace-service-ohdsi",
+  "parameters": [
+    {
+      "name": "tre_id",
+      "source": {
+        "env": "TRE_ID"
+      }
+    },
+    {
+      "name": "id",
+      "source": {
+        "env": "ID"
+      }
+    },
+    {
+      "name": "tfstate_container_name",
+      "source": {
+        "env": "TERRAFORM_STATE_CONTAINER_NAME"
+      }
+    },
+    {
+      "name": "tfstate_resource_group_name",
+      "source": {
+        "env": "MGMT_RESOURCE_GROUP_NAME"
+      }
+    },
+    {
+      "name": "tfstate_storage_account_name",
+      "source": {
+        "env": "MGMT_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "workspace_id",
+      "source": {
+        "env": "WORKSPACE_ID"
+      }
+    },
+    {
+      "name": "address_space",
+      "source": {
+        "env": "ADDRESS_SPACE"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
+      }
+    },
+    {
+      "name": "azure_environment",
+      "source": {
+        "env": "AZURE_ENVIRONMENT"
+      }
+    },
+    {
+      "name": "configure_data_source",
+      "source": {
+        "env": "CONFIGURE_DATA_SOURCE"
+      }
+    },
+    {
+      "name": "data_source_config",
+      "source": {
+        "env": "DATA_SOURCE_CONFIG"
+      }
+    },
+    {
+      "name": "data_source_daimons",
+      "source": {
+        "env": "DATA_SOURCE_DAIMONS"
+      }
+    }
+  ]
+}

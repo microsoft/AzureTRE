@@ -69,7 +69,8 @@
             "type": "boolean",
             "title": "Configure Review VMs",
             "description": "Allow TRE to automatically create and delete review VMs for airlock approvals",
-            "default": false
+            "default": false,
+            "updateable": true
           }
         }
       }
@@ -96,6 +97,7 @@
             "title": "Airlock Review Config",
             "default": null,
             "description": "Configuration for Airlock Review feature. Needs to be set up after workspace creation",
+            "updateable": true,
             "properties": {
               "import": {
                 "title": "Import Review Settings",

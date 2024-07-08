@@ -9,7 +9,7 @@ class RestrictedProperties(AzureTREModel):
     description: str = ""
     overview: str = ""
     connection_uri: str = ""
-    internal_connection_uri: str = ""
+    is_exposed_externally: bool = True
 
 
 class RestrictedResource(AzureTREModel):

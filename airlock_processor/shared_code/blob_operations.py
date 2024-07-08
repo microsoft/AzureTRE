@@ -1,8 +1,8 @@
 import os
-import datetime
 import logging
 import json
 import re
+from datetime import datetime, timedelta
 from typing import Tuple
 
 from azure.core.exceptions import ResourceExistsError
@@ -13,7 +13,7 @@ from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
 
 
 def get_account_url(account_name: str) -> str:
-    return f"https://{account_name}.blob.core.windows.net/"
+    return f"https://{account_name}.blob.{get_storage_endpoint_suffix()}/"
 
 
 def get_blob_client_from_blob_info(storage_account_name: str, container_name: str, blob_name: str):
@@ -69,16 +69,18 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
         logging.error(msg)
         raise NoFilesInRequestException(msg)
 
-    udk = source_blob_service_client.get_user_delegation_key(datetime.datetime.utcnow() - datetime.timedelta(hours=1),
-                                                             datetime.datetime.utcnow() + datetime.timedelta(hours=1))
-
     # token geneation with expiry of 1 hour. since its not shared, we can leave it to expire (no need to track/delete)
     # Remove sas token if not needed: https://github.com/microsoft/AzureTRE/issues/2034
-    sas_token = generate_container_sas(account_name=source_account_name,
-                                       container_name=container_name,
+    start = datetime.utcnow() - timedelta(minutes=15)
+    expiry = datetime.utcnow() + timedelta(hours=1)
+    udk = source_blob_service_client.get_user_delegation_key(key_start_time=start, key_expiry_time=expiry)
+
+    sas_token = generate_container_sas(container_name=container_name,
+                                       account_name=source_account_name,
                                        user_delegation_key=udk,
                                        permission=ContainerSasPermissions(read=True),
-                                       expiry=datetime.datetime.utcnow() + datetime.timedelta(hours=1))
+                                       start=start,
+                                       expiry=expiry)
 
     source_blob = source_container_client.get_blob_client(blob_name)
     source_url = f'{source_blob.url}?{sas_token}'
@@ -120,8 +122,17 @@ def get_blob_info_from_topic_and_subject(topic: str, subject: str):
 
 def get_blob_info_from_blob_url(blob_url: str) -> Tuple[str, str, str]:
     # Example of blob url: https://stalimappws663d.blob.core.windows.net/50866a82-d13a-4fd5-936f-deafdf1022ce/test_blob.txt
-    return re.search(r'https://(.*?).blob.core.windows.net/(.*?)/(.*?)$', blob_url).groups()
+    return re.search(rf'https://(.*?).blob.{get_storage_endpoint_suffix()}/(.*?)/(.*?)$', blob_url).groups()
 
 
 def get_blob_url(account_name: str, container_name: str, blob_name='') -> str:
     return f'{get_account_url(account_name)}{container_name}/{blob_name}'
+
+
+def get_storage_endpoint_suffix():
+    default_value = "core.windows.net"
+    try:
+        return os.environ["STORAGE_ENDPOINT_SUFFIX"]
+    except KeyError as e:
+        logging.warning(f"Missing environment variable: {e}. using default value: '{default_value}'")
+        return default_value

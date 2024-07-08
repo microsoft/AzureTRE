@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-airlock-notifier
-version: 0.4.0
+version: 0.9.0
 description: "A shared service notifying on Airlock Operations"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -27,6 +27,10 @@ parameters:
   - name: id
     type: string
     description: "Resource ID"
+  - name: azure_environment
+    type: string
+    default: "AzureCloud"
+    description: "Used by Azure CLI to set the Azure environment"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -40,6 +44,10 @@ parameters:
   - name: smtp_server_address
     env: SMTP_SERVER_ADDRESS
     type: string
+  - name: smtp_server_port
+    env: SMTP_SERVER_PORT
+    type: string
+    default: "25"
   - name: smtp_username
     env: SMTP_USERNAME
     type: string
@@ -47,6 +55,10 @@ parameters:
     env: SMTP_PASSWORD
     type: string
     sensitive: true
+  - name: smtp_server_enable_ssl
+    env: SMTP_SERVER_ENABLE_SSL
+    type: boolean
+    default: true
   - name: smtp_from_email
     env: SMTP_FROM_EMAIL
     type: string
@@ -54,13 +66,17 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+    type: string
+    default: "public"
 
 mixins:
   - exec
   - az:
       clientVersion: 2.37.0
   - terraform:
-      clientVersion: 1.3.6
+      clientVersion: 1.4.6
 
 install:
   - terraform:
@@ -70,8 +86,10 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         tre_url: ${ bundle.parameters.tre_url }
         smtp_server_address: ${ bundle.parameters.smtp_server_address }
+        smtp_server_port: ${ bundle.parameters.smtp_server_port }
         smtp_username: ${ bundle.parameters.smtp_username }
         smtp_password: ${ bundle.parameters.smtpPassword }
+        smtp_server_enable_ssl: ${ bundle.parameters.smtp_server_enable_ssl }
         smtp_from_email: ${ bundle.parameters.smtp_from_email }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
@@ -83,12 +101,38 @@ install:
         - name: airlock_notifier_logic_app_resource_group_name
 
   - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.azure_environment }
+
+  - az:
       description: "Login to Azure"
       arguments:
         - login
       flags:
         identity:
         username: ${ bundle.credentials.azure_client_id }
+
+  - az:
+      arguments:
+        - resource
+        - update
+      flags:
+        resource-group: ${ bundle.outputs.airlock_notifier_logic_app_resource_group_name }
+        name: scm
+        namespace: Microsoft.Web
+        resource-type: basicPublishingCredentialsPolicies
+        parent: sites/${ bundle.outputs.airlock_notifier_logic_app_name }
+        set: "properties.allow=true"
+
+  - exec:
+      description: Wait for SCM Auth settings to kick in
+      command: sleep
+      arguments:
+        - "60"
 
   - az:
       description: "Deploy logic app"
@@ -101,7 +145,7 @@ install:
         name: ${ bundle.outputs.airlock_notifier_logic_app_name }
         resource-group: ${ bundle.outputs.airlock_notifier_logic_app_resource_group_name }
         subscription: ${ bundle.credentials.azure_subscription_id }
-        src: LogicApp.zip
+        src: /cnab/app/LogicApp.zip
 
 
 upgrade:
@@ -120,8 +164,10 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         tre_url: ${ bundle.parameters.tre_url }
         smtp_server_address: ${ bundle.parameters.smtp_server_address }
+        smtp_server_port: ${ bundle.parameters.smtp_server_port }
         smtp_username: ${ bundle.parameters.smtp_username }
         smtp_password: ${ bundle.parameters.smtpPassword }
+        smtp_server_enable_ssl: ${ bundle.parameters.smtp_server_enable_ssl }
         smtp_from_email: ${ bundle.parameters.smtp_from_email }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }

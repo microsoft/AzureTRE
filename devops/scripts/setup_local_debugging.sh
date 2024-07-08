@@ -13,6 +13,8 @@ private_env_path="./core/private.env"
 : "${AZURE_SUBSCRIPTION_ID?"Check AZURE_SUBSCRIPTION_ID is defined in ${private_env_path}"}"
 : "${EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID?"Check EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID is defined in ${private_env_path}"}"
 : "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID?"Check EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID is defined in ${private_env_path}"}"
+: "${KEYVAULT_URI?"Check KEYVAULT_URI is defined in ${private_env_path}"}"
+: "${KEYVAULT?"Check KEYVAULT is defined in ${private_env_path}"}"
 
 set -o pipefail
 set -o nounset
@@ -39,17 +41,29 @@ az cosmosdb update \
   --ip-range-filter "${IPADDR}"
 
 echo "Adding local IP Address to ${SERVICE_BUS_NAMESPACE}."
-az servicebus namespace network-rule add \
+if az servicebus namespace network-rule-set list \
   --resource-group "${RESOURCE_GROUP_NAME}" \
   --namespace-name "${SERVICE_BUS_NAMESPACE}" \
-  --ip-address "${IPADDR}" \
-  --action Allow
+  -o json | grep -q "${IPADDR}" ; then
+  echo "IP Address ${IPADDR} already exists in ${SERVICE_BUS_NAMESPACE}. Skipping..."
+else
+  az servicebus namespace network-rule-set ip-rule add \
+    --resource-group "${RESOURCE_GROUP_NAME}" \
+    --namespace-name "${SERVICE_BUS_NAMESPACE}" \
+    --ip-rule ip-address="${IPADDR}" action=Allow
+fi
 
 echo "Adding local IP Address to Event Grid Topics."
 az eventgrid topic update \
   --public-network-access enabled \
   --inbound-ip-rules "${IPADDR}" allow \
   --ids "${EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID}" "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID}"
+
+echo "Allow data ingestion to App Insights from public  networks not connected through a Private Link Scope"
+az monitor app-insights component update  \
+  --resource-group "${RESOURCE_GROUP_NAME}" \
+  --app "appi-${TRE_ID}" \
+  --ingestion-access enabled
 
 
 # Get the object id of the currently logged-in identity
@@ -91,6 +105,12 @@ az role assignment create \
     --assignee "${LOGGED_IN_OBJECT_ID}" \
     --scope "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID}"
 
+# For end to E2E add Storage Blob Data Contributor role to the logged in user
+az role assignment create \
+    --role "Storage Blob Data Contributor" \
+    --assignee "${LOGGED_IN_OBJECT_ID}" \
+    --scope "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_NAME}/providers/Microsoft.Storage/storageAccounts/stalimex${TRE_ID}"
+
 
 if [[ -z ${ARM_CLIENT_ID:-} ]]; then
   # Configure SP for local resource processor debugging (Porter can't use local creds)
@@ -115,15 +135,36 @@ az role assignment create \
     --assignee "${RP_TESTING_SP_APP_ID}" \
     --scope "${SERVICE_BUS_RESOURCE_ID}"
 
+
+# Assign get permissions on the keyvault
+az keyvault set-policy \
+  --name "${KEYVAULT}" \
+  --spn "${RP_TESTING_SP_APP_ID}" \
+  --secret-permissions get
+
+
 # Write the appId and secret to the private.env file which is used for RP debugging
 # First check if the env vars are there already and delete them
 sed -i '/ARM_CLIENT_ID/d' "${private_env_path}"
 sed -i '/ARM_CLIENT_SECRET/d' "${private_env_path}"
+sed -i '/AAD_TENANT_ID/d' "${private_env_path}"
+sed -i '/APPLICATION_ADMIN_CLIENT_ID/d' "${private_env_path}"
+sed -i '/APPLICATION_ADMIN_CLIENT_SECRET/d' "${private_env_path}"
+sed -i '/TEST_WORKSPACE_APP_ID/d' "${private_env_path}"
+sed -i '/TEST_WORKSPACE_APP_SECRET/d' "${private_env_path}"
 
 # Append them to the TRE file so that the Resource Processor can use them
 tee -a "${private_env_path}" <<EOF
 ARM_CLIENT_ID=${RP_TESTING_SP_APP_ID}
 ARM_CLIENT_SECRET=${RP_TESTING_SP_PASSWORD}
+AAD_TENANT_ID=${AAD_TENANT_ID}
+APPLICATION_ADMIN_CLIENT_ID=${APPLICATION_ADMIN_CLIENT_ID}
+APPLICATION_ADMIN_CLIENT_SECRET=${APPLICATION_ADMIN_CLIENT_SECRET}
+TEST_WORKSPACE_APP_ID=${WORKSPACE_API_CLIENT_ID}
+TEST_WORKSPACE_APP_SECRET=${WORKSPACE_API_CLIENT_SECRET}
 EOF
+
+# copy porter configuration to porter home
+cp  ./resource_processor/vmss_porter/config.yaml ~/.porter/config.yaml
 
 echo "Local debugging configuration complete. The vscode debug profiles for the API and Resource Processor are ready to use."
