@@ -2,9 +2,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import parse_obj_as
 
-from api.dependencies.database import get_repository
 from api.routes.resource_helpers import get_template
 from db.errors import EntityVersionExist, InvalidInput
+from api.helpers import get_repository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
 from models.schemas.resource_template import ResourceTemplateInResponse, ResourceTemplateInformationInList

@@ -31,14 +31,15 @@ on:  # yamllint disable-line rule:truthy
         description: ""
         type: number
         required: false
+      DEVCONTAINER_TAG:
+        description: ""
+        type: string
+        required: true
     secrets:
       AAD_TENANT_ID:
         description: ""
         required: true
       ACR_NAME:
-        description: ""
-        required: true
-      DEVCONTAINER_TAG:
         description: ""
         required: true
       API_CLIENT_ID:
@@ -51,12 +52,6 @@ on:  # yamllint disable-line rule:truthy
         description: ""
         required: true
       APPLICATION_ADMIN_CLIENT_SECRET:
-        description: ""
-        required: true
-      CORE_ADDRESS_SPACE:
-        description: ""
-        required: true
-      LOCATION:
         description: ""
         required: true
       MGMT_RESOURCE_GROUP_NAME:
@@ -86,42 +81,15 @@ on:  # yamllint disable-line rule:truthy
       TEST_ACCOUNT_CLIENT_SECRET:
         description: ""
         required: true
-      TERRAFORM_STATE_CONTAINER_NAME:
-        description: ""
-        required: false
-      TRE_ADDRESS_SPACE:
-        description: ""
-        required: true
-      ENABLE_SWAGGER:
-        description: ""
-        required: false
       TRE_ID:
         description: ""
         required: true
       CI_CACHE_ACR_NAME:
         description: ""
         required: false
-      TF_LOG:
-        description: ""
-        required: false
       AZURE_CREDENTIALS:
         description: ""
         required: true
-      AZURE_ENVIRONMENT:
-        description: ""
-        required: true
-      CORE_APP_SERVICE_PLAN_SKU:
-        description: ""
-        required: false
-      WORKSPACE_APP_SERVICE_PLAN_SKU:
-        description: ""
-        required: false
-      RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE:
-        description: ""
-        required: false
-      RP_BUNDLE_VALUES:
-        description: ""
-        required: false
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
@@ -131,6 +99,9 @@ jobs:
   deploy_management:
     name: Deploy Management
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Show inputs
@@ -142,17 +113,15 @@ jobs:
           echo "ciGitRef    : ${{ inputs.ciGitRef }}"
           echo "environment : ${{ inputs.environmentName }}"
 
-      - name: Check required secrets
-        # since this is a reusable workflow, required=true secrets will always have a value but it can be empty.
+      - name: Check required values
+        id: check_required_values
+        # since this is a resuable workflow, required=true secrets will always have a value but it can be empty.
         run: |
           if [ "${{ secrets.AAD_TENANT_ID }}" == '' ]; then
             echo "Missing secret: AAD_TENANT_ID" && exit 1
           fi
           if [ "${{ secrets.ACR_NAME }}" == '' ]; then
             echo "Missing secret: ACR_NAME" && exit 1
-          fi
-          if [ "${{ secrets.DEVCONTAINER_TAG }}" == '' ]; then
-            echo "Missing secret: DEVCONTAINER_TAG" && exit 1
           fi
           if [ "${{ secrets.API_CLIENT_ID }}" == '' ]; then
             echo "Missing secret: API_CLIENT_ID" && exit 1
@@ -165,12 +134,6 @@ jobs:
           fi
           if [ "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}" == '' ]; then
             echo "Missing secret: APPLICATION_ADMIN_CLIENT_SECRET" && exit 1
-          fi
-          if [ "${{ secrets.CORE_ADDRESS_SPACE }}" == '' ]; then
-            echo "Missing secret: CORE_ADDRESS_SPACE" && exit 1
-          fi
-          if [ "${{ secrets.LOCATION }}" == '' ]; then
-            echo "Missing secret: LOCATION" && exit 1
           fi
           if [ "${{ secrets.MGMT_RESOURCE_GROUP_NAME }}" == '' ]; then
             echo "Missing secret: MGMT_RESOURCE_GROUP_NAME" && exit 1
@@ -196,9 +159,6 @@ jobs:
           if [ "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}" == '' ]; then
             echo "Missing secret: TEST_ACCOUNT_CLIENT_SECRET" && exit 1
           fi
-          if [ "${{ secrets.TRE_ADDRESS_SPACE }}" == '' ]; then
-            echo "Missing secret: TRE_ADDRESS_SPACE" && exit 1
-          fi
           if [ "${{ secrets.TRE_ID }}" == '' ]; then
             echo "Missing secret: TRE_ID" && exit 1
           fi
@@ -206,9 +166,17 @@ jobs:
             echo "Missing secret: AZURE_CREDENTIALS" && exit 1
           fi
 
+          if [ "${{ inputs.DEVCONTAINER_TAG }}" == '' ]; then
+            echo "Missing input: DEVCONTAINER_TAG" && exit 1
+          fi
+
+          if [ "${{ vars.LOCATION }}" == '' ]; then
+            echo "Missing variable: LOCATION" && exit 1
+          fi
+
       - name: Report check status start
         if: inputs.prHeadSha != ''
-        uses: LouisBrunner/checks-action@v1.6.0
+        uses: LouisBrunner/checks-action@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sha: ${{ inputs.prHeadSha }}
@@ -217,7 +185,7 @@ jobs:
           details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -225,13 +193,13 @@ jobs:
           ref: ${{ inputs.prRef }}
 
       - name: Set up Docker BuildKit
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-          environment: ${{ (secrets.AZURE_ENVIRONMENT != '' && secrets.AZURE_ENVIRONMENT) || 'AzureCloud' }}
+          environment: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
 
       - name: ACR Login
         id: ci_cache_cr_login
@@ -253,30 +221,30 @@ jobs:
 
           docker_cache=()
           if [ "${{ steps.ci_cache_cr_login.outcome }}" = "success" ]; then
-            docker_cache+=(--cache-from "$CI_CACHE_ACR_URI/tredev:${{ secrets.DEVCONTAINER_TAG }}")
+            docker_cache+=(--cache-from "$CI_CACHE_ACR_URI/tredev:${{ inputs.DEVCONTAINER_TAG }}")
             docker_cache+=(--cache-from "$CI_CACHE_ACR_URI/tredev:latest")
           fi
 
           docker build . "${docker_cache[@]}" \
-            -t "tredev:${{ secrets.DEVCONTAINER_TAG }}" -f ".devcontainer/Dockerfile" \
+            -t "tredev:${{ inputs.DEVCONTAINER_TAG }}" -f ".devcontainer/Dockerfile" \
             --build-arg BUILDKIT_INLINE_CACHE=1 --build-arg USER_UID="${USER_UID}" --build-arg USER_GID="${USER_GID}"
 
-          docker image tag tredev:"${{ secrets.DEVCONTAINER_TAG }}" \
-            "$CI_CACHE_ACR_URI/tredev:${{ secrets.DEVCONTAINER_TAG }}"
+          docker image tag tredev:"${{ inputs.DEVCONTAINER_TAG }}" \
+            "$CI_CACHE_ACR_URI/tredev:${{ inputs.DEVCONTAINER_TAG }}"
 
       - name: Deploy management
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make bootstrap mgmt-deploy"
-          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: ${{ secrets.LOCATION }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
+          TRE_ID: ${{ secrets.TRE_ID }}
+          LOCATION: ${{ vars.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME }}
-          MGMT_RESOURCE_GROUP_NAME: "${{ secrets.MGMT_RESOURCE_GROUP_NAME }}"
+          TERRAFORM_STATE_CONTAINER_NAME: ${{ vars.TERRAFORM_STATE_CONTAINER_NAME }}
+          MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
 
       - name: ACR Login
@@ -285,13 +253,13 @@ jobs:
         run: |
           # shellcheck disable=SC2034,SC2015,SC2125
           for i in {1..3}; do
-            az acr login --name "${{ secrets.CI_CACHE_ACR_NAME }}" && ec=0 && break || ec=\$? && sleep 10
+            az acr login --name "${{ secrets.CI_CACHE_ACR_NAME }}" && ec=0 && break || ec="$?" && sleep 10
           done
           # shellcheck disable=SC2242
-          (exit \$ec)
+          (exit "$ec")
 
       - name: Push cached devcontainer
-        run: docker image push ${{ env.CI_CACHE_ACR_URI }}/tredev:${{ secrets.DEVCONTAINER_TAG }}
+        run: docker image push ${{ env.CI_CACHE_ACR_URI }}/tredev:${{ inputs.DEVCONTAINER_TAG }}
 
   build_core_images:
     # used to build images used by core infrastructure
@@ -306,7 +274,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -317,10 +285,10 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make ${{ matrix.target }}"
-          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
 
   start_tre:
@@ -330,7 +298,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -341,11 +309,11 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make tre-start"
-          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
-          TRE_ID: "${{ secrets.TRE_ID }}"
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
+          TRE_ID: ${{ secrets.TRE_ID }}
 
   deploy_tre:
     name: Deploy TRE
@@ -354,7 +322,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -364,41 +332,43 @@ jobs:
       - name: Deploy TRE Core
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "TF_VAR_ci_git_ref=${{ inputs.ciGitRef }} TF_LOG=${{ secrets.TF_LOG }} make deploy-core"
-          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          COMMAND: "TF_VAR_ci_git_ref=${{ inputs.ciGitRef }} TF_LOG=${{ vars.TF_LOG }} make deploy-core"
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: ${{ secrets.LOCATION }}
+          TRE_ID: ${{ secrets.TRE_ID }}
+          LOCATION: ${{ vars.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME }}
+          TERRAFORM_STATE_CONTAINER_NAME: ${{ vars.TERRAFORM_STATE_CONTAINER_NAME }}
           MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
-          CORE_ADDRESS_SPACE: ${{ secrets.CORE_ADDRESS_SPACE }}
-          TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
-          ENABLE_SWAGGER: ${{ secrets.ENABLE_SWAGGER }}
+          CORE_ADDRESS_SPACE: ${{ vars.CORE_ADDRESS_SPACE }}
+          TRE_ADDRESS_SPACE: ${{ vars.TRE_ADDRESS_SPACE }}
+          ENABLE_SWAGGER: ${{ vars.ENABLE_SWAGGER }}
           SWAGGER_UI_CLIENT_ID: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           API_CLIENT_SECRET: "${{ secrets.API_CLIENT_SECRET }}"
           APPLICATION_ADMIN_CLIENT_ID: "${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}"
           APPLICATION_ADMIN_CLIENT_SECRET: "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}"
           STATEFUL_RESOURCES_LOCKED: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
-          CORE_APP_SERVICE_PLAN_SKU: ${{ secrets.CORE_APP_SERVICE_PLAN_SKU }}
-          RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE: ${{ secrets.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE }}
-          RP_BUNDLE_VALUES: ${{ secrets.RP_BUNDLE_VALUES }}
+          KV_PURGE_PROTECTION_ENABLED: ${{ vars.KV_PURGE_PROTECTION_ENABLED || true }}
+          CORE_APP_SERVICE_PLAN_SKU: ${{ vars.CORE_APP_SERVICE_PLAN_SKU }}
+          RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE: ${{ vars.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE }}
+          RP_BUNDLE_VALUES: ${{ vars.RP_BUNDLE_VALUES }}
+          FIREWALL_SKU: ${{ vars.FIREWALL_SKU}}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make api-healthcheck"
-          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: ${{ secrets.LOCATION }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
+          TRE_ID: ${{ secrets.TRE_ID }}
+          LOCATION: ${{ vars.LOCATION }}
 
   publish_bundles:
     name: Publish Bundles
@@ -410,13 +380,13 @@ jobs:
           - {BUNDLE_TYPE: "workspace",
              BUNDLE_DIR: "./templates/workspaces/base"}
           - {BUNDLE_TYPE: "workspace",
+             BUNDLE_DIR: "./templates/workspaces/unrestricted"}
+          - {BUNDLE_TYPE: "workspace",
              BUNDLE_DIR: "./templates/workspaces/airlock-import-review"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/guacamole"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/azureml"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/innereye"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/gitea"}
           - {BUNDLE_TYPE: "workspace_service",
@@ -425,6 +395,10 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/mysql"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/health-services"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/databricks"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/ohdsi"}
           - {BUNDLE_TYPE: "user_resource",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"}
           - {BUNDLE_TYPE: "user_resource",
@@ -436,7 +410,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -450,9 +424,9 @@ jobs:
           COMMAND: >-
             for i in {1..3}; do make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }}
             && ec=0 && break || ec=\$? && sleep 30; done; (exit \$ec)
-          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           ACR_NAME: ${{ secrets.ACR_NAME }}
 
@@ -477,10 +451,12 @@ jobs:
              BUNDLE_DIR: "./templates/shared_services/cyclecloud/"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/sonatype-nexus-vm/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/databricks-auth/"}
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -494,9 +470,9 @@ jobs:
           COMMAND: >-
             for i in {1..3}; do make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }}
             && ec=0 && break || ec=\$? && sleep 30; done; (exit \$ec)
-          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           ACR_NAME: ${{ secrets.ACR_NAME }}
 
@@ -521,10 +497,12 @@ jobs:
              BUNDLE_DIR: "./templates/shared_services/cyclecloud/"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/sonatype-nexus-vm/"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/databricks-auth/"}
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -536,18 +514,18 @@ jobs:
           COMMAND: >-
             for i in {1..3}; do make bundle-register DIR=${{ matrix.BUNDLE_DIR }}
             && ec=0 && break || ec=\$? && sleep 10; done; (exit \$ec)
-          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: "${{ secrets.LOCATION }}"
+          TRE_ID: ${{ secrets.TRE_ID }}
+          LOCATION: ${{ vars.LOCATION }}
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
 
   register_bundles:
@@ -561,13 +539,13 @@ jobs:
           - {BUNDLE_TYPE: "workspace",
              BUNDLE_DIR: "./templates/workspaces/base"}
           - {BUNDLE_TYPE: "workspace",
+             BUNDLE_DIR: "./templates/workspaces/unrestricted"}
+          - {BUNDLE_TYPE: "workspace",
              BUNDLE_DIR: "./templates/workspaces/airlock-import-review"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/guacamole"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/azureml"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/innereye"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/gitea"}
           - {BUNDLE_TYPE: "workspace_service",
@@ -576,11 +554,15 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/mysql"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/health-services"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/databricks"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/ohdsi"}
 
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -592,18 +574,18 @@ jobs:
           COMMAND: >-
             for i in {1..3}; do make bundle-register DIR=${{ matrix.BUNDLE_DIR }}
             && ec=0 && break || ec=\$? && sleep 10; done; (exit \$ec)
-          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: "${{ secrets.LOCATION }}"
+          TRE_ID: ${{ secrets.TRE_ID }}
+          LOCATION: ${{ vars.LOCATION }}
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
 
   register_user_resource_bundles:
@@ -629,7 +611,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -641,18 +623,18 @@ jobs:
           COMMAND: >-
             for i in {1..3}; do make bundle-register DIR=${{ matrix.BUNDLE_DIR }}
             && ec=0 && break || ec=\$? && sleep 10; done; (exit \$ec)
-          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: "${{ secrets.LOCATION }}"
+          TRE_ID: ${{ secrets.TRE_ID }}
+          LOCATION: ${{ vars.LOCATION }}
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
           WORKSPACE_SERVICE_NAME: ${{ matrix.WORKSPACE_SERVICE_NAME }}
 
@@ -663,7 +645,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -674,34 +656,35 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make deploy-shared-service DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service"
-          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: "${{ secrets.LOCATION }}"
+          TRE_ID: ${{ secrets.TRE_ID }}
+          LOCATION: ${{ vars.LOCATION }}
+          FIREWALL_SKU: ${{ vars.FIREWALL_SKU}}
 
       - name: State Store Migrations
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make db-migrate"
-          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: ${{ secrets.LOCATION }}
-          TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME }}
+          TRE_ID: ${{ secrets.TRE_ID }}
+          LOCATION: ${{ vars.LOCATION }}
+          TERRAFORM_STATE_CONTAINER_NAME: ${{ vars.TERRAFORM_STATE_CONTAINER_NAME }}
           MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
 
@@ -712,7 +695,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -722,15 +705,15 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make build-and-deploy-ui"
-          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: ${{ secrets.LOCATION }}
-          TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME }}
+          TRE_ID: ${{ secrets.TRE_ID }}
+          LOCATION: ${{ vars.LOCATION }}
+          TERRAFORM_STATE_CONTAINER_NAME: ${{ vars.TERRAFORM_STATE_CONTAINER_NAME }}
           MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
           SWAGGER_UI_CLIENT_ID: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
@@ -743,7 +726,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -754,11 +737,11 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make test-e2e-smoke"
-          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
-          LOCATION: "${{ secrets.LOCATION }}"
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
+          LOCATION: ${{ vars.LOCATION }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
@@ -766,13 +749,13 @@ jobs:
           TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
+          TRE_ID: ${{ secrets.TRE_ID }}
           IS_API_SECURED: false
-          WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ secrets.WORKSPACE_APP_SERVICE_PLAN_SKU }}
+          WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ vars.WORKSPACE_APP_SERVICE_PLAN_SKU }}
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: E2E Test (Smoke) Results
           path: "./e2e_tests/pytest_e2e_smoke.xml"
@@ -786,7 +769,7 @@ jobs:
     timeout-minutes: 300
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -797,11 +780,11 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make test-e2e-custom SELECTOR='${{ inputs.e2eTestsCustomSelector }}'"
-          DEVCONTAINER_TAG: ${{ secrets.DEVCONTAINER_TAG }}
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
-          LOCATION: "${{ secrets.LOCATION }}"
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
+          LOCATION: ${{ vars.LOCATION }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
@@ -809,14 +792,14 @@ jobs:
           TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
+          TRE_ID: ${{ secrets.TRE_ID }}
           IS_API_SECURED: false
-          WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ secrets.WORKSPACE_APP_SERVICE_PLAN_SKU }}
+          WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ vars.WORKSPACE_APP_SERVICE_PLAN_SKU }}
           E2E_TESTS_NUMBER_PROCESSES: ${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: E2E Test Results
           path: "./e2e_tests/pytest_e2e_custom.xml"
@@ -825,17 +808,23 @@ jobs:
     name: Summary
     needs: [e2e_tests_smoke, e2e_tests_custom]
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     if: always()
     environment: ${{ inputs.environmentName }}
     steps:
-      - uses: technote-space/workflow-conclusion-action@v3
-
+      # - uses: technote-space/workflow-conclusion-action@v3 (removed due to archived repo and deprecated node.js version)
+      - uses: im-open/workflow-conclusion@v2.2.2
+        id: conclusion
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       # For PR builds triggered from comment builds, the GITHUB_REF is set to main
       # so the checks aren't automatically associated with the PR
       # If prHeadSha is specified then explicity mark the checks for that SHA
       - name: Report check status
         if: inputs.prHeadSha != ''
-        uses: LouisBrunner/checks-action@v1.6.0
+        uses: LouisBrunner/checks-action@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # the name must be identical to the one received by the real job
@@ -862,12 +851,12 @@ jobs:
           timezone: Europe/Zurich
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
 
       - name: Publish E2E Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: EnricoMi/publish-unit-test-result-action@v2.16.1
         with:
           junit_files: "artifacts/**/*.xml"
           check_name: "E2E Test Results"

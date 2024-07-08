@@ -94,13 +94,15 @@
           "client_id": {
             "type": "string",
             "title": "Application (Client) ID",
-            "description": "The AAD Application Registration ID for the workspace."
+            "description": "The AAD Application Registration ID for the workspace.",
+            "updateable": true
           },
           "client_secret": {
             "type": "string",
             "title": "Application (Client) Secret",
             "description": "The AAD Application Registration secret for the workspace. This value will be stored in the Workspace Key Vault.",
-            "sensitive": true
+            "sensitive": true,
+            "updateable": true
           }
         },
         "required": [
@@ -113,12 +115,14 @@
             "type": "boolean",
             "title": "Create AAD Groups for each workspace role",
             "description": "Create AAD Groups for the workspace roles. If this is set to true, the workspace will create new AAD Groups.",
-            "default": false
+            "default": false,
+            "updateable": true
           },
           "aad_redirect_uris": {
             "type": "array",
             "title": "AAD Redirect URIs",
             "description": "Redirect URIs for the AAD app in Automatic Auth mode",
+            "updateable": true,
             "items": {
               "title": "items",
               "type": "object",

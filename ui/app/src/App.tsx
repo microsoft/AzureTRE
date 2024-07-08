@@ -26,6 +26,7 @@ export const App: React.FunctionComponent = () => {
   const [appRoles, setAppRoles] = useState([] as Array<string>);
   const [selectedWorkspace, setSelectedWorkspace] = useState({} as Workspace);
   const [workspaceRoles, setWorkspaceRoles] = useState([] as Array<string>);
+  const [workspaceCosts, setWorkspaceCosts] = useState([] as Array<CostResource>);
   const [costs, setCosts] = useState([] as Array<CostResource>);
   const [costsLoadingState, setCostsLoadingState] = useState(LoadingState.Loading);
   const [createFormOpen, setCreateFormOpen] = useState(false);
@@ -43,7 +44,6 @@ export const App: React.FunctionComponent = () => {
     setAppRolesOnLoad();
   }, [apiCall]);
 
-  // initiliase filetype icons
   useEffect(() => initializeFileTypeIcons(), []);
 
   return (
@@ -89,6 +89,8 @@ export const App: React.FunctionComponent = () => {
                             <WorkspaceContext.Provider value={{
                               roles: workspaceRoles,
                               setRoles: (roles: Array<string>) => {setWorkspaceRoles(roles)},
+                              costs: workspaceCosts,
+                              setCosts: (costs: Array<CostResource>) => {setWorkspaceCosts(costs)},
                               workspace: selectedWorkspace,
                               setWorkspace: (w: Workspace) => {setSelectedWorkspace(w)},
                               workspaceApplicationIdURI: selectedWorkspace.properties?.scope_id

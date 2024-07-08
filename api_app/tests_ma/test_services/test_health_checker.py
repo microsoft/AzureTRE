@@ -11,84 +11,73 @@ from services import health_checker
 pytestmark = pytest.mark.asyncio
 
 
-@patch("core.credentials.get_credential_async")
-@patch("services.health_checker.get_store_key")
-@patch("services.health_checker.CosmosClient")
-async def test_get_state_store_status_responding(_, get_store_key_mock, get_credential_async) -> None:
-    get_store_key_mock.return_value = None
-    status, message = await health_checker.create_state_store_status(get_credential_async)
+@patch("azure.cosmos.aio.ContainerProxy.query_items", return_value=AsyncMock())
+async def test_get_state_store_status_responding(_) -> None:
+    status, message = await health_checker.create_state_store_status()
 
     assert status == StatusEnum.ok
     assert message == ""
 
 
-@patch("core.credentials.get_credential_async")
-@patch("services.health_checker.get_store_key")
-@patch("services.health_checker.CosmosClient")
-async def test_get_state_store_status_not_responding(cosmos_client_mock, get_store_key_mock, get_credential_async) -> None:
-    get_credential_async.return_value = AsyncMock()
-    get_store_key_mock.return_value = None
-    cosmos_client_mock.return_value = None
-    cosmos_client_mock.side_effect = ServiceRequestError(message="some message")
-    status, message = await health_checker.create_state_store_status(get_credential_async)
+@patch("api.dependencies.database.Database.get_container_proxy")
+async def test_get_state_store_status_not_responding(container_proxy_mock) -> None:
+    container_proxy_mock.return_value = None
+    container_proxy_mock.side_effect = ServiceRequestError(message="some message")
+    status, message = await health_checker.create_state_store_status()
 
     assert status == StatusEnum.not_ok
     assert message == strings.STATE_STORE_ENDPOINT_NOT_RESPONDING
 
 
-@patch("core.credentials.get_credential_async")
-@patch("services.health_checker.get_store_key")
-@patch("services.health_checker.CosmosClient")
-async def test_get_state_store_status_other_exception(cosmos_client_mock, get_store_key_mock, get_credential_async) -> None:
-    get_credential_async.return_value = AsyncMock()
-    get_store_key_mock.return_value = None
-    cosmos_client_mock.return_value = None
-    cosmos_client_mock.side_effect = Exception()
-    status, message = await health_checker.create_state_store_status(get_credential_async)
+@patch("api.dependencies.database.Database.get_container_proxy")
+async def test_get_state_store_status_other_exception(container_proxy_mock) -> None:
+    container_proxy_mock.return_value = None
+    container_proxy_mock.side_effect = Exception()
+    status, message = await health_checker.create_state_store_status()
 
     assert status == StatusEnum.not_ok
     assert message == strings.UNSPECIFIED_ERROR
 
 
-@patch("core.credentials.get_credential_async")
+@patch("core.credentials.get_credential_async_context")
 @patch("services.health_checker.ServiceBusClient")
-async def test_get_service_bus_status_responding(service_bus_client_mock, get_credential_async) -> None:
-    get_credential_async.return_value = AsyncMock()
+async def test_get_service_bus_status_responding(service_bus_client_mock, get_credential_async_context) -> None:
+    get_credential_async_context.return_value = AsyncMock()
     service_bus_client_mock().get_queue_receiver.__aenter__.return_value = AsyncMock()
-    status, message = await health_checker.create_service_bus_status(get_credential_async)
+    status, message = await health_checker.create_service_bus_status(get_credential_async_context)
 
     assert status == StatusEnum.ok
     assert message == ""
 
 
-@patch("core.credentials.get_credential_async")
+@patch("core.credentials.get_credential_async_context")
 @patch("services.health_checker.ServiceBusClient")
-async def test_get_service_bus_status_not_responding(service_bus_client_mock, get_credential_async) -> None:
-    get_credential_async.return_value = AsyncMock()
+async def test_get_service_bus_status_not_responding(service_bus_client_mock, get_credential_async_context) -> None:
+    get_credential_async_context.return_value = AsyncMock()
     service_bus_client_mock.return_value = None
     service_bus_client_mock.side_effect = ServiceBusConnectionError(message="some message")
-    status, message = await health_checker.create_service_bus_status(get_credential_async)
+    status, message = await health_checker.create_service_bus_status(get_credential_async_context)
 
     assert status == StatusEnum.not_ok
     assert message == strings.SERVICE_BUS_NOT_RESPONDING
 
 
-@patch("core.credentials.get_credential_async")
+@patch("core.credentials.get_credential_async_context")
 @patch("services.health_checker.ServiceBusClient")
-async def test_get_service_bus_status_other_exception(service_bus_client_mock, get_credential_async) -> None:
-    get_credential_async.return_value = AsyncMock()
+async def test_get_service_bus_status_other_exception(service_bus_client_mock, get_credential_async_context) -> None:
+    get_credential_async_context.return_value = AsyncMock()
     service_bus_client_mock.return_value = None
     service_bus_client_mock.side_effect = Exception()
-    status, message = await health_checker.create_service_bus_status(get_credential_async)
+    status, message = await health_checker.create_service_bus_status(get_credential_async_context)
 
     assert status == StatusEnum.not_ok
     assert message == strings.UNSPECIFIED_ERROR
 
 
-@patch("core.credentials.get_credential_async")
+@patch("core.credentials.get_credential_async_context")
 @patch("services.health_checker.ComputeManagementClient")
-async def test_get_resource_processor_status_healthy(resource_processor_client_mock, get_credential_async) -> None:
-    get_credential_async.return_value = AsyncMock()
+async def test_get_resource_processor_status_healthy(resource_processor_client_mock, get_credential_async_context) -> None:
+    get_credential_async_context.return_value = AsyncMock()
     resource_processor_client_mock().virtual_machine_scale_set_vms.return_value = AsyncMock()
     vm_mock = MagicMock()
     vm_mock.instance_id = 'mocked_id'
@@ -100,16 +89,16 @@ async def test_get_resource_processor_status_healthy(resource_processor_client_m
     awaited_mock.set_result(instance_view_mock)
     resource_processor_client_mock().virtual_machine_scale_set_vms.get_instance_view.return_value = awaited_mock
 
-    status, message = await health_checker.create_resource_processor_status(get_credential_async)
+    status, message = await health_checker.create_resource_processor_status(get_credential_async_context)
 
     assert status == StatusEnum.ok
     assert message == ""
 
 
-@patch("core.credentials.get_credential_async")
+@patch("core.credentials.get_credential_async_context")
 @patch("services.health_checker.ComputeManagementClient", return_value=MagicMock())
-async def test_get_resource_processor_status_not_healthy(resource_processor_client_mock, get_credential_async) -> None:
-    get_credential_async.return_value = AsyncMock()
+async def test_get_resource_processor_status_not_healthy(resource_processor_client_mock, get_credential_async_context) -> None:
+    get_credential_async_context.return_value = AsyncMock()
 
     resource_processor_client_mock().virtual_machine_scale_set_vms.return_value = AsyncMock()
     vm_mock = MagicMock()
@@ -122,19 +111,19 @@ async def test_get_resource_processor_status_not_healthy(resource_processor_clie
     awaited_mock.set_result(instance_view_mock)
     resource_processor_client_mock().virtual_machine_scale_set_vms.get_instance_view.return_value = awaited_mock
 
-    status, message = await health_checker.create_resource_processor_status(get_credential_async)
+    status, message = await health_checker.create_resource_processor_status(get_credential_async_context)
 
     assert status == StatusEnum.not_ok
     assert message == strings.RESOURCE_PROCESSOR_GENERAL_ERROR_MESSAGE
 
 
-@patch("core.credentials.get_credential_async")
+@patch("core.credentials.get_credential_async_context")
 @patch("services.health_checker.ComputeManagementClient")
-async def test_get_resource_processor_status_other_exception(resource_processor_client_mock, get_credential_async) -> None:
-    get_credential_async.return_value = AsyncMock()
+async def test_get_resource_processor_status_other_exception(resource_processor_client_mock, get_credential_async_context) -> None:
+    get_credential_async_context.return_value = AsyncMock()
     resource_processor_client_mock.return_value = None
     resource_processor_client_mock.side_effect = Exception()
-    status, message = await health_checker.create_resource_processor_status(get_credential_async)
+    status, message = await health_checker.create_resource_processor_status(get_credential_async_context)
 
     assert status == StatusEnum.not_ok
     assert message == strings.UNSPECIFIED_ERROR

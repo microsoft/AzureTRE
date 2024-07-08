@@ -33,7 +33,8 @@ else
     fi
 
     # Get any default entries from config schema and export. Any values in config.yaml will override these defaults
-    DEFAULT_VALUES=$(yq '[... |select(has("default"))| {"":path | .[-1] | upcase , " ": .default }| to_entries| map("=" +  .value)|join("")  ]'  config_schema.json)
+    DEFAULT_VALUES=$(yq '[... |select(has("default"))| {"":path | .[-1] | upcase , " ": .default }| to_entries| map("=" +  .value)|join("")  ]' --output-format=yaml "$DIR/../../config_schema.json")
+
     # Format env string
     DEFAULT_VALUES=${DEFAULT_VALUES//"- ="}
 
@@ -82,6 +83,15 @@ else
 
     TRE_URL=$(construct_tre_url "${TRE_ID}" "${LOCATION}" "${AZURE_ENVIRONMENT}")
     export TRE_URL
+fi
+
+# if local debugging is configured, then set vars required by ~/.porter/config.yaml
+if [ -f "$DIR/../../core/private.env" ]; then
+  # shellcheck disable=SC1091
+  source "$DIR/../../core/private.env"
+  # shellcheck disable=SC2153
+  KEY_VAULT_URL=$KEYVAULT_URI
+  export KEY_VAULT_URL
 fi
 
 set +o nounset

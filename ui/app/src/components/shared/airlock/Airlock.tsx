@@ -255,7 +255,7 @@ export const Airlock: React.FunctionComponent = () => {
 
   const handleNewRequest = async (newRequest: AirlockRequest) => {
     await getAirlockRequests();
-    navigate(newRequest.id);
+    navigate(`/workspaces/${newRequest.workspaceId}/requests/${newRequest.id}`);
   };
 
   const quickFilters: ICommandBarItemProps[] = [

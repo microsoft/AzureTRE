@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-import-reviewvm
-version: 0.2.4
+version: 0.2.8
 description: "An Azure TRE User Resource Template for reviewing Airlock import requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -90,14 +90,17 @@ outputs:
     type: string
     applyTo:
       - install
+      - upgrade
   - name: hostname
     type: string
     applyTo:
       - install
+      - upgrade
   - name: connection_uri
     type: string
     applyTo:
       - install
+      - upgrade
   - name: azure_resource_id
     type: string
     applyTo:

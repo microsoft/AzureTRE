@@ -1,5 +1,11 @@
 {
   "name": "AzureTRE",
+  // Uncomment when debugging using Jetbrains
+  // "features": {
+  //   "ghcr.io/devcontainers/features/sshd:1": {
+  //       "version": "latest"
+  //   }
+  // },
   "build": {
     "context": "..",
     "dockerfile": "Dockerfile",
@@ -55,8 +61,10 @@
         "python.testing.unittestEnabled": false,
         "python.testing.pytestEnabled": true,
         "python.testing.pytestArgs": [
-          "api_app"
+          "--ignore=e2e_tests",
+          "-W ignore::DeprecationWarning"
         ],
+        "python.testing.cwd": "${workspaceFolder}",
         "files.associations": {
           "*.terraform": "terraform"
         },
@@ -79,7 +87,11 @@
               "justMyCode": false,
               "console": "integratedTerminal",
               "preLaunchTask": "Copy_env_file_for_api_debug",
-              "cwd": "${workspaceFolder}/api_app"
+              "cwd": "${workspaceFolder}/api_app",
+              "envFile": "${workspaceFolder}/api_app/.env",
+              "env": {
+                "OTEL_RESOURCE_ATTRIBUTES": "service.name=api,service.instance.id=local_debug,service.version=dev"
+              }
             },
             {
               "name": "E2E Extended",
@@ -181,8 +193,10 @@
               "cwd": "${workspaceFolder}/resource_processor",
               "envFile": "${workspaceFolder}/core/private.env",
               "env": {
-                "PYTHONPATH": "."
-              }
+                "PYTHONPATH": ".",
+                "OTEL_RESOURCE_ATTRIBUTES": "service.name=resource_processor,service.instance.id=local_debug,service.version=dev"
+              },
+              "justMyCode": false
             },
             {
               "name": "Debug Python file",

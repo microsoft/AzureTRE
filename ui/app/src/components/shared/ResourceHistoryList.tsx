@@ -29,7 +29,8 @@ export const ResourceHistoryList: React.FunctionComponent<ResourceHistoryListPro
     const getResourceHistory = async () => {
       try {
         // get resource operations
-        const history = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.History}`, HttpMethod.Get, workspaceCtx.workspaceApplicationIdURI);
+        const scopeId = workspaceCtx.roles.length > 0 ? workspaceCtx.workspaceApplicationIdURI : "";
+        const history = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.History}`, HttpMethod.Get, scopeId);
         config.debug && console.log(`Got resource history, for resource:${props.resource.id}: ${history.resource_history}`);
         setResourceHistory(history.resource_history.reverse());
         setLoadingState(history ? LoadingState.Ok : LoadingState.Error);
@@ -40,7 +41,7 @@ export const ResourceHistoryList: React.FunctionComponent<ResourceHistoryListPro
       }
     };
     getResourceHistory();
-  }, [apiCall, props.resource, resourceId, workspaceCtx.workspaceApplicationIdURI]);
+  }, [apiCall, props.resource, resourceId, workspaceCtx.workspaceApplicationIdURI, workspaceCtx.roles]);
 
 
   const stackStyles: IStackStyles = {

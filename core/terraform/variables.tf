@@ -130,6 +130,13 @@ variable "arm_environment" {
   description = "Used as an environment variable in the VMSS to set the Azure cloud for Terraform"
 }
 
+variable "arm_use_msi" {
+  type        = bool
+  default     = false
+  description = "Used as an environment variable to determine if Terraform should use a managed identity"
+}
+
+
 variable "stateful_resources_locked" {
   type        = bool
   default     = true
@@ -161,13 +168,22 @@ variable "public_deployment_ip_address" {
   default     = ""
 }
 
-# Important note: it is NOT enough to simply enable the malware scanning on. Further, manual, steps are required
-# in order to actually set up the scanner. Setting this property to True without supplying a scanner will result
-# in airlock requests being stuck in the in-progress stage.
 variable "enable_airlock_malware_scanning" {
   type        = bool
   default     = false
   description = "If False, Airlock requests will skip the malware scanning stage"
+}
+
+variable "enable_airlock_email_check" {
+  type        = bool
+  default     = false
+  description = "If True, prior to airlock requests creation will check users have email addresses"
+}
+
+variable "firewall_sku" {
+  description = "Azure Firewall SKU"
+  type        = string
+  default     = ""
 }
 
 variable "rp_bundle_values" {
@@ -179,4 +195,20 @@ variable "rp_bundle_values" {
 variable "is_cosmos_defined_throughput" {
   type    = bool
   default = false
+}
+
+variable "kv_purge_protection_enabled" {
+  type        = bool
+  description = "A boolean indicating if the purge protection will be enabled on the core keyvault."
+  default     = true
+}
+
+variable "logging_level" {
+  type        = string
+  default     = "INFO"
+  description = "The logging level for the API and Resource Processor"
+  validation {
+    condition     = contains(["INFO", "DEBUG", "WARNING", "ERROR"], var.logging_level)
+    error_message = "logging_level must be one of ERROR, WARNING, INFO, DEBUG"
+  }
 }

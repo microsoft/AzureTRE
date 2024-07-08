@@ -3,23 +3,31 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.47.0"
+      version = "=3.108.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.4.0"
+      version = "~> 3.6"
     }
     local = {
       source  = "hashicorp/local"
-      version = "~> 2.4.0"
+      version = "~> 2.5"
     }
     http = {
       source  = "hashicorp/http"
-      version = "~> 3.2.0"
+      version = "~> 3.4"
+    }
+    azapi = {
+      source  = "Azure/azapi"
+      version = "~> 1.13.0"
     }
   }
 
   backend "azurerm" {}
+}
+
+provider "azapi" {
+  use_msi = var.arm_use_msi
 }
 
 provider "azurerm" {
@@ -158,6 +166,8 @@ module "resource_processor_vmss_porter" {
   resource_processor_number_processes_per_instance = var.resource_processor_number_processes_per_instance
   resource_processor_vmss_sku                      = var.resource_processor_vmss_sku
   arm_environment                                  = var.arm_environment
+  logging_level                                    = var.logging_level
+  firewall_sku                                     = var.firewall_sku
   rp_bundle_values                                 = var.rp_bundle_values
 
   depends_on = [

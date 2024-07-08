@@ -15,14 +15,10 @@ register_template() {
   if [ -f "$template_dir"/porter.yaml ]; then
     if [ "$bundle_type" == "$parent_bundle" ]; then
       echo "Registering $bundle_type bundle $bundle_name"
-      until make "${bundle_type%s}"_bundle BUNDLE="$bundle_name"; do
-        [[ $? == 2 ]] || break
-      done
+      make "${bundle_type%s}"_bundle BUNDLE="$bundle_name"
     else
       echo "Registering user resource bundle $bundle_name for workspace service $parent_bundle"
-      until make user_resource_bundle BUNDLE="$bundle_name" WORKSPACE_SERVICE="$parent_bundle"; do
-        [[ $? == 2 ]] || break
-      done
+      make user_resource_bundle BUNDLE="$bundle_name" WORKSPACE_SERVICE="$parent_bundle"
     fi
   fi
 }

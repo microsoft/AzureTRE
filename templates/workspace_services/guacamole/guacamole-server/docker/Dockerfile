@@ -1,6 +1,9 @@
-FROM maven:3-jdk-11 AS client_build
+FROM maven:3-jdk-11-slim AS client_build
 
 COPY ./guacamole-auth-azure/pom.xml /pom.xml
+# cache dependencies in a separate layer
+RUN mvn package -Dmaven.test.skip
+
 COPY ./guacamole-auth-azure/src /src
 COPY ./docker/maven_package_and_exit_succesfully.sh /tmp/
 RUN bash /tmp/maven_package_and_exit_succesfully.sh
@@ -8,9 +11,9 @@ RUN bash /tmp/maven_package_and_exit_succesfully.sh
 FROM scratch as test-results
 COPY --from=client_build /target/surefire-reports/* /
 
-FROM guacamole/guacd:1.4.0
+FROM guacamole/guacd:1.5.3
 
-ARG GUACAMOLE_AZURE_VERSION=0.2.0
+ARG GUACAMOLE_AZURE_VERSION=0.3.4
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -18,25 +21,16 @@ ENV DEBIAN_FRONTEND=noninteractive
 # hadolint ignore=DL3002
 USER root
 
-# dependencies
-RUN apt-get update && apt-get install wget curl openssh-server apt-transport-https gnupg -y --no-install-recommends && \
-    apt-get autoclean && apt-get autoremove && rm -rf /var/lib/apt/lists/*
-
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-RUN JAVA_ARCHIVE=java.tar.gz && \
-    wget -O "$JAVA_ARCHIVE" "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.17%2B8/OpenJDK11U-jre_x64_linux_hotspot_11.0.17_8.tar.gz" --progress=dot:giga && \
-    mkdir -p "$JAVA_HOME" && \
-    tar xzf "$JAVA_ARCHIVE" -C "$JAVA_HOME" --strip-components=1 && \
-    rm -f "$JAVA_ARCHIVE" && \
-    export PATH="$JAVA_HOME"/bin:"$PATH" && java -version
+RUN apk add --update --no-cache wget openssh openjdk11-jre \
+    && ssh-keygen -A
 
 ENV CATALINA_BASE=/usr/share/tomcat9/
-RUN TOMCAT_ARCHIVE=tomcat.tar.gz && \
-    TOMCAT_VER=9.0.70 && \
+RUN TOMCAT_ARCHIVE="tomcat.tar.gz" && \
+    TOMCAT_VER="9.0.83" && \
     wget -O "$TOMCAT_ARCHIVE" -N "https://archive.apache.org/dist/tomcat/tomcat-9/v${TOMCAT_VER}/bin/apache-tomcat-${TOMCAT_VER}.tar.gz" --progress=dot:giga && \
     tar xzf "$TOMCAT_ARCHIVE" && \
     rm -f "$TOMCAT_ARCHIVE" && \
-    mv apache-tomcat-${TOMCAT_VER}/ "$CATALINA_BASE"
+    mv "apache-tomcat-${TOMCAT_VER}/" "$CATALINA_BASE"
 
 ENV GUACAMOLE_HOME=/guacamole/
 ENV GUACAMOLE_LIB="${GUACAMOLE_HOME}/lib/"
@@ -59,7 +53,7 @@ COPY ./docker/services /etc/services.d/
 COPY --from=client_build /target/lib/* "${GUACAMOLE_LIB}"
 COPY --from=client_build "/target/guacamole-auth-tre-${GUACAMOLE_AZURE_VERSION}.jar" "${GUACAMOLE_HOME}/extensions/"
 
-RUN wget -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.4.0/binary/guacamole-1.4.0.war" --progress=dot:giga
+RUN wget -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.5.3/binary/guacamole-1.5.3.war" --progress=dot:giga
 
 ENV OAUTH2_PROXY_HOME=/etc/oauth2-proxy
 RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
@@ -70,7 +64,7 @@ RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
 
 COPY ./docker/index.jsp "$CATALINA_BASE"/webapps/ROOT/index.jsp
 
-RUN wget -O "/tmp/applicationinsights-agent.jar" "https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.4.7/applicationinsights-agent-3.4.7.jar" --progress=dot:giga
+RUN wget -O "/tmp/applicationinsights-agent.jar" "https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.4.18/applicationinsights-agent-3.4.18.jar" --progress=dot:giga
 ENV CATALINA_OPTS="$CATALINA_OPTS -javaagent:/tmp/applicationinsights-agent.jar"
 
 ENTRYPOINT [ "/init" ]

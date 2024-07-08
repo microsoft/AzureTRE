@@ -90,11 +90,6 @@ outputs:
     applyTo:
       - install
       - upgrade
-  - name: internal_connection_uri
-    type: string
-    applyTo:
-      - install
-      - upgrade
   - name: workspace_address_spaces
     type: string
     applyTo:
@@ -116,6 +111,11 @@ outputs:
       - install
       - upgrade
   - name: mcr_tag
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: aml_fqdn
     type: string
     applyTo:
       - install
@@ -165,6 +165,7 @@ install:
         - name: batch_tag
         - name: mcr_tag
         - name: azure_endpoint
+        - name: aml_fqdn
 
   - az:
       description: "Login to Azure"
@@ -213,13 +214,13 @@ install:
         - name: azureml_acr_name
         - name: azureml_storage_account_id
         - name: connection_uri
-        - name: internal_connection_uri
         - name: workspace_address_spaces
         - name: aml_subnet_address_prefixes
         - name: storage_tag
         - name: batch_tag
         - name: mcr_tag
         - name: azure_endpoint
+        - name: aml_fqdn
 
 upgrade:
   - terraform:
@@ -251,13 +252,13 @@ upgrade:
         - name: core_location
         - name: azureml_storage_account_id
         - name: connection_uri
-        - name: internal_connection_uri
         - name: workspace_address_spaces
         - name: aml_subnet_address_prefixes
         - name: storage_tag
         - name: batch_tag
         - name: mcr_tag
         - name: azure_endpoint
+        - name: aml_fqdn
 
   - exec:
       command: sleep # wait for public network access to _actually_ take effect
@@ -318,6 +319,7 @@ upgrade:
         - name: batch_tag
         - name: mcr_tag
         - name: azure_endpoint
+        - name: aml_fqdn
 
 uninstall:
   - terraform:

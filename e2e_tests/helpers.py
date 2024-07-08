@@ -9,9 +9,11 @@ from azure.identity import ClientSecretCredential, UsernamePasswordCredential
 import config
 from e2e_tests import cloud
 
-
 LOGGER = logging.getLogger(__name__)
 TIMEOUT = Timeout(10, read=30)
+
+azlogger = logging.getLogger("azure")
+azlogger.setLevel(logging.WARN)
 
 
 class InstallFailedException(Exception):

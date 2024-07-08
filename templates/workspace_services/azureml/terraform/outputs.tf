@@ -18,12 +18,12 @@ output "azureml_storage_account_id" {
   value = azurerm_storage_account.aml.id
 }
 
-output "connection_uri" {
-  value = var.is_exposed_externally ? "https://ml.azure.com/?wsid=${azurerm_machine_learning_workspace.aml_workspace.id}&tid=${var.arm_tenant_id}" : ""
+output "aml_fqdn" {
+  value = regex("(?:(?P<scheme>[^:/?#]+):)?(?://(?P<fqdn>[^/?#:]*))?", module.terraform_azurerm_environment_configuration.aml_studio_endpoint).fqdn
 }
 
-output "internal_connection_uri" {
-  value = var.is_exposed_externally ? "" : "https://ml.azure.com/?wsid=${azurerm_machine_learning_workspace.aml_workspace.id}&tid=${var.arm_tenant_id}"
+output "connection_uri" {
+  value = format("%s/?wsid=%s&tid=%s", module.terraform_azurerm_environment_configuration.aml_studio_endpoint, azurerm_machine_learning_workspace.aml_workspace.id, var.arm_tenant_id)
 }
 
 output "workspace_address_spaces" {

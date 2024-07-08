@@ -17,3 +17,7 @@ A clear and concise description of what the bug is.
 1.
 1.
 1.
+
+**Azure TRE release version (e.g. v0.14.0 or main):**
+
+**Deployed Azure TRE components - click the (i) in the UI:**

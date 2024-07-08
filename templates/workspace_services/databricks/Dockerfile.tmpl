@@ -1,18 +1,15 @@
 # syntax=docker/dockerfile-upstream:1.4.0
-FROM debian:bullseye-slim
+FROM --platform=linux/amd64 debian:bullseye-slim
 
 # PORTER_INIT
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
 # Install git - required for https://registry.terraform.io/modules/claranet/regions/azurerm
-RUN apt-get update && apt-get install --no-install-recommends -y git \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+    apt-get update && apt-get install --no-install-recommends -y git
 
 # PORTER_MIXINS
-
-RUN apt-get remove -y git
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY --link . ${BUNDLE_DIR}/

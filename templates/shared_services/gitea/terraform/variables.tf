@@ -30,4 +30,10 @@ variable "acr_name" {
   description = "Name of Azure Container Registry"
 }
 
-variable "arm_environment" {}
+variable "arm_environment" {
+  type = string
+}
+
+variable "sql_sku" {
+  type = string
+}

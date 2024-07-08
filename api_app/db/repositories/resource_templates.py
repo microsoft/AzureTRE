@@ -1,7 +1,6 @@
 import uuid
 from typing import List, Optional, Union
 
-from azure.cosmos.aio import CosmosClient
 from pydantic import parse_obj_as
 
 from core import config
@@ -16,9 +15,9 @@ from services.schema_service import enrich_shared_service_template, enrich_works
 
 class ResourceTemplateRepository(BaseRepository):
     @classmethod
-    async def create(cls, client: CosmosClient):
+    async def create(cls):
         cls = ResourceTemplateRepository()
-        await super().create(client, config.STATE_STORE_RESOURCE_TEMPLATES_CONTAINER)
+        await super().create(config.STATE_STORE_RESOURCE_TEMPLATES_CONTAINER)
         return cls
 
     @staticmethod
@@ -113,8 +112,8 @@ class ResourceTemplateRepository(BaseRepository):
             "version": template_input.version,
             "resourceType": resource_type,
             "current": template_input.current,
-            "required": template_input.json_schema["required"],
-            "authorizedRoles": template_input.json_schema["authorizedRoles"] if "authorizedRoles" in template_input.json_schema else [],
+            "required": template_input.json_schema.get("required", []),
+            "authorizedRoles": template_input.json_schema.get("authorizedRoles", []),
             "properties": template_input.json_schema["properties"],
             "customActions": template_input.customActions
         }

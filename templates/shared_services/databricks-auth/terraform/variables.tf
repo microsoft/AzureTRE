@@ -8,4 +8,6 @@ variable "tre_resource_id" {
   description = "Unique TRE Resource ID"
 }
 
-variable "arm_environment" {}
+variable "arm_environment" {
+  type = string
+}

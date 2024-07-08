@@ -1,8 +1,10 @@
+Remove-Item -LiteralPath "C:\AzureData" -Force -Recurse
+$ErrorActionPreference = "Stop"
+
 if( ${SharedStorageAccess} -eq 1 )
 {
-  $Command = "net use z: \\${StorageAccountFileEndpoint}\${FileShareName} /u:AZURE\${StorageAccountName} ${StorageAccountKey}"
-  $Command | Out-File  "C:\ProgramData\Start Menu\Programs\StartUp\attatch_storage.cmd" -encoding ascii
-  Remove-Item -LiteralPath "C:\AzureData" -Force -Recurse
+  $Command = "net use z: \\${StorageAccountFileHost}\${FileShareName} /u:AZURE\${StorageAccountName} ${StorageAccountKey}"
+  $Command | Out-File  "C:\ProgramData\Start Menu\Programs\StartUp\attach_storage.cmd" -encoding ascii
 }
 
 $PipConfigFolderPath = "C:\ProgramData\pip\"

@@ -43,13 +43,11 @@ resource "azurerm_application_gateway" "agw" {
     subnet_id = var.app_gw_subnet
   }
 
-  # HTTP Port
   frontend_port {
     name = local.insecure_frontend_port_name
     port = 80
   }
 
-  # HTTPS Port
   frontend_port {
     name = local.secure_frontend_port_name
     port = 443
@@ -65,6 +63,12 @@ resource "azurerm_application_gateway" "agw" {
   ssl_certificate {
     name                = local.certificate_name
     key_vault_secret_id = azurerm_key_vault_certificate.tlscert.secret_id
+  }
+
+  # SSL policy
+  ssl_policy {
+    policy_type = "Predefined"
+    policy_name = "AppGwSslPolicy20220101"
   }
 
   # Backend pool with the static website in storage account.
@@ -160,7 +164,7 @@ resource "azurerm_application_gateway" "agw" {
 
     path_rule {
       name                       = "api"
-      paths                      = ["/api/*", "/api/docs", "/openapi.json", "/api/docs/oauth2-redirect"]
+      paths                      = ["/api/*", "/openapi.json"]
       backend_address_pool_name  = local.api_backend_pool_name
       backend_http_settings_name = local.api_http_setting_name
     }
@@ -203,22 +207,12 @@ resource "azurerm_monitor_diagnostic_setting" "agw" {
     for_each = setintersection(data.azurerm_monitor_diagnostic_categories.agw.log_category_types, local.appgateway_diagnostic_categories_enabled)
     content {
       category = enabled_log.value
-
-      retention_policy {
-        enabled = true
-        days    = 365
-      }
     }
   }
 
   metric {
     category = "AllMetrics"
     enabled  = true
-
-    retention_policy {
-      enabled = true
-      days    = 365
-    }
   }
 
   lifecycle { ignore_changes = [log_analytics_destination_type] }

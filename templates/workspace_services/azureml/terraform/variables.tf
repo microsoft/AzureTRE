@@ -40,6 +40,10 @@ variable "public_access_enabled" {
   default = false
 }
 
-variable "arm_environment" {}
+variable "arm_environment" {
+  type = string
+}
 
-variable "azure_environment" {}
+variable "azure_environment" {
+  type = string
+}

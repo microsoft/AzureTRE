@@ -24,12 +24,7 @@ module "network" {
   ws_resource_group_name = azurerm_resource_group.ws.name
   tre_resource_id        = var.tre_resource_id
   tre_workspace_tags     = local.tre_workspace_tags
-  arm_use_msi            = var.arm_use_msi
-  arm_tenant_id          = var.arm_tenant_id
-  arm_client_id          = var.arm_client_id
-  arm_client_secret      = var.arm_client_secret
   arm_environment        = var.arm_environment
-  azure_environment      = var.azure_environment
 }
 
 module "aad" {
@@ -45,7 +40,7 @@ module "aad" {
   depends_on = [
     azurerm_key_vault_access_policy.deployer,
     azurerm_key_vault_access_policy.resource_processor,
-    null_resource.wait_for_dns_vault
+    terraform_data.wait_for_dns_vault
   ]
 }
 

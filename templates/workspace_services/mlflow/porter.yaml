@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-mlflow
-version: 0.7.0
+version: 0.7.7
 description: "An Azure TRE service for MLflow machine learning lifecycle"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -61,8 +61,13 @@ parameters:
     default: "public"
 
 outputs:
-  - name: internal_connection_uri
+  - name: connection_uri
     type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: is_exposed_externally
+    type: boolean
     applyTo:
       - install
       - upgrade
@@ -88,7 +93,8 @@ install:
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: tre-service-mlflow-${ bundle.parameters.id }
       outputs:
-        - name: internal_connection_uri
+        - name: connection_uri
+        - name: is_exposed_externally
 
 upgrade:
   - terraform:
@@ -106,7 +112,8 @@ upgrade:
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: tre-service-mlflow-${ bundle.parameters.id }
       outputs:
-        - name: internal_connection_uri
+        - name: connection_uri
+        - name: is_exposed_externally
 
 uninstall:
   - terraform:

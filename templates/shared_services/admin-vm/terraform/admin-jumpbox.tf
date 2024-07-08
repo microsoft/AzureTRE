@@ -9,6 +9,8 @@ resource "azurerm_network_interface" "jumpbox_nic" {
     subnet_id                     = data.azurerm_subnet.shared.id
     private_ip_address_allocation = "Dynamic"
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "random_password" "password" {
@@ -47,6 +49,8 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_key_vault_secret" "jumpbox_credentials" {
@@ -54,6 +58,8 @@ resource "azurerm_key_vault_secret" "jumpbox_credentials" {
   value        = random_password.password.result
   key_vault_id = data.azurerm_key_vault.keyvault.id
   tags         = local.tre_shared_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_virtual_machine_extension" "antimalware" {
@@ -68,4 +74,6 @@ resource "azurerm_virtual_machine_extension" "antimalware" {
   settings = jsonencode({
     "AntimalwareEnabled" = true
   })
+
+  lifecycle { ignore_changes = [tags] }
 }

@@ -1,31 +1,27 @@
 # syntax=docker/dockerfile-upstream:1.4.0
-FROM debian:bullseye-slim
+FROM --platform=linux/amd64 debian:bullseye-slim
 
 # PORTER_INIT
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
-# Install git - required for https://registry.terraform.io/modules/claranet/regions/azurerm
-RUN apt-get update && apt-get install --no-install-recommends -y git \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
-
-# Install jq
+# Git is required for terraform_azurerm_environment_configuration
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
-    apt-get update && \
-    apt-get install -y jq="1.6-2.1" curl ca-certificates patch --no-install-recommends
+    apt-get update && apt-get install -y git jq curl ca-certificates patch --no-install-recommends
 
-ARG AZURE_TRE_VERSION="0.9.0"
+ARG AZURE_TRE_VERSION="0.15.2"
 
 WORKDIR ${BUNDLE_DIR}
 
 # Copy all files from base workspace (note: some of them will be overwritten with the following COPY command)
-RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/refs/tags/v${AZURE_TRE_VERSION}.tar.gz" \
+RUN curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/refs/tags/v${AZURE_TRE_VERSION}.tar.gz" \
   && tar -xzf azuretre.tar.gz "AzureTRE-${AZURE_TRE_VERSION}/templates/workspaces/base" --strip-components=4 --skip-old-files \
   && rm -rf azuretre.tar.gz
 
 # Copy and change the file extension of .terraform file to .tf
 COPY ./terraform/import_review_resources.terraform "${BUNDLE_DIR}"/terraform/import_review_resources.tf
+# HACK: PR #3769: Remove once base workspace includes this change
+COPY ./terraform/network_output.terraform "${BUNDLE_DIR}"/terraform/network/temp_output.tf
 
 # PORTER_MIXINS
 
