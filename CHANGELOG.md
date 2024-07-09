@@ -4,6 +4,7 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 FEATURES:
+* Azure SQL Workspace Service ([#3969](https://github.com/microsoft/AzureTRE/issues/3969))
 
 ENHANCEMENTS:
 
@@ -18,7 +19,6 @@ COMPONENTS:
 * Introduction of config value `enable_airlock_email_check`, which defaults to `false`, this is a change in behaviour. If you require email addresses for users before an airlock request is created, set to `true`. ([#3904](https://github.com/microsoft/AzureTRE/issues/3904))
 
 FEATURES:
-* Azure SQL Workspace Service ([#3969](https://github.com/microsoft/AzureTRE/issues/3969))
 
 ENHANCEMENTS:
 * Additional DataBrick IPs added ([#3901](https://github.com/microsoft/AzureTRE/issues/3901))
