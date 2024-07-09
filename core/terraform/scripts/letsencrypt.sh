@@ -97,6 +97,8 @@ if [[ -n "$CUSTOM_DOMAIN" ]]; then
   CERT_FQDN=$CUSTOM_DOMAIN
 fi
 
+echo "Requesting certificate for $CERT_FQDN..."
+
 # Initiate the ACME challange
 /opt/certbot/bin/certbot certonly \
     --config-dir "${ledir}" \
