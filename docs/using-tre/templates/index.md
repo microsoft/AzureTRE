@@ -22,10 +22,10 @@ See the [template authoring guide](../../tre-workspace-authors/authoring-workspa
 
 1. Add your template under the relevant folder (For example: if you are adding a new workspace template then place it under `/templates/workspaces` folder).  
 1. Use existing templates in AzureTRE as a reference.  
-1. Add porter configuration - AzureTRE uses [Porter](https://porter.sh/) as a solution for implementing and deploying workspaces and workspace, learn more about how it is used in AzureTRE [here](https://microsoft.github.io/AzureTRE/tre-developers/resource-processor/#porter).  
+1. Add porter configuration - AzureTRE uses [Porter](https://porter.sh/) as a solution for implementing and deploying workspaces and workspace, learn more about how it is used in AzureTRE [here](https://microsoft.github.io/AzureTRE/latest/tre-developers/resource-processor/#porter).  
 1. Add terraform scripts to set up your deployment plan.
-   - Define resource template in the API - follow [this readme](https://microsoft.github.io/AzureTRE/tre-admins/registering-templates/) to register your template.
-   - Use the [AzureTRE UI](https://microsoft.github.io/AzureTRE/tre-developers/ui/) to deploy your resources
+   - Define resource template in the API - follow [this readme](https://microsoft.github.io/AzureTRE/latest/tre-admins/registering-templates/) to register your template.
+   - Use the [AzureTRE UI](https://microsoft.github.io/AzureTRE/latest/tre-developers/ui/) to deploy your resources
    - Add your custom templates to CI/CD workflows - in Deploy Azure TRE Reusable workflow make sure to add your bundles under register_bundles and publish_bundles steps.
 
 ## Publish and Register Custom templates in the CI/CD
