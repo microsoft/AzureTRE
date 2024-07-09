@@ -85,13 +85,12 @@
           "description": "Determines whether the Swagger interface for the API will be available.",
           "type": "boolean"
         },
-        "tre_url": {
-          "description": "Url for the TRE environment.",
-          "type": "string",
-          "pattern": "^https?://"
-        },
         "firewall_sku": {
           "description": "SKU of the Azure Firewall.",
+          "type": "string"
+        },
+        "custom_domain": {
+          "description": "Custom domain name.",
           "type": "string"
         }
       }
