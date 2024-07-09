@@ -47,9 +47,9 @@
       }
     },
     {
-      "name": "sku_tier",
+      "name": "firewall_sku",
       "source": {
-        "env": "SKU_TIER"
+        "env": "FIREWALL_SKU"
       }
     },
     {

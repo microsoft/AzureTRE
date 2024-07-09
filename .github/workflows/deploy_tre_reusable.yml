@@ -353,9 +353,11 @@ jobs:
           APPLICATION_ADMIN_CLIENT_ID: "${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}"
           APPLICATION_ADMIN_CLIENT_SECRET: "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}"
           STATEFUL_RESOURCES_LOCKED: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          KV_PURGE_PROTECTION_ENABLED: ${{ vars.KV_PURGE_PROTECTION_ENABLED || true }}
           CORE_APP_SERVICE_PLAN_SKU: ${{ vars.CORE_APP_SERVICE_PLAN_SKU }}
           RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE: ${{ vars.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE }}
           RP_BUNDLE_VALUES: ${{ vars.RP_BUNDLE_VALUES }}
+          FIREWALL_SKU: ${{ vars.FIREWALL_SKU}}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
@@ -665,6 +667,7 @@ jobs:
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: ${{ secrets.TRE_ID }}
           LOCATION: ${{ vars.LOCATION }}
+          FIREWALL_SKU: ${{ vars.FIREWALL_SKU}}
 
       - name: State Store Migrations
         uses: ./.github/actions/devcontainer_run_command

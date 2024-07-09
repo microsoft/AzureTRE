@@ -161,7 +161,9 @@ foreach ($Group in $ResourceGroups) {
         # Find the firewall's public IP and virtual network
         $pip = Get-AzPublicIpAddress -ResourceGroupName $Group.ResourceGroupName -Name "pip-fw-$azureTreId"
         $vnet = Get-AzVirtualNetwork -ResourceGroupName $Group.ResourceGroupName -Name "vnet-$azureTreId"
-        $Firewall.Allocate($vnet, $pip)
+        # Find the firewall's public management IP - note this will only be present for a firewall with a Basic SKU
+        $mgmtPip = Get-AzPublicIpAddress -ResourceGroupName "rg-$azureTreId" -Name "pip-fw-management-$azureTreId" -ErrorAction SilentlyContinue
+        $Firewall.Allocate($vnet, $pip, $mgmtPip)
         Write-Output "Allocating Firewall '$($Firewall.Name)' with public IP '$($pip.Name)'"
         Set-AzFirewall -AzureFirewall $Firewall
     }

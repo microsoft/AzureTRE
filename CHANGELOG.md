@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD041 -->
-## 0.18.0 (Unreleased)
+## 0.19.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
 
@@ -8,15 +8,70 @@ FEATURES:
 ENHANCEMENTS:
 
 BUG FIXES:
+
+COMPONENTS:
+
+## 0.18.0
+
+**BREAKING CHANGES & MIGRATIONS**:
+* Update Core Terraform Provider versions ([#3919](https://github.com/microsoft/AzureTRE/issues/3919))
+* Introduction of config value `enable_airlock_email_check`, which defaults to `false`, this is a change in behaviour. If you require email addresses for users before an airlock request is created, set to `true`. ([#3904](https://github.com/microsoft/AzureTRE/issues/3904))
+
+FEATURES:
+
+ENHANCEMENTS:
+* Additional DataBrick IPs added ([#3901](https://github.com/microsoft/AzureTRE/issues/3901))
+* Add KeyVault Purge Protection Variable ([#3922](https://github.com/microsoft/AzureTRE/issues/3922))
+* Update Guacamole Windows 11 VM Image to 2Win11-23h2-pro ([#3995](https://github.com/microsoft/AzureTRE/issues/3995))
+* Make check for email addresses prior to an airlock request being created optional. ([#3904](https://github.com/microsoft/AzureTRE/issues/3904))
+* Add Firewall SKU variable ([#3961](https://github.com/microsoft/AzureTRE/issues/3961))
+
+BUG FIXES:
 * Update Guacamole Linux VM Images to Ubuntu 22.04 LTS. Part of ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
 * Update Nexus Shared Service with new proxies. Part of ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
 * Update to Resource Processor Image, now using Ubuntu 22.04 (jammy). Part of ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
 * Remove TLS1.0/1.1 support from Application Gateway ([#3914](https://github.com/microsoft/AzureTRE/issues/3914))
 * GitHub Actions version updates. ([#3847](https://github.com/microsoft/AzureTRE/issues/3847))
 * Add workaround to avoid name clashes for storage accounts([#3863](https://github.com/microsoft/AzureTRE/pull/3858))
+* Resource processor fails to deploy first workspace on fresh TRE deployment ([#3950](https://github.com/microsoft/AzureTRE/issues/3950))
 * Dependency and Vulnerability updates
+* Fix Weak hashes ([#3931](https://github.com/microsoft/AzureTRE/issues/3931))
+* Add lifecycle rule to MySQL resources to stop them recreating on `update` ([#3993](https://github.com/microsoft/AzureTRE/issues/3993))
+* Fixes broken links on 'Using the Azure TRE -> Custom Templates' page of documentation ([[#4003](https://github.com/microsoft/AzureTRE/issues/4003)])
+* Fix 'Renew Lets Encrypt Certificates' GitHub Action ([#3978](https://github.com/microsoft/AzureTRE/issues/3978))
+* Add lifecycle rule to the Gitea Shared Service template for the MySQL resource to stop it recreating on `update` ([#4006](https://github.com/microsoft/AzureTRE/issues/4006))
 
 COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.5.1 |
+| core | 0.10.1 |
+| ui | 0.5.24 |
+| tre-service-guacamole-linuxvm | 1.0.0 |
+| tre-service-guacamole-import-reviewvm | 0.2.8 |
+| tre-service-guacamole-export-reviewvm | 0.1.8 |
+| tre-service-guacamole-windowsvm | 1.0.0 |
+| tre-service-guacamole | 0.10.7 |
+| tre-service-databricks | 1.0.3 |
+| tre-service-mlflow | 0.7.7 |
+| tre-service-innereye | 0.6.4 |
+| tre-workspace-service-ohdsi | 0.2.4 |
+| tre-workspace-service-gitea | 1.0.2 |
+| tre-workspace-service-mysql | 1.0.2 |
+| tre-user-resource-aml-compute-instance | 0.5.7 |
+| tre-service-azureml | 0.8.10 |
+| tre-workspace-service-health | 0.2.5 |
+| tre-workspace-airlock-import-review | 0.12.16 |
+| tre-workspace-unrestricted | 0.11.4 |
+| tre-workspace-base | 1.5.3 |
+| tre-shared-service-cyclecloud | 0.5.5 |
+| tre-shared-service-databricks-private-auth | 0.1.5 |
+| tre-shared-service-sonatype-nexus | 3.0.0 |
+| tre-shared-service-admin-vm | 0.4.3 |
+| tre-shared-service-firewall | 1.2.0 |
+| tre-shared-service-gitea | 1.0.1 |
+| tre-shared-service-certs | 0.5.1 |
+| tre-shared-service-airlock-notifier | 0.9.0 |
 
 ## 0.17.0
 
