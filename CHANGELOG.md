@@ -7,6 +7,7 @@ FEATURES:
 * Azure SQL Workspace Service ([#3969](https://github.com/microsoft/AzureTRE/issues/3969))
 
 ENHANCEMENTS:
+* Ability to host TRE on a custom domain ([#4014](https://github.com/microsoft/AzureTRE/pull/4014))
 
 BUG FIXES:
 
