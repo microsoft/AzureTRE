@@ -8,6 +8,7 @@ interface ExceptionLayoutProps {
 
 export const ExceptionLayout: React.FunctionComponent<ExceptionLayoutProps> = (props: ExceptionLayoutProps) => {
   const [showDetails, setShowDetails] = useState(false);
+  const [showMessageBar, setShowMessageBar] = useState(true);
 
   switch (props.e.status) {
     case 403:
@@ -24,9 +25,12 @@ export const ExceptionLayout: React.FunctionComponent<ExceptionLayoutProps> = (p
       );
     default:
       return (
-        <MessageBar
+          showMessageBar && 
+          <MessageBar
           messageBarType={MessageBarType.error}
           isMultiline={true}
+          onDismiss={()=> setShowMessageBar(!showMessageBar)}
+          dismissButtonAriaLabel="Close"
         >
           <h3>{props.e.userMessage}</h3>
           <p>{props.e.message}</p><br />
@@ -65,6 +69,6 @@ export const ExceptionLayout: React.FunctionComponent<ExceptionLayoutProps> = (p
           }
 
         </MessageBar>
-      )
+      );
   }
 };
