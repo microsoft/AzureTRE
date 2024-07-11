@@ -55,6 +55,7 @@ nav:
           - Airlock: azure-tre-overview/airlock.md
           - Cost Reporting: azure-tre-overview/cost-reporting.md
       - Terms and Definitions: using-tre/terms-definitions.md
+      - Case Studies: azure-tre-overview/case-studies.md
       # - Compliance: azure-tre-overview/compliance-info.md
 
   - QuickStart: # Setup steps for anyone performing an initial deployment of the AzureTRE for eval purposes
