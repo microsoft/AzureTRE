@@ -6,6 +6,7 @@
 FEATURES:
 
 ENHANCEMENTS:
+* Add Case Study Docs ([#1366](https://github.com/microsoft/AzureTRE/issues/1366))
 
 BUG FIXES:
 
