@@ -133,6 +133,7 @@ nav:
           - Upgrading Resources Version: tre-admins/upgrading-resources.md
           - Configuring Airlock Reviews: tre-admins/configure-airlock-review.md
           - Supported Clouds: tre-admins/supported-clouds.md
+          - Custom Domain Name: tre-admins/custom-domain.md
 
       - Development: # Docs related to the developing code for the AzureTRE
           - Local Development: using-tre/local-development/local-development.md
