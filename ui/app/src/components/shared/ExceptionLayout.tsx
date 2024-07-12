@@ -23,13 +23,16 @@ export const ExceptionLayout: React.FunctionComponent<ExceptionLayoutProps> = (p
           <p>Attempted resource: {props.e.endpoint}</p>
         </MessageBar>
       );
+    case 429:
+      return (<></>);
     default:
+      if (!showMessageBar) return null;
       return (
-          showMessageBar && 
+          showMessageBar &&
           <MessageBar
           messageBarType={MessageBarType.error}
           isMultiline={true}
-          onDismiss={()=> setShowMessageBar(!showMessageBar)}
+          onDismiss={()=> setShowMessageBar(false)}
           dismissButtonAriaLabel="Close"
         >
           <h3>{props.e.userMessage}</h3>
