@@ -6,6 +6,7 @@
 FEATURES:
 
 ENHANCEMENTS:
+* Add Case Study Docs ([#1366](https://github.com/microsoft/AzureTRE/issues/1366))
 * Ability to host TRE on a custom domain ([#4014](https://github.com/microsoft/AzureTRE/pull/4014))
 
 BUG FIXES:
