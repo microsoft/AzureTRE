@@ -42,6 +42,7 @@ BUG FIXES:
 * Fixes broken links on 'Using the Azure TRE -> Custom Templates' page of documentation ([[#4003](https://github.com/microsoft/AzureTRE/issues/4003)])
 * Fix 'Renew Lets Encrypt Certificates' GitHub Action ([#3978](https://github.com/microsoft/AzureTRE/issues/3978))
 * Add lifecycle rule to the Gitea Shared Service template for the MySQL resource to stop it recreating on `update` ([#4006](https://github.com/microsoft/AzureTRE/issues/4006))
+* Fix numbering issue within `bug_report.md` template ([#4028](https://github.com/microsoft/AzureTRE/pull/4028))
 
 COMPONENTS:
 | name | version |
