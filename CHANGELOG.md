@@ -2,6 +2,7 @@
 ## 0.19.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
+* Fix numbering issue within `bug_report.md` template ([#4028](https://github.com/microsoft/AzureTRE/pull/4028))
 
 FEATURES:
 * Azure SQL Workspace Service ([#3969](https://github.com/microsoft/AzureTRE/issues/3969))
@@ -19,7 +20,6 @@ COMPONENTS:
 **BREAKING CHANGES & MIGRATIONS**:
 * Update Core Terraform Provider versions ([#3919](https://github.com/microsoft/AzureTRE/issues/3919))
 * Introduction of config value `enable_airlock_email_check`, which defaults to `false`, this is a change in behaviour. If you require email addresses for users before an airlock request is created, set to `true`. ([#3904](https://github.com/microsoft/AzureTRE/issues/3904))
-* Fix numbering issue within `bug_report.md` template ([#4028](https://github.com/microsoft/AzureTRE/pull/4028))
 
 FEATURES:
 
