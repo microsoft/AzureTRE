@@ -102,6 +102,7 @@ nav:
           - Azure Databricks: tre-templates/workspace-services/databricks.md
           - OHDSI: tre-templates/workspace-services/ohdsi.md
           - MySQL: tre-templates/workspace-services/mysql.md
+          - Azure SQL: tre-templates/workspace-services/azuresql.md
       - Shared Services:
           - Gitea (Source Mirror): tre-templates/shared-services/gitea.md
           - Nexus (Package Mirror): tre-templates/shared-services/nexus.md
