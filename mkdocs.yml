@@ -55,6 +55,7 @@ nav:
           - Airlock: azure-tre-overview/airlock.md
           - Cost Reporting: azure-tre-overview/cost-reporting.md
       - Terms and Definitions: using-tre/terms-definitions.md
+      - Case Studies: azure-tre-overview/case-studies.md
       # - Compliance: azure-tre-overview/compliance-info.md
 
   - QuickStart: # Setup steps for anyone performing an initial deployment of the AzureTRE for eval purposes
@@ -97,6 +98,7 @@ nav:
           - Health Services: tre-templates/workspace-services/health_services.md
           - Azure Databricks: tre-templates/workspace-services/databricks.md
           - OHDSI: tre-templates/workspace-services/ohdsi.md
+          - MySQL: tre-templates/workspace-services/mysql.md
       - Shared Services:
           - Gitea (Source Mirror): tre-templates/shared-services/gitea.md
           - Nexus (Package Mirror): tre-templates/shared-services/nexus.md
@@ -132,6 +134,7 @@ nav:
           - Upgrading Resources Version: tre-admins/upgrading-resources.md
           - Configuring Airlock Reviews: tre-admins/configure-airlock-review.md
           - Supported Clouds: tre-admins/supported-clouds.md
+          - Custom Domain Name: tre-admins/custom-domain.md
 
       - Development: # Docs related to the developing code for the AzureTRE
           - Local Development: using-tre/local-development/local-development.md

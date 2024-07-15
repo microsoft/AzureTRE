@@ -1,5 +1,19 @@
 <!-- markdownlint-disable MD041 -->
-## 0.18.0 (Unreleased)
+## 0.19.0 (Unreleased)
+
+**BREAKING CHANGES & MIGRATIONS**:
+
+FEATURES:
+
+ENHANCEMENTS:
+* Add Case Study Docs ([#1366](https://github.com/microsoft/AzureTRE/issues/1366))
+* Ability to host TRE on a custom domain ([#4014](https://github.com/microsoft/AzureTRE/pull/4014))
+
+BUG FIXES:
+
+COMPONENTS:
+
+## 0.18.0
 
 **BREAKING CHANGES & MIGRATIONS**:
 * Update Core Terraform Provider versions ([#3919](https://github.com/microsoft/AzureTRE/issues/3919))
@@ -30,6 +44,36 @@ BUG FIXES:
 * Add lifecycle rule to the Gitea Shared Service template for the MySQL resource to stop it recreating on `update` ([#4006](https://github.com/microsoft/AzureTRE/issues/4006))
 
 COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.5.1 |
+| core | 0.10.1 |
+| ui | 0.5.24 |
+| tre-service-guacamole-linuxvm | 1.0.0 |
+| tre-service-guacamole-import-reviewvm | 0.2.8 |
+| tre-service-guacamole-export-reviewvm | 0.1.8 |
+| tre-service-guacamole-windowsvm | 1.0.0 |
+| tre-service-guacamole | 0.10.7 |
+| tre-service-databricks | 1.0.3 |
+| tre-service-mlflow | 0.7.7 |
+| tre-service-innereye | 0.6.4 |
+| tre-workspace-service-ohdsi | 0.2.4 |
+| tre-workspace-service-gitea | 1.0.2 |
+| tre-workspace-service-mysql | 1.0.2 |
+| tre-user-resource-aml-compute-instance | 0.5.7 |
+| tre-service-azureml | 0.8.10 |
+| tre-workspace-service-health | 0.2.5 |
+| tre-workspace-airlock-import-review | 0.12.16 |
+| tre-workspace-unrestricted | 0.11.4 |
+| tre-workspace-base | 1.5.3 |
+| tre-shared-service-cyclecloud | 0.5.5 |
+| tre-shared-service-databricks-private-auth | 0.1.5 |
+| tre-shared-service-sonatype-nexus | 3.0.0 |
+| tre-shared-service-admin-vm | 0.4.3 |
+| tre-shared-service-firewall | 1.2.0 |
+| tre-shared-service-gitea | 1.0.1 |
+| tre-shared-service-certs | 0.5.1 |
+| tre-shared-service-airlock-notifier | 0.9.0 |
 
 ## 0.17.0
 
