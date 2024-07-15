@@ -10,6 +10,7 @@ ENHANCEMENTS:
 * Ability to host TRE on a custom domain ([#4014](https://github.com/microsoft/AzureTRE/pull/4014))
 
 BUG FIXES:
+* Update Docs to format emojis properly ([#4027](https://github.com/microsoft/AzureTRE/issues/4027))
 
 COMPONENTS:
 
