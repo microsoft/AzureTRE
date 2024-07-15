@@ -12,6 +12,7 @@ ENHANCEMENTS:
 BUG FIXES:
 * Update Docs to format emojis properly ([#4027](https://github.com/microsoft/AzureTRE/issues/4027))
 
+
 COMPONENTS:
 
 ## 0.18.0
