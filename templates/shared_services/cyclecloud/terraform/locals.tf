@@ -1,6 +1,8 @@
 locals {
   core_resource_group_name = "rg-${var.tre_id}"
   core_vnet                = "vnet-${var.tre_id}"
+  allowed_fqdns            = "management.azure.com"
+  allowed_fqdns_list       = distinct(compact(split(",", replace(local.allowed_fqdns, " ", ""))))
   short_service_id         = substr(var.tre_resource_id, -4, -1)
   vm_name                  = "cyclecloud-${local.short_service_id}"
   storage_name             = lower(replace("stgcc${var.tre_id}${local.short_service_id}", "-", ""))

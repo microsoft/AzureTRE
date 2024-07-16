@@ -23,11 +23,13 @@ az vm image terms accept --urn almalinux:almalinux-hpc:8_5-hpc:latest
 
 Deploy the CycleCloud server using UI or API.
 
-To connect to the CycleCloud server, the TRE Administrator must connect to the CycleCloud server from the administration jumpbox. Use Azure Bastion to connect to the jumpbox a with the username `admin` and the select the password located in your core KeyVault. Connect to the CycleCloud server at the URL: `https://cyclecloud-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`.
+To connect to the CycleCloud server, the TRE Administrator **must** connect to the CycleCloud server from the administration jumpbox (`templates/shared_services/admin-vm`).
+Use Azure Bastion to connect to the jumpbox a with the username `adminuser` and the select the password located in your core KeyVault.
+Connect to the CycleCloud server at the URL: `https://cyclecloud-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`.
 
 - Provide a name for the cyclecloud server instance.
 
--Review the terms and conditions and hit next.
+- Review the terms and conditions and hit next.
 
 - Provide your user details, including SSH key
 

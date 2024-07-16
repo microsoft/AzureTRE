@@ -7,5 +7,138 @@
   "required": [
   ],
   "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the shared service",
+      "description": "The name of the shared service to be displayed to users",
+      "default": "CycleCloud",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the shared service",
+      "description": "Description of the shared service",
+      "default": "Manage HPC environments on Azure",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace Service Overview",
+      "description": "Long form description of the shared service, in markdown syntax",
+      "default": "Azure CycleCloud is an enterprise-friendly tool for orchestrating and managing High Performance Computing (HPC) environments on Azure.",
+      "updateable": true
+    }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "42024559-3a88-4518-b1ea-713aebc91cfd",
+        "stepTitle": "Add CycleCloud rule collection to firewall",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_cylecloud",
+              "rules": [
+                {
+                  "name": "azure-crl",
+                  "description": "CRLs for workspaces",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    },
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    }
+                  ],
+                  "target_fqdns": "{{ resource.properties.allowed_fqdns_list }}",
+                  "source_addresses": [
+                    "*"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "a794e818-0807-4012-90be-3e78f530383c",
+        "stepTitle": "Update CycleCloud rule collection in firewall",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_cylecloud",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "azure-crl",
+                  "description": "CRLs for workspaces",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    },
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    }
+                  ],
+                  "target_fqdns": "{{ resource.properties.allowed_fqdns_list }}",
+                  "source_addresses": [
+                    "*"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "c3f95f9f-d125-4937-9403-84e4957a26b8",
+        "stepTitle": "Remove CycleCloud rule collection from firewall",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_cylecloud"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ]
   }
 }
