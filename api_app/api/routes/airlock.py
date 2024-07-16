@@ -232,11 +232,11 @@ async def review_contact_team_form(airlock_request_contact_form_input: AirlockRe
     if airlock_request.type == AirlockRequestType.Import:
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
                             detail="Endpoint not available for Import Airlock requests.")
-    if (len(airlock_request_contact_form_input.requiredDisclosureAlignment) > 100 or
-        len(airlock_request_contact_form_input.measuresTakenMinimiseDisclosure) > 100 or
-        len(airlock_request_contact_form_input.transferToThirdParty) > 100):
+    if (len(airlock_request_contact_form_input.requiredDisclosureAlignment) > 1500 or
+        len(airlock_request_contact_form_input.measuresTakenMinimiseDisclosure) > 1500 or
+        len(airlock_request_contact_form_input.transferToThirdParty) > 1500):
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
-                            detail="One or more fields have more than 100 characters.")
+                            detail="One or more fields have more than 1500 characters.")
     try:
         await airlock_request_repo.save_and_check_contact_team_form(airlock_request, airlock_request_contact_form_input)
         triage_level_input = "L3: Exemption"
