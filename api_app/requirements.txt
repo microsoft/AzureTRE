@@ -2,7 +2,7 @@ aiohttp==3.9.4
 azure-core==1.30.0
 azure-cosmos==4.5.1
 azure-eventgrid==4.15.0
-azure-identity==1.14.1
+azure-identity==1.16.1
 azure-mgmt-compute==30.3.0
 azure-mgmt-cosmosdb==9.3.0
 azure-mgmt-costmanagement==4.0.1
