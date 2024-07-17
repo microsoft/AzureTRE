@@ -51,6 +51,7 @@ jobs:
           TF_VAR_terraform_state_container_name: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME || 'tfstate' }}
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           TF_VAR_mgmt_storage_account_name: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
+          CUSTOM_DOMAIN: ${{ secrets.CUSTOM_DOMAIN }}
         run: |
           sudo apt-get install -y python3 python3-venv libaugeas0 \
             && python3 -m venv /opt/certbot/ \

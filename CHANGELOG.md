@@ -4,11 +4,15 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 FEATURES:
+* Azure SQL Workspace Service ([#3969](https://github.com/microsoft/AzureTRE/issues/3969))
 
 ENHANCEMENTS:
+* Add Case Study Docs ([#1366](https://github.com/microsoft/AzureTRE/issues/1366))
+* Ability to host TRE on a custom domain ([#4014](https://github.com/microsoft/AzureTRE/pull/4014))
 
 BUG FIXES:
 * Removed 429 Error (Costs API) form presenting in UI ([#3929](https://github.com/microsoft/AzureTRE/issues/3929))
+* Disable public network access to the API App Service ([#3986](https://github.com/microsoft/AzureTRE/issues/3986))
 
 COMPONENTS:
 

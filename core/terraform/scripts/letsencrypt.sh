@@ -92,6 +92,13 @@ ledir=$(pwd)/letsencrypt
 
 mkdir -p "${ledir}/logs"
 
+CERT_FQDN=$FQDN
+if [[ -n "$CUSTOM_DOMAIN" ]]; then
+  CERT_FQDN=$CUSTOM_DOMAIN
+fi
+
+echo "Requesting certificate for $CERT_FQDN..."
+
 # Initiate the ACME challange
 /opt/certbot/bin/certbot certonly \
     --config-dir "${ledir}" \
@@ -101,13 +108,13 @@ mkdir -p "${ledir}/logs"
     --preferred-challenges=http \
     --manual-auth-hook "${script_dir}"/auth-hook.sh \
     --manual-cleanup-hook "${script_dir}"/cleanup-hook.sh \
-    --domain "$FQDN" \
+    --domain "$CERT_FQDN" \
     --non-interactive \
     --agree-tos \
     --register-unsafely-without-email
 
 # Convert the generated certificate to a .pfx
-CERT_DIR="${ledir}/live/$FQDN"
+CERT_DIR="${ledir}/live/$CERT_FQDN"
 CERT_PASSWORD=$(openssl rand -base64 30)
 openssl pkcs12 -export \
     -inkey "${CERT_DIR}/privkey.pem" \

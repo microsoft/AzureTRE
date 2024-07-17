@@ -32,6 +32,7 @@ locals {
     "privatelink.notebooks.azure.net",
     "privatelink.postgres.database.azure.com",
     "privatelink.mysql.database.azure.com",
+    "privatelink.database.windows.net",
     "privatelink.azuredatabricks.net"
   ])
 
