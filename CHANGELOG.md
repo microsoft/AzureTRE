@@ -8,6 +8,7 @@ FEATURES:
 ENHANCEMENTS:
 
 BUG FIXES:
+* Removed 429 Error (Costs API) form presenting in UI ([#3929](https://github.com/microsoft/AzureTRE/issues/3929))
 
 COMPONENTS:
 
