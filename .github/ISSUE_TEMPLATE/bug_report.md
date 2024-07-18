@@ -15,8 +15,8 @@ A clear and concise description of what the bug is.
 **Steps to reproduce**
 
 1.
-1.
-1.
+2.
+3.
 
 **Azure TRE release version (e.g. v0.14.0 or main):**
 
