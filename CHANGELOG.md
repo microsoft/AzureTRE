@@ -6,6 +6,7 @@
 FEATURES:
 
 ENHANCEMENTS:
+* Update CycleCloud Shared Service ([#3933](https://github.com/microsoft/AzureTRE/issues/3933))
 
 BUG FIXES:
 
@@ -25,7 +26,6 @@ ENHANCEMENTS:
 * Update Guacamole Windows 11 VM Image to 2Win11-23h2-pro ([#3995](https://github.com/microsoft/AzureTRE/issues/3995))
 * Make check for email addresses prior to an airlock request being created optional. ([#3904](https://github.com/microsoft/AzureTRE/issues/3904))
 * Add Firewall SKU variable ([#3961](https://github.com/microsoft/AzureTRE/issues/3961))
-* Increase `E2E_TESTS_NUMBER_PROCESSES` from `1` to `3` in [pr_comment_bot.yml](.github/workflows/pr_comment_bot.yml)
 
 BUG FIXES:
 * Update Guacamole Linux VM Images to Ubuntu 22.04 LTS. Part of ([#3523](https://github.com/microsoft/AzureTRE/issues/3523))
