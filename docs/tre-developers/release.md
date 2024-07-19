@@ -7,11 +7,11 @@ The process follows these steps:
 1. Create a `Prep for Release v0...` issue to track.
 2. Create a new branch for the release prep and open in Dev Container.
 3. Update `CHANGELOG.md` in a PR with the following:
-   1. Rename the top-most version noted as unreleased with the version number that makes sense. Note that you don't have to keep the one that is currently in the file as the version number chosen should reflect the changes made (major, minor, etc.)
+   1. Rename the top-most version noted as unreleased with the version number that makes sense. Note that you don't have to keep the one that is currently in the file as the version number chosen should reflect the changes made (major, minor, etc.).
    2. Create a new section for the next-unreleased version so that future changes will be placed there.
-   3. Run `devops/scripts/list_versions.sh` and include the output in the change log for the version you're about the release
-4. Create PR linked to the `Prep...` issue.
-5. Merge the PR
+   3. Run `devops/scripts/list_versions.sh` and include the output in the change log for the version you're about the release.
+4. Create PR and link to the `Prep...` issue.
+5. Merge the PR.
 6. Create GitHub Release in `Pre Release` state.
    <!-- markdownlint-disable-next-line MD034 -->
    1. Go to https://github.com/microsoft/AzureTRE/releases/new
@@ -27,4 +27,4 @@ The process follows these steps:
    3. Compare both `.devcontainer` and `.github` folders of the new release with the ones in the repo and make required updates so that only required difference exist.
    The compare can be done with VSCode [Compare Folders extension](https://marketplace.visualstudio.com/items?itemName=moshfeu.compare-folders) as you have both the old version (under to root folder) and the "new" one inside the _AzureTRE_ symlink.
    4. With all changes made, rebuild the container to verify it's working and that AzureTRE folder has been populated correctly.
-8. Once tests have been complete edit GitHub Release to `Set as the latest release`.
+8. Once tests have been complete edit GitHub Release by disabling `Set as a pre-release` and enabling `Set as the latest release`.
