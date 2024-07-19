@@ -5,12 +5,12 @@ A release is created when enough changes have been made and the main branch is s
 The process follows these steps:
 
 1. Create a `Prep for Release v0...` issue to track.
-2. Create a new branch for the release prep.
+2. Create a new branch for the release prep and open in Dev Container.
 3. Update `CHANGELOG.md` in a PR with the following:
    1. Rename the top-most version noted as unreleased with the version number that makes sense. Note that you don't have to keep the one that is currently in the file as the version number chosen should reflect the changes made (major, minor, etc.)
    2. Create a new section for the next-unreleased version so that future changes will be placed there.
    3. Run `devops/scripts/list_versions.sh` and include the output in the change log for the version you're about the release
-4. Create PR linked to the `Prep...` issue and open in Dev Container.
+4. Create PR linked to the `Prep...` issue.
 5. Merge the PR
 6. Create GitHub Release in `Pre Release` state.
    <!-- markdownlint-disable-next-line MD034 -->
