@@ -1,18 +1,10 @@
 ---
 schemaVersion: 1.0.0
-name: tre-shared-service-gitea
-version: 1.0.2
-description: "A Gitea shared service"
-dockerfile: Dockerfile.tmpl
+name: tre-workspace-service-azuresql
+version: 1.0.9
+description: "An Azure SQL workspace service"
 registry: azuretre
-
-custom:
-  runtime_image:
-    name: gitea
-    build:
-      version_file: docker/version.txt
-      docker_file: docker/Dockerfile
-      docker_context: docker
+dockerfile: Dockerfile.tmpl
 
 credentials:
   - name: azure_tenant_id
@@ -24,15 +16,16 @@ credentials:
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
 parameters:
+  - name: workspace_id
+    type: string
   - name: tre_id
     type: string
-    description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
+
+  # the following are added automatically by the resource processor
   - name: id
     type: string
     description: "Resource ID"
-  - name: mgmt_acr_name
-    type: string
-    description: "The name of the Azure Container Registry"
+    env: id
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -40,6 +33,7 @@ parameters:
     type: string
     description: "The name of the Terraform state storage account"
   - name: tfstate_container_name
+    env: tfstate_container_name
     type: string
     default: "tfstate"
     description: "The name of the Terraform state storage container"
@@ -53,90 +47,75 @@ parameters:
     default: "public"
   - name: sql_sku
     type: string
-    default: "B | 4GB 2vCores"
+    default: "S2 | 50 DTUs"
+  - name: storage_gb
+    type: integer
+    default: 5
+  - name: db_name
+    type: string
+    default: tredb
 
 mixins:
+  - exec
   - terraform:
-      clientVersion: 1.3.6
+      clientVersion: 1.9.2
 
 outputs:
-  - name: gitea_allowed_fqdns_list
+  - name: azuresql_fqdn
     type: string
-    default: ""
-    applyTo:
-      - install
-      - upgrade
-  - name: address_prefixes
-    type: string
-    default: ""
-    applyTo:
-      - install
-      - upgrade
-  - name: connection_uri
-    type: string
-    applyTo:
-      - install
-      - upgrade
-  - name: is_exposed_externally
-    type: boolean
     applyTo:
       - install
       - upgrade
 
 install:
   - terraform:
-      description: "Deploy shared service"
+      description: "Deploy Azure SQL workspace service"
       vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
-        mgmt_resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
-        acr_name: ${ bundle.parameters.mgmt_acr_name }
-        arm_environment: ${ bundle.parameters.arm_environment }
         sql_sku: ${ bundle.parameters.sql_sku }
+        storage_gb: ${ bundle.parameters.storage_gb }
+        db_name: ${ bundle.parameters.db_name }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
-        key: ${ bundle.parameters.tre_id }-shared-service-gitea
+        key: tre-workspace-service-azuresql-${ bundle.parameters.id }
       outputs:
-        - name: gitea_allowed_fqdns_list
-        - name: address_prefixes
-        - name: connection_uri
-        - name: is_exposed_externally
-
+        - name: azuresql_fqdn
 upgrade:
   - terraform:
-      description: "Upgrade shared service"
+      description: "Upgrade Azure SQL workspace service"
       vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
-        mgmt_resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
-        acr_name: ${ bundle.parameters.mgmt_acr_name }
-        arm_environment: ${ bundle.parameters.arm_environment }
         sql_sku: ${ bundle.parameters.sql_sku }
+        storage_gb: ${ bundle.parameters.storage_gb }
+        db_name: ${ bundle.parameters.db_name }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
-        key: ${ bundle.parameters.tre_id }-shared-service-gitea
+        key: tre-workspace-service-azuresql-${ bundle.parameters.id }
       outputs:
-        - name: gitea_allowed_fqdns_list
-        - name: address_prefixes
-        - name: connection_uri
-        - name: is_exposed_externally
-
+        - name: azuresql_fqdn
 uninstall:
   - terraform:
-      description: "Tear down shared service"
+      description: "Tear down Azure SQL workspace service"
       vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
-        mgmt_resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
-        acr_name: ${ bundle.parameters.mgmt_acr_name }
-        arm_environment: ${ bundle.parameters.arm_environment }
         sql_sku: ${ bundle.parameters.sql_sku }
+        storage_gb: ${ bundle.parameters.storage_gb }
+        db_name: ${ bundle.parameters.db_name }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
-        key: ${ bundle.parameters.tre_id }-shared-service-gitea
+        key: tre-workspace-service-azuresql-${ bundle.parameters.id }
