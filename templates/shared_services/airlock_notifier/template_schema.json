@@ -77,5 +77,10 @@
         "stepId": "main"
       }
     ]
+  },
+  "uiSchema": {
+    "smtp_password" : {
+      "ui:widget": "password"
+    }
   }
 }
