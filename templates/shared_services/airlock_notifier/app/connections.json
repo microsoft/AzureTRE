@@ -26,7 +26,7 @@
   "managedApiConnections": {
     "smtp": {
       "api": {
-        "id": "/subscriptions/@appsetting('subscription')/providers/Microsoft.Web/locations/westeurope/managedApis/smtp"
+        "id": "/subscriptions/@appsetting('subscription')/providers/Microsoft.Web/locations/@appsetting('location')/managedApis/smtp"
       },
       "connection": {
         "id": "/subscriptions/@appsetting('subscription')/resourceGroups/@appsetting('resource_group')/providers/Microsoft.Web/connections/smtp"
@@ -35,6 +35,18 @@
         "type": "ManagedServiceIdentity"
       },
       "connectionRuntimeUrl": "@appsetting('smtp_connection_runtime_url')"
+    },
+    "servicebus": {
+      "api": {
+        "id": "/subscriptions/@appsetting('subscription')/providers/Microsoft.Web/locations/@appsetting('location')/managedApis/servicebus"
+      },
+      "authentication": {
+        "type": "ManagedServiceIdentity"
+      },
+      "connection": {
+        "id": "/subscriptions/@appsetting('subscription')/resourceGroups/@appsetting('resource_group')/providers/Microsoft.Web/connections/servicebus"
+      },
+      "connectionRuntimeUrl": "@appsetting('servicebus_connection_runtime_url')"
     }
   }
 }

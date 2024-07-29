@@ -45,7 +45,9 @@ resource "azurerm_logic_app_standard" "logic_app" {
     "FUNCTIONS_WORKER_RUNTIME"              = "node"
     "WEBSITE_NODE_DEFAULT_VERSION"          = "~20"
     "serviceBus_connectionString"           = data.azurerm_servicebus_namespace.core.default_primary_connection_string
+    "serviceBus_queueName"                  = azurerm_servicebus_queue.notifications_queue.name
     "subscription"                          = data.azurerm_subscription.current.subscription_id
+    "location"                              = data.azurerm_resource_group.core.location
     "resource_group"                        = data.azurerm_resource_group.core.name
     "smtp_server_address"                   = var.smtp_server_address
     "smtp_server_port"                      = var.smtp_server_port
@@ -57,13 +59,55 @@ resource "azurerm_logic_app_standard" "logic_app" {
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = data.azurerm_application_insights.core.connection_string
   }
   site_config {
-    ftps_state               = "Disabled"
-    vnet_route_all_enabled   = true
-    elastic_instance_minimum = 1
+    ftps_state                       = "Disabled"
+    vnet_route_all_enabled           = true
+    elastic_instance_minimum         = 1
+    runtime_scale_monitoring_enabled = true
   }
   identity {
     type = "SystemAssigned"
   }
   tags = local.tre_shared_service_tags
   lifecycle { ignore_changes = [tags] }
+}
+
+
+resource "azurerm_api_connection" "smtp" {
+  name                = "smtp"
+  resource_group_name = data.azurerm_resource_group.core.name
+  managed_api_id      = data.azurerm_managed_api.smtp.id
+  display_name        = "smtp"
+
+  parameter_values = {
+    "enableSSL"     = var.smtp_server_enable_ssl
+    "port"          = var.smtp_server_port
+    "password"      = var.smtp_password
+    "serverAddress" = var.smtp_server_address
+    "username"      = var.smtp_username
+  }
+
+  tags = local.tre_shared_service_tags
+
+  lifecycle {
+    # NOTE: since the connectionString is a secure value it's not returned from the API
+    ignore_changes = ["parameter_values", tags]
+  }
+}
+
+resource "azurerm_api_connection" "servicebus" {
+  name                = "servicebus"
+  resource_group_name = data.azurerm_resource_group.core.name
+  managed_api_id      = data.azurerm_managed_api.smtp.id
+  display_name        = "servicebus"
+
+  parameter_values = {
+    connectionString = data.azurerm_servicebus_namespace.core.default_primary_connection_string
+  }
+
+  tags = local.tre_shared_service_tags
+
+  lifecycle {
+    # NOTE: since the connectionString is a secure value it's not returned from the API
+    ignore_changes = ["parameter_values", tags]
+  }
 }

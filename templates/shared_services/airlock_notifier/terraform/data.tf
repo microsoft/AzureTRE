@@ -46,3 +46,13 @@ data "azurerm_ip_group" "resource_processor" {
   name                = "ipg-resource-processor"
   resource_group_name = local.core_resource_group_name
 }
+
+data "azurerm_managed_api" "servicebus" {
+  name     = "servicebus"
+  location = data.azurerm_resource_group.core.location
+}
+
+data "azurerm_managed_api" "smtp" {
+  name     = "smtp"
+  location = data.azurerm_resource_group.core.location
+}
