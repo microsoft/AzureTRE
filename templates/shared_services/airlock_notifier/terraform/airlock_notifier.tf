@@ -97,7 +97,7 @@ resource "azurerm_api_connection" "smtp" {
 resource "azurerm_api_connection" "servicebus" {
   name                = "servicebus"
   resource_group_name = data.azurerm_resource_group.core.name
-  managed_api_id      = data.azurerm_managed_api.smtp.id
+  managed_api_id      = data.azurerm_managed_api.servicebus.id
   display_name        = "servicebus"
 
   parameter_values = {
