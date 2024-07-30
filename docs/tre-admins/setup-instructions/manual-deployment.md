@@ -71,6 +71,22 @@ Open your browser and navigate to the `/api/docs` route of the API:  `https://<a
 
 ![Swagger UI](../../assets/quickstart_swaggerui.png)
 
+## Using the `DEPLOY_MODE` variable
+
+To use the `DEPLOY_MODE` variable, follow these steps:
+
+1. Set the `DEPLOY_MODE` variable to either `plan` or `apply` depending on your desired deployment mode.
+2. Run the deployment command with the `DEPLOY_MODE` variable set.
+
+Example:
+
+```bash
+export DEPLOY_MODE=plan
+make all
+```
+
+When `DEPLOY_MODE` is set to `plan`, the deployment script will execute the terraform plan without applying it, allowing you to review the changes before deciding to apply them. When `DEPLOY_MODE` is set to `apply`, the deployment script will execute the terraform plan and apply the changes automatically.
+
 ## Next steps
 
 * [Configure Shared Services](configuring-shared-services.md)

@@ -5,7 +5,7 @@ set -e
 function usage() {
     cat <<USAGE
 
-    Usage: $0 [-g | --mgmt-resource-group-name ]  [-s | --mgmt-storage-account-name] [-n | --state-container-name] [-k | --key] [-c | --cmd] [-l | --logfile]
+    Usage: $0 [-g | --mgmt-resource-group-name ]  [-s | --mgmt-storage-account-name] [-n | --state-container-name] [-k | --key] [-c | --cmd] [-l | --logfile] [-d | --deploy-mode]
 
     Options:
         -g, --mgmt-resource-group-name      Management resource group name
@@ -14,6 +14,7 @@ function usage() {
         -k, --key                           Key
         -c, --cmd                           Command to execute
         -l, --logfile                       Log file to write output to
+        -d, --deploy-mode                   Deployment mode (plan or apply)
 USAGE
     exit 1
 }
@@ -48,6 +49,10 @@ while [ "$1" != "" ]; do
     -l | --logfile)
         shift
         tf_logfile=$1
+        ;;
+    -d | --deploy-mode)
+        shift
+        deploy_mode=$1
         ;;
     *)
         usage
@@ -91,6 +96,11 @@ if [[ -z ${tf_logfile+x} ]]; then
     echo -e "No logfile provided, using ${tf_logfile}\n"
 fi
 
+if [[ -z ${deploy_mode+x} ]]; then
+    deploy_mode="apply"
+    echo -e "No deploy mode provided, using ${deploy_mode}\n"
+fi
+
 terraform init -input=false -backend=true -reconfigure \
     -backend-config="resource_group_name=${mgmt_resource_group_name}" \
     -backend-config="storage_account_name=${mgmt_storage_account_name}" \
@@ -102,6 +112,10 @@ while [ $RUN_COMMAND = 1 ]
 do
     RUN_COMMAND=0
     TF_CMD="$tf_command"
+
+    if [ "$deploy_mode" == "plan" ]; then
+        TF_CMD="terraform plan -out=tfplan && terraform show -json tfplan > plan_output.json"
+    fi
 
     script -c "$TF_CMD" "$tf_logfile"
 
@@ -127,4 +141,6 @@ do
     fi
 done
 
-
+if [ "$deploy_mode" == "plan" ]; then
+    echo "Terraform plan output saved to plan_output.json"
+fi

@@ -151,3 +151,13 @@ Configure variables used in the deployment workflow:
 ### Deploy the TRE using the workflow
 
 With all the repository secrets set, you can trigger a workflow run by pushing to develop/main of your fork, or by dispatching the workflow manually.
+
+To use the `DEPLOY_MODE` variable, follow these steps:
+
+1. Go to the "Actions" tab of your GitHub repository.
+2. Select the `deploy_tre.yml` workflow from the list of workflows.
+3. Click on the "Run workflow" button.
+4. In the "DEPLOY_MODE" input field, enter either `plan` or `apply` depending on your desired deployment mode.
+5. Click on the "Run workflow" button to start the deployment.
+
+When `DEPLOY_MODE` is set to `plan`, the workflow will execute the terraform plan without applying it, allowing you to review the changes before deciding to apply them. When `DEPLOY_MODE` is set to `apply`, the workflow will execute the terraform plan and apply the changes automatically.
