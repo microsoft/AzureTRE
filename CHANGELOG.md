@@ -14,7 +14,7 @@ ENHANCEMENTS:
 BUG FIXES:
 * Fix numbering issue within `bug_report.md` template ([#4028](https://github.com/microsoft/AzureTRE/pull/4028))
 * Disable public network access to the API App Service ([#3986](https://github.com/microsoft/AzureTRE/issues/3986))
-* Delete of in-progress container is triggered twice ([#4035](https://github.com/microsoft/AzureTRE/issues/4035))
+* Delete of in-progress container is triggered twice ([#3795](https://github.com/microsoft/AzureTRE/issues/3795))
 
 COMPONENTS:
 
