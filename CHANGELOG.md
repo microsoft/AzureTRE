@@ -14,6 +14,7 @@ ENHANCEMENTS:
 BUG FIXES:
 * Fix numbering issue within `bug_report.md` template ([#4028](https://github.com/microsoft/AzureTRE/pull/4028))
 * Disable public network access to the API App Service ([#3986](https://github.com/microsoft/AzureTRE/issues/3986))
+* Delete of in-progress container is triggered twice ([#4035](https://github.com/microsoft/AzureTRE/issues/4035))
 
 COMPONENTS:
 
@@ -687,7 +688,7 @@ ENHANCEMENTS:
 * Update docker base images to bullseye ([#2946](https://github.com/microsoft/AzureTRE/pull/2946)
 * Support updating the firewall when installing via makefile/CICD ([#2942](https://github.com/microsoft/AzureTRE/pull/2942))
 * Add the ability for workspace services to request additional address spaces from a workspace ([#2902](https://github.com/microsoft/AzureTRE/pull/2902))
-* Airlock processor function and api app service work with http2
+* Airlock function internal storage is accessed with private endpoints ([#2980](https://github.com/microsoft/AzureTRE/pull/2980))
 * Added the option to disable Swagger ([#2981](https://github.com/microsoft/AzureTRE/pull/2981))
 * Serverless CosmosDB for new deployments to reduce cost ([#3029](https://github.com/microsoft/AzureTRE/pull/3029))
 * Adding disable_download and disable_upload properties for guacamole ([#2967](https://github.com/microsoft/AzureTRE/pull/2967))
