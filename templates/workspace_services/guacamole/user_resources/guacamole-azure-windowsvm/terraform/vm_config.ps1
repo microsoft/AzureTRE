@@ -1,9 +1,13 @@
 Remove-Item -LiteralPath "C:\AzureData" -Force -Recurse
 $ErrorActionPreference = "Stop"
 
-if( ${SharedStorageAccess} -eq 1 )
+if( ${SharedStorageAccess} -eq 1 -And ${StorageAccountKey1} -match "/")
 {
-  $Command = "net use z: \\${StorageAccountFileHost}\${FileShareName} /u:AZURE\${StorageAccountName} ${StorageAccountKey}"
+  $Command = "net use z: \\${StorageAccountFileHost}\${FileShareName} /u:AZURE\${StorageAccountName} ${StorageAccountKey2}"
+  $Command | Out-File  "C:\ProgramData\Start Menu\Programs\StartUp\attach_storage.cmd" -encoding ascii
+} else
+{
+  $Command = "net use z: \\${StorageAccountFileHost}\${FileShareName} /u:AZURE\${StorageAccountName} ${StorageAccountKey1}"
   $Command | Out-File  "C:\ProgramData\Start Menu\Programs\StartUp\attach_storage.cmd" -encoding ascii
 }
 
