@@ -10,10 +10,12 @@ ENHANCEMENTS:
 * Update CycleCloud Shared Service ([#3933](https://github.com/microsoft/AzureTRE/issues/3933))
 * Add Case Study Docs ([#1366](https://github.com/microsoft/AzureTRE/issues/1366))
 * Ability to host TRE on a custom domain ([#4014](https://github.com/microsoft/AzureTRE/pull/4014))
+* Remove AppServiceFileAuditLogs diagnostic setting ([#4033](https://github.com/microsoft/AzureTRE/issues/4033))
 
 BUG FIXES:
 * Fix numbering issue within `bug_report.md` template ([#4028](https://github.com/microsoft/AzureTRE/pull/4028))
 * Disable public network access to the API App Service ([#3986](https://github.com/microsoft/AzureTRE/issues/3986))
+* Update Docs to format emojis properly ([#4027](https://github.com/microsoft/AzureTRE/issues/4027))
 
 COMPONENTS:
 
