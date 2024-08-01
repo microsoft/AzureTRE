@@ -1,6 +1,6 @@
 from mock import patch
 import logging
-from shared.logging import shell_output_logger
+from shared.logging import shell_output_logger, chunk_log_output
 
 
 @patch("shared.logging.logger")
@@ -29,3 +29,20 @@ def test_shell_output_logger_normal_case(mock_logger):
     console_output = "Some logs"
     shell_output_logger(console_output, "prefix", logging.DEBUG)
     mock_logger.log.assert_called_with(logging.DEBUG, "prefix Some logs")
+
+
+@patch("shared.logging.logger")
+def test_shell_output_logger_chunked_logging(mock_logger):
+    console_output = "A" * 60000  # 60,000 characters long
+    shell_output_logger(console_output, "prefix", logging.DEBUG)
+    assert mock_logger.log.call_count == 2
+    mock_logger.log.assert_any_call(logging.DEBUG, f"prefix {'A' * 30000}")
+    mock_logger.log.assert_any_call(logging.DEBUG, f"prefix {'A' * 30000}")
+
+
+def test_chunk_log_output():
+    output = "A" * 60000  # 60,000 characters long
+    chunks = list(chunk_log_output(output, chunk_size=30000))
+    assert len(chunks) == 2
+    assert chunks[0] == "A" * 30000
+    assert chunks[1] == "A" * 30000
