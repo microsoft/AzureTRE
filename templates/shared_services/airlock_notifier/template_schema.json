@@ -95,6 +95,9 @@
   "uiSchema": {
     "smtpPassword" : {
       "ui:widget": "password"
+    },
+    "smtp_from_email" : {
+      "ui:widget": "email"
     }
   }
 }
