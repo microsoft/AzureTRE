@@ -68,6 +68,12 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
               url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}`,
               isExpanded: false,
               links: sharedServiceLinkArray
+            },
+            {
+              name: 'Users',
+              key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/users`,
+              url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/users`,
+              isExpanded: false
             }
           ]
         }

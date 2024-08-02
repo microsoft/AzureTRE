@@ -13,6 +13,7 @@ from core import config
 from db.errors import EntityDoesNotExist
 from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace import Workspace, WorkspaceRole
+from models.domain.users import User as WorkspaceUser
 from resources import strings
 from db.repositories.workspaces import WorkspaceRepository
 from services.logging import logger
@@ -442,6 +443,30 @@ class AzureADAuthorization(AccessService):
         if RoleAssignment(resource_id=workspace_sp_id, role_id=workspace.properties['app_role_id_workspace_airlock_manager']) in user_role_assignments:
             return WorkspaceRole.AirlockManager
         return WorkspaceRole.NoRole
+
+    def get_workspace_users(self, workspace: Workspace) -> List[WorkspaceUser]:
+        msgraph_token = self._get_msgraph_token()
+        app_role_ids = {role_name: workspace.properties[role_id] for role_name, role_id in self.WORKSPACE_ROLES_DICT.items()}
+        inverted_app_role_ids = {role_id: role_name for role_name, role_id in app_role_ids.items()}
+
+        sp_id = workspace.properties["sp_id"]
+        roles_graph_data = self._get_user_role_assignments(sp_id, msgraph_token)
+        users_graph_data = self._get_user_emails(roles_graph_data, msgraph_token)
+
+        users = []
+        for role_assignment in roles_graph_data["value"]:
+            principal_id = role_assignment["principalId"]
+            principal_type = role_assignment["principalType"]
+
+            if principal_type != "ServicePrincipal" and principal_id in users_graph_data:
+                app_role_id = role_assignment["appRoleId"]
+                app_role_name = inverted_app_role_ids.get(app_role_id)
+
+                if app_role_name:
+                    for email in users_graph_data[principal_id]:
+                        users.append(WorkspaceUser(name="", email=email, roles=[app_role_name]))
+
+        return users
 
 
 def merge_dict(d1, d2):
