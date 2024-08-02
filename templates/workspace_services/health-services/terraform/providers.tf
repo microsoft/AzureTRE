@@ -5,9 +5,13 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "3.37.0"
     }
-    external = {
-      source  = "hashicorp/external"
-      version = "=2.2.3"
+    # external = {
+    #   source  = "hashicorp/external"
+    #   version = "=2.2.3"
+    # }
+    azapi = {
+      source = "Azure/azapi"
+      version = "1.14.0"
     }
   }
 
