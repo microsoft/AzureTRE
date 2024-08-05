@@ -15,7 +15,7 @@ moved {
 }
 
 resource "azurerm_public_ip" "fwmanagement" {
-  count               = var.sku_tier == "Basic" ? 1 : 0
+  count               = local.effective_firewall_sku == "Basic" ? 1 : 0
   name                = "pip-fw-management-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
   location            = data.azurerm_resource_group.rg.location
@@ -31,7 +31,7 @@ resource "azurerm_firewall" "fw" {
   name                = local.firewall_name
   resource_group_name = local.core_resource_group_name
   location            = data.azurerm_resource_group.rg.location
-  sku_tier            = var.sku_tier
+  sku_tier            = local.effective_firewall_sku
   sku_name            = "AZFW_VNet"
   firewall_policy_id  = azurerm_firewall_policy.root.id
   tags                = local.tre_shared_service_tags
@@ -42,7 +42,7 @@ resource "azurerm_firewall" "fw" {
   }
 
   dynamic "management_ip_configuration" {
-    for_each = var.sku_tier == "Basic" ? [1] : []
+    for_each = local.effective_firewall_sku == "Basic" ? [1] : []
     content {
       name                 = "mgmtconfig"
       subnet_id            = data.azurerm_subnet.firewall_management.id
@@ -80,7 +80,7 @@ resource "azurerm_firewall_policy" "root" {
   name                = local.firewall_policy_name
   resource_group_name = local.core_resource_group_name
   location            = data.azurerm_resource_group.rg.location
-  sku                 = var.sku_tier
+  sku                 = local.effective_firewall_sku
   tags                = local.tre_shared_service_tags
 
   lifecycle { ignore_changes = [tags] }
