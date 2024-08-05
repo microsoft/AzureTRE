@@ -25,6 +25,7 @@ resource "azurerm_linux_web_app" "api" {
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.id.id
   virtual_network_subnet_id       = module.network.web_app_subnet_id
+  public_network_access_enabled   = false
   tags                            = local.tre_core_tags
 
   app_settings = {
