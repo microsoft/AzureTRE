@@ -7,7 +7,7 @@ Examples of virtual machines using cloud-init are:
 - Sonatype Nexus VM
 - Apache Guacamole Linux VM
 
-## Retrieving the cloud-inmit logs
+## Retrieving the cloud-init logs
 Log onto the virtual machine using Bastion or serial console and run the following command to view the cloud-init logs:
 
 ```bash

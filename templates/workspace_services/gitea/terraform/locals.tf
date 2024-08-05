@@ -19,7 +19,7 @@ locals {
     tre_workspace_service_id = var.id
   }
   web_app_diagnostic_categories_enabled = [
-    "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
+    "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs",
     "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"
   ]
   gitea_openid_auth = "${var.aad_authority_url}/${data.azurerm_key_vault_secret.aad_tenant_id.value}/v2.0"
