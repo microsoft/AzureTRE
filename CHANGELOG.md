@@ -16,7 +16,7 @@ BUG FIXES:
 * Disable public network access to the API App Service ([#3986](https://github.com/microsoft/AzureTRE/issues/3986))
 * Add Dependabot Security updates for July
 * Update Docs to format emojis properly ([#4027](https://github.com/microsoft/AzureTRE/issues/4027))
-* Update API and Resource Processor opentelemetry versions
+* Update API and Resource Processor opentelemetry versions ([#4052](https://github.com/microsoft/AzureTRE/issues/4052))
 
 COMPONENTS:
 
