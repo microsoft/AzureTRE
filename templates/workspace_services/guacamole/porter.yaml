@@ -53,7 +53,7 @@ parameters:
     description: "Guacamole disable paste configuration"
   - name: guac_enable_drive
     type: boolean
-    default: true
+    default: false
     env: GUAC_ENABLE_DRIVE
     description: "Guacamole enable drive configuration"
   - name: guac_drive_name
