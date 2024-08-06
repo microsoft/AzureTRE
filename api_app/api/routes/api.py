@@ -24,8 +24,7 @@ workspace_tags_metadata = [
     {"name": "workspaces", "description": " **Workspace Owners and Researchers** can view their own workspaces"},
     {"name": "workspace services", "description": "**Workspace Owners** administer workspace services, **Workspace Owners and Researchers** can view services in the workspaces they belong to"},
     {"name": "user resources", "description": "**Researchers** administer and can view their own researchers, **Workspace Owners** can view/update/delete all user resources in their workspaces"},
-    {"name": "shared services", "description": "**TRE administratiors** administer shared services"},
-    {"name": "users", "description": "Retrieve users assigned to a workspace"},
+    {"name": "shared services", "description": "**TRE administratiors** administer shared services"}
 ]
 
 # Root
