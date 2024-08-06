@@ -160,6 +160,18 @@ resource "azurerm_key_vault_secret" "notify_uk_iss_id" {
   lifecycle { ignore_changes = [ value ] }
 }
 
+resource "azurerm_key_vault_secret" "notify_uk_email_subject_tag" {
+  name         = "notify-uk-email-subject-tag"
+  value        = ""
+  key_vault_id = azurerm_key_vault.kv.id
+  tags         = local.tre_core_tags
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
+
+  lifecycle { ignore_changes = [ value ] }
+}
+
 resource "azurerm_monitor_diagnostic_setting" "kv" {
   name                       = "diagnostics-kv-${var.tre_id}"
   target_resource_id         = azurerm_key_vault.kv.id

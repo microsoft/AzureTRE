@@ -29,11 +29,15 @@ async def send_message_notify_platform(message_properties: NotifyUkMessageInput)
         if(re.fullmatch(email_regex_validation, item)):
             validated_secondary_recipients_list.append(item)
 
+    email_subject_tag = ""
+    if config.NOTIFY_UK_EMAIL_SUBJECT_TAG != "":
+        email_subject_tag = f"{config.NOTIFY_UK_EMAIL_SUBJECT_TAG}: "
+
     async with httpx.AsyncClient() as client:
         personalisation_data = {
             "name": message_properties.name,
             "email": message_properties.email,
-            "subject": f"TRE: {message_properties.subject}",
+            "subject": f"{email_subject_tag}{message_properties.subject}",
             "workspace": message_properties.workspace,
             "issue_type": message_properties.issue_type,
             "error_message": message_properties.error_message,
