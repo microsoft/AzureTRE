@@ -9,10 +9,6 @@ terraform {
       source  = "hashicorp/external"
       version = "=2.2.3"
     }
-    azapi = {
-      source = "Azure/azapi"
-      version = "1.14.0"
-    }
   }
 
   backend "azurerm" {}
