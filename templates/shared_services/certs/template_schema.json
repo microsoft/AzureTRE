@@ -2,13 +2,27 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/certs/template_schema.json",
   "type": "object",
-  "title": "Certs Service",
+  "title": "Certificate Service",
   "description": "Provides SSL Certs for a specified internal domain",
   "required": [
     "domain_prefix",
     "cert_name"
   ],
   "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "default": "Certificate Service",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "default": "Provides an SSL certificate for a specified internal domain",
+      "updateable": true
+    },
     "domain_prefix": {
       "$id": "#/properties/domain_prefix",
       "type": "string",
@@ -21,5 +35,122 @@
       "title": "Cert name",
       "description": "What to call the certificate that's exported to KeyVault (alphanumeric and '-' only)"
     }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "97713f47-a6d9-490b-9bf6-79a3b59df402",
+        "stepTitle": "Add network firewall rules for certs/letsencrypt",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_rp_certs",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "LetsEncrypt",
+                  "description": "Resource Processor to interact with LetsEncrypt",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    },
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    }
+                  ],
+                  "target_fqdns": [
+                    "acme-v02.api.letsencrypt.org"
+                  ],
+                  "source_ip_groups_in_core": [
+                    "ipg-resource-processor"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "250a65e6-6f66-4a27-b2bc-9c9890948b46",
+        "stepTitle": "Update network firewall rules for certs/letsencrypt",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_rp_certs",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "LetsEncrypt",
+                  "description": "Resource Processor to interact with LetsEncrypt",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    },
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    }
+                  ],
+                  "target_fqdns": [
+                    "acme-v02.api.letsencrypt.org"
+                  ],
+                  "source_ip_groups_in_core": [
+                    "ipg-resource-processor"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "a0bd5e34-5902-4589-94a7-27dbc22f0724",
+        "stepTitle": "Remove network firewall rules for certs/letsencrypt",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_rp_certs"
+            }
+          }
+        ]
+      }
+    ]
   }
 }

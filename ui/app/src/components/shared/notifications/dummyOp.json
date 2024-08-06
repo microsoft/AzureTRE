@@ -1,0 +1,20 @@
+{
+    "id": "36847de7-aa82-40a8-bbe7-d211bd677467",
+    "resourceId": "8c70974a-5f66-4ae9-9502-7a54e9e0bb86",
+    "resourcePath": "/workspaces/1e800001-7385-46a1-9f6d-490a6201ea01/workspace-services/8c70974a-5f66-4ae9-9502-7a54e9e0bb86",
+    "resourceVersion": 0,
+    "status": "deploying",
+    "action": "install",
+    "message": "8c70974a-5f66-4ae9-9502-7a54e9e0bb86: install action completed successfully.",
+    "createdWhen": 1650653543.343581,
+    "updatedWhen": 1650653543.343581,
+    "user": {
+        "id": "7f9756c3-7925-4b78-a10b-83927ab9c008",
+        "name": "joalmeid@microsoft.com Lopes de Almeida",
+        "email": "",
+        "roles": [
+            "WorkspaceOwner"
+        ],
+        "roleAssignments": []
+    }
+}

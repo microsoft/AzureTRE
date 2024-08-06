@@ -7,19 +7,10 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
-# Prepare ssl certificate
-az login --identity -u "${MSI_ID}" --allow-no-subscriptions
-# -- get cert from kv as secret so it contains private key
-echo 'Getting cert and cert password from Keyvault...'
-az keyvault secret download --vault-name "${VAULT_NAME}" --name "${SSL_CERT_NAME}" --file temp.pfx --encoding base64
-cert_password=$(az keyvault secret show --vault-name "${VAULT_NAME}" \
-  --name "${SSL_CERT_PASSWORD_NAME}" -o tsv --query value)
-# -- az cli strips out password from cert so we re-add by converting to PEM then PFX with pwd
-openssl pkcs12 -in temp.pfx -out temp.pem -nodes -password pass:
-openssl pkcs12 -export -out nexus-ssl.pfx -in temp.pem -password "pass:$cert_password"
+echo "Setting up Nexus SSL..."
 
 # Import ssl cert to keystore within Nexus volume
-keystore_timeout=300
+keystore_timeout=60
 echo 'Checking for nexus-data/keystores directory...'
 while [ ! -d /etc/nexus-data/keystores ]; do
   # Wait for /keystore dir to be created by container first
@@ -27,13 +18,30 @@ while [ ! -d /etc/nexus-data/keystores ]; do
     echo 'ERROR - Timeout while waiting for Nexus to create nexus-data/keystores'
     exit 1
   fi
-  sleep 1
+  sleep 5
   ((keystore_timeout--))
 done
-echo 'Directory found. Importing ssl cert into nexus-data/keystores/keystore.jks...'
-keytool -v -importkeystore -noprompt -srckeystore nexus-ssl.pfx -srcstoretype PKCS12 \
-  -destkeystore /etc/nexus-data/keystores/keystore.jks \
-  -deststoretype JKS -srcstorepass "$cert_password" -deststorepass "$cert_password"
+
+downloaded_cert_path="/var/lib/waagent/Microsoft.Azure.KeyVault.Store/${VAULT_NAME}.${SSL_CERT_NAME}"
+cert_timeout=60
+echo 'Waiting for cert to be downloaded from KV...'
+while [ ! -f "$downloaded_cert_path" ]; do
+  if [ $cert_timeout == 0 ]; then
+    echo 'ERROR - Timeout while waiting!'
+    exit 1
+  fi
+  sleep 5
+  ((cert_timeout--))
+done
+
+keystore_file_name=ssl.keystore
+cert_password=$(openssl rand -base64 32)
+rm -f temp.p12
+openssl pkcs12 -export -inkey "$downloaded_cert_path" -in "$downloaded_cert_path" -out temp.p12 -password "pass:$cert_password"
+rm -f /etc/nexus-data/keystores/"$keystore_file_name"
+keytool -v -importkeystore -noprompt -srckeystore temp.p12 -srcstoretype PKCS12 -srcstorepass "$cert_password" \
+  -destkeystore /etc/nexus-data/keystores/"$keystore_file_name" -deststoretype PKCS12 -deststorepass "$cert_password"
+rm -f temp.p12
 
 # Configure Jetty instance within Nexus to consume ssl cert
 echo 'Modifying Nexus Jetty configuration to enable ssl...'
@@ -53,10 +61,10 @@ xmlstarlet ed -P --inplace \
 # -- then update the location of our keystore
 xmlstarlet ed -P --inplace \
   -u "/Configure[@id='Server']/New[@id='sslContextFactory']/Set[@name='KeyStorePath']" \
-  -v /nexus-data/keystores/keystore.jks /etc/nexus-data/etc/jetty/jetty-https.xml
+  -v /nexus-data/keystores/"$keystore_file_name" /etc/nexus-data/etc/jetty/jetty-https.xml
 xmlstarlet ed -P --inplace \
   -u "/Configure[@id='Server']/New[@id='sslContextFactory']/Set[@name='TrustStorePath']" \
-  -v /nexus-data/keystores/keystore.jks /etc/nexus-data/etc/jetty/jetty-https.xml
+  -v /nexus-data/keystores/"$keystore_file_name" /etc/nexus-data/etc/jetty/jetty-https.xml
 
 # Add jetty configuration and ssl port to Nexus properties
 cat >> /etc/nexus-data/etc/nexus.properties <<'EOF'

@@ -6,6 +6,7 @@ data "local_file" "deploypl_compute_cluster" {
 resource "azurerm_resource_group_template_deployment" "deploy_compute_cluster" {
   name                = "dpl-${local.service_resource_name_suffix}_deploy_compute_cluster"
   resource_group_name = data.azurerm_resource_group.ws.name
+  tags                = local.tre_workspace_service_tags
 
   template_content = data.local_file.deploypl_compute_cluster.content
 
@@ -45,6 +46,8 @@ resource "azurerm_resource_group_template_deployment" "deploy_compute_cluster" {
   })
 
   deployment_mode = "Incremental"
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 data "azurerm_container_registry" "aml" {

@@ -3,18 +3,8 @@ data "azurerm_log_analytics_workspace" "tre" {
   resource_group_name = local.core_resource_group_name
 }
 
-data "azurerm_app_service_plan" "core" {
+data "azurerm_service_plan" "core" {
   name                = "plan-${var.tre_id}"
-  resource_group_name = local.core_resource_group_name
-}
-
-data "azurerm_application_insights" "core" {
-  name                = "appi-${var.tre_id}"
-  resource_group_name = local.core_resource_group_name
-}
-
-data "azurerm_virtual_network" "core" {
-  name                = local.core_vnet
   resource_group_name = local.core_resource_group_name
 }
 
@@ -30,18 +20,13 @@ data "azurerm_subnet" "web_app" {
   name                 = "WebAppSubnet"
 }
 
-data "azurerm_firewall" "fw" {
-  name                = "fw-${var.tre_id}"
-  resource_group_name = local.core_resource_group_name
-}
-
 data "azurerm_private_dns_zone" "mysql" {
-  name                = "privatelink.mysql.database.azure.com"
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.mysql.database.azure.com"]
   resource_group_name = local.core_resource_group_name
 }
 
 data "azurerm_private_dns_zone" "azurewebsites" {
-  name                = "privatelink.azurewebsites.net"
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurewebsites.net"]
   resource_group_name = local.core_resource_group_name
 }
 
@@ -51,7 +36,7 @@ data "azurerm_storage_account" "gitea" {
 }
 
 data "local_file" "version" {
-  filename = "${path.module}/../version.txt"
+  filename = "${path.module}/../docker/version.txt"
 }
 
 data "azurerm_container_registry" "mgmt_acr" {
@@ -66,4 +51,11 @@ data "azurerm_key_vault" "keyvault" {
 
 data "azurerm_resource_group" "rg" {
   name = local.core_resource_group_name
+}
+
+data "azurerm_monitor_diagnostic_categories" "webapp" {
+  resource_id = data.azurerm_service_plan.core.id
+  depends_on = [
+    azurerm_linux_web_app.gitea,
+  ]
 }

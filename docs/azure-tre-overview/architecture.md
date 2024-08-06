@@ -8,15 +8,12 @@ All traffic has to be explicitly allowed by the Application Gateway or the Firew
 
 [![Architecture overview](../assets/archtecture-overview.png)](../assets/archtecture-overview.png)
 
-The Azure resources outside the network boundries of the Azure TRE are Azure Active Directory, Microsoft Graph and TRE Management. TRE Management are resources used during deployment.
+The Azure resources outside the network boundries of the Azure TRE are Microsoft Entra ID, Microsoft Graph and TRE Management. TRE Management are resources used during deployment.
 
 The Azure TRE core plane consists of two groups of components:
 
 - API & Composition Service
 - Shared Services
-
-!!! todo
-    The Shared Services [#23](https://github.com/microsoft/AzureTRE/issues/23) and Firewall Shared Service [#882](https://github.com/microsoft/AzureTRE/issues/882) are still work in progress.
 
 The TRE API is a service that users can interact with to request changes to workspaces e.g., to create, update, delete workspaces and workspace services inside each workspace. The Composition Service is doing the actual work of mutating the state of each Workspace including the Workspace Services.
 
@@ -53,19 +50,19 @@ To automate Porter it needs a place to live in Azure TRE. The home chosen for Po
 [![Resource Processor overview](../assets/resource-processor-overview.jpg)](../assets/resource-processor-overview.jpg)
 
 <!-- markdownlint-disable MD013 -->
-During the deployment of Resource Processor itself it is given the credentials of a managed identity with the privileges to modify and deploy resources to the subscription associated with the Azure TRE instance. Resource Processor later then uses these credentials to receive and send Service Bus messages, authorizes Porter to deploy Porter bundles and to access the storage account to update installation data.
+During the deployment of Resource Processor itself it is given the credentials of a managed identity with the privileges to modify and deploy resources to the subscription associated with the Azure TRE instance. Resource Processor then uses these credentials to receive and send Service Bus messages, authorizes Porter to access its state (stored in Cosmos-MongoDB) and deploy bundles.
 <!-- markdownlint-enable MD013 -->
 
 The logic in Resource Processor is written in Python. The Resource Processor implementation is located in [`resource_processor` folder](https://github.com/microsoft/AzureTRE/blob/main/resource_processor/) of the repository.
 
-The [TRE Administrator](user-roles.md#tre-administrator) can register a Porter bundle to use the Composition Service to provision instances of the Workspace Templates.
+The [TRE Administrator](user-roles.md#tre-administrator) can register a Porter bundle that will be used to provision instances of bundle (template).
 
 This requires:
 
 1. The Porter bundle to be pushed to the Azure Container Registry (ACR).
-1. Registering the Workspace through the API.
+1. Registering the Template through the API.
 
-Details on how to [register a Workspace Template](../tre-admins/registering-templates.md).
+Details on how to [register a Template](../tre-admins/registering-templates.md).
 
 ## Provisioning a Workspace
 
@@ -94,10 +91,10 @@ The flow to provision a Workspace is as follows (the flow is the same for all ki
 
     ```bash
     # simplified for readability
-    porter <action> --reference <ACR name>.azurecr.io/bundles/<name>:<version> --params key=value --cred <credentials set name or file>
+    porter <action> --reference <ACR name>.azurecr.io/bundles/<name>:<version> --params key=value --cred <credentials set name>
 
     # Example
-    porter install --reference msfttreacr.azurecr.io/bundles/BaseWorkspaceTemplate:1.0 --params param1=value1 --cred arm_auth_local_debugging.json
+    porter install --reference msfttreacr.azurecr.io/bundles/BaseWorkspaceTemplate:1.0 --params param1=value1 --cred arm_auth
     ```
 
     Deployments are carried out against the Azure Subscription using a User Assigned Managed Identity. The `arm_auth_local_debugging.json` tells Porter where the credential information can be found and for the Resource Processor they are set as environment variables.
@@ -106,8 +103,7 @@ The flow to provision a Workspace is as follows (the flow is the same for all ki
 
 1. The Porter Docker bundle is pulled from the Azure Container Registry (ACR) and executed.
 1. The Porter bundle executes against Azure Resource Manager to provision Azure resources. Any kind of infrastructure of code frameworks like ARM, Terraform, or Pulumi can be used or scripted via PowerShell or Azure CLI.
-1. Porter stores state and outputs in Azure Storage Containers. State for keeping persistent state between executions of a bundled with the same Workspace.
-1. For the time being, the Porter bundle updates Firewall rules directly setting egress rules. An enhancement to implement a Shared Firewall services is planned ([#882](https://github.com/microsoft/AzureTRE/issues/882)).
-1. The Resource Processor sends events to the `deploymentstatus` queue on state changes and informs if the deployment succeeded or failed.
+1. Porter stores state (like outputs) in Cosmos-MongoDB.
+1. The Resource Processor sends events to the `deploymentstatus` queue on status changes and informs if the deployment succeeded or failed.
 1. The API receives the status of the Porter bundle execution.
 1. The API updates the status of the Porter bundle execution in the Configuration Store.

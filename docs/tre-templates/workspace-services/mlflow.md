@@ -6,10 +6,6 @@ See: <https://www.mlflow.org>
 
 - [A base workspace deployed](https://microsoft.github.io/AzureTRE/tre-templates/workspaces/base/)
 
-- The MLflow workspace service container image needs building and pushing:
-
-  `make build-and-push-mlflow`
-
 ## MLflow Workspace VM Configuration
 
 Each MLflow server deployment creates a PowerShell (for Windows) and a shell script (for Linux) with the same name as the MLflow server, in the shared storage mounted on the researcher VMs.
@@ -30,7 +26,7 @@ mlflow.set_tracking_uri(remote_server_uri)
 
 ## Using with Conda-Forge
 
-If working with Conda-Forge you need to ensure the user resource you are using is configured correctly and using the channels available via the [Nexus repository](https://microsoft.github.io/AzureTRE/azure-tre-overview/shared-services/nexus/).
+If working with Conda-Forge you need to ensure the user resource you are using is configured correctly and using the channels available via the [Nexus repository](../shared-services/nexus/).
 If the user resource you have deployed used one of the pre-existing Guacamole user resource templates and has conda installed by default, conda will already be configured to use the correct channels via Nexus.
 If not and conda has been manually deployed on the user resource, the following script can be used to configure conda:
 

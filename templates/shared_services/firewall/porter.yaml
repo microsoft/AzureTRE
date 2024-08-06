@@ -1,9 +1,10 @@
 ---
+schemaVersion: 1.0.0
 name: tre-shared-service-firewall
-version: 0.3.0
+version: 1.2.0
 description: "An Azure TRE Firewall shared service"
-registry: azuretre
 dockerfile: Dockerfile.tmpl
+registry: azuretre
 
 credentials:
   - name: azure_tenant_id
@@ -38,50 +39,70 @@ parameters:
     default: false
   - name: rule_collections
     type: string
-    default: "W10=" #b64 for []
+    default: "W10=" # b64 for []
+    description: "Application rule collection array"
+  - name: network_rule_collections
+    type: string
+    default: "W10=" # b64 for []
+    description: "Network rule collection array"
+  - name: firewall_sku
+    type: string
+    default: Standard
+    description: The firewall and its policy SKU tier
+  - name: microsoft_graph_fqdn
+    type: string
+    default: "graph.microsoft.com"
+  - name: arm_environment
+    type: string
 
 mixins:
-  - exec
   - terraform:
-      clientVersion: 1.1.5
+      clientVersion: 1.4.5
 
 install:
   - terraform:
       description: "Deploy shared service"
-      input: false
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        api_driven_rule_collections_b64: "{{ bundle.parameters.rule_collections }}"
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
+        api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
+        firewall_sku: ${ bundle.parameters.firewall_sku }
+        microsoft_graph_fqdn: ${ bundle.parameters.microsoft_graph_fqdn }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-firewall"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-service-firewall
 
 upgrade:
   - terraform:
       description: "Upgrade shared service"
-      input: false
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        api_driven_rule_collections_b64: "{{ bundle.parameters.rule_collections }}"
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
+        api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
+        firewall_sku: ${ bundle.parameters.firewall_sku }
+        microsoft_graph_fqdn: ${ bundle.parameters.microsoft_graph_fqdn }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-firewall"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-service-firewall
 
 uninstall:
   - terraform:
       description: "Tear down shared service"
-      input: false
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        api_driven_rule_collections_b64: "{{ bundle.parameters.rule_collections }}"
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
+        api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
+        firewall_sku: ${ bundle.parameters.firewall_sku }
+        microsoft_graph_fqdn: ${ bundle.parameters.microsoft_graph_fqdn }
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-firewall"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-service-firewall

@@ -5,21 +5,27 @@
   "title": "User Resource Default Parameters",
   "description": "These parameters are required for all user resources",
   "required": [
-      "display_name",
-      "description"
+    "display_name",
+    "description"
   ],
   "properties": {
-      "display_name": {
-          "type": "string",
-          "title": "Name for the user resource",
-          "description": "The name of the user resource to be displayed to users",
-          "updateable": true
-      },
-      "description": {
-          "type": "string",
-          "title": "Description of the user resource",
-          "description": "Description of the user resource",
-          "updateable": true
-      }
+    "display_name": {
+      "type": "string",
+      "title": "Name for the user resource",
+      "description": "The name of the user resource to be displayed to users",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the user resource",
+      "description": "Description of the user resource",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "User Resource Overview",
+      "description": "Long form description of the user resource, in markdown syntax",
+      "updateable": true
+    }
   }
 }

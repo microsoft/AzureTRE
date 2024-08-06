@@ -2,8 +2,164 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/gitea/template_schema.json",
   "type": "object",
-  "title": "Gitea Shared Service",
-  "description": "Provides Gitea shared service",
+  "title": "Gitea - Git Mirror",
+  "description": "The Gitea shared service is typically used for mirroring external Git repositories.",
   "required": [],
-  "properties": {}
+  "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "default": "Git Mirror",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "default": "Access mirrored Git repositories.",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace Service Overview",
+      "description": "Long form description of the workspace service, in markdown syntax",
+      "default": "The Gitea shared service is used for mirroring external Git repositories. For instructions on how to create Git mirrors see [https://docs.gitea.com/usage/repo-mirror](https://docs.gitea.com/usage/repo-mirror).",
+      "updateable": true
+    },
+    "sql_sku": {
+      "$id": "#/properties/sql_sku",
+      "type": "string",
+      "title": "MySQL server SKU",
+      "description": "MySQL server SKU",
+      "updateable": true,
+      "enum": [
+        "B | 4GB 2vCores",
+        "GP | 8GB 2vCores",
+        "BC | 16GB 2vCores"
+      ],
+      "default": "B | 4GB 2vCores"
+    },
+    "is_exposed_externally": {
+      "$id": "#/properties/is_exposed_externally",
+      "type": "boolean",
+      "title": "Expose externally",
+      "description": "Is the Gitea accessible from outside of the TRE network.",
+      "default": false
+    }
+  },
+  "uiSchema": {
+    "is_exposed_externally": {
+      "classNames": "tre-hidden"
+    }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "260421b3-7308-491f-b531-e007cdc0ff46",
+        "stepTitle": "Add gitea rule collection to firewall",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_web_app_subnet_gitea_v2",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "nexus-package-sources",
+                  "description": "Nexus Package Sources",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    },
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    }
+                  ],
+                  "target_fqdns": "{{ resource.properties.gitea_allowed_fqdns_list }}",
+                  "source_addresses": "{{ resource.properties.address_prefixes }}"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "360421b3-7308-491f-b531-e007cdc0ff47",
+        "stepTitle": "Update gitea rule collection in firewall",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_web_app_subnet_gitea_v2",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "nexus-package-sources",
+                  "description": "Nexus Package Sources",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    },
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    }
+                  ],
+                  "target_fqdns": "{{ resource.properties.gitea_allowed_fqdns_list }}",
+                  "source_addresses": "{{ resource.properties.address_prefixes }}"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "460421b3-7308-491f-b531-e007cdc0ff48",
+        "stepTitle": "Remove gitea rule collection from firewall",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_web_app_subnet_gitea_v2"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ]
+  }
 }

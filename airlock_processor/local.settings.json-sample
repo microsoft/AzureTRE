@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AIRLOCK_STATUS_CHANGED_QUEUE_NAME": "status_changed",
+    "AIRLOCK_SCAN_RESULT_QUEUE_NAME": "scan_result",
+    "SB_CONNECTION_STRING": "Endpoint=sb://XXXX.servicebus.windows.net/;SharedAccessKeyName=.....",
+    "BLOB_CREATED_TOPIC_NAME": "",
+    "TOPIC_SUBSCRIPTION_NAME":"",
+    "TRE_ID": "",
+    "ENABLE_MALWARE_SCANNING": "false"
+  }
+}

@@ -1,29 +1,9 @@
-FROM debian:stretch-slim
+# syntax=docker/dockerfile-upstream:1.4.0
+FROM --platform=linux/amd64 debian:bullseye-slim
 
-ARG BUNDLE_DIR
+# PORTER_INIT
 
-RUN apt-get update && apt-get install -y ca-certificates
-
-# Install Azure CLI
-RUN apt-get update \
-    && apt-get install -y ca-certificates jq curl apt-transport-https lsb-release gnupg \
-    && curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null \
-    && AZ_REPO=$(lsb_release -cs) \
-    && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list \
-    && apt-get update && apt-get -y install azure-cli
-
-# This is a template Dockerfile for the bundle's invocation image
-# You can customize it to use different base images, install tools and copy configuration files.
-#
-# Porter will use it as a template and append lines to it for the mixins
-# and to set the CMD appropriately for the CNAB specification.
-#
-# Add the following line to porter.yaml to instruct Porter to use this template
-# dockerfile: Dockerfile.tmpl
-
-# You can control where the mixin's Dockerfile lines are inserted into this file by moving "# PORTER_MIXINS" line
-# another location in this file. If you remove that line, the mixins generated content is appended to this file.
 # PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
-COPY . $BUNDLE_DIR
+COPY --link . ${BUNDLE_DIR}/

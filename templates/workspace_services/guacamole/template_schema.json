@@ -2,10 +2,31 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/template_schema.json",
   "type": "object",
-  "title": "Virtual Desktop Service",
+  "title": "Apache Guacamole - Virtual Desktop Service",
   "description": "Enables Windows and Linux virtual machines to be accessed via Apache Guacamole.",
   "required": [],
   "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "default": "Virtual Desktops",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "default": "Access Windows and Linux virtual machines via Apache Guacamole",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace Service Overview",
+      "description": "Long form description of the workspace service, in markdown syntax",
+      "default": "Access Windows and Linux virtual machines via Apache Guacamole. Documentation for using this service can be found here: [https://guacamole.apache.org/doc/gug/using-guacamole.html](https://guacamole.apache.org/doc/gug/using-guacamole.html)",
+      "updateable": true
+    },
     "guac_disable_copy": {
       "$id": "#/properties/guac_disable_copy",
       "type": "boolean",
@@ -25,26 +46,154 @@
       "type": "boolean",
       "title": "Enable Drive",
       "description": "Enable mounted drive",
-      "updateable": true
+      "updateable": true,
+      "default": false
     },
     "guac_disable_download": {
       "$id": "#/properties/guac_disable_download",
       "type": "boolean",
       "title": "Disable files download",
       "description": "Disable files download",
-      "updateable": true
+      "updateable": true,
+      "default": true
+    },
+    "guac_disable_upload": {
+      "$id": "#/properties/guac_disable_upload",
+      "type": "boolean",
+      "title": "Disable files upload",
+      "description": "Disable files upload",
+      "updateable": true,
+      "default": true
     },
     "is_exposed_externally": {
       "$id": "#/properties/is_exposed_externally",
       "type": "boolean",
       "title": "Expose externally",
-      "description": "Is the Guacamole service exposed outside of the vnet"
-    },
-    "workspace_identifier_uri": {
-      "$id": "#/properties/workspace_identifier_uri",
-      "type": "string",
-      "title": "Workspace Identifier URI (Scope)",
-      "description": "The audience/scope/identifier uri of the workspace in AAD"
+      "description": "Is the Guacamole service exposed outside of the vnet",
+      "default": true
     }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "12ba0dad-ea6c-4d0d-9255-d316212f5ffa",
+        "stepTitle": "Add Guacamole URI as AAD redirect URI",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "aad_redirect_uris",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}",
+              "value": "{{ resource.properties.authentication_callback_uri }}"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "260421b3-7308-491f-b531-e007cdc0ff46",
+        "stepTitle": "Add network firewall rules for guacamole",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_guacamole",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureAD",
+                  "description": "AAD access for authNZ",
+                  "source_addresses": "{{ resource.properties.web_apps_addresses }}",
+                  "destination_addresses": [
+                    "AzureActiveDirectory"
+                  ],
+                  "destination_ports": [
+                    "*"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "741c7ff2-eff5-47b2-bf62-2b410d65c96b",
+        "stepTitle": "Update Guacamole URI in AAD",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "aad_redirect_uris",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}",
+              "value": "{{ resource.properties.authentication_callback_uri }}"
+            }
+          }
+        ]
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "758d8043-4455-45ee-b9b5-a0586bb9f6cf",
+        "stepTitle": "Remove network firewall rules for guacamole",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_guacamole"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "9a1d6b95-26c8-4165-8010-573dd4e2b45c",
+        "stepTitle": "Update guacamole URI to AAD redirect URI",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "aad_redirect_uris",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ]
   }
 }

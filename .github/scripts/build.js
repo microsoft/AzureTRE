@@ -5,6 +5,7 @@
 // These tests can be run from the dev container using the run-tests.sh script
 //
 const { createHash } = require('crypto');
+const { create } = require('domain');
 
 async function getCommandFromComment({ core, context, github }) {
   const commentUsername = context.payload.comment.user.login;
@@ -91,6 +92,15 @@ async function getCommandFromComment({ core, context, github }) {
           const runTests = await handleTestCommand({ core, github }, parts, "extended tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests-extended";
+          }
+          break;
+        }
+
+      case "/test-extended-aad":
+        {
+          const runTests = await handleTestCommand({ core, github }, parts, "extended AAD tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
+          if (runTests) {
+            command = "run-tests-extended-aad";
           }
           break;
         }
@@ -238,6 +248,7 @@ async function showHelp({ github }, repoOwner, repoName, prNumber, commentUser, 
 You can use the following commands:
 &nbsp;&nbsp;&nbsp;&nbsp;/test - build, deploy and run smoke tests on a PR
 &nbsp;&nbsp;&nbsp;&nbsp;/test-extended - build, deploy and run smoke & extended tests on a PR
+&nbsp;&nbsp;&nbsp;&nbsp;/test-extended-aad - build, deploy and run smoke & extended AAD tests on a PR
 &nbsp;&nbsp;&nbsp;&nbsp;/test-shared-services - test the deployment of shared services on a PR build
 &nbsp;&nbsp;&nbsp;&nbsp;/test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)
 &nbsp;&nbsp;&nbsp;&nbsp;/test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)
@@ -282,11 +293,12 @@ function getRefIdForBranch(branchName) {
   return createShortHash(`refs/heads/${branchName}\n`);
 }
 function createShortHash(ref) {
-  const hash = createHash('sha1').update(ref, 'utf8').digest('hex')
+  const hash = createHash('sha512').update(ref, 'utf8').digest('hex');
   return hash.substring(0, 8);
 }
 
 module.exports = {
   getCommandFromComment,
-  labelAsExternalIfAuthorDoesNotHaveWriteAccess
+  labelAsExternalIfAuthorDoesNotHaveWriteAccess,
+  createShortHash
 }

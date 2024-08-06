@@ -6,6 +6,9 @@
   "description": "Linux virtual machine.",
   "required": [
   ],
+  "authorizedRoles": [
+    "WorkspaceOwner", "WorkspaceResearcher"
+  ],
   "properties": {
     "os_image": {
       "$id": "#/properties/os_image",
@@ -13,8 +16,7 @@
       "title": "Linux image",
       "description": "Select Linux image to use for VM",
       "enum": [
-        "Ubuntu 18.04",
-        "Ubuntu 18.04 Data Science VM"
+        "Ubuntu 22.04 LTS"
       ]
     },
     "vm_size": {
@@ -30,16 +32,12 @@
       ],
       "updateable": true
     },
-    "nexus_version": {
-      "$id": "#/properties/nexus_version",
-      "type": "string",
-      "title": "Nexus",
-      "description": "Which Nexus proxy service to use, i.e. V1 for the App Service-based Nexus or V2 for the VM-based service",
-      "enum": [
-        "V1",
-        "V2"
-      ],
-      "default": "V1"
+    "shared_storage_access": {
+      "$id": "#/properties/shared_storage_access",
+      "type": "boolean",
+      "title": "Shared storage",
+      "default": true,
+      "description": "Enable access to shared storage"
     }
   }
 }

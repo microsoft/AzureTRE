@@ -43,43 +43,36 @@ For more information on how to use API, refer to [API documentation](./api.md#us
 
 On Azure Portal, find an Virtual VM scale set with a name `vmss-rp-porter-${TRE_ID}`.
 
-### Resource Processor logs in LogAnalytics
+### Connect to the Resource Processor terminal
 
-To find logs in LogAnalytics, go to your resource group, then to LogAnalytics instance, which is named like `log-${TRE_ID}`.
+The processor runs in a VNET, and you cannot connect to it directly. To SSH to this instance, use Bastion.
 
-There, you can run a query like
+1. Navigate to the VMSS instance named `vmss-rp-porter-${TRE_ID}` in the Azure Portal.
+1. Click on `Instances` in the left menu.
+1. Click on an instance name.
+1. Click on `Connect -> Bastion` in the top menu.
 
-```cmd
-AppTraces 
-| where AppRoleName == "runner.py"
-| order by TimeGenerated desc 
-```
+  ![Bastion](../assets/bastion.png "Bastion")
 
-### SSH-ing to the instance
-
-The processor runs in a VNET, and you cannot connect to it directly.
-To SSH to this instance, use Bastion.
-
-1. Find a keyvault with a name `kv-${TRE_ID}` in your resource group.
-1. Copy a secret named `resource-processor-vmss-password`
-
-    ![VMSS Password](../assets/vmss_password.png)
+1. Set `Authentication type` to `Password from Azure Key Vault`.
+1. Set Username to `adminuser`.
+1. Set the Key Vault to  `kv-${TRE_ID}` and Azure Key Vault Secret to `resource-processor-vmss-password`.
 
     If you don't have permissions to see the secret, add yourself to the Access Policy of this keyvault with a permission to read secrets:
 
     [![Keyvault access policy](../assets/rp_kv_access_policy.png)](../assets/rp_kv_access_policy.png)
-1. Connect to the instance using Bastion. Use the username `adminuser` and the password you just copied.
 
-  ![Bastion](../assets/bastion.png "Bastion")
+1. Click `Connect`.
+
 
 ### Getting container logs
 
 1. SSH into the Resource Processor VM as described above
-1. Check the status of the container using `sudo docker ps`
+1. Check the status of the container using `docker ps`
 
     If you see nothing (and the container was pulled) then the processor has either not started yet or it has crashed.
 
-1. Get the logs from the container using `sudo docker logs <container_id>` command.
+1. Get the logs from the container using `docker logs <container_id>` command.
 
 ### Starting container manually
 
@@ -128,11 +121,11 @@ Furthermore, Porter provides a set of [mixins](https://porter.sh/mixins/) - anal
 
 ### Porter Azure plugin
 
-Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to store Porter data in TRE management storage account. The storage table, named `porter`, is created during the bootstrapping phase of TRE deployment. The `/resource_processor/run.sh` script generates a `config.toml` file in Porter home folder to enable the Azure plugin when the image is started.
+Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to access secrets in Azure Key Vault.
 
 ### Porter bundle inputs
 
-When Porter runs bundle actions, it passes input parameters. Full set of inputs that Porter passes can be found in [config.py](../../resource_processor/shared/config.py).
+When Porter runs bundle actions, it passes input parameters. Full set of inputs that Porter passes can be found in [config.py](https://github.com/microsoft/AzureTRE/blob/main/resource_processor/shared/config.py).
 
 !!! info
     Note that Resource Processor does not pass any location-related attributes when running bundle actions. Instead, a `location` attribute is passed from the API. This is so that different TRE resources could be potentially deployed to different regions.

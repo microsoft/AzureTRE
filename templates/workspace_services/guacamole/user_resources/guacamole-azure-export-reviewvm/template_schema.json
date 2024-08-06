@@ -1,0 +1,41 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm/template_schema.json",
+    "type": "object",
+    "title": "Export review Virtual Machine",
+    "description": "Windows virtual machine for export review",
+    "required": [
+    ],
+    "authorizedRoles": [
+      "AirlockManager"
+    ],
+    "properties": {
+      "os_image": {
+        "$id": "#/properties/os_image",
+        "type": "string",
+        "title": "Windows image",
+        "description": "Select Windows image to use for VM",
+        "enum": [
+          "Server 2019 Data Science VM"
+        ]
+      },
+      "vm_size": {
+        "$id": "#/properties/vm_size",
+        "type": "string",
+        "title": "VM Size",
+        "description": "Select size of VM",
+        "enum": [
+          "2 CPU | 8GB RAM"
+        ],
+        "updateable": true
+      },
+      "airlock_request_sas_url": {
+        "$id": "#/properties/airlock_request_sas_url",
+        "type": "string",
+        "title": "Airlock request SAS Token",
+        "description": "SAS Token for airlock request",
+        "updateable": false,
+        "sensitive": true
+      }
+    }
+}

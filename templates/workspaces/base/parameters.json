@@ -1,13 +1,13 @@
 {
-  "schemaVersion": "1.0.0-DRAFT+TODO",
-  "name": "base",
-  "created": "2021-06-04T13:37:29.5071039+03:00",
-  "modified": "2021-06-04T13:37:29.5071039+03:00",
+  "schemaType": "ParameterSet",
+  "schemaVersion": "1.0.1",
+  "namespace": "",
+  "name": "tre-workspace-base",
   "parameters": [
     {
-      "name": "address_space",
+      "name": "address_spaces",
       "source": {
-        "env": "ADDRESS_SPACE"
+        "env": "ADDRESS_SPACES"
       }
     },
     {
@@ -65,9 +65,33 @@
       }
     },
     {
+      "name": "create_aad_groups",
+      "source": {
+        "env": "CREATE_AAD_GROUPS"
+      }
+    },
+    {
       "name": "client_id",
       "source": {
         "env": "CLIENT_ID"
+      }
+    },
+    {
+      "name": "client_secret",
+      "source": {
+        "env": "CLIENT_SECRET"
+      }
+    },
+    {
+      "name": "scope_id",
+      "source": {
+        "env": "SCOPE_ID"
+      }
+    },
+    {
+      "name": "workspace_owner_object_id",
+      "source": {
+        "env": "WORKSPACE_OWNER_OBJECT_ID"
       }
     },
     {
@@ -86,6 +110,42 @@
       "name": "app_role_id_workspace_researcher",
       "source": {
         "env": "APP_ROLE_ID_WORKSPACE_RESEARCHER"
+      }
+    },
+    {
+      "name": "app_role_id_workspace_airlock_manager",
+      "source": {
+        "env": "APP_ROLE_ID_WORKSPACE_AIRLOCK_MANAGER"
+      }
+    },
+    {
+      "name": "aad_redirect_uris",
+      "source": {
+        "env": "AAD_REDIRECT_URIS"
+      }
+    },
+    {
+      "name": "app_service_plan_sku",
+      "source": {
+        "env": "WORKSPACE_APP_SERVICE_PLAN_SKU"
+      }
+    },
+    {
+      "name": "enable_airlock",
+      "source": {
+        "env": "ENABLE_AIRLOCK"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
+      }
+    },
+    {
+      "name": "azure_environment",
+      "source": {
+        "env": "AZURE_ENVIRONMENT"
       }
     }
   ]

@@ -1,0 +1,74 @@
+{
+  "schemaType": "ParameterSet",
+  "schemaVersion": "1.0.1",
+  "namespace": "",
+  "name": "tre-workspace-service-health",
+  "parameters": [
+    {
+      "name": "workspace_id",
+      "source": {
+        "env": "WORKSPACE_ID"
+      }
+    },
+    {
+      "name": "tre_id",
+      "source": {
+        "env": "TRE_ID"
+      }
+    },
+    {
+      "name": "id",
+      "source": {
+        "env": "ID"
+      }
+    },
+    {
+      "name": "tfstate_container_name",
+      "source": {
+        "env": "TERRAFORM_STATE_CONTAINER_NAME"
+      }
+    },
+    {
+      "name": "tfstate_resource_group_name",
+      "source": {
+        "env": "MGMT_RESOURCE_GROUP_NAME"
+      }
+    },
+    {
+      "name": "tfstate_storage_account_name",
+      "source": {
+        "env": "MGMT_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "deploy_fhir",
+      "source": {
+        "env": "DEPLOY_FHIR"
+      }
+    },
+    {
+      "name": "fhir_kind",
+      "source": {
+        "env": "FHIR_KIND"
+      }
+    },
+    {
+      "name": "deploy_dicom",
+      "source": {
+        "env": "DEPLOY_DICOM"
+      }
+    },
+    {
+      "name": "aad_authority_url",
+      "source": {
+        "env": "AAD_AUTHORITY_URL"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
+      }
+    }
+  ]
+}

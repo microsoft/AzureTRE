@@ -1,16 +1,13 @@
-import logging
-import traceback
-
-from starlette.requests import Request
-from starlette.responses import PlainTextResponse
-
-from core import config
 from resources import strings
+
+from fastapi import Request
+from fastapi.responses import PlainTextResponse
+
+from services.logging import logger
 
 
 async def generic_error_handler(_: Request, exception: Exception) -> PlainTextResponse:
-    logging.debug("=====================================")
-    logging.exception(exception)
-    logging.debug("=====================================")
-    error_string = traceback.format_exc() if config.DEBUG else strings.UNABLE_TO_PROCESS_REQUEST
-    return PlainTextResponse(error_string, status_code=500)
+    logger.debug("=====================================")
+    logger.exception(exception)
+    logger.debug("=====================================")
+    return PlainTextResponse(strings.UNABLE_TO_PROCESS_REQUEST, status_code=500)

@@ -75,7 +75,7 @@ There, you can run a query like
 
 ```cmd
 AppTraces 
-| where AppRoleName == "uvicorn"
+| where AppRoleName == "api"
 | order by TimeGenerated desc 
 ```
 
@@ -99,22 +99,6 @@ To deploy a new version of the API to your TRE deployment, do this:
 make build-and-push-api
 make deploy-core
 ```
-
-### Enabling DEBUG mode on the API
-
-For security, the API is by default configured to not show detailed error messages and stack trace when an error occurs.
-
-You can enable debugging via one of the two ways:
-
-1. Set `DEBUG=true` in `templates/core/.env` file (see [])
-
-To enable debugging on an already running instance:
-
-1. Go to App Service for the API and select **Settings > Configuration**.
-1. Click **New Application Setting**.
-1. in the new dialog box set **Name=DEBUG** and **Value=true**
-
-![API Debug True](../assets/api_debug_true.png)
 
 ## Using Swagger UI
 
@@ -160,7 +144,7 @@ make auth
 ```
 
 Alternatively, in Azure Portal you can add the redirect URL to the App Registration.
-Under AAD, find App Registrations, and find the App Registration with the ID shown in the error message.
+Under Microsoft Entra ID, find App Registrations, and find the App Registration with the ID shown in the error message.
 There, go to Redirect URL and add the URL given to you by the error message (it will have a form of
 `https://${TRE_ID}.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect`).
 

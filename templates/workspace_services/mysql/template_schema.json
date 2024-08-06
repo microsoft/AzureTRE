@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/sql/template_schema.json",
+  "type": "object",
+  "title": "MySQL Workspace Service",
+  "description": "Provides MySQL within the workspace",
+  "required": [],
+  "properties": {
+    "sql_sku": {
+      "$id": "#/properties/sql_sku",
+      "type": "string",
+      "title": "MySQL server SKU",
+      "description": "MySQL server SKU",
+      "updateable": true,
+      "enum": [
+        "B | 4GB 2vCores",
+        "GP | 8GB 2vCores",
+        "BC | 16GB 2vCores"
+      ],
+      "default": "B | 4GB 2vCores"
+    },
+    "storage_mb": {
+      "$id": "#/properties/storage_mb",
+      "type": "number",
+      "title": "Max storage allowed for a server",
+      "description": "Max storage allowed for a server",
+      "default": 5120
+    },
+    "db_name": {
+      "$id": "#/properties/db_name",
+      "type": "string",
+      "title": "Database name",
+      "description": "Database name",
+      "default": "tredb"
+    }
+  }
+}

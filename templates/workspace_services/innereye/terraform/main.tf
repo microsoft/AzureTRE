@@ -5,6 +5,14 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "=2.97.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "=3.4.2"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "=2.4.0"
+    }
   }
   backend "azurerm" {
   }
@@ -13,6 +21,11 @@ terraform {
 
 provider "azurerm" {
   features {}
+}
+
+module "terraform_azurerm_environment_configuration" {
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
+  arm_environment = var.arm_environment
 }
 
 data "azurerm_resource_group" "ws" {
@@ -34,9 +47,4 @@ data "azurerm_subnet" "services" {
   name                 = "ServicesSubnet"
   virtual_network_name = data.azurerm_virtual_network.ws.name
   resource_group_name  = data.azurerm_virtual_network.ws.resource_group_name
-}
-
-data "azurerm_network_security_group" "ws" {
-  name                = "nsg-ws"
-  resource_group_name = data.azurerm_virtual_network.ws.resource_group_name
 }

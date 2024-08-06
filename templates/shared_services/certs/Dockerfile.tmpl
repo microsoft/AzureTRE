@@ -1,26 +1,26 @@
-FROM python:3.8
+# syntax=docker/dockerfile-upstream:1.4.0
+FROM --platform=linux/amd64 python:3.8-slim-bullseye
 
-ARG BUNDLE_DIR
+# PORTER_INIT
 
-RUN apt-get update \
-    && apt-get install -y ca-certificates \
-    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Install Azure CLI
-RUN apt-get update \
-    && apt-get install -y ca-certificates jq curl apt-transport-https lsb-release gnupg \
-    && curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null \
-    && AZ_REPO=$(lsb_release -cs) \
-    && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list \
-    && apt-get update && apt-get -y install azure-cli \
-    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Install jq
+RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+    apt-get update \
+    && apt-get install -y --no-install-recommends jq
 
 # Install Certbot
-RUN apt-get update && apt-get install -y python3 python3-venv libaugeas0 \
+RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+    apt-get update \
+    && apt-get install -y --no-install-recommends libaugeas0 \
     && python3 -m venv /opt/certbot/ \
     && /opt/certbot/bin/pip install --no-cache-dir --upgrade pip \
-    && /opt/certbot/bin/pip install --no-cache-dir certbot \
-    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+    && /opt/certbot/bin/pip install --no-cache-dir certbot
+
+# PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
-COPY . $BUNDLE_DIR
+COPY --link . ${BUNDLE_DIR}/

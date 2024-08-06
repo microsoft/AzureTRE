@@ -1,0 +1,121 @@
+---
+schemaVersion: 1.0.0
+name: tre-workspace-service-mysql
+version: 1.0.2
+description: "A MySQL workspace service"
+registry: azuretre
+dockerfile: Dockerfile.tmpl
+
+credentials:
+  - name: azure_tenant_id
+    env: ARM_TENANT_ID
+  - name: azure_subscription_id
+    env: ARM_SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: ARM_CLIENT_ID
+  - name: azure_client_secret
+    env: ARM_CLIENT_SECRET
+parameters:
+  - name: workspace_id
+    type: string
+  - name: tre_id
+    type: string
+
+  # the following are added automatically by the resource processor
+  - name: id
+    type: string
+    description: "Resource ID"
+    env: id
+  - name: tfstate_resource_group_name
+    type: string
+    description: "Resource group containing the Terraform state storage account"
+  - name: tfstate_storage_account_name
+    type: string
+    description: "The name of the Terraform state storage account"
+  - name: tfstate_container_name
+    env: tfstate_container_name
+    type: string
+    default: "tfstate"
+    description: "The name of the Terraform state storage container"
+  - name: arm_use_msi
+    env: ARM_USE_MSI
+    type: boolean
+    default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+    type: string
+    default: "public"
+  - name: sql_sku
+    type: string
+    default: "B | 4GB 2vCores"
+  - name: storage_mb
+    type: integer
+    default: 5120
+  - name: db_name
+    type: string
+    default: tredb
+
+mixins:
+  - exec
+  - terraform:
+      clientVersion: 1.3.6
+
+outputs:
+  - name: mysql_fqdn
+    type: string
+    applyTo:
+      - install
+      - upgrade
+
+install:
+  - terraform:
+      description: "Deploy MySQL workspace service"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        sql_sku: ${ bundle.parameters.sql_sku }
+        storage_mb: ${ bundle.parameters.storage_mb }
+        db_name: ${ bundle.parameters.db_name }
+        arm_environment: ${ bundle.parameters.arm_environment }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-workspace-service-mysql-${ bundle.parameters.id }
+      outputs:
+        - name: mysql_fqdn
+upgrade:
+  - terraform:
+      description: "Upgrade MySQL workspace service"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        sql_sku: ${ bundle.parameters.sql_sku }
+        storage_mb: ${ bundle.parameters.storage_mb }
+        db_name: ${ bundle.parameters.db_name }
+        arm_environment: ${ bundle.parameters.arm_environment }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-workspace-service-mysql-${ bundle.parameters.id }
+      outputs:
+        - name: mysql_fqdn
+uninstall:
+  - terraform:
+      description: "Tear down MySQL workspace service"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        sql_sku: ${ bundle.parameters.sql_sku }
+        storage_mb: ${ bundle.parameters.storage_mb }
+        db_name: ${ bundle.parameters.db_name }
+        arm_environment: ${ bundle.parameters.arm_environment }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-workspace-service-mysql-${ bundle.parameters.id }

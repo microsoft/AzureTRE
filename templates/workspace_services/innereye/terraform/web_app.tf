@@ -13,6 +13,7 @@ resource "azurerm_app_service" "inference" {
   resource_group_name = data.azurerm_resource_group.ws.name
   app_service_plan_id = data.azurerm_app_service_plan.workspace.id
   https_only          = true
+  tags                = local.tre_workspace_service_tags
 
   site_config {
     always_on     = true
@@ -46,6 +47,8 @@ resource "azurerm_app_service" "inference" {
     type  = "Custom"
     value = random_uuid.inference_auth_key.result
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_app_service_virtual_network_swift_connection" "inference" {
@@ -54,7 +57,7 @@ resource "azurerm_app_service_virtual_network_swift_connection" "inference" {
 }
 
 data "azurerm_private_dns_zone" "azurewebsites" {
-  name                = "privatelink.azurewebsites.net"
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurewebsites.net"]
   resource_group_name = local.core_resource_group_name
 }
 
@@ -63,6 +66,7 @@ resource "azurerm_private_endpoint" "inference" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
+  tags                = local.tre_workspace_service_tags
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.inference.id
@@ -72,7 +76,9 @@ resource "azurerm_private_endpoint" "inference" {
   }
 
   private_dns_zone_group {
-    name                 = "privatelink.azurewebsites.net"
+    name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurewebsites.net"]
     private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
+
+  lifecycle { ignore_changes = [tags] }
 }

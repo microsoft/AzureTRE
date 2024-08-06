@@ -40,8 +40,8 @@ def read_schema(schema_file: str) -> Tuple[List[str], Dict]:
 def enrich_template(original_template, extra_properties, is_update: bool = False, is_workspace_scope: bool = True) -> dict:
     template = original_template.dict(exclude_none=True)
 
-    all_required = [template["required"]] + [definition[0] for definition in extra_properties]
-    all_properties = [template["properties"]] + [definition[1] for definition in extra_properties]
+    all_required = [definition[0] for definition in extra_properties] + [template["required"]]
+    all_properties = [definition[1] for definition in extra_properties] + [template["properties"]]
 
     template["required"] = merge_required(all_required)
     template["properties"] = merge_properties(all_properties)
@@ -50,8 +50,20 @@ def enrich_template(original_template, extra_properties, is_update: bool = False
     # this will help the UI render fields appropriately and know what it can send in a PATCH
     if is_update:
         for prop in template["properties"].values():
-            if "updateable" not in prop.keys() or prop["updateable"] is not True:
+            if not prop.get("updateable", False):
                 prop["readOnly"] = True
+
+        if "allOf" in template:
+            for conditional_property in template["allOf"]:
+                for condition in ["then", "else"]:
+                    if condition in conditional_property and "properties" in conditional_property[condition]:
+                        for prop in conditional_property[condition]["properties"].values():
+                            if not prop.get("updateable", False):
+                                prop["readOnly"] = True
+
+    # if there is an 'allOf' property which is empty, the validator fails - so remove the key
+    if "allOf" in template and template["allOf"] is None:
+        template.pop("allOf")
 
     if is_workspace_scope:
         id_field = "workspace_id"

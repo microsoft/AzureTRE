@@ -11,17 +11,15 @@ set -o pipefail
 function usage() {
     cat <<USAGE
 
-    Usage: $0 [-u --tre_url]  [-c --current] [-i --insecure]
+    Usage: $0 [-c --current] [-i --insecure]
 
     Options:
         -r, --acr-name                Azure Container Registry Name
         -t, --bundle-type             Bundle type: workspace, workspace_service, user_resource or shared_service
         -w, --workspace-service-name  The template name of the user resource (if registering a user_resource)
         -c, --current                 Make this the currently deployed version of this template
-        -i, --insecure                Bypass SSL certificate checks
-        -u, --tre_url                 URL for the TRE (required for automatic registration)
-        -a, --access-token            Azure access token to automatically post to the API (required for automatic registration)
         -v, --verify                  Verify registration with the API
+        --dry-run                     Don't submit the template to the API, just output the payload
 USAGE
     exit 1
 }
@@ -33,13 +31,10 @@ fi
 
 current="false"
 verify="false"
+dry_run="false"
 
 while [ "$1" != "" ]; do
     case $1 in
-    -u | --tre_url)
-        shift
-        tre_url=$1
-        ;;
     -r | --acr-name)
         shift
         acr_name=$1
@@ -68,15 +63,11 @@ while [ "$1" != "" ]; do
     -c| --current)
         current="true"
         ;;
-    -i| --insecure)
-        insecure=1
-        ;;
-    -a | --access-token)
-        shift
-        access_token=$1
-        ;;
     -v| --verify)
         verify="true"
+        ;;
+    --dry-run)
+        dry_run="true"
         ;;
     *)
         echo "Unexpected argument: '$1'"
@@ -105,66 +96,71 @@ if [[ -z ${bundle_type:-} ]]; then
     usage
 fi
 
-explain_json=$(porter explain --reference "${acr_name}".azurecr.io/"$(yq eval '.name' porter.yaml)":v"$(yq eval '.version' porter.yaml)" -o json)
+acr_domain_suffix=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)
+explain_json=$(porter explain --reference "${acr_name}${acr_domain_suffix}"/"$(yq eval '.name' porter.yaml)":v"$(yq eval '.version' porter.yaml)" -o json)
 
 payload=$(echo "${explain_json}" | jq --argfile json_schema template_schema.json --arg current "${current}" --arg bundle_type "${bundle_type}" '. + {"json_schema": $json_schema, "resourceType": $bundle_type, "current": $current}')
 
-function get_http_code() {
-  curl_output="$1"
-  http_code=$(echo "${curl_output}" | grep HTTP | sed 's/.*HTTP\/1\.1 \([0-9]\+\).*/\1/' | tail -n 1)
-}
-
-if [ -z "${access_token:-}" ]; then
-  # If access token isn't set, try to obtain it
-  if [ -z "${ACCESS_TOKEN:-}" ]
-  then
-    echo "API access token isn't available - automatic bundle registration not possible. Use the script output to self-register. "
+if [ "${dry_run}" == "true" ]; then
+    echo "--dry-run specified - automatic bundle registration disabled. Use the script output to self-register. "
     echo "See documentation for more details: https://microsoft.github.io/AzureTRE/tre-admins/registering-templates/"
     echo "${payload}" | jq --color-output .
     exit 1
-  fi
-  access_token=${ACCESS_TOKEN}
 fi
+
 if [ "${bundle_type}" == "user_resource" ] && [ -z "${workspace_service_name:-}" ]; then
   echo -e "You must supply a workspace service_name name if you would like to automatically register the user_resource bundle\n"
   echo "${payload}" | jq --color-output .
   usage
 fi
 
-if [[ -n ${insecure+x} ]]; then
-    options="-k"
+template_name=$(yq eval '.name' porter.yaml)
+template_version=$(yq eval '.version' porter.yaml)
+
+
+function get_template() {
+  case "${bundle_type}" in
+    ("workspace") get_result=$(tre workspace-template "$template_name" show --output json) || echo ;;
+    ("workspace_service") get_result=$(tre workspace-service-template "$template_name" show --output json) || echo ;;
+    ("user_resource") get_result=$(tre workspace-service-template "${workspace_service_name}" user-resource-template "$template_name" show --output json) || echo;;
+    ("shared_service") get_result=$(tre shared-service-template "$template_name" show --output json) || echo ;;
+  esac
+  echo "$get_result"
+}
+
+
+get_result=$(get_template)
+if [[ -n "$(echo "$get_result" | jq -r .id)" ]]; then
+  # 'id' was returned - so we successfully got the template from the API. Now check the version
+  if [[ "$(echo "$get_result" | jq -r .version)" == "$template_version" ]]; then
+    echo "Template with this version already exists"
+    exit
+  fi
+else
+  error_code=$(echo "$get_result" | jq -r .status_code)
+  # 404 Not Found error at this point is fine => we want to continue to register the template
+  # For other errors, show the error and exit with non-zero result
+  if [[  "$error_code" != "404" ]]; then
+    echo "Error checking for existing template: $get_result"
+    exit 1
+  fi
 fi
 
-if [[ -z ${tre_url} ]]; then
-  # access_token specified but no URL
-  echo -e "No TRE URL provided\n"
-  usage
-fi
 
+# If we got here then register the template - CLI exits with non-zero result on error
 case "${bundle_type}" in
-  ("workspace") tre_get_path="api/workspace-templates" ;;
-  ("workspace_service") tre_get_path="api/workspace-service-templates" ;;
-  ("user_resource") tre_get_path="api/workspace-service-templates/${workspace_service_name}/user-resource-templates";;
-  ("shared_service") tre_get_path="api/shared-service-templates";;
+  ("workspace") tre workspace-templates new --definition "${payload}" ;;
+  ("workspace_service") tre workspace-service-templates new --definition "${payload}" ;;
+  ("user_resource") tre workspace-service-template "${workspace_service_name}" user-resource-templates new --definition "${payload}" ;;
+  ("shared_service") tre shared-service-templates new --definition "${payload}";;
 esac
-
-register_result=$(curl -i -X "POST" "${tre_url}/${tre_get_path}" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${access_token}" -d "${payload}" "${options}")
-get_http_code "${register_result}"
-if [[ ${http_code} == 409 ]]; then
-  echo "Template with this version already exists"
-elif [[ ${http_code} != 201 ]]; then
-  echo "Error while registering template"
-  echo "${register_result}"
-  exit 1
-fi
 
 if [[ "${verify}" = "true" ]]; then
   # Check that the template got registered
-  template_name=$(yq eval '.name' porter.yaml)
-  status_code=$(curl -X "GET" "${tre_url}/${tre_get_path}/${template_name}" -H "accept: application/json" -H "Authorization: Bearer ""${access_token}""" "${options}" -s -w "%{http_code}" -o /dev/null)
 
-  if [[ ${status_code} != 200 ]]; then
-    echo "::warning ::Template API check for ${bundle_type} ${template_name} returned http status: ${status_code}"
+  get_result=$(get_template)
+  if [[ -z "$(echo "$get_result" | jq -r .id)" ]]; then
+    echo "Error checking for template after registering: $get_result"
     exit 1
   fi
 fi

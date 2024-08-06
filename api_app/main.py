@@ -1,14 +1,12 @@
-import logging
-import os
-from opencensus.ext.azure.trace_exporter import AzureExporter
+import asyncio
 import uvicorn
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
-from fastapi_utils.tasks import repeat_every
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.concurrency import asynccontextmanager
 
-from services.tracing import RequestTracerMiddleware
-from opencensus.trace.samplers import ProbabilitySampler
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from starlette.exceptions import HTTPException
 from starlette.middleware.errors import ServerErrorMiddleware
@@ -18,31 +16,52 @@ from api.errors.http_error import http_error_handler
 from api.errors.validation_error import http422_error_handler
 from api.errors.generic_error import generic_error_handler
 from core import config
-from core.events import create_start_app_handler, create_stop_app_handler
-from services.logging import disable_unwanted_loggers, initialize_logging
-from service_bus.deployment_status_update import receive_message_and_update_deployment
+from db.events import bootstrap_database
+from services.logging import initialize_logging, logger
+from service_bus.deployment_status_updater import DeploymentStatusUpdater
+from service_bus.airlock_request_status_update import AirlockStatusUpdater
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    while not await bootstrap_database():
+        await asyncio.sleep(5)
+        logger.warning("Database connection could not be established")
+
+    deploymentStatusUpdater = DeploymentStatusUpdater()
+    await deploymentStatusUpdater.init_repos()
+
+    airlockStatusUpdater = AirlockStatusUpdater()
+    await airlockStatusUpdater.init_repos()
+
+    asyncio.create_task(deploymentStatusUpdater.receive_messages())
+    asyncio.create_task(airlockStatusUpdater.receive_messages())
+    yield
 
 
 def get_application() -> FastAPI:
     application = FastAPI(
         title=config.PROJECT_NAME,
-        debug=config.DEBUG,
+        debug=(config.LOGGING_LEVEL == "DEBUG"),
         description=config.API_DESCRIPTION,
         version=config.VERSION,
         docs_url=None,
         redoc_url=None,
-        openapi_url=None
+        openapi_url=None,
+        lifespan=lifespan
     )
 
-    application.add_event_handler("startup", create_start_app_handler(application))
-    application.add_event_handler("shutdown", create_stop_app_handler(application))
-
-    try:
-        application.add_middleware(RequestTracerMiddleware, exporter=AzureExporter(connection_string=f'InstrumentationKey={os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")}', sampler=ProbabilitySampler(1.0)))
-    except Exception as e:
-        logging.error(f"Failed to add RequestTracerMiddleware: {e}")
-
     application.add_middleware(ServerErrorMiddleware, handler=generic_error_handler)
+
+    # Allow local UI debugging with local API
+    if config.ENABLE_LOCAL_DEBUGGING:
+        application.add_middleware(
+            CORSMiddleware,
+            allow_origins=["http://localhost:3000"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"])
+
     application.add_exception_handler(HTTPException, http_error_handler)
     application.add_exception_handler(RequestValidationError, http422_error_handler)
 
@@ -50,24 +69,9 @@ def get_application() -> FastAPI:
     return application
 
 
+initialize_logging()
 app = get_application()
-
-
-@app.on_event("startup")
-async def initialize_logging_on_startup():
-    if config.DEBUG:
-        initialize_logging(logging.DEBUG)
-    else:
-        initialize_logging(logging.INFO)
-
-    disable_unwanted_loggers()
-
-
-@app.on_event("startup")
-@repeat_every(seconds=20, wait_first=True, logger=logging.getLogger())
-async def update_deployment_status() -> None:
-    await receive_message_and_update_deployment(app)
-
+FastAPIInstrumentor.instrument_app(app)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, loop="asyncio")

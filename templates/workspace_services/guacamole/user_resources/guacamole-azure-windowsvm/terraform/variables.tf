@@ -1,15 +1,28 @@
-variable "workspace_id" {}
-variable "tre_id" {}
-variable "parent_service_id" {}
-
-variable "arm_client_id" {}
-variable "arm_client_secret" {}
-variable "arm_tenant_id" {}
-variable "arm_use_msi" {}
-variable "tre_resource_id" {}
-
-variable "image" {}
-variable "vm_size" {}
-variable "shared_storage_access" {}
-variable "shared_storage_name" {}
-variable "nexus_version" {}
+variable "workspace_id" {
+  type = string
+}
+variable "tre_id" {
+  type = string
+}
+variable "parent_service_id" {
+  type = string
+}
+variable "tre_resource_id" {
+  type = string
+}
+variable "image" {
+  type = string
+}
+variable "vm_size" {
+  type = string
+}
+variable "shared_storage_access" {
+  type = bool
+}
+variable "shared_storage_name" {
+  type = string
+}
+variable "image_gallery_id" {
+  type    = string
+  default = ""
+}

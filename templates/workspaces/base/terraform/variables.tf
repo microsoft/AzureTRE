@@ -19,9 +19,9 @@ variable "location" {
   description = "Azure location (region) for deployment of core TRE services"
 }
 
-variable "address_space" {
+variable "address_spaces" {
   type        = string
-  description = "VNet address space for the workspace services"
+  description = "VNet address space (base 64)"
 }
 
 variable "deploy_app_service_plan" {
@@ -32,7 +32,6 @@ variable "deploy_app_service_plan" {
 
 variable "app_service_plan_sku" {
   type        = string
-  default     = "P1v3"
   description = "App Service Plan SKU"
 }
 
@@ -46,6 +45,22 @@ variable "register_aad_application" {
   type        = bool
   default     = false
   description = "Create an AAD application automatically for the Workspace."
+}
+
+variable "create_aad_groups" {
+  type        = bool
+  default     = false
+  description = "Create AAD groups automatically for the Workspace Application Roles."
+}
+
+variable "enable_airlock" {
+  type        = bool
+  description = "Controls the deployment of Airlock resources in the workspace."
+}
+
+variable "aad_redirect_uris_b64" {
+  type    = string # B64 encoded list of objects like [{"name": "my uri 1", "value": "https://..."}, {}]
+  default = "W10=" #b64 for []
 }
 
 variable "auth_tenant_id" {
@@ -73,6 +88,11 @@ variable "app_role_id_workspace_researcher" {
   default     = ""
   description = "The id of the application role WorkspaceResearcher in the identity provider, this is passed in so that we may return it as an output."
 }
+variable "app_role_id_workspace_airlock_manager" {
+  type        = string
+  default     = ""
+  description = "The id of the application role AirlockManager in the identity provider, this is passed in so that we may return it as an output."
+}
 variable "client_id" {
   type        = string
   default     = ""
@@ -99,15 +119,6 @@ variable "workspace_owner_object_id" {
   description = "The Object Id of the user that you wish to be the Workspace Owner. E.g. the TEST_AUTOMATION_ACCOUNT."
 }
 
-
-locals {
-  core_vnet                      = "vnet-${var.tre_id}"
-  short_workspace_id             = substr(var.tre_resource_id, -4, -1)
-  core_resource_group_name       = "rg-${var.tre_id}"
-  workspace_resource_name_suffix = "${var.tre_id}-ws-${local.short_workspace_id}"
-  storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
-  keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
-  vnet_subnets                   = cidrsubnets(var.address_space, 1, 1)
-  services_subnet_address_prefix = local.vnet_subnets[0]
-  webapps_subnet_address_prefix  = local.vnet_subnets[1]
+variable "arm_environment" {
+  type = string
 }

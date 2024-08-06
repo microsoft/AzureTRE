@@ -3,7 +3,9 @@ name: Docker build
 
 on:  # yamllint disable-line rule:truthy
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - 'feature/**'
   workflow_dispatch:
 
 # for each ref (branch/pr) run just the most recent, cancel
@@ -17,13 +19,20 @@ jobs:
     name: Build images
     runs-on: ubuntu-latest
     steps:
+      - name: Upload Event File
+        # this step is required to publish test results from forks
+        uses: actions/upload-artifact@v4
+        with:
+          name: Event File
+          path: ${{ github.event_path }}
+
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       - name: Filter changes
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
@@ -34,15 +43,23 @@ jobs:
             resource_processor:
               - 'resource_processor/**/*'
             resource_processor_version:
-              - 'resource_processor/version.txt'
+              - 'resource_processor/_version.py'
             guacamole_server:
               - 'templates/workspace_services/guacamole/guacamole-server/**/*'
             guacamole_server_version:
-              - 'templates/workspace_services/guacamole/version.txt'
+              - 'templates/workspace_services/guacamole/guacamole-server/docker/version.txt'
             gitea:
-              - 'templates/shared_services/gitea/**/*'
+              - 'templates/shared_services/gitea/docker/**/*'
             gitea_version:
-              - 'templates/shared_services/gitea/version.txt'
+              - 'templates/shared_services/gitea/docker/version.txt'
+            airlock_processor:
+              - 'airlock_processor/**/*'
+            airlock_processor_version:
+              - 'airlock_processor/_version.py'
+            ui_app:
+              - 'ui/app/**/*'
+            ui_app_version:
+              - 'ui/app/package.json'
 
       - name: "Stale version: api"
         if: ${{ steps.filter.outputs.api == 'true' &&
@@ -64,9 +81,19 @@ jobs:
           steps.filter.outputs.gitea_version == 'false' }}
         run: echo "::error::Code update without version change" && exit 1
 
+      - name: "Stale version: airlock_processor"
+        if: ${{ steps.filter.outputs.airlock_processor == 'true' &&
+          steps.filter.outputs.airlock_processor_version == 'false' }}
+        run: echo "::error::Code update without version change" && exit 1
+
+      - name: "Stale version: ui_app"
+        if: ${{ steps.filter.outputs.ui_app == 'true' &&
+          steps.filter.outputs.ui_app_version == 'false' }}
+        run: echo "::error::Code update without version change" && exit 1
+
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v3
 
       # Unit Tests are executed by calling the 'test-results' target in the
       # Dockerfile's. Test runner exit codes must be swallowed (and kept) so we
@@ -78,7 +105,7 @@ jobs:
         if: |
           (steps.filter.outputs.api == 'true'
           || github.event_name == 'workflow_dispatch')
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
           context: ./api_app/
           file: ./api_app/Dockerfile
@@ -89,7 +116,7 @@ jobs:
 
       - name: "Check pytest failure file existence"
         id: check_api_test_result
-        uses: andstor/file-existence-action@v1
+        uses: andstor/file-existence-action@v3
         with:
           files: "test-results/pytest_api_unit_failed"
 
@@ -98,7 +125,7 @@ jobs:
           (steps.filter.outputs.api == 'true'
           || github.event_name == 'workflow_dispatch')
           && steps.check_api_test_result.outputs.files_exists == 'false'
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
           context: ./api_app/
           file: ./api_app/Dockerfile
@@ -109,7 +136,7 @@ jobs:
         if: |
           (steps.filter.outputs.resource_processor == 'true'
           || github.event_name == 'workflow_dispatch')
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
           context: ./resource_processor
           file: ./resource_processor/vmss_porter/Dockerfile
@@ -120,7 +147,7 @@ jobs:
         if: |
           (steps.filter.outputs.guacamole_server == 'true'
           || github.event_name == 'workflow_dispatch')
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
           context: ./templates/workspace_services/guacamole/guacamole-server
           file: ./templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile
@@ -131,7 +158,7 @@ jobs:
 
       - name: "Check maven failure file existence"
         id: check_maven_test_result
-        uses: andstor/file-existence-action@v1
+        uses: andstor/file-existence-action@v3
         with:
           files: "test-results/guacamole_package_failed"
 
@@ -140,7 +167,7 @@ jobs:
           (steps.filter.outputs.guacamole_server == 'true'
           || github.event_name == 'workflow_dispatch')
           && steps.check_maven_test_result.outputs.files_exists == 'false'
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
           context: ./templates/workspace_services/guacamole/guacamole-server
           file: ./templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile
@@ -151,22 +178,53 @@ jobs:
         if: |
           (steps.filter.outputs.gitea == 'true'
           || github.event_name == 'workflow_dispatch')
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
-          context: ./templates/shared_services/gitea
-          file: ./templates/shared_services/gitea/Dockerfile
+          context: ./templates/shared_services/gitea/docker
+          file: ./templates/shared_services/gitea/docker/Dockerfile
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Unit Tests are executed by calling the 'test-results' target in the
+      # Dockerfile's. Test runner exit codes must be swallowed (and kept) so we
+      # can output the test results. This means we have to check for failure
+      # trigger files in later steps.
+      - name: "Test image: airlock_processor"
+        # test should be before build since its docker target
+        # is prior to runtime
+        if: |
+          (steps.filter.outputs.airlock_processor == 'true'
+          || github.event_name == 'workflow_dispatch')
+        uses: docker/build-push-action@v5
+        with:
+          context: ./airlock_processor/
+          file: ./airlock_processor/Dockerfile
+          outputs: type=local,dest=test-results
+          target: test-results
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: "Check pytest failure file existence"
+        id: check_airlock_processor_test_result
+        uses: andstor/file-existence-action@v3
+        with:
+          files: "test-results/pytest_airlock_processor_unit_failed"
+
+      - name: "Build image: airlock_processor"
+        if: |
+          (steps.filter.outputs.airlock_processor == 'true'
+          || github.event_name == 'workflow_dispatch')
+          && steps.check_airlock_processor_test_result.outputs.files_exists == 'false'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./airlock_processor/
+          file: ./airlock_processor/Dockerfile
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Upload Unit Test Results
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: test-results
-
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always()
-        with:
-          files: test-results/**/*.xml

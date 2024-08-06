@@ -2,12 +2,15 @@ resource "azurerm_network_interface" "nexus" {
   name                = "nic-nexus-${var.tre_id}"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = local.core_resource_group_name
+  tags                = local.tre_shared_service_tags
 
   ip_configuration {
     name                          = "primary"
     subnet_id                     = data.azurerm_subnet.shared.id
     private_ip_address_allocation = "Dynamic"
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "nexus_core_vnet" {
@@ -15,6 +18,9 @@ resource "azurerm_private_dns_zone_virtual_network_link" "nexus_core_vnet" {
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.nexus.name
   virtual_network_id    = data.azurerm_virtual_network.core.id
+  tags                  = local.tre_shared_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_a_record" "nexus_vm" {
@@ -23,6 +29,9 @@ resource "azurerm_private_dns_a_record" "nexus_vm" {
   resource_group_name = local.core_resource_group_name
   ttl                 = 300
   records             = [azurerm_linux_virtual_machine.nexus.private_ip_address]
+  tags                = local.tre_shared_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "random_password" "nexus_vm_password" {
@@ -31,7 +40,7 @@ resource "random_password" "nexus_vm_password" {
   min_lower        = 1
   upper            = true
   min_upper        = 1
-  number           = true
+  numeric          = true
   min_numeric      = 1
   special          = true
   min_special      = 1
@@ -44,7 +53,7 @@ resource "random_password" "nexus_admin_password" {
   min_lower        = 1
   upper            = true
   min_upper        = 1
-  number           = true
+  numeric          = true
   min_numeric      = 1
   special          = true
   min_special      = 1
@@ -55,18 +64,26 @@ resource "azurerm_key_vault_secret" "nexus_vm_password" {
   name         = "nexus-vm-password"
   value        = random_password.nexus_vm_password.result
   key_vault_id = data.azurerm_key_vault.kv.id
+  tags         = local.tre_shared_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_key_vault_secret" "nexus_admin_password" {
   name         = "nexus-admin-password"
   value        = random_password.nexus_admin_password.result
   key_vault_id = data.azurerm_key_vault.kv.id
+  tags         = local.tre_shared_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_user_assigned_identity" "nexus_msi" {
   name                = "id-nexus-${var.tre_id}"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = local.core_resource_group_name
+  tags                = local.tre_shared_service_tags
+
   lifecycle { ignore_changes = [tags] }
 }
 
@@ -75,7 +92,7 @@ resource "azurerm_key_vault_access_policy" "nexus_msi" {
   tenant_id    = azurerm_user_assigned_identity.nexus_msi.tenant_id
   object_id    = azurerm_user_assigned_identity.nexus_msi.principal_id
 
-  secret_permissions = ["Get", "Recover"]
+  secret_permissions = ["Get", "List"]
 }
 
 resource "azurerm_linux_virtual_machine" "nexus" {
@@ -87,6 +104,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   disable_password_authentication = false
   admin_username                  = "adminuser"
   admin_password                  = random_password.nexus_vm_password.result
+  tags                            = local.tre_shared_service_tags
 
   custom_data = data.template_cloudinit_config.nexus_config.rendered
 
@@ -94,8 +112,8 @@ resource "azurerm_linux_virtual_machine" "nexus" {
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts-gen2"
     version   = "latest"
   }
 
@@ -103,6 +121,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
     name                 = "osdisk-nexus-${var.tre_id}"
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
+    disk_size_gb         = 64
   }
 
   identity {
@@ -115,8 +134,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   }
 
   depends_on = [
-    azurerm_key_vault_access_policy.nexus_msi,
-    azurerm_firewall_application_rule_collection.shared_subnet_sonatype_nexus
+    azurerm_key_vault_access_policy.nexus_msi
   ]
 
   connection {
@@ -127,11 +145,6 @@ resource "azurerm_linux_virtual_machine" "nexus" {
     agent    = false
     timeout  = "10m"
   }
-
-  provisioner "file" {
-    source      = "${path.module}/../scripts/nexus_repos_config"
-    destination = "/tmp/nexus_repos_config"
-  }
 }
 
 data "template_cloudinit_config" "nexus_config" {
@@ -139,22 +152,45 @@ data "template_cloudinit_config" "nexus_config" {
   base64_encode = true
 
   part {
+    # Ref: https://cloudinit.readthedocs.io/en/latest/reference/merging.html
+    # Important: merge_type must be defined on each part, contrary to what cloud-init docs say about a "stack" aproach
+    merge_type   = "list(append)+dict(no_replace,recurse_list)+str()"
     content_type = "text/cloud-config"
     content      = data.template_file.nexus_bootstrapping.rendered
   }
 
   part {
     content_type = "text/cloud-config"
+    merge_type   = "list(append)+dict(no_replace,recurse_list)+str()"
+    content = jsonencode({
+      write_files = [
+        for file in fileset("${path.module}/../scripts/nexus_repos_config", "*") : {
+          content     = file("${path.module}/../scripts/nexus_repos_config/${file}")
+          path        = "/etc/nexus-data/scripts/nexus_repos_config/${file}"
+          permissions = "0744"
+        }
+      ]
+    })
+  }
+
+  part {
+    content_type = "text/cloud-config"
+    merge_type   = "list(append)+dict(no_replace,recurse_list)+str()"
     content = jsonencode({
       write_files = [
         {
           content     = file("${path.module}/../scripts/configure_nexus_repos.sh")
-          path        = "/tmp/configure_nexus_repos.sh"
+          path        = "/etc/nexus-data/scripts/configure_nexus_repos.sh"
+          permissions = "0744"
+        },
+        {
+          content     = file("${path.module}/../scripts/nexus_realms_config.json")
+          path        = "/etc/nexus-data/scripts/nexus_realms_config.json"
           permissions = "0744"
         },
         {
           content     = data.template_file.configure_nexus_ssl.rendered
-          path        = "/etc/cron.daily/configure_nexus_ssl.sh"
+          path        = "/etc/cron.daily/configure_nexus_ssl"
           permissions = "0755"
         },
         {
@@ -164,7 +200,12 @@ data "template_cloudinit_config" "nexus_config" {
         },
         {
           content     = file("${path.module}/../scripts/reset_nexus_password.sh")
-          path        = "/tmp/reset_nexus_password.sh"
+          path        = "/etc/nexus-data/scripts/reset_nexus_password.sh"
+          permissions = "0744"
+        },
+        {
+          content     = file("${path.module}/../scripts/deploy_nexus_container.sh")
+          path        = "/etc/nexus-data/scripts/deploy_nexus_container.sh"
           permissions = "0744"
         }
       ]
@@ -182,9 +223,34 @@ data "template_file" "nexus_bootstrapping" {
 data "template_file" "configure_nexus_ssl" {
   template = file("${path.module}/../scripts/configure_nexus_ssl.sh")
   vars = {
-    MSI_ID                 = azurerm_user_assigned_identity.nexus_msi.id
-    VAULT_NAME             = data.azurerm_key_vault.kv.name
-    SSL_CERT_NAME          = data.azurerm_key_vault_certificate.nexus_cert.name
-    SSL_CERT_PASSWORD_NAME = data.azurerm_key_vault_secret.nexus_cert_password.name
+    MSI_ID        = azurerm_user_assigned_identity.nexus_msi.id
+    VAULT_NAME    = data.azurerm_key_vault.kv.name
+    SSL_CERT_NAME = data.azurerm_key_vault_certificate.nexus_cert.name
   }
+}
+
+resource "azurerm_virtual_machine_extension" "keyvault" {
+  virtual_machine_id         = azurerm_linux_virtual_machine.nexus.id
+  name                       = "${azurerm_linux_virtual_machine.nexus.name}-KeyVault"
+  publisher                  = "Microsoft.Azure.KeyVault"
+  type                       = "KeyVaultForLinux"
+  type_handler_version       = "2.0"
+  auto_upgrade_minor_version = true
+  tags                       = local.tre_shared_service_tags
+
+  settings = jsonencode({
+    "secretsManagementSettings" : {
+      "pollingIntervalInS" : "3600",
+      "requireInitialSync" : true,
+      "observedCertificates" : [
+        data.azurerm_key_vault_certificate.nexus_cert.versionless_secret_id
+      ]
+    }
+    "authenticationSettings" : {
+      "msiEndpoint" : "http://169.254.169.254/metadata/identity",
+      "msiClientId" : azurerm_user_assigned_identity.nexus_msi.client_id
+    }
+  })
+
+  lifecycle { ignore_changes = [tags] }
 }

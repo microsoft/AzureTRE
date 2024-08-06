@@ -9,15 +9,20 @@ name: Deploy Azure TRE (branch)
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
     inputs:
-      runExtendedTests:
-        description: Run the extended tests as part of the deployment?
-        type: boolean
-        default: false
+      e2eTestsCustomSelector:
+        description: A pytest marker selector for the e2e tests to be run
+        type: string
+        default: ""
         required: false
-      runSharedServicesTests:
-        description: Run the shared services tests as part of the deployment?
-        type: boolean
-        default: false
+      environment:
+        description: The environment to run this workflow in
+        type: environment
+        default: CICD
+        required: true
+      e2eProcesses:
+        description: The number of E2E processes/tests running in parallel
+        type: string
+        default: "1"
         required: false
 
 # This will prevent multiple runs of this entire workflow.
@@ -42,47 +47,44 @@ jobs:
           # Debug output for checking SHA used in checks-action
           echo "git SHA:    $(git rev-parse --abbrev-ref HEAD)"
           echo "git ref:    $(git rev-parse HEAD)"
+          echo "github sha: ${GITHUB_SHA}"
           echo "github ref: ${GITHUB_REF}"
           REFID=$(echo "${GITHUB_REF}" | shasum | cut -c1-8)
           echo "using id of: ${REFID} for GitHub Ref: ${GITHUB_REF}"
-          echo "::set-output name=refid::${REFID}"
+          echo "refid=${REFID}" >> "$GITHUB_OUTPUT"
 
   run-deploy-tre-not-main:
     name: "Deploy PR"
     if: ${{ github.ref != 'refs/heads/main' }}
     needs: [prepare-not-main]
     uses: ./.github/workflows/deploy_tre_reusable.yml
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
     with:
       ciGitRef: ${{ github.ref }}
-      # testing input against string 'true' - see https://github.com/actions/runner/issues/1483
-      runExtendedTests: ${{ github.event.inputs.runExtendedTests == 'true' }}
-      runSharedSevicesTests: ${{ github.event.inputs.runSharedServicesTests == 'true' }}
+      prHeadSha: ${{ github.sha }}
+      e2eTestsCustomSelector: ${{ github.event.inputs.e2eTestsCustomSelector }}
+      environmentName: ${{ github.event.inputs.environment }}
+      E2E_TESTS_NUMBER_PROCESSES: ${{ fromJSON(github.event.inputs.e2eProcesses) }}
+      DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
-      ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-      ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/
-      ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-      ACTIONS_DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
       API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
-      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-      CORE_ADDRESS_SPACE: ${{ secrets.CORE_ADDRESS_SPACE }}
-      LOCATION: ${{ secrets.LOCATION }}
-      MGMT_RESOURCE_GROUP: ${{ format('rg-tre{0}-mgmt', needs.prepare-not-main.outputs.refid) }}
+      APPLICATION_ADMIN_CLIENT_ID: ${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}
+      APPLICATION_ADMIN_CLIENT_SECRET: ${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}
+      MGMT_RESOURCE_GROUP_NAME: ${{ format('rg-tre{0}-mgmt', needs.prepare-not-main.outputs.refid) }}
       MS_TEAMS_WEBHOOK_URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-      STATE_STORAGE_ACCOUNT_NAME: ${{ format('tre{0}mgmt', needs.prepare-not-main.outputs.refid) }}
+      MGMT_STORAGE_ACCOUNT_NAME: ${{ format('tre{0}mgmt', needs.prepare-not-main.outputs.refid) }}
       SWAGGER_UI_CLIENT_ID: ${{ secrets.SWAGGER_UI_CLIENT_ID }}
       TEST_APP_ID: ${{ secrets.TEST_APP_ID }}
       TEST_WORKSPACE_APP_ID: ${{ secrets.TEST_WORKSPACE_APP_ID }}
       TEST_WORKSPACE_APP_SECRET: ${{ secrets.TEST_WORKSPACE_APP_SECRET }}
       TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
       TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-      TF_STATE_CONTAINER: ${{ secrets.TF_STATE_CONTAINER }}
-      TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
       TRE_ID: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
-      TF_LOG: ${{ secrets.TF_LOG }}

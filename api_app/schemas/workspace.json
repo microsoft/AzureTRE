@@ -5,38 +5,27 @@
   "title": "Workspace Default Parameters",
   "description": "These parameters are required for all workspaces",
   "required": [
-      "display_name",
-      "description",
-      "address_space_size"
+    "display_name",
+    "description"
   ],
   "properties": {
-      "display_name": {
-          "type": "string",
-          "title": "Name for the workspace",
-          "description": "The name of the workspace to be displayed to users",
-          "updateable": true
-      },
-      "description": {
-          "type": "string",
-          "title": "Description of the workspace",
-          "description": "Description of the workspace",
-          "updateable": true
-      },
-      "address_space_size": {
-        "type": "string",
-        "title": "Address space size",
-        "description": "Network address size (small, medium, large or custom) to be used by the workspace",
-        "enum": [
-          "small",
-          "medium",
-          "large",
-          "custom"
-        ]
-      },
-      "address_space": {
-          "type": "string",
-          "title": "Address space",
-          "description": "Network address space to be used by the workspace if address_space_size is custom"
-      }
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace",
+      "description": "The name of the workspace to be displayed to users.",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace",
+      "description": "Description of the workspace.",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace Overview",
+      "description": "Long form description of the workspace, in markdown syntax.",
+      "updateable": true
+    }
   }
 }

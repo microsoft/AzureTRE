@@ -1,0 +1,302 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
+    'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1 {
+  margin-top: 0;
+  font-weight: normal;
+}
+
+h2 {
+  font-weight: normal;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+.tre-logout-message {
+  margin: 40px auto;
+  width: 70%;
+}
+
+.tre-top-nav {
+  box-shadow: 0 1px 2px 0px #033d68;
+  z-index: 100;
+}
+
+.ms-CommandBar {
+  background-color: transparent;
+  padding-left: 0px;
+
+  .ms-Button {
+    background-color: transparent;
+  }
+}
+
+.tre-notifications-button {
+  position: relative;
+  top: 7px;
+  color: #fff;
+
+  i {
+    font-size: 20px !important;
+  }
+}
+
+.tre-notifications-button i {
+  font-size: 24px;
+}
+
+.tre-notifications-dismiss {
+  text-align: right;
+  padding-top: 10px;
+}
+
+ul.tre-notifications-list {
+  margin: 0;
+  padding: 0;
+}
+
+.tre-notifications-list li {
+  list-style: none;
+  margin-top: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px #ccc solid;
+}
+
+ul.tre-notifications-steps-list {
+  padding: 5px 15px 15px 15px;
+  background-color: #f9f9f9;
+  margin: 10px 0 0 0;
+}
+
+ul.tre-notifications-steps-list li {
+  border: none;
+}
+
+.tre-notification-time {
+  font-style: italic;
+  text-align: right;
+  font-size: 12px;
+}
+
+.tre-home-link {
+  color: #fff;
+  text-decoration: none;
+  font-size:1.2rem;
+}
+
+.tre-user-menu {
+  margin-top: 2px;
+
+  .ms-Persona-primaryText:hover {
+    color: #fff;
+  }
+
+  .ms-Persona-primaryText {
+    color: #fff;
+  }
+
+  .ms-Icon {
+    margin-top: 3px;
+  }
+}
+
+.tre-table {
+  .ms-Persona-primaryText {
+    font-size: 12px;
+    color: rgb(108, 108, 108);
+  }
+
+  .ms-DetailsRow-cell {
+    align-self: baseline;
+  }
+}
+
+.tre-hide-chevron i[data-icon-name=ChevronDown] {
+  display: none;
+}
+
+.tre-body {
+  height: 100%;
+  overflow: hidden;
+}
+
+.tre-body-inner {
+  height: 100%;
+  overflow: hidden;
+}
+
+.tre-body-content {
+  padding-left: 10px;
+}
+
+.tre-left-nav {
+  width: 200px;
+  overflow-y: auto;
+  box-shadow: 1px 0 8px 0px #ccc;
+  z-index: 100;
+}
+
+.tre-body-content {
+  width: calc(100% - 200px);
+  overflow-y: scroll;
+  background-color: #faf9f8;
+  padding-bottom: 80px;
+}
+
+.tre-workspace-header h1 {
+  margin: 10px 0 10px 0;
+}
+
+.tre-context-menu button {
+  text-transform: capitalize;
+}
+
+.tre-panel {
+  margin: 10px 15px 10px 10px;
+  padding: 10px;
+}
+
+.tre-resource-panel {
+  box-shadow: 1px 0px 5px 0px #ccc;
+  margin: 10px 15px 10px 10px;
+  padding: 10px;
+  background-color: #fff;
+}
+
+.ms-Pivot {
+  margin-bottom: 10px;
+}
+
+input[readonly]{
+  background-color:#efefef;
+}
+
+.tre-badge{
+  border-radius:4px;
+  background-color: #efefef;
+  padding:2px 6px;
+  text-transform: capitalize;
+  display:inline-block;
+  font-size:12px;
+}
+.tre-badge-in-progress{
+  background-color: #ce7b00;
+  color: #fff;
+}
+.tre-badge-failed{
+  background-color: #990000;
+  color: #fff;
+  padding-top: 4px;
+  padding-left: 7px;
+  font-size: 16px;
+}
+.tre-badge-success{
+  background-color: #006600;
+  color: #fff;
+}
+.tre-complex-list{
+  list-style: none;
+  padding:0 0 0 20px;
+  margin:0;
+}
+.tre-complex-list-border{
+  border-bottom: 1px #ccc solid;
+  margin-left:-15px;
+}
+.tre-complex-list-string{
+  padding-left:20px;
+}
+.tre-complex-list .ms-Icon{
+  font-size:12px!important;
+  font-weight: bold;
+  position: relative;
+  top:2px;
+}
+
+// Classes for rendering power state badges
+.tre-power-badge {
+  text-align: center;
+  color: #636262;
+  margin: 6px;
+
+  .tre-power-on, .tre-power-off {
+    height: 8px;
+    width: 8px;
+    background-color: #006600;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+  }
+
+  .tre-power-off {
+    background-color: #990000;
+  }
+}
+
+/* hide fields explicitly */
+.tre-hidden {
+  display: none;
+}
+
+/* create form overrides */
+/* panel header */
+.ms-Panel-commands {
+  background: #fff;
+  border-bottom: 1px #ccc solid;
+  padding-bottom: 10px;
+}
+
+/* template description at top of panel */
+.rjsf > .ms-Grid-col {
+  margin-top: -25px;
+}
+
+.rjsf > .ms-Grid-col > span:first-of-type {
+  display: block;
+  background-color: #efefef;
+  padding: 10px;
+  margin-bottom: 15px;
+  font-style: normal;
+}
+
+/* border around sub-blocks */
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object,
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array {
+  border: 1px #ccc dashed;
+  padding: 10px;
+  background-color: #fcfcfc;
+}
+
+/* sub titles and sub-sub titles */
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > label.ms-Label,
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array > label.ms-Label {
+  font-size: 20px;
+}
+
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > .ms-Grid > .ms-Grid-row > .ms-Grid-col > label.ms-Label,
+.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array > .ms-Grid > .ms-Grid-row > .ms-Grid-col > label.ms-Label {
+  font-size: 16px;
+}
+
+/* remove secondary template description at the bottom of each template + sub blocks */
+.rjsf > .ms-Grid-col > span:last-of-type,
+.rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > span:last-of-type,
+.rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > .ms-Grid > .ms-Grid-row > .ms-Grid-col > span:last-of-type {
+  display: none;
+}
+
+/* make descriptive text italic */
+.field span {
+  font-style: italic;
+}
+
+.field span.ms-Checkbox-text {
+  font-style: normal;
+}

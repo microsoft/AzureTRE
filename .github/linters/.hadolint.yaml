@@ -1,0 +1,6 @@
+---
+ignored:
+  # sometimes pinned versions are removed from the package source so we decided to ignore this rule.
+  - DL3008
+  - DL3018
+  - DL3029

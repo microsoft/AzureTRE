@@ -1,9 +1,44 @@
 ---
+schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 0.3.2
+version: 1.0.0
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
-registry: azuretre
 dockerfile: Dockerfile.tmpl
+registry: azuretre
+
+custom:
+  # For information on vm_sizes and image_options, see README.me in the guacamole/user-resources folder
+  vm_sizes:
+    "2 CPU | 8GB RAM": Standard_D2s_v5
+    "4 CPU | 16GB RAM": Standard_D4s_v5
+    "8 CPU | 32GB RAM": Standard_D8s_v5
+    "16 CPU | 64GB RAM": Standard_D16s_v5
+  image_options:
+    "Windows 10":
+      source_image_reference:
+        publisher: MicrosoftWindowsDesktop
+        offer: Windows-10
+        sku: win10-21h2-pro-g2
+        version: latest
+      conda_config: false
+    "Windows 11":
+      source_image_reference:
+        publisher: microsoftwindowsdesktop
+        offer: windows-11
+        sku: win11-23h2-pro
+        version: latest
+      conda_config: false
+    "Server 2019 Data Science VM":
+      source_image_reference:
+        publisher: microsoft-dsvm
+        offer: dsvm-win-2019
+        sku: winserver-2019
+        version: latest
+      conda_config: true
+    # For information on using custom images, see README.me in the guacamole/user-resources folder
+    # "Custom Image From Gallery":
+    #   source_image_name: your-image
+    #   conda_config: true
 
 credentials:
   - name: azure_tenant_id
@@ -24,11 +59,17 @@ parameters:
     type: string
     description: "Resource group containing the shared ACR"
     env: PARENT_SERVICE_ID
-
-  # the following are added automatically by the resource processor
+  - name: image_gallery_id
+    type: string
+    description: Azure resource ID for the compute image gallery to pull images from (if specifying custom images by name)
+    default: ""
   - name: id
     type: string
     description: "An Id for this installation"
+  - name: azure_environment
+    type: string
+    default: "AzureCloud"
+    description: "Used by Azure CLI to set the Azure environment"
     env: id
   - name: tfstate_resource_group_name
     type: string
@@ -43,6 +84,7 @@ parameters:
     description: "The name of the Terraform state storage container"
   - name: arm_use_msi
     env: ARM_USE_MSI
+    type: boolean
     default: false
   - name: os_image
     type: string
@@ -51,124 +93,120 @@ parameters:
     type: string
     default: "2 CPU | 8GB RAM"
   - name: shared_storage_access
-    type: string
-    default: "true"
+    type: boolean
+    default: true
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
-  - name: nexus_version
+  - name: arm_environment
     type: string
-    default: "V1"
-    description: "Which Nexus proxy service to use, i.e. V1 for the App Service-based Nexus or V2 for the VM-based service"
-
 
 outputs:
   - name: ip
     type: string
     applyTo:
       - install
+      - upgrade
   - name: hostname
     type: string
     applyTo:
       - install
+      - upgrade
   - name: connection_uri
     type: string
     applyTo:
       - install
+      - upgrade
   - name: azure_resource_id
     type: string
     applyTo:
+      - install
       - start
       - stop
+      - reset_password
 
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.0.4
-  - az
+      clientVersion: 1.4.6
+  - az:
+      clientVersion: 2.37.0
 
 install:
   - terraform:
       description: "Deploy Guacamole User Resource Service (Windows VM)"
       vars:
-        workspace_id: "{{ bundle.parameters.workspace_id }}"
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        parent_service_id: "{{ bundle.parameters.parent_service_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        image: "{{ bundle.parameters.os_image }}"
-        vm_size: "{{ bundle.parameters.vm_size }}"
-        shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
-        shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
-        nexus_version: "{{ bundle.parameters.nexus_version }}"
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        parent_service_id: ${ bundle.parameters.parent_service_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        image: ${ bundle.parameters.os_image }
+        vm_size: ${ bundle.parameters.vm_size }
+        shared_storage_access: ${ bundle.parameters.shared_storage_access }
+        shared_storage_name: ${ bundle.parameters.shared_storage_name }
+        image_gallery_id: ${ bundle.parameters.image_gallery_id }
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.id }}"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.id }
       outputs:
         - name: ip
         - name: hostname
         - name: connection_uri
+        - name: azure_resource_id
 
 upgrade:
   - terraform:
       description: "Update Guacamole User Resource Service (Windows VM)"
       vars:
-        workspace_id: "{{ bundle.parameters.workspace_id }}"
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        parent_service_id: "{{ bundle.parameters.parent_service_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        image: "{{ bundle.parameters.os_image }}"
-        vm_size: "{{ bundle.parameters.vm_size }}"
-        shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
-        shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
-        nexus_version: "{{ bundle.parameters.nexus_version }}"
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        parent_service_id: ${ bundle.parameters.parent_service_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        image: ${ bundle.parameters.os_image }
+        vm_size: ${ bundle.parameters.vm_size }
+        shared_storage_access: ${ bundle.parameters.shared_storage_access }
+        shared_storage_name: ${ bundle.parameters.shared_storage_name }
+        image_gallery_id: ${ bundle.parameters.image_gallery_id }
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.id }}"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.id }
       outputs:
         - name: ip
         - name: hostname
         - name: connection_uri
+        - name: azure_resource_id
 
 uninstall:
+  - exec:
+      description: "Delete the Extensions from the Terraform state manually"
+      command: ./delete_vm_extensions.sh
+      arguments:
+        - ${ bundle.parameters.tfstate_resource_group_name }
+        - ${ bundle.parameters.tfstate_storage_account_name }
+        - ${ bundle.parameters.tfstate_container_name }
+        - ${ bundle.parameters.id }
+
   - terraform:
       description: "Delete the Guacamole User Resource Service"
       vars:
-        workspace_id: "{{ bundle.parameters.workspace_id }}"
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        parent_service_id: "{{ bundle.parameters.parent_service_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        image: "{{ bundle.parameters.os_image }}"
-        vm_size: "{{ bundle.parameters.vm_size }}"
-        shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
-        shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
-        nexus_version: "{{ bundle.parameters.nexus_version }}"
+        workspace_id: ${ bundle.parameters.workspace_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        parent_service_id: ${ bundle.parameters.parent_service_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        image: ${ bundle.parameters.os_image }
+        vm_size: ${ bundle.parameters.vm_size }
+        shared_storage_access: ${ bundle.parameters.shared_storage_access }
+        shared_storage_name: ${ bundle.parameters.shared_storage_name }
+        image_gallery_id: ${ bundle.parameters.image_gallery_id }
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.id }}"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.id }
 
 start:
   - terraform:
@@ -176,30 +214,33 @@ start:
         - "output"
       description: "Get resource ID from Terraform outputs"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.id }}"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.id }
       outputs:
         - name: azure_resource_id
   - az:
-      description:
-        "Login to Azure"
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.azure_environment }
+  - az:
+      description: "Login to Azure"
       arguments:
         - login
       flags:
         identity:
-        username: "{{ bundle.credentials.azure_client_id }}"
+        username: ${ bundle.credentials.azure_client_id }
   - az:
-      description:
-        "Start the VM"
+      description: "Start the VM"
       arguments:
         - vm
         - start
       flags:
-        ids: "{{ bundle.outputs.azure_resource_id }}"
+        ids: ${ bundle.outputs.azure_resource_id }
 
 stop:
   - terraform:
@@ -207,27 +248,69 @@ stop:
         - "output"
       description: "Get VM hostname and rg from Terraform outputs"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.id }}"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.id }
       outputs:
         - name: azure_resource_id
   - az:
-      description:
-        "Login to Azure"
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.azure_environment }
+  - az:
+      description: "Login to Azure"
       arguments:
         - login
       flags:
         identity:
-        username: "{{ bundle.credentials.azure_client_id }}"
+        username: ${ bundle.credentials.azure_client_id }
   - az:
-      description:
-        "Stop the VM"
+      description: "Stop the VM"
       arguments:
         - vm
-        - stop
+        - deallocate
       flags:
-        ids: "{{ bundle.outputs.azure_resource_id }}"
+        ids: ${ bundle.outputs.azure_resource_id }
+
+reset_password:
+  - terraform:
+      arguments:
+        - "output"
+      description: "Get VM details from Terraform outputs"
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.id }
+      outputs:
+        - name: azure_resource_id
+        - name: vm_username
+        - name: vm_password_secret_name
+        - name: keyvault_name
+  - az:
+      description: "Set Azure Cloud Environment"
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.azure_environment }
+  - az:
+      description: "Login to Azure"
+      arguments:
+        - login
+      flags:
+        identity:
+        username: ${ bundle.credentials.azure_client_id }
+  - exec:
+      description: "Reset password and persist to keyvault"
+      suppress-output: true
+      command: ./reset_password.sh
+      arguments:
+        - ${ bundle.outputs.vm_password_secret_name }
+        - ${ bundle.outputs.keyvault_name }
+        - ${ bundle.outputs.vm_username }
+        - ${ bundle.outputs.azure_resource_id }

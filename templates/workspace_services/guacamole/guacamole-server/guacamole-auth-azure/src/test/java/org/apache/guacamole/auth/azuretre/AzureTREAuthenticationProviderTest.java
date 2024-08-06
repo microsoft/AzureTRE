@@ -39,7 +39,7 @@ public class AzureTREAuthenticationProviderTest {
     public static final String OAUTH_2_PROXY_JWKS_ENDPOINT = "OAUTH2_PROXY_JWKS_ENDPOINT";
     public static final String JWKS_MOCK_ENDPOINT_URL = "https://mockedjwks.com";
     public static final String MOCKED_TOKEN = "dummy_token";
-    public static final String MOCKED_MAIL = "mocked@mail.com";
+    public static final String MOCKED_USERNAME = "mocked@mail.com";
     @Mock
     AuthenticationProviderService authenticationProviderService;
     @Mock
@@ -59,7 +59,7 @@ public class AzureTREAuthenticationProviderTest {
     @Test
     public void authenticateUserSucceed() {
         when(credentialsMock.getRequest().getHeader("X-Forwarded-Access-Token")).thenReturn(MOCKED_TOKEN);
-        when(credentialsMock.getRequest().getHeader("X-Forwarded-Email")).thenReturn(MOCKED_MAIL);
+        when(credentialsMock.getRequest().getHeader("X-Forwarded-Preferred-Username")).thenReturn(MOCKED_USERNAME);
 
         assertNotNull(azureTREAuthenticationProvider.authenticateUser(credentialsMock));
     }
@@ -67,15 +67,15 @@ public class AzureTREAuthenticationProviderTest {
     @Test
     public void authenticateUserFailsWhenNoAccessToken() {
         when(credentialsMock.getRequest().getHeader("X-Forwarded-Access-Token")).thenReturn("");
-        when(credentialsMock.getRequest().getHeader("X-Forwarded-Email")).thenReturn(MOCKED_MAIL);
+        when(credentialsMock.getRequest().getHeader("X-Forwarded-Preferred-Username")).thenReturn(MOCKED_USERNAME);
 
         assertNull(azureTREAuthenticationProvider.authenticateUser(credentialsMock));
     }
 
     @Test
-    public void authenticateUserFailsWhenNoPrefEmail() {
+    public void authenticateUserFailsWhenNoPrefUsername() {
         when(credentialsMock.getRequest().getHeader("X-Forwarded-Access-Token")).thenReturn(MOCKED_TOKEN);
-        when(credentialsMock.getRequest().getHeader("X-Forwarded-Email")).thenReturn("");
+        when(credentialsMock.getRequest().getHeader("X-Forwarded-Preferred-Username")).thenReturn("");
 
         assertNull(azureTREAuthenticationProvider.authenticateUser(credentialsMock));
     }

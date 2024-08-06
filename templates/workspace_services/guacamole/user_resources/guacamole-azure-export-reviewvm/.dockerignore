@@ -1,0 +1,14 @@
+# Local .terraform directories
+**/.terraform/*
+
+# TF backend files
+**/*_backend.tf
+
+# Porter files it uses for local build
+./cnab/**
+
+Dockerfile.tmpl
+
+.env*
+terraform/deploy.sh
+terraform/destroy.sh

@@ -1,8 +1,8 @@
 {
-  "schemaVersion": "1.0.0-DRAFT+TODO",
-  "name": "guacamole-win-windowsvm",
-  "created": "2021-06-03T11:54:54.0225968Z",
-  "modified": "2021-06-03T11:54:54.0225968Z",
+  "schemaType": "ParameterSet",
+  "schemaVersion": "1.0.1",
+  "namespace": "",
+  "name": "tre-service-guacamole-windowsvm",
   "parameters": [
     {
       "name": "workspace_id",
@@ -38,6 +38,54 @@
       "name": "tfstate_storage_account_name",
       "source": {
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "id",
+      "source": {
+        "env": "ID"
+      }
+    },
+    {
+      "name": "os_image",
+      "source": {
+        "env": "OS_IMAGE"
+      }
+    },
+    {
+      "name": "shared_storage_access",
+      "source": {
+        "env": "SHARED_STORAGE_ACCESS"
+      }
+    },
+    {
+      "name": "shared_storage_name",
+      "source": {
+        "env": "SHARED_STORAGE_NAME"
+      }
+    },
+    {
+      "name": "vm_size",
+      "source": {
+        "env": "VM_SIZE"
+      }
+    },
+    {
+      "name": "image_gallery_id",
+      "source": {
+        "env": "IMAGE_GALLERY_ID"
+      }
+    },
+    {
+      "name": "azure_environment",
+      "source": {
+        "env": "AZURE_ENVIRONMENT"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
       }
     }
   ]

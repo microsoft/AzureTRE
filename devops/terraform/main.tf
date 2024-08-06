@@ -2,12 +2,15 @@ provider "azurerm" {
   features {}
 }
 
-data "azurerm_client_config" "current" {}
-
 # Resource group for TRE core management
 resource "azurerm_resource_group" "mgmt" {
   name     = var.mgmt_resource_group_name
   location = var.location
+
+  tags = {
+    project = "Azure Trusted Research Environment"
+    source  = "https://github.com/microsoft/AzureTRE/"
+  }
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -25,14 +28,6 @@ resource "azurerm_storage_account" "state_storage" {
   lifecycle { ignore_changes = [tags] }
 }
 
-# Storage container for Porter data
-# See https://github.com/getporter/azure-plugins#storage
-resource "azurerm_storage_container" "porter_container" {
-  name                  = "porter"
-  storage_account_name  = azurerm_storage_account.state_storage.name
-  container_access_type = "private"
-}
-
 # Shared container registry
 resource "azurerm_container_registry" "shared_acr" {
   name                = var.acr_name
@@ -42,4 +37,30 @@ resource "azurerm_container_registry" "shared_acr" {
   admin_enabled       = true
 
   lifecycle { ignore_changes = [tags] }
+}
+
+
+# tredev is the devcontainer image name generate by our CICD
+resource "azurerm_container_registry_task" "tredev_purge" {
+  name                  = "tredev_purge"
+  container_registry_id = azurerm_container_registry.shared_acr.id
+  platform {
+    os           = "Linux"
+    architecture = "amd64"
+  }
+  encoded_step {
+    task_content = <<EOF
+version: v1.1.0
+steps:
+  - cmd: acr purge   --filter 'tredev:[0-9a-fA-F]{8}'   --ago 7d --untagged
+    disableWorkingDirectoryOverride: true
+    timeout: 600
+EOF
+  }
+
+  timer_trigger {
+    name     = "t1"
+    schedule = "4 1 * * *"
+    enabled  = true
+  }
 }

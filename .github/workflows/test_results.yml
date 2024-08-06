@@ -1,0 +1,76 @@
+---
+# This workflow is required to publish test results from forks
+name: Test Results
+
+on:  # yamllint disable-line rule:truthy
+  workflow_run:
+    workflows: ["Docker build"]
+    types:
+      - completed
+# actionlint doesn't like the following line depite it being recommanded:
+# https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs#overview
+# permissions: {}
+
+jobs:
+  test-results:
+    name: Test Results
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion != 'skipped'
+
+    permissions:
+      checks: write
+
+      # needed unless run with comment_mode: off
+      pull-requests: write
+
+      # required by download step to access artifacts API
+      actions: read
+
+    steps:
+      - name: Download and Extract Artifacts
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: |
+           mkdir -p artifacts && cd artifacts
+
+           artifacts_url=${{ github.event.workflow_run.artifacts_url }}
+
+           gh api "$artifacts_url" -q '.artifacts[] | [.name, .archive_download_url] | @tsv' | while read -r artifact
+           do
+             IFS=$'\t' read -r name url <<< "$artifact"
+             gh api "$url" > "$name.zip"
+             unzip -d "$name" "$name.zip"
+           done
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          commit: ${{ github.event.workflow_run.head_sha }}
+          event_file: artifacts/Event File/event.json
+          event_name: ${{ github.event.workflow_run.event }}
+          files: "artifacts/**/*.xml"
+          check_name: "Unit Test Results"
+
+      # The following step is the catch situations where the tests didn't run at all.
+      - name: Check failure files
+        run: |
+          if compgen -G "artifacts/**/pytest*failed" > /dev/null; then
+            echo "Tests failure file(s) exist. Some tests have failed or didn't run at all! \
+              Check the artifacts for details."
+            exit 1
+          fi
+
+      # For PR builds triggered from comment builds, the GITHUB_REF is set to main
+      # so the checks aren't automatically associated with the PR
+      # If prHeadSha is specified then explicity mark the checks for that SHA
+      - name: Report check status
+        if: github.event.workflow_run.head_sha != ''
+        uses: LouisBrunner/checks-action@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # the name must be identical to the one received by the real job
+          sha: ${{ github.event.workflow_run.head_sha }}
+          name: "Test Results"
+          status: "completed"
+          conclusion: ${{ github.event.workflow_run.conclusion }}
+          details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"

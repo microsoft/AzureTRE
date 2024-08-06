@@ -1,21 +1,17 @@
 import pytest
+import pytest_asyncio
 from mock import patch
 
-from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
 from models.domain.authentication import User
 
 
-@pytest.fixture(autouse=True)
-def no_database():
-    """ overrides connecting to the database for all tests"""
-    with patch('api.dependencies.database.connect_to_db', return_value=None):
-        with patch('api.dependencies.database.get_db_client', return_value=None):
-            with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
-                with patch('core.events.bootstrap_database', return_value=None):
-                    yield
+@pytest.fixture(autouse=True, scope='module')
+def no_lifespan_events():
+    with patch("main.lifespan"):
+        yield
 
 
 @pytest.fixture(autouse=True)
@@ -62,11 +58,23 @@ def create_workspace_researcher_user() -> User:
     return user
 
 
+def create_workspace_airlock_manager_user() -> User:
+    user = create_test_user()
+    user.roles = ["AirlockManager"]
+    return user
+
+
 def override_get_user():
     user = create_test_user()
     user.roles = []
     user.roleAssignments = [("ab123", "ab124")]
     return user
+
+
+def get_required_roles(endpoint):
+    dependencies = list(filter(lambda x: hasattr(x.dependency, 'require_one_of_roles'), endpoint.__defaults__))
+    required_roles = dependencies[0].dependency.require_one_of_roles
+    return required_roles
 
 
 @pytest.fixture(scope='module')
@@ -98,6 +106,13 @@ def researcher_user():
 
 
 @pytest.fixture(scope='module')
+def airlock_manager_user():
+    def inner():
+        return create_workspace_airlock_manager_user()
+    return inner
+
+
+@pytest.fixture(scope='module')
 def no_workspace_role_user():
     def inner():
         user = create_test_user()
@@ -105,7 +120,7 @@ def no_workspace_role_user():
     return inner
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def app() -> FastAPI:
     from main import get_application
 
@@ -113,13 +128,8 @@ def app() -> FastAPI:
     return the_app
 
 
-@pytest.fixture
-async def initialized_app(app: FastAPI) -> FastAPI:
-    async with LifespanManager(app):
-        yield app
+@pytest_asyncio.fixture
+async def client(app: FastAPI) -> AsyncClient:
 
-
-@pytest.fixture
-async def client(initialized_app: FastAPI) -> AsyncClient:
-    async with AsyncClient(app=initialized_app, base_url="http://testserver", headers={"Content-Type": "application/json"}) as client:
+    async with AsyncClient(app=app, base_url="http://testserver", headers={"Content-Type": "application/json"}) as client:
         yield client
