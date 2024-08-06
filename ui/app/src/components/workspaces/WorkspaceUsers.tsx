@@ -17,13 +17,13 @@ interface IUser {
   id: string;
   name: string;
   email: string;
-  role: IGroup;
+  role: string;
   roles: string[];
 }
 
 export const WorkspaceUsers: React.FunctionComponent = () => {
   const [state, setState] = useState({
-    users: [] as User[],
+    users: [] as IUser[],
     apiError: undefined as APIError | undefined,
     loadingState: LoadingState.Loading,
   });
@@ -60,14 +60,12 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
   }, [getUsers]);
 
   const groupedUsers = useMemo(() => {
-    const groups: { [key: string]: User[] } = {};
+    const groups: { [key: string]: IUser[] } = {};
     state.users.forEach(user => {
-      user.roles.forEach(role => {
-        if (!groups[role]) {
-          groups[role] = [];
+      if (!groups[user.role]) {
+        groups[user.role] = [];
         }
-        groups[role].push(user);
-      });
+      groups[user.role].push(user);
     });
     return groups;
   }, [state.users]);
