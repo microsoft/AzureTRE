@@ -6,7 +6,7 @@
     "@azure/msal-browser": "^2.35.0",
     "@azure/msal-react": "^1.5.12",
     "@fluentui/react": "^8.114.1",
-    "@fluentui/react-file-type-icons": "^8.7.9",
+    "@fluentui/react-file-type-icons": "^8.11.18",
     "@reduxjs/toolkit": "^1.8.6",
     "@rjsf/core": "^4.2.3",
     "@rjsf/fluent-ui": "^4.2.3",
