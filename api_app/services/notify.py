@@ -33,6 +33,7 @@ async def send_message_notify_platform(message_properties: NotifyUkMessageInput)
         personalisation_data = {
             "name": message_properties.name,
             "email": message_properties.email,
+            "subject": f"TRE: {message_properties.subject}",
             "workspace": message_properties.workspace,
             "issue_type": message_properties.issue_type,
             "error_message": message_properties.error_message,
