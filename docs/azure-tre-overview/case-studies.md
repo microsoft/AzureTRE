@@ -8,7 +8,7 @@ Click [here](https://cloudkubed.com/case-studies/imperial-college-london-trusted
 
 ## Building the Trusted Research Environment with Azure Databricks
 The importance of secure and scalable data environments in healthcare research has grown, particularly highlighted by the COVID-19 pandemic. The Trusted Research Environments (TREs) enable secure collaboration on sensitive data while maintaining patient privacy. Azure Databricks enhances TREs by offering scalable, secure, and flexible data processing capabilities.
-For example, Providence Health used Azure Databricks to reduce hospital overcrowding and improve patient care by leveraging real-time data. The integration of Azure Databricks into the Azure TRE blueprint allows researchers to perform complex data analysis securely, promoting innovative research and improved healthcare outcomes.
+The integration of Azure Databricks into the Azure TRE blueprint allows researchers to perform complex data analysis securely, promoting innovative research and improved healthcare outcomes.
 
 Click [here](https://databricks.com/blog/2023/03/27/trusted-research-environments-health-and-life-sciences.html "Building the Trusted Research Environment with Azure Databricks"){target="_blank"} to see the full case study.
 
