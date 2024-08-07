@@ -29,6 +29,9 @@ extra:
 
 plugins:
   - search
+  - privacy:
+      links_attr_map:
+        target: _blank
 
 markdown_extensions:
   - pymdownx.superfences:
