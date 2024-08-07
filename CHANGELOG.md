@@ -15,7 +15,6 @@ BUG FIXES:
 * Removed 429 Error (Costs API) form presenting in UI ([#3929](https://github.com/microsoft/AzureTRE/issues/3929))
 * Fix numbering issue within `bug_report.md` template ([#4028](https://github.com/microsoft/AzureTRE/pull/4028))
 * Disable public network access to the API App Service ([#3986](https://github.com/microsoft/AzureTRE/issues/3986))
-* Delete of in-progress container is triggered twice ([#3795](https://github.com/microsoft/AzureTRE/issues/3795))
 * Fix Guacamole shared drive always enabled ([#3885](https://github.com/microsoft/AzureTRE/issues/3885))
 * Add Dependabot Security updates for July
 * Update Docs to format emojis properly ([#4027](https://github.com/microsoft/AzureTRE/issues/4027))
