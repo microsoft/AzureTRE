@@ -29,6 +29,12 @@ resource "azurerm_eventgrid_event_subscription" "airlock_notification" {
   }
 }
 
+resource "azurerm_role_assignment" "servicebus_logic_app" {
+  scope                = data.azurerm_servicebus_namespace.core.id
+  role_definition_name = "Azure Service Bus Data Owner"
+  principal_id         = azurerm_logic_app_standard.logic_app.identity[0].principal_id
+}
+
 resource "azurerm_logic_app_standard" "logic_app" {
   name                       = "airlock-notifier-app-${var.tre_id}"
   location                   = data.azurerm_resource_group.core.location
@@ -43,6 +49,7 @@ resource "azurerm_logic_app_standard" "logic_app" {
     "FUNCTIONS_WORKER_RUNTIME"              = "node"
     "WEBSITE_NODE_DEFAULT_VERSION"          = "~20"
     "serviceBus_connectionString"           = data.azurerm_servicebus_namespace.core.default_primary_connection_string
+    "serviceBus_fullyQualifiedNamespace"    = data.azurerm_servicebus_namespace.core.endpoint
     "serviceBus_queueName"                  = azurerm_servicebus_queue.notifications_queue.name
     "subscription"                          = data.azurerm_subscription.current.subscription_id
     "location"                              = data.azurerm_resource_group.core.location
