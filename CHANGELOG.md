@@ -20,6 +20,7 @@ BUG FIXES:
 * Add Dependabot Security updates for July
 * Update Docs to format emojis properly ([#4027](https://github.com/microsoft/AzureTRE/issues/4027))
 * Update API and Resource Processor opentelemetry versions ([#4052](https://github.com/microsoft/AzureTRE/issues/4052))
+* Fix broken links in new Case Study Docs
 
 COMPONENTS:
 
