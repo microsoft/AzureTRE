@@ -38,7 +38,7 @@ resource "azurerm_logic_app_standard" "logic_app" {
   storage_account_access_key = data.azurerm_storage_account.storage.primary_access_key
   virtual_network_subnet_id  = data.azurerm_subnet.airlock_notification.id
   version                    = "~4"
-  bundle_version             = "[4.0.0, 5.0.0)"
+  bundle_version             = "[1.*, 2.0.0)"
   app_settings = {
     "FUNCTIONS_WORKER_RUNTIME"              = "node"
     "WEBSITE_NODE_DEFAULT_VERSION"          = "~20"
@@ -55,7 +55,6 @@ resource "azurerm_logic_app_standard" "logic_app" {
     "smtp_from_email"                       = var.smtp_from_email
     "tre_url"                               = var.tre_url != "" ? var.tre_url : local.default_tre_url
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = data.azurerm_application_insights.core.connection_string
-    "smtp_connection_runtime_url"           = jsondecode(azurerm_resource_group_template_deployment.smtp_api_connection.output_content).connectionRuntimeUrl.value
   }
   site_config {
     ftps_state                       = "Disabled"

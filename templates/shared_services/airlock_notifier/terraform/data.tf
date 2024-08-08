@@ -55,11 +55,3 @@ data "azurerm_managed_api" "smtp" {
   name     = "smtp"
   location = data.azurerm_resource_group.core.location
 }
-
-data "local_file" "smtp_api_connection" {
-  filename = "${path.module}/smtp-api-connection.json"
-}
-
-data "local_file" "smtp_access_policy" {
-  filename = "${path.module}/smtp-access-policy.json"
-}

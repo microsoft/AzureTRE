@@ -188,7 +188,7 @@
             "from": "@parameters('smtp_from_email')",
             "importance": "Normal",
             "isHTML": true,
-            "subject": "@{variables('message')}",
+            "subject": "@replace(replace(variables('message'), '<b>', ''), '</b>', '')",
             "to": "@{join(variables('recipients'), ';')}"
           },
           "serviceProviderConfiguration": {
@@ -222,7 +222,7 @@
               "Set_approved_message": {
                 "inputs": {
                   "name": "message",
-                  "value": "Your Airlock request in @{variables('workspace')} workspace was approved"
+                  "value": "Your Airlock request in <b>@{variables('workspace')}</b> workspace was approved"
                 },
                 "runAfter": {
                   "Set_recipients_as_researchers_emails": [
@@ -246,7 +246,7 @@
               "Set_in_review_message": {
                 "inputs": {
                   "name": "message",
-                  "value": "An Airlock request in @{variables('workspace')} workspace by @{variables('creator')} needs your review"
+                  "value": "An Airlock request in <b>@{variables('workspace')}</b> workspace by <b>@{variables('creator')}</b> needs your review"
                 },
                 "runAfter": {
                   "Set_recipients_as_owners_emails": [
