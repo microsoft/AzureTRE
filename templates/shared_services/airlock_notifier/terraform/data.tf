@@ -46,11 +46,13 @@ data "azurerm_ip_group" "resource_processor" {
   resource_group_name = local.core_resource_group_name
 }
 
+# tflint-ignore: terraform_unused_declarations
 data "azurerm_managed_api" "servicebus" {
   name     = "servicebus"
   location = data.azurerm_resource_group.core.location
 }
 
+# tflint-ignore: terraform_unused_declarations
 data "azurerm_managed_api" "smtp" {
   name     = "smtp"
   location = data.azurerm_resource_group.core.location
