@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-airlock-notifier
-version: 0.9.0
+version: 1.0.1
 description: "A shared service notifying on Airlock Operations"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -149,11 +149,73 @@ install:
 
 
 upgrade:
-  - exec:
-      description: "Upgrade shared service"
-      command: echo
+  - terraform:
+      description: "Update shared service"
+      vars:
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        tre_url: ${ bundle.parameters.tre_url }
+        smtp_server_address: ${ bundle.parameters.smtp_server_address }
+        smtp_server_port: ${ bundle.parameters.smtp_server_port }
+        smtp_username: ${ bundle.parameters.smtp_username }
+        smtp_password: ${ bundle.parameters.smtpPassword }
+        smtp_server_enable_ssl: ${ bundle.parameters.smtp_server_enable_ssl }
+        smtp_from_email: ${ bundle.parameters.smtp_from_email }
+      backendConfig:
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-airlock-notifier
+      outputs:
+        - name: airlock_notifier_logic_app_name
+        - name: airlock_notifier_logic_app_resource_group_name
+
+  - az:
+      description: "Set Azure Cloud Environment"
       arguments:
-        - "This shared service does not implement upgrade action"
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.azure_environment }
+
+  - az:
+      description: "Login to Azure"
+      arguments:
+        - login
+      flags:
+        identity:
+        username: ${ bundle.credentials.azure_client_id }
+
+  - az:
+      arguments:
+        - resource
+        - update
+      flags:
+        resource-group: ${ bundle.outputs.airlock_notifier_logic_app_resource_group_name }
+        name: scm
+        namespace: Microsoft.Web
+        resource-type: basicPublishingCredentialsPolicies
+        parent: sites/${ bundle.outputs.airlock_notifier_logic_app_name }
+        set: "properties.allow=true"
+
+  - exec:
+      description: Wait for SCM Auth settings to kick in
+      command: sleep
+      arguments:
+        - "60"
+
+  - az:
+      description: "Deploy logic app update"
+      arguments:
+        - functionapp
+        - deployment
+        - source
+        - config-zip
+      flags:
+        name: ${ bundle.outputs.airlock_notifier_logic_app_name }
+        resource-group: ${ bundle.outputs.airlock_notifier_logic_app_resource_group_name }
+        subscription: ${ bundle.credentials.azure_subscription_id }
+        src: /cnab/app/LogicApp.zip
 
 
 uninstall:

@@ -23,6 +23,10 @@ resource "azurerm_servicebus_namespace" "sb" {
       subnet_id                            = module.network.airlock_events_subnet_id
       ignore_missing_vnet_service_endpoint = false
     }
+    network_rules {
+      subnet_id                            = module.network.airlock_notification_subnet_id
+      ignore_missing_vnet_service_endpoint = false
+    }
   }
 
   lifecycle { ignore_changes = [tags] }
