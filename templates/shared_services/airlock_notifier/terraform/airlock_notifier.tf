@@ -36,10 +36,9 @@ resource "azurerm_logic_app_standard" "logic_app" {
   storage_account_name       = data.azurerm_storage_account.storage.name
   storage_account_access_key = data.azurerm_storage_account.storage.primary_access_key
   virtual_network_subnet_id  = data.azurerm_subnet.airlock_notification.id
-  version                    = "~4"
   app_settings = {
     "FUNCTIONS_WORKER_RUNTIME"              = "node"
-    "WEBSITE_NODE_DEFAULT_VERSION"          = "~14"
+    "WEBSITE_NODE_DEFAULT_VERSION"          = "~12"
     "serviceBus_connectionString"           = data.azurerm_servicebus_namespace.core.default_primary_connection_string
     "subscription"                          = data.azurerm_subscription.current.subscription_id
     "resource_group"                        = data.azurerm_resource_group.core.name

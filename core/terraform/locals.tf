@@ -6,7 +6,7 @@ locals {
   }
 
   api_diagnostic_categories_enabled = [
-    "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
+    "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs",
     "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"
   ]
   servicebus_diagnostic_categories_enabled = ["OperationalLogs", "VNetAndIPFilteringLogs", "RuntimeAuditLogs", "ApplicationMetricsLogs"]
@@ -32,6 +32,7 @@ locals {
     "privatelink.notebooks.azure.net",
     "privatelink.postgres.database.azure.com",
     "privatelink.mysql.database.azure.com",
+    "privatelink.database.windows.net",
     "privatelink.azuredatabricks.net"
   ])
 
