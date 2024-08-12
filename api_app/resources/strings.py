@@ -48,6 +48,7 @@ API_TRIAGE_LEVEL2A = "L2a: No ACRO"
 API_TRIAGE_LEVEL2B = "L2b: ACRO"
 API_TRIAGE_LEVEL3 = "L3: Exemption"
 API_TRIAGE_LEVEL4 = "L4: Rejected"
+API_TRIAGE_LEVEL4A = "L4a: Rejected"
 
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"

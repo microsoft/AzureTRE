@@ -651,7 +651,7 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
 
     if criteriumCheck1 or criteriumCheck2 or criteriumCheck3 or criteriumCheck6:
         try:
-            triage_level_input = strings.API_TRIAGE_LEVEL4
+            triage_level_input = strings.API_TRIAGE_LEVEL4A
             airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
             logging.info(f"Auto-rejecting airlock request item: {airlock_request.id}")
             submitted_airlock_request = await airlock_request_repo.update_airlock_request(
