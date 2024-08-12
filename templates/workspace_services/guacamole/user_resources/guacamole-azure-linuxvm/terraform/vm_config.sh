@@ -40,7 +40,7 @@ sudo apt install -y jupyter-notebook microsoft-edge-dev
 
 ## VS Code
 echo "init_vm.sh: VS Code"
-sudo apt install -y code 
+sudo apt install -y code
 sudo apt install -y gvfs-bin || true
 
 echo "init_vm.sh: Folders"
@@ -58,7 +58,19 @@ sudo apt install azure-cli -y
 # code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension RDebugger.r-debugger
 
 # Azure Storage Explorer
-sudo apt install gnome-keyring dotnet-sdk-7.0 -y
+sudo apt-get remove -y dotnet-host-7.0
+sudo apt-get remove -y dotnet-sdk-7.0
+sudo apt-get install -y dotnet-sdk-8.0
+sudo apt install gnome-keyring -y
+
+sudo chmod 666 /etc/profile
+
+sudo echo "export DOTNET_ROOT=/usr/share/dotnet
+export PATH=$PATH:/usr/share/dotnet
+" >>/etc/profile
+
+sudo chmod 644 /etc/profile
+
 wget -q "${NEXUS_PROXY_URL}"/repository/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
 sudo mkdir /opt/storage-explorer
 sudo tar xvf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
@@ -166,24 +178,10 @@ sudo sed -i -e 's/Terminal=true/Terminal=false/g' /usr/share/applications/jupyte
 # Default Browser
 sudo update-alternatives --config x-www-browser
 
+# Prevent screen timeout
+echo "init_vm.sh: Preventing Timeout"
+sudo apt-get remove xfce4-screensaver -y
+
 ## Cleanup
 echo "init_vm.sh: Cleanup"
 sudo shutdown -r now
-
-# Prevent screen timeout 
-echo "init_vm.sh: Preventing Timeout"
-sudo touch /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
-sudo chmod 664 /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
-sudo chown "${VM_USER}":"${VM_USER}" /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
-sudo tee /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml << END
-<?xml version="1.0" encoding="UTF-8"?>
-<channel name="xfce4-screensaver" version="1.0">
-  <property name="saver" type="empty">
-    <property name="mode" type="int" value="0"/>
-    <property name="enabled" type="bool" value="false"/>
-  </property>
-  <property name="lock" type="empty">
-    <property name="enabled" type="bool" value="false"/>
-  </property>
-</ channel>
-END
