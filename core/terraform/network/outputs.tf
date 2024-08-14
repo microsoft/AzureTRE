@@ -42,7 +42,6 @@ output "airlock_notification_subnet_id" {
   value = azurerm_subnet.airlock_notification.id
 }
 
-
 # DNS Zones
 
 output "azure_monitor_dns_zone_id" {
