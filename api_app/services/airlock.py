@@ -23,6 +23,7 @@ from services.authentication import get_access_service
 from resources import strings, constants
 
 from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, update_user_resource
+from api.dependencies.database import get_repository
 
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
@@ -320,6 +321,20 @@ async def update_and_publish_event_airlock_request(
         return updated_airlock_request
 
     try:
+        if (airlock_request.type == AirlockRequestType.Import and
+           airlock_request.isEUUAAccepted and
+           airlock_request.status == AirlockRequestStatus.Submitted and 
+           updated_airlock_request.status == AirlockRequestStatus.InReview):
+            logging.info(f"Auto approving import request: {airlock_request.id}") 
+            decisionApproval = f"EUUA has been accepted. Import request {airlock_request.id} is approved automatically."
+            airlock_review_input: AirlockReviewInCreate = AirlockReviewInCreate(approval=True, decisionExplanation=decisionApproval)
+            user_resource_repo = get_repository(UserResourceRepository)
+            workspace_service_repo = get_repository(WorkspaceServiceRepository)
+            operation_repo = get_repository(OperationRepository)
+            resource_template_repo = get_repository(ResourceTemplateRepository)
+            resource_history_repo = get_repository(ResourceHistoryRepository)
+            auto_approved_airlock_request = await review_airlock_request(airlock_review_input, updated_airlock_request, updated_by, workspace, airlock_request_repo, user_resource_repo, workspace_service_repo, operation_repo, resource_template_repo, resource_history_repo)
+            return auto_approved_airlock_request
         logging.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
         await send_status_changed_event(airlock_request=updated_airlock_request, previous_status=airlock_request.status)
         access_service = get_access_service()

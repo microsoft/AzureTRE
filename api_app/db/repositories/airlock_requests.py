@@ -107,7 +107,8 @@ class AirlockRequestRepository(BaseRepository):
             triageLevel = "",
             triageStatements=[],
             contactTeamForm=[],
-            statisticsStatements=[]
+            statisticsStatements=[],
+            isEUUAAccepted=False
         )
 
         return airlock_request

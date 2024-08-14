@@ -153,6 +153,7 @@ class AirlockRequest(AzureTREModel):
     createdWhen: float = Field(None, title="Creation time of the request")
     updatedBy: dict = {}
     updatedWhen: float = 0
+    isEUUAAccepted: bool
     history: List[AirlockRequestHistoryItem] = []
     workspaceId: str = Field("", title="Workspace ID", description="Service target Workspace id")
     type: AirlockRequestType = Field("", title="Airlock request type")
