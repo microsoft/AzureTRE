@@ -58,7 +58,19 @@ sudo apt install azure-cli -y
 # code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension RDebugger.r-debugger
 
 # Azure Storage Explorer
-sudo apt install gnome-keyring dotnet-sdk-7.0 -y
+sudo apt-get remove -y dotnet-host-7.0
+sudo apt-get remove -y dotnet-sdk-7.0
+sudo apt-get install -y dotnet-sdk-8.0
+sudo apt install gnome-keyring -y
+
+sudo chmod 666 /etc/profile
+
+sudo echo "export DOTNET_ROOT=/usr/share/dotnet
+export PATH=$PATH:/usr/share/dotnet
+" >>/etc/profile
+
+sudo chmod 644 /etc/profile
+
 wget -q "${NEXUS_PROXY_URL}"/repository/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
 sudo mkdir /opt/storage-explorer
 sudo tar xvf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer

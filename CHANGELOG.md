@@ -20,6 +20,7 @@ BUG FIXES:
 * Update Docs to format emojis properly ([#4027](https://github.com/microsoft/AzureTRE/issues/4027))
 * Update API and Resource Processor opentelemetry versions ([#4052](https://github.com/microsoft/AzureTRE/issues/4052))
 * Fix broken links in new Case Study Docs
+* Update .NET version on Linux VMs ([#4067](https://github.com/microsoft/AzureTRE/issues/4067))
 
 COMPONENTS:
 
