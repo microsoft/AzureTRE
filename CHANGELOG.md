@@ -10,6 +10,7 @@ ENHANCEMENTS:
 * Add Case Study Docs ([#1366](https://github.com/microsoft/AzureTRE/issues/1366))
 * Ability to host TRE on a custom domain ([#4014](https://github.com/microsoft/AzureTRE/pull/4014))
 * Remove AppServiceFileAuditLogs diagnostic setting ([#4033](https://github.com/microsoft/AzureTRE/issues/4033))
+* Update to the Airlock Notifier Shared Service ([#3909](https://github.com/microsoft/AzureTRE/issues/3909))
 
 BUG FIXES:
 * Removed 429 Error (Costs API) form presenting in UI ([#3929](https://github.com/microsoft/AzureTRE/issues/3929))
@@ -20,6 +21,7 @@ BUG FIXES:
 * Update Docs to format emojis properly ([#4027](https://github.com/microsoft/AzureTRE/issues/4027))
 * Update API and Resource Processor opentelemetry versions ([#4052](https://github.com/microsoft/AzureTRE/issues/4052))
 * Fix broken links in new Case Study Docs
+* Update Linux VM to stop screensaver locking out the user ([#4065](https://github.com/microsoft/AzureTRE/issues/4065))
 * Update .NET version on Linux VMs ([#4067](https://github.com/microsoft/AzureTRE/issues/4067))
 
 COMPONENTS:
