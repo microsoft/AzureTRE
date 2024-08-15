@@ -65,9 +65,9 @@ sudo apt install gnome-keyring -y
 
 sudo chmod 666 /etc/profile
 
-sudo echo "export DOTNET_ROOT=/usr/share/dotnet
+echo "export DOTNET_ROOT=/usr/share/dotnet
 export PATH=$PATH:/usr/share/dotnet
-" >>/etc/profile
+" | sudo tee -a /etc/profile
 
 sudo chmod 644 /etc/profile
 
