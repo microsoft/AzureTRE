@@ -1,13 +1,17 @@
 {
   "serviceProviderConnections": {
     "serviceBus": {
+      "displayName": "core-service-bus",
+      "parameterSetName": "ManagedServiceIdentity",
       "parameterValues": {
-        "connectionString": "@appsetting('serviceBus_connectionString')"
+        "authProvider": {
+          "Type": "ManagedServiceIdentity"
+        },
+        "fullyQualifiedNamespace": "@appsetting('serviceBus_fullyQualifiedNamespace')"
       },
       "serviceProvider": {
         "id": "/serviceProviders/serviceBus"
-      },
-      "displayName": "core-service-bus"
+      }
     },
     "Smtp": {
       "displayName": "smtp",
@@ -21,20 +25,6 @@
       "serviceProvider": {
         "id": "/serviceProviders/Smtp"
       }
-    }
-  },
-  "managedApiConnections": {
-    "smtp": {
-      "api": {
-        "id": "/subscriptions/@appsetting('subscription')/providers/Microsoft.Web/locations/westeurope/managedApis/smtp"
-      },
-      "connection": {
-        "id": "/subscriptions/@appsetting('subscription')/resourceGroups/@appsetting('resource_group')/providers/Microsoft.Web/connections/smtp"
-      },
-      "authentication": {
-        "type": "ManagedServiceIdentity"
-      },
-      "connectionRuntimeUrl": "@appsetting('smtp_connection_runtime_url')"
     }
   }
 }
