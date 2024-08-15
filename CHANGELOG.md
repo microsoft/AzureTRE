@@ -10,6 +10,7 @@ ENHANCEMENTS:
 * Add Case Study Docs ([#1366](https://github.com/microsoft/AzureTRE/issues/1366))
 * Ability to host TRE on a custom domain ([#4014](https://github.com/microsoft/AzureTRE/pull/4014))
 * Remove AppServiceFileAuditLogs diagnostic setting ([#4033](https://github.com/microsoft/AzureTRE/issues/4033))
+* Update to the Airlock Notifier Shared Service ([#3909](https://github.com/microsoft/AzureTRE/issues/3909))
 
 BUG FIXES:
 * Removed 429 Error (Costs API) form presenting in UI ([#3929](https://github.com/microsoft/AzureTRE/issues/3929))
