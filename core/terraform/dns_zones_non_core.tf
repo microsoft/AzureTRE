@@ -10,27 +10,6 @@ resource "azurerm_private_dns_zone" "non_core" {
   lifecycle { ignore_changes = [tags] }
 }
 
-#######################################################################
-# Pending https://github.com/microsoft/terraform-azurerm-environment-configuration/issues/13
-resource "azurerm_private_dns_zone" "non_core_openai" {
-  for_each            = local.private_dns_zone_names_non_core
-  name                = "privatelink.openai.azure.com"
-  resource_group_name = azurerm_resource_group.core.name
-  tags                = local.tre_core_tags
-
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_private_dns_zone" "non_core_cognitive_services" {
-  for_each            = local.private_dns_zone_names_non_core
-  name                = "privatelink.cognitiveservices.azure.com"
-  resource_group_name = azurerm_resource_group.core.name
-  tags                = local.tre_core_tags
-
-  lifecycle { ignore_changes = [tags] }
-}
-######################################################################
-
 # since shared services are in the core network, their dns link could exist once and must be defined here.
 resource "azurerm_private_dns_zone_virtual_network_link" "mysql" {
   resource_group_name   = azurerm_resource_group.core.name

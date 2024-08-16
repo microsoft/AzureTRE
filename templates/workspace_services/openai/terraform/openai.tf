@@ -42,9 +42,7 @@ resource "azurerm_private_endpoint" "openai_private_endpoint" {
   }
 
   private_dns_zone_group {
-    # Pending https://github.com/microsoft/terraform-azurerm-environment-configuration/issues/13
-    # name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.openai.azure.com"]
-    name                 = "privatelink.openai.azure.com"
+    name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.openai.azure.com"]
     private_dns_zone_ids = [azurerm_private_dns_zone.openai.id]
   }
 
