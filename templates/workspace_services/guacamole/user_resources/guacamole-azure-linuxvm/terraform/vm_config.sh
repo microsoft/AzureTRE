@@ -60,7 +60,7 @@ sudo apt install azure-cli -y
 # Azure Storage Explorer
 sudo apt install gnome-keyring dotnet-sdk-8.0 -y
 wget -q "${NEXUS_PROXY_URL}"/repository/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
-sudo mkdir /opt/storage-explorer
+sudo mkdir -p /opt/storage-explorer
 sudo tar xvf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
 sudo chmod +x /opt/storage-explorer/*
 
