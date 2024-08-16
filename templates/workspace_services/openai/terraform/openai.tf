@@ -27,25 +27,25 @@ resource "azurerm_private_dns_zone" "openai" {
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
-resource "azurerm_private_endpoint" "openai_private_endpoint" {
-  name                = "pe-${azurerm_cognitive_account.openai.name}"
-  location            = data.azurerm_resource_group.ws.location
-  resource_group_name = data.azurerm_resource_group.ws.name
-  subnet_id           = data.azurerm_subnet.services.id
-  tags                = local.workspace_service_tags
-
-  private_service_connection {
-    private_connection_resource_id = azurerm_cognitive_account.openai.id
-    name                           = "psc-${azurerm_cognitive_account.openai.name}"
-    subresource_names              = ["account"]
-    is_manual_connection           = false
-  }
-
-  private_dns_zone_group {
-    # name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.mysql.database.azure.com"]
-    name                 = "privatelink.openai.azure.com"
-    private_dns_zone_ids = [azurerm_private_dns_zone.openai.id]
-  }
-
-  lifecycle { ignore_changes = [tags] }
-}
+#resource "azurerm_private_endpoint" "openai_private_endpoint" {
+#  name                = "pe-${azurerm_cognitive_account.openai.name}"
+#  location            = data.azurerm_resource_group.ws.location
+#  resource_group_name = data.azurerm_resource_group.ws.name
+#  subnet_id           = data.azurerm_subnet.services.id
+#  tags                = local.workspace_service_tags
+#
+#  private_service_connection {
+#    private_connection_resource_id = azurerm_cognitive_account.openai.id
+#    name                           = "psc-${azurerm_cognitive_account.openai.name}"
+#    subresource_names              = ["account"]
+#    is_manual_connection           = false
+#  }
+#
+#  private_dns_zone_group {
+#    # name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.mysql.database.azure.com"]
+#    name                 = "privatelink.openai.azure.com"
+#    private_dns_zone_ids = [azurerm_private_dns_zone.openai.id]
+#  }
+#
+#  lifecycle { ignore_changes = [tags] }
+#}
