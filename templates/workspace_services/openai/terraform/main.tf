@@ -28,7 +28,8 @@ provider "azurerm" {
 }
 
 module "terraform_azurerm_environment_configuration" {
-  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
+#  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
+  source          = "github.com/hippo-digital/terraform-azurerm-environment-configuration"
   arm_environment = var.arm_environment
 }
 
@@ -53,7 +54,7 @@ data "azurerm_subnet" "services" {
   resource_group_name  = data.azurerm_resource_group.ws.name
 }
 
- data "azurerm_private_dns_zone" "openai" {
-   name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.openai.azure.com"]
-   resource_group_name = local.core_resource_group_name
- }
+data "azurerm_private_dns_zone" "openai" {
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.openai.azure.com"]
+  resource_group_name = local.core_resource_group_name
+}
