@@ -13,8 +13,6 @@ COMPONENTS:
 
 ## 0.19.0
 
-**BREAKING CHANGES & MIGRATIONS**:
-
 FEATURES:
 * Azure SQL Workspace Service ([#3969](https://github.com/microsoft/AzureTRE/issues/3969))
 
