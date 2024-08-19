@@ -28,6 +28,7 @@
       "updateable": true
     },
     "is_exposed_externally": {
+      "$id": "#/properties/is_exposed_externally",
       "type": "boolean",
       "title": "Expose externally",
       "description": "Should the OpenAI instance be publicly accessible?",
