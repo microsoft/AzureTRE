@@ -45,6 +45,12 @@
       "source": {
         "env": "ARM_ENVIRONMENT"
       }
+    },
+    {
+      "name": "is_exposed_externally",
+      "source": {
+        "env": "IS_EXPOSED_EXTERNALLY"
+      }
     }
   ]
 }

@@ -26,6 +26,12 @@
       "description": "Long form description of the workspace service, in markdown syntax",
       "default": "Azure OpenAI Service provides REST API access to OpenAI's powerful language models including the GPT-4, GPT-4 Turbo with Vision, GPT-3.5-Turbo, and Embeddings model series. For more information, see the [Azure OpenAI Service documentation](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview).",
       "updateable": true
+    },
+    "is_exposed_externally": {
+      "type": "boolean",
+      "title": "Expose externally",
+      "description": "Should the OpenAI instance be publicly accessible?",
+      "default": false
     }
   }
 }
