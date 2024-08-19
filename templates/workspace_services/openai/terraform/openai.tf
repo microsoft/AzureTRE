@@ -8,13 +8,20 @@ resource "azurerm_cognitive_account" "openai" {
   sku_name            = "S0"
 }
 
+locals {
+  openai_model_name = "gpt-35-turbo"
+  openai_model_version = "0301"
+}
+
 resource "azurerm_cognitive_deployment" "openai" {
-  name                 = "openai-gpt-4-32k-0314"
+  name                 = "openai-${local.openai_model_name}-${local.openai_model_version}-${var.tre_id}-${local.short_workspace_id}"
   cognitive_account_id = azurerm_cognitive_account.openai.id
   model {
     format  = "OpenAI"
-    name    = "gpt-4-32k"
-    version = "0314"
+#    name    = "gpt-4-32k"
+    name    = local.openai_model_name
+#    version = "0314"
+    version = local.openai_model_version
   }
 
   scale {
