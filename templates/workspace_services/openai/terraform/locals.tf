@@ -11,7 +11,7 @@ locals {
     tre_workspace_service_id = var.tre_resource_id
   }
   openai_model = {
-    name = trimspace(split("|", var.openai_model)[0])
+    name    = trimspace(split("|", var.openai_model)[0])
     version = trimspace(split("|", var.openai_model)[1])
   }
 }
