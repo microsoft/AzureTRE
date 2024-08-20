@@ -13,7 +13,7 @@ sudo rm -f /etc/apt/sources.list.d/*
 echo "init_vm.sh: START"
 sudo apt update || true
 sudo apt upgrade -y
-sudo apt install -y gnupg2 software-properties-common apt-transport-https wget dirmngr gdebi-core
+sudo apt install -y software-properties-common apt-transport-https wget dirmngr gdebi-core
 sudo apt-get update || true
 
 ## Desktop
