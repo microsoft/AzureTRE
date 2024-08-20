@@ -51,6 +51,12 @@
       "source": {
         "env": "IS_EXPOSED_EXTERNALLY"
       }
+    },
+    {
+      "name": "openai_model",
+      "source": {
+        "env": "OPENAI_MODEL"
+      }
     }
   ]
 }

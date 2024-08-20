@@ -48,6 +48,9 @@ parameters:
   - name: is_exposed_externally
     env: IS_EXPOSED_EXTERNALLY
     type: boolean
+  - name: openai_model
+    env: OPENAI_MODEL
+    type: string
 
 mixins:
   - exec
@@ -69,6 +72,7 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         arm_environment: ${ bundle.parameters.arm_environment }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
+        openai_model: ${ bundle.parameters.openai_model }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -85,6 +89,7 @@ upgrade:
         tre_resource_id: ${ bundle.parameters.id }
         arm_environment: ${ bundle.parameters.arm_environment }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
+        openai_model: ${ bundle.parameters.openai_model }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
@@ -101,6 +106,7 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         arm_environment: ${ bundle.parameters.arm_environment }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
+        openai_model: ${ bundle.parameters.openai_model }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

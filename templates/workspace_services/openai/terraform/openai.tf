@@ -1,25 +1,25 @@
 # openai cognitive services account
 
 resource "azurerm_cognitive_account" "openai" {
-  kind                  = "OpenAI"
-  name                  = "openai-${var.tre_id}-${local.short_workspace_id}"
-  resource_group_name   = data.azurerm_resource_group.ws.name
-  location              = data.azurerm_resource_group.ws.location
-  sku_name              = "S0"
-  custom_subdomain_name = "openai-${var.tre_id}-${local.short_workspace_id}"
+  kind                          = "OpenAI"
+  name                          = "openai-${local.service_resource_name_suffix}"
+  resource_group_name           = data.azurerm_resource_group.ws.name
+  location                      = data.azurerm_resource_group.ws.location
+  sku_name                      = "S0"
+  custom_subdomain_name         = "openai-${local.service_resource_name_suffix}"
   public_network_access_enabled = var.is_exposed_externally
 }
 
 resource "azurerm_cognitive_deployment" "openai" {
-  name                 = "openai-${var.openai_model_name}-${var.openai_model_version}-${local.service_resource_name_suffix}"
+  name                 = "openai-${local.openai_model.name}-${local.openai_model.version}-${local.service_resource_name_suffix}"
   cognitive_account_id = azurerm_cognitive_account.openai.id
 
   model {
     format = "OpenAI"
     #    name    = "gpt-4-32k"
-    name = var.openai_model_name
+    name = local.openai_model.name
     #    version = "0314"
-    version = var.openai_model_version
+    version = local.openai_model.version
   }
 
   scale {
@@ -45,6 +45,15 @@ resource "azurerm_private_endpoint" "openai_private_endpoint" {
     name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.openai.azure.com"]
     private_dns_zone_ids = [data.azurerm_private_dns_zone.openai.id]
   }
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_key_vault_secret" "db_password" {
+  name         = "${azurerm_cognitive_account.openai.name}-access-key"
+  value        = azurerm_cognitive_account.openai.primary_access_key
+  key_vault_id = data.azurerm_key_vault.ws.id
+  tags         = local.workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 }

@@ -33,6 +33,22 @@
       "title": "Expose externally",
       "description": "Should the OpenAI instance be publicly accessible?",
       "default": false
+    },
+    "openai_model": {
+      "$id": "#/properties/openai_model",
+      "type": "string",
+      "title": "OpenAI Model",
+      "description": "Which OpenAI Model should be used? (be mindful of subscription limits)",
+      "enum": [
+        "gpt-35-turbo | 0301",
+        "gpt-35-turbo | 1106",
+        "gpt-35-turbo | 0163",
+        "gpt-35-turbo | 0125",
+        "gpt-4 | 0613",
+        "gpt-4 | turbo-2024-04-09",
+        "gpt-4o | 2024-05-13"
+      ],
+      "default": "gpt-35-turbo | 0301"
     }
   }
 }
