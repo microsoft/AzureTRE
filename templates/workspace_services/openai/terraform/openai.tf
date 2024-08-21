@@ -15,10 +15,8 @@ resource "azurerm_cognitive_deployment" "openai" {
   cognitive_account_id = azurerm_cognitive_account.openai.id
 
   model {
-    format = "OpenAI"
-    #    name    = "gpt-4-32k"
-    name = local.openai_model.name
-    #    version = "0314"
+    format  = "OpenAI"
+    name    = local.openai_model.name
     version = local.openai_model.version
   }
 
