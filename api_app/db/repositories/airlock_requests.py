@@ -12,7 +12,8 @@ from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
 from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, \
     AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType, AirlockReviewUserResource
-from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestContactTeamForm, AirlockRequestStatisticsStatements
+from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate, \
+    AirlockRequestTriageStatements, AirlockRequestContactTeamForm, AirlockRequestStatisticsStatements
 from core import config
 from resources import strings
 from db.repositories.base import BaseRepository
@@ -108,7 +109,7 @@ class AirlockRequestRepository(BaseRepository):
             triageStatements=[],
             contactTeamForm=[],
             statisticsStatements=[],
-            isEUUAAccepted=False
+            isEUUAAccepted=airlock_request_input.isEUUAAccepted
         )
 
         return airlock_request

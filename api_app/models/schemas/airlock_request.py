@@ -94,6 +94,7 @@ class AirlockRequestInCreate(BaseModel):
     type: AirlockRequestType = Field("", title="Airlock request type", description="Specifies if this is an import or an export request")
     title: str = Field("Airlock Request", title="Brief title for the request")
     businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
+    isEUUAAccepted: bool = Field("User Agreement Acceptance", title="Mark if the User Agreement was accepted")
     properties: dict = Field({}, title="Airlock request parameters", description="Values for the parameters required by the Airlock request specification")
 
     class Config:
@@ -101,7 +102,8 @@ class AirlockRequestInCreate(BaseModel):
             "example": {
                 "type": "import",
                 "title": "a request title",
-                "businessJustification": "some business justification"
+                "businessJustification": "some business justification",
+                "isEUUAAccepted": "true"
             }
         }
 

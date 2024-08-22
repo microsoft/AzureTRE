@@ -18,7 +18,8 @@ from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestWithAllowedUserActions, \
-    AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestContactTeamForm, AirlockRequestStatisticsStatements
+    AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestContactTeamForm, \
+    AirlockRequestStatisticsStatements
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
     get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user
@@ -35,7 +36,7 @@ airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests", status_code=status_code.HTTP_201_CREATED,
                                response_model=AirlockRequestWithAllowedUserActions, name=strings.API_CREATE_AIRLOCK_REQUEST,
                                dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
-async def create_draft_request(airlock_request_input: AirlockRequestInCreate, user=Depends(get_current_workspace_owner_or_researcher_user),
+async def create_draft_request(airlock_request_input: AirlockRequestInCreate,user=Depends(get_current_workspace_owner_or_researcher_user),
                                airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
                                workspace=Depends(get_deployed_workspace_by_id_from_path)) -> AirlockRequestWithAllowedUserActions:
     if workspace.properties.get("enable_airlock") is False:
@@ -207,7 +208,6 @@ async def review_triage_statements(airlock_request_triage_statements_input: Airl
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/exit-triage", status_code=status_code.HTTP_200_OK,
                                response_model=AirlockRequestWithAllowedUserActions, name=strings.API_CHECK_TRIAGE_STATEMENTS,
                                dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
-# async def exit_and_reject(airlock_request_triage_statements_input: AirlockRequestTriageStatements,
 async def exit_and_reject(airlock_request=Depends(get_airlock_request_by_id_from_path),
                           airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
                           user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager),
