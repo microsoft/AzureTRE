@@ -32,7 +32,8 @@
       "type": "boolean",
       "title": "Expose externally",
       "description": "Should the OpenAI instance be publicly accessible?",
-      "default": false
+      "default": false,
+      "updateable": true
     },
     "openai_model": {
       "$id": "#/properties/openai_model",
@@ -48,7 +49,8 @@
         "gpt-4 | turbo-2024-04-09",
         "gpt-4o | 2024-05-13"
       ],
-      "default": "gpt-35-turbo | 0301"
+      "default": "gpt-35-turbo | 0301",
+      "updateable": true
     }
   }
 }
