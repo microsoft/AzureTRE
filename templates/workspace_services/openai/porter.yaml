@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-openai
-version: 0.4.9
+version: 1.0.0
 description: "An OpenAI workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -62,6 +62,12 @@ outputs:
     type: string
     applyTo:
       - install
+      - upgrade
+  - name: openai_deployment_id
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 install:
   - terraform:
@@ -80,6 +86,7 @@ install:
         key: tre-workspace-service-openai-${ bundle.parameters.id }
       outputs:
         - name: openai_fqdn
+        - name: openai_deployment_id
 upgrade:
   - terraform:
       description: "Upgrade OpenAI workspace service"
@@ -97,6 +104,7 @@ upgrade:
         key: tre-workspace-service-openai-${ bundle.parameters.id }
       outputs:
         - name: openai_fqdn
+        - name: openai_deployment_id
 uninstall:
   - terraform:
       description: "Tear down OpenAI workspace service"
