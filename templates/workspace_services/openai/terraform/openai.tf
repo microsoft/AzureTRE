@@ -8,6 +8,8 @@ resource "azurerm_cognitive_account" "openai" {
   sku_name                      = "S0"
   custom_subdomain_name         = "openai-${local.service_resource_name_suffix}"
   public_network_access_enabled = var.is_exposed_externally
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_cognitive_deployment" "openai" {
@@ -23,6 +25,8 @@ resource "azurerm_cognitive_deployment" "openai" {
   scale {
     type = "Standard"
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_endpoint" "openai_private_endpoint" {

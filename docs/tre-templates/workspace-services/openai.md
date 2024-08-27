@@ -18,5 +18,5 @@ See: [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/ai-services/
 ## Properties
 - `is_exposed_externally` - If `True`, the OpenAI workspace is accessible from outside of the workspace virtual network.
 - `openai_model` - The model to use for the OpenAI deployment `<model name> | <model version>`. The default is `gpt-35-turbo | 0301`.
-- Important note: Models are subject to different quota and region availability and the deployment may fail if you don't have the correct quota. 
-  Please review this link on current limits and how to request increases: [Open AI Quotas](https://learn.microsoft.com/en-us/azure/ai-services/openai/quotas-limits) 
+- Important note: Models are subject to different quota and region availability and the deployment may fail if you don't have the correct quota.
+Please review this link on current limits and how to request increases: [Open AI Quotas](https://learn.microsoft.com/en-us/azure/ai-services/openai/quotas-limits)
