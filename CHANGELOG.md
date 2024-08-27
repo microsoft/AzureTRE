@@ -1,7 +1,17 @@
 <!-- markdownlint-disable MD041 -->
-## 0.19.0 (Unreleased)
+## 0.20.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
+
+FEATURES:
+
+ENHANCEMENTS:
+
+BUG FIXES:
+
+COMPONENTS:
+
+## 0.19.0
 
 FEATURES:
 * Azure SQL Workspace Service ([#3969](https://github.com/microsoft/AzureTRE/issues/3969))
@@ -25,6 +35,37 @@ BUG FIXES:
 * Update .NET version on Linux VMs ([#4067](https://github.com/microsoft/AzureTRE/issues/4067))
 
 COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.5.1 |
+| core | 0.10.6 |
+| ui | 0.5.28 |
+| tre-service-guacamole-linuxvm | 1.0.2 |
+| tre-service-guacamole-import-reviewvm | 0.2.8 |
+| tre-service-guacamole-export-reviewvm | 0.1.8 |
+| tre-service-guacamole-windowsvm | 1.0.0 |
+| tre-service-guacamole | 0.10.8 |
+| tre-service-databricks | 1.0.3 |
+| tre-service-mlflow | 0.7.8 |
+| tre-service-innereye | 0.6.4 |
+| tre-workspace-service-ohdsi | 0.2.4 |
+| tre-workspace-service-gitea | 1.0.3 |
+| tre-workspace-service-mysql | 1.0.2 |
+| tre-workspace-service-azuresql | 1.0.9 |
+| tre-user-resource-aml-compute-instance | 0.5.7 |
+| tre-service-azureml | 0.8.10 |
+| tre-workspace-service-health | 0.2.5 |
+| tre-workspace-airlock-import-review | 0.12.16 |
+| tre-workspace-unrestricted | 0.11.4 |
+| tre-workspace-base | 1.5.4 |
+| tre-shared-service-cyclecloud | 0.5.5 |
+| tre-shared-service-databricks-private-auth | 0.1.5 |
+| tre-shared-service-sonatype-nexus | 3.0.0 |
+| tre-shared-service-admin-vm | 0.4.3 |
+| tre-shared-service-firewall | 1.2.0 |
+| tre-shared-service-gitea | 1.0.2 |
+| tre-shared-service-certs | 0.5.1 |
+| tre-shared-service-airlock-notifier | 1.0.1 |
 
 ## 0.18.0
 
