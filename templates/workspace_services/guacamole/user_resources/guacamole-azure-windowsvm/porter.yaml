@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 0.7.9
+version: 1.0.0
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -9,10 +9,14 @@ registry: azuretre
 custom:
   # For information on vm_sizes and image_options, see README.me in the guacamole/user-resources folder
   vm_sizes:
-    "2 CPU | 8GB RAM": Standard_D2s_v5
-    "4 CPU | 16GB RAM": Standard_D4s_v5
-    "8 CPU | 32GB RAM": Standard_D8s_v5
-    "16 CPU | 64GB RAM": Standard_D16s_v5
+    "2 CPU | 8GB RAM": Standard_D2s_v5    #  73.49
+    "4 CPU | 16GB RAM": Standard_D4s_v5   # 145.26
+    "8 CPU | 32GB RAM": Standard_D8s_v5   # 284.78
+    "16 CPU | 64GB RAM": Standard_D16s_v5 # 562.66
+    "32 CPU | 128GB RAM": Standard_D32s_v5 # 1096.22
+    "64 CPU | 256GB RAM": Standard_D64s_v5 # 2134.68
+    "36 CPU | 440GB | 1 x A10 GPU": Standard_NV36ads_A10_v5  # 2375.82
+    "36 CPU | 880GB | 1 x A10 GPU": Standard_NV36adms_A10_v5 # 3323.17
   image_options:
     "Windows 10":
       source_image_reference:
@@ -25,7 +29,7 @@ custom:
       source_image_reference:
         publisher: microsoftwindowsdesktop
         offer: windows-11
-        sku: win11-21h2-pro
+        sku: win11-23h2-pro
         version: latest
       conda_config: false
     "Server 2019 Data Science VM":

@@ -13,6 +13,7 @@ workspace_services = [
     strings.MLFLOW_SERVICE,
     strings.MYSQL_SERVICE,
     strings.HEALTH_SERVICE,
+    strings.AZURESQL_SERVICE
 ]
 
 

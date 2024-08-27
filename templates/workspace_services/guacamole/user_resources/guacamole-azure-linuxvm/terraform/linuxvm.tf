@@ -44,7 +44,6 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   disable_password_authentication = false
   admin_username                  = random_string.username.result
   admin_password                  = random_password.password.result
-  encryption_at_host_enabled      = true
 
   custom_data = data.template_cloudinit_config.config.rendered
 
@@ -111,6 +110,8 @@ data "template_file" "vm_config" {
     FILESHARE_NAME        = var.shared_storage_access ? data.azurerm_storage_share.shared_storage[0].name : ""
     NEXUS_PROXY_URL       = local.nexus_proxy_url
     CONDA_CONFIG          = local.selected_image.conda_config ? 1 : 0
+    VM_USER               = random_string.username.result
+    APT_SKU               = replace(local.apt_sku, ".", "")
   }
 }
 
@@ -132,6 +133,7 @@ data "template_file" "apt_sources_config" {
   template = file("${path.module}/apt_sources_config.yml")
   vars = {
     nexus_proxy_url = local.nexus_proxy_url
+    apt_sku         = local.apt_sku
   }
 }
 

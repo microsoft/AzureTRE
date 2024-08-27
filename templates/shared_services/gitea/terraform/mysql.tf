@@ -27,6 +27,8 @@ resource "azurerm_mysql_flexible_database" "gitea" {
   server_name         = azurerm_mysql_flexible_server.gitea.name
   charset             = "utf8"
   collation           = "utf8_unicode_ci"
+
+  lifecycle { ignore_changes = [charset, collation] }
 }
 
 moved {

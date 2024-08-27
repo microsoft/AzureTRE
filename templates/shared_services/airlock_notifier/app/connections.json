@@ -35,18 +35,6 @@
         "type": "ManagedServiceIdentity"
       },
       "connectionRuntimeUrl": "@appsetting('smtp_connection_runtime_url')"
-    },
-      "outlook": {
-          "api": {
-              "id": "/subscriptions/@appsetting('subscription')/providers/Microsoft.Web/locations/uksouth/managedApis/outlook"
-          },
-          "authentication": {
-              "type": "ManagedServiceIdentity"
-          },
-          "connection": {
-              "id": "/subscriptions/@appsetting('subscription')/resourceGroups/@appsetting('resource_group')/providers/Microsoft.Web/connections/outlook"
-          },
-          "connectionRuntimeUrl": "https://dbd1728c4196793d.11.common.logic-uksouth.azure-apihub.net/apim/outlook/3a2261e686234238a0058f766e39e7a4"
-      }
+    }
   }
 }

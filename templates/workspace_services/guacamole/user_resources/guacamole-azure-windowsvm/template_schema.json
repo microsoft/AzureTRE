@@ -30,8 +30,12 @@
           "2 CPU | 8GB RAM",
           "4 CPU | 16GB RAM",
           "8 CPU | 32GB RAM",
-          "16 CPU | 64GB RAM"
-        ],
+          "16 CPU | 64GB RAM",
+          "32 CPU | 128GB RAM",
+          "64 CPU | 256GB RAM",
+          "36 CPU | 440GB | 1 x A10 GPU",
+          "36 CPU | 880GB | 1 x A10 GPU"
+          ],
         "updateable": true
       },
       "shared_storage_access": {
