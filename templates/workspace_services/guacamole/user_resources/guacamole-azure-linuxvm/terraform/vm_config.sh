@@ -172,9 +172,9 @@ sudo update-alternatives --config x-www-browser
 
 # Prevent screen timeout
 echo "init_vm.sh: Preventing Timeout"
+sudo mkdir -p /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml
 sudo touch /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
 sudo chmod 664 /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
-sudo chown "${VM_USER}":"${VM_USER}" /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
 sudo tee /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml << END
 <?xml version="1.0" encoding="UTF-8"?>
 <channel name="xfce4-screensaver" version="1.0">
@@ -187,6 +187,7 @@ sudo tee /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-scree
   </property>
 </ channel>
 END
+sudo chown -Rf "${VM_USER}":"${VM_USER}" /home/"${VM_USER}"/.config
 
 ## Cleanup
 echo "init_vm.sh: Cleanup"
