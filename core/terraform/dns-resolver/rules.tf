@@ -1,5 +1,5 @@
 data "external" "dns-rules" {
-  program = [ "bash", "${path.module}/make-rules.sh" ]
+  program = ["bash", "${path.module}/make-rules.sh"]
 }
 
 resource "azurerm_private_dns_resolver_forwarding_rule" "dns-rules" {
@@ -8,13 +8,13 @@ resource "azurerm_private_dns_resolver_forwarding_rule" "dns-rules" {
   #       net  = { domain = "net.", address = "8.8.8.8" },
   #       sink = { domain = ".",    address = "0.0.0.0" }
   # } )
-  for_each = data.external.dns-rules.result
+  for_each                  = data.external.dns-rules.result
   name                      = "dns-rule-${each.key}"
   dns_forwarding_ruleset_id = azurerm_private_dns_resolver_dns_forwarding_ruleset.dns-ruleset.id
-  domain_name               = jsondecode( each.value ).domain
+  domain_name               = jsondecode(each.value).domain
   enabled                   = true
   target_dns_servers {
-    ip_address = jsondecode( each.value ).address
+    ip_address = jsondecode(each.value).address
     port       = 53
   }
 }
