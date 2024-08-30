@@ -23,6 +23,7 @@ LOG_FILE="${TS}-tre-core.log"
   -k "${TRE_ID}" \
   -l "${LOG_FILE}" \
   -c "terraform plan -out ${PLAN_FILE} && \
+  terraform import azurerm_key_vault_access_policy.deployer /subscriptions/92397f1e-d02e-4cb4-bd67-47f4045e553f/resourceGroups/rg-tremric/providers/Microsoft.KeyVault/vaults/kv-tremric/objectId/bde531cf-37d0-4759-8fc8-e3a681cfa27c && \
   terraform apply -input=false -auto-approve ${PLAN_FILE} && \
   terraform output -json > ../tre_output.json"
 
