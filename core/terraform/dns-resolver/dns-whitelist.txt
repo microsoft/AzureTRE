@@ -1,0 +1,28 @@
+#
+# Add the domains to be whitelisted here.
+# Use an octothorpe to comment lines out.
+#
+# api.snapcraft.io
+# archive.ubuntu.com
+# azure.archive.ubuntu.com
+# cloud.r-project.org
+# azure.com
+# conda.anaconda.org
+# cran.r-project.org
+# docker.com
+# docker.io
+# download-ib01.fedoraproject.org
+# download.microsoft.com
+# download1.rstudio.org
+# files.pythonhosted.org
+# keyserver.ubuntu.com
+# microsoft.com
+# nhs.net
+# nhs.org
+# nhs.uk
+# packages.microsoft.com
+# pypi.org
+# repo.almalinux.org
+# repo.anaconda.com
+# security.ubuntu.com
+# snapcraftcontent.com

@@ -88,6 +88,17 @@ module "network" {
   arm_environment     = var.arm_environment
 }
 
+module "dns-resolver" {
+  source              = "./dns-resolver"
+  tre_id              = var.tre_id
+  location            = var.location
+  resource_group_name = azurerm_resource_group.core.name
+  core_address_space  = var.core_address_space
+  arm_environment     = var.arm_environment
+  core_vnet_name      = module.network.core_vnet_name
+  core_vnet_id        = module.network.core_vnet_id
+}
+
 module "appgateway" {
   source                     = "./appgateway"
   tre_id                     = var.tre_id
