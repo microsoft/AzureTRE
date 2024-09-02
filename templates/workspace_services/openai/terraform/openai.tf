@@ -8,6 +8,7 @@ resource "azurerm_cognitive_account" "openai" {
   sku_name                      = "S0"
   custom_subdomain_name         = "openai-${local.service_resource_name_suffix}"
   public_network_access_enabled = var.is_exposed_externally
+  tags                          = local.workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 }
