@@ -5,15 +5,22 @@ from azure.servicebus.aio import ServiceBusClient
 from fastapi import HTTPException
 from pydantic import ValidationError, parse_obj_as
 
-from api.dependencies.database import get_db_client
+from api.dependencies.database import get_db_client,get_repository
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
-from services.airlock import update_and_publish_event_airlock_request
+from services.airlock import update_and_publish_event_airlock_request, review_airlock_request
 from db.repositories.workspaces import WorkspaceRepository
-from models.domain.airlock_request import AirlockRequestStatus
+from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
 from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.airlock_operations import StepResultStatusUpdateMessage
 from core import config, credentials
 from resources import strings
+
+from db.repositories.user_resources import UserResourceRepository
+from db.repositories.workspace_services import WorkspaceServiceRepository
+from db.repositories.operations import OperationRepository
+from db.repositories.resource_templates import ResourceTemplateRepository
+from db.repositories.resources_history import ResourceHistoryRepository
+from models.schemas.airlock_request import AirlockReviewInCreate
 
 
 async def receive_message_from_step_result_queue():
@@ -65,7 +72,22 @@ async def update_status_in_database(airlock_request_repo: AirlockRequestReposito
         if airlock_request.status == current_status:
             workspace = await workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
             # update to new status and send to event grid
-            await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, updated_by=airlock_request.updatedBy, workspace=workspace, new_status=new_status, request_files=request_files, status_message=status_message)
+            updated_airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, updated_by=airlock_request.updatedBy, workspace=workspace, new_status=new_status, request_files=request_files, status_message=status_message)
+            # If we have are moving from 'submitted' to 'in_review', than we auto-approve the request
+            if (airlock_request.type == AirlockRequestType.Import and
+               airlock_request.isEUUAAccepted and
+               airlock_request.status == AirlockRequestStatus.Submitted and 
+               new_status == AirlockRequestStatus.InReview):
+                logging.info(f"Auto approving import request: {airlock_request.id}") 
+                decisionApproval = f"EUUA has been accepted. Import request {airlock_request.id} is approved automatically."
+                airlock_review_input: AirlockReviewInCreate = AirlockReviewInCreate(approval=True, decisionExplanation=decisionApproval)
+                user_resource_repo = get_repository(UserResourceRepository)
+                workspace_service_repo = get_repository(WorkspaceServiceRepository)
+                operation_repo = get_repository(OperationRepository)
+                resource_template_repo = get_repository(ResourceTemplateRepository)
+                resource_history_repo = get_repository(ResourceHistoryRepository)
+                await review_airlock_request(airlock_review_input, updated_airlock_request, updated_airlock_request.createdBy, workspace, airlock_request_repo, user_resource_repo, workspace_service_repo, operation_repo, resource_template_repo, resource_history_repo)
+
             result = True
         else:
             logging.error(strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, current_status, airlock_request.status))
