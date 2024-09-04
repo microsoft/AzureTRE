@@ -23,4 +23,7 @@ locals {
     "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs",
     "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"
   ]
+  guac_disable_copy     = true
+  guac_disable_download = true
+  guac_disable_upload   = true
 }
