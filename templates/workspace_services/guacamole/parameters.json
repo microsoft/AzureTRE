@@ -51,25 +51,6 @@
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
       }
     },
-
-    {
-      "name": "guac_disable_copy",
-      "source": {
-        "env": "GUAC_DISABLE_COPY"
-      }
-    },
-    {
-      "name": "guac_disable_download",
-      "source": {
-        "env": "GUAC_DISABLE_DOWNLOAD"
-      }
-    },
-    {
-      "name": "guac_disable_upload",
-      "source": {
-        "env": "GUAC_DISABLE_UPLOAD"
-      }
-    },
     {
       "name": "guac_disable_paste",
       "source": {

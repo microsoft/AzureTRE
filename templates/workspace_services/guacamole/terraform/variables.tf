@@ -26,10 +26,6 @@ variable "image_tag" {
   type        = string
   description = "The Guacamole image tag"
 }
-variable "guac_disable_copy" {
-  type        = bool
-  description = "Disable copy from the Guacamole workspace"
-}
 variable "guac_disable_paste" {
   type        = bool
   description = "Disable paste to the Guacamole workspace"
@@ -45,14 +41,6 @@ variable "guac_drive_name" {
 variable "guac_drive_path" {
   type        = string
   description = "The drive path"
-}
-variable "guac_disable_download" {
-  type        = bool
-  description = "Disable download from the Guacamole workspace"
-}
-variable "guac_disable_upload" {
-  type        = bool
-  description = "Disable upload to the Guacamole workspace"
 }
 variable "is_exposed_externally" {
   type        = bool
