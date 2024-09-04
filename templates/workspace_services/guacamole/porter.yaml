@@ -182,7 +182,6 @@ uninstall:
         guac_disable_paste: ${ bundle.parameters.guac_disable_paste }
         guac_enable_drive: ${ bundle.parameters.guac_enable_drive }
         guac_drive_name: ${ bundle.parameters.guac_drive_name }
-
         guac_drive_path: ${ bundle.parameters.guac_drive_path }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
