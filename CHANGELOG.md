@@ -6,7 +6,7 @@
 FEATURES:
 
 ENHANCEMENTS:
-
+* Update Unrestricted and Airlock Import Review workspaces to be built off the Base workspace 0.19.0
 BUG FIXES:
 
 COMPONENTS:
