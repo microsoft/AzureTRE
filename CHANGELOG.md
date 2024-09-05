@@ -1,7 +1,17 @@
 <!-- markdownlint-disable MD041 -->
-## 0.19.0 (Unreleased)
+## 0.20.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
+
+FEATURES:
+
+ENHANCEMENTS:
+
+BUG FIXES:
+
+COMPONENTS:
+
+## 0.19.0
 
 FEATURES:
 * Azure SQL Workspace Service ([#3969](https://github.com/microsoft/AzureTRE/issues/3969))
@@ -10,18 +20,52 @@ ENHANCEMENTS:
 * Add Case Study Docs ([#1366](https://github.com/microsoft/AzureTRE/issues/1366))
 * Ability to host TRE on a custom domain ([#4014](https://github.com/microsoft/AzureTRE/pull/4014))
 * Remove AppServiceFileAuditLogs diagnostic setting ([#4033](https://github.com/microsoft/AzureTRE/issues/4033))
+* Update to the Airlock Notifier Shared Service ([#3909](https://github.com/microsoft/AzureTRE/issues/3909))
 
 BUG FIXES:
 * Removed 429 Error (Costs API) form presenting in UI ([#3929](https://github.com/microsoft/AzureTRE/issues/3929))
 * Fix numbering issue within `bug_report.md` template ([#4028](https://github.com/microsoft/AzureTRE/pull/4028))
 * Disable public network access to the API App Service ([#3986](https://github.com/microsoft/AzureTRE/issues/3986))
-* Delete of in-progress container is triggered twice ([#3795](https://github.com/microsoft/AzureTRE/issues/3795))
 * Fix Guacamole shared drive always enabled ([#3885](https://github.com/microsoft/AzureTRE/issues/3885))
 * Add Dependabot Security updates for July
 * Update Docs to format emojis properly ([#4027](https://github.com/microsoft/AzureTRE/issues/4027))
 * Update API and Resource Processor opentelemetry versions ([#4052](https://github.com/microsoft/AzureTRE/issues/4052))
+* Fix broken links in new Case Study Docs
+* Update Linux VM to stop screensaver locking out the user ([#4065](https://github.com/microsoft/AzureTRE/issues/4065))
+* Update .NET version on Linux VMs ([#4067](https://github.com/microsoft/AzureTRE/issues/4067))
 
 COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.5.1 |
+| core | 0.10.6 |
+| ui | 0.5.28 |
+| tre-service-guacamole-linuxvm | 1.0.2 |
+| tre-service-guacamole-import-reviewvm | 0.2.8 |
+| tre-service-guacamole-export-reviewvm | 0.1.8 |
+| tre-service-guacamole-windowsvm | 1.0.0 |
+| tre-service-guacamole | 0.10.8 |
+| tre-service-databricks | 1.0.3 |
+| tre-service-mlflow | 0.7.8 |
+| tre-service-innereye | 0.6.4 |
+| tre-workspace-service-ohdsi | 0.2.4 |
+| tre-workspace-service-gitea | 1.0.3 |
+| tre-workspace-service-mysql | 1.0.2 |
+| tre-workspace-service-azuresql | 1.0.9 |
+| tre-user-resource-aml-compute-instance | 0.5.7 |
+| tre-service-azureml | 0.8.10 |
+| tre-workspace-service-health | 0.2.5 |
+| tre-workspace-airlock-import-review | 0.12.16 |
+| tre-workspace-unrestricted | 0.11.4 |
+| tre-workspace-base | 1.5.4 |
+| tre-shared-service-cyclecloud | 0.5.5 |
+| tre-shared-service-databricks-private-auth | 0.1.5 |
+| tre-shared-service-sonatype-nexus | 3.0.0 |
+| tre-shared-service-admin-vm | 0.4.3 |
+| tre-shared-service-firewall | 1.2.0 |
+| tre-shared-service-gitea | 1.0.2 |
+| tre-shared-service-certs | 0.5.1 |
+| tre-shared-service-airlock-notifier | 1.0.1 |
 
 ## 0.18.0
 
