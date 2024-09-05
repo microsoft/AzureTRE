@@ -6,7 +6,8 @@
 FEATURES:
 
 ENHANCEMENTS:
-* Update Unrestricted and Airlock Import Review workspaces to be built off the Base workspace 0.19.0
+* Update Unrestricted and Airlock Import Review workspaces to be built off the Base workspace 0.19.0 ([#4087](https://github.com/microsoft/AzureTRE/pull/4087))
+
 BUG FIXES:
 
 COMPONENTS:
