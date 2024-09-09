@@ -23,3 +23,8 @@ variable "acr_name" {
   type        = string
   description = "Name of ACR"
 }
+
+variable "keyvault_name" {
+  type        = string
+  description = "Name of Key Vault"
+}

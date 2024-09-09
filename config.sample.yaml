@@ -8,6 +8,8 @@ management:
   mgmt_storage_account_name: __CHANGE_ME__
   terraform_state_container_name: tfstate
   acr_name: __CHANGE_ME__
+  # Key Vault for encryption keys
+  keyvault_name: __CHANGE_ME__
   # Azure Resource Manager credentials used for CI/CD pipelines
   arm_subscription_id: __CHANGE_ME__
 

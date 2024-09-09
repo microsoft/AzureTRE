@@ -2,6 +2,8 @@ provider "azurerm" {
   features {}
 }
 
+data "azurerm_client_config" "current" {}
+
 # Resource group for TRE core management
 resource "azurerm_resource_group" "mgmt" {
   name     = var.mgmt_resource_group_name
@@ -63,4 +65,15 @@ EOF
     schedule = "4 1 * * *"
     enabled  = true
   }
+}
+
+# Key Vault for encryption keys
+
+resource "azurerm_key_vault" "shared_kv" {
+  name                        = var.keyvault_name
+  resource_group_name         = azurerm_resource_group.mgmt.name
+  location                    = azurerm_resource_group.mgmt.location
+  enabled_for_disk_encryption = true
+  sku_name                    = "standard"
+  tenant_id                   = data.azurerm_client_config.current.tenant_id
 }
