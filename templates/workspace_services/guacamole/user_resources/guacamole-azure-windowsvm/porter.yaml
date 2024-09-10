@@ -40,9 +40,12 @@ custom:
         version: latest
       conda_config: true
     # For information on using custom images, see README.me in the guacamole/user-resources folder
-    # "Custom Image From Gallery":
-    #   source_image_name: your-image
-    #   conda_config: true
+    "Custom Server 2019 Data Science VM":
+      source_image_name: imgdef-windows11-dsvm-rpython
+      conda_config: true
+    "Custom Windows 10":
+      source_image_name: imgdef-windows10-dsvm-rpython
+      conda_config: true
 
 credentials:
   - name: azure_tenant_id

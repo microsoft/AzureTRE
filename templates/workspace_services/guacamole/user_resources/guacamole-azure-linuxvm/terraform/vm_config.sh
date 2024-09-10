@@ -7,7 +7,12 @@ set -o nounset
 # set -o xtrace
 
 # Remove apt sources not included in sources.list file
+echo "init_vm.sh: APT sources"
 sudo rm -f /etc/apt/sources.list.d/*
+
+# shellcheck disable=SC1091
+. /etc/os-release
+sed -i "s%unknown_sku%$VERSION_ID%" /etc/apt/sources.list
 
 # Update apt packages from configured Nexus sources
 echo "init_vm.sh: START"
@@ -35,63 +40,31 @@ sudo -u "${VM_USER}" -i bash -c 'echo xset -dpms >> ~/.xsession'
 sudo systemctl enable xrdp
 sudo service xrdp restart
 
-## Python 3.8 and Jupyter
-sudo apt install -y jupyter-notebook microsoft-edge-dev
-
-## VS Code
-echo "init_vm.sh: VS Code"
-sudo apt install -y code
-sudo apt install -y gvfs-bin || true
-
-echo "init_vm.sh: Folders"
-sudo mkdir -p /opt/vscode/user-data
-sudo mkdir -p /opt/vscode/extensions
-
-# echo "init_vm.sh: azure-cli"
-sudo apt install azure-cli -y
-
-# TODO: need to look at proxy extentions
-## VSCode Extensions
-# echo "init_vm.sh: VSCode extensions"
-# code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension ms-python.python
-# code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension REditorSupport.r
-# code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension RDebugger.r-debugger
-
-# Azure Storage Explorer
-sudo apt install gnome-keyring dotnet-sdk-8.0 -y
-wget -q "${NEXUS_PROXY_URL}"/repository/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
-sudo mkdir -p /opt/storage-explorer
-sudo tar xvf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
-sudo chmod +x /opt/storage-explorer/*
-
-sudo tee /usr/share/applications/storage-explorer.desktop << END
-[Desktop Entry]
-Name=Storage Explorer
-Comment=Azure Storage Explorer
-Exec=/opt/storage-explorer/StorageExplorer
-Icon=/opt/storage-explorer/resources/app/out/app/icon.png
-Terminal=false
-Type=Application
-StartupNotify=false
-StartupWMClass=Code
-Categories=Development;
+# Prevent screen timeout
+echo "init_vm.sh: Preventing Timeout"
+sudo mkdir -p /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml
+sudo touch /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
+sudo chmod 664 /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
+sudo tee /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml << END
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-screensaver" version="1.0">
+  <property name="saver" type="empty">
+    <property name="mode" type="int" value="0"/>
+    <property name="enabled" type="bool" value="false"/>
+  </property>
+  <property name="lock" type="empty">
+    <property name="enabled" type="bool" value="false"/>
+  </property>
+</ channel>
 END
-
-## R
-echo "init_vm.sh: R Setup"
-sudo apt install -y r-base
-
-# RStudio Desktop
-echo "init_vm.sh: RStudio"
-wget "${NEXUS_PROXY_URL}"/repository/r-studio-download/electron/jammy/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2204
-wget "${NEXUS_PROXY_URL}"/repository/r-studio-download/electron/focal/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2004
-sudo gdebi --non-interactive /tmp/"${APT_SKU}"/rstudio-2023.12.1-402-amd64.deb
+sudo chown -Rf "${VM_USER}":"${VM_USER}" /home/"${VM_USER}"/.config
 
 # Fix for blank screen on DSVM (/sh -> /bash due to conflict with profile.d scripts)
 sudo sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
 
 if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   # Install required packages
+  echo "init_vm.sh: Shared storage"
   sudo apt-get install autofs -y
 
   # Pass in required variables
@@ -129,12 +102,73 @@ if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   sudo mount $mntRoot
 fi
 
+set +o errexit
+set +o pipefail
+set +o nounset
+set -o xtrace
+
+## Python 3.8 and Jupyter
+echo "init_vm.sh: Jupyter, Edge"
+sudo apt install -y jupyter-notebook microsoft-edge-dev
+
+## VS Code
+echo "init_vm.sh: VS Code"
+sudo apt install -y code
+sudo apt install -y gvfs-bin || true
+
+echo "init_vm.sh: Folders"
+sudo mkdir -p /opt/vscode/user-data
+sudo mkdir -p /opt/vscode/extensions
+
+echo "init_vm.sh: azure-cli"
+sudo apt install azure-cli -y
+
+# TODO: need to look at proxy extentions
+## VSCode Extensions
+# echo "init_vm.sh: VSCode extensions"
+# code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension ms-python.python
+# code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension REditorSupport.r
+# code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension RDebugger.r-debugger
+
+# Azure Storage Explorer
+sudo apt install gnome-keyring dotnet-sdk-8.0 -y
+wget -q "${NEXUS_PROXY_URL}"/repository/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
+sudo mkdir -p /opt/storage-explorer
+sudo tar xvf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
+sudo chmod +x /opt/storage-explorer/*
+
+sudo tee /usr/share/applications/storage-explorer.desktop << END
+[Desktop Entry]
+Name=Storage Explorer
+Comment=Azure Storage Explorer
+Exec=/opt/storage-explorer/StorageExplorer
+Icon=/opt/storage-explorer/resources/app/out/app/icon.png
+Terminal=false
+Type=Application
+StartupNotify=false
+StartupWMClass=Code
+Categories=Development;
+END
+
+## R
+echo "init_vm.sh: R Setup"
+sudo apt install -y r-base
+
+# RStudio Desktop
+echo "init_vm.sh: RStudio"
+wget "${NEXUS_PROXY_URL}"/repository/r-studio-download/electron/jammy/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/
+# wget "${NEXUS_PROXY_URL}"/repository/r-studio-download/electron/focal/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/
+sudo gdebi --non-interactive /tmp/rstudio-2023.12.1-402-amd64.deb
+
 ### Anaconda Config
 if [ "${CONDA_CONFIG}" -eq 1 ]; then
   echo "init_vm.sh: Anaconda"
-  export PATH="/anaconda/condabin":$PATH
-  export PATH="/anaconda/bin":$PATH
-  export PATH="/anaconda/envs/py38_default/bin":$PATH
+  if [ -d "/anaconda" ]; then
+    export PATH="/anaconda/condabin:/anaconda/bin:$/anaconda/envs/py38_default/bin":$PATH
+  fi
+  if [ -d "/opt/anaconda" ]; then
+    export PATH="/opt/anaconda/condabin:/opt/anaconda/bin":$PATH
+  fi
   conda config --add channels "${NEXUS_PROXY_URL}"/repository/conda-mirror/main/  --system
   conda config --add channels "${NEXUS_PROXY_URL}"/repository/conda-repo/main/  --system
   conda config --remove channels defaults --system
@@ -160,24 +194,9 @@ sudo sed -i -e 's/Terminal=true/Terminal=false/g' /usr/share/applications/jupyte
 # Default Browser
 sudo update-alternatives --config x-www-browser
 
-# Prevent screen timeout
-echo "init_vm.sh: Preventing Timeout"
-sudo mkdir -p /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml
-sudo touch /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
-sudo chmod 664 /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml
-sudo tee /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensaver.xml << END
-<?xml version="1.0" encoding="UTF-8"?>
-<channel name="xfce4-screensaver" version="1.0">
-  <property name="saver" type="empty">
-    <property name="mode" type="int" value="0"/>
-    <property name="enabled" type="bool" value="false"/>
-  </property>
-  <property name="lock" type="empty">
-    <property name="enabled" type="bool" value="false"/>
-  </property>
-</ channel>
-END
-sudo chown -Rf "${VM_USER}":"${VM_USER}" /home/"${VM_USER}"/.config
+echo "init_vm.sh: environment"
+echo "export NEXUS_PROXY_URL=${NEXUS_PROXY_URL}" > /etc/profile.d/99-sde-environment.sh
+env | sort
 
 ## Cleanup
 echo "init_vm.sh: Cleanup"
