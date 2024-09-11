@@ -50,6 +50,25 @@ resource "azurerm_user_assigned_identity" "vmss_msi" {
   lifecycle { ignore_changes = [tags] }
 }
 
+resource "azurerm_disk_encryption_set" "vmss_disk_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  name                      = "vmss-disk-encryption-rp-porter-${var.tre_id}"
+  location                  = var.location
+  resource_group_name       = var.resource_group_name
+  key_vault_key_id          = data.azurerm_key_vault_key.encryption[0].versionless_id
+  encryption_type           = "EncryptionAtRestWithPlatformAndCustomerKeys"
+  auto_key_rotation_enabled = true
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.vmss_msi.id]
+  }
+
+  depends_on = [
+    azurerm_role_assignment.vmss_kv_encryption_key_user
+  ]
+}
+
 resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
   name                            = "vmss-rp-porter-${var.tre_id}"
   location                        = var.location
@@ -113,9 +132,10 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
   }
 
   os_disk {
-    storage_account_type = "Standard_LRS"
-    caching              = "ReadWrite"
-    disk_size_gb         = 64
+    storage_account_type   = "Standard_LRS"
+    caching                = "ReadWrite"
+    disk_size_gb           = 64
+    disk_encryption_set_id = var.enable_cmk_encryption ? azurerm_disk_encryption_set.vmss_disk_encryption[0].id : null
   }
 
   network_interface {
@@ -190,6 +210,13 @@ resource "azurerm_key_vault_access_policy" "resource_processor" {
 
   secret_permissions      = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
   certificate_permissions = ["Get", "Recover", "Import", "Delete", "Purge"]
+}
+
+resource "azurerm_role_assignment" "vmss_kv_encryption_key_user" {
+  count                = var.enable_cmk_encryption ? 1 : 0
+  scope                = data.azurerm_key_vault.mgmt_kv[0].id
+  role_definition_name = "Key Vault Crypto Service Encryption User"
+  principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
 }
 
 module "terraform_azurerm_environment_configuration" {

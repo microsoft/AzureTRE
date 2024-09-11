@@ -28,7 +28,29 @@ resource "azurerm_storage_account" "az_monitor" {
     bypass         = ["AzureServices"]
   }
 
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
+
   lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_storage_account_customer_managed_key" "az_monitor_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.az_monitor.id
+  key_vault_id              = data.azurerm_key_vault.mgmt_kv[0].id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = var.encryption_identity_id
+
+  lifecycle {
+    ignore_changes = [
+      key_vault_id
+    ]
+  }
 }
 
 resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_ingestion" {

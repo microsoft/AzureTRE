@@ -5,7 +5,18 @@ resource "azurerm_storage_account" "stg" {
   account_tier                    = "Standard"
   account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
-  tags                            = local.tre_core_tags
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [azurerm_user_assigned_identity.encryption[0].id]
+    }
+  }
+
+  tags = local.tre_core_tags
+
+
   lifecycle { ignore_changes = [tags] }
 }
 
@@ -66,4 +77,22 @@ resource "azurerm_private_endpoint" "filepe" {
   depends_on = [
     azurerm_private_endpoint.blobpe
   ]
+}
+
+resource "azurerm_storage_account_customer_managed_key" "encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.stg.id
+  key_vault_id              = data.azurerm_key_vault.mgmt_kv[0].id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = azurerm_user_assigned_identity.encryption[0].id
+
+  depends_on = [
+    azurerm_role_assignment.kv_encryption_key_user[0]
+  ]
+
+  lifecycle {
+    ignore_changes = [
+      key_vault_id
+    ]
+  }
 }

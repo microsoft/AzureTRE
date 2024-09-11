@@ -27,7 +27,29 @@ resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
   allow_nested_items_to_be_public = false
   tags                            = var.tre_core_tags
 
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
+
   lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_storage_account_customer_managed_key" "sa_airlock_processor_func_app_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.sa_airlock_processor_func_app.id
+  key_vault_id              = data.azurerm_key_vault.mgmt_kv[0].id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = var.encryption_identity_id
+
+  lifecycle {
+    ignore_changes = [
+      key_vault_id
+    ]
+  }
 }
 
 resource "azurerm_linux_function_app" "airlock_function_app" {

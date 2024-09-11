@@ -212,3 +212,21 @@ variable "logging_level" {
     error_message = "logging_level must be one of ERROR, WARNING, INFO, DEBUG"
   }
 }
+
+variable "enable_cmk_encryption" {
+  type        = bool
+  description = "A boolean indicating if key vault will be deployed for customer managed key encryption"
+  default     = false
+}
+
+variable "kv_name" {
+  type        = string
+  description = "Name of Key Vault (only used if enable_cmk_encryption is true)"
+}
+
+variable "kv_encryption_key_name" {
+  type        = string
+  description = "Name of Key Vault Encryption Key (only used if enable_cmk_encryption is true)"
+  default     = "tre-encryption"
+}
+
