@@ -12,7 +12,7 @@ sudo rm -f /etc/apt/sources.list.d/*
 
 # shellcheck disable=SC1091
 . /etc/os-release
-sed -i "s%unknown_sku%$VERSION_ID%" /etc/apt/sources.list
+sed -i "s%__VERSION_ID__%$VERSION_ID%" /etc/apt/sources.list
 
 # Update apt packages from configured Nexus sources
 echo "init_vm.sh: START"
@@ -102,9 +102,9 @@ if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   sudo mount $mntRoot
 fi
 
-set +o errexit
-set +o pipefail
-set +o nounset
+# set +o errexit
+# set +o pipefail
+# set +o nounset
 set -o xtrace
 
 ## Python 3.8 and Jupyter
