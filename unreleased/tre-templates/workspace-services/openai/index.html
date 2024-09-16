@@ -12,13 +12,13 @@
         <meta name="author" content="Microsoft">
       
       
-        <link rel="canonical" href="https://microsoft.github.io/AzureTRE/unreleased/tre-templates/workspace-services/mlflow/">
+        <link rel="canonical" href="https://microsoft.github.io/AzureTRE/unreleased/tre-templates/workspace-services/openai/">
       
       
-        <link rel="prev" href="../inner-eye/">
+        <link rel="prev" href="../azuresql/">
       
       
-        <link rel="next" href="../health_services/">
+        <link rel="next" href="../../shared-services/gitea/">
       
       
       <link rel="icon" href="../../../assets/ms_icon.png">
@@ -26,7 +26,7 @@
     
     
       
-        <title>MLFlow - Azure TRE</title>
+        <title>Open AI - Azure TRE</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#mlflow-workspace-service" class="md-skip">
+        <a href="#openai-workspace-service" class="md-skip">
           Skip to content
         </a>
       
@@ -133,7 +133,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              MLFlow
+              Open AI
             
           </span>
         </div>
@@ -1506,30 +1506,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    MLFlow
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../mlflow/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1538,77 +1518,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    <span class="md-ellipsis">
-      Prerequisites
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mlflow-workspace-vm-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      MLflow Workspace VM Configuration
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mlflow-set-tracking-uri" class="md-nav__link">
-    <span class="md-ellipsis">
-      MLflow set tracking URI
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#using-with-conda-forge" class="md-nav__link">
-    <span class="md-ellipsis">
-      Using with Conda-Forge
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Using with Conda-Forge">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#condayml" class="md-nav__link">
-    <span class="md-ellipsis">
-      conda.yml
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1723,10 +1632,30 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../openai/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Open AI
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -1735,6 +1664,53 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authenticating" class="md-nav__link">
+    <span class="md-ellipsis">
+      Authenticating
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Properties
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3477,44 +3453,20 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#mlflow-workspace-vm-configuration" class="md-nav__link">
+  <a href="#authenticating" class="md-nav__link">
     <span class="md-ellipsis">
-      MLflow Workspace VM Configuration
+      Authenticating
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#mlflow-set-tracking-uri" class="md-nav__link">
+  <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
-      MLflow set tracking URI
+      Properties
     </span>
   </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#using-with-conda-forge" class="md-nav__link">
-    <span class="md-ellipsis">
-      Using with Conda-Forge
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Using with Conda-Forge">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#condayml" class="md-nav__link">
-    <span class="md-ellipsis">
-      conda.yml
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -3533,43 +3485,30 @@
                   
 
 
-<h1 id="mlflow-workspace-service">MLflow Workspace Service</h1>
-<p>See: <a href="https://www.mlflow.org">https://www.mlflow.org</a></p>
+<h1 id="openai-workspace-service">OpenAI Workspace Service</h1>
+<p>See: <a href="https://learn.microsoft.com/en-us/azure/ai-services/openai/overview">Azure OpenAI Service</a></p>
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
-<li><a href="https://microsoft.github.io/AzureTRE/tre-templates/workspaces/base/">A base workspace deployed</a></li>
+<li><a href="../../workspaces/base/">A base workspace deployed</a></li>
 </ul>
-<h2 id="mlflow-workspace-vm-configuration">MLflow Workspace VM Configuration</h2>
-<p>Each MLflow server deployment creates a PowerShell (for Windows) and a shell script (for Linux) with the same name as the MLflow server, in the shared storage mounted on the researcher VMs.
-These scripts will configure the researcher VMs (by installing the required packages and setting up the environment variables) to communicate with the MLflow tracking server.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Please ensure that <a href="https://microsoft.github.io/AzureTRE/tre-admins/setup-instructions/configuring-shared-services/">nexus reposiory</a> is configured before running the above scripts.</p>
-</div>
-<h2 id="mlflow-set-tracking-uri">MLflow set tracking URI</h2>
-<p>Researchers will be required to set the remote tracking URI in their scripts</p>
-<div class="highlight"><pre><span></span><code><span class="n">remote_server_uri</span> <span class="o">=</span> <span class="s2">&quot;https://xxxxxxx.azurewebsites.net/&quot;</span>
-
-<span class="n">mlflow</span><span class="o">.</span><span class="n">set_tracking_uri</span><span class="p">(</span><span class="n">remote_server_uri</span><span class="p">)</span>
-</code></pre></div>
-<h2 id="using-with-conda-forge">Using with Conda-Forge</h2>
-<p>If working with Conda-Forge you need to ensure the user resource you are using is configured correctly and using the channels available via the <a href="../shared-services/nexus/">Nexus repository</a>.
-If the user resource you have deployed used one of the pre-existing Guacamole user resource templates and has conda installed by default, conda will already be configured to use the correct channels via Nexus.
-If not and conda has been manually deployed on the user resource, the following script can be used to configure conda:</p>
-<div class="highlight"><pre><span></span><code><span class="w">  </span>conda<span class="w"> </span>config<span class="w"> </span>--add<span class="w"> </span>channels<span class="w"> </span><span class="si">${</span><span class="nv">nexus_proxy_url</span><span class="si">}</span>/repository/conda/<span class="w">  </span>--system
-<span class="w">  </span>conda<span class="w"> </span>config<span class="w"> </span>--add<span class="w"> </span>channels<span class="w"> </span><span class="si">${</span><span class="nv">nexus_proxy_url</span><span class="si">}</span>/repository/conda-forge/<span class="w">  </span>--system
-<span class="w">  </span>conda<span class="w"> </span>config<span class="w"> </span>--remove<span class="w"> </span>channels<span class="w"> </span>defaults<span class="w"> </span>--system
-<span class="w">  </span>conda<span class="w"> </span>config<span class="w"> </span>--set<span class="w"> </span>channel_alias<span class="w"> </span><span class="si">${</span><span class="nv">nexus_proxy_url</span><span class="si">}</span>/repository/conda/<span class="w">  </span>--system
-</code></pre></div>
-<h3 id="condayml">conda.yml</h3>
-<p>When using a <code>conda.yml</code> file to configure your MLFlow environment it is required to specify the channels to use.<br />
-As the traditional channels (conda-forge, defaults etc) have been replaced with Nexus channels, you must ensure that the Nexus channels are being specified here instead.
-To retireve these channels, run <code>conda config --show channels</code> once conda has been configured to use Nexus.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-</div>
-<p>When logging models using sklearn, an optional parameter <code>conda_env</code> can be passed as either JSON or YML.  If this is not passed a default <code>conda.yml</code> will be generate for the model, targeting the channel <code>conda-forge</code> causing any subsequent environments created using the model to fail.
-  See the official documentation <a href="https://www.mlflow.org/docs/latest/python_api/mlflow.sklearn.html">here</a> for the full details.</p>
+<ul>
+<li>
+<p>The OpenAI workspace service container image needs building and pushing:</p>
+<p><code>make workspace_service_bundle BUNDLE=openai</code></p>
+</li>
+</ul>
+<h2 id="authenticating">Authenticating</h2>
+<ol>
+<li>The open AI domain and deployment id can be found from the details tab.</li>
+<li>When communicating with the API, an "api_key" is required. This can be found in the Key Vault.</li>
+</ol>
+<h2 id="properties">Properties</h2>
+<ul>
+<li><code>is_exposed_externally</code> - If <code>True</code>, the OpenAI workspace is accessible from outside of the workspace virtual network.</li>
+<li><code>openai_model</code> - The model to use for the OpenAI deployment <code>&lt;model name&gt; | &lt;model version&gt;</code>. The default is <code>gpt-35-turbo | 0301</code>.</li>
+<li>Important note: Models are subject to different quota and region availability and the deployment may fail if you don't have the correct quota.
+Please review this link on current limits and how to request increases: <a href="https://learn.microsoft.com/en-us/azure/ai-services/openai/quotas-limits">Open AI Quotas</a></li>
+</ul>
 
 
 
