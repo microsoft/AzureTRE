@@ -5,9 +5,10 @@
 
 FEATURES:
 
-ENHANCEMENTS:
+ENHANCEMENTS
 
 BUG FIXES:
+* Add Snyk Security updates for September
 
 COMPONENTS:
 
