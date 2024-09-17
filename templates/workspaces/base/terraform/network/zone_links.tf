@@ -158,3 +158,23 @@ resource "azurerm_private_dns_zone_virtual_network_link" "databrickslink" {
 
   lifecycle { ignore_changes = [tags] }
 }
+
+resource "azurerm_private_dns_zone_virtual_network_link" "openailink" {
+  name                  = "openailink-${local.workspace_resource_name_suffix}"
+  resource_group_name   = local.core_resource_group_name
+  private_dns_zone_name = data.azurerm_private_dns_zone.openai.name
+  virtual_network_id    = azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "cognitveserviceslink" {
+  name                  = "cognitiveserviceslink-${local.workspace_resource_name_suffix}"
+  resource_group_name   = local.core_resource_group_name
+  private_dns_zone_name = data.azurerm_private_dns_zone.cognitiveservices.name
+  virtual_network_id    = azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
