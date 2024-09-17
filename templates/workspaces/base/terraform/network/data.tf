@@ -98,6 +98,16 @@ data "azurerm_private_dns_zone" "azuresql" {
   resource_group_name = local.core_resource_group_name
 }
 
+data "azurerm_private_dns_zone" "openai" {
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.openai.azure.com"]
+  resource_group_name = local.core_resource_group_name
+}
+
+data "azurerm_private_dns_zone" "cognitiveservices" {
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.cognitiveservices.azure.com"]
+  resource_group_name = local.core_resource_group_name
+}
+
 data "azurerm_public_ip" "app_gateway_ip" {
   name                = "pip-agw-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
