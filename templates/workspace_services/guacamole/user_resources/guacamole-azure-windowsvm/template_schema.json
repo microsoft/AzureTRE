@@ -16,9 +16,11 @@
         "title": "Windows image",
         "description": "Select Windows image to use for VM",
         "enum": [
+          "Custom Server 2019 Data Science VM",
+          "Custom Windows 10",
+          "Server 2019 Data Science VM",
           "Windows 10",
-          "Windows 11",
-          "Server 2019 Data Science VM"
+          "Windows 11"
         ]
       },
       "vm_size": {
