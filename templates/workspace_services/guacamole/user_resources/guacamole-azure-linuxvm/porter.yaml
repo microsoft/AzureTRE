@@ -32,6 +32,10 @@ custom:
       source_image_name: imgdef-linux-dsvm-rpython
       install_ui: true
       conda_config: true
+    "Custom Ubuntu 24.04 LTS":
+      source_image_name: imgdef-linux24-dsvm-rpython
+      install_ui: true
+      conda_config: true
 
 credentials:
   - name: azure_tenant_id
