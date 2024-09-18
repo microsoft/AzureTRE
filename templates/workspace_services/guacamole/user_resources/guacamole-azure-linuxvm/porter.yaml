@@ -18,15 +18,15 @@ custom:
     "36 CPU | 440GB | 1 x A10 GPU": Standard_NV36ads_A10_v5  # 2375.82
     "36 CPU | 880GB | 1 x A10 GPU": Standard_NV36adms_A10_v5 # 3323.17
   image_options:
-    "Ubuntu 22.04 LTS":
-      source_image_reference:
-        publisher: canonical
-        offer: 0001-com-ubuntu-server-jammy
-        sku: 22_04-lts-gen2
-        version: latest
-        apt_sku: 22.04
-      install_ui: true
-      conda_config: false
+    # "Ubuntu 22.04 LTS":
+    #   source_image_reference:
+    #     publisher: canonical
+    #     offer: 0001-com-ubuntu-server-jammy
+    #     sku: 22_04-lts-gen2
+    #     version: latest
+    #     apt_sku: 22.04
+    #   install_ui: true
+    #   conda_config: false
     # For information on using custom images, see README.me in the guacamole/user-resources folder
     "Custom Ubuntu 22.04 LTS":
       source_image_name: imgdef-linux-dsvm-rpython
