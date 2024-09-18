@@ -16,6 +16,7 @@ COMPONENTS:
 
 FEATURES:
 * Azure SQL Workspace Service ([#3969](https://github.com/microsoft/AzureTRE/issues/3969))
+* OpenAI Workspace Service ([#3810](https://github.com/microsoft/AzureTRE/issues/3810))
 
 ENHANCEMENTS:
 * Add Case Study Docs ([#1366](https://github.com/microsoft/AzureTRE/issues/1366))
