@@ -6,8 +6,7 @@ set -o nounset
 # Uncomment this line to see each command for debugging (careful: this will show secrets!)
 set -o xtrace
 
-echo "init_vm.sh: I am running as:"
-id
+echo "init_vm.sh: START"
 
 echo "init_vm.sh: Acquire lock"
 timeout 900 bash -c -- 'while fuser /var/lib/dpkg/lock-frontend > /dev/null 2>&1
@@ -16,7 +15,7 @@ timeout 900 bash -c -- 'while fuser /var/lib/dpkg/lock-frontend > /dev/null 2>&1
                               sleep 5
                             done'
 
-echo "Currently installed packages:"
+echo "init_vm.sh: Currently installed packages:"
 apt list --installed
 
 # Remove apt sources not included in sources.list file
@@ -27,12 +26,17 @@ rm -f /etc/apt/sources.list.d/*
 . /etc/os-release
 sed -i "s%__VERSION_ID__%$VERSION_ID%" /etc/apt/sources.list
 if [ "$VERSION_ID" == "24.04" ]; then
-  # azuredatastudio seems to be broken, at least, that's what it reports when we fix it...
+  echo "init_vm.sh: Fix APT for Ubuntu 24.04"
+  # azuredatastudio seems to be broken, at least, that's what it reports when we run this...
   apt --fix-broken install -y
+
+  # While we're here, disable bombing out, so we can debug this thing easier
+  set +o errexit
+  set +o pipefail
 fi
 
 # Update apt packages from configured Nexus sources
-echo "init_vm.sh: START"
+echo "init_vm.sh: Update OS"
 export DEBIAN_FRONTEND=noninteractive
 export DEBIAN_PRIORITY=critical
 apt upgrade -y
@@ -42,28 +46,20 @@ apt install -y software-properties-common apt-transport-https wget dirmngr gdebi
 # apt-get update || true
 
 ## Desktop
-echo "init_vm.sh: Desktop"
-systemctl start gdm3 || true
-DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true dpkg-reconfigure gdm3 || true
-# Ubuntu 24.04 seems flaky here, so this line has to be split, and "--fix-missing" added, for good measure
-# apt install -y xfce4 xfce4-goodies xorg dbus-x11 x11-xserver-utils
-#
-# it's this next line, in particular, that causes the problem. Force it to succeed, and hope for the best
-apt install -y xfce4 xfce4-goodies xorg dbus-x11 --fix-missing || true # --fix-missing for Ubuntu 24.04
-apt install -y x11-xserver-utils --fix-missing # --fix-missing for Ubuntu 24.04
-echo /usr/sbin/gdm3 > /etc/X11/default-display-manager
+if [ "$VERSION_ID" == "24.04" ]; then
+  echo "init_vm.sh: Desktop"
 
-## Install xrdp so Guacamole can connect via RDP
-echo "init_vm.sh: xrdp"
-apt install -y xrdp xorgxrdp xfce4-session
-adduser xrdp ssl-cert
+  # This next line causes problems. Force it to succeed, and hope for the best
+  apt install -y xfce4 xfce4-goodies xorg dbus-x11 --fix-missing || true # --fix-missing for Ubuntu 24.04
+
+  ## Install xrdp so Guacamole can connect via RDP
+  echo "init_vm.sh: xrdp"
+  apt install -y xrdp xorgxrdp xfce4-session
+  adduser xrdp ssl-cert
+fi
 sudo -u "${VM_USER}" -i bash -c 'echo xfce4-session > ~/.xsession'
 sudo -u "${VM_USER}" -i bash -c 'echo xset s off >> ~/.xsession'
 sudo -u "${VM_USER}" -i bash -c 'echo xset -dpms >> ~/.xsession'
-
-# Make sure xrdp service starts up with the system
-systemctl enable xrdp
-service xrdp restart
 
 # Prevent screen timeout
 echo "init_vm.sh: Preventing Timeout"
@@ -84,13 +80,10 @@ tee /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensave
 END
 chown -Rf "${VM_USER}":"${VM_USER}" /home/"${VM_USER}"/.config
 
-# Fix for blank screen on DSVM (/sh -> /bash due to conflict with profile.d scripts)
-sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
-
 if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   # Install required packages
   echo "init_vm.sh: Shared storage"
-  apt-get install autofs -y
+  apt-get install -y autofs
 
   # Pass in required variables
   storageAccountName="${STORAGE_ACCOUNT_NAME}"
@@ -101,13 +94,11 @@ if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   mntRoot="/shared-storage"
   credentialRoot="/etc/smbcredentials"
 
-  # mntPath="$mntRoot/$fileShareName"
   # shellcheck disable=SC2308
   smbPath=$(echo "$httpEndpoint" | cut -c7-"$(expr length "$httpEndpoint")")$fileShareName
   smbCredentialFile="$credentialRoot/$storageAccountName.cred"
 
   # Create required file paths
-  # mkdir -p "$mntPath"
   mkdir -p $credentialRoot
   mkdir -p $mntRoot
 
@@ -127,40 +118,9 @@ if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   mount $mntRoot
 fi
 
-# set +o errexit
-# set +o pipefail
-# set +o nounset
-set -o xtrace
-
 ## Python 3.8 and Jupyter
 echo "init_vm.sh: Jupyter, Edge"
 apt install -y jupyter-notebook microsoft-edge-dev
-
-## VS Code
-echo "init_vm.sh: VS Code"
-# apt install -y code
-# apt install -y gvfs-bin || true
-
-echo "init_vm.sh: Folders"
-mkdir -p /opt/vscode/user-data
-mkdir -p /opt/vscode/extensions
-
-echo "init_vm.sh: azure-cli"
-apt install azure-cli -y
-
-# TODO: need to look at proxy extentions
-## VSCode Extensions
-# echo "init_vm.sh: VSCode extensions"
-# code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension ms-python.python
-# code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension REditorSupport.r
-# code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension RDebugger.r-debugger
-
-# Azure Storage Explorer
-apt install gnome-keyring dotnet-sdk-8.0 -y
-wget -q "${NEXUS_PROXY_URL}"/repository/microsoft-download/A/E/3/AE32C485-B62B-4437-92F7-8B6B2C48CB40/StorageExplorer-linux-x64.tar.gz -P /tmp
-mkdir -p /opt/storage-explorer
-tar xvf /tmp/StorageExplorer-linux-x64.tar.gz -C /opt/storage-explorer
-chmod +x /opt/storage-explorer/*
 
 tee /usr/share/applications/storage-explorer.desktop << END
 [Desktop Entry]
@@ -175,15 +135,21 @@ StartupWMClass=Code
 Categories=Development;
 END
 
-## R
-echo "init_vm.sh: R Setup"
-apt install -y r-base
-
 # RStudio Desktop
-echo "init_vm.sh: RStudio"
-wget "${NEXUS_PROXY_URL}"/repository/r-studio-download/electron/jammy/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/
-# wget "${NEXUS_PROXY_URL}"/repository/r-studio-download/electron/focal/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/
-gdebi --non-interactive /tmp/rstudio-2023.12.1-402-amd64.deb
+if [ "$VERSION_ID" == "24.04" ]; then
+  echo "init_vm.sh: RStudio"
+  echo "Sadly, this won't work, there's a problem with the proxy configuration for RStudio"
+  # # wget "${NEXUS_PROXY_URL}"/repository/r-studio-download/electron/jammy/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/
+  # # wget "${NEXUS_PROXY_URL}"/repository/r-studio-download/electron/focal/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/
+  # # gdebi --non-interactive /tmp/rstudio-2023.12.1-402-amd64.deb
+
+  # # https://download1.rstudio.org/electron/focal/amd64/rstudio-2024.04.2-764-amd64.deb
+  # wget "${NEXUS_PROXY_URL}"/repository/r-studio-download/electron/focal/amd64/rstudio-2024.04.2-764-amd64.deb -P /tmp/
+  # gdebi --non-interactive /tmp/rstudio-2024.04.2-764-amd64.deb
+fi
+
+# R config
+echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- \"""${NEXUS_PROXY_URL}\"/repository/r-proxy/\"\n    options(repos = r)\n})" | tee /etc/R/Rprofile.site
 
 ### Anaconda Config
 if [ "${CONDA_CONFIG}" -eq 1 ]; then
@@ -194,15 +160,15 @@ if [ "${CONDA_CONFIG}" -eq 1 ]; then
   if [ -d "/opt/anaconda" ]; then
     export PATH="/opt/anaconda/condabin:/opt/anaconda/bin":$PATH
   fi
-  conda config --add channels "${NEXUS_PROXY_URL}"/repository/conda-mirror/main/  --system
-  conda config --add channels "${NEXUS_PROXY_URL}"/repository/conda-repo/main/  --system
+  conda config --add channels "${NEXUS_PROXY_URL}"/repository/conda-mirror/main/ --system
+  conda config --add channels "${NEXUS_PROXY_URL}"/repository/conda-repo/main/ --system
   conda config --remove channels defaults --system
-  conda config --set channel_alias "${NEXUS_PROXY_URL}"/repository/conda-mirror/  --system
+  conda config --set channel_alias "${NEXUS_PROXY_URL}"/repository/conda-mirror/ --system
 fi
 
 # Docker install and config
+echo "init_vm.sh: Docker"
 apt-get remove -y moby-tini || true
-apt-get install -y r-base-core
 apt-get install -y ca-certificates curl gnupg lsb-release
 apt-get install -y docker-compose-plugin docker-ce-cli containerd.io jq
 apt-get install -y docker-ce
@@ -210,8 +176,7 @@ jq -n --arg proxy "${NEXUS_PROXY_URL}:8083" '{"registry-mirrors": [$proxy]}' > /
 systemctl daemon-reload
 systemctl restart docker
 
-# R config
-echo -e "local({\n    r <- getOption(\"repos\")\n    r[\"Nexus\"] <- \"""${NEXUS_PROXY_URL}\"/repository/r-proxy/\"\n    options(repos = r)\n})" | tee /etc/R/Rprofile.site
+echo "init_vm.sh: odds and ends"
 
 # Jupiter Notebook Config
 sed -i -e 's/Terminal=true/Terminal=false/g' /usr/share/applications/jupyter-notebook.desktop
@@ -221,9 +186,9 @@ update-alternatives --config x-www-browser
 
 echo "init_vm.sh: environment"
 echo "export NEXUS_PROXY_URL=${NEXUS_PROXY_URL}" > /etc/profile.d/99-sde-environment.sh
-env | sort
 
 ## Cleanup
-echo "init_vm.sh: Cleanup"
+echo "init_vm.sh: Cleanup & restart"
 rm -f /etc/apt/sources.list.d/* # Again, because of VS Code
+set +o xtrace # Avoid Python stack dump from myself
 shutdown -r now
