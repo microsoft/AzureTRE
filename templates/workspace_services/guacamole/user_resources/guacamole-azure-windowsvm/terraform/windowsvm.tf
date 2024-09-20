@@ -52,7 +52,8 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
       nexus_proxy_url        = local.nexus_proxy_url
       SharedStorageAccess    = var.shared_storage_access ? 1 : 0
       StorageAccountName     = data.azurerm_storage_account.stg.name
-      StorageAccountKey      = data.azurerm_storage_account.stg.primary_access_key
+      StorageAccountKey1     = data.azurerm_storage_account.stg.primary_access_key
+      StorageAccountkey2     = data.azurerm_storage_account.stg.secondary_access_key
       StorageAccountFileHost = data.azurerm_storage_account.stg.primary_file_host
       FileShareName          = var.shared_storage_access ? data.azurerm_storage_share.shared_storage[0].name : ""
       CondaConfig            = local.selected_image.conda_config ? 1 : 0
