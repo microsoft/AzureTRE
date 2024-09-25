@@ -38,9 +38,9 @@ keystore_file_name=ssl.keystore
 cert_password=$(openssl rand -base64 32)
 rm -f temp.p12
 openssl pkcs12 -export -inkey "$downloaded_cert_path" -in "$downloaded_cert_path" -out temp.p12 -password "pass:$cert_password"
-rm -f /etc/nexus-data/keystores/"$keystore_file_name"
+rm -f /etc/nexus-data/keystores/${keystore_file_name}
 keytool -v -importkeystore -noprompt -srckeystore temp.p12 -srcstoretype PKCS12 -srcstorepass "$cert_password" \
-  -destkeystore /etc/nexus-data/keystores/"$keystore_file_name" -deststoretype PKCS12 -deststorepass "$cert_password"
+  -destkeystore /etc/nexus-data/keystores/${keystore_file_name} -deststoretype PKCS12 -deststorepass "$cert_password"
 rm -f temp.p12
 
 # Configure Jetty instance within Nexus to consume ssl cert
@@ -61,10 +61,10 @@ xmlstarlet ed -P --inplace \
 # -- then update the location of our keystore
 xmlstarlet ed -P --inplace \
   -u "/Configure[@id='Server']/New[@id='sslContextFactory']/Set[@name='KeyStorePath']" \
-  -v /nexus-data/keystores/"$keystore_file_name" /etc/nexus-data/etc/jetty/jetty-https.xml
+  -v /nexus-data/keystores/${keystore_file_name} /etc/nexus-data/etc/jetty/jetty-https.xml
 xmlstarlet ed -P --inplace \
   -u "/Configure[@id='Server']/New[@id='sslContextFactory']/Set[@name='TrustStorePath']" \
-  -v /nexus-data/keystores/"$keystore_file_name" /etc/nexus-data/etc/jetty/jetty-https.xml
+  -v /nexus-data/keystores/${keystore_file_name} /etc/nexus-data/etc/jetty/jetty-https.xml
 
 # Add jetty configuration and ssl port to Nexus properties
 cat >> /etc/nexus-data/etc/nexus.properties <<'EOF'
