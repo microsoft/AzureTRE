@@ -24,7 +24,7 @@ concurrency: "${{ github.workflow }}-${{ github.ref }}"
 jobs:
   run-deploy-tre-main:
     name: "Deploy main"
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/provide-upgrades'
     uses: ./.github/workflows/deploy_tre_reusable.yml
     permissions:
       checks: write
