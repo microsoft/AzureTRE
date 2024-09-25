@@ -8,7 +8,7 @@ on:  # yamllint disable-line rule:truthy
     # midnight every day https://crontab.guru/#0_0_*_*_*
     - cron: "0 0 * * *"
   push:
-    branches: [main]
+    branches: [provide-upgrades]
   workflow_dispatch:
     inputs:
       environment:
@@ -24,7 +24,7 @@ concurrency: "${{ github.workflow }}-${{ github.ref }}"
 jobs:
   run-deploy-tre-main:
     name: "Deploy main"
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/provide-upgrades'
     uses: ./.github/workflows/deploy_tre_reusable.yml
     permissions:
       checks: write
