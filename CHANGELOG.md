@@ -6,6 +6,17 @@
 FEATURES:
 
 ENHANCEMENTS:
+
+BUG FIXES:
+
+COMPONENTS:
+
+## 0.19.1
+
+**BREAKING CHANGES & MIGRATIONS**:
+* Workspace creation blocked due to Azure API depreciation ([#4095](https://github.com/microsoft/AzureTRE/issues/4095))
+
+ENHANCEMENTS:
 * Update Unrestricted and Airlock Import Review workspaces to be built off the Base workspace 0.19.0 ([#4087](https://github.com/microsoft/AzureTRE/pull/4087))
 * Update Release Docs (part of [#2727](https://github.com/microsoft/AzureTRE/issues/2727))
 * Add info regarding workspace limit into docs ([#3920](https://github.com/microsoft/AzureTRE/issues/3920))
@@ -14,6 +25,38 @@ BUG FIXES:
 * Workspace creation blocked due to Azure API depreciation ([#4095](https://github.com/microsoft/AzureTRE/issues/4095))
 
 COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.5.2 |
+| core | 0.10.8 |
+| ui | 0.5.28 |
+| tre-service-guacamole-linuxvm | 1.0.3 |
+| tre-service-guacamole-import-reviewvm | 0.2.9 |
+| tre-service-guacamole-export-reviewvm | 0.1.9 |
+| tre-service-guacamole-windowsvm | 1.0.1 |
+| tre-service-guacamole | 0.10.9 |
+| tre-service-databricks | 1.0.4 |
+| tre-service-mlflow | 0.7.9 |
+| tre-service-innereye | 0.6.5 |
+| tre-workspace-service-ohdsi | 0.2.5 |
+| tre-workspace-service-gitea | 1.0.5 |
+| tre-workspace-service-mysql | 1.0.4 |
+| tre-workspace-service-azuresql | 1.0.10 |
+| tre-user-resource-aml-compute-instance | 0.5.7 |
+| tre-service-azureml | 0.8.11 |
+| tre-workspace-service-health | 0.2.6 |
+| tre-workspace-service-openai | 1.0.1 |
+| tre-workspace-airlock-import-review | 0.13.1 |
+| tre-workspace-unrestricted | 0.12.1 |
+| tre-workspace-base | 1.5.7 |
+| tre-shared-service-cyclecloud | 0.6.3 |
+| tre-shared-service-databricks-private-auth | 0.1.6 |
+| tre-shared-service-sonatype-nexus | 3.0.1 |
+| tre-shared-service-admin-vm | 0.4.4 |
+| tre-shared-service-firewall | 1.2.1 |
+| tre-shared-service-gitea | 1.0.3 |
+| tre-shared-service-certs | 0.5.2 |
+| tre-shared-service-airlock-notifier | 1.0.2 |
 
 ## 0.19.0
 
