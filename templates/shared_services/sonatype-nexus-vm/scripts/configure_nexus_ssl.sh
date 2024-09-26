@@ -34,7 +34,7 @@ while [ ! -f "$downloaded_cert_path" ]; do
   ((cert_timeout--))
 done
 
-keystore_file_name=ssl.keystore
+keystore_file_name="ssl.keystore"
 cert_password=$(openssl rand -base64 32)
 rm -f temp.p12
 openssl pkcs12 -export -inkey "$downloaded_cert_path" -in "$downloaded_cert_path" -out temp.p12 -password "pass:$cert_password"
