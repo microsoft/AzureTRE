@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-cyclecloud
-version: 0.5.6
+version: 0.6.3
 description: "An Azure TRE Shared Service Template for Azure Cyclecloud"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -53,6 +53,11 @@ outputs:
     applyTo:
       - install
       - upgrade
+  - name: shared_subnet_address_prefixes
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 
 mixins:
@@ -67,10 +72,6 @@ install:
       description: "Deploy Cyclecloud shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
-        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
         tre_resource_id: ${ bundle.parameters.id }
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
@@ -80,16 +81,13 @@ install:
         key: ${ bundle.parameters.id }
       outputs:
         - name: connection_uri
+        - name: shared_subnet_address_prefixes
 
 upgrade:
   - terraform:
       description: "Update Cyclecloud shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
-        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
         tre_resource_id: ${ bundle.parameters.id }
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
@@ -99,16 +97,13 @@ upgrade:
         key: ${ bundle.parameters.id }
       outputs:
         - name: connection_uri
+        - name: shared_subnet_address_prefixes
 
 uninstall:
   - terraform:
       description: "Delete the Cyclecloud shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
-        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
         tre_resource_id: ${ bundle.parameters.id }
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
