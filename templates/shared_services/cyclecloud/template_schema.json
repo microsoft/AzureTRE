@@ -4,8 +4,200 @@
   "type": "object",
   "title": "Azure CycleCloud",
   "description": "Azure CycleCloud is an enterprise-friendly tool for orchestrating and managing High Performance Computing (HPC) environments on Azure.",
-  "required": [
-  ],
+  "required": [],
   "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the shared service",
+      "description": "The name of the shared service to be displayed to users",
+      "default": "CycleCloud",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the shared service",
+      "description": "Description of the shared service",
+      "default": "Manage HPC environments on Azure",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace Service Overview",
+      "description": "Long form description of the shared service, in markdown syntax",
+      "default": "Azure CycleCloud is an enterprise-friendly tool for orchestrating and managing High Performance Computing (HPC) environments on Azure.",
+      "updateable": true
+    }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "42024559-3a88-4518-b1ea-713aebc91cfd",
+        "stepTitle": "Add CycleCloud rule collection to firewall",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_cyclecloud",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "Cyclecloud_Dependancies",
+                  "description": "Cyclecloud Dependancies",
+                  "source_addresses": "{{ resource.properties.shared_subnet_address_prefixes }}",
+                  "destination_addresses": [
+                    "AzureResourceManager"
+                  ],
+                  "destination_ports": [
+                    "443"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_cyclecloud",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "cyclecloud",
+                  "description": "CycleCloud",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ],
+                  "target_fqdns": [
+                    "github.com",
+                    "api.github.com",
+                    "codeload.github.com",
+                    "objects.githubusercontent.com"
+                  ],
+                  "source_addresses": "{{ resource.properties.shared_subnet_address_prefixes }}"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "c3f95f9f-d125-4937-9403-84e4957a26b8",
+        "stepTitle": "Add CycleCloud rule collection from firewall",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_cyclecloud",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "Cyclecloud_Dependancies",
+                  "description": "Cyclecloud Dependancies",
+                  "source_addresses": "{{ resource.properties.shared_subnet_address_prefixes }}",
+                  "destination_addresses": [
+                    "AzureResourceManager"
+                  ],
+                  "destination_ports": [
+                    "443"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_cyclecloud",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "cyclecloud",
+                  "description": "CycleCloud",
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ],
+                  "target_fqdns": [
+                    "github.com",
+                    "api.github.com",
+                    "codeload.github.com",
+                    "objects.githubusercontent.com"
+                  ],
+                  "source_addresses": "{{ resource.properties.shared_subnet_address_prefixes }}"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "c3f95f9f-d125-4937-9403-84e4957a26a8",
+        "stepTitle": "Remove CycleCloud rule collection from firewall",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_cyclecloud"
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_cyclecloud"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ]
   }
 }
