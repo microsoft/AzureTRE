@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/sql/template_schema.json",
+  "type": "object",
+  "title": "OpenAI Workspace Service",
+  "description": "Provides OpenAI within the workspace",
+  "required": [],
+  "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "default": "Azure OpenAI Service",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "default": "Build your own copilot and generative AI applications",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace Service Overview",
+      "description": "Long form description of the workspace service, in markdown syntax",
+      "default": "Azure OpenAI Service provides REST API access to OpenAI's powerful language models including the GPT-4, GPT-4 Turbo with Vision, GPT-3.5-Turbo, and Embeddings model series. For more information, see the [Azure OpenAI Service documentation](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview).",
+      "updateable": true
+    },
+    "is_exposed_externally": {
+      "$id": "#/properties/is_exposed_externally",
+      "type": "boolean",
+      "title": "Expose externally",
+      "description": "Should the OpenAI instance be publicly accessible?",
+      "default": false,
+      "updateable": true
+    },
+    "openai_model": {
+      "$id": "#/properties/openai_model",
+      "type": "string",
+      "title": "OpenAI Model",
+      "description": "Which OpenAI Model should be used? (be mindful of subscription limits)",
+      "enum": [
+        "gpt-35-turbo | 0301",
+        "gpt-35-turbo | 1106",
+        "gpt-35-turbo | 0163",
+        "gpt-35-turbo | 0125",
+        "gpt-4 | 0613",
+        "gpt-4 | turbo-2024-04-09",
+        "gpt-4o | 2024-05-13"
+      ],
+      "default": "gpt-35-turbo | 0301",
+      "updateable": true
+    }
+  }
+}
