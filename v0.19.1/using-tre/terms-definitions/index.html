@@ -3567,6 +3567,11 @@
 <p>Workspaces can be enhanced with one or more building blocks called <strong>workspace services</strong> like Azure ML, Guacamole etc. to allow functionality such as development of machine learning models, data engineering, data analysis and software development.</p>
 <p>Multiple workspaces can be created within a single Trusted Research Environment to enable the required separation for your projects.</p>
 <p>Each workspace has <a href="../../azure-tre-overview/user-roles/">workspace users</a>: a <strong>workspace owner</strong> (normally only one), and one or more <strong>workspace researchers</strong> that can access the data and workspace services in the workspace. The workspace owner is also considered a workspace researcher.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>The TRE has a soft limit of 32 projects, it can be increased to 70 by updating the storage account limit in your subscription to 500.
+See issue <a href="https://github.com/microsoft/AzureTRE/issues/3920">#3920</a> for more info.</p>
+</div>
 <h2 id="workspace-service">Workspace Service</h2>
 <p>A workspace service is a service, created as a building block, with pre-configured set of resources that can be applied to a workspace.</p>
 <p>Examples of Workspace Services are:</p>

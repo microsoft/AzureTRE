@@ -3529,7 +3529,7 @@ ls<span class="w"> </span>/etc/yum.repos.d/*.repo<span class="w"> </span><span c
 
 yum<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>epel-release
 ls<span class="w"> </span>/etc/yum.repos.d/*.repo<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;s/metalink/# metalink/g&#39;</span>
-ls<span class="w"> </span>/etc/yum.repos.d/*.repo<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;s,#baseurl=https://download.fedoraproject.org/,baseurl=https://nexus-</span><span class="nv">$TRE_ID</span><span class="s2">.</span><span class="nv">$REGION</span><span class="s2">.cloudapp.azure.com/repository/fedoraproject/,g&quot;</span>
+ls<span class="w"> </span>/etc/yum.repos.d/*.repo<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;s,#baseurl=https://download.example/pub/epel/,baseurl=https://nexus-</span><span class="nv">$TRE_ID</span><span class="s2">.</span><span class="nv">$REGION</span><span class="s2">.cloudapp.azure.com/repository/fedoraproject/pub/epel/,g&quot;</span>
 
 yum<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>python3<span class="w"> </span>python3-pip
 
@@ -3547,6 +3547,8 @@ sudo<span class="w"> </span>cat<span class="w"> </span>&gt;<span class="w"> </sp
 <span class="s">gpgcheck=1</span>
 <span class="s">gpgkey=https://nexus-$TRE_ID.$REGION.cloudapp.azure.com/repository/microsoft-keys/microsoft.asc</span>
 <span class="s">EOF</span>
+
+rpm<span class="w"> </span>--import<span class="w"> </span>https://nexus-<span class="nv">$TRE_ID</span>.<span class="nv">$REGION</span>.cloudapp.azure.com/repository/almalinux/almalinux/RPM-GPG-KEY-AlmaLinux
 </code></pre></div>
 <ul>
 <li>Click Save.</li>
