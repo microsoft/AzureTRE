@@ -111,6 +111,7 @@ resource "azurerm_subnet" "airlock_notification" {
       actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
     }
   }
+  service_endpoints = ["Microsoft.ServiceBus"]
 }
 
 resource "azurerm_subnet" "airlock_storage" {
@@ -171,4 +172,18 @@ resource "azurerm_ip_group" "webapp" {
   cidrs               = [local.web_app_subnet_address_prefix]
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_ip_group" "airlock_processor" {
+  name                = "ipg-airlock-processor"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  cidrs               = [local.airlock_processor_subnet_address_prefix]
+  tags                = local.tre_core_tags
+  lifecycle { ignore_changes = [tags] }
+}
+
+module "terraform_azurerm_environment_configuration" {
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
+  arm_environment = var.arm_environment
 }

@@ -8,7 +8,7 @@ import json
 
 from fastapi import HTTPException, status
 
-from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, mask_sensitive_properties
+from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, mask_sensitive_properties, enrich_resource_with_available_upgrades
 from db.repositories.resources_history import ResourceHistoryRepository
 from tests_ma.test_api.conftest import create_test_user
 from resources import strings
@@ -16,7 +16,7 @@ from resources import strings
 from db.repositories.resources import ResourceRepository
 from db.repositories.operations import OperationRepository
 from models.domain.operation import Status, Operation, OperationStep
-from models.domain.resource import RequestAction, ResourceType
+from models.domain.resource import AvailableUpgrade, RequestAction, ResourceType
 from models.domain.workspace import Workspace
 
 
@@ -29,24 +29,21 @@ FAKE_UPDATE_TIMESTAMP: float = FAKE_UPDATE_TIME.timestamp()
 
 @pytest_asyncio.fixture
 async def resource_repo() -> ResourceRepository:
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=AsyncMock()):
-        with patch("azure.cosmos.CosmosClient") as cosmos_client_mock:
-            resource_repo_mock = await ResourceRepository.create(cosmos_client_mock)
-            yield resource_repo_mock
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=AsyncMock()):
+        resource_repo_mock = await ResourceRepository().create()
+        yield resource_repo_mock
 
 
 @pytest_asyncio.fixture
 async def operations_repo() -> OperationRepository:
-    with patch("azure.cosmos.CosmosClient") as cosmos_client_mock:
-        operation_repo_mock = await OperationRepository.create(cosmos_client_mock)
-        yield operation_repo_mock
+    operation_repo_mock = await OperationRepository().create()
+    yield operation_repo_mock
 
 
 @pytest_asyncio.fixture
 async def resource_history_repo() -> ResourceHistoryRepository:
-    with patch("azure.cosmos.CosmosClient") as cosmos_client_mock:
-        resource_history_repo_mock = await ResourceHistoryRepository.create(cosmos_client_mock)
-        yield resource_history_repo_mock
+    resource_history_repo_mock = await ResourceHistoryRepository().create()
+    yield resource_history_repo_mock
 
 
 def sample_resource(workspace_id=WORKSPACE_ID):
@@ -97,13 +94,15 @@ def sample_resource_operation(resource_id: str, operation_id: str):
         user=create_test_user(),
         steps=[
             OperationStep(
-                stepId="main",
+                id="random-uuid-1",
+                templateStepId="main",
                 stepTitle="Main step for resource-id",
                 resourceAction="install",
                 resourceType=ResourceType.Workspace,
                 resourceTemplateName="template1",
                 resourceId=resource_id,
-                updatedWhen=FAKE_CREATE_TIMESTAMP
+                updatedWhen=FAKE_CREATE_TIMESTAMP,
+                sourceTemplateResourceId=resource_id
             )
         ]
     )
@@ -270,7 +269,7 @@ class TestResourceHelpers:
     @pytest.mark.asyncio
     async def test_save_and_deploy_masks_secrets(self, send_deployment_message_mock, resource_template_repo, resource_repo, operations_repo, basic_resource_template, resource_history_repo):
         resource = sample_resource_with_secret()
-        step_id = "main"
+        step_id = "random-uuid-1"
         operation_id = str(uuid.uuid4())
         operation = sample_resource_operation(resource_id=resource.id, operation_id=operation_id)
 
@@ -303,6 +302,25 @@ class TestResourceHelpers:
         resource.properties["prop_with_nested_secret"]["nested_secret"] = strings.REDACTED_SENSITIVE_VALUE
 
         resource_repo.save_item.assert_called_once_with(resource)
+
+    @patch("api.routes.workspaces.ResourceTemplateRepository")
+    @pytest.mark.asyncio
+    async def test_enrich_resource_with_available_upgrades_when_there_are_new_upgrades_returns_relevant_upgrades_only(self, resource_template_repo):
+        resource_template_repo.get_all_template_versions = AsyncMock(return_value=['0.1.0', '0.1.2', '1.0.0', '1.0.1'])
+        resource = sample_resource()
+        await enrich_resource_with_available_upgrades(resource, resource_template_repo)
+
+        assert resource.availableUpgrades == [AvailableUpgrade(version='0.1.2', forceUpdateRequired=False),
+                                              AvailableUpgrade(version='1.0.0', forceUpdateRequired=True),
+                                              AvailableUpgrade(version='1.0.1', forceUpdateRequired=True)]
+
+    @patch("api.routes.workspaces.ResourceTemplateRepository")
+    @pytest.mark.asyncio
+    async def test_enrich_resource_with_available_upgrades_when_there_are_no_upgrades_returns_empty_list(self, resource_template_repo):
+        resource_template_repo.get_all_template_versions = AsyncMock(return_value=['0.1.0'])
+        resource = sample_resource()
+        await enrich_resource_with_available_upgrades(resource, resource_template_repo)
+        assert resource.availableUpgrades == []
 
     def test_sensitive_properties_get_masked(self, basic_resource_template):
         resource = sample_resource_with_secret()

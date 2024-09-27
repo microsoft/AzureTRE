@@ -23,7 +23,7 @@ def test_substitution_for_primary_resource_no_parents(primary_resource):
     # array val to inject, with text. Text will be dropped.
     val_to_sub = "{{ resource.properties.fqdn }} - this text will be removed because fqdn is a list and shouldn't be concatenated into a string"
     val = substitute_value(val_to_sub, resource_dict, None, None)
-    assert val == ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"]
+    assert val == ["*.pypi.org", "files.pythonhosted.org", "security.ubuntu.com"]
 
     # single string val, with text. Will be concatenated into text.
     val_to_sub = "I think {{ resource.templateName }} is the best template!"
@@ -36,7 +36,9 @@ def test_substitution_for_primary_resource_no_parents(primary_resource):
     assert val == "I think template name is the best template, and 7 is a good version!"
 
 
-def test_substitution_for_user_resource_primary_resource_with_parents(primary_user_resource, resource_ws_parent, resource_ws_svc_parent):
+def test_substitution_for_user_resource_primary_resource_with_parents(
+    primary_user_resource, resource_ws_parent, resource_ws_svc_parent
+):
     primary_user_resource_dict = primary_user_resource.dict()
     parent_ws_resource_dict = resource_ws_parent.dict()
     parent_ws_svc_resource_dict = resource_ws_svc_parent.dict()
@@ -44,23 +46,35 @@ def test_substitution_for_user_resource_primary_resource_with_parents(primary_us
     # ws parent (2 levels up)
     # single array val
     val_to_sub = "{{ resource.parent.parent.properties.address_prefix }}"
-    val = substitute_value(val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None)
+    val = substitute_value(
+        val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None
+    )
     assert val == ["172.1.1.1", "192.168.1.1"]
 
     # array val to inject, with text. Text will be dropped.
     val_to_sub = "{{ resource.parent.parent.properties.fqdn }} - this text will be removed because fqdn is a list and shouldn't be concatenated into a string"
-    val = substitute_value(val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None)
-    assert val == ["*pypi.org", "security.ubuntu.com"]
+    val = substitute_value(
+        val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None
+    )
+    assert val == ["*.pypi.org", "security.ubuntu.com"]
 
     # single string val, with text. Will be concatenated into text.
-    val_to_sub = "I think {{ resource.parent.parent.templateName }} is the best template!"
-    val = substitute_value(val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None)
+    val_to_sub = (
+        "I think {{ resource.parent.parent.templateName }} is the best template!"
+    )
+    val = substitute_value(
+        val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None
+    )
     assert val == "I think ws template name is the best template!"
 
     # multiple string vals, with text. Will be concatenated.
     val_to_sub = "I think {{ resource.parent.parent.templateName }} is the best template, and {{ resource.parent.parent.templateVersion }} is a good version!"
-    val = substitute_value(val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None)
-    assert val == "I think ws template name is the best template, and 8 is a good version!"
+    val = substitute_value(
+        val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None
+    )
+    assert (
+        val == "I think ws template name is the best template, and 8 is a good version!"
+    )
 
     # Verify the correct dictionary is provided
     val_to_sub = "{{ resource.parent.properties.display_name }}"
@@ -70,28 +84,47 @@ def test_substitution_for_user_resource_primary_resource_with_parents(primary_us
     # ws svc parent (1 level up)
     # single array val
     val_to_sub = "{{ resource.parent.properties.address_prefix }}"
-    val = substitute_value(val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict)
+    val = substitute_value(
+        val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict
+    )
     assert val == ["172.2.2.2", "192.168.2.2"]
 
     # array val to inject, with text. Text will be dropped.
     val_to_sub = "{{ resource.parent.properties.fqdn }} - this text will be removed because fqdn is a list and shouldn't be concatenated into a string"
-    val = substitute_value(val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict)
-    assert val == ["*pypi.org", "files.pythonhosted.org"]
+    val = substitute_value(
+        val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict
+    )
+    assert val == ["*.pypi.org", "files.pythonhosted.org"]
 
     # single string val, with text. Will be concatenated into text.
     val_to_sub = "I think {{ resource.parent.templateName }} is the best template!"
-    val = substitute_value(val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict)
+    val = substitute_value(
+        val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict
+    )
     assert val == "I think svc template name is the best template!"
 
     # multiple string vals, with text. Will be concatenated.
     val_to_sub = "I think {{ resource.parent.templateName }} is the best template, and {{ resource.parent.templateVersion }} is a good version!"
-    val = substitute_value(val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict)
-    assert val == "I think svc template name is the best template, and 9 is a good version!"
+    val = substitute_value(
+        val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict
+    )
+    assert (
+        val
+        == "I think svc template name is the best template, and 9 is a good version!"
+    )
 
     # multiple sources (primary + both parents) multiple string vals, with text. Will be concatenated.
     val_to_sub = "I am the primary resource ( a user resource - {{ resource.properties.display_name }}), my workspace service parent is {{ resource.parent.properties.display_name }} and my parent workspace is {{ resource.parent.parent.properties.display_name }}"
-    val = substitute_value(val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, parent_ws_svc_resource_dict)
-    assert val == "I am the primary resource ( a user resource - test_resource name), my workspace service parent is ImTheParentWSSvc and my parent workspace is ImTheParentWS"
+    val = substitute_value(
+        val_to_sub,
+        primary_user_resource_dict,
+        parent_ws_resource_dict,
+        parent_ws_svc_resource_dict,
+    )
+    assert (
+        val
+        == "I am the primary resource ( a user resource - test_resource name), my workspace service parent is ImTheParentWSSvc and my parent workspace is ImTheParentWS"
+    )
 
     # Verify the correct dictionary is provided
     val_to_sub = "{{ resource.parent.parent.properties.display_name }}"
@@ -101,27 +134,49 @@ def test_substitution_for_user_resource_primary_resource_with_parents(primary_us
     # 2 parents are the maximum supported!
     val_to_sub = "{{ resource.parent.parent.parent.properties.display_name }}"
     with pytest.raises(ValueError):
-        val = substitute_value(val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, parent_ws_svc_resource_dict)
+        val = substitute_value(
+            val_to_sub,
+            primary_user_resource_dict,
+            parent_ws_resource_dict,
+            parent_ws_svc_resource_dict,
+        )
 
 
-def test_substitution_for_workspace_service_primary_resource__with_parents(primary_workspace_service_resource, resource_ws_parent):
+def test_substitution_for_workspace_service_primary_resource__with_parents(
+    primary_workspace_service_resource, resource_ws_parent
+):
     primary_workspace_service_resource_dict = primary_workspace_service_resource.dict()
     parent_ws_resource_dict = resource_ws_parent.dict()
 
     # ws parent
     # single array val
     val_to_sub = "I am a ws service, but my ws parent is '{{ resource.parent.properties.display_name }}'"
-    val = substitute_value(val_to_sub, primary_workspace_service_resource_dict, parent_ws_resource_dict, None)
+    val = substitute_value(
+        val_to_sub,
+        primary_workspace_service_resource_dict,
+        parent_ws_resource_dict,
+        None,
+    )
     assert val == "I am a ws service, but my ws parent is 'ImTheParentWS'"
 
     # ws service cant have more than a single parent
     val_to_sub = "{{ resource.parent.parent.properties.display_name }}"
     with pytest.raises(ValueError):
-        val = substitute_value(val_to_sub, primary_workspace_service_resource_dict, parent_ws_resource_dict, None)
+        val = substitute_value(
+            val_to_sub,
+            primary_workspace_service_resource_dict,
+            parent_ws_resource_dict,
+            None,
+        )
 
     val_to_sub = "{{ resource.parent.parent.parent.properties.display_name }}"
     with pytest.raises(ValueError):
-        val = substitute_value(val_to_sub, primary_workspace_service_resource_dict, parent_ws_resource_dict, None)
+        val = substitute_value(
+            val_to_sub,
+            primary_workspace_service_resource_dict,
+            parent_ws_resource_dict,
+            None,
+        )
 
 
 def test_substitution_for_workspace_primary_resource_parents(primary_resource):
@@ -148,7 +203,10 @@ def test_substitution_for_shared_service_primary_resource_parents(basic_shared_s
     # single array val
     val_to_sub = "I am a shared service WITHOUT any parents, my name is '{{ resource.properties.display_name }}'"
     val = substitute_value(val_to_sub, primary_resource_dict, None, None)
-    assert val == "I am a shared service WITHOUT any parents, my name is 'shared_service_resource name'"
+    assert (
+        val
+        == "I am a shared service WITHOUT any parents, my name is 'shared_service_resource name'"
+    )
 
     # shared service cant have any parents
     val_to_sub = "{{ resource.parent.properties.display_name }}"
@@ -196,17 +254,23 @@ def test_substitution_list_strings(primary_resource, resource_to_update):
         ]
     )
     obj = substitute_properties(
-        pipeline_step_with_list_strings, primary_resource, None, None, resource_to_update,
+        pipeline_step_with_list_strings,
+        primary_resource,
+        None,
+        None,
+        resource_to_update,
     )
 
     assert obj["obj_list_strings"]["rules"][0]["destination_ports"] == ["*", "123"]
 
 
 def test_substitution_props(pipeline_step, primary_resource, resource_to_update):
-    obj = substitute_properties(pipeline_step, primary_resource, None, None, resource_to_update)
+    obj = substitute_properties(
+        pipeline_step, primary_resource, None, None, resource_to_update
+    )
 
     assert obj["rule_collections"][0]["rules"][0]["target_fqdns"] == [
-        "*pypi.org",
+        "*.pypi.org",
         "files.pythonhosted.org",
         "security.ubuntu.com",
     ]
@@ -224,7 +288,6 @@ def test_substitution_props(pipeline_step, primary_resource, resource_to_update)
 def test_substitution_array_append_remove(
     pipeline_step, primary_resource, resource_to_update
 ):
-
     # do the first substitution, and assert there's a single rule collection
     step = copy.deepcopy(pipeline_step)
     step.properties[0].arraySubstitutionAction = "append"
@@ -299,7 +362,6 @@ def test_substitution_array_append_remove(
 def test_substitution_array_append_replace(
     pipeline_step, primary_resource, resource_to_update
 ):
-
     # add object 1
     step = copy.deepcopy(pipeline_step)
     step.properties[0].arraySubstitutionAction = "append"
@@ -347,7 +409,6 @@ def test_substitution_array_append_replace(
 def test_substitution_array_replace_not_found(
     pipeline_step, primary_resource, resource_to_update
 ):
-
     # try to replace an item not there - it should just append
     step = copy.deepcopy(pipeline_step)
     step.properties[0].arraySubstitutionAction = "replace"

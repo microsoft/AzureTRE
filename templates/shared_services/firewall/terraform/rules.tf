@@ -114,43 +114,27 @@ resource "azurerm_firewall_policy_rule_collection_group" "core" {
       ]
       source_ip_groups = [data.azurerm_ip_group.resource_processor.id]
     }
+    # This rule is needed to support Gov Cloud.
+    # The az cli uses msal lib which requires access to this fqdn for authentication.
+    rule {
+      name = "microsoft-login"
+      protocols {
+        port = "443"
+        type = "Https"
+      }
+      destination_fqdns = [
+        "login.microsoftonline.com",
+      ]
+      source_ip_groups = [data.azurerm_ip_group.resource_processor.id]
+    }
+
+
   }
 
   application_rule_collection {
     name     = "arc-shared-subnet"
     priority = 302
     action   = "Allow"
-
-    rule {
-      name = "admin-resources"
-      protocols {
-        port = "443"
-        type = "Https"
-      }
-      protocols {
-        port = "80"
-        type = "Http"
-      }
-      destination_fqdns = [
-        "go.microsoft.com",
-        "*.azureedge.net",
-        "*github.com",
-        "*powershellgallery.com",
-        "git-scm.com",
-        "*githubusercontent.com",
-        "*core.windows.net",
-        "aka.ms",
-        "management.azure.com",
-        "graph.microsoft.com",
-        "login.microsoftonline.com",
-        "aadcdn.msftauth.net",
-        "graph.windows.net",
-        "keyserver.ubuntu.com",
-        "packages.microsoft.com",
-        "download.docker.com"
-      ]
-      source_ip_groups = [data.azurerm_ip_group.shared.id]
-    }
 
     rule {
       name = "nexus-bootstrap"
@@ -184,11 +168,33 @@ resource "azurerm_firewall_policy_rule_collection_group" "core" {
         type = "Https"
       }
       destination_fqdns = [
-        "graph.microsoft.com"
+        var.microsoft_graph_fqdn
       ]
       source_ip_groups = [data.azurerm_ip_group.web.id]
     }
   }
+
+  application_rule_collection {
+    name     = "arc-airlock-processor-subnet"
+    priority = 304
+    action   = "Allow"
+
+    rule {
+      name = "functions-runtime"
+      protocols {
+        port = "443"
+        type = "Https"
+      }
+      destination_fqdns = [
+        "functionscdn.azureedge.net"
+      ]
+      source_ip_groups = [data.azurerm_ip_group.airlock_processor.id]
+    }
+  }
+
+  depends_on = [
+    azurerm_firewall.fw
+  ]
 }
 
 

@@ -1,5 +1,5 @@
 data "azurerm_private_dns_zone" "eventgrid" {
-  name                = "privatelink.eventgrid.azure.net"
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.eventgrid.azure.net"]
   resource_group_name = var.resource_group_name
 }
 
@@ -159,6 +159,36 @@ resource "azurerm_private_endpoint" "eg_data_deletion" {
     is_manual_connection           = false
     subresource_names              = ["topic"]
   }
+}
+
+resource "azurerm_eventgrid_topic" "scan_result" {
+  count               = var.enable_malware_scanning ? 1 : 0
+  name                = local.scan_result_topic_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  # This is mandatory for the scan result to be published since private networks are not supported yet
+  public_network_access_enabled = true
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  tags = merge(var.tre_core_tags, {
+    Publishers = "Airlock Processor;"
+  })
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_role_assignment" "servicebus_sender_scan_result" {
+  count                = var.enable_malware_scanning ? 1 : 0
+  scope                = var.airlock_servicebus.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_topic.scan_result[0].identity[0].principal_id
+
+  depends_on = [
+    azurerm_eventgrid_topic.scan_result
+  ]
 }
 
 # System topic
@@ -392,6 +422,23 @@ resource "azurerm_eventgrid_event_subscription" "data_deletion" {
   depends_on = [
     azurerm_eventgrid_topic.data_deletion,
     azurerm_role_assignment.servicebus_sender_data_deletion
+  ]
+}
+
+resource "azurerm_eventgrid_event_subscription" "scan_result" {
+  count = var.enable_malware_scanning ? 1 : 0
+  name  = local.scan_result_eventgrid_subscription_name
+  scope = azurerm_eventgrid_topic.scan_result[0].id
+
+  service_bus_queue_endpoint_id = azurerm_servicebus_queue.scan_result.id
+
+  delivery_identity {
+    type = "SystemAssigned"
+  }
+
+  depends_on = [
+    azurerm_eventgrid_topic.scan_result,
+    azurerm_role_assignment.servicebus_sender_scan_result
   ]
 }
 

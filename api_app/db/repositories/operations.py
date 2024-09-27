@@ -2,7 +2,6 @@ from datetime import datetime
 import uuid
 from typing import List
 
-from azure.cosmos.aio import CosmosClient
 from pydantic import parse_obj_as
 from db.repositories.resource_templates import ResourceTemplateRepository
 from resources import strings
@@ -19,9 +18,9 @@ from models.domain.operation import Operation, OperationStep, Status
 
 class OperationRepository(BaseRepository):
     @classmethod
-    async def create(cls, client: CosmosClient):
+    async def create(cls):
         cls = OperationRepository()
-        await super().create(client, config.STATE_STORE_OPERATIONS_CONTAINER)
+        await super().create(config.STATE_STORE_OPERATIONS_CONTAINER)
         return cls
 
     @staticmethod
@@ -38,13 +37,14 @@ class OperationRepository(BaseRepository):
 
     def create_main_step(self, resource_template: dict, action: str, resource_id: str, status: Status, message: str) -> OperationStep:
         return OperationStep(
-            stepId="main",
+            id=str(uuid.uuid4()),
+            templateStepId="main",
             stepTitle=f"Main step for {resource_id}",
             resourceId=resource_id,
             resourceTemplateName=resource_template["name"],
             resourceType=resource_template["resourceType"],
             resourceAction=action,
-            parentResourceId=resource_id,
+            sourceTemplateResourceId=resource_id,
             status=status,
             message=message,
             updatedWhen=self.get_timestamp())
@@ -133,7 +133,8 @@ class OperationRepository(BaseRepository):
                         resource_for_step_status, resource_for_step_message = self.get_initial_status(step["resourceAction"])
 
                         steps.append(OperationStep(
-                            stepId=step["stepId"],
+                            id=str(uuid.uuid4()),
+                            templateStepId=step["stepId"],
                             stepTitle=step["stepTitle"],
                             resourceId=resource_for_step.id,
                             resourceTemplateName=resource_for_step.templateName,
@@ -142,7 +143,7 @@ class OperationRepository(BaseRepository):
                             status=resource_for_step_status,
                             message=resource_for_step_message,
                             updatedWhen=self.get_timestamp(),
-                            parentResourceId=resource_id
+                            sourceTemplateResourceId=resource_id
                         ))
         return steps
 
@@ -190,6 +191,6 @@ class OperationRepository(BaseRepository):
         return parse_obj_as(List[Operation], operations)
 
     async def resource_has_deployed_operation(self, resource_id: str) -> bool:
-        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND c.action = "{RequestAction.Install}" AND c.status = "{Status.Deployed}"'
+        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND ((c.action = "{RequestAction.Install}" AND c.status = "{Status.Deployed}") OR (c.action = "{RequestAction.Upgrade}" AND c.status = "{Status.Updated}"))'
         operations = await self.query(query=query)
         return len(operations) > 0

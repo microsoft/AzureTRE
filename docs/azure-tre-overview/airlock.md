@@ -66,7 +66,8 @@ This storage location is external for import (`stalimex`) or internal for export
 The user will be able to upload a file to the provided storage location, using any tool of their preference: [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) or [AzCopy](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10) which is a command line tool.
 
 The user Submits the request (TRE API call) starting the data movement (to the `stalimip` - import in-progress or `stalexip` - export in-progress). The airlock request is now in state **Submitted**.
-If enabled, the Security Scanning is started. In the case that security flaws are found, the request state becomes **Blocking In-progress** while the data is moved to blocked storage  (either import blocked `stalimblocked` or export blocked `stalexblocked`). In this case, the request is finalized with the state **Blocked By Scan**.
+If enabled, the Malware Scanning is started. The scan is done using Microsoft Defender for Storage, which is described in details [here](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-storage-introduction).
+In the case that security flaws are found, the request state becomes **Blocking In-progress** while the data is moved to blocked storage  (either import blocked `stalimblocked` or export blocked `stalexblocked`). In this case, the request is finalized with the state **Blocked By Scan**.
 If the Security Scanning does not identify any security flaws, the request state becomes **In-Review**. Simultaneously, a notification is sent to the Airlock Manager user. The user needs to ask for the container URL using the TRE API (SAS token + URL with READ permission).
 
 > The Security Scanning can be disabled, changing the request state from **Submitted** straight to **In-Review**.
@@ -116,7 +117,7 @@ Whenever the airlock process changes to a state of **Draft**, **Submitted**, **A
 When the state changes to `In-progress` the Workspace Owner (Airlock Manager) gets notified.
 
 > * The Notification mechanism is also data-driven, allowing an organization to extend the notifications behavior. The mechanism is exemplified with a Logic App determining the notifications logic.
-> * Notifications will work with All TRE users being AAD users (guests or not), with email defined – if not, notifications will not be sent.
+> * Notifications will work with All TRE users being Microsoft Entra ID users (guests or not), with email defined – if not, notifications will not be sent.
 
 ## Architecture
 

@@ -63,6 +63,30 @@
       "source": {
         "env": "SMTP_FROM_EMAIL"
       }
+    },
+    {
+      "name": "smtp_server_port",
+      "source": {
+        "env": "SMTP_SERVER_PORT"
+      }
+    },
+    {
+      "name": "smtp_server_enable_ssl",
+      "source": {
+        "env": "SMTP_SERVER_ENABLE_SSL"
+      }
+    },
+    {
+      "name": "azure_environment",
+      "source": {
+        "env": "AZURE_ENVIRONMENT"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
+      }
     }
   ]
 }

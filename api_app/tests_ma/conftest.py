@@ -1,6 +1,9 @@
 import pytest
 import pytest_asyncio
-from mock import patch
+from mock import AsyncMock, patch
+from azure.cosmos.aio import CosmosClient, DatabaseProxy
+
+from api.dependencies.database import Database
 from models.domain.request_action import RequestAction
 from models.domain.resource import Resource
 from models.domain.user_resource import UserResource
@@ -311,7 +314,7 @@ def multi_step_resource_template(basic_shared_service_template) -> ResourceTempl
                         )
                     ],
                 ),
-            ]
+            ],
         ),
     )
 
@@ -367,7 +370,8 @@ def multi_step_operation(
         updatedWhen=FAKE_CREATE_TIMESTAMP,
         steps=[
             OperationStep(
-                stepId="pre-step-1",
+                id="random-uuid-1",
+                templateStepId="pre-step-1",
                 stepTitle="Title for pre-step-1",
                 resourceAction="upgrade",
                 resourceTemplateName=basic_shared_service_template.name,
@@ -376,10 +380,11 @@ def multi_step_operation(
                 status=Status.AwaitingUpdate,
                 message="This resource is waiting to be updated",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
-                parentResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+                sourceTemplateResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
             ),
             OperationStep(
-                stepId="main",
+                id="random-uuid-2",
+                templateStepId="main",
                 stepTitle="Main step for 59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
                 resourceAction="install",
                 resourceType=ResourceType.Workspace,
@@ -388,10 +393,11 @@ def multi_step_operation(
                 status=Status.AwaitingDeployment,
                 message="This resource is waiting to be deployed",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
-                parentResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+                sourceTemplateResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
             ),
             OperationStep(
-                stepId="post-step-1",
+                id="random-uuid-3",
+                templateStepId="post-step-1",
                 stepTitle="Title for post-step-1",
                 resourceAction="upgrade",
                 resourceType=basic_shared_service_template.resourceType,
@@ -400,7 +406,7 @@ def multi_step_operation(
                 status=Status.AwaitingUpdate,
                 message="This resource is waiting to be updated",
                 updatedWhen=FAKE_CREATE_TIMESTAMP,
-                parentResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+                sourceTemplateResourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
             ),
         ],
     )
@@ -419,7 +425,7 @@ def primary_resource() -> Resource:
         properties={
             "display_name": "test_resource name",
             "address_prefix": ["172.0.0.1", "192.168.0.1"],
-            "fqdn": ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
+            "fqdn": ["*.pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
             "my_protocol": "MyCoolProtocol",
         },
     )
@@ -438,7 +444,7 @@ def primary_user_resource() -> Resource:
         properties={
             "display_name": "test_resource name",
             "address_prefix": ["172.0.0.1", "192.168.0.1"],
-            "fqdn": ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
+            "fqdn": ["*.pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
             "my_protocol": "MyCoolProtocol",
         },
     )
@@ -457,7 +463,7 @@ def primary_workspace_service_resource() -> Resource:
         properties={
             "display_name": "test_workspace_service_resource name",
             "address_prefix": ["172.0.0.1", "192.168.0.1"],
-            "fqdn": ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
+            "fqdn": ["*.pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
             "my_protocol": "MyCoolProtocol",
         },
     )
@@ -476,7 +482,7 @@ def resource_ws_parent() -> Resource:
         properties={
             "display_name": "ImTheParentWS",
             "address_prefix": ["172.1.1.1", "192.168.1.1"],
-            "fqdn": ["*pypi.org", "security.ubuntu.com"],
+            "fqdn": ["*.pypi.org", "security.ubuntu.com"],
             "my_protocol": "MyWSCoolProtocol",
         },
     )
@@ -495,7 +501,7 @@ def resource_ws_svc_parent() -> Resource:
         properties={
             "display_name": "ImTheParentWSSvc",
             "address_prefix": ["172.2.2.2", "192.168.2.2"],
-            "fqdn": ["*pypi.org", "files.pythonhosted.org"],
+            "fqdn": ["*.pypi.org", "files.pythonhosted.org"],
             "my_protocol": "MyWSSvcCoolProtocol",
         },
     )
@@ -569,11 +575,10 @@ def simple_pipeline_step() -> PipelineStep:
     )
 
 
-@pytest_asyncio.fixture()
-def no_database():
-    """ overrides connecting to the database """
-    with patch('api.dependencies.database.connect_to_db', return_value=None):
-        with patch('api.dependencies.database.get_db_client', return_value=None):
-            with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
-                with patch('core.events.bootstrap_database', return_value=None):
-                    yield
+@pytest_asyncio.fixture(autouse=True)
+async def no_database():
+    with patch('api.dependencies.database.get_credential_async', return_value=AsyncMock()), \
+         patch('api.dependencies.database.CosmosDBManagementClient', return_value=AsyncMock()), \
+         patch('api.dependencies.database.CosmosClient', return_value=AsyncMock(spec=CosmosClient)) as cosmos_client_mock:
+        cosmos_client_mock.return_value.get_database_client.return_value = AsyncMock(spec=DatabaseProxy)
+        yield Database()

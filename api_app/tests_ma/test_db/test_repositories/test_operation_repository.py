@@ -18,31 +18,29 @@ pytestmark = pytest.mark.asyncio
 
 @pytest_asyncio.fixture
 async def operations_repo():
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
-        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-            operations_repo = await OperationRepository.create(cosmos_client_mock)
-            yield operations_repo
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=None):
+        operations_repo = await OperationRepository.create()
+        yield operations_repo
 
 
 @pytest_asyncio.fixture
 async def resource_repo():
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
-        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-            resource_repo = await ResourceRepository.create(cosmos_client_mock)
-            yield resource_repo
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=None):
+        resource_repo = await ResourceRepository.create()
+        yield resource_repo
 
 
 @pytest_asyncio.fixture
 async def resource_template_repo():
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
-        with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-            resource_template_repo = await ResourceTemplateRepository.create(cosmos_client_mock)
-            yield resource_template_repo
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=None):
+        resource_template_repo = await ResourceTemplateRepository.create()
+        yield resource_template_repo
 
 
+@patch('uuid.uuid4', side_effect=["random-uuid-1", "random-uuid-2", "random-uuid-3"])
 @patch("db.repositories.operations.OperationRepository.get_timestamp", return_value=FAKE_CREATE_TIMESTAMP)
 @patch("db.repositories.operations.OperationRepository.create_operation_id", return_value=OPERATION_ID)
-async def test_create_operation_steps_from_multi_step_template(_, __, resource_repo, test_user, multi_step_operation, operations_repo, basic_shared_service, resource_template_repo, multi_step_resource_template):
+async def test_create_operation_steps_from_multi_step_template(_, __, ___, resource_repo, test_user, multi_step_operation, operations_repo, basic_shared_service, resource_template_repo, multi_step_resource_template):
 
     expected_op = multi_step_operation
     expected_op.id = OPERATION_ID

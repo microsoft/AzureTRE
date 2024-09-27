@@ -6,12 +6,17 @@ locals {
   keyvault_name            = "kv-${var.tre_id}"
   version                  = replace(replace(replace(data.local_file.version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
   gitea_allowed_fqdns_list = distinct(compact(split(",", replace(var.gitea_allowed_fqdns, " ", ""))))
+  sql_sku = {
+    "B | 4GB 2vCores"   = { value = "B_Standard_B2s" },
+    "GP | 8GB 2vCores"  = { value = "GP_Standard_D2ds_v4" },
+    "BC | 16GB 2vCores" = { value = "MO_Standard_E2ds_v4" }
+  }
   tre_shared_service_tags = {
     tre_id                = var.tre_id
     tre_shared_service_id = var.tre_resource_id
   }
   webapp_diagnostic_categories_enabled = [
-    "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
+    "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs",
     "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"
   ]
 }

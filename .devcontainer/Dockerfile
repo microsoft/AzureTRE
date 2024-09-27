@@ -8,15 +8,13 @@ FROM --platform="${TARGETPLATFORM}" mcr.microsoft.com/vscode/devcontainers/pytho
 # This will be set to true when running in VSCode
 ARG INTERACTIVE="false"
 
-ARG USERNAME=vscode
 ARG USER_UID=1000
-ARG USER_GID=$USER_UID
+ARG USERNAME=vscode
+
+# make user ID match user ID on host machine
+RUN usermod --uid $USER_UID $USERNAME
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-# Set up non-root user
-COPY .devcontainer/scripts/non-root-user.sh /tmp/
-RUN bash /tmp/non-root-user.sh "${USERNAME}" "${USER_UID}" "${USER_GID}"
 
 # Set env for tracking that we're running in a devcontainer
 ENV DEVCONTAINER=true
@@ -26,7 +24,7 @@ ARG NODE_VERSION="lts/*"
 RUN su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"
 
 # Install terraform
-ARG TERRAFORM_VERSION="1.3.6"
+ARG TERRAFORM_VERSION="1.4.5"
 COPY .devcontainer/scripts/terraform.sh /tmp/
 RUN bash /tmp/terraform.sh "${TERRAFORM_VERSION}" /usr/bin
 
@@ -39,7 +37,7 @@ RUN apt-get update && apt-get install -y ca-certificates curl gnupg lsb-release 
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
     | tee /etc/apt/sources.list.d/docker.list > /dev/null \
-    && apt-get update && apt-get install -y docker-ce="5:20.10.21~3-0~debian-bullseye" docker-ce-cli="5:20.10.21~3-0~debian-bullseye" containerd.io="1.6.12-1" --no-install-recommends \
+    && apt-get update && apt-get install -y docker-ce="5:24.0.0-1~debian.11~bullseye" docker-ce-cli="5:24.0.0-1~debian.11~bullseye" docker-compose-plugin="2.21.0-1~debian.11~bullseye" containerd.io="1.6.24-1" docker-buildx-plugin --no-install-recommends \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install Certbot
@@ -50,13 +48,11 @@ RUN if [ "${INTERACTIVE}" = "true" ]; then \
     && /opt/certbot/bin/pip install --no-cache-dir certbot \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/* ; fi
 
-# can't be in a non default path
-# ARG PORTER_HOME_V1=/home/$USERNAME/.porter-v1/
 ARG PORTER_HOME_V1=/home/$USERNAME/.porter/
-ARG PORTER_VERSION=v1.0.8
-ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.1
-ARG PORTER_AZ_MIXIN_VERSION=v1.0.0
-ARG PORTER_AZURE_PLUGIN_VERSION=v1.1.0
+ARG PORTER_VERSION=v1.0.15
+ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.2
+ARG PORTER_AZ_MIXIN_VERSION=v1.0.1
+ARG PORTER_AZURE_PLUGIN_VERSION=v1.2.0
 COPY .devcontainer/scripts/porter-v1.sh /tmp/
 RUN export PORTER_VERSION=${PORTER_VERSION} \
     PORTER_TERRAFORM_MIXIN_VERSION=${PORTER_TERRAFORM_MIXIN_VERSION} \
@@ -68,6 +64,8 @@ RUN export PORTER_VERSION=${PORTER_VERSION} \
 ENV PATH ${PORTER_HOME_V1}:$PATH
 
 # Install requirements
+ARG PIP_VERSION=23.3.1
+RUN  pip3 --no-cache-dir install pip==${PIP_VERSION} && pip3 config set global.disable-pip-version-check true
 COPY ["requirements.txt", "/tmp/pip-tmp/" ]
 COPY ["api_app/requirements.txt", "api_app/requirements-dev.txt", "/tmp/pip-tmp/api_app/" ]
 COPY ["resource_processor/vmss_porter/requirements.txt", "/tmp/pip-tmp/resource_processor/vmss_porter/" ]
@@ -77,17 +75,22 @@ COPY ["airlock_processor/requirements.txt", "/tmp/pip-tmp/airlock_processor/"]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt
 
 # Install azure-cli
-ARG AZURE_CLI_VERSION=2.37.0-1~bullseye
+ARG AZURE_CLI_VERSION=2.57.0-1~bullseye
 COPY .devcontainer/scripts/azure-cli.sh /tmp/
 RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh
 
-ARG YQ_VERSION="v4.30.6"
+ARG YQ_VERSION="v4.33.3"
 RUN curl -L --fail -o /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" \
     && chmod +x /usr/local/bin/yq
 
 ARG PAJV_VERSION="1.2.0"
 RUN npm install -g pajv@${PAJV_VERSION}
+
+# Install git - required for terraform's git modules
+RUN if [ "${INTERACTIVE}" = "false" ]; then \
+apt-get update && apt-get install --no-install-recommends -y git \
+&& apt-get clean -y && rm -rf /var/lib/apt/lists/* ; fi
 
 USER $USERNAME
 

@@ -1,10 +1,12 @@
 import pytest
-from mock import patch
+from mock import call, patch
 
 from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace import Workspace, WorkspaceRole
 from services.aad_authentication import AzureADAuthorization
 from services.access_service import AuthConfigValidationError
+
+MOCK_MICROSOFT_GRAPH_URL = "https://graph.microsoft.com"
 
 
 class PrincipalRole:
@@ -552,6 +554,66 @@ def test_get_workspace_role_assignment_details_with_groups_and_users_assigned_re
     assert "test_user1@email.com" in role_assignment_details["WorkspaceOwner"]
 
 
+@patch("services.aad_authentication.AzureADAuthorization._get_auth_header")
+@patch("services.aad_authentication.AzureADAuthorization._get_batch_users_by_role_assignments_body")
+@patch("requests.post")
+def test_get_user_emails_with_batch_of_more_than_20_requests(mock_graph_post, mock_get_batch_users_by_role_assignments_body, mock_headers):
+    # Arrange
+    access_service = AzureADAuthorization()
+    roles_graph_data = [{"id": "role1"}, {"id": "role2"}]
+    msgraph_token = "token"
+    batch_endpoint = access_service._get_batch_endpoint()
+
+    # mock the response of _get_auth_header
+    headers = {"Authorization": f"Bearer {msgraph_token}"}
+    mock_headers.return_value = headers
+    headers["Content-type"] = "application/json"
+
+    # mock the response of the get batch request for 30 users
+    batch_request_body_first_20 = {
+        "requests": [
+            {"id": f"{i}", "method": "GET", "url": f"/users/{i}"} for i in range(20)
+        ]
+    }
+
+    batch_request_body_last_10 = {
+        "requests": [
+            {"id": f"{i}", "method": "GET", "url": f"/users/{i}"} for i in range(20, 30)
+        ]
+    }
+
+    batch_request_body = {
+        "requests": [
+            {"id": f"{i}", "method": "GET", "url": f"/users/{i}"} for i in range(30)
+        ]
+    }
+
+    mock_get_batch_users_by_role_assignments_body.return_value = batch_request_body
+
+    # Mock the response of the post request
+    mock_graph_post_response = {"responses": [{"id": "user1"}, {"id": "user2"}]}
+    mock_graph_post.return_value.json.return_value = mock_graph_post_response
+
+    # Act
+    users_graph_data = access_service._get_user_emails(roles_graph_data, msgraph_token)
+
+    # Assert
+    assert len(users_graph_data["responses"]) == 4
+    calls = [
+        call(
+            f"{batch_endpoint}",
+            json=batch_request_body_first_20,
+            headers=headers
+        ),
+        call(
+            f"{batch_endpoint}",
+            json=batch_request_body_last_10,
+            headers=headers
+        )
+    ]
+    mock_graph_post.assert_has_calls(calls, any_order=True)
+
+
 def get_mock_batch_response(user_principals, group_principals):
     response_body = {"responses": []}
     for user_principal in user_principals:
@@ -565,7 +627,7 @@ def get_mock_batch_response(user_principals, group_principals):
 
 def get_mock_user_response(principal_id, mail):
     headers = '{"Cache-Control":"no-cache","x-ms-resource-unit":"1","OData-Version":"4.0","Content-Type":"application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8"}'
-    user_odata = '@odata.context":"https://graph.microsoft.com/v1.0/$metadata#users(mail,id)/$entity'
+    user_odata = f'@odata.context":"{MOCK_MICROSOFT_GRAPH_URL}/v1.0/$metadata#users(mail,id)/$entity'
     user_response_body = {
         "id": "1",
         "status": 200,
@@ -577,7 +639,7 @@ def get_mock_user_response(principal_id, mail):
 
 def get_mock_group_response(group):
     headers = '{"Cache-Control":"no-cache","x-ms-resource-unit":"1","OData-Version":"4.0","Content-Type":"application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8"}'
-    group_odata = "https://graph.microsoft.com/v1.0/$metadata#directoryObjects(mail,id)"
+    group_odata = f"{MOCK_MICROSOFT_GRAPH_URL}/v1.0/$metadata#directoryObjects(mail,id)"
     group_members_body = []
     for member in group.members:
         group_members_body.append(
@@ -597,7 +659,7 @@ def get_mock_group_response(group):
 
 
 def get_mock_role_response(principal_roles):
-    odata_context = '@odata.context":"https://graph.microsoft.com/v1.0/$metadata#servicePrincipals(workspace-client-id))/appRoleAssignedTo(appRoleId,principalId,principalType)'
+    odata_context = f'@odata.context":"{MOCK_MICROSOFT_GRAPH_URL}/v1.0/$metadata#servicePrincipals(workspace-client-id))/appRoleAssignedTo(appRoleId,principalId,principalType)'
     response = {"@odata.context": odata_context, "value": []}
     for principal_role in principal_roles:
         response["value"].append(

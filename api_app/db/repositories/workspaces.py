@@ -1,13 +1,12 @@
 import uuid
 from typing import List, Tuple
-
-from azure.cosmos.aio import CosmosClient
+from azure.mgmt.storage import StorageManagementClient
 from pydantic import parse_obj_as
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 
-from core import config
+from core import config, credentials
 from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources import ResourceRepository, IS_NOT_DELETED_CLAUSE
@@ -28,9 +27,9 @@ class WorkspaceRepository(ResourceRepository):
     predefined_address_spaces = {"small": 24, "medium": 22, "large": 16}
 
     @classmethod
-    async def create(cls, client: CosmosClient):
+    async def create(cls):
         cls = WorkspaceRepository()
-        await super().create(client)
+        await super().create()
         return cls
 
     @staticmethod
@@ -66,8 +65,24 @@ class WorkspaceRepository(ResourceRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Workspace, workspaces[0])
 
+    # Remove this method once not using last 4 digits for naming - https://github.com/microsoft/AzureTRE/issues/3666
+    async def is_worksapce_storage_account_available(self, workspace_id: str) -> bool:
+        storage_client = StorageManagementClient(credentials.get_credential(), config.SUBSCRIPTION_ID)
+        # check for storage account with last 4 digits of workspace_id
+        availability_result = storage_client.storage_accounts.check_name_availability(
+            {
+                "name": f"stgws{workspace_id[-4:]}"
+            }
+        )
+        return availability_result.name_available
+
     async def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str, user_roles: List[str]) -> Tuple[Workspace, ResourceTemplate]:
+
         full_workspace_id = str(uuid.uuid4())
+
+        # Ensure workspace with last four digits of ID does not already exist - remove when https://github.com/microsoft/AzureTRE/issues/3666 is resolved
+        while not await self.is_worksapce_storage_account_available(full_workspace_id):
+            full_workspace_id = str(uuid.uuid4())
 
         template = await self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
 
@@ -129,11 +144,11 @@ class WorkspaceRepository(ResourceRepository):
         if (address_space is None):
             raise InvalidInput("Missing 'address_space' from properties.")
 
-        allocated_networks = [x.properties["address_space"] for x in await self.get_workspaces()]
+        allocated_networks = [x.properties["address_space"] for x in await self.get_active_workspaces()]
         return is_network_available(allocated_networks, address_space)
 
     async def get_new_address_space(self, cidr_netmask: int = 24):
-        workspaces = await self.get_workspaces()
+        workspaces = await self.get_active_workspaces()
         networks = [[x.properties.get("address_space")] for x in workspaces]
         networks = networks + [x.properties.get("address_spaces", []) for x in workspaces]
         networks = [i for s in networks for i in s if i is not None]

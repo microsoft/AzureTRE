@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-import logging
+from services.logging import logger
 
 from azure.storage.blob import generate_container_sas, ContainerSasPermissions, BlobServiceClient
 from fastapi import HTTPException, status
@@ -32,6 +32,8 @@ from db.repositories.resources_history import ResourceHistoryRepository
 
 from collections import defaultdict
 from event_grid.event_sender import send_status_changed_event, send_airlock_notification_event
+
+STORAGE_ENDPOINT = config.STORAGE_ENDPOINT_SUFFIX
 
 
 def get_account_by_request(airlock_request: AirlockRequest, workspace: Workspace) -> str:
@@ -106,22 +108,30 @@ def get_airlock_request_container_sas_token(account_name: str,
                                             airlock_request: AirlockRequest):
     blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
                                             credential=credentials.get_credential())
+
+    start = datetime.utcnow() - timedelta(minutes=15)
     expiry = datetime.utcnow() + timedelta(hours=config.AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS)
-    udk = blob_service_client.get_user_delegation_key(datetime.utcnow(), expiry)
+
+    try:
+        udk = blob_service_client.get_user_delegation_key(key_start_time=start, key_expiry_time=expiry)
+    except Exception:
+        raise Exception(f"Failed getting user delegation key, has the API identity been granted 'Storage Blob Data Contributor' access to the storage account {account_name}?")
+
     required_permission = get_required_permission(airlock_request)
 
     token = generate_container_sas(container_name=airlock_request.id,
                                    account_name=account_name,
                                    user_delegation_key=udk,
                                    permission=required_permission,
+                                   start=start,
                                    expiry=expiry)
 
-    return "https://{}.blob.core.windows.net/{}?{}" \
-        .format(account_name, airlock_request.id, token)
+    return "https://{}.blob.{}/{}?{}" \
+        .format(account_name, STORAGE_ENDPOINT, airlock_request.id, token)
 
 
 def get_account_url(account_name: str) -> str:
-    return f"https://{account_name}.blob.core.windows.net/"
+    return f"https://{account_name}.blob.{STORAGE_ENDPOINT}/"
 
 
 async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, airlock_request: AirlockRequest, user: User, workspace: Workspace,
@@ -182,7 +192,7 @@ async def create_review_vm(airlock_request: AirlockRequest, user: User, workspac
     if resource_already_exists:
         existing_resource = airlock_request.reviewUserResources[user.id]
         existing_resource = await user_resource_repo.get_user_resource_by_id(workspace_id=existing_resource.workspaceId, service_id=existing_resource.workspaceServiceId, resource_id=existing_resource.userResourceId)
-        logging.info("User already has an existing review resource")
+        logger.info("User already has an existing review resource")
         await _handle_existing_review_resource(existing_resource, user, user_resource_repo, workspace_service_repo, operation_repo, resource_template_repo, resource_history_repo)
 
     # Create the VM
@@ -200,14 +210,14 @@ async def create_review_vm(airlock_request: AirlockRequest, user: User, workspac
             userResourceId=user_resource.id
         ))
 
-    logging.info(f"Airlock Request {updated_resource.id} updated to include {updated_resource.reviewUserResources}")
+    logger.info(f"Airlock Request {updated_resource.id} updated to include {updated_resource.reviewUserResources}")
     return updated_resource, operation
 
 
 async def _deploy_vm(airlock_request: AirlockRequest, user: User, workspace: Workspace, review_workspace_id: str, review_workspace_service_id: str, user_resource_template_name: str,
                      user_resource_repo: UserResourceRepository, workspace_service_repo: WorkspaceServiceRepository, operation_repo: OperationRepository,
                      resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository):
-    logging.info(f"Creating review VM in workspace:{review_workspace_id} service:{review_workspace_service_id} using template:{user_resource_template_name}")
+    logger.info(f"Creating review VM in workspace:{review_workspace_id} service:{review_workspace_service_id} using template:{user_resource_template_name}")
     workspace_service = await workspace_service_repo.get_workspace_service_by_id(workspace_id=review_workspace_id, service_id=review_workspace_service_id)
     airlock_request_sas_url = get_airlock_container_link(airlock_request, user, workspace)
 
@@ -241,15 +251,15 @@ async def _handle_existing_review_resource(existing_resource: AirlockReviewUserR
     if existing_resource.isEnabled and existing_resource.deploymentStatus == "deployed" and 'azure_resource_id' in existing_resource.properties:
         resource_status = get_azure_resource_status(existing_resource.properties['azure_resource_id'])
         if "powerState" in resource_status and resource_status["powerState"] == "VM running":
-            logging.info("Existing review resource is enabled, in a succeeded state and running. Returning a conflict error.")
+            logger.info("Existing review resource is enabled, in a succeeded state and running. Returning a conflict error.")
             raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                                 detail="A healthy review resource is already deployed for the current user. "
                                 "You may only have a single review resource.")
 
     # If it wasn't healthy or running, we'll delete the existing resource if not already deleted, and then create a new one
-    logging.info("Existing review resource is in an unhealthy state.")
+    logger.info("Existing review resource is in an unhealthy state.")
     if existing_resource.deploymentStatus != "deleted":
-        logging.info("Deleting existing user resource...")
+        logger.info("Deleting existing user resource...")
         _ = await delete_review_user_resource(
             user_resource=existing_resource,
             user_resource_repo=user_resource_repo,
@@ -263,18 +273,18 @@ async def _handle_existing_review_resource(existing_resource: AirlockReviewUserR
 
 async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, workspace: Workspace):
 
-    # First check we have some email addresses so we can notify people.
     access_service = get_access_service()
     role_assignment_details = access_service.get_workspace_role_assignment_details(workspace)
-    check_email_exists(role_assignment_details)
+    if config.ENABLE_AIRLOCK_EMAIL_CHECK:
+        check_email_exists(role_assignment_details)
 
     try:
-        logging.debug(f"Saving airlock request item: {airlock_request.id}")
+        logger.debug(f"Saving airlock request item: {airlock_request.id}")
         airlock_request.updatedBy = user
         airlock_request.updatedWhen = get_timestamp()
         await airlock_request_repo.save_item(airlock_request)
     except Exception:
-        logging.exception(f'Failed saving airlock request {airlock_request}')
+        logger.exception(f'Failed saving airlock request {airlock_request}')
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
@@ -283,10 +293,8 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
         await send_airlock_notification_event(airlock_request, workspace, role_assignment_details)
     except Exception:
         await airlock_request_repo.delete_item(airlock_request.id)
-        logging.exception("Failed sending status_changed message")
+        logger.exception("Failed sending status_changed message")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_GENERAL_ERROR_MESSAGE)
-
-
 async def update_and_publish_event_airlock_request(
         airlock_request: AirlockRequest,
         airlock_request_repo: AirlockRequestRepository,
@@ -298,7 +306,7 @@ async def update_and_publish_event_airlock_request(
         airlock_review: Optional[AirlockReview] = None,
         review_user_resource: Optional[AirlockReviewUserResource] = None) -> AirlockRequest:
     try:
-        logging.debug(f"Updating airlock request item: {airlock_request.id}")
+        logger.debug(f"Updating airlock request item: {airlock_request.id}")
         updated_airlock_request = await airlock_request_repo.update_airlock_request(
             original_request=airlock_request,
             updated_by=updated_by,
@@ -308,7 +316,7 @@ async def update_and_publish_event_airlock_request(
             airlock_review=airlock_review,
             review_user_resource=review_user_resource)
     except Exception as e:
-        logging.exception(f'Failed updating airlock_request item {airlock_request}')
+        logger.exception(f'Failed updating airlock_request item {airlock_request}')
         # If the validation failed, the error was not related to the saving itself
         if hasattr(e, 'status_code'):
             if e.status_code == 400:  # type: ignore
@@ -316,9 +324,8 @@ async def update_and_publish_event_airlock_request(
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     if not new_status:
-        logging.debug(f"Skipping sending 'status changed' event for airlock request item: {airlock_request.id} - there is no status change")
+        logger.debug(f"Skipping sending 'status changed' event for airlock request item: {airlock_request.id} - there is no status change")
         return updated_airlock_request
-
     try:
         logging.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
         await send_status_changed_event(airlock_request=updated_airlock_request, workspace_unique_identifier_suffix=workspace.properties['unique_identifier_suffix'], previous_status=airlock_request.status)
@@ -327,7 +334,7 @@ async def update_and_publish_event_airlock_request(
         await send_airlock_notification_event(updated_airlock_request, workspace, role_assignment_details)
         return updated_airlock_request
     except Exception:
-        logging.exception("Failed sending status_changed message")
+        logger.exception("Failed sending status_changed message")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_GENERAL_ERROR_MESSAGE)
 
 
@@ -336,11 +343,11 @@ def get_timestamp() -> float:
 
 
 def check_email_exists(role_assignment_details: defaultdict(list)):
-    if "WorkspaceResearcher" not in role_assignment_details or not role_assignment_details["WorkspaceResearcher"]:
-        logging.error('Creating an airlock request but the researcher does not have an email address.')
-        raise HTTPException(status_code=status.HTTP_417_EXPECTATION_FAILED, detail=strings.AIRLOCK_NO_RESEARCHER_EMAIL)
-    if "AirlockManager" not in role_assignment_details or not role_assignment_details["AirlockManager"]:
-        logging.error('Creating an airlock request but the airlock manager does not have an email address.')
+    if not role_assignment_details.get("WorkspaceResearcher") and not role_assignment_details.get("WorkspaceOwner"):
+        logger.error(strings.AIRLOCK_NO_EMAIL)
+        raise HTTPException(status_code=status.HTTP_417_EXPECTATION_FAILED, detail=strings.AIRLOCK_NO_EMAIL)
+    if not role_assignment_details.get("AirlockManager"):
+        logger.error(strings.AIRLOCK_NO_AIRLOCK_MANAGER_EMAIL)
         raise HTTPException(status_code=status.HTTP_417_EXPECTATION_FAILED, detail=strings.AIRLOCK_NO_AIRLOCK_MANAGER_EMAIL)
 
 
@@ -392,7 +399,7 @@ async def delete_review_user_resource(
     # disable might contain logic that we need to execute before the deletion of the resource
     _ = await disable_user_resource(user_resource, user, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
 
-    logging.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")
+    logger.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")
     operation = await send_uninstall_message(
         resource=user_resource,
         resource_repo=user_resource_repo,
@@ -401,7 +408,7 @@ async def delete_review_user_resource(
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo,
         user=user)
-    logging.info(f"Started operation {operation}")
+    logger.info(f"Started operation {operation}")
     return operation
 
 
@@ -449,7 +456,7 @@ async def delete_all_review_user_resources(
         )
         operations.append(operation)
 
-    logging.info(f"Started {len(operations)} operations on deleting user resources")
+    logger.info(f"Started {len(operations)} operations on deleting user resources")
     return operations
 
 

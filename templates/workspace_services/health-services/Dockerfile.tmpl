@@ -1,12 +1,14 @@
 # syntax=docker/dockerfile-upstream:1.4.0
-FROM debian:bullseye-slim
+FROM --platform=linux/amd64 debian:bullseye-slim
 
 # PORTER_INIT
-# Install jq
+
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Git is required for terraform_azurerm_environment_configuration
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
-    apt-get update \
-    && apt-get install --no-install-recommends -y jq
-    
+    apt-get update && apt-get install -y git jq --no-install-recommends
+
 # PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle

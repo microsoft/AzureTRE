@@ -13,7 +13,7 @@
     "tre_id": {
       "description": "TRE unique identifier",
       "type": "string",
-      "pattern": "^[a-zA-Z 0-9\\_]*$",
+      "pattern": "^[a-z0-9]*$",
       "maxLength": 11
     },
     "management": {
@@ -69,6 +69,10 @@
           "description": "Allow airlock malware scanning.",
           "type": "boolean"
         },
+        "enable_airlock_email_check": {
+          "description": "Require email check for airlock.",
+          "type": "boolean"
+        },
         "core_address_space": {
           "description": "TRE core address spaces.",
           "type": "string"
@@ -80,6 +84,14 @@
         "enable_swagger": {
           "description": "Determines whether the Swagger interface for the API will be available.",
           "type": "boolean"
+        },
+        "firewall_sku": {
+          "description": "SKU of the Azure Firewall.",
+          "type": "string"
+        },
+        "custom_domain": {
+          "description": "Custom domain name.",
+          "type": "string"
         }
       }
     },

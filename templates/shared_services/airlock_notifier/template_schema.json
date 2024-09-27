@@ -6,6 +6,20 @@
   "description": "A shared service notifying on Airlock operations",
   "required": ["smtp_server_address", "smtp_username", "smtpPassword", "smtp_from_email"],
   "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "default": "Airlock Notifier",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "default": "A shared service notifying on Airlock operations",
+      "updateable": true
+    },
     "smtp_server_address": {
       "$id": "#/properties/smtp_server_address",
       "type": "string",
@@ -32,7 +46,7 @@
       "$id": "#/properties/smtp_from_email",
       "type": "string",
       "title": "SMTP From Email",
-      "description": "SMTP From Email",
+      "description": "The notification emails will be sent from this address",
       "updateable": false
     },
     "tre_url": {
@@ -45,85 +59,29 @@
       "examples": [
         "https://mytre.westeurope.cloudapp.azure.com"
       ]
+    },
+    "smtp_server_enable_ssl": {
+      "$id": "#/properties/smtp_server_enable_ssl",
+      "type": "boolean",
+      "title": "SMTP SSL Enabled",
+      "updateable": false,
+      "default": true
+    },
+    "smtp_server_port": {
+      "$id": "#/properties/smtp_server_port",
+      "type": "integer",
+      "title": "SMTP Server Port",
+      "updateable": false,
+      "default": 25
     }
   },
   "pipeline": {
     "install": [
       {
-        "stepId": "e8360838-008c-40d4-8135-65cdbead5392",
-        "stepTitle": "Add network firewall rules for airlock notifier deployment",
-        "resourceTemplateName": "tre-shared-service-firewall",
-        "resourceType": "shared-service",
-        "resourceAction": "upgrade",
-        "properties": [
-          {
-            "name": "network_rule_collections",
-            "type": "array",
-            "arraySubstitutionAction": "replace",
-            "arrayMatchField": "name",
-            "value": {
-              "name": "nrc_svc_{{ resource.id }}_rp_airlock_notifier_deployment",
-              "action": "Allow",
-              "rules": [
-                {
-                  "name": "AppService",
-                  "description": "Resource Processor to interact with AppService",
-                  "source_ip_groups_in_core": ["ipg-resource-processor"],
-                  "destination_addresses": [
-                    "AppService"
-                  ],
-                  "destination_ports": [
-                    "443"
-                  ],
-                  "protocols": [
-                    "TCP"
-                  ]
-                }
-              ]
-            }
-          }
-        ]
-      },
-      {
         "stepId": "main"
       }
     ],
     "upgrade": [
-      {
-        "stepId": "b757f0e1-3e38-4231-8227-6ab43dc2b1f3",
-        "stepTitle": "Update network firewall rules for airlock notifier deployment",
-        "resourceTemplateName": "tre-shared-service-firewall",
-        "resourceType": "shared-service",
-        "resourceAction": "upgrade",
-        "properties": [
-          {
-            "name": "network_rule_collections",
-            "type": "array",
-            "arraySubstitutionAction": "replace",
-            "arrayMatchField": "name",
-            "value": {
-              "name": "nrc_svc_{{ resource.id }}_rp_airlock_notifier_deployment",
-              "action": "Allow",
-              "rules": [
-                {
-                  "name": "AppService",
-                  "description": "Resource Processor to interact with AppService",
-                  "source_ip_groups_in_core": ["ipg-resource-processor"],
-                  "destination_addresses": [
-                    "AppService"
-                  ],
-                  "destination_ports": [
-                    "443"
-                  ],
-                  "protocols": [
-                    "TCP"
-                  ]
-                }
-              ]
-            }
-          }
-        ]
-      },
       {
         "stepId": "main"
       }
@@ -131,25 +89,15 @@
     "uninstall": [
       {
         "stepId": "main"
-      },
-      {
-        "stepId": "040c788a-babf-49cd-824d-535efd631150",
-        "stepTitle": "Remove network firewall rules for airlock notifier deployment",
-        "resourceTemplateName": "tre-shared-service-firewall",
-        "resourceType": "shared-service",
-        "resourceAction": "upgrade",
-        "properties": [
-          {
-            "name": "network_rule_collections",
-            "type": "array",
-            "arraySubstitutionAction": "remove",
-            "arrayMatchField": "name",
-            "value": {
-              "name": "nrc_svc_{{ resource.id }}_rp_airlock_notifier_deployment"
-            }
-          }
-        ]
       }
     ]
+  },
+  "uiSchema": {
+    "smtpPassword" : {
+      "ui:widget": "password"
+    },
+    "smtp_from_email" : {
+      "ui:widget": "email"
+    }
   }
 }

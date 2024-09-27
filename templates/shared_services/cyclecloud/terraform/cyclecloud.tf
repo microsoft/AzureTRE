@@ -79,6 +79,8 @@ resource "azurerm_key_vault_secret" "cyclecloud_password" {
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.core.id
   tags         = local.tre_shared_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 data "azurerm_subscription" "primary" {
@@ -102,17 +104,12 @@ resource "azurerm_network_interface" "cyclecloud" {
     subnet_id                     = data.azurerm_subnet.shared.id
     private_ip_address_allocation = "Dynamic"
   }
-}
 
-module "azure_region" {
-  source  = "claranet/regions/azurerm"
-  version = ">=5.1.0"
-
-  azure_region = azurerm_virtual_machine.cyclecloud.location
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone" "cyclecloud" {
-  name                = "cyclecloud-${var.tre_id}.${module.azure_region.location_cli}.cloudapp.azure.com"
+  name                = "cyclecloud-${data.azurerm_public_ip.app_gateway_ip.fqdn}"
   resource_group_name = local.core_resource_group_name
   tags                = local.tre_shared_service_tags
 
@@ -125,6 +122,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "cyclecloud_core_vnet" 
   private_dns_zone_name = azurerm_private_dns_zone.cyclecloud.name
   virtual_network_id    = data.azurerm_virtual_network.core.id
   tags                  = local.tre_shared_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_a_record" "cyclecloud_vm" {
@@ -134,5 +133,7 @@ resource "azurerm_private_dns_a_record" "cyclecloud_vm" {
   ttl                 = 300
   records             = [azurerm_network_interface.cyclecloud.private_ip_address]
   tags                = local.tre_shared_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 

@@ -3,23 +3,31 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.41.0"
+      version = "=3.112.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.4.0"
+      version = "~> 3.6"
     }
     local = {
       source  = "hashicorp/local"
-      version = "~> 2.3.0"
+      version = "~> 2.5"
     }
     http = {
       source  = "hashicorp/http"
-      version = "~> 3.2.0"
+      version = "~> 3.4"
+    }
+    azapi = {
+      source  = "Azure/azapi"
+      version = "~> 1.13.0"
     }
   }
 
   backend "azurerm" {}
+}
+
+provider "azapi" {
+  use_msi = var.arm_use_msi
 }
 
 provider "azurerm" {
@@ -77,6 +85,7 @@ module "network" {
   location            = var.location
   resource_group_name = azurerm_resource_group.core.name
   core_address_space  = var.core_address_space
+  arm_environment     = var.arm_environment
 }
 
 module "appgateway" {
@@ -115,6 +124,7 @@ module "airlock_resources" {
   airlock_servicebus                    = azurerm_servicebus_namespace.sb
   applicationinsights_connection_string = module.azure_monitor.app_insights_connection_string
   enable_malware_scanning               = var.enable_airlock_malware_scanning
+  arm_environment                       = var.arm_environment
   tre_core_tags                         = local.tre_core_tags
   log_analytics_workspace_id            = module.azure_monitor.log_analytics_workspace_id
   blob_core_dns_zone_id                 = module.network.blob_core_dns_zone_id
@@ -143,18 +153,21 @@ module "resource_processor_vmss_porter" {
   docker_registry_server                           = local.docker_registry_server
   resource_processor_vmss_porter_image_repository  = var.resource_processor_vmss_porter_image_repository
   service_bus_namespace_id                         = azurerm_servicebus_namespace.sb.id
+  service_bus_namespace_fqdn                       = local.service_bus_namespace_fqdn
   service_bus_resource_request_queue               = azurerm_servicebus_queue.workspacequeue.name
   service_bus_deployment_status_update_queue       = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
   mgmt_storage_account_name                        = var.mgmt_storage_account_name
   mgmt_resource_group_name                         = var.mgmt_resource_group_name
   terraform_state_container_name                   = var.terraform_state_container_name
   key_vault_name                                   = azurerm_key_vault.kv.name
+  key_vault_url                                    = azurerm_key_vault.kv.vault_uri
   key_vault_id                                     = azurerm_key_vault.kv.id
   subscription_id                                  = var.arm_subscription_id
   resource_processor_number_processes_per_instance = var.resource_processor_number_processes_per_instance
   resource_processor_vmss_sku                      = var.resource_processor_vmss_sku
-  log_analytics_workspace_workspace_id             = module.azure_monitor.log_analytics_workspace_workspace_id
-  log_analytics_workspace_primary_key              = module.azure_monitor.log_analytics_workspace_primary_key
+  arm_environment                                  = var.arm_environment
+  logging_level                                    = var.logging_level
+  firewall_sku                                     = var.firewall_sku
   rp_bundle_values                                 = var.rp_bundle_values
 
   depends_on = [
@@ -163,4 +176,9 @@ module "resource_processor_vmss_porter" {
     azurerm_key_vault.kv,
     azurerm_key_vault_access_policy.deployer
   ]
+}
+
+module "terraform_azurerm_environment_configuration" {
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.6.0"
+  arm_environment = var.arm_environment
 }

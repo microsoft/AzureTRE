@@ -2,7 +2,6 @@ from sqlite3 import InternalError
 from typing import List, Tuple
 import uuid
 
-from azure.cosmos.aio import CosmosClient
 from pydantic import parse_obj_as
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
@@ -18,9 +17,9 @@ from models.domain.resource import ResourceType
 
 class SharedServiceRepository(ResourceRepository):
     @classmethod
-    async def create(cls, client: CosmosClient):
+    async def create(cls):
         cls = SharedServiceRepository()
-        await super().create(client)
+        await super().create()
         return cls
 
     @staticmethod

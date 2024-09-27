@@ -10,6 +10,7 @@ import { ApiEndpoint } from '../../models/apiEndpoints';
 import { UserResource } from '../../models/userResource';
 import { getActionIcon, ResourceTemplate, TemplateAction } from '../../models/resourceTemplate';
 import { ConfirmDeleteResource } from './ConfirmDeleteResource';
+import { ConfirmCopyUrlToClipboard } from './ConfirmCopyUrlToClipboard';
 import { ConfirmDisableEnableResource } from './ConfirmDisableEnableResource';
 import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResourceContext';
 import { Workspace } from '../../models/workspace';
@@ -18,6 +19,7 @@ import { actionsDisabledStates } from '../../models/operation';
 import { AppRolesContext } from '../../contexts/AppRolesContext';
 import { useAppDispatch } from '../../hooks/customReduxHooks';
 import { addUpdateOperation } from '../shared/notifications/operationsSlice';
+import { ConfirmUpgradeResource } from './ConfirmUpgradeResource';
 
 interface ResourceContextMenuProps {
   resource: Resource,
@@ -30,11 +32,12 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   const workspaceCtx = useContext(WorkspaceContext);
   const [showDisable, setShowDisable] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showCopyUrl, setShowCopyUrl] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [resourceTemplate, setResourceTemplate] = useState({} as ResourceTemplate);
   const createFormCtx = useContext(CreateUpdateResourceContext);
   const [parentResource, setParentResource] = useState({} as WorkspaceService | Workspace);
   const [roles, setRoles] = useState([] as Array<string>);
-  const [wsAuth, setWsAuth] = useState(false);
   const appRoles = useContext(AppRolesContext); // the user is in these roles which apply across the app
   const dispatch = useAppDispatch();
 
@@ -81,7 +84,6 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
           r = [RoleName.TREAdmin];
           break;
       }
-      setWsAuth(wsAuth);
       setRoles(r);
 
       // should we bother getting the template? if the user isn't in the right role they won't see the menu at all.
@@ -92,7 +94,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       }
     };
     getTemplate();
-  }, [apiCall, props.resource, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI, appRoles.roles, workspaceCtx.roles]);
+  }, [apiCall, props.resource, workspaceCtx, appRoles]);
 
   const doAction = async (actionName: string) => {
     const action = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.InvokeAction}?action=${actionName}`, HttpMethod.Post, workspaceCtx.workspaceApplicationIdURI);
@@ -140,16 +142,29 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   }
 
   // add 'connect' button if we have a URL to connect to
-  if (props.resource.properties.connection_uri) {
-    menuItems.push({
-      key: 'connect',
-      text: 'Connect',
-      title: shouldDisableConnect() ? 'Resource must be deployed, enabled & powered on to connect' : 'Connect to resource',
-      iconProps: { iconName: 'PlugConnected' },
-      onClick: () => { window.open(props.resource.properties.connection_uri, '_blank') },
-      disabled: shouldDisableConnect()
-    })
+  if(props.resource.properties.connection_uri){
+    if (props.resource.properties.is_exposed_externally === true) {
+      menuItems.push({
+        key: 'connect',
+        text: 'Connect',
+        title: shouldDisableConnect() ? 'Resource must be deployed, enabled & powered on to connect' : 'Connect to resource',
+        iconProps: { iconName: 'PlugConnected' },
+        onClick: () => { window.open(props.resource.properties.connection_uri, '_blank') },
+        disabled: shouldDisableConnect()
+      })
+    }
+    else if (props.resource.properties.is_exposed_externally === false) {
+      menuItems.push({
+        key: 'connect',
+        text: 'Connect',
+        title: shouldDisableConnect() ? 'Resource must be deployed, enabled & powered on to connect' : 'Connect to resource',
+        iconProps: { iconName: 'PlugConnected' },
+        onClick: () => setShowCopyUrl(true),
+        disabled: shouldDisableConnect()
+      })
+    }
   }
+
 
   const shouldDisableActions = () => {
     return props.componentAction === ComponentAction.Lock
@@ -182,6 +197,19 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
     });
   }
 
+  // add 'upgrade' button if we have available template upgrades
+  const nonMajorUpgrades = props.resource.availableUpgrades?.filter(upgrade => !upgrade.forceUpdateRequired)
+  if (nonMajorUpgrades?.length > 0) {
+    menuItems.push({
+      key: 'upgrade',
+      text: 'Upgrade',
+      title: 'Upgrade this resource template version',
+      iconProps: { iconName: 'Refresh' },
+      onClick: () => setShowUpgrade(true),
+      disabled: (props.componentAction === ComponentAction.Lock)
+    })
+  }
+
   const menuProps: IContextualMenuProps = {
     shouldFocusOnMount: true,
     items: menuItems
@@ -189,7 +217,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
 
   return (
     <>
-      <SecuredByRole allowedRoles={roles} workspaceAuth={wsAuth} element={
+      <SecuredByRole allowedWorkspaceRoles={roles} allowedAppRoles={roles} element={
         props.commandBar ?
         <CommandBar
           items={menuItems}
@@ -205,6 +233,14 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       {
         showDelete &&
         <ConfirmDeleteResource onDismiss={() => setShowDelete(false)} resource={props.resource} />
+      }
+      {
+         showCopyUrl &&
+        <ConfirmCopyUrlToClipboard onDismiss={() => setShowCopyUrl(false)} resource={props.resource} />
+      }
+      {
+        showUpgrade &&
+        <ConfirmUpgradeResource onDismiss={() => setShowUpgrade(false)} resource={props.resource} />
       }
     </>
   )

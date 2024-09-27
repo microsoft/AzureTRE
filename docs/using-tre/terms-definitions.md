@@ -46,6 +46,10 @@ Multiple workspaces can be created within a single Trusted Research Environment 
 
 Each workspace has [workspace users](../azure-tre-overview/user-roles.md): a **workspace owner** (normally only one), and one or more **workspace researchers** that can access the data and workspace services in the workspace. The workspace owner is also considered a workspace researcher.
 
+!!! important
+    The TRE has a soft limit of 32 projects, it can be increased to 70 by updating the storage account limit in your subscription to 500.
+    See issue [#3920](https://github.com/microsoft/AzureTRE/issues/3920) for more info.
+
 ## Workspace Service
 
 A workspace service is a service, created as a building block, with pre-configured set of resources that can be applied to a workspace.
@@ -81,5 +85,3 @@ To use a template, and deploy a resource, the template needs to be registered in
     Once a template is registered it can be used multiple times to deploy multiple workspaces, workspace services etc.
 
 If you want to author your own workspace, workspace service, or user resource template, consult the [template authoring guide](../tre-workspace-authors/authoring-workspace-templates.md)
-
-**Thank you for your patience and support!**

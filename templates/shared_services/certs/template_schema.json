@@ -2,13 +2,27 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/certs/template_schema.json",
   "type": "object",
-  "title": "Certs Service",
+  "title": "Certificate Service",
   "description": "Provides SSL Certs for a specified internal domain",
   "required": [
     "domain_prefix",
     "cert_name"
   ],
   "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "default": "Certificate Service",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "default": "Provides an SSL certificate for a specified internal domain",
+      "updateable": true
+    },
     "domain_prefix": {
       "$id": "#/properties/domain_prefix",
       "type": "string",

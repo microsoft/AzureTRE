@@ -16,6 +16,8 @@ resource "azurerm_key_vault_secret" "aml_password" {
   value        = random_password.password.result
   key_vault_id = data.azurerm_key_vault.ws.id
   tags         = local.tre_workspace_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 
@@ -40,7 +42,7 @@ resource "azapi_resource" "compute_cluster" {
       computeType      = "AmlCompute"
       properties = {
         enableNodePublicIp          = false
-        isolatedNetwork             = true
+        isolatedNetwork             = false # isolatedNetwork = true for internal MS usage only
         osType                      = "Linux"
         remoteLoginPortPublicAccess = "Disabled"
         scaleSettings = {

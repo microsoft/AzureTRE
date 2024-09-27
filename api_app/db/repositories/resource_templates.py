@@ -1,7 +1,6 @@
 import uuid
 from typing import List, Optional, Union
 
-from azure.cosmos.aio import CosmosClient
 from pydantic import parse_obj_as
 
 from core import config
@@ -16,9 +15,9 @@ from services.schema_service import enrich_shared_service_template, enrich_works
 
 class ResourceTemplateRepository(BaseRepository):
     @classmethod
-    async def create(cls, client: CosmosClient):
+    async def create(cls):
         cls = ResourceTemplateRepository()
-        await super().create(client, config.STATE_STORE_RESOURCE_TEMPLATES_CONTAINER)
+        await super().create(config.STATE_STORE_RESOURCE_TEMPLATES_CONTAINER)
         return cls
 
     @staticmethod
@@ -95,6 +94,12 @@ class ResourceTemplateRepository(BaseRepository):
         else:
             return parse_obj_as(ResourceTemplate, templates[0])
 
+    async def get_all_template_versions(self, template_name: str) -> List[str]:
+        query = 'SELECT VALUE c.version FROM c where c.name = @template_name'
+        parameters = [{"name": "@template_name", "value": template_name}]
+        versions = await self.query(query=query, parameters=parameters)
+        return versions
+
     async def create_template(self, template_input: ResourceTemplateInCreate, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
         """
         creates a template based on the input (workspace and workspace-services template)
@@ -107,8 +112,8 @@ class ResourceTemplateRepository(BaseRepository):
             "version": template_input.version,
             "resourceType": resource_type,
             "current": template_input.current,
-            "required": template_input.json_schema["required"],
-            "authorizedRoles": template_input.json_schema["authorizedRoles"] if "authorizedRoles" in template_input.json_schema else [],
+            "required": template_input.json_schema.get("required", []),
+            "authorizedRoles": template_input.json_schema.get("authorizedRoles", []),
             "properties": template_input.json_schema["properties"],
             "customActions": template_input.customActions
         }

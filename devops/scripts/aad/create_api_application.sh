@@ -22,6 +22,7 @@ Options:
                                 Requires directory admin privileges to the Azure AD in question.
     -t,--automation-clientid    Optional, when --workspace is specified the client ID of the automation account can be added to the TRE workspace.
     -r,--reset-password         Optional, switch to automatically reset the password. Default 0
+    -d,--custom-domain          Optional, custom domain, used to construct auth redirection URLs (in addition to --tre-url)
 
 Examples:
     1. $0 -n TRE -r https://mytre.region.cloudapp.azure.com -a
@@ -30,7 +31,7 @@ Examples:
     3. $0 --name 'TRE' --tre-url https://mytre.region.cloudapp.azure.com --admin-consent --automation-account
 
 USAGE
-    exit 1
+    exit 2
 }
 
 if ! command -v az &> /dev/null; then
@@ -56,8 +57,9 @@ declare treUrl=""
 declare currentUserId=""
 declare automationAppId=""
 declare automationAppObjectId=""
-declare msGraphUri="https://graph.microsoft.com/v1.0"
+declare msGraphUri=""
 declare spPassword=""
+declare customDomain=""
 
 # Initialize parameters specified from command line
 while [[ $# -gt 0 ]]; do
@@ -82,10 +84,13 @@ while [[ $# -gt 0 ]]; do
             resetPassword=$2
             shift 2
         ;;
+        -d|--custom-domain)
+            customDomain=$2
+            shift 2
+        ;;
         *)
             echo "Invalid option: $1."
             show_usage
-            exit 2
         ;;
     esac
 done
@@ -100,6 +105,7 @@ fi
 uxAppName="$appName UX"
 appName="$appName API"
 currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-errors)
+msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
 echo -e "\e[96mCreating the API/UX Application in the \"${tenant}\" Azure AD tenant.\e[0m"
@@ -243,6 +249,11 @@ redirectUris="\"http://localhost:8000/api/docs/oauth2-redirect\", \"http://local
 if [[ -n ${treUrl} ]]; then
     echo "Adding reply/redirect URL \"${treUrl}\" to \"${appName}\""
     redirectUris="${redirectUris}, \"${treUrl}\", \"${treUrl}/api/docs/oauth2-redirect\""
+fi
+if [[ -n ${customDomain} ]]; then
+    customDomainUrl="https://${customDomain}"
+    echo "Adding reply/redirect URL \"${customDomainUrl}\" to \"${appName}\""
+    redirectUris="${redirectUris}, \"${customDomainUrl}\", \"${customDomainUrl}/api/docs/oauth2-redirect\""
 fi
 
 uxAppDefinition=$(jq -c . << JSON

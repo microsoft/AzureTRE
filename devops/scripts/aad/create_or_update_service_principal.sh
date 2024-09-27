@@ -10,7 +10,8 @@ function wait_for_new_service_principal()
   servicePrincipalId=$1
   retries=10
   counter=0
-  local msGraphUri="https://graph.microsoft.com/v1.0"
+  local msGraphUri=""
+  msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
 
   output=$(az rest --method GET --uri "${msGraphUri}/servicePrincipals/${servicePrincipalId}" 2>/dev/null || true)
 

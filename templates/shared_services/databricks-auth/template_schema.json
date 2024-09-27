@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/databricks-auth/template_schema.json",
+  "type": "object",
+  "title": "Azure Databricks Private Authentication Shared Service",
+  "description": "Azure Databricks Private Authentication Shared Service",
+  "required": [],
+  "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the shared service",
+      "description": "The name of the shared service to be displayed to users",
+      "default": "Azure Databricks Private Authentication Shared Service",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the shared service",
+      "description": "The description of the shared service to be displayed to users",
+      "default": "Hosts the browser authentication private endpoint connection for your Azure Databricks workspaces.",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Overview for the shared service",
+      "description": "Long form description of the shared service, in markdown syntax",
+      "default": "Azure Databricks Private Authentication Shared Service is a Databricks workspace that in the same region as your Azure Databricks workspaces, and its only purpose is hosting the browser authentication private endpoint connection for your Azure Databricks workspace services.",
+      "updateable": true
+    }
+  }
+}

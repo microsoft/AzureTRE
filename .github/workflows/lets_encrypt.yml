@@ -2,10 +2,16 @@
 name: Renew Lets Encrypt Certificates
 
 on:  # yamllint disable-line rule:truthy
-  schedule:
-    # 3am each month https://crontab.guru/#0_3_1_*_*
-    - cron: "0 3 1 * *"
+  # schedule:
+  #   # 3am each month https://crontab.guru/#0_3_1_*_*
+  #   - cron: "0 3 1 * *"
   workflow_dispatch:
+    inputs:
+      environment:
+        description: The environment to run this workflow in
+        type: environment
+        default: CICD
+        required: true
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
@@ -20,15 +26,15 @@ jobs:
   renew_letsencrypt_certs:
     name: Renew Lets Encrypt Certificates
     runs-on: ubuntu-latest
-    environment: CICD
+    environment: ${{ github.event.inputs.environment || 'CICD' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       - name: Install Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.2.9
           terraform_wrapper: false
@@ -38,13 +44,14 @@ jobs:
         env:
           ARM_CLIENT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}
           ARM_CLIENT_SECRET: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
-          ARM_SUBSCRIPTION_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
-          ARM_TENANT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}
+          ARM_SUBSCRIPTION_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}
+          ARM_TENANT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
           TRE_ID: ${{ secrets.TRE_ID }}
-          TERRAFORM_STATE_CONTAINER_NAME:
-            ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME && secrets.TERRAFORM_STATE_CONTAINER_NAME || 'tfstate' }}
-          MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
-          MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_terraform_state_container_name: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME || 'tfstate' }}
+          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
+          CUSTOM_DOMAIN: ${{ secrets.CUSTOM_DOMAIN }}
         run: |
           sudo apt-get install -y python3 python3-venv libaugeas0 \
             && python3 -m venv /opt/certbot/ \

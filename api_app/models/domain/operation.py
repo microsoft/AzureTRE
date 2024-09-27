@@ -42,7 +42,8 @@ class OperationStep(AzureTREModel):
     The steps are built up front as the operation is created from the initial user request.
     As each step completes, the next one is processed.
     """
-    stepId: str = Field(title="stepId", description="Unique id identifying the step")
+    id: str = Field(title="Id", description="Unique id identifying the step")
+    templateStepId: str = Field(title="templateStepId", description="Unique id identifying the step")
     stepTitle: Optional[str] = Field(title="stepTitle", description="Human readable title of what the step is for")
     resourceId: Optional[str] = Field(title="resourceId", description="Id of the resource to update")
     resourceTemplateName: Optional[str] = Field("", title="resourceTemplateName", description="Name of the template for the resource under change")
@@ -51,7 +52,8 @@ class OperationStep(AzureTREModel):
     status: Optional[Status] = Field(None, title="Operation step status")
     message: Optional[str] = Field("", title="Additional operation step status information")
     updatedWhen: Optional[float] = Field("", title="POSIX Timestamp for When the operation step was updated")
-    parentResourceId: Optional[str] = Field(title="parentResourceId", description="Id of the parent of the resource to update")
+    # An example for this property will be if we have a step that is responsible for updating the firewall, and its origin was the guacamole workspace service, the id here will be the guacamole id
+    sourceTemplateResourceId: Optional[str] = Field(title="sourceTemplateResourceId", description="Id of the parent of the resource to update")
 
     def is_success(self) -> bool:
         return self.status in (

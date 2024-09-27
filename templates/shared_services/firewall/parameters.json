@@ -47,9 +47,21 @@
       }
     },
     {
-      "name": "sku_tier",
+      "name": "firewall_sku",
       "source": {
-        "env": "SKU_TIER"
+        "env": "FIREWALL_SKU"
+      }
+    },
+    {
+      "name": "microsoft_graph_fqdn",
+      "source": {
+        "env": "MICROSOFT_GRAPH_FQDN"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
       }
     }
   ]

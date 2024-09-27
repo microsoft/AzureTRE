@@ -1,12 +1,11 @@
 import asyncio
 import json
-import logging
 import uuid
 
 from pydantic import ValidationError, parse_obj_as
 
-from api.dependencies.database import get_db_client
 from api.routes.resource_helpers import get_timestamp
+from models.domain.resource import Output
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.request_action import RequestAction
 from db.repositories.resource_templates import ResourceTemplateRepository
@@ -20,68 +19,75 @@ from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
 from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
 from resources import strings
+from services.logging import logger, tracer
 
 
 class DeploymentStatusUpdater():
-    def __init__(self, app):
-        self.app = app
+    def __init__(self):
+        pass
 
     async def init_repos(self):
-        db_client = await get_db_client(self.app)
-        self.operations_repo = await OperationRepository.create(db_client)
-        self.resource_repo = await ResourceRepository.create(db_client)
-        self.resource_template_repo = await ResourceTemplateRepository.create(db_client)
-        self.resource_history_repo = await ResourceHistoryRepository.create(db_client)
+        self.operations_repo = await OperationRepository.create()
+        self.resource_repo = await ResourceRepository.create()
+        self.resource_template_repo = await ResourceTemplateRepository.create()
+        self.resource_history_repo = await ResourceHistoryRepository.create()
 
     def run(self, *args, **kwargs):
         asyncio.run(self.receive_messages())
 
     async def receive_messages(self):
-        while True:
-            try:
-                async with credentials.get_credential_async() as credential:
-                    service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
+        with tracer.start_as_current_span("deployment_status_receive_messages"):
+            while True:
+                try:
+                    async with credentials.get_credential_async_context() as credential:
+                        service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
 
-                    logging.info("Looking for new session...")
-                    # max_wait_time=1 -> don't hold the session open after processing of the message has finished
-                    async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
-                        logging.info(f"Got a session containing messages: {receiver.session.session_id}")
-                        async with AutoLockRenewer() as renewer:
-                            renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
-                            async for msg in receiver:
-                                complete_message = await self.process_message(msg)
-                                if complete_message:
-                                    await receiver.complete_message(msg)
-                                else:
-                                    # could have been any kind of transient issue, we'll abandon back to the queue, and retry
-                                    await receiver.abandon_message(msg)
-                        logging.info(f"Closing session: {receiver.session.session_id}")
+                        logger.info(f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue...")
+                        # max_wait_time=1 -> don't hold the session open after processing of the message has finished
+                        async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
+                            logger.info(f"Got a session containing messages: {receiver.session.session_id}")
+                            async with AutoLockRenewer() as renewer:
+                                renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
+                                async for msg in receiver:
+                                    complete_message = await self.process_message(msg)
+                                    if complete_message:
+                                        await receiver.complete_message(msg)
+                                    else:
+                                        # could have been any kind of transient issue, we'll abandon back to the queue, and retry
+                                        await receiver.abandon_message(msg)
+                            logger.info(f"Closing session: {receiver.session.session_id}")
 
-            except OperationTimeoutError:
-                # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
-                logging.debug("No sessions for this process. Will look again...")
+                except OperationTimeoutError:
+                    # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
+                    logger.debug("No sessions for this process. Will look again...")
 
-            except ServiceBusConnectionError:
-                # Occasionally there will be a transient / network-level error in connecting to SB.
-                logging.info("Unknown Service Bus connection error. Will retry...")
+                except ServiceBusConnectionError:
+                    # Occasionally there will be a transient / network-level error in connecting to SB.
+                    logger.info("Unknown Service Bus connection error. Will retry...")
 
-            except Exception as e:
-                # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
-                logging.exception(f"Unknown exception. Will retry - {e}")
+                except Exception as e:
+                    # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
+                    logger.exception(f"Unknown exception. Will retry - {e}")
 
     async def process_message(self, msg):
         complete_message = False
         message = ""
 
-        try:
-            message = parse_obj_as(DeploymentStatusUpdateMessage, json.loads(str(msg)))
-            logging.info(f"Received and parsed JSON for: {msg.correlation_id}")
-            complete_message = await self.update_status_in_database(message)
-            logging.info(f"Update status in DB for {message.operationId} - {message.status}")
-        except (json.JSONDecodeError, ValidationError):
-            logging.exception(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id}")
-        except Exception:
-            logging.exception(f"Exception processing message: {msg.correlation_id}")
+        with tracer.start_as_current_span("process_message") as current_span:
+            try:
+                message = parse_obj_as(DeploymentStatusUpdateMessage, json.loads(str(msg)))
+
+                current_span.set_attribute("step_id", message.stepId)
+                current_span.set_attribute("operation_id", message.operationId)
+                current_span.set_attribute("status", message.status)
+
+                logger.info(f"Received and parsed JSON for: {msg.correlation_id}")
+                complete_message = await self.update_status_in_database(message)
+                logger.info(f"Update status in DB for {message.operationId} - {message.status}")
+            except (json.JSONDecodeError, ValidationError):
+                logger.exception(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id}")
+            except Exception:
+                logger.exception(f"Exception processing message: {msg.correlation_id}")
 
         return complete_message
 
@@ -102,7 +108,8 @@ class DeploymentStatusUpdater():
 
             current_step_index = 0
             for i, step in enumerate(operation.steps):
-                if step.stepId == message.stepId and step.resourceId == str(message.id):
+                # TODO more simple condition
+                if step.id == message.stepId and step.resourceId == str(message.id):
                     step_to_update = step
                     current_step_index = i
                     if i == (len(operation.steps) - 1):
@@ -146,7 +153,7 @@ class DeploymentStatusUpdater():
                 # catch any errors in updating the resource - maybe Cosmos / schema invalid etc, and report them back to the op
                 try:
                     # parent resource is always retrieved via cosmos, hence it is always with redacted sensitive values
-                    parent_resource = await self.resource_repo.get_resource_by_id(next_step.parentResourceId)
+                    parent_resource = await self.resource_repo.get_resource_by_id(next_step.sourceTemplateResourceId)
                     resource_to_send = await update_resource_for_step(
                         operation_step=next_step,
                         resource_repo=self.resource_repo,
@@ -159,11 +166,11 @@ class DeploymentStatusUpdater():
                         user=operation.user)
 
                     # create + send the message
-                    logging.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.stepId}, action: {next_step.resourceAction}")
-                    content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.stepId, action=next_step.resourceAction))
+                    logger.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.templateStepId}, action: {next_step.resourceAction}")
+                    content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.id, action=next_step.resourceAction))
                     await send_deployment_message(content=content, correlation_id=operation.id, session_id=resource_to_send.id, action=next_step.resourceAction)
                 except Exception as e:
-                    logging.exception("Unable to send update for resource in pipeline step")
+                    logger.exception("Unable to send update for resource in pipeline step")
                     next_step.message = repr(e)
                     next_step.status = Status.UpdatingFailed
                     await self.update_overall_operation_status(operation, next_step, is_last_step)
@@ -174,9 +181,9 @@ class DeploymentStatusUpdater():
         except EntityDoesNotExist:
             # Marking as true as this message will never succeed anyways and should be removed from the queue.
             result = True
-            logging.exception(strings.DEPLOYMENT_STATUS_ID_NOT_FOUND.format(message.id))
+            logger.exception(strings.DEPLOYMENT_STATUS_ID_NOT_FOUND.format(message.id))
         except Exception:
-            logging.exception("Failed to update status")
+            logger.exception("Failed to update status")
 
         return result
 
@@ -194,12 +201,12 @@ class DeploymentStatusUpdater():
 
         if step.is_failure():
             operation.status = self.get_failure_status_for_action(operation.action)
-            operation.message = f"Multi step pipeline failed on step {step.stepId}"
+            operation.message = f"Multi step pipeline failed on step {step.templateStepId}"
 
             # pipeline failed - update the primary resource (from the main step) as failed too
             main_step = None
             for i, step in enumerate(operation.steps):
-                if step.stepId == "main":
+                if step.templateStepId == "main":
                     main_step = step
                     break
 
@@ -243,7 +250,33 @@ class DeploymentStatusUpdater():
 
         # although outputs are likely to be relevant when resources are moving to "deployed" status,
         # lets not limit when we update them and have the resource process make that decision.
-        output_dict = {output.Name: output.Value.strip("'").strip('"') if isinstance(output.Value, str) else output.Value for output in message.outputs}
+        # need to convert porter outputs to dict so boolean values are converted to bools, not strings
+        output_dict = self.convert_outputs_to_dict(message.outputs)
         resource["properties"].update(output_dict)
 
         return resource
+
+    def convert_outputs_to_dict(self, outputs_list: [Output]):
+        """
+        Convert a list of Porter outputs to a dictionary
+        """
+
+        result_dict = {}
+        for msg in outputs_list:
+            if msg.Value is None:
+                continue
+            name = msg.Name
+            value = msg.Value
+            obj_type = msg.Type
+
+            #
+            if obj_type == 'string' and isinstance(value, str):
+                value = value.strip("'").strip('"')
+            elif obj_type == 'boolean':
+                if isinstance(value, str):
+                    value = value.strip("'").strip('"')
+                value = (value.lower() == 'true')
+
+            result_dict[name] = value
+
+        return result_dict

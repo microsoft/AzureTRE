@@ -3,11 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = ">= 3.8"
-    }
-    null = {
-      source  = "hashicorp/null"
-      version = ">= 3.0"
+      version = ">= 3.112"
     }
     random = {
       source  = "hashicorp/random"
@@ -42,6 +38,8 @@ resource "azurerm_key_vault_secret" "resource_processor_vmss_password" {
   value        = random_password.password.result
   key_vault_id = var.key_vault_id
   tags         = local.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_user_assigned_identity" "vmss_msi" {
@@ -84,25 +82,6 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
     )
   }
 
-  extension {
-    auto_upgrade_minor_version = true
-    automatic_upgrade_enabled  = false
-    name                       = "OmsAgentForLinux"
-    publisher                  = "Microsoft.EnterpriseCloud.Monitoring"
-    type                       = "OmsAgentForLinux"
-    type_handler_version       = "1.0"
-
-    protected_settings = jsonencode({
-      "workspaceKey" = var.log_analytics_workspace_primary_key
-    })
-
-    settings = jsonencode({
-      "workspaceId"               = var.log_analytics_workspace_workspace_id
-      "stopOnMultipleConnections" = false
-      "skipDockerProviderInstall" = true
-    })
-  }
-
   automatic_os_upgrade_policy {
     disable_automatic_rollback  = false
     enable_automatic_os_upgrade = true
@@ -128,8 +107,8 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts"
     version   = "latest"
   }
 
@@ -157,17 +136,15 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
 
 # CustomData (e.g. image tag to run) changes will only take affect after vmss instances are reimaged.
 # https://docs.microsoft.com/en-us/azure/virtual-machines/custom-data#can-i-update-custom-data-after-the-vm-has-been-created
-resource "null_resource" "vm_linux_reimage" {
+resource "terraform_data" "vm_linux_reimage" {
   provisioner "local-exec" {
     command = "az vmss reimage --name ${azurerm_linux_virtual_machine_scale_set.vm_linux.name} --resource-group ${var.resource_group_name}"
   }
 
-  lifecycle {
-    replace_triggered_by = [
-      # although we mainly want to catch image tag changes, this covers any custom data change.
-      azurerm_linux_virtual_machine_scale_set.vm_linux.custom_data
-    ]
-  }
+  triggers_replace = [
+    # although we mainly want to catch image tag changes, this covers any custom data change.
+    azurerm_linux_virtual_machine_scale_set.vm_linux.custom_data
+  ]
 
   depends_on = [
     azurerm_linux_virtual_machine_scale_set.vm_linux
@@ -213,4 +190,9 @@ resource "azurerm_key_vault_access_policy" "resource_processor" {
 
   secret_permissions      = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
   certificate_permissions = ["Get", "Recover", "Import", "Delete", "Purge"]
+}
+
+module "terraform_azurerm_environment_configuration" {
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
+  arm_environment = var.arm_environment
 }

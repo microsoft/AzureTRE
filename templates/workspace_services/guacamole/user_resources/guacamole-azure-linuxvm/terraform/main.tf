@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.41.0"
+      version = "=3.112.0"
     }
     template = {
       source  = "hashicorp/template"
@@ -63,4 +63,9 @@ data "azurerm_key_vault" "ws" {
 data "azurerm_linux_web_app" "guacamole" {
   name                = "guacamole-${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_parent_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
+}
+
+data "azurerm_public_ip" "app_gateway_ip" {
+  name                = "pip-agw-${var.tre_id}"
+  resource_group_name = data.azurerm_resource_group.core.name
 }

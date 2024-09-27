@@ -22,3 +22,7 @@ variable "is_exposed_externally" {
   type        = bool
   description = "If the databricks workspace is exposed externally or not."
 }
+
+variable "arm_environment" {
+  type = string
+}

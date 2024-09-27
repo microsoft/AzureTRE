@@ -26,12 +26,20 @@ jq -r '
             "env_var": "KEYVAULT"
         },
         {
+            "path": "keyvault_uri",
+            "env_var": "KEYVAULT_URI"
+        },
+        {
             "path": "azure_tre_fqdn",
             "env_var": "FQDN"
         },
         {
             "path": "service_bus_resource_id",
             "env_var": "SERVICE_BUS_RESOURCE_ID"
+        },
+        {
+            "path": "service_bus_namespace_fqdn",
+            "env_var": "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"
         },
         {
             "path": "service_bus_workspace_queue",

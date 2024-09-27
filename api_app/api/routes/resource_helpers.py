@@ -1,5 +1,5 @@
 from datetime import datetime
-import logging
+import semantic_version
 from copy import deepcopy
 from typing import Dict, Any, Optional
 
@@ -17,7 +17,7 @@ from pydantic import parse_obj_as
 from db.errors import DuplicateEntity, EntityDoesNotExist
 from db.repositories.operations import OperationRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
-from models.domain.resource import ResourceType, Resource
+from models.domain.resource import AvailableUpgrade, ResourceType, Resource
 from models.domain.operation import Operation
 from resources import strings
 from service_bus.resource_request_sender import (
@@ -25,6 +25,7 @@ from service_bus.resource_request_sender import (
     RequestAction,
 )
 from services.authentication import get_access_service
+from services.logging import logger
 
 
 async def delete_validation(resource: Resource, resource_repo: ResourceRepository):
@@ -74,7 +75,7 @@ async def save_and_deploy_resource(
         )
         await resource_repo.save_item(masked_resource)
     except Exception:
-        logging.exception(f"Failed saving resource item {resource.id}")
+        logger.exception(f"Failed saving resource item {resource.id}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING,
@@ -93,7 +94,7 @@ async def save_and_deploy_resource(
         return operation
     except Exception:
         await resource_repo.delete_item(resource.id)
-        logging.exception("Failed send resource request message")
+        logger.exception("Failed send resource request message")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
@@ -188,7 +189,7 @@ async def send_uninstall_message(
         )
         return operation
     except Exception:
-        logging.exception(f"Failed to send {resource_type} resource delete message")
+        logger.exception(f"Failed to send {resource_type} resource delete message")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
@@ -239,7 +240,7 @@ async def send_custom_action_message(
         )
         return operation
     except Exception:
-        logging.exception(f"Failed to send {resource_type} resource custom action message")
+        logger.exception(f"Failed to send {resource_type} resource custom action message")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
@@ -277,7 +278,7 @@ async def get_template(
             detail=strings.NO_UNIQUE_CURRENT_FOR_TEMPLATE,
         )
     except Exception as e:
-        logging.debug(e)
+        logger.debug(e)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING,
@@ -311,3 +312,21 @@ async def update_user_resource(
         action=RequestAction.Upgrade)
 
     return operation
+
+
+async def enrich_resource_with_available_upgrades(resource: Resource, resource_template_repo: ResourceTemplateRepository):
+    available_upgrades = []
+    resource_version = semantic_version.Version(resource.templateVersion)
+    all_versions = await resource_template_repo.get_all_template_versions(resource.templateName)
+
+    versions_higher_than_current = [version for version in all_versions if semantic_version.Version(version) > resource_version]
+    major_update_versions = [version for version in versions_higher_than_current if semantic_version.Version(version).major > resource_version.major]
+    non_major_update_versions = [version for version in versions_higher_than_current if version not in major_update_versions]
+
+    for version in sorted(non_major_update_versions, key=semantic_version.Version):
+        available_upgrades.append(AvailableUpgrade(version=version, forceUpdateRequired=False))
+
+    for version in sorted(major_update_versions, key=semantic_version.Version):
+        available_upgrades.append(AvailableUpgrade(version=version, forceUpdateRequired=True))
+
+    resource.availableUpgrades = available_upgrades

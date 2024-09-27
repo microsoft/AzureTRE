@@ -3,7 +3,6 @@ import semantic_version
 from datetime import datetime
 from typing import Optional, Tuple, List
 
-from azure.cosmos.aio import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from core import config
 from db.errors import VersionDowngradeDenied, EntityDoesNotExist, MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, UserNotAuthorizedToUseTemplate
@@ -25,9 +24,9 @@ from pydantic import UUID4, parse_obj_as
 
 class ResourceRepository(BaseRepository):
     @classmethod
-    async def create(cls, client: CosmosClient):
+    async def create(cls):
         cls = ResourceRepository()
-        await super().create(client, config.STATE_STORE_RESOURCES_CONTAINER)
+        await super().create(config.STATE_STORE_RESOURCES_CONTAINER)
         return cls
 
     @staticmethod
@@ -46,7 +45,7 @@ class ResourceRepository(BaseRepository):
         validate(instance=resource_input["properties"], schema=resource_template)
 
     async def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = "") -> dict:
-        template_repo = await ResourceTemplateRepository.create(self._client)
+        template_repo = await ResourceTemplateRepository.create()
         template = await template_repo.get_current_template(template_name, resource_type, parent_template_name)
         return template_repo.enrich_template(template)
 
@@ -130,7 +129,7 @@ class ResourceRepository(BaseRepository):
         dependent_resources_list = []
 
         # Get all related resources
-        related_resources_query = f"SELECT * FROM c WHERE CONTAINS(c.resourcePath, '{parent_resource_path}') AND c.deploymentStatus != '{Status.Deleted}' and c.deploymentStatus != '{Status.DeploymentFailed}'"
+        related_resources_query = f"SELECT * FROM c WHERE CONTAINS(c.resourcePath, '{parent_resource_path}') AND c.deploymentStatus != '{Status.Deleted}'"
         related_resources = await self.query(query=related_resources_query)
         for resource in related_resources:
             resource_path = resource["resourcePath"]
@@ -141,9 +140,14 @@ class ResourceRepository(BaseRepository):
         return [resource[0] for resource in sorted_list]
 
     async def validate_template_version_patch(self, resource: Resource, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, force_version_update: bool = False):
-        parent_resource_id = None
+        parent_service_template_name = None
         if resource.resourceType == ResourceType.UserResource:
-            parent_resource_id = resource.parentWorkspaceServiceId
+            try:
+                resource_repo = await ResourceRepository.create()
+                parent_service = await resource_repo.get_resource_by_id(resource.parentWorkspaceServiceId)
+                parent_service_template_name = parent_service.templateName
+            except EntityDoesNotExist:
+                raise ValueError(f'Parent workspace service {resource.parentWorkspaceServiceId} not found')
 
         # validate Major upgrade
         try:
@@ -160,7 +164,7 @@ class ResourceRepository(BaseRepository):
 
         # validate if target template with desired version is registered
         try:
-            await resource_template_repo.get_template_by_name_and_version(resource.templateName, resource_patch.templateVersion, resource_template.resourceType, parent_resource_id)
+            await resource_template_repo.get_template_by_name_and_version(resource.templateName, resource_patch.templateVersion, resource_template.resourceType, parent_service_template_name)
         except EntityDoesNotExist:
             raise TargetTemplateVersionDoesNotExist(f"Template '{resource_template.name}' not found for resource type '{resource_template.resourceType}' with target template version '{resource_patch.templateVersion}'")
 

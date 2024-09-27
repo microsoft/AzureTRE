@@ -46,9 +46,9 @@ resource "azurerm_linux_web_app" "gitea" {
 
     GITEA__database__SSL_MODE = "true"
     GITEA__database__DB_TYPE  = "mysql"
-    GITEA__database__HOST     = azurerm_mysql_server.gitea.fqdn
-    GITEA__database__NAME     = azurerm_mysql_database.gitea.name
-    GITEA__database__USER     = "${azurerm_mysql_server.gitea.administrator_login}@${azurerm_mysql_server.gitea.fqdn}"
+    GITEA__database__HOST     = azurerm_mysql_flexible_server.gitea.fqdn
+    GITEA__database__NAME     = azurerm_mysql_flexible_database.gitea.name
+    GITEA__database__USER     = azurerm_mysql_flexible_server.gitea.administrator_login
     GITEA__database__PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_password.id})"
   }
 
@@ -115,7 +115,7 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   }
 
   private_dns_zone_group {
-    name                 = "privatelink.azurewebsites.net"
+    name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurewebsites.net"]
     private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
 
@@ -132,22 +132,12 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
     content {
       category = log.value
       enabled  = contains(local.webapp_diagnostic_categories_enabled, log.value) ? true : false
-
-      retention_policy {
-        enabled = contains(local.webapp_diagnostic_categories_enabled, log.value) ? true : false
-        days    = 365
-      }
     }
   }
 
   metric {
     category = "AllMetrics"
     enabled  = true
-
-    retention_policy {
-      enabled = true
-      days    = 365
-    }
   }
 }
 
@@ -168,6 +158,8 @@ resource "azurerm_key_vault_secret" "gitea_password" {
   depends_on = [
     azurerm_key_vault_access_policy.gitea_policy
   ]
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_storage_share" "gitea" {

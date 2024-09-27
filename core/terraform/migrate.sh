@@ -197,6 +197,15 @@ if [ -n "${nexus_dns_zone}" ]; then
   terraform import azurerm_private_dns_zone.non_core[\""nexus-${TRE_ID}.${LOCATION}.cloudapp.azure.com"\"] "${nexus_dns_zone}"
 fi
 
+# Additional DNS Zones migration. We changed the name for the nexus dns zone hence we need to apply the change.
+NEXUS_DNS_NAME="nexus-${TRE_ID}.${LOCATION}.cloudapp.azure.com"
+nexus_dns_zone_changed=$(echo "${terraform_show_json}" \
+  |  jq -r --arg nexus_dns_name "$NEXUS_DNS_NAME" 'select(.values.root_module.resources != null) .values.root_module.resources[] | select (.address=="azurerm_private_dns_zone.non_core[\""+$nexus_dns_name+"\"]") | .values.id')
+if [ -n "${nexus_dns_zone_changed}" ]; then
+  terraform state rm azurerm_private_dns_zone.non_core[\""nexus-${TRE_ID}.${LOCATION}.cloudapp.azure.com"\"]
+  terraform import azurerm_private_dns_zone.nexus "${nexus_dns_zone_changed}"
+fi
+
 # this isn't a classic migration, but impacts how terraform handles the deployment in the next phase
 state_store_serverless=$(echo "${terraform_show_json}" \
   | jq 'select(.values.root_module.resources != null) | .values.root_module.resources[] | select(.address=="azurerm_cosmosdb_account.tre_db_account") | any(.values.capabilities[]; .name=="EnableServerless")')
@@ -206,6 +215,15 @@ if [ "${state_store_serverless}" == "false" ]; then
   echo "Identified CosmosDB with defined throughput."
   TF_VAR_is_cosmos_defined_throughput="true"
   export TF_VAR_is_cosmos_defined_throughput
+fi
+
+# prep for migration of azurerm_servicebus_namespace_network_rule_set https://github.com/microsoft/AzureTRE/pull/3858
+# as described https://github.com/hashicorp/terraform-provider-azurerm/issues/23954
+state_store_servicebus_network_rule_set=$(echo "${terraform_show_json}" \
+  | jq 'select(.values.root_module.resources != null) | .values.root_module.resources[] | select(.address=="azurerm_servicebus_namespace_network_rule_set.servicebus_network_rule_set") | .values.id')
+if [ -n "${state_store_servicebus_network_rule_set}" ]; then
+  echo "Removing state of azurerm_servicebus_namespace_network_rule_set"
+  terraform state rm azurerm_servicebus_namespace_network_rule_set.servicebus_network_rule_set
 fi
 
 echo "*** Migration is done. ***"

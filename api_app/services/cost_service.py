@@ -3,7 +3,6 @@ from enum import Enum
 from functools import lru_cache
 from typing import Dict, Optional, Union
 import pandas as pd
-import logging
 
 from azure.mgmt.costmanagement import CostManagementClient
 from azure.mgmt.costmanagement.models import QueryGrouping, QueryAggregation, QueryDataset, QueryDefinition, \
@@ -21,6 +20,7 @@ from db.repositories.workspaces import WorkspaceRepository
 from models.domain.costs import GranularityEnum, CostReport, WorkspaceCostReport, CostItem, WorkspaceServiceCostItem, \
     CostRow
 from models.domain.resource import Resource
+from services.logging import logger
 
 
 class ResultColumnDaily(Enum):
@@ -93,7 +93,10 @@ class CostService:
     def __init__(self) -> None:
         self.scope = "/subscriptions/{}".format(config.SUBSCRIPTION_ID)
         self.client = CostManagementClient(credential=credentials.get_credential())
-        self.resource_client = ResourceManagementClient(credentials.get_credential(), config.SUBSCRIPTION_ID)
+        self.resource_client = ResourceManagementClient(credentials.get_credential(),
+                                                        config.SUBSCRIPTION_ID,
+                                                        base_url=config.RESOURCE_MANAGER_ENDPOINT,
+                                                        credential_scopes=config.CREDENTIAL_SCOPES)
         self.cache = {}
 
     def get_cached_result(self, key: str) -> Union[QueryResult, None]:
@@ -323,20 +326,20 @@ class CostService:
             # Given subscription {subscription_id} doesn't have valid WebDirect/AIRS offer type.
             # it means that the Azure subscription deosn't support cost management
             if "doesn't have valid WebDirect/AIRS" in e.message:
-                logging.exception("Subscription doesn't support cost management")
+                logger.exception("Subscription doesn't support cost management")
                 raise SubscriptionNotSupported(e)
             else:
-                logging.exception("Unhandled Cost Management API error")
+                logger.exception("Unhandled Cost Management API error")
                 raise e
         except HttpResponseError as e:
-            logging.exception("Cost Management API error")
+            logger.exception("Cost Management API error")
             if e.status_code == 429:
                 # Too many requests - Request is throttled.
                 # Retry after waiting for the time specified in the "x-ms-ratelimit-microsoft.consumption-retry-after" header.
                 if self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY in e.response.headers:
                     raise TooManyRequests(int(e.response.headers[self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY]))
                 else:
-                    logging.exception(f"{self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY} header was not found in response")
+                    logger.exception(f"{self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY} header was not found in response")
                     raise e
             elif e.status_code == 503:
                 # Service unavailable - Service is temporarily unavailable.
@@ -344,7 +347,7 @@ class CostService:
                 if self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY in e.response.headers:
                     raise ServiceUnavailable(int(e.response.headers[self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY]))
                 else:
-                    logging.exception(f"{self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY} header was not found in response")
+                    logger.exception(f"{self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY} header was not found in response")
                     raise e
             else:
                 raise e

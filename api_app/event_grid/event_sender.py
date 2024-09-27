@@ -1,4 +1,3 @@
-import logging
 import re
 import json
 
@@ -9,6 +8,7 @@ from event_grid.helpers import publish_event
 from core import config
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus
 from models.domain.workspace import Workspace
+from services.logging import logger
 
 
 async def send_status_changed_event(airlock_request: AirlockRequest, workspace_unique_identifier_suffix: str, previous_status: Optional[AirlockRequestStatus]):
@@ -23,7 +23,7 @@ async def send_status_changed_event(airlock_request: AirlockRequest, workspace_u
         subject=f"{request_id}/statusChanged",
         data_version="2.0"
     )
-    logging.info(f"Sending status changed event with request ID {request_id}, new status: {new_status}, previous status: {previous_status}")
+    logger.info(f"Sending status changed event with request ID {request_id}, new status: {new_status}, previous status: {previous_status}")
     await publish_event(status_changed_event, config.EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT)
 
 
@@ -66,5 +66,5 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
         data_version="4.0"
     )
 
-    logging.info(f"Sending airlock notification event with request ID {request_id}, status: {status}")
+    logger.info(f"Sending airlock notification event with request ID {request_id}, status: {status}")
     await publish_event(airlock_notification, config.EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT)
