@@ -45,13 +45,12 @@ class TestMigrationRoutesThatRequireAdminRights:
     @ patch("api.routes.migrations.AirlockMigration.rename_field_name")
     @ patch("api.routes.migrations.AirlockMigration.change_review_resources_to_dict")
     @ patch("api.routes.migrations.AirlockMigration.update_review_decision_values")
-    @ patch("api.routes.migrations.ResourceMigration.migrate_step_id_of_operation_steps")
-    async def test_post_migrations_returns_202_on_successful(self, migrate_step_id_of_operation_steps, update_review_decision_values,
+    @ patch("api.routes.migrations.ResourceMigration.add_unique_identifier_suffix")
+    async def test_post_migrations_returns_202_on_successful(self, add_unique_identifier_suffix, update_review_decision_values,
                                                              change_review_resources_to_dict, airlock_rename_field, add_created_by_and_rename_in_history,
-                                                             check_min_firewall_version, workspace_migration, shared_services_migration,
-                                                             rename_field, add_deployment_field, archive_history, _, logging, client, app):
+                                                             check_min_firewall_version, workspace_migration, shared_services_migration, rename_field,
+                                                             add_deployment_field, archive_history, _, logging, client, app):
         response = await client.post(app.url_path_for(strings.API_MIGRATE_DATABASE))
-
         check_min_firewall_version.assert_called_once()
         shared_services_migration.assert_called_once()
         workspace_migration.assert_called_once()
@@ -63,6 +62,7 @@ class TestMigrationRoutesThatRequireAdminRights:
         update_review_decision_values.assert_called_once()
         migrate_step_id_of_operation_steps.assert_called_once()
         archive_history.assert_called_once()
+        add_unique_identifier_suffix.assert_called_once()
         logging.assert_called()
         assert response.status_code == status.HTTP_202_ACCEPTED
 
