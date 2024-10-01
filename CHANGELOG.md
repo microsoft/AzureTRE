@@ -22,6 +22,7 @@ ENHANCEMENTS:
 * Add info regarding workspace limit into docs ([#3920](https://github.com/microsoft/AzureTRE/issues/3920))
 
 BUG FIXES:
+* Add Snyk Security updates for September
 * Workspace creation blocked due to Azure API depreciation ([#4095](https://github.com/microsoft/AzureTRE/issues/4095))
 
 COMPONENTS:
