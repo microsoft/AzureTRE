@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-export-reviewvm
-version: 0.1.9
+version: 0.1.12
 description: "An Azure TRE User Resource Template for reviewing Airlock export requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -119,6 +119,8 @@ install:
         vm_size: ${ bundle.parameters.vm_size }
         airlock_request_sas_url: ${ bundle.parameters.airlock_request_sas_url }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -141,6 +143,8 @@ upgrade:
         vm_size: ${ bundle.parameters.vm_size }
         airlock_request_sas_url: "unused"
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -172,6 +176,8 @@ uninstall:
         vm_size: ${ bundle.parameters.vm_size }
         airlock_request_sas_url: "unused"
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -183,6 +189,8 @@ start:
         - "output"
       description: "Get resource ID from Terraform outputs"
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -217,6 +225,8 @@ stop:
         - "output"
       description: "Get VM hostname and rg from Terraform outputs"
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -251,6 +261,8 @@ reset_password:
         - "output"
       description: "Get VM details from Terraform outputs"
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }

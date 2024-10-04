@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-sonatype-nexus
-version: 3.0.1
+version: 3.0.4
 description: "A Sonatype Nexus shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -86,6 +86,8 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         ssl_cert_name: ${ bundle.parameters.ssl_cert_name }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -105,6 +107,8 @@ upgrade:
         tre_resource_id: ${ bundle.parameters.id }
         ssl_cert_name: ${ bundle.parameters.ssl_cert_name }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -124,6 +128,8 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         ssl_cert_name: ${ bundle.parameters.ssl_cert_name }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }

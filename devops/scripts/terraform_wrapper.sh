@@ -91,6 +91,13 @@ if [[ -z ${tf_logfile+x} ]]; then
     echo -e "No logfile provided, using ${tf_logfile}\n"
 fi
 
+# Configure AzureRM provider to user Azure AD to connect to storage accounts
+export ARM_STORAGE_USE_AZUREAD=true
+
+# Configure AzureRM backend to user Azure AD to connect to storage accounts
+export ARM_USE_AZUREAD=true
+export ARM_USE_OIDC=true
+
 terraform init -input=false -backend=true -reconfigure \
     -backend-config="resource_group_name=${mgmt_resource_group_name}" \
     -backend-config="storage_account_name=${mgmt_storage_account_name}" \
