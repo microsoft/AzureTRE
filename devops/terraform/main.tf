@@ -1,5 +1,3 @@
-# tflint-ignore-file: azurerm_resource_missing_tags
-
 provider "azurerm" {
   features {}
 

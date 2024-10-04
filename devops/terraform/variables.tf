@@ -23,8 +23,3 @@ variable "acr_name" {
   type        = string
   description = "Name of ACR"
 }
-
-variable "tre_id" {
-  type        = string
-  description = "TRE ID"
-}
