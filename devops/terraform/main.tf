@@ -6,7 +6,7 @@ provider "azurerm" {
 
 locals {
   mgmt_tags = {
-    tre_id                   = var.tre_id
+    tre_id = var.tre_id
   }
 }
 
@@ -36,7 +36,7 @@ resource "azurerm_storage_account" "state_storage" {
   account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
   shared_access_key_enabled       = false
-  tags = local.mgmt_tags
+  tags                            = local.mgmt_tags
 
   lifecycle { ignore_changes = [tags] }
 }
