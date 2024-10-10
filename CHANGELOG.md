@@ -6,6 +6,7 @@
 FEATURES:
 
 ENHANCEMENTS:
+- Split log entries with [Log chunk X of Y] for better readability. ([[#3992](https://github.com/microsoft/AzureTRE/issues/3992)
 
 BUG FIXES:
 
