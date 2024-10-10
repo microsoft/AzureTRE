@@ -107,6 +107,10 @@ terraform init -input=false -backend=true -reconfigure \
     -backend-config="container_name=${container_name}" \
     -backend-config="key=${key}"
 
+if [[ ${DEPLOY_MODE} == "plan" ]]; then
+    tf_command="terraform plan -out=tfplan && terraform show -json tfplan > plan_output.json"
+fi
+
 RUN_COMMAND=1
 while [ $RUN_COMMAND = 1 ]
 do
@@ -140,6 +144,7 @@ do
         exit 1
     fi
 done
+
 
 if [ "$deploy_mode" == "plan" ]; then
     echo "Terraform plan output saved to plan_output.json"

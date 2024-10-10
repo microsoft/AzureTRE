@@ -2,7 +2,7 @@
 azure-core==1.30.0
 azure-functions==1.17.0
 azure-storage-blob==12.19.0
-azure-identity==1.14.1
+azure-identity==1.16.1
 azure-mgmt-storage==21.1.0
 azure-mgmt-resource==23.0.1
 pydantic==1.10.13

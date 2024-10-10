@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-admin-vm
-version: 0.4.3
+version: 0.4.4
 description: "An admin vm shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre

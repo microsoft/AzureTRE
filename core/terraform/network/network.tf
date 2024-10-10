@@ -111,6 +111,7 @@ resource "azurerm_subnet" "airlock_notification" {
       actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
     }
   }
+  service_endpoints = ["Microsoft.ServiceBus"]
 }
 
 resource "azurerm_subnet" "airlock_storage" {

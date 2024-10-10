@@ -2,7 +2,7 @@
 
 The Azure services deployed within an Azure TRE are described below.
 
-Once an Azure TRE has been [provisioned](../../tre-admins/setup-instructions/pre-deployment-steps) in an Azure Subscription, you will have two Resource Groups:
+Once an Azure TRE has been [provisioned](../../tre-admins/setup-instructions/manual-pre-deployment-steps) in an Azure Subscription, you will have two Resource Groups:
 
 1. Azure TRE Management Resource Group - Prerequisite for deploying an Azure TRE instance
 1. Azure TRE Resource Group - Core Azure TRE instance
@@ -13,7 +13,7 @@ Once an Azure TRE has been [provisioned](../../tre-admins/setup-instructions/pre
 
 | Name | Azure Service | Description | Additional links
 |---|---|---|---|
-| {MGMT_STORAGE_ACCOUNT_NAME} | Storage Account | [Azure TRE Terraform](../../tre-admins/setup-instructions/pre-deployment-steps)  | [Storage Blobs](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview)
+| {MGMT_STORAGE_ACCOUNT_NAME} | Storage Account | [Azure TRE Terraform](../../tre-admins/setup-instructions/manual-pre-deployment-steps)  | [Storage Blobs](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview)
 | {ACR_NAME} | Container Registry | [Azure TRE container images (Porter bundles)](../architecture/#composition-service) | [Container Registry](https://docs.microsoft.com/en-gb/azure/container-registry/container-registry-intro)
 
 ## Azure TRE Resource Group

@@ -20,7 +20,11 @@ class AccessService(OAuth2AuthorizationCodeBearer):
         pass
 
     @abstractmethod
-    def get_workspace_role_assignment_details(self, workspace: Workspace) -> dict:
+    def get_workspace_users(self, workspace: Workspace) -> List[User]:
+        pass
+
+    @abstractmethod
+    def get_workspace_user_emails_by_role_assignment(self, workspace: Workspace) -> dict:
         pass
 
     @staticmethod

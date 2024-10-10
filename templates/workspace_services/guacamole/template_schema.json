@@ -46,7 +46,8 @@
       "type": "boolean",
       "title": "Enable Drive",
       "description": "Enable mounted drive",
-      "updateable": true
+      "updateable": true,
+      "default": false
     },
     "guac_disable_download": {
       "$id": "#/properties/guac_disable_download",

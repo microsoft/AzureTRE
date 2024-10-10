@@ -10,6 +10,7 @@ import { WorkspaceLeftNav } from './WorkspaceLeftNav';
 import { WorkspaceServiceItem } from './WorkspaceServiceItem';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { WorkspaceServices } from './WorkspaceServices';
+import { WorkspaceUsers } from './WorkspaceUsers';
 import { Workspace } from '../../models/workspace';
 import { SharedService } from '../../models/sharedService';
 import { SharedServices } from '../shared/SharedServices';
@@ -234,6 +235,9 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                         } />
                         <Route path="requests/*" element={
                           <Airlock />
+                        } />
+                        <Route path="users/*" element={
+                          <WorkspaceUsers />
                         } />
                       </>
                     )}
