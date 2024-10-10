@@ -14,7 +14,10 @@ resource "azurerm_firewall_policy_rule_collection_group" "core_airlock_notifier"
         "TCP"
       ]
       destination_addresses = [
-        "AppService"
+        "AppService",
+        "AzureConnectors",
+        "LogicApps",
+        "LogicAppsManagement"
       ]
       destination_ports = [
         "443"
