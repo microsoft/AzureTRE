@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole
-version: 0.10.7
+version: 0.10.9
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -53,7 +53,7 @@ parameters:
     description: "Guacamole disable paste configuration"
   - name: guac_enable_drive
     type: boolean
-    default: true
+    default: false
     env: GUAC_ENABLE_DRIVE
     description: "Guacamole enable drive configuration"
   - name: guac_drive_name

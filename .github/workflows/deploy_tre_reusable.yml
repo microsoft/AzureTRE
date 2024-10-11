@@ -357,6 +357,7 @@ jobs:
           CORE_APP_SERVICE_PLAN_SKU: ${{ vars.CORE_APP_SERVICE_PLAN_SKU }}
           RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE: ${{ vars.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE }}
           RP_BUNDLE_VALUES: ${{ vars.RP_BUNDLE_VALUES }}
+          FIREWALL_SKU: ${{ vars.FIREWALL_SKU}}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
@@ -398,6 +399,10 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/databricks"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/ohdsi"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/azuresql"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/openai"}
           - {BUNDLE_TYPE: "user_resource",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"}
           - {BUNDLE_TYPE: "user_resource",
@@ -557,6 +562,8 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/databricks"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/ohdsi"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/azuresql"}
 
     environment: ${{ inputs.environmentName }}
     steps:
@@ -666,6 +673,7 @@ jobs:
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: ${{ secrets.TRE_ID }}
           LOCATION: ${{ vars.LOCATION }}
+          FIREWALL_SKU: ${{ vars.FIREWALL_SKU}}
 
       - name: State Store Migrations
         uses: ./.github/actions/devcontainer_run_command

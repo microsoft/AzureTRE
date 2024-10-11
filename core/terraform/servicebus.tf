@@ -1,10 +1,11 @@
 resource "azurerm_servicebus_namespace" "sb" {
-  name                = "sb-${var.tre_id}"
-  location            = azurerm_resource_group.core.location
-  resource_group_name = azurerm_resource_group.core.name
-  sku                 = "Premium"
-  capacity            = "1"
-  tags                = local.tre_core_tags
+  name                         = "sb-${var.tre_id}"
+  location                     = azurerm_resource_group.core.location
+  resource_group_name          = azurerm_resource_group.core.name
+  sku                          = "Premium"
+  premium_messaging_partitions = "1"
+  capacity                     = "1"
+  tags                         = local.tre_core_tags
 
   # Block public access
   # See https://docs.microsoft.com/azure/service-bus-messaging/service-bus-service-endpoints
@@ -20,6 +21,10 @@ resource "azurerm_servicebus_namespace" "sb" {
     public_network_access_enabled = true
     network_rules {
       subnet_id                            = module.network.airlock_events_subnet_id
+      ignore_missing_vnet_service_endpoint = false
+    }
+    network_rules {
+      subnet_id                            = module.network.airlock_notification_subnet_id
       ignore_missing_vnet_service_endpoint = false
     }
   }

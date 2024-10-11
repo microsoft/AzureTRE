@@ -2,19 +2,19 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.40.0"
+      version = "=3.112.0"
     }
     azapi = {
       source  = "Azure/azapi"
-      version = "=1.1.0"
+      version = "=1.13.1"
     }
     databricks = {
       source  = "databricks/databricks"
-      version = "=1.5.0"
+      version = "=1.48.0"
     }
     dns = {
       source  = "hashicorp/dns"
-      version = "=3.2.3"
+      version = "=3.4.1"
     }
   }
 

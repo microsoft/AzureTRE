@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-mysql
-version: 1.0.1
+version: 1.0.4
 description: "A MySQL workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl

@@ -15,6 +15,8 @@ API_DELETE_WORKSPACE = "Delete workspace"
 API_UPDATE_WORKSPACE = "Update an existing workspace"
 API_INVOKE_ACTION_ON_WORKSPACE = "Invoke action on a workspace"
 
+API_GET_WORKSPACE_USERS = "Get all users for a workspace"
+
 API_GET_ALL_WORKSPACE_SERVICES = "Get all workspace services for workspace"
 API_GET_WORKSPACE_SERVICE_BY_ID = "Get workspace service by Id"
 API_CREATE_WORKSPACE_SERVICE = "Create a workspace service"
@@ -215,8 +217,8 @@ AIRLOCK_REQUEST_UNACCESSIBLE = "Airlock request is in invalid status: rejected, 
 AIRLOCK_REQUEST_INVALID_STATUS = "Airlock request status is unknown."
 AIRLOCK_UNAUTHORIZED_TO_SA = "User is unauthorized to access airlock request files in its current status."
 AIRLOCK_NOT_ENABLED_IN_WORKSPACE = "Airlock is not enabled in this workspace."
-AIRLOCK_NO_RESEARCHER_EMAIL = "There are no Workspace Researchers with an email address."
-AIRLOCK_NO_AIRLOCK_MANAGER_EMAIL = "There are no Airlock Managers with an email address."
+AIRLOCK_NO_EMAIL = "There are no Workspace Researchers or Workspace Owners in the workspace with an email address."
+AIRLOCK_NO_AIRLOCK_MANAGER_EMAIL = "There are no Airlock Managers in the workspace with an email address."
 
 # Airlock Actions
 AIRLOCK_ACTION_REVIEW = "review"

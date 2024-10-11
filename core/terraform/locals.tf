@@ -6,7 +6,7 @@ locals {
   }
 
   api_diagnostic_categories_enabled = [
-    "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
+    "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs",
     "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"
   ]
   servicebus_diagnostic_categories_enabled = ["OperationalLogs", "VNetAndIPFilteringLogs", "RuntimeAuditLogs", "ApplicationMetricsLogs"]
@@ -32,7 +32,10 @@ locals {
     "privatelink.notebooks.azure.net",
     "privatelink.postgres.database.azure.com",
     "privatelink.mysql.database.azure.com",
-    "privatelink.azuredatabricks.net"
+    "privatelink.database.windows.net",
+    "privatelink.azuredatabricks.net",
+    "privatelink.openai.azure.com",
+    "privatelink.cognitiveservices.azure.com"
   ])
 
   # The followig regex extracts different parts of the service bus endpoint: scheme, fqdn, port, path, query and fragment. This allows us to extract the needed fqdn part.
