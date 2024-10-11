@@ -136,7 +136,8 @@ resource "azurerm_monitor_private_link_scoped_service" "ampls_app_insights" {
   scope_name          = azapi_resource.ampls_workspace.name
 
   # linked_resource_id  = azurerm_application_insights.workspace.id
-  linked_resource_id = jsondecode(azapi_resource.appinsights.output).id
+  # linked_resource_id = jsondecode(azapi_resource.appinsights.output).id
+  linked_resource_id = replace(jsondecode(azapi_resource.appinsights.output).id, "microsoft.insights", "Microsoft.Insights")
 }
 
 resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
