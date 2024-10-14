@@ -6,7 +6,7 @@
 FEATURES:
 
 ENHANCEMENTS:
--
+- Make user details avialble to resource processor, and update Windows and Linux VMs to use them. ([#4905](https://github.com/microsoft/AzureTRE/pull/3770))
 
 BUG FIXES:
 
