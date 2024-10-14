@@ -100,7 +100,7 @@ data "template_file" "vm_config" {
     FILESHARE_NAME        = var.shared_storage_access ? data.azurerm_storage_share.shared_storage[0].name : ""
     NEXUS_PROXY_URL       = local.nexus_proxy_url
     CONDA_CONFIG          = local.selected_image.conda_config ? 1 : 0
-    VM_USER               = random_string.username.result
+    VM_USER               = local.admin_username
     APT_SKU               = replace(local.apt_sku, ".", "")
   }
 }
@@ -129,7 +129,7 @@ data "template_file" "apt_sources_config" {
 
 resource "azurerm_key_vault_secret" "linuxvm_password" {
   name         = local.vm_password_secret_name
-  value        = "${random_string.username.result}\n${random_password.password.result}"
+  value        = "${local.admin_username}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
   tags         = local.tre_user_resources_tags
 
