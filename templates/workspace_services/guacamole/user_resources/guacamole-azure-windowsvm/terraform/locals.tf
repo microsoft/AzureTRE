@@ -14,6 +14,8 @@ locals {
     tre_workspace_id         = var.workspace_id
     tre_workspace_service_id = var.parent_service_id
     tre_user_resource_id     = var.tre_resource_id
+    tre_user_id              = var.user_id
+    tre_user_username        = var.user_username
   }
   nexus_proxy_url = "https://nexus-${data.azurerm_public_ip.app_gateway_ip.fqdn}"
 

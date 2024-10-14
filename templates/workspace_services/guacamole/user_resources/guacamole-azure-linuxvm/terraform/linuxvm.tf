@@ -12,16 +12,6 @@ resource "azurerm_network_interface" "internal" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "random_string" "username" {
-  length      = 4
-  upper       = true
-  lower       = true
-  numeric     = true
-  min_numeric = 1
-  min_lower   = 1
-  special     = false
-}
-
 resource "random_password" "password" {
   length           = 16
   lower            = true
@@ -42,7 +32,7 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   network_interface_ids           = [azurerm_network_interface.internal.id]
   size                            = local.vm_sizes[var.vm_size]
   disable_password_authentication = false
-  admin_username                  = random_string.username.result
+  admin_username                  = local.admin_username
   admin_password                  = random_password.password.result
 
   custom_data = data.template_cloudinit_config.config.rendered

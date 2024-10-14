@@ -5,6 +5,7 @@ from shared.logging import shell_output_logger
 
 pytestmark = pytest.mark.asyncio
 
+
 @patch("shared.logging.logger")
 async def test_shell_output_logger_empty_console_output(mock_logger):
     shell_output_logger("", "prefix", logging.DEBUG)
