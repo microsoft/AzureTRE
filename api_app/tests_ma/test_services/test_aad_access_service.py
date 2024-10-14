@@ -166,6 +166,7 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
                 roleAssignments=[RoleAssignment(resource_id="ab123", role_id="ab124")],
                 id="123",
                 name="test",
+                username="test",
                 email="t@t.com",
             ),
             Workspace(
@@ -190,6 +191,7 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
                 roleAssignments=[RoleAssignment(resource_id="ab127", role_id="ab124")],
                 id="123",
                 name="test",
+                username="test",
                 email="t@t.com",
             ),
             Workspace(
@@ -216,6 +218,7 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
                 ],
                 id="123",
                 name="test",
+                username="test",
                 email="t@t.com",
             ),
             Workspace(
@@ -242,6 +245,7 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
                 ],
                 id="123",
                 name="test",
+                username="test",
                 email="t@t.com",
             ),
             Workspace(
@@ -268,6 +272,7 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
                 ],
                 id="123",
                 name="test",
+                username="test",
                 email="t@t.com",
             ),
             Workspace(

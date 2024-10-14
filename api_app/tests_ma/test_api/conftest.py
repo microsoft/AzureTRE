@@ -26,6 +26,7 @@ def create_test_user() -> User:
     return User(
         id="user-guid-here",
         name="Test User",
+        username="testuser",
         email="test@user.com",
         roles=[],
         roleAssignments=[]
