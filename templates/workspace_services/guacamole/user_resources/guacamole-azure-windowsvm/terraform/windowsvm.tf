@@ -13,16 +13,6 @@ resource "azurerm_network_interface" "internal" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "random_string" "username" {
-  length      = 4
-  upper       = true
-  lower       = true
-  numeric     = true
-  min_numeric = 1
-  min_lower   = 1
-  special     = false
-}
-
 resource "random_password" "password" {
   length           = 16
   lower            = true
@@ -43,7 +33,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   network_interface_ids      = [azurerm_network_interface.internal.id]
   size                       = local.vm_sizes[var.vm_size]
   allow_extension_operations = true
-  admin_username             = random_string.username.result
+  admin_username             = local.admin_username
   admin_password             = random_password.password.result
 
   custom_data = base64encode(templatefile(
@@ -104,7 +94,7 @@ PROT
 
 resource "azurerm_key_vault_secret" "windowsvm_password" {
   name         = "${local.vm_name}-admin-credentials"
-  value        = "${random_string.username.result}\n${random_password.password.result}"
+  value        = "${local.admin_username}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
   tags         = local.tre_user_resources_tags
 
