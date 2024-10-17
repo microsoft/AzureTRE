@@ -10,7 +10,6 @@ from service_bus.helpers import (
     try_update_with_retries,
     update_resource_for_step,
 )
-from tests_ma.test_api.conftest import create_test_user
 from tests_ma.test_service_bus.test_deployment_status_update import (
     create_sample_operation,
 )
