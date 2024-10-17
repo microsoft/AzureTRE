@@ -21,6 +21,7 @@ class UserPrincipal:
         self.principal_id = principal_id
         self.mail = mail
         self.display_name = name
+        self.userPrincipalName = mail
 
 
 class GroupPrincipal:
@@ -314,10 +315,9 @@ def test_get_workspace_role_returns_correct_owner(
     "services.aad_authentication.AzureADAuthorization.get_identity_role_assignments",
     return_value=[("ab123", "ab124")],
 )
-def test_raises_auth_config_error_if_workspace_auth_config_is_not_set(_):
+def test_raises_auth_config_error_if_workspace_auth_config_is_not_set(_, test_user):
     access_service = AzureADAuthorization()
 
-    user = User(id="123", name="test", email="t@t.com")
     workspace_with_no_auth_config = Workspace(
         id="abc",
         etag="",
@@ -328,9 +328,9 @@ def test_raises_auth_config_error_if_workspace_auth_config_is_not_set(_):
 
     with pytest.raises(AuthConfigValidationError):
         _ = access_service.get_workspace_role(
-            user,
+            test_user,
             workspace_with_no_auth_config,
-            access_service.get_identity_role_assignments(user.id),
+            access_service.get_identity_role_assignments(test_user.id),
         )
 
 
@@ -338,10 +338,9 @@ def test_raises_auth_config_error_if_workspace_auth_config_is_not_set(_):
     "services.aad_authentication.AzureADAuthorization.get_identity_role_assignments",
     return_value=[("ab123", "ab124")],
 )
-def test_raises_auth_config_error_if_auth_info_has_incorrect_roles(_):
+def test_raises_auth_config_error_if_auth_info_has_incorrect_roles(_, test_user):
     access_service = AzureADAuthorization()
 
-    user = User(id="123", name="test", email="t@t.com")
     workspace_with_auth_info_but_no_roles = Workspace(
         id="abc",
         templateName="template-name",
@@ -353,7 +352,7 @@ def test_raises_auth_config_error_if_auth_info_has_incorrect_roles(_):
 
     with pytest.raises(AuthConfigValidationError):
         _ = access_service.get_workspace_role(
-            user,
+            test_user,
             workspace_with_auth_info_but_no_roles,
             access_service.get_identity_role_assignments(),
         )
@@ -367,7 +366,7 @@ def test_raises_auth_config_error_if_auth_info_has_incorrect_roles(_):
     return_value="token",
 )
 def test_get_workspace_user_emails_by_role_assignment_with_single_user_returns_user_mail_and_role_assignment(
-    _, users, roles, app_sp_graph_data_mock, user_response, roles_response, get_app_sp_graph_data_mock
+    _, users, roles, app_sp_graph_data_mock, user_response, roles_response, get_app_sp_graph_data_mock, test_user
 ):
     access_service = AzureADAuthorization()
 
@@ -390,6 +389,7 @@ def test_get_workspace_user_emails_by_role_assignment_with_single_user_returns_u
                 "app_role_id_workspace_researcher": "ab125",
                 "app_role_id_workspace_airlock_manager": "ab130",
             },
+            user=test_user
         )
     )
 
@@ -404,7 +404,7 @@ def test_get_workspace_user_emails_by_role_assignment_with_single_user_returns_u
     return_value="token",
 )
 def test_get_workspace_user_emails_by_role_assignment_with_single_user_with_no_mail_is_not_returned(
-    _, users, roles, app_sp_graph_data_mock, user_response, roles_response, get_app_sp_graph_data_mock
+    _, users, roles, app_sp_graph_data_mock, user_response, roles_response, get_app_sp_graph_data_mock, test_user
 ):
     access_service = AzureADAuthorization()
 
@@ -430,6 +430,7 @@ def test_get_workspace_user_emails_by_role_assignment_with_single_user_with_no_m
                 "app_role_id_workspace_researcher": "ab125",
                 "app_role_id_workspace_airlock_manager": "ab130",
             },
+            user=test_user
         )
     )
 
@@ -444,7 +445,7 @@ def test_get_workspace_user_emails_by_role_assignment_with_single_user_with_no_m
     return_value="token",
 )
 def test_get_workspace_user_emails_by_role_assignment_with_only_groups_assigned_returns_group_members(
-    _, users_and_groups, roles, app_sp_graph_data_mock, group_response, roles_response, get_app_sp_graph_data_mock
+    _, users_and_groups, roles, app_sp_graph_data_mock, group_response, roles_response, get_app_sp_graph_data_mock, test_user
 ):
     access_service = AzureADAuthorization()
 
@@ -466,6 +467,7 @@ def test_get_workspace_user_emails_by_role_assignment_with_only_groups_assigned_
                 "app_role_id_workspace_researcher": "ab125",
                 "app_role_id_workspace_airlock_manager": "ab130",
             },
+            user=test_user
         )
     )
 
@@ -482,7 +484,7 @@ def test_get_workspace_user_emails_by_role_assignment_with_only_groups_assigned_
     return_value="token",
 )
 def test_get_workspace_user_emails_by_role_assignment_with_groups_and_users_assigned_returned_as_expected(
-    _, users_and_groups, roles, app_sp_graph_data_mock, roles_response, get_app_sp_graph_data_mock, users_and_group_response
+    _, users_and_groups, roles, app_sp_graph_data_mock, roles_response, get_app_sp_graph_data_mock, users_and_group_response, test_user
 ):
 
     access_service = AzureADAuthorization()
@@ -505,6 +507,7 @@ def test_get_workspace_user_emails_by_role_assignment_with_groups_and_users_assi
                 "app_role_id_workspace_researcher": "ab125",
                 "app_role_id_workspace_airlock_manager": "ab130",
             },
+            user=test_user
         )
     )
 
@@ -592,7 +595,7 @@ def get_mock_user_response(principal_id, mail, name):
         "id": "1",
         "status": 200,
         "headers": headers,
-        "body": {"@odata.context": user_odata, "mail": mail, "id": principal_id, "displayName": name},
+        "body": {"@odata.context": user_odata, "mail": mail, "id": principal_id, "displayName": name, "userPrincipalName": mail},
     }
     return user_response_body
 
@@ -608,6 +611,7 @@ def get_mock_group_response(group):
                 "mail": member.mail,
                 "id": member.principal_id,
                 "displayName": member.display_name,
+                "userPrincipalName": member.mail
             }
         )
     group_response_body = {

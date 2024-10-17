@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Optional, Union, List
 from pydantic import BaseModel, Field, validator
+from models.domain.authentication import User
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.request_action import RequestAction
 from resources import strings
@@ -50,7 +51,7 @@ class Resource(AzureTREModel):
     etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
     resourceVersion: int = 0
-    user: dict = {}
+    user: Optional[User]
     updatedWhen: float = 0
 
     def get_resource_request_message_payload(self, operation_id: str, step_id: str, action: RequestAction) -> dict:

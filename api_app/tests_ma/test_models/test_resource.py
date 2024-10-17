@@ -22,12 +22,12 @@ def test_resource_is_enabled_returns_correct_value(resource, expected):
     assert resource.isEnabled == expected
 
 
-def test_user_resource_get_resource_request_message_payload_augments_payload_with_extra_params():
+def test_user_resource_get_resource_request_message_payload_augments_payload_with_extra_params(test_user):
     owner_id = "abc"
     workspace_id = "123"
     parent_service_id = "abcdef"
 
-    user_resource = UserResource(id="123", templateName="user-template", templateVersion="1.0", etag="", ownerId=owner_id, workspaceId=workspace_id, parentWorkspaceServiceId=parent_service_id, resourcePath="test")
+    user_resource = UserResource(id="123", templateName="user-template", templateVersion="1.0", etag="", ownerId=owner_id, workspaceId=workspace_id, parentWorkspaceServiceId=parent_service_id, resourcePath="test", user=test_user)
 
     message_payload = user_resource.get_resource_request_message_payload(OPERATION_ID, STEP_ID, RequestAction.Install)
 
@@ -36,9 +36,9 @@ def test_user_resource_get_resource_request_message_payload_augments_payload_wit
     assert message_payload["parentWorkspaceServiceId"] == parent_service_id
 
 
-def test_workspace_service_get_resource_request_message_payload_augments_payload_with_extra_params():
+def test_workspace_service_get_resource_request_message_payload_augments_payload_with_extra_params(test_user):
     workspace_id = "123"
-    workspace_service = WorkspaceService(id="123", templateName="service-template", templateVersion="1.0", etag="", workspaceId=workspace_id, resourcePath="test")
+    workspace_service = WorkspaceService(id="123", templateName="service-template", templateVersion="1.0", etag="", workspaceId=workspace_id, resourcePath="test", user=test_user)
 
     message_payload = workspace_service.get_resource_request_message_payload(OPERATION_ID, STEP_ID, RequestAction.Install)
 

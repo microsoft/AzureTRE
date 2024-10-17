@@ -228,11 +228,11 @@ class AzureADAuthorization(AccessService):
 
     @staticmethod
     def _get_users_endpoint(user_object_id) -> str:
-        return "/users/" + user_object_id + "?$select=displayName,mail,id"
+        return "/users/" + user_object_id + "?$select=displayName,mail,id,userPrincipalName"
 
     @staticmethod
     def _get_group_members_endpoint(group_object_id) -> str:
-        return "/groups/" + group_object_id + "/transitiveMembers?$select=displayName,mail,id"
+        return "/groups/" + group_object_id + "/transitiveMembers?$select=displayName,mail,id,userPrincipalName"
 
     def _get_app_sp_graph_data(self, client_id: str) -> dict:
         msgraph_token = self._get_msgraph_token()
@@ -277,23 +277,26 @@ class AzureADAuthorization(AccessService):
                 # Handle user endpoint response
                 user_id = user_data["body"]["id"]
                 user_name = user_data["body"]["displayName"]
+                user_username = user_data["body"]["userPrincipalName"]
 
                 if "users" in user_data["body"]["@odata.context"]:
                     user_email = user_data["body"]["mail"]
                     # if user with id does not already exist in users
                     if not any(user.id == user_id for user in users):
-                        users.append(User(id=user_id, name=user_name, email=user_email, roles=self._get_roles_for_principal(user_id, roles_graph_data, app_id_to_role_name)))
+                        users.append(User(id=user_id, name=user_name, email=user_email, username=user_username, roles=self._get_roles_for_principal(user_id, roles_graph_data, app_id_to_role_name)))
 
             # Handle group endpoint response
             elif "directoryObjects" in user_data["body"]["@odata.context"]:
                 group_id = user_data["id"]
                 for group_member in user_data["body"]["value"]:
-                    user_id = group_member["id"]
-                    user_name = group_member["displayName"]
-                    user_email = group_member["mail"]
+                    if group_member["@odata.type"] == "#microsoft.graph.user":
+                        user_id = group_member["id"]
+                        user_name = group_member["displayName"]
+                        user_email = group_member["mail"]
+                        user_username = group_member["userPrincipalName"]
 
-                    if not any(user.id == user_id for user in users):
-                        users.append(User(id=user_id, name=user_name, email=user_email, roles=self._get_roles_for_principal(group_id, roles_graph_data, app_id_to_role_name)))
+                        if not any(user.id == user_id for user in users):
+                            users.append(User(id=user_id, name=user_name, email=user_email, username=user_username, roles=self._get_roles_for_principal(group_id, roles_graph_data, app_id_to_role_name)))
 
         return users
 
