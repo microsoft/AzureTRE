@@ -10,8 +10,8 @@
     "context": "..",
     "dockerfile": "Dockerfile",
     "args": {
-      // To ensure that the group ID for the docker group in the container
-      // matches the group ID on the host, add this to your .bash_profile on the host
+      // To ensure that the group ID for the docker group in  container
+      // matches the group ID on the host, add this to your .bash_profile on  host
       // 		export DOCKER_GROUP_ID=$(getent group docker | awk -F ":" '{ print $3 }')
       "DOCKER_GROUP_ID": "${localEnv:DOCKER_GROUP_ID}",
       "INTERACTIVE": "true"
