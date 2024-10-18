@@ -9,12 +9,6 @@ resource "azurerm_storage_account" "stg" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_storage_share" "storage_state_path" {
-  name                 = "cnab-state"
-  storage_account_name = azurerm_storage_account.stg.name
-  quota                = 50
-}
-
 resource "azurerm_private_endpoint" "blobpe" {
   name                = "pe-blob-${var.tre_id}"
   location            = azurerm_resource_group.core.location
