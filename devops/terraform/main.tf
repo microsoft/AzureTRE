@@ -12,10 +12,10 @@ resource "azurerm_resource_group" "mgmt" {
   tags = merge(default_tags, {
     project = "Azure Trusted Research Environment"
     source  = "https://github.com/microsoft/AzureTRE/"
-  }
+  })
 
   lifecycle { ignore_changes = [tags] }
-})
+}
 
 # Holds Terraform shared state (already exists, created by bootstrap.sh)
 resource "azurerm_storage_account" "state_storage" {
