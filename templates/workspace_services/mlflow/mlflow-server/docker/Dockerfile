@@ -1,4 +1,4 @@
-FROM python:3.12slim-bullseye
+FROM python:3.12-slim-bullseye
 
 # Install MLflow Python Packages
 RUN pip install --no-cache-dir psycopg2==2.9.5 mlflow==2.0.1 azure-storage-blob==12.14.1
