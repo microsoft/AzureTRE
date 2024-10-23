@@ -1,5 +1,7 @@
 provider "azurerm" {
   features {}
+
+  storage_use_azuread = true
 }
 
 # Resource group for TRE core management
@@ -7,10 +9,10 @@ resource "azurerm_resource_group" "mgmt" {
   name     = var.mgmt_resource_group_name
   location = var.location
 
-  tags = {
+  tags = merge(local.default_tags, {
     project = "Azure Trusted Research Environment"
     source  = "https://github.com/microsoft/AzureTRE/"
-  }
+  })
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -24,6 +26,9 @@ resource "azurerm_storage_account" "state_storage" {
   account_kind                    = "StorageV2"
   account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
+  shared_access_key_enabled       = false
+
+  tags = local.default_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -35,6 +40,8 @@ resource "azurerm_container_registry" "shared_acr" {
   location            = azurerm_resource_group.mgmt.location
   sku                 = var.acr_sku
   admin_enabled       = true
+
+  tags = local.default_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -63,4 +70,6 @@ EOF
     schedule = "4 1 * * *"
     enabled  = true
   }
+
+  tags = local.default_tags
 }

@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-airlock-notifier
-version: 1.0.2
+version: 1.0.5
 description: "A shared service notifying on Airlock Operations"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -92,6 +92,8 @@ install:
         smtp_server_enable_ssl: ${ bundle.parameters.smtp_server_enable_ssl }
         smtp_from_email: ${ bundle.parameters.smtp_from_email }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -162,6 +164,8 @@ upgrade:
         smtp_server_enable_ssl: ${ bundle.parameters.smtp_server_enable_ssl }
         smtp_from_email: ${ bundle.parameters.smtp_from_email }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -232,6 +236,8 @@ uninstall:
         smtp_server_enable_ssl: ${ bundle.parameters.smtp_server_enable_ssl }
         smtp_from_email: ${ bundle.parameters.smtp_from_email }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
