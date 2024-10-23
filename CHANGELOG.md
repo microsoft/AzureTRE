@@ -6,7 +6,7 @@
 FEATURES:
 
 ENHANCEMENTS:
-* Expose APP_SERVICE_SKU build variable to allow enablement of App Gateway WAF
+* Expose APP_SERVICE_SKU build variable to allow enablement of App Gateway WAF ([#4111](https://github.com/microsoft/AzureTRE/pull/4111))
 BUG FIXES:
 
 COMPONENTS:
