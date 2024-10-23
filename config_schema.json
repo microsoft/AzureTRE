@@ -89,6 +89,10 @@
           "description": "SKU of the Azure Firewall.",
           "type": "string"
         },
+        "app_gateway_sku": {
+          "description": "SKU of the Application Gateway.",
+          "type": "string"
+        },
         "custom_domain": {
           "description": "Custom domain name.",
           "type": "string"

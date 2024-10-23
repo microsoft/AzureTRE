@@ -6,7 +6,7 @@
 FEATURES:
 
 ENHANCEMENTS:
-
+* Expose APP_SERVICE_SKU build variable to allow enablement of App Gateway WAF
 BUG FIXES:
 
 COMPONENTS:
