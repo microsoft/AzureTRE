@@ -10,7 +10,6 @@ from service_bus.helpers import (
     try_update_with_retries,
     update_resource_for_step,
 )
-from tests_ma.test_api.conftest import create_test_user
 from tests_ma.test_service_bus.test_deployment_status_update import (
     create_sample_operation,
 )
@@ -25,7 +24,8 @@ from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 pytestmark = pytest.mark.asyncio
 
 
-def create_test_resource():
+@pytest.fixture
+def test_resource(test_user):
     return Resource(
         id=str(uuid.uuid4()),
         resourceType=ResourceType.Workspace,
@@ -34,6 +34,7 @@ def create_test_resource():
         etag="",
         properties={"testParameter": "testValue"},
         resourcePath="test",
+        user=test_user
     )
 
 
@@ -52,22 +53,23 @@ async def test_resource_request_message_generated_correctly(
     operations_repo_mock,
     resource_history_repo_mock,
     request_action,
-    multi_step_resource_template
+    multi_step_resource_template,
+    test_resource,
+    test_user
 ):
     service_bus_client_mock().get_queue_sender().send_messages = AsyncMock()
-    resource = create_test_resource()
-    operation = create_sample_operation(resource.id, request_action)
+    operation = create_sample_operation(test_resource.id, request_action)
     operations_repo_mock.create_operation_item.return_value = operation
-    resource_repo.get_resource_by_id.return_value = resource
+    resource_repo.get_resource_by_id.return_value = test_resource
     resource_template_repo.get_template_by_name_and_version.return_value = multi_step_resource_template
 
-    resource_repo.patch_resource.return_value = (resource, multi_step_resource_template)
+    resource_repo.patch_resource.return_value = (test_resource, multi_step_resource_template)
 
     await send_resource_request_message(
-        resource=resource,
+        resource=test_resource,
         operations_repo=operations_repo_mock,
         resource_repo=resource_repo,
-        user=create_test_user(),
+        user=test_user,
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo_mock,
         action=request_action
@@ -80,7 +82,7 @@ async def test_resource_request_message_generated_correctly(
     sent_message = args[0]
     assert sent_message.correlation_id == operation.id
     sent_message_as_json = json.loads(str(sent_message))
-    assert sent_message_as_json["id"] == resource.id
+    assert sent_message_as_json["id"] == test_resource.id
     assert sent_message_as_json["action"] == request_action
 
 

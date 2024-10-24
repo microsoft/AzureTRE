@@ -1661,14 +1661,16 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
                     "name": "John Doe",
                     "email": "john.doe@example.com",
                     "roles": ["WorkspaceOwner", "WorkspaceResearcher"],
-                    'roleAssignments': []
+                    "roleAssignments": [],
+                    "username": "johndoe"
                 },
                 {
                     "id": "456",
                     "name": "Jane Smith",
                     "email": "jane.smith@example.com",
                     "roles": ["WorkspaceResearcher"],
-                    'roleAssignments': []
+                    "roleAssignments": [],
+                    "username": "janesmith"
                 }
             ]
             get_workspace_users_mock.return_value = users

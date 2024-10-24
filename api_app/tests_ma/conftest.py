@@ -321,7 +321,7 @@ def multi_step_resource_template(basic_shared_service_template) -> ResourceTempl
 
 @pytest.fixture
 def test_user():
-    return User(id="user-id", name="test user", email="test@user.com")
+    return User(id="user-id", name="test user", email="test@user.com", username="testuser")
 
 
 @pytest.fixture
