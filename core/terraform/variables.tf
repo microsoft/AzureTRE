@@ -192,7 +192,7 @@ variable "app_gateway_sku" {
   default     = ""
 
   validation {
-    condition = contains(["", "Standard_v2", "WAF_v2"], var.app_gateway_sku)
+    condition     = contains(["", "Standard_v2", "WAF_v2"], var.app_gateway_sku)
     error_message = "Invalid app_gateway_sku value"
   }
 }

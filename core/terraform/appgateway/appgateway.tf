@@ -217,7 +217,7 @@ resource "azurerm_web_application_firewall_policy" "waf" {
 
   policy_settings {
     enabled = true
-    mode = "Detection"
+    mode    = "Detection"
   }
 
   managed_rules {
@@ -228,12 +228,12 @@ resource "azurerm_web_application_firewall_policy" "waf" {
   }
 
   // once created ignore policy_settings and rulesets allow to be managed outside of here
-  lifecycle { ignore_changes = [ policy_settings, managed_rules] }
+  lifecycle { ignore_changes = [policy_settings, managed_rules] }
 
   // terraform doesn't handle the downgrade from WAF_v2 > Standard_v2 SKU, this is required to detatch the policy from the app gateway before deletion of the policy
   provisioner "local-exec" {
-      when    = destroy
-      command = <<EOT
+    when    = destroy
+    command = <<EOT
           APP_GATEWAY_ID=$(az network application-gateway waf-policy show --name ${self.name} --resource-group ${self.resource_group_name} --query applicationGateways[0].id --output tsv)
           az network application-gateway update --ids $APP_GATEWAY_ID --set firewallPolicy=null --set sku.name=Standard_v2 --set sku.tier=Standard_v2
         EOT
