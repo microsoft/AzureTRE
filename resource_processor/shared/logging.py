@@ -95,6 +95,17 @@ def initialize_logging() -> logging.Logger:
     return logger
 
 
+def chunk_log_output(output: str, chunk_size: int = 30000):
+    """
+    Split the log output into smaller chunks and prefix each chunk with [Log chunk X of Y].
+    """
+    total_chunks = (len(output) + chunk_size - 1) // chunk_size  # Calculate total number of chunks
+    for i in range(0, len(output), chunk_size):
+        current_chunk = i // chunk_size + 1
+        prefix = f"[Log chunk {current_chunk} of {total_chunks}] "
+        yield prefix + output[i:i + chunk_size]
+
+
 def shell_output_logger(console_output: str, prefix_item: str, logging_level: int):
     if not console_output:
         logger.debug("shell console output is empty.")
@@ -118,4 +129,5 @@ def shell_output_logger(console_output: str, prefix_item: str, logging_level: in
     console_output = console_output.strip()
 
     if console_output:
-        logger.log(logging_level, f"{prefix_item} {console_output}")
+        for chunk in chunk_log_output(console_output):
+            logger.log(logging_level, f"{prefix_item} {chunk}")
