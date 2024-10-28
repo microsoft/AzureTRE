@@ -183,13 +183,10 @@ resource "azurerm_role_assignment" "subscription_contributor" {
   principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
 }
 
-resource "azurerm_key_vault_access_policy" "resource_processor" {
-  key_vault_id = var.key_vault_id
-  tenant_id    = azurerm_user_assigned_identity.vmss_msi.tenant_id
-  object_id    = azurerm_user_assigned_identity.vmss_msi.principal_id
-
-  secret_permissions      = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
-  certificate_permissions = ["Get", "Recover", "Import", "Delete", "Purge"]
+resource "azurerm_role_assignment" "keyvault_vmss_role" {
+  scope                = var.key_vault_id
+  role_definition_name = "Key Vault Administrator"
+  principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id  // id-vmss-<TRE_ID>
 }
 
 module "terraform_azurerm_environment_configuration" {

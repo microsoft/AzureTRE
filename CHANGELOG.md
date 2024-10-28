@@ -6,7 +6,7 @@
 FEATURES:
 
 ENHANCEMENTS:
-
+* Key Vaults should use RBAC instead of access policies for access control ([#4000](https://github.com/microsoft/AzureTRE/issues/4000))
 BUG FIXES:
 
 COMPONENTS:

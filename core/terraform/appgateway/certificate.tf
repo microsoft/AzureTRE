@@ -1,15 +1,7 @@
-resource "azurerm_key_vault_access_policy" "app_gw_managed_identity" {
-  key_vault_id = var.keyvault_id
-  tenant_id    = azurerm_user_assigned_identity.agw_id.tenant_id
-  object_id    = azurerm_user_assigned_identity.agw_id.principal_id
-
-  key_permissions = [
-    "Get",
-  ]
-
-  secret_permissions = [
-    "Get",
-  ]
+resource "azurerm_role_assignment" "keyvault_appgw_role" {
+  scope                = var.keyvault_id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.agw_id.principal_id  // id-agw-<TRE_ID>
 }
 
 resource "azurerm_key_vault_certificate" "tlscert" {

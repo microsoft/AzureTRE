@@ -97,7 +97,7 @@ resource "azurerm_key_vault_secret" "cosmos_mongo_connstr" {
   key_vault_id = azurerm_key_vault.kv.id
   tags         = local.tre_core_tags
   depends_on = [
-    azurerm_key_vault_access_policy.deployer
+    azurerm_role_assignment.keyvault_deployer_role
   ]
 
   lifecycle { ignore_changes = [tags] }
