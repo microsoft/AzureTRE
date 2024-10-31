@@ -19,13 +19,14 @@ resource "azurerm_service_plan" "airlock_plan" {
 }
 
 resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
-  name                            = local.airlock_function_sa_name
-  resource_group_name             = var.resource_group_name
-  location                        = var.location
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
-  tags                            = var.tre_core_tags
+  name                             = local.airlock_function_sa_name
+  resource_group_name              = var.resource_group_name
+  location                         = var.location
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
+  tags                             = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 }
