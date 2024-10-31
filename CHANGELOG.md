@@ -6,7 +6,7 @@
 FEATURES:
 
 ENHANCEMENTS:
-* Disable storage account cross tenant replication ([#XXXX](https://github.com/microsoft/AzureTRE/pull/XXXX))
+* Disable storage account cross tenant replication ([#4116](https://github.com/microsoft/AzureTRE/pull/4116))
 
 BUG FIXES:
 
