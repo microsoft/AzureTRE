@@ -108,7 +108,7 @@ class ServiceBusReceivedMessageMock:
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
 @patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
 @patch('logging.exception')
-@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_user_emails_by_role_assignment", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
 async def test_receiving_good_message(_, logging_mock, workspace_repo, airlock_request_repo, eg_client):
 
     eg_client().send = AsyncMock()
