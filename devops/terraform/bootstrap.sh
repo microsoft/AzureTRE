@@ -15,7 +15,11 @@ az storage account create --resource-group "$TF_VAR_mgmt_resource_group_name" \
 
 # Grant user blob data contributor permissions
 echo -e "\n\e[34m»»» 🔑 \e[96mGranting Storage Blob Data Contributor role to the current user\e[0m..."
-USER_OBJECT_ID=$(az ad signed-in-user show --query id --output tsv)
+if [ -n "$ARM_CLIENT_ID" ]; then
+    USER_OBJECT_ID=$(az ad sp show --id "$ARM_CLIENT_ID" --query objectId --output tsv)
+else
+    USER_OBJECT_ID=$(az ad signed-in-user show --query id --output tsv)
+fi
 az role assignment create --assignee "$USER_OBJECT_ID" \
   --role "Storage Blob Data Contributor" \
   --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name"

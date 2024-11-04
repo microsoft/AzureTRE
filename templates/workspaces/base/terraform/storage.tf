@@ -13,12 +13,12 @@ resource "azurerm_storage_account" "stg" {
 
 # Using AzAPI as AzureRM uses shared account key for Azure files operations
 resource "azapi_resource" "shared_storage" {
-  type = "Microsoft.Storage/storageAccounts/fileServices/shares@2023-05-01"
-  name = "vm-shared-storage"
+  type      = "Microsoft.Storage/storageAccounts/fileServices/shares@2023-05-01"
+  name      = "vm-shared-storage"
   parent_id = "${azurerm_storage_account.stg.id}/fileServices/default"
   body = jsonencode({
     properties = {
-      shareQuota = var.shared_storage_quota
+      shareQuota       = var.shared_storage_quota
       enabledProtocols = "SMB"
     }
   })
