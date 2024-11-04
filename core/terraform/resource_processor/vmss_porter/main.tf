@@ -186,7 +186,7 @@ resource "azurerm_role_assignment" "subscription_contributor" {
 resource "azurerm_role_assignment" "keyvault_vmss_role" {
   scope                = var.key_vault_id
   role_definition_name = "Key Vault Administrator"
-  principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id  // id-vmss-<TRE_ID>
+  principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id // id-vmss-<TRE_ID>
 }
 
 module "terraform_azurerm_environment_configuration" {

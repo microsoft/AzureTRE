@@ -1,7 +1,7 @@
 resource "azurerm_role_assignment" "keyvault_appgw_role" {
   scope                = var.keyvault_id
   role_definition_name = "Key Vault Secrets User"
-  principal_id         = azurerm_user_assigned_identity.agw_id.principal_id  // id-agw-<TRE_ID>
+  principal_id         = azurerm_user_assigned_identity.agw_id.principal_id // id-agw-<TRE_ID>
 }
 
 resource "azurerm_key_vault_certificate" "tlscert" {

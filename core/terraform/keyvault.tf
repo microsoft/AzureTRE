@@ -14,13 +14,13 @@ resource "azurerm_key_vault" "kv" {
 resource "azurerm_role_assignment" "keyvault_deployer_role" {
   scope                = azurerm_key_vault.kv.id
   role_definition_name = "Key Vault Administrator"
-  principal_id         = data.azurerm_client_config.current.object_id  // deployer - either CICD service principal or local user
+  principal_id         = data.azurerm_client_config.current.object_id // deployer - either CICD service principal or local user
 }
 
 resource "azurerm_role_assignment" "keyvault_apiidentity_role" {
   scope                = azurerm_key_vault.kv.id
   role_definition_name = "Key Vault Secrets User"
-  principal_id         = azurerm_user_assigned_identity.id.principal_id  // id-api-<TRE_ID>
+  principal_id         = azurerm_user_assigned_identity.id.principal_id // id-api-<TRE_ID>
 }
 
 data "azurerm_private_dns_zone" "vaultcore" {
