@@ -40,6 +40,9 @@ jobs:
             docs:
               - 'docs/**/*'
 
+            terraform_core:
+              - core/**/terraform/**/*.tf
+
             terraform_workspaces:
               - templates/workspaces/**/terraform/**/*.tf
 
@@ -94,6 +97,17 @@ jobs:
         run: |
           pip install -r docs/requirements.txt
           mkdocs build --strict
+
+      - name: Core Tags
+        if: ${{ steps.filter.outputs.terraform_core == 'true' }}
+        uses: github/super-linter/slim@v5.0.0
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_TERRAFORM_TFLINT: true
+          TERRAFORM_TFLINT_CONFIG_FILE: .tflint_core.hcl
+          FILTER_REGEX_INCLUDE: './core/.*'
 
       - name: Workspace Tags
         if: ${{ steps.filter.outputs.terraform_workspaces == 'true' }}
