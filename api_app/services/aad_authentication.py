@@ -219,7 +219,7 @@ class AzureADAuthorization(AccessService):
 
     @staticmethod
     def _get_service_principal_assigned_roles_endpoint(client_id) -> str:
-        return f"{MICROSOFT_GRAPH_URL}/v1.0/serviceprincipals/{client_id}/appRoleAssignedTo?$select=appRoleId,principalId,principalType"
+        return f"{MICROSOFT_GRAPH_URL}/v1.0/serviceprincipals/{client_id}/appRoleAssignedTo?$select=appRoleId,principalId,principalType,principalDisplayName"
 
     @staticmethod
     def _get_batch_endpoint() -> str:
@@ -227,11 +227,11 @@ class AzureADAuthorization(AccessService):
 
     @staticmethod
     def _get_users_endpoint(user_object_id) -> str:
-        return "/users/" + user_object_id + "?$select=mail,id"
+        return "/users/" + user_object_id + "?$select=displayName,mail,id"
 
     @staticmethod
     def _get_group_members_endpoint(group_object_id) -> str:
-        return "/groups/" + group_object_id + "/transitiveMembers?$select=mail,id"
+        return "/groups/" + group_object_id + "/transitiveMembers?$select=displayName,mail,id"
 
     def _get_app_sp_graph_data(self, client_id: str) -> dict:
         msgraph_token = self._get_msgraph_token()
@@ -243,7 +243,7 @@ class AzureADAuthorization(AccessService):
         sp_roles_endpoint = self._get_service_principal_assigned_roles_endpoint(client_id)
         return requests.get(sp_roles_endpoint, headers=self._get_auth_header(msgraph_token)).json()
 
-    def _get_user_emails(self, roles_graph_data, msgraph_token):
+    def _get_user_details(self, roles_graph_data, msgraph_token):
         batch_endpoint = self._get_batch_endpoint()
         batch_request_body = self._get_batch_users_by_role_assignments_body(roles_graph_data)
         headers = self._get_auth_header(msgraph_token)
@@ -262,43 +262,59 @@ class AzureADAuthorization(AccessService):
 
         return users_graph_data
 
-    def _get_user_emails_from_response(self, users_graph_data):
-        user_emails = {}
-        for user_data in users_graph_data["responses"]:
-            # Handle user endpoint response
-            if "users" in user_data["body"]["@odata.context"] and user_data["body"]["mail"] is not None:
-                user_emails[user_data["body"]["id"]] = [user_data["body"]["mail"]]
-            # Handle group endpoint response
-            if "directoryObjects" in user_data["body"]["@odata.context"]:
-                group_members_emails = []
-                for group_member in user_data["body"]["value"]:
-                    if group_member["mail"] is not None and group_member["mail"] not in group_members_emails:
-                        group_members_emails.append(group_member["mail"])
-                user_emails[user_data["id"]] = group_members_emails
-        return user_emails
-
-    def get_workspace_role_assignment_details(self, workspace: Workspace):
-        msgraph_token = self._get_msgraph_token()
-        app_role_ids = {role_name: workspace.properties[role_id] for role_name, role_id in self.WORKSPACE_ROLES_DICT.items()}
-        inverted_app_role_ids = {role_id: role_name for role_name, role_id in app_role_ids.items()}
-
-        sp_id = workspace.properties["sp_id"]
-        roles_graph_data = self._get_user_role_assignments(sp_id, msgraph_token)
-        users_graph_data = self._get_user_emails(roles_graph_data, msgraph_token)
-        user_emails = self._get_user_emails_from_response(users_graph_data)
-
-        workspace_role_assignments_details = defaultdict(list)
+    def _get_roles_for_principal(self, user_id, roles_graph_data, app_id_to_role_name):
+        roles = []
         for role_assignment in roles_graph_data["value"]:
-            principal_id = role_assignment["principalId"]
-            principal_type = role_assignment["principalType"]
+            if role_assignment["principalId"] == user_id:
+                roles.append(app_id_to_role_name[role_assignment["appRoleId"]])
+        return roles
 
-            if principal_type != "ServicePrincipal" and principal_id in user_emails:
-                app_role_id = role_assignment["appRoleId"]
-                app_role_name = inverted_app_role_ids.get(app_role_id)
+    def _get_users_inc_groups_from_response(self, users_graph_data, roles_graph_data, app_id_to_role_name) -> List[User]:
+        users = []
+        for user_data in users_graph_data["responses"]:
+            if "users" in user_data["body"]["@odata.context"]:
+                # Handle user endpoint response
+                user_id = user_data["body"]["id"]
+                user_name = user_data["body"]["displayName"]
 
-                if app_role_name:
-                    workspace_role_assignments_details[app_role_name].extend(user_emails[principal_id])
+                if "users" in user_data["body"]["@odata.context"]:
+                    user_email = user_data["body"]["mail"]
+                    # if user with id does not already exist in users
+                    if not any(user.id == user_id for user in users):
+                        users.append(User(id=user_id, name=user_name, email=user_email, roles=self._get_roles_for_principal(user_id, roles_graph_data, app_id_to_role_name)))
 
+            # Handle group endpoint response
+            elif "directoryObjects" in user_data["body"]["@odata.context"]:
+                group_id = user_data["id"]
+                for group_member in user_data["body"]["value"]:
+                    user_id = group_member["id"]
+                    user_name = group_member["displayName"]
+                    user_email = group_member["mail"]
+
+                    if not any(user.id == user_id for user in users):
+                        users.append(User(id=user_id, name=user_name, email=user_email, roles=self._get_roles_for_principal(group_id, roles_graph_data, app_id_to_role_name)))
+
+        return users
+
+    def get_workspace_users(self, workspace: Workspace) -> List[User]:
+        msgraph_token = self._get_msgraph_token()
+        sp_graph_data = self._get_app_sp_graph_data(workspace.properties["client_id"])
+        app_id_to_role_name = {app_role["id"]: app_role["value"] for app_role in sp_graph_data["value"][0]["appRoles"]}
+        roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"], msgraph_token)
+        users_graph_data = self._get_user_details(roles_graph_data, msgraph_token)
+        users_inc_groups = self._get_users_inc_groups_from_response(users_graph_data, roles_graph_data, app_id_to_role_name)
+
+        return users_inc_groups
+
+    def get_workspace_user_emails_by_role_assignment(self, workspace: Workspace):
+        users = self.get_workspace_users(workspace)
+        workspace_role_assignments_details = {}
+        for user in users:
+            if user.email:
+                for role in user.roles:
+                    if role not in workspace_role_assignments_details:
+                        workspace_role_assignments_details[role] = []
+                    workspace_role_assignments_details[role].append(user.email)
         return workspace_role_assignments_details
 
     def _get_batch_users_by_role_assignments_body(self, roles_graph_data):
