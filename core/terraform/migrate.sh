@@ -12,7 +12,7 @@ export ARM_STORAGE_USE_AZUREAD=true
 export ARM_USE_AZUREAD=true
 export ARM_USE_OIDC=true
 
-terraform_wrapper_path="../../devops/scripts/terraform_wrapper.sh"
+# terraform_wrapper_path="../../devops/scripts/terraform_wrapper.sh"
 
 # This variables are loaded in for us
 # shellcheck disable=SC2154
