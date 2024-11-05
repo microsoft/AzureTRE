@@ -1,7 +1,7 @@
 FROM python:3.12-slim-bullseye
 
 # Install MLflow Python Packages
-RUN pip install --no-cache-dir psycopg2==2.9.10 mlflow==2.17.2 azure-storage-blob==12.23.1
+RUN pip install --no-cache-dir psycopg2-binary==2.9.10 mlflow==2.17.2 azure-storage-blob==12.23.1
 
 RUN apt-get update \
   && apt-get install openssh-server -y --no-install-recommends \
