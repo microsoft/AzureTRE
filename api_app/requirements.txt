@@ -17,7 +17,7 @@ gunicorn==23.0.0
 jsonschema[format_nongpl]==4.19.1
 msal==1.31.0
 opentelemetry.instrumentation.logging>=0.44b0
-pandas==2.2.3
+pandas==2.2.2
 PyJWT==2.9.0
 pytz==2024.2
 python-dateutil==2.9.0
