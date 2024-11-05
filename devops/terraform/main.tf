@@ -9,7 +9,7 @@ resource "azurerm_resource_group" "mgmt" {
   name     = var.mgmt_resource_group_name
   location = var.location
 
-  tags = merge(local.default_tags, {
+  tags = merge(default_tags, {
     project = "Azure Trusted Research Environment"
     source  = "https://github.com/microsoft/AzureTRE/"
   })
@@ -28,7 +28,7 @@ resource "azurerm_storage_account" "state_storage" {
   allow_nested_items_to_be_public = false
   shared_access_key_enabled       = false
 
-  tags = local.default_tags
+  tags = default_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -41,7 +41,7 @@ resource "azurerm_container_registry" "shared_acr" {
   sku                 = var.acr_sku
   admin_enabled       = true
 
-  tags = local.default_tags
+  tags = default_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -71,5 +71,5 @@ EOF
     enabled  = true
   }
 
-  tags = local.default_tags
+  tags = default_tags
 }
