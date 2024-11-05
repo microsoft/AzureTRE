@@ -22,4 +22,5 @@ PyJWT==2.9.0
 pytz==2024.2
 python-dateutil==2.9.0
 semantic-version==2.10.0
+setuptools==75.3.0
 uvicorn[standard]==0.31.0
