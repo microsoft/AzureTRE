@@ -1,12 +1,13 @@
 #!/bin/bash
+# shellcheck disable=SC2154
+
 # See remove_state.sh for the purpose of these scripts
 echo "IMPORTING STATE FOR FIREWALL..."
 
 # check for the existence of the RG. If it's not there it's because we're in CI and building from scratch - we can skip this script
 set +e
 RESOURCE_GROUP_ID="rg-${TRE_ID}"
-az group show -n $RESOURCE_GROUP_ID
-if [ $? -ne 0 ]; then
+if ! az group show -n "$RESOURCE_GROUP_ID"; then
   echo "RG not found, skipping import_state"
   exit 0
 fi
@@ -28,7 +29,7 @@ function import_if_exists() {
   CMD=$3
 
   # Check if the resource exists in Terraform
-  TF_RESOURCE_EXISTS=$(echo "$tf_state_list" | grep -q ^${ADDRESS}$; echo $?)
+  TF_RESOURCE_EXISTS=$(echo "$tf_state_list" | grep -q ^"${ADDRESS}"$; echo $?)
 
   if [[ ${TF_RESOURCE_EXISTS} -eq 0 ]]; then
     echo "${ADDRESS} already in TF State, ignoring..."
@@ -48,7 +49,7 @@ function import_if_exists() {
   # If resource doesn't exist in Terraform but exist in Azure, we need to import it
   if [[ ${TF_RESOURCE_EXISTS} -ne 0 && ${AZ_RESOURCE_EXISTS} -eq 0 ]]; then
     echo "IMPORTING ${ADDRESS} ${ID}"
-    terraform import -var "tre_id=${TRE_ID}" -var "location=${LOCATION}" ${ADDRESS} ${ID}
+    terraform import -var "tre_id=${TRE_ID}" -var "location=${LOCATION}" "${ADDRESS}" "${ID}"
   fi
 }
 
