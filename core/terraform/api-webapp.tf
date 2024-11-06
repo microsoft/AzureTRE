@@ -47,9 +47,9 @@ resource "azurerm_linux_web_app" "api" {
     "RESOURCE_LOCATION"                              = azurerm_resource_group.core.location
     "ENABLE_SWAGGER"                                 = var.enable_swagger
     "SWAGGER_UI_CLIENT_ID"                           = var.swagger_ui_client_id
-    "AAD_TENANT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.auth_tenant_id.id})"
-    "API_CLIENT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_id.id})"
-    "API_CLIENT_SECRET"                              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_secret.id})"
+    "AAD_TENANT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.kv.vault_uri}secrets/${azurerm_key_vault_secret.auth_tenant_id.name}/${azurerm_key_vault_secret.auth_tenant_id.version})"
+    "API_CLIENT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.kv.vault_uri}secrets/${azurerm_key_vault_secret.api_client_id.name}/${azurerm_key_vault_secret.api_client_id.version})"
+    "API_CLIENT_SECRET"                              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.kv.vault_uri}secrets/${azurerm_key_vault_secret.api_client_secret.name}/${azurerm_key_vault_secret.api_client_secret.version})"
     "RESOURCE_GROUP_NAME"                            = azurerm_resource_group.core.name
     "SUBSCRIPTION_ID"                                = data.azurerm_subscription.current.subscription_id
     CORE_ADDRESS_SPACE                               = var.core_address_space
