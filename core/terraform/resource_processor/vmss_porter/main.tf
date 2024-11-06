@@ -151,6 +151,12 @@ resource "terraform_data" "vm_linux_reimage" {
   ]
 }
 
+resource "azurerm_role_assignment" "mgmt_storage_account_blob_contributor" {
+  scope                = data.azurerm_storage_account.mgmt_storage.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
+}
+
 resource "azurerm_role_assignment" "vmss_acr_pull" {
   scope                = var.acr_id
   role_definition_name = "AcrPull"
