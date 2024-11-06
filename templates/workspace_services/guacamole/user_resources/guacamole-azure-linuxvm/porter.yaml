@@ -186,6 +186,9 @@ uninstall:
         - ${ bundle.parameters.tfstate_storage_account_name }
         - ${ bundle.parameters.tfstate_container_name }
         - ${ bundle.parameters.id }
+      envs:
+        ARM_USE_AZUREAD: "true"
+        ARM_USE_OIDC: "true"
 
   - terraform:
       description: "Delete the Guacamole User Resource Service"
