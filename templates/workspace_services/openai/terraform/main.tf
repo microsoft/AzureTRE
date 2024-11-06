@@ -25,6 +25,7 @@ provider "azurerm" {
       recover_soft_deleted_keys         = true
     }
   }
+  storage_use_azuread = true
 }
 
 module "terraform_azurerm_environment_configuration" {
