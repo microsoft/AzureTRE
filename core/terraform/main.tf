@@ -19,7 +19,7 @@ terraform {
     }
     azapi = {
       source  = "Azure/azapi"
-      version = "~> 1.13.0"
+      version = "~> 1.15.0"
     }
   }
 
@@ -99,6 +99,7 @@ module "appgateway" {
   keyvault_id                = azurerm_key_vault.kv.id
   static_web_dns_zone_id     = module.network.static_web_dns_zone_id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
+  app_gateway_sku            = var.app_gateway_sku
 
   depends_on = [
     module.network,

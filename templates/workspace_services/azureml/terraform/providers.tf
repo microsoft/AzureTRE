@@ -6,7 +6,7 @@ terraform {
     }
     azapi = {
       source  = "Azure/azapi"
-      version = "=1.1.0"
+      version = "=1.15.0"
     }
     external = {
       source  = "hashicorp/external"
@@ -36,6 +36,7 @@ provider "azurerm" {
       recover_soft_deleted_keys         = true
     }
   }
+  storage_use_azuread = true
 }
 
 provider "azapi" {}

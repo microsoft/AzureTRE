@@ -6,6 +6,9 @@
 FEATURES:
 
 ENHANCEMENTS:
+* Split log entries with [Log chunk X of Y] for better readability. ([[#3992](https://github.com/microsoft/AzureTRE/issues/3992)
+* Expose APP_SERVICE_SKU build variable to allow enablement of App Gateway WAF ([#4111](https://github.com/microsoft/AzureTRE/pull/4111))
+* Update Terraform to use Azure AD authentication rather than storage account keys ([#4103](https://github.com/microsoft/AzureTRE/issues/4103))
 
 BUG FIXES:
 
@@ -22,6 +25,7 @@ ENHANCEMENTS:
 * Add info regarding workspace limit into docs ([#3920](https://github.com/microsoft/AzureTRE/issues/3920))
 
 BUG FIXES:
+* Add Snyk Security updates for September
 * Workspace creation blocked due to Azure API depreciation ([#4095](https://github.com/microsoft/AzureTRE/issues/4095))
 
 COMPONENTS:
