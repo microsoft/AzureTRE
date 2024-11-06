@@ -33,15 +33,20 @@ tre:
   enable_swagger: true
   enable_airlock_malware_scanning: true
 
+  # Set to true if want to ensure users have an email address before airlock request is created
+  # Used if rely on email notifications for governance purposes
+  # enable_airlock_email_check: true
+
   # TODO: move to RP default with https://github.com/microsoft/AzureTRE/issues/2948
   workspace_app_service_plan_sku: P1v2
   # The TRE Web UI is deployed by default.
   # Uncomment the following to disable deployment of the Web UI.
   # deploy_ui: false
-  # If you want to use TRE_URL to point to your local TRE API instance or be configured to another cloud provider
-  # uncomment and set this variable
-  # tre_url: __CHANGE_ME__
+  firewall_sku: Standard
+  app_gateway_sku: Standard_v2
 
+  # Uncomment to deploy to a custom domain
+  # custom_domain: __CHANGE_ME__
 authentication:
   aad_tenant_id: __CHANGE_ME__
   # Setting AUTO_WORKSPACE_APP_REGISTRATION to false will:
@@ -65,9 +70,10 @@ resource_processor:
 #  rp_bundle_values: '{"custom_key_1":"custom_value_1","image_gallery_id":"/subscriptions/<subscription-id>/resourceGroups/<your-rg>/providers/Microsoft.Compute/galleries/<your-gallery-name>"}'
 
 developer_settings:
-  # Locks will not be added to stateful resources so they can be easily removed
-  # stateful_resources_locked: false
-
+# Locks will not be added to stateful resources so they can be easily removed
+# stateful_resources_locked: false
+# TRE Core Key Vault purge protection will be disabled so it can be reused upon deletion
+# kv_purge_protection_enabled: false
 
 # This setting will enable your local machine to be able to
 # communicate with Service Bus and Cosmos. It will also allow deploying
@@ -75,4 +81,9 @@ developer_settings:
 #  enable_local_debugging: true
 
 # Used by the API and Resource processor application to change log level
-#  debug: true
+# Can be "ERROR", "WARNING", "INFO", "DEBUG"
+#  logging_level: "INFO"
+
+# If you want to use TRE_URL to point to your local TRE API instance or be configured to another cloud provider
+# uncomment and set this variable
+#  tre_url: __CHANGE_ME__

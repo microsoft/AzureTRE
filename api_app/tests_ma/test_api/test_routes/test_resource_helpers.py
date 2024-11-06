@@ -29,24 +29,21 @@ FAKE_UPDATE_TIMESTAMP: float = FAKE_UPDATE_TIME.timestamp()
 
 @pytest_asyncio.fixture
 async def resource_repo() -> ResourceRepository:
-    with patch('db.repositories.base.BaseRepository._get_container', return_value=AsyncMock()):
-        with patch("azure.cosmos.CosmosClient") as cosmos_client_mock:
-            resource_repo_mock = await ResourceRepository.create(cosmos_client_mock)
-            yield resource_repo_mock
+    with patch('api.dependencies.database.Database.get_container_proxy', return_value=AsyncMock()):
+        resource_repo_mock = await ResourceRepository().create()
+        yield resource_repo_mock
 
 
 @pytest_asyncio.fixture
 async def operations_repo() -> OperationRepository:
-    with patch("azure.cosmos.CosmosClient") as cosmos_client_mock:
-        operation_repo_mock = await OperationRepository.create(cosmos_client_mock)
-        yield operation_repo_mock
+    operation_repo_mock = await OperationRepository().create()
+    yield operation_repo_mock
 
 
 @pytest_asyncio.fixture
 async def resource_history_repo() -> ResourceHistoryRepository:
-    with patch("azure.cosmos.CosmosClient") as cosmos_client_mock:
-        resource_history_repo_mock = await ResourceHistoryRepository.create(cosmos_client_mock)
-        yield resource_history_repo_mock
+    resource_history_repo_mock = await ResourceHistoryRepository().create()
+    yield resource_history_repo_mock
 
 
 def sample_resource(workspace_id=WORKSPACE_ID):

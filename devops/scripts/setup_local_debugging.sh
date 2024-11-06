@@ -41,11 +41,17 @@ az cosmosdb update \
   --ip-range-filter "${IPADDR}"
 
 echo "Adding local IP Address to ${SERVICE_BUS_NAMESPACE}."
-az servicebus namespace network-rule add \
+if az servicebus namespace network-rule-set list \
   --resource-group "${RESOURCE_GROUP_NAME}" \
   --namespace-name "${SERVICE_BUS_NAMESPACE}" \
-  --ip-address "${IPADDR}" \
-  --action Allow
+  -o json | grep -q "${IPADDR}" ; then
+  echo "IP Address ${IPADDR} already exists in ${SERVICE_BUS_NAMESPACE}. Skipping..."
+else
+  az servicebus namespace network-rule-set ip-rule add \
+    --resource-group "${RESOURCE_GROUP_NAME}" \
+    --namespace-name "${SERVICE_BUS_NAMESPACE}" \
+    --ip-rule ip-address="${IPADDR}" action=Allow
+fi
 
 echo "Adding local IP Address to Event Grid Topics."
 az eventgrid topic update \
@@ -99,6 +105,12 @@ az role assignment create \
     --assignee "${LOGGED_IN_OBJECT_ID}" \
     --scope "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID}"
 
+# For end to E2E add Storage Blob Data Contributor role to the logged in user
+az role assignment create \
+    --role "Storage Blob Data Contributor" \
+    --assignee "${LOGGED_IN_OBJECT_ID}" \
+    --scope "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_NAME}/providers/Microsoft.Storage/storageAccounts/stalimex${TRE_ID}"
+
 
 if [[ -z ${ARM_CLIENT_ID:-} ]]; then
   # Configure SP for local resource processor debugging (Porter can't use local creds)
@@ -138,6 +150,8 @@ sed -i '/ARM_CLIENT_SECRET/d' "${private_env_path}"
 sed -i '/AAD_TENANT_ID/d' "${private_env_path}"
 sed -i '/APPLICATION_ADMIN_CLIENT_ID/d' "${private_env_path}"
 sed -i '/APPLICATION_ADMIN_CLIENT_SECRET/d' "${private_env_path}"
+sed -i '/TEST_WORKSPACE_APP_ID/d' "${private_env_path}"
+sed -i '/TEST_WORKSPACE_APP_SECRET/d' "${private_env_path}"
 
 # Append them to the TRE file so that the Resource Processor can use them
 tee -a "${private_env_path}" <<EOF
@@ -146,6 +160,8 @@ ARM_CLIENT_SECRET=${RP_TESTING_SP_PASSWORD}
 AAD_TENANT_ID=${AAD_TENANT_ID}
 APPLICATION_ADMIN_CLIENT_ID=${APPLICATION_ADMIN_CLIENT_ID}
 APPLICATION_ADMIN_CLIENT_SECRET=${APPLICATION_ADMIN_CLIENT_SECRET}
+TEST_WORKSPACE_APP_ID=${WORKSPACE_API_CLIENT_ID}
+TEST_WORKSPACE_APP_SECRET=${WORKSPACE_API_CLIENT_SECRET}
 EOF
 
 # copy porter configuration to porter home

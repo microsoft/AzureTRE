@@ -26,10 +26,12 @@ resource "azurerm_application_gateway" "agw" {
   tags                = local.tre_core_tags
 
   sku {
-    name     = "Standard_v2"
-    tier     = "Standard_v2"
+    name     = coalesce(var.app_gateway_sku, "Standard_v2")
+    tier     = coalesce(var.app_gateway_sku, "Standard_v2")
     capacity = 1
   }
+
+  firewall_policy_id = var.app_gateway_sku == "WAF_v2" ? azurerm_web_application_firewall_policy.waf[0].id : null
 
   # User-assign managed identify id required to access certificate in KeyVault
   identity {
@@ -63,6 +65,12 @@ resource "azurerm_application_gateway" "agw" {
   ssl_certificate {
     name                = local.certificate_name
     key_vault_secret_id = azurerm_key_vault_certificate.tlscert.secret_id
+  }
+
+  # SSL policy
+  ssl_policy {
+    policy_type = "Predefined"
+    policy_name = "AppGwSslPolicy20220101"
   }
 
   # Backend pool with the static website in storage account.
@@ -114,6 +122,12 @@ resource "azurerm_application_gateway" "agw" {
     path                = "/api/ping"
     timeout             = "30"
     unhealthy_threshold = "3"
+
+    match {
+      status_code = [
+        "200-399"
+      ]
+    }
   }
 
   # Public HTTPS listener
@@ -190,6 +204,40 @@ resource "azurerm_application_gateway" "agw" {
   # We don't want Terraform to revert certificate cycle changes. We assume the certificate will be renewed in keyvault.
   lifecycle { ignore_changes = [ssl_certificate, tags] }
 
+}
+
+resource "azurerm_web_application_firewall_policy" "waf" {
+
+  // only create WAF policy when App Gateway sku.tier == "WAF_v2"
+  count = var.app_gateway_sku == "WAF_v2" ? 1 : 0
+
+  name                = "wafpolicy-${var.tre_id}"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+
+  policy_settings {
+    enabled = true
+    mode    = "Detection"
+  }
+
+  managed_rules {
+    managed_rule_set {
+      type    = "OWASP"
+      version = 3.2
+    }
+  }
+
+  // once created ignore policy_settings and rulesets allow to be managed outside of here
+  lifecycle { ignore_changes = [policy_settings, managed_rules] }
+
+  // terraform doesn't handle the downgrade from WAF_v2 > Standard_v2 SKU, this is required to detatch the policy from the app gateway before deletion of the policy
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<EOT
+          APP_GATEWAY_ID=$(az network application-gateway waf-policy show --name ${self.name} --resource-group ${self.resource_group_name} --query applicationGateways[0].id --output tsv)
+          az network application-gateway update --ids $APP_GATEWAY_ID --set firewallPolicy=null --set sku.name=Standard_v2 --set sku.tier=Standard_v2
+        EOT
+  }
 }
 
 resource "azurerm_monitor_diagnostic_setting" "agw" {

@@ -1,12 +1,11 @@
 import asyncio
-import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Header, status, Response
 from jsonschema.exceptions import ValidationError
 
 from db.repositories.operations import OperationRepository
 from db.errors import DuplicateEntity, MajorVersionUpdateDenied, UserNotAuthorizedToUseTemplate, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied
-from api.dependencies.database import get_repository
+from api.helpers import get_repository
 from api.dependencies.shared_services import get_shared_service_by_id_from_path, get_operation_by_id_from_path
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources_history import ResourceHistoryRepository
@@ -21,6 +20,7 @@ from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from .resource_helpers import enrich_resource_with_available_upgrades, send_custom_action_message, send_uninstall_message, send_resource_request_message
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
 from models.domain.request_action import RequestAction
+from services.logging import logger
 
 
 shared_services_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
@@ -56,13 +56,13 @@ async def create_shared_service(response: Response, shared_service_input: Shared
     try:
         shared_service, resource_template = await shared_services_repo.create_shared_service_item(shared_service_input, user.roles)
     except (ValidationError, ValueError) as e:
-        logging.exception("Failed create shared service model instance")
+        logger.exception("Failed create shared service model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except DuplicateEntity as e:
-        logging.exception("Shared service already exists")
+        logger.exception("Shared service already exists")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except UserNotAuthorizedToUseTemplate as e:
-        logging.exception("User not authorized to use template")
+        logger.exception("User not authorized to use template")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
     operation = await save_and_deploy_resource(

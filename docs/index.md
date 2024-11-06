@@ -20,7 +20,7 @@ Core features include:
 - Self-service for research teams – research tooling creation and administration
 - Package and repository mirroring
 - Extensible architecture - build your own service templates as required
-- Azure Active Directory integration
+- Microsoft Entra ID integration
 - Airlock
 - Cost reporting
 - Ready to workspace templates including:

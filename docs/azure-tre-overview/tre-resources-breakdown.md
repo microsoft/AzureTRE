@@ -2,7 +2,7 @@
 
 The Azure services deployed within an Azure TRE are described below.
 
-Once an Azure TRE has been [provisioned](../../tre-admins/setup-instructions/pre-deployment-steps) in an Azure Subscription, you will have two Resource Groups:
+Once an Azure TRE has been [provisioned](../../tre-admins/setup-instructions/manual-pre-deployment-steps) in an Azure Subscription, you will have two Resource Groups:
 
 1. Azure TRE Management Resource Group - Prerequisite for deploying an Azure TRE instance
 1. Azure TRE Resource Group - Core Azure TRE instance
@@ -13,7 +13,7 @@ Once an Azure TRE has been [provisioned](../../tre-admins/setup-instructions/pre
 
 | Name | Azure Service | Description | Additional links
 |---|---|---|---|
-| {MGMT_STORAGE_ACCOUNT_NAME} | Storage Account | [Azure TRE Terraform](../../tre-admins/setup-instructions/pre-deployment-steps)  | [Storage Blobs](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview)
+| {MGMT_STORAGE_ACCOUNT_NAME} | Storage Account | [Azure TRE Terraform](../../tre-admins/setup-instructions/manual-pre-deployment-steps)  | [Storage Blobs](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview)
 | {ACR_NAME} | Container Registry | [Azure TRE container images (Porter bundles)](../architecture/#composition-service) | [Container Registry](https://docs.microsoft.com/en-gb/azure/container-registry/container-registry-intro)
 
 ## Azure TRE Resource Group
@@ -36,10 +36,10 @@ Once an Azure TRE has been [provisioned](../../tre-admins/setup-instructions/pre
 | fw-dsk-{TRE_ID} | Azure Firewall | [Azure TRE Firewall](../networking) restricts external outbound traffic from all TRE resources | [Azure Firewall](https://docs.microsoft.com/en-us/azure/firewall/overview)
 | kv-{TRE_ID} | Azure Key Vault | Management of TRE secrets & certificates | [Azure Key Vault](https://docs.microsoft.com/en-us/azure/key-vault/general/overview)
 | log-{TRE_ID} | Log Analytics Workspace | Azure Monitor Logs store for all TRE resources | [Log Analytics](https://docs.microsoft.com/en-us/azure/azure-monitor/logs/data-platform-logs#log-analytics-workspaces)
-| id-agw-{TRE_ID} | Managed Identity | User-managed identity for TRE Application Gateway | [Managed Identities](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview)
-| id-api-{TRE_ID} | Managed Identity | User-managed identity for TRE API App Service | [Managed Identities](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview)
-| id-gitea-{TRE_ID} | Managed Identity | User-managed identity for TRE Gitea App Service | [Managed Identities](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview)
-| id-vmss-{TRE_ID} | Managed Identity | User-managed identity for TRE Resource Processer (VMSS) | [Managed Identities](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview)
+| id-agw-{TRE_ID} | Managed Identity | User-managed identity for TRE Application Gateway | [Managed Identities](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview)
+| id-api-{TRE_ID} | Managed Identity | User-managed identity for TRE API App Service | [Managed Identities](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview)
+| id-gitea-{TRE_ID} | Managed Identity | User-managed identity for TRE Gitea App Service | [Managed Identities](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview)
+| id-vmss-{TRE_ID} | Managed Identity | User-managed identity for TRE Resource Processer (VMSS) | [Managed Identities](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview)
 | sb-{TRE_ID} | Service Bus Namespace | Messaging for TRE API | [Service Bus](https://docs.microsoft.com/en-us/azure/service-bus-messaging/service-bus-messaging-overview)
 | stappinsights{TRE_ID} | Storage Account | Storage for TRE Application Insights telemetry logs | [Storage Blobs](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview)
 | stg{TRE_ID} | Storage Account | Files shares for TRE services such as Gitea, Nexus | [Storage Files](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-introduction)

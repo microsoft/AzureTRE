@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, Path, status
 from pydantic import UUID4
 
-from api.dependencies.database import get_repository
+from api.helpers import get_repository
 from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.airlock_request import AirlockRequest
 from db.errors import EntityDoesNotExist, UnableToAccessDatabase
