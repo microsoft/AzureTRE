@@ -6,7 +6,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
 # Install Azure CLI
-ARG AZURE_CLI_VERSION=2.50.0-1~bullseye
+ARG AZURE_CLI_VERSION=2.65.0-1~bullseye
 COPY scripts/azure-cli.sh /tmp/
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
     export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
@@ -34,10 +34,10 @@ ENV PORTER_HOME_V0 ${PORTER_HOME}
 # can't be in a non default path
 # ARG PORTER_HOME_V1=/home/$USERNAME/.porter-v1/
 ARG PORTER_HOME_V1=/root/.porter/
-ARG PORTER_VERSION=v1.0.15
-ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.2
-ARG PORTER_AZ_MIXIN_VERSION=v1.0.1
-ARG PORTER_AZURE_PLUGIN_VERSION=v1.2.0
+ARG PORTER_VERSION=v1.1.1
+ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.3
+ARG PORTER_AZ_MIXIN_VERSION=v1.0.2
+ARG PORTER_AZURE_PLUGIN_VERSION=v1.2.3
 COPY scripts/porter-v1.sh /tmp/
 RUN export PORTER_VERSION=${PORTER_VERSION} \
     PORTER_TERRAFORM_MIXIN_VERSION=${PORTER_TERRAFORM_MIXIN_VERSION} \
