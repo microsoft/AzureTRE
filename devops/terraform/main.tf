@@ -1,5 +1,7 @@
 provider "azurerm" {
   features {}
+
+  storage_use_azuread = true
 }
 
 # Resource group for TRE core management
@@ -25,6 +27,7 @@ resource "azurerm_storage_account" "state_storage" {
   account_replication_type         = "LRS"
   cross_tenant_replication_enabled = false
   allow_nested_items_to_be_public  = false
+  shared_access_key_enabled        = false
 
   lifecycle { ignore_changes = [tags] }
 }
