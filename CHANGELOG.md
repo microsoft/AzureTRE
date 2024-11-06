@@ -12,6 +12,7 @@ ENHANCEMENTS:
 * Update Terraform to use Azure AD authentication rather than storage account keys ([#4103](https://github.com/microsoft/AzureTRE/issues/4103))
 
 BUG FIXES:
+- Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
 
 COMPONENTS:
 
