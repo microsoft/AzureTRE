@@ -53,7 +53,7 @@
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-identity</artifactId>
-            <version>1.13.0</version>
+            <version>1.14.0</version>
         </dependency>
         <!-- Http and Json Components -->
         <dependency>
