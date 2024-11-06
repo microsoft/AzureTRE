@@ -4,7 +4,7 @@ data "azurerm_firewall" "fw" {
 }
 
 locals {
-  allowedInnerEyeURLs = ["*.anaconda.com", "*.anaconda.org", "binstar-cio-packages-prod.s3.amazonaws.com", "*pythonhosted.org", "github-cloud.githubusercontent.com", "azure.archive.ubuntu.com", "packagecloud.io"]
+  allowed_inner_eye_urls = ["*.anaconda.com", "*.anaconda.org", "binstar-cio-packages-prod.s3.amazonaws.com", "*pythonhosted.org", "github-cloud.githubusercontent.com", "azure.archive.ubuntu.com", "packagecloud.io"]
 }
 
 data "azurerm_client_config" "current" {}
@@ -59,7 +59,7 @@ resource "azurerm_firewall_application_rule_collection" "innereyeapprulecollecti
 
     source_addresses = data.azurerm_virtual_network.ws.address_space
 
-    target_fqdns = local.allowedInnerEyeURLs
+    target_fqdns = local.allowed_inner_eye_urls
 
 
     protocol {
