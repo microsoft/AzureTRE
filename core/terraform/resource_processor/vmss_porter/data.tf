@@ -57,3 +57,7 @@ data "azurerm_key_vault_key" "encryption" {
   key_vault_id = data.azurerm_key_vault.mgmt_kv[0].id
 }
 
+data "azurerm_storage_account" "mgmt_storage" {
+  name                = var.mgmt_storage_account_name
+  resource_group_name = var.mgmt_resource_group_name
+}

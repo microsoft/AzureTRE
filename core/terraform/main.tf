@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.108.0"
+      version = "=3.112.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -19,7 +19,7 @@ terraform {
     }
     azapi = {
       source  = "Azure/azapi"
-      version = "~> 1.13.0"
+      version = "~> 1.15.0"
     }
   }
 
@@ -105,11 +105,14 @@ module "appgateway" {
   keyvault_id                = azurerm_key_vault.kv.id
   static_web_dns_zone_id     = module.network.static_web_dns_zone_id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
+  app_gateway_sku            = var.app_gateway_sku
+
   enable_cmk_encryption      = var.enable_cmk_encryption
   kv_name                    = var.kv_name
   kv_encryption_key_name     = var.kv_encryption_key_name
   encryption_identity_id     = azurerm_user_assigned_identity.encryption[0].id
   mgmt_resource_group_name   = var.mgmt_resource_group_name
+
   depends_on = [
     module.network,
     azurerm_key_vault.kv,
@@ -198,6 +201,6 @@ module "resource_processor_vmss_porter" {
 }
 
 module "terraform_azurerm_environment_configuration" {
-  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.5.0"
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.6.0"
   arm_environment = var.arm_environment
 }

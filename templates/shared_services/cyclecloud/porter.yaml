@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-cyclecloud
-version: 0.5.5
+version: 0.6.6
 description: "An Azure TRE Shared Service Template for Azure Cyclecloud"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -53,6 +53,11 @@ outputs:
     applyTo:
       - install
       - upgrade
+  - name: shared_subnet_address_prefixes
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 
 mixins:
@@ -67,51 +72,47 @@ install:
       description: "Deploy Cyclecloud shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
-        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
         tre_resource_id: ${ bundle.parameters.id }
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: ${ bundle.parameters.id }
       outputs:
         - name: connection_uri
+        - name: shared_subnet_address_prefixes
 
 upgrade:
   - terraform:
       description: "Update Cyclecloud shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
-        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
         tre_resource_id: ${ bundle.parameters.id }
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: ${ bundle.parameters.id }
       outputs:
         - name: connection_uri
+        - name: shared_subnet_address_prefixes
 
 uninstall:
   - terraform:
       description: "Delete the Cyclecloud shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
-        arm_client_id: ${ bundle.credentials.azure_client_id }
-        arm_client_secret: ${ bundle.credentials.azure_client_secret }
-        arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        arm_use_msi: ${ bundle.parameters.arm_use_msi }
         tre_resource_id: ${ bundle.parameters.id }
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -123,6 +124,8 @@ start:
         - "output"
       description: "Get resource ID from Terraform outputs"
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -157,6 +160,8 @@ stop:
         - "output"
       description: "Get VM hostname and rg from Terraform outputs"
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }

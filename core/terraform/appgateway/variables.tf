@@ -26,6 +26,9 @@ variable "static_web_dns_zone_id" {
 variable "log_analytics_workspace_id" {
   type = string
 }
+variable "app_gateway_sku" {
+  type = string
+}
 variable "mgmt_resource_group_name" {
   type = string
 }

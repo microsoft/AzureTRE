@@ -1,5 +1,7 @@
 provider "azurerm" {
   features {}
+
+  storage_use_azuread = true
 }
 
 data "azurerm_client_config" "current" {}
@@ -26,6 +28,7 @@ resource "azurerm_storage_account" "state_storage" {
   account_kind                    = "StorageV2"
   account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
+  shared_access_key_enabled       = false
 
   lifecycle { ignore_changes = [tags] }
 }

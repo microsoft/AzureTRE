@@ -45,6 +45,7 @@ tre:
   # Uncomment the following to disable deployment of the Web UI.
   # deploy_ui: false
   firewall_sku: Standard
+  app_gateway_sku: Standard_v2
 
   # Uncomment to deploy to a custom domain
   # custom_domain: __CHANGE_ME__

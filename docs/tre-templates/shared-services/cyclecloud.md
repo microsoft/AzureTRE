@@ -64,7 +64,7 @@ ls /etc/yum.repos.d/*.repo | xargs sed -i "s,# baseurl=https://repo.almalinux.or
 
 yum -y install epel-release
 ls /etc/yum.repos.d/*.repo | xargs sed -i 's/metalink/# metalink/g'
-ls /etc/yum.repos.d/*.repo | xargs sed -i "s,#baseurl=https://download.fedoraproject.org/,baseurl=https://nexus-$TRE_ID.$REGION.cloudapp.azure.com/repository/fedoraproject/,g"
+ls /etc/yum.repos.d/*.repo | xargs sed -i "s,#baseurl=https://download.example/pub/epel/,baseurl=https://nexus-$TRE_ID.$REGION.cloudapp.azure.com/repository/fedoraproject/pub/epel/,g"
 
 yum -y install python3 python3-pip
 
@@ -82,6 +82,8 @@ baseurl=https://nexus-$TRE_ID.$REGION.cloudapp.azure.com/repository/microsoft-yu
 gpgcheck=1
 gpgkey=https://nexus-$TRE_ID.$REGION.cloudapp.azure.com/repository/microsoft-keys/microsoft.asc
 EOF
+
+rpm --import https://nexus-$TRE_ID.$REGION.cloudapp.azure.com/repository/almalinux/almalinux/RPM-GPG-KEY-AlmaLinux
 
 ```
 

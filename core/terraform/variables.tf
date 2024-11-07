@@ -186,6 +186,17 @@ variable "firewall_sku" {
   default     = ""
 }
 
+variable "app_gateway_sku" {
+  description = "Application Gateway SKU"
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = contains(["", "Standard_v2", "WAF_v2"], var.app_gateway_sku)
+    error_message = "Invalid app_gateway_sku value"
+  }
+}
+
 variable "rp_bundle_values" {
   description = "Additional environment values to set on the resource processor that can be supplied to template bundles"
   type        = map(string)
