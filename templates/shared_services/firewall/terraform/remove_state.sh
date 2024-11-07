@@ -1,4 +1,6 @@
 #!/bin/bash
+# shellcheck disable=SC2154
+
 # This script works together with the import_state.sh script to manually remove the firewall state from the core deployment
 # and import it into the firewall deployment. It's used for migration purposes only and will be removed when clients are all
 # using the shared services model
@@ -15,11 +17,11 @@ terraform init -input=false -backend=true -reconfigure -upgrade \
 tf_state_list="$(terraform state list)"
 function remove_if_present() {
   echo -n "Checking $1 ..."
-  found=$(echo "$tf_state_list" | grep -q ^$1$; echo $?)
+  found=$(echo "$tf_state_list" | grep -q ^"$1"$; echo $?)
 
   if [[ $found -eq 0 ]]; then
     echo " removing"
-    terraform state rm $1
+    terraform state rm "$1"
   else
     echo " not present"
   fi
