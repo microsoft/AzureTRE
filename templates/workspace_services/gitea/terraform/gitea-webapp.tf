@@ -150,12 +150,10 @@ resource "azurerm_monitor_diagnostic_setting" "gitea" {
   }
 }
 
-resource "azurerm_key_vault_access_policy" "gitea_policy" {
-  key_vault_id = data.azurerm_key_vault.ws.id
-  tenant_id    = azurerm_user_assigned_identity.gitea_id.tenant_id
-  object_id    = azurerm_user_assigned_identity.gitea_id.principal_id
-
-  secret_permissions = ["Get", "List", ]
+resource "azurerm_role_assignment" "keyvault_gitea_ws_role" {
+  scope                = data.azurerm_key_vault.ws.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.gitea_id.principal_id
 }
 
 resource "azurerm_key_vault_secret" "gitea_password" {
@@ -165,7 +163,7 @@ resource "azurerm_key_vault_secret" "gitea_password" {
   tags         = local.workspace_service_tags
 
   depends_on = [
-    azurerm_key_vault_access_policy.gitea_policy
+    azurerm_role_assignment.keyvault_gitea_ws_role
   ]
 
   lifecycle { ignore_changes = [tags] }
