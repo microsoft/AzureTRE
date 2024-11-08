@@ -12,6 +12,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 - Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
+- Make letsencypt fails on storage account key authentication error ([#4125](https://github.com/microsoft/AzureTRE/issues/4125))
 
 COMPONENTS:
 
