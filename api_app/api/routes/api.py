@@ -5,7 +5,7 @@ from fastapi import APIRouter, Request, Depends, HTTPException, status
 from fastapi.openapi.docs import get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
 from fastapi.openapi.utils import get_openapi
 
-from api.dependencies.database import get_repository
+from api.helpers import get_repository
 from db.repositories.workspaces import WorkspaceRepository
 from api.routes import health, ping, workspaces, workspace_templates, workspace_service_templates, user_resource_templates, \
     shared_services, shared_service_templates, migrations, costs, airlock, operations, metadata
@@ -24,7 +24,7 @@ workspace_tags_metadata = [
     {"name": "workspaces", "description": " **Workspace Owners and Researchers** can view their own workspaces"},
     {"name": "workspace services", "description": "**Workspace Owners** administer workspace services, **Workspace Owners and Researchers** can view services in the workspaces they belong to"},
     {"name": "user resources", "description": "**Researchers** administer and can view their own researchers, **Workspace Owners** can view/update/delete all user resources in their workspaces"},
-    {"name": "shared services", "description": "**TRE administratiors** administer shared services"},
+    {"name": "shared services", "description": "**TRE administratiors** administer shared services"}
 ]
 
 # Root

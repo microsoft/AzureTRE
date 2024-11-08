@@ -122,7 +122,7 @@ foreach ($Group in $ResourceGroups) {
 
 ### Automating `start`
 
-To restart the TRE core services (Firewall, Application Gateway(s), Virtual Machine Scale Sets, and MySQL), you can use `make tre-start`. Depending on your workflow, you might not be able to easily execute the `make` target. Alternatively, you can create a second Runbook and execute it manually. The PowerShell code to start TRE core services is below:
+To restart the TRE core services (Firewall, Application Gateway(s), Virtual Machine Scale Sets, Virtual Machines, and MySQL), you can use `make tre-start`. Depending on your workflow, you might not be able to easily execute the `make` target. Alternatively, you can create a second Runbook and execute it manually. The PowerShell code to start TRE core services is below:
 
 ```powershell
 try {
@@ -161,7 +161,9 @@ foreach ($Group in $ResourceGroups) {
         # Find the firewall's public IP and virtual network
         $pip = Get-AzPublicIpAddress -ResourceGroupName $Group.ResourceGroupName -Name "pip-fw-$azureTreId"
         $vnet = Get-AzVirtualNetwork -ResourceGroupName $Group.ResourceGroupName -Name "vnet-$azureTreId"
-        $Firewall.Allocate($vnet, $pip)
+        # Find the firewall's public management IP - note this will only be present for a firewall with a Basic SKU
+        $mgmtPip = Get-AzPublicIpAddress -ResourceGroupName "rg-$azureTreId" -Name "pip-fw-management-$azureTreId" -ErrorAction SilentlyContinue
+        $Firewall.Allocate($vnet, $pip, $mgmtPip)
         Write-Output "Allocating Firewall '$($Firewall.Name)' with public IP '$($pip.Name)'"
         Set-AzFirewall -AzureFirewall $Firewall
     }
@@ -188,6 +190,13 @@ foreach ($Group in $ResourceGroups) {
     foreach ($item in $VMSS) {
         Write-Output "Starting VMSS '$($item.Name)'"
         Start-AzVmss -ResourceGroupName $item.ResourceGroupName -VMScaleSetName $item.Name
+    }
+
+    # Start VMs
+    $VM = Get-AzVM -ResourceGroupName $Group.ResourceGroupName
+    foreach ($item in $VM) {
+      Write-Output "Starting VM '$($item.Name)'"
+      Start-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name
     }
 }
 ```

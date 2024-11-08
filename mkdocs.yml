@@ -43,6 +43,10 @@ markdown_extensions:
   - mdx_truly_sane_lists
   - pymdownx.tabbed
   - pymdownx.tasklist
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - attr_list
 
 nav:
   - Overview: # Pages to explain what the Azure TRE
@@ -55,6 +59,7 @@ nav:
           - Airlock: azure-tre-overview/airlock.md
           - Cost Reporting: azure-tre-overview/cost-reporting.md
       - Terms and Definitions: using-tre/terms-definitions.md
+      - Case Studies: azure-tre-overview/case-studies.md
       # - Compliance: azure-tre-overview/compliance-info.md
 
   - QuickStart: # Setup steps for anyone performing an initial deployment of the AzureTRE for eval purposes
@@ -97,6 +102,9 @@ nav:
           - Health Services: tre-templates/workspace-services/health_services.md
           - Azure Databricks: tre-templates/workspace-services/databricks.md
           - OHDSI: tre-templates/workspace-services/ohdsi.md
+          - MySQL: tre-templates/workspace-services/mysql.md
+          - Azure SQL: tre-templates/workspace-services/azuresql.md
+          - Open AI: tre-templates/workspace-services/openai.md
       - Shared Services:
           - Gitea (Source Mirror): tre-templates/shared-services/gitea.md
           - Nexus (Package Mirror): tre-templates/shared-services/nexus.md
@@ -132,6 +140,7 @@ nav:
           - Upgrading Resources Version: tre-admins/upgrading-resources.md
           - Configuring Airlock Reviews: tre-admins/configure-airlock-review.md
           - Supported Clouds: tre-admins/supported-clouds.md
+          - Custom Domain Name: tre-admins/custom-domain.md
 
       - Development: # Docs related to the developing code for the AzureTRE
           - Local Development: using-tre/local-development/local-development.md
@@ -156,7 +165,7 @@ nav:
 
       - Troubleshooting FAQ: # General Troubleshooting Section for Development
           - troubleshooting-faq/index.md
-          - Enabling Debugging for the API: troubleshooting-faq/debug-api.md
+          - Enabling DEBUG logs: troubleshooting-faq/debug-logs.md
           - API logs using deployment center: troubleshooting-faq/api-logs-deployment-center.md
           - Checking the Service Bus: troubleshooting-faq/troubleshooting-sb.md
           - Checking Logs in Application Insights: troubleshooting-faq/app-insights-logs.md

@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-admin-vm
-version: 0.4.3
+version: 0.4.7
 description: "An admin vm shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -57,6 +57,8 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         admin_jumpbox_vm_sku: ${ bundle.parameters.admin_jumpbox_vm_sku }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -70,6 +72,8 @@ upgrade:
         tre_resource_id: ${ bundle.parameters.id }
         admin_jumpbox_vm_sku: ${ bundle.parameters.admin_jumpbox_vm_sku }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -83,6 +87,8 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         admin_jumpbox_vm_sku: ${ bundle.parameters.admin_jumpbox_vm_sku }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }

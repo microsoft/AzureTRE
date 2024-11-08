@@ -1,7 +1,4 @@
 import asyncio
-import logging
-from opencensus.ext.azure.trace_exporter import AzureExporter
-import os
 import uvicorn
 
 from fastapi import FastAPI
@@ -9,8 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import asynccontextmanager
 
-from services.tracing import RequestTracerMiddleware
-from opencensus.trace.samplers import ProbabilitySampler
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from starlette.exceptions import HTTPException
 from starlette.middleware.errors import ServerErrorMiddleware
@@ -21,23 +17,21 @@ from api.errors.validation_error import http422_error_handler
 from api.errors.generic_error import generic_error_handler
 from core import config
 from db.events import bootstrap_database
-from services.logging import initialize_logging, telemetry_processor_callback_function
+from services.logging import initialize_logging, logger
 from service_bus.deployment_status_updater import DeploymentStatusUpdater
 from service_bus.airlock_request_status_update import AirlockStatusUpdater
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.cosmos_client = None
-
-    while not await bootstrap_database(app):
+    while not await bootstrap_database():
         await asyncio.sleep(5)
-        logging.warning("Database connection could not be established")
+        logger.warning("Database connection could not be established")
 
-    deploymentStatusUpdater = DeploymentStatusUpdater(app)
+    deploymentStatusUpdater = DeploymentStatusUpdater()
     await deploymentStatusUpdater.init_repos()
 
-    airlockStatusUpdater = AirlockStatusUpdater(app)
+    airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
 
     asyncio.create_task(deploymentStatusUpdater.receive_messages())
@@ -48,7 +42,7 @@ async def lifespan(app: FastAPI):
 def get_application() -> FastAPI:
     application = FastAPI(
         title=config.PROJECT_NAME,
-        debug=config.DEBUG,
+        debug=(config.LOGGING_LEVEL == "DEBUG"),
         description=config.API_DESCRIPTION,
         version=config.VERSION,
         docs_url=None,
@@ -57,15 +51,8 @@ def get_application() -> FastAPI:
         lifespan=lifespan
     )
 
-    try:
-        if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
-            exporter = AzureExporter(sampler=ProbabilitySampler(1.0))
-            exporter.add_telemetry_processor(telemetry_processor_callback_function)
-            application.add_middleware(RequestTracerMiddleware, exporter=exporter)
-    except Exception:
-        logging.exception("Failed to add RequestTracerMiddleware")
-
     application.add_middleware(ServerErrorMiddleware, handler=generic_error_handler)
+
     # Allow local UI debugging with local API
     if config.ENABLE_LOCAL_DEBUGGING:
         application.add_middleware(
@@ -82,13 +69,9 @@ def get_application() -> FastAPI:
     return application
 
 
-if config.DEBUG:
-    initialize_logging(logging.DEBUG, add_console_handler=True)
-else:
-    initialize_logging(logging.INFO, add_console_handler=False)
-
+initialize_logging()
 app = get_application()
-
+FastAPIInstrumentor.instrument_app(app)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, loop="asyncio")

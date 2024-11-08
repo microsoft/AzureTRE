@@ -121,6 +121,18 @@ inputs:
     description: "JSON string containing key/value pairs to injet into the Resource Processor as ENV vars"
     required: false
     default: ""
+  KV_PURGE_PROTECTION_ENABLED:
+    description: "A boolean indicating if the purge protection will be enabled on the core keyvault."
+    required: false
+    default: "true"
+  FIREWALL_SKU:
+    description: "Firewall SKU"
+    required: false
+    default: ""
+  APP_GATEWAY_SKU:
+    description: "Application Gateway SKU"
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -132,7 +144,7 @@ runs:
         echo "AZURE_ENVIRONMENT=$azure_env" >> $GITHUB_ENV
 
     - name: Azure Login
-      uses: azure/login@v1
+      uses: azure/login@v2
       if: contains(inputs.COMMAND, 'bootstrap') != true
       with:
         creds: ${{ inputs.AZURE_CREDENTIALS }}
@@ -174,6 +186,9 @@ runs:
           -e TF_INPUT="0" \
           -e TF_IN_AUTOMATION="1" \
           -e USE_ENV_VARS_NOT_FILES="true" \
+          -e ARM_STORAGE_USE_AZUREAD="true" \
+          -e ARM_USE_AZUREAD="true" \
+          -e ARM_USE_OIDC="true" \
           -e BUNDLE_TYPE="${{ inputs.BUNDLE_TYPE }}" \
           -e WORKSPACE_SERVICE_NAME="${{ inputs.WORKSPACE_SERVICE_NAME }}" \
           -e ARM_ENVIRONMENT="${{ env.ARM_ENVIRONMENT }}" \
@@ -219,6 +234,7 @@ runs:
           -e IS_API_SECURED=${{ inputs.IS_API_SECURED }} \
           -e DOCKER_BUILDKIT=1 \
           -e TF_VAR_stateful_resources_locked=${{ inputs.STATEFUL_RESOURCES_LOCKED }} \
+          -e TF_VAR_kv_purge_protection_enabled="${{ inputs.KV_PURGE_PROTECTION_ENABLED }}" \
           -e TF_VAR_enable_airlock_malware_scanning=${{ inputs.ENABLE_AIRLOCK_MALWARE_SCANNING }} \
           -e CI_CACHE_ACR_NAME="${{ inputs.CI_CACHE_ACR_NAME }}" \
           -e TF_VAR_core_app_service_plan_sku="${{ (inputs.CORE_APP_SERVICE_PLAN_SKU != ''
@@ -229,6 +245,8 @@ runs:
             && inputs.RP_BUNDLE_VALUES) || '{}' }}' \
           -e TF_VAR_resource_processor_number_processes_per_instance="${{ (inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE != ''
             && inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE) || 5 }}" \
+          -e TF_VAR_firewall_sku=${{ inputs.FIREWALL_SKU }} \
+          -e TF_VAR_app_gateway_sku=${{ inputs.APP_GATEWAY_SKU }} \
           -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"

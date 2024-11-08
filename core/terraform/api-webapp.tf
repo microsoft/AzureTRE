@@ -25,6 +25,7 @@ resource "azurerm_linux_web_app" "api" {
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.id.id
   virtual_network_subnet_id       = module.network.web_app_subnet_id
+  public_network_access_enabled   = false
   tags                            = local.tre_core_tags
 
   app_settings = {
@@ -46,9 +47,9 @@ resource "azurerm_linux_web_app" "api" {
     "RESOURCE_LOCATION"                              = azurerm_resource_group.core.location
     "ENABLE_SWAGGER"                                 = var.enable_swagger
     "SWAGGER_UI_CLIENT_ID"                           = var.swagger_ui_client_id
-    "AAD_TENANT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.auth_tenant_id.id})"
-    "API_CLIENT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_id.id})"
-    "API_CLIENT_SECRET"                              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_secret.id})"
+    "AAD_TENANT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.kv.vault_uri}secrets/${azurerm_key_vault_secret.auth_tenant_id.name}/${azurerm_key_vault_secret.auth_tenant_id.version})"
+    "API_CLIENT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.kv.vault_uri}secrets/${azurerm_key_vault_secret.api_client_id.name}/${azurerm_key_vault_secret.api_client_id.version})"
+    "API_CLIENT_SECRET"                              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.kv.vault_uri}secrets/${azurerm_key_vault_secret.api_client_secret.name}/${azurerm_key_vault_secret.api_client_secret.version})"
     "RESOURCE_GROUP_NAME"                            = azurerm_resource_group.core.name
     "SUBSCRIPTION_ID"                                = data.azurerm_subscription.current.subscription_id
     CORE_ADDRESS_SPACE                               = var.core_address_space
@@ -58,6 +59,10 @@ resource "azurerm_linux_web_app" "api" {
     RESOURCE_MANAGER_ENDPOINT                        = module.terraform_azurerm_environment_configuration.resource_manager_endpoint
     MICROSOFT_GRAPH_URL                              = module.terraform_azurerm_environment_configuration.microsoft_graph_endpoint
     STORAGE_ENDPOINT_SUFFIX                          = module.terraform_azurerm_environment_configuration.storage_suffix
+    ENABLE_AIRLOCK_EMAIL_CHECK                       = var.enable_airlock_email_check
+    LOGGING_LEVEL                                    = var.logging_level
+    OTEL_RESOURCE_ATTRIBUTES                         = "service.name=api,service.version=${local.version}"
+    OTEL_EXPERIMENTAL_RESOURCE_DETECTORS             = "azure_app_service"
   }
 
   identity {

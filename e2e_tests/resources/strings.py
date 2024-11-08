@@ -15,6 +15,7 @@ AIRLOCK_IMPORT_REVIEW_WORKSPACE = "tre-workspace-airlock-import-review"
 
 AZUREML_SERVICE = "tre-service-azureml"
 DATABRICKS_SERVICE = "tre-service-databricks"
+GUACAMOLE_SERVICE = "tre-service-guacamole"
 GITEA_SERVICE = "tre-workspace-service-gitea"
 GUACAMOLE_SERVICE = "tre-service-guacamole"
 INNEREYE_SERVICE = "tre-service-innereye"
@@ -23,6 +24,9 @@ MLFLOW_SERVICE = "tre-service-mlflow"
 MYSQL_SERVICE = "tre-workspace-service-mysql"
 OHDSI_SERVICE = "tre-workspace-service-ohdsi"
 
+HEALTH_SERVICE = "tre-workspace-service-health"
+AZURESQL_SERVICE = "tre-workspace-service-azuresql"
+OPENAI_SERVICE = "tre-workspace-service-openai"
 
 FIREWALL_SHARED_SERVICE = "tre-shared-service-firewall"
 GITEA_SHARED_SERVICE = "tre-shared-service-gitea"

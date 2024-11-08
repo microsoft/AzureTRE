@@ -58,6 +58,10 @@ jobs:
     if: ${{ github.ref != 'refs/heads/main' }}
     needs: [prepare-not-main]
     uses: ./.github/workflows/deploy_tre_reusable.yml
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
     with:
       ciGitRef: ${{ github.ref }}
       prHeadSha: ${{ github.sha }}

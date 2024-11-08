@@ -4,6 +4,7 @@ about: User story with acceptance criteria
 title: ''
 labels: story
 assignees: ''
+type: 'task'
 
 ---
 

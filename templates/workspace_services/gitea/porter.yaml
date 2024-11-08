@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-gitea
-version: 0.8.7
+version: 1.0.8
 description: "A Gitea workspace service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -60,6 +60,9 @@ parameters:
     env: ARM_ENVIRONMENT
     type: string
     default: "public"
+  - name: sql_sku
+    type: string
+    default: "B | 4GB 2vCores"
   - name: aad_authority_url
     type: string
     default: "https://login.microsoftonline.com"
@@ -102,7 +105,10 @@ install:
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        sql_sku: ${ bundle.parameters.sql_sku }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -124,7 +130,10 @@ upgrade:
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        sql_sku: ${ bundle.parameters.sql_sku }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -146,7 +155,10 @@ uninstall:
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        sql_sku: ${ bundle.parameters.sql_sku }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }

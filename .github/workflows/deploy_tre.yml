@@ -26,6 +26,10 @@ jobs:
     name: "Deploy main"
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/deploy_tre_reusable.yml
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
     with:
       ciGitRef: ${{ github.ref }}
       e2eTestsCustomSelector: >-

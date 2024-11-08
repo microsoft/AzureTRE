@@ -59,3 +59,18 @@ jobs:
               Check the artifacts for details."
             exit 1
           fi
+
+      # For PR builds triggered from comment builds, the GITHUB_REF is set to main
+      # so the checks aren't automatically associated with the PR
+      # If prHeadSha is specified then explicity mark the checks for that SHA
+      - name: Report check status
+        if: github.event.workflow_run.head_sha != ''
+        uses: LouisBrunner/checks-action@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # the name must be identical to the one received by the real job
+          sha: ${{ github.event.workflow_run.head_sha }}
+          name: "Test Results"
+          status: "completed"
+          conclusion: ${{ github.event.workflow_run.conclusion }}
+          details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"

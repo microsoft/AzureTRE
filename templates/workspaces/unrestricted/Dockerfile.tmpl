@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile-upstream:1.4.0
-FROM debian:bullseye-slim
+FROM --platform=linux/amd64 debian:bullseye-slim
 
 # PORTER_INIT
 
@@ -9,7 +9,7 @@ RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloa
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
     apt-get update && apt-get install -y git jq curl ca-certificates patch --no-install-recommends
 
-ARG AZURE_TRE_VERSION="0.14.0"
+ARG AZURE_TRE_VERSION="0.19.1"
 
 WORKDIR $BUNDLE_DIR
 

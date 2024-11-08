@@ -174,6 +174,29 @@ variable "enable_airlock_malware_scanning" {
   description = "If False, Airlock requests will skip the malware scanning stage"
 }
 
+variable "enable_airlock_email_check" {
+  type        = bool
+  default     = false
+  description = "If True, prior to airlock requests creation will check users have email addresses"
+}
+
+variable "firewall_sku" {
+  description = "Azure Firewall SKU"
+  type        = string
+  default     = ""
+}
+
+variable "app_gateway_sku" {
+  description = "Application Gateway SKU"
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = contains(["", "Standard_v2", "WAF_v2"], var.app_gateway_sku)
+    error_message = "Invalid app_gateway_sku value"
+  }
+}
+
 variable "rp_bundle_values" {
   description = "Additional environment values to set on the resource processor that can be supplied to template bundles"
   type        = map(string)
@@ -183,4 +206,20 @@ variable "rp_bundle_values" {
 variable "is_cosmos_defined_throughput" {
   type    = bool
   default = false
+}
+
+variable "kv_purge_protection_enabled" {
+  type        = bool
+  description = "A boolean indicating if the purge protection will be enabled on the core keyvault."
+  default     = true
+}
+
+variable "logging_level" {
+  type        = string
+  default     = "INFO"
+  description = "The logging level for the API and Resource Processor"
+  validation {
+    condition     = contains(["INFO", "DEBUG", "WARNING", "ERROR"], var.logging_level)
+    error_message = "logging_level must be one of ERROR, WARNING, INFO, DEBUG"
+  }
 }

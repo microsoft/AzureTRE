@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-databricks-private-auth
-version: 0.1.5
+version: 0.1.9
 description: "An Azure TRE shared service for Azure Databricks authentication."
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -62,6 +62,8 @@ install:
         tre_id: ${ bundle.parameters.tre_id }
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -77,6 +79,8 @@ upgrade:
         tre_id: ${ bundle.parameters.tre_id }
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -92,6 +96,8 @@ uninstall:
         tre_id: ${ bundle.parameters.tre_id }
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }

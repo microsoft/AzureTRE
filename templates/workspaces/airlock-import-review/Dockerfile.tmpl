@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile-upstream:1.4.0
-FROM debian:bullseye-slim
+FROM --platform=linux/amd64 debian:bullseye-slim
 
 # PORTER_INIT
 
@@ -9,7 +9,7 @@ RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloa
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
     apt-get update && apt-get install -y git jq curl ca-certificates patch --no-install-recommends
 
-ARG AZURE_TRE_VERSION="0.15.2"
+ARG AZURE_TRE_VERSION="0.19.1"
 
 WORKDIR ${BUNDLE_DIR}
 
@@ -20,8 +20,6 @@ RUN curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/re
 
 # Copy and change the file extension of .terraform file to .tf
 COPY ./terraform/import_review_resources.terraform "${BUNDLE_DIR}"/terraform/import_review_resources.tf
-# HACK: PR #3769: Remove once base workspace includes this change
-COPY ./terraform/network_output.terraform "${BUNDLE_DIR}"/terraform/network/temp_output.tf
 
 # PORTER_MIXINS
 

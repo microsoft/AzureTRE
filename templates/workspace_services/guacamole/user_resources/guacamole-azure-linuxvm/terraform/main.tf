@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.41.0"
+      version = "=3.112.0"
     }
     template = {
       source  = "hashicorp/template"
@@ -34,6 +34,7 @@ provider "azurerm" {
       recover_soft_deleted_keys         = true
     }
   }
+  storage_use_azuread = true
 }
 
 data "azurerm_resource_group" "ws" {

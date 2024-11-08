@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-airlock-import-review
-version: 0.12.16
+version: 0.13.4
 description: "A workspace to do Airlock Data Import Reviews for Azure TRE"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -179,6 +179,8 @@ install:
         enable_airlock: false
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -218,6 +220,8 @@ upgrade:
         enable_airlock: false
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -280,6 +284,8 @@ uninstall:
         enable_airlock: false
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }

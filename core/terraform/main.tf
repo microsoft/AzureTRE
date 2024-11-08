@@ -3,23 +3,23 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.74.0"
+      version = "=3.112.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.4.0"
+      version = "~> 3.6"
     }
     local = {
       source  = "hashicorp/local"
-      version = "~> 2.4.0"
+      version = "~> 2.5"
     }
     http = {
       source  = "hashicorp/http"
-      version = "~> 3.2.0"
+      version = "~> 3.4"
     }
     azapi = {
       source  = "Azure/azapi"
-      version = "~> 1.9.0"
+      version = "~> 1.15.0"
     }
   }
 
@@ -99,6 +99,7 @@ module "appgateway" {
   keyvault_id                = azurerm_key_vault.kv.id
   static_web_dns_zone_id     = module.network.static_web_dns_zone_id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
+  app_gateway_sku            = var.app_gateway_sku
 
   depends_on = [
     module.network,
@@ -166,6 +167,8 @@ module "resource_processor_vmss_porter" {
   resource_processor_number_processes_per_instance = var.resource_processor_number_processes_per_instance
   resource_processor_vmss_sku                      = var.resource_processor_vmss_sku
   arm_environment                                  = var.arm_environment
+  logging_level                                    = var.logging_level
+  firewall_sku                                     = var.firewall_sku
   rp_bundle_values                                 = var.rp_bundle_values
 
   depends_on = [
@@ -177,6 +180,6 @@ module "resource_processor_vmss_porter" {
 }
 
 module "terraform_azurerm_environment_configuration" {
-  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.6.0"
   arm_environment = var.arm_environment
 }

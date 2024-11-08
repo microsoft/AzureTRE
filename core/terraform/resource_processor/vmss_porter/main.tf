@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = ">= 3.8"
+      version = ">= 3.112"
     }
     random = {
       source  = "hashicorp/random"
@@ -107,8 +107,8 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts"
     version   = "latest"
   }
 
@@ -149,6 +149,12 @@ resource "terraform_data" "vm_linux_reimage" {
   depends_on = [
     azurerm_linux_virtual_machine_scale_set.vm_linux
   ]
+}
+
+resource "azurerm_role_assignment" "mgmt_storage_account_blob_contributor" {
+  scope                = data.azurerm_storage_account.mgmt_storage.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
 }
 
 resource "azurerm_role_assignment" "vmss_acr_pull" {
