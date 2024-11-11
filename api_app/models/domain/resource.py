@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Optional, Union, List
 from pydantic import BaseModel, Field, field_validator
 from models.domain.azuretremodel import AzureTREModel
@@ -6,7 +6,7 @@ from models.domain.request_action import RequestAction
 from resources import strings
 
 
-class ResourceType(str, Enum):
+class ResourceType(StrEnum):
     """
     Type of resource to deploy
     """
@@ -43,11 +43,11 @@ class Resource(AzureTREModel):
     templateName: str = Field(title="Resource template name", description="The resource template (bundle) to deploy")
     templateVersion: str = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
     properties: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
-    availableUpgrades: Optional[List[AvailableUpgrade]] = Field(title="Available template upgrades", description="Versions of the template that are available for upgrade")
+    availableUpgrades: Optional[List[AvailableUpgrade]] = Field([], title="Available template upgrades", description="Versions of the template that are available for upgrade")
     isEnabled: bool = True  # Must be set before a resource can be deleted
     resourceType: ResourceType
-    deploymentStatus: Optional[str] = Field(title="Deployment Status", description="Overall deployment status of the resource")
-    etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
+    deploymentStatus: Optional[str] = Field("", title="Deployment Status", description="Overall deployment status of the resource")
+    etag: str = Field("", title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
     resourceVersion: int = 0
     user: dict = {}

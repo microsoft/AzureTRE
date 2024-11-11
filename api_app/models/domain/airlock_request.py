@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import List, Dict, Optional
 
 from models.domain.azuretremodel import AzureTREModel
@@ -6,7 +6,7 @@ from pydantic import Field, field_validator
 from resources import strings
 
 
-class AirlockRequestStatus(str, Enum):
+class AirlockRequestStatus(StrEnum):
     """
     Airlock Resource status
     """
@@ -24,12 +24,12 @@ class AirlockRequestStatus(str, Enum):
     Failed = strings.AIRLOCK_RESOURCE_STATUS_FAILED
 
 
-class AirlockRequestType(str, Enum):
+class AirlockRequestType(StrEnum):
     Import = strings.AIRLOCK_REQUEST_TYPE_IMPORT
     Export = strings.AIRLOCK_REQUEST_TYPE_EXPORT
 
 
-class AirlockActions(str, Enum):
+class AirlockActions(StrEnum):
     Review = strings.AIRLOCK_ACTION_REVIEW
     Cancel = strings.AIRLOCK_ACTION_CANCEL
     Submit = strings.AIRLOCK_ACTION_SUBMIT
@@ -40,7 +40,7 @@ class AirlockFile(AzureTREModel):
     size: float = Field(title="size", description="size of the file in bytes")
 
 
-class AirlockReviewDecision(str, Enum):
+class AirlockReviewDecision(StrEnum):
     Approved = strings.AIRLOCK_REVIEW_DECISION_APPROVED
     Rejected = strings.AIRLOCK_REVIEW_DECISION_REJECTED
 
@@ -91,7 +91,7 @@ class AirlockRequest(AzureTREModel):
     files: List[AirlockFile] = Field([], title="Files of the request")
     title: str = Field("Airlock Request", title="Brief title for the request")
     businessJustification: str = Field("Business Justification", title="Explanation that will be provided to the request reviewer")
-    status: AirlockRequestStatus = AirlockRequestStatus.Draft
+    status: str = AirlockRequestStatus.Draft
     statusMessage: Optional[str] = Field(title="Optional - contains additional information about the current status.")
     reviews: Optional[List[AirlockReview]]
     etag: Optional[str] = Field(title="_etag", alias="_etag")

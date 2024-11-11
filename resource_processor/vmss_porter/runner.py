@@ -289,4 +289,4 @@ if __name__ == "__main__":
 
         asyncio.run(check_runners(processes, httpserver))
 
-        logger.warn("Exiting main...")
+        logger.warning("Exiting main...")
