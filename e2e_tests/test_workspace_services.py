@@ -70,8 +70,8 @@ async def ping_guacamole_workspace_service(workspace_service_path, access_token,
 @pytest.mark.workspace_services
 @pytest.mark.timeout(45 * 60)
 @pytest.mark.parametrize("template_name", workspace_services)
-async def test_install_workspace_service(template_name, verify, setup_test_workspace) -> None:
-    workspace_path, workspace_id = setup_test_workspace
+async def test_install_workspace_service(template_name, verify, setup_test_aad_workspace) -> None:
+    workspace_path, workspace_id = setup_test_aad_workspace
     workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
 
     service_payload = {
