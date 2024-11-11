@@ -104,7 +104,7 @@ module "appgateway" {
   depends_on = [
     module.network,
     azurerm_key_vault.kv,
-    azurerm_key_vault_access_policy.deployer,
+    azurerm_role_assignment.keyvault_deployer_role,
     azurerm_private_endpoint.api_private_endpoint
   ]
 }
@@ -175,7 +175,7 @@ module "resource_processor_vmss_porter" {
     module.network,
     module.azure_monitor,
     azurerm_key_vault.kv,
-    azurerm_key_vault_access_policy.deployer
+    azurerm_role_assignment.keyvault_deployer_role
   ]
 }
 

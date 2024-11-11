@@ -38,8 +38,8 @@ module "aad" {
   create_aad_groups              = var.create_aad_groups
 
   depends_on = [
-    azurerm_key_vault_access_policy.deployer,
-    azurerm_key_vault_access_policy.resource_processor,
+    azurerm_role_assignment.keyvault_deployer_ws_role,
+    azurerm_role_assignment.keyvault_resourceprocessor_ws_role,
     terraform_data.wait_for_dns_vault
   ]
 }
