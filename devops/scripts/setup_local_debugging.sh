@@ -15,6 +15,7 @@ private_env_path="./core/private.env"
 : "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID?"Check EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID is defined in ${private_env_path}"}"
 : "${KEYVAULT_URI?"Check KEYVAULT_URI is defined in ${private_env_path}"}"
 : "${KEYVAULT?"Check KEYVAULT is defined in ${private_env_path}"}"
+: "${KEYVAULT_RESOURCE_ID?"Check KEYVAULT_RESOURCE_ID is defined in ${private_env_path}"}"
 
 set -o pipefail
 set -o nounset
@@ -135,13 +136,11 @@ az role assignment create \
     --assignee "${RP_TESTING_SP_APP_ID}" \
     --scope "${SERVICE_BUS_RESOURCE_ID}"
 
-
 # Assign get permissions on the keyvault
-az keyvault set-policy \
-  --name "${KEYVAULT}" \
-  --spn "${RP_TESTING_SP_APP_ID}" \
-  --secret-permissions get
-
+az role assignment create \
+    --role "Key Vault Secrets User" \
+    --assignee "${RP_TESTING_SP_APP_ID}" \
+    --scope "${KEYVAULT_RESOURCE_ID}"
 
 # Write the appId and secret to the private.env file which is used for RP debugging
 # First check if the env vars are there already and delete them
