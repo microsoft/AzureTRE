@@ -24,7 +24,7 @@ class WorkspaceServiceInResponse(BaseModel):
     workspaceService: WorkspaceService
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "workspace_service": get_sample_workspace_service("933ad738-7265-4b5f-9eae-a1a62928772e", "2fdc9fba-726e-4db6-a1b8-9018a2165748")
             }
@@ -35,7 +35,7 @@ class WorkspaceServicesInList(BaseModel):
     workspaceServices: List[WorkspaceService] = Field([], title="Workspace services")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "workspaceServices": [
                     get_sample_workspace_service("933ad738-7265-4b5f-9eae-a1a62928772e", "2fdc9fba-726e-4db6-a1b8-9018a2165748"),
@@ -50,7 +50,7 @@ class WorkspaceServiceInCreate(BaseModel):
     properties: dict = Field({}, title="Workspace service parameters", description="Values for the parameters required by the workspace service resource specification")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "templateName": "tre-service-guacamole",
                 "properties": {

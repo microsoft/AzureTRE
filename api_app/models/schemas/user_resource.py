@@ -29,7 +29,7 @@ class UserResourceInResponse(BaseModel):
     userResource: UserResource
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "user_resource": get_sample_user_resource("933ad738-7265-4b5f-9eae-a1a62928772e")
             }
@@ -40,7 +40,7 @@ class UserResourcesInList(BaseModel):
     userResources: List[UserResource] = Field([], title="User resources")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "userResources": [
                     get_sample_user_resource("2fdc9fba-726e-4db6-a1b8-9018a2165748"),
@@ -55,7 +55,7 @@ class UserResourceInCreate(BaseModel):
     properties: dict = Field({}, title="User resource parameters", description="Values for the parameters required by the user resource specification")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "templateName": "user-resource-type",
                 "properties": {

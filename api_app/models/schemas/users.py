@@ -8,7 +8,7 @@ class UsersInResponse(BaseModel):
     users: List[User] = Field(..., title="Users", description="List of users assigned to the workspace")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "users": [
                     {

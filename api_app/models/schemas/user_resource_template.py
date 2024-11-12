@@ -38,7 +38,7 @@ def get_sample_user_resource_template_in_response() -> dict:
 class UserResourceTemplateInCreate(ResourceTemplateInCreate):
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "name": "my-tre-user-resource",
                 "version": "0.0.1",
@@ -71,6 +71,6 @@ class UserResourceTemplateInResponse(ResourceTemplateInResponse):
     parentWorkspaceService: str = Field(title="Workspace type", description="Bundle name")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": get_sample_user_resource_template_in_response()
         }

@@ -39,7 +39,7 @@ class WorkspaceInResponse(BaseModel):
     workspace: Workspace
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "workspace": get_sample_workspace("933ad738-7265-4b5f-9eae-a1a62928772e")
             }
@@ -50,7 +50,7 @@ class WorkspaceAuthInResponse(BaseModel):
     workspaceAuth: WorkspaceAuth
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "scopeId": "api://mytre-ws-1233456"
             }
@@ -61,7 +61,7 @@ class WorkspacesInList(BaseModel):
     workspaces: List[Workspace]
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "workspaces": [
                     get_sample_workspace("933ad738-7265-4b5f-9eae-a1a62928772e", "0001"),
@@ -73,10 +73,10 @@ class WorkspacesInList(BaseModel):
 
 class WorkspaceInCreate(BaseModel):
     templateName: str = Field(title="Workspace type", description="Bundle name")
-    properties: dict = Field({}, title="Workspace parameters", description="Values for the parameters required by the workspace resource specification")
+    properties: dict = Field(None, title="Workspace parameters", description="Values for the parameters required by the workspace resource specification")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "templateName": "tre-workspace-base",
                 "properties": {
