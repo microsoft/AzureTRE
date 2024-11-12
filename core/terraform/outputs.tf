@@ -30,6 +30,10 @@ output "keyvault_uri" {
   value = azurerm_key_vault.kv.vault_uri
 }
 
+output "keyvault_resource_id" {
+  value = azurerm_key_vault.kv.id
+}
+
 output "service_bus_resource_id" {
   value = azurerm_servicebus_namespace.sb.id
 }
