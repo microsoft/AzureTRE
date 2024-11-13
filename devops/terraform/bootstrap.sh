@@ -18,6 +18,9 @@ if ! az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name"
     --allow-blob-public-access false \
     --kind StorageV2 --sku Standard_LRS -o table \
     --require-infrastructure-encryption true
+else
+  echo "Storage account already exists..."
+  az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name" --name "$TF_VAR_mgmt_storage_account_name"
 fi
 
 # Grant user blob data contributor permissions
