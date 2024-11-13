@@ -6,7 +6,10 @@ resource "azurerm_storage_account" "gitea" {
   account_replication_type = "GRS"
   tags                     = local.workspace_service_tags
 
-  lifecycle { ignore_changes = [tags] }
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_storage_account_network_rules" "stgrules" {

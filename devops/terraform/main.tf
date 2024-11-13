@@ -28,7 +28,10 @@ resource "azurerm_storage_account" "state_storage" {
   allow_nested_items_to_be_public = false
   shared_access_key_enabled       = false
 
-  lifecycle { ignore_changes = [tags] }
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 # Shared container registry

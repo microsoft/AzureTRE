@@ -6,7 +6,11 @@ resource "azurerm_storage_account" "stg" {
   account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
   tags                            = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
+
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_private_endpoint" "blobpe" {

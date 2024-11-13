@@ -10,12 +10,15 @@ resource "azurerm_storage_account" "staticweb" {
   allow_nested_items_to_be_public = false
   tags                            = local.tre_shared_service_tags
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   static_website {
     index_document     = "index.html"
     error_404_document = "404.html"
   }
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_role_assignment" "stgwriter" {

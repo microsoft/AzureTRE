@@ -11,6 +11,9 @@ resource "azurerm_storage_account" "sa_import_approved" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   network_rules {
     default_action = var.enable_local_debugging ? "Allow" : "Deny"
     bypass         = ["AzureServices"]
@@ -23,7 +26,7 @@ resource "azurerm_storage_account" "sa_import_approved" {
     }
   )
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_private_endpoint" "import_approved_pe" {
@@ -62,6 +65,9 @@ resource "azurerm_storage_account" "sa_export_internal" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   network_rules {
     default_action = var.enable_local_debugging ? "Allow" : "Deny"
     bypass         = ["AzureServices"]
@@ -74,7 +80,7 @@ resource "azurerm_storage_account" "sa_export_internal" {
     }
   )
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 
@@ -113,6 +119,9 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   tags = merge(
     var.tre_workspace_tags,
     {
@@ -120,7 +129,7 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
     }
   )
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_storage_account_network_rules" "sa_export_inprogress_rules" {
@@ -171,6 +180,9 @@ resource "azurerm_storage_account" "sa_export_rejected" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   network_rules {
     default_action = var.enable_local_debugging ? "Allow" : "Deny"
     bypass         = ["AzureServices"]
@@ -183,7 +195,7 @@ resource "azurerm_storage_account" "sa_export_rejected" {
     }
   )
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 
@@ -222,6 +234,9 @@ resource "azurerm_storage_account" "sa_export_blocked" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   network_rules {
     default_action = var.enable_local_debugging ? "Allow" : "Deny"
     bypass         = ["AzureServices"]
@@ -234,7 +249,7 @@ resource "azurerm_storage_account" "sa_export_blocked" {
     }
   )
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 
