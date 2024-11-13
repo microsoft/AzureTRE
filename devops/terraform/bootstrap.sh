@@ -20,7 +20,7 @@ if ! az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name"
     --require-infrastructure-encryption true
 else
   echo "Storage account already exists..."
-  az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name" --name "$TF_VAR_mgmt_storage_account_name"
+  az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name" --name "$TF_VAR_mgmt_storage_account_name" --output table
 fi
 
 # Grant user blob data contributor permissions
