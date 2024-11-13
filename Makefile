@@ -1,4 +1,4 @@
-.PHONY: bootstrap-init mgmt-deploy mgmt-destroy build-api-image push-api-image deploy-tre destroy-tre letsencrypt
+.PHONY: bootstrap-init mgmt-deploy mgmt-destroy build-api-image push-api-image tre-deploy tre-destroy letsencrypt
 .DEFAULT_GOAL := help
 
 SHELL:=/bin/bash
