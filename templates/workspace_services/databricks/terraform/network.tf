@@ -131,7 +131,7 @@ resource "azurerm_route_table" "rt" {
   name                          = local.route_table_name
   location                      = data.azurerm_resource_group.ws.location
   resource_group_name           = data.azurerm_resource_group.ws.name
-  disable_bgp_route_propagation = false
+  bgp_route_propagation_enabled = true
 
   tags = local.tre_workspace_service_tags
   lifecycle { ignore_changes = [tags] }
