@@ -46,7 +46,7 @@ class AirlockRequestInResponse(BaseModel):
     airlockRequest: AirlockRequest
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "airlockRequest": get_sample_airlock_request("933ad738-7265-4b5f-9eae-a1a62928772e", "121e921f-a4aa-44b3-90a9-e8da030495ef")
             }
@@ -58,7 +58,7 @@ class AirlockRequestAndOperationInResponse(BaseModel):
     operation: Operation
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "airlockRequest": get_sample_airlock_request("933ad738-7265-4b5f-9eae-a1a62928772e", "121e921f-a4aa-44b3-90a9-e8da030495ef"),
                 "operation": get_sample_operation("121e921f-a4aa-44b3-90a9-e8da030495ef")
@@ -71,7 +71,7 @@ class AirlockRequestWithAllowedUserActions(BaseModel):
     allowedUserActions: List[str] = Field([], title="actions that the requesting user can do on the request")
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": get_sample_airlock_request_with_allowed_user_actions("933ad738-7265-4b5f-9eae-a1a62928772e"),
         }
 
@@ -80,7 +80,7 @@ class AirlockRequestWithAllowedUserActionsInList(BaseModel):
     airlockRequests: List[AirlockRequestWithAllowedUserActions] = Field([], title="Airlock Requests")
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "airlockRequests": [
                     get_sample_airlock_request_with_allowed_user_actions("933ad738-7265-4b5f-9eae-a1a62928772e"),
@@ -97,7 +97,7 @@ class AirlockRequestInCreate(BaseModel):
     properties: dict = Field({}, title="Airlock request parameters", description="Values for the parameters required by the Airlock request specification")
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "type": "import",
                 "title": "a request title",
@@ -111,7 +111,7 @@ class AirlockReviewInCreate(BaseModel):
     decisionExplanation: str = Field("Decision Explanation", title="Explanation of the reviewer for the reviews decision")
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "approval": "True",
                 "decisionExplanation": "the reason why this request was approved/rejected"

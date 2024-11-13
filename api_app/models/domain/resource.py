@@ -2,6 +2,7 @@ from enum import StrEnum
 from typing import Optional, Union, List
 from pydantic import BaseModel, Field, field_validator
 from models.domain.azuretremodel import AzureTREModel
+from models.domain.authentication import User
 from models.domain.request_action import RequestAction
 from resources import strings
 
@@ -26,7 +27,7 @@ class ResourceHistoryItem(AzureTREModel):
     isEnabled: bool = True
     resourceVersion: int = 0
     updatedWhen: float = 0
-    user: dict = {}
+    user: User
     templateVersion: Optional[str] = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
 
 
@@ -50,7 +51,7 @@ class Resource(AzureTREModel):
     etag: str = Field(None, title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
     resourceVersion: int = 0
-    user: dict = {}
+    user: Optional[User] = {}
     updatedWhen: float = 0
 
     def get_resource_request_message_payload(self, operation_id: str, step_id: str, action: RequestAction) -> dict:

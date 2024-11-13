@@ -28,7 +28,7 @@ class ResourceTemplateInformationInList(BaseModel):
     templates: List[ResourceTemplateInformation]
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "templates": [
                     {

@@ -11,7 +11,7 @@ class ResourcePatch(BaseModel):
 
     class Config:
         extra = Extra.forbid
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "isEnabled": False,
                 "templateVersion": "1.0.1",
@@ -45,7 +45,7 @@ class ResourceHistoryInList(BaseModel):
     resource_history: List[ResourceHistoryItem] = Field([], title="Resource history")
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "resource_history": [
                     get_sample_resource_history("2fdc9fba-726e-4db6-a1b8-9018a2165748"),

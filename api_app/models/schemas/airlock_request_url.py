@@ -11,7 +11,7 @@ class AirlockRequestTokenInResponse(BaseModel):
     containerUrl: str
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "container_url": get_sample_airlock_request_container_url("container_url")
             }

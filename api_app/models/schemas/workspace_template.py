@@ -43,7 +43,7 @@ def get_sample_workspace_template_in_response() -> dict:
 class WorkspaceTemplateInCreate(ResourceTemplateInCreate):
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "name": "my-tre-workspace",
                 "version": "0.0.1",
@@ -95,6 +95,6 @@ class WorkspaceTemplateInCreate(ResourceTemplateInCreate):
 class WorkspaceTemplateInResponse(ResourceTemplateInResponse):
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": get_sample_workspace_template_in_response()
         }

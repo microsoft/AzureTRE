@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+chmod g+x ../../core/
+
 if [ ! -f ../tre_output.json ]; then
   # Connect to the remote backend of Terraform
   export TF_LOG=""
@@ -14,6 +16,8 @@ if [ ! -f ../tre_output.json ]; then
   # Convert the output to json
   terraform output -json > ../tre_output.json
 fi
+
+touch ../private.env
 
 # Now create an .env file
 ./json-to-env.sh < ../tre_output.json > ../private.env
@@ -33,3 +37,5 @@ echo "TEST_WORKSPACE_APP_SECRET='${WORKSPACE_API_CLIENT_SECRET}'" >> ../private.
 echo "SUBSCRIPTION_ID='${SUB_ID}'" >> ../private.env
 echo "AZURE_SUBSCRIPTION_ID='${SUB_ID}'" >> ../private.env
 echo "AZURE_TENANT_ID='${TENANT_ID}'" >> ../private.env
+
+ls -al ../

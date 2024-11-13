@@ -33,7 +33,7 @@ class OperationInResponse(BaseModel):
     operation: Operation
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "operation": get_sample_operation("7ac667f0-fd3f-4a6c-815b-82d0cb7a2132")
             }
@@ -44,7 +44,7 @@ class OperationInList(BaseModel):
     operations: List[Operation] = Field([], title="Operations")
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "operations": [
                     get_sample_operation("7ac667f0-fd3f-4a6c-815b-82d0cb7a2132"),

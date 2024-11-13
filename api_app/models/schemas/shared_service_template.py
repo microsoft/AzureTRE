@@ -38,7 +38,7 @@ def get_sample_shared_service_template_in_response() -> dict:
 
 class SharedServiceTemplateInCreate(ResourceTemplateInCreate):
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "name": "my-tre-shared-service",
                 "version": "0.0.1",
@@ -65,6 +65,6 @@ class SharedServiceTemplateInCreate(ResourceTemplateInCreate):
 
 class SharedServiceTemplateInResponse(ResourceTemplateInResponse):
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": get_sample_shared_service_template_in_response()
         }

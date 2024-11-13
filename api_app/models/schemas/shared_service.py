@@ -25,7 +25,7 @@ class SharedServiceInResponse(BaseModel):
     sharedService: SharedService
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "shared_service": get_sample_shared_service("2fdc9fba-726e-4db6-a1b8-9018a2165748")
             }
@@ -36,7 +36,7 @@ class RestrictedSharedServiceInResponse(BaseModel):
     sharedService: RestrictedResource
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "shared_service": get_sample_shared_service("2fdc9fba-726e-4db6-a1b8-9018a2165748")
             }
@@ -47,7 +47,7 @@ class RestrictedSharedServicesInList(BaseModel):
     sharedServices: List[RestrictedResource] = Field([], title="shared services")
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "sharedServices": [
                     get_sample_shared_service("2fdc9fba-726e-4db6-a1b8-9018a2165748"),
@@ -61,7 +61,7 @@ class SharedServicesInList(BaseModel):
     sharedServices: List[SharedService] = Field([], title="shared services")
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "sharedServices": [
                     get_sample_shared_service("2fdc9fba-726e-4db6-a1b8-9018a2165748"),
@@ -76,7 +76,7 @@ class SharedServiceInCreate(BaseModel):
     properties: dict = Field({}, title="Shared service parameters", description="Values for the parameters required by the shared service resource specification")
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "templateName": "tre-shared-service-firewall",
                 "properties": {
