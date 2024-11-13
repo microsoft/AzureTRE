@@ -85,8 +85,8 @@ resource "azurerm_linux_web_app" "api" {
     ftps_state                                    = "Disabled"
 
     application_stack {
-      docker_image     = "${local.docker_registry_server}/${var.api_image_repository}"
-      docker_image_tag = local.version
+      docker_registry_url = "https://${local.docker_registry_server}"
+      docker_image_name   = "${var.api_image_repository}:${local.version}"
     }
 
     cors {
