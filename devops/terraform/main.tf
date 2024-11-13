@@ -97,7 +97,7 @@ resource "azurerm_role_assignment" "current_user_to_key_vault_crypto_officer" {
 # Key used to encrypt resources
 resource "azurerm_key_vault_key" "encryption" {
   count        = var.enable_cmk_encryption ? 1 : 0
-  
+
   name         = var.kv_encryption_key_name
   key_vault_id = azurerm_key_vault.shared_kv[0].id
   key_type     = "RSA"

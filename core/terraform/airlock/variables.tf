@@ -105,6 +105,7 @@ variable "enable_cmk_encryption" {
 variable "kv_name" {
   type        = string
   description = "Name of Key Vault (only used if enable_cmk_encryption is true)"
+  default     = null
 }
 
 variable "kv_encryption_key_name" {
