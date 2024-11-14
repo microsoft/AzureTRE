@@ -7,6 +7,7 @@ resource "azurerm_cosmosdb_account" "mongo" {
   enable_automatic_failover = false
   mongo_server_version      = 4.2
   ip_range_filter           = "${local.azure_portal_cosmos_ips}${var.enable_local_debugging ? ",${local.myip}" : ""}"
+  key_vault_key_id          = var.enable_cmk_encryption ? data.azurerm_key_vault_key.encryption[0].versionless_id : null
 
   capabilities {
     name = "EnableServerless"
@@ -35,9 +36,18 @@ resource "azurerm_cosmosdb_account" "mongo" {
     failover_priority = 0
   }
 
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [azurerm_user_assigned_identity.encryption[0].id]
+    }
+  }
+
+
   tags = local.tre_core_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags, key_vault_key_id] }
 }
 
 resource "azurerm_cosmosdb_mongo_database" "mongo" {
