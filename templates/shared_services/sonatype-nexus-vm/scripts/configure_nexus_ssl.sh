@@ -9,6 +9,13 @@ set -o nounset
 
 echo "Setting up Nexus SSL..."
 
+# Check if Nexus is running. If so, restart it.
+CONTAINER_STATUS=$(docker container inspect -f '{{.State.Running}}' nexus)
+if [ $CONTAINER_STATUS == "true" ]; then
+  echo "Nexus container is already running. Let's restart it to be sure everything goes fine."
+  docker restart nexus
+fi
+
 # Import ssl cert to keystore within Nexus volume
 keystore_timeout=60
 echo 'Checking for nexus-data/keystores directory...'
