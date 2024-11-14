@@ -72,6 +72,11 @@ export SUB_ID
 TENANT_ID=$(az account show --query tenantId -o tsv)
 export TENANT_ID
 
+# Configure AzureRM provider and backend to use Azure AD to connect to storage accounts
+export ARM_STORAGE_USE_AZUREAD=true
+export ARM_USE_AZUREAD=true
+export ARM_USE_OIDC=true
+
 if [ -z "$SUB_NAME" ]; then
   echo -e "\n\e[31m»»» ⚠️ You are not logged in to Azure!"
   exit 1
