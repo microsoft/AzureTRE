@@ -147,51 +147,8 @@ Configure variables used in the deployment workflow:
 | `ENABLE_SWAGGER` | Optional. Determines whether the Swagger interface for the API will be available. Default value is `false`. |
 | `FIREWALL_SKU` | Optional. The SKU of the Azure Firewall instance. Default value is `Standard`. Allowed values [`Basic`, `Standard`, `Premium`]. See [Azure Firewall SKU feature comparison](https://learn.microsoft.com/en-us/azure/firewall/choose-firewall-sku). |
 | `APP_GATEWAY_SKU` | Optional. The SKU of the Application Gateway. Default value is `Standard_v2`. Allowed values [`Standard_v2`, `WAF_v2`] |
-
-### Using the DEPLOY_MODE variable
-
-The `DEPLOY_MODE` variable allows you to control whether the deployment runs in 'plan' mode or 'apply' mode. In 'plan' mode, the terraform plan is generated and can be reviewed before applying. In 'apply' mode, the terraform plan is applied directly.
-
-### Setting the DEPLOY_MODE variable
-
-To set the `DEPLOY_MODE` variable, use the following commands:
-
-```bash
-export DEPLOY_MODE=plan
-```
-
-or
-
-```bash
-export DEPLOY_MODE=apply
-```
-
-### Example usage
-
-To run the deployment in 'plan' mode:
-
-```bash
-export DEPLOY_MODE=plan
-make all
-```
-
-To run the deployment in 'apply' mode:
-
-```bash
-export DEPLOY_MODE=apply
-make all
-```
+| `DEPLOY_MODE` | Optional. Control whether the terraform operations run in `plan` mode or `apply` mode. Defaults to `apply` |
 
 ### Deploy the TRE using the workflow
 
 With all the repository secrets set, you can trigger a workflow run by pushing to develop/main of your fork, or by dispatching the workflow manually.
-
-To use the `DEPLOY_MODE` variable, follow these steps:
-
-1. Go to the "Actions" tab of your GitHub repository.
-2. Select the `deploy_tre.yml` workflow from the list of workflows.
-3. Click on the "Run workflow" button.
-4. In the "DEPLOY_MODE" input field, enter either `plan` or `apply` depending on your desired deployment mode.
-5. Click on the "Run workflow" button to start the deployment.
-
-When `DEPLOY_MODE` is set to `plan`, the workflow will execute the terraform plan without applying it, allowing you to review the changes before deciding to apply them. When `DEPLOY_MODE` is set to `apply`, the workflow will execute the terraform plan and apply the changes automatically.
