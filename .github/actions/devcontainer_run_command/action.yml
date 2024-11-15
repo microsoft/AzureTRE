@@ -186,9 +186,6 @@ runs:
           -e TF_INPUT="0" \
           -e TF_IN_AUTOMATION="1" \
           -e USE_ENV_VARS_NOT_FILES="true" \
-          -e ARM_STORAGE_USE_AZUREAD="true" \
-          -e ARM_USE_AZUREAD="true" \
-          -e ARM_USE_OIDC="true" \
           -e BUNDLE_TYPE="${{ inputs.BUNDLE_TYPE }}" \
           -e WORKSPACE_SERVICE_NAME="${{ inputs.WORKSPACE_SERVICE_NAME }}" \
           -e ARM_ENVIRONMENT="${{ env.ARM_ENVIRONMENT }}" \
