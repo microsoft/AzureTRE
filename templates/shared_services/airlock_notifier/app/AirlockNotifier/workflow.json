@@ -150,7 +150,7 @@
           "Send_Email_with_SMTP": {
               "inputs": {
                   "body": {
-                      "Body": "<p>Hi @{body('Parse_JSON')?['data']?['request']?['createdBy']?['name']}</p><p>Your CPRD Safe Airlock import request has been approved. You can now download your file from the airlock inside CPRD Safe. This guide: <a href=\"https://www.cprd.com/sites/default/files/2024-09/Airlock%20Import%20v1.pdf\">Airlock import request</a> shows you how. Further help can be found at: <a href=\"https://www.cprd.com/cprd-safe-training-and-guidance\">CPRD Safe training and guidance | CPRD</a>.</p><p><a href=\"@{parameters('tre_url')}/workspaces/@{body('Parse_JSON')?['data']?['workspace']?['id']}/requests/@{body('Parse_JSON')?['data']?['request']?['id']}\">View the request</a></p><p>Many thanks,</p><p><b>CPRD Safe Team</b></p>",
+                      "Body": "<p>Hi @{body('Parse_JSON')?['data']?['request']?['createdBy']?['name']}</p><p>Your CPRD Safe airlock import request has been approved. You can now download your file from the airlock inside CPRD Safe. This guide: <a href=\"https://www.cprd.com/sites/default/files/2024-09/Airlock%20Import%20v1.pdf\">airlock import request</a> shows you how. Further help can be found at: <a href=\"https://www.cprd.com/cprd-safe-training-and-guidance\">CPRD Safe training and guidance | CPRD</a>.</p><p><a href=\"@{parameters('tre_url')}/workspaces/@{body('Parse_JSON')?['data']?['workspace']?['id']}/requests/@{body('Parse_JSON')?['data']?['request']?['id']}\">View the request</a></p><p>Many thanks,</p><p><b>CPRD Safe Team</b></p>",
                       "From": "@parameters('smtp_from_email')",
                       "Subject": "@variables('message')",
                       "To": "@{join(variables('recipients'), ';')}"
@@ -188,7 +188,7 @@
                           "Set_approved_message": {
                               "inputs": {
                                   "name": "message",
-                                  "value": "Your CPRD Safe Airlock request was approved"
+                                  "value": "Your CPRD Safe airlock request was approved"
                               },
                               "runAfter": {
                                   "Set_recipients_as_researchers_emails": [
@@ -215,7 +215,7 @@
                           "Set_in_review_message": {
                               "inputs": {
                                   "name": "message",
-                                  "value": "An Airlock request from Workspace @{body('Parse_JSON')?['data']?['workspace']?['id']} needs your review"
+                                  "value": "An airlock request from Workspace @{body('Parse_JSON')?['data']?['workspace']?['id']} needs your review"
                               },
                               "runAfter": {
                                   "Set_recipients_as_owners_emails": [
@@ -250,7 +250,7 @@
                           "Set_rejected_message": {
                               "inputs": {
                                   "name": "message",
-                                  "value": "Your Airlock request from Workspace @{body('Parse_JSON')?['data']?['workspace']?['id']} was rejected"
+                                  "value": "Your airlock request from Workspace @{body('Parse_JSON')?['data']?['workspace']?['id']} was rejected"
                               },
                               "runAfter": {
                                   "Set_recipients_as_researchers_emails_rejected": [
