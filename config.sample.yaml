@@ -17,6 +17,12 @@ management:
   # arm_client_id: __CHANGE_ME__
   # arm_client_secret: __CHANGE_ME__
 
+  # An array of identities that should have the same roles assigned 
+  # as the current deployment identity. Each shoudl be an Entra ID Object ID
+  # additional_deployment_identities:
+  # - __CHANGE_ME__
+  # - __CHANGE_ME__
+
 tre:
   # If your local machine/build agent cannot get the public IP
   # address from https://ipecho.net/plain, then you can circumvent

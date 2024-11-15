@@ -17,6 +17,13 @@ resource "azurerm_role_assignment" "keyvault_deployer_role" {
   principal_id         = data.azurerm_client_config.current.object_id // deployer - either CICD service principal or local user
 }
 
+resource "azurerm_role_assignment" "keyvault_additional_deployer_roles" {
+  count                = length(var.additional_deployment_identities)
+  scope                = azurerm_key_vault.kv.id
+  role_definition_name = "Key Vault Administrator"
+  principal_id         = var.additional_deployment_identities[count.index]
+}
+
 resource "azurerm_role_assignment" "keyvault_apiidentity_role" {
   scope                = azurerm_key_vault.kv.id
   role_definition_name = "Key Vault Secrets User"
