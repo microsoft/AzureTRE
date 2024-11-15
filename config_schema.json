@@ -51,6 +51,13 @@
           "description": "The Azure subscription ID for all resources.",
           "type": "string",
           "pattern": "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$"
+        },
+        "additional_deployment_identities": {
+          "description": "An array of identities that should have the same roles assigned as the current deployment identity.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [

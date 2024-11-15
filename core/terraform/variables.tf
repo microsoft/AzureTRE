@@ -223,3 +223,9 @@ variable "logging_level" {
     error_message = "logging_level must be one of ERROR, WARNING, INFO, DEBUG"
   }
 }
+
+variable "additional_deployment_identities" {
+  type        = list(string)
+  default     = []
+  description = "An array of identities that will have the same roles assigned as the current deployment identity."
+}

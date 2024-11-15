@@ -3,9 +3,9 @@
 !!! info
     See [Environment variables](../environment-variables.md) for full details of the deployment related variables.
 
-## Set environment configuration variables of shared management resources
+## Set environment configuration variables to enable deployment of the TRE
 
-1. In this part we will setup configuration variables in `config.yaml` file for the shared management infrastructure which is used to support the deployment of one or more Azure TRE instances.
+1. In this part we will setup configuration variables in `config.yaml` file for the shared management infrastructure and deployment of the TRE.
 
 2. Provide the values for the following variables:
 
@@ -16,6 +16,7 @@
   | `mgmt_storage_account_name` | The name of the storage account to hold the Terraform state and other deployment artifacts. |
   | `acr_name` | A globally unique name for the [Azure Container Registry (ACR)](https://docs.microsoft.com/azure/container-registry/) that will be created to store deployment images. |
   | `arm_subscription_id` | The Azure subscription ID for all resources. |
+    | `additional_deployment_identities` | An array of identities that should have the same roles assigned as the current deployment identity. Must be Entra ID object IDs. |
 
   !!! tip
       To retrieve your Azure subscription ID, use the `az` command line interface available in the development container. In the terminal window in Visual Studio Code, type `az login` followed by `az account show` to see your default subscription. Please refer to `az account -help` for further details on how to change your active subscription.
@@ -36,6 +37,10 @@ The rest of the variables can have their default values. You should now have a m
     # arm_tenant_id: __CHANGE_ME__
     # arm_client_id: __CHANGE_ME__
     # arm_client_secret: __CHANGE_ME__
+
+    additional_deployment_identities:
+    - c4018a77-10e3-4927-849b-eadca45bb193
+    - ba018a77-l0e3-49b6-849b-eadca45ac193
 ```
 
   3. If you want to disable the built-in web UI (`./ui`) ensure you set `deploy_ui=false` under tre defaults section in the `config.yaml` file.
