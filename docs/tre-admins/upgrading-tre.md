@@ -42,3 +42,21 @@ If you wish to deploy the Azure TRE from a forked repository you can change the 
 - `"OSS_REPO": "myorg/AzureTRE"` (to point to fork of the Azure TRE in your GitHub organisation)
 
 When changing `OSS_REPO` ensure the `OSS_VERSION` variable refers to a GitHub ref on the repository fork.
+
+## Check infrastructure changes using a Terraform plan
+
+The `DEPLOY_MODE` variable allows you to control whether the deployment runs in 'plan' mode or 'apply' mode. In 'plan' mode, the terraform plan is generated and can be reviewed before applying. In 'apply' mode, the terraform plan is applied directly. This can be useful when evaluating an updgrade and don't want to make any actual changes to the deployed infrastructure.
+
+### Setting the DEPLOY_MODE variable
+
+To set the `DEPLOY_MODE` variable, use the following commands:
+
+```bash
+export DEPLOY_MODE=plan
+```
+
+### Example usage
+```bash
+export DEPLOY_MODE=plan
+make core
+```
