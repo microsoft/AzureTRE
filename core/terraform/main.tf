@@ -81,7 +81,7 @@ module "azure_monitor" {
 
   depends_on = [
     module.network,
-    azurerm_role_assignment.kv_encryption_key_user[0]
+    azurerm_key_vault_key.tre_encryption[0]
   ]
 }
 
@@ -118,7 +118,7 @@ module "appgateway" {
     azurerm_key_vault.kv,
     azurerm_role_assignment.keyvault_deployer_role,
     azurerm_private_endpoint.api_private_endpoint,
-    azurerm_role_assignment.kv_encryption_key_user[0]
+    azurerm_key_vault_key.tre_encryption[0]
   ]
 }
 
@@ -156,7 +156,7 @@ module "airlock_resources" {
   depends_on = [
     azurerm_servicebus_namespace.sb,
     module.network,
-    azurerm_role_assignment.kv_encryption_key_user[0]
+    azurerm_key_vault_key.tre_encryption[0]
   ]
 }
 
@@ -196,7 +196,8 @@ module "resource_processor_vmss_porter" {
     module.network,
     module.azure_monitor,
     azurerm_key_vault.kv,
-    azurerm_role_assignment.keyvault_deployer_role
+    azurerm_role_assignment.keyvault_deployer_role,
+    azurerm_key_vault_key.tre_encryption[0]
   ]
 }
 

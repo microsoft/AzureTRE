@@ -33,4 +33,8 @@ resource "azurerm_key_vault_key" "tre_encryption" {
     "verify",
     "wrapKey",
   ]
+
+  depends_on = [
+    azurerm_role_assignment.kv_encryption_key_user
+  ]
 }
