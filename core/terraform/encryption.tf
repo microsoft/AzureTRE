@@ -15,3 +15,22 @@ resource "azurerm_role_assignment" "kv_encryption_key_user" {
   role_definition_name = "Key Vault Crypto Service Encryption User"
   principal_id         = azurerm_user_assigned_identity.encryption[0].principal_id
 }
+
+# Key used to encrypt resources
+resource "azurerm_key_vault_key" "tre_encryption" {
+  count = var.enable_cmk_encryption ? 1 : 0
+
+  name         = var.kv_encryption_key_name
+  key_vault_id = data.azurerm_key_vault.mgmt_kv[0].id
+  key_type     = "RSA"
+  key_size     = 2048
+
+  key_opts = [
+    "decrypt",
+    "encrypt",
+    "sign",
+    "unwrapKey",
+    "verify",
+    "wrapKey",
+  ]
+}

@@ -51,7 +51,7 @@ data "azurerm_key_vault" "mgmt_kv" {
   resource_group_name = var.mgmt_resource_group_name
 }
 
-data "azurerm_key_vault_key" "encryption" {
+data "azurerm_key_vault_key" "tre_encryption" {
   count        = var.enable_cmk_encryption ? 1 : 0
   name         = var.kv_encryption_key_name
   key_vault_id = data.azurerm_key_vault.mgmt_kv[0].id

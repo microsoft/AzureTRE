@@ -94,26 +94,3 @@ resource "azurerm_role_assignment" "current_user_to_key_vault_crypto_officer" {
   principal_id         = data.azurerm_client_config.current.object_id
 }
 
-# Key used to encrypt resources
-resource "azurerm_key_vault_key" "encryption" {
-  count        = var.enable_cmk_encryption ? 1 : 0
-
-  name         = var.kv_encryption_key_name
-  key_vault_id = azurerm_key_vault.shared_kv[0].id
-  key_type     = "RSA"
-  key_size     = 2048
-
-  key_opts = [
-    "decrypt",
-    "encrypt",
-    "sign",
-    "unwrapKey",
-    "verify",
-    "wrapKey",
-  ]
-
-  depends_on = [
-    azurerm_role_assignment.current_user_to_key_vault_crypto_officer
-  ]
-}
-

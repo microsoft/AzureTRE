@@ -55,7 +55,7 @@ resource "azurerm_disk_encryption_set" "vmss_disk_encryption" {
   name                      = "vmss-disk-encryption-rp-porter-${var.tre_id}"
   location                  = var.location
   resource_group_name       = var.resource_group_name
-  key_vault_key_id          = data.azurerm_key_vault_key.encryption[0].versionless_id
+  key_vault_key_id          = data.azurerm_key_vault_key.tre_encryption[0].versionless_id
   encryption_type           = "EncryptionAtRestWithPlatformAndCustomerKeys"
   auto_key_rotation_enabled = true
 
