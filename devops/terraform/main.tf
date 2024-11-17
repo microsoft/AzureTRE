@@ -30,8 +30,37 @@ resource "azurerm_storage_account" "state_storage" {
   allow_nested_items_to_be_public = false
   shared_access_key_enabled       = false
 
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [azurerm_user_assigned_identity.tre_mgmt_encryption[0].id]
+    }
+  }
+
   lifecycle { ignore_changes = [tags] }
 }
+
+# CMK encryption for state storage account
+resource "azurerm_storage_account_customer_managed_key" "state_storage_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.state_storage.id
+  key_vault_id              = azurerm_key_vault.shared_kv[0].id
+  key_name                  = var.kv_mgmt_encryption_key_name
+  user_assigned_identity_id = azurerm_user_assigned_identity.tre_mgmt_encryption[0].id
+
+  depends_on = [
+    azurerm_role_assignment.kv_mgmt_encryption_key_user
+  ]
+
+  lifecycle {
+    ignore_changes = [
+      key_vault_id
+    ]
+  }
+}
+
+
 
 # Shared container registry
 resource "azurerm_container_registry" "shared_acr" {
