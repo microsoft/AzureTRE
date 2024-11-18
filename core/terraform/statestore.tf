@@ -6,7 +6,6 @@ resource "azurerm_cosmosdb_account" "tre_db_account" {
   kind                      = "GlobalDocumentDB"
   enable_automatic_failover = false
   ip_range_filter           = "${local.azure_portal_cosmos_ips}${var.enable_local_debugging ? ",${local.myip}" : ""}"
-  key_vault_key_id          = var.enable_cmk_encryption ? azurerm_key_vault_key.tre_encryption[0].versionless_id : null
   tags                      = local.tre_core_tags
 
   dynamic "capabilities" {
@@ -26,14 +25,6 @@ resource "azurerm_cosmosdb_account" "tre_db_account" {
   geo_location {
     location          = azurerm_resource_group.core.location
     failover_priority = 0
-  }
-
-  dynamic "identity" {
-    for_each = var.enable_cmk_encryption ? [1] : []
-    content {
-      type         = "UserAssigned"
-      identity_ids = [azurerm_user_assigned_identity.encryption[0].id]
-    }
   }
 
   lifecycle { ignore_changes = [tags, key_vault_key_id] }
