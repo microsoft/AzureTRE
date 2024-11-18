@@ -55,7 +55,7 @@ resource "azurerm_private_endpoint" "stg_import_external_pe" {
 resource "azurerm_storage_account_customer_managed_key" "sa_import_external_encryption" {
   count                     = var.enable_cmk_encryption ? 1 : 0
   storage_account_id        = azurerm_storage_account.sa_import_external.id
-  key_vault_id              = data.azurerm_key_vault.mgmt_kv[0].id
+  key_vault_id              = var.key_store_id
   key_name                  = var.kv_encryption_key_name
   user_assigned_identity_id = var.encryption_identity_id
 
@@ -121,7 +121,7 @@ resource "azurerm_private_endpoint" "stg_export_approved_pe" {
 resource "azurerm_storage_account_customer_managed_key" "sa_export_approved_encryption" {
   count                     = var.enable_cmk_encryption ? 1 : 0
   storage_account_id        = azurerm_storage_account.sa_export_approved.id
-  key_vault_id              = data.azurerm_key_vault.mgmt_kv[0].id
+  key_vault_id              = var.key_store_id
   key_name                  = var.kv_encryption_key_name
   user_assigned_identity_id = var.encryption_identity_id
 
@@ -168,7 +168,7 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
 resource "azurerm_storage_account_customer_managed_key" "sa_import_in_progress_encryption" {
   count                     = var.enable_cmk_encryption ? 1 : 0
   storage_account_id        = azurerm_storage_account.sa_import_in_progress.id
-  key_vault_id              = data.azurerm_key_vault.mgmt_kv[0].id
+  key_vault_id              = var.key_store_id
   key_name                  = var.kv_encryption_key_name
   user_assigned_identity_id = var.encryption_identity_id
 
@@ -287,7 +287,7 @@ resource "azurerm_private_endpoint" "stg_import_rejected_pe" {
 resource "azurerm_storage_account_customer_managed_key" "sa_import_rejected_encryption" {
   count                     = var.enable_cmk_encryption ? 1 : 0
   storage_account_id        = azurerm_storage_account.sa_import_rejected.id
-  key_vault_id              = data.azurerm_key_vault.mgmt_kv[0].id
+  key_vault_id              = var.key_store_id
   key_name                  = var.kv_encryption_key_name
   user_assigned_identity_id = var.encryption_identity_id
 
@@ -357,7 +357,7 @@ resource "azurerm_private_endpoint" "stg_import_blocked_pe" {
 resource "azurerm_storage_account_customer_managed_key" "sa_import_blocked_encryption" {
   count                     = var.enable_cmk_encryption ? 1 : 0
   storage_account_id        = azurerm_storage_account.sa_import_blocked.id
-  key_vault_id              = data.azurerm_key_vault.mgmt_kv[0].id
+  key_vault_id              = var.key_store_id
   key_name                  = var.kv_encryption_key_name
   user_assigned_identity_id = var.encryption_identity_id
 

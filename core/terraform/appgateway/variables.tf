@@ -40,9 +40,9 @@ variable "enable_cmk_encryption" {
   type        = bool
   description = "A boolean indicating if key vault will be deployed for customer managed key encryption"
 }
-variable "kv_name" {
+variable "key_store_id" {
   type        = string
-  description = "Name of Key Vault (only used if enable_cmk_encryption is true)"
+  description = "ID of the Key Vault/HSM to store CMKs in (only used if enable_cmk_encryption is true)"
   default     = null
 }
 variable "kv_encryption_key_name" {

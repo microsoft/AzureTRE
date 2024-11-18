@@ -34,7 +34,7 @@ resource "azurerm_storage_account" "staticweb" {
 resource "azurerm_storage_account_customer_managed_key" "staticweb_encryption" {
   count                     = var.enable_cmk_encryption ? 1 : 0
   storage_account_id        = azurerm_storage_account.staticweb.id
-  key_vault_id              = data.azurerm_key_vault.mgmt_kv[0].id
+  key_vault_id              = var.key_store_id
   key_name                  = var.kv_encryption_key_name
   user_assigned_identity_id = var.encryption_identity_id
 

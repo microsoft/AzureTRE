@@ -11,7 +11,7 @@ resource "azurerm_user_assigned_identity" "encryption" {
 
 resource "azurerm_role_assignment" "kv_encryption_key_user" {
   count                = var.enable_cmk_encryption ? 1 : 0
-  scope                = data.azurerm_key_vault.mgmt_kv[0].id
+  scope                = local.key_store_id
   role_definition_name = "Key Vault Crypto Service Encryption User"
   principal_id         = azurerm_user_assigned_identity.encryption[0].principal_id
 }
@@ -21,7 +21,7 @@ resource "azurerm_key_vault_key" "tre_encryption" {
   count = var.enable_cmk_encryption ? 1 : 0
 
   name         = var.kv_encryption_key_name
-  key_vault_id = data.azurerm_key_vault.mgmt_kv[0].id
+  key_vault_id = local.key_store_id
   key_type     = "RSA"
   key_size     = 2048
 

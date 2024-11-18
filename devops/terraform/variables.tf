@@ -36,9 +36,15 @@ variable "enable_cmk_encryption" {
   default     = false
 }
 
-variable "kv_name" {
+variable "external_key_store_id" {
   type        = string
-  description = "Name of Key Vault (only used if enable_cmk_encryption is true)"
+  description = "ID of external Key Vault/HSM to store CMKs in (only required if enable_cmk_encryption is true)"
+  default     = null
+}
+
+variable "encryption_kv_name" {
+  type        = string
+  description = "Name of Key Vault for encryption keys, required only if external_key_store_id is not set (only used if enable_cmk_encryption is true)"
   default     = null
 }
 

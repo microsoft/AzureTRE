@@ -74,7 +74,7 @@ module "azure_monitor" {
   tre_core_tags                            = local.tre_core_tags
   enable_local_debugging                   = var.enable_local_debugging
   enable_cmk_encryption                    = var.enable_cmk_encryption
-  kv_name                                  = var.kv_name
+  key_store_id                             = local.key_store_id
   kv_encryption_key_name                   = var.kv_encryption_key_name
   encryption_identity_id                   = azurerm_user_assigned_identity.encryption[0].id
   mgmt_resource_group_name                 = var.mgmt_resource_group_name
@@ -107,11 +107,11 @@ module "appgateway" {
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
   app_gateway_sku            = var.app_gateway_sku
 
-  enable_cmk_encryption      = var.enable_cmk_encryption
-  kv_name                    = var.kv_name
-  kv_encryption_key_name     = var.kv_encryption_key_name
-  encryption_identity_id     = azurerm_user_assigned_identity.encryption[0].id
-  mgmt_resource_group_name   = var.mgmt_resource_group_name
+  enable_cmk_encryption    = var.enable_cmk_encryption
+  key_store_id             = local.key_store_id
+  kv_encryption_key_name   = var.kv_encryption_key_name
+  encryption_identity_id   = azurerm_user_assigned_identity.encryption[0].id
+  mgmt_resource_group_name = var.mgmt_resource_group_name
 
   depends_on = [
     module.network,
@@ -149,7 +149,7 @@ module "airlock_resources" {
   enable_local_debugging = var.enable_local_debugging
   myip                   = local.myip
   enable_cmk_encryption  = var.enable_cmk_encryption
-  kv_name                = var.kv_name
+  key_store_id           = local.key_store_id
   kv_encryption_key_name = var.kv_encryption_key_name
   encryption_identity_id = azurerm_user_assigned_identity.encryption[0].id
 
@@ -189,7 +189,7 @@ module "resource_processor_vmss_porter" {
   firewall_sku                                     = var.firewall_sku
   rp_bundle_values                                 = var.rp_bundle_values
   enable_cmk_encryption                            = var.enable_cmk_encryption
-  kv_name                                          = var.kv_name
+  key_store_id                                     = local.key_store_id
   kv_encryption_key_name                           = var.kv_encryption_key_name
 
   depends_on = [

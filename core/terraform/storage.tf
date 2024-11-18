@@ -76,7 +76,7 @@ resource "azurerm_private_endpoint" "filepe" {
 resource "azurerm_storage_account_customer_managed_key" "encryption" {
   count                     = var.enable_cmk_encryption ? 1 : 0
   storage_account_id        = azurerm_storage_account.stg.id
-  key_vault_id              = data.azurerm_key_vault.mgmt_kv[0].id
+  key_vault_id              = local.key_store_id
   key_name                  = var.kv_encryption_key_name
   user_assigned_identity_id = azurerm_user_assigned_identity.encryption[0].id
 

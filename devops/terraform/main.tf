@@ -45,12 +45,13 @@ resource "azurerm_storage_account" "state_storage" {
 resource "azurerm_storage_account_customer_managed_key" "state_storage_encryption" {
   count                     = var.enable_cmk_encryption ? 1 : 0
   storage_account_id        = azurerm_storage_account.state_storage.id
-  key_vault_id              = azurerm_key_vault.shared_kv[0].id
+  key_vault_id              = local.key_store_id
   key_name                  = var.kv_mgmt_encryption_key_name
   user_assigned_identity_id = azurerm_user_assigned_identity.tre_mgmt_encryption[0].id
 
   depends_on = [
-    azurerm_role_assignment.kv_mgmt_encryption_key_user
+    azurerm_role_assignment.kv_mgmt_encryption_key_user,
+    azurerm_key_vault_key.tre_mgmt_encryption[0]
   ]
 
   lifecycle {
@@ -100,9 +101,9 @@ EOF
 }
 
 # Key Vault for encryption keys
-resource "azurerm_key_vault" "shared_kv" {
-  count                       = var.enable_cmk_encryption ? 1 : 0
-  name                        = var.kv_name
+resource "azurerm_key_vault" "encryption_kv" {
+  count                       = var.enable_cmk_encryption && var.external_key_store_id == null ? 1 : 0
+  name                        = var.encryption_kv_name
   resource_group_name         = azurerm_resource_group.mgmt.name
   location                    = azurerm_resource_group.mgmt.location
   enabled_for_disk_encryption = true
@@ -117,8 +118,8 @@ resource "azurerm_key_vault" "shared_kv" {
 }
 
 resource "azurerm_role_assignment" "current_user_to_key_vault_crypto_officer" {
-  count                = var.enable_cmk_encryption ? 1 : 0
-  scope                = azurerm_key_vault.shared_kv[0].id
+  count                = var.enable_cmk_encryption && var.external_key_store_id == null ? 1 : 0
+  scope                = azurerm_key_vault.encryption_kv[0].id
   role_definition_name = "Key Vault Crypto Officer"
   principal_id         = data.azurerm_client_config.current.object_id
 }
