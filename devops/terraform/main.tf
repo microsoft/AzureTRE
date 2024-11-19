@@ -109,7 +109,7 @@ resource "azurerm_key_vault" "encryption_kv" {
   sku_name                    = "standard"
   tenant_id                   = data.azurerm_client_config.current.tenant_id
   enable_rbac_authorization   = true
-  purge_protection_enabled = true
+  purge_protection_enabled    = true
 
   lifecycle { ignore_changes = [tags] }
 }
