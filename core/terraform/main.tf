@@ -77,7 +77,6 @@ module "azure_monitor" {
   key_store_id                             = local.key_store_id
   kv_encryption_key_name                   = var.kv_encryption_key_name
   encryption_identity_id                   = azurerm_user_assigned_identity.encryption[0].id
-  mgmt_resource_group_name                 = var.mgmt_resource_group_name
 
   depends_on = [
     module.network,
@@ -107,11 +106,10 @@ module "appgateway" {
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
   app_gateway_sku            = var.app_gateway_sku
 
-  enable_cmk_encryption    = var.enable_cmk_encryption
-  key_store_id             = local.key_store_id
-  kv_encryption_key_name   = var.kv_encryption_key_name
-  encryption_identity_id   = azurerm_user_assigned_identity.encryption[0].id
-  mgmt_resource_group_name = var.mgmt_resource_group_name
+  enable_cmk_encryption  = var.enable_cmk_encryption
+  key_store_id           = local.key_store_id
+  kv_encryption_key_name = var.kv_encryption_key_name
+  encryption_identity_id = azurerm_user_assigned_identity.encryption[0].id
 
   depends_on = [
     module.network,

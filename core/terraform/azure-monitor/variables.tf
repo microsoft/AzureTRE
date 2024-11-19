@@ -31,9 +31,7 @@ variable "tre_core_tags" {
 variable "enable_local_debugging" {
   type = bool
 }
-variable "mgmt_resource_group_name" {
-  type = string
-}
+
 variable "encryption_identity_id" {
   type        = string
   description = "User Managed Identity with permissions to get encryption keys from key vault"

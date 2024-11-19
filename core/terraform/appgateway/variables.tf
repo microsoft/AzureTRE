@@ -29,9 +29,7 @@ variable "log_analytics_workspace_id" {
 variable "app_gateway_sku" {
   type = string
 }
-variable "mgmt_resource_group_name" {
-  type = string
-}
+
 variable "encryption_identity_id" {
   type        = string
   description = "User Managed Identity with permissions to get encryption keys from key vault"
