@@ -32,13 +32,13 @@ variable "kv_purge_protection_enabled" {
 
 variable "enable_cmk_encryption" {
   type        = bool
-  description = "A boolean indicating if key vault will be deployed for customer managed key encryption"
+  description = "A boolean indicating if customer managed keys will be used for encryption of supporting resources"
   default     = false
 }
 
 variable "external_key_store_id" {
   type        = string
-  description = "ID of external Key Vault/HSM to store CMKs in (only required if enable_cmk_encryption is true)"
+  description = "ID of external Key Vault to store CMKs in (only required if enable_cmk_encryption is true)"
   default     = null
 }
 

@@ -41,7 +41,6 @@ resource "azurerm_storage_account" "state_storage" {
   lifecycle { ignore_changes = [tags] }
 }
 
-# CMK encryption for state storage account
 resource "azurerm_storage_account_customer_managed_key" "state_storage_encryption" {
   count                     = var.enable_cmk_encryption ? 1 : 0
   storage_account_id        = azurerm_storage_account.state_storage.id
@@ -110,8 +109,6 @@ resource "azurerm_key_vault" "encryption_kv" {
   sku_name                    = "standard"
   tenant_id                   = data.azurerm_client_config.current.tenant_id
   enable_rbac_authorization   = true
-
-  # Purge protection needs to be enabled for customer managed key encryption
   purge_protection_enabled = true
 
   lifecycle { ignore_changes = [tags] }

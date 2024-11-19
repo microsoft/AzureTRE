@@ -99,12 +99,12 @@ variable "encryption_identity_id" {
 
 variable "enable_cmk_encryption" {
   type        = bool
-  description = "A boolean indicating if key vault will be deployed for customer managed key encryption"
+  description = "A boolean indicating if customer managed keys will be used for encryption of supporting resources"
 }
 
 variable "key_store_id" {
   type        = string
-  description = "ID of the Key Vault/HSM to store CMKs in (only used if enable_cmk_encryption is true)"
+  description = "ID of the Key Vault to store CMKs in (only used if enable_cmk_encryption is true)"
   default     = null
 }
 

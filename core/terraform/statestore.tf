@@ -27,7 +27,7 @@ resource "azurerm_cosmosdb_account" "tre_db_account" {
     failover_priority = 0
   }
 
-  lifecycle { ignore_changes = [tags, key_vault_key_id] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 moved {
