@@ -275,7 +275,7 @@ resource "azurerm_route_table" "aml" {
   name                          = "rt-aml-${var.tre_id}-${local.short_service_id}"
   resource_group_name           = data.azurerm_resource_group.ws.name
   location                      = data.azurerm_resource_group.ws.location
-  disable_bgp_route_propagation = false
+  bgp_route_propagation_enabled = true
   tags                          = local.tre_workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
