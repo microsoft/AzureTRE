@@ -11,6 +11,8 @@ ENHANCEMENTS:
 * Expose APP_SERVICE_SKU build variable to allow enablement of App Gateway WAF ([#4111](https://github.com/microsoft/AzureTRE/pull/4111))
 * Update Terraform to use Azure AD authentication rather than storage account keys ([#4103](https://github.com/microsoft/AzureTRE/issues/4103))
 * Storage accounts should use infrastructure encryption ([#4001](https://github.com/microsoft/AzureTRE/issues/4001))
+* Update obsolete Terraform properties ([#4136](https://github.com/microsoft/AzureTRE/issues/4136))
+* Update Guacamole version and dependencies ([#4140](https://github.com/microsoft/AzureTRE/issues/4140))
 
 BUG FIXES:
 - Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
