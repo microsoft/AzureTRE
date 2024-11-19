@@ -24,12 +24,6 @@ variable "acr_name" {
   description = "Name of ACR"
 }
 
-variable "kv_purge_protection_enabled" {
-  type        = bool
-  description = "A boolean indicating if the purge protection will be enabled on the core keyvault."
-  default     = true
-}
-
 variable "enable_cmk_encryption" {
   type        = bool
   description = "A boolean indicating if customer managed keys will be used for encryption of supporting resources"
