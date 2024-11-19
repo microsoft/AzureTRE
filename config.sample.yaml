@@ -82,7 +82,7 @@ developer_settings:
 # This setting will enable your local machine to be able to
 # communicate with Service Bus and Cosmos. It will also allow deploying
 # the base workspace.
-# enable_local_debugging: true
+#  enable_local_debugging: true
 
 # This setting enables customer-managed key encryption for all supported resources
 # enable_cmk_encryption: true
