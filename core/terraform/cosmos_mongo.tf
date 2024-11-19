@@ -37,7 +37,7 @@ resource "azurerm_cosmosdb_account" "mongo" {
 
   tags = local.tre_core_tags
 
-  lifecycle { ignore_changes = [tags, key_vault_key_id] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_cosmosdb_mongo_database" "mongo" {
