@@ -85,7 +85,7 @@ developer_settings:
 #  enable_local_debugging: true
 
 # This setting enables customer-managed key encryption for all supported resources
-# enable_cmk_encryption: true
+#  enable_cmk_encryption: true
 
 # Used by the API and Resource processor application to change log level
 # Can be "ERROR", "WARNING", "INFO", "DEBUG"
