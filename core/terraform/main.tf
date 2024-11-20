@@ -76,7 +76,7 @@ module "azure_monitor" {
   enable_cmk_encryption                    = var.enable_cmk_encryption
   key_store_id                             = local.key_store_id
   kv_encryption_key_name                   = var.kv_encryption_key_name
-  encryption_identity_id                   = azurerm_user_assigned_identity.encryption[0].id
+  encryption_identity_id                   = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
     module.network,
@@ -109,7 +109,7 @@ module "appgateway" {
   enable_cmk_encryption  = var.enable_cmk_encryption
   key_store_id           = local.key_store_id
   kv_encryption_key_name = var.kv_encryption_key_name
-  encryption_identity_id = azurerm_user_assigned_identity.encryption[0].id
+  encryption_identity_id = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
     module.network,
@@ -149,7 +149,7 @@ module "airlock_resources" {
   enable_cmk_encryption  = var.enable_cmk_encryption
   key_store_id           = local.key_store_id
   kv_encryption_key_name = var.kv_encryption_key_name
-  encryption_identity_id = azurerm_user_assigned_identity.encryption[0].id
+  encryption_identity_id = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
     azurerm_servicebus_namespace.sb,
