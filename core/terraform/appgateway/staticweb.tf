@@ -37,12 +37,6 @@ resource "azurerm_storage_account_customer_managed_key" "staticweb_encryption" {
   key_vault_id              = var.key_store_id
   key_name                  = var.kv_encryption_key_name
   user_assigned_identity_id = var.encryption_identity_id
-
-  lifecycle {
-    ignore_changes = [
-      key_vault_id
-    ]
-  }
 }
 
 # Assign the "Storage Blob Data Contributor" role needed for uploading certificates to the storage account

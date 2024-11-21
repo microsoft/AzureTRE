@@ -83,10 +83,4 @@ resource "azurerm_storage_account_customer_managed_key" "encryption" {
   depends_on = [
     azurerm_role_assignment.kv_encryption_key_user[0]
   ]
-
-  lifecycle {
-    ignore_changes = [
-      key_vault_id
-    ]
-  }
 }

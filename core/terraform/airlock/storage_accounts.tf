@@ -58,12 +58,6 @@ resource "azurerm_storage_account_customer_managed_key" "sa_import_external_encr
   key_vault_id              = var.key_store_id
   key_name                  = var.kv_encryption_key_name
   user_assigned_identity_id = var.encryption_identity_id
-
-  lifecycle {
-    ignore_changes = [
-      key_vault_id
-    ]
-  }
 }
 
 # 'Approved' export
@@ -124,12 +118,6 @@ resource "azurerm_storage_account_customer_managed_key" "sa_export_approved_encr
   key_vault_id              = var.key_store_id
   key_name                  = var.kv_encryption_key_name
   user_assigned_identity_id = var.encryption_identity_id
-
-  lifecycle {
-    ignore_changes = [
-      key_vault_id
-    ]
-  }
 }
 
 # 'In-Progress' storage account
@@ -171,12 +159,6 @@ resource "azurerm_storage_account_customer_managed_key" "sa_import_in_progress_e
   key_vault_id              = var.key_store_id
   key_name                  = var.kv_encryption_key_name
   user_assigned_identity_id = var.encryption_identity_id
-
-  lifecycle {
-    ignore_changes = [
-      key_vault_id
-    ]
-  }
 }
 
 
@@ -290,12 +272,6 @@ resource "azurerm_storage_account_customer_managed_key" "sa_import_rejected_encr
   key_vault_id              = var.key_store_id
   key_name                  = var.kv_encryption_key_name
   user_assigned_identity_id = var.encryption_identity_id
-
-  lifecycle {
-    ignore_changes = [
-      key_vault_id
-    ]
-  }
 }
 
 # 'Blocked' storage account
@@ -360,10 +336,4 @@ resource "azurerm_storage_account_customer_managed_key" "sa_import_blocked_encry
   key_vault_id              = var.key_store_id
   key_name                  = var.kv_encryption_key_name
   user_assigned_identity_id = var.encryption_identity_id
-
-  lifecycle {
-    ignore_changes = [
-      key_vault_id
-    ]
-  }
 }

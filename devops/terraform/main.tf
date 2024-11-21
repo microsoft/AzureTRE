@@ -52,12 +52,6 @@ resource "azurerm_storage_account_customer_managed_key" "state_storage_encryptio
     azurerm_role_assignment.kv_mgmt_encryption_key_user,
     azurerm_key_vault_key.tre_mgmt_encryption[0]
   ]
-
-  lifecycle {
-    ignore_changes = [
-      key_vault_id
-    ]
-  }
 }
 
 

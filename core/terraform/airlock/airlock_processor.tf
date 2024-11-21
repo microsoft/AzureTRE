@@ -44,12 +44,6 @@ resource "azurerm_storage_account_customer_managed_key" "sa_airlock_processor_fu
   key_vault_id              = var.key_store_id
   key_name                  = var.kv_encryption_key_name
   user_assigned_identity_id = var.encryption_identity_id
-
-  lifecycle {
-    ignore_changes = [
-      key_vault_id
-    ]
-  }
 }
 
 resource "azurerm_linux_function_app" "airlock_function_app" {
