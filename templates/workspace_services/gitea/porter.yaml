@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-gitea
-version: 0.8.24
+version: 0.8.26
 description: "A Gitea workspace service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -60,7 +60,9 @@ parameters:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.3.6
+      clientVersion: 1.6.6
+  - az:
+      clientVersion: 2.37.0
 
 outputs:
   - name: internal_connection_uri

@@ -38,9 +38,10 @@ resource "azurerm_private_endpoint" "stgfilepe" {
   }
 }
 
-
 resource "azurerm_storage_share" "gitea" {
   name                 = "gitea-data"
   storage_account_name = azurerm_storage_account.gitea.name
   quota                = var.gitea_storage_limit
+
+  depends_on = [azurerm_private_endpoint.stgfilepe]
 }

@@ -4,7 +4,7 @@ ARG CERTIFICATE_URL=https://www.digicert.com/CACerts/BaltimoreCyberTrustRoot.crt
 FROM gitea/gitea:${GITEA_TAG}
 # need to pass args to stage
 ARG CERTIFICATE_URL
-RUN wget -q -O /usr/local/share/ca-certificates/mysql.crt.pem ${CERTIFICATE_URL} && update-ca-certificates
+RUN wget --no-check-certificate -q -O /usr/local/share/ca-certificates/mysql.crt.pem ${CERTIFICATE_URL} && update-ca-certificates
 COPY . /
 
 RUN /usr/sbin/adduser -D -g users gitea
