@@ -27,9 +27,7 @@ resource "azurerm_key_vault_key" "tre_mgmt_encryption" {
   key_opts = [
     "decrypt",
     "encrypt",
-    "sign",
     "unwrapKey",
-    "verify",
     "wrapKey",
   ]
 
