@@ -37,6 +37,7 @@ resource "azurerm_cosmosdb_account" "tre_db_account" {
     failover_priority = 0
   }
 
+  # since key_vault_key_id is created by the 'tre_db_account_enable_cmk' null_resource, terraform forces re-creation of the resource
   lifecycle { ignore_changes = [tags, key_vault_key_id] }
 }
 

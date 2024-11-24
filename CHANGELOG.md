@@ -12,7 +12,7 @@ ENHANCEMENTS:
 * Update Terraform to use Azure AD authentication rather than storage account keys ([#4103](https://github.com/microsoft/AzureTRE/issues/4103))
 * Update obsolete Terraform properties ([#4136](https://github.com/microsoft/AzureTRE/issues/4136))
 * Update Guacamole version and dependencies ([#4140](https://github.com/microsoft/AzureTRE/issues/4140))
-* Add partial (core resources only) support for customer managed keys  ([#4141](https://github.com/microsoft/AzureTRE/issues/4142))
+* Add partial (core resources only) support for customer managed keys  ([#4141](https://github.com/microsoft/AzureTRE/issues/4142),  [#4144](https://github.com/microsoft/AzureTRE/issues/4144))
 
 BUG FIXES:
 - Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))

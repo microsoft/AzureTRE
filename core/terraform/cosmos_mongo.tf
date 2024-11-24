@@ -47,6 +47,7 @@ resource "azurerm_cosmosdb_account" "mongo" {
 
   tags = local.tre_core_tags
 
+  # since key_vault_key_id is created by the 'mongo_enable_cmk' null_resource, terraform forces re-creation of the resource
   lifecycle { ignore_changes = [tags, key_vault_key_id] }
 }
 
