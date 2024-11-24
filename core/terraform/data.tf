@@ -19,6 +19,12 @@ data "azurerm_key_vault" "encryption_kv" {
   resource_group_name = var.mgmt_resource_group_name
 }
 
+data "azurerm_key_vault_key" "encryption_key" {
+  count               = var.enable_cmk_encryption ? 1 : 0
+  name                = var.kv_encryption_key_name
+  key_vault_id        = local.key_store_id
+}
+
 data "http" "myip" {
   count = var.public_deployment_ip_address == "" ? 1 : 0
   url   = "https://ipecho.net/plain"
