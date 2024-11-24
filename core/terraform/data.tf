@@ -20,9 +20,9 @@ data "azurerm_key_vault" "encryption_kv" {
 }
 
 data "azurerm_key_vault_key" "encryption_key" {
-  count               = var.enable_cmk_encryption ? 1 : 0
-  name                = var.kv_encryption_key_name
-  key_vault_id        = local.key_store_id
+  count        = var.enable_cmk_encryption ? 1 : 0
+  name         = var.kv_encryption_key_name
+  key_vault_id = local.key_store_id
 }
 
 data "http" "myip" {
