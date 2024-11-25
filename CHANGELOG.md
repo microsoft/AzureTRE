@@ -6,6 +6,7 @@
 FEATURES:
 
 ENHANCEMENTS:
+* Disable storage account cross tenant replication ([#4116](https://github.com/microsoft/AzureTRE/pull/4116))
 * Key Vaults should use RBAC instead of access policies for access control ([#4000](https://github.com/microsoft/AzureTRE/issues/4000))
 * Split log entries with [Log chunk X of Y] for better readability. ([[#3992](https://github.com/microsoft/AzureTRE/issues/3992)
 * Expose APP_SERVICE_SKU build variable to allow enablement of App Gateway WAF ([#4111](https://github.com/microsoft/AzureTRE/pull/4111))
