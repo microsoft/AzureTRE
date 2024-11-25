@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-innereye
-version: 0.6.8
+version: 0.6.9
 description: "An Azure TRE service for InnerEye Deep Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -59,11 +59,11 @@ parameters:
 mixins:
   - exec
   - az:
-      clientVersion: 2.37.0
+      clientVersion: 2.67.0
       extensions:
         - azure-firewall
   - terraform:
-      clientVersion: 1.3.6
+      clientVersion: 1.9.8
 
 install:
   - az:
