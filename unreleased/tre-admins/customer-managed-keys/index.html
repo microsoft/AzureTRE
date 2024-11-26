@@ -12,13 +12,13 @@
         <meta name="author" content="Microsoft">
       
       
-        <link rel="canonical" href="https://microsoft.github.io/AzureTRE/unreleased/tre-admins/supported-clouds/">
+        <link rel="canonical" href="https://microsoft.github.io/AzureTRE/unreleased/tre-admins/customer-managed-keys/">
       
       
-        <link rel="prev" href="../configure-airlock-review/">
+        <link rel="prev" href="../supported-clouds/">
       
       
-        <link rel="next" href="../customer-managed-keys/">
+        <link rel="next" href="../custom-domain/">
       
       
       <link rel="icon" href="../../assets/ms_icon.png">
@@ -26,7 +26,7 @@
     
     
       
-        <title>Supported Clouds - Azure TRE</title>
+        <title>Customer Managed Keys - Azure TRE</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#supported-clouds" class="md-skip">
+        <a href="#enabling-customer-managed-keys-for-tre-resources" class="md-skip">
           Skip to content
         </a>
       
@@ -133,7 +133,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Supported Clouds
+              Customer Managed Keys
             
           </span>
         </div>
@@ -2539,6 +2539,27 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../supported-clouds/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Supported Clouds
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -2555,7 +2576,7 @@
           
   
   <span class="md-ellipsis">
-    Supported Clouds
+    Customer Managed Keys
   </span>
   
 
@@ -2566,7 +2587,7 @@
         
   
   <span class="md-ellipsis">
-    Supported Clouds
+    Customer Managed Keys
   </span>
   
 
@@ -2588,18 +2609,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#supported-services" class="md-nav__link">
+  <a href="#key-vault-configuration" class="md-nav__link">
     <span class="md-ellipsis">
-      Supported Services
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#technical-notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Technical Notes
+      Key Vault configuration
     </span>
   </a>
   
@@ -2609,27 +2621,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../customer-managed-keys/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Customer Managed Keys
-  </span>
-  
-
-      </a>
     </li>
   
 
@@ -3458,18 +3449,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#supported-services" class="md-nav__link">
+  <a href="#key-vault-configuration" class="md-nav__link">
     <span class="md-ellipsis">
-      Supported Services
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#technical-notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Technical Notes
+      Key Vault configuration
     </span>
   </a>
   
@@ -3490,22 +3472,20 @@
                   
 
 
-<h1 id="supported-clouds">Supported Clouds</h1>
-<p>AzureTRE can be installed on the following clouds:
-1. Azure Public cloud
-2. <a href="https://azure.microsoft.com/en-us/explore/global-infrastructure/government/">Azure US Government Cloud</a></p>
-<h2 id="supported-services">Supported Services</h2>
-<ol>
-<li>Azure Public cloud - All services are supported.</li>
-<li>In Azure US Government Cloud the following services are supported
-    - All type of workspaces
-    - Virtual Desktops service - Guacamole
-    - Linux and Windows VM machines</li>
-</ol>
-<h2 id="technical-notes">Technical Notes</h2>
-<p>When Using Azure US Government Cloud make sure to:
-1. Setup the cloud in Azure CLI - <code>az cloud set --name AzureUSGovernment</code>
-1. Setup the AZURE_ENVIRONMENT param in CI/CD pipelines to <code>AzureUSGovernment</code> - as mentioned in <a href="../setup-instructions/cicd-pre-deployment-steps/">CI/CD predeployment steps</a></p>
+<h1 id="enabling-customer-managed-keys-for-tre-resources">Enabling Customer-managed keys for TRE resources</h1>
+<p>You can enable customer-managed keys (CMK) for supporting resources in Azure TRE.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Currently Azure TRE only supports CMK encryption for resources in the TRE core.<br />
+CMK encryption is not supported for the rest of the resources such as those deployed by a TRE workspace.</p>
+</div>
+<p>When enabled, CMK encryption provides an additional layer of encryption control for supported Azure resources within the TRE by allowing you to manage and control the encryption keys used to protect your data.</p>
+<p>To enable CMK encryption, set <code>enable_cmk_encryption: true</code> in the developer settings section of your <code>config.yaml</code> file.</p>
+<p>For more information about CMKs, see <a href="https://learn.microsoft.com/azure/storage/common/customer-managed-keys-overview">Use customer-managed keys with Azure Storage encryption</a>.</p>
+<h2 id="key-vault-configuration">Key Vault configuration</h2>
+<p>The CMKs for Azure TRE can be stored in either a Key Vault deployed by TRE itself, or in an external Key Vault provided by the user.  </p>
+<p>To have TRE create and manage its own Key Vault for storing CMKs, specify the <code>ENCRYPTION_KV_NAME</code> parameter in the <code>config.yaml</code> file.  </p>
+<p>Alternatively, to use your own existing Key Vault, provide the <code>EXTERNAL_KEY_STORE_ID</code> parameter pointing to your Key Vault resource ID.</p>
 
 
 
