@@ -1,14 +1,15 @@
 # See https://microsoft.github.io/AzureTRE/tre-developers/letsencrypt/
 resource "azurerm_storage_account" "staticweb" {
-  name                            = local.staticweb_storage_name
-  resource_group_name             = var.resource_group_name
-  location                        = var.location
-  account_kind                    = "StorageV2"
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  enable_https_traffic_only       = true
-  allow_nested_items_to_be_public = false
-  tags                            = local.tre_core_tags
+  name                             = local.staticweb_storage_name
+  resource_group_name              = var.resource_group_name
+  location                         = var.location
+  account_kind                     = "StorageV2"
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  enable_https_traffic_only        = true
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
+  tags                             = local.tre_core_tags
 
   static_website {
     index_document     = "index.html"
