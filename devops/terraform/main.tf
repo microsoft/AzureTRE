@@ -1,5 +1,7 @@
 provider "azurerm" {
   features {}
+
+  storage_use_azuread = true
 }
 
 # Resource group for TRE core management
@@ -17,13 +19,15 @@ resource "azurerm_resource_group" "mgmt" {
 
 # Holds Terraform shared state (already exists, created by bootstrap.sh)
 resource "azurerm_storage_account" "state_storage" {
-  name                            = var.mgmt_storage_account_name
-  resource_group_name             = azurerm_resource_group.mgmt.name
-  location                        = azurerm_resource_group.mgmt.location
-  account_tier                    = "Standard"
-  account_kind                    = "StorageV2"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
+  name                             = var.mgmt_storage_account_name
+  resource_group_name              = azurerm_resource_group.mgmt.name
+  location                         = azurerm_resource_group.mgmt.location
+  account_tier                     = "Standard"
+  account_kind                     = "StorageV2"
+  account_replication_type         = "LRS"
+  cross_tenant_replication_enabled = false
+  allow_nested_items_to_be_public  = false
+  shared_access_key_enabled        = false
 
   lifecycle { ignore_changes = [tags] }
 }

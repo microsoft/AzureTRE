@@ -1,12 +1,12 @@
 resource "azurerm_cosmosdb_account" "mongo" {
-  name                      = "cosmos-mongo-${var.tre_id}"
-  location                  = azurerm_resource_group.core.location
-  resource_group_name       = azurerm_resource_group.core.name
-  offer_type                = "Standard"
-  kind                      = "MongoDB"
-  enable_automatic_failover = false
-  mongo_server_version      = 4.2
-  ip_range_filter           = "${local.azure_portal_cosmos_ips}${var.enable_local_debugging ? ",${local.myip}" : ""}"
+  name                       = "cosmos-mongo-${var.tre_id}"
+  location                   = azurerm_resource_group.core.location
+  resource_group_name        = azurerm_resource_group.core.name
+  offer_type                 = "Standard"
+  kind                       = "MongoDB"
+  automatic_failover_enabled = false
+  mongo_server_version       = 4.2
+  ip_range_filter            = "${local.azure_portal_cosmos_ips}${var.enable_local_debugging ? ",${local.myip}" : ""}"
 
   capabilities {
     name = "EnableServerless"
@@ -93,11 +93,11 @@ resource "azurerm_private_endpoint" "mongo" {
 
 resource "azurerm_key_vault_secret" "cosmos_mongo_connstr" {
   name         = "porter-db-connection-string"
-  value        = azurerm_cosmosdb_account.mongo.connection_strings[0]
+  value        = azurerm_cosmosdb_account.mongo.primary_mongodb_connection_string
   key_vault_id = azurerm_key_vault.kv.id
   tags         = local.tre_core_tags
   depends_on = [
-    azurerm_key_vault_access_policy.deployer
+    azurerm_role_assignment.keyvault_deployer_role
   ]
 
   lifecycle { ignore_changes = [tags] }

@@ -1,10 +1,11 @@
 resource "azurerm_storage_account" "gitea" {
-  name                     = local.storage_name
-  resource_group_name      = data.azurerm_resource_group.ws.name
-  location                 = data.azurerm_resource_group.ws.location
-  account_tier             = "Standard"
-  account_replication_type = "GRS"
-  tags                     = local.workspace_service_tags
+  name                             = local.storage_name
+  resource_group_name              = data.azurerm_resource_group.ws.name
+  location                         = data.azurerm_resource_group.ws.location
+  account_tier                     = "Standard"
+  account_replication_type         = "GRS"
+  cross_tenant_replication_enabled = false
+  tags                             = local.workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 }

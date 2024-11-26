@@ -14,14 +14,15 @@ resource "azurerm_log_analytics_workspace" "core" {
 # Storage account for Azure Monitor ingestion
 # Because Private Link is enabled on Application Performance Management (APM), Bring Your Own Storage (BYOS) approach is required
 resource "azurerm_storage_account" "az_monitor" {
-  name                            = lower(replace("stazmonitor${var.tre_id}", "-", ""))
-  resource_group_name             = var.resource_group_name
-  location                        = var.location
-  account_kind                    = "StorageV2"
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
-  tags                            = var.tre_core_tags
+  name                             = lower(replace("stazmonitor${var.tre_id}", "-", ""))
+  resource_group_name              = var.resource_group_name
+  location                         = var.location
+  account_kind                     = "StorageV2"
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
+  tags                             = var.tre_core_tags
 
   network_rules {
     default_action = "Deny"
