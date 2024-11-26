@@ -1,10 +1,11 @@
 resource "azurerm_storage_account" "cyclecloud" {
-  name                     = local.storage_name
-  location                 = data.azurerm_resource_group.rg.location
-  resource_group_name      = data.azurerm_resource_group.rg.name
-  account_tier             = "Standard"
-  account_replication_type = "GRS"
-  tags                     = local.tre_shared_service_tags
+  name                             = local.storage_name
+  location                         = data.azurerm_resource_group.rg.location
+  resource_group_name              = data.azurerm_resource_group.rg.name
+  account_tier                     = "Standard"
+  account_replication_type         = "GRS"
+  cross_tenant_replication_enabled = false
+  tags                             = local.tre_shared_service_tags
 
   lifecycle { ignore_changes = [tags] }
 }

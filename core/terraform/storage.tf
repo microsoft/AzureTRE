@@ -1,10 +1,12 @@
 resource "azurerm_storage_account" "stg" {
-  name                            = lower(replace("stg-${var.tre_id}", "-", ""))
-  resource_group_name             = azurerm_resource_group.core.name
-  location                        = azurerm_resource_group.core.location
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
+  name                             = lower(replace("stg-${var.tre_id}", "-", ""))
+  resource_group_name              = azurerm_resource_group.core.name
+  location                         = azurerm_resource_group.core.location
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
+
 
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
