@@ -39,14 +39,6 @@ resource "azurerm_storage_account" "state_storage" {
     }
   }
 
-  dynamic "identity" {
-    for_each = var.enable_cmk_encryption ? [1] : []
-    content {
-      type         = "UserAssigned"
-      identity_ids = [azurerm_user_assigned_identity.tre_mgmt_encryption[0].id]
-    }
-  }
-
   lifecycle { ignore_changes = [tags] }
 }
 

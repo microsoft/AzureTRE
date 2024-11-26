@@ -36,14 +36,6 @@ resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
     }
   }
 
-  dynamic "identity" {
-    for_each = var.enable_cmk_encryption ? [1] : []
-    content {
-      type         = "UserAssigned"
-      identity_ids = [var.encryption_identity_id]
-    }
-  }
-
   lifecycle { ignore_changes = [tags] }
 }
 
