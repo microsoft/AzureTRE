@@ -57,7 +57,7 @@ resource "null_resource" "mongo_enable_cmk" {
   count = var.enable_cmk_encryption ? 1 : 0
 
   provisioner "local-exec" {
-    command = "az cosmosdb update --name ${azurerm_cosmosdb_account.mongo.name} --resource-group ${azurerm_cosmosdb_account.mongo.resource_group_name} --key-uri ${data.azurerm_key_vault_key.encryption_key[0].versionless_id}"
+    command = "az cosmosdb update --name ${azurerm_cosmosdb_account.mongo.name} --resource-group ${azurerm_cosmosdb_account.mongo.resource_group_name} --key-uri ${azurerm_key_vault_key.tre_encryption[0].versionless_id}"
   }
 
   depends_on = [
