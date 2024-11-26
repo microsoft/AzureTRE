@@ -22,6 +22,22 @@ resource "azurerm_storage_account" "staticweb" {
     bypass         = ["AzureServices"]
     default_action = "Deny"
   }
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
+}
+
+resource "azurerm_storage_account_customer_managed_key" "staticweb_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.staticweb.id
+  key_vault_id              = var.key_store_id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = var.encryption_identity_id
 }
 
 # Assign the "Storage Blob Data Contributor" role needed for uploading certificates to the storage account
