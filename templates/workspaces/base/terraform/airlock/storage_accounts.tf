@@ -1,11 +1,12 @@
 # 'Approved' storage account
 resource "azurerm_storage_account" "sa_import_approved" {
-  name                            = local.import_approved_storage_name
-  location                        = var.location
-  resource_group_name             = var.ws_resource_group_name
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
+  name                             = local.import_approved_storage_name
+  location                         = var.location
+  resource_group_name              = var.ws_resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
@@ -54,12 +55,13 @@ resource "azurerm_private_endpoint" "import_approved_pe" {
 
 # 'Drop' location for export
 resource "azurerm_storage_account" "sa_export_internal" {
-  name                            = local.export_internal_storage_name
-  location                        = var.location
-  resource_group_name             = var.ws_resource_group_name
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
+  name                             = local.export_internal_storage_name
+  location                         = var.location
+  resource_group_name              = var.ws_resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
@@ -108,12 +110,13 @@ resource "azurerm_private_endpoint" "export_internal_pe" {
 
 # 'In-progress' location for export
 resource "azurerm_storage_account" "sa_export_inprogress" {
-  name                            = local.export_inprogress_storage_name
-  location                        = var.location
-  resource_group_name             = var.ws_resource_group_name
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
+  name                             = local.export_inprogress_storage_name
+  location                         = var.location
+  resource_group_name              = var.ws_resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
@@ -169,12 +172,13 @@ resource "azurerm_private_endpoint" "export_inprogress_pe" {
 
 # 'Rejected' location for export
 resource "azurerm_storage_account" "sa_export_rejected" {
-  name                            = local.export_rejected_storage_name
-  location                        = var.location
-  resource_group_name             = var.ws_resource_group_name
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
+  name                             = local.export_rejected_storage_name
+  location                         = var.location
+  resource_group_name              = var.ws_resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
@@ -223,12 +227,13 @@ resource "azurerm_private_endpoint" "export_rejected_pe" {
 
 # 'Blocked' location for export
 resource "azurerm_storage_account" "sa_export_blocked" {
-  name                            = local.export_blocked_storage_name
-  location                        = var.location
-  resource_group_name             = var.ws_resource_group_name
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
+  name                             = local.export_blocked_storage_name
+  location                         = var.location
+  resource_group_name              = var.ws_resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
