@@ -1,10 +1,13 @@
+
+
 # 'External' storage account - drop location for import
 resource "azurerm_storage_account" "sa_import_external" {
-  name                     = local.import_external_storage_name
-  location                 = var.location
-  resource_group_name      = var.resource_group_name
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
+  name                             = local.import_external_storage_name
+  location                         = var.location
+  resource_group_name              = var.resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  cross_tenant_replication_enabled = false
 
   # Don't allow anonymous access (unrelated to the 'public' networking rules)
   allow_nested_items_to_be_public = false
@@ -12,6 +15,14 @@ resource "azurerm_storage_account" "sa_import_external" {
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
 
   tags = merge(var.tre_core_tags, {
     description = "airlock;import;external"
@@ -42,13 +53,22 @@ resource "azurerm_private_endpoint" "stg_import_external_pe" {
   }
 }
 
+resource "azurerm_storage_account_customer_managed_key" "sa_import_external_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.sa_import_external.id
+  key_vault_id              = var.key_store_id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = var.encryption_identity_id
+}
+
 # 'Approved' export
 resource "azurerm_storage_account" "sa_export_approved" {
-  name                     = local.export_approved_storage_name
-  location                 = var.location
-  resource_group_name      = var.resource_group_name
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
+  name                             = local.export_approved_storage_name
+  location                         = var.location
+  resource_group_name              = var.resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  cross_tenant_replication_enabled = false
 
   # Don't allow anonymous access (unrelated to the 'public' networking rules)
   allow_nested_items_to_be_public = false
@@ -56,6 +76,14 @@ resource "azurerm_storage_account" "sa_export_approved" {
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
 
   tags = merge(var.tre_core_tags, {
     description = "airlock;export;approved"
@@ -86,18 +114,35 @@ resource "azurerm_private_endpoint" "stg_export_approved_pe" {
   }
 }
 
+resource "azurerm_storage_account_customer_managed_key" "sa_export_approved_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.sa_export_approved.id
+  key_vault_id              = var.key_store_id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = var.encryption_identity_id
+}
+
 # 'In-Progress' storage account
 resource "azurerm_storage_account" "sa_import_in_progress" {
-  name                            = local.import_in_progress_storage_name
-  location                        = var.location
-  resource_group_name             = var.resource_group_name
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
+  name                             = local.import_in_progress_storage_name
+  location                         = var.location
+  resource_group_name              = var.resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
 
   tags = merge(var.tre_core_tags, {
     description = "airlock;import;in-progress"
@@ -109,6 +154,14 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
   }
 
   lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_storage_account_customer_managed_key" "sa_import_in_progress_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.sa_import_in_progress.id
+  key_vault_id              = var.key_store_id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = var.encryption_identity_id
 }
 
 
@@ -162,16 +215,25 @@ resource "azurerm_private_endpoint" "stg_import_inprogress_pe" {
 
 # 'Rejected' storage account
 resource "azurerm_storage_account" "sa_import_rejected" {
-  name                            = local.import_rejected_storage_name
-  location                        = var.location
-  resource_group_name             = var.resource_group_name
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
+  name                             = local.import_rejected_storage_name
+  location                         = var.location
+  resource_group_name              = var.resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
 
   tags = merge(var.tre_core_tags, {
     description = "airlock;import;rejected"
@@ -208,18 +270,35 @@ resource "azurerm_private_endpoint" "stg_import_rejected_pe" {
   lifecycle { ignore_changes = [tags] }
 }
 
+resource "azurerm_storage_account_customer_managed_key" "sa_import_rejected_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.sa_import_rejected.id
+  key_vault_id              = var.key_store_id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = var.encryption_identity_id
+}
+
 # 'Blocked' storage account
 resource "azurerm_storage_account" "sa_import_blocked" {
-  name                            = local.import_blocked_storage_name
-  location                        = var.location
-  resource_group_name             = var.resource_group_name
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
+  name                             = local.import_blocked_storage_name
+  location                         = var.location
+  resource_group_name              = var.resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
 
   tags = merge(var.tre_core_tags, {
     description = "airlock;import;blocked"
@@ -254,4 +333,12 @@ resource "azurerm_private_endpoint" "stg_import_blocked_pe" {
   tags = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_storage_account_customer_managed_key" "sa_import_blocked_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.sa_import_blocked.id
+  key_vault_id              = var.key_store_id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = var.encryption_identity_id
 }

@@ -4,6 +4,8 @@ provider "azurerm" {
   storage_use_azuread = true
 }
 
+data "azurerm_client_config" "current" {}
+
 # Resource group for TRE core management
 resource "azurerm_resource_group" "mgmt" {
   name     = var.mgmt_resource_group_name
@@ -19,17 +21,41 @@ resource "azurerm_resource_group" "mgmt" {
 
 # Holds Terraform shared state (already exists, created by bootstrap.sh)
 resource "azurerm_storage_account" "state_storage" {
-  name                            = var.mgmt_storage_account_name
-  resource_group_name             = azurerm_resource_group.mgmt.name
-  location                        = azurerm_resource_group.mgmt.location
-  account_tier                    = "Standard"
-  account_kind                    = "StorageV2"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
-  shared_access_key_enabled       = false
+  name                             = var.mgmt_storage_account_name
+  resource_group_name              = azurerm_resource_group.mgmt.name
+  location                         = azurerm_resource_group.mgmt.location
+  account_tier                     = "Standard"
+  account_kind                     = "StorageV2"
+  account_replication_type         = "LRS"
+  cross_tenant_replication_enabled = false
+  allow_nested_items_to_be_public  = false
+  shared_access_key_enabled        = false
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [azurerm_user_assigned_identity.tre_mgmt_encryption[0].id]
+    }
+  }
 
   lifecycle { ignore_changes = [tags] }
 }
+
+resource "azurerm_storage_account_customer_managed_key" "state_storage_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.state_storage.id
+  key_vault_id              = local.key_store_id
+  key_name                  = var.kv_mgmt_encryption_key_name
+  user_assigned_identity_id = azurerm_user_assigned_identity.tre_mgmt_encryption[0].id
+
+  depends_on = [
+    azurerm_role_assignment.kv_mgmt_encryption_key_user,
+    azurerm_key_vault_key.tre_mgmt_encryption[0]
+  ]
+}
+
+
 
 # Shared container registry
 resource "azurerm_container_registry" "shared_acr" {
@@ -67,3 +93,26 @@ EOF
     enabled  = true
   }
 }
+
+# Key Vault for encryption keys
+resource "azurerm_key_vault" "encryption_kv" {
+  count                       = var.enable_cmk_encryption && var.external_key_store_id == null ? 1 : 0
+  name                        = var.encryption_kv_name
+  resource_group_name         = azurerm_resource_group.mgmt.name
+  location                    = azurerm_resource_group.mgmt.location
+  enabled_for_disk_encryption = true
+  sku_name                    = "standard"
+  tenant_id                   = data.azurerm_client_config.current.tenant_id
+  enable_rbac_authorization   = true
+  purge_protection_enabled    = true
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_role_assignment" "current_user_to_key_vault_crypto_officer" {
+  count                = var.enable_cmk_encryption && var.external_key_store_id == null ? 1 : 0
+  scope                = azurerm_key_vault.encryption_kv[0].id
+  role_definition_name = "Key Vault Crypto Officer"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+

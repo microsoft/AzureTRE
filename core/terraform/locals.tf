@@ -40,4 +40,7 @@ locals {
 
   # The followig regex extracts different parts of the service bus endpoint: scheme, fqdn, port, path, query and fragment. This allows us to extract the needed fqdn part.
   service_bus_namespace_fqdn = regex("(?:(?P<scheme>[^:/?#]+):)?(?://(?P<fqdn>[^/?#:]*))?(?::(?P<port>[0-9]+))?(?P<path>[^?#]*)(?:\\?(?P<query>[^#]*))?(?:#(?P<fragment>.*))?", azurerm_servicebus_namespace.sb.endpoint).fqdn
+
+  # The key store for encryption keys could either be external or created by terraform
+  key_store_id = var.enable_cmk_encryption ? (var.external_key_store_id != null ? var.external_key_store_id : data.azurerm_key_vault.encryption_kv[0].id) : null
 }
