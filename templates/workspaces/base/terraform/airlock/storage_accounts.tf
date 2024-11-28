@@ -17,6 +17,14 @@ resource "azurerm_storage_account" "sa_import_approved" {
     bypass         = ["AzureServices"]
   }
 
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
+
   tags = merge(
     var.tre_workspace_tags,
     {
@@ -69,6 +77,14 @@ resource "azurerm_storage_account" "sa_export_internal" {
     bypass         = ["AzureServices"]
   }
 
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
+
   tags = merge(
     var.tre_workspace_tags,
     {
@@ -115,6 +131,14 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
 
   tags = merge(
     var.tre_workspace_tags,
@@ -180,6 +204,14 @@ resource "azurerm_storage_account" "sa_export_rejected" {
     bypass         = ["AzureServices"]
   }
 
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
+
   tags = merge(
     var.tre_workspace_tags,
     {
@@ -232,6 +264,14 @@ resource "azurerm_storage_account" "sa_export_blocked" {
     bypass         = ["AzureServices"]
   }
 
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
+
   tags = merge(
     var.tre_workspace_tags,
     {
@@ -281,3 +321,44 @@ resource "azurerm_role_assignment" "api_sa_data_contributor" {
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
 }
+
+resource "azurerm_storage_account_customer_managed_key" "sa_import_approved_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.sa_import_approved.id
+  key_vault_id              = var.key_store_id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = var.encryption_identity_id
+}
+
+resource "azurerm_storage_account_customer_managed_key" "sa_export_internal_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.sa_export_internal.id
+  key_vault_id              = var.key_store_id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = var.encryption_identity_id
+}
+
+resource "azurerm_storage_account_customer_managed_key" "sa_export_inprogress_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.sa_export_inprogress.id
+  key_vault_id              = var.key_store_id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = var.encryption_identity_id
+}
+
+resource "azurerm_storage_account_customer_managed_key" "sa_export_rejected_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.sa_export_rejected.id
+  key_vault_id              = var.key_store_id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = var.encryption_identity_id
+}
+
+resource "azurerm_storage_account_customer_managed_key" "sa_export_blocked_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.sa_export_blocked.id
+  key_vault_id              = var.key_store_id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = var.encryption_identity_id
+}
+

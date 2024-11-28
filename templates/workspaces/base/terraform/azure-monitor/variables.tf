@@ -37,3 +37,15 @@ variable "tre_resource_id" {
 variable "enable_local_debugging" {
   type = bool
 }
+variable "enable_cmk_encryption" {
+  type = bool
+}
+variable "key_store_id" {
+  type = string
+}
+variable "encryption_identity_id" {
+  type = string
+}
+variable "kv_encryption_key_name" {
+  type = string
+}
