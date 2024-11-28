@@ -97,8 +97,6 @@ nav:
           - Azure ML: tre-templates/workspace-services/azure-ml.md
           - Gitea: tre-templates/workspace-services/gitea.md
           - Guacamole: tre-templates/workspace-services/guacamole.md
-          - InnerEye: tre-templates/workspace-services/inner-eye.md
-          - MLFlow: tre-templates/workspace-services/mlflow.md
           - Health Services: tre-templates/workspace-services/health_services.md
           - Azure Databricks: tre-templates/workspace-services/databricks.md
           - OHDSI: tre-templates/workspace-services/ohdsi.md
