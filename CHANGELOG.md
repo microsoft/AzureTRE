@@ -2,6 +2,7 @@
 ## 0.20.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
+* InnerEye and MLFlow bundles depreciated and removed from main. If you wish to update and deploy these worksapce services they can be retrieved from release 0.19.1. ([#4127](https://github.com/microsoft/AzureTRE/issues/4127))
 
 FEATURES:
 
