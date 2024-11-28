@@ -8,7 +8,7 @@ azure-mgmt-cosmosdb==9.6.0
 azure-mgmt-costmanagement==4.0.1
 azure-mgmt-resource==23.2.0
 azure-mgmt-storage==21.2.1
-azure-monitor-opentelemetry~=1.6
+azure-monitor-opentelemetry==1.6.4
 azure-servicebus==7.12.3
 azure-storage-blob==12.23.1
 fastapi==0.115.3
@@ -16,7 +16,7 @@ fastapi-utils==0.7.0
 gunicorn==23.0.0
 jsonschema[format_nongpl]==4.19.1
 msal==1.31.0
-opentelemetry.instrumentation.logging>=0.44b0
+opentelemetry-instrumentation-logging==0.49b2
 pandas==2.2.2
 PyJWT==2.9.0
 pytz==2024.2

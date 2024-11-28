@@ -27,7 +27,7 @@ class ResourceHistoryItem(AzureTREModel):
     isEnabled: bool = True
     resourceVersion: int = 0
     updatedWhen: float = 0
-    user: User
+    user: Optional[User] = {}
     templateVersion: Optional[str] = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
 
 

@@ -34,20 +34,20 @@ class CustomAction(AzureTREModel):
 
 
 class PipelineStepProperty(AzureTREModel):
-    name: str = Field(title="name", description="name of the property to update")
-    type: str = Field(title="type", description="data type of the property to update")
+    name: str = Field(None, title="name", description="name of the property to update")
+    type: str = Field(None, title="type", description="data type of the property to update")
     value: Union[dict, str] = Field(None, title="value", description="value to use in substitution for the property to update")
     arraySubstitutionAction: Optional[str] = Field("", title="Array Substitution Action", description="How to treat existing values of this property in an array [overwrite | append | replace | remove]")
     arrayMatchField: Optional[str] = Field("", title="Array match field", description="Name of the field to use for finding an item in an array - to replace/remove it")
 
 
 class PipelineStep(AzureTREModel):
-    stepId: Optional[str] = Field(title="stepId", description="Unique id identifying the step")
-    stepTitle: Optional[str] = Field(title="stepTitle", description="Human readable title of what the step is for")
-    resourceTemplateName: Optional[str] = Field(title="resourceTemplateName", description="Name of the template for the resource under change")
-    resourceType: Optional[ResourceType] = Field(title="resourceType", description="Type of resource under change")
-    resourceAction: Optional[str] = Field(title="resourceAction", description="Action - install / upgrade / uninstall etc")
-    properties: Optional[List[PipelineStepProperty]]
+    stepId: Optional[str] = Field(None, title="stepId", description="Unique id identifying the step")
+    stepTitle: Optional[str] = Field(None, title="stepTitle", description="Human readable title of what the step is for")
+    resourceTemplateName: Optional[str] = Field(None, title="resourceTemplateName", description="Name of the template for the resource under change")
+    resourceType: Optional[ResourceType] = Field(None, title="resourceType", description="Type of resource under change")
+    resourceAction: Optional[str] = Field(None, title="resourceAction", description="Action - install / upgrade / uninstall etc")
+    properties: Optional[List[PipelineStepProperty]] = Field(None, title="properties", description="List of properties to update")
 
 
 class Pipeline(AzureTREModel):

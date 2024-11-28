@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Optional, Union
 
-from pydantic import parse_obj_as
+from pydantic import parse_obj_as, TypeAdapter
 
 from core import config
 from db.errors import DuplicateEntity, EntityDoesNotExist, EntityVersionExist, InvalidInput
@@ -90,9 +90,11 @@ class ResourceTemplateRepository(BaseRepository):
         if len(templates) != 1:
             raise EntityDoesNotExist
         if resource_type == ResourceType.UserResource:
-            return parse_obj_as(UserResourceTemplate, templates[0])
+            ta = TypeAdapter(UserResourceTemplate)
+            return ta.validate_python(templates[0])
         else:
-            return parse_obj_as(ResourceTemplate, templates[0])
+            ta = TypeAdapter(ResourceTemplate)
+            return ta.validate_python(templates[0])
 
     async def get_all_template_versions(self, template_name: str) -> List[str]:
         query = 'SELECT VALUE c.version FROM c where c.name = @template_name'
@@ -131,9 +133,11 @@ class ResourceTemplateRepository(BaseRepository):
 
         if resource_type == ResourceType.UserResource:
             template["parentWorkspaceService"] = parent_service_name
-            template = parse_obj_as(UserResourceTemplate, template)
+            ta = TypeAdapter(UserResourceTemplate)
+            template = ta.validate_python(template)
         else:
-            template = parse_obj_as(ResourceTemplate, template)
+            ta = TypeAdapter(ResourceTemplate)
+            template = ta.validate_python(template)
 
         await self.save_item(template)
         return template

@@ -93,7 +93,7 @@ class Operation(AzureTREModel):
     message: str = Field("", title="Additional operation status information")
     createdWhen: float = Field("", title="POSIX Timestamp for when the operation was submitted")
     updatedWhen: float = Field("", title="POSIX Timestamp for When the operation was updated")
-    user: User
+    user: Optional[User] = {}
     steps: Optional[List[OperationStep]] = Field(None, title="Operation Steps")
 
 
