@@ -10,9 +10,7 @@ pytestmark = pytest.mark.asyncio
 workspace_services = [
     strings.AZUREML_SERVICE,
     strings.GITEA_SERVICE,
-    # strings.INNEREYE_SERVICE,
     # strings.OHDSI_SERVICE,
-    # strings.MLFLOW_SERVICE,
     strings.MYSQL_SERVICE,
     strings.HEALTH_SERVICE,
     strings.AZURESQL_SERVICE,

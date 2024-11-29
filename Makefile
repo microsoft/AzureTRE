@@ -349,7 +349,7 @@ test-e2e-workspace-services: ## 🧪 Run E2E workspace services tests
 	$(call target_title, "Running E2E workspace services tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=workspace_services
 
-test-e2e-shared-services: ## 🧪 Run E2E shared service tests
+test-e2e-shared-services: ## 🧪 Run E2E shared services tests
 	$(call target_title, "Running E2E shared services tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=shared_services
 
