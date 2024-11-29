@@ -2,13 +2,14 @@
 ## 0.20.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
+* InnerEye and MLFlow bundles depreciated and removed from main. If you wish to update and deploy these worksapce services they can be retrieved from release 0.19.1. ([#4127](https://github.com/microsoft/AzureTRE/issues/4127))
 
 FEATURES:
 
 ENHANCEMENTS:
 * Disable storage account cross tenant replication ([#4116](https://github.com/microsoft/AzureTRE/pull/4116))
 * Key Vaults should use RBAC instead of access policies for access control ([#4000](https://github.com/microsoft/AzureTRE/issues/4000))
-* Split log entries with [Log chunk X of Y] for better readability. ([[#3992](https://github.com/microsoft/AzureTRE/issues/3992)
+* Split log entries with [Log chunk X of Y] for better readability. ([#3992](https://github.com/microsoft/AzureTRE/issues/3992))
 * Expose APP_SERVICE_SKU build variable to allow enablement of App Gateway WAF ([#4111](https://github.com/microsoft/AzureTRE/pull/4111))
 * Update Terraform to use Azure AD authentication rather than storage account keys ([#4103](https://github.com/microsoft/AzureTRE/issues/4103))
 * Update obsolete Terraform properties ([#4136](https://github.com/microsoft/AzureTRE/issues/4136))
