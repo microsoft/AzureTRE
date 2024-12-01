@@ -57,4 +57,6 @@ resource "azurerm_cosmosdb_sql_role_assignment" "tre_db_contributor" {
   role_definition_id  = data.azurerm_cosmosdb_sql_role_definition.cosmosdb_db_contributor.id
   principal_id        = azurerm_user_assigned_identity.id.principal_id
   scope               = azurerm_cosmosdb_account.tre_db_account.id
+
+  depends_on = [null_resource.tre_db_account_enable_cmk]
 }

@@ -11,12 +11,15 @@ resource "azurerm_storage_account" "staticweb" {
   cross_tenant_replication_enabled = false
   tags                             = local.tre_core_tags
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   static_website {
     index_document     = "index.html"
     error_404_document = "index.html"
   }
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 
   network_rules {
     bypass         = ["AzureServices"]
