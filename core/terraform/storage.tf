@@ -7,6 +7,9 @@ resource "azurerm_storage_account" "stg" {
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
@@ -17,8 +20,7 @@ resource "azurerm_storage_account" "stg" {
 
   tags = local.tre_core_tags
 
-
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_private_endpoint" "blobpe" {

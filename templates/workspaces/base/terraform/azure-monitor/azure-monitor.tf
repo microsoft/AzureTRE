@@ -31,12 +31,15 @@ resource "azurerm_storage_account" "app_insights" {
     }
   }
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   network_rules {
     default_action = "Deny"
     bypass         = ["AzureServices"]
   }
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_storage_account_customer_managed_key" "app_insights_stg_encryption" {
