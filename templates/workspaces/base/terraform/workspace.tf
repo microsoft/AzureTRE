@@ -59,7 +59,7 @@ module "airlock" {
   enable_cmk_encryption       = var.enable_cmk_encryption
   key_store_id                = var.key_store_id
   kv_encryption_key_name      = local.kv_encryption_key_name
-  encryption_identity_id      = azurerm_user_assigned_identity.encryption_identity[0].id
+  encryption_identity_id      = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
   depends_on = [
     module.network,
   ]
@@ -83,7 +83,7 @@ module "azure_monitor" {
   enable_cmk_encryption                    = var.enable_cmk_encryption
   key_store_id                             = var.key_store_id
   kv_encryption_key_name                   = local.kv_encryption_key_name
-  encryption_identity_id                   = azurerm_user_assigned_identity.encryption_identity[0].id
+  encryption_identity_id                   = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
   enable_local_debugging                   = var.enable_local_debugging
   depends_on = [
     module.network,
