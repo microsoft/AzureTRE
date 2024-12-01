@@ -15,7 +15,7 @@ ENHANCEMENTS:
 * Storage accounts should use infrastructure encryption ([#4001](https://github.com/microsoft/AzureTRE/issues/4001))
 * Update obsolete Terraform properties ([#4136](https://github.com/microsoft/AzureTRE/issues/4136))
 * Update Guacamole version and dependencies ([#4140](https://github.com/microsoft/AzureTRE/issues/4140))
-* Add partial (core resources only) support for customer managed keys  ([#4141](https://github.com/microsoft/AzureTRE/issues/4142))
+* Add partial (core resources only) support for customer managed keys  ([#4141](https://github.com/microsoft/AzureTRE/issues/4142),  [#4144](https://github.com/microsoft/AzureTRE/issues/4144))
 * Update the Azure CLI version to 2.67.0 in dev container and vmss ([#4157](https://github.com/microsoft/AzureTRE/pull/4157))
 
 BUG FIXES:
