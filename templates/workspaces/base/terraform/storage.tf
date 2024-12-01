@@ -147,5 +147,5 @@ resource "azurerm_storage_account_customer_managed_key" "stg_encryption" {
   key_name                  = local.kv_encryption_key_name
   user_assigned_identity_id = azurerm_user_assigned_identity.encryption_identity[0].id
 
-  depends_on = [ azurerm_key_vault_key.encryption_key ]
+  depends_on = [azurerm_key_vault_key.encryption_key]
 }
