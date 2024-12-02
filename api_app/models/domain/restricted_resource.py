@@ -2,7 +2,6 @@ from typing import Optional, List
 from pydantic import Field
 from models.domain.resource import AvailableUpgrade, ResourceType
 from models.domain.azuretremodel import AzureTREModel
-from models.domain.authentication import User
 
 
 class RestrictedProperties(AzureTREModel):
