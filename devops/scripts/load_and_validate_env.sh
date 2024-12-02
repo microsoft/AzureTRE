@@ -83,11 +83,6 @@ else
 
     TRE_URL=$(construct_tre_url "${TRE_ID}" "${LOCATION}" "${AZURE_ENVIRONMENT}")
     export TRE_URL
-
-    # Configure AzureRM provider and backend to use Azure AD to connect to storage accounts
-    export ARM_STORAGE_USE_AZUREAD=true
-    export ARM_USE_AZUREAD=true
-    export ARM_USE_OIDC=true
 fi
 
 # if local debugging is configured, then set vars required by ~/.porter/config.yaml

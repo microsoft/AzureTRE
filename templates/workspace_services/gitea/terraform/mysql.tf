@@ -65,7 +65,7 @@ resource "azurerm_key_vault_secret" "db_password" {
   tags         = local.workspace_service_tags
 
   depends_on = [
-    azurerm_key_vault_access_policy.gitea_policy
+    azurerm_role_assignment.keyvault_gitea_ws_role
   ]
 
   lifecycle { ignore_changes = [tags] }

@@ -1,12 +1,12 @@
 resource "azurerm_cosmosdb_account" "mongo" {
-  name                      = "cosmos-mongo-${var.tre_id}"
-  location                  = azurerm_resource_group.core.location
-  resource_group_name       = azurerm_resource_group.core.name
-  offer_type                = "Standard"
-  kind                      = "MongoDB"
-  enable_automatic_failover = false
-  mongo_server_version      = 4.2
-  ip_range_filter           = "${local.azure_portal_cosmos_ips}${var.enable_local_debugging ? ",${local.myip}" : ""}"
+  name                       = "cosmos-mongo-${var.tre_id}"
+  location                   = azurerm_resource_group.core.location
+  resource_group_name        = azurerm_resource_group.core.name
+  offer_type                 = "Standard"
+  kind                       = "MongoDB"
+  automatic_failover_enabled = false
+  mongo_server_version       = 4.2
+  ip_range_filter            = "${local.azure_portal_cosmos_ips}${var.enable_local_debugging ? ",${local.myip}" : ""}"
 
   capabilities {
     name = "EnableServerless"
@@ -35,10 +35,37 @@ resource "azurerm_cosmosdb_account" "mongo" {
     failover_priority = 0
   }
 
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [azurerm_user_assigned_identity.encryption[0].id]
+    }
+  }
+
+  default_identity_type = var.enable_cmk_encryption ? "UserAssignedIdentity=${azurerm_user_assigned_identity.encryption[0].id}" : null
+
   tags = local.tre_core_tags
 
-  lifecycle { ignore_changes = [tags] }
+  # since key_vault_key_id is created by the 'mongo_enable_cmk' null_resource, terraform forces re-creation of the resource
+  lifecycle { ignore_changes = [tags, key_vault_key_id] }
 }
+
+# Using the az CLI command since terraform forces a re-creation of the resource
+# https://github.com/hashicorp/terraform-provider-azurerm/issues/24781
+resource "null_resource" "mongo_enable_cmk" {
+  count = var.enable_cmk_encryption ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "az cosmosdb update --name ${azurerm_cosmosdb_account.mongo.name} --resource-group ${azurerm_cosmosdb_account.mongo.resource_group_name} --key-uri ${azurerm_key_vault_key.tre_encryption[0].versionless_id}"
+  }
+
+  depends_on = [
+    azurerm_cosmosdb_account.mongo,
+    azurerm_role_assignment.kv_encryption_key_user[0]
+  ]
+}
+
 
 resource "azurerm_cosmosdb_mongo_database" "mongo" {
   name                = "porter"
@@ -93,11 +120,11 @@ resource "azurerm_private_endpoint" "mongo" {
 
 resource "azurerm_key_vault_secret" "cosmos_mongo_connstr" {
   name         = "porter-db-connection-string"
-  value        = azurerm_cosmosdb_account.mongo.connection_strings[0]
+  value        = azurerm_cosmosdb_account.mongo.primary_mongodb_connection_string
   key_vault_id = azurerm_key_vault.kv.id
   tags         = local.tre_core_tags
   depends_on = [
-    azurerm_key_vault_access_policy.deployer
+    azurerm_role_assignment.keyvault_deployer_role
   ]
 
   lifecycle { ignore_changes = [tags] }

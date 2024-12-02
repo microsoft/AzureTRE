@@ -2,7 +2,7 @@ resource "azurerm_route_table" "rt" {
   name                          = "rt-${var.tre_id}"
   resource_group_name           = local.core_resource_group_name
   location                      = data.azurerm_resource_group.rg.location
-  disable_bgp_route_propagation = false
+  bgp_route_propagation_enabled = true
   tags                          = local.tre_shared_service_tags
 
   lifecycle { ignore_changes = [tags] }
