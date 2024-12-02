@@ -91,7 +91,7 @@ class AirlockRequest(AzureTREModel):
     files: List[AirlockFile] = Field([], title="Files of the request")
     title: str = Field("Airlock Request", title="Brief title for the request")
     businessJustification: str = Field("Business Justification", title="Explanation that will be provided to the request reviewer")
-    status: str = AirlockRequestStatus.Draft
+    status = AirlockRequestStatus.Draft
     statusMessage: Optional[str] = Field(title="Optional - contains additional information about the current status.")
     reviews: Optional[List[AirlockReview]]
     etag: Optional[str] = Field(title="_etag", alias="_etag")
