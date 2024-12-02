@@ -337,43 +337,17 @@ resource "azurerm_role_assignment" "api_sa_data_contributor" {
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
 }
 
-resource "azurerm_storage_account_customer_managed_key" "sa_import_approved_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.sa_import_approved.id
+resource "azurerm_storage_account_customer_managed_key" "sa_encryption" {
+  for_each = var.enable_cmk_encryption ? {
+    "sa_import_approved"   = azurerm_storage_account.sa_import_approved,
+    "sa_export_internal"   = azurerm_storage_account.sa_export_internal,
+    "sa_export_inprogress" = azurerm_storage_account.sa_export_inprogress,
+    "sa_export_rejected"   = azurerm_storage_account.sa_export_rejected,
+    "sa_export_blocked"    = azurerm_storage_account.sa_export_blocked
+  } : {}
+
+  storage_account_id        = each.value.id
   key_vault_id              = var.key_store_id
   key_name                  = var.kv_encryption_key_name
   user_assigned_identity_id = var.encryption_identity_id
 }
-
-resource "azurerm_storage_account_customer_managed_key" "sa_export_internal_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.sa_export_internal.id
-  key_vault_id              = var.key_store_id
-  key_name                  = var.kv_encryption_key_name
-  user_assigned_identity_id = var.encryption_identity_id
-}
-
-resource "azurerm_storage_account_customer_managed_key" "sa_export_inprogress_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.sa_export_inprogress.id
-  key_vault_id              = var.key_store_id
-  key_name                  = var.kv_encryption_key_name
-  user_assigned_identity_id = var.encryption_identity_id
-}
-
-resource "azurerm_storage_account_customer_managed_key" "sa_export_rejected_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.sa_export_rejected.id
-  key_vault_id              = var.key_store_id
-  key_name                  = var.kv_encryption_key_name
-  user_assigned_identity_id = var.encryption_identity_id
-}
-
-resource "azurerm_storage_account_customer_managed_key" "sa_export_blocked_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.sa_export_blocked.id
-  key_vault_id              = var.key_store_id
-  key_name                  = var.kv_encryption_key_name
-  user_assigned_identity_id = var.encryption_identity_id
-}
-
