@@ -73,7 +73,7 @@ class WorkspacesInList(BaseModel):
 
 class WorkspaceInCreate(BaseModel):
     templateName: str = Field(title="Workspace type", description="Bundle name")
-    properties: dict = Field(None, title="Workspace parameters", description="Values for the parameters required by the workspace resource specification")
+    properties: dict = Field({}, title="Workspace parameters", description="Values for the parameters required by the workspace resource specification")
 
     class Config:
         schema_extra = {
