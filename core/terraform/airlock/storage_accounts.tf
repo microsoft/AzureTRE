@@ -16,6 +16,9 @@ resource "azurerm_storage_account" "sa_import_external" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
@@ -28,7 +31,7 @@ resource "azurerm_storage_account" "sa_import_external" {
     description = "airlock;import;external"
   })
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_private_endpoint" "stg_import_external_pe" {
@@ -77,6 +80,9 @@ resource "azurerm_storage_account" "sa_export_approved" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
@@ -89,7 +95,7 @@ resource "azurerm_storage_account" "sa_export_approved" {
     description = "airlock;export;approved"
   })
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_private_endpoint" "stg_export_approved_pe" {
@@ -136,6 +142,9 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
@@ -153,7 +162,7 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
     bypass         = ["AzureServices"]
   }
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_storage_account_customer_managed_key" "sa_import_in_progress_encryption" {
@@ -227,6 +236,9 @@ resource "azurerm_storage_account" "sa_import_rejected" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
@@ -244,7 +256,7 @@ resource "azurerm_storage_account" "sa_import_rejected" {
     bypass         = ["AzureServices"]
   }
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_private_endpoint" "stg_import_rejected_pe" {
@@ -292,6 +304,9 @@ resource "azurerm_storage_account" "sa_import_blocked" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
@@ -309,7 +324,7 @@ resource "azurerm_storage_account" "sa_import_blocked" {
     bypass         = ["AzureServices"]
   }
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_private_endpoint" "stg_import_blocked_pe" {
