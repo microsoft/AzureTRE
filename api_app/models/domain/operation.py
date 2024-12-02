@@ -6,7 +6,6 @@ from pydantic.types import UUID4
 
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.resource import Output, ResourceType
-from models.domain.authentication import User
 from resources import strings
 
 
@@ -93,7 +92,7 @@ class Operation(AzureTREModel):
     message: str = Field("", title="Additional operation status information")
     createdWhen: float = Field("", title="POSIX Timestamp for when the operation was submitted")
     updatedWhen: float = Field("", title="POSIX Timestamp for When the operation was updated")
-    user: Optional[User] = {}
+    user: dict = {}
     steps: Optional[List[OperationStep]] = Field(None, title="Operation Steps")
 
 
