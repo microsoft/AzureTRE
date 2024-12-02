@@ -3,6 +3,7 @@
 
 **BREAKING CHANGES & MIGRATIONS**:
 * InnerEye and MLFlow bundles depreciated and removed from main. If you wish to update and deploy these worksapce services they can be retrieved from release 0.19.1. ([#4127](https://github.com/microsoft/AzureTRE/issues/4127))
+* Upgrade Python version from 3.8 to 3.12 ([#3949](https://github.com/microsoft/AzureTRE/issues/3949))
 
 FEATURES:
 
@@ -17,9 +18,10 @@ ENHANCEMENTS:
 * Update Guacamole version and dependencies ([#4140](https://github.com/microsoft/AzureTRE/issues/4140))
 * Add partial (core resources only) support for customer managed keys  ([#4141](https://github.com/microsoft/AzureTRE/issues/4142),  [#4144](https://github.com/microsoft/AzureTRE/issues/4144))
 * Update the Azure CLI version to 2.67.0 in dev container and vmss ([#4157](https://github.com/microsoft/AzureTRE/pull/4157))
+* Upgrade Python version from 3.8 to 3.12 ([#3949](https://github.com/microsoft/AzureTRE/issues/3949))
 
 BUG FIXES:
-- Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
+* Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
 
 COMPONENTS:
 
