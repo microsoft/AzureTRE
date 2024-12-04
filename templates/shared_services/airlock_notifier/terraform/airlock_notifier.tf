@@ -14,7 +14,7 @@ resource "azurerm_servicebus_queue" "notifications_queue" {
   name         = "notifications"
   namespace_id = data.azurerm_servicebus_namespace.core.id
 
-  enable_partitioning = false
+  partitioning_enabled = false
 }
 
 /* The notification queue needs to be subscribed to the notification event-grid */
