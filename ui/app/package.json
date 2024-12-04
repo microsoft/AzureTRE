@@ -1,6 +1,6 @@
 {
   "name": "tre-ui",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "private": true,
   "dependencies": {
     "@azure/msal-browser": "^2.35.0",
@@ -10,12 +10,12 @@
     "@reduxjs/toolkit": "^1.8.6",
     "@rjsf/core": "^4.2.3",
     "@rjsf/fluent-ui": "^4.2.3",
+    "@testing-library/dom": "^7.21.4",
     "@testing-library/jest-dom": "^6.2.0",
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.4.3",
-    "@testing-library/dom": "^7.21.4",
     "@types/jest": "^29.5.0",
-    "@types/node": "^20.14.10",
+    "@types/node": "^20.16.12",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.2.6",
     "moment": "^2.29.4",
@@ -26,15 +26,15 @@
     "react-redux": "^8.0.4",
     "react-router-dom": "6.27.0",
     "remark-gfm": "^3.0.1",
-    "typescript": "^5.5.3",
+    "typescript": "^5.6.3",
     "web-vitals": "^3.3.0"
   },
   "devDependencies": {
-    "react-scripts": "5.0.1",
     "@babel/core": "^7.23.7",
-    "@babel/plugin-syntax-flow" : "^7.23.3",
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@babel/plugin-syntax-flow": "^7.23.3",
     "@babel/plugin-transform-react-jsx": "^7.23.4",
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
+    "react-scripts": "5.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
