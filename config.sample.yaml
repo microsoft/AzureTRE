@@ -8,6 +8,10 @@ management:
   mgmt_storage_account_name: __CHANGE_ME__
   terraform_state_container_name: tfstate
   acr_name: __CHANGE_ME__
+  # ID of external Key Vault to store CMKs in (only required if enable_cmk_encryption is true)
+  # external_key_store_id: __CHANGE_ME__
+  # Name of Key Vault for encryption keys, required only if enable_cmk_encryption is true and not using external_key_store_id
+  # encryption_kv_name: __CHANGE_ME__
   # Azure Resource Manager credentials used for CI/CD pipelines
   arm_subscription_id: __CHANGE_ME__
 
@@ -79,6 +83,9 @@ developer_settings:
 # communicate with Service Bus and Cosmos. It will also allow deploying
 # the base workspace.
 #  enable_local_debugging: true
+
+# This setting enables customer-managed key encryption for all supported resources
+#  enable_cmk_encryption: true
 
 # Used by the API and Resource processor application to change log level
 # Can be "ERROR", "WARNING", "INFO", "DEBUG"
