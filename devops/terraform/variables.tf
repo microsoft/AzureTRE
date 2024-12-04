@@ -45,5 +45,5 @@ variable "encryption_kv_name" {
 variable "kv_mgmt_encryption_key_name" {
   type        = string
   description = "Name of Key Vault Encryption Key for management resources (only used if enable_cmk_encryption is true)"
-  default     = "tre-mgmt-encryption"
+  default     = "tre-encryption-mgmt"
 }
