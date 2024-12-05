@@ -42,7 +42,7 @@ setup(
     install_requires=[
         "click==8.1.3",
         "httpx==0.25.0",
-        "msal==1.26.0",
+        "msal==1.31.0",
         "jmespath==1.0.1",
         "tabulate==0.9.0",
         "pygments==2.16.1",
