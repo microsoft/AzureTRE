@@ -11,4 +11,4 @@ class UserResource(Resource):
     ownerId: str = Field("", title="Owner of the user resource")
     parentWorkspaceServiceId: str = Field("", title="Parent Workspace Service ID", description="Service target Workspace Service id")
     azureStatus: dict = Field({}, title="Azure Status", description="Azure status, varies per user resource")
-    resourceType = ResourceType.UserResource
+    resourceType: ResourceType = ResourceType.UserResource

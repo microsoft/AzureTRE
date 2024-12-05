@@ -1,17 +1,17 @@
 from datetime import datetime, timedelta, date
 from typing import List, Optional
 from pydantic import BaseModel
-from enum import Enum
+from enum import StrEnum
 import random
 import uuid
 
 
-class GranularityEnum(str, Enum):
+class GranularityEnum(StrEnum):
     daily = "Daily"
     none = "None"
 
 
-class CurrencyEnum(str, Enum):
+class CurrencyEnum(StrEnum):
     USD = "USD"
     ILS = "ILS"
 
