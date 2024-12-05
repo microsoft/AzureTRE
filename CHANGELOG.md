@@ -19,7 +19,8 @@ ENHANCEMENTS:
 * Update the Azure CLI version to 2.67.0 in dev container and vmss ([#4157](https://github.com/microsoft/AzureTRE/pull/4157))
 
 BUG FIXES:
-- Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
+* Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
+* Amend session ID to prevent parallel operations on a resource. ([#3807](https://github.com/microsoft/AzureTRE/pull/3807))
 
 COMPONENTS:
 

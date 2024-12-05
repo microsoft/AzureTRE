@@ -29,6 +29,7 @@ parameters:
     type: string
   - name: is_exposed_externally
     type: boolean
+    default: false
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -100,6 +101,11 @@ outputs:
     applyTo:
       - install
       - upgrade
+  - name: is_exposed_externally
+    type: boolean
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
   - terraform:
@@ -133,6 +139,7 @@ install:
         - name: artifact_blob_storage_domains
         - name: workspace_address_spaces
         - name: databricks_address_prefixes
+        - name: is_exposed_externally
 
 upgrade:
   - terraform:
@@ -162,6 +169,7 @@ upgrade:
         - name: artifact_blob_storage_domains
         - name: workspace_address_spaces
         - name: databricks_address_prefixes
+        - name: is_exposed_externally
 
 uninstall:
   - terraform:
