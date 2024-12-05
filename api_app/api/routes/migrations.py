@@ -9,7 +9,7 @@ from resources import strings
 from db.migrations.shared_services import SharedServiceMigration
 from db.migrations.workspaces import WorkspaceMigration
 from db.repositories.resources import ResourceRepository
-from models.schemas.migrations import MigrationOutList, Migration
+from models.schemas.migrations import MigrationOutList
 from services.logging import logger
 
 migrations_core_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
@@ -29,7 +29,7 @@ async def migrate_database(resources_repo=Depends(get_repository(ResourceReposit
                            airlock_migration=Depends(get_repository(AirlockMigration)),):
     try:
         migrations = list()
-        
+
         # ADD MIGRATIONS HERE
 
         return MigrationOutList(migrations=migrations)
