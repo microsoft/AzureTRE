@@ -23,12 +23,15 @@ resource "azurerm_storage_account" "app_insights" {
   cross_tenant_replication_enabled = false
   tags                             = var.tre_workspace_tags
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   network_rules {
     default_action = "Deny"
     bypass         = ["AzureServices"]
   }
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_ingestion" {

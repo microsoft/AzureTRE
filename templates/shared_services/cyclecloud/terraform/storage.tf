@@ -7,7 +7,10 @@ resource "azurerm_storage_account" "cyclecloud" {
   cross_tenant_replication_enabled = false
   tags                             = local.tre_shared_service_tags
 
-  lifecycle { ignore_changes = [tags] }
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 data "azurerm_private_dns_zone" "blobcore" {

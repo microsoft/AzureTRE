@@ -24,6 +24,9 @@ resource "azurerm_storage_account" "az_monitor" {
   cross_tenant_replication_enabled = false
   tags                             = var.tre_core_tags
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   network_rules {
     default_action = "Deny"
     bypass         = ["AzureServices"]
@@ -37,7 +40,7 @@ resource "azurerm_storage_account" "az_monitor" {
     }
   }
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_storage_account_customer_managed_key" "az_monitor_encryption" {
