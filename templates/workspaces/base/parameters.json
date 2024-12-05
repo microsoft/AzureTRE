@@ -147,6 +147,18 @@
       "source": {
         "env": "AZURE_ENVIRONMENT"
       }
+    },
+    {
+      "name": "enable_cmk_encryption",
+      "source": {
+        "env": "enable_cmk_encryption"
+      }
+    },
+    {
+      "name": "key_store_id",
+      "source": {
+        "env": "key_store_id"
+      }
     }
   ]
 }

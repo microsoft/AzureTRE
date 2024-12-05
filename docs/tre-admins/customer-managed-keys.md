@@ -3,7 +3,7 @@
 You can enable customer-managed keys (CMK) for supporting resources in Azure TRE.
 
 !!! warning
-    Currently Azure TRE only supports CMK encryption for resources in the TRE core.  
+    Currently Azure TRE only supports CMK encryption for resources in the TRE core and Base Workspace.
     CMK encryption is not supported for the rest of the resources such as those deployed by a TRE workspace.
 
 

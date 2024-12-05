@@ -8,4 +8,5 @@ locals {
     tre_id           = var.tre_id
     tre_workspace_id = var.tre_resource_id
   }
+  kv_encryption_key_name = "tre-encryption-${local.workspace_resource_name_suffix}"
 }

@@ -56,6 +56,10 @@ module "airlock" {
   short_workspace_id          = local.short_workspace_id
   airlock_processor_subnet_id = module.network.airlock_processor_subnet_id
   arm_environment             = var.arm_environment
+  enable_cmk_encryption       = var.enable_cmk_encryption
+  key_store_id                = var.key_store_id
+  kv_encryption_key_name      = local.kv_encryption_key_name
+  encryption_identity_id      = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
   depends_on = [
     module.network,
   ]
@@ -76,6 +80,10 @@ module "azure_monitor" {
   azure_monitor_ods_opinsights_dns_zone_id = module.network.azure_monitor_ods_opinsights_dns_zone_id
   azure_monitor_agentsvc_dns_zone_id       = module.network.azure_monitor_agentsvc_dns_zone_id
   blob_core_dns_zone_id                    = module.network.blobcore_zone_id
+  enable_cmk_encryption                    = var.enable_cmk_encryption
+  key_store_id                             = var.key_store_id
+  kv_encryption_key_name                   = local.kv_encryption_key_name
+  encryption_identity_id                   = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
   enable_local_debugging                   = var.enable_local_debugging
   depends_on = [
     module.network,

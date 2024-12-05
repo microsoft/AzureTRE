@@ -23,6 +23,14 @@ resource "azurerm_storage_account" "app_insights" {
   cross_tenant_replication_enabled = false
   tags                             = var.tre_workspace_tags
 
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
+
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
 
@@ -32,6 +40,14 @@ resource "azurerm_storage_account" "app_insights" {
   }
 
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
+}
+
+resource "azurerm_storage_account_customer_managed_key" "app_insights_stg_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.app_insights.id
+  key_vault_id              = var.key_store_id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = var.encryption_identity_id
 }
 
 resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_ingestion" {
