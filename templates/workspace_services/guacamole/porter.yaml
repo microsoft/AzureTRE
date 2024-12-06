@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole
-version: 0.12.0
+version: 0.12.1
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -125,7 +125,7 @@ outputs:
 
 mixins:
   - terraform:
-      clientVersion: 1.4.6
+      clientVersion: 1.9.8
 
 install:
   - terraform:
