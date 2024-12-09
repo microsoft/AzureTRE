@@ -96,8 +96,6 @@ jobs:
             echo "Bundle directory: $bundle_dir"
             make bundle-register DIR="${bundle_dir}"
           DEVCONTAINER_TAG: latest
-          CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME}}
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
           ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
