@@ -1,19 +1,19 @@
 ---
-name: Publish TRE Bundle
+name: Register TRE Bundle
 
-# This workflow is intended to be used to register and publish a TRE bundle into an existing TRE environment
+# This workflow is intended to be used to register a TRE bundle into an existing TRE environment
 
 on:
   workflow_call:
     inputs:
       bundle_type:
-        description: The type of bundle to publish
+        description: The type of bundle to register
         type: string
         default: base
         required: true
   push:
     branches:
-      - guybartal/publish-bundle-workflow
+      - guybartal/register-bundle-workflow
   workflow_dispatch:
     inputs:
       # environmentName:
@@ -21,15 +21,15 @@ on:
       #   type: string
       #   required: true
       bundle_type:
-        description: The type of bundle to publish
+        description: The type of bundle to register
         type: string
         default: base
         required: true
 
 
 jobs:
-  publish_bundle:
-    name: Publish Bundle
+  register_bundle:
+    name: Register Bundle
     runs-on: ubuntu-latest
     permissions:
       checks: write
@@ -37,9 +37,9 @@ jobs:
       pull-requests: write
     environment: ${{ inputs.environmentName }}
     steps:
-      - name: Publish Bundle
+      - name: Register Bundle
         run: |
-          echo "Publishing bundle of type ${{ inputs.bundle_type }}"
+          echo "Registering bundle of type ${{ inputs.bundle_type }}"
 
           # create a map of bundle_type to bundle_dir
           declare -A bundle_map
