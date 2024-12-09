@@ -22,6 +22,9 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
+* Move Github PR bot commands into main documentation ([#4167](https://github.com/microsoft/AzureTRE/pull/4167))
+* Fix Dockerfile 'as' casting ([#4170](https://github.com/microsoft/AzureTRE/pull/4170))
+
 
 COMPONENTS:
 
