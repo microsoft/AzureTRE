@@ -15,10 +15,11 @@ on:
       - guybartal/publish-bundle-workflow
   workflow_dispatch:
     inputs:
-      # environmentName:
-      #   description: The name of the Github Action's environment this will deploy into
-      #   type: string
-      #   required: true
+      environmentName:
+        description: The name of the Github Action's environment this will deploy into
+        type: string
+        default: CICD
+        required: false
       bundle_type:
         description: The type of bundle to register
         type: string
@@ -96,6 +97,7 @@ jobs:
             echo "Bundle directory: $bundle_dir"
             make bundle-register DIR="${bundle_dir}"
           DEVCONTAINER_TAG: latest
+          ENVIRONMENT_NAME: ${{ inputs.environmentName }}
           AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
           ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
