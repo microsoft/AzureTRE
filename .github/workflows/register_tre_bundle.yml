@@ -38,34 +38,40 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Register Bundle
-        run: |
-          echo "Registering bundle of type ${{ inputs.bundle_type }}"
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: >-
+            echo "Registering bundle of type ${{ inputs.bundle_type }}"
 
-          # create a map of bundle_type to bundle_dir
-          declare -A bundle_map
-          bundle_map[workspace]="./templates/workspaces/base"
-          bundle_map[unrestricted]="./templates/workspaces/unrestricted"
-          bundle_map[airlock-import-review]="./templates/workspaces/airlock-import-review"
-          bundle_map[guacamole]="./templates/workspace_services/guacamole"
-          bundle_map[azureml]="./templates/workspace_services/azureml"
-          bundle_map[gitea]="./templates/workspace_services/gitea"
-          bundle_map[mysql]="./templates/workspace_services/mysql"
-          bundle_map[health-services]="./templates/workspace_services/health-services"
-          bundle_map[databricks]="./templates/workspace_services/databricks"
-          bundle_map[ohdsi]="./templates/workspace_services/ohdsi"
-          bundle_map[azuresql]="./templates/workspace_services/azuresql"
-          bundle_map[openai]="./templates/workspace_services/openai"
-          bundle_map[guacamole-azure-windowsvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"
-          bundle_map[guacamole-azure-linuxvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm"
-          bundle_map[guacamole-azure-export-reviewvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm"
-          bundle_map[guacamole-azure-import-reviewvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm"
+            # create a map of bundle_type to bundle_dir
+            declare -A bundle_map
+            bundle_map[workspace]="./templates/workspaces/base"
+            bundle_map[unrestricted]="./templates/workspaces/unrestricted"
+            bundle_map[airlock-import-review]="./templates/workspaces/airlock-import-review"
+            bundle_map[guacamole]="./templates/workspace_services/guacamole"
+            bundle_map[azureml]="./templates/workspace_services/azureml"
+            bundle_map[gitea]="./templates/workspace_services/gitea"
+            bundle_map[mysql]="./templates/workspace_services/mysql"
+            bundle_map[health-services]="./templates/workspace_services/health-services"
+            bundle_map[databricks]="./templates/workspace_services/databricks"
+            bundle_map[ohdsi]="./templates/workspace_services/ohdsi"
+            bundle_map[azuresql]="./templates/workspace_services/azuresql"
+            bundle_map[openai]="./templates/workspace_services/openai"
+            bundle_map[guacamole-azure-windowsvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"
+            bundle_map[guacamole-azure-linuxvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm"
+            bundle_map[guacamole-azure-export-reviewvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm"
+            bundle_map[guacamole-azure-import-reviewvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm"
 
-          # if inputs.bundle_type is empty, use the default value
-          if [ -z "${{ inputs.bundle_type }}" ]; then
-            bundle_type="base"
-          fi
+            # if inputs.bundle_type is empty, use the default value
+            if [ -z "${{ inputs.bundle_type }}" ]; then
+              bundle_type="base"
+            fi
 
-          bundle_dir=${bundle_map[${{ inputs.bundle_type }}]}
+            bundle_dir=${bundle_map[${{ inputs.bundle_type }}]}
 
-          echo "Bundle directory: $bundle_dir"
-          make bundle-register DIR="${bundle_dir}"
+            echo "Bundle directory: $bundle_dir"
+            make bundle-register DIR="${bundle_dir}"
+          DEVCONTAINER_TAG: latest
+          CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
