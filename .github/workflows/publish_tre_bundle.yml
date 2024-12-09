@@ -53,6 +53,11 @@ jobs:
           bundle_map[guacamole-azure-export-reviewvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm"
           bundle_map[guacamole-azure-import-reviewvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm"
 
+          # if inputs.bundle_type is empty, use the default value
+          if [ -z "${{ inputs.bundle_type }}" ]; then
+            bundle_type="base"
+          fi
+
           bundle_dir=${bundle_map[${{ inputs.bundle_type }}]}
 
           echo "Bundle directory: $bundle_dir"
