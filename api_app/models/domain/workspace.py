@@ -16,7 +16,7 @@ class Workspace(Resource):
     Workspace request
     """
     workspaceURL: str = Field("", title="Workspace URL", description="Main endpoint for workspace users")
-    resourceType = ResourceType.Workspace
+    resourceType: ResourceType = ResourceType.Workspace
 
 
 class WorkspaceAuth(AzureTREModel):

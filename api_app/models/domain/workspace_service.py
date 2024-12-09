@@ -8,4 +8,4 @@ class WorkspaceService(Resource):
     Workspace service request
     """
     workspaceId: str = Field("", title="Workspace ID", description="Service target Workspace id")
-    resourceType = ResourceType.WorkspaceService
+    resourceType: ResourceType = ResourceType.WorkspaceService

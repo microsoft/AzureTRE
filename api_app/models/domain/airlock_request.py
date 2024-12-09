@@ -1,13 +1,12 @@
-from enum import Enum
-from typing import List, Dict
+from enum import StrEnum
+from typing import List, Dict, Optional
 
 from models.domain.azuretremodel import AzureTREModel
 from pydantic import Field, validator
-from pydantic.schema import Optional
 from resources import strings
 
 
-class AirlockRequestStatus(str, Enum):
+class AirlockRequestStatus(StrEnum):
     """
     Airlock Resource status
     """
@@ -25,12 +24,12 @@ class AirlockRequestStatus(str, Enum):
     Failed = strings.AIRLOCK_RESOURCE_STATUS_FAILED
 
 
-class AirlockRequestType(str, Enum):
+class AirlockRequestType(StrEnum):
     Import = strings.AIRLOCK_REQUEST_TYPE_IMPORT
     Export = strings.AIRLOCK_REQUEST_TYPE_EXPORT
 
 
-class AirlockActions(str, Enum):
+class AirlockActions(StrEnum):
     Review = strings.AIRLOCK_ACTION_REVIEW
     Cancel = strings.AIRLOCK_ACTION_CANCEL
     Submit = strings.AIRLOCK_ACTION_SUBMIT
@@ -41,7 +40,7 @@ class AirlockFile(AzureTREModel):
     size: float = Field(title="size", description="size of the file in bytes")
 
 
-class AirlockReviewDecision(str, Enum):
+class AirlockReviewDecision(StrEnum):
     Approved = strings.AIRLOCK_REVIEW_DECISION_APPROVED
     Rejected = strings.AIRLOCK_REVIEW_DECISION_REJECTED
 
