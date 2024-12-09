@@ -4,4 +4,3 @@ azure-identity==1.19.0
 azure-monitor-opentelemetry==1.6.4
 azure-servicebus==7.12.3
 opentelemetry-instrumentation-logging==0.49b2
-setuptools==75.3.0
