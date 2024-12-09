@@ -35,7 +35,6 @@ jobs:
       checks: write
       contents: read
       pull-requests: write
-    environment: ${{ inputs.environmentName }}
     steps:
       - name: Register Bundle
         uses: ./.github/actions/devcontainer_run_command
