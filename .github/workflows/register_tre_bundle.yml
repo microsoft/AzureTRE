@@ -35,6 +35,9 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Register Bundle
         uses: ./.github/actions/devcontainer_run_command
         with:
