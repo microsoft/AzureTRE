@@ -4,6 +4,9 @@ name: Publish TRE Bundle
 # This workflow is intended to be used to register and publish a TRE bundle into an existing TRE environment
 
 on:
+  push:
+    branches:
+      - guybartal/publish-tre-bundle
   workflow_dispatch:
     inputs:
       environmentName:
