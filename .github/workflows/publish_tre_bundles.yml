@@ -9,13 +9,27 @@ on:
       - guybartal/publish-bundle-workflow
   workflow_dispatch:
 
-
 jobs:
   call-publish-bundle:
     strategy:
       matrix:
-        include:
-          - bundle_type: [workspace, unrestricted, airlock-import-review, guacamole, azureml, gitea, mysql, health-services, databricks, ohdsi, azuresql, openai, guacamole-azure-windowsvm, guacamole-azure-linuxvm, guacamole-azure-export-reviewvm, guacamole-azure-import-reviewvm]
+        bundle_type:
+          - workspace
+          - unrestricted
+          - airlock-import-review
+          - guacamole
+          - azureml
+          - gitea
+          - mysql
+          - health-services
+          - databricks
+          - ohdsi
+          - azuresql
+          - openai
+          - guacamole-azure-windowsvm
+          - guacamole-azure-linuxvm
+          - guacamole-azure-export-reviewvm
+          - guacamole-azure-import-reviewvm
     uses: ./.github/workflows/publish_tre_bundle.yml
     with:
       bundle_type: ${{ matrix.bundle_type }}
