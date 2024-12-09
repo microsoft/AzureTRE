@@ -9,7 +9,6 @@ on:
       bundle_type:
         description: The type of bundle to register
         type: string
-        default: base
         required: true
   push:
     branches:
