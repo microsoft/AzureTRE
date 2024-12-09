@@ -6,7 +6,7 @@ name: Publish TRE Bundle
 on:
   push:
     branches:
-      - guybartal/publish-tre-bundle
+      - guybartal/publish-bundle-workflow
   workflow_dispatch:
     inputs:
       environmentName:
