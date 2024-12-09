@@ -1,5 +1,5 @@
 ---
-  name: Publish TRE Bundle
+  name: Publish TRE Bundles
 
   # This workflow registers and publishes all TRE bundles into an existing TRE environment
 
