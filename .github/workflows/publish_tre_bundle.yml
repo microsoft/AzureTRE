@@ -1,0 +1,52 @@
+---
+name: Publish TRE Bundle
+
+# This workflow is intended to be used to register and publish a TRE bundle into an existing TRE environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environmentName:
+        description: The name of the Github Action's environment this will deploy into
+        type: string
+        required: true
+      bundle_type:
+        description: The type of bundle to publish
+        type: string
+        default: base
+        required: true
+
+
+jobs:
+  publish_bundle:
+    name: Publish Bundle
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environmentName }}
+    steps:
+      - name: Publish Bundle
+        run: |
+          echo "Publishing bundle of type ${{ inputs.bundle_type }}"
+
+          # create a map of bundle_type to bundle_dir
+          declare -A bundle_map
+          bundle_map[workspace]="./templates/workspaces/base"
+          bundle_map[unrestricted]="./templates/workspaces/unrestricted"
+          bundle_map[airlock-import-review]="./templates/workspaces/airlock-import-review"
+          bundle_map[guacamole]="./templates/workspace_services/guacamole"
+          bundle_map[azureml]="./templates/workspace_services/azureml"
+          bundle_map[gitea]="./templates/workspace_services/gitea"
+          bundle_map[mysql]="./templates/workspace_services/mysql"
+          bundle_map[health-services]="./templates/workspace_services/health-services"
+          bundle_map[databricks]="./templates/workspace_services/databricks"
+          bundle_map[ohdsi]="./templates/workspace_services/ohdsi"
+          bundle_map[azuresql]="./templates/workspace_services/azuresql"
+          bundle_map[openai]="./templates/workspace_services/openai"
+          bundle_map[guacamole-azure-windowsvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"
+          bundle_map[guacamole-azure-linuxvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm"
+          bundle_map[guacamole-azure-export-reviewvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm"
+          bundle_map[guacamole-azure-import-reviewvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm"
+
+          bundle_dir=${bundle_map[${{ inputs.bundle_type }}]}
+
+          echo "Bundle directory: $bundle_dir"
+          make bundle-register DIR=${bundle_dir}
