@@ -16,6 +16,7 @@ variable "location" {
 variable "acr_sku" {
   type        = string
   description = "Price tier for ACR"
+  default     = null
 }
 
 variable "acr_name" {
