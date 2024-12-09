@@ -8,7 +8,7 @@ COPY ./guacamole-auth-azure/src /src
 COPY ./docker/maven_package_and_exit_succesfully.sh /tmp/
 RUN bash /tmp/maven_package_and_exit_succesfully.sh
 
-FROM scratch as test-results
+FROM scratch AS test-results
 COPY --from=client_build /target/surefire-reports/* /
 
 FROM guacamole/guacd:1.5.5

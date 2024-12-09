@@ -152,6 +152,7 @@ nav:
               - Letsencrypt: tre-developers/letsencrypt.md
               - Releases: tre-developers/release.md
               - GitHub Actions: tre-admins/setup-instructions/workflows.md
+              - GitHub PR Bot Commands: tre-developers/github-pr-bot-commands.md
 
           - Developing Workspace Templates: # Docs aimed at developers creating workspace templates
               - Authoring Workspace Templates: tre-workspace-authors/authoring-workspace-templates.md

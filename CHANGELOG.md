@@ -17,10 +17,12 @@ ENHANCEMENTS:
 * Update Guacamole version and dependencies ([#4140](https://github.com/microsoft/AzureTRE/issues/4140))
 * Add partial (core resources only) support for customer-managed keys  ([#4141](https://github.com/microsoft/AzureTRE/issues/4142),  [#4144](https://github.com/microsoft/AzureTRE/issues/4144))
 * Update the Azure CLI version to 2.67.0 in dev container and vmss ([#4157](https://github.com/microsoft/AzureTRE/pull/4157))
+* Move Github PR bot commands into main documentation ([#4167](https://github.com/microsoft/AzureTRE/pull/4167))
 * Add support for customer-managed keys encryption in base workspace ([#4161](https://github.com/microsoft/AzureTRE/pull/4161))
 
 BUG FIXES:
 - Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
+- Fix Dockerfile 'as' casting ([#4170](https://github.com/microsoft/AzureTRE/pull/4170))
 
 COMPONENTS:
 
