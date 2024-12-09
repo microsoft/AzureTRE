@@ -9,21 +9,25 @@ on:
       - guybartal/publish-bundle-workflow
   workflow_dispatch:
     inputs:
-      environmentName:
-        description: The name of the Github Action's environment this will deploy into
-        type: string
-        required: true
+      # environmentName:
+      #   description: The name of the Github Action's environment this will deploy into
+      #   type: string
+      #   required: true
       bundle_type:
         description: The type of bundle to publish
         type: string
         default: base
-        required: true
+        required: false
 
 
 jobs:
   publish_bundle:
     name: Publish Bundle
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Publish Bundle
