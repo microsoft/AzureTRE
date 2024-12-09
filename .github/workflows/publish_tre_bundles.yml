@@ -11,6 +11,10 @@ on:
 
 jobs:
   call-publish-bundle:
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
     strategy:
       matrix:
         bundle_type:
