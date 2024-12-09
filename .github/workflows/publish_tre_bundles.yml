@@ -1,0 +1,17 @@
+---
+  name: Publish TRE Bundle
+
+  # This workflow registers and publishes all TRE bundles into an existing TRE environment
+
+  on:
+    push:
+      branches:
+        - guybartal/publish-bundle-workflow
+    workflow_dispatch:
+
+
+  jobs:
+    call-reusable:
+      uses: ./.github/workflows/publish_tre_bundle.yml
+      with:
+        bundle_type: ${{ matrix.bundle_type }}
