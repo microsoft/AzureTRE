@@ -15,7 +15,7 @@ on:
       - guybartal/publish-bundle-workflow
   workflow_dispatch:
     inputs:
-      environmentName:
+      environment:
         description: The name of the Github Action's environment this will deploy into
         type: string
         default: CICD
@@ -54,6 +54,9 @@ jobs:
     name: Register Bundle
     runs-on: ubuntu-latest
     needs: [prepare-not-main]
+    # environment is used to access the secrets for Azure credentials
+    # to sign in to a container registry to re-use a dev container image as a build cache
+    environment: ${{ inputs.environment || 'CICD'}}
     permissions:
       checks: write
       contents: read
@@ -97,7 +100,6 @@ jobs:
             echo "Bundle directory: $bundle_dir"
             make bundle-register DIR="${bundle_dir}"
           DEVCONTAINER_TAG: latest
-          ENVIRONMENT_NAME: ${{ inputs.environmentName }}
           AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
           AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
           ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
