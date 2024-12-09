@@ -6,7 +6,7 @@ name: Register TRE Bundles
 on:
   push:
     branches:
-      - guybartal/register-bundle-workflow
+      - guybartal/publish-bundle-workflow
   workflow_dispatch:
 
 jobs:
