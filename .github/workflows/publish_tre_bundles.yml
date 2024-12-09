@@ -1,21 +1,21 @@
 ---
-  name: Publish TRE Bundles
+name: Publish TRE Bundles
 
-  # This workflow registers and publishes all TRE bundles into an existing TRE environment
+# This workflow registers and publishes all TRE bundles into an existing TRE environment
 
-  on:
-    push:
-      branches:
-        - guybartal/publish-bundle-workflow
-    workflow_dispatch:
+on:
+  push:
+    branches:
+      - guybartal/publish-bundle-workflow
+  workflow_dispatch:
 
 
-  jobs:
-    call-publish-bundle:
-      strategy:
-        matrix:
-          include:
-            - bundle_type: [workspace, unrestricted, airlock-import-review, guacamole, azureml, gitea, mysql, health-services, databricks, ohdsi, azuresql, openai, guacamole-azure-windowsvm, guacamole-azure-linuxvm, guacamole-azure-export-reviewvm, guacamole-azure-import-reviewvm]
-      uses: ./.github/workflows/publish_tre_bundle.yml
-      with:
-        bundle_type: ${{ matrix.bundle_type }}
+jobs:
+  call-publish-bundle:
+    strategy:
+      matrix:
+        include:
+          - bundle_type: [workspace, unrestricted, airlock-import-review, guacamole, azureml, gitea, mysql, health-services, databricks, ohdsi, azuresql, openai, guacamole-azure-windowsvm, guacamole-azure-linuxvm, guacamole-azure-export-reviewvm, guacamole-azure-import-reviewvm]
+    uses: ./.github/workflows/publish_tre_bundle.yml
+    with:
+      bundle_type: ${{ matrix.bundle_type }}
