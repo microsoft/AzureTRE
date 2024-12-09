@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-azuresql
-version: 1.0.13
+version: 1.0.14
 description: "An Azure SQL workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -58,7 +58,7 @@ parameters:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.9.2
+      clientVersion: 1.9.8
 
 outputs:
   - name: azuresql_fqdn
