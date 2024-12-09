@@ -49,4 +49,4 @@ jobs:
           bundle_dir=${bundle_map[${{ inputs.bundle_type }}]}
 
           echo "Bundle directory: $bundle_dir"
-          make bundle-register DIR=${bundle_dir}
+          make bundle-register DIR="${bundle_dir}"
