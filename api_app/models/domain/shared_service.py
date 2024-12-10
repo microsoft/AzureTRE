@@ -5,4 +5,4 @@ class SharedService(Resource):
     """
     Shared service request
     """
-    resourceType = ResourceType.SharedService
+    resourceType: ResourceType = ResourceType.SharedService
