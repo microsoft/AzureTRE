@@ -20,7 +20,7 @@ resource "azurerm_role_assignment" "kv_encryption_key_user" {
 resource "azurerm_key_vault_key" "tre_encryption" {
   count = var.enable_cmk_encryption ? 1 : 0
 
-  name         = var.kv_encryption_key_name
+  name         = local.cmk_name
   key_vault_id = local.key_store_id
   key_type     = "RSA"
   key_size     = 2048
