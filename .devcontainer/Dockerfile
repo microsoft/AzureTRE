@@ -50,10 +50,8 @@ RUN if [ "${INTERACTIVE}" = "true" ]; then \
 
 ARG PORTER_HOME_V1=/home/$USERNAME/.porter/
 ARG PORTER_VERSION=v1.2.0
-# using "canary" release of terraform mixin until v.1.0.4 tag is added to the porter releases feed, see https://github.com/getporter/terraform-mixin/issues/119#issuecomment-2503399932
-ARG PORTER_TERRAFORM_MIXIN_VERSION=canary
-# using "canary" release of az mixin until v.1.0.3 tag is added to the porter releases feed, see https://github.com/getporter/az-mixin/issues/70#issuecomment-2503403521
-ARG PORTER_AZ_MIXIN_VERSION=canary
+ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.5
+ARG PORTER_AZ_MIXIN_VERSION=v1.0.4
 ARG PORTER_AZURE_PLUGIN_VERSION=v1.2.3
 COPY .devcontainer/scripts/porter-v1.sh /tmp/
 RUN export PORTER_VERSION=${PORTER_VERSION} \
