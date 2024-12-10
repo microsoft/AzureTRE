@@ -25,7 +25,10 @@ on:
         type: string
         default: base
         required: true
-
+      prRef:
+        description: The git ref to checkout
+        type: string
+        required: false
 
 jobs:
   deploy_management:
@@ -43,6 +46,7 @@ jobs:
           echo "prRHeadSha  : ${{ github.sha }}"
           echo "ciGitRef    : ${{ github.ref }}"
           echo "environment : ${{ inputs.environmentName || 'CICD'}}"
+          echo "prRef       : ${{ inputs.prRef }}"
           echo AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
           echo ACR_NAME: ${{ secrets.ACR_NAME }}
           echo API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
