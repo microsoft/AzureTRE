@@ -12,11 +12,16 @@ az group create --resource-group "$TF_VAR_mgmt_resource_group_name" --location "
 if ! az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name" --name "$TF_VAR_mgmt_storage_account_name" --query "name" -o none 2>/dev/null; then
   # only run `az storage account create` if doesn't exist (to prevent error from occuring if storage account was originally created without infrastructure encryption enabled)
 
+  # Set default encryption types based on enable_cmk
+  encryption_type=$([ "${TF_VAR_enable_cmk_encryption:-false}" = true ] && echo "Account" || echo "Service")
+
   # shellcheck disable=SC2154
   az storage account create --resource-group "$TF_VAR_mgmt_resource_group_name" \
     --name "$TF_VAR_mgmt_storage_account_name" --location "$LOCATION" \
     --allow-blob-public-access false \
     --kind StorageV2 --sku Standard_LRS -o table \
+    --encryption-key-type-for-queue "$encryption_type" \
+    --encryption-key-type-for-table "$encryption_type" \
     --require-infrastructure-encryption true
 else
   echo "Storage account already exists..."
