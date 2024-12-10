@@ -94,9 +94,11 @@ jobs:
             # if inputs.bundle_type is empty, use the default value
             if [ -z "${{ inputs.bundle_type }}" ]; then
               bundle_type="base"
+            else
+              bundle_type="${{ inputs.bundle_type }}"
             fi
 
-            bundle_dir=${bundle_map[${{ inputs.bundle_type }}]}
+            bundle_dir="${bundle_map[$bundle_type]}"
 
             echo "Bundle directory: $bundle_dir"
             make bundle-register DIR="${bundle_dir}"
