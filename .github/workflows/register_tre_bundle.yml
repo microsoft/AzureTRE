@@ -15,7 +15,7 @@ on:
       - guybartal/publish-bundle-workflow
   workflow_dispatch:
     inputs:
-      environment:
+      environmentName:
         description: The name of the Github Action's environment this will deploy into
         type: string
         default: CICD
@@ -28,6 +28,162 @@ on:
 
 
 jobs:
+  deploy_management:
+    name: Deploy Management
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+    environment: ${{ inputs.environmentName }}
+    steps:
+      - name: Show inputs
+        run: |
+          echo "Inputs"
+          echo "======"
+          echo "prRHeadSha  : ${{ github.sha }}"
+          echo "ciGitRef    : ${{ github.ref }}"
+          echo "environment : ${{ inputs.environmentName }}"
+
+      - name: Check required values
+        id: check_required_values
+        # since this is a resuable workflow, required=true secrets will always have a value but it can be empty.
+        run: |
+          if [ "${{ secrets.AAD_TENANT_ID }}" == '' ]; then
+            echo "Missing secret: AAD_TENANT_ID" && exit 1
+          fi
+          if [ "${{ secrets.ACR_NAME }}" == '' ]; then
+            echo "Missing secret: ACR_NAME" && exit 1
+          fi
+          if [ "${{ secrets.API_CLIENT_ID }}" == '' ]; then
+            echo "Missing secret: API_CLIENT_ID" && exit 1
+          fi
+          if [ "${{ secrets.API_CLIENT_SECRET }}" == '' ]; then
+            echo "Missing secret: API_CLIENT_SECRET" && exit 1
+          fi
+          if [ "${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}" == '' ]; then
+            echo "Missing secret: APPLICATION_ADMIN_CLIENT_ID" && exit 1
+          fi
+          if [ "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}" == '' ]; then
+            echo "Missing secret: APPLICATION_ADMIN_CLIENT_SECRET" && exit 1
+          fi
+          if [ "${{ secrets.MGMT_RESOURCE_GROUP_NAME }}" == '' ]; then
+            echo "Missing secret: MGMT_RESOURCE_GROUP_NAME" && exit 1
+          fi
+          if [ "${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}" == '' ]; then
+            echo "Missing secret: MGMT_STORAGE_ACCOUNT_NAME" && exit 1
+          fi
+          if [ "${{ secrets.SWAGGER_UI_CLIENT_ID }}" == '' ]; then
+            echo "Missing secret: SWAGGER_UI_CLIENT_ID" && exit 1
+          fi
+          if [ "${{ secrets.TEST_APP_ID }}" == '' ]; then
+            echo "Missing secret: TEST_APP_ID" && exit 1
+          fi
+          if [ "${{ secrets.TEST_WORKSPACE_APP_ID }}" == '' ]; then
+            echo "Missing secret: TEST_WORKSPACE_APP_ID" && exit 1
+          fi
+          if [ "${{ secrets.TEST_WORKSPACE_APP_SECRET }}" == '' ]; then
+            echo "Missing secret: TEST_WORKSPACE_APP_SECRET" && exit 1
+          fi
+          if [ "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}" == '' ]; then
+            echo "Missing secret: TEST_ACCOUNT_CLIENT_ID" && exit 1
+          fi
+          if [ "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}" == '' ]; then
+            echo "Missing secret: TEST_ACCOUNT_CLIENT_SECRET" && exit 1
+          fi
+          if [ "${{ secrets.TRE_ID }}" == '' ]; then
+            echo "Missing secret: TRE_ID" && exit 1
+          fi
+          if [ "${{ secrets.AZURE_CREDENTIALS }}" == '' ]; then
+            echo "Missing secret: AZURE_CREDENTIALS" && exit 1
+          fi
+
+      - name: Report check status start
+        if: github.sha != ''
+        uses: LouisBrunner/checks-action@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          sha: ${{ github.sha }}
+          name: "Deploy PR / Run E2E Tests (Smoke)"
+          status: "in_progress"
+          details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
+          ref: ${{ inputs.prRef }}
+
+      - name: Set up Docker BuildKit
+        uses: docker/setup-buildx-action@v3
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          environment: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
+
+      - name: ACR Login
+        id: ci_cache_cr_login
+        # will fail if this is a new env which is expected
+        continue-on-error: true
+        run: az acr login --name "${{ secrets.CI_CACHE_ACR_NAME }}"
+
+      - name: Build new devcontainer
+        env:
+          DOCKER_BUILDKIT: 1
+        run: |
+          set -e
+
+          USER_UID=$(id -u)
+          USER_GID=$(id -g)
+          acr_domain_suffix=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)
+          CI_CACHE_ACR_URI=${{ secrets.CI_CACHE_ACR_NAME }}${acr_domain_suffix}
+          echo "CI_CACHE_ACR_URI=$CI_CACHE_ACR_URI" >> "$GITHUB_ENV"
+
+          docker_cache=()
+          if [ "${{ steps.ci_cache_cr_login.outcome }}" = "success" ]; then
+            docker_cache+=(--cache-from "$CI_CACHE_ACR_URI/tredev:${{ inputs.DEVCONTAINER_TAG }}")
+            docker_cache+=(--cache-from "$CI_CACHE_ACR_URI/tredev:latest")
+          fi
+
+          docker build . "${docker_cache[@]}" \
+            -t "tredev:${{ inputs.DEVCONTAINER_TAG }}" -f ".devcontainer/Dockerfile" \
+            --build-arg BUILDKIT_INLINE_CACHE=1 --build-arg USER_UID="${USER_UID}" --build-arg USER_GID="${USER_GID}"
+
+          docker image tag tredev:"${{ inputs.DEVCONTAINER_TAG }}" \
+            "$CI_CACHE_ACR_URI/tredev:${{ inputs.DEVCONTAINER_TAG }}"
+
+      - name: Deploy management
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make bootstrap mgmt-deploy"
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
+          TRE_ID: ${{ secrets.TRE_ID }}
+          LOCATION: ${{ vars.LOCATION }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          TERRAFORM_STATE_CONTAINER_NAME: ${{ vars.TERRAFORM_STATE_CONTAINER_NAME }}
+          MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
+          MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
+
+      - name: ACR Login
+        # failure in the first attempt indicates a new ACR, so we need to try again after it's been created
+        if: steps.ci_cache_cr_login.outcome != 'success'
+        run: |
+          # shellcheck disable=SC2034,SC2015,SC2125
+          for i in {1..3}; do
+            az acr login --name "${{ secrets.CI_CACHE_ACR_NAME }}" && ec=0 && break || ec="$?" && sleep 10
+          done
+          # shellcheck disable=SC2242
+          (exit "$ec")
+
+      - name: Push cached devcontainer
+        run: docker image push ${{ env.CI_CACHE_ACR_URI }}/tredev:${{ inputs.DEVCONTAINER_TAG }}
+
   prepare-not-main:
     name: Preparation
     runs-on: ubuntu-latest
@@ -53,11 +209,11 @@ jobs:
   register_bundle:
     name: Register Bundle
     runs-on: ubuntu-latest
-    needs: [prepare-not-main]
+    needs: [deploy_management, prepare-not-main]
     # environment is used to access the secrets for Azure credentials
     # to sign in to a container registry to re-use a dev container image as a build cache
-    # environment: ${{ inputs.environment || 'CICD'}}
-    environment: 'CICD'
+    environment: ${{ inputs.environmentName || 'CICD'}}
+    #environment: 'CICD'
     permissions:
       checks: write
       contents: read
@@ -74,7 +230,7 @@ jobs:
 
             # create a map of bundle_type to bundle_dir
             declare -A bundle_map
-            bundle_map[workspace]="./templates/workspaces/base"
+            bundle_map[base]="./templates/workspaces/base"
             bundle_map[unrestricted]="./templates/workspaces/unrestricted"
             bundle_map[airlock-import-review]="./templates/workspaces/airlock-import-review"
             bundle_map[guacamole]="./templates/workspace_services/guacamole"
@@ -98,27 +254,24 @@ jobs:
               bundle_type="${{ inputs.bundle_type }}"
             fi
 
+            echo "bundle_type: $bundle_type"
             bundle_dir="${bundle_map[$bundle_type]}"
 
             echo "Bundle directory: $bundle_dir"
-            make bundle-register DIR="${bundle_dir}"
-          DEVCONTAINER_TAG: latest
-          AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
-          AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
-          ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
+            make workspace_bundle BUNDLE="${bundle_dir}"
+          # publish bundle variables
+          DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
-          API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
-          APPLICATION_ADMIN_CLIENT_ID: ${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}
-          APPLICATION_ADMIN_CLIENT_SECRET: ${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}
-          MGMT_RESOURCE_GROUP_NAME: ${{ format('rg-tre{0}-mgmt', needs.prepare-not-main.outputs.refid) }}
-          MS_TEAMS_WEBHOOK_URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          MGMT_STORAGE_ACCOUNT_NAME: ${{ format('tre{0}mgmt', needs.prepare-not-main.outputs.refid) }}
-          SWAGGER_UI_CLIENT_ID: ${{ secrets.SWAGGER_UI_CLIENT_ID }}
-          TEST_APP_ID: ${{ secrets.TEST_APP_ID }}
-          TEST_WORKSPACE_APP_ID: ${{ secrets.TEST_WORKSPACE_APP_ID }}
-          TEST_WORKSPACE_APP_SECRET: ${{ secrets.TEST_WORKSPACE_APP_SECRET }}
+          AZURE_ENVIRONMENT: ${{ inputs.environmentName }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+
+          # register bundle variables
+          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
-          CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
+          TRE_ID: ${{ secrets.TRE_ID }}
+          LOCATION: ${{ vars.LOCATION }}
+
