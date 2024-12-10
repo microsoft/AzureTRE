@@ -171,7 +171,7 @@ jobs:
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
           TRE_ID: ${{ secrets.TRE_ID }}
-          LOCATION: ${{ vars.LOCATION }}
+          LOCATION: "uksouth"
           ACR_NAME: ${{ secrets.ACR_NAME }}
           TERRAFORM_STATE_CONTAINER_NAME: ${{ vars.TERRAFORM_STATE_CONTAINER_NAME }}
           MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
@@ -280,5 +280,5 @@ jobs:
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: ${{ secrets.TRE_ID }}
-          LOCATION: ${{ vars.LOCATION }}
+          LOCATION: "uksouth"
 
