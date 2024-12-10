@@ -152,22 +152,21 @@ jobs:
 
           docker_cache=()
           if [ "${{ steps.ci_cache_cr_login.outcome }}" = "success" ]; then
-            docker_cache+=(--cache-from "$CI_CACHE_ACR_URI/tredev:${{ inputs.DEVCONTAINER_TAG }}")
             docker_cache+=(--cache-from "$CI_CACHE_ACR_URI/tredev:latest")
           fi
 
           docker build . "${docker_cache[@]}" \
-            -t "tredev:${{ inputs.DEVCONTAINER_TAG }}" -f ".devcontainer/Dockerfile" \
+            -t "tredev:latest" -f ".devcontainer/Dockerfile" \
             --build-arg BUILDKIT_INLINE_CACHE=1 --build-arg USER_UID="${USER_UID}" --build-arg USER_GID="${USER_GID}"
 
-          docker image tag tredev:"${{ inputs.DEVCONTAINER_TAG }}" \
-            "$CI_CACHE_ACR_URI/tredev:${{ inputs.DEVCONTAINER_TAG }}"
+          docker image tag tredev:"latest" \
+            "$CI_CACHE_ACR_URI/tredev:latest"
 
       - name: Deploy management
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make bootstrap mgmt-deploy"
-          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
+          DEVCONTAINER_TAG: latest
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
@@ -190,7 +189,7 @@ jobs:
           (exit "$ec")
 
       - name: Push cached devcontainer
-        run: docker image push ${{ env.CI_CACHE_ACR_URI }}/tredev:${{ inputs.DEVCONTAINER_TAG }}
+        run: docker image push ${{ env.CI_CACHE_ACR_URI }}/tredev:latest
 
   prepare-not-main:
     name: Preparation
