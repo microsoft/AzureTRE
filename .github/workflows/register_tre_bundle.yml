@@ -34,7 +34,7 @@ jobs:
     permissions:
       checks: write
       contents: read
-    environment: ${{ inputs.environmentName }}
+    environment: ${{ inputs.environmentName || 'CICD'}}
     steps:
       - name: Show inputs
         run: |
@@ -42,7 +42,11 @@ jobs:
           echo "======"
           echo "prRHeadSha  : ${{ github.sha }}"
           echo "ciGitRef    : ${{ github.ref }}"
-          echo "environment : ${{ inputs.environmentName }}"
+          echo "environment : ${{ inputs.environmentName || 'CICD'}}"
+          echo AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
+          echo ACR_NAME: ${{ secrets.ACR_NAME }}
+          echo API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
+
 
       # - name: Check required values
       #   id: check_required_values
@@ -262,13 +266,13 @@ jobs:
           # publish bundle variables
           DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ inputs.environmentName }}
+          AZURE_ENVIRONMENT: ${{ inputs.environmentName || 'CICD'}}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           ACR_NAME: ${{ secrets.ACR_NAME }}
 
           # register bundle variables
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
-          # AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
