@@ -10,6 +10,11 @@
   ],
   "authorizedRoles": [],
   "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Display Name",
+      "description": "Display name for Base Workspace."
+    },
     "shared_storage_quota": {
       "type": "integer",
       "title": "Shared Storage Quota",

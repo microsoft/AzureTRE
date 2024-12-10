@@ -47,6 +47,12 @@
       }
     },
     {
+      "name": "display_name",
+      "source": {
+        "env": "DISPLAY_NAME"
+      }
+    },
+    {
       "name": "shared_storage_quota",
       "source": {
         "env": "SHARED_STORAGE_QUOTA"

@@ -54,6 +54,9 @@ parameters:
   - name: arm_use_msi
     type: boolean
     default: false
+  - name: display_name
+    type: string
+    description: "The display name for base workspace"
   - name: shared_storage_quota
     type: integer
     default: 50
@@ -164,6 +167,7 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         location: ${ bundle.parameters.azure_location }
         address_spaces: ${ bundle.parameters.address_spaces }
+        display_name: ${ bundle.parameters.display_name }
         shared_storage_quota: ${ bundle.parameters.shared_storage_quota }
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
         register_aad_application: ${ bundle.parameters.register_aad_application }
@@ -204,6 +208,7 @@ upgrade:
         tre_resource_id: ${ bundle.parameters.id }
         location: ${ bundle.parameters.azure_location }
         address_spaces: ${ bundle.parameters.address_spaces }
+        display_name: ${ bundle.parameters.display_name }
         shared_storage_quota: ${ bundle.parameters.shared_storage_quota }
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
         register_aad_application: ${ bundle.parameters.register_aad_application }
@@ -268,6 +273,7 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         location: ${ bundle.parameters.azure_location }
         address_spaces: ${ bundle.parameters.address_spaces }
+        display_name: ${ bundle.parameters.display_name }
         shared_storage_quota: ${ bundle.parameters.shared_storage_quota }
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
         register_aad_application: ${ bundle.parameters.register_aad_application }
