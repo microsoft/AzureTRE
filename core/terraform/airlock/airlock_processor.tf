@@ -24,6 +24,8 @@ resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
   location                         = var.location
   account_tier                     = "Standard"
   account_replication_type         = "LRS"
+  table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
   tags                             = var.tre_core_tags
