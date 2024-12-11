@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-admin-vm
-version: 0.4.7
+version: 0.4.8
 description: "An admin vm shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -47,7 +47,7 @@ parameters:
 
 mixins:
   - terraform:
-      clientVersion: 1.3.6
+      clientVersion: 1.9.8
 
 install:
   - terraform:
