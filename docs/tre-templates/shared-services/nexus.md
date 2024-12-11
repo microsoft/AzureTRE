@@ -93,6 +93,7 @@ Nexus Shared Service requires access to resources outside of the Azure TRE VNET.
 | Microsoft Keys | raw | [https://packages.microsoft.com/keys/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-keys` | Provide access to Microsoft keys |
 | Microsoft Yum | yum | [https://packages.microsoft.com/yumrepos] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-yum` | Provide access to Microsoft Yum packages |
 | Microsoft Download | raw | [https://download.microsoft.com/download] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-download` | Provide access to Microsoft Downloads |
+| VS Code Extensions | raw | [https://marketplace.visualstudio.com/_apis/public/gallery/publishers/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/vscode-extensions/` | Provide access to VS Code extensions |
 
 ### Migrate from an existing V1 Nexus service (hosted on App Service)
 
@@ -130,3 +131,15 @@ sudo docker pull {NEXUS_URL}:8083/hello-world
 the default port out of the box is 8083
 
 Nexus will also need "Anonymous Access" set to "Enable". This can be done by logging into the Nexus Portal with the Admin user and following the prompts.
+
+## Using the VS Code Extensions
+
+To fetch and install VS Code extensions, use the following commands:
+
+```bash
+curl -o {publisher}-{extension}-{version}.vsix https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/vscode-extensions/{publisher}/vsextensions/{extension}/{version}/vspackage
+
+code --install-extension {publisher}-{extension}-{version}.vsix
+```
+
+The extensions which are  available to users can be restricred by configuring content selectors using the package `path` via the SonatypeNexus RM web interface.
