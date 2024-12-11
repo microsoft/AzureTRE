@@ -182,7 +182,9 @@ runs:
         SCRIPT_FILE=$(mktemp)
         mv "${SCRIPT_FILE}" "${SCRIPT_FILE,,}"
         SCRIPT_FILE="${SCRIPT_FILE,,}"
-        echo "${{ inputs.COMMAND }}" > "${SCRIPT_FILE}"
+        cat << 'EOF' > "${SCRIPT_FILE}"
+        ${{ inputs.COMMAND }}
+        EOF
         chmod +x "${SCRIPT_FILE}"
 
         docker run --rm \
