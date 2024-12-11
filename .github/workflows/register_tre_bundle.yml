@@ -213,10 +213,7 @@ jobs:
     name: Register Bundle
     runs-on: ubuntu-latest
     needs: [deploy_management, prepare-not-main]
-    # environment is used to access the secrets for Azure credentials
-    # to sign in to a container registry to re-use a dev container image as a build cache
     environment: ${{ inputs.environmentName || 'CICD'}}
-    #environment: 'CICD'
     permissions:
       checks: write
       contents: read
@@ -259,15 +256,11 @@ jobs:
             fi
 
             echo "Finished bundle registration"
-
-          # publish bundle variables
           DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
           CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME}}
           ACR_NAME: ${{ secrets.ACR_NAME }}
-
-          # register bundle variables
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
@@ -275,4 +268,3 @@ jobs:
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: ${{ secrets.TRE_ID }}
           LOCATION: "uksouth"
-
