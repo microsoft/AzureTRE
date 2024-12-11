@@ -28,12 +28,12 @@ on:
           - workspace_service
           - shared_service
           - user_resource
-        default: workspace
+        default: workspace_service
         required: true
       bundle_name:
         description: The name of the bundle to register
         type: string
-        default: base
+        default: azureml
         required: true
       workspace_service_name:
         description: The name of the workspace service to register user resources for
@@ -271,7 +271,7 @@ jobs:
 
             # if inputs.bundle_type is workspace_service
             if [ "${{ inputs.bundle_type }}" = "workspace_service" ]; then
-              echo "Registering workspace service bundle ${{ inputs.bundle_name }} of type ${{ inputs.bundle_type }}"
+              echo "  bundle ${{ inputs.bundle_name }} of type ${{ inputs.bundle_type }}"
               make workspace_service_bundle BUNDLE="${bundle_name}" WORKSPACE_SERVICE="${{ inputs.workspace_service_name }}"
             fi
 

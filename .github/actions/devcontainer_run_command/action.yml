@@ -178,7 +178,7 @@ runs:
     - name: Run command in DevContainer
       shell: bash
       run: |
-        docker run --rm --mount \
+        docker run --name devcontainer_run_command --rm --mount \
           "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
           -v /var/run/docker.sock:/var/run/docker.sock \
           --workdir /workspaces/tre \
@@ -246,4 +246,9 @@ runs:
           -e TF_VAR_app_gateway_sku=${{ inputs.APP_GATEWAY_SKU }} \
           -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
-        bash -c "${{ inputs.COMMAND }}"
+        bash -c "(${{ inputs.COMMAND }}) 2>&1 | tee devcontainer_output.log"
+
+
+    - name: Get Dev Container logs
+      run: docker logs devcontainer_run_command 2>&1 | tee devcontainer_runtime.log
+
