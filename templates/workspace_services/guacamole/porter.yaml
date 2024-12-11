@@ -125,7 +125,7 @@ outputs:
 
 mixins:
   - terraform:
-      clientVersion: 1.4.6
+      clientVersion: 1.9.8
 
 install:
   - terraform:
