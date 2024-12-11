@@ -183,9 +183,9 @@ runs:
         echo "${{ inputs.COMMAND }}" > "${SCRIPT_FILE}"
         chmod +x "${SCRIPT_FILE}"
 
-        docker run --rm --mount \
-          "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
-          "type=bind,src=${SCRIPT_FILE},dst=/tmp/command.sh" \
+        docker run --rm \
+          --mount "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
+          --mount "type=bind,src=${SCRIPT_FILE},dst=/tmp/command.sh" \
           -v /var/run/docker.sock:/var/run/docker.sock \
           --workdir /workspaces/tre \
           --user vscode \
