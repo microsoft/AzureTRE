@@ -247,7 +247,10 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: >-
-
+            echo "Starting bundle registration"
+            echo "bundle_name: [${{ inputs.bundle_name }}]"
+            echo "bundle_type: [${{ inputs.bundle_type }}]"
+            echo "workspace_service_name: [${{ inputs.workspace_service_name }}]"
 
             # # if inputs.bundle_name is empty, use the default value
             # if [ -z "${{ inputs.bundle_name }}" ]; then
@@ -286,6 +289,8 @@ jobs:
               echo "Registering user resource bundle ${{ inputs.bundle_name }} of type ${{ inputs.bundle_type }} into workspace service ${{ inputs.workspace_service_name }}"
               make user_resource_bundle BUNDLE="${bundle_name}" WORKSPACE_SERVICE="${{ inputs.workspace_service_name }}"
             fi
+
+            echo "Finished bundle registration"
 
           # publish bundle variables
           DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
