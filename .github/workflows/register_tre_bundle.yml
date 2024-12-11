@@ -38,7 +38,7 @@ on:
       workspace_service_name:
         description: The name of the workspace service to register user resources for
         type: string
-        required: ${{ inputs.bundle_type == 'user_resource'? true : false }}
+        required: false
       prRef:
         description: The git ref to checkout
         type: string
