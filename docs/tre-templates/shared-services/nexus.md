@@ -142,4 +142,4 @@ curl -o {publisher}-{extension}-{version}.vsix https://nexus-{TRE_ID}.{LOCATION}
 code --install-extension {publisher}-{extension}-{version}.vsix
 ```
 
-The extensions which are  available to users can be restricred by configuring content selectors using the package `path` via the SonatypeNexus RM web interface.
+The extensions which are  available to users can be restricted by configuring content selectors using the package `path` via the SonatypeNexus RM web interface.
