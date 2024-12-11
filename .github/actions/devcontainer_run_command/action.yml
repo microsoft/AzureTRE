@@ -175,6 +175,10 @@ runs:
       run: |
         echo "ACR_DOMAIN_SUFFIX=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)" >> $GITHUB_ENV
 
+    - name: List docker containers
+      shell: bash
+      run: docker ps -a
+
     - name: Run command in DevContainer
       shell: bash
       run: |
