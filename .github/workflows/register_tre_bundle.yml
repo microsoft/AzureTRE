@@ -246,8 +246,7 @@ jobs:
       - name: Register Bundle
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: >-
-            echo "Starting bundle registration"
+          COMMAND: "echo Starting bundle registration"
 
           # publish bundle variables
           DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
