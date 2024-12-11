@@ -178,7 +178,7 @@ runs:
     - name: Run command in DevContainer
       shell: bash
       run: |
-        docker run --name devcontainer_run_command --rm --mount \
+        docker run --rm --mount \
           "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
           -v /var/run/docker.sock:/var/run/docker.sock \
           --workdir /workspaces/tre \
