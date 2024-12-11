@@ -2,6 +2,7 @@
 name: Register TRE Bundle
 
 # This workflow is intended to be used to register a TRE bundle into an existing TRE environment
+# by default, if not specified, the base workspace bundle will be registered into the TRE environment.
 
 on:
   workflow_call:
@@ -66,58 +67,39 @@ jobs:
           echo API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
 
 
-      # - name: Check required values
-      #   id: check_required_values
-      #   # since this is a resuable workflow, required=true secrets will always have a value but it can be empty.
-      #   run: |
-      #     if [ "${{ secrets.AAD_TENANT_ID }}" == '' ]; then
-      #       echo "Missing secret: AAD_TENANT_ID" && exit 1
-      #     fi
-      #     if [ "${{ secrets.ACR_NAME }}" == '' ]; then
-      #       echo "Missing secret: ACR_NAME" && exit 1
-      #     fi
-      #     if [ "${{ secrets.API_CLIENT_ID }}" == '' ]; then
-      #       echo "Missing secret: API_CLIENT_ID" && exit 1
-      #     fi
-      #     if [ "${{ secrets.API_CLIENT_SECRET }}" == '' ]; then
-      #       echo "Missing secret: API_CLIENT_SECRET" && exit 1
-      #     fi
-      #     if [ "${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}" == '' ]; then
-      #       echo "Missing secret: APPLICATION_ADMIN_CLIENT_ID" && exit 1
-      #     fi
-      #     if [ "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}" == '' ]; then
-      #       echo "Missing secret: APPLICATION_ADMIN_CLIENT_SECRET" && exit 1
-      #     fi
-      #     if [ "${{ secrets.MGMT_RESOURCE_GROUP_NAME }}" == '' ]; then
-      #       echo "Missing secret: MGMT_RESOURCE_GROUP_NAME" && exit 1
-      #     fi
-      #     if [ "${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}" == '' ]; then
-      #       echo "Missing secret: MGMT_STORAGE_ACCOUNT_NAME" && exit 1
-      #     fi
-      #     if [ "${{ secrets.SWAGGER_UI_CLIENT_ID }}" == '' ]; then
-      #       echo "Missing secret: SWAGGER_UI_CLIENT_ID" && exit 1
-      #     fi
-      #     if [ "${{ secrets.TEST_APP_ID }}" == '' ]; then
-      #       echo "Missing secret: TEST_APP_ID" && exit 1
-      #     fi
-      #     if [ "${{ secrets.TEST_WORKSPACE_APP_ID }}" == '' ]; then
-      #       echo "Missing secret: TEST_WORKSPACE_APP_ID" && exit 1
-      #     fi
-      #     if [ "${{ secrets.TEST_WORKSPACE_APP_SECRET }}" == '' ]; then
-      #       echo "Missing secret: TEST_WORKSPACE_APP_SECRET" && exit 1
-      #     fi
-      #     if [ "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}" == '' ]; then
-      #       echo "Missing secret: TEST_ACCOUNT_CLIENT_ID" && exit 1
-      #     fi
-      #     if [ "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}" == '' ]; then
-      #       echo "Missing secret: TEST_ACCOUNT_CLIENT_SECRET" && exit 1
-      #     fi
-      #     if [ "${{ secrets.TRE_ID }}" == '' ]; then
-      #       echo "Missing secret: TRE_ID" && exit 1
-      #     fi
-      #     if [ "${{ secrets.AZURE_CREDENTIALS }}" == '' ]; then
-      #       echo "Missing secret: AZURE_CREDENTIALS" && exit 1
-      #     fi
+      - name: Check required values
+        id: check_required_values
+        run: |
+          if [ "${{ secrets.AAD_TENANT_ID }}" == '' ]; then
+            echo "Missing secret: AAD_TENANT_ID" && exit 1
+          fi
+          if [ "${{ secrets.ACR_NAME }}" == '' ]; then
+            echo "Missing secret: ACR_NAME" && exit 1
+          fi
+          if [ "${{ secrets.API_CLIENT_ID }}" == '' ]; then
+            echo "Missing secret: API_CLIENT_ID" && exit 1
+          fi
+          if [ "${{ secrets.API_CLIENT_SECRET }}" == '' ]; then
+            echo "Missing secret: API_CLIENT_SECRET" && exit 1
+          fi
+          if [ "${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}" == '' ]; then
+            echo "Missing secret: APPLICATION_ADMIN_CLIENT_ID" && exit 1
+          fi
+          if [ "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}" == '' ]; then
+            echo "Missing secret: APPLICATION_ADMIN_CLIENT_SECRET" && exit 1
+          fi
+          if [ "${{ secrets.MGMT_RESOURCE_GROUP_NAME }}" == '' ]; then
+            echo "Missing secret: MGMT_RESOURCE_GROUP_NAME" && exit 1
+          fi
+          if [ "${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}" == '' ]; then
+            echo "Missing secret: MGMT_STORAGE_ACCOUNT_NAME" && exit 1
+          fi
+          if [ "${{ secrets.TRE_ID }}" == '' ]; then
+            echo "Missing secret: TRE_ID" && exit 1
+          fi
+          if [ "${{ secrets.AZURE_CREDENTIALS }}" == '' ]; then
+            echo "Missing secret: AZURE_CREDENTIALS" && exit 1
+          fi
 
       - name: Report check status start
         if: github.sha != ''
