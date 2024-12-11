@@ -269,7 +269,7 @@ jobs:
           # publish bundle variables
           DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_ENVIRONMENT: ${{ inputs.environmentName || 'CICD'}}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
           CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME}}
           ACR_NAME: ${{ secrets.ACR_NAME }}
 
