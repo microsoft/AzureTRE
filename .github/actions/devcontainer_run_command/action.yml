@@ -250,5 +250,6 @@ runs:
 
 
     - name: Get Dev Container logs
+      shell: bash
       run: docker logs devcontainer_run_command 2>&1 | tee devcontainer_runtime.log
 
