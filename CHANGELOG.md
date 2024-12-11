@@ -20,6 +20,7 @@ ENHANCEMENTS:
 * Move Github PR bot commands into main documentation ([#4167](https://github.com/microsoft/AzureTRE/pull/4167))
 * Block Authentication with keys to CosmosDB SQL account ([#4175](https://github.com/microsoft/AzureTRE/pull/4175))
 * Add support for customer-managed keys encryption in base workspace ([#4161](https://github.com/microsoft/AzureTRE/pull/4161))
+* Change the way "inherited" workspaces retrieve the base workspace code ([#4162](https://github.com/microsoft/AzureTRE/issues/4162))
 
 BUG FIXES:
 - Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
