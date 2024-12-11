@@ -248,6 +248,9 @@ runs:
           '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c "(${{ inputs.COMMAND }}) 2>&1 | tee devcontainer_output.log"
 
+    - name: List docker containers
+      shell: bash
+      run: docker ps -a
 
     - name: Get Dev Container logs
       shell: bash
