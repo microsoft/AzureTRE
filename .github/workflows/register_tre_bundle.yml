@@ -246,7 +246,7 @@ jobs:
       - name: Register Bundle
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: >-
+          COMMAND: |
             echo "Starting bundle registration"
             echo "bundle_name: [${{ inputs.bundle_name }}]"
             echo "bundle_type: [${{ inputs.bundle_type }}]"
