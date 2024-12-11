@@ -13,7 +13,7 @@ sudo rm -f /etc/apt/sources.list.d/*
 echo "init_vm.sh: START"
 sudo apt update || true
 sudo apt upgrade -y
-sudo apt install -y gnupg2 software-properties-common apt-transport-https wget dirmngr gdebi-core
+sudo apt install -y gnupg2 software-properties-common apt-transport-https wget dirmngr gdebi-core debconf-utils
 sudo apt-get update || true
 
 ## Desktop
@@ -23,23 +23,12 @@ DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true dpkg-reconfigure
 sudo apt install -y xfce4 xfce4-goodies xorg dbus-x11 x11-xserver-utils
 echo /usr/sbin/gdm3 > /etc/X11/default-display-manager
 
-## Install xrdp so Guacamole can connect via RDP
-echo "init_vm.sh: xrdp"
-sudo apt install -y xrdp xorgxrdp xfce4-session
-sudo adduser xrdp ssl-cert
-sudo -u "${VM_USER}" -i bash -c 'echo xfce4-session > ~/.xsession'
-sudo -u "${VM_USER}" -i bash -c 'echo xset s off >> ~/.xsession'
-sudo -u "${VM_USER}" -i bash -c 'echo xset -dpms >> ~/.xsession'
-
-# Make sure xrdp service starts up with the system
-sudo systemctl enable xrdp
-sudo service xrdp restart
-
 ## Python 3.8 and Jupyter
 sudo apt install -y jupyter-notebook microsoft-edge-dev
 
 ## VS Code
 echo "init_vm.sh: VS Code"
+echo code code/add-microsoft-repo boolean false | sudo debconf-set-selections
 sudo apt install -y code
 sudo apt install -y gvfs-bin || true
 
@@ -98,9 +87,6 @@ echo "init_vm.sh: RStudio"
 wget "${NEXUS_PROXY_URL}"/repository/r-studio-download/electron/jammy/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2204
 wget "${NEXUS_PROXY_URL}"/repository/r-studio-download/electron/focal/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2004
 sudo gdebi --non-interactive /tmp/"${APT_SKU}"/rstudio-2023.12.1-402-amd64.deb
-
-# Fix for blank screen on DSVM (/sh -> /bash due to conflict with profile.d scripts)
-sudo sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
 
 if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   # Install required packages
@@ -192,6 +178,20 @@ ResultInactive=no
 ResultActive=yes
 EOF
 
+## Install xrdp so Guacamole can connect via RDP
+echo "init_vm.sh: xrdp"
+sudo apt install -y xrdp xorgxrdp xfce4-session
+sudo adduser xrdp ssl-cert
+sudo -u "${VM_USER}" -i bash -c 'echo xfce4-session > ~/.xsession'
+sudo -u "${VM_USER}" -i bash -c 'echo xset s off >> ~/.xsession'
+sudo -u "${VM_USER}" -i bash -c 'echo xset -dpms >> ~/.xsession'
+
+# Fix for blank screen on DSVM (/sh -> /bash due to conflict with profile.d scripts)
+sudo sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
+
+# Make sure xrdp service starts up with the system
+sudo systemctl enable xrdp
+sudo service xrdp restart
+
 ## Cleanup
 echo "init_vm.sh: Cleanup"
-sudo shutdown -r now
