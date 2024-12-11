@@ -12,6 +12,9 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 WORKDIR $BUNDLE_DIR
 
 # copy files from the base workspace (dir passed to porter via --build-context)
+# ignoring hadolint DL3022; for details see https://github.com/hadolint/hadolint/issues/830
+#
+# hadolint ignore=DL3022
 COPY --from=base --link . ${BUNDLE_DIR}/
 
 # PORTER_MIXINS
