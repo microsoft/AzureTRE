@@ -248,8 +248,8 @@ jobs:
         with:
           COMMAND: |
             echo "Starting bundle registration"
-            bundle_name="${{ inputs.bundle_name }} || base"
-            bundle_type="${{ inputs.bundle_type }} || workspace"
+            bundle_name="${{ inputs.bundle_name || 'base' }}"
+            bundle_type="${{ inputs.bundle_type || 'workspace' }}"
             workspace_service_name="${{ inputs.workspace_service_name }}"
 
             echo "bundle_name: [${bundle_name}]"
