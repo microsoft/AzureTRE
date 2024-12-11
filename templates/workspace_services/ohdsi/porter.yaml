@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-ohdsi
-version: 0.2.4
+version: 0.3.0
 description: "An OHDSI workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -122,6 +122,8 @@ install:
         data_source_config: ${ bundle.parameters.data_source_config }
         data_source_daimons: ${ bundle.parameters.data_source_daimons }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -166,6 +168,8 @@ upgrade:
         data_source_config: ${ bundle.parameters.data_source_config }
         data_source_daimons: ${ bundle.parameters.data_source_daimons }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -188,6 +192,8 @@ uninstall:
         data_source_config: ${ bundle.parameters.data_source_config }
         data_source_daimons: ${ bundle.parameters.data_source_daimons }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
