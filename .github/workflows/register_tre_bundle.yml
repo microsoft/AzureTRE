@@ -252,19 +252,19 @@ jobs:
             echo "bundle_type: [${{ inputs.bundle_type }}]"
             echo "workspace_service_name: [${{ inputs.workspace_service_name }}]"
 
-            # # if inputs.bundle_name is empty, use the default value
-            # if [ -z "${{ inputs.bundle_name }}" ]; then
-            #   bundle_name="base"
-            # else
-            #   bundle_name="${{ inputs.bundle_name }}"
-            # fi
+            # if inputs.bundle_name is empty, use the default value
+            if [ -z "${{ inputs.bundle_name }}" ]; then
+              bundle_name="base"
+            else
+              bundle_name="${{ inputs.bundle_name }}"
+            fi
 
-            # # if inputs.bundle_type is empty, use the default value
-            # if [ -z "${{ inputs.bundle_type }}" ]; then
-            #   bundle_type="workspace"
-            # else
-            #   bundle_type="${{ inputs.bundle_type }}"
-            # fi
+            # if inputs.bundle_type is empty, use the default value
+            if [ -z "${{ inputs.bundle_type }}" ]; then
+              bundle_type="workspace"
+            else
+              bundle_type="${{ inputs.bundle_type }}"
+            fi
 
             # if inputs.bundle_type is workspace
             if [ "${{ inputs.bundle_type }}" = "workspace" ]; then
