@@ -27,6 +27,7 @@ BUG FIXES:
 - Fix Dockerfile 'as' casting ([#4170](https://github.com/microsoft/AzureTRE/pull/4170))
 - Create policy to allow all user to configure color profiles to remove auth dialog. ([#4184](https://github.com/microsoft/AzureTRE/pull/4184))
 - Pre configure VS code option to prevent script failure ([#4185](https://github.com/microsoft/AzureTRE/pull/4185))
+- Increase size of Nexus VM, and derive Java VM memory limits from machine size ([#4074](https://github.com/microsoft/AzureTRE/issues/4074))
 
 COMPONENTS:
 
