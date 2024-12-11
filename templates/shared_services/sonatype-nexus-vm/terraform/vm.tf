@@ -87,10 +87,12 @@ resource "azurerm_user_assigned_identity" "nexus_msi" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_role_assignment" "keyvault_nexus_role" {
-  scope                = data.azurerm_key_vault.kv.id
-  role_definition_name = "Key Vault Secrets User"
-  principal_id         = azurerm_user_assigned_identity.nexus_msi.principal_id
+resource "azurerm_key_vault_access_policy" "nexus_msi" {
+  key_vault_id = data.azurerm_key_vault.kv.id
+  tenant_id    = azurerm_user_assigned_identity.nexus_msi.tenant_id
+  object_id    = azurerm_user_assigned_identity.nexus_msi.principal_id
+
+  secret_permissions = ["Get", "List"]
 }
 
 resource "azurerm_linux_virtual_machine" "nexus" {
@@ -98,7 +100,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   resource_group_name             = local.core_resource_group_name
   location                        = data.azurerm_resource_group.rg.location
   network_interface_ids           = [azurerm_network_interface.nexus.id]
-  size                            = "Standard_B2s"
+  size                            = "Standard_B8ms"
   disable_password_authentication = false
   admin_username                  = "adminuser"
   admin_password                  = random_password.nexus_vm_password.result
@@ -132,7 +134,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   }
 
   depends_on = [
-    azurerm_role_assignment.keyvault_nexus_role
+    azurerm_key_vault_access_policy.nexus_msi
   ]
 
   connection {
