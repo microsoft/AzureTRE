@@ -65,8 +65,26 @@ resource "azurerm_container_registry" "shared_acr" {
   name                = var.acr_name
   resource_group_name = azurerm_resource_group.mgmt.name
   location            = azurerm_resource_group.mgmt.location
-  sku                 = var.acr_sku
+  sku                 = var.acr_sku != null ? var.acr_sku : (var.enable_cmk_encryption ? "Premium" : "Standard")
   admin_enabled       = true
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [azurerm_user_assigned_identity.tre_mgmt_encryption[0].id]
+    }
+  }
+
+  dynamic "encryption" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      enabled            = true
+      key_vault_key_id   = azurerm_key_vault_key.tre_mgmt_encryption[0].id
+      identity_client_id = azurerm_user_assigned_identity.tre_mgmt_encryption[0].client_id
+    }
+
+  }
 
   lifecycle { ignore_changes = [tags] }
 }

@@ -29,6 +29,22 @@ resource "azurerm_servicebus_namespace" "sb" {
     }
   }
 
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id = azurerm_key_vault_key.tre_encryption[0].id
+      identity_id      = azurerm_user_assigned_identity.encryption[0].id
+    }
+  }
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [azurerm_user_assigned_identity.encryption[0].id]
+    }
+  }
+
   lifecycle { ignore_changes = [tags] }
 }
 

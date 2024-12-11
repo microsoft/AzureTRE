@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-firewall
-version: 1.2.6
+version: 1.2.7
 description: "An Azure TRE Firewall shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -57,7 +57,7 @@ parameters:
 
 mixins:
   - terraform:
-      clientVersion: 1.4.5
+      clientVersion: 1.9.8
 
 install:
   - terraform:
