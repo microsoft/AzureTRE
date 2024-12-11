@@ -246,7 +246,51 @@ jobs:
       - name: Register Bundle
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "echo Starting bundle registration"
+          COMMAND: >-
+            echo "Starting bundle registration"
+            echo "bundle_name: [${{ inputs.bundle_name }}]"
+            echo "bundle_type: [${{ inputs.bundle_type }}]"
+            echo "workspace_service_name: [${{ inputs.workspace_service_name }}]"
+
+            # # if inputs.bundle_name is empty, use the default value
+            # if [ -z "${{ inputs.bundle_name }}" ]; then
+            #   bundle_name="base"
+            # else
+            #   bundle_name="${{ inputs.bundle_name }}"
+            # fi
+
+            # # if inputs.bundle_type is empty, use the default value
+            # if [ -z "${{ inputs.bundle_type }}" ]; then
+            #   bundle_type="workspace"
+            # else
+            #   bundle_type="${{ inputs.bundle_type }}"
+            # fi
+
+            # if inputs.bundle_type is workspace
+            if [ "${{ inputs.bundle_type }}" = "workspace" ]; then
+              echo "Registering workspace bundle ${{ inputs.bundle_name }} of type ${{ inputs.bundle_type }}"
+              make workspace_bundle BUNDLE="${bundle_name}"
+            fi
+
+            # if inputs.bundle_type is workspace_service
+            if [ "${{ inputs.bundle_type }}" = "workspace_service" ]; then
+              echo "  bundle ${{ inputs.bundle_name }} of type ${{ inputs.bundle_type }}"
+              make workspace_service_bundle BUNDLE="${bundle_name}" WORKSPACE_SERVICE="${{ inputs.workspace_service_name }}"
+            fi
+
+            # if inputs.bundle_type is shared_service
+            if [ "${{ inputs.bundle_type }}" = "shared_service" ]; then
+              echo "Registering shared service bundle ${{ inputs.bundle_name }} of type ${{ inputs.bundle_type }}"
+              make shared_service_bundle BUNDLE="${bundle_name}"
+            fi
+
+            # if inputs.bundle_type is user_resource
+            if [ "${{ inputs.bundle_type }}" = "user_resource" ]; then
+              echo "Registering user resource bundle ${{ inputs.bundle_name }} of type ${{ inputs.bundle_type }} into workspace service ${{ inputs.workspace_service_name }}"
+              make user_resource_bundle BUNDLE="${bundle_name}" WORKSPACE_SERVICE="${{ inputs.workspace_service_name }}"
+            fi
+
+            echo "Finished bundle registration"
 
           # publish bundle variables
           DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
