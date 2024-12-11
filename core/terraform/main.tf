@@ -79,7 +79,7 @@ module "azure_monitor" {
   enable_local_debugging                   = var.enable_local_debugging
   enable_cmk_encryption                    = var.enable_cmk_encryption
   key_store_id                             = local.key_store_id
-  kv_encryption_key_name                   = var.kv_encryption_key_name
+  kv_encryption_key_name                   = local.cmk_name
   encryption_identity_id                   = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
@@ -112,7 +112,7 @@ module "appgateway" {
 
   enable_cmk_encryption  = var.enable_cmk_encryption
   key_store_id           = local.key_store_id
-  kv_encryption_key_name = var.kv_encryption_key_name
+  kv_encryption_key_name = local.cmk_name
   encryption_identity_id = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
@@ -152,7 +152,7 @@ module "airlock_resources" {
   myip                   = local.myip
   enable_cmk_encryption  = var.enable_cmk_encryption
   key_store_id           = local.key_store_id
-  kv_encryption_key_name = var.kv_encryption_key_name
+  kv_encryption_key_name = local.cmk_name
   encryption_identity_id = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
@@ -192,7 +192,7 @@ module "resource_processor_vmss_porter" {
   rp_bundle_values                                 = var.rp_bundle_values
   enable_cmk_encryption                            = var.enable_cmk_encryption
   key_store_id                                     = local.key_store_id
-  kv_encryption_key_name                           = var.kv_encryption_key_name
+  kv_encryption_key_name                           = local.cmk_name
 
   depends_on = [
     module.network,

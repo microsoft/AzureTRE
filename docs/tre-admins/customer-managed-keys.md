@@ -7,6 +7,9 @@ You can enable customer-managed keys (CMK) for supporting resources in Azure TRE
     CMK encryption is not supported for the rest of the resources such as those deployed by a TRE workspace.
 
 
+!!! caution
+    Currently, it is not possible to redeploy TRE with CMK enabled if it has previously been deployed without it. This is due to limitations of resources such as Azure Container Registry (ACR) that only allow enabling the CMK encryption at the time of resource creation.
+
 When enabled, CMK encryption provides an additional layer of encryption control for supported Azure resources within the TRE by allowing you to manage and control the encryption keys used to protect your data.
 
 To enable CMK encryption, set `enable_cmk_encryption: true` in the developer settings section of your `config.yaml` file.
