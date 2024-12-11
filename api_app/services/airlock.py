@@ -361,9 +361,10 @@ def check_email_exists(role_assignment_details: defaultdict(list)):
 
 async def get_airlock_requests_by_user_and_workspace(user: User, workspace: Workspace, airlock_request_repo: AirlockRequestRepository,
                                                      creator_user_id: Optional[str] = None, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None,
-                                                     order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
+                                                     order_by: Optional[str] = None, order_ascending=True,
+                                                     from_date: Optional[datetime] = None, to_date: Optional[datetime] = None) -> List[AirlockRequest]:
     return await airlock_request_repo.get_airlock_requests(workspace_id=workspace.id, creator_user_id=creator_user_id, type=type, status=status,
-                                                           order_by=order_by, order_ascending=order_ascending)
+                                                           order_by=order_by, order_ascending=order_ascending, from_date=from_date, to_date=to_date)
 
 
 def get_allowed_actions(request: AirlockRequest, user: User, airlock_request_repo: AirlockRequestRepository) -> AirlockRequestWithAllowedUserActions:

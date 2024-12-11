@@ -227,6 +227,9 @@ AIRLOCK_UNAUTHORIZED_TO_SA = "User is unauthorized to access airlock request fil
 AIRLOCK_NOT_ENABLED_IN_WORKSPACE = "Airlock is not enabled in this workspace."
 AIRLOCK_NO_RESEARCHER_EMAIL = "There are no Workspace Researchers with an email address."
 AIRLOCK_NO_AIRLOCK_MANAGER_EMAIL = "There are no Airlock Managers with an email address."
+AIRLOCK_TO_DATE_NEED_TO_BE_LATER_THEN_FROM_DATE = "to_date needs to be later than from_date"
+AIRLOCK_FROM_DATE_NEED_TO_BE_BEFORE_TO_DATE = "from_date needs to be before to_date"
+AIRLOCK_MAX_TIME_PERIOD = "The time period for pulling the data cannot exceed 1 year"
 
 # Airlock Actions
 AIRLOCK_ACTION_REVIEW = "review"

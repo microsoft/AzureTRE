@@ -1,4 +1,6 @@
 import logging
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status as status_code, Response
@@ -31,6 +33,24 @@ from services.airlock import create_review_vm, review_airlock_request, get_airlo
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 
+def validate_time_period(from_date: Optional[datetime], to_date: Optional[datetime]):  
+    # Valid option, no period of time was set
+    if from_date is None and to_date is None:        
+        return
+    # Valid option, only a upper limit is set
+    if from_date is None and to_date is not None:        
+        return
+    # Valid option, only a lower limit is set
+    if from_date is not None and to_date is None:        
+        return
+    
+    # From_date is higher then to_date
+    if from_date > to_date:
+        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
+                            detail=strings.AIRLOCK_TO_DATE_NEED_TO_BE_LATER_THEN_FROM_DATE)
+    # Filters required a too far away period
+    if relativedelta(to_date, from_date).years > 0:
+        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_MAX_TIME_PERIOD)
 
 # airlock
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests", status_code=status_code.HTTP_201_CREATED,
@@ -62,11 +82,14 @@ async def get_all_airlock_requests_by_workspace(
         workspace=Depends(get_deployed_workspace_by_id_from_path),
         user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager),
         creator_user_id: Optional[str] = None, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None,
-        order_by: Optional[str] = None, order_ascending: bool = True) -> AirlockRequestWithAllowedUserActionsInList:
+        order_by: Optional[str] = None, order_ascending: bool = True,
+        from_date: Optional[datetime] = None, to_date: Optional[datetime] = None) -> AirlockRequestWithAllowedUserActionsInList:
+    validate_time_period(from_date, to_date)
     try:
         airlock_requests = await get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo,
                                                                             creator_user_id=creator_user_id, type=type, status=status,
-                                                                            order_by=order_by, order_ascending=order_ascending)
+                                                                            order_by=order_by, order_ascending=order_ascending,
+                                                                            from_date=from_date, to_date=to_date)
         airlock_requests_with_allowed_user_actions = enrich_requests_with_allowed_actions(airlock_requests, user, airlock_request_repo)
         return AirlockRequestWithAllowedUserActionsInList(airlockRequests=airlock_requests_with_allowed_user_actions)
     except (ValidationError, ValueError) as e:

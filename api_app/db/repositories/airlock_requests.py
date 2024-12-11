@@ -114,7 +114,8 @@ class AirlockRequestRepository(BaseRepository):
 
         return airlock_request
 
-    async def get_airlock_requests(self, workspace_id: str, creator_user_id: Optional[str] = None, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
+    async def get_airlock_requests(self, workspace_id: str, creator_user_id: Optional[str] = None, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, 
+                                   order_by: Optional[str] = None, order_ascending=True, from_date: Optional[datetime] = None, to_date: Optional[datetime] = None) -> List[AirlockRequest]:
         query = self.airlock_requests_query() + f' WHERE c.workspaceId = "{workspace_id}"'
 
         # optional filters
@@ -125,15 +126,27 @@ class AirlockRequestRepository(BaseRepository):
         if type:
             query += ' AND c.type=@type'
 
+        # optional filtering by dates
+        from_date_timestamp = None
+        if from_date:
+            from_date_timestamp = from_date.timestamp()
+            query += ' AND c.createdWhen>=@from_date_timestamp'
+        to_date_timestamp = None
+        if to_date:
+            to_date_timestamp = to_date.timestamp()
+            query += ' AND c.createdWhen<=@to_date_timestamp'
+
         # optional sorting
         if order_by:
             query += ' ORDER BY c.' + order_by
             query += ' ASC' if order_ascending else ' DESC'
-
+        
         parameters = [
             {"name": "@user_id", "value": creator_user_id},
             {"name": "@status", "value": status},
             {"name": "@type", "value": type},
+            {"name": "@from_date_timestamp", "value": from_date_timestamp},
+            {"name": "@to_date_timestamp", "value": to_date_timestamp},
         ]
         airlock_requests = await self.query(query=query, parameters=parameters)
         return parse_obj_as(List[AirlockRequest], airlock_requests)
