@@ -21,10 +21,11 @@ while true; do
 done
 
 # Deduce memory available to Java. Either 3/4 of the system RAM, or a set minimum
+# shellcheck disable=SC2002
 mem_total_mb=$(( $(cat /proc/meminfo | head -1 | awk '{ print $2 }') / 1024 ))
 java_mem=2703
 if [ $mem_total_mb -gt 4096 ]; then
-  java_mem=$(( $mem_total_mb * 3 / 4 ))
+  java_mem=$(( mem_total_mb * 3 / 4 ))
 fi
 
 echo "System memory: ${mem_total_mb} MB. Java memory: ${java_mem} MB"
