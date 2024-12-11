@@ -21,10 +21,24 @@ on:
         default: CICD
         required: false
       bundle_type:
-        description: The type of bundle to register
+        description: The type of the bundle to register
+        type: choice
+        options:
+          - workspace
+          - workspace_service
+          - shared_service
+          - user_resource
+        default: workspace
+        required: true
+      bundle_name:
+        description: The name of the bundle to register
         type: string
         default: base
         required: true
+      workspace_service_name:
+        description: The name of the workspace service to register user resources for
+        type: string
+        required: ${{ inputs.bundle_type == 'user_resource'? true : false }}
       prRef:
         description: The git ref to checkout
         type: string
@@ -233,39 +247,46 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: >-
-            echo "Registering bundle of type ${{ inputs.bundle_type }}"
 
-            # create a map of bundle_type to bundle_dir
-            declare -A bundle_map
-            bundle_map[base]="./templates/workspaces/base"
-            bundle_map[unrestricted]="./templates/workspaces/unrestricted"
-            bundle_map[airlock-import-review]="./templates/workspaces/airlock-import-review"
-            bundle_map[guacamole]="./templates/workspace_services/guacamole"
-            bundle_map[azureml]="./templates/workspace_services/azureml"
-            bundle_map[gitea]="./templates/workspace_services/gitea"
-            bundle_map[mysql]="./templates/workspace_services/mysql"
-            bundle_map[health-services]="./templates/workspace_services/health-services"
-            bundle_map[databricks]="./templates/workspace_services/databricks"
-            bundle_map[ohdsi]="./templates/workspace_services/ohdsi"
-            bundle_map[azuresql]="./templates/workspace_services/azuresql"
-            bundle_map[openai]="./templates/workspace_services/openai"
-            bundle_map[guacamole-azure-windowsvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"
-            bundle_map[guacamole-azure-linuxvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm"
-            bundle_map[guacamole-azure-export-reviewvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm"
-            bundle_map[guacamole-azure-import-reviewvm]="./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm"
+
+            # if inputs.bundle_name is empty, use the default value
+            if [ -z "${{ inputs.bundle_name }}" ]; then
+              bundle_name="base"
+            else
+              bundle_name="${{ inputs.bundle_name }}"
+            fi
 
             # if inputs.bundle_type is empty, use the default value
             if [ -z "${{ inputs.bundle_type }}" ]; then
-              bundle_type="base"
+              bundle_type="workspace"
             else
               bundle_type="${{ inputs.bundle_type }}"
             fi
 
-            echo "bundle_type: $bundle_type"
-            bundle_dir="${bundle_map[$bundle_type]}"
+            # if inputs.bundle_type is workspace
+            if [ "${{ inputs.bundle_type }}" = "workspace" ]; then
+              echo "Registering workspace bundle ${{ inputs.bundle_name }} of type ${{ inputs.bundle_type }}"
+              make workspace_bundle BUNDLE="${bundle_name}"
+            fi
 
-            echo "Bundle directory: $bundle_dir"
-            make workspace_bundle BUNDLE="${bundle_dir}"
+            # if inputs.bundle_type is workspace_service
+            if [ "${{ inputs.bundle_type }}" = "workspace_service" ]; then
+              echo "Registering workspace service bundle ${{ inputs.bundle_name }} of type ${{ inputs.bundle_type }}"
+              make workspace_service_bundle BUNDLE="${bundle_name}" WORKSPACE_SERVICE="${{ inputs.workspace_service_name }}"
+            fi
+
+            # if inputs.bundle_type is shared_service
+            if [ "${{ inputs.bundle_type }}" = "shared_service" ]; then
+              echo "Registering shared service bundle ${{ inputs.bundle_name }} of type ${{ inputs.bundle_type }}"
+              make shared_service_bundle BUNDLE="${bundle_name}"
+            fi
+
+            # if inputs.bundle_type is user_resource
+            if [ "${{ inputs.bundle_type }}" = "user_resource" ]; then
+              echo "Registering user resource bundle ${{ inputs.bundle_name }} of type ${{ inputs.bundle_type }} into workspace service ${{ inputs.workspace_service_name }}"
+              make user_resource_bundle BUNDLE="${bundle_name}" WORKSPACE_SERVICE="${{ inputs.workspace_service_name }}"
+            fi
+
           # publish bundle variables
           DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
