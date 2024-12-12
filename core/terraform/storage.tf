@@ -4,6 +4,8 @@ resource "azurerm_storage_account" "stg" {
   location                         = azurerm_resource_group.core.location
   account_tier                     = "Standard"
   account_replication_type         = "LRS"
+  table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
 
