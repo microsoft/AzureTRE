@@ -70,3 +70,14 @@ data "azurerm_public_ip" "app_gateway_ip" {
   name                = "pip-agw-${var.tre_id}"
   resource_group_name = data.azurerm_resource_group.core.name
 }
+
+resource "azurerm_dev_test_global_vm_shutdown_schedule" "shutdown_schedule" {
+  location            = data.azurerm_resource_group.ws.location
+  virtual_machine_id  = azurerm_linux_virtual_machine.linuxvm.id
+  daily_recurrence_time                 = var.shutdown_time
+  timezone            = var.shutdown_timezone
+  enabled             = var.enable_shutdown_schedule
+  notification_settings {
+    enabled = false
+  }
+}

@@ -38,6 +38,73 @@
       "title": "Shared storage",
       "default": true,
       "description": "Enable access to shared storage"
+    },
+    "enable_shutdown_schedule": {
+      "$id": "#/properties/enable_shutdown_schedule",
+      "type": "boolean",
+      "title": "Enable Shutdown Schedule",
+      "default": false,
+      "description": "Enable automatic shutdown schedule for the VM"
+    },
+    "shutdown_time": {
+      "$id": "#/properties/shutdown_time",
+      "type": "string",
+      "title": "Shutdown Time",
+      "description": "Time of day to shutdown the VM (HH:MM format)",
+      "pattern": "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+    },
+    "shutdown_timezone": {
+      "$id": "#/properties/shutdown_timezone",
+      "type": "string",
+      "title": "Shutdown Timezone",
+      "description": "Timezone for the shutdown schedule",
+      "enum": [
+        "UTC",
+        "PST",
+        "EST",
+        "CST",
+        "MST"
+      ]
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "enable_shutdown_schedule": {
+            "const": true
+          }
+        },
+        "required": [
+          "enable_shutdown_schedule"
+        ]
+      },
+      "then": {
+        "properties": {
+          "shutdown_time": {
+            "type": "string",
+            "title": "Shutdown Time",
+            "description": "Time of day to shutdown the VM (HH:MM format)",
+            "pattern": "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+          },
+          "shutdown_timezone": {
+            "type": "string",
+            "title": "Shutdown Timezone",
+            "description": "Timezone for the shutdown schedule",
+            "enum": [
+              "UTC",
+              "PST",
+              "EST",
+              "CST",
+              "MST"
+            ]
+          }
+        },
+        "required": [
+          "shutdown_time",
+          "shutdown_timezone"
+        ]
+      }
+    }
+  ]
 }

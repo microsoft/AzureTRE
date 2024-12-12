@@ -56,6 +56,17 @@ parameters:
     type: string
     description: Azure resource ID for the compute image gallery to pull images from (if specifying custom images by name)
     default: ""
+  - name: enable_shutdown_schedule
+    type: boolean
+    default: false
+    description: "Enable automatic shutdown schedule for the VM"
+  - name: shutdown_time
+    type: string
+    description: "Time of day to shutdown the VM (HH:MM format)"
+  - name: shutdown_timezone
+    type: string
+    description: "Timezone for the shutdown schedule"
+    default: "UTC"
 
   # the following are added automatically by the resource processor
   - name: id
@@ -138,6 +149,9 @@ install:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
+        shutdown_time: ${ bundle.parameters.shutdown_time }
+        shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -164,6 +178,9 @@ upgrade:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
+        shutdown_time: ${ bundle.parameters.shutdown_time }
+        shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -202,6 +219,9 @@ uninstall:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
+        shutdown_time: ${ bundle.parameters.shutdown_time }
+        shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
