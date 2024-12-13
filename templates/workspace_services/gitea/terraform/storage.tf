@@ -16,7 +16,7 @@ resource "azurerm_storage_account" "gitea" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
       type         = "UserAssigned"
-      identity_ids = [data.azurerm_user_assigned_identity.tre_encryption_identity[0].id]
+      identity_ids = [data.azurerm_user_assigned_identity.ws_encryption_identity[0].id]
     }
   }
 
@@ -28,7 +28,7 @@ resource "azurerm_storage_account_customer_managed_key" "gitea_stg_encryption" {
   storage_account_id        = azurerm_storage_account.gitea.id
   key_vault_id              = var.key_store_id
   key_name                  = local.cmk_name
-  user_assigned_identity_id = data.azurerm_user_assigned_identity.tre_encryption_identity[0].id
+  user_assigned_identity_id = data.azurerm_user_assigned_identity.ws_encryption_identity[0].id
 }
 
 resource "azurerm_storage_account_network_rules" "stgrules" {
