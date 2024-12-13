@@ -63,7 +63,8 @@ parameters:
   - name: shutdown_time
     default: ""
     type: string
-    description: "Time of day to shutdown the VM (HH:MM format)"
+    description: "Time of day to shutdown the VM (HHmm format)"
+    pattern: "^([01]?[0-9]|2[0-3])[0-5][0-9]$"
   - name: shutdown_timezone
     type: string
     description: "Timezone for the shutdown schedule"
