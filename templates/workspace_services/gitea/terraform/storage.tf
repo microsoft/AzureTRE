@@ -29,8 +29,6 @@ resource "azurerm_storage_account_customer_managed_key" "gitea_stg_encryption" {
   key_vault_id              = var.key_store_id
   key_name                  = local.cmk_name
   user_assigned_identity_id = data.azurerm_user_assigned_identity.tre_encryption_identity[0].id
-
-  depends_on = [azurerm_key_vault_key.encryption_key]
 }
 
 resource "azurerm_storage_account_network_rules" "stgrules" {

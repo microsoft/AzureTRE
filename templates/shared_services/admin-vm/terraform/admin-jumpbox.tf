@@ -56,7 +56,7 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
 
 resource "azurerm_disk_encryption_set" "jumpbox_disk_encryption" {
   count                     = var.enable_cmk_encryption ? 1 : 0
-  name                      = "vmss-disk-encryption-jumpbox-${var.tre_id}-${tre_resource_id}"
+  name                      = "vmss-disk-encryption-jumpbox-${var.tre_id}-${var.tre_resource_id}"
   location                  = data.azurerm_resource_group.rg.location
   resource_group_name       = data.azurerm_resource_group.rg.name
   key_vault_key_id          = data.azurerm_key_vault_key.tre_encryption_key[0].versionless_id

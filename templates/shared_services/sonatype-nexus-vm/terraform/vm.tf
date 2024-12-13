@@ -120,7 +120,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
     caching                = "ReadWrite"
     storage_account_type   = "Standard_LRS"
     disk_size_gb           = 64
-    disk_encryption_set_id = var.enable_cmk_encryption ? azurerm_disk_encryption_set.jumpbox_disk_encryption[0].id : null
+    disk_encryption_set_id = var.enable_cmk_encryption ? azurerm_disk_encryption_set.nexus_disk_encryption[0].id : null
   }
 
   identity {
@@ -148,7 +148,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
 
 resource "azurerm_disk_encryption_set" "nexus_disk_encryption" {
   count                     = var.enable_cmk_encryption ? 1 : 0
-  name                      = "vmss-disk-encryption-nexus-${var.tre_id}-${tre_resource_id}"
+  name                      = "vmss-disk-encryption-nexus-${var.tre_id}-${var.tre_resource_id}"
   location                  = data.azurerm_resource_group.rg.location
   resource_group_name       = data.azurerm_resource_group.rg.name
   key_vault_key_id          = data.azurerm_key_vault_key.tre_encryption_key[0].versionless_id
