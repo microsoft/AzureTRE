@@ -143,3 +143,61 @@ code --install-extension {publisher}-{extension}-{version}.vsix
 ```
 
 The extensions which are  available to users can be restricted by configuring content selectors using the package `path` via the SonatypeNexus RM web interface.
+
+If extensions want to be intalled in bulk, a script such as the following can be used:
+
+```bash
+#!/bin/bash
+
+# Function to display usage
+usage() {
+    echo "Usage: $0 -t TRE_ID -l LOCATION [--install]"
+    exit 1
+}
+
+# Parse command line arguments
+INSTALL=false
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -t|--tre-id) TRE_ID="$2"; shift ;;
+        -l|--location) LOCATION="$2"; shift ;;
+        --install) INSTALL=true ;;
+        *) usage ;;
+    esac
+    shift
+done
+
+# Check if TRE_ID and LOCATION are provided
+if [ -z "$TRE_ID" ] || [ -z "$LOCATION" ]; then
+    usage
+fi
+
+# Define the list of extensions
+extensions=(
+    "ms-python.debugpy@2024.14.0"
+    "ms-python.python@2024.22.0"
+    "ms-python.vscode-pylance@2024.12.1"
+    "ms-toolsai.datawrangler@1.14.0"
+    "ms-toolsai.jupyter@2024.10.0"
+    "ms-toolsai.jupyter-keymap@1.1.2"
+    "ms-toolsai.jupyter-renderers@1.0.21"
+    "ms-toolsai.vscode-jupyter-cell-tags@0.1.9"
+    "ms-toolsai.vscode-jupyter-slideshow@0.1.6"
+)
+
+# Define the base URL
+base_url="https://nexus-${TRE_ID}.${LOCATION}.cloudapp.azure.com/repository/vscode-extensions"
+
+# Loop through each extension and download it
+for ext in "${extensions[@]}"; do
+    IFS='@' read -r publisher_extension version <<< "$ext"
+    IFS='.' read -r publisher extension <<< "$publisher_extension"
+    vsix_file="${publisher}-${extension}-${version}.vsix"
+    curl -o "$vsix_file" "${base_url}/${publisher}/vsextensions/${extension}/${version}/vspackage"
+    
+    # Install the extension if --install flag is set
+    if [ "$INSTALL" = true ]; then
+        code --install-extension "$vsix_file"
+    fi
+done
+```
