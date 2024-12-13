@@ -70,3 +70,15 @@ data "azurerm_public_ip" "app_gateway_ip" {
   name                = "pip-agw-${var.tre_id}"
   resource_group_name = data.azurerm_resource_group.core.name
 }
+
+data "azurerm_key_vault_key" "ws_encryption_key" {
+  count        = var.enable_cmk_encryption ? 1 : 0
+  name         = local.cmk_name
+  key_vault_id = var.key_store_id
+}
+
+data "azurerm_user_assigned_identity" "ws_encryption_identity" {
+  count               = var.enable_cmk_encryption ? 1 : 0
+  name                = local.encryption_identity_name
+  resource_group_name = data.azurerm_resource_group.ws.name
+}

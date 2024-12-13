@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-azureml
-version: 0.8.15
+version: 1.0.0
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -63,6 +63,12 @@ parameters:
     env: ARM_ENVIRONMENT
   - name: azure_environment
     env: AZURE_ENVIRONMENT
+  - name: enable_cmk_encryption
+    type: boolean
+    default: false
+  - name: key_store_id
+    type: string
+    default: ""
 
 outputs:
   - name: azureml_workspace_name
@@ -139,6 +145,8 @@ install:
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         arm_environment: ${ bundle.parameters.arm_environment }
         azure_environment: ${ bundle.parameters.azure_environment }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -175,6 +183,8 @@ upgrade:
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         arm_environment: ${ bundle.parameters.arm_environment }
         azure_environment: ${ bundle.parameters.azure_environment }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -211,6 +221,8 @@ uninstall:
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         arm_environment: ${ bundle.parameters.arm_environment }
         azure_environment: ${ bundle.parameters.azure_environment }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

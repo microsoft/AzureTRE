@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-linuxvm
-version: 1.0.6
+version: 1.1.0
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -93,6 +93,12 @@ parameters:
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
+  - name: enable_cmk_encryption
+    type: boolean
+    default: false
+  - name: key_store_id
+    type: string
+    default: ""
 
 outputs:
   - name: ip
@@ -138,6 +144,8 @@ install:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -164,6 +172,8 @@ upgrade:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -202,6 +212,8 @@ uninstall:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

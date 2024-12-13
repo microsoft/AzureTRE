@@ -61,9 +61,10 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   }
 
   os_disk {
-    name                 = "osdisk-${local.vm_name}"
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+    name                   = "osdisk-${local.vm_name}"
+    caching                = "ReadWrite"
+    storage_account_type   = "Standard_LRS"
+    disk_encryption_set_id = var.enable_cmk_encryption ? azurerm_disk_encryption_set.windowsvm_disk_encryption[0].id : null
   }
 
   identity {
@@ -73,6 +74,21 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   tags = local.tre_user_resources_tags
 
   lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_disk_encryption_set" "windowsvm_disk_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  name                      = "vmss-disk-encryption-windowsvm-${var.tre_id}-${tre_resource_id}"
+  location                  = data.azurerm_resource_group.ws.location
+  resource_group_name       = data.azurerm_resource_group.ws.name
+  key_vault_key_id          = data.azurerm_key_vault_key.ws_encryption_key[0].versionless_id
+  encryption_type           = "EncryptionAtRestWithPlatformAndCustomerKeys"
+  auto_key_rotation_enabled = true
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [data.azurerm_user_assigned_identity.ws_encryption_identity[0].id]
+  }
 }
 
 resource "azurerm_virtual_machine_extension" "config_script" {

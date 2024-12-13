@@ -9,6 +9,24 @@ resource "azurerm_container_registry" "acr" {
   public_network_access_enabled = false
   tags                          = local.tre_workspace_service_tags
 
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [data.azurerm_user_assigned_identity.tre_encryption_identity[0].id]
+    }
+  }
+
+  dynamic "encryption" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      enabled            = true
+      key_vault_key_id   = data.azurerm_key_vault_key.ws_encryption_key[0].id
+      identity_client_id = data.azurerm_user_assigned_identity.tre_encryption_identity[0].id
+    }
+
+  }
+
   lifecycle { ignore_changes = [tags] }
 }
 

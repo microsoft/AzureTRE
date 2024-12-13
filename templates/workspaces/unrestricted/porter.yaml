@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-unrestricted
-version: 0.12.4
+version: 1.0.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -118,6 +118,12 @@ parameters:
   - name: enable_airlock
     type: boolean
     default: false
+  - name: enable_cmk_encryption
+    type: boolean
+    default: false
+  - name: key_store_id
+    type: string
+    default: ""
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -185,6 +191,8 @@ install:
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
         arm_environment: ${ bundle.parameters.arm_environment }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -227,6 +235,8 @@ upgrade:
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
         arm_environment: ${ bundle.parameters.arm_environment }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -292,6 +302,8 @@ uninstall:
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
         arm_environment: ${ bundle.parameters.arm_environment }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
