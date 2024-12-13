@@ -2,13 +2,33 @@
 ## 0.20.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
+* InnerEye and MLFlow bundles depreciated and removed from main. If you wish to update and deploy these worksapce services they can be retrieved from release 0.19.1. ([#4127](https://github.com/microsoft/AzureTRE/issues/4127))
 
 FEATURES:
 
 ENHANCEMENTS:
 - Make user details avialble to resource processor, and update Windows and Linux VMs to use them. ([#4905](https://github.com/microsoft/AzureTRE/pull/3770))
+* Disable storage account cross tenant replication ([#4116](https://github.com/microsoft/AzureTRE/pull/4116))
+* Key Vaults should use RBAC instead of access policies for access control ([#4000](https://github.com/microsoft/AzureTRE/issues/4000))
+* Split log entries with [Log chunk X of Y] for better readability. ([#3992](https://github.com/microsoft/AzureTRE/issues/3992))
+* Expose APP_SERVICE_SKU build variable to allow enablement of App Gateway WAF ([#4111](https://github.com/microsoft/AzureTRE/pull/4111))
+* Update Terraform to use Azure AD authentication rather than storage account keys ([#4103](https://github.com/microsoft/AzureTRE/issues/4103))
+* Storage accounts should use infrastructure encryption ([#4001](https://github.com/microsoft/AzureTRE/issues/4001))
+* Update obsolete Terraform properties ([#4136](https://github.com/microsoft/AzureTRE/issues/4136))
+* Update Guacamole version and dependencies ([#4140](https://github.com/microsoft/AzureTRE/issues/4140))
+* Add partial (core resources only) support for customer-managed keys  ([#4141](https://github.com/microsoft/AzureTRE/issues/4142),  [#4144](https://github.com/microsoft/AzureTRE/issues/4144))
+* Update the Azure CLI version to 2.67.0 in dev container and vmss ([#4157](https://github.com/microsoft/AzureTRE/pull/4157))
+* Move Github PR bot commands into main documentation ([#4167](https://github.com/microsoft/AzureTRE/pull/4167))
+* Block Authentication with keys to CosmosDB SQL account ([#4175](https://github.com/microsoft/AzureTRE/pull/4175))
+* Add support for customer-managed keys encryption in base workspace ([#4161](https://github.com/microsoft/AzureTRE/pull/4161))
 
 BUG FIXES:
+- Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
+- Template images are showing CVEs ([#4153](https://github.com/microsoft/AzureTRE/issues/4153)
+- Fix Dockerfile 'as' casting ([#4170](https://github.com/microsoft/AzureTRE/pull/4170))
+- Create policy to allow all user to configure color profiles to remove auth dialog. ([#4184](https://github.com/microsoft/AzureTRE/pull/4184))
+- Pre configure VS code option to prevent script failure ([#4185](https://github.com/microsoft/AzureTRE/pull/4185))
+- Enable symlinks to work on Linux VM shared storage ([#4180](https://github.com/microsoft/AzureTRE/issues/4180))
 
 COMPONENTS:
 
@@ -23,6 +43,7 @@ ENHANCEMENTS:
 * Add info regarding workspace limit into docs ([#3920](https://github.com/microsoft/AzureTRE/issues/3920))
 
 BUG FIXES:
+* Add Snyk Security updates for September
 * Workspace creation blocked due to Azure API depreciation ([#4095](https://github.com/microsoft/AzureTRE/issues/4095))
 
 COMPONENTS:

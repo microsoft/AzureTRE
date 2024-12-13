@@ -138,7 +138,7 @@ mixins:
   - terraform:
       clientVersion: 1.4.6
   - az:
-      clientVersion: 2.37.0
+      clientVersion: 2.67.0
 
 install:
   - terraform:
@@ -158,6 +158,8 @@ install:
         user_email: ${ bundle.parameters.user_email }
         user_username: ${ bundle.parameters.user_username }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -186,6 +188,8 @@ upgrade:
         user_email: ${ bundle.parameters.user_email }
         user_username: ${ bundle.parameters.user_username }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -205,6 +209,9 @@ uninstall:
         - ${ bundle.parameters.tfstate_storage_account_name }
         - ${ bundle.parameters.tfstate_container_name }
         - ${ bundle.parameters.id }
+      envs:
+        ARM_USE_AZUREAD: "true"
+        ARM_USE_OIDC: "true"
 
   - terraform:
       description: "Delete the Guacamole User Resource Service"
@@ -223,6 +230,8 @@ uninstall:
         user_email: ${ bundle.parameters.user_email }
         user_username: ${ bundle.parameters.user_username }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -234,6 +243,8 @@ start:
         - "output"
       description: "Get resource ID from Terraform outputs"
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -268,6 +279,8 @@ stop:
         - "output"
       description: "Get VM hostname and rg from Terraform outputs"
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -302,6 +315,8 @@ reset_password:
         - "output"
       description: "Get VM details from Terraform outputs"
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }

@@ -24,7 +24,7 @@ ARG NODE_VERSION="lts/*"
 RUN su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"
 
 # Install terraform
-ARG TERRAFORM_VERSION="1.4.5"
+ARG TERRAFORM_VERSION="1.9.8"
 COPY .devcontainer/scripts/terraform.sh /tmp/
 RUN bash /tmp/terraform.sh "${TERRAFORM_VERSION}" /usr/bin
 
@@ -49,10 +49,10 @@ RUN if [ "${INTERACTIVE}" = "true" ]; then \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/* ; fi
 
 ARG PORTER_HOME_V1=/home/$USERNAME/.porter/
-ARG PORTER_VERSION=v1.0.15
-ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.2
-ARG PORTER_AZ_MIXIN_VERSION=v1.0.1
-ARG PORTER_AZURE_PLUGIN_VERSION=v1.2.0
+ARG PORTER_VERSION=v1.2.0
+ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.5
+ARG PORTER_AZ_MIXIN_VERSION=v1.0.4
+ARG PORTER_AZURE_PLUGIN_VERSION=v1.2.3
 COPY .devcontainer/scripts/porter-v1.sh /tmp/
 RUN export PORTER_VERSION=${PORTER_VERSION} \
     PORTER_TERRAFORM_MIXIN_VERSION=${PORTER_TERRAFORM_MIXIN_VERSION} \
@@ -75,7 +75,7 @@ COPY ["airlock_processor/requirements.txt", "/tmp/pip-tmp/airlock_processor/"]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt
 
 # Install azure-cli
-ARG AZURE_CLI_VERSION=2.57.0-1~bullseye
+ARG AZURE_CLI_VERSION=2.67.0-1~bullseye
 COPY .devcontainer/scripts/azure-cli.sh /tmp/
 RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh

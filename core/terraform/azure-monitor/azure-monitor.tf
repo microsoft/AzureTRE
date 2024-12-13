@@ -14,21 +14,43 @@ resource "azurerm_log_analytics_workspace" "core" {
 # Storage account for Azure Monitor ingestion
 # Because Private Link is enabled on Application Performance Management (APM), Bring Your Own Storage (BYOS) approach is required
 resource "azurerm_storage_account" "az_monitor" {
-  name                            = lower(replace("stazmonitor${var.tre_id}", "-", ""))
-  resource_group_name             = var.resource_group_name
-  location                        = var.location
-  account_kind                    = "StorageV2"
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
-  tags                            = var.tre_core_tags
+  name                             = lower(replace("stazmonitor${var.tre_id}", "-", ""))
+  resource_group_name              = var.resource_group_name
+  location                         = var.location
+  account_kind                     = "StorageV2"
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
+  tags                             = var.tre_core_tags
+
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
 
   network_rules {
     default_action = "Deny"
     bypass         = ["AzureServices"]
   }
 
-  lifecycle { ignore_changes = [tags] }
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
+
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
+}
+
+resource "azurerm_storage_account_customer_managed_key" "az_monitor_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.az_monitor.id
+  key_vault_id              = var.key_store_id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = var.encryption_identity_id
 }
 
 resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_ingestion" {

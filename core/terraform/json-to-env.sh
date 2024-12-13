@@ -30,6 +30,10 @@ jq -r '
             "env_var": "KEYVAULT_URI"
         },
         {
+            "path": "keyvault_resource_id",
+            "env_var": "KEYVAULT_RESOURCE_ID"
+        },
+        {
             "path": "azure_tre_fqdn",
             "env_var": "FQDN"
         },

@@ -1,19 +1,31 @@
 # 'Approved' storage account
 resource "azurerm_storage_account" "sa_import_approved" {
-  name                            = local.import_approved_storage_name
-  location                        = var.location
-  resource_group_name             = var.ws_resource_group_name
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
+  name                             = local.import_approved_storage_name
+  location                         = var.location
+  resource_group_name              = var.ws_resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   network_rules {
     default_action = var.enable_local_debugging ? "Allow" : "Deny"
     bypass         = ["AzureServices"]
+  }
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
   }
 
   tags = merge(
@@ -23,7 +35,7 @@ resource "azurerm_storage_account" "sa_import_approved" {
     }
   )
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_private_endpoint" "import_approved_pe" {
@@ -51,20 +63,32 @@ resource "azurerm_private_endpoint" "import_approved_pe" {
 
 # 'Drop' location for export
 resource "azurerm_storage_account" "sa_export_internal" {
-  name                            = local.export_internal_storage_name
-  location                        = var.location
-  resource_group_name             = var.ws_resource_group_name
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
+  name                             = local.export_internal_storage_name
+  location                         = var.location
+  resource_group_name              = var.ws_resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   network_rules {
     default_action = var.enable_local_debugging ? "Allow" : "Deny"
     bypass         = ["AzureServices"]
+  }
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
   }
 
   tags = merge(
@@ -74,7 +98,7 @@ resource "azurerm_storage_account" "sa_export_internal" {
     }
   )
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 
@@ -102,16 +126,28 @@ resource "azurerm_private_endpoint" "export_internal_pe" {
 
 # 'In-progress' location for export
 resource "azurerm_storage_account" "sa_export_inprogress" {
-  name                            = local.export_inprogress_storage_name
-  location                        = var.location
-  resource_group_name             = var.ws_resource_group_name
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
+  name                             = local.export_inprogress_storage_name
+  location                         = var.location
+  resource_group_name              = var.ws_resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
+
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
 
   tags = merge(
     var.tre_workspace_tags,
@@ -120,7 +156,7 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
     }
   )
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_storage_account_network_rules" "sa_export_inprogress_rules" {
@@ -160,20 +196,32 @@ resource "azurerm_private_endpoint" "export_inprogress_pe" {
 
 # 'Rejected' location for export
 resource "azurerm_storage_account" "sa_export_rejected" {
-  name                            = local.export_rejected_storage_name
-  location                        = var.location
-  resource_group_name             = var.ws_resource_group_name
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
+  name                             = local.export_rejected_storage_name
+  location                         = var.location
+  resource_group_name              = var.ws_resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   network_rules {
     default_action = var.enable_local_debugging ? "Allow" : "Deny"
     bypass         = ["AzureServices"]
+  }
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
   }
 
   tags = merge(
@@ -183,7 +231,7 @@ resource "azurerm_storage_account" "sa_export_rejected" {
     }
   )
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 
@@ -211,20 +259,32 @@ resource "azurerm_private_endpoint" "export_rejected_pe" {
 
 # 'Blocked' location for export
 resource "azurerm_storage_account" "sa_export_blocked" {
-  name                            = local.export_blocked_storage_name
-  location                        = var.location
-  resource_group_name             = var.ws_resource_group_name
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
+  name                             = local.export_blocked_storage_name
+  location                         = var.location
+  resource_group_name              = var.ws_resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
   network_rules {
     default_action = var.enable_local_debugging ? "Allow" : "Deny"
     bypass         = ["AzureServices"]
+  }
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
   }
 
   tags = merge(
@@ -234,7 +294,7 @@ resource "azurerm_storage_account" "sa_export_blocked" {
     }
   )
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 
@@ -275,4 +335,19 @@ resource "azurerm_role_assignment" "api_sa_data_contributor" {
   scope                = local.api_sa_data_contributor[count.index]
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
+}
+
+resource "azurerm_storage_account_customer_managed_key" "sa_encryption" {
+  for_each = var.enable_cmk_encryption ? {
+    "sa_import_approved"   = azurerm_storage_account.sa_import_approved,
+    "sa_export_internal"   = azurerm_storage_account.sa_export_internal,
+    "sa_export_inprogress" = azurerm_storage_account.sa_export_inprogress,
+    "sa_export_rejected"   = azurerm_storage_account.sa_export_rejected,
+    "sa_export_blocked"    = azurerm_storage_account.sa_export_blocked
+  } : {}
+
+  storage_account_id        = each.value.id
+  key_vault_id              = var.key_store_id
+  key_name                  = var.kv_encryption_key_name
+  user_assigned_identity_id = var.encryption_identity_id
 }

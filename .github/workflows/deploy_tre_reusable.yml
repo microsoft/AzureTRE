@@ -358,6 +358,7 @@ jobs:
           RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE: ${{ vars.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE }}
           RP_BUNDLE_VALUES: ${{ vars.RP_BUNDLE_VALUES }}
           FIREWALL_SKU: ${{ vars.FIREWALL_SKU}}
+          APP_GATEWAY_SKU: ${{ vars.APP_GATEWAY_SKU }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
@@ -389,8 +390,6 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/azureml"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/gitea"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/mlflow"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/mysql"}
           - {BUNDLE_TYPE: "workspace_service",
@@ -552,8 +551,6 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/azureml"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/gitea"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/mlflow"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/mysql"}
           - {BUNDLE_TYPE: "workspace_service",

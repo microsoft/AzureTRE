@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-openai
-version: 1.0.1
+version: 1.0.5
 description: "An OpenAI workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -55,7 +55,7 @@ parameters:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.3.6
+      clientVersion: 1.9.8
 
 outputs:
   - name: openai_fqdn
@@ -80,6 +80,8 @@ install:
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         openai_model: ${ bundle.parameters.openai_model }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -98,6 +100,8 @@ upgrade:
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         openai_model: ${ bundle.parameters.openai_model }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -116,6 +120,8 @@ uninstall:
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         openai_model: ${ bundle.parameters.openai_model }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }

@@ -107,14 +107,14 @@ do
 
     # upload the log file?
     if [[ $TF_LOG == "DEBUG" ]] ; then
-      az storage blob upload --file $tf_logfile \
+      az storage blob upload --file "$tf_logfile" \
         --container-name "tflogs" \
         --account-name "$mgmt_storage_account_name" \
         --auth-mode key
     fi
 
-    LOCKED_STATE=$(cat ${tf_logfile} |  grep -c 'Error acquiring the state lock') || true;
-    TF_ERROR=$(cat ${tf_logfile} |  grep -c 'COMMAND_EXIT_CODE="1"') || true;
+    LOCKED_STATE=$(cat < "$tf_logfile" |  grep -c 'Error acquiring the state lock') || true;
+    TF_ERROR=$(cat < "$tf_logfile" |  grep -c 'COMMAND_EXIT_CODE="1"') || true;
     if [[ $LOCKED_STATE -gt 0  ]];
     then
         RUN_COMMAND=1

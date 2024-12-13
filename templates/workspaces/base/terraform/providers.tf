@@ -10,7 +10,7 @@ terraform {
     }
     azapi = {
       source  = "Azure/azapi"
-      version = "=1.5.0"
+      version = "=1.15.0"
     }
   }
 
@@ -32,6 +32,7 @@ provider "azurerm" {
       recover_soft_deleted_keys         = true
     }
   }
+  storage_use_azuread = true
 }
 
 provider "azuread" {
