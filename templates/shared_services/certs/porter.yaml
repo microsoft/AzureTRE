@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-certs
-version: 1.0.0
+version: 0.7.0
 description: "An Azure TRE shared service to generate certificates for a specified internal domain using Letsencrypt"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -123,7 +123,6 @@ install:
       flags:
         resource-group: ${ bundle.outputs.resource_group_name }
         name: ${ bundle.outputs.application_gateway_name }
-
 
 upgrade:
   - exec:
