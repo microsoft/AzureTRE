@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-linuxvm
-version: 1.0.6
+version: 1.0.25
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -61,6 +61,7 @@ parameters:
     default: false
     description: "Enable automatic shutdown schedule for the VM"
   - name: shutdown_time
+    default: ""
     type: string
     description: "Time of day to shutdown the VM (HH:MM format)"
   - name: shutdown_timezone

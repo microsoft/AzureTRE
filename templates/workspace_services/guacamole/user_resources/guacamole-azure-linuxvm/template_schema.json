@@ -5,6 +5,8 @@
   "title": "Linux Virtual Machine",
   "description": "Linux virtual machine.",
   "required": [
+    "os_image",
+    "vm_size"
   ],
   "authorizedRoles": [
     "WorkspaceOwner", "WorkspaceResearcher"
@@ -15,6 +17,7 @@
       "type": "string",
       "title": "Linux image",
       "description": "Select Linux image to use for VM",
+      "default": "Ubuntu 22.04 LTS",
       "enum": [
         "Ubuntu 22.04 LTS"
       ]
@@ -24,6 +27,7 @@
       "type": "string",
       "title": "VM Size",
       "description": "Select size of VM",
+      "default": "2 CPU | 8GB RAM",
       "enum": [
         "2 CPU | 8GB RAM",
         "4 CPU | 16GB RAM",
@@ -45,26 +49,6 @@
       "title": "Enable Shutdown Schedule",
       "default": false,
       "description": "Enable automatic shutdown schedule for the VM"
-    },
-    "shutdown_time": {
-      "$id": "#/properties/shutdown_time",
-      "type": "string",
-      "title": "Shutdown Time",
-      "description": "Time of day to shutdown the VM (HH:MM format)",
-      "pattern": "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
-    },
-    "shutdown_timezone": {
-      "$id": "#/properties/shutdown_timezone",
-      "type": "string",
-      "title": "Shutdown Timezone",
-      "description": "Timezone for the shutdown schedule",
-      "enum": [
-        "UTC",
-        "PST",
-        "EST",
-        "CST",
-        "MST"
-      ]
     }
   },
   "allOf": [
@@ -84,19 +68,40 @@
           "shutdown_time": {
             "type": "string",
             "title": "Shutdown Time",
-            "description": "Time of day to shutdown the VM (HH:MM format)",
-            "pattern": "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+            "description": "Time of day to shutdown the VM (HHmm format), e.g. 1800",
+            "pattern": "^([01]?[0-9]|2[0-3])[0-5][0-9]$"
           },
           "shutdown_timezone": {
             "type": "string",
             "title": "Shutdown Timezone",
             "description": "Timezone for the shutdown schedule",
+            "default": "UTC",
             "enum": [
+              "UTC -12",
+              "UTC -11",
+              "UTC -10",
+              "UTC -9",
+              "UTC -8",
+              "UTC -7",
+              "UTC -6",
+              "UTC -5",
+              "UTC -4",
+              "UTC -3",
+              "UTC -2",
+              "UTC -1",
               "UTC",
-              "PST",
-              "EST",
-              "CST",
-              "MST"
+              "UTC +1",
+              "UTC +2",
+              "UTC +3",
+              "UTC +4",
+              "UTC +5",
+              "UTC +6",
+              "UTC +7",
+              "UTC +8",
+              "UTC +9",
+              "UTC +10",
+              "UTC +11",
+              "UTC +12"
             ]
           }
         },
