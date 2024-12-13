@@ -82,7 +82,7 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.4.5
+      clientVersion: 1.9.8
 
 install:
   - terraform:
