@@ -256,4 +256,4 @@ runs:
           -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c "./command.sh"
-      rm "${SCRIPT_FILE}"
+        rm "${SCRIPT_FILE}"
