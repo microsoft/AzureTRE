@@ -93,6 +93,7 @@ Nexus Shared Service requires access to resources outside of the Azure TRE VNET.
 | Microsoft Keys | raw | [https://packages.microsoft.com/keys/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-keys` | Provide access to Microsoft keys |
 | Microsoft Yum | yum | [https://packages.microsoft.com/yumrepos] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-yum` | Provide access to Microsoft Yum packages |
 | Microsoft Download | raw | [https://download.microsoft.com/download] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-download` | Provide access to Microsoft Downloads |
+| VS Code Extensions | raw | [https://marketplace.visualstudio.com/_apis/public/gallery/publishers/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/vscode-extensions/` | Provide access to VS Code extensions |
 
 ### Migrate from an existing V1 Nexus service (hosted on App Service)
 
@@ -130,3 +131,73 @@ sudo docker pull {NEXUS_URL}:8083/hello-world
 the default port out of the box is 8083
 
 Nexus will also need "Anonymous Access" set to "Enable". This can be done by logging into the Nexus Portal with the Admin user and following the prompts.
+
+## Using the VS Code Extensions
+
+To fetch and install VS Code extensions, use the following commands:
+
+```bash
+curl -o {publisher}-{extension}-{version}.vsix https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/vscode-extensions/{publisher}/vsextensions/{extension}/{version}/vspackage
+
+code --install-extension {publisher}-{extension}-{version}.vsix
+```
+
+The extensions which are  available to users can be restricted by configuring content selectors using the package `path` via the SonatypeNexus RM web interface.
+
+If extensions want to be intalled in bulk, a script such as the following can be used:
+
+```bash
+#!/bin/bash
+
+# Function to display usage
+usage() {
+    echo "Usage: $0 -t TRE_ID -l LOCATION [--install]"
+    exit 1
+}
+
+# Parse command line arguments
+INSTALL=false
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -t|--tre-id) TRE_ID="$2"; shift ;;
+        -l|--location) LOCATION="$2"; shift ;;
+        --install) INSTALL=true ;;
+        *) usage ;;
+    esac
+    shift
+done
+
+# Check if TRE_ID and LOCATION are provided
+if [ -z "$TRE_ID" ] || [ -z "$LOCATION" ]; then
+    usage
+fi
+
+# Define the list of extensions
+extensions=(
+    "ms-python.debugpy@2024.14.0"
+    "ms-python.python@2024.22.0"
+    "ms-python.vscode-pylance@2024.12.1"
+    "ms-toolsai.datawrangler@1.14.0"
+    "ms-toolsai.jupyter@2024.10.0"
+    "ms-toolsai.jupyter-keymap@1.1.2"
+    "ms-toolsai.jupyter-renderers@1.0.21"
+    "ms-toolsai.vscode-jupyter-cell-tags@0.1.9"
+    "ms-toolsai.vscode-jupyter-slideshow@0.1.6"
+)
+
+# Define the base URL
+base_url="https://nexus-${TRE_ID}.${LOCATION}.cloudapp.azure.com/repository/vscode-extensions"
+
+# Loop through each extension and download it
+for ext in "${extensions[@]}"; do
+    IFS='@' read -r publisher_extension version <<< "$ext"
+    IFS='.' read -r publisher extension <<< "$publisher_extension"
+    vsix_file="${publisher}-${extension}-${version}.vsix"
+    curl -o "$vsix_file" "${base_url}/${publisher}/vsextensions/${extension}/${version}/vspackage"
+    
+    # Install the extension if --install flag is set
+    if [ "$INSTALL" = true ]; then
+        code --install-extension "$vsix_file"
+    fi
+done
+```
