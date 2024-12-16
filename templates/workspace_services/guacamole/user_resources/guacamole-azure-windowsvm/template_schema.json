@@ -35,9 +35,12 @@
           "16 CPU | 64GB RAM",
           "32 CPU | 128GB RAM",
           "64 CPU | 256GB RAM",
+          "6 CPU | 55GB RAM | 1/6 x A10 GPU",
+          "12 CPU | 110GB RAM | 1/3 x A10 GPU",
+          "18 CPU | 220GB RAM | 1/2 x A10 GPU",
           "36 CPU | 440GB | 1 x A10 GPU",
           "36 CPU | 880GB | 1 x A10 GPU"
-          ],
+        ],
         "updateable": true
       },
       "shared_storage_access": {
