@@ -40,11 +40,7 @@
           "18 CPU | 220GB RAM | 1/2 x A10 GPU",
           "36 CPU | 440GB | 1 x A10 GPU",
           "36 CPU | 880GB | 1 x A10 GPU"
-<<<<<<< HEAD
         ],
-=======
-            ],
->>>>>>> e52f8af03aeedcb55a50e3e8cdc9a4940b6fb8c3
         "updateable": true
       },
       "shared_storage_access": {
