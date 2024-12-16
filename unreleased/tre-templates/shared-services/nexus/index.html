@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../../assets/ms_icon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.48">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.49">
     
     
       
@@ -1807,6 +1807,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#using-the-vs-code-extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using the VS Code Extensions
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3572,6 +3581,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#using-the-vs-code-extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using the VS Code Extensions
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3815,6 +3833,13 @@
 <td><code>https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-download</code></td>
 <td>Provide access to Microsoft Downloads</td>
 </tr>
+<tr>
+<td>VS Code Extensions</td>
+<td>raw</td>
+<td>[https://marketplace.visualstudio.com/_apis/public/gallery/publishers/]</td>
+<td><code>https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/vscode-extensions/</code></td>
+<td>Provide access to VS Code extensions</td>
+</tr>
 </tbody>
 </table>
 <h3 id="migrate-from-an-existing-v1-nexus-service-hosted-on-app-service">Migrate from an existing V1 Nexus service (hosted on App Service)</h3>
@@ -3849,6 +3874,68 @@ As a result, a new installation of Nexus will be necessary.</p>
 </code></pre></div>
 <p>the default port out of the box is 8083</p>
 <p>Nexus will also need "Anonymous Access" set to "Enable". This can be done by logging into the Nexus Portal with the Admin user and following the prompts.</p>
+<h2 id="using-the-vs-code-extensions">Using the VS Code Extensions</h2>
+<p>To fetch and install VS Code extensions, use the following commands:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-o<span class="w"> </span><span class="o">{</span>publisher<span class="o">}</span>-<span class="o">{</span>extension<span class="o">}</span>-<span class="o">{</span>version<span class="o">}</span>.vsix<span class="w"> </span>https://nexus-<span class="o">{</span>TRE_ID<span class="o">}</span>.<span class="o">{</span>LOCATION<span class="o">}</span>.cloudapp.azure.com/repository/vscode-extensions/<span class="o">{</span>publisher<span class="o">}</span>/vsextensions/<span class="o">{</span>extension<span class="o">}</span>/<span class="o">{</span>version<span class="o">}</span>/vspackage
+
+code<span class="w"> </span>--install-extension<span class="w"> </span><span class="o">{</span>publisher<span class="o">}</span>-<span class="o">{</span>extension<span class="o">}</span>-<span class="o">{</span>version<span class="o">}</span>.vsix
+</code></pre></div>
+<p>The extensions which are  available to users can be restricted by configuring content selectors using the package <code>path</code> via the SonatypeNexus RM web interface.</p>
+<p>If extensions want to be intalled in bulk, a script such as the following can be used:</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/bin/bash</span>
+
+<span class="c1"># Function to display usage</span>
+usage<span class="o">()</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Usage: </span><span class="nv">$0</span><span class="s2"> -t TRE_ID -l LOCATION [--install]&quot;</span>
+<span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="o">}</span>
+
+<span class="c1"># Parse command line arguments</span>
+<span class="nv">INSTALL</span><span class="o">=</span><span class="nb">false</span>
+<span class="k">while</span><span class="w"> </span><span class="o">[[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$#</span><span class="s2">&quot;</span><span class="w"> </span>-gt<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]]</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="nv">$1</span><span class="w"> </span><span class="k">in</span>
+<span class="w">        </span>-t<span class="p">|</span>--tre-id<span class="o">)</span><span class="w"> </span><span class="nv">TRE_ID</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$2</span><span class="s2">&quot;</span><span class="p">;</span><span class="w"> </span><span class="nb">shift</span><span class="w"> </span><span class="p">;;</span>
+<span class="w">        </span>-l<span class="p">|</span>--location<span class="o">)</span><span class="w"> </span><span class="nv">LOCATION</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$2</span><span class="s2">&quot;</span><span class="p">;</span><span class="w"> </span><span class="nb">shift</span><span class="w"> </span><span class="p">;;</span>
+<span class="w">        </span>--install<span class="o">)</span><span class="w"> </span><span class="nv">INSTALL</span><span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="p">;;</span>
+<span class="w">        </span>*<span class="o">)</span><span class="w"> </span>usage<span class="w"> </span><span class="p">;;</span>
+<span class="w">    </span><span class="k">esac</span>
+<span class="w">    </span><span class="nb">shift</span>
+<span class="k">done</span>
+
+<span class="c1"># Check if TRE_ID and LOCATION are provided</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-z<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$TRE_ID</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-z<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOCATION</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span>usage
+<span class="k">fi</span>
+
+<span class="c1"># Define the list of extensions</span>
+<span class="nv">extensions</span><span class="o">=(</span>
+<span class="w">    </span><span class="s2">&quot;ms-python.debugpy@2024.14.0&quot;</span>
+<span class="w">    </span><span class="s2">&quot;ms-python.python@2024.22.0&quot;</span>
+<span class="w">    </span><span class="s2">&quot;ms-python.vscode-pylance@2024.12.1&quot;</span>
+<span class="w">    </span><span class="s2">&quot;ms-toolsai.datawrangler@1.14.0&quot;</span>
+<span class="w">    </span><span class="s2">&quot;ms-toolsai.jupyter@2024.10.0&quot;</span>
+<span class="w">    </span><span class="s2">&quot;ms-toolsai.jupyter-keymap@1.1.2&quot;</span>
+<span class="w">    </span><span class="s2">&quot;ms-toolsai.jupyter-renderers@1.0.21&quot;</span>
+<span class="w">    </span><span class="s2">&quot;ms-toolsai.vscode-jupyter-cell-tags@0.1.9&quot;</span>
+<span class="w">    </span><span class="s2">&quot;ms-toolsai.vscode-jupyter-slideshow@0.1.6&quot;</span>
+<span class="o">)</span>
+
+<span class="c1"># Define the base URL</span>
+<span class="nv">base_url</span><span class="o">=</span><span class="s2">&quot;https://nexus-</span><span class="si">${</span><span class="nv">TRE_ID</span><span class="si">}</span><span class="s2">.</span><span class="si">${</span><span class="nv">LOCATION</span><span class="si">}</span><span class="s2">.cloudapp.azure.com/repository/vscode-extensions&quot;</span>
+
+<span class="c1"># Loop through each extension and download it</span>
+<span class="k">for</span><span class="w"> </span>ext<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">extensions</span><span class="p">[@]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">    </span><span class="nv">IFS</span><span class="o">=</span><span class="s1">&#39;@&#39;</span><span class="w"> </span><span class="nb">read</span><span class="w"> </span>-r<span class="w"> </span>publisher_extension<span class="w"> </span>version<span class="w"> </span><span class="o">&lt;&lt;&lt;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ext</span><span class="s2">&quot;</span>
+<span class="w">    </span><span class="nv">IFS</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="w"> </span><span class="nb">read</span><span class="w"> </span>-r<span class="w"> </span>publisher<span class="w"> </span>extension<span class="w"> </span><span class="o">&lt;&lt;&lt;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$publisher_extension</span><span class="s2">&quot;</span>
+<span class="w">    </span><span class="nv">vsix_file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">publisher</span><span class="si">}</span><span class="s2">-</span><span class="si">${</span><span class="nv">extension</span><span class="si">}</span><span class="s2">-</span><span class="si">${</span><span class="nv">version</span><span class="si">}</span><span class="s2">.vsix&quot;</span>
+<span class="w">    </span>curl<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$vsix_file</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">base_url</span><span class="si">}</span><span class="s2">/</span><span class="si">${</span><span class="nv">publisher</span><span class="si">}</span><span class="s2">/vsextensions/</span><span class="si">${</span><span class="nv">extension</span><span class="si">}</span><span class="s2">/</span><span class="si">${</span><span class="nv">version</span><span class="si">}</span><span class="s2">/vspackage&quot;</span>
+
+<span class="w">    </span><span class="c1"># Install the extension if --install flag is set</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$INSTALL</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">        </span>code<span class="w"> </span>--install-extension<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$vsix_file</span><span class="s2">&quot;</span>
+<span class="w">    </span><span class="k">fi</span>
+<span class="k">done</span>
+</code></pre></div>
 
 
 
@@ -3898,7 +3985,7 @@ As a result, a new installation of Nexus will be necessary.</p>
     <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.instant", "navigation.indexes"], "search": "../../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.83f73b43.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.88dd0f4e.min.js"></script>
       
     
   </body>
