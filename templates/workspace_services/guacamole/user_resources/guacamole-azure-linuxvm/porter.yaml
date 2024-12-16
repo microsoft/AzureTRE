@@ -15,11 +15,11 @@ custom:
     "16 CPU | 64GB RAM": Standard_D16s_v5  #  562
     "32 CPU | 128GB RAM": Standard_D32s_v5 # 1096
     "64 CPU | 256GB RAM": Standard_D64s_v5 # 2134
-    "6 CPU | 55GB RAM | 1/6 x A10 GPU" : Standard_NV6ads_A10_v5   #  533
-    "12 CPU | 110GB RAM | 1/3 x A10 GPU" : Standard_NV6ads_A10_v5 # 1066
-    "18 CPU | 220GB RAM | 1/2 x A10 GPU" : Standard_NV6ads_A10_v5 # 1772
-    "36 CPU | 440GB | 1 x A10 GPU": Standard_NV36ads_A10_v5       # 2375
-    "36 CPU | 880GB | 1 x A10 GPU": Standard_NV36adms_A10_v5      # 3323
+    "6 CPU | 55GB RAM | 1/6 x A10 GPU": Standard_NV6ads_A10_v5   #  533
+    "12 CPU | 110GB RAM | 1/3 x A10 GPU": Standard_NV6ads_A10_v5 # 1066
+    "18 CPU | 220GB RAM | 1/2 x A10 GPU": Standard_NV6ads_A10_v5 # 1772
+    "36 CPU | 440GB | 1 x A10 GPU": Standard_NV36ads_A10_v5      # 2375
+    "36 CPU | 880GB | 1 x A10 GPU": Standard_NV36adms_A10_v5     # 3323
   image_options:
     # "Ubuntu 22.04 LTS":
     #   source_image_reference:
@@ -65,7 +65,7 @@ parameters:
     env: PARENT_SERVICE_ID
   - name: image_gallery_id
     type: string
-    description: Azure resource ID for the compute image gallery to pull images from (if specifying custom images by name)
+    description: Azure resource ID for the compute image gallery to pull images from (if using custom images)
     default: ""
 
   # the following are added automatically by the resource processor
