@@ -1,8 +1,8 @@
 # API
 httpx==0.25.0
-pytest==7.4.3
-pytest-asyncio==0.21.1
-starlette==0.36.3
+pytest==8.3.3
+pytest-asyncio==0.24.0
+starlette==0.41.2
 pytest-timeout==2.2.0
 pytest-xdist==3.3.1
 backoff==2.2.1
