@@ -25,13 +25,13 @@ ENHANCEMENTS:
 * Update Windows VM Images ([#4198](https://github.com/microsoft/AzureTRE/pull/4198))
 
 BUG FIXES:
-- Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
-- Template images are showing CVEs ([#4153](https://github.com/microsoft/AzureTRE/issues/4153)
-- Fix Dockerfile 'as' casting ([#4170](https://github.com/microsoft/AzureTRE/pull/4170))
-- Create policy to allow all user to configure color profiles to remove auth dialog. ([#4184](https://github.com/microsoft/AzureTRE/pull/4184))
-- Pre configure VS code option to prevent script failure ([#4185](https://github.com/microsoft/AzureTRE/pull/4185))
-- Enable symlinks to work on Linux VM shared storage ([#4180](https://github.com/microsoft/AzureTRE/issues/4180))
-- Upgrade aiohttp version for security fixes ([#4197](https://github.com/microsoft/AzureTRE/pull/4197)) 
+* Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
+* Template images are showing CVEs ([#4153](https://github.com/microsoft/AzureTRE/issues/4153))
+* Fix Dockerfile 'as' casting ([#4170](https://github.com/microsoft/AzureTRE/pull/4170))
+* Create policy to allow all user to configure color profiles to remove auth dialog. ([#4184](https://github.com/microsoft/AzureTRE/pull/4184))
+* Pre configure VS code option to prevent script failure ([#4185](https://github.com/microsoft/AzureTRE/pull/4185))
+* Enable symlinks to work on Linux VM shared storage ([#4180](https://github.com/microsoft/AzureTRE/issues/4180))
+* Upgrade aiohttp version for security fixes ([#4197](https://github.com/microsoft/AzureTRE/pull/4197)) 
 
 COMPONENTS:
 
