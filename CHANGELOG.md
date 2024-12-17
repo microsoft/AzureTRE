@@ -33,6 +33,7 @@ BUG FIXES:
 - Create policy to allow all user to configure color profiles to remove auth dialog. ([#4184](https://github.com/microsoft/AzureTRE/pull/4184))
 - Pre configure VS code option to prevent script failure ([#4185](https://github.com/microsoft/AzureTRE/pull/4185))
 - Enable symlinks to work on Linux VM shared storage ([#4180](https://github.com/microsoft/AzureTRE/issues/4180))
+- Unable to delete virtual machines, add skip_shutdown_and_force_delete = true ([#4135](https://github.com/microsoft/AzureTRE/issues/4135))
 
 COMPONENTS:
 
