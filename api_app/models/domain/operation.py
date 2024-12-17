@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import List, Optional
 
 from pydantic import Field
@@ -9,7 +9,7 @@ from models.domain.resource import Output, ResourceType
 from resources import strings
 
 
-class Status(str, Enum):
+class Status(StrEnum):
     """
     Operation status
     """
