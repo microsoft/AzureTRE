@@ -98,7 +98,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   resource_group_name             = local.core_resource_group_name
   location                        = data.azurerm_resource_group.rg.location
   network_interface_ids           = [azurerm_network_interface.nexus.id]
-  size                            = "Standard_B8ms"
+  size                            = "Standard_D2s_v3"
   disable_password_authentication = false
   admin_username                  = "adminuser"
   admin_password                  = random_password.nexus_vm_password.result
