@@ -123,7 +123,7 @@ if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   sudo chmod 600 "$smbCredentialFile"
 
   # Configure autofs
-  echo "$fileShareName -fstype=cifs,rw,dir_mode=0777,credentials=$smbCredentialFile :$smbPath" | sudo tee /etc/auto.fileshares > /dev/null
+  echo "$fileShareName -fstype=cifs,rw,dir_mode=0777,uid=1000,gid=1000,mfsymlinks,credentials=$smbCredentialFile :$smbPath" | sudo tee /etc/auto.fileshares > /dev/null
   echo "$mntRoot /etc/auto.fileshares --timeout=60" | sudo tee /etc/auto.master > /dev/null
 
   # Restart service to register changes
@@ -152,6 +152,7 @@ sudo apt-get install -y ca-certificates curl gnupg lsb-release
 sudo apt-get install -y docker-compose-plugin docker-ce-cli containerd.io jq
 sudo apt-get install -y docker-ce
 jq -n --arg proxy "${NEXUS_PROXY_URL}:8083" '{"registry-mirrors": [$proxy]}' > /etc/docker/daemon.json
+sudo usermod -aG docker "${VM_USER}"
 sudo systemctl daemon-reload
 sudo systemctl restart docker
 
@@ -185,6 +186,7 @@ sudo adduser xrdp ssl-cert
 sudo -u "${VM_USER}" -i bash -c 'echo xfce4-session > ~/.xsession'
 sudo -u "${VM_USER}" -i bash -c 'echo xset s off >> ~/.xsession'
 sudo -u "${VM_USER}" -i bash -c 'echo xset -dpms >> ~/.xsession'
+sudo -u "${VM_USER}" -i bash -c 'echo Xft.dpi: 192 >> ~/.Xresources'
 
 # Fix for blank screen on DSVM (/sh -> /bash due to conflict with profile.d scripts)
 sudo sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
