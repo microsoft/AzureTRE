@@ -98,7 +98,7 @@ async def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
 @pytest.mark.asyncio
 @patch('db.repositories.workspaces.generate_new_cidr')
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
-@patch('db.repositories.workspaces.WorkspaceRepository.is_worksapce_storage_account_available')
+@patch('db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available')
 @patch('core.config.RESOURCE_LOCATION', "useast2")
 @patch('core.config.TRE_ID', "9876")
 async def test_create_workspace_item_creates_a_workspace_with_the_right_values(mock_is_workspace_storage_account_available, validate_input_mock, new_cidr_mock, workspace_repo, basic_workspace_request, basic_resource_template):
@@ -168,7 +168,7 @@ async def test_get_address_space_based_on_size_with_large_address_space(workspac
 
 @pytest.mark.asyncio
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
-@patch('db.repositories.workspaces.WorkspaceRepository.is_worksapce_storage_account_available')
+@patch('db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available')
 @patch('core.config.RESOURCE_LOCATION', "useast2")
 @patch('core.config.TRE_ID', "9876")
 @patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
@@ -189,7 +189,7 @@ async def test_create_workspace_item_creates_a_workspace_with_custom_address_spa
 
 @pytest.mark.asyncio
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
-@patch('db.repositories.workspaces.WorkspaceRepository.is_worksapce_storage_account_available')
+@patch('db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available')
 @patch('core.config.RESOURCE_LOCATION', "useast2")
 @patch('core.config.TRE_ID', "9876")
 @patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
@@ -260,7 +260,7 @@ async def test_get_address_space_based_on_size_with_address_space_and_address_sp
 
 @pytest.mark.asyncio
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
-@patch('db.repositories.workspaces.WorkspaceRepository.is_worksapce_storage_account_available')
+@patch('db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available')
 async def test_create_workspace_item_raises_value_error_if_template_is_invalid(mock_is_workspace_storage_account_available, validate_input_mock, workspace_repo, basic_workspace_request):
     workspace_input = basic_workspace_request
 
@@ -298,27 +298,31 @@ def test_workspace_owner_is_not_overwritten_if_present_in_workspace_properties(w
     assert workspace_repo.get_workspace_owner(dictToTest, not_expected_object_id) == "Expected"
 
 
-@patch('azure.mgmt.storage.StorageManagementClient')
-async def test_is_worksapce_storage_account_available_when_name_available(mock_storage_client):
+@pytest.mark.asyncio
+@patch('db.repositories.workspaces.StorageManagementClient')
+async def test_is_workspace_storage_account_available_when_name_available(mock_storage_client):
     workspace_id = "workspace1234"
+    mock_storage_client.return_value = MagicMock()
     mock_storage_client.return_value.storage_accounts.check_name_availability.return_value = AsyncMock()
     mock_storage_client.return_value.storage_accounts.check_name_availability.return_value.name_available = True
     workspace_repo = WorkspaceRepository()
 
-    result = await workspace_repo.is_workspace_with_last_4_id(workspace_id)
+    result = await workspace_repo.is_workspace_storage_account_available(workspace_id)
 
     mock_storage_client.return_value.storage_accounts.check_name_availability.assert_called_once_with({"name": f"stgws{workspace_id[-4:]}"})
-    assert result is False
+    assert result is True
 
 
-@patch('azure.mgmt.storage.StorageManagementClient')
-async def test_is_worksapce_storage_account_available_when_name_not_available(mock_storage_client):
+@pytest.mark.asyncio
+@patch('db.repositories.workspaces.StorageManagementClient')
+async def test_is_workspace_storage_account_available_when_name_not_available(mock_storage_client):
     workspace_id = "workspace1234"
+    mock_storage_client.return_value = MagicMock()
     mock_storage_client.return_value.storage_accounts.check_name_availability.return_value = AsyncMock()
     mock_storage_client.return_value.storage_accounts.check_name_availability.return_value.name_available = False
     workspace_repo = WorkspaceRepository()
 
-    result = await workspace_repo.is_workspace_with_last_4_id(workspace_id)
+    result = await workspace_repo.is_workspace_storage_account_available(workspace_id)
 
     mock_storage_client.return_value.storage_accounts.check_name_availability.assert_called_once_with({"name": f"stgws{workspace_id[-4:]}"})
-    assert result is True
+    assert result is False
