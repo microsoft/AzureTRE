@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import List
 
 from pydantic import BaseModel, Field
@@ -23,7 +23,7 @@ def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> 
     }
 
 
-class AuthProvider(str, Enum):
+class AuthProvider(StrEnum):
     """
     Auth Provider
     """

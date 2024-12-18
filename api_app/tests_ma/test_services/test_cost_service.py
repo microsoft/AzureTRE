@@ -21,6 +21,7 @@ def clear_lru_cache():
     CostService.cache_clear()
 
 
+@pytest.mark.asyncio
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
@@ -63,6 +64,7 @@ async def test_query_tre_costs_with_granularity_none_returns_correct_cost_report
     assert cost_report.workspaces[1].costs[1].currency == "USD"
 
 
+@pytest.mark.asyncio
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
@@ -165,6 +167,7 @@ def __get_daily_cost_management_query_result():
     return query_result
 
 
+@pytest.mark.asyncio
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
@@ -201,6 +204,7 @@ async def test_query_tre_costs_with_granularity_none_and_missing_costs_data_retu
     assert len(cost_report.workspaces[1].costs) == 0
 
 
+@pytest.mark.asyncio
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
@@ -229,6 +233,7 @@ async def test_query_tre_costs_for_unsupported_subscription_raises_subscription_
             "guy22", GranularityEnum.none, datetime.now(), datetime.now(), workspace_repo_mock, shared_service_repo_mock)
 
 
+@pytest.mark.asyncio
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
@@ -267,6 +272,7 @@ async def test_query_tre_costs_with_granularity_daily_and_missing_costs_data_ret
     assert len(cost_report.workspaces[1].costs) == 0
 
 
+@pytest.mark.asyncio
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
@@ -333,6 +339,7 @@ async def test_query_tre_costs_with_dates_set_as_none_calls_client_with_month_to
     assert query_definition.timeframe == TimeframeType.MONTH_TO_DATE
 
 
+@pytest.mark.asyncio
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
@@ -442,6 +449,7 @@ def __set_user_resource_repo_mock_return_value(user_resource_repo_mock):
     ])
 
 
+@pytest.mark.asyncio
 @patch('db.repositories.user_resources.UserResourceRepository')
 @patch('db.repositories.workspace_services.WorkspaceServiceRepository')
 @patch('db.repositories.workspaces.WorkspaceRepository')
@@ -497,6 +505,7 @@ async def test_query_tre_workspace_costs_with_granularity_none_returns_correct_w
     assert workspace_cost_report.workspace_services[1].user_resources[1].costs[0].cost == 4.1
 
 
+@pytest.mark.asyncio
 @patch('db.repositories.user_resources.UserResourceRepository')
 @patch('db.repositories.workspace_services.WorkspaceServiceRepository')
 @patch('db.repositories.workspaces.WorkspaceRepository')
