@@ -33,6 +33,7 @@ BUG FIXES:
 * Fix Dockerfile 'as' casting ([#4170](https://github.com/microsoft/AzureTRE/pull/4170))
 * Create policy to allow all user to configure color profiles to remove auth dialog. ([#4184](https://github.com/microsoft/AzureTRE/pull/4184))
 * Pre configure VS code option to prevent script failure ([#4185](https://github.com/microsoft/AzureTRE/pull/4185))
+* Increase size of Nexus VM, and derive Java VM memory limits from machine size ([#4074](https://github.com/microsoft/AzureTRE/issues/4074))
 * Enable symlinks to work on Linux VM shared storage ([#4180](https://github.com/microsoft/AzureTRE/issues/4180))
 * Upgrade aiohttp version for security fixes ([#4197](https://github.com/microsoft/AzureTRE/pull/4197))
 * Fix failing tests, .env missing and storage logs ([#4207](https://github.com/microsoft/AzureTRE/issues/4207))
