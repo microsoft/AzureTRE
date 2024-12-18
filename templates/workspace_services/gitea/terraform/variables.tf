@@ -27,3 +27,10 @@ variable "arm_environment" {
 variable "sql_sku" {
   type = string
 }
+variable "enable_cmk_encryption" {
+  type    = bool
+  default = false
+}
+variable "key_store_id" {
+  type = string
+}

@@ -4,7 +4,7 @@ resource "azurerm_user_assigned_identity" "encryption_identity" {
   location            = azurerm_resource_group.ws.location
   tags                = local.tre_workspace_tags
 
-  name = "id-encryption-${var.tre_id}-${local.short_workspace_id}"
+  name = local.encryption_identity_name
 
   lifecycle { ignore_changes = [tags] }
 }

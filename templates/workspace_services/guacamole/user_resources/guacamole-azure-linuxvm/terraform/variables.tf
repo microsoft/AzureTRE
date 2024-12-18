@@ -37,3 +37,10 @@ variable "shutdown_timezone" {
   type    = string
   default = "UTC"
 }
+variable "enable_cmk_encryption" {
+  type    = bool
+  default = false
+}
+variable "key_store_id" {
+  type = string
+}

@@ -23,4 +23,7 @@ locals {
     tre_id                = var.tre_id
     tre_shared_service_id = var.tre_resource_id
   }
+
+  cmk_name                 = "tre-encryption-${var.tre_id}"
+  encryption_identity_name = "id-encryption-${var.tre_id}"
 }

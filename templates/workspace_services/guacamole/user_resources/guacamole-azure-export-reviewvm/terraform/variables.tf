@@ -23,3 +23,10 @@ variable "image_gallery_id" {
 variable "airlock_request_sas_url" {
   type = string
 }
+variable "enable_cmk_encryption" {
+  type    = bool
+  default = false
+}
+variable "key_store_id" {
+  type = string
+}

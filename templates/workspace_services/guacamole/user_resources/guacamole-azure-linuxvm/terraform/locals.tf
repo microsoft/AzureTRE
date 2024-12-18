@@ -26,4 +26,7 @@ locals {
   selected_image_source_refs = lookup(local.selected_image, "source_image_reference", null) == null ? [] : [local.selected_image.source_image_reference]
   selected_image_source_id   = lookup(local.selected_image, "source_image_name", null) == null ? null : "${var.image_gallery_id}/images/${local.selected_image.source_image_name}"
   apt_sku                    = local.selected_image_source_refs[0]["apt_sku"]
+
+  cmk_name                 = "tre-encryption-${local.workspace_resource_name_suffix}"
+  encryption_identity_name = "id-encryption-${var.tre_id}-${local.short_workspace_id}"
 }

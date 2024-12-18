@@ -151,13 +151,13 @@
     {
       "name": "enable_cmk_encryption",
       "source": {
-        "env": "enable_cmk_encryption"
+        "env": "ENABLE_CMK_ENCRYPTION"
       }
     },
     {
       "name": "key_store_id",
       "source": {
-        "env": "key_store_id"
+        "env": "KEY_STORE_ID"
       }
     }
   ]

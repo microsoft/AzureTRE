@@ -1,5 +1,3 @@
-data "azurerm_client_config" "current" {}
-
 data "azurerm_resource_group" "rg" {
   name = "rg-${var.tre_id}"
 }
@@ -18,4 +16,10 @@ data "azurerm_subnet" "app_gw_subnet" {
 data "azurerm_user_assigned_identity" "resource_processor_vmss_id" {
   name                = "id-vmss-${var.tre_id}"
   resource_group_name = "rg-${var.tre_id}"
+}
+
+data "azurerm_user_assigned_identity" "tre_encryption_identity" {
+  count               = var.enable_cmk_encryption ? 1 : 0
+  name                = local.encryption_identity_name
+  resource_group_name = data.azurerm_resource_group.rg.name
 }

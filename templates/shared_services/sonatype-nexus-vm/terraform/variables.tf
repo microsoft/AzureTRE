@@ -10,3 +10,12 @@ variable "tre_resource_id" {
 variable "ssl_cert_name" {
   type = string
 }
+
+variable "enable_cmk_encryption" {
+  type    = bool
+  default = false
+}
+
+variable "key_store_id" {
+  type = string
+}

@@ -22,5 +22,7 @@ locals {
     "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs",
     "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"
   ]
-  gitea_openid_auth = "${var.aad_authority_url}/${data.azurerm_key_vault_secret.aad_tenant_id.value}/v2.0"
+  gitea_openid_auth        = "${var.aad_authority_url}/${data.azurerm_key_vault_secret.aad_tenant_id.value}/v2.0"
+  cmk_name                 = "tre-encryption-${local.workspace_resource_name_suffix}"
+  encryption_identity_name = "id-encryption-${var.tre_id}-${local.short_workspace_id}"
 }

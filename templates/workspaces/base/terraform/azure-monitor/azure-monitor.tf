@@ -19,6 +19,8 @@ resource "azurerm_storage_account" "app_insights" {
   account_kind                     = "StorageV2"
   account_tier                     = "Standard"
   account_replication_type         = "LRS"
+  table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
   tags                             = var.tre_workspace_tags

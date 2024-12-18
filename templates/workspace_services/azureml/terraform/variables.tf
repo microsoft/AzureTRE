@@ -35,11 +35,16 @@ variable "auth_client_secret" {
   sensitive   = true
   description = "Used to authenticate into the AAD Tenant to get app role members"
 }
-
 variable "arm_environment" {
   type = string
 }
-
 variable "azure_environment" {
+  type = string
+}
+variable "enable_cmk_encryption" {
+  type    = bool
+  default = false
+}
+variable "key_store_id" {
   type = string
 }
