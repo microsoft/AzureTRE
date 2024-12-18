@@ -8,6 +8,7 @@
 FEATURES:
 
 ENHANCEMENTS:
+- Make user details avialble to resource processor, and update Windows and Linux VMs to use them. ([#4905](https://github.com/microsoft/AzureTRE/pull/3770))
 * Disable storage account cross tenant replication ([#4116](https://github.com/microsoft/AzureTRE/pull/4116))
 * Key Vaults should use RBAC instead of access policies for access control ([#4000](https://github.com/microsoft/AzureTRE/issues/4000))
 * Split log entries with [Log chunk X of Y] for better readability. ([#3992](https://github.com/microsoft/AzureTRE/issues/3992))

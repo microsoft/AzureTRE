@@ -106,6 +106,11 @@ parameters:
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
+  - name: user_id
+    type: string
+  - name: user_username
+    type: string
+
 
 outputs:
   - name: ip
@@ -151,6 +156,8 @@ install:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        user_id: ${ bundle.parameters.user_id }
+        user_username: ${ bundle.parameters.user_username }
         enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
         shutdown_time: ${ bundle.parameters.shutdown_time }
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
@@ -180,6 +187,8 @@ upgrade:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        user_id: ${ bundle.parameters.user_id }
+        user_username: ${ bundle.parameters.user_username }
         enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
         shutdown_time: ${ bundle.parameters.shutdown_time }
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
@@ -221,6 +230,8 @@ uninstall:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        user_id: ${ bundle.parameters.user_id }
+        user_username: ${ bundle.parameters.user_username }
         enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
         shutdown_time: ${ bundle.parameters.shutdown_time }
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
