@@ -156,3 +156,16 @@ data "azurerm_storage_share" "shared_storage" {
   name                 = var.shared_storage_name
   storage_account_name = data.azurerm_storage_account.stg.name
 }
+
+resource "azurerm_dev_test_global_vm_shutdown_schedule" "shutdown_schedule" {
+  count = var.enable_shutdown_schedule ? 1 : 0
+
+  location              = data.azurerm_resource_group.ws.location
+  virtual_machine_id    = azurerm_linux_virtual_machine.linuxvm.id
+  daily_recurrence_time = var.shutdown_time
+  timezone              = var.shutdown_timezone
+  enabled               = var.enable_shutdown_schedule
+  notification_settings {
+    enabled = false
+  }
+}
