@@ -26,11 +26,20 @@ variable "image_gallery_id" {
   type    = string
   default = ""
 }
-
 variable "user_id" {
   type = string
 }
-
 variable "user_username" {
   type = string
+}
+variable "enable_shutdown_schedule" {
+  type    = bool
+  default = false
+}
+variable "shutdown_time" {
+  type = string
+}
+variable "shutdown_timezone" {
+  type    = string
+  default = "UTC"
 }
