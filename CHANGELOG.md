@@ -23,15 +23,20 @@ ENHANCEMENTS:
 * Block Authentication with keys to CosmosDB SQL account ([#4175](https://github.com/microsoft/AzureTRE/pull/4175))
 * Add support for customer-managed keys encryption in base workspace ([#4161](https://github.com/microsoft/AzureTRE/pull/4161))
 * Change the way "inherited" workspaces retrieve the base workspace code ([#4162](https://github.com/microsoft/AzureTRE/issues/4162))
+* Add option to configure auto shutdown for Linux VM  ([#4186](https://github.com/microsoft/AzureTRE/issues/4186))
+* Add ability to download VSCode Extensions ([[#4187](https://github.com/microsoft/AzureTRE/issues/4187)])
 * Update Windows VM Images ([#4198](https://github.com/microsoft/AzureTRE/pull/4198))
 
 BUG FIXES:
-- Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
-- Template images are showing CVEs ([#4153](https://github.com/microsoft/AzureTRE/issues/4153)
-- Fix Dockerfile 'as' casting ([#4170](https://github.com/microsoft/AzureTRE/pull/4170))
-- Create policy to allow all user to configure color profiles to remove auth dialog. ([#4184](https://github.com/microsoft/AzureTRE/pull/4184))
-- Pre configure VS code option to prevent script failure ([#4185](https://github.com/microsoft/AzureTRE/pull/4185))
-- Enable symlinks to work on Linux VM shared storage ([#4180](https://github.com/microsoft/AzureTRE/issues/4180))
+* Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
+* Template images are showing CVEs ([#4153](https://github.com/microsoft/AzureTRE/issues/4153))
+* Fix Dockerfile 'as' casting ([#4170](https://github.com/microsoft/AzureTRE/pull/4170))
+* Create policy to allow all user to configure color profiles to remove auth dialog. ([#4184](https://github.com/microsoft/AzureTRE/pull/4184))
+* Pre configure VS code option to prevent script failure ([#4185](https://github.com/microsoft/AzureTRE/pull/4185))
+* Enable symlinks to work on Linux VM shared storage ([#4180](https://github.com/microsoft/AzureTRE/issues/4180))
+* Upgrade aiohttp version for security fixes ([#4197](https://github.com/microsoft/AzureTRE/pull/4197))
+* Fix failing tests, .env missing and storage logs ([#4207](https://github.com/microsoft/AzureTRE/issues/4207))
+* Unable to delete virtual machines, add skip_shutdown_and_force_delete = true ([#4135](https://github.com/microsoft/AzureTRE/issues/4135))
 
 COMPONENTS:
 
