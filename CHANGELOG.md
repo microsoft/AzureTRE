@@ -22,6 +22,7 @@ ENHANCEMENTS:
 * Move Github PR bot commands into main documentation ([#4167](https://github.com/microsoft/AzureTRE/pull/4167))
 * Block Authentication with keys to CosmosDB SQL account ([#4175](https://github.com/microsoft/AzureTRE/pull/4175))
 * Add support for customer-managed keys encryption in base workspace ([#4161](https://github.com/microsoft/AzureTRE/pull/4161))
+* Add option to configure auto shutdown for Linux VM  ([#4186](https://github.com/microsoft/AzureTRE/issues/4186))
 * Add ability to download VSCode Extensions ([[#4187](https://github.com/microsoft/AzureTRE/issues/4187)])
 * Update Windows VM Images ([#4198](https://github.com/microsoft/AzureTRE/pull/4198))
 
