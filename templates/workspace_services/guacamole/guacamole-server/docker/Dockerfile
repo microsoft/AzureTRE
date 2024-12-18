@@ -53,7 +53,7 @@ COPY ./docker/services /etc/services.d/
 COPY --from=client_build /target/lib/* "${GUACAMOLE_LIB}"
 COPY --from=client_build "/target/guacamole-auth-tre-${GUACAMOLE_AZURE_VERSION}.jar" "${GUACAMOLE_HOME}/extensions/"
 
-RUN wget -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.5.3/binary/guacamole-1.5.3.war" --progress=dot:giga
+RUN wget -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.5.5/binary/guacamole-1.5.5.war" --progress=dot:giga
 
 ENV OAUTH2_PROXY_HOME=/etc/oauth2-proxy
 RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \

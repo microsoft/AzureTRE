@@ -25,6 +25,7 @@ ENHANCEMENTS:
 * Add option to configure auto shutdown for Linux VM  ([#4186](https://github.com/microsoft/AzureTRE/issues/4186))
 * Add ability to download VSCode Extensions ([[#4187](https://github.com/microsoft/AzureTRE/issues/4187)])
 * Update Windows VM Images ([#4198](https://github.com/microsoft/AzureTRE/pull/4198))
+* Enhance DPI of Linux display ([[#4200](https://github.com/microsoft/AzureTRE/issues/4200)])
 
 BUG FIXES:
 * Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
