@@ -195,6 +195,12 @@ resource "azurerm_role_assignment" "vmss_sb_receiver" {
   principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
 }
 
+resource "azurerm_role_assignment" "vmss_sb_receiver" {
+  scope                = var.service_bus_namespace_id
+  role_definition_name = "Azure Service Bus Data Receiver"
+  principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
+}
+
 resource "azurerm_role_assignment" "subscription_administrator" {
   # Below is a workaround TF replacing this resource when using the data object.
   scope                = var.subscription_id != "" ? "/subscriptions/${var.subscription_id}" : data.azurerm_subscription.current.id

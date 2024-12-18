@@ -7,12 +7,12 @@
 
 # Azure Monitor requires 5 DNS zones:
 # - privatelink.monitor.azure.com
-# - privatelink.oms.opinsights.azure.com
+# - privatelink.oms.opinsights.azure.comprivatelink
 # - privatelink.ods.opinsights.azure.com
 # - privatelink.agentsvc.azure-automation.net
 # - privatelink.blob.core.windows.net (used also by Storage module)
 resource "azurerm_private_dns_zone" "azure_monitor" {
-  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.monitor.azure.com"]
+  name                = module.terraform_azurerm_environment_configuration.private_links[".monitor.azure.com"]
   resource_group_name = var.ws_resource_group_name
   tags                = var.tre_workspace_tags
 

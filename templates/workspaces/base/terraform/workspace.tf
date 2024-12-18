@@ -25,6 +25,8 @@ module "network" {
   tre_resource_id        = var.tre_resource_id
   tre_workspace_tags     = local.tre_workspace_tags
   arm_environment        = var.arm_environment
+  ws_resource_group_id   = azurerm_resource_group.ws.id
+
 }
 
 module "aad" {

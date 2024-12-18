@@ -115,7 +115,7 @@ resource "azapi_resource" "pbi_privatelink" {
   type                      = "Microsoft.PowerBI/privateLinkServicesForPowerBI@2020-06-01"
   name                      = "plfabric-${local.workspace_resource_name_suffix}"
   location                  = "global"
-  parent_id                 = azurerm_virtual_network.ws.id
+  parent_id                 = var.ws_resource_group_id
   schema_validation_enabled = false
 
   body = {

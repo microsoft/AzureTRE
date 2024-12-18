@@ -19,3 +19,6 @@ variable "tre_resource_id" {
 variable "arm_environment" {
   type = string
 }
+variable "ws_resource_group_id" {
+  type = string
+}
