@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-sonatype-nexus
-version: 3.2.2
+version: 3.2.3
 description: "A Sonatype Nexus shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -47,6 +47,10 @@ parameters:
     type: string
     default: "nexus-ssl"
     description: "Name of the certificate for configuring Nexus SSL with (stored in the core KeyVault)"
+  - name: vm_size
+    type: string
+    default: "Standard_B2ms"
+    description: "The size of the VM to be deployed"
 outputs:
   - name: workspace_vm_allowed_fqdns_list
     type: string
@@ -85,6 +89,7 @@ install:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         ssl_cert_name: ${ bundle.parameters.ssl_cert_name }
+        vm_size: ${ bundle.parameters.vm_size }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -106,6 +111,7 @@ upgrade:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         ssl_cert_name: ${ bundle.parameters.ssl_cert_name }
+        vm_size: ${ bundle.parameters.vm_size }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -127,6 +133,7 @@ uninstall:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         ssl_cert_name: ${ bundle.parameters.ssl_cert_name }
+        vm_size: ${ bundle.parameters.vm_size }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

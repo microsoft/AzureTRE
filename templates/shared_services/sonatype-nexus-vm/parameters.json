@@ -51,6 +51,12 @@
       "source": {
         "env": "ARM_ENVIRONMENT"
       }
+    },
+    {
+      "name": "vm_size",
+      "source": {
+        "env": "VM_SIZE"
+      }
     }
   ]
 }
