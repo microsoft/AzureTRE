@@ -9,7 +9,7 @@ on:
       environment:
         description: The environment to run this workflow in
         type: environment
-        default: Prod
+        default: Dev
         required: true
 
 jobs:
@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     # environment is used to access the secrets for Azure credentials
     # to sign in to a container registry to re-use a dev container image as a build cache
-    environment: ${{ inputs.environment || 'CICD'}}
+    environment: ${{ inputs.environment || 'Dev'}}
 
     steps:
       - name: Checkout (GitHub)
