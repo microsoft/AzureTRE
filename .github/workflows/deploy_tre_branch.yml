@@ -17,7 +17,7 @@ on:  # yamllint disable-line rule:truthy
       environment:
         description: The environment to run this workflow in
         type: environment
-        default: CICD
+        default: Prod
         required: true
       e2eProcesses:
         description: The number of E2E processes/tests running in parallel
