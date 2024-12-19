@@ -11,7 +11,7 @@ jobs:
   clean:
     name: Clean
     runs-on: ubuntu-latest
-    environment: CICD
+    environment: Dev
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
