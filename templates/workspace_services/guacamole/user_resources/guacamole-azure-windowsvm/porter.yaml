@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 1.0.7
+version: 1.0.8
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -128,7 +128,7 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.4.6
+      clientVersion: 1.9.8
   - az:
       clientVersion: 2.67.0
 
