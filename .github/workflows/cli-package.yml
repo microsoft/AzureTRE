@@ -9,7 +9,7 @@ on:
       environment:
         description: The environment to run this workflow in
         type: environment
-        default: CICD
+        default: Prod
         required: true
 
 jobs:
