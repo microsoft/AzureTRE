@@ -10,3 +10,9 @@ variable "tre_resource_id" {
 variable "ssl_cert_name" {
   type = string
 }
+
+variable "vm_size" {
+  type        = string
+  description = "The size of the VM to be deployed"
+  default     = "Standard_B2ms"
+}
