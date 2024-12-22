@@ -1,0 +1,68 @@
+{
+  "schemaType": "ParameterSet",
+  "schemaVersion": "1.0.1",
+  "namespace": "",
+  "name": "tre-user-resource-aml-compute-instance",
+  "parameters": [
+    {
+      "name": "id",
+      "source": {
+        "env": "ID"
+      }
+    },
+    {
+      "name": "parent_service_id",
+      "source": {
+        "env": "PARENT_SERVICE_ID"
+      }
+    },
+    {
+      "name": "workspace_id",
+      "source": {
+        "env": "WORKSPACE_ID"
+      }
+    },
+    {
+      "name": "tre_id",
+      "source": {
+        "env": "TRE_ID"
+      }
+    },
+    {
+      "name": "vm_size",
+      "source": {
+        "env": "VM_SIZE"
+      }
+    },
+    {
+      "name": "user_object_id",
+      "source": {
+        "env": "USER_OBJECT_ID"
+      }
+    },
+    {
+      "name": "tfstate_container_name",
+      "source": {
+        "env": "TERRAFORM_STATE_CONTAINER_NAME"
+      }
+    },
+    {
+      "name": "tfstate_resource_group_name",
+      "source": {
+        "env": "MGMT_RESOURCE_GROUP_NAME"
+      }
+    },
+    {
+      "name": "tfstate_storage_account_name",
+      "source": {
+        "env": "MGMT_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
+      }
+    }
+  ]
+}

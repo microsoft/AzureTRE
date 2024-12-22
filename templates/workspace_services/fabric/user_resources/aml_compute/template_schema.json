@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/azureml/user_resources/aml_compute/custom_parameters.json",
+  "type": "object",
+  "title": "Azure Machine Learning Compute Instance",
+  "description": "An Azure Machine Learning compute instance is a managed cloud-based workstation for data scientists. Each compute instance has only one owner, although you can share files between multiple compute instances.",
+  "required": [],
+  "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the user resource",
+      "description": "The name of the user resource to be displayed to users",
+      "default": "Compute Instance",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the user resource",
+      "description": "Description of the user resource",
+      "default": "AML Compute Instance",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "User Resource Overview",
+      "description": "Long form description of the user resource, in markdown syntax",
+      "default": "An Azure Machine Learning compute instance is a managed cloud-based workstation for data scientists. Each compute instance has only one owner, although you can share files between multiple compute instances.\n- [Azure Machine Learning Compute Instance](https://docs.microsoft.com/en-us/azure/machine-learning/concept-compute-instance)",
+      "updateable": true
+    },
+    "vm_size": {
+      "type": "string",
+      "title": "Virtual Machine Size",
+      "description": "The size of the virtual machine to be created.",
+      "enum": [
+        "Standard_D2_v3",
+        "Standard_D4_v3",
+        "Standard_D8_v3",
+        "Standard_D16_v3"
+      ],
+      "default": "Standard_D2_v3"
+    },
+    "user_object_id": {
+      "type": "string",
+      "title": "Azure Active Directory User Object ID",
+      "description": "The Azure Active Directory user object ID of User who will be using the compute instance",
+      "default": "",
+      "minLength": 1
+    }
+  }
+}
