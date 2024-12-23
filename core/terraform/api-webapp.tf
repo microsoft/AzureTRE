@@ -18,15 +18,17 @@ resource "azurerm_service_plan" "core" {
 }
 
 resource "azurerm_linux_web_app" "api" {
-  name                            = "api-${var.tre_id}"
-  resource_group_name             = azurerm_resource_group.core.name
-  location                        = azurerm_resource_group.core.location
-  service_plan_id                 = azurerm_service_plan.core.id
-  https_only                      = true
-  key_vault_reference_identity_id = azurerm_user_assigned_identity.id.id
-  virtual_network_subnet_id       = module.network.web_app_subnet_id
-  public_network_access_enabled   = false
-  tags                            = local.tre_core_tags
+  name                                           = "api-${var.tre_id}"
+  resource_group_name                            = azurerm_resource_group.core.name
+  location                                       = azurerm_resource_group.core.location
+  service_plan_id                                = azurerm_service_plan.core.id
+  https_only                                     = true
+  key_vault_reference_identity_id                = azurerm_user_assigned_identity.id.id
+  virtual_network_subnet_id                      = module.network.web_app_subnet_id
+  public_network_access_enabled                  = false
+  ftp_publish_basic_authentication_enabled       = false
+  webdeploy_publish_basic_authentication_enabled = false
+  tags                                           = local.tre_core_tags
 
   app_settings = {
     "APPLICATIONINSIGHTS_CONNECTION_STRING"          = module.azure_monitor.app_insights_connection_string

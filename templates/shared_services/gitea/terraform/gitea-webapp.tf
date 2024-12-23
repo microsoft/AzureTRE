@@ -18,14 +18,16 @@ resource "azurerm_user_assigned_identity" "gitea_id" {
 }
 
 resource "azurerm_linux_web_app" "gitea" {
-  name                            = local.webapp_name
-  resource_group_name             = local.core_resource_group_name
-  location                        = data.azurerm_resource_group.rg.location
-  service_plan_id                 = data.azurerm_service_plan.core.id
-  https_only                      = true
-  key_vault_reference_identity_id = azurerm_user_assigned_identity.gitea_id.id
-  virtual_network_subnet_id       = data.azurerm_subnet.web_app.id
-  tags                            = local.tre_shared_service_tags
+  name                                           = local.webapp_name
+  resource_group_name                            = local.core_resource_group_name
+  location                                       = data.azurerm_resource_group.rg.location
+  service_plan_id                                = data.azurerm_service_plan.core.id
+  https_only                                     = true
+  key_vault_reference_identity_id                = azurerm_user_assigned_identity.gitea_id.id
+  virtual_network_subnet_id                      = data.azurerm_subnet.web_app.id
+  ftp_publish_basic_authentication_enabled       = false
+  webdeploy_publish_basic_authentication_enabled = false
+  tags                                           = local.tre_shared_service_tags
 
   app_settings = {
     WEBSITES_PORT                       = "3000"
@@ -68,8 +70,8 @@ resource "azurerm_linux_web_app" "gitea" {
     vnet_route_all_enabled                        = true
 
     application_stack {
-      docker_image     = "${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/gitea"
-      docker_image_tag = local.version
+      docker_registry_url = "https://${data.azurerm_container_registry.mgmt_acr.login_server}"
+      docker_image_name   = "microsoft/azuretre/gitea:${local.version}"
     }
   }
 
