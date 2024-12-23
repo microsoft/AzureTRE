@@ -5,9 +5,8 @@ class NotifyUkMessageInput(BaseModel):
     secondary_recipients: str = Field("Secondary recipient list to be sent to Notify UK Platform", title="Secondary recipient list to be sent to Notify UK Platform")
     name: str = Field("Name of the Researcher who sent the support request", title="Name of the Researcher who sent the support request")
     email: str = Field("Email address of the Researcher who sent the support request", title="Email address of the Researcher who sent the support request")
-    subject: str = Field("Email subject of the message sent to support team", title="Email subject of the message sent to support team")
-    workspace: str = Field("Workspace ID of the workspace where the problem happened", title="Workspace ID of the workspace where the problem happened")
-    issue_type: str = Field("Issue type related to the problem reported", title="Issue type related to the problem reported")
+    workspace_id: str = Field("Workspace Name and ID of the workspace where the problem happened", title="Workspace Name and ID of the workspace where the problem happened")
+    issue_name: str = Field("Issue name related to the problem reported", title="Issue name related to the problem reported")
     error_message: str = Field("Error message received by the Researcher", title="Error message received by the Researcher")
     issue_description: str = Field("Issue description given by the Researcher", title="Issue description given by the Researcher")
 
@@ -18,9 +17,8 @@ class NotifyUkMessageInput(BaseModel):
                 "secondary_recipients": "email1@domain.com, email2@domain.com, email3@domain.com",
                 "name": "John Smith",
                 "email": "john.smith@email.com",
-                "subject": "Email subject",
-                "workspace": "b0aec2c5-658a-4a74-b48e-e0ee6cd1d8a4",
-                "issue_type": "Issue type 1",
+                "workspace_id": "Workspace Client 1 - b0aec2c5-658a-4a74-b48e-e0ee6cd1d8a4",
+                "issue_name": "Issue name 1",
                 "error_message": "Error message received by user",
                 "issue_description": "I have an error"
             }

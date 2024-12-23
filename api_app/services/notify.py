@@ -14,6 +14,8 @@ async def send_message_notify_platform(message_properties: NotifyUkMessageInput)
 
     headers = {'Content-type':'application/json', 'Authorization': 'Bearer ' + jwt_token }
 
+    logging.info("jwt_token -> %s", jwt_token)
+    logging.info("headers -> %s", headers)
     # Remove empty chars from the input, split the secondary recipients string and create the final list.
     replaced_secondary_recipients = message_properties.secondary_recipients.replace(" ", "")
     secondary_recipients_list = replaced_secondary_recipients.split(",")
@@ -25,21 +27,21 @@ async def send_message_notify_platform(message_properties: NotifyUkMessageInput)
     # Remove malformed email addresses.
     # This regex will validate email addresses sent to the API.
     email_regex_validation = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
-    for item in secondary_recipients_list:
-        if(re.fullmatch(email_regex_validation, item)):
-            validated_secondary_recipients_list.append(item)
+    if not secondary_recipients_list == '':
+        for item in secondary_recipients_list:
+            if(re.fullmatch(email_regex_validation, item)):
+                validated_secondary_recipients_list.append(item)
 
-    email_subject_tag = ""
-    if config.NOTIFY_UK_EMAIL_SUBJECT_TAG != "":
-        email_subject_tag = f"{config.NOTIFY_UK_EMAIL_SUBJECT_TAG}: "
+    # email_subject_tag = ""
+    # if config.NOTIFY_UK_EMAIL_SUBJECT_TAG != "":
+    #     email_subject_tag = f"{config.NOTIFY_UK_EMAIL_SUBJECT_TAG}: "
 
     async with httpx.AsyncClient() as client:
         personalisation_data = {
             "name": message_properties.name,
             "email": message_properties.email,
-            "subject": f"{email_subject_tag}{message_properties.subject}",
-            "workspace": message_properties.workspace,
-            "issue_type": message_properties.issue_type,
+            "issue_name": message_properties.issue_name,
+            "workspace_id": message_properties.workspace_id,
             "error_message": message_properties.error_message,
             "issue_description": message_properties.issue_description
         }
@@ -51,6 +53,8 @@ async def send_message_notify_platform(message_properties: NotifyUkMessageInput)
                     "template_id": config.NOTIFY_UK_TEMPLATE_ID,
                     "personalisation": personalisation_data
                 }
+
+                logging.info("template_data -> %s", template_data)
 
                 response = await client.post(
                     config.NOTIFY_UK_URL,
