@@ -21,6 +21,7 @@ resource "azurerm_linux_web_app" "guacamole" {
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.guacamole_id.id
   virtual_network_subnet_id       = data.azurerm_subnet.web_apps.id
+  public_network_access_enabled   = false
   tags                            = local.workspace_service_tags
 
   site_config {
@@ -32,8 +33,8 @@ resource "azurerm_linux_web_app" "guacamole" {
     minimum_tls_version                           = "1.2"
 
     application_stack {
-      docker_image     = "${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/${var.image_name}"
-      docker_image_tag = local.image_tag
+      docker_registry_url = "https://${data.azurerm_container_registry.mgmt_acr.login_server}"
+      docker_image_name   = "microsoft/azuretre/${var.image_name}:${local.image_tag}"
     }
   }
 
@@ -63,7 +64,7 @@ resource "azurerm_linux_web_app" "guacamole" {
 
     OAUTH2_PROXY_CLIENT_ID       = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_id.id})"
     OAUTH2_PROXY_CLIENT_SECRET   = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_secret.id})"
-    OAUTH2_PROXY_REDIRECT_URI    = "https://${local.webapp_name}.${local.webapp_suffix}/oauth2/callback"
+    OAUTH2_PROXY_REDIRECT_URI    = local.webapp_auth_callback_url
     OAUTH2_PROXY_EMAIL_DOMAIN    = "\"*\"" # oauth proxy will allow all email domains only when the value is "*"
     OAUTH2_PROXY_OIDC_ISSUER_URL = local.issuer
     OAUTH2_PROXY_JWKS_ENDPOINT   = local.jwks_endpoint
@@ -120,8 +121,6 @@ resource "azurerm_role_assignment" "guac_acr_pull" {
 }
 
 resource "azurerm_private_endpoint" "guacamole" {
-  # disabling this makes the webapp available on the public internet
-  count               = var.is_exposed_externally == false ? 1 : 0
   name                = "pe-${local.webapp_name}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name

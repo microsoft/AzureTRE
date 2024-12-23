@@ -83,3 +83,7 @@ output "queue_core_dns_zone_id" {
 output "table_core_dns_zone_id" {
   value = azurerm_private_dns_zone.private_dns_zones["privatelink.table.core.windows.net"].id
 }
+
+output "internal_agw_subnet_cidr" {
+  value = local.app_gw_intternal_subnet_address_prefix
+}

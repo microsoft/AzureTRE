@@ -109,6 +109,8 @@ module "appgateway" {
   static_web_dns_zone_id     = module.network.static_web_dns_zone_id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
   app_gateway_sku            = var.app_gateway_sku
+  internal_agw_count         = var.internal_agw_count
+  internal_agw_subnet_cidr   = module.network.internal_agw_subnet_cidr
 
   enable_cmk_encryption  = var.enable_cmk_encryption
   key_store_id           = local.key_store_id
@@ -193,6 +195,8 @@ module "resource_processor_vmss_porter" {
   enable_cmk_encryption                            = var.enable_cmk_encryption
   key_store_id                                     = local.key_store_id
   kv_encryption_key_name                           = local.cmk_name
+  tre_url                                          = var.tre_url
+  internal_agw_count                               = var.internal_agw_count
 
   depends_on = [
     module.network,

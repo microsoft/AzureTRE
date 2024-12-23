@@ -1,4 +1,3 @@
-
 variable "tre_id" {
   type = string
 }
@@ -46,4 +45,13 @@ variable "key_store_id" {
 variable "kv_encryption_key_name" {
   type        = string
   description = "Name of Key Vault Encryption Key (only used if enable_cmk_encryption is true)"
+}
+
+variable "internal_agw_count" {
+  type    = number
+  default = 0
+}
+
+variable "internal_agw_subnet_cidr" {
+  type = string
 }

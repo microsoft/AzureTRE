@@ -1,5 +1,9 @@
 output "authentication_callback_uri" {
-  value = "https://${azurerm_linux_web_app.guacamole.default_hostname}/oauth2/callback"
+  value = local.webapp_auth_callback_url
+}
+
+output "routing_fqdn" {
+  value = var.is_exposed_externally ? azurerm_linux_web_app.guacamole.default_hostname : ""
 }
 
 output "web_apps_addresses" {
@@ -7,5 +11,5 @@ output "web_apps_addresses" {
 }
 
 output "admin_connection_uri" {
-  value = "https://${azurerm_linux_web_app.guacamole.default_hostname}/guacamole"
+  value = "${local.webapp_access_prefix}/guacamole/"
 }

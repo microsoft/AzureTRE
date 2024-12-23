@@ -9,4 +9,12 @@ locals {
     "public"       = "AzureCloud"
     "usgovernment" = "AzureUSGovernment"
   }, var.arm_environment, "AzureCloud")
+
+  rp_bundle_values_all = merge(var.rp_bundle_values,
+    {
+      tre_url            = var.tre_url,
+      internal_agw_count = var.internal_agw_count
+  })
+  rp_bundle_values_dic       = [for key in keys(local.rp_bundle_values_all) : "RP_BUNDLE_${key}=${local.rp_bundle_values_all[key]}"]
+  rp_bundle_values_formatted = join("\n      ", local.rp_bundle_values_dic)
 }

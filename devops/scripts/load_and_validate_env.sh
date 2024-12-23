@@ -78,11 +78,14 @@ else
 
     # The ARM Environment is required by terraform to indicate the destination cloud.
     ARM_ENVIRONMENT=$(convert_azure_env_to_arm_env "${AZURE_ENVIRONMENT}")
-    export ARM_ENVIRONMENT
+    export ARM_ENVIRONMENT #TODO: isn't used by scripts, right?
     export TF_VAR_arm_environment="${ARM_ENVIRONMENT}"
 
-    TRE_URL=$(construct_tre_url "${TRE_ID}" "${LOCATION}" "${AZURE_ENVIRONMENT}")
-    export TRE_URL
+    if [ -z "${TRE_URL:-}" ]; then
+      TRE_URL=$(construct_tre_url "${TRE_ID}" "${LOCATION}" "${AZURE_ENVIRONMENT}")
+      export TRE_URL
+    fi
+    export TF_VAR_tre_url="${TRE_URL}"
 fi
 
 # if local debugging is configured, then set vars required by ~/.porter/config.yaml

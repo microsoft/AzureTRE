@@ -45,6 +45,8 @@
 | `APP_GATEWAY_SKU` | Optional. The SKU of the Application Gateway. Default value is `Standard_v2`. Allowed values [`Standard_v2`, `WAF_v2`] |
 | `CUSTOM_DOMAIN` | Optional. Custom domain name to access the Azure TRE portal. See [Custom domain name](custom-domain.md). |
 | `ENABLE_CMK_ENCRYPTION` | If set to `true`, customer-managed key encryption will be enabled for all supported resources. |
+| `TRE_URL` | Optional. A custom URL for the TRE as registered in the DNS. Defaults to the DNS name used by Azure Application Gateway.|
+
 ## For authentication in `/config.yaml`
 
   | Variable | Description |

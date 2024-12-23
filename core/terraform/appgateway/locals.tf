@@ -30,4 +30,16 @@ locals {
   }
 
   appgateway_diagnostic_categories_enabled = ["ApplicationGatewayAccessLog", "ApplicationGatewayPerformanceLog", "ApplicationGatewayFirewallLog"]
+
+  internal_agw_backend_pool_name_prefix = "beap-internal"
+  internal_agw_backend_url_prefix       = "i"
+  internal_agw_http_setting_name        = "be-htst-internal-agw"
+  internal_agw_ruleset_name             = "rs-internal-agw"
+  internal_agw_ip_step                  = 1
+  internal_agw_ip_start                 = 5
+  internal_agw_ips                      = [for i in range(local.internal_agw_ip_start, local.internal_agw_ip_start + var.internal_agw_count * local.internal_agw_ip_step, local.internal_agw_ip_step) : cidrhost(var.internal_agw_subnet_cidr, i)]
+  internal_agw_ips_max                  = [for i in range(local.internal_agw_ip_start, local.internal_agw_ip_start + 10 * local.internal_agw_ip_step, local.internal_agw_ip_step) : cidrhost(var.internal_agw_subnet_cidr, i)]
+  keyvault_cert_prefix                  = "cert"
+  ca_common_name                        = "${var.tre_id}-ca"
+  internal_agw_ca_certificate_name      = "cert-ca"
 }

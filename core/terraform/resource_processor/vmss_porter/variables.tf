@@ -76,8 +76,12 @@ variable "rp_bundle_values" {
   type = map(string)
 }
 
-locals {
-  rp_bundle_values_formatted = join("\n      ", [for key in keys(var.rp_bundle_values) : "RP_BUNDLE_${key}=${var.rp_bundle_values[key]}"])
+variable "tre_url" {
+  type = string
+}
+
+variable "internal_agw_count" {
+  type = number
 }
 
 variable "enable_cmk_encryption" {

@@ -66,3 +66,6 @@ variable "arm_environment" {
   type        = string
   description = "The ARM cloud environment"
 }
+variable "tre_url" {
+  type = string
+}
