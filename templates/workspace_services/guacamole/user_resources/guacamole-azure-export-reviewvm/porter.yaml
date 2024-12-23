@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-export-reviewvm
-version: 0.1.13
+version: 0.2.0
 description: "An Azure TRE User Resource Template for reviewing Airlock export requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -75,6 +75,12 @@ parameters:
     type: string
     description: "A SAS token to access storage resource in workspace under review"
     env: airlock_request_sas_url
+  - name: enable_cmk_encryption
+    type: boolean
+    default: false
+  - name: key_store_id
+    type: string
+    default: ""
 
 outputs:
   - name: ip
@@ -118,6 +124,8 @@ install:
         image: ${ bundle.parameters.os_image }
         vm_size: ${ bundle.parameters.vm_size }
         airlock_request_sas_url: ${ bundle.parameters.airlock_request_sas_url }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -142,6 +150,8 @@ upgrade:
         image: ${ bundle.parameters.os_image }
         vm_size: ${ bundle.parameters.vm_size }
         airlock_request_sas_url: "unused"
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -178,6 +188,8 @@ uninstall:
         image: ${ bundle.parameters.os_image }
         vm_size: ${ bundle.parameters.vm_size }
         airlock_request_sas_url: "unused"
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

@@ -132,6 +132,5 @@ variable "enable_cmk_encryption" {
 variable "key_store_id" {
   type        = string
   description = "ID of the Key Vault to store CMKs in (only used if enable_cmk_encryption is true)"
-  default     = null
 }
 

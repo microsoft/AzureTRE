@@ -11,3 +11,12 @@ variable "tre_resource_id" {
 variable "admin_jumpbox_vm_sku" {
   type = string
 }
+
+variable "enable_cmk_encryption" {
+  type    = bool
+  default = false
+}
+
+variable "key_store_id" {
+  type = string
+}

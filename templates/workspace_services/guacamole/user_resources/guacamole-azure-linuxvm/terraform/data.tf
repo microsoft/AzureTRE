@@ -32,17 +32,6 @@ data "azurerm_public_ip" "app_gateway_ip" {
   resource_group_name = data.azurerm_resource_group.core.name
 }
 
-data "azurerm_storage_account" "stg" {
-  name                = local.storage_name
-  resource_group_name = data.azurerm_resource_group.ws.name
-}
-
-data "azurerm_storage_share" "shared_storage" {
-  count                = var.shared_storage_access ? 1 : 0
-  name                 = var.shared_storage_name
-  storage_account_name = data.azurerm_storage_account.stg.name
-}
-
 data "azurerm_key_vault_key" "ws_encryption_key" {
   count        = var.enable_cmk_encryption ? 1 : 0
   name         = local.cmk_name
