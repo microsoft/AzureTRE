@@ -33,3 +33,15 @@ data "azurerm_private_endpoint_connection" "airlock_export_inprogress_pe" {
   name                = "pe-sa-export-ip-blob-${local.short_workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
+
+data "azurerm_key_vault_key" "ws_encryption_key" {
+  count        = var.enable_cmk_encryption ? 1 : 0
+  name         = local.cmk_name
+  key_vault_id = var.key_store_id
+}
+
+data "azurerm_user_assigned_identity" "ws_encryption_identity" {
+  count               = var.enable_cmk_encryption ? 1 : 0
+  name                = local.encryption_identity_name
+  resource_group_name = data.azurerm_resource_group.ws.name
+}
