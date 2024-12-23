@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/firewall/template_schema.json",
+  "type": "object",
+  "title": "Application Gateway Shared Service",
+  "description": "Provides routing services into the TRE",
+  "required": [],
+  "properties": {
+    "backend_collection": {
+			"$id": "#properties/backend_collection",
+			"title": "backend collections",
+			"type": "array",
+			"default": [],
+      "updateable": true,
+			"items":{
+				"title": "items",
+				"type": "object",
+				"required": [
+					"name",
+					"fqdn"
+				],
+				"properties": {
+					"name": {
+						"title": "name",
+						"type": "string",
+						"examples": [
+							"my-backend"
+						],
+						"pattern": "^.*$"
+					},
+          "fqdn": {
+						"title": "fqdn",
+						"type": "string",
+						"examples": [
+							"my-web-site.azurewebsites.com"
+						],
+						"pattern": "^(https?)?.*$"
+					}
+				}
+			}
+    }
+  }
+}

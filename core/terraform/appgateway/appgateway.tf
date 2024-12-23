@@ -85,6 +85,14 @@ resource "azurerm_application_gateway" "agw" {
     fqdns = [var.api_fqdn]
   }
 
+  dynamic "backend_address_pool" {
+    for_each = toset([for i in range(var.internal_agw_count) : i])
+    content {
+      name         = "${local.internal_agw_backend_pool_name_prefix}${backend_address_pool.key}"
+      ip_addresses = [local.internal_agw_ips[backend_address_pool.key]]
+    }
+  }
+
   # Backend settings for api.
   # Using custom probe to test specific health endpoint
   backend_http_settings {
@@ -106,6 +114,21 @@ resource "azurerm_application_gateway" "agw" {
     protocol                            = "Https"
     request_timeout                     = 60
     pick_host_name_from_backend_address = true
+  }
+
+  backend_http_settings {
+    name                                = local.internal_agw_http_setting_name
+    cookie_based_affinity               = "Disabled"
+    port                                = 443
+    protocol                            = "Https"
+    request_timeout                     = 60
+    pick_host_name_from_backend_address = true
+    trusted_root_certificate_names      = [local.internal_agw_ca_certificate_name]
+  }
+
+  trusted_root_certificate {
+    name                = local.internal_agw_ca_certificate_name
+    key_vault_secret_id = [for item in data.azurerm_key_vault_secrets.secrets.secrets : item.id if item.name == "${local.keyvault_cert_prefix}-${local.ca_common_name}"][0]
   }
 
   # Custom health probe for API.
@@ -177,6 +200,15 @@ resource "azurerm_application_gateway" "agw" {
       backend_http_settings_name = local.api_http_setting_name
     }
 
+    dynamic "path_rule" {
+      for_each = toset([for i in range(var.internal_agw_count) : i])
+      content {
+        name                       = "${local.internal_agw_backend_pool_name_prefix}${path_rule.key}"
+        paths                      = ["/${local.internal_agw_backend_url_prefix}${path_rule.key}*"]
+        backend_address_pool_name  = "${local.internal_agw_backend_pool_name_prefix}${path_rule.key}"
+        backend_http_settings_name = local.internal_agw_http_setting_name
+      }
+    }
   }
 
   # Redirect any HTTP traffic to HTTPS unless its the ACME challenge path used for LetsEncrypt validation.

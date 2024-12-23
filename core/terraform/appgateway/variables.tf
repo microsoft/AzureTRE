@@ -1,4 +1,3 @@
-
 variable "tre_id" {
   type = string
 }
@@ -36,5 +35,14 @@ variable "enable_cmk_encryption" {
   type = bool
 }
 variable "encryption_key_versionless_id" {
+  type = string
+}
+
+variable "internal_agw_count" {
+  type    = number
+  default = 0
+}
+
+variable "internal_agw_subnet_cidr" {
   type = string
 }

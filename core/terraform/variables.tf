@@ -241,3 +241,17 @@ variable "encryption_kv_name" {
   description = "Name of Key Vault for encryption keys, required only if external_key_store_id is not set (only used if enable_cmk_encryption is true)"
   default     = null
 }
+variable "tre_url" {
+  type    = string
+  default = ""
+  validation {
+    condition     = startswith(var.tre_url, "http") && length(var.tre_url) > 10
+    error_message = "Invalid tre_url. Must start with http or https."
+  }
+}
+
+variable "internal_agw_count" {
+  type        = number
+  description = "The number of internal AGWs to deploy are will be used to route traffic to internal endpoints (e.g. Guacamole)"
+  default     = 2
+}

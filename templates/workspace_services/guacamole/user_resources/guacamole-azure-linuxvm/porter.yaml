@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-linuxvm
-version: 1.2.3
+version: 1.2.4
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -112,6 +112,8 @@ parameters:
   - name: key_store_id
     type: string
     default: ""
+  - name: tre_url
+    type: string
 
 outputs:
   - name: ip
@@ -162,6 +164,7 @@ install:
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        tre_url: ${ bundle.parameters.tre_url }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -193,6 +196,7 @@ upgrade:
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        tre_url: ${ bundle.parameters.tre_url }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -236,6 +240,7 @@ uninstall:
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        tre_url: ${ bundle.parameters.tre_url }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

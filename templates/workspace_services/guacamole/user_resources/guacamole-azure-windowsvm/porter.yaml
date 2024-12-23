@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 1.2.3
+version: 1.2.4
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -14,13 +14,6 @@ custom:
     "8 CPU | 32GB RAM": Standard_D8s_v5
     "16 CPU | 64GB RAM": Standard_D16s_v5
   image_options:
-    "Windows 10":
-      source_image_reference:
-        publisher: MicrosoftWindowsDesktop
-        offer: Windows-10
-        sku: win10-22h2-pro-g2
-        version: latest
-      conda_config: false
     "Windows 11":
       source_image_reference:
         publisher: microsoftwindowsdesktop
@@ -33,6 +26,13 @@ custom:
         publisher: microsoft-dsvm
         offer: dsvm-win-2019
         sku: winserver-2019
+        version: latest
+      conda_config: true
+    "Server 2022 Data Science VM":
+      source_image_reference:
+        publisher: microsoft-dsvm
+        offer: dsvm-win-2022
+        sku: winserver-2022
         version: latest
       conda_config: true
     # For information on using custom images, see README.me in the guacamole/user-resources folder
@@ -106,6 +106,8 @@ parameters:
   - name: key_store_id
     type: string
     default: ""
+  - name: tre_url
+    type: string
 
 outputs:
   - name: ip
@@ -153,6 +155,7 @@ install:
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        tre_url: ${ bundle.parameters.tre_url }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -181,6 +184,7 @@ upgrade:
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        tre_url: ${ bundle.parameters.tre_url }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -221,6 +225,7 @@ uninstall:
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        tre_url: ${ bundle.parameters.tre_url }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

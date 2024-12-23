@@ -23,4 +23,10 @@ locals {
     "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs",
     "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"
   ]
+
+  # TODO: the i0 prefix is a temporary workaround, we need a way to know which appgw will be used.
+  # We might ask the user which one to use...
+  # This results in a maximum of 100 backends in the system.
+  webapp_access_prefix     = var.is_exposed_externally ? "${var.tre_url}/i0/${var.tre_resource_id}" : "https://${local.webapp_name}.${local.webapp_suffix}"
+  webapp_auth_callback_url = "${local.webapp_access_prefix}/oauth2/callback"
 }

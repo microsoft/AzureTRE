@@ -107,3 +107,29 @@ resource "azurerm_private_endpoint" "sspe" {
     subresource_names              = ["Sql"]
   }
 }
+
+# Using the az CLI command since terraform forces a re-creation of the resource
+# https://github.com/hashicorp/terraform-provider-azurerm/issues/24781
+resource "null_resource" "tre_db_account_enable_cmk" {
+  count = var.enable_cmk_encryption ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "az cosmosdb update --name ${azurerm_cosmosdb_account.tre_db_account.name} --resource-group ${azurerm_cosmosdb_account.tre_db_account.resource_group_name} --key-uri ${azurerm_key_vault_key.tre_encryption[0].versionless_id}"
+  }
+
+  depends_on = [
+    azurerm_cosmosdb_account.tre_db_account,
+    azurerm_role_assignment.kv_encryption_key_user[0]
+  ]
+}
+
+resource "azurerm_cosmosdb_sql_role_assignment" "tre_db_contributor_for_developer" {
+  count               = var.enable_local_debugging ? 1 : 0
+  resource_group_name = azurerm_resource_group.core.name
+  account_name        = azurerm_cosmosdb_account.tre_db_account.name
+  role_definition_id  = data.azurerm_cosmosdb_sql_role_definition.cosmosdb_db_contributor.id
+  principal_id        = azurerm_user_assigned_identity.id.principal_id
+  scope               = azurerm_cosmosdb_account.tre_db_account.id
+
+  depends_on = [null_resource.tre_db_account_enable_cmk]
+}

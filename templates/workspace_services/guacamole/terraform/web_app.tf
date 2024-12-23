@@ -18,8 +18,8 @@ resource "azurerm_linux_web_app" "guacamole" {
   virtual_network_subnet_id                      = data.azurerm_subnet.web_apps.id
   ftp_publish_basic_authentication_enabled       = false
   webdeploy_publish_basic_authentication_enabled = false
+  public_network_access_enabled                  = false
   tags                                           = local.workspace_service_tags
-  public_network_access_enabled                  = var.is_exposed_externally
 
   site_config {
     http2_enabled                                 = true
@@ -61,7 +61,7 @@ resource "azurerm_linux_web_app" "guacamole" {
 
     OAUTH2_PROXY_CLIENT_ID       = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_id.id})"
     OAUTH2_PROXY_CLIENT_SECRET   = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_secret.id})"
-    OAUTH2_PROXY_REDIRECT_URI    = "https://${local.webapp_name}.${local.webapp_suffix}/oauth2/callback"
+    OAUTH2_PROXY_REDIRECT_URI    = local.webapp_auth_callback_url
     OAUTH2_PROXY_EMAIL_DOMAIN    = "\"*\"" # oauth proxy will allow all email domains only when the value is "*"
     OAUTH2_PROXY_OIDC_ISSUER_URL = local.issuer
     OAUTH2_PROXY_JWKS_ENDPOINT   = local.jwks_endpoint
@@ -118,8 +118,6 @@ resource "azurerm_role_assignment" "guac_acr_pull" {
 }
 
 resource "azurerm_private_endpoint" "guacamole" {
-  # disabling this makes the webapp available on the public internet
-  count               = var.is_exposed_externally == false ? 1 : 0
   name                = "pe-${local.webapp_name}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name

@@ -147,6 +147,7 @@ Configure variables used in the deployment workflow:
 | `ENABLE_SWAGGER` | Optional. Determines whether the Swagger interface for the API will be available. Default value is `false`. |
 | `FIREWALL_SKU` | Optional. The SKU of the Azure Firewall instance. Default value is `Standard`. Allowed values [`Basic`, `Standard`, `Premium`]. See [Azure Firewall SKU feature comparison](https://learn.microsoft.com/en-us/azure/firewall/choose-firewall-sku). |
 | `APP_GATEWAY_SKU` | Optional. The SKU of the Application Gateway. Default value is `Standard_v2`. Allowed values [`Standard_v2`, `WAF_v2`] |
+| `TRE_URL` | Optional. A custom URL for the TRE as registered in the DNS. Defaults to the DNS name used by Azure Application Gateway.|
 
 
 ### Deploy the TRE using the workflow

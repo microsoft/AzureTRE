@@ -147,6 +147,14 @@ resource "azurerm_subnet" "firewall_management" {
   depends_on           = [azurerm_subnet.airlock_events]
 }
 
+resource "azurerm_subnet" "app_gw_internal" {
+  name                 = "AppGwInternalSubnet"
+  virtual_network_name = azurerm_virtual_network.core.name
+  resource_group_name  = var.resource_group_name
+  address_prefixes     = [local.app_gw_intternal_subnet_address_prefix]
+  depends_on           = [azurerm_subnet.firewall_management]
+}
+
 resource "azurerm_ip_group" "resource_processor" {
   name                = "ipg-resource-processor"
   location            = var.location

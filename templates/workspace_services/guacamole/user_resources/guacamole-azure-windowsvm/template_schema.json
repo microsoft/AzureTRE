@@ -1,45 +1,62 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm/template_schema.json",
-    "type": "object",
-    "title": "Windows Virtual Machine",
-    "description": "Windows virtual machine.",
-    "required": [
-    ],
-    "authorizedRoles": [
-      "WorkspaceOwner", "WorkspaceResearcher"
-    ],
-    "properties": {
-      "os_image": {
-        "$id": "#/properties/os_image",
-        "type": "string",
-        "title": "Windows image",
-        "description": "Select Windows image to use for VM",
-        "enum": [
-          "Windows 10",
-          "Windows 11",
-          "Server 2019 Data Science VM"
-        ]
-      },
-      "vm_size": {
-        "$id": "#/properties/vm_size",
-        "type": "string",
-        "title": "VM Size",
-        "description": "Select size of VM",
-        "enum": [
-          "2 CPU | 8GB RAM",
-          "4 CPU | 16GB RAM",
-          "8 CPU | 32GB RAM",
-          "16 CPU | 64GB RAM"
-        ],
-        "updateable": true
-      },
-      "shared_storage_access": {
-        "$id": "#/properties/shared_storage_access",
-        "type": "boolean",
-        "title": "Shared storage",
-        "default": true,
-        "description": "Enable access to shared storage"
-      }
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm/template_schema.json",
+  "type": "object",
+  "title": "Windows Virtual Machine",
+  "description": "Windows virtual machine.",
+  "required": [],
+  "authorizedRoles": [
+    "WorkspaceOwner",
+    "WorkspaceResearcher"
+  ],
+  "properties": {
+    "os_image": {
+      "$id": "#/properties/os_image",
+      "type": "string",
+      "title": "Windows image",
+      "description": "Select Windows image to use for VM",
+      "enum": [
+        "Windows 11",
+        "Server 2019 Data Science VM",
+        "Server 2022 Data Science VM"
+      ]
+    },
+    "vm_size": {
+      "$id": "#/properties/vm_size",
+      "type": "string",
+      "title": "VM Size",
+      "description": "Select size of VM",
+      "enum": [
+        "2 CPU | 8GB RAM",
+        "4 CPU | 16GB RAM",
+        "8 CPU | 32GB RAM",
+        "16 CPU | 64GB RAM"
+      ],
+      "updateable": true
+    },
+    "shared_storage_access": {
+      "$id": "#/properties/shared_storage_access",
+      "type": "boolean",
+      "title": "Shared storage",
+      "default": true,
+      "description": "Enable access to shared storage"
     }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "main"
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "main"
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "main"
+      }
+    ]
+  }
 }
