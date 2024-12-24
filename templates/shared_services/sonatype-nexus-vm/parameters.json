@@ -63,6 +63,12 @@
       "source": {
         "env": "KEY_STORE_ID"
       }
+    },
+    {
+      "name": "vm_size",
+      "source": {
+        "env": "VM_SIZE"
+      }
     }
   ]
 }
