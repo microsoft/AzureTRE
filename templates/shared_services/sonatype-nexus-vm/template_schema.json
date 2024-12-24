@@ -41,6 +41,19 @@
       "title": "Expose externally",
       "description": "Is the Sonatype Nexus accessible from outside of the TRE network.",
       "default": false
+    },
+    "vm_size": {
+      "type": "string",
+      "title": "VM Size",
+      "description": "The size of the VM to be deployed",
+      "default": "Standard_B2ms",
+      "enum": [
+        "Standard_B2ms",
+        "Standard_B4ms",
+        "Standard_D2s_v3",
+        "Standard_D4s_v3",
+        "Standard_D2ads_v5"
+      ]
     }
   },
   "uiSchema": {
