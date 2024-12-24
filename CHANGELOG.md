@@ -41,6 +41,7 @@ BUG FIXES:
 * Fix failing tests, .env missing and storage logs ([#4207](https://github.com/microsoft/AzureTRE/issues/4207))
 * Unable to delete virtual machines, add skip_shutdown_and_force_delete = true ([#4135](https://github.com/microsoft/AzureTRE/issues/4135))
 * Bump terraform version in windows VM template ([#4212](https://github.com/microsoft/AzureTRE/issues/4212))
+* Upgrade azurerm terraform provider from v3.112.0 to v3.117.0 to mitiagte storage account deployment issue ([#4004](https://github.com/microsoft/AzureTRE/issues/4004))
 
 COMPONENTS:
 
