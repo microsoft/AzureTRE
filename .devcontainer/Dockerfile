@@ -5,6 +5,9 @@ ARG VARIANT="3.8"
 ARG TARGETPLATFORM="linux/amd64"
 FROM --platform="${TARGETPLATFORM}" mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}-bullseye
 
+ADD .devcontainer/ZscalerRootCertificate-2048-SHA256.crt /usr/local/share/ca-certificates/ZscalerRootCertificate-2048-SHA256.crt
+RUN /usr/sbin/update-ca-certificates
+
 # This will be set to true when running in VSCode
 ARG INTERACTIVE="false"
 
