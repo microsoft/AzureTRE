@@ -39,8 +39,8 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
 
   source_image_reference {
     publisher = "MicrosoftWindowsDesktop"
-    offer     = "windows-10"
-    sku       = "win10-21h2-pro-g2"
+    offer     = "windows-11"
+    sku       = "win11-24h2-pro"
     version   = "latest"
   }
 
