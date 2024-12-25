@@ -40,6 +40,7 @@ BUG FIXES:
 * Fix failing tests, .env missing and storage logs ([#4207](https://github.com/microsoft/AzureTRE/issues/4207))
 * Unable to delete virtual machines, add skip_shutdown_and_force_delete = true ([#4135](https://github.com/microsoft/AzureTRE/issues/4135))
 * Bump terraform version in windows VM template ([#4212](https://github.com/microsoft/AzureTRE/issues/4212))
+* Fix VM actions where Workspace shared storage doesn't allow shared key access ([#4222](https://github.com/microsoft/AzureTRE/issues/4222))
 
 COMPONENTS:
 
