@@ -41,6 +41,7 @@ BUG FIXES:
 * Unable to delete virtual machines, add skip_shutdown_and_force_delete = true ([#4135](https://github.com/microsoft/AzureTRE/issues/4135))
 * Bump terraform version in windows VM template ([#4212](https://github.com/microsoft/AzureTRE/issues/4212))
 * Upgrade azurerm terraform provider from v3.112.0 to v3.117.0 to mitiagte storage account deployment issue ([#4004](https://github.com/microsoft/AzureTRE/issues/4004))
+* Fix VM actions where Workspace shared storage doesn't allow shared key access ([#4222](https://github.com/microsoft/AzureTRE/issues/4222))
 
 COMPONENTS:
 
