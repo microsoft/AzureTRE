@@ -123,33 +123,11 @@ data "template_file" "vm_config" {
     STORAGE_ACCOUNT_NAME  = data.azurerm_storage_account.stg.name
     STORAGE_ACCOUNT_KEY   = data.azurerm_storage_account.stg.primary_access_key
     HTTP_ENDPOINT         = data.azurerm_storage_account.stg.primary_file_endpoint
-    FILESHARE_NAME        = var.shared_storage_access ? data.azurerm_storage_share.shared_storage[0].name : ""
+    FILESHARE_NAME        = var.shared_storage_access ? var.shared_storage_name : ""
     NEXUS_PROXY_URL       = local.nexus_proxy_url
     CONDA_CONFIG          = local.selected_image.conda_config ? 1 : 0
     VM_USER               = random_string.username.result
     APT_SKU               = replace(local.apt_sku, ".", "")
-  }
-}
-
-data "template_file" "get_apt_keys" {
-  template = file("${path.module}/get_apt_keys.sh")
-  vars = {
-    NEXUS_PROXY_URL = local.nexus_proxy_url
-  }
-}
-
-data "template_file" "pypi_sources_config" {
-  template = file("${path.module}/pypi_sources_config.sh")
-  vars = {
-    nexus_proxy_url = local.nexus_proxy_url
-  }
-}
-
-data "template_file" "apt_sources_config" {
-  template = file("${path.module}/apt_sources_config.yml")
-  vars = {
-    nexus_proxy_url = local.nexus_proxy_url
-    apt_sku         = local.apt_sku
   }
 }
 
@@ -160,17 +138,6 @@ resource "azurerm_key_vault_secret" "linuxvm_password" {
   tags         = local.tre_user_resources_tags
 
   lifecycle { ignore_changes = [tags] }
-}
-
-data "azurerm_storage_account" "stg" {
-  name                = local.storage_name
-  resource_group_name = data.azurerm_resource_group.ws.name
-}
-
-data "azurerm_storage_share" "shared_storage" {
-  count                = var.shared_storage_access ? 1 : 0
-  name                 = var.shared_storage_name
-  storage_account_name = data.azurerm_storage_account.stg.name
 }
 
 resource "azurerm_dev_test_global_vm_shutdown_schedule" "shutdown_schedule" {

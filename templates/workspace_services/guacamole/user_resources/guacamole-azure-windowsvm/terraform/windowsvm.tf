@@ -53,7 +53,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
       StorageAccountName     = data.azurerm_storage_account.stg.name
       StorageAccountKey      = data.azurerm_storage_account.stg.primary_access_key
       StorageAccountFileHost = data.azurerm_storage_account.stg.primary_file_host
-      FileShareName          = var.shared_storage_access ? data.azurerm_storage_share.shared_storage[0].name : ""
+      FileShareName          = var.shared_storage_access ? var.shared_storage_name : ""
       CondaConfig            = local.selected_image.conda_config ? 1 : 0
     }
   ))

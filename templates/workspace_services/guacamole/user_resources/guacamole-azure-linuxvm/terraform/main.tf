@@ -33,9 +33,6 @@ provider "azurerm" {
       recover_soft_deleted_certificates = true
       recover_soft_deleted_keys         = true
     }
-    virtual_machine {
-      skip_shutdown_and_force_delete = true
-    }
   }
   storage_use_azuread = true
 }
