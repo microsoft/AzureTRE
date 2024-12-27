@@ -53,16 +53,19 @@ resource "azurerm_storage_account_customer_managed_key" "sa_airlock_processor_fu
 }
 
 resource "azurerm_linux_function_app" "airlock_function_app" {
-  name                      = local.airlock_function_app_name
-  resource_group_name       = var.resource_group_name
-  location                  = var.location
-  https_only                = true
-  virtual_network_subnet_id = var.airlock_processor_subnet_id
-  service_plan_id           = azurerm_service_plan.airlock_plan.id
-  storage_account_name      = azurerm_storage_account.sa_airlock_processor_func_app.name
+  name                                           = local.airlock_function_app_name
+  resource_group_name                            = var.resource_group_name
+  location                                       = var.location
+  https_only                                     = true
+  virtual_network_subnet_id                      = var.airlock_processor_subnet_id
+  service_plan_id                                = azurerm_service_plan.airlock_plan.id
+  ftp_publish_basic_authentication_enabled       = false
+  webdeploy_publish_basic_authentication_enabled = false
+  storage_account_name                           = azurerm_storage_account.sa_airlock_processor_func_app.name
   # consider moving to a managed identity here
   storage_account_access_key = azurerm_storage_account.sa_airlock_processor_func_app.primary_access_key
-  tags                       = var.tre_core_tags
+
+  tags = var.tre_core_tags
 
   identity {
     type         = "UserAssigned"

@@ -32,6 +32,7 @@ resource "azurerm_storage_account" "state_storage" {
   cross_tenant_replication_enabled = false
   allow_nested_items_to_be_public  = false
   shared_access_key_enabled        = false
+  local_user_enabled               = false
 
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
