@@ -153,6 +153,21 @@ if [ "${workspace}" != "0" ]; then
   | xargs -P 10 -I {} az rest --method delete --uri "{}?api-version=2020-08-01"
 fi
 
+# delete container repositories individually otherwise defender doesn't purge image scans
+if [[ -n ${ACR_NAME:-} ]]; then
+  echo "Deleting container repositories from registry ${ACR_NAME}..."
+  repositories=$(az acr repository list --name "$ACR_NAME" --output tsv)
+
+  if [ -z "$repositories" ]; then
+      echo "No repositories found in $ACR_NAME"
+  else
+    for repository in $repositories; do
+        echo "  Deleting: $repository"
+        az acr repository delete --name "$ACR_NAME" --repository "$repository" --yes --output none
+    done
+  fi
+fi
+
 # this will find the mgmt, core resource groups as well as any workspace ones
 # we are reverse-sorting to first delete the workspace groups (might not be
 # good enough because we use no-wait sometimes)

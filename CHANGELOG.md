@@ -27,6 +27,7 @@ ENHANCEMENTS:
 * Enhance DPI of Linux display ([[#4200](https://github.com/microsoft/AzureTRE/issues/4200)])
 * Update Admin VM versions ([[#4217](https://github.com/microsoft/AzureTRE/issues/4217)])
 * Update devcontainer/RP/API package versions: base image, docker, az cli, YQ ([#4225](https://github.com/microsoft/AzureTRE/pull/4225))
+* Purge container repos individually in when using `make tre-destroy` ([#TBC](https://github.com/microsoft/AzureTRE/pull/TBC))
 
 BUG FIXES:
 * Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
