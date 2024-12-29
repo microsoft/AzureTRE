@@ -14,16 +14,18 @@ set -o pipefail
 function usage() {
     cat <<USAGE
 
-    Usage: $0 --core-tre-rg "something" [--no-wait]
+    Usage: $0 --core-tre-rg "something" [--no-wait] [--acr-name "acrname"]
 
     Options:
         --core-tre-rg   The core resource group name of the TRE.
         --no-wait       Doesn't wait for delete operations to complete and exits asap.
+        --acr-name      When set will delete container repositories individually (in order to purge associated Defender scans)
 USAGE
     exit 1
 }
 
 no_wait=false
+acr_name=""
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -33,6 +35,10 @@ while [ "$1" != "" ]; do
         ;;
     --no-wait)
         no_wait=true
+        ;;
+    --acr-name)
+        shift
+        acr_name=$1
         ;;
     *)
         echo "Unexpected argument: '$1'"
@@ -64,6 +70,12 @@ no_wait_option=""
 if ${no_wait}
 then
   no_wait_option="--no-wait"
+fi
+
+if [[ -z ${acr_name:-} ]]; then
+  if [[ -n ${ACR_NAME:-} ]]; then
+    acr_name="${ACR_NAME}"
+  fi
 fi
 
 group_show_result=$(az group show --name "${core_tre_rg}" > /dev/null 2>&1; echo $?)
@@ -154,16 +166,16 @@ if [ "${workspace}" != "0" ]; then
 fi
 
 # delete container repositories individually otherwise defender doesn't purge image scans
-if [[ -n ${ACR_NAME:-} ]]; then
-  echo "Deleting container repositories from registry ${ACR_NAME}..."
-  repositories=$(az acr repository list --name "$ACR_NAME" --output tsv)
+if [[ -n ${acr_name} ]]; then
+  echo "Deleting container repositories from registry ${acr_name}..."
+  repositories=$(az acr repository list --name "$acr_name" --output tsv)
 
   if [ -z "$repositories" ]; then
-      echo "No repositories found in $ACR_NAME"
+      echo "No repositories found in $acr_name"
   else
     for repository in $repositories; do
         echo "  Deleting: $repository"
-        az acr repository delete --name "$ACR_NAME" --repository "$repository" --yes --output none
+        az acr repository delete --name "$acr_name" --repository "$repository" --yes --output none
     done
   fi
 fi
