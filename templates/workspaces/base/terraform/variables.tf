@@ -135,6 +135,6 @@ variable "key_store_id" {
 }
 
 variable "storage_account_redundancy" {
-  type = string
+  type        = string
   description = "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
 }
