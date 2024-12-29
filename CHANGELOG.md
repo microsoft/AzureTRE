@@ -3,7 +3,7 @@
 
 **BREAKING CHANGES & MIGRATIONS**:
 * InnerEye and MLFlow bundles depreciated and removed from main. If you wish to update and deploy these worksapce services they can be retrieved from release 0.19.1. ([#4127](https://github.com/microsoft/AzureTRE/issues/4127))
-* Upgrade Python version from 3.8 to 3.12 ([#3949](https://github.com/microsoft/AzureTRE/issues/3949))
+* This released removed support for Porter v0.*. If you're upgrading from a much earlier verion you can't go directly to this one. ([#TBD](https://github.com/microsoft/AzureTRE/issues/TBD))
 
 FEATURES:
 * Add support for customer-managed keys encryption. Core support ([#4141](https://github.com/microsoft/AzureTRE/issues/4142), [#4144](https://github.com/microsoft/AzureTRE/issues/4144)), Base workspace ([#4161](https://github.com/microsoft/AzureTRE/pull/4161)), other templates ([#4145](https://github.com/microsoft/AzureTRE/issues/4145))
@@ -27,6 +27,7 @@ ENHANCEMENTS:
 * Enhance DPI of Linux display ([[#4200](https://github.com/microsoft/AzureTRE/issues/4200)])
 * Update Admin VM versions ([[#4217](https://github.com/microsoft/AzureTRE/issues/4217)])
 * Update devcontainer/RP/API package versions: base image, docker, az cli, YQ ([#4225](https://github.com/microsoft/AzureTRE/pull/4225))
+* Upgrade Python version from 3.8 to 3.12 ([#3949](https://github.com/microsoft/AzureTRE/issues/3949))Upgrade Python version from 3.8 to 3.12 (#3949)
 
 BUG FIXES:
 * Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))

@@ -8,7 +8,7 @@ resource "azurerm_storage_account" "staticweb" {
   account_replication_type         = "LRS"
   table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
-  enable_https_traffic_only        = true
+  https_traffic_only_enabled       = true
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
   local_user_enabled               = false
