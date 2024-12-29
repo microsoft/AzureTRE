@@ -24,6 +24,7 @@ resource "azurerm_storage_account" "az_monitor" {
   queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
+  local_user_enabled               = false
   tags                             = var.tre_core_tags
 
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below

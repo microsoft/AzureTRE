@@ -11,6 +11,7 @@ resource "azurerm_storage_account" "staticweb" {
   enable_https_traffic_only        = true
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
+  local_user_enabled               = false
   tags                             = local.tre_core_tags
 
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
