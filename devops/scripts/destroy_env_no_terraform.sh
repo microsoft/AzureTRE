@@ -14,12 +14,11 @@ set -o pipefail
 function usage() {
     cat <<USAGE
 
-    Usage: $0 --core-tre-rg "something" [--no-wait] [--acr-name "acrname"]
+    Usage: $0 --core-tre-rg "something" [--no-wait]
 
     Options:
         --core-tre-rg   The core resource group name of the TRE.
         --no-wait       Doesn't wait for delete operations to complete and exits asap.
-        --acr-name      When set will delete container repositories individually (in order to purge associated Defender scans)
 USAGE
     exit 1
 }
