@@ -25,7 +25,6 @@ USAGE
 }
 
 no_wait=false
-acr_name=""
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -35,10 +34,6 @@ while [ "$1" != "" ]; do
         ;;
     --no-wait)
         no_wait=true
-        ;;
-    --acr-name)
-        shift
-        acr_name=$1
         ;;
     *)
         echo "Unexpected argument: '$1'"
@@ -70,12 +65,6 @@ no_wait_option=""
 if ${no_wait}
 then
   no_wait_option="--no-wait"
-fi
-
-if [[ -z ${acr_name:-} ]]; then
-  if [[ -n ${ACR_NAME:-} ]]; then
-    acr_name="${ACR_NAME}"
-  fi
 fi
 
 group_show_result=$(az group show --name "${core_tre_rg}" > /dev/null 2>&1; echo $?)
@@ -166,25 +155,34 @@ if [ "${workspace}" != "0" ]; then
 fi
 
 # delete container repositories individually otherwise defender doesn't purge image scans
-if [[ -n ${acr_name} ]]; then
-  echo "Deleting container repositories from registry ${acr_name}..."
-  repositories=$(az acr repository list --name "$acr_name" --output tsv)
+function purge_container_repositories() {
+  local rg=$1
 
-  if [ -z "$repositories" ]; then
-      echo "No repositories found in $acr_name"
-  else
+  local acrs
+  acrs=$(az acr list --resource-group "$rg" --query [].name --output tsv)
+
+  local acr
+  for acr in $acrs; do
+    echo "Found container registry ${acr}, deleting repositories..."
+
+    local repositories
+    repositories=$(az acr repository list --name "$acr" --output tsv)
+
+    local repository
     for repository in $repositories; do
         echo "  Deleting: $repository"
-        az acr repository delete --name "$acr_name" --repository "$repository" --yes --output none
+        az acr repository delete --name "$acr" --repository "$repository" --yes --output none
     done
-  fi
-fi
+  done
+}
 
 # this will find the mgmt, core resource groups as well as any workspace ones
 # we are reverse-sorting to first delete the workspace groups (might not be
 # good enough because we use no-wait sometimes)
 az group list --query "[?starts_with(name, '${core_tre_rg}')].[name]" -o tsv | sort -r |
 while read -r rg_item; do
+  purge_container_repositories "$rg_item"
+
   echo "Deleting resource group: ${rg_item}"
   az group delete --resource-group "${rg_item}" --yes ${no_wait_option}
 done
