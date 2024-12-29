@@ -10,6 +10,7 @@ resource "azurerm_storage_account" "sa_import_external" {
   table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
   local_user_enabled               = false
   # Don't allow anonymous access (unrelated to the 'public' networking rules)
   allow_nested_items_to_be_public = false
@@ -76,6 +77,7 @@ resource "azurerm_storage_account" "sa_export_approved" {
   table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
   local_user_enabled               = false
 
   # Don't allow anonymous access (unrelated to the 'public' networking rules)
@@ -144,6 +146,7 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
   queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
   local_user_enabled               = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
@@ -241,6 +244,7 @@ resource "azurerm_storage_account" "sa_import_rejected" {
   queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
   local_user_enabled               = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
@@ -312,6 +316,7 @@ resource "azurerm_storage_account" "sa_import_blocked" {
   queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
   local_user_enabled               = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
