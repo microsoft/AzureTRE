@@ -29,6 +29,7 @@ ENHANCEMENTS:
 * Update devcontainer/RP/API package versions: base image, docker, az cli, YQ ([#4225](https://github.com/microsoft/AzureTRE/pull/4225))
 * Upgrade Python version from 3.8 to 3.12 ([#3949](https://github.com/microsoft/AzureTRE/issues/3949))Upgrade Python version from 3.8 to 3.12 (#3949)
 * Disable storage account key usage ([[#4227](https://github.com/microsoft/AzureTRE/issues/4227)])
+* Update Guacamole dependencies ([[#4232](https://github.com/microsoft/AzureTRE/issues/4232)])
 
 BUG FIXES:
 * Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
