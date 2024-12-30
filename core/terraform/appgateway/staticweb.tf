@@ -11,6 +11,7 @@ resource "azurerm_storage_account" "staticweb" {
   https_traffic_only_enabled       = true
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
   local_user_enabled               = false
   tags                             = local.tre_core_tags
 
