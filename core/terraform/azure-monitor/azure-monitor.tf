@@ -27,6 +27,9 @@ resource "azurerm_storage_account" "az_monitor" {
   local_user_enabled               = false
   tags                             = var.tre_core_tags
 
+  # unclear the implications on az-monitor, so leaving it for now.
+  # shared_access_key_enabled        = false
+
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
 
