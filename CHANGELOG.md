@@ -3,7 +3,7 @@
 
 **BREAKING CHANGES & MIGRATIONS**:
 * InnerEye and MLFlow bundles depreciated and removed from main. If you wish to update and deploy these worksapce services they can be retrieved from release 0.19.1. ([#4127](https://github.com/microsoft/AzureTRE/issues/4127))
-* This released removed support for Porter v0.*. If you're upgrading from a much earlier verion you can't go directly to this one. ([#TBD](https://github.com/microsoft/AzureTRE/issues/TBD))
+* This released removed support for Porter v0.*. If you're upgrading from a much earlier verion you can't go directly to this one. ([#4228](https://github.com/microsoft/AzureTRE/issues/4228))
 
 FEATURES:
 * Add support for customer-managed keys encryption. Core support ([#4141](https://github.com/microsoft/AzureTRE/issues/4142), [#4144](https://github.com/microsoft/AzureTRE/issues/4144)), Base workspace ([#4161](https://github.com/microsoft/AzureTRE/pull/4161)), other templates ([#4145](https://github.com/microsoft/AzureTRE/issues/4145))
