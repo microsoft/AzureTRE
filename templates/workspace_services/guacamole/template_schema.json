@@ -70,7 +70,7 @@
       "type": "boolean",
       "title": "Expose externally",
       "description": "Is the Guacamole service exposed outside of the vnet",
-      "default": false
+      "default": true
     }
   },
   "pipeline": {
