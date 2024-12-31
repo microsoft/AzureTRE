@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 1.8.3
+version: 1.9.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -122,6 +122,10 @@ parameters:
   - name: key_store_id
     type: string
     default: ""
+  - name: storage_account_redundancy
+    type: string
+    default: "GRS"
+    description: "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -191,6 +195,7 @@ install:
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -235,6 +240,7 @@ upgrade:
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -302,6 +308,7 @@ uninstall:
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
