@@ -45,21 +45,20 @@ module "aad" {
 }
 
 module "airlock" {
-  count                       = var.enable_airlock ? 1 : 0
-  source                      = "./airlock"
-  location                    = var.location
-  tre_id                      = var.tre_id
-  tre_workspace_tags          = local.tre_workspace_tags
-  ws_resource_group_name      = azurerm_resource_group.ws.name
-  enable_local_debugging      = var.enable_local_debugging
-  services_subnet_id          = module.network.services_subnet_id
-  short_workspace_id          = local.short_workspace_id
-  airlock_processor_subnet_id = module.network.airlock_processor_subnet_id
-  arm_environment             = var.arm_environment
-  enable_cmk_encryption       = var.enable_cmk_encryption
-  key_store_id                = var.key_store_id
-  kv_encryption_key_name      = local.kv_encryption_key_name
-  encryption_identity_id      = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
+  count                         = var.enable_airlock ? 1 : 0
+  source                        = "./airlock"
+  location                      = var.location
+  tre_id                        = var.tre_id
+  tre_workspace_tags            = local.tre_workspace_tags
+  ws_resource_group_name        = azurerm_resource_group.ws.name
+  enable_local_debugging        = var.enable_local_debugging
+  services_subnet_id            = module.network.services_subnet_id
+  short_workspace_id            = local.short_workspace_id
+  airlock_processor_subnet_id   = module.network.airlock_processor_subnet_id
+  arm_environment               = var.arm_environment
+  enable_cmk_encryption         = var.enable_cmk_encryption
+  encryption_key_versionless_id = azurerm_key_vault_key.encryption_key[0].versionless_id
+  encryption_identity_id        = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
   depends_on = [
     module.network,
   ]
@@ -81,8 +80,7 @@ module "azure_monitor" {
   azure_monitor_agentsvc_dns_zone_id       = module.network.azure_monitor_agentsvc_dns_zone_id
   blob_core_dns_zone_id                    = module.network.blobcore_zone_id
   enable_cmk_encryption                    = var.enable_cmk_encryption
-  key_store_id                             = var.key_store_id
-  kv_encryption_key_name                   = local.kv_encryption_key_name
+  encryption_key_versionless_id            = azurerm_key_vault_key.encryption_key[0].versionless_id
   encryption_identity_id                   = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
   enable_local_debugging                   = var.enable_local_debugging
   depends_on = [

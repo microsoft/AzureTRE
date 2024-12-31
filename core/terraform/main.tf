@@ -78,8 +78,7 @@ module "azure_monitor" {
   tre_core_tags                            = local.tre_core_tags
   enable_local_debugging                   = var.enable_local_debugging
   enable_cmk_encryption                    = var.enable_cmk_encryption
-  key_store_id                             = local.key_store_id
-  kv_encryption_key_name                   = local.cmk_name
+  encryption_key_versionless_id            = azurerm_key_vault_key.tre_encryption[0].versionless_id
   encryption_identity_id                   = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
@@ -110,10 +109,9 @@ module "appgateway" {
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
   app_gateway_sku            = var.app_gateway_sku
 
-  enable_cmk_encryption  = var.enable_cmk_encryption
-  key_store_id           = local.key_store_id
-  kv_encryption_key_name = local.cmk_name
-  encryption_identity_id = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
+  enable_cmk_encryption         = var.enable_cmk_encryption
+  encryption_key_versionless_id = azurerm_key_vault_key.tre_encryption[0].versionless_id
+  encryption_identity_id        = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
     module.network,
@@ -148,12 +146,11 @@ module "airlock_resources" {
   queue_core_dns_zone_id                = module.network.queue_core_dns_zone_id
   table_core_dns_zone_id                = module.network.table_core_dns_zone_id
 
-  enable_local_debugging = var.enable_local_debugging
-  myip                   = local.myip
-  enable_cmk_encryption  = var.enable_cmk_encryption
-  key_store_id           = local.key_store_id
-  kv_encryption_key_name = local.cmk_name
-  encryption_identity_id = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
+  enable_local_debugging        = var.enable_local_debugging
+  myip                          = local.myip
+  enable_cmk_encryption         = var.enable_cmk_encryption
+  encryption_key_versionless_id = azurerm_key_vault_key.tre_encryption[0].versionless_id
+  encryption_identity_id        = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
     azurerm_servicebus_namespace.sb,

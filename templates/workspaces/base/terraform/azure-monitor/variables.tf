@@ -40,12 +40,9 @@ variable "enable_local_debugging" {
 variable "enable_cmk_encryption" {
   type = bool
 }
-variable "key_store_id" {
-  type = string
-}
 variable "encryption_identity_id" {
   type = string
 }
-variable "kv_encryption_key_name" {
+variable "encryption_key_versionless_id" {
   type = string
 }
