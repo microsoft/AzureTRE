@@ -52,6 +52,7 @@ RUN if [ "${INTERACTIVE}" = "true" ]; then \
     && /opt/certbot/bin/pip install --no-cache-dir certbot \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/* ; fi
 
+# Install Porter, updates should be propagated to the RP.
 ARG PORTER_HOME_V1=/home/$USERNAME/.porter/
 ARG PORTER_VERSION=v1.2.1
 ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.5
