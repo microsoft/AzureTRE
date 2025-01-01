@@ -140,6 +140,7 @@ nav:
           - Supported Clouds: tre-admins/supported-clouds.md
           - Customer Managed Keys: tre-admins/customer-managed-keys.md
           - Custom Domain Name: tre-admins/custom-domain.md
+          - Firewall Force Tunneling: tre-admins/configure-firewall-force-tunneling.md
 
       - Development: # Docs related to the developing code for the AzureTRE
           - Local Development: using-tre/local-development/local-development.md
