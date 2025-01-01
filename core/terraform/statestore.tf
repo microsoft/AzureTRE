@@ -25,7 +25,7 @@ resource "azurerm_cosmosdb_account" "tre_db_account" {
     }
   }
 
-  key_vault_key_id = var.enable_cmk_encryption ? azurerm_key_vault_key.tre_encryption[0].versionless_id : null
+  key_vault_key_id      = var.enable_cmk_encryption ? azurerm_key_vault_key.tre_encryption[0].versionless_id : null
   default_identity_type = var.enable_cmk_encryption ? "UserAssignedIdentity=${azurerm_user_assigned_identity.encryption[0].id}" : null
 
   consistency_policy {
