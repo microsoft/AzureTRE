@@ -99,7 +99,7 @@ resource "azurerm_route_table" "fw_tunnel_rt" {
   lifecycle { ignore_changes = [tags] }
 
   route {
-    name                   = "DefaultRoute"
+    name                   = "ForceTunnelRoute"
     address_prefix         = "0.0.0.0/0"
     next_hop_type          = "VirtualAppliance"
     next_hop_in_ip_address = var.firewall_force_tunnel_ip
