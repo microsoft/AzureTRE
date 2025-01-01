@@ -74,7 +74,7 @@ module "azure_monitor" {
   tre_core_tags                            = local.tre_core_tags
   enable_local_debugging                   = var.enable_local_debugging
   enable_cmk_encryption                    = var.enable_cmk_encryption
-  encryption_key_versionless_id            = azurerm_key_vault_key.tre_encryption[0].versionless_id
+  encryption_key_versionless_id            = var.enable_cmk_encryption ? azurerm_key_vault_key.tre_encryption[0].versionless_id : null
   encryption_identity_id                   = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [

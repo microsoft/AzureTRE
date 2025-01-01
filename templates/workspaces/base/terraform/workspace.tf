@@ -57,7 +57,7 @@ module "airlock" {
   airlock_processor_subnet_id   = module.network.airlock_processor_subnet_id
   arm_environment               = var.arm_environment
   enable_cmk_encryption         = var.enable_cmk_encryption
-  encryption_key_versionless_id = azurerm_key_vault_key.encryption_key[0].versionless_id
+  encryption_key_versionless_id = var.enable_cmk_encryption ? azurerm_key_vault_key.encryption_key[0].versionless_id : null
   encryption_identity_id        = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
   depends_on = [
     module.network,
@@ -80,7 +80,7 @@ module "azure_monitor" {
   azure_monitor_agentsvc_dns_zone_id       = module.network.azure_monitor_agentsvc_dns_zone_id
   blob_core_dns_zone_id                    = module.network.blobcore_zone_id
   enable_cmk_encryption                    = var.enable_cmk_encryption
-  encryption_key_versionless_id            = azurerm_key_vault_key.encryption_key[0].versionless_id
+  encryption_key_versionless_id            = var.enable_cmk_encryption ? azurerm_key_vault_key.encryption_key[0].versionless_id : null
   encryption_identity_id                   = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
   enable_local_debugging                   = var.enable_local_debugging
   depends_on = [
