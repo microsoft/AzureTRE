@@ -25,6 +25,7 @@ resource "azurerm_cosmosdb_account" "tre_db_account" {
     }
   }
 
+  key_vault_key_id = var.enable_cmk_encryption ? azurerm_key_vault_key.tre_encryption[0].versionless_id : null
   default_identity_type = var.enable_cmk_encryption ? "UserAssignedIdentity=${azurerm_user_assigned_identity.encryption[0].id}" : null
 
   consistency_policy {
@@ -38,8 +39,7 @@ resource "azurerm_cosmosdb_account" "tre_db_account" {
     failover_priority = 0
   }
 
-  # since key_vault_key_id is created by the 'tre_db_account_enable_cmk' null_resource, terraform forces re-creation of the resource
-  lifecycle { ignore_changes = [tags, key_vault_key_id] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 moved {
@@ -106,19 +106,4 @@ resource "azurerm_private_endpoint" "sspe" {
     is_manual_connection           = false
     subresource_names              = ["Sql"]
   }
-}
-
-# Using the az CLI command since terraform forces a re-creation of the resource
-# https://github.com/hashicorp/terraform-provider-azurerm/issues/24781
-resource "null_resource" "tre_db_account_enable_cmk" {
-  count = var.enable_cmk_encryption ? 1 : 0
-
-  provisioner "local-exec" {
-    command = "az cosmosdb update --name ${azurerm_cosmosdb_account.tre_db_account.name} --resource-group ${azurerm_cosmosdb_account.tre_db_account.resource_group_name} --key-uri ${azurerm_key_vault_key.tre_encryption[0].versionless_id}"
-  }
-
-  depends_on = [
-    azurerm_cosmosdb_account.tre_db_account,
-    azurerm_role_assignment.kv_encryption_key_user[0]
-  ]
 }
