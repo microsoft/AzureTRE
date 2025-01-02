@@ -6,4 +6,8 @@ FROM --platform=linux/amd64 debian:bookworm-slim
 # PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
+RUN mkdir -p ${BUNDLE_DIR}/app
+# hadolint ignore=DL3022
+COPY --from=scripts --link . ${BUNDLE_DIR}/scripts/
+
 COPY --link . ${BUNDLE_DIR}/
