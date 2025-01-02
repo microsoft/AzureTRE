@@ -67,7 +67,7 @@ resource "azurerm_subnet" "aml" {
   address_prefixes     = [var.address_space]
 
   # need to be disabled for AML private compute
-  private_endpoint_network_policies_enabled     = false
+  private_endpoint_network_policies             = "Disabled"
   private_link_service_network_policies_enabled = false
 
   service_endpoints = [
