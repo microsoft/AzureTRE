@@ -42,26 +42,19 @@ resource "azurerm_storage_account" "state_storage" {
     }
   }
 
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = azurerm_key_vault_key.tre_mgmt_encryption[0].versionless_id
+      user_assigned_identity_id = azurerm_user_assigned_identity.tre_mgmt_encryption[0].id
+    }
+  }
+
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
 
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
-
-resource "azurerm_storage_account_customer_managed_key" "state_storage_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.state_storage.id
-  key_vault_id              = local.key_store_id
-  key_name                  = var.kv_mgmt_encryption_key_name
-  user_assigned_identity_id = azurerm_user_assigned_identity.tre_mgmt_encryption[0].id
-
-  depends_on = [
-    azurerm_role_assignment.kv_mgmt_encryption_key_user,
-    azurerm_key_vault_key.tre_mgmt_encryption[0]
-  ]
-}
-
-
 
 # Shared container registry
 resource "azurerm_container_registry" "shared_acr" {
