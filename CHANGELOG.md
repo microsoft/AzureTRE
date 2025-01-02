@@ -27,6 +27,7 @@ ENHANCEMENTS:
 * Enhance DPI of Linux display ([[#4200](https://github.com/microsoft/AzureTRE/issues/4200)])
 * Update Admin VM versions ([[#4217](https://github.com/microsoft/AzureTRE/issues/4217)])
 * Update devcontainer/RP/API package versions: base image, docker, az cli, YQ ([#4225](https://github.com/microsoft/AzureTRE/pull/4225))
+* Purge container repos individually in when using `make tre-destroy` ([#4230](https://github.com/microsoft/AzureTRE/pull/4230))
 * Upgrade Python version from 3.8 to 3.12 ([#3949](https://github.com/microsoft/AzureTRE/issues/3949))Upgrade Python version from 3.8 to 3.12 (#3949)
 * Disable storage account key usage ([[#4227](https://github.com/microsoft/AzureTRE/issues/4227)])
 * Update Guacamole dependencies ([[#4232](https://github.com/microsoft/AzureTRE/issues/4232)])
