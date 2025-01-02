@@ -46,7 +46,7 @@ BUG FIXES:
 * Bump terraform version in windows VM template ([#4212](https://github.com/microsoft/AzureTRE/issues/4212))
 * Upgrade azurerm terraform provider from v3.112.0 to v3.117.0 to mitiagte storage account deployment issue ([#4004](https://github.com/microsoft/AzureTRE/issues/4004))
 * Fix VM actions where Workspace shared storage doesn't allow shared key access ([#4222](https://github.com/microsoft/AzureTRE/issues/4222))
-
+* Fix public exposure in Guacamole service ([[#4199](https://github.com/microsoft/AzureTRE/issues/4199)])
 COMPONENTS:
 
 ## 0.19.1
