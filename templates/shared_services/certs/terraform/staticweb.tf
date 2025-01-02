@@ -6,7 +6,9 @@ resource "azurerm_storage_account" "staticweb" {
   account_kind                     = "StorageV2"
   account_tier                     = "Standard"
   account_replication_type         = "LRS"
-  enable_https_traffic_only        = true
+  table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  https_traffic_only_enabled       = true
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
   tags                             = local.tre_shared_service_tags
@@ -19,7 +21,23 @@ resource "azurerm_storage_account" "staticweb" {
     error_404_document = "404.html"
   }
 
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [data.azurerm_user_assigned_identity.tre_encryption_identity[0].id]
+    }
+  }
+
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
+}
+
+resource "azurerm_storage_account_customer_managed_key" "staticweb_stg_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  storage_account_id        = azurerm_storage_account.staticweb.id
+  key_vault_id              = var.key_store_id
+  key_name                  = local.cmk_name
+  user_assigned_identity_id = data.azurerm_user_assigned_identity.tre_encryption_identity[0].id
 }
 
 resource "azurerm_role_assignment" "stgwriter" {

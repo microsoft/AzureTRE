@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.112.0"
+      version = "=3.117.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -27,9 +27,6 @@ provider "azurerm" {
       recover_soft_deleted_secrets      = true
       recover_soft_deleted_certificates = true
       recover_soft_deleted_keys         = true
-    }
-    virtual_machine {
-      skip_shutdown_and_force_delete = true
     }
   }
   storage_use_azuread = true

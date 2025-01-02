@@ -3,7 +3,9 @@ resource "azurerm_storage_account" "stg" {
   resource_group_name              = azurerm_resource_group.ws.name
   location                         = azurerm_resource_group.ws.location
   account_tier                     = "Standard"
-  account_replication_type         = "GRS"
+  account_replication_type         = var.storage_account_redundancy
+  table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   allow_nested_items_to_be_public  = false
   is_hns_enabled                   = true
   cross_tenant_replication_enabled = false // not technically needed as cross tenant replication not supported when is_hns_enabled = true

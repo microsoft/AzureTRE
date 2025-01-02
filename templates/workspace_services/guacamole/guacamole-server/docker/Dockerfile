@@ -13,7 +13,7 @@ COPY --from=client_build /target/surefire-reports/* /
 
 FROM guacamole/guacd:1.5.5
 
-ARG GUACAMOLE_AZURE_VERSION=0.4.0
+ARG GUACAMOLE_AZURE_VERSION=0.4.1
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -26,7 +26,7 @@ RUN apk add --update --no-cache wget openssh openjdk11-jre \
 
 ENV CATALINA_BASE=/usr/share/tomcat9/
 RUN TOMCAT_ARCHIVE="tomcat.tar.gz" && \
-    TOMCAT_VER="9.0.97" && \
+    TOMCAT_VER="9.0.98" && \
     wget -O "$TOMCAT_ARCHIVE" -N "https://archive.apache.org/dist/tomcat/tomcat-9/v${TOMCAT_VER}/bin/apache-tomcat-${TOMCAT_VER}.tar.gz" --progress=dot:giga && \
     tar xzf "$TOMCAT_ARCHIVE" && \
     rm -f "$TOMCAT_ARCHIVE" && \
@@ -53,7 +53,7 @@ COPY ./docker/services /etc/services.d/
 COPY --from=client_build /target/lib/* "${GUACAMOLE_LIB}"
 COPY --from=client_build "/target/guacamole-auth-tre-${GUACAMOLE_AZURE_VERSION}.jar" "${GUACAMOLE_HOME}/extensions/"
 
-RUN wget -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.5.3/binary/guacamole-1.5.3.war" --progress=dot:giga
+RUN wget -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.5.5/binary/guacamole-1.5.5.war" --progress=dot:giga
 
 ENV OAUTH2_PROXY_HOME=/etc/oauth2-proxy
 RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
