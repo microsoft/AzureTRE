@@ -46,15 +46,15 @@ resource "azurerm_storage_account" "az_monitor" {
     }
   }
 
-  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
-}
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
+    }
+  }
 
-resource "azurerm_storage_account_customer_managed_key" "az_monitor_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.az_monitor.id
-  key_vault_id              = var.key_store_id
-  key_name                  = var.kv_encryption_key_name
-  user_assigned_identity_id = var.encryption_identity_id
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_ingestion" {

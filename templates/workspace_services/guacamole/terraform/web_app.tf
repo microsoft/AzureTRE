@@ -1,8 +1,3 @@
-data "azurerm_service_plan" "workspace" {
-  name                = "plan-${var.workspace_id}"
-  resource_group_name = data.azurerm_resource_group.ws.name
-}
-
 # we have to use user-assigned to break a cycle in the dependencies: app identity, kv-policy, secrets in app settings
 resource "azurerm_user_assigned_identity" "guacamole_id" {
   resource_group_name = data.azurerm_resource_group.ws.name
@@ -24,6 +19,7 @@ resource "azurerm_linux_web_app" "guacamole" {
   ftp_publish_basic_authentication_enabled       = false
   webdeploy_publish_basic_authentication_enabled = false
   tags                                           = local.workspace_service_tags
+  public_network_access_enabled                  = var.is_exposed_externally
 
   site_config {
     http2_enabled                                 = true

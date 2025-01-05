@@ -134,3 +134,8 @@ variable "key_store_id" {
   description = "ID of the Key Vault to store CMKs in (only used if enable_cmk_encryption is true)"
 }
 
+variable "storage_account_redundancy" {
+  type        = string
+  default     = "GRS"
+  description = "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
+}
