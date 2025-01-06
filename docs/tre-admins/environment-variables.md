@@ -44,7 +44,8 @@
 | `FIREWALL_SKU` | Optional. The SKU of the Azure Firewall instance. Default value is `Standard`. Allowed values [`Basic`, `Standard`, `Premium`]. See [Azure Firewall SKU feature comparison](https://learn.microsoft.com/en-us/azure/firewall/choose-firewall-sku). |
 | `APP_GATEWAY_SKU` | Optional. The SKU of the Application Gateway. Default value is `Standard_v2`. Allowed values [`Standard_v2`, `WAF_v2`] |
 | `CUSTOM_DOMAIN` | Optional. Custom domain name to access the Azure TRE portal. See [Custom domain name](custom-domain.md). |
-| `ENABLE_CMK_ENCRYPTION` | If set to `true`, customer-managed key encryption will be enabled for all supported resources. |
+| `ENABLE_CMK_ENCRYPTION` | Optionl. Default is `false`, if set to `true` customer-managed key encryption will be enabled for all supported resources. |
+
 ## For authentication in `/config.yaml`
 
   | Variable | Description |

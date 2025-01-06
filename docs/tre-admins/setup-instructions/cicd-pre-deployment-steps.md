@@ -66,6 +66,8 @@ Configure the following secrets in your github environment:
 | `MGMT_RESOURCE_GROUP_NAME` | The name of the shared resource group for all Azure TRE core resources. |
 | `MGMT_STORAGE_ACCOUNT_NAME` | The name of the storage account to hold the Terraform state and other deployment artifacts. E.g. `mystorageaccount`. |
 | `ACR_NAME` | A globally unique name for the Azure Container Registry (ACR) that will be created to store deployment images. |
+| `EXTERNAL_KEY_STORE_ID` | Optional. The ID of the external Key Vault to store CMKs in. Should not be set if `ENCRYPTION_KV_NAME` is set and only required if `ENABLE_CMK_ENCRYPTION` is true. |
+| `ENCRYPTION_KV_NAME` | Optional. The name of the Key Vault for encryption keys. Should not be set if `EXTERNAL_KEY_STORE_ID` is set and only required if `ENABLE_CMK_ENCRYPTION` is true. |
 
 
 ### Configure Core Variables
@@ -86,6 +88,7 @@ Configure the following **variables** in your github environment:
 | `FIREWALL_SKU` | Optional. The SKU of the Azure Firewall instance. Default value is `Standard`. Allowed values [`Basic`, `Standard`, `Premium`]. See [Azure Firewall SKU feature comparison](https://learn.microsoft.com/en-us/azure/firewall/choose-firewall-sku). |
 | `APP_GATEWAY_SKU` | Optional. The SKU of the Application Gateway. Default value is `Standard_v2`. Allowed values [`Standard_v2`, `WAF_v2`] |
 | `CUSTOM_DOMAIN` | Optional. Custom domain name to access the Azure TRE portal. See [Custom domain name](../custom-domain.md). |
+| `ENABLE_CMK_ENCRYPTION` | Optionl. Default is `false`, if set to `true` customer-managed key encryption will be enabled for all supported resources. |
 
 ### Configure Authentication Secrets
 
