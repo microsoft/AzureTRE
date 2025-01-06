@@ -47,6 +47,8 @@ tre:
   # Uncomment the following to disable deployment of the Web UI.
   # deploy_ui: false
   firewall_sku: Standard
+  # The SKU of the Service Bus to use. Options are "Standard" or "Premium". For production, use Premium
+  servicebus_sku: Standard
   app_gateway_sku: Standard_v2
 
   # Uncomment to deploy to a custom domain

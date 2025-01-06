@@ -241,3 +241,9 @@ variable "encryption_kv_name" {
   description = "Name of Key Vault for encryption keys, required only if external_key_store_id is not set (only used if enable_cmk_encryption is true)"
   default     = null
 }
+
+variable "servicebus_sku" {
+  description = "The SKU for the Service Bus namespace. Possible values are 'Standard' and 'Premium'."
+  type        = string
+  default     = "Premium"
+}
