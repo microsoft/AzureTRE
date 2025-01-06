@@ -1,6 +1,6 @@
 # Forced Tunneling to External Firewall in TRE
 
-Forced tunneling ensures that all traffic from TRE is routed through a specific external firewall. This guarantees that all data passes through the firewall for inspection, control, or further processing before reaching its destination.
+Azure TRE deploys and manages an Azure firewall to ensure creation of workspace level rules can be automated when TRE workspaces and other services are created without manual intervention. It is highly recommend leaving the Azure TRE firewall in place. If there is still the requirement to send all traffic through a centralized enterprise firewall, such as that deployed as part of an Azure landing zone, then forced tunnelling should be used. The centralized firewall will need needs a superset of rules used by the TRE.
 
 To setup forced tunneling to an external firewall, follow these steps:
 
@@ -18,6 +18,3 @@ Configure connectivity between TRE’s VNet and your external firewall using one
 1. **VNet Peering**: Peer the TRE VNet with your firewall’s VNet.
 1. **ExpressRoute**: Use a private connection for firewalls located on-premises.
 1. **Site-to-Site VPN**: Establish a VPN connection as an alternative.
-
-!!! warning
-    To ensure workspace-level rules can be created when TRE workspaces are provisioned without manual intervention, we highly recommend leaving the Azure TRE firewall in place. However, if all traffic must pass through a centralized enterprise firewall, forced tunneling should be configured. This enterprise firewall must also include a superset of the rules used by the TRE firewall.
