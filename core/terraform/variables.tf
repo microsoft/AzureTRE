@@ -230,7 +230,10 @@ variable "enable_cmk_encryption" {
   default     = false
 
   validation {
-    condition     = var.enable_cmk_encryption == false || (var.enable_cmk_encryption == true && try(length(var.external_key_store_id), 0) + try(length(var.encryption_kv_name), 0) > 0)
+    condition = var.enable_cmk_encryption == false || (var.enable_cmk_encryption == true && (
+      (try(length(var.external_key_store_id), 0) > 0 && try(length(var.encryption_kv_name), 0) == 0) ||
+      (try(length(var.external_key_store_id), 0) == 0 && try(length(var.encryption_kv_name), 0) > 0)
+    ))
     error_message = "Exactly one of 'external_key_store_id' or 'encryption_kv_name' must be non-empty when enable_cmk_encryption is true."
   }
 }
