@@ -8,6 +8,11 @@ resource "azurerm_key_vault" "kv" {
   purge_protection_enabled  = var.kv_purge_protection_enabled
   tags                      = local.tre_core_tags
 
+  network_acls {
+    bypass         = "AzureServices"
+    default_action = var.enable_local_debugging ? "Allow" : "Deny"
+  }
+
   lifecycle { ignore_changes = [access_policy, tags] }
 }
 
