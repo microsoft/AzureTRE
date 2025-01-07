@@ -8,7 +8,7 @@ set -o nounset
 # This is where we can migrate any Terraform before we plan and apply
 # For instance deprecated Terraform resources
 # shellcheck disable=SC1091
-# source ./migrate.sh
+source ./migrate.sh
 
 TS=$(date +"%s")
 PLAN_FILE="${TS}-tre-core.tfplan"
