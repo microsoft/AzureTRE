@@ -10,7 +10,7 @@ management:
   acr_name: __CHANGE_ME__
   # ID of external Key Vault to store CMKs in (only required if enable_cmk_encryption is true)
   # external_key_store_id: __CHANGE_ME__
-  # Name of Key Vault for encryption keys, required if enable_cmk_encryption is true and external_key_store_id is not set
+  # Name of Key Vault for encryption, required if enable_cmk_encryption is true and external_key_store_id is not set
   # encryption_kv_name: __CHANGE_ME__
   # Azure Resource Manager credentials used for CI/CD pipelines
   arm_subscription_id: __CHANGE_ME__
