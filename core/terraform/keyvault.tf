@@ -1,14 +1,48 @@
 resource "azurerm_key_vault" "kv" {
-  name                      = "kv-${var.tre_id}"
+  name                      = local.kv_name
   tenant_id                 = data.azurerm_client_config.current.tenant_id
   location                  = azurerm_resource_group.core.location
   resource_group_name       = azurerm_resource_group.core.name
   sku_name                  = "standard"
   enable_rbac_authorization = true
   purge_protection_enabled  = var.kv_purge_protection_enabled
-  tags                      = local.tre_core_tags
+  tags                      = merge(local.tre_core_tags, { "${local.tre_deployment_network_exception_tag}" = "true" })
 
-  lifecycle { ignore_changes = [access_policy, tags] }
+  public_network_access_enabled = local.kv_public_network_access_enabled
+
+  network_acls {
+    default_action = local.kv_network_default_action
+    bypass         = local.kv_network_bypass
+    ip_rules       = [ local.myip ]  # exception for deployment IP, this is removed in remove_deployment_network_exceptions.sh
+  }
+
+  lifecycle {
+    ignore_changes = [access_policy, tags]
+  }
+
+  # create provisioner required due to https://github.com/hashicorp/terraform-provider-azurerm/issues/18970
+  #
+  provisioner "local-exec" {
+    when = create
+    command = <<EOT
+az keyvault update --name ${local.kv_name} --public-network-access ${local.kv_public_network_access_enabled ? "Enabled" : "Disabled"} --default-action ${local.kv_network_default_action} --bypass ${local.kv_network_bypass} --output none
+az keyvault network-rule add --name ${local.kv_name} --ip-address ${local.myip} --output none
+EOT
+  }
+}
+
+# provisioner required due to ignore_changes = [tags] in azurerm_key_vault.kv
+#
+resource "null_resource" "add_deployment_tag" {
+  triggers = {
+    always_run = timestamp()
+  }
+
+  provisioner "local-exec" {
+    command = "az resource update --ids ${azurerm_key_vault.kv.id} --set 'tags.${local.tre_deployment_network_exception_tag}=\"true\"' --output none"
+  }
+
+  depends_on = [azurerm_key_vault.kv]
 }
 
 resource "azurerm_role_assignment" "keyvault_deployer_role" {

@@ -3,6 +3,13 @@ set -e
 
 script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
+# add trap to remove deployment network exceptions on script exit
+trap 'source "$script_dir/../../../devops/scripts/remove_deployment_network_exceptions.sh"' EXIT
+
+# now add deployment network exceptions
+source "$script_dir/../../../devops/scripts/add_deployment_network_exceptions.sh"
+
+
 if [[ -z ${STORAGE_ACCOUNT} ]]; then
   echo "STORAGE_ACCOUNT not set"
   exit 1

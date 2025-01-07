@@ -16,6 +16,16 @@ set -e
 #
 
 echo -e "\n\e[34m»»» 🤖 \e[96mCreating (or updating) service principal ID and secret to Key Vault\e[0m..."
+
+script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+
+# add trap to remove deployment network exceptions on script exit
+trap 'source "$script_dir/remove_deployment_network_exceptions.sh"' EXIT
+
+# now add deployment network exceptions
+source "$script_dir/add_deployment_network_exceptions.sh"
+
+
 key_vault_name="kv-$TRE_ID"
 az account set --subscription $ARM_SUBSCRIPTION_ID
 az keyvault secret set --name deployment-processor-azure-client-id --vault-name $key_vault_name --value $RESOURCE_PROCESSOR_CLIENT_ID

@@ -46,4 +46,14 @@ locals {
 
   cmk_name                 = "tre-encryption-${var.tre_id}"
   encryption_identity_name = "id-encryption-${var.tre_id}"
+
+  # used to tag resources (e.g. kv, sa) that require a IP exception for the deployment runner
+  # adding to their network firewall during TRE deployment (and removing at the end of deployment)
+  tre_deployment_network_exception_tag = "tre_deployment_network_exception"
+
+  # key vault variables
+  kv_name = "kv-${var.tre_id}"
+  kv_public_network_access_enabled = true
+  kv_network_default_action = var.enable_local_debugging ? "Allow" : "Deny"
+  kv_network_bypass = "AzureServices"
 }

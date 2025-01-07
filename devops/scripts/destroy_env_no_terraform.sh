@@ -66,6 +66,14 @@ then
   no_wait_option="--no-wait"
 fi
 
+script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+
+# add trap to remove deployment network exceptions on script exit
+trap 'source "$script_dir/remove_deployment_network_exceptions.sh"' EXIT
+
+# now add deployment network exceptions
+source "$script_dir/add_deployment_network_exceptions.sh"
+
 group_show_result=$(az group show --name "${core_tre_rg}" > /dev/null 2>&1; echo $?)
 if [[ "$group_show_result" !=  "0" ]]; then
   echo "Resource group ${core_tre_rg} not found - skipping destroy"

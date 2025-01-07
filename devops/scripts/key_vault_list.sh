@@ -7,6 +7,14 @@ fi
 
 echo "DEBUG: Check keyvault and secrets exist"
 
+script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+
+# add trap to remove deployment network exceptions on script exit
+trap 'source "$script_dir/remove_deployment_network_exceptions.sh"' EXIT
+
+# now add deployment network exceptions
+source "$script_dir/add_deployment_network_exceptions.sh"
+
 echo "az keyvault show"
 az keyvault show --name kv-${TRE_ID}
 
