@@ -12,13 +12,13 @@
         <meta name="author" content="Microsoft">
       
       
-        <link rel="canonical" href="https://microsoft.github.io/AzureTRE/unreleased/troubleshooting-faq/api-logs-deployment-center/">
+        <link rel="canonical" href="https://microsoft.github.io/AzureTRE/unreleased/tre-admins/configure-firewall-force-tunneling/">
       
       
-        <link rel="prev" href="../debug-logs/">
+        <link rel="prev" href="../custom-domain/">
       
       
-        <link rel="next" href="../troubleshooting-sb/">
+        <link rel="next" href="../../using-tre/local-development/local-development/">
       
       
       <link rel="icon" href="../../assets/ms_icon.png">
@@ -26,7 +26,7 @@
     
     
       
-        <title>API logs using deployment center - Azure TRE</title>
+        <title>Firewall Force Tunneling - Azure TRE</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#api-logs-using-deployment-center" class="md-skip">
+        <a href="#forced-tunneling-to-external-firewall-in-tre" class="md-skip">
           Skip to content
         </a>
       
@@ -133,7 +133,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              API logs using deployment center
+              Firewall Force Tunneling
             
           </span>
         </div>
@@ -572,7 +572,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../tre-admins/setup-instructions/" class="md-nav__link ">
+            <a href="../setup-instructions/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -605,7 +605,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/prerequisites/" class="md-nav__link">
+      <a href="../setup-instructions/prerequisites/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -626,7 +626,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/deployment-repo/" class="md-nav__link">
+      <a href="../setup-instructions/deployment-repo/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -647,7 +647,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/ad-tenant-choices/" class="md-nav__link">
+      <a href="../setup-instructions/ad-tenant-choices/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -668,7 +668,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/setup-auth-entities/" class="md-nav__link">
+      <a href="../setup-instructions/setup-auth-entities/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -771,7 +771,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/manual-pre-deployment-steps/" class="md-nav__link">
+      <a href="../setup-instructions/manual-pre-deployment-steps/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -792,7 +792,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/manual-deployment/" class="md-nav__link">
+      <a href="../setup-instructions/manual-deployment/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -862,7 +862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/cicd-pre-deployment-steps/" class="md-nav__link">
+      <a href="../setup-instructions/cicd-pre-deployment-steps/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -883,7 +883,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/cicd-deployment/" class="md-nav__link">
+      <a href="../setup-instructions/cicd-deployment/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -920,7 +920,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/configuring-shared-services/" class="md-nav__link">
+      <a href="../setup-instructions/configuring-shared-services/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -941,7 +941,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/ui-install-base-workspace/" class="md-nav__link">
+      <a href="../setup-instructions/ui-install-base-workspace/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -962,7 +962,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/ui-install-ws-and-ur/" class="md-nav__link">
+      <a href="../setup-instructions/ui-install-ws-and-ur/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1939,8 +1939,10 @@
                 
   
   
+    
   
   
+  
     
     
       
@@ -1973,11 +1975,11 @@
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1" checked>
         
           
           <label class="md-nav__link" for="__nav_5_1" id="__nav_5_1_label" tabindex="0">
@@ -1991,7 +1993,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_1_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_1_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5_1">
             <span class="md-nav__icon md-icon"></span>
             Administration
@@ -2005,7 +2007,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/start-stop/" class="md-nav__link">
+      <a href="../start-stop/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2026,7 +2028,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/environment-variables/" class="md-nav__link">
+      <a href="../environment-variables/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2047,7 +2049,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/tear-down/" class="md-nav__link">
+      <a href="../tear-down/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2111,7 +2113,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/auth/" class="md-nav__link">
+      <a href="../auth/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2132,7 +2134,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/auth-manual/" class="md-nav__link">
+      <a href="../identities/auth-manual/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2200,7 +2202,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/application_admin/" class="md-nav__link">
+      <a href="../identities/application_admin/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2221,7 +2223,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/api/" class="md-nav__link">
+      <a href="../identities/api/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2242,7 +2244,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/client/" class="md-nav__link">
+      <a href="../identities/client/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2263,7 +2265,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/test-account/" class="md-nav__link">
+      <a href="../identities/test-account/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2284,7 +2286,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/identities/workspace/" class="md-nav__link">
+      <a href="../identities/workspace/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2321,7 +2323,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/registering-templates/" class="md-nav__link">
+      <a href="../registering-templates/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2383,7 +2385,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/installing-base-workspace/" class="md-nav__link">
+      <a href="../setup-instructions/installing-base-workspace/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2404,7 +2406,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/installing-workspace-service-and-user-resource/" class="md-nav__link">
+      <a href="../setup-instructions/installing-workspace-service-and-user-resource/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2433,7 +2435,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/upgrading-tre/" class="md-nav__link">
+      <a href="../upgrading-tre/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2454,7 +2456,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/upgrading-resources/" class="md-nav__link">
+      <a href="../upgrading-resources/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2475,7 +2477,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/configure-airlock-review/" class="md-nav__link">
+      <a href="../configure-airlock-review/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2496,7 +2498,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/supported-clouds/" class="md-nav__link">
+      <a href="../supported-clouds/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2517,7 +2519,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/customer-managed-keys/" class="md-nav__link">
+      <a href="../customer-managed-keys/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2538,7 +2540,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/custom-domain/" class="md-nav__link">
+      <a href="../custom-domain/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2556,10 +2558,30 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../tre-admins/configure-firewall-force-tunneling/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Firewall Force Tunneling
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -2568,6 +2590,44 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-set-the-firewall_force_tunnel_ip-parameter-in-the-configyaml-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Set the firewall_force_tunnel_ip parameter in the config.yaml file
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-manually-connect-tre-to-your-firewall" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Manually Connect TRE to Your Firewall
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2845,7 +2905,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tre-admins/setup-instructions/workflows/" class="md-nav__link">
+      <a href="../setup-instructions/workflows/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3105,8 +3165,6 @@
                 
   
   
-    
-  
   
   
     
@@ -3135,16 +3193,16 @@
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" >
         
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../" class="md-nav__link ">
+            <a href="../../troubleshooting-faq/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -3161,7 +3219,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5_4">
             <span class="md-nav__icon md-icon"></span>
             Troubleshooting FAQ
@@ -3177,7 +3235,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../debug-logs/" class="md-nav__link">
+      <a href="../../troubleshooting-faq/debug-logs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3195,19 +3253,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../troubleshooting-faq/api-logs-deployment-center/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3216,7 +3265,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -3229,7 +3277,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting-sb/" class="md-nav__link">
+      <a href="../../troubleshooting-faq/troubleshooting-sb/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3250,7 +3298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../app-insights-logs/" class="md-nav__link">
+      <a href="../../troubleshooting-faq/app-insights-logs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3271,7 +3319,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting-rp/" class="md-nav__link">
+      <a href="../../troubleshooting-faq/troubleshooting-rp/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3292,7 +3340,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../airlock-troubleshooting/" class="md-nav__link">
+      <a href="../../troubleshooting-faq/airlock-troubleshooting/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3313,7 +3361,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../manually-editing-resources/" class="md-nav__link">
+      <a href="../../troubleshooting-faq/manually-editing-resources/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3334,7 +3382,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cloud-init/" class="md-nav__link">
+      <a href="../../troubleshooting-faq/cloud-init/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3403,6 +3451,32 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-set-the-firewall_force_tunnel_ip-parameter-in-the-configyaml-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Set the firewall_force_tunnel_ip parameter in the config.yaml file
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-manually-connect-tre-to-your-firewall" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Manually Connect TRE to Your Firewall
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -3416,10 +3490,22 @@
                   
 
 
-<h1 id="api-logs-using-deployment-center">API logs using deployment center</h1>
-<p>Check that the version you are debugging/troubleshooting is the same one deployed on the App Service.</p>
-<p>You can check this in Azure's Deployment Center, or follow the logs as generated by the container in the logs tabs.</p>
-<p><img alt="Deployment Center" src="../../assets/api_deployment_center.png" /></p>
+<h1 id="forced-tunneling-to-external-firewall-in-tre">Forced Tunneling to External Firewall in TRE</h1>
+<p>Azure TRE deploys and manages an Azure firewall to ensure creation of workspace level rules can be automated when TRE workspaces and other services are created without manual intervention.
+It is highly recommended leaving the Azure TRE firewall in place. If there is still the requirement to send all traffic through a centralized enterprise firewall, such as that deployed as part of an Azure landing zone, then forced tunnelling should be used. The centralized firewall will need a superset of rules used by the TRE.</p>
+<p>To setup forced tunneling to an external firewall, follow these steps:</p>
+<h2 id="1-set-the-firewall_force_tunnel_ip-parameter-in-the-configyaml-file">1. Set the firewall_force_tunnel_ip parameter in the config.yaml file</h2>
+<p>Provide the external firewall's IP address:</p>
+<p><div class="highlight"><pre><span></span><code><span class="kc">f</span><span class="err">irewall_</span><span class="kc">f</span><span class="err">orce_</span><span class="kc">tunnel</span><span class="err">_ip</span><span class="p">:</span><span class="w"> </span><span class="mf">192.168.0.4</span>
+</code></pre></div>
+This automatically creates a route table to direct TRE’s traffic to the specified IP.</p>
+<h2 id="2-manually-connect-tre-to-your-firewall">2. Manually Connect TRE to Your Firewall</h2>
+<p>Configure connectivity between TRE’s VNet and your external firewall using one of the following methods:</p>
+<ol>
+<li><strong>VNet Peering</strong>: Peer the TRE VNet with your firewall’s VNet.</li>
+<li><strong>ExpressRoute</strong>: Use a private connection for firewalls located on-premises.</li>
+<li><strong>Site-to-Site VPN</strong>: Establish a VPN connection as an alternative.</li>
+</ol>
 
 
 
