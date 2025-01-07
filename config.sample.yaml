@@ -46,6 +46,7 @@ tre:
   # The TRE Web UI is deployed by default.
   # Uncomment the following to disable deployment of the Web UI.
   # deploy_ui: false
+  # firewall_force_tunnel_ip: __CHANGE_ME__
   firewall_sku: Standard
   app_gateway_sku: Standard_v2
 
