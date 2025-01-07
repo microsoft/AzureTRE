@@ -1,7 +1,7 @@
 # Forced Tunneling to External Firewall in TRE
 
 Azure TRE deploys and manages an Azure firewall to ensure creation of workspace level rules can be automated when TRE workspaces and other services are created without manual intervention.
-It is highly recommend leaving the Azure TRE firewall in place. If there is still the requirement to send all traffic through a centralized enterprise firewall, such as that deployed as part of an Azure landing zone, then forced tunnelling should be used. The centralized firewall will need needs a superset of rules used by the TRE.
+It is highly recommended to leave the Azure TRE firewall in place.
 
 To setup forced tunneling to an external firewall, follow these steps:
 
