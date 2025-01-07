@@ -92,6 +92,27 @@ module "network" {
   arm_environment     = var.arm_environment
 }
 
+module "firewall" {
+  source                         = "./firewall"
+  tre_id                         = var.tre_id
+  firewall_sku                   = var.firewall_sku
+  firewall_subnet_id             = module.network.azure_firewall_subnet_id
+  location                       = var.location
+  resource_group_name            = azurerm_resource_group.core.name
+  tre_core_tags                  = local.tre_core_tags
+  microsoft_graph_fqdn           = regex("(?:(?P<scheme>[^:/?#]+):)?(?://(?P<fqdn>[^/?#:]*))?", module.terraform_azurerm_environment_configuration.microsoft_graph_endpoint).fqdn
+  log_analytics_workspace_id     = module.azure_monitor.log_analytics_workspace_id
+  firewall_management_subnet_id  = module.network.firewall_management_subnet_id
+  resource_processor_ip_group_id = module.network.resource_processor_ip_group_id
+  shared_services_ip_group_id    = module.network.shared_services_ip_group_id
+  web_app_ip_group_id            = module.network.web_app_ip_group_id
+  airlock_processor_ip_group_id  = module.network.airlock_processor_ip_group_id
+
+  depends_on = [
+    module.network,
+  ]
+}
+
 module "appgateway" {
   source                     = "./appgateway"
   tre_id                     = var.tre_id

@@ -25,10 +25,6 @@ build-and-push-airlock-processor: build-airlock-processor push-airlock-processor
 help: ## 💬 This help message :)
 	@grep -E '[a-zA-Z_-]+:.*?## .*$$' $(firstword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
-# to move your environment from the single 'core' deployment (which includes the firewall)
-# toward the shared services model, where it is split out - run the following make target before a tre-deploy
-# This will remove + import the resource state into a shared service
-migrate-firewall-state: prepare-tf-state
 
 bootstrap:
 	$(call target_title, "Bootstrap Terraform") \
@@ -96,15 +92,12 @@ push-resource-processor-vm-porter-image:
 push-airlock-processor:
 	$(call push_image,"airlock-processor","${MAKEFILE_DIR}/airlock_processor/_version.py")
 
-# # These targets are for a graceful migration of Firewall
-# # from terraform state in Core to a Shared Service.
-# # See https://github.com/microsoft/AzureTRE/issues/1177
-prepare-tf-state:
+migrate-firewall-state:
 	$(call target_title, "Preparing terraform state") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
-	&& pushd ${MAKEFILE_DIR}/core/terraform > /dev/null && ../../shared_services/firewall/terraform/remove_state.sh && popd > /dev/null \
-	&& pushd ${MAKEFILE_DIR}/templates/shared_services/firewall/terraform > /dev/null && ./import_state.sh && popd > /dev/null
-# / End migration targets
+	&& pushd ${MAKEFILE_DIR}/templates/shared_services/firewall/terraform > /dev/null && ${MAKEFILE_DIR}/core/terraform/firewall/remove_state.sh && popd > /dev/null \
+	&& pushd ${MAKEFILE_DIR}/core/terraform > /dev/null && ${MAKEFILE_DIR}/core/terraform/firewall/import_state.sh && popd > /dev/null
+
 
 deploy-core: tre-start
 	$(call target_title, "Deploying TRE") \

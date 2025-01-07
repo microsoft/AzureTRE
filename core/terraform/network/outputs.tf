@@ -10,6 +10,10 @@ output "azure_firewall_subnet_id" {
   value = azurerm_subnet.azure_firewall.id
 }
 
+output "firewall_management_subnet_id" {
+  value = azurerm_subnet.firewall_management.id
+}
+
 output "app_gw_subnet_id" {
   value = azurerm_subnet.app_gw.id
 }
@@ -82,4 +86,21 @@ output "queue_core_dns_zone_id" {
 
 output "table_core_dns_zone_id" {
   value = azurerm_private_dns_zone.private_dns_zones["privatelink.table.core.windows.net"].id
+}
+
+# IP Groups
+output "resource_processor_ip_group_id" {
+  value = azurerm_ip_group.resource_processor.id
+}
+
+output "shared_services_ip_group_id" {
+  value = azurerm_ip_group.shared.id
+}
+
+output "airlock_processor_ip_group_id" {
+  value = azurerm_ip_group.airlock_processor.id
+}
+
+output "web_app_ip_group_id" {
+  value = azurerm_ip_group.webapp.id
 }
