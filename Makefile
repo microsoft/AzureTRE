@@ -149,7 +149,7 @@ terraform-upgrade:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR}/terraform/ && ./upgrade.sh
+	&& ./devops/scripts/upgrade.sh ${DIR}
 
 terraform-import:
 	$(call target_title, "Importing ${DIR} with Terraform") \
