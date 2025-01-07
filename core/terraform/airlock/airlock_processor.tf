@@ -1,11 +1,3 @@
-data "local_file" "airlock_processor_version" {
-  filename = "${path.root}/../../airlock_processor/_version.py"
-}
-
-locals {
-  version = replace(replace(replace(data.local_file.airlock_processor_version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
-}
-
 resource "azurerm_service_plan" "airlock_plan" {
   name                = "plan-airlock-${var.tre_id}"
   resource_group_name = var.resource_group_name
