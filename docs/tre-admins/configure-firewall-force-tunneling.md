@@ -5,11 +5,11 @@ It is highly recommend leaving the Azure TRE firewall in place. If there is stil
 
 To setup forced tunneling to an external firewall, follow these steps:
 
-## 1. Set the rp_bundle_values Parameter in  the config.yaml file
+## 1. Set the firewall_force_tunnel_ip parameter in the config.yaml file
 Provide the external firewall's IP address:
 
 ```json
-rp_bundle_values: '{"firewall_force_tunnel_ip":"10.0.0.4"}'
+firewall_force_tunnel_ip: 192.168.0.4
 ```
 This automatically creates a route table to direct TRE’s traffic to the specified IP.
 
