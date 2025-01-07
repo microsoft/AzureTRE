@@ -13,7 +13,7 @@ resource "azurerm_key_vault" "kv" {
   network_acls {
     default_action = local.kv_network_default_action
     bypass         = local.kv_network_bypass
-    ip_rules       = [ local.myip ]  # exception for deployment IP, this is removed in remove_deployment_network_exceptions.sh
+    ip_rules       = [local.myip] # exception for deployment IP, this is removed in remove_deployment_network_exceptions.sh
   }
 
   lifecycle {
@@ -23,7 +23,7 @@ resource "azurerm_key_vault" "kv" {
   # create provisioner required due to https://github.com/hashicorp/terraform-provider-azurerm/issues/18970
   #
   provisioner "local-exec" {
-    when = create
+    when    = create
     command = <<EOT
 az keyvault update --name ${local.kv_name} --public-network-access ${local.kv_public_network_access_enabled ? "Enabled" : "Disabled"} --default-action ${local.kv_network_default_action} --bypass ${local.kv_network_bypass} --output none
 az keyvault network-rule add --name ${local.kv_name} --ip-address ${local.myip} --output none
