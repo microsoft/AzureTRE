@@ -6,7 +6,7 @@ resource "azurerm_key_vault" "kv" {
   sku_name                  = "standard"
   enable_rbac_authorization = true
   purge_protection_enabled  = var.kv_purge_protection_enabled
-  tags                      = merge(local.tre_core_tags, { "${local.tre_deployment_network_exception_tag}" = "true" })
+  tags                      = merge(local.tre_core_tags, { (local.tre_deployment_network_exception_tag) = "true" })
 
   public_network_access_enabled = local.kv_public_network_access_enabled
 

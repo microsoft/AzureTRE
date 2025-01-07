@@ -6,9 +6,11 @@ set -o nounset
 # set -o xtrace
 
 # add trap to remove deployment network exceptions
+# shellcheck disable=SC1091
 trap 'source "../../devops/scripts/remove_deployment_network_exceptions.sh"' EXIT
 
 # now add deployment network exceptions
+# shellcheck disable=SC1091
 source "../../devops/scripts/add_deployment_network_exceptions.sh"
 
 # This is where we can migrate any Terraform before we plan and apply
