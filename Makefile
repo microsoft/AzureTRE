@@ -1,4 +1,4 @@
-.PHONY: bootstrap-init mgmt-deploy mgmt-destroy build-api-image push-api-image deploy-tre destroy-tre letsencrypt
+.PHONY: bootstrap-init mgmt-deploy mgmt-destroy build-api-image push-api-image tre-deploy tre-destroy letsencrypt
 .DEFAULT_GOAL := help
 
 SHELL:=/bin/bash
@@ -200,7 +200,7 @@ bundle-build:
 	&& if [ -d terraform ]; then terraform -chdir=terraform init -backend=false; terraform -chdir=terraform validate; fi \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} IMAGE_NAME_PREFIX=${IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_build.sh \
-	&& porter build \
+	&& ${MAKEFILE_DIR}/devops/scripts/porter_build_bundle.sh \
 	  $(MAKE) bundle-check-params
 
 bundle-install: bundle-check-params

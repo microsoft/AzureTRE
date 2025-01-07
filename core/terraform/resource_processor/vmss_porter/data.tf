@@ -32,6 +32,8 @@ data "template_file" "cloudconfig" {
     firewall_sku                                     = var.firewall_sku
     logging_level                                    = var.logging_level
     rp_bundle_values                                 = local.rp_bundle_values_formatted
+    enable_cmk_encryption                            = var.enable_cmk_encryption
+    key_store_id                                     = var.key_store_id
   }
 }
 
@@ -43,6 +45,12 @@ data "template_cloudinit_config" "config" {
     content_type = "text/cloud-config"
     content      = data.template_file.cloudconfig.rendered
   }
+}
+
+data "azurerm_key_vault_key" "tre_encryption" {
+  count        = var.enable_cmk_encryption ? 1 : 0
+  name         = var.kv_encryption_key_name
+  key_vault_id = var.key_store_id
 }
 
 data "azurerm_storage_account" "mgmt_storage" {

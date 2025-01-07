@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile-upstream:1.4.0
-FROM --platform=linux/amd64 debian:bullseye-slim
+FROM --platform=linux/amd64 debian:bookworm-slim
 
 # PORTER_INIT
 
@@ -9,14 +9,13 @@ RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloa
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
     apt-get update && apt-get install -y git jq curl ca-certificates patch --no-install-recommends
 
-ARG AZURE_TRE_VERSION="0.19.1"
-
 WORKDIR ${BUNDLE_DIR}
 
-# Copy all files from base workspace (note: some of them will be overwritten with the following COPY command)
-RUN curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/refs/tags/v${AZURE_TRE_VERSION}.tar.gz" \
-  && tar -xzf azuretre.tar.gz "AzureTRE-${AZURE_TRE_VERSION}/templates/workspaces/base" --strip-components=4 --skip-old-files \
-  && rm -rf azuretre.tar.gz
+# copy files from the base workspace (dir passed to porter via --build-context)
+# ignoring hadolint DL3022; for details see https://github.com/hadolint/hadolint/issues/830
+#
+# hadolint ignore=DL3022
+COPY --from=base --link . ${BUNDLE_DIR}/
 
 # Copy and change the file extension of .terraform file to .tf
 COPY ./terraform/import_review_resources.terraform "${BUNDLE_DIR}"/terraform/import_review_resources.tf

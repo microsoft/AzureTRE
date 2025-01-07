@@ -7,15 +7,30 @@ set -o nounset
 echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e[0m..."
 # shellcheck disable=SC2154
 az group create --resource-group "$TF_VAR_mgmt_resource_group_name" --location "$LOCATION" -o table
+
 # shellcheck disable=SC2154
-az storage account create --resource-group "$TF_VAR_mgmt_resource_group_name" \
-  --name "$TF_VAR_mgmt_storage_account_name" --location "$LOCATION" \
-  --allow-blob-public-access false \
-  --kind StorageV2 --sku Standard_LRS -o table
+if ! az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name" --name "$TF_VAR_mgmt_storage_account_name" --query "name" -o none 2>/dev/null; then
+  # only run `az storage account create` if doesn't exist (to prevent error from occuring if storage account was originally created without infrastructure encryption enabled)
+
+  # Set default encryption types based on enable_cmk
+  encryption_type=$([ "${TF_VAR_enable_cmk_encryption:-false}" = true ] && echo "Account" || echo "Service")
+
+  # shellcheck disable=SC2154
+  az storage account create --resource-group "$TF_VAR_mgmt_resource_group_name" \
+    --name "$TF_VAR_mgmt_storage_account_name" --location "$LOCATION" \
+    --allow-blob-public-access false --min-tls-version TLS1_2 \
+    --kind StorageV2 --sku Standard_LRS -o table \
+    --encryption-key-type-for-queue "$encryption_type" \
+    --encryption-key-type-for-table "$encryption_type" \
+    --require-infrastructure-encryption true
+else
+  echo "Storage account already exists..."
+  az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name" --name "$TF_VAR_mgmt_storage_account_name" --output table
+fi
 
 # Grant user blob data contributor permissions
 echo -e "\n\e[34m»»» 🔑 \e[96mGranting Storage Blob Data Contributor role to the current user\e[0m..."
-if [ -n "$ARM_CLIENT_ID" ]; then
+if [ -n "${ARM_CLIENT_ID:-}" ]; then
     USER_OBJECT_ID=$(az ad sp show --id "$ARM_CLIENT_ID" --query id --output tsv)
 else
     USER_OBJECT_ID=$(az ad signed-in-user show --query id --output tsv)

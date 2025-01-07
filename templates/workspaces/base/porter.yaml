@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 1.5.13
+version: 1.9.1
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -116,6 +116,16 @@ parameters:
     default: true
   - name: arm_environment
     type: string
+  - name: enable_cmk_encryption
+    type: boolean
+    default: false
+  - name: key_store_id
+    type: string
+    default: ""
+  - name: storage_account_redundancy
+    type: string
+    default: "GRS"
+    description: "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -152,9 +162,9 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.4.6
+      clientVersion: 1.9.8
   - az:
-      clientVersion: 2.49.0
+      clientVersion: 2.67.0
 
 install:
   - terraform:
@@ -183,6 +193,9 @@ install:
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
         arm_environment: ${ bundle.parameters.arm_environment }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
+        storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -225,6 +238,9 @@ upgrade:
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
         arm_environment: ${ bundle.parameters.arm_environment }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
+        storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -290,6 +306,9 @@ uninstall:
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
         arm_environment: ${ bundle.parameters.arm_environment }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
+        storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

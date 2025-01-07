@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.112.0"
+      version = "=3.117.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -73,9 +73,13 @@ module "azure_monitor" {
   blob_core_dns_zone_id                    = module.network.blob_core_dns_zone_id
   tre_core_tags                            = local.tre_core_tags
   enable_local_debugging                   = var.enable_local_debugging
+  enable_cmk_encryption                    = var.enable_cmk_encryption
+  encryption_key_versionless_id            = var.enable_cmk_encryption ? azurerm_key_vault_key.tre_encryption[0].versionless_id : null
+  encryption_identity_id                   = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
-    module.network
+    module.network,
+    azurerm_key_vault_key.tre_encryption[0]
   ]
 }
 
@@ -101,11 +105,16 @@ module "appgateway" {
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
   app_gateway_sku            = var.app_gateway_sku
 
+  enable_cmk_encryption         = var.enable_cmk_encryption
+  encryption_key_versionless_id = var.enable_cmk_encryption ? azurerm_key_vault_key.tre_encryption[0].versionless_id : null
+  encryption_identity_id        = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
+
   depends_on = [
     module.network,
     azurerm_key_vault.kv,
-    azurerm_key_vault_access_policy.deployer,
-    azurerm_private_endpoint.api_private_endpoint
+    azurerm_role_assignment.keyvault_deployer_role,
+    azurerm_private_endpoint.api_private_endpoint,
+    azurerm_key_vault_key.tre_encryption[0]
   ]
 }
 
@@ -133,12 +142,16 @@ module "airlock_resources" {
   queue_core_dns_zone_id                = module.network.queue_core_dns_zone_id
   table_core_dns_zone_id                = module.network.table_core_dns_zone_id
 
-  enable_local_debugging = var.enable_local_debugging
-  myip                   = local.myip
+  enable_local_debugging        = var.enable_local_debugging
+  myip                          = local.myip
+  enable_cmk_encryption         = var.enable_cmk_encryption
+  encryption_key_versionless_id = var.enable_cmk_encryption ? azurerm_key_vault_key.tre_encryption[0].versionless_id : null
+  encryption_identity_id        = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
     azurerm_servicebus_namespace.sb,
-    module.network
+    module.network,
+    azurerm_key_vault_key.tre_encryption[0]
   ]
 }
 
@@ -170,12 +183,16 @@ module "resource_processor_vmss_porter" {
   logging_level                                    = var.logging_level
   firewall_sku                                     = var.firewall_sku
   rp_bundle_values                                 = var.rp_bundle_values
+  enable_cmk_encryption                            = var.enable_cmk_encryption
+  key_store_id                                     = local.key_store_id
+  kv_encryption_key_name                           = local.cmk_name
 
   depends_on = [
     module.network,
     module.azure_monitor,
     azurerm_key_vault.kv,
-    azurerm_key_vault_access_policy.deployer
+    azurerm_role_assignment.keyvault_deployer_role,
+    azurerm_key_vault_key.tre_encryption[0]
   ]
 }
 

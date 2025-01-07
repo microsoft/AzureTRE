@@ -1,12 +1,38 @@
 resource "azurerm_storage_account" "stg" {
-  name                            = lower(replace("stg-${var.tre_id}", "-", ""))
-  resource_group_name             = azurerm_resource_group.core.name
-  location                        = azurerm_resource_group.core.location
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
-  tags                            = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
+  name                             = lower(replace("stg-${var.tre_id}", "-", ""))
+  resource_group_name              = azurerm_resource_group.core.name
+  location                         = azurerm_resource_group.core.location
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
+  local_user_enabled               = false
+
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [azurerm_user_assigned_identity.encryption[0].id]
+    }
+  }
+
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = azurerm_key_vault_key.tre_encryption[0].versionless_id
+      user_assigned_identity_id = azurerm_user_assigned_identity.encryption[0].id
+    }
+  }
+
+  tags = local.tre_core_tags
+
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_private_endpoint" "blobpe" {

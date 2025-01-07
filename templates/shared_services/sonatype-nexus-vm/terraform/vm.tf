@@ -87,12 +87,10 @@ resource "azurerm_user_assigned_identity" "nexus_msi" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_key_vault_access_policy" "nexus_msi" {
-  key_vault_id = data.azurerm_key_vault.kv.id
-  tenant_id    = azurerm_user_assigned_identity.nexus_msi.tenant_id
-  object_id    = azurerm_user_assigned_identity.nexus_msi.principal_id
-
-  secret_permissions = ["Get", "List"]
+resource "azurerm_role_assignment" "keyvault_nexus_role" {
+  scope                = data.azurerm_key_vault.kv.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.nexus_msi.principal_id
 }
 
 resource "azurerm_linux_virtual_machine" "nexus" {
@@ -100,7 +98,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   resource_group_name             = local.core_resource_group_name
   location                        = data.azurerm_resource_group.rg.location
   network_interface_ids           = [azurerm_network_interface.nexus.id]
-  size                            = "Standard_B2s"
+  size                            = var.vm_size
   disable_password_authentication = false
   admin_username                  = "adminuser"
   admin_password                  = random_password.nexus_vm_password.result
@@ -118,10 +116,11 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   }
 
   os_disk {
-    name                 = "osdisk-nexus-${var.tre_id}"
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
-    disk_size_gb         = 64
+    name                   = "osdisk-nexus-${var.tre_id}"
+    caching                = "ReadWrite"
+    storage_account_type   = "Standard_LRS"
+    disk_size_gb           = 64
+    disk_encryption_set_id = var.enable_cmk_encryption ? azurerm_disk_encryption_set.nexus_disk_encryption[0].id : null
   }
 
   identity {
@@ -134,7 +133,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   }
 
   depends_on = [
-    azurerm_key_vault_access_policy.nexus_msi
+    azurerm_role_assignment.keyvault_nexus_role
   ]
 
   connection {
@@ -144,6 +143,21 @@ resource "azurerm_linux_virtual_machine" "nexus" {
     password = random_password.nexus_vm_password.result
     agent    = false
     timeout  = "10m"
+  }
+}
+
+resource "azurerm_disk_encryption_set" "nexus_disk_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  name                      = "disk-encryption-nexus-${var.tre_id}-${var.tre_resource_id}"
+  location                  = data.azurerm_resource_group.rg.location
+  resource_group_name       = data.azurerm_resource_group.rg.name
+  key_vault_key_id          = data.azurerm_key_vault_key.tre_encryption_key[0].versionless_id
+  encryption_type           = "EncryptionAtRestWithPlatformAndCustomerKeys"
+  auto_key_rotation_enabled = true
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [data.azurerm_user_assigned_identity.tre_encryption_identity[0].id]
   }
 }
 

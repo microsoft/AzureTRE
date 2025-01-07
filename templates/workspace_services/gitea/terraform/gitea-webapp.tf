@@ -23,14 +23,16 @@ data "azurerm_service_plan" "workspace" {
 }
 
 resource "azurerm_linux_web_app" "gitea" {
-  name                            = local.webapp_name
-  location                        = data.azurerm_resource_group.ws.location
-  resource_group_name             = data.azurerm_resource_group.ws.name
-  service_plan_id                 = data.azurerm_service_plan.workspace.id
-  https_only                      = true
-  key_vault_reference_identity_id = azurerm_user_assigned_identity.gitea_id.id
-  virtual_network_subnet_id       = data.azurerm_subnet.web_apps.id
-  tags                            = local.workspace_service_tags
+  name                                           = local.webapp_name
+  location                                       = data.azurerm_resource_group.ws.location
+  resource_group_name                            = data.azurerm_resource_group.ws.name
+  service_plan_id                                = data.azurerm_service_plan.workspace.id
+  https_only                                     = true
+  key_vault_reference_identity_id                = azurerm_user_assigned_identity.gitea_id.id
+  virtual_network_subnet_id                      = data.azurerm_subnet.web_apps.id
+  ftp_publish_basic_authentication_enabled       = false
+  webdeploy_publish_basic_authentication_enabled = false
+  tags                                           = local.workspace_service_tags
 
   app_settings = {
     WEBSITES_PORT                                    = "3000"
@@ -78,8 +80,8 @@ resource "azurerm_linux_web_app" "gitea" {
     vnet_route_all_enabled                        = true
 
     application_stack {
-      docker_image     = "${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/gitea-workspace-service"
-      docker_image_tag = local.version
+      docker_registry_url = "https://${data.azurerm_container_registry.mgmt_acr.login_server}"
+      docker_image_name   = "/microsoft/azuretre/gitea-workspace-service:${local.version}"
     }
   }
 
@@ -150,12 +152,10 @@ resource "azurerm_monitor_diagnostic_setting" "gitea" {
   }
 }
 
-resource "azurerm_key_vault_access_policy" "gitea_policy" {
-  key_vault_id = data.azurerm_key_vault.ws.id
-  tenant_id    = azurerm_user_assigned_identity.gitea_id.tenant_id
-  object_id    = azurerm_user_assigned_identity.gitea_id.principal_id
-
-  secret_permissions = ["Get", "List", ]
+resource "azurerm_role_assignment" "keyvault_gitea_ws_role" {
+  scope                = data.azurerm_key_vault.ws.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.gitea_id.principal_id
 }
 
 resource "azurerm_key_vault_secret" "gitea_password" {
@@ -165,7 +165,7 @@ resource "azurerm_key_vault_secret" "gitea_password" {
   tags         = local.workspace_service_tags
 
   depends_on = [
-    azurerm_key_vault_access_policy.gitea_policy
+    azurerm_role_assignment.keyvault_gitea_ws_role
   ]
 
   lifecycle { ignore_changes = [tags] }

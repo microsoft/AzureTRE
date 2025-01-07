@@ -29,3 +29,12 @@ variable "log_analytics_workspace_id" {
 variable "app_gateway_sku" {
   type = string
 }
+variable "encryption_identity_id" {
+  type = string
+}
+variable "enable_cmk_encryption" {
+  type = bool
+}
+variable "encryption_key_versionless_id" {
+  type = string
+}
