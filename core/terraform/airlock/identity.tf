@@ -1,8 +1,3 @@
-data "azurerm_container_registry" "mgmt_acr" {
-  name                = var.mgmt_acr_name
-  resource_group_name = var.mgmt_resource_group_name
-}
-
 resource "azurerm_user_assigned_identity" "airlock_id" {
   resource_group_name = var.resource_group_name
   location            = var.location

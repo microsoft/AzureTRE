@@ -1,11 +1,3 @@
-data "local_file" "airlock_processor_version" {
-  filename = "${path.root}/../../airlock_processor/_version.py"
-}
-
-locals {
-  version = replace(replace(replace(data.local_file.airlock_processor_version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
-}
-
 resource "azurerm_service_plan" "airlock_plan" {
   name                = "plan-airlock-${var.tre_id}"
   resource_group_name = var.resource_group_name
@@ -44,15 +36,15 @@ resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
 
-  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
-}
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
+    }
+  }
 
-resource "azurerm_storage_account_customer_managed_key" "sa_airlock_processor_func_app_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.sa_airlock_processor_func_app.id
-  key_vault_id              = var.key_store_id
-  key_name                  = var.kv_encryption_key_name
-  user_assigned_identity_id = var.encryption_identity_id
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_linux_function_app" "airlock_function_app" {
