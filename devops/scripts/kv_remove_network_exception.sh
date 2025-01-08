@@ -5,15 +5,25 @@ function main() {
     set -o errexit
     set -o pipefail
 
-    # parse params/set up inputs
+    # attempt to determine our tre id
     #
-    if [[ -z "$TRE_ID" ]]; then
+    local TRE_ID_LOCAL="${TRE_ID:-}"
+
+    if [[ -z "$TRE_ID_LOCAL" ]]; then
+      if [[ "${core_tre_rg:-}" == rg-* ]]; then  # TRE_ID may not be available when called from destroy_env_no_terraform.sh
+        TRE_ID_LOCAL="${core_tre_rg#rg-}"
+      fi
+    fi
+
+    if [[ -z "$TRE_ID_LOCAL" ]]; then
       echo -e "Could not remove keyvault deployment network exception: TRE_ID is not set\nExiting...\n"
       exit 1
     fi
 
-    local RG_NAME="rg-${TRE_ID}"
-    local KV_NAME="kv-${TRE_ID}"
+    # set up variables
+    #
+    local RG_NAME="rg-${TRE_ID_LOCAL}"
+    local KV_NAME="kv-${TRE_ID_LOCAL}"
     local MY_IP="${PUBLIC_DEPLOYMENT_IP_ADDRESS:-}"
 
     if [[ -z "$MY_IP" ]]; then
