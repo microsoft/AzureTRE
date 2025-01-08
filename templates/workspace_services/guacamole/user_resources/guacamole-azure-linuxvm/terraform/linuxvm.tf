@@ -44,7 +44,7 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   disable_password_authentication = false
   admin_username                  = random_string.username.result
   admin_password                  = random_password.password.result
-  encryption_at_host_enabled       = true
+  encryption_at_host_enabled      = true
 
   custom_data = data.template_cloudinit_config.config.rendered
 
