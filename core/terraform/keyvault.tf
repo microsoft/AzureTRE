@@ -6,14 +6,14 @@ resource "azurerm_key_vault" "kv" {
   sku_name                  = "standard"
   enable_rbac_authorization = true
   purge_protection_enabled  = var.kv_purge_protection_enabled
-  tags                      = merge(local.tre_core_tags, { (local.tre_deployment_network_exception_tag) = "true" })
+  tags                      = local.tre_core_tags
 
   public_network_access_enabled = local.kv_public_network_access_enabled
 
   network_acls {
     default_action = local.kv_network_default_action
     bypass         = local.kv_network_bypass
-    ip_rules       = [local.myip] # exception for deployment IP, this is removed in remove_deployment_network_exceptions.sh
+    ip_rules       = [local.myip] # exception for deployment IP, this is removed in kv_remove_network_exception.sh
   }
 
   lifecycle {
@@ -25,24 +25,10 @@ resource "azurerm_key_vault" "kv" {
   provisioner "local-exec" {
     when    = create
     command = <<EOT
-az keyvault update --name ${local.kv_name} --public-network-access ${local.kv_public_network_access_enabled ? "Enabled" : "Disabled"} --default-action ${local.kv_network_default_action} --bypass ${local.kv_network_bypass} --output none
+az keyvault update --name ${local.kv_name} --public-network-access ${local.kv_public_network_access_enabled ? "Enabled" : "Disabled"} --default-action ${local.kv_network_default_action} --bypass "${local.kv_network_bypass}" --output none
 az keyvault network-rule add --name ${local.kv_name} --ip-address ${local.myip} --output none
 EOT
   }
-}
-
-# provisioner required due to ignore_changes = [tags] in azurerm_key_vault.kv
-#
-resource "null_resource" "add_deployment_tag" {
-  triggers = {
-    always_run = timestamp()
-  }
-
-  provisioner "local-exec" {
-    command = "az resource update --ids ${azurerm_key_vault.kv.id} --set 'tags.${local.tre_deployment_network_exception_tag}=\"true\"' --output none"
-  }
-
-  depends_on = [azurerm_key_vault.kv]
 }
 
 resource "azurerm_role_assignment" "keyvault_deployer_role" {

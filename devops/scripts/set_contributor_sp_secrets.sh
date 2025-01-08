@@ -19,13 +19,13 @@ echo -e "\n\e[34m»»» 🤖 \e[96mCreating (or updating) service principal ID a
 
 script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
-# add trap to remove deployment network exceptions on script exit
+# add trap to remove kv network exception
 # shellcheck disable=SC1091
-trap 'source "$script_dir/remove_deployment_network_exceptions.sh"' EXIT
+trap 'source "$script_dir/kv_remove_network_exception.sh"' EXIT
 
-# now add deployment network exceptions
+# now add kv network exception
 # shellcheck disable=SC1091
-source "$script_dir/add_deployment_network_exceptions.sh"
+source "$script_dir/kv_add_network_exception.sh"
 
 
 key_vault_name="kv-$TRE_ID"

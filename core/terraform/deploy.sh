@@ -5,13 +5,13 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
-# add trap to remove deployment network exceptions
+# add trap to remove kv network exception
 # shellcheck disable=SC1091
-trap 'source "../../devops/scripts/remove_deployment_network_exceptions.sh"' EXIT
+trap 'source "../../devops/scripts/kv_remove_network_exception.sh"' EXIT
 
-# now add deployment network exceptions
+# now add kv network exception
 # shellcheck disable=SC1091
-source "../../devops/scripts/add_deployment_network_exceptions.sh"
+source "../../devops/scripts/kv_add_network_exception.sh"
 
 # This is where we can migrate any Terraform before we plan and apply
 # For instance deprecated Terraform resources
