@@ -103,6 +103,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   admin_username                  = "adminuser"
   admin_password                  = random_password.nexus_vm_password.result
   tags                            = local.tre_shared_service_tags
+  encryption_at_host_enabled      = true
 
   custom_data = data.template_cloudinit_config.nexus_config.rendered
 
