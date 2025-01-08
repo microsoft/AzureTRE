@@ -14,6 +14,7 @@ ENHANCEMENTS:
 * Split log entries with [Log chunk X of Y] for better readability. ([#3992](https://github.com/microsoft/AzureTRE/issues/3992))
 * Expose APP_SERVICE_SKU build variable to allow enablement of App Gateway WAF ([#4111](https://github.com/microsoft/AzureTRE/pull/4111))
 * Update Terraform to use Azure AD authentication rather than storage account keys ([#4103](https://github.com/microsoft/AzureTRE/issues/4103))
+* Consolidate Terraform upgrade scripts ([#4099](https://github.com/microsoft/AzureTRE/issues/4099))
 * Storage accounts should use infrastructure encryption ([#4001](https://github.com/microsoft/AzureTRE/issues/4001))
 * Update obsolete Terraform properties ([#4136](https://github.com/microsoft/AzureTRE/issues/4136))
 * Update Guacamole version and dependencies ([#4140](https://github.com/microsoft/AzureTRE/issues/4140))
@@ -48,6 +49,7 @@ BUG FIXES:
 * Fix VM actions where Workspace shared storage doesn't allow shared key access ([#4222](https://github.com/microsoft/AzureTRE/issues/4222))
 * Fix public exposure in Guacamole service ([[#4199](https://github.com/microsoft/AzureTRE/issues/4199)])
 * Fix Azure ML network tags to use name rather than ID ([[#4151](https://github.com/microsoft/AzureTRE/issues/4151)])
+* Add option to force tunnel TRE's Firewall ([#4237](https://github.com/microsoft/AzureTRE/issues/4237))
 
 COMPONENTS:
 
