@@ -33,6 +33,8 @@ ENHANCEMENTS:
 * Disable storage account key usage ([[#4227](https://github.com/microsoft/AzureTRE/issues/4227)])
 * Update Guacamole dependencies ([[#4232](https://github.com/microsoft/AzureTRE/issues/4232)])
 * Core key vault firewall should not be set to "Allow public access from all networks" ([#4250](https://github.com/microsoft/AzureTRE/issues/4250))
+* Add option to force tunnel TRE's Firewall ([#4237](https://github.com/microsoft/AzureTRE/issues/4237))
+* Add EventGrid diagnostics to identify airlock issues ([#4258](https://github.com/microsoft/AzureTRE/issues/4258))
 
 BUG FIXES:
 * Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
@@ -50,7 +52,6 @@ BUG FIXES:
 * Fix VM actions where Workspace shared storage doesn't allow shared key access ([#4222](https://github.com/microsoft/AzureTRE/issues/4222))
 * Fix public exposure in Guacamole service ([[#4199](https://github.com/microsoft/AzureTRE/issues/4199)])
 * Fix Azure ML network tags to use name rather than ID ([[#4151](https://github.com/microsoft/AzureTRE/issues/4151)])
-* Add option to force tunnel TRE's Firewall ([#4237](https://github.com/microsoft/AzureTRE/issues/4237))
 
 COMPONENTS:
 

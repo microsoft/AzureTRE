@@ -18,8 +18,8 @@ source "../../devops/scripts/kv_add_network_exception.sh"
 # shellcheck disable=SC1091
 source ./migrate.sh
 
-PLAN_FILE="tfplan$$"
 TS=$(date +"%s")
+PLAN_FILE="${TS}-tre-core.tfplan"
 LOG_FILE="${TS}-tre-core.log"
 
 # This variables are loaded in for us
