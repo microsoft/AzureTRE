@@ -6,7 +6,7 @@ terraform {
     }
     azapi = {
       source  = "Azure/azapi"
-      version = "=1.15.0"
+      version = "=2.2.0"
     }
     external = {
       source  = "hashicorp/external"
