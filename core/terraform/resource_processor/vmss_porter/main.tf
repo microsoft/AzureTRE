@@ -82,6 +82,8 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
   encryption_at_host_enabled      = false
   upgrade_mode                    = "Automatic"
   tags                            = local.tre_core_tags
+  secure_boot_enabled             = true
+  vtpm_enabled                    = true
 
   extension {
     auto_upgrade_minor_version = true
