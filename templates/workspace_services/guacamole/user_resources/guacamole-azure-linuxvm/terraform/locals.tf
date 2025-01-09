@@ -25,6 +25,8 @@ locals {
   # selected_image_source_refs is an array to enable easy use of a dynamic block
   selected_image_source_refs = lookup(local.selected_image, "source_image_reference", null) == null ? [] : [local.selected_image.source_image_reference]
   selected_image_source_id   = lookup(local.selected_image, "source_image_name", null) == null ? null : "${var.image_gallery_id}/images/${local.selected_image.source_image_name}"
+  secure_boot_enabled        = lookup(local.selected_image, "trusted_launch_enabled", false)
+  vtpm_enabled               = lookup(local.selected_image, "vtpm_enabled", false)
   apt_sku                    = local.selected_image_source_refs[0]["apt_sku"]
 
   cmk_name                 = "tre-encryption-${local.workspace_resource_name_suffix}"
