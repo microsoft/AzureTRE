@@ -14,6 +14,7 @@ ENHANCEMENTS:
 * Split log entries with [Log chunk X of Y] for better readability. ([#3992](https://github.com/microsoft/AzureTRE/issues/3992))
 * Expose APP_SERVICE_SKU build variable to allow enablement of App Gateway WAF ([#4111](https://github.com/microsoft/AzureTRE/pull/4111))
 * Update Terraform to use Azure AD authentication rather than storage account keys ([#4103](https://github.com/microsoft/AzureTRE/issues/4103))
+* Consolidate Terraform upgrade scripts ([#4099](https://github.com/microsoft/AzureTRE/issues/4099))
 * Storage accounts should use infrastructure encryption ([#4001](https://github.com/microsoft/AzureTRE/issues/4001))
 * Update obsolete Terraform properties ([#4136](https://github.com/microsoft/AzureTRE/issues/4136))
 * Update Guacamole version and dependencies ([#4140](https://github.com/microsoft/AzureTRE/issues/4140))
@@ -31,6 +32,8 @@ ENHANCEMENTS:
 * Upgrade Python version from 3.8 to 3.12 ([#3949](https://github.com/microsoft/AzureTRE/issues/3949))Upgrade Python version from 3.8 to 3.12 (#3949)
 * Disable storage account key usage ([[#4227](https://github.com/microsoft/AzureTRE/issues/4227)])
 * Update Guacamole dependencies ([[#4232](https://github.com/microsoft/AzureTRE/issues/4232)])
+* Add option to force tunnel TRE's Firewall ([#4237](https://github.com/microsoft/AzureTRE/issues/4237))
+* Add EventGrid diagnostics to identify airlock issues ([#4258](https://github.com/microsoft/AzureTRE/issues/4258))
 
 BUG FIXES:
 * Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
