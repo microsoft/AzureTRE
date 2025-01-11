@@ -113,9 +113,11 @@ public class ConnectionService {
         config.setParameter("disable-upload", System.getenv("GUAC_DISABLE_UPLOAD"));
 
         String serverLayout = System.getenv("GUAC_SERVER_LAYOUT");
-        if (serverLayout != null)
-          if (!serverLayout.isEmpty())
-            config.setParameter("server-layout", serverLayout);
+        if (serverLayout != null) {
+            if (!serverLayout.isEmpty()) {
+                config.setParameter("server-layout", serverLayout);
+            }
+        }
     }
 
     private static JSONArray getVMsFromProjectAPI(final AzureTREAuthenticatedUser user) throws GuacamoleException {
