@@ -3713,6 +3713,20 @@ When the state changes to <code>In-progress</code> the Workspace Owner (Airlock 
 <blockquote>
 <p>Data movement in an Airlock import request</p>
 </blockquote>
+<pre class="mermaid"><code>graph LR
+  subgraph TRE workspace
+  data(Data to export)--&gt;A
+  A[(stalexint&lt;/br&gt;export internal)]--&gt;|Request Submitted| B
+  B[(stalexip&lt;/br&gt;export in-progress)]--&gt;|Security issues found| D[(stalexblocked&lt;/br&gt;export blocked)] 
+  B--&gt;|No security issues found| review{Manual&lt;/br&gt;Approval} 
+  review--&gt;|Rejected| C[(stalexrej&lt;/br&gt;export rejected)]
+  end
+  subgraph External
+  review--&gt;|Approved| E[(stalexapp&lt;/br&gt;export approved)]
+  end</code></pre>
+<blockquote>
+<p>Data movement in an Airlock export request</p>
+</blockquote>
 <p>TRE:</p>
 <ul>
 <li><code>stalimex</code> - storage (st) airlock (al) import (im) external (ex)</li>
