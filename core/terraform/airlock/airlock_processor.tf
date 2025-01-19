@@ -66,25 +66,31 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   }
 
   app_settings = {
-    "SB_CONNECTION_STRING"                       = var.airlock_servicebus.default_primary_connection_string
-    "BLOB_CREATED_TOPIC_NAME"                    = azurerm_servicebus_topic.blob_created.name
-    "TOPIC_SUBSCRIPTION_NAME"                    = azurerm_servicebus_subscription.airlock_processor.name
-    "EVENT_GRID_STEP_RESULT_TOPIC_URI_SETTING"   = azurerm_eventgrid_topic.step_result.endpoint
-    "EVENT_GRID_STEP_RESULT_TOPIC_KEY_SETTING"   = azurerm_eventgrid_topic.step_result.primary_access_key
-    "EVENT_GRID_DATA_DELETION_TOPIC_URI_SETTING" = azurerm_eventgrid_topic.data_deletion.endpoint
-    "EVENT_GRID_DATA_DELETION_TOPIC_KEY_SETTING" = azurerm_eventgrid_topic.data_deletion.primary_access_key
-    "WEBSITES_ENABLE_APP_SERVICE_STORAGE"        = false
-    "AIRLOCK_STATUS_CHANGED_QUEUE_NAME"          = local.status_changed_queue_name
-    "AIRLOCK_SCAN_RESULT_QUEUE_NAME"             = local.scan_result_queue_name
-    "AIRLOCK_DATA_DELETION_QUEUE_NAME"           = local.data_deletion_queue_name
-    "ENABLE_MALWARE_SCANNING"                    = var.enable_malware_scanning
-    "ARM_ENVIRONMENT"                            = var.arm_environment
-    "MANAGED_IDENTITY_CLIENT_ID"                 = azurerm_user_assigned_identity.airlock_id.client_id
-    "TRE_ID"                                     = var.tre_id
-    "WEBSITE_CONTENTOVERVNET"                    = 1
-    "STORAGE_ENDPOINT_SUFFIX"                    = module.terraform_azurerm_environment_configuration.storage_suffix
-    "AzureWebJobsStorage__clientId"              = azurerm_user_assigned_identity.airlock_id.client_id
-    "AzureWebJobsStorage__credential"            = "managedidentity"
+    "SB_CONNECTION_STRING"                = var.airlock_servicebus.default_primary_connection_string
+    "BLOB_CREATED_TOPIC_NAME"             = azurerm_servicebus_topic.blob_created.name
+    "TOPIC_SUBSCRIPTION_NAME"             = azurerm_servicebus_subscription.airlock_processor.name
+    "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = false
+    "AIRLOCK_STATUS_CHANGED_QUEUE_NAME"   = local.status_changed_queue_name
+    "AIRLOCK_SCAN_RESULT_QUEUE_NAME"      = local.scan_result_queue_name
+    "AIRLOCK_DATA_DELETION_QUEUE_NAME"    = local.data_deletion_queue_name
+    "ENABLE_MALWARE_SCANNING"             = var.enable_malware_scanning
+    "ARM_ENVIRONMENT"                     = var.arm_environment
+    "MANAGED_IDENTITY_CLIENT_ID"          = azurerm_user_assigned_identity.airlock_id.client_id
+    "TRE_ID"                              = var.tre_id
+    "WEBSITE_CONTENTOVERVNET"             = 1
+    "STORAGE_ENDPOINT_SUFFIX"             = module.terraform_azurerm_environment_configuration.storage_suffix
+    "AzureWebJobsStorage__clientId"       = azurerm_user_assigned_identity.airlock_id.client_id
+    "AzureWebJobsStorage__credential"     = "managedidentity"
+
+    "EVENT_GRID_STEP_RESULT_CONNECTION"                           = local.step_result_eventgrid_connection
+    "${local.step_result_eventgrid_connection}__topicEndpointUri" = azurerm_eventgrid_topic.step_result.endpoint
+    "${local.step_result_eventgrid_connection}__credential"       = "managedidentity"
+    "${local.step_result_eventgrid_connection}__clientId"         = azurerm_user_assigned_identity.airlock_id.client_id
+
+    "EVENT_GRID_DATA_DELETION_CONNECTION"                           = local.data_deletion_eventgrid_connection
+    "${local.data_deletion_eventgrid_connection}__topicEndpointUri" = azurerm_eventgrid_topic.data_deletion.endpoint
+    "${local.data_deletion_eventgrid_connection}__credential"       = "managedidentity"
+    "${local.data_deletion_eventgrid_connection}__clientId"         = azurerm_user_assigned_identity.airlock_id.client_id
   }
 
   site_config {

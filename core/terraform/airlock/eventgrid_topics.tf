@@ -6,6 +6,7 @@ resource "azurerm_eventgrid_topic" "step_result" {
   location                      = var.location
   resource_group_name           = var.resource_group_name
   public_network_access_enabled = var.enable_local_debugging
+  local_auth_enabled            = false
 
   identity {
     type = "SystemAssigned"
@@ -60,6 +61,7 @@ resource "azurerm_eventgrid_topic" "status_changed" {
   location                      = var.location
   resource_group_name           = var.resource_group_name
   public_network_access_enabled = var.enable_local_debugging
+  local_auth_enabled            = false
 
   identity {
     type = "SystemAssigned"
@@ -113,6 +115,7 @@ resource "azurerm_eventgrid_topic" "data_deletion" {
   location                      = var.location
   resource_group_name           = var.resource_group_name
   public_network_access_enabled = var.enable_local_debugging
+  local_auth_enabled            = false
 
   identity {
     type = "SystemAssigned"
@@ -163,6 +166,7 @@ resource "azurerm_eventgrid_topic" "scan_result" {
   resource_group_name = var.resource_group_name
   # This is mandatory for the scan result to be published since private networks are not supported yet
   public_network_access_enabled = true
+  local_auth_enabled            = false
 
   identity {
     type = "SystemAssigned"
@@ -323,6 +327,7 @@ resource "azurerm_eventgrid_topic" "airlock_notification" {
   location                      = var.location
   resource_group_name           = var.resource_group_name
   public_network_access_enabled = var.enable_local_debugging
+  local_auth_enabled            = false
 
   identity {
     type = "SystemAssigned"
