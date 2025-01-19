@@ -54,6 +54,10 @@ variable "guac_disable_upload" {
   type        = bool
   description = "Disable upload to the Guacamole workspace"
 }
+variable "guac_server_layout" {
+  type        = string
+  description = "Server keyboard layout"
+}
 variable "is_exposed_externally" {
   type        = bool
   description = "Is the Guacamole workspace to be exposed externally?"
