@@ -7,7 +7,7 @@
       "type": "serviceBusTrigger",
       "direction": "in",
       "queueName": "%AIRLOCK_SCAN_RESULT_QUEUE_NAME%",
-      "connection": "SB_CONNECTION_STRING"
+      "connection": "SERVICEBUS_CONNECTION"
     },
     {
       "type": "eventGrid",

@@ -60,4 +60,6 @@ locals {
     azurerm_storage_account.sa_import_in_progress.id,
     azurerm_storage_account.sa_export_approved.id
   ]
+
+  servicebus_connection = "SB_CONNECTION_STRING"
 }

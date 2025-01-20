@@ -8,7 +8,7 @@
       "direction": "in",
       "topicName": "%BLOB_CREATED_TOPIC_NAME%",
       "subscriptionName": "%TOPIC_SUBSCRIPTION_NAME%",
-      "connection": "SB_CONNECTION_STRING"
+      "connection": "SERVICEBUS_CONNECTION"
     },
     {
       "type": "eventGrid",
