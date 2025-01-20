@@ -61,5 +61,5 @@ locals {
     azurerm_storage_account.sa_export_approved.id
   ]
 
-  servicebus_connection = "SB_CONNECTION_STRING"
+  servicebus_connection = "SERVICEBUS_CONNECTION"
 }
