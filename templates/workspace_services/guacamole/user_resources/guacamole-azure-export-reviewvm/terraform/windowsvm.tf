@@ -124,6 +124,8 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   allow_extension_operations = true
   admin_username             = random_string.username.result
   admin_password             = random_password.password.result
+  secure_boot_enabled        = local.secure_boot_enabled
+  vtpm_enabled               = local.vtpm_enabled
 
   custom_data = base64encode(data.template_file.download_review_data_script.rendered)
 
@@ -152,7 +154,10 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
 
   tags = local.tre_user_resources_tags
 
-  lifecycle { ignore_changes = [tags] }
+  # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
+  # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
+  #
+  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled] }
 }
 
 resource "azurerm_disk_encryption_set" "windowsvm_disk_encryption" {
