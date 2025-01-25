@@ -32,6 +32,7 @@ ENHANCEMENTS:
 * Upgrade Python version from 3.8 to 3.12 ([#3949](https://github.com/microsoft/AzureTRE/issues/3949))Upgrade Python version from 3.8 to 3.12 (#3949)
 * Disable storage account key usage ([[#4227](https://github.com/microsoft/AzureTRE/issues/4227)])
 * Update Guacamole dependencies ([[#4232](https://github.com/microsoft/AzureTRE/issues/4232)])
+* Core key vault firewall should not be set to "Allow public access from all networks" ([#4250](https://github.com/microsoft/AzureTRE/issues/4250))
 * Add option to force tunnel TRE's Firewall ([#4237](https://github.com/microsoft/AzureTRE/issues/4237))
 * Add EventGrid diagnostics to identify airlock issues ([#4258](https://github.com/microsoft/AzureTRE/issues/4258))
 * Allow enablement of Secure Boot and vTPM for Guacamole VMs ([#4235](https://github.com/microsoft/AzureTRE/issues/4235))
