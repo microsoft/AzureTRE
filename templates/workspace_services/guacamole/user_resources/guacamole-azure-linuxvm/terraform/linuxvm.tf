@@ -45,6 +45,8 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   admin_username                  = random_string.username.result
   admin_password                  = random_password.password.result
   encryption_at_host_enabled      = true
+  secure_boot_enabled             = local.secure_boot_enabled
+  vtpm_enabled                    = local.vtpm_enabled
 
   custom_data = data.template_cloudinit_config.config.rendered
 
@@ -73,7 +75,10 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
 
   tags = local.tre_user_resources_tags
 
-  lifecycle { ignore_changes = [tags] }
+  # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
+  # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
+  #
+  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled] }
 }
 
 resource "azurerm_disk_encryption_set" "linuxvm_disk_encryption" {
