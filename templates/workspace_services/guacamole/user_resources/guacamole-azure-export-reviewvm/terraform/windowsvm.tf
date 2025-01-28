@@ -124,6 +124,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   allow_extension_operations = true
   admin_username             = random_string.username.result
   admin_password             = random_password.password.result
+  encryption_at_host_enabled = true
   secure_boot_enabled        = local.secure_boot_enabled
   vtpm_enabled               = local.vtpm_enabled
 
