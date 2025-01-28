@@ -10,7 +10,7 @@ resource "azurerm_public_ip" "fwtransit" {
 }
 
 resource "azurerm_public_ip" "fwmanagement" {
-  count               = local.effective_firewall_sku == "Basic" ? 1 : 0
+  count               = (var.firewall_force_tunnel_ip != "" || local.effective_firewall_sku == "Basic") ? 1 : 0
   name                = "pip-fw-management-${var.tre_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
@@ -36,7 +36,7 @@ resource "azurerm_firewall" "fw" {
   }
 
   dynamic "management_ip_configuration" {
-    for_each = local.effective_firewall_sku == "Basic" ? [1] : []
+    for_each = (var.firewall_force_tunnel_ip != "" || local.effective_firewall_sku == "Basic") ? [1] : []
     content {
       name                 = "mgmtconfig"
       subnet_id            = var.firewall_management_subnet_id

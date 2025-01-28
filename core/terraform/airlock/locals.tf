@@ -1,4 +1,6 @@
 locals {
+  version = replace(replace(replace(data.local_file.airlock_processor_version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
+
   # STorage AirLock EXternal
   import_external_storage_name = lower(replace("stalimex${var.tre_id}", "-", ""))
   # STorage AirLock IMport InProgress
