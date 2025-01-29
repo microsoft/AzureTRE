@@ -97,6 +97,7 @@ module "firewall" {
   tre_id                         = var.tre_id
   firewall_sku                   = var.firewall_sku
   firewall_subnet_id             = module.network.azure_firewall_subnet_id
+  firewall_force_tunnel_ip       = var.firewall_force_tunnel_ip
   location                       = var.location
   resource_group_name            = azurerm_resource_group.core.name
   tre_core_tags                  = local.tre_core_tags

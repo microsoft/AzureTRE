@@ -26,6 +26,11 @@ variable "firewall_management_subnet_id" {
   description = "Subnet ID for the firewall management"
 }
 
+variable "firewall_force_tunnel_ip" {
+  type    = string
+  default = ""
+}
+
 variable "tre_core_tags" {
   type        = map(string)
   description = "Tags to apply to all resources"
