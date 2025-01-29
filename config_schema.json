@@ -89,6 +89,10 @@
           "description": "SKU of the Azure Firewall.",
           "type": "string"
         },
+        "service_bus_sku": {
+          "description": "SKU of the Service Bus.",
+          "type": "string"
+        },
         "app_gateway_sku": {
           "description": "SKU of the Application Gateway.",
           "type": "string"
