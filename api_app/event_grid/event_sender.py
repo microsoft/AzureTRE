@@ -34,7 +34,7 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
         return re.sub(r'(?<!^)(?=[A-Z])', '_', string).lower()
 
     if airlock_request.type == constants.EXPORT_TYPE:
-        logging.info(f"Roles details original -----> {role_assignment_details}")
+        logging.debug(f"Roles details original -----> {role_assignment_details}")
         if airlock_request.triageLevel == strings.API_TRIAGE_LEVEL1:
             role_assignment_details["AirlockManager"] = role_assignment_details["AirlockManagerL1"]
         elif airlock_request.triageLevel == strings.API_TRIAGE_LEVEL2A:
@@ -43,11 +43,17 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
             role_assignment_details["AirlockManager"] = role_assignment_details["AirlockManagerL2b"]
         elif airlock_request.triageLevel == strings.API_TRIAGE_LEVEL3:
             role_assignment_details["AirlockManager"] = role_assignment_details["AirlockManagerL3"]
-        logging.info(f"Roles details changed -----> {role_assignment_details}")
+        logging.debug(f"Roles details changed -----> {role_assignment_details}")
 
     request_id = airlock_request.id
     status = airlock_request.status.value
     recipient_emails_by_role = {to_snake_case(role_name): role_id for role_name, role_id in role_assignment_details.items()}
+
+    # We need only the substring L1, L2, etc.
+    triage_leve_code = ""
+    if airlock_request.type == strings.AIRLOCK_REQUEST_TYPE_EXPORT:
+        triage_level_split = airlock_request.triageLevel.split(":")
+        triage_leve_code = triage_level_split[0]
 
     data = AirlockNotificationData(
         event_type="status_changed",
@@ -61,7 +67,8 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
             request_type=airlock_request.type,
             files=airlock_request.files,
             status=airlock_request.status.value,
-            business_justification=airlock_request.businessJustification),
+            business_justification=airlock_request.businessJustification,
+            triage_level=triage_leve_code),            
         workspace=AirlockNotificationWorkspaceData(
             id=workspace.id,
             display_name=workspace.properties["display_name"],

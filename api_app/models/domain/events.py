@@ -19,6 +19,7 @@ class AirlockNotificationRequestData(AzureTREModel):
     files: List[AirlockFile]
     status: AirlockRequestStatus
     business_justification: str
+    triage_level: str
 
 
 class AirlockNotificationWorkspaceData(AzureTREModel):

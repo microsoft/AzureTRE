@@ -1,307 +1,564 @@
 {
-  "definition": {
-      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
-      "actions": {
-          "Initialize_message_variable": {
-              "inputs": {
-                  "variables": [
-                      {
-                          "name": "message",
-                          "type": "string"
-                      }
-                  ]
-              },
-              "runAfter": {
-                  "Parse_JSON": [
-                      "Succeeded"
-                  ]
-              },
-              "type": "InitializeVariable"
-          },
-          "Initialize_recipients_variable": {
-              "inputs": {
-                  "variables": [
-                      {
-                          "name": "recipients",
-                          "type": "array"
-                      }
-                  ]
-              },
-              "runAfter": {
-                  "Initialize_message_variable": [
-                      "Succeeded"
-                  ]
-              },
-              "type": "InitializeVariable"
-          },
-          "Parse_JSON": {
-              "inputs": {
-                  "content": "@triggerOutputs()?['body']?['contentData']",
-                  "schema": {
-                      "properties": {
-                          "data": {
-                              "properties": {
-                                  "event_type": {
-                                      "type": "string"
-                                  },
-                                  "recipient_emails_by_role": {
-                                      "properties": {
-                                          "airlock_manager": {
-                                              "items": {
-                                                  "type": "string"
-                                              },
-                                              "type": "array"
-                                          },
-                                          "workspace_owner": {
-                                              "items": {
-                                                  "type": "string"
-                                              },
-                                              "type": "array"
-                                          },
-                                          "workspace_researcher": {
-                                              "items": {
-                                                  "type": "string"
-                                              },
-                                              "type": "array"
-                                          }
-                                      },
-                                      "type": "object"
-                                  },
-                                  "request": {
-                                      "properties": {
-                                          "business_justification": {
-                                              "type": "string"
-                                          },
-                                          "createdBy": {
-                                              "properties": {
-                                                  "email": {
-                                                      "type": "string"
-                                                  },
-                                                  "name": {
-                                                      "type": "string"
-                                                  }
-                                              },
-                                              "type": "object"
-                                          },
-                                          "createdWhen": {
-                                              "type": "number"
-                                          },
-                                          "files": {
-                                              "items": {
-                                                  "name": {
-                                                      "type": "string"
-                                                  },
-                                                  "size": {
-                                                      "type": "number"
-                                                  }
-                                              },
-                                              "type": "array"
-                                          },
-                                          "id": {
-                                              "type": "string"
-                                          },
-                                          "requestType": {
-                                              "type": "string"
-                                          },
-                                          "status": {
-                                              "type": "string"
-                                          },
-                                          "updatedBy": {
-                                              "properties": {
-                                                  "email": {
-                                                      "type": "string"
-                                                  },
-                                                  "name": {
-                                                      "type": "string"
-                                                  }
-                                              },
-                                              "type": "object"
-                                          },
-                                          "updatedWhen": {
-                                              "type": "number"
-                                          }
-                                      },
-                                      "type": "object"
-                                  },
-                                  "workspace": {
-                                      "properties": {
-                                          "description": {
-                                              "type": "string"
-                                          },
-                                          "display_name": {
-                                              "type": "string"
-                                          },
-                                          "id": {
-                                              "type": "string"
-                                          }
-                                      },
-                                      "type": "object"
-                                  }
-                              },
-                              "type": "object"
-                          }
-                      },
-                      "type": "object"
-                  }
-              },
-              "runAfter": {},
-              "type": "ParseJson"
-          },
-          "Send_Email_with_SMTP": {
-              "inputs": {
-                  "body": {
-                      "Body": "<p>Hi @{body('Parse_JSON')?['data']?['request']?['created_by']?['name']}</p><p>Your CPRD Safe airlock import request has been approved. You can now download your file from the airlock inside CPRD Safe. This guide: <a href=\"https://www.cprd.com/sites/default/files/2024-09/Airlock%20Import%20v1.pdf\">Airlock import request</a> shows you how. Further help can be found at: <a href=\"https://www.cprd.com/cprd-safe-training-and-guidance\">CPRD Safe training and guidance | CPRD</a>.</p><p>Log in to <a href=\"@{parameters('tre_url')}\">CPRD Safe</a> to view the request.</p><p>Many thanks,</p><p><b>CPRD Safe Team</b></p>",
-                      "From": "@parameters('smtp_from_email')",
-                      "Subject": "@variables('message')",
-                      "To": "@{join(variables('recipients'), ';')}"
-                  },
-                  "host": {
-                      "connection": {
-                          "referenceName": "smtp"
-                      }
-                  },
-                  "method": "post",
-                  "path": "/SendEmailV3"
-              },
-              "runAfter": {
-                  "Switch_on_request_status": [
-                      "Succeeded"
-                  ]
-              },
-              "type": "ApiConnection"
-          },
-          "Succeeded": {
-              "inputs": {
-                  "runStatus": "Succeeded"
-              },
-              "runAfter": {
-                  "Send_Email_with_SMTP": [
-                      "Succeeded"
-                  ]
-              },
-              "type": "Terminate"
-          },
-          "Switch_on_request_status": {
-              "cases": {
-                  "Case_approved": {
-                      "actions": {
-                          "Set_approved_message": {
-                              "inputs": {
-                                  "name": "message",
-                                  "value": "Your CPRD Safe airlock request was approved"
-                              },
-                              "runAfter": {
-                                  "Set_recipients_as_researchers_emails": [
-                                      "Succeeded"
-                                  ]
-                              },
-                              "type": "SetVariable"
-                          },
-                          "Set_recipients_as_researchers_emails": {
-                              "inputs": {
-                                  "name": "recipients",
-                                  "value": [
-                                      "@body('Parse_JSON')?['data']?['request']?['created_by']?['email']"
-                                  ]
-                              },
-                              "runAfter": {},
-                              "type": "SetVariable"
-                          }
-                      },
-                      "case": "approved"
-                  },
-                  "Case_in_review": {
-                      "actions": {
-                          "Set_in_review_message": {
-                              "inputs": {
-                                  "name": "message",
-                                  "value": "An airlock request from Workspace @{body('Parse_JSON')?['data']?['workspace']?['id']} needs your review"
-                              },
-                              "runAfter": {
-                                  "Set_recipients_as_owners_emails": [
-                                      "Succeeded"
-                                  ]
-                              },
-                              "type": "SetVariable"
-                          },
-                          "Set_recipients_as_owners_emails": {
-                              "inputs": {
-                                  "name": "recipients",
-                                  "value": "@body('Parse_JSON')?['data']?['recipient_emails_by_role']?['airlock_manager']"
-                              },
-                              "runAfter": {},
-                              "type": "SetVariable"
-                          }
-                      },
-                      "case": "in_review"
-                  },
-                  "Case_rejected": {
-                      "actions": {
-                          "Set_recipients_as_researchers_emails_rejected": {
-                              "inputs": {
-                                  "name": "recipients",
-                                  "value": [
-                                      "@body('Parse_JSON')?['data']?['request']?['created_by']?['email']"
-                                  ]
-                              },
-                              "runAfter": {},
-                              "type": "SetVariable"
-                          },
-                          "Set_rejected_message": {
-                              "inputs": {
-                                  "name": "message",
-                                  "value": "Your airlock request from Workspace @{body('Parse_JSON')?['data']?['workspace']?['id']} was rejected"
-                              },
-                              "runAfter": {
-                                  "Set_recipients_as_researchers_emails_rejected": [
-                                      "Succeeded"
-                                  ]
-                              },
-                              "type": "SetVariable"
-                          }
-                      },
-                      "case": "rejected"
-                  }
-              },
-              "default": {
-                  "actions": {
-                      "Cancelled": {
-                          "inputs": {
-                              "runStatus": "Cancelled"
-                          },
-                          "runAfter": {},
-                          "type": "Terminate"
-                      }
-                  }
-              },
-              "expression": "@body('Parse_JSON')?['data']?['request']?['status']",
-              "runAfter": {
-                  "Initialize_recipients_variable": [
-                      "Succeeded"
-                  ]
-              },
-              "type": "Switch"
-          }
-      },
-      "contentVersion": "1.0.0.0",
-      "outputs": {},
-      "triggers": {
-          "When_messages_are_available_in_a_queue": {
-              "inputs": {
-                  "parameters": {
-                      "isSessionsEnabled": false,
-                      "queueName": "notifications"
-                  },
-                  "serviceProviderConfiguration": {
-                      "connectionName": "serviceBus",
-                      "operationId": "receiveQueueMessages",
-                      "serviceProviderId": "/serviceProviders/serviceBus"
-                  }
-              },
-              "splitOn": "@triggerOutputs()?['body']",
-              "type": "ServiceProvider"
-          }
-      }
-  },
-  "kind": "Stateful"
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Initialize_message_variable": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "message",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Parse_JSON": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_email_body_variable": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "email_body",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_message_variable": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_created_when_variable": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "created_when",
+                            "type": "integer",
+                            "value": "@int(formatNumber(body('Parse_JSON')?['data']?['request']?['created_when'], 'F0'))"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_email_body_variable": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_in_review_due_date": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "in_review_due_date",
+                            "type": "string",
+                            "value": ""
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_created_when_variable": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_export_triage_level": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "export_triage_level",
+                            "type": "string",
+                            "value": ""
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_in_review_due_date": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_recipients_variable": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "recipients",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_export_triage_level": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Parse_JSON": {
+                "inputs": {
+                    "content": "@triggerOutputs()?['body']?['contentData']",
+                    "schema": {
+                        "properties": {
+                            "data": {
+                                "properties": {
+                                    "event_type": {
+                                        "type": "string"
+                                    },
+                                    "recipient_emails_by_role": {
+                                        "properties": {
+                                            "airlock_manager": {
+                                                "items": {
+                                                    "type": "string"
+                                                },
+                                                "type": "array"
+                                            },
+                                            "workspace_owner": {
+                                                "items": {
+                                                    "type": "string"
+                                                },
+                                                "type": "array"
+                                            },
+                                            "workspace_researcher": {
+                                                "items": {
+                                                    "type": "string"
+                                                },
+                                                "type": "array"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "request": {
+                                        "properties": {
+                                            "business_justification": {
+                                                "type": "string"
+                                            },
+                                            "createdBy": {
+                                                "properties": {
+                                                    "email": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "createdWhen": {
+                                                "type": "number"
+                                            },
+                                            "files": {
+                                                "items": {
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "size": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "type": "array"
+                                            },
+                                            "id": {
+                                                "type": "string"
+                                            },
+                                            "requestType": {
+                                                "type": "string"
+                                            },
+                                            "status": {
+                                                "type": "string"
+                                            },
+                                            "updatedBy": {
+                                                "properties": {
+                                                    "email": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "updatedWhen": {
+                                                "type": "number"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "workspace": {
+                                        "properties": {
+                                            "description": {
+                                                "type": "string"
+                                            },
+                                            "display_name": {
+                                                "type": "string"
+                                            },
+                                            "id": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "runAfter": {},
+                "type": "ParseJson"
+            },
+            "Send_Email_with_SMTP": {
+                "inputs": {
+                    "body": {
+                        "Body": "@variables('email_body')",
+                        "From": "@parameters('smtp_from_email')",
+                        "Subject": "@variables('message')",
+                        "To": "@{join(variables('recipients'), ';')}"
+                    },
+                    "host": {
+                        "connection": {
+                            "referenceName": "smtp"
+                        }
+                    },
+                    "method": "post",
+                    "path": "/SendEmailV3"
+                },
+                "runAfter": {
+                    "Switch_on_request_status": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection"
+            },
+            "Succeeded": {
+                "inputs": {
+                    "runStatus": "Succeeded"
+                },
+                "runAfter": {
+                    "Send_Email_with_SMTP": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Terminate"
+            },
+            "Switch_on_request_status": {
+                "cases": {
+                    "Case_approved": {
+                        "actions": {
+                            "Set_approved_email_body": {
+                                "cases": {
+                                    "Case_import": {
+                                        "actions": {
+                                            "Set_approved_import_email_body": {
+                                                "inputs": {
+                                                    "name": "email_body",
+                                                    "value": "<p>Hi @{body('Parse_JSON')?['data']?['request']?['created_by']?['name']}</p><p>Your CPRD Safe airlock import request has been approved. You can now download your file from the airlock inside CPRD Safe. This guide: <a href=\"https://www.cprd.com/sites/default/files/2024-09/Airlock%20Import%20v1.pdf\">Airlock import request</a> shows you how. Further help can be found at: <a href=\"https://www.cprd.com/cprd-safe-training-and-guidance\">CPRD Safe training and guidance | CPRD</a>.</p><p>Log in to <a href=\"@{parameters('tre_url')}\">CPRD Safe</a> to view the request.</p><p>Many thanks,</p><p><b>CPRD Safe Team</b></p>."
+                                                },
+                                                "type": "SetVariable"
+                                            }
+                                        },
+                                        "case": "import"
+                                    },
+                                    "Case_export": {
+                                        "actions": {
+                                            "Set_approved_export_email_body": {
+                                                "inputs": {
+                                                    "name": "email_body",
+                                                    "value": "<p>Hi @{body('Parse_JSON')?['data']?['request']?['created_by']?['name']}</p><p>Your CPRD Safe airlock export request has been approved. You can now download your file from the airlock outside CPRD Safe. Further help can be found at: <a href=\"https://www.cprd.com/cprd-safe-training-and-guidance\">CPRD Safe training and guidance | CPRD</a>.</p><p>Log in to <a href=\"@{parameters('tre_url')}\">CPRD Safe</a> to view the request.</p><p>Many thanks,</p><p><b>CPRD Safe Team</b></p>."
+                                                },
+                                                "type": "SetVariable"
+                                            }
+                                        },
+                                        "case": "export"
+                                    }
+                                },
+                                "expression": "@body('Parse_JSON')?['data']?['request']?['request_type']",
+                                "runAfter": {
+                                    "Set_approved_message": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "Switch"
+                            },
+                            "Set_approved_message": {
+                                "inputs": {
+                                    "name": "message",
+                                    "value": "Your CPRD Safe airlock request was approved"
+                                },
+                                "runAfter": {
+                                    "Set_recipients_as_researchers_emails": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "SetVariable"
+                            },
+                            "Set_recipients_as_researchers_emails": {
+                                "inputs": {
+                                    "name": "recipients",
+                                    "value": [
+                                        "@body('Parse_JSON')?['data']?['request']?['created_by']?['email']"
+                                    ]
+                                },
+                                "runAfter": {},
+                                "type": "SetVariable"
+                            }
+                        },
+                        "case": "approved"
+                    },
+                    "Case_in_review": {
+                        "actions": {
+                            "Set_in_review_email_body": {
+                                "inputs": {
+                                    "name": "email_body",
+                                    "value": "<p>Dear Reviewer,<br>A @{variables('export_triage_level')} airlock export request is read for review by 25/01/2025:</p><table border=\"1\"><tr><th>Overview of Request</th></tr><tr><th>Workspace Name</th><td>@{body('Parse_JSON')?['data']?['workspace']?['display_name']}</td></tr><tr><th>Workspace ID</th><td>@{body('Parse_JSON')?['data']?['workspace']?['id']}</td></tr><tr><th>Airlock Request ID</th><td>@{body('Parse_JSON')?['data']?['request']?['id']}</td></tr><tr><th>Requestor</th><td>@{body('Parse_JSON')?['data']?['request']?['created_by']?['name']}</td></tr><tr><th>Submitted Date</th><td>@{addToTime('1970-01-01T00:00:00Z',variables('created_when'),'second','MM/dd/yyyy')}</td></tr><tr><th>Status</th><td>In Review</td></tr><tr><th>File name</th><td>@{first(body('Parse_JSON')?['data']?['request']?['files'])['name']}</td></tr></table><p>Log in to <a href=\"@{parameters('tre_url')}\">CPRD Safe</a> to review the request.</p>"
+                                },
+                                "runAfter": {
+                                    "Set_in_review_message": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "SetVariable"
+                            },
+                            "Set_in_review_message": {
+                                "inputs": {
+                                    "name": "message",
+                                    "value": "@{variables('export_triage_level')} Airlock export review from Workspace @{body('Parse_JSON')?['data']?['workspace']?['display_name']}"
+                                },
+                                "runAfter": {
+                                    "Set_export_triage_level": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "SetVariable"
+                            },
+                            "Set_export_triage_level": {
+                                "cases": {
+                                    "Case_L1": {
+                                        "actions": {
+                                            "Set_export_triage_level_L1": {
+                                                "inputs": {
+                                                    "name": "export_triage_level",
+                                                    "value": "L1"
+                                                },
+                                                "type": "SetVariable"
+                                            },
+                                            "Set_in_review_due_date_L1": {
+                                                "inputs": {
+                                                    "name": "in_review_due_date",
+                                                    "value": "@{addToTime('1970-01-01T00:00:00Z',add(variables('created_when'),259200),'second','MM/dd/yyyy')}"
+                                                },
+                                                "runAfter": {
+                                                    "Set_export_triage_level_L1": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "SetVariable"
+                                            }
+                                        },
+                                        "case": "L1"
+                                    },
+                                    "Case_L2": {
+                                        "actions": {
+                                            "Set_export_triage_level_L2": {
+                                                "inputs": {
+                                                    "name": "export_triage_level",
+                                                    "value": "L2"
+                                                },
+                                                "type": "SetVariable"
+                                            },
+                                            "Set_in_review_due_date_L2": {
+                                                "inputs": {
+                                                    "name": "in_review_due_date",
+                                                    "value": "@{addToTime('1970-01-01T00:00:00Z',add(variables('created_when'),259200),'second','MM/dd/yyyy')}"
+                                                },
+                                                "runAfter": {
+                                                    "Set_export_triage_level_L2": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "SetVariable"
+                                            }
+                                        },
+                                        "case": "L2"
+                                    },
+                                    "Case_L2a": {
+                                        "actions": {
+                                            "Set_export_triage_level_L2a": {
+                                                "inputs": {
+                                                    "name": "export_triage_level",
+                                                    "value": "L2a"
+                                                },
+                                                "type": "SetVariable"
+                                            },
+                                            "Set_in_review_due_date_L2a": {
+                                                "inputs": {
+                                                    "name": "in_review_due_date",
+                                                    "value": "@{addToTime('1970-01-01T00:00:00Z',add(variables('created_when'),259200),'second','MM/dd/yyyy')}"
+                                                },
+                                                "runAfter": {
+                                                    "Set_export_triage_level_L2a": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "SetVariable"
+                                            }
+                                        },
+                                        "case": "L2a"
+                                    },
+                                    "Case_L3": {
+                                        "actions": {
+                                            "Set_export_triage_level_L3": {
+                                                "inputs": {
+                                                    "name": "export_triage_level",
+                                                    "value": "L3"
+                                                },
+                                                "type": "SetVariable"
+                                            },
+                                            "Set_in_review_due_date_L3": {
+                                                "inputs": {
+                                                    "name": "in_review_due_date",
+                                                    "value": "@{addToTime('1970-01-01T00:00:00Z',add(variables('created_when'),1296000),'second','MM/dd/yyyy')}"
+                                                },
+                                                "runAfter": {
+                                                    "Set_export_triage_level_L3": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "SetVariable"
+                                            }
+                                        },
+                                        "case": "L3"
+                                    },
+                                    "Case_L4": {
+                                        "actions": {
+                                            "Set_export_triage_level_L4": {
+                                                "inputs": {
+                                                    "name": "export_triage_level",
+                                                    "value": "L4"
+                                                },
+                                                "type": "SetVariable"
+                                            }
+                                        },
+                                        "case": "L4"
+                                    },
+                                    "Case_L4a": {
+                                        "actions": {
+                                            "Set_export_triage_level_L4a": {
+                                                "inputs": {
+                                                    "name": "export_triage_level",
+                                                    "value": "L4a"
+                                                },
+                                                "type": "SetVariable"
+                                            }
+                                        },
+                                        "case": "L4a"
+                                    }
+                                },
+                                "expression": "@body('Parse_JSON')?['data']?['request']?['triage_level']",
+                                "runAfter": {
+                                    "Set_recipients_as_owners_emails": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "Switch"                                
+                            },
+                            "Set_recipients_as_owners_emails": {
+                                "inputs": {
+                                    "name": "recipients",
+                                    "value": "@body('Parse_JSON')?['data']?['recipient_emails_by_role']?['airlock_manager']"
+                                },
+                                "runAfter": {},
+                                "type": "SetVariable"
+                            }
+                        },
+                        "case": "in_review"
+                    },
+                    "Case_rejected": {
+                        "actions": {
+                            "Set_recipients_as_researchers_emails_rejected": {
+                                "inputs": {
+                                    "name": "recipients",
+                                    "value": [
+                                        "@body('Parse_JSON')?['data']?['request']?['created_by']?['email']"
+                                    ]
+                                },
+                                "runAfter": {},
+                                "type": "SetVariable"
+                            },
+                            "Set_rejected_message": {
+                                "inputs": {
+                                    "name": "message",
+                                    "value": "Your airlock request from Workspace @{body('Parse_JSON')?['data']?['workspace']?['id']} was rejected"
+                                },
+                                "runAfter": {
+                                    "Set_recipients_as_researchers_emails_rejected": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "SetVariable"
+                            },
+                            "Set_rejected_email_body": {
+                                "inputs": {
+                                    "name": "email_body",
+                                    "value": "Your airlock request from Workspace @{body('Parse_JSON')?['data']?['workspace']?['id']} was rejected"
+                                },
+                                "runAfter": {
+                                    "Set_rejected_message": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "SetVariable"
+                            }
+                        },
+                        "case": "rejected"
+                    }
+                },
+                "default": {
+                    "actions": {
+                        "Cancelled": {
+                            "inputs": {
+                                "runStatus": "Cancelled"
+                            },
+                            "runAfter": {},
+                            "type": "Terminate"
+                        }
+                    }
+                },
+                "expression": "@body('Parse_JSON')?['data']?['request']?['status']",
+                "runAfter": {
+                    "Initialize_recipients_variable": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Switch"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "triggers": {
+            "When_messages_are_available_in_a_queue": {
+                "inputs": {
+                    "parameters": {
+                        "isSessionsEnabled": false,
+                        "queueName": "notifications"
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "serviceBus",
+                        "operationId": "receiveQueueMessages",
+                        "serviceProviderId": "/serviceProviders/serviceBus"
+                    }
+                },
+                "splitOn": "@triggerOutputs()?['body']",
+                "type": "ServiceProvider"
+            }
+        }
+    },
+    "kind": "Stateful"
 }
