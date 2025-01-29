@@ -1,0 +1,13 @@
+FROM debian:buster
+
+# PORTER_MIXINS
+
+ARG BUNDLE_DIR
+
+COPY . $BUNDLE_DIR
+
+WORKDIR $BUNDLE_DIR
+
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+
+RUN az bicep build --file ./bicep/main.bicep --outfile main.json
