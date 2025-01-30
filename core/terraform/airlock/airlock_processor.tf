@@ -69,7 +69,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   }
 
   app_settings = {
-    "SERVICEBUS_CONNECTION"                                   = local.servicebus_connection
+    "SERVICEBUS_CONNECTION_NAME"                              = local.servicebus_connection
     "${local.servicebus_connection}__tenantId"                = azurerm_user_assigned_identity.airlock_id.tenant_id
     "${local.servicebus_connection}__clientId"                = azurerm_user_assigned_identity.airlock_id.client_id
     "${local.servicebus_connection}__credential"              = "managedidentity"
