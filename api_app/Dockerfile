@@ -1,5 +1,8 @@
 FROM python:3.8-slim-bullseye as base
 COPY requirements.txt /.
+RUN apt-get update && apt-get install ca-certificates -y
+COPY ZscalerRootCertificate-2048-SHA256.crt /usr/local/share/ca-certificates/ZscalerRootCertificate-2048-SHA256.crt
+RUN /usr/sbin/update-ca-certificates
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 FROM base as test

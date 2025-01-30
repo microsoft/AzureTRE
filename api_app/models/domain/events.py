@@ -20,7 +20,9 @@ class AirlockNotificationRequestData(AzureTREModel):
     status: AirlockRequestStatus
     business_justification: str
     triage_level: str
-
+    triage_level_code: str
+    export_review_due_date: float
+    
 
 class AirlockNotificationWorkspaceData(AzureTREModel):
     id: str

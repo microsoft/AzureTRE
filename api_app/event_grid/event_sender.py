@@ -49,12 +49,6 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
     status = airlock_request.status.value
     recipient_emails_by_role = {to_snake_case(role_name): role_id for role_name, role_id in role_assignment_details.items()}
 
-    # We need only the substring L1, L2, etc.
-    triage_leve_code = ""
-    if airlock_request.type == strings.AIRLOCK_REQUEST_TYPE_EXPORT:
-        triage_level_split = airlock_request.triageLevel.split(":")
-        triage_leve_code = triage_level_split[0]
-
     data = AirlockNotificationData(
         event_type="status_changed",
         recipient_emails_by_role=recipient_emails_by_role,
@@ -68,7 +62,9 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
             files=airlock_request.files,
             status=airlock_request.status.value,
             business_justification=airlock_request.businessJustification,
-            triage_level=triage_leve_code),            
+            triage_level=airlock_request.triageLevel,
+            triage_level_code=airlock_request.triageLevelCode,
+            export_review_due_date=airlock_request.exportReviewDueDate),            
         workspace=AirlockNotificationWorkspaceData(
             id=workspace.id,
             display_name=workspace.properties["display_name"],
