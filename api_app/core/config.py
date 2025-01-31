@@ -68,3 +68,4 @@ NOTIFY_UK_EMAIL_SUBJECT_TAG: str = config("NOTIFY_UK_EMAIL_SUBJECT_TAG", default
 
 # Triage level due date
 DUE_DATE_DAYS_TO_ADD: map = config("DUE_DATE_DAYS_TO_ADD", default={"L1": 3, "L2": 3, "L2a": 3, "L2b": 3, "L3": 15})
+BANK_HOLIDAYS_FILE_PATH = "/api/resources/bank-holidays.json"

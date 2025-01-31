@@ -18,6 +18,7 @@ from core import config
 from resources import strings
 from db.repositories.base import BaseRepository
 import logging
+import json
 
 
 class AirlockRequestRepository(BaseRepository):
@@ -239,6 +240,24 @@ class AirlockRequestRepository(BaseRepository):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
 
     def _calculate_export_review_due_date(self, created_when: float, triage_level_code: str):
+        non_working_days = []
+
+        try:
+            with open(config.BANK_HOLIDAYS_FILE_PATH) as holidays:
+                logging.info(f'Loading UK bank holidays file: {config.BANK_HOLIDAYS_FILE_PATH}')
+                holidays_json = json.load(holidays)
+                england_holidays = holidays_json['england-and-wales']
+                england_events = england_holidays['events']
+
+                for event in england_events:
+                    non_working_days.append(event['date'])
+
+        except FileNotFoundError:
+            logging.info(f'File not found: {config.BANK_HOLIDAYS_FILE_PATH}')
+
+        except:
+            logging.info(f'Unable to load UK bank holidays file: {config.BANK_HOLIDAYS_FILE_PATH}')
+
         days_to_add_map = config.DUE_DATE_DAYS_TO_ADD
         created_when_iso = datetime.fromtimestamp(created_when)
         next_day = created_when_iso
@@ -250,11 +269,15 @@ class AirlockRequestRepository(BaseRepository):
 
         while days_to_add > 0:	
             next_day = next_day + timedelta(days=1)
+            is_weekend = next_day.weekday() == 5 or next_day.weekday() == 6
             
             # If next_day is an UK holiday or Saturday or Sunday, we ignore this day
-            # if (next_day.strftime("%Y-%m-%d") not in non_working_days and next_day.weekday() != 5 and next_day.weekday() != 6):
-            if (next_day.weekday() != 5 and next_day.weekday() != 6):
-                days_to_add = days_to_add - 1
+            if non_working_days != []:
+                if next_day.strftime("%Y-%m-%d") not in non_working_days and not is_weekend:
+                    days_to_add = days_to_add - 1
+            else:
+                if not is_weekend:
+                    days_to_add = days_to_add - 1
             
         due_date = next_day
         due_date_timestamp = due_date.timestamp()
@@ -262,6 +285,7 @@ class AirlockRequestRepository(BaseRepository):
         return due_date_timestamp
 
     async def set_triage_level_and_review_due_date(self, request: AirlockRequest, triage_level_input: str) -> AirlockRequest:
+        request.createdWhen = 1744895603.0
         request.triageLevel = triage_level_input
         
         # We need only the substring L1, L2, etc.
