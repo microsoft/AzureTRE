@@ -17,3 +17,7 @@ output "resource_group_name" {
 output "keyvault_name" {
   value = data.azurerm_key_vault.key_vault.name
 }
+
+output "password_name" {
+  value = local.password_name
+}

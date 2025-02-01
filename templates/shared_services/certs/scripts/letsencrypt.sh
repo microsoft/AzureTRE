@@ -29,6 +29,10 @@ while [ "$1" != "" ]; do
         shift
         cert_name=$1
         ;;
+    --password_name)
+        shift
+        password_name=$1
+        ;;
     *)
         echo "Unexpected argument: '$1'"
         usage
@@ -122,8 +126,8 @@ sid=$(az keyvault certificate import \
     --password "${CERT_PASSWORD}" \
     | jq -r '.sid')
 
-echo "Saving certificate password to KV with key ${cert_name}-password"
-az keyvault secret set --name "${cert_name}"-password \
+echo "Saving certificate password to KV with key ${password_name}"
+az keyvault secret set --name "$password_name" \
   --vault-name "${keyvault_name}" \
   --value "${CERT_PASSWORD}"
 
