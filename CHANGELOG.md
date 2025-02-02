@@ -34,7 +34,9 @@ ENHANCEMENTS:
 * Update Guacamole dependencies ([[#4232](https://github.com/microsoft/AzureTRE/issues/4232)])
 * Add option to force tunnel TRE's Firewall ([#4237](https://github.com/microsoft/AzureTRE/issues/4237))
 * Add EventGrid diagnostics to identify airlock issues ([#4258](https://github.com/microsoft/AzureTRE/issues/4258))
+* Allow enablement of Secure Boot and vTPM for Guacamole VMs ([#4235](https://github.com/microsoft/AzureTRE/issues/4235))
 * Surface the server-layout parameter of Guacamole [server-layout](https://guacamole.apache.org/doc/gug/configuring-guacamole.html#session-settings) ([#4234](https://github.com/microsoft/AzureTRE/issues/4234))
+* Add encryption at host for VMs ([#4263](https://github.com/microsoft/AzureTRE/pull/4263))
 * Airlock function host storage to use the user-assigned managed identity ([#4276](https://github.com/microsoft/AzureTRE/issues/4276))
 
 BUG FIXES:

@@ -103,10 +103,16 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   admin_username                  = "adminuser"
   admin_password                  = random_password.nexus_vm_password.result
   tags                            = local.tre_shared_service_tags
+  encryption_at_host_enabled      = true
+  secure_boot_enabled             = true
+  vtpm_enabled                    = true
 
   custom_data = data.template_cloudinit_config.nexus_config.rendered
 
-  lifecycle { ignore_changes = [tags] }
+  # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
+  # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
+  #
+  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled] }
 
   source_image_reference {
     publisher = "Canonical"
