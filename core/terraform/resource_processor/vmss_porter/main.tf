@@ -79,9 +79,11 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
   disable_password_authentication = false
   admin_password                  = random_password.password.result
   custom_data                     = data.template_cloudinit_config.config.rendered
-  encryption_at_host_enabled      = false
+  encryption_at_host_enabled      = true
   upgrade_mode                    = "Automatic"
   tags                            = local.tre_core_tags
+  secure_boot_enabled             = true
+  vtpm_enabled                    = true
 
   extension {
     auto_upgrade_minor_version = true
@@ -127,7 +129,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
   source_image_reference {
     publisher = "Canonical"
     offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-lts"
+    sku       = "22_04-lts-gen2"
     version   = "latest"
   }
 
