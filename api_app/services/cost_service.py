@@ -95,7 +95,8 @@ class CostService:
 
     def __init__(self) -> None:
         self.scope = "/subscriptions/{}".format(config.SUBSCRIPTION_ID)
-        self.client = CostManagementClient(credential=credentials.get_credential())
+        # We add a custom ClientType header to avoid small limits for Azure API calls.
+        self.client = CostManagementClient(credential=credentials.get_credential(),headers={"ClientType": config.CLIENT_TYPE_CUSTOM_HEADER})
         self.resource_client = ResourceManagementClient(credentials.get_credential(), config.SUBSCRIPTION_ID)
         self.cache = {}
 
