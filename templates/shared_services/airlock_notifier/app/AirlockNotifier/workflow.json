@@ -51,13 +51,13 @@
                 },
                 "type": "InitializeVariable"
             },
-            "Initialize_in_review_due_date": {
+            "Initialize_export_review_due_date": {
                 "inputs": {
                     "variables": [
                         {
-                            "name": "in_review_due_date",
-                            "type": "string",
-                            "value": ""
+                            "name": "export_review_due_date",
+                            "type": "integer",
+                            "value": "@int(formatNumber(body('Parse_JSON')?['data']?['request']?['export_review_due_date'], 'F0'))"
                         }
                     ]
                 },
@@ -68,18 +68,18 @@
                 },
                 "type": "InitializeVariable"
             },
-            "Initialize_export_triage_level": {
+            "Initialize_triage_level_code": {
                 "inputs": {
                     "variables": [
                         {
-                            "name": "export_triage_level",
+                            "name": "triage_level_code",
                             "type": "string",
-                            "value": ""
+                            "value": "@body('Parse_JSON')?['data']?['request']?['triage_level_code']"
                         }
                     ]
                 },
                 "runAfter": {
-                    "Initialize_in_review_due_date": [
+                    "Initialize_export_review_due_date": [
                         "Succeeded"
                     ]
                 },
@@ -95,7 +95,7 @@
                     ]
                 },
                 "runAfter": {
-                    "Initialize_export_triage_level": [
+                    "Initialize_triage_level_code": [
                         "Succeeded"
                     ]
                 },
@@ -317,7 +317,7 @@
                             "Set_in_review_email_body": {
                                 "inputs": {
                                     "name": "email_body",
-                                    "value": "<p>Dear Reviewer,<br>A @{variables('export_triage_level')} airlock export request is read for review by 25/01/2025:</p><table border=\"1\"><tr><th>Overview of Request</th></tr><tr><th>Workspace Name</th><td>@{body('Parse_JSON')?['data']?['workspace']?['display_name']}</td></tr><tr><th>Workspace ID</th><td>@{body('Parse_JSON')?['data']?['workspace']?['id']}</td></tr><tr><th>Airlock Request ID</th><td>@{body('Parse_JSON')?['data']?['request']?['id']}</td></tr><tr><th>Requestor</th><td>@{body('Parse_JSON')?['data']?['request']?['created_by']?['name']}</td></tr><tr><th>Submitted Date</th><td>@{addToTime('1970-01-01T00:00:00Z',variables('created_when'),'second','MM/dd/yyyy')}</td></tr><tr><th>Status</th><td>In Review</td></tr><tr><th>File name</th><td>@{first(body('Parse_JSON')?['data']?['request']?['files'])['name']}</td></tr></table><p>Log in to <a href=\"@{parameters('tre_url')}\">CPRD Safe</a> to review the request.</p>"
+                                    "value": "<p>Dear Reviewer,<br>A @{variables('triage_level_code')} airlock export request is read for review by @{addToTime('1970-01-01T00:00:00Z',variables('export_review_due_date'),'second','MM/dd/yyyy')}:</p><table border=\"1\"><tr><th>Overview of Request</th></tr><tr><th>Workspace Name</th><td>@{body('Parse_JSON')?['data']?['workspace']?['display_name']}</td></tr><tr><th>Workspace ID</th><td>@{body('Parse_JSON')?['data']?['workspace']?['id']}</td></tr><tr><th>Airlock Request ID</th><td>@{body('Parse_JSON')?['data']?['request']?['id']}</td></tr><tr><th>Requestor</th><td>@{body('Parse_JSON')?['data']?['request']?['created_by']?['name']}</td></tr><tr><th>Submitted Date</th><td>@{addToTime('1970-01-01T00:00:00Z',variables('created_when'),'second','MM/dd/yyyy')}</td></tr><tr><th>Status</th><td>In Review</td></tr><tr><th>File name</th><td>@{first(body('Parse_JSON')?['data']?['request']?['files'])['name']}</td></tr></table><p>Log in to <a href=\"@{parameters('tre_url')}\">CPRD Safe</a> to review the request.</p>"
                                 },
                                 "runAfter": {
                                     "Set_in_review_message": [
@@ -329,145 +329,14 @@
                             "Set_in_review_message": {
                                 "inputs": {
                                     "name": "message",
-                                    "value": "@{variables('export_triage_level')} Airlock export review from Workspace @{body('Parse_JSON')?['data']?['workspace']?['display_name']}"
+                                    "value": "@{variables('triage_level_code')} Airlock export review from Workspace @{body('Parse_JSON')?['data']?['workspace']?['display_name']}"
                                 },
-                                "runAfter": {
-                                    "Set_export_triage_level": [
-                                        "Succeeded"
-                                    ]
-                                },
-                                "type": "SetVariable"
-                            },
-                            "Set_export_triage_level": {
-                                "cases": {
-                                    "Case_L1": {
-                                        "actions": {
-                                            "Set_export_triage_level_L1": {
-                                                "inputs": {
-                                                    "name": "export_triage_level",
-                                                    "value": "L1"
-                                                },
-                                                "type": "SetVariable"
-                                            },
-                                            "Set_in_review_due_date_L1": {
-                                                "inputs": {
-                                                    "name": "in_review_due_date",
-                                                    "value": "@{addToTime('1970-01-01T00:00:00Z',add(variables('created_when'),259200),'second','MM/dd/yyyy')}"
-                                                },
-                                                "runAfter": {
-                                                    "Set_export_triage_level_L1": [
-                                                        "Succeeded"
-                                                    ]
-                                                },
-                                                "type": "SetVariable"
-                                            }
-                                        },
-                                        "case": "L1"
-                                    },
-                                    "Case_L2": {
-                                        "actions": {
-                                            "Set_export_triage_level_L2": {
-                                                "inputs": {
-                                                    "name": "export_triage_level",
-                                                    "value": "L2"
-                                                },
-                                                "type": "SetVariable"
-                                            },
-                                            "Set_in_review_due_date_L2": {
-                                                "inputs": {
-                                                    "name": "in_review_due_date",
-                                                    "value": "@{addToTime('1970-01-01T00:00:00Z',add(variables('created_when'),259200),'second','MM/dd/yyyy')}"
-                                                },
-                                                "runAfter": {
-                                                    "Set_export_triage_level_L2": [
-                                                        "Succeeded"
-                                                    ]
-                                                },
-                                                "type": "SetVariable"
-                                            }
-                                        },
-                                        "case": "L2"
-                                    },
-                                    "Case_L2a": {
-                                        "actions": {
-                                            "Set_export_triage_level_L2a": {
-                                                "inputs": {
-                                                    "name": "export_triage_level",
-                                                    "value": "L2a"
-                                                },
-                                                "type": "SetVariable"
-                                            },
-                                            "Set_in_review_due_date_L2a": {
-                                                "inputs": {
-                                                    "name": "in_review_due_date",
-                                                    "value": "@{addToTime('1970-01-01T00:00:00Z',add(variables('created_when'),259200),'second','MM/dd/yyyy')}"
-                                                },
-                                                "runAfter": {
-                                                    "Set_export_triage_level_L2a": [
-                                                        "Succeeded"
-                                                    ]
-                                                },
-                                                "type": "SetVariable"
-                                            }
-                                        },
-                                        "case": "L2a"
-                                    },
-                                    "Case_L3": {
-                                        "actions": {
-                                            "Set_export_triage_level_L3": {
-                                                "inputs": {
-                                                    "name": "export_triage_level",
-                                                    "value": "L3"
-                                                },
-                                                "type": "SetVariable"
-                                            },
-                                            "Set_in_review_due_date_L3": {
-                                                "inputs": {
-                                                    "name": "in_review_due_date",
-                                                    "value": "@{addToTime('1970-01-01T00:00:00Z',add(variables('created_when'),1296000),'second','MM/dd/yyyy')}"
-                                                },
-                                                "runAfter": {
-                                                    "Set_export_triage_level_L3": [
-                                                        "Succeeded"
-                                                    ]
-                                                },
-                                                "type": "SetVariable"
-                                            }
-                                        },
-                                        "case": "L3"
-                                    },
-                                    "Case_L4": {
-                                        "actions": {
-                                            "Set_export_triage_level_L4": {
-                                                "inputs": {
-                                                    "name": "export_triage_level",
-                                                    "value": "L4"
-                                                },
-                                                "type": "SetVariable"
-                                            }
-                                        },
-                                        "case": "L4"
-                                    },
-                                    "Case_L4a": {
-                                        "actions": {
-                                            "Set_export_triage_level_L4a": {
-                                                "inputs": {
-                                                    "name": "export_triage_level",
-                                                    "value": "L4a"
-                                                },
-                                                "type": "SetVariable"
-                                            }
-                                        },
-                                        "case": "L4a"
-                                    }
-                                },
-                                "expression": "@body('Parse_JSON')?['data']?['request']?['triage_level']",
                                 "runAfter": {
                                     "Set_recipients_as_owners_emails": [
                                         "Succeeded"
                                     ]
                                 },
-                                "type": "Switch"                                
+                                "type": "SetVariable"
                             },
                             "Set_recipients_as_owners_emails": {
                                 "inputs": {

@@ -285,7 +285,6 @@ class AirlockRequestRepository(BaseRepository):
         return due_date_timestamp
 
     async def set_triage_level_and_review_due_date(self, request: AirlockRequest, triage_level_input: str) -> AirlockRequest:
-        request.createdWhen = 1744895603.0
         request.triageLevel = triage_level_input
         
         # We need only the substring L1, L2, etc.
