@@ -54,6 +54,8 @@ BUG FIXES:
 * Fix VM actions where Workspace shared storage doesn't allow shared key access ([#4222](https://github.com/microsoft/AzureTRE/issues/4222))
 * Fix public exposure in Guacamole service ([[#4199](https://github.com/microsoft/AzureTRE/issues/4199)])
 * Fix Azure ML network tags to use name rather than ID ([[#4151](https://github.com/microsoft/AzureTRE/issues/4151)])
+* Upgrade AzureRM Terraform provider from `3.117.0` to `4.14.0`. ([[PR_link](https://github.com/microsoft/AzureTRE/pull/4255/)])
+* Subnet definitions are now inline in the `azurerm_virtual_network` resource, and NSG associations are set using `security_group` in each subnet block (no separate `azurerm_subnet_network_security_group_association` needed). ([[PR_link](https://github.com/microsoft/AzureTRE/pull/4255/)])
 
 COMPONENTS:
 
