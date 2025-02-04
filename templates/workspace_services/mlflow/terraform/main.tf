@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.33.0"
+      version = "=3.112.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -37,6 +37,11 @@ provider "azurerm" {
       recover_soft_deleted_keys         = true
     }
   }
+}
+
+module "terraform_azurerm_environment_configuration" {
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
+  arm_environment = var.arm_environment
 }
 
 data "azurerm_resource_group" "ws" {
@@ -86,11 +91,11 @@ data "azurerm_storage_account" "mlflow" {
 }
 
 data "azurerm_private_dns_zone" "azurewebsites" {
-  name                = "privatelink.azurewebsites.net"
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurewebsites.net"]
   resource_group_name = local.core_resource_group_name
 }
 
 data "azurerm_private_dns_zone" "postgres" {
-  name                = "privatelink.postgres.database.azure.com"
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.postgres.database.azure.com"]
   resource_group_name = local.core_resource_group_name
 }

@@ -25,6 +25,8 @@ resource "azurerm_key_vault_secret" "postgresql_admin_username" {
   value        = random_string.username.result
   key_vault_id = data.azurerm_key_vault.ws.id
   tags         = local.tre_workspace_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_key_vault_secret" "postgresql_admin_password" {
@@ -32,6 +34,8 @@ resource "azurerm_key_vault_secret" "postgresql_admin_password" {
   value        = random_password.password.result
   key_vault_id = data.azurerm_key_vault.ws.id
   tags         = local.tre_workspace_service_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_postgresql_server" "mlflow" {
@@ -54,6 +58,8 @@ resource "azurerm_postgresql_server" "mlflow" {
   public_network_access_enabled    = false
   ssl_enforcement_enabled          = true
   ssl_minimal_tls_version_enforced = "TLS1_2"
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_postgresql_database" "mlflow" {
@@ -79,7 +85,7 @@ resource "azurerm_private_endpoint" "private_endpoint" {
   }
 
   private_dns_zone_group {
-    name                 = "privatelink.postgres.database.azure.com"
+    name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.postgres.database.azure.com"]
     private_dns_zone_ids = [data.azurerm_private_dns_zone.postgres.id]
   }
 
