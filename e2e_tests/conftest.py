@@ -12,7 +12,7 @@ from helpers import get_admin_token
 
 
 LOGGER = logging.getLogger(__name__)
-pytestmark = pytest.mark.asyncio
+pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 
 def pytest_addoption(parser):
