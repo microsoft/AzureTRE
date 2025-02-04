@@ -4,7 +4,7 @@ from pydantic import parse_obj_as
 
 from api.routes.resource_helpers import get_template
 from db.errors import EntityVersionExist, InvalidInput
-from api.helpers import get_repository
+from api.helpers import get_repository, validate_resource_type
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
 from models.schemas.resource_template import ResourceTemplateInResponse, ResourceTemplateInformationInList
@@ -30,6 +30,7 @@ async def get_workspace_service_template(service_template_name: str, is_update: 
 
 @workspace_service_templates_core_router.post("/workspace-service-templates", status_code=status.HTTP_201_CREATED, response_model=WorkspaceServiceTemplateInResponse, response_model_exclude_none=True, name=strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES, dependencies=[Depends(get_current_admin_user)])
 async def register_workspace_service_template(template_input: WorkspaceServiceTemplateInCreate, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInResponse:
+    validate_resource_type(template_input.resourceType, ResourceType.WorkspaceService)
     try:
         return await template_repo.create_and_validate_template(template_input, ResourceType.WorkspaceService)
     except EntityVersionExist:

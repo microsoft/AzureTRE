@@ -112,3 +112,32 @@ class TestSharedServiceTemplates:
         response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_shared_service_template.dict())
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    # Add test cases to validate resourceType property in register_shared_service_template function
+    @patch("api.routes.shared_service_templates.ResourceTemplateRepository.create_template")
+    @patch("api.routes.shared_service_templates.ResourceTemplateRepository.get_current_template")
+    @patch("api.routes.shared_service_templates.ResourceTemplateRepository.get_template_by_name_and_version")
+    async def test_register_shared_service_template_invalid_resource_type(self, get_template_by_name_and_version_mock, get_current_template_mock, create_template_mock, app, client, input_shared_service_template, basic_shared_service_template):
+        input_shared_service_template.resourceType = ResourceType.Workspace
+        get_template_by_name_and_version_mock.side_effect = EntityDoesNotExist
+        get_current_template_mock.side_effect = EntityDoesNotExist
+        create_template_mock.return_value = basic_shared_service_template
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_shared_service_template.dict())
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["detail"] == "Invalid resourceType for shared service template"
+
+    @patch("api.routes.shared_service_templates.ResourceTemplateRepository.create_template")
+    @patch("api.routes.shared_service_templates.ResourceTemplateRepository.get_current_template")
+    @patch("api.routes.shared_service_templates.ResourceTemplateRepository.get_template_by_name_and_version")
+    async def test_register_shared_service_template_valid_resource_type(self, get_template_by_name_and_version_mock, get_current_template_mock, create_template_mock, app, client, input_shared_service_template, basic_shared_service_template):
+        input_shared_service_template.resourceType = ResourceType.SharedService
+        get_template_by_name_and_version_mock.side.effect = EntityDoesNotExist
+        get_current_template_mock.side.effect = EntityDoesNotExist
+        create_template_mock.return.value = basic_shared_service_template
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_shared_service_template.dict())
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.json()["resourceType"] == ResourceType.SharedService

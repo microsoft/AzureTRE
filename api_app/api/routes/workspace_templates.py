@@ -2,7 +2,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import parse_obj_as
 
-from api.helpers import get_repository
+from api.helpers import get_repository, validate_resource_type
 from db.errors import EntityVersionExist, InvalidInput
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
@@ -30,6 +30,7 @@ async def get_workspace_template(workspace_template_name: str, is_update: bool =
 
 @workspace_templates_admin_router.post("/workspace-templates", status_code=status.HTTP_201_CREATED, response_model=WorkspaceTemplateInResponse, response_model_exclude_none=True, name=strings.API_CREATE_WORKSPACE_TEMPLATES)
 async def register_workspace_template(template_input: WorkspaceTemplateInCreate, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInResponse:
+    validate_resource_type(template_input.resourceType, ResourceType.Workspace)
     try:
         return await template_repo.create_and_validate_template(template_input, ResourceType.Workspace)
     except EntityVersionExist:

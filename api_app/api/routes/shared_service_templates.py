@@ -2,7 +2,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import parse_obj_as
 
-from api.helpers import get_repository
+from api.helpers import get_repository, validate_resource_type
 from db.errors import EntityDoesNotExist, EntityVersionExist, InvalidInput
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
@@ -33,6 +33,7 @@ async def get_shared_service_template(shared_service_template_name: str, is_upda
 
 @shared_service_templates_core_router.post("/shared-service-templates", status_code=status.HTTP_201_CREATED, response_model=SharedServiceTemplateInResponse, response_model_exclude_none=True, name=strings.API_CREATE_SHARED_SERVICE_TEMPLATES, dependencies=[Depends(get_current_admin_user)])
 async def register_shared_service_template(template_input: SharedServiceTemplateInCreate, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInResponse:
+    validate_resource_type(template_input.resourceType, ResourceType.SharedService)
     try:
         return await template_repo.create_and_validate_template(template_input, ResourceType.SharedService)
     except EntityVersionExist:

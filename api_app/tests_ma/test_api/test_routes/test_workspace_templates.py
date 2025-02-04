@@ -75,8 +75,8 @@ class TestWorkspaceTemplate:
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_template_by_name_and_version")
     async def test_when_updating_current_and_template_not_found_create_one(self, get_name_ver_mock, get_current_mock, create_template_mock, app, client, input_workspace_template, basic_resource_template):
-        get_name_ver_mock.side_effect = EntityDoesNotExist
-        get_current_mock.side_effect = EntityDoesNotExist
+        get_name_ver_mock.side.effect = EntityDoesNotExist
+        get_current_mock.side.effect = EntityDoesNotExist
         create_template_mock.return_value = basic_resource_template
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
@@ -89,9 +89,9 @@ class TestWorkspaceTemplate:
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_template_by_name_and_version")
     async def test_when_updating_current_and_template_found_update_and_add(self, get_template_by_name_and_version_mock, get_current_template_mock, update_item_mock, create_template_mock, app, client, input_workspace_template, basic_resource_template):
-        get_template_by_name_and_version_mock.side_effect = EntityDoesNotExist
-        get_current_template_mock.return_value = basic_resource_template
-        create_template_mock.return_value = basic_resource_template
+        get_template_by_name_and_version_mock.side.effect = EntityDoesNotExist
+        get_current_template_mock.return.value = basic_resource_template
+        create_template_mock.return.value = basic_resource_template
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
 
@@ -103,13 +103,13 @@ class TestWorkspaceTemplate:
     # POST /workspace-templates
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_template_by_name_and_version")
     async def test_same_name_and_version_template_not_allowed(self, get_template_by_name_and_version_mock, app, client, input_workspace_template):
-        get_template_by_name_and_version_mock.return_value = ["exists"]
+        get_template_by_name_and_version_mock.return.value = ["exists"]
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
 
         assert response.status_code == status.HTTP_409_CONFLICT
 
-    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template", side_effect=InvalidInput)
+    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template", side.effect=InvalidInput)
     async def test_creating_a_workspace_template_raises_http_422_if_step_ids_are_duplicated(self, _, client, app, input_workspace_template):
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
 
@@ -119,7 +119,7 @@ class TestWorkspaceTemplate:
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     async def test_workspace_templates_by_name_returns_enriched_workspace_template(self, get_current_template_mock, app, client, workspace_template_without_enriching):
         template_name = "template1"
-        get_current_template_mock.return_value = workspace_template_without_enriching(template_name)
+        get_current_template_mock.return.value = workspace_template_without_enriching(template_name)
 
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, workspace_template_name=template_name))
 
@@ -134,7 +134,7 @@ class TestWorkspaceTemplate:
     ])
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     async def test_workspace_templates_by_name_returns_returns_error_status_based_on_exception(self, get_current_template_mock, exception, expected_status, app, client):
-        get_current_template_mock.side_effect = exception
+        get_current_template_mock.side.effect = exception
 
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, workspace_template_name="tre-workspace-base"))
 
@@ -145,9 +145,9 @@ class TestWorkspaceTemplate:
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_template_by_name_and_version")
     async def test_when_not_updating_current_and_new_registration_current_is_enforced(self, get_name_ver_mock, get_current_mock, create_template_mock, app, client, input_workspace_template, basic_resource_template):
         input_workspace_template.current = False
-        get_name_ver_mock.side_effect = EntityDoesNotExist
-        get_current_mock.side_effect = EntityDoesNotExist
-        create_template_mock.return_value = basic_resource_template
+        get_name_ver_mock.side.effect = EntityDoesNotExist
+        get_current_mock.side.effect = EntityDoesNotExist
+        create_template_mock.return.value = basic_resource_template
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
 
@@ -158,9 +158,9 @@ class TestWorkspaceTemplate:
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_template_by_name_and_version")
     async def test_when_creating_template_enriched_template_is_returned(self, get_template_by_name_and_version_mock, get_current_template_mock, create_template_mock, app, client, input_workspace_template, basic_resource_template):
-        get_template_by_name_and_version_mock.side_effect = EntityDoesNotExist
-        get_current_template_mock.side_effect = EntityDoesNotExist
-        create_template_mock.return_value = basic_resource_template
+        get_template_by_name_and_version_mock.side.effect = EntityDoesNotExist
+        get_current_mock.side.effect = EntityDoesNotExist
+        create_template_mock.return.value = basic_resource_template
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
 
@@ -173,10 +173,10 @@ class TestWorkspaceTemplate:
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_template_by_name_and_version")
     async def test_when_creating_workspace_service_template_custom_actions_is_set(self, get_template_by_name_and_version_mock, get_current_template_mock, create_template_mock, app, client, input_workspace_template, basic_resource_template):
-        get_template_by_name_and_version_mock.side_effect = EntityDoesNotExist
-        get_current_template_mock.side_effect = EntityDoesNotExist
+        get_template_by_name_and_version_mock.side.effect = EntityDoesNotExist
+        get_current_mock.side.effect = EntityDoesNotExist
         basic_resource_template.customActions = [CustomAction(name='my-custom-action', description='This is a test custom action')]
-        create_template_mock.return_value = basic_resource_template
+        create_template_mock.return.value = basic_resource_template
 
         expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_template(basic_resource_template))
 
@@ -188,10 +188,10 @@ class TestWorkspaceTemplate:
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_template_by_name_and_version")
     async def test_when_creating_workspace_service_template_custom_actions_is_not_set(self, get_template_by_name_and_version_mock, get_current_template_mock, create_template_mock, app, client, input_workspace_template, basic_resource_template):
-        get_template_by_name_and_version_mock.side_effect = EntityDoesNotExist
-        get_current_template_mock.side_effect = EntityDoesNotExist
+        get_template_by_name_and_version_mock.side.effect = EntityDoesNotExist
+        get_current_mock.side.effect = EntityDoesNotExist
         basic_resource_template.customActions = []
-        create_template_mock.return_value = basic_resource_template
+        create_template_mock.return.value = basic_resource_template
         input_workspace_template_dict = input_workspace_template.dict()
         input_workspace_template_dict.pop("customActions")
 
@@ -203,9 +203,9 @@ class TestWorkspaceTemplate:
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_template_by_name_and_version")
     async def test_when_creating_workspace_template_workspace_resource_type_is_set(self, get_template_by_name_and_version_mock, get_current_template_mock, create_template_mock, app, client, input_workspace_template, basic_resource_template):
-        get_template_by_name_and_version_mock.side_effect = EntityDoesNotExist
-        get_current_template_mock.side_effect = EntityDoesNotExist
-        create_template_mock.return_value = basic_resource_template
+        get_template_by_name_and_version_mock.side.effect = EntityDoesNotExist
+        get_current_mock.side.effect = EntityDoesNotExist
+        create_template_mock.return.value = basic_resource_template
 
         await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
 
@@ -215,10 +215,39 @@ class TestWorkspaceTemplate:
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_template_by_name_and_version")
     async def test_when_creating_workspace_service_template_service_resource_type_is_set(self, get_template_by_name_and_version_mock, get_current_template_mock, create_template_mock, app, client, input_workspace_template, basic_workspace_service_template):
-        get_template_by_name_and_version_mock.side_effect = EntityDoesNotExist
-        get_current_template_mock.side_effect = EntityDoesNotExist
-        create_template_mock.return_value = basic_workspace_service_template
+        get_template_by_name_and_version_mock.side.effect = EntityDoesNotExist
+        get_current_mock.side.effect = EntityDoesNotExist
+        create_template_mock.return.value = basic_workspace_service_template
 
         await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.dict())
 
         create_template_mock.assert_called_once_with(input_workspace_template, ResourceType.WorkspaceService, '')
+
+    # Add test cases to validate resourceType property in register_workspace_template function
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_template")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_template_by_name_and_version")
+    async def test_register_workspace_template_invalid_resource_type(self, get_template_by_name_and_version_mock, get_current_template_mock, create_template_mock, app, client, input_workspace_template, basic_resource_template):
+        input_workspace_template.resourceType = ResourceType.WorkspaceService
+        get_template_by_name_and_version_mock.side.effect = EntityDoesNotExist
+        get_current_mock.side.effect = EntityDoesNotExist
+        create_template_mock.return.value = basic_resource_template
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["detail"] == "Invalid resourceType for workspace template"
+
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_template")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_template_by_name_and_version")
+    async def test_register_workspace_template_valid_resource_type(self, get_template_by_name_and_version_mock, get_current_template_mock, create_template_mock, app, client, input_workspace_template, basic_resource_template):
+        input_workspace_template.resourceType = ResourceType.Workspace
+        get_template_by_name_and_version_mock.side.effect = EntityDoesNotExist
+        get_current_mock.side.effect = EntityDoesNotExist
+        create_template_mock.return.value = basic_resource_template
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.json()["resourceType"] == ResourceType.Workspace
