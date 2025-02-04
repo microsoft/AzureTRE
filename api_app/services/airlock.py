@@ -520,7 +520,7 @@ async def exit_and_reject_airlock_request(airlock_request: AirlockRequest,
     else:
         try:
             triage_level_input = strings.API_TRIAGE_LEVEL4A
-            airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
+            airlock_request = await airlock_request_repo.set_triage_level_and_review_due_date(airlock_request, triage_level_input)
             logging.info(f"Auto-rejecting airlock request item: {airlock_request.id}")
             submitted_airlock_request = await airlock_request_repo.update_airlock_request(
                 original_request=airlock_request,
@@ -668,7 +668,7 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
     if criteriumCheck1 or criteriumCheck2 or criteriumCheck3 or criteriumCheck6:
         try:
             triage_level_input = strings.API_TRIAGE_LEVEL4
-            airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
+            airlock_request = await airlock_request_repo.set_triage_level_and_review_due_date(airlock_request, triage_level_input)
             logging.info(f"Auto-rejecting airlock request item: {airlock_request.id}")
             submitted_airlock_request = await airlock_request_repo.update_airlock_request(
                 original_request=airlock_request,
@@ -708,20 +708,20 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
 
     if criteriumCheck4 or criteriumCheck5 or criteriumCheck7 or criteriumCheck8 or criteriumCheck9 or criteriumCheck10 or criteriumCheck11 or criteriumCheck12 or criteriumCheck21:
         triage_level_input = strings.API_TRIAGE_LEVEL3
-        airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
+        airlock_request = await airlock_request_repo.set_triage_level_and_review_due_date(airlock_request, triage_level_input)
         return airlock_request
 
     if criteriumCheck15 or criteriumCheck18:
         triage_level_input = strings.API_TRIAGE_LEVEL2A
-        airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
+        airlock_request = await airlock_request_repo.set_triage_level_and_review_due_date(airlock_request, triage_level_input)
         return airlock_request
 
     if criteriumCheck13 or criteriumCheck14 or criteriumCheck16 or criteriumCheck17 or criteriumCheck19 or criteriumCheck20:
         triage_level_input = strings.API_TRIAGE_LEVEL2B
-        airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
+        airlock_request = await airlock_request_repo.set_triage_level_and_review_due_date(airlock_request, triage_level_input)
         return airlock_request
 
     else:
         triage_level_input = strings.API_TRIAGE_LEVEL1
-        airlock_request = await airlock_request_repo.set_triage_level(airlock_request, triage_level_input)
+        airlock_request = await airlock_request_repo.set_triage_level_and_review_due_date(airlock_request, triage_level_input)
         return airlock_request

@@ -1,7 +1,7 @@
 import copy
 import uuid
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
@@ -18,6 +18,7 @@ from core import config
 from resources import strings
 from db.repositories.base import BaseRepository
 import logging
+import json
 
 
 class AirlockRequestRepository(BaseRepository):
@@ -238,11 +239,64 @@ class AirlockRequestRepository(BaseRepository):
         if not self.validate_status_update(current_status=current_status, new_status=new_status):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
 
-    async def set_triage_level(self, request: AirlockRequest, triage_level_input: str) -> AirlockRequest:
+    def _calculate_export_review_due_date(self, created_when: float, triage_level_code: str):
+        non_working_days = []
+
+        try:
+            with open(config.BANK_HOLIDAYS_FILE_PATH) as holidays:
+                logging.info(f'Loading UK bank holidays file: {config.BANK_HOLIDAYS_FILE_PATH}')
+                holidays_json = json.load(holidays)
+                england_holidays = holidays_json['england-and-wales']
+                england_events = england_holidays['events']
+
+                for event in england_events:
+                    non_working_days.append(event['date'])
+
+        except FileNotFoundError:
+            logging.info(f'File not found: {config.BANK_HOLIDAYS_FILE_PATH}')
+
+        except:
+            logging.info(f'Unable to load UK bank holidays file: {config.BANK_HOLIDAYS_FILE_PATH}')
+
+        days_to_add_map = config.DUE_DATE_DAYS_TO_ADD
+        created_when_iso = datetime.fromtimestamp(created_when)
+        next_day = created_when_iso
+
+        logging.info(f"created_when -----> {created_when}")
+        logging.info(f"triage_level_code -----> {triage_level_code}")
+        logging.info(f"days_to_add_map -----> {days_to_add_map}")
+        days_to_add = days_to_add_map[triage_level_code]
+
+        while days_to_add > 0:	
+            next_day = next_day + timedelta(days=1)
+            is_weekend = next_day.weekday() == 5 or next_day.weekday() == 6
+            
+            # If next_day is an UK holiday or Saturday or Sunday, we ignore this day
+            if non_working_days != []:
+                if next_day.strftime("%Y-%m-%d") not in non_working_days and not is_weekend:
+                    days_to_add = days_to_add - 1
+            else:
+                if not is_weekend:
+                    days_to_add = days_to_add - 1
+            
+        due_date = next_day
+        due_date_timestamp = due_date.timestamp()
+        logging.info(f"due_date -----> {due_date}, {due_date_timestamp}")
+        return due_date_timestamp
+
+    async def set_triage_level_and_review_due_date(self, request: AirlockRequest, triage_level_input: str) -> AirlockRequest:
         request.triageLevel = triage_level_input
+        
+        # We need only the substring L1, L2, etc.
+        triage_level_split = request.triageLevel.split(":")
+        triage_leve_code = triage_level_split[0]
+        request.triageLevelCode = triage_leve_code
+        # Export requests will have a due date for reviewing.
+        logging.info(f"set_triage_level_and_review_due_date -----> {request.createdWhen}, {triage_leve_code}")
+        request.exportReviewDueDate = self._calculate_export_review_due_date(request.createdWhen, triage_leve_code)        
+        
         await self.update_item(request)
         return request
-
 
     async def save_and_check_triage_statements(self, request: AirlockRequest, airlock_request_triage_statements_input: AirlockRequestTriageStatements) -> AirlockRequest:
         triageStatements = AirlockRequestTriageStatements(

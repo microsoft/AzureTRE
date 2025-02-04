@@ -16,11 +16,12 @@ from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.costs import CostReport, GranularityEnum, WorkspaceCostReport, MHRAWorkspaceCosts
 from resources import strings
-from services.authentication import get_current_admin_user, get_current_workspace_owner_or_tre_admin
+from services.authentication import get_current_admin_user, get_current_workspace_owner_or_tre_admin, get_current_workspace_owner_or_tre_user_or_tre_admin
 from services.cost_service import CostService, ServiceUnavailable, SubscriptionNotSupported, TooManyRequests, WorkspaceDoesNotExist, cost_service_factory
 
 costs_core_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 costs_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_tre_admin)])
+costs_workspace_custom_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_tre_user_or_tre_admin)])
 
 
 def validate_report_period(from_date: Optional[datetime], to_date: Optional[datetime]):
@@ -121,10 +122,10 @@ async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depend
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.API_GET_COSTS_INTERNAL_SERVER_ERROR)
 
 
-@costs_core_router.get("/workspace_costs", response_model=MHRAWorkspaceCosts,
+@costs_workspace_custom_router.get("/workspace_costs", response_model=MHRAWorkspaceCosts,
                        status_code=status.HTTP_200_OK,
                        name=strings.API_GET_COSTS_MHRA_CLIENTS,
-                       dependencies=[Depends(get_current_workspace_owner_or_tre_admin)],
+                       dependencies=[Depends(get_current_workspace_owner_or_tre_user_or_tre_admin)],
                        responses=get_mhra_workspace_costs_responses())
 async def get_workspace_costs_custom_method(cost_service: CostService = Depends(cost_service_factory)) -> MHRAWorkspaceCosts:
     try:
