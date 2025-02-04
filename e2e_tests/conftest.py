@@ -19,8 +19,6 @@ def pytest_addoption(parser):
     parser.addoption("--verify", action="store", default="true")
 
 
-
-
 @pytest.fixture(scope="session")
 def verify(pytestconfig):
     if pytestconfig.getoption("verify").lower() == "true":
