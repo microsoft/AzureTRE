@@ -2,6 +2,9 @@
 FROM debian:bullseye-slim
 
 # PORTER_INIT
+RUN apt-get update && apt-get install ca-certificates -y
+COPY ZscalerRootCertificate-2048-SHA256.crt /usr/local/share/ca-certificates/ZscalerRootCertificate-2048-SHA256.crt
+RUN /usr/sbin/update-ca-certificates
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
