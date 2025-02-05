@@ -5,7 +5,7 @@
 ## Background
 <img align="right" src="./docs/assets/azure-tre-logo.svg" width="33%" />
 
-Across multiple industries, be it a pharmaceutical company interrogating clinical trial results, a public health provider analyzing electronic health records, or an engineering organization working on next-generation systems, there is a need to enable researchers and solution developers to collaborate on sensitive data. 
+Across multiple industries, be it a pharmaceutical company interrogating clinical trial results, a public health provider analyzing electronic health records, or an engineering organization working on next-generation systems, there is a need to enable researchers and solution developers to collaborate on sensitive data.
 
 Trusted Research Environments (TREs) enable organisations to provide research and development (R&D) teams secure access to data alongside tooling to ensure productivity while keeping security controls in place.
 
