@@ -14,8 +14,7 @@
     {
       "type": "eventGrid",
       "name": "outputEvent",
-      "topicEndpointUri": "EVENT_GRID_STEP_RESULT_TOPIC_URI_SETTING",
-      "topicKeySetting": "EVENT_GRID_STEP_RESULT_TOPIC_KEY_SETTING",
+      "connection": "EVENT_GRID_STEP_RESULT_CONNECTION",
       "direction": "out"
     }
   ]
