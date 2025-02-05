@@ -14,6 +14,11 @@ custom:
     "8 CPU | 32GB RAM": Standard_D8s_v5
     "16 CPU | 64GB RAM": Standard_D16s_v5
   image_options:
+    "Ubuntu 22.04 Data Science":
+      source_image_name: imgdef-linux-dsvm-rpython
+      install_ui: false
+      conda_config: false
+
     "Ubuntu 22.04 LTS":
       source_image_reference:
         publisher: canonical

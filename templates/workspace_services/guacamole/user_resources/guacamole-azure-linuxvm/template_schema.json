@@ -17,8 +17,9 @@
       "type": "string",
       "title": "Linux image",
       "description": "Select Linux image to use for VM",
-      "default": "Ubuntu 22.04 LTS",
+      "default": "Ubuntu 22.04 Data Science",
       "enum": [
+        "Ubuntu 22.04 Data Science",
         "Ubuntu 22.04 LTS"
       ]
     },
