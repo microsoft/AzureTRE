@@ -9,7 +9,7 @@ FEATURES:
 * Add support for customer-managed keys encryption. Core support ([#4141](https://github.com/microsoft/AzureTRE/issues/4142), [#4144](https://github.com/microsoft/AzureTRE/issues/4144)), Base workspace ([#4161](https://github.com/microsoft/AzureTRE/pull/4161)), other templates ([#4145](https://github.com/microsoft/AzureTRE/issues/4145))
 
 ENHANCEMENTS:
-- Make user details avialble to resource processor, and update Windows and Linux VMs to use them. ([#4905](https://github.com/microsoft/AzureTRE/pull/3770))
+- Make user details available to resource processor, and update Windows and Linux VMs to use them. ([#4905](https://github.com/microsoft/AzureTRE/pull/3770))
 * Disable storage account cross tenant replication ([#4116](https://github.com/microsoft/AzureTRE/pull/4116))
 * Key Vaults should use RBAC instead of access policies for access control ([#4000](https://github.com/microsoft/AzureTRE/issues/4000))
 * Split log entries with [Log chunk X of Y] for better readability. ([#3992](https://github.com/microsoft/AzureTRE/issues/3992))
