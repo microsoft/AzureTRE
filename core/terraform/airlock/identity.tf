@@ -52,3 +52,11 @@ resource "azurerm_role_assignment" "api_sa_data_contributor" {
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = var.api_principal_id
 }
+
+# Permissions needed for the Function Host to work correctly.
+resource "azurerm_role_assignment" "function_host_storage" {
+  for_each             = toset(["Storage Account Contributor", "Storage Blob Data Owner", "Storage Queue Data Contributor"])
+  scope                = azurerm_storage_account.sa_airlock_processor_func_app.id
+  role_definition_name = each.value
+  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
+}
