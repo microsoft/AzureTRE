@@ -1,12 +1,13 @@
 resource "azurerm_cosmosdb_account" "mongo" {
-  name                       = "cosmos-mongo-${var.tre_id}"
-  location                   = azurerm_resource_group.core.location
-  resource_group_name        = azurerm_resource_group.core.name
-  offer_type                 = "Standard"
-  kind                       = "MongoDB"
-  automatic_failover_enabled = false
-  mongo_server_version       = 4.2
-  ip_range_filter            = "${local.azure_portal_cosmos_ips}${var.enable_local_debugging ? ",${local.myip}" : ""}"
+  name                          = "cosmos-mongo-${var.tre_id}"
+  location                      = azurerm_resource_group.core.location
+  resource_group_name           = azurerm_resource_group.core.name
+  offer_type                    = "Standard"
+  kind                          = "MongoDB"
+  automatic_failover_enabled    = false
+  mongo_server_version          = 4.2
+  ip_range_filter               = var.enable_local_debugging ? "${local.azure_portal_cosmos_ips},${local.myip}" : ""
+  public_network_access_enabled = var.enable_local_debugging
 
   capabilities {
     name = "EnableServerless"
