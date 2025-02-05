@@ -21,9 +21,8 @@ resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
   local_user_enabled               = false
-  # Function Host Storage doesn't seem to be able to use a User Managed ID, which is why we continue to use a key.
-  shared_access_key_enabled = true
-  tags                      = var.tre_core_tags
+  shared_access_key_enabled        = false
+  tags                             = var.tre_core_tags
 
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
@@ -57,9 +56,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   ftp_publish_basic_authentication_enabled       = false
   webdeploy_publish_basic_authentication_enabled = false
   storage_account_name                           = azurerm_storage_account.sa_airlock_processor_func_app.name
-
-  # Function Host Storage doesn't seem to be able to use a User Managed ID, which is why we continue to use a key.
-  storage_account_access_key = azurerm_storage_account.sa_airlock_processor_func_app.primary_access_key
+  storage_uses_managed_identity                  = true
 
   tags = var.tre_core_tags
 
@@ -86,6 +83,8 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
     "TRE_ID"                                     = var.tre_id
     "WEBSITE_CONTENTOVERVNET"                    = 1
     "STORAGE_ENDPOINT_SUFFIX"                    = module.terraform_azurerm_environment_configuration.storage_suffix
+    "AzureWebJobsStorage__clientId"              = azurerm_user_assigned_identity.airlock_id.client_id
+    "AzureWebJobsStorage__credential"            = "managedidentity"
   }
 
   site_config {
