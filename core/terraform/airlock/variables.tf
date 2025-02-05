@@ -62,6 +62,9 @@ variable "airlock_servicebus" {
     default_primary_connection_string = string
   })
 }
+variable "airlock_servicebus_fqdn" {
+  type = string
+}
 variable "tre_core_tags" {
   type = map(string)
 }

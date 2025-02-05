@@ -5,6 +5,7 @@ resource "azurerm_servicebus_namespace" "sb" {
   sku                          = "Premium"
   premium_messaging_partitions = "1"
   capacity                     = "1"
+  local_auth_enabled           = false
   tags                         = local.tre_core_tags
 
   # Block public access

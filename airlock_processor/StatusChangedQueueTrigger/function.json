@@ -6,7 +6,9 @@
       "type": "serviceBusTrigger",
       "direction": "in",
       "queueName": "%AIRLOCK_STATUS_CHANGED_QUEUE_NAME%",
-      "connection": "SB_CONNECTION_STRING"
+      "connection": "%SERVICEBUS_CONNECTION_NAME%",
+      "accessRights": "listen",
+      "autoComplete": true
     },
     {
       "type": "eventGrid",
