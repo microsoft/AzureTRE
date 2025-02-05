@@ -79,7 +79,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
   # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
   #
-  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled] }
+  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, admin_username] }
 }
 
 resource "azurerm_disk_encryption_set" "windowsvm_disk_encryption" {
