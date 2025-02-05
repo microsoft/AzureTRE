@@ -4,11 +4,29 @@ resource "azurerm_storage_account" "cyclecloud" {
   resource_group_name              = data.azurerm_resource_group.rg.name
   account_tier                     = "Standard"
   account_replication_type         = "GRS"
+  table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   cross_tenant_replication_enabled = false
   tags                             = local.tre_shared_service_tags
 
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [data.azurerm_user_assigned_identity.tre_encryption_identity[0].id]
+    }
+  }
+
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = data.azurerm_key_vault_key.encryption_key[0].versionless_id
+      user_assigned_identity_id = data.azurerm_user_assigned_identity.tre_encryption_identity[0].id
+    }
+  }
 
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }

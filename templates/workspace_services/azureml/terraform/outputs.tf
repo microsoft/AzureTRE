@@ -45,13 +45,13 @@ data "azurerm_network_service_tags" "batch_tag" {
 }
 
 output "storage_tag" {
-  value = data.azurerm_network_service_tags.storage_tag.id
+  value = data.azurerm_network_service_tags.storage_tag.name
 }
 
 output "mcr_tag" {
-  value = data.azurerm_network_service_tags.mcr_tag.id
+  value = data.azurerm_network_service_tags.mcr_tag.name
 }
 
 output "batch_tag" {
-  value = data.azurerm_network_service_tags.batch_tag.id
+  value = data.azurerm_network_service_tags.batch_tag.name
 }

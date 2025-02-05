@@ -8,9 +8,11 @@ resource "azurerm_storage_account" "staticweb" {
   account_replication_type         = "LRS"
   table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
-  enable_https_traffic_only        = true
+  https_traffic_only_enabled       = true
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
+  local_user_enabled               = false
   tags                             = local.tre_core_tags
 
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
@@ -35,14 +37,14 @@ resource "azurerm_storage_account" "staticweb" {
       identity_ids = [var.encryption_identity_id]
     }
   }
-}
 
-resource "azurerm_storage_account_customer_managed_key" "staticweb_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.staticweb.id
-  key_vault_id              = var.key_store_id
-  key_name                  = var.kv_encryption_key_name
-  user_assigned_identity_id = var.encryption_identity_id
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
+    }
+  }
 }
 
 # Assign the "Storage Blob Data Contributor" role needed for uploading certificates to the storage account

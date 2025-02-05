@@ -5,7 +5,7 @@ from helpers import check_aad_auth_redirect
 from resources.resource import get_resource, post_resource
 from resources import strings
 
-pytestmark = pytest.mark.asyncio
+pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 workspace_services = [
     strings.AZUREML_SERVICE,

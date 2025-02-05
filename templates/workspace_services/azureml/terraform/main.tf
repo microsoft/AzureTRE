@@ -20,7 +20,7 @@ resource "azurerm_machine_learning_workspace" "aml_workspace" {
     ignore_changes = [
       tags,
       image_build_compute_name,
-      public_access_behind_virtual_network_enabled
+      public_network_access_enabled
     ]
   }
 
