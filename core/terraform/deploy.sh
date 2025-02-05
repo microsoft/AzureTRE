@@ -23,7 +23,6 @@ LOG_FILE="${TS}-tre-core.log"
   -k "${TRE_ID}" \
   -l "${LOG_FILE}" \
   -c "terraform plan -out ${PLAN_FILE} && \
-  terraform apply -input=false -auto-approve ${PLAN_FILE} && \
   terraform output -json > ../tre_output.json"
 
 ./update_tags.sh
