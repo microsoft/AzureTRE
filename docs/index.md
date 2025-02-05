@@ -6,7 +6,7 @@ Across multiple industries, be it a pharmaceutical company interrogating clinica
 
 Trusted Research Environments (TREs) enable organisations to provide research and development (R&D) teams secure access to data alongside tooling to ensure productivity. Further information on TREs in general can be found in many places, one good resource specifically for healthcare is [HDR UK](https://www.hdruk.ac.uk/access-to-health-data/trusted-research-environments/).
 
-Azure TRE is finding new applications and to date, has been used as the basis for exploring future secure collaboration environments in manufacturing. Workloads investigated include systems and software engineering. In truth, any workload in any industry could theoretically be supported with extensions to Azure TRE.
+Azure TRE is finding new applications and to date, has been used as the basis for exploring future secure collaboration environments in engineering. Workloads investigated include systems and software development. In truth, any workload in any industry could theoretically be supported with extensions to Azure TRE.
 
 The Azure Trusted Research Environment project is an accelerator to assist Microsoft customers and partners who want to build out Trusted Research environments on Azure. This project enables authorized users to deploy and configure secure workspaces and R&D tooling without a dependency on IT teams.  
 
