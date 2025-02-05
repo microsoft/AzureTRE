@@ -56,6 +56,7 @@ BUG FIXES:
 * Fix VM actions where Workspace shared storage doesn't allow shared key access ([#4222](https://github.com/microsoft/AzureTRE/issues/4222))
 * Fix public exposure in Guacamole service ([[#4199](https://github.com/microsoft/AzureTRE/issues/4199)])
 * Fix Azure ML network tags to use name rather than ID ([[#4151](https://github.com/microsoft/AzureTRE/issues/4151)])
+* Windows R version must be 4.1.2 otherwise post install script doesn't update package mirror URL ([#4288](https://github.com/microsoft/AzureTRE/issues/4288))
 * Recreate tre_output.json if empty. ([[#4292](https://github.com/microsoft/AzureTRE/issues/4292)])
 
 COMPONENTS:
