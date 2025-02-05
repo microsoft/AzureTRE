@@ -14,7 +14,7 @@ from e2e_tests.conftest import get_workspace_owner_token
 from helpers import get_admin_token
 
 
-pytestmark = pytest.mark.asyncio
+pytestmark = pytest.mark.asyncio(loop_scope="session")
 LOGGER = logging.getLogger(__name__)
 BLOB_FILE_PATH = "./test_airlock_sample.txt"
 BLOB_NAME = os.path.basename(BLOB_FILE_PATH)

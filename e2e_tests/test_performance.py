@@ -8,7 +8,7 @@ from resources import strings
 
 from helpers import get_admin_token
 
-pytestmark = pytest.mark.asyncio
+pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 
 @pytest.mark.performance
