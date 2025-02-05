@@ -57,6 +57,7 @@ BUG FIXES:
 * Fix public exposure in Guacamole service ([[#4199](https://github.com/microsoft/AzureTRE/issues/4199)])
 * Fix Azure ML network tags to use name rather than ID ([[#4151](https://github.com/microsoft/AzureTRE/issues/4151)])
 * Certs shared service: Secret nexus-ssl-password is currently in a deleted but recoverable state ([#4294](https://github.com/microsoft/AzureTRE/issues/4294)])
+* Windows R version must be 4.1.2 otherwise post install script doesn't update package mirror URL ([#4288](https://github.com/microsoft/AzureTRE/issues/4288))
 * Recreate tre_output.json if empty. ([[#4292](https://github.com/microsoft/AzureTRE/issues/4292)])
 
 COMPONENTS:
