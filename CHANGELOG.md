@@ -39,6 +39,7 @@ ENHANCEMENTS:
 * Add encryption at host for VMs ([#4263](https://github.com/microsoft/AzureTRE/pull/4263))
 * Downgrade certs shared service App Gateway to Basic SKU ([#4300](https://github.com/microsoft/AzureTRE/issues/4300))
 * Airlock function host storage to use the user-assigned managed identity ([#4276](https://github.com/microsoft/AzureTRE/issues/4276))
+* Disable local authentication in EventGrid ([#4254](https://github.com/microsoft/AzureTRE/issues/4254))
 
 BUG FIXES:
 * Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
