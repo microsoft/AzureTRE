@@ -143,6 +143,9 @@ class CostService:
                               workspace_repo: WorkspaceRepository,
                               shared_services_repo: SharedServiceRepository) -> CostReport:
 
+        # This wait time is here to avoid problems with rate limit.
+        time.sleep(20)
+        
         resource_groups_dict = self.get_resource_groups_by_tag(self.TRE_ID_TAG, tre_id)
 
         cache_key = f"{CostService.TRE_ID_TAG}_{tre_id}_granularity{granularity}_from_date{from_date}_to_date{to_date}_rgs{'_'.join(list(resource_groups_dict.keys()))}"
