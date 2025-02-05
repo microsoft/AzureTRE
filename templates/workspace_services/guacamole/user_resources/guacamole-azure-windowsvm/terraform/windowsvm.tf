@@ -35,6 +35,9 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   allow_extension_operations = true
   admin_username             = local.admin_username
   admin_password             = random_password.password.result
+  encryption_at_host_enabled = true
+  secure_boot_enabled        = local.secure_boot_enabled
+  vtpm_enabled               = local.vtpm_enabled
 
   custom_data = base64encode(templatefile(
     "${path.module}/vm_config.ps1", {
@@ -43,7 +46,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
       StorageAccountName     = data.azurerm_storage_account.stg.name
       StorageAccountKey      = data.azurerm_storage_account.stg.primary_access_key
       StorageAccountFileHost = data.azurerm_storage_account.stg.primary_file_host
-      FileShareName          = var.shared_storage_access ? data.azurerm_storage_share.shared_storage[0].name : ""
+      FileShareName          = var.shared_storage_access ? var.shared_storage_name : ""
       CondaConfig            = local.selected_image.conda_config ? 1 : 0
     }
   ))
@@ -61,9 +64,10 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   }
 
   os_disk {
-    name                 = "osdisk-${local.vm_name}"
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+    name                   = "osdisk-${local.vm_name}"
+    caching                = "ReadWrite"
+    storage_account_type   = "Standard_LRS"
+    disk_encryption_set_id = var.enable_cmk_encryption ? azurerm_disk_encryption_set.windowsvm_disk_encryption[0].id : null
   }
 
   identity {
@@ -72,8 +76,27 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
 
   tags = local.tre_user_resources_tags
 
-  lifecycle { ignore_changes = [tags] }
+  # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
+  # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
+  #
+  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled] }
 }
+
+resource "azurerm_disk_encryption_set" "windowsvm_disk_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  name                      = "disk-encryption-windowsvm-${var.tre_id}-${var.tre_resource_id}"
+  location                  = data.azurerm_resource_group.ws.location
+  resource_group_name       = data.azurerm_resource_group.ws.name
+  key_vault_key_id          = data.azurerm_key_vault_key.ws_encryption_key[0].versionless_id
+  encryption_type           = "EncryptionAtRestWithPlatformAndCustomerKeys"
+  auto_key_rotation_enabled = true
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [data.azurerm_user_assigned_identity.ws_encryption_identity[0].id]
+  }
+}
+
 
 resource "azurerm_virtual_machine_extension" "config_script" {
   name                 = "${azurerm_windows_virtual_machine.windowsvm.name}-vmextension"

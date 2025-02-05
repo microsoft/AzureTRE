@@ -3,7 +3,7 @@
 # [Choice] Python version: 3.11 3.12, 3.13
 ARG VARIANT="3.12"
 ARG TARGETPLATFORM="linux/amd64"
-FROM --platform="${TARGETPLATFORM}" mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}-bullseye
+FROM --platform="${TARGETPLATFORM}" mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}-bookworm
 
 # This will be set to true when running in VSCode
 ARG INTERACTIVE="false"
@@ -33,11 +33,15 @@ COPY .devcontainer/scripts/docker-client.sh /tmp/
 RUN /tmp/docker-client.sh $USERNAME
 
 # Install Docker
+ARG DOCKER_CE_VERSION="5:27.4.1-1~debian.12~bookworm"
+ARG DOCKER_CE_CLI_VERSION="5:27.4.1-1~debian.12~bookworm"
+ARG DOCKER_COMPOSE_PLUGIN_VERSION="2.32.1-1~debian.12~bookworm"
+ARG DOCKER_CONTAINERD_VERSION="1.7.24-1"
 RUN apt-get update && apt-get install -y ca-certificates curl gnupg lsb-release --no-install-recommends \
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
     | tee /etc/apt/sources.list.d/docker.list > /dev/null \
-    && apt-get update && apt-get install -y docker-ce="5:24.0.0-1~debian.11~bullseye" docker-ce-cli="5:24.0.0-1~debian.11~bullseye" docker-compose-plugin="2.21.0-1~debian.11~bullseye" containerd.io="1.6.24-1" docker-buildx-plugin --no-install-recommends \
+    && apt-get update && apt-get install -y docker-ce="$DOCKER_CE_VERSION" docker-ce-cli="$DOCKER_CE_CLI_VERSION" docker-compose-plugin="$DOCKER_COMPOSE_PLUGIN_VERSION" containerd.io="$DOCKER_CONTAINERD_VERSION" docker-buildx-plugin --no-install-recommends \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install Certbot
@@ -48,8 +52,9 @@ RUN if [ "${INTERACTIVE}" = "true" ]; then \
     && /opt/certbot/bin/pip install --no-cache-dir certbot \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/* ; fi
 
+# Install Porter, updates should be propagated to the RP.
 ARG PORTER_HOME_V1=/home/$USERNAME/.porter/
-ARG PORTER_VERSION=v1.2.0
+ARG PORTER_VERSION=v1.2.1
 ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.5
 ARG PORTER_AZ_MIXIN_VERSION=v1.0.4
 ARG PORTER_AZURE_PLUGIN_VERSION=v1.2.3
@@ -75,12 +80,12 @@ COPY ["airlock_processor/requirements.txt", "/tmp/pip-tmp/airlock_processor/"]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt
 
 # Install azure-cli
-ARG AZURE_CLI_VERSION=2.67.0-1~bullseye
+ARG AZURE_CLI_VERSION=2.67.0-1~bookworm
 COPY .devcontainer/scripts/azure-cli.sh /tmp/
 RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh
 
-ARG YQ_VERSION="v4.33.3"
+ARG YQ_VERSION="v4.44.6"
 RUN curl -L --fail -o /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" \
     && chmod +x /usr/local/bin/yq
 

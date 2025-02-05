@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-firewall
-version: 1.2.7
+version: 1.3.0
 description: "An Azure TRE Firewall shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -54,6 +54,9 @@ parameters:
     default: "graph.microsoft.com"
   - name: arm_environment
     type: string
+  - name: firewall_force_tunnel_ip
+    type: string
+    default: ""
 
 mixins:
   - terraform:
@@ -69,6 +72,7 @@ install:
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
         firewall_sku: ${ bundle.parameters.firewall_sku }
         microsoft_graph_fqdn: ${ bundle.parameters.microsoft_graph_fqdn }
+        firewall_force_tunnel_ip: ${ bundle.parameters.firewall_force_tunnel_ip }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -87,6 +91,7 @@ upgrade:
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
         firewall_sku: ${ bundle.parameters.firewall_sku }
         microsoft_graph_fqdn: ${ bundle.parameters.microsoft_graph_fqdn }
+        firewall_force_tunnel_ip: ${ bundle.parameters.firewall_force_tunnel_ip }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -105,6 +110,7 @@ uninstall:
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
         firewall_sku: ${ bundle.parameters.firewall_sku }
         microsoft_graph_fqdn: ${ bundle.parameters.microsoft_graph_fqdn }
+        firewall_force_tunnel_ip: ${ bundle.parameters.firewall_force_tunnel_ip }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

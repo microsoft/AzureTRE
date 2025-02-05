@@ -14,4 +14,6 @@ locals {
     tre_workspace_id         = var.workspace_id
     tre_workspace_service_id = var.tre_resource_id
   }
+  cmk_name                 = "tre-encryption-${local.workspace_resource_name_suffix}"
+  encryption_identity_name = "id-encryption-${var.tre_id}-${local.short_workspace_id}"
 }

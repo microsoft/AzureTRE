@@ -1,11 +1,9 @@
+import warnings
 from starlette.config import Config
 
+warnings.filterwarnings("ignore", message="Config file '.env' not found.")
 
-try:
-    config = Config('.env')
-# Workaround needed until FastAPI uses Starlette >= 3.7.1
-except FileNotFoundError:
-    config = Config()
+config = Config('.env')
 
 # Resource Info
 RESOURCE_LOCATION: str = config("RESOURCE_LOCATION", default="")

@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-linuxvm
-version: 1.1.0
+version: 1.2.5
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -23,11 +23,15 @@ custom:
         apt_sku: 22.04
       install_ui: true
       conda_config: false
+      secure_boot_enabled: true
+      vtpm_enabled: true
     # For information on using custom images, see README.me in the guacamole/user-resources folder
     # "Custom Image From Gallery":
     #   source_image_name: your-image
     #   install_ui: true
     #   conda_config: true
+    #   secure_boot_enabled: false
+    #   vtpm_enabled: false
 
 credentials:
   - name: azure_tenant_id
@@ -56,6 +60,19 @@ parameters:
     type: string
     description: Azure resource ID for the compute image gallery to pull images from (if specifying custom images by name)
     default: ""
+  - name: enable_shutdown_schedule
+    type: boolean
+    default: false
+    description: "Enable automatic shutdown schedule for the VM"
+  - name: shutdown_time
+    default: ""
+    type: string
+    description: "Time of day to shutdown the VM (HHmm format)"
+    pattern: "^([01]?[0-9]|2[0-3])[0-5][0-9]$"
+  - name: shutdown_timezone
+    type: string
+    description: "Timezone for the shutdown schedule"
+    default: "UTC"
 
   # the following are added automatically by the resource processor
   - name: id
@@ -97,7 +114,12 @@ parameters:
     type: string
   - name: user_username
     type: string
-
+  - name: enable_cmk_encryption
+    type: boolean
+    default: false
+  - name: key_store_id
+    type: string
+    default: ""
 
 outputs:
   - name: ip
@@ -145,6 +167,11 @@ install:
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
         user_id: ${ bundle.parameters.user_id }
         user_username: ${ bundle.parameters.user_username }
+        enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
+        shutdown_time: ${ bundle.parameters.shutdown_time }
+        shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -173,6 +200,11 @@ upgrade:
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
         user_id: ${ bundle.parameters.user_id }
         user_username: ${ bundle.parameters.user_username }
+        enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
+        shutdown_time: ${ bundle.parameters.shutdown_time }
+        shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -213,6 +245,11 @@ uninstall:
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
         user_id: ${ bundle.parameters.user_id }
         user_username: ${ bundle.parameters.user_username }
+        enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
+        shutdown_time: ${ bundle.parameters.shutdown_time }
+        shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

@@ -26,11 +26,16 @@ variable "image_gallery_id" {
   type    = string
   default = ""
 }
-
 variable "user_id" {
   type = string
 }
-
 variable "user_username" {
+    type = string
+}
+variable "enable_cmk_encryption" {
+  type    = bool
+  default = false
+}
+variable "key_store_id" {
   type = string
 }
