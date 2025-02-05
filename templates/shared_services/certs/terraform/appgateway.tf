@@ -26,8 +26,8 @@ resource "azurerm_application_gateway" "agw" {
   tags                = local.tre_shared_service_tags
 
   sku {
-    name     = "Standard_v2"
-    tier     = "Standard_v2"
+    name     = "Basic"
+    tier     = "Basic"
     capacity = 1
   }
 
