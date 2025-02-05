@@ -57,8 +57,9 @@ resource "azurerm_linux_web_app" "api" {
     "NOTIFY_UK_EMAIL_SUBJECT_TAG"                    = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.notify_uk_email_subject_tag.id})"
     "RESOURCE_GROUP_NAME"                            = azurerm_resource_group.core.name
     "SUBSCRIPTION_ID"                                = data.azurerm_subscription.current.subscription_id
-    CORE_ADDRESS_SPACE                               = var.core_address_space
-    TRE_ADDRESS_SPACE                                = var.tre_address_space
+    "CORE_ADDRESS_SPACE"                             = var.core_address_space
+    "TRE_ADDRESS_SPACE"                              = var.tre_address_space
+    "CLIENT_TYPE_CUSTOM_HEADER"                      = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.client_type_custom_header.id})"
   }
 
   identity {
