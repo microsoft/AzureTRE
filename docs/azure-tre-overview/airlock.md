@@ -141,6 +141,21 @@ graph LR
 ```
 > Data movement in an Airlock import request
 
+```mermaid
+graph LR
+  subgraph TRE workspace
+  data(Data to export)-->A
+  A[(stalexint</br>export internal)]-->|Request Submitted| B
+  B[(stalexip</br>export in-progress)]-->|Security issues found| D[(stalexblocked</br>export blocked)] 
+  B-->|No security issues found| review{Manual</br>Approval} 
+  review-->|Rejected| C[(stalexrej</br>export rejected)]
+  end
+  subgraph External
+  review-->|Approved| E[(stalexapp</br>export approved)]
+  end
+```
+> Data movement in an Airlock export request
+
 
 TRE:
 

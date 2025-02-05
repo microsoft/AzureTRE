@@ -1,11 +1,3 @@
-data "local_file" "airlock_processor_version" {
-  filename = "${path.root}/../../airlock_processor/_version.py"
-}
-
-locals {
-  version = replace(replace(replace(data.local_file.airlock_processor_version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
-}
-
 resource "azurerm_service_plan" "airlock_plan" {
   name                = "plan-airlock-${var.tre_id}"
   resource_group_name = var.resource_group_name
@@ -29,9 +21,8 @@ resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
   local_user_enabled               = false
-  # Function Host Storage doesn't seem to be able to use a User Managed ID, which is why we continue to use a key.
-  shared_access_key_enabled = true
-  tags                      = var.tre_core_tags
+  shared_access_key_enabled        = false
+  tags                             = var.tre_core_tags
 
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
@@ -44,15 +35,15 @@ resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
 
-  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
-}
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
+    }
+  }
 
-resource "azurerm_storage_account_customer_managed_key" "sa_airlock_processor_func_app_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.sa_airlock_processor_func_app.id
-  key_vault_id              = var.key_store_id
-  key_name                  = var.kv_encryption_key_name
-  user_assigned_identity_id = var.encryption_identity_id
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_linux_function_app" "airlock_function_app" {
@@ -65,9 +56,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   ftp_publish_basic_authentication_enabled       = false
   webdeploy_publish_basic_authentication_enabled = false
   storage_account_name                           = azurerm_storage_account.sa_airlock_processor_func_app.name
-
-  # Function Host Storage doesn't seem to be able to use a User Managed ID, which is why we continue to use a key.
-  storage_account_access_key = azurerm_storage_account.sa_airlock_processor_func_app.primary_access_key
+  storage_uses_managed_identity                  = true
 
   tags = var.tre_core_tags
 
@@ -77,23 +66,31 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   }
 
   app_settings = {
-    "SB_CONNECTION_STRING"                       = var.airlock_servicebus.default_primary_connection_string
-    "BLOB_CREATED_TOPIC_NAME"                    = azurerm_servicebus_topic.blob_created.name
-    "TOPIC_SUBSCRIPTION_NAME"                    = azurerm_servicebus_subscription.airlock_processor.name
-    "EVENT_GRID_STEP_RESULT_TOPIC_URI_SETTING"   = azurerm_eventgrid_topic.step_result.endpoint
-    "EVENT_GRID_STEP_RESULT_TOPIC_KEY_SETTING"   = azurerm_eventgrid_topic.step_result.primary_access_key
-    "EVENT_GRID_DATA_DELETION_TOPIC_URI_SETTING" = azurerm_eventgrid_topic.data_deletion.endpoint
-    "EVENT_GRID_DATA_DELETION_TOPIC_KEY_SETTING" = azurerm_eventgrid_topic.data_deletion.primary_access_key
-    "WEBSITES_ENABLE_APP_SERVICE_STORAGE"        = false
-    "AIRLOCK_STATUS_CHANGED_QUEUE_NAME"          = local.status_changed_queue_name
-    "AIRLOCK_SCAN_RESULT_QUEUE_NAME"             = local.scan_result_queue_name
-    "AIRLOCK_DATA_DELETION_QUEUE_NAME"           = local.data_deletion_queue_name
-    "ENABLE_MALWARE_SCANNING"                    = var.enable_malware_scanning
-    "ARM_ENVIRONMENT"                            = var.arm_environment
-    "MANAGED_IDENTITY_CLIENT_ID"                 = azurerm_user_assigned_identity.airlock_id.client_id
-    "TRE_ID"                                     = var.tre_id
-    "WEBSITE_CONTENTOVERVNET"                    = 1
-    "STORAGE_ENDPOINT_SUFFIX"                    = module.terraform_azurerm_environment_configuration.storage_suffix
+    "SB_CONNECTION_STRING"                = var.airlock_servicebus.default_primary_connection_string
+    "BLOB_CREATED_TOPIC_NAME"             = azurerm_servicebus_topic.blob_created.name
+    "TOPIC_SUBSCRIPTION_NAME"             = azurerm_servicebus_subscription.airlock_processor.name
+    "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = false
+    "AIRLOCK_STATUS_CHANGED_QUEUE_NAME"   = local.status_changed_queue_name
+    "AIRLOCK_SCAN_RESULT_QUEUE_NAME"      = local.scan_result_queue_name
+    "AIRLOCK_DATA_DELETION_QUEUE_NAME"    = local.data_deletion_queue_name
+    "ENABLE_MALWARE_SCANNING"             = var.enable_malware_scanning
+    "ARM_ENVIRONMENT"                     = var.arm_environment
+    "MANAGED_IDENTITY_CLIENT_ID"          = azurerm_user_assigned_identity.airlock_id.client_id
+    "TRE_ID"                              = var.tre_id
+    "WEBSITE_CONTENTOVERVNET"             = 1
+    "STORAGE_ENDPOINT_SUFFIX"             = module.terraform_azurerm_environment_configuration.storage_suffix
+    "AzureWebJobsStorage__clientId"       = azurerm_user_assigned_identity.airlock_id.client_id
+    "AzureWebJobsStorage__credential"     = "managedidentity"
+
+    "EVENT_GRID_STEP_RESULT_CONNECTION"                           = local.step_result_eventgrid_connection
+    "${local.step_result_eventgrid_connection}__topicEndpointUri" = azurerm_eventgrid_topic.step_result.endpoint
+    "${local.step_result_eventgrid_connection}__credential"       = "managedidentity"
+    "${local.step_result_eventgrid_connection}__clientId"         = azurerm_user_assigned_identity.airlock_id.client_id
+
+    "EVENT_GRID_DATA_DELETION_CONNECTION"                           = local.data_deletion_eventgrid_connection
+    "${local.data_deletion_eventgrid_connection}__topicEndpointUri" = azurerm_eventgrid_topic.data_deletion.endpoint
+    "${local.data_deletion_eventgrid_connection}__credential"       = "managedidentity"
+    "${local.data_deletion_eventgrid_connection}__clientId"         = azurerm_user_assigned_identity.airlock_id.client_id
   }
 
   site_config {

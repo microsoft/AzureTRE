@@ -19,6 +19,14 @@ resource "azurerm_storage_account" "stg" {
     }
   }
 
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = azurerm_key_vault_key.encryption_key[0].versionless_id
+      user_assigned_identity_id = azurerm_user_assigned_identity.encryption_identity[0].id
+    }
+  }
+
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
 
@@ -140,14 +148,4 @@ resource "azurerm_private_endpoint" "stgdfspe" {
     is_manual_connection           = false
     subresource_names              = ["dfs"]
   }
-}
-
-resource "azurerm_storage_account_customer_managed_key" "stg_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.stg.id
-  key_vault_id              = var.key_store_id
-  key_name                  = local.kv_encryption_key_name
-  user_assigned_identity_id = azurerm_user_assigned_identity.encryption_identity[0].id
-
-  depends_on = [azurerm_key_vault_key.encryption_key]
 }

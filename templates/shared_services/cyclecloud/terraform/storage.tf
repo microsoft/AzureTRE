@@ -20,15 +20,15 @@ resource "azurerm_storage_account" "cyclecloud" {
     }
   }
 
-  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
-}
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = data.azurerm_key_vault_key.encryption_key[0].versionless_id
+      user_assigned_identity_id = data.azurerm_user_assigned_identity.tre_encryption_identity[0].id
+    }
+  }
 
-resource "azurerm_storage_account_customer_managed_key" "cyclecloud_stg_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.cyclecloud.id
-  key_vault_id              = var.key_store_id
-  key_name                  = local.cmk_name
-  user_assigned_identity_id = data.azurerm_user_assigned_identity.tre_encryption_identity[0].id
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 data "azurerm_private_dns_zone" "blobcore" {
