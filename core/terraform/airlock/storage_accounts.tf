@@ -10,7 +10,8 @@ resource "azurerm_storage_account" "sa_import_external" {
   table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   cross_tenant_replication_enabled = false
-
+  shared_access_key_enabled        = false
+  local_user_enabled               = false
   # Don't allow anonymous access (unrelated to the 'public' networking rules)
   allow_nested_items_to_be_public = false
 
@@ -26,6 +27,14 @@ resource "azurerm_storage_account" "sa_import_external" {
     content {
       type         = "UserAssigned"
       identity_ids = [var.encryption_identity_id]
+    }
+  }
+
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
     }
   }
 
@@ -58,14 +67,6 @@ resource "azurerm_private_endpoint" "stg_import_external_pe" {
   }
 }
 
-resource "azurerm_storage_account_customer_managed_key" "sa_import_external_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.sa_import_external.id
-  key_vault_id              = var.key_store_id
-  key_name                  = var.kv_encryption_key_name
-  user_assigned_identity_id = var.encryption_identity_id
-}
-
 # 'Approved' export
 resource "azurerm_storage_account" "sa_export_approved" {
   name                             = local.export_approved_storage_name
@@ -76,6 +77,8 @@ resource "azurerm_storage_account" "sa_export_approved" {
   table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
+  local_user_enabled               = false
 
   # Don't allow anonymous access (unrelated to the 'public' networking rules)
   allow_nested_items_to_be_public = false
@@ -92,6 +95,14 @@ resource "azurerm_storage_account" "sa_export_approved" {
     content {
       type         = "UserAssigned"
       identity_ids = [var.encryption_identity_id]
+    }
+  }
+
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
     }
   }
 
@@ -124,14 +135,6 @@ resource "azurerm_private_endpoint" "stg_export_approved_pe" {
   }
 }
 
-resource "azurerm_storage_account_customer_managed_key" "sa_export_approved_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.sa_export_approved.id
-  key_vault_id              = var.key_store_id
-  key_name                  = var.kv_encryption_key_name
-  user_assigned_identity_id = var.encryption_identity_id
-}
-
 # 'In-Progress' storage account
 resource "azurerm_storage_account" "sa_import_in_progress" {
   name                             = local.import_in_progress_storage_name
@@ -143,6 +146,8 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
   queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
+  local_user_enabled               = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
@@ -159,6 +164,14 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
     }
   }
 
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
+    }
+  }
+
   tags = merge(var.tre_core_tags, {
     description = "airlock;import;in-progress"
   })
@@ -170,15 +183,6 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
 
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
-
-resource "azurerm_storage_account_customer_managed_key" "sa_import_in_progress_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.sa_import_in_progress.id
-  key_vault_id              = var.key_store_id
-  key_name                  = var.kv_encryption_key_name
-  user_assigned_identity_id = var.encryption_identity_id
-}
-
 
 # Enable Airlock Malware Scanning on Core TRE
 resource "azapi_resource_action" "enable_defender_for_storage" {
@@ -239,6 +243,8 @@ resource "azurerm_storage_account" "sa_import_rejected" {
   queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
+  local_user_enabled               = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
@@ -252,6 +258,14 @@ resource "azurerm_storage_account" "sa_import_rejected" {
     content {
       type         = "UserAssigned"
       identity_ids = [var.encryption_identity_id]
+    }
+  }
+
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
     }
   }
 
@@ -290,14 +304,6 @@ resource "azurerm_private_endpoint" "stg_import_rejected_pe" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_storage_account_customer_managed_key" "sa_import_rejected_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.sa_import_rejected.id
-  key_vault_id              = var.key_store_id
-  key_name                  = var.kv_encryption_key_name
-  user_assigned_identity_id = var.encryption_identity_id
-}
-
 # 'Blocked' storage account
 resource "azurerm_storage_account" "sa_import_blocked" {
   name                             = local.import_blocked_storage_name
@@ -309,6 +315,8 @@ resource "azurerm_storage_account" "sa_import_blocked" {
   queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
+  local_user_enabled               = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
@@ -322,6 +330,14 @@ resource "azurerm_storage_account" "sa_import_blocked" {
     content {
       type         = "UserAssigned"
       identity_ids = [var.encryption_identity_id]
+    }
+  }
+
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
     }
   }
 
@@ -360,10 +376,3 @@ resource "azurerm_private_endpoint" "stg_import_blocked_pe" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_storage_account_customer_managed_key" "sa_import_blocked_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.sa_import_blocked.id
-  key_vault_id              = var.key_store_id
-  key_name                  = var.kv_encryption_key_name
-  user_assigned_identity_id = var.encryption_identity_id
-}

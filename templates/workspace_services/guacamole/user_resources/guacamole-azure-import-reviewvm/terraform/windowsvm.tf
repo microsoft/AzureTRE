@@ -45,6 +45,9 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   allow_extension_operations = true
   admin_username             = random_string.username.result
   admin_password             = random_password.password.result
+  encryption_at_host_enabled = true
+  secure_boot_enabled        = local.secure_boot_enabled
+  vtpm_enabled               = local.vtpm_enabled
 
   custom_data = base64encode(data.template_file.download_review_data_script.rendered)
 
@@ -61,9 +64,10 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   }
 
   os_disk {
-    name                 = "osdisk-${local.vm_name}"
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+    name                   = "osdisk-${local.vm_name}"
+    caching                = "ReadWrite"
+    storage_account_type   = "Standard_LRS"
+    disk_encryption_set_id = var.enable_cmk_encryption ? azurerm_disk_encryption_set.windowsvm_disk_encryption[0].id : null
   }
 
   identity {
@@ -72,7 +76,25 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
 
   tags = local.tre_user_resources_tags
 
-  lifecycle { ignore_changes = [tags] }
+  # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
+  # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
+  #
+  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled] }
+}
+
+resource "azurerm_disk_encryption_set" "windowsvm_disk_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  name                      = "disk-encryption-windowsvm-${var.tre_id}-${var.tre_resource_id}"
+  location                  = data.azurerm_resource_group.ws.location
+  resource_group_name       = data.azurerm_resource_group.ws.name
+  key_vault_key_id          = data.azurerm_key_vault_key.ws_encryption_key[0].versionless_id
+  encryption_type           = "EncryptionAtRestWithPlatformAndCustomerKeys"
+  auto_key_rotation_enabled = true
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [data.azurerm_user_assigned_identity.ws_encryption_identity[0].id]
+  }
 }
 
 resource "azurerm_virtual_machine_extension" "config_script" {

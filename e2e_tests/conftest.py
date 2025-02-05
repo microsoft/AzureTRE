@@ -12,21 +12,11 @@ from helpers import get_admin_token
 
 
 LOGGER = logging.getLogger(__name__)
-pytestmark = pytest.mark.asyncio
+pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 
 def pytest_addoption(parser):
     parser.addoption("--verify", action="store", default="true")
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest.fixture(scope="session")

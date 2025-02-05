@@ -1,8 +1,3 @@
-data "azurerm_service_plan" "workspace" {
-  name                = "plan-${var.workspace_id}"
-  resource_group_name = data.azurerm_resource_group.ws.name
-}
-
 # we have to use user-assigned to break a cycle in the dependencies: app identity, kv-policy, secrets in app settings
 resource "azurerm_user_assigned_identity" "guacamole_id" {
   resource_group_name = data.azurerm_resource_group.ws.name
@@ -14,14 +9,17 @@ resource "azurerm_user_assigned_identity" "guacamole_id" {
 }
 
 resource "azurerm_linux_web_app" "guacamole" {
-  name                            = local.webapp_name
-  location                        = data.azurerm_resource_group.ws.location
-  resource_group_name             = data.azurerm_resource_group.ws.name
-  service_plan_id                 = data.azurerm_service_plan.workspace.id
-  https_only                      = true
-  key_vault_reference_identity_id = azurerm_user_assigned_identity.guacamole_id.id
-  virtual_network_subnet_id       = data.azurerm_subnet.web_apps.id
-  tags                            = local.workspace_service_tags
+  name                                           = local.webapp_name
+  location                                       = data.azurerm_resource_group.ws.location
+  resource_group_name                            = data.azurerm_resource_group.ws.name
+  service_plan_id                                = data.azurerm_service_plan.workspace.id
+  https_only                                     = true
+  key_vault_reference_identity_id                = azurerm_user_assigned_identity.guacamole_id.id
+  virtual_network_subnet_id                      = data.azurerm_subnet.web_apps.id
+  ftp_publish_basic_authentication_enabled       = false
+  webdeploy_publish_basic_authentication_enabled = false
+  tags                                           = local.workspace_service_tags
+  public_network_access_enabled                  = var.is_exposed_externally
 
   site_config {
     http2_enabled                                 = true
@@ -32,8 +30,8 @@ resource "azurerm_linux_web_app" "guacamole" {
     minimum_tls_version                           = "1.2"
 
     application_stack {
-      docker_image     = "${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/${var.image_name}"
-      docker_image_tag = local.image_tag
+      docker_registry_url = "https://${data.azurerm_container_registry.mgmt_acr.login_server}"
+      docker_image_name   = "microsoft/azuretre/${var.image_name}:${local.image_tag}"
     }
   }
 
@@ -57,6 +55,7 @@ resource "azurerm_linux_web_app" "guacamole" {
     GUAC_DRIVE_PATH       = var.guac_drive_path
     GUAC_DISABLE_DOWNLOAD = var.guac_disable_download
     GUAC_DISABLE_UPLOAD   = var.guac_disable_upload
+    GUAC_SERVER_LAYOUT    = var.guac_server_layout
 
     AUDIENCE = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_id.id})"
     ISSUER   = local.issuer

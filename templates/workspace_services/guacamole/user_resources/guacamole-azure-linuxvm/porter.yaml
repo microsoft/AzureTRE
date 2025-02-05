@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-linuxvm
-version: 1.1.0
+version: 1.2.4
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -28,11 +28,15 @@ custom:
         apt_sku: 22.04
       install_ui: true
       conda_config: false
+      secure_boot_enabled: true
+      vtpm_enabled: true
     # For information on using custom images, see README.me in the guacamole/user-resources folder
     # "Custom Image From Gallery":
     #   source_image_name: your-image
     #   install_ui: true
     #   conda_config: true
+    #   secure_boot_enabled: false
+    #   vtpm_enabled: false
 
 credentials:
   - name: azure_tenant_id
@@ -111,6 +115,12 @@ parameters:
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
+  - name: enable_cmk_encryption
+    type: boolean
+    default: false
+  - name: key_store_id
+    type: string
+    default: ""
 
 outputs:
   - name: ip
@@ -159,6 +169,8 @@ install:
         enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
         shutdown_time: ${ bundle.parameters.shutdown_time }
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -188,6 +200,8 @@ upgrade:
         enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
         shutdown_time: ${ bundle.parameters.shutdown_time }
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -229,6 +243,8 @@ uninstall:
         enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
         shutdown_time: ${ bundle.parameters.shutdown_time }
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

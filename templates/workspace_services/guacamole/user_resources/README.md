@@ -37,10 +37,14 @@ custom:
         apt_sku: 22.04
       install_ui: true
       conda_config: false
+      secure_boot_enabled: true
+      vtpm_enabled: true
     # "Custom Image From Gallery":
     #   source_image_name: your-image
     #   install_ui: true
     #   conda_config: true
+    #   secure_boot_enabled: true
+    #   vtpm_enabled: true
 ```
 
 The `vm_sizes` section is a map of a custom SKU description to the SKU identifier.
@@ -55,6 +59,8 @@ Within the image definition in `image_options` there are a few properties that c
 | `source_image_reference` | Specify VM image to use by `publisher`, `offer`, `sku` & `version` (e.g. for Azure Marketplace images)   |
 | `install_ui`             | (Linux only) Set `true` to install desktop environment                                                   |
 | `conda_config`           | Set true to configure conda                                                                              |
+| `secure_boot_enabled`    | Set true to enable [Secure Boot](https://learn.microsoft.com/en-us/azure/virtual-machines/trusted-launch#secure-boot).  Requires a Requires a [Gen 2](https://learn.microsoft.com/en-us/azure/virtual-machines/generation-2) VM image |
+| `vtpm_enabled`           | Set true to enable [Secure Boot](https://learn.microsoft.com/en-us/azure/virtual-machines/trusted-launch#vtpm).  Requires a [Gen 2](https://learn.microsoft.com/en-us/azure/virtual-machines/generation-2) VM image |
 
 When specifying images using `source_image_name`, the image must be stored in an [image gallery](https://learn.microsoft.com/en-us/azure/virtual-machines/azure-compute-gallery).
 To enable re-using built user resource templates across environments where the image may vary, the image gallery is configured via the `RP_BUNDLE_VALUES` environment variable when deploying the TRE.

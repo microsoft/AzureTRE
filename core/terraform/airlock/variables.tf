@@ -102,13 +102,7 @@ variable "enable_cmk_encryption" {
   description = "A boolean indicating if customer managed keys will be used for encryption of supporting resources"
 }
 
-variable "key_store_id" {
+variable "encryption_key_versionless_id" {
   type        = string
-  description = "ID of the Key Vault to store CMKs in (only used if enable_cmk_encryption is true)"
-  default     = null
-}
-
-variable "kv_encryption_key_name" {
-  type        = string
-  description = "Name of Key Vault Encryption Key (only used if enable_cmk_encryption is true)"
+  description = "Versionless ID of the encryption key in the key vault"
 }

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-if [ ! -f ../tre_output.json ]; then
+if [ ! -f ../tre_output.json ] || [ ! -s ../tre_output.json ]; then
   # Connect to the remote backend of Terraform
   export TF_LOG=""
   # shellcheck disable=SC2154
