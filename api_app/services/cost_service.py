@@ -156,7 +156,7 @@ class CostService:
                 try:
                     retry = retry + 1
                     query_result = self.query_costs(CostService.TRE_ID_TAG, tre_id, granularity, from_date, to_date, list(resource_groups_dict.keys()))
-                    # self.cache_result(cache_key, query_result, timedelta(hours=2))                    
+                    self.cache_result(cache_key, query_result, timedelta(hours=2))                    
                     costs_calculated = True
                 except HttpResponseError as e:
                     if e.status_code == 429:
@@ -337,7 +337,10 @@ class CostService:
                     to_date: Optional[datetime],
                     resource_groups: list) -> QueryResult:
         query_definition = self.build_query_definition(granularity, from_date, to_date, tag_name, tag_value, resource_groups)
-
+        
+        # This wait time is here to avoid problems with rate limit.
+        time.sleep(20)
+                
         try:
             return self.client.query.usage(self.scope, query_definition)
         except ResourceNotFoundError as e:
