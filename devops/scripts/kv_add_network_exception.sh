@@ -104,7 +104,7 @@ function get_tre_id() {
   fi
 
   if [[ -z "$TRE_ID_LOCAL" ]]; then
-    echo -e "Could not remove keyvault deployment network exception: TRE_ID is not set\nExiting...\n"
+    echo -e "Could not add/remove keyvault deployment network exception: TRE_ID is not set\nExiting...\n"
     exit 1
   fi
 
