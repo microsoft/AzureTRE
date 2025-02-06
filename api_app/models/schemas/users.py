@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List
 
-from models.domain.authentication import User
+from models.domain.authentication import User, AssignableUser
 
 
 class UsersInResponse(BaseModel):
@@ -26,3 +26,6 @@ class UsersInResponse(BaseModel):
                 ]
             }
         }
+
+class AssignableUsersInResponse(BaseModel):
+    assignable_users: List[AssignableUser] = Field(..., title="Assignable Users", description="List of users assignable to a workspace")

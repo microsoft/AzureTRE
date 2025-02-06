@@ -21,7 +21,8 @@ from models.schemas.workspace import WorkspaceAuthInResponse, WorkspaceInCreate,
 from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse
 from models.schemas.resource import ResourceHistoryInList, ResourcePatch
 from models.schemas.resource_template import ResourceTemplateInformationInList
-from models.schemas.users import UsersInResponse
+from models.schemas.users import UsersInResponse, AssignableUsersInResponse
+from models.schemas.roles import RolesInResponse
 from resources import strings
 from services.access_service import AuthConfigValidationError
 from services.authentication import get_current_admin_user, \
@@ -543,3 +544,53 @@ async def retrieve_user_resource_operations_by_user_resource_id_and_operation_id
 async def retrieve_user_resource_history_by_user_resource_id(user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> ResourceHistoryInList:
     validate_user_has_valid_role_for_user_resource(user, user_resource)
     return ResourceHistoryInList(resource_history=await resource_history_repo.get_resource_history_by_resource_id(resource_id=user_resource.id))
+
+@workspaces_shared_router.get("/workspaces/{workspace_id}/assignable-users", response_model=AssignableUsersInResponse, name=strings.API_GET_ASSIGNABLE_USERS)
+async def get_assignable_users(workspace=Depends(get_workspace_by_id_from_path)) -> AssignableUsersInResponse:
+    access_service = get_access_service()
+    assignable_users = access_service.get_assignable_users()
+    return AssignableUsersInResponse(assignable_users=assignable_users)
+
+
+@workspaces_shared_router.get("/workspaces/{workspace_id}/roles", response_model=RolesInResponse, name=strings.API_GET_WORKSPACE_ROLES)
+async def get_workspace_roles(workspace=Depends(get_workspace_by_id_from_path)) -> RolesInResponse:
+    access_service = get_access_service()
+    roles = access_service.get_workspace_roles(workspace)
+    return RolesInResponse(roles=roles)
+
+@workspaces_shared_router.post("/workspaces/{workspace_id}/users/assign", status_code=status.HTTP_202_ACCEPTED, name=strings.API_ASSIGN_WORKSPACE_USER)
+async def assign_workspace_user(response: Response, user_email: str, role_name: str, workspace=Depends(get_workspace_by_id_from_path)) -> UsersInResponse:
+    access_service = get_access_service()
+
+    user = access_service.get_user_by_email(user_email)
+    role = access_service.get_workspace_role_by_name(role_name, workspace)
+
+    access_service.assign_workspace_user(
+        user,
+        workspace,
+        role,
+    )
+
+    users = access_service.get_workspace_users(workspace)
+    return UsersInResponse(users=users)
+
+@workspaces_shared_router.delete("/workspaces/{workspace_id}/users/assign",
+                               status_code=status.HTTP_202_ACCEPTED,
+                               name=strings.API_REMOVE_WORKSPACE_USER_ASSIGNMENT)
+async def remove_workspace_user_assignment(user_email: str,
+                                           role_name: str,
+                                           workspace=Depends(get_workspace_by_id_from_path)) -> UsersInResponse:
+
+    access_service = get_access_service()
+
+    user = access_service.get_user_by_email(user_email)
+    role = access_service.get_workspace_role_by_name(role_name, workspace)
+
+    access_service.remove_workspace_role_user_assignment(
+        user,
+        role,
+        workspace
+    )
+
+    users = access_service.get_workspace_users(workspace)
+    return UsersInResponse(users=users)

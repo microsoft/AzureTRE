@@ -13,3 +13,18 @@ class User(BaseModel):
     email: str = Field(None)
     roles: List[str] = Field([])
     roleAssignments: List[RoleAssignment] = Field([])
+
+class AssignableUser(BaseModel):
+    name: str
+    email: str
+
+class Role(BaseModel):
+    id: str
+    value: str
+    isEnabled: bool
+    email: str = Field(None)
+    allowedMemberTypes: List[str] = Field([])
+    description: str
+    displayName: str
+    origin: str
+    roleAssignments: List[RoleAssignment] = Field([])
