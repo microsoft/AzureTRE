@@ -136,3 +136,58 @@ if [ -n "${vnet_id}" ] && [ "${vnet_id}" != "null" ]; then
 else
   echo "No VNet ID found; skipping re-import of VNet."
 fi
+
+
+### Step 5: Remove Old Private Endpoints
+echo "*** Removing Private Endpoints ***"
+
+declare -a PRIVATE_ENDPOINTS=(
+  "module.network.azurerm_private_endpoint.azure_monitor"
+  "module.network.azurerm_private_endpoint.azure_monitor_agentsvc"
+  "module.network.azurerm_private_endpoint.azure_monitor_ods_opinsights"
+  "module.network.azurerm_private_endpoint.azure_monitor_oms_opinsights"
+  "module.network.azurerm_private_endpoint.azurecr"
+  "module.network.azurerm_private_endpoint.azurewebsites"
+  "module.network.azurerm_private_endpoint.blobcore"
+  "module.network.azurerm_private_endpoint.eventgrid"
+  "module.network.azurerm_private_endpoint.filecore"
+  "module.network.azurerm_private_endpoint.queuecore"
+  "module.network.azurerm_private_endpoint.tablecore"
+  "module.network.azurerm_private_endpoint.static_web"
+  "module.network.azurerm_private_endpoint.vaultcore"
+)
+
+for resource in "${PRIVATE_ENDPOINTS[@]}"; do
+  resource_id=$(echo "${terraform_show_json}" | jq -r --arg addr "$resource" '
+    def walk_resources:
+      (.resources[]? ),
+      (.child_modules[]? | walk_resources);
+    .values.root_module | walk_resources | select(.address==$addr) | .values.id
+  ')
+
+  if [ -n "$resource_id" ] && [ "$resource_id" != "null" ]; then
+    echo "Removing Private Endpoint: ${resource} (id: ${resource_id})"
+    terraform state rm "$resource"
+  else
+    echo "Private Endpoint resource not found in state: ${resource}"
+  fi
+done
+
+### Step 6: Re-import Private Endpoints
+echo "*** Re-importing Private Endpoints ***"
+
+for resource in "${PRIVATE_ENDPOINTS[@]}"; do
+  resource_id=$(echo "${terraform_show_json}" | jq -r --arg addr "$resource" '
+    def walk_resources:
+      (.resources[]? ),
+      (.child_modules[]? | walk_resources);
+    .values.root_module | walk_resources | select(.address==$addr) | .values.id
+  ')
+
+  if [ -n "$resource_id" ] && [ "$resource_id" != "null" ]; then
+    echo "Re-importing Private Endpoint: ${resource} (id: ${resource_id})"
+    terraform import "$resource" "$resource_id"
+  else
+    echo "No Private Endpoint ID found for ${resource}, skipping import."
+  fi
+done
