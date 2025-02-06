@@ -3,7 +3,7 @@
 set -o errexit
 set -o pipefail
 set -o nounset
-set -o xtrace
+# set -o xtrace
 
 # Configure AzureRM provider to user Azure AD to connect to storage accounts
 export ARM_STORAGE_USE_AZUREAD=true
