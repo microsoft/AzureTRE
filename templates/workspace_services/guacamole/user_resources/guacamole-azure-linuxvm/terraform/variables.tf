@@ -47,3 +47,15 @@ variable "enable_cmk_encryption" {
 variable "key_store_id" {
   type = string
 }
+variable "auth_tenant_id" {
+  type        = string
+  description = "Used to authenticate into the AAD Tenant to create the AAD App"
+}
+variable "auth_client_id" {
+  type        = string
+  description = "Used to authenticate into the AAD Tenant to create the AAD App"
+}
+variable "auth_client_secret" {
+  type        = string
+  description = "Used to authenticate into the AAD Tenant to create the AAD App"
+}

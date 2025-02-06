@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 1.4.1
+version: 1.4.5
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -171,6 +171,9 @@ install:
         owner_id: ${ bundle.parameters.owner_id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -200,6 +203,9 @@ upgrade:
         owner_id: ${ bundle.parameters.owner_id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -241,6 +247,9 @@ uninstall:
         owner_id: ${ bundle.parameters.owner_id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
