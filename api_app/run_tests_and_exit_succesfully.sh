@@ -6,6 +6,6 @@
 rm -f ../test-results/pytest_api*
 mkdir -p ../test-results
 
-if ! pytest --junit-xml ../test-results/pytest_api_unit.xml --ignore e2e_tests -W ignore::pytest.PytestUnraisableExceptionWarning -W ignore::DeprecationWarning; then
+if ! python -m pytest --junit-xml ../test-results/pytest_api_unit.xml --ignore e2e_tests -W ignore::pytest.PytestUnraisableExceptionWarning -W ignore::DeprecationWarning; then
   touch ../test-results/pytest_api_unit_failed
 fi
