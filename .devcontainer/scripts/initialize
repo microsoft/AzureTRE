@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mkdir -p "$HOME/.azure" "$HOME/.config" || true
