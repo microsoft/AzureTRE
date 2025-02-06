@@ -60,7 +60,7 @@ resource "azurerm_subnet" "shared" {
   private_endpoint_network_policies = "Disabled"
   depends_on                        = [azurerm_subnet.web_app]
 }
-
+# add comment
 resource "azurerm_subnet" "resource_processor" {
   name                 = "ResourceProcessorSubnet"
   virtual_network_name = azurerm_virtual_network.core.name
