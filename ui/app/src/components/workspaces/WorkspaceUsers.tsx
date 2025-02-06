@@ -17,6 +17,7 @@ import { CommandBarButton, DefaultButton, Dialog, DialogFooter, getTheme, Spinne
 import { useNavigate, Route, Routes } from 'react-router-dom';
 import { destructiveButtonStyles } from '../../styles';
 import { WorkSpaceUsersAssignNew } from './WorkspaceUsersAssignNew';
+import config from "../../config.json"
 
 interface IUser {
   id: string;
@@ -169,7 +170,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
         item={item}
         itemIndex={itemIndex!}
         selection={selection}
-        selectionMode={isTreAdmin ? SelectionMode.single : SelectionMode.none}
+        selectionMode={(isTreAdmin && config.userManagementEnabled) ? SelectionMode.single : SelectionMode.none}
         group={group}
       />
     ),
@@ -182,7 +183,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
         <Stack.Item>
           <Stack horizontal horizontalAlign="space-between">
             <h1 style={{ marginBottom: 0, marginRight: 30 }}>Users</h1>
-            { isTreAdmin &&
+            { (isTreAdmin && config.userManagementEnabled) &&
               <Stack horizontal  horizontalAlign="start">
                 <CommandBarButton
                   iconProps={{ iconName: 'add' }}
