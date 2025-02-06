@@ -99,6 +99,18 @@
       "source": {
         "env": "KEY_STORE_ID"
       }
+    },
+    {
+      "name": "os_disk_account_type",
+      "source": {
+        "env": "OS_DISK_ACCOUNT_TYPE"
+      }
+    },
+    {
+      "name": "os_disk_size",
+      "source": {
+        "env": "OS_DISK_SIZE"
+      }
     }
   ]
 }

@@ -44,3 +44,11 @@ variable "enable_cmk_encryption" {
 variable "key_store_id" {
   type = string
 }
+variable "os_disk_account_type" {
+  type    = string
+  default = "Standard_LRS"
+}
+variable "os_disk_size" {
+  type    = number
+  default = 64
+}

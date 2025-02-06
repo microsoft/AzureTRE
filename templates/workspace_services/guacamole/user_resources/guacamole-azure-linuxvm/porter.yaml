@@ -73,6 +73,14 @@ parameters:
     type: string
     description: "Timezone for the shutdown schedule"
     default: "UTC"
+  - name: os_disk_account_type
+    type: string
+    default: "Standard_LRS"
+    description: "The type of storage account to use for the OS disk"
+  - name: os_disk_size
+    type: int
+    default: 64
+    description: "The size of the OS disk in GB"
 
   # the following are added automatically by the resource processor
   - name: id
@@ -166,6 +174,8 @@ install:
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        os_disk_account_type: ${ bundle.parameters.os_disk_account_type }
+        os_disk_size: ${ bundle.parameters.os_disk_size }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -197,6 +207,8 @@ upgrade:
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        os_disk_account_type: ${ bundle.parameters.os_disk_account_type }
+        os_disk_size: ${ bundle.parameters.os_disk_size }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -240,6 +252,8 @@ uninstall:
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        os_disk_account_type: ${ bundle.parameters.os_disk_account_type }
+        os_disk_size: ${ bundle.parameters.os_disk_size }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
