@@ -17,7 +17,7 @@ locals {
       0, 20
     )
   )
-  vm_password_secret_name        = "${local.vm_name}-admin-credentials"
+  vm_password_secret_name = "${local.vm_name}-admin-credentials"
   tre_user_resources_tags = {
     tre_id                   = var.tre_id
     tre_workspace_id         = var.workspace_id

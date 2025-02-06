@@ -71,6 +71,6 @@ data "azurerm_storage_account" "stg" {
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
-data azuread_user "user" {
+data "azuread_user" "user" {
   object_id = var.owner_id
 }

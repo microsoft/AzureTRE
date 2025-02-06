@@ -7,7 +7,7 @@ locals {
   vm_name                        = "linuxvm${local.short_service_id}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
-    admin_username = (
+  admin_username = (
     length(data.azuread_user.user.mail) > 0 ?
     substr(element(split("@", data.azuread_user.user.mail), 0), 0, 20) :
     substr(
@@ -17,7 +17,7 @@ locals {
       0, 20
     )
   )
-  vm_password_secret_name        = "${local.vm_name}-admin-credentials"
+  vm_password_secret_name = "${local.vm_name}-admin-credentials"
   tre_user_resources_tags = {
     tre_id                   = var.tre_id
     tre_workspace_id         = var.workspace_id
