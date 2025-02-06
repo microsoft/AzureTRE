@@ -59,7 +59,7 @@ BUG FIXES:
 * Fix Azure ML network tags to use name rather than ID ([[#4151](https://github.com/microsoft/AzureTRE/issues/4151)])
 * Windows R version must be 4.1.2 otherwise post install script doesn't update package mirror URL ([#4288](https://github.com/microsoft/AzureTRE/issues/4288))
 * Recreate tre_output.json if empty. ([[#4292](https://github.com/microsoft/AzureTRE/issues/4292)])
-* Ensure R directory is present before attempting to update package mirror URL ([#TBC](https://github.com/microsoft/AzureTRE/pull/TBC))
+* Ensure R directory is present before attempting to update package mirror URL ([#4332](https://github.com/microsoft/AzureTRE/pull/4332))
 
 COMPONENTS:
 
