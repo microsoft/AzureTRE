@@ -106,7 +106,7 @@ prepare-tf-state:
 	&& pushd ${MAKEFILE_DIR}/templates/shared_services/firewall/terraform > /dev/null && ./import_state.sh && popd > /dev/null
 # / End migration targets
 
-deploy-core: #tre-start
+deploy-core: tre-start
 	$(call target_title, "Deploying TRE") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
 	&& rm -fr ~/.config/tre/environment.json \
