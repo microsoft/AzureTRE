@@ -6,7 +6,6 @@ script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 # shellcheck disable=SC1091
 source "$script_dir/../../../devops/scripts/kv_add_network_exception.sh"
 
-
 if [[ -z ${STORAGE_ACCOUNT} ]]; then
   echo "STORAGE_ACCOUNT not set"
   exit 1
