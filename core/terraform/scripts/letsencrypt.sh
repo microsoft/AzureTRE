@@ -3,11 +3,6 @@ set -e
 
 script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
-# add trap to remove kv network exception
-# shellcheck disable=SC1091
-trap 'source "$script_dir/../../../devops/scripts/kv_remove_network_exception.sh"' EXIT
-
-# now add kv network exception
 # shellcheck disable=SC1091
 source "$script_dir/../../../devops/scripts/kv_add_network_exception.sh"
 
