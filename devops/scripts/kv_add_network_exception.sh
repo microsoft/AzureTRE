@@ -28,7 +28,6 @@ function kv_add_network_exception() {
   # ensure kv exists
   #
   if ! does_kv_exist "$RG_NAME" "$KV_NAME"; then
-    echo "Exiting..."
     return 0   # don't cause outer sourced script to fail
   fi
 
@@ -82,7 +81,6 @@ function kv_remove_network_exception() {
   # ensure kv exists
   #
   if ! does_kv_exist "$RG_NAME" "$KV_NAME"; then
-    echo "Exiting..."
     return 0   # don't cause outer sourced script to fail
   fi
 
