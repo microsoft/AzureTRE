@@ -142,19 +142,13 @@ fi
 echo "*** Removing Private Endpoints ***"
 
 declare -a PRIVATE_ENDPOINTS=(
-  "module.network.azurerm_private_endpoint.azure_monitor"
-  "module.network.azurerm_private_endpoint.azure_monitor_agentsvc"
-  "module.network.azurerm_private_endpoint.azure_monitor_ods_opinsights"
-  "module.network.azurerm_private_endpoint.azure_monitor_oms_opinsights"
-  "module.network.azurerm_private_endpoint.azurecr"
-  "module.network.azurerm_private_endpoint.azurewebsites"
-  "module.network.azurerm_private_endpoint.blobcore"
-  "module.network.azurerm_private_endpoint.eventgrid"
-  "module.network.azurerm_private_endpoint.filecore"
-  "module.network.azurerm_private_endpoint.queuecore"
-  "module.network.azurerm_private_endpoint.tablecore"
-  "module.network.azurerm_private_endpoint.static_web"
-  "module.network.azurerm_private_endpoint.vaultcore"
+  "azurerm_private_endpoint.api_private_endpoint"
+  "azurerm_private_endpoint.blobpe"
+  "azurerm_private_endpoint.filepe"
+  "azurerm_private_endpoint.kvpe"
+  "azurerm_private_endpoint.mongo"
+  "azurerm_private_endpoint.sbpe"
+  "azurerm_private_endpoint.sspe"
 )
 
 for resource in "${PRIVATE_ENDPOINTS[@]}"; do
@@ -173,7 +167,7 @@ for resource in "${PRIVATE_ENDPOINTS[@]}"; do
   fi
 done
 
-### Step 6: Re-import Private Endpoints
+### Step 6: Re-importing Private Endpoints
 echo "*** Re-importing Private Endpoints ***"
 
 for resource in "${PRIVATE_ENDPOINTS[@]}"; do
