@@ -100,6 +100,9 @@ def chunk_log_output(output: str, chunk_size: int = 30000):
     Split the log output into smaller chunks and prefix each chunk with [Log chunk X of Y].
     """
     total_chunks = (len(output) + chunk_size - 1) // chunk_size  # Calculate total number of chunks
+    if total_chunks == 1:
+        yield output
+        return
     for i in range(0, len(output), chunk_size):
         current_chunk = i // chunk_size + 1
         prefix = f"[Log chunk {current_chunk} of {total_chunks}] "

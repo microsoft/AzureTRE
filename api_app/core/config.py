@@ -1,12 +1,11 @@
 from typing import List
+import warnings
 from starlette.config import Config
 from _version import __version__
 
-try:
-    config = Config('.env')
-# Workaround needed until FastAPI uses Starlette >= 3.7.1
-except FileNotFoundError:
-    config = Config()
+warnings.filterwarnings("ignore", message="Config file '.env' not found.")
+
+config = Config('.env')
 
 # API settings
 API_PREFIX = "/api"

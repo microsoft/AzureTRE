@@ -24,7 +24,11 @@ resource "azurerm_storage_account" "az_monitor" {
   queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
+  local_user_enabled               = false
   tags                             = var.tre_core_tags
+
+  # unclear the implications on az-monitor, so leaving it for now.
+  # shared_access_key_enabled        = false
 
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
@@ -42,15 +46,15 @@ resource "azurerm_storage_account" "az_monitor" {
     }
   }
 
-  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
-}
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
+    }
+  }
 
-resource "azurerm_storage_account_customer_managed_key" "az_monitor_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.az_monitor.id
-  key_vault_id              = var.key_store_id
-  key_name                  = var.kv_encryption_key_name
-  user_assigned_identity_id = var.encryption_identity_id
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
 resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_ingestion" {
