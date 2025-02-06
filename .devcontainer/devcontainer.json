@@ -294,5 +294,5 @@
   ],
   // Run commands after the container is created.
   "postCreateCommand": "./.devcontainer/scripts/post-create.sh",
-  "initializeCommand": ["./.devcontainer/scripts/initialize"]
+  "initializeCommand": "mkdir -p $HOME/.azure $HOME/.config || true"
 }
