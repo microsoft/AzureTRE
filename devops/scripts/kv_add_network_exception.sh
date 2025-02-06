@@ -12,8 +12,8 @@ function kv_add_network_exception() {
 
   # set up variables
   #
-  local TRE_ID
-  TRE_ID=$(get_tre_id)
+  local TRE_ID_LOCAL
+  TRE_ID_LOCAL=$(get_tre_id)
 
   local RG_NAME="rg-${TRE_ID_LOCAL}"
   local KV_NAME="kv-${TRE_ID_LOCAL}"
@@ -66,8 +66,8 @@ function kv_remove_network_exception() {
 
   # set up variables
   #
-  local TRE_ID
-  TRE_ID=$(get_tre_id)
+  local TRE_ID_LOCAL
+  TRE_ID_LOCAL=$(get_tre_id)
 
   local RG_NAME="rg-${TRE_ID_LOCAL}"
   local KV_NAME="kv-${TRE_ID_LOCAL}"
@@ -132,7 +132,7 @@ function does_kv_exist() {
 
 
 # setup the trap to remove network exception on exit
-trap remove_network_exception EXIT
+trap kv_remove_network_exception EXIT
 
 # now add the network exception
-add_keyvault_network_exception "$@"
+kv_add_network_exception "$@"
