@@ -26,6 +26,9 @@ variable "image_gallery_id" {
   type    = string
   default = ""
 }
+variable "owner_id" {
+  type = string
+}
 variable "enable_shutdown_schedule" {
   type    = bool
   default = false
