@@ -1256,4 +1256,3 @@ FEATURES:
 * Centrally manage the firewall share service state to enable other services to ask for rule changes
 
 Many more enhancements are listed on the [release page](https://github.com/microsoft/AzureTRE/releases/tag/v0.4)
-
