@@ -53,9 +53,12 @@ local({
 "@
 
 $RBasePath = "$Env:ProgramFiles\R"
-$RVersions = Get-ChildItem -Path $RBasePath -Directory | Where-Object { $_.Name -like "R-*" }
 
-foreach ($RVersion in $RVersions) {
-    $ConfigPath = Join-Path -Path $RVersion.FullName -ChildPath "etc\Rprofile.site"
-    $RConfig | Out-File -Encoding Ascii (New-Item -Path $ConfigPath -Force)
+if (Test-Path $RBasePath) {
+  $RVersions = Get-ChildItem -Path $RBasePath -Directory | Where-Object { $_.Name -like "R-*" }
+
+  foreach ($RVersion in $RVersions) {
+      $ConfigPath = Join-Path -Path $RVersion.FullName -ChildPath "etc\Rprofile.site"
+      $RConfig | Out-File -Encoding Ascii (New-Item -Path $ConfigPath -Force)
+  }
 }
