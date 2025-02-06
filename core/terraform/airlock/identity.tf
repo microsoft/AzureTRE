@@ -25,7 +25,7 @@ resource "azurerm_role_assignment" "servicebus_receiver" {
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
-resource "azurerm_role_assignment" "eventgrid_data_sender" {
+resource "azurerm_role_assignment" "eventgrid_data_sender_status_changed" {
   scope                = azurerm_eventgrid_topic.status_changed.id
   role_definition_name = "EventGrid Data Sender"
   principal_id         = var.api_principal_id
@@ -35,6 +35,18 @@ resource "azurerm_role_assignment" "eventgrid_data_sender_notification" {
   scope                = azurerm_eventgrid_topic.airlock_notification.id
   role_definition_name = "EventGrid Data Sender"
   principal_id         = var.api_principal_id
+}
+
+resource "azurerm_role_assignment" "eventgrid_data_sender_step_result" {
+  scope                = azurerm_eventgrid_topic.step_result.id
+  role_definition_name = "EventGrid Data Sender"
+  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
+}
+
+resource "azurerm_role_assignment" "eventgrid_data_sender_data_deletion" {
+  scope                = azurerm_eventgrid_topic.data_deletion.id
+  role_definition_name = "EventGrid Data Sender"
+  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
 resource "azurerm_role_assignment" "airlock_blob_data_contributor" {
