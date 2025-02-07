@@ -47,9 +47,6 @@ parameters:
     description: "Network rule collection array"
   - name: arm_environment
     type: string
-  - name: firewall_force_tunnel_ip
-    type: string
-    default: ""
 
 mixins:
   - terraform:

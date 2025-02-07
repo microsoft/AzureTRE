@@ -304,8 +304,7 @@ deploy-shared-service:
 firewall-install:
 	. ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& $(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
-	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service \
-	PROPS="$${FIREWALL_SKU+--firewall_sku $${FIREWALL_SKU} }$${FIREWALL_FORCE_TUNNEL_IP+--firewall_force_tunnel_ip $${FIREWALL_FORCE_TUNNEL_IP} }"
+	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
