@@ -79,7 +79,7 @@ async def build_porter_command(config, msg_body, custom_action=False):
                     val_base64_bytes = base64.b64encode(val_bytes)
                     parameter_value = val_base64_bytes.decode("ascii")
 
-                porter_parameters = f"{porter_parameters} --param {parameter_name}=\"{parameter_value}\""
+                porter_parameters += f" --param {parameter_name}=\"{parameter_value}\""
 
     installation_id = msg_body['id']
 
@@ -95,7 +95,7 @@ async def build_porter_command(config, msg_body, custom_action=False):
                     ]
 
     if msg_body['action'] == 'upgrade':
-        command_line[0] = command_line[0] + f"{'--force-upgrade '}"
+        command_line[0] = command_line[0] + "--force-upgrade "
 
     command_line[0] = command_line[0].strip()
 
