@@ -79,7 +79,7 @@ async def build_porter_command(config, msg_body, custom_action=False):
                     val_base64_bytes = base64.b64encode(val_bytes)
                     parameter_value = val_base64_bytes.decode("ascii")
 
-                porter_parameters = porter_parameters + f"--param {parameter_name}=\"{parameter_value}\" "
+                porter_parameters = f"{porter_parameters} --param {parameter_name}=\"{parameter_value}\""
 
     installation_id = msg_body['id']
 
@@ -87,8 +87,8 @@ async def build_porter_command(config, msg_body, custom_action=False):
                     # If a custom action (i.e. not install, uninstall, upgrade) we need to use 'invoke'
                     f"{' invoke --action' if custom_action else ''} "
                     f"{msg_body['action']} \"{installation_id}\" "
-                    f"--reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']} "
-                    f"{porter_parameters}"
+                    f"--reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
+                    f"{porter_parameters} "
                     f"--force "
                     f"--credential-set arm_auth "
                     f"--credential-set aad_auth "

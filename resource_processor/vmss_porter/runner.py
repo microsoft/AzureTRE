@@ -173,6 +173,9 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
     logger.debug("Starting to run porter execution command...")
     returncode, _, err = await run_porter(porter_command, config)
     logger.debug("Finished running porter execution command.")
+
+    action_completed_without_error = False
+
     if returncode == 0:
         action_completed_without_error = True
 

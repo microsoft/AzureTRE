@@ -121,7 +121,7 @@ async def test_receive_message(mock_invoke_porter_action, mock_service_bus_clien
 
 
 @pytest.mark.asyncio
-async def test_receive_message_unknown_exception(mock_default_credential, mock_auto_lock_renewer, mock_service_bus_client, mock_logger):
+async def test_receive_message_unknown_exception(mock_auto_lock_renewer, mock_service_bus_client, mock_logger):
     """Test receiving a message with an unknown exception."""
     mock_service_bus_client_instance = mock_service_bus_client.return_value
     mock_auto_lock_renewer.return_value = AsyncMock()
