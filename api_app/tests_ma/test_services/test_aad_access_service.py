@@ -1,7 +1,7 @@
 import pytest
 from mock import call, patch
 
-from models.domain.authentication import User, RoleAssignment
+from models.domain.authentication import User, Role, RoleAssignment
 from models.domain.workspace import Workspace, WorkspaceRole
 from services.aad_authentication import AzureADAuthorization
 from services.access_service import AuthConfigValidationError
@@ -405,7 +405,7 @@ def test_get_workspace_user_emails_by_role_assignment_with_single_user_with_no_m
 
     # Build user response
     user_response_no_mail = user_response.copy()
-    user_response_no_mail["responses"][0]["body"]["mail"] = None
+    user_response_no_mail["responses"][0]["body"]["userPrincipalName"] = None
     users.return_value = user_response_no_mail
 
     roles.return_value = roles_response
@@ -569,6 +569,80 @@ def test_get_user_details_with_batch_of_more_than_20_requests(mock_graph_post, m
     mock_graph_post.assert_has_calls(calls, any_order=True)
 
 
+@patch("services.aad_authentication.AzureADAuthorization._ms_graph_query")
+def test_get_workspace_role_by_name(mock_ms_graph_query):
+    workspace = Workspace(
+        id="abc",
+        etag="",
+        templateName="template-name",
+        templateVersion="0.1.0",
+        resourcePath="test",
+        properties={
+            "client_id": "1234",
+            "sp_id": "abc127",
+            "app_role_id_workspace_owner": "abc128",
+            "app_role_id_workspace_researcher": "abc129",
+            "app_role_id_workspace_airlock_manager": "abc130",
+        },
+    )
+
+    mock_ms_graph_query.return_value = {
+        "value": [
+            Role(id=1, value="AirlockManager", isEnabled=True, description="", displayName="Airlock Manager", origin="", allowedMemberTypes=[]).dict(),
+            Role(id=2, value="WorkspaceResearcher", isEnabled=True, description="", displayName="Workspace Researcher", origin="", allowedMemberTypes=[]).dict(),
+            Role(id=3, value="WorkspaceOwner", isEnabled=True, description="", displayName="Workspace Owner", origin="", allowedMemberTypes=[]).dict(),
+        ]
+    }
+
+    access_service = AzureADAuthorization()
+    role = access_service.get_workspace_role_by_name("WorkspaceOwner", workspace)
+
+    assert role.id == "3"
+
+
+@patch("services.aad_authentication.AzureADAuthorization.get_user_by_email")
+def test_get_user_by_email(mock_get_user_by_email):
+    workspace = Workspace(
+        id="abc",
+        etag="",
+        templateName="template-name",
+        templateVersion="0.1.0",
+        resourcePath="test",
+        properties={
+            "client_id": "1234",
+            "sp_id": "abc127",
+            "app_role_id_workspace_owner": "abc128",
+            "app_role_id_workspace_researcher": "abc129",
+            "app_role_id_workspace_airlock_manager": "abc130",
+        },
+    )
+
+    mock_get_user_by_email.return_value = User(id="1", name="John Doe", email="john.doe@example.com", roles=["WorkspaceOwner"])
+
+    access_service = AzureADAuthorization()
+    user = access_service.get_user_by_email("john.doe@example.com")
+
+    assert user == mock_get_user_by_email.return_value
+
+
+@patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_for_user")
+def test_get_role_assignment_for_user(mock_get_role_assignment_for_user):
+    mock_get_role_assignment_for_user.return_value = Role(
+        id=1,
+        value="AirlockManager",
+        isEnabled=True,
+        description="",
+        displayName="Airlock Manager",
+        origin="",
+        allowedMemberTypes=[]
+    ).dict()
+
+    access_service = AzureADAuthorization()
+    role = access_service._get_role_assignment_for_user("123", "abc", 1)
+
+    assert role == mock_get_role_assignment_for_user.return_value
+
+
 def get_mock_batch_response(user_principals, group_principals):
     response_body = {"responses": []}
     for user_principal in user_principals:
@@ -587,7 +661,7 @@ def get_mock_user_response(principal_id, mail, name):
         "id": "1",
         "status": 200,
         "headers": headers,
-        "body": {"@odata.context": user_odata, "mail": mail, "id": principal_id, "displayName": name},
+        "body": {"@odata.context": user_odata, "userPrincipalName": mail, "id": principal_id, "displayName": name},
     }
     return user_response_body
 
@@ -600,7 +674,7 @@ def get_mock_group_response(group):
         group_members_body.append(
             {
                 "@odata.type": "#microsoft.graph.user",
-                "mail": member.mail,
+                "userPrincipalName": member.mail,
                 "id": member.principal_id,
                 "displayName": member.display_name,
             }

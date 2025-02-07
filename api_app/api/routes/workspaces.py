@@ -39,12 +39,16 @@ from .resource_helpers import cascaded_update_resource, delete_validation, enric
 from models.domain.request_action import RequestAction
 from services.logging import logger
 
+from core.config import USER_MANAGEMENT_ENABLED
+
 
 workspaces_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 workspaces_shared_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin)])
 workspace_services_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 user_resources_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 
+def _is_user_management_enabled():
+    return USER_MANAGEMENT_ENABLED
 
 def validate_user_has_valid_role_for_user_resource(user, user_resource):
     if "WorkspaceOwner" in user.roles:
@@ -547,6 +551,11 @@ async def retrieve_user_resource_history_by_user_resource_id(user_resource=Depen
 
 @workspaces_shared_router.get("/workspaces/{workspace_id}/assignable-users", response_model=AssignableUsersInResponse, name=strings.API_GET_ASSIGNABLE_USERS)
 async def get_assignable_users(workspace=Depends(get_workspace_by_id_from_path)) -> AssignableUsersInResponse:
+    if _is_user_management_enabled() is False:
+        logger.exception("Getting Assignable Users failed - User management is disabled.  Enable via the USER_MANAGEMENT_ENABLED environment variable.")
+        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail=strings.USER_MANAGEMENT_DISABLED)
+
+
     access_service = get_access_service()
     assignable_users = access_service.get_assignable_users()
     return AssignableUsersInResponse(assignable_users=assignable_users)
@@ -560,6 +569,10 @@ async def get_workspace_roles(workspace=Depends(get_workspace_by_id_from_path)) 
 
 @workspaces_shared_router.post("/workspaces/{workspace_id}/users/assign", status_code=status.HTTP_202_ACCEPTED, name=strings.API_ASSIGN_WORKSPACE_USER)
 async def assign_workspace_user(response: Response, user_email: str, role_name: str, workspace=Depends(get_workspace_by_id_from_path)) -> UsersInResponse:
+    if _is_user_management_enabled() is False:
+        logger.exception("User assignment failed - User management is disabled.  Enable via the USER_MANAGEMENT_ENABLED environment variable.")
+        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail=strings.USER_MANAGEMENT_DISABLED)
+
     access_service = get_access_service()
 
     user = access_service.get_user_by_email(user_email)
@@ -580,6 +593,11 @@ async def assign_workspace_user(response: Response, user_email: str, role_name: 
 async def remove_workspace_user_assignment(user_email: str,
                                            role_name: str,
                                            workspace=Depends(get_workspace_by_id_from_path)) -> UsersInResponse:
+
+    if _is_user_management_enabled() is False:
+        logger.exception("User de-assignment failed - User management is disabled.  Enable via the USER_MANAGEMENT_ENABLED environment variable.")
+        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail=strings.USER_MANAGEMENT_DISABLED)
+
 
     access_service = get_access_service()
 

@@ -53,9 +53,12 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
   const { workspace, roles, workspaceApplicationIdURI } = useContext(WorkspaceContext);
 
+  const [loadingUsers, setloadingUsers] = useState(false);
+
   const getUsers = useCallback(async () => {
     setState(prevState => ({ ...prevState, apiError: undefined, loadingState: LoadingState.Loading }));
 
+    setloadingUsers(true);
     try {
       const scopeId = roles.length > 0 ? workspaceApplicationIdURI : "";
       const result = await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}`, HttpMethod.Get, scopeId);
@@ -75,6 +78,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
       err.userMessage = "Error retrieving users";
       setState({ users: [], apiError: err, loadingState: LoadingState.Error });
     }
+    setloadingUsers(false);
   }, [apiCall, workspace.id, roles.length, workspaceApplicationIdURI]);
 
   const addedAssignment = async () => {
@@ -210,7 +214,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
       </Stack>
       {state.apiError && <ExceptionLayout e={state.apiError} />}
       <div className="tre-resource-panel" style={{ padding: '0px' }}>
-      <SelectionZone selection={selection} selectionMode={isTreAdmin ? SelectionMode.single : SelectionMode.none} >
+      { !loadingUsers && <SelectionZone selection={selection} selectionMode={isTreAdmin ? SelectionMode.single : SelectionMode.none} >
         <GroupedList
           items={state.users}
           onRenderCell={onRenderCell}
@@ -220,7 +224,15 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
           compact={false}
         />
         </SelectionZone>
+}
       </div>
+      {
+          loadingUsers && <Stack>
+              <Stack.Item style={{ paddingTop: '10px', paddingBottom: '10px' }}>
+                  <Spinner />
+              </Stack.Item>
+          </Stack>
+        }
       <Dialog
           hidden={hideCancelDialog}
           onDismiss={() => {setHideCancelDialog(true);}}

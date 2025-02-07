@@ -258,3 +258,6 @@ PARAMETERS_WITH_WRONG_TYPE = "Parameters with wrong type"
 
 # Value that a sensitive is replaced with in Cosmos
 REDACTED_SENSITIVE_VALUE = "REDACTED"
+
+# User Management
+USER_MANAGEMENT_DISABLED = "User management is disabled"

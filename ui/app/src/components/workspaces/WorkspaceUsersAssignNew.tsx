@@ -1,4 +1,4 @@
-import { ComboBox, Dropdown, IComboBoxOption, IDropdownOption, ISelectableOption, Label,  Panel, PanelType, PrimaryButton, Spinner, Stack } from "@fluentui/react";
+import { Dropdown, IDropdownOption, Label,  Panel, PanelType, PrimaryButton, Spinner, Stack, TextField } from "@fluentui/react";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
@@ -9,11 +9,6 @@ import { ExceptionLayout } from "../shared/ExceptionLayout";
 
 interface WorkspaceUsersAssignProps {
   onAssignUser: (request: any) => void;
-}
-
-interface AssignableUser {
-  name: string;
-  email: string;
 }
 
 interface WorkspaceRole {
@@ -28,7 +23,6 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
   const navigate = useNavigate();
   const apiCall = useAuthApiCall();
 
-  const [userOptions, setUserOptions] = useState<IComboBoxOption[]>([]);
   const [roleOptions, setRoleOptions] = useState<IDropdownOption[]>([]);
 
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
@@ -38,8 +32,8 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
   const [hasAssignmentError, setHasAssignmentError] = useState(false);
   const [assignmentError, setAssignmentError] = useState({} as APIError);
 
-  const onUserChange = (event: any, option: any) => {
-    setSelectedUser(option ? option.key : null);
+  const onUserChange = (event: any) => {
+    setSelectedUser(event ? event.target.value : null);
   };
 
   const onRoleChange = (event: any, option: any) => {
@@ -47,26 +41,6 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
   };
 
   const dismissPanel = useCallback(() => navigate('../'), [navigate]);
-
-  const getAssignableUsers = useCallback(async () => {
-    try {
-      const scopeId = roles.length > 0 ? workspaceApplicationIdURI : "";
-      const response = await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.AssignableUsers}`, HttpMethod.Get, scopeId);
-      const assignableUsers = response.assignable_users;
-
-      const options: IComboBoxOption[] = assignableUsers.map((assignableUser: AssignableUser) => ({
-        key: assignableUser.email,
-        text: assignableUser.email,
-        data: { name: assignableUser.name },
-      }));
-
-      setUserOptions(options);
-    }
-    catch (err: any) {
-      err.userMessage = 'Error retrieving assignable users';
-    }
-
-  }, [apiCall, roles.length, workspace.id, workspaceApplicationIdURI]);
 
   const getWorkspaceRoles = useCallback(async () => {
     try {
@@ -87,9 +61,8 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
   }, [apiCall, roles.length, workspace.id, workspaceApplicationIdURI]);
 
   useEffect(() => {
-    getAssignableUsers();
     getWorkspaceRoles();
-  }, [getAssignableUsers, getWorkspaceRoles]);
+  }, [getWorkspaceRoles]);
 
   const assign = useCallback(async () => {
     setAssigning(true);
@@ -120,18 +93,6 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
     return footer;
   }, [selectedUser, selectedRole, assign, assigning]);
 
-  const onRenderOption = (option?: ISelectableOption<any>): JSX.Element | null => {
-    if (!option) {
-      return null;
-    }
-    return (
-      <div style={{ padding: '8px 0' }}>
-        <div style={{ fontWeight: 'bold' }}>{option.data?.name}</div>
-        <div>{option.text}</div>
-      </div>
-    );
-  };
-
   return (
     <Panel
       headerText="Assign user to a role"
@@ -147,13 +108,11 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
       <Stack tokens={{ childrenGap: 20 }} styles={{ root: { paddingTop: 20 } }}>
         <Stack tokens={{ childrenGap: 10 }} verticalAlign="center">
           <Label>User</Label>
-          <ComboBox
+          <TextField
             placeholder="Enter a user's email address"
-            options={userOptions}
             styles={{ root: { width: '100%' } }}
             disabled={assigning}
             onChange={onUserChange}
-            onRenderOption={onRenderOption}
           />
         </Stack>
         <Stack tokens={{ childrenGap: 10 }} verticalAlign="center">
