@@ -1,8 +1,8 @@
 resource "azurerm_route_table" "rt" {
-  name                          = "rt-${var.tre_id}"
-  resource_group_name           = azurerm_resource_group.core.name
-  location                      = var.location
-  tags                          = local.tre_core_tags
+  name                = "rt-${var.tre_id}"
+  resource_group_name = azurerm_resource_group.core.name
+  location            = var.location
+  tags                = local.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 
