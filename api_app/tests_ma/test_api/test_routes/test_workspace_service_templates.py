@@ -176,3 +176,22 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME, service_template_name="template1"))
 
         assert response.status_code == expected_status
+
+    # POST /workspace-service-templates/
+    async def test_post_workspace_service_template_with_invalid_resource_type(self, app, client):
+        input_data = {
+            "name": "invalid-template",
+            "description": "Invalid template",
+            "version": "0.1.0",
+            "resourceType": "InvalidType",
+            "current": True,
+            "type": "object",
+            "required": [],
+            "properties": {},
+            "actions": []
+        }
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_data)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.json()["detail"] == strings.INVALID_RESOURCE_TYPE.format('WorkspaceService', input_data.resourceType)

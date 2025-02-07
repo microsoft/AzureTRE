@@ -222,3 +222,22 @@ class TestWorkspaceTemplate:
         await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.dict())
 
         create_template_mock.assert_called_once_with(input_workspace_template, ResourceType.WorkspaceService, '')
+
+    # POST /workspace-templates
+    async def test_post_workspace_template_with_invalid_resource_type(self, app, client):
+        input_data = {
+            "name": "invalid-template",
+            "description": "Invalid template",
+            "version": "0.1.0",
+            "resourceType": "InvalidType",
+            "current": True,
+            "type": "object",
+            "required": [],
+            "properties": {},
+            "customActions": []
+        }
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_data)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.json()["detail"] == strings.INVALID_RESOURCE_TYPE.format('Workspace', input_data.resourceType)
