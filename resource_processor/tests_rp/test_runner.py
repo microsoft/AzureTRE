@@ -1,13 +1,11 @@
 import json
 from unittest.mock import patch, AsyncMock, Mock
 import pytest
-import asyncio
 from resource_processor.vmss_porter.runner import (
-    set_up_config, receive_message, run_porter, invoke_porter_action, get_porter_outputs, check_runners, runner, default_credentials
+    set_up_config, receive_message, invoke_porter_action, get_porter_outputs, check_runners, runner
 )
 from azure.servicebus.aio import ServiceBusClient
-from azure.servicebus import ServiceBusMessage, ServiceBusSessionFilter
-from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
+from azure.servicebus import ServiceBusSessionFilter
 
 
 @pytest.fixture

@@ -192,7 +192,6 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
             if returncode == 0:
                 action_completed_without_error = True
 
-
         if "uninstall" == action and "could not find installation" in err:
             logger.warning("The installation doesn't exist. Treating as a successful action to allow the flow to proceed.")
             action_completed_without_error = True
@@ -240,7 +239,8 @@ async def get_porter_outputs(msg_body: dict, config: dict):
 
     if returncode != 0:
         error_message = "Error context message = " + " ".join(err.split('\n'))
-        logger.info(f"{msg_body["id"]}: Failed to get outputs with error = {error_message}")
+        installation_id = msg_body["id"]
+        logger.info(f"{installation_id}: Failed to get outputs with error = {error_message}")
         return False, {}
     else:
         outputs_json = {}

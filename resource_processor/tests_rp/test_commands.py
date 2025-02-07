@@ -3,10 +3,12 @@ import pytest
 from unittest.mock import patch, AsyncMock
 from helpers.commands import azure_login_command, apply_porter_credentials_sets_command, azure_acr_login_command, build_porter_command, build_porter_command_for_outputs, get_porter_parameter_keys
 
+
 @pytest.fixture
 def mock_get_porter_parameter_keys():
     with patch("helpers.commands.get_porter_parameter_keys", new_callable=AsyncMock) as mock:
         yield mock
+
 
 @pytest.mark.parametrize("config, expected_command", [
     ({"azure_environment": "AzureCloud", "vmss_msi_id": "msi_id"}, "az cloud set --name AzureCloud >/dev/null  && az login --identity -u msi_id >/dev/null "),
@@ -16,6 +18,7 @@ def test_azure_login_command(config, expected_command):
     """Test azure_login_command function."""
     assert azure_login_command(config) == expected_command
 
+
 @pytest.mark.parametrize("config, expected_command", [
     ({"vmss_msi_id": "msi_id"}, "porter credentials apply vmss_porter/arm_auth_local_debugging.json >/dev/null 2>&1 && porter credentials apply vmss_porter/aad_auth.json >/dev/null 2>&1"),
     ({}, "porter credentials apply vmss_porter/arm_auth_local_debugging.json >/dev/null 2>&1 && porter credentials apply vmss_porter/aad_auth_local_debugging.json >/dev/null 2>&1")
@@ -24,12 +27,14 @@ def test_apply_porter_credentials_sets_command(config, expected_command):
     """Test apply_porter_credentials_sets_command function."""
     assert apply_porter_credentials_sets_command(config) == expected_command
 
+
 @pytest.mark.parametrize("config, expected_command", [
     ({"registry_server": "myregistry.azurecr.io"}, "az acr login --name myregistry >/dev/null ")
 ])
 def test_azure_acr_login_command(config, expected_command):
     """Test azure_acr_login_command function."""
     assert azure_acr_login_command(config) == expected_command
+
 
 @pytest.mark.asyncio
 async def test_build_porter_command(mock_get_porter_parameter_keys):
@@ -45,6 +50,7 @@ async def test_build_porter_command(mock_get_porter_parameter_keys):
     command = await build_porter_command(config, msg_body)
     assert command == expected_command
 
+
 @pytest.mark.asyncio
 async def test_build_porter_command_for_upgrade(mock_get_porter_parameter_keys):
     """Test build_porter_command function for upgrade action."""
@@ -59,6 +65,7 @@ async def test_build_porter_command_for_upgrade(mock_get_porter_parameter_keys):
     command = await build_porter_command(config, msg_body)
     assert command == expected_command
 
+
 @pytest.mark.asyncio
 async def test_build_porter_command_for_outputs():
     """Test build_porter_command_for_outputs function."""
@@ -67,6 +74,7 @@ async def test_build_porter_command_for_outputs():
 
     command = await build_porter_command_for_outputs(msg_body)
     assert command == expected_command
+
 
 @pytest.mark.asyncio
 @patch("helpers.commands.azure_login_command", return_value="az login command")
