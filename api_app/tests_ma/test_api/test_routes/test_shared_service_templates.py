@@ -114,20 +114,12 @@ class TestSharedServiceTemplates:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     # POST /shared-service-templates
-    async def test_post_shared_service_template_with_invalid_resource_type(self, app, client):
-        input_data = {
-            "name": "invalid-template",
-            "description": "Invalid template",
-            "version": "0.1.0",
-            "resourceType": "InvalidType",
-            "current": True,
-            "type": "object",
-            "required": [],
-            "properties": {},
-            "actions": []
-        }
+    async def test_post_shared_service_template_with_invalid_resource_type(self, app, client, input_shared_service_template):
+
+        input_data = input_shared_service_template.dict()
+        input_data["resourceType"] = ResourceType.WorkspaceService
 
         response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_data)
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-        assert response.json()["detail"] == strings.INVALID_RESOURCE_TYPE.format('SharedService', input_data.resourceType)
+        assert response.text == strings.INVALID_RESOURCE_TYPE.format(ResourceType.SharedService, input_data["resourceType"])

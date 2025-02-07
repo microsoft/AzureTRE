@@ -33,6 +33,7 @@ from models.schemas.shared_service_template import SharedServiceTemplateInCreate
 def input_workspace_template():
     return WorkspaceTemplateInCreate(
         name="my-tre-workspace",
+        resourceType=ResourceType.Workspace,
         version="0.0.1",
         current=True,
         json_schema={
@@ -99,6 +100,7 @@ def input_workspace_service_template():
     return WorkspaceServiceTemplateInCreate(
         name="my-tre-workspace-service",
         version="0.0.1",
+        resourceType=ResourceType.WorkspaceService,
         current=True,
         json_schema={
             "$schema": "http://json-schema.org/draft-07/schema",
@@ -119,6 +121,7 @@ def input_workspace_service_template():
 def input_user_resource_template():
     return UserResourceTemplateInCreate(
         name="my-tre-user-resource",
+        resourceType=ResourceType.UserResource,
         version="0.0.1",
         current=True,
         json_schema={
@@ -140,6 +143,7 @@ def input_user_resource_template():
 def input_shared_service_template():
     return SharedServiceTemplateInCreate(
         name="my-tre-shared-service",
+        resourceType=ResourceType.SharedService,
         version="0.0.1",
         current=True,
         json_schema={

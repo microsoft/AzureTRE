@@ -8,6 +8,7 @@ from models.domain.resource_template import CustomAction, ResourceTemplate, Prop
 class ResourceTemplateInCreate(BaseModel):
     name: str = Field(title="Template name")
     version: str = Field(title="Template version")
+    resourceType: str = Field(title="Resource type")
     current: bool = Field(title="Mark this version as current")
     json_schema: Dict = Field(title="JSON Schema compliant template")
     customActions: List[CustomAction] = Field(default=[], title="Custom actions")
