@@ -153,6 +153,41 @@
             }
           }
         ]
+      },
+      {
+        "stepId": "260421b3-7308-491f-b531-e007cdc0ff46",
+        "stepTitle": "Add network firewall rules for guacamole",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_guacamole",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureAD",
+                  "description": "AAD access for authNZ",
+                  "source_addresses": "{{ resource.properties.web_apps_addresses }}",
+                  "destination_addresses": [
+                    "AzureActiveDirectory"
+                  ],
+                  "destination_ports": [
+                    "*"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
       }
     ],
     "uninstall": [
