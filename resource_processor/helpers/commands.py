@@ -4,14 +4,13 @@ import base64
 import logging
 from urllib.parse import urlparse
 
-from resources.helpers import get_installation_id
 from shared.logging import logger, shell_output_logger
 
 
 def azure_login_command(config):
     set_cloud_command = f"az cloud set --name {config['azure_environment']} >/dev/null "
 
-    if config["vmss_msi_id"]:
+    if config.get("vmss_msi_id"):
         # Use the Managed Identity when in VMSS context
         login_command = f"az login --identity -u {config['vmss_msi_id']} >/dev/null "
 
@@ -23,7 +22,7 @@ def azure_login_command(config):
 
 
 def apply_porter_credentials_sets_command(config):
-    if config["vmss_msi_id"]:
+    if config.get("vmss_msi_id"):
         # Use the Managed Identity when in VMSS context
         porter_credential_sets = "porter credentials apply vmss_porter/arm_auth_local_debugging.json >/dev/null 2>&1 && porter credentials apply vmss_porter/aad_auth.json >/dev/null 2>&1"
 
@@ -80,25 +79,31 @@ async def build_porter_command(config, msg_body, custom_action=False):
                     val_base64_bytes = base64.b64encode(val_bytes)
                     parameter_value = val_base64_bytes.decode("ascii")
 
-                porter_parameters = porter_parameters + f" --param {parameter_name}=\"{parameter_value}\""
+                porter_parameters = porter_parameters + f"--param {parameter_name}=\"{parameter_value}\" "
 
-    installation_id = get_installation_id(msg_body)
+    installation_id = msg_body['id']
 
     command_line = [f"porter"
                     # If a custom action (i.e. not install, uninstall, upgrade) we need to use 'invoke'
-                    f"{' invoke --action' if custom_action else ''}"
-                    f" {msg_body['action']} \"{installation_id}\""
-                    f" --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
-                    f" {porter_parameters} --force"
-                    f" --credential-set arm_auth"
-                    f" --credential-set aad_auth"
+                    f"{' invoke --action' if custom_action else ''} "
+                    f"{msg_body['action']} \"{installation_id}\" "
+                    f"--reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']} "
+                    f"{porter_parameters}"
+                    f"--force "
+                    f"--credential-set arm_auth "
+                    f"--credential-set aad_auth "
                     ]
+
+    if msg_body['action'] == 'upgrade':
+        command_line[0] = command_line[0] + f"{'--force-upgrade '}"
+
+    command_line[0] = command_line[0].strip()
 
     return command_line
 
 
 async def build_porter_command_for_outputs(msg_body):
-    installation_id = get_installation_id(msg_body)
+    installation_id = msg_body['id']
     command_line = [f"porter installations output list --installation {installation_id} --output json"]
     return command_line
 
