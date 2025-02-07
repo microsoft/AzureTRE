@@ -4,7 +4,7 @@ from httpx import AsyncClient
 import config
 
 
-pytestmark = pytest.mark.asyncio
+pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 
 @pytest.mark.smoke
