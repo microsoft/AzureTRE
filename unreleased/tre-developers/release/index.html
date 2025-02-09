@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../assets/ms_icon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.3">
     
     
       
@@ -3551,17 +3551,21 @@
 <li>The release title should be just the version number "0.9.2" in the example above.</li>
 <li>Copy the text from the CHANGELOG.md file and paste in the release description.</li>
 <li>Include a final line with a link to the full changelog similar to this:
- <!-- markdownlint-disable-next-line MD034 --><p><strong>Full Changelog</strong>: https://github.com/microsoft/AzureTRE/compare/v0.9.1...v0.9.2
-7. Update <a href="https://github.com/microsoft/AzureTRE-Deployment">AzureTRE-Deployment</a>. The procedure may vary depending on the level of changes introduced in the new version but should include the following steps:
-   1. Update the tag used in <a href="https://github.com/microsoft/AzureTRE-Deployment/blob/main/.devcontainer/devcontainer.json">devcontainer.json</a>.
-   2. Rebuild the container.
-   3. Compare both <code>.devcontainer</code> and <code>.github</code> folders of the new release with the ones in the repo and make required updates so that only required difference exist.
-   The compare can be done with VSCode <a href="https://marketplace.visualstudio.com/items?itemName=moshfeu.compare-folders">Compare Folders extension</a> as you have both the old version (under to root folder) and the "new" one inside the <em>AzureTRE</em> symlink.
-   4. With all changes made, rebuild the container to verify it's working and that AzureTRE folder has been populated correctly.
-8. Once tests have been complete edit GitHub Release by disabling <code>Set as a pre-release</code> and enabling <code>Set as the latest release</code>.</p>
+ <!-- markdownlint-disable-next-line MD034 --><p><strong>Full Changelog</strong>: https://github.com/microsoft/AzureTRE/compare/v0.9.1...v0.9.2</p>
 </li>
 </ol>
 </li>
+<li>
+<p>Update <a href="https://github.com/microsoft/AzureTRE-Deployment">AzureTRE-Deployment</a>. The procedure may vary depending on the level of changes introduced in the new version but should include the following steps:</p>
+<ol>
+<li>Update the tag used in <a href="https://github.com/microsoft/AzureTRE-Deployment/blob/main/.devcontainer/devcontainer.json">devcontainer.json</a>.</li>
+<li>Rebuild the container.</li>
+<li>Compare both <code>.devcontainer</code> and <code>.github</code> folders of the new release with the ones in the repo and make required updates so that only required difference exist.
+ The compare can be done with VSCode <a href="https://marketplace.visualstudio.com/items?itemName=moshfeu.compare-folders">Compare Folders extension</a> as you have both the old version (under to root folder) and the "new" one inside the <em>AzureTRE</em> symlink.</li>
+<li>With all changes made, rebuild the container to verify it's working and that AzureTRE folder has been populated correctly.</li>
+</ol>
+</li>
+<li>Once tests have been complete edit GitHub Release by disabling <code>Set as a pre-release</code> and enabling <code>Set as the latest release</code>.</li>
 </ol>
 
 
@@ -3612,7 +3616,7 @@
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../assets/javascripts/bundle.f1b6f286.min.js"></script>
       
     
   </body>
