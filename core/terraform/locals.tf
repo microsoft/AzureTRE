@@ -25,8 +25,8 @@ locals {
 
   cosmos_ip_filter_set = toset(
     var.enable_local_debugging
-      ? concat(local.azure_portal_cosmos_ips_list, [local.myip])
-      : local.azure_portal_cosmos_ips_list
+    ? concat(local.azure_portal_cosmos_ips_list, [local.myip])
+    : local.azure_portal_cosmos_ips_list
   )
 
   # we define some zones in core despite not used by the core infra because
