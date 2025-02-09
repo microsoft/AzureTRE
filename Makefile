@@ -149,7 +149,7 @@ terraform-upgrade:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR}/terraform/ && ./upgrade.sh
+	&& ./devops/scripts/upgrade.sh ${DIR}
 
 terraform-import:
 	$(call target_title, "Importing ${DIR} with Terraform") \
@@ -200,7 +200,7 @@ bundle-build:
 	&& if [ -d terraform ]; then terraform -chdir=terraform init -backend=false; terraform -chdir=terraform validate; fi \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} IMAGE_NAME_PREFIX=${IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_build.sh \
-	&& porter build \
+	&& ${MAKEFILE_DIR}/devops/scripts/porter_build_bundle.sh \
 	  $(MAKE) bundle-check-params
 
 bundle-install: bundle-check-params
@@ -309,8 +309,10 @@ deploy-shared-service:
 	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh $${PROPS}
 
 firewall-install:
-	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
-	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
+	. ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
+	&& $(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
+	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service \
+	PROPS="$${FIREWALL_SKU+--firewall_sku $${FIREWALL_SKU} }$${FIREWALL_FORCE_TUNNEL_IP+--firewall_force_tunnel_ip $${FIREWALL_FORCE_TUNNEL_IP} }"
 
 static-web-upload:
 	$(call target_title, "Uploading to static website") \

@@ -95,6 +95,12 @@
       }
     },
     {
+      "name": "guac_server_layout",
+      "source": {
+        "env": "GUAC_SERVER_LAYOUT"
+      }
+    },
+    {
       "name": "image_tag",
       "source": {
         "env": "IMAGE_TAG"
