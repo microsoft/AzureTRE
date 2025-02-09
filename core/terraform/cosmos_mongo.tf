@@ -6,7 +6,7 @@ resource "azurerm_cosmosdb_account" "mongo" {
   kind                       = "MongoDB"
   automatic_failover_enabled = false
   mongo_server_version       = 4.2
-  ip_range_filter            = toset(var.enable_local_debugging ? concat(split(",", local.azure_portal_cosmos_ips), [local.myip]) : split(",", local.azure_portal_cosmos_ips))
+  ip_range_filter            = local.cosmos_ip_filter_set
 
   capabilities {
     name = "EnableServerless"

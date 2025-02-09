@@ -32,4 +32,6 @@ locals {
     "privatelink.queue.core.windows.net",
     "privatelink.table.core.windows.net"
   ])
+
+  subnet_ids_map = { for s in azurerm_virtual_network.core.subnet : s.name => s.id }
 }
