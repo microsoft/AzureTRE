@@ -74,7 +74,6 @@ BUG FIXES:
 * Recreate tre_output.json if empty. ([[#4292](https://github.com/microsoft/AzureTRE/issues/4292)])
 * Ensure R directory is present before attempting to update package mirror URL ([#4332](https://github.com/microsoft/AzureTRE/pull/4332))
 
-
 COMPONENTS:
 
 | name | version |
