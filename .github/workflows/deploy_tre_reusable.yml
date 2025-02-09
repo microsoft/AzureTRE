@@ -425,8 +425,13 @@ jobs:
         with:
           # Although porter publish will build automatically, our makefile build target includes logic that should run
           COMMAND: |
-            for i in {1..3}; do make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }}
-            && ec=0 && break || ec=\$? && sleep 30; done; (exit \$ec)
+            # Loop to retry the make command up to 3 times
+            for i in {1..3}; do
+              make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }} && ec=0 && break || ec=\$? && sleep 30;
+            done;
+
+            # Exit with the last status code
+            (exit \$ec)
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
@@ -471,8 +476,13 @@ jobs:
         with:
           # Although porter publish will build automatically, our makefile build target includes logic that should run
           COMMAND: |
-            for i in {1..3}; do make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }}
-            && ec=0 && break || ec=\$? && sleep 30; done; (exit \$ec)
+            # Loop to retry the make command up to 3 times
+            for i in {1..3}; do
+            make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }} && ec=0 && break || ec=\$? && sleep 30;
+            done
+
+            # Exit with the last status code
+            (exit \$ec)
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
@@ -515,8 +525,13 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: |
-            for i in {1..3}; do make bundle-register DIR=${{ matrix.BUNDLE_DIR }}
-            && ec=0 && break || ec=\$? && sleep 10; done; (exit \$ec)
+            # Loop to retry the make command up to 3 times
+            for i in {1..3}; do
+              make bundle-register DIR=${{ matrix.BUNDLE_DIR }} && ec=0 && break || ec=\$? && sleep 10;
+            done
+
+            # Exit with the last status code
+            (exit \$ec)
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
@@ -575,8 +590,13 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: |
-            for i in {1..3}; do make bundle-register DIR=${{ matrix.BUNDLE_DIR }}
-            && ec=0 && break || ec=\$? && sleep 10; done; (exit \$ec)
+            # Loop to retry the make command up to 3 times
+            for i in {1..3}; do
+              make bundle-register DIR=${{ matrix.BUNDLE_DIR }} && ec=0 && break || ec=\$? && sleep 10;
+            done;
+
+            # Exit with the last status code
+            (exit \$ec)
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
@@ -624,8 +644,13 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: |
-            for i in {1..3}; do make bundle-register DIR=${{ matrix.BUNDLE_DIR }}
-            && ec=0 && break || ec=\$? && sleep 10; done; (exit \$ec)
+            # Loop to retry the make command up to 3 times
+            for i in {1..3}; do
+              make bundle-register DIR=${{ matrix.BUNDLE_DIR }} && ec=0 && break || ec=\$? && sleep 10;
+            done;
+
+            # Exit with the last status code
+            (exit \$ec)
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
