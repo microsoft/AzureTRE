@@ -12,8 +12,6 @@ export ARM_STORAGE_USE_AZUREAD=true
 export ARM_USE_AZUREAD=true
 export ARM_USE_OIDC=true
 
-# terraform_wrapper_path="../../devops/scripts/terraform_wrapper.sh"
-
 # This variables are loaded in for us
 # shellcheck disable=SC2154
 terraform init -input=false -backend=true -reconfigure \
@@ -24,19 +22,6 @@ terraform init -input=false -backend=true -reconfigure \
 
 echo "*** Migrating TF Resources... ***"
 
-
-terraform_show_json=$(terraform show -json)
-
-# Remove cnab-state legacy state path form state. Needs to be run before refresh, as refresh will fail.
-state_store_legacy_path=$(echo "${terraform_show_json}" \
-   | jq 'select(.values.root_module.resources != null) | .values.root_module.resources[] | select(.address=="azurerm_storage_share.storage_state_path") | .values.id')
-
-if [ -n "${state_store_legacy_path}" ]; then
-  echo -e "\n\e[96mRemoving legacy state path from TF state\e[0m..."
-  terraform state rm azurerm_storage_share.storage_state_path
-fi
-
-# terraform show might fail if provider schema has changed. Since we don't call apply at this stage a refresh is needed
 terraform refresh
 
 # 1. Check we have a root_module in state
@@ -61,4 +46,93 @@ terraform_show_json=$(terraform show -json)
 #   fi
 # fi
 
-echo "*** Migration is done. ***"
+# List of NSG association resource addresses to remove.
+declare -a NSG_ASSOC_RESOURCES=(
+  "module.network.azurerm_subnet_network_security_group_association.bastion"
+  "module.network.azurerm_subnet_network_security_group_association.app_gw"
+  "module.network.azurerm_subnet_network_security_group_association.shared"
+  "module.network.azurerm_subnet_network_security_group_association.web_app"
+  "module.network.azurerm_subnet_network_security_group_association.resource_processor"
+  "module.network.azurerm_subnet_network_security_group_association.airlock_processor"
+  "module.network.azurerm_subnet_network_security_group_association.airlock_notification"
+  "module.network.azurerm_subnet_network_security_group_association.airlock_storage"
+  "module.network.azurerm_subnet_network_security_group_association.airlock_events"
+  "module.network.azurerm_subnet_network_security_group_association.firewall_management"
+)
+
+echo "*** Removing NSG Associations ***"
+
+for resource in "${NSG_ASSOC_RESOURCES[@]}"; do
+  resource_id=$(echo "${terraform_show_json}" | jq -r --arg addr "$resource" '
+    def walk_resources:
+      (.resources[]? ),
+      (.child_modules[]? | walk_resources);
+    .values.root_module | walk_resources | select(.address==$addr) | .values.id
+  ')
+
+  if [ -n "$resource_id" ] && [ "$resource_id" != "null" ]; then
+    echo "Removing NSG association: ${resource} (id: ${resource_id})"
+    terraform state rm "$resource"
+  else
+    echo "NSG association resource not found in state: ${resource}"
+  fi
+done
+
+declare -a old_subnet_resources=(
+  "module.network.azurerm_subnet.bastion"
+  "module.network.azurerm_subnet.azure_firewall"
+  "module.network.azurerm_subnet.app_gw"
+  "module.network.azurerm_subnet.web_app"
+  "module.network.azurerm_subnet.shared"
+  "module.network.azurerm_subnet.resource_processor"
+  "module.network.azurerm_subnet.airlock_processor"
+  "module.network.azurerm_subnet.airlock_notification"
+  "module.network.azurerm_subnet.airlock_storage"
+  "module.network.azurerm_subnet.airlock_events"
+  "module.network.azurerm_subnet.firewall_management"
+)
+
+echo "*** Removing Subnets ***"
+
+for resource in "${old_subnet_resources[@]}"; do
+  resource_id=$(echo "${terraform_show_json}" | jq -r --arg addr "$resource" '
+    def walk_resources:
+      (.resources[]? ),
+      (.child_modules[]? | walk_resources);
+    .values.root_module | walk_resources | select(.address==$addr) | .values.id
+  ')
+
+  if [ -n "$resource_id" ] && [ "$resource_id" != "null" ]; then
+    echo "Removing subnet: ${resource} (id: ${resource_id})"
+    terraform state rm "$resource"
+  else
+    echo "Subnet resource not found in state: ${resource}"
+  fi
+done
+
+echo "*** Removing VNet ***"
+
+vnet_address="module.network.azurerm_virtual_network.core"
+vnet_id=$(echo "${terraform_show_json}" | jq -r --arg addr "$vnet_address" '
+  def walk_resources:
+    (.values.root_module.resources[]?),
+    (.values.root_module.child_modules[]? | .resources[]?);
+  walk_resources | select(.address == $addr) | .values.id
+')
+
+if [ -n "${vnet_id}" ] && [ "${vnet_id}" != "null" ]; then
+  echo "Removing VNet from state: ${vnet_address} (ID: ${vnet_id})"
+  terraform state rm "${vnet_address}"
+else
+  echo "VNet resource not found in state: ${vnet_address}"
+fi
+
+
+echo "*** Re-importing VNet ***"
+
+if [ -n "${vnet_id}" ] && [ "${vnet_id}" != "null" ]; then
+  echo "Importing VNet with ID: ${vnet_id} into new resource address: ${vnet_address}"
+  terraform import "${vnet_address}" "${vnet_id}"
+else
+  echo "No VNet ID found; skipping re-import of VNet."
+fi
