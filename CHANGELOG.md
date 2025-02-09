@@ -4,6 +4,7 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 ENHANCEMENTS:
+* Allow workspace App Service Plan SKU to be updated ([#4331](https://github.com/microsoft/AzureTRE/issues/4331))
 
 BUG FIXES:
 
@@ -72,7 +73,6 @@ BUG FIXES:
 * Windows R version must be 4.1.2 otherwise post install script doesn't update package mirror URL ([#4288](https://github.com/microsoft/AzureTRE/issues/4288))
 * Recreate tre_output.json if empty. ([[#4292](https://github.com/microsoft/AzureTRE/issues/4292)])
 * Ensure R directory is present before attempting to update package mirror URL ([#4332](https://github.com/microsoft/AzureTRE/pull/4332))
-* Allow workspace App Service Plan SKU to be updated ([#4331](https://github.com/microsoft/AzureTRE/issues/4331))
 
 COMPONENTS:
 
