@@ -5,6 +5,7 @@
 
 ENHANCEMENTS:
 * Add Windows image field to the Admin VM template ([#4274](https://github.com/microsoft/AzureTRE/pull/4274))
+* Allow workspace App Service Plan SKU to be updated ([#4331](https://github.com/microsoft/AzureTRE/issues/4331))
 
 BUG FIXES:
 
