@@ -15,7 +15,6 @@ function kv_add_network_exception() {
   local TRE_ID_LOCAL
   TRE_ID_LOCAL=$(get_tre_id)
 
-  local RG_NAME="rg-${TRE_ID_LOCAL}"
   local KV_NAME="kv-${TRE_ID_LOCAL}"
   local MY_IP="${PUBLIC_DEPLOYMENT_IP_ADDRESS:-}"
 
@@ -27,13 +26,13 @@ function kv_add_network_exception() {
 
   # ensure kv exists
   #
-  if ! does_kv_exist "$RG_NAME" "$KV_NAME"; then
+  if ! does_kv_exist "$KV_NAME"; then
     return 0   # don't cause outer sourced script to fail
   fi
 
   # add keyvault network exception
   #
-  az keyvault network-rule add --resource-group "$RG_NAME" --name "$KV_NAME" --ip-address "$MY_IP" --output none
+  az keyvault network-rule add --name "$KV_NAME" --ip-address "$MY_IP" --output none
 
   local ATTEMPT=1
   local MAX_ATTEMPTS=10
@@ -68,7 +67,6 @@ function kv_remove_network_exception() {
   local TRE_ID_LOCAL
   TRE_ID_LOCAL=$(get_tre_id)
 
-  local RG_NAME="rg-${TRE_ID_LOCAL}"
   local KV_NAME="kv-${TRE_ID_LOCAL}"
   local MY_IP="${PUBLIC_DEPLOYMENT_IP_ADDRESS:-}"
 
@@ -80,7 +78,7 @@ function kv_remove_network_exception() {
 
   # ensure kv exists
   #
-  if ! does_kv_exist "$RG_NAME" "$KV_NAME"; then
+  if ! does_kv_exist "$KV_NAME"; then
     return 0   # don't cause outer sourced script to fail
   fi
 
@@ -112,15 +110,9 @@ function get_tre_id() {
 
 function does_kv_exist() {
 
-  RG_NAME=$1
-  KV_NAME=$2
+  KV_NAME=$1
 
-  if [[ -z "$(az group list --query "[?name=='$RG_NAME']" --output tsv)" ]]; then
-      echo -e " Core resource group $RG_NAME not found\n"
-      return 1
-  fi
-
-  if [[ -z "$(az keyvault list --resource-group "$RG_NAME" --query "[?name=='$KV_NAME'].id" --output tsv)" ]]; then
+  if [[ -z "$(az keyvault list --query "[?name=='$KV_NAME'].id" --output tsv)" ]]; then
       echo -e " Core key vault $KV_NAME not found\n"
       return 1
   fi
