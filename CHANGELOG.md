@@ -34,12 +34,14 @@ ENHANCEMENTS:
 * Update Guacamole dependencies ([[#4232](https://github.com/microsoft/AzureTRE/issues/4232)])
 * Add option to force tunnel TRE's Firewall ([#4237](https://github.com/microsoft/AzureTRE/issues/4237))
 * Add EventGrid diagnostics to identify airlock issues ([#4258](https://github.com/microsoft/AzureTRE/issues/4258))
+* Disable local authentication in ServiceBus ([#4259](https://github.com/microsoft/AzureTRE/issues/4259))
 * Allow enablement of Secure Boot and vTPM for Guacamole VMs ([#4235](https://github.com/microsoft/AzureTRE/issues/4235))
 * Surface the server-layout parameter of Guacamole [server-layout](https://guacamole.apache.org/doc/gug/configuring-guacamole.html#session-settings) ([#4234](https://github.com/microsoft/AzureTRE/issues/4234))
 * Add encryption at host for VMs ([#4263](https://github.com/microsoft/AzureTRE/pull/4263))
 * Downgrade certs shared service App Gateway to Basic SKU ([#4300](https://github.com/microsoft/AzureTRE/issues/4300))
 * Airlock function host storage to use the user-assigned managed identity ([#4276](https://github.com/microsoft/AzureTRE/issues/4276))
 * Disable local authentication in EventGrid ([#4254](https://github.com/microsoft/AzureTRE/issues/4254))
+
 
 BUG FIXES:
 * Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
@@ -59,6 +61,7 @@ BUG FIXES:
 * Fix Azure ML network tags to use name rather than ID ([[#4151](https://github.com/microsoft/AzureTRE/issues/4151)])
 * Windows R version must be 4.1.2 otherwise post install script doesn't update package mirror URL ([#4288](https://github.com/microsoft/AzureTRE/issues/4288))
 * Recreate tre_output.json if empty. ([[#4292](https://github.com/microsoft/AzureTRE/issues/4292)])
+* Ensure R directory is present before attempting to update package mirror URL ([#4332](https://github.com/microsoft/AzureTRE/pull/4332))
 * Upgrade AzureRM Terraform provider from `3.117.0` to `4.14.0`. ([[PR_link](https://github.com/microsoft/AzureTRE/pull/4255/)])
 * Subnet definitions are now inline in the `azurerm_virtual_network` resource, and NSG associations are set using `security_group` in each subnet block (no separate `azurerm_subnet_network_security_group_association` needed). ([[PR_link](https://github.com/microsoft/AzureTRE/pull/4255/)])
 
