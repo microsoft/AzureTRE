@@ -5,14 +5,25 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
-# Configure AzureRM provider to user Azure AD to connect to storage accounts
+get_resource_id() {
+  local json_data="$1"
+  local resource_addr="$2"
+  echo "$json_data" | jq -r --arg addr "$resource_addr" '
+    def walk_resources:
+      (.resources[]?),
+      (.child_modules[]? | walk_resources);
+    .values.root_module | walk_resources | select(.address==$addr) | .values.id
+  '
+}
+
+# Configure AzureRM provider to use Azure AD to connect to storage accounts
 export ARM_STORAGE_USE_AZUREAD=true
 
-# Configure AzureRM backend to user Azure AD to connect to storage accounts
+# Configure AzureRM backend to use Azure AD to connect to storage accounts
 export ARM_USE_AZUREAD=true
 export ARM_USE_OIDC=true
 
-# This variables are loaded in for us
+# These variables are loaded in for us
 # shellcheck disable=SC2154
 terraform init -input=false -backend=true -reconfigure \
     -backend-config="resource_group_name=${TF_VAR_mgmt_resource_group_name}" \
@@ -24,30 +35,11 @@ echo "*** Migrating TF Resources... ***"
 
 terraform refresh
 
-# 1. Check we have a root_module in state
-# 2. Grab the Resource ID
-# 3. Delete the old resource from state
-# 4. Import the new resource type in using the existing Azure Resource ID
-
+# get TF state in JSON
 terraform_show_json=$(terraform show -json)
 
-# example migration
-# # azurerm_app_service_plan -> azurerm_service_plan
-# core_app_service_plan_id=$(echo "${terraform_show_json}" \
-#   | jq -r 'select(.values.root_module.resources != null) | .values.root_module.resources[] | select(.address=="azurerm_app_service_plan.core") | .values.id')
-# if [ -n "${core_app_service_plan_id}" ]; then
-#   echo "Migrating ${core_app_service_plan_id}"
-#   terraform state rm azurerm_app_service_plan.core
-#   if [[ $(az resource list --query "[?id=='${core_app_service_plan_id}'] | length(@)") == 0 ]];
-#   then
-#     echo "The resource doesn't exist on Azure. Skipping importing it back to state."
-#   else
-#     terraform import azurerm_service_plan.core "${core_app_service_plan_id}"
-#   fi
-# fi
-
-# List of NSG association resource addresses to remove.
-declare -a NSG_ASSOC_RESOURCES=(
+# List of resource addresses to remove.
+declare -a RESOURCES_TO_REMOVE=(
   "module.network.azurerm_subnet_network_security_group_association.bastion"
   "module.network.azurerm_subnet_network_security_group_association.app_gw"
   "module.network.azurerm_subnet_network_security_group_association.shared"
@@ -57,28 +49,6 @@ declare -a NSG_ASSOC_RESOURCES=(
   "module.network.azurerm_subnet_network_security_group_association.airlock_notification"
   "module.network.azurerm_subnet_network_security_group_association.airlock_storage"
   "module.network.azurerm_subnet_network_security_group_association.airlock_events"
-  "module.network.azurerm_subnet_network_security_group_association.firewall_management"
-)
-
-echo "*** Removing NSG Associations ***"
-
-for resource in "${NSG_ASSOC_RESOURCES[@]}"; do
-  resource_id=$(echo "${terraform_show_json}" | jq -r --arg addr "$resource" '
-    def walk_resources:
-      (.resources[]? ),
-      (.child_modules[]? | walk_resources);
-    .values.root_module | walk_resources | select(.address==$addr) | .values.id
-  ')
-
-  if [ -n "$resource_id" ] && [ "$resource_id" != "null" ]; then
-    echo "Removing NSG association: ${resource} (id: ${resource_id})"
-    terraform state rm "$resource"
-  else
-    echo "NSG association resource not found in state: ${resource}"
-  fi
-done
-
-declare -a old_subnet_resources=(
   "module.network.azurerm_subnet.bastion"
   "module.network.azurerm_subnet.azure_firewall"
   "module.network.azurerm_subnet.app_gw"
@@ -92,47 +62,36 @@ declare -a old_subnet_resources=(
   "module.network.azurerm_subnet.firewall_management"
 )
 
-echo "*** Removing Subnets ***"
-
-for resource in "${old_subnet_resources[@]}"; do
-  resource_id=$(echo "${terraform_show_json}" | jq -r --arg addr "$resource" '
-    def walk_resources:
-      (.resources[]? ),
-      (.child_modules[]? | walk_resources);
-    .values.root_module | walk_resources | select(.address==$addr) | .values.id
-  ')
-
+migration_is_needed=0
+for resource in "${RESOURCES_TO_REMOVE[@]}"; do
+  resource_id=$(get_resource_id "${terraform_show_json}" "$resource")
   if [ -n "$resource_id" ] && [ "$resource_id" != "null" ]; then
-    echo "Removing subnet: ${resource} (id: ${resource_id})"
-    terraform state rm "$resource"
-  else
-    echo "Subnet resource not found in state: ${resource}"
+    migration_is_needed=1
+    break
   fi
 done
 
-echo "*** Removing VNet ***"
-
-vnet_address="module.network.azurerm_virtual_network.core"
-vnet_id=$(echo "${terraform_show_json}" | jq -r --arg addr "$vnet_address" '
-  def walk_resources:
-    (.values.root_module.resources[]?),
-    (.values.root_module.child_modules[]? | .resources[]?);
-  walk_resources | select(.address == $addr) | .values.id
-')
-
-if [ -n "${vnet_id}" ] && [ "${vnet_id}" != "null" ]; then
-  echo "Removing VNet from state: ${vnet_address} (ID: ${vnet_id})"
-  terraform state rm "${vnet_address}"
-else
-  echo "VNet resource not found in state: ${vnet_address}"
+if [ "$migration_is_needed" -eq 0 ]; then
+  echo "No old resources found in the state, skipping migration."
+  exit 0
 fi
 
+# remove resources from state
+for resource in "${RESOURCES_TO_REMOVE[@]}"; do
+  resource_id=$(get_resource_id "${terraform_show_json}" "$resource")
+  if [ -n "$resource_id" ] && [ "$resource_id" != "null" ]; then
+    terraform state rm "$resource"
+  else
+    echo "Resource that supposed to be removed not found in state: ${resource}"
+  fi
+done
 
-echo "*** Re-importing VNet ***"
-
+# remove & import VNet
+vnet_address="module.network.azurerm_virtual_network.core"
+vnet_id=$(get_resource_id "${terraform_show_json}" "$vnet_address" "vnet")
 if [ -n "${vnet_id}" ] && [ "${vnet_id}" != "null" ]; then
-  echo "Importing VNet with ID: ${vnet_id} into new resource address: ${vnet_address}"
+  terraform state rm "${vnet_address}"
   terraform import "${vnet_address}" "${vnet_id}"
 else
-  echo "No VNet ID found; skipping re-import of VNet."
+  echo "VNet resource not found in state: ${vnet_address}"
 fi

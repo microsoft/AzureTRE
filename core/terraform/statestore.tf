@@ -1,11 +1,17 @@
 resource "azurerm_cosmosdb_account" "tre_db_account" {
-  name                          = "cosmos-${var.tre_id}"
-  location                      = azurerm_resource_group.core.location
-  resource_group_name           = azurerm_resource_group.core.name
-  offer_type                    = "Standard"
-  kind                          = "GlobalDocumentDB"
-  automatic_failover_enabled    = false
-  ip_range_filter               = toset(var.enable_local_debugging ? concat(split(",", local.azure_portal_cosmos_ips), [local.myip]) : split(",", local.azure_portal_cosmos_ips))
+  name                       = "cosmos-${var.tre_id}"
+  location                   = azurerm_resource_group.core.location
+  resource_group_name        = azurerm_resource_group.core.name
+  offer_type                 = "Standard"
+  kind                       = "GlobalDocumentDB"
+  automatic_failover_enabled = false
+  ip_range_filter            = local.cosmos_ip_filter_set
+
+
+
+
+
+
   local_authentication_disabled = true
   tags                          = local.tre_core_tags
 
