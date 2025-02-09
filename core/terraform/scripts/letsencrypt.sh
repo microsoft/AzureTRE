@@ -1,16 +1,16 @@
 #!/bin/bash
 set -e
 
-if [[ -n ${KEYVAULT} ]]; then
-  script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-
-  # shellcheck disable=SC1091
-  source "$script_dir/../../../devops/scripts/kv_add_network_exception.sh"
-fi
+script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
 if [[ -z ${STORAGE_ACCOUNT} ]]; then
   echo "STORAGE_ACCOUNT not set"
   exit 1
+fi
+
+if [[ -n ${KEYVAULT} ]]; then
+  # shellcheck disable=SC1091
+  source "$script_dir/../../../devops/scripts/kv_add_network_exception.sh"
 fi
 
 # The storage account is protected by network rules
