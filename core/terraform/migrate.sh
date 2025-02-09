@@ -78,7 +78,6 @@ for resource in "${NSG_ASSOC_RESOURCES[@]}"; do
   fi
 done
 
-### Step 2: Remove Old Subnets
 declare -a old_subnet_resources=(
   "module.network.azurerm_subnet.bastion"
   "module.network.azurerm_subnet.azure_firewall"
@@ -94,6 +93,7 @@ declare -a old_subnet_resources=(
 )
 
 echo "*** Removing Subnets ***"
+
 for resource in "${old_subnet_resources[@]}"; do
   resource_id=$(echo "${terraform_show_json}" | jq -r --arg addr "$resource" '
     def walk_resources:
@@ -110,8 +110,8 @@ for resource in "${old_subnet_resources[@]}"; do
   fi
 done
 
-### Step 3: Remove Old Virtual Network
 echo "*** Removing VNet ***"
+
 vnet_address="module.network.azurerm_virtual_network.core"
 vnet_id=$(echo "${terraform_show_json}" | jq -r --arg addr "$vnet_address" '
   def walk_resources:
@@ -128,60 +128,11 @@ else
 fi
 
 
-### Step 4: Re-import Virtual Network
 echo "*** Re-importing VNet ***"
+
 if [ -n "${vnet_id}" ] && [ "${vnet_id}" != "null" ]; then
   echo "Importing VNet with ID: ${vnet_id} into new resource address: ${vnet_address}"
   terraform import "${vnet_address}" "${vnet_id}"
 else
   echo "No VNet ID found; skipping re-import of VNet."
 fi
-
-
-### Step 5: Remove Old Private Endpoints
-echo "*** Removing Private Endpoints ***"
-
-declare -a PRIVATE_ENDPOINTS=(
-  "azurerm_private_endpoint.api_private_endpoint"
-  "azurerm_private_endpoint.blobpe"
-  "azurerm_private_endpoint.filepe"
-  "azurerm_private_endpoint.kvpe"
-  "azurerm_private_endpoint.mongo"
-  "azurerm_private_endpoint.sbpe"
-  "azurerm_private_endpoint.sspe"
-)
-
-for resource in "${PRIVATE_ENDPOINTS[@]}"; do
-  resource_id=$(echo "${terraform_show_json}" | jq -r --arg addr "$resource" '
-    def walk_resources:
-      (.resources[]? ),
-      (.child_modules[]? | walk_resources);
-    .values.root_module | walk_resources | select(.address==$addr) | .values.id
-  ')
-
-  if [ -n "$resource_id" ] && [ "$resource_id" != "null" ]; then
-    echo "Removing Private Endpoint: ${resource} (id: ${resource_id})"
-    terraform state rm "$resource"
-  else
-    echo "Private Endpoint resource not found in state: ${resource}"
-  fi
-done
-
-### Step 6: Re-importing Private Endpoints
-echo "*** Re-importing Private Endpoints ***"
-
-for resource in "${PRIVATE_ENDPOINTS[@]}"; do
-  resource_id=$(echo "${terraform_show_json}" | jq -r --arg addr "$resource" '
-    def walk_resources:
-      (.resources[]? ),
-      (.child_modules[]? | walk_resources);
-    .values.root_module | walk_resources | select(.address==$addr) | .values.id
-  ')
-
-  if [ -n "$resource_id" ] && [ "$resource_id" != "null" ]; then
-    echo "Re-importing Private Endpoint: ${resource} (id: ${resource_id})"
-    terraform import "$resource" "$resource_id"
-  else
-    echo "No Private Endpoint ID found for ${resource}, skipping import."
-  fi
-done
