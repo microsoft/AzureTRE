@@ -12,15 +12,11 @@ function kv_add_network_exception() {
 
   # set up variables
   #
-  local TRE_ID_LOCAL
-  TRE_ID_LOCAL=$(get_tre_id)
+  local KV_NAME
+  KV_NAME=$(get_kv_name)
 
-  local KV_NAME="kv-${TRE_ID_LOCAL}"
-  local MY_IP="${PUBLIC_DEPLOYMENT_IP_ADDRESS:-}"
-
-  if [[ -z "$MY_IP" ]]; then
-    MY_IP=$(curl -s "ipecho.net/plain"; echo)
-  fi
+  local MY_IP
+  MY_IP=$(get_my_ip)
 
   echo -e "\nAdding deployment network exception to key vault $KV_NAME..."
 
@@ -64,15 +60,11 @@ function kv_remove_network_exception() {
 
   # set up variables
   #
-  local TRE_ID_LOCAL
-  TRE_ID_LOCAL=$(get_tre_id)
+  local KV_NAME
+  KV_NAME=$(get_kv_name)
 
-  local KV_NAME="kv-${TRE_ID_LOCAL}"
-  local MY_IP="${PUBLIC_DEPLOYMENT_IP_ADDRESS:-}"
-
-  if [[ -z "$MY_IP" ]]; then
-    MY_IP=$(curl -s "ipecho.net/plain"; echo)
-  fi
+  local MY_IP
+  MY_IP=$(get_my_ip)
 
   echo -e "\nRemoving deployment network exception to key vault $KV_NAME..."
 
@@ -89,7 +81,7 @@ function kv_remove_network_exception() {
 }
 
 
-function get_tre_id() {
+function get_kv_name() {
 
   local TRE_ID_LOCAL="${TRE_ID:-}"
 
@@ -104,7 +96,18 @@ function get_tre_id() {
     exit 1
   fi
 
-  echo "$TRE_ID_LOCAL"
+  echo "kv-${TRE_ID_LOCAL}"
+}
+
+function get_my_ip() {
+
+  local MY_IP="${PUBLIC_DEPLOYMENT_IP_ADDRESS:-}"
+
+  if [[ -z "$MY_IP" ]]; then
+    MY_IP=$(curl -s "ipecho.net/plain"; echo)
+  fi
+
+  echo "$MY_IP"
 }
 
 
