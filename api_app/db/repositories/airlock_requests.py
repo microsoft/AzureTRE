@@ -114,14 +114,19 @@ class AirlockRequestRepository(BaseRepository):
 
         # optional filters
         conditions = []
+        parameters = []
         if workspace_id:
             conditions.append('c.workspaceId=@workspace_id')
+            parameters.append({"name": "@workspace_id", "value": workspace_id})
         if creator_user_id:
             conditions.append('c.createdBy.id=@user_id')
+            parameters.append({"name": "@user_id", "value": creator_user_id})
         if status:
             conditions.append('c.status=@status')
+            parameters.append({"name": "@status", "value": status})
         if type:
             conditions.append('c.type=@type')
+            parameters.append({"name": "@type", "value": type})
 
         if conditions:
             query += ' WHERE ' + ' AND '.join(conditions)
@@ -131,12 +136,6 @@ class AirlockRequestRepository(BaseRepository):
             query += ' ORDER BY c.' + order_by
             query += ' ASC' if order_ascending else ' DESC'
 
-        parameters = [
-            {"name": "@workspace_id", "value": workspace_id},
-            {"name": "@user_id", "value": creator_user_id},
-            {"name": "@status", "value": status},
-            {"name": "@type", "value": type},
-        ]
         airlock_requests = await self.query(query=query, parameters=parameters)
         return parse_obj_as(List[AirlockRequest], airlock_requests)
 

@@ -160,9 +160,6 @@ async def test_get_airlock_requests_queries_db(airlock_request_repo):
     expected_query = airlock_request_repo.airlock_requests_query() + ' WHERE c.workspaceId=@workspace_id'
     expected_parameters = [
         {"name": "@workspace_id", "value": WORKSPACE_ID},
-        {"name": "@user_id", "value": None},
-        {"name": "@status", "value": None},
-        {"name": "@type", "value": None},
     ]
 
     await airlock_request_repo.get_airlock_requests(WORKSPACE_ID)
@@ -174,10 +171,7 @@ async def test_get_airlock_requests_with_user_id(airlock_request_repo):
     user_id = "test_user_id"
     expected_query = airlock_request_repo.airlock_requests_query() + ' WHERE c.createdBy.id=@user_id'
     expected_parameters = [
-        {"name": "@workspace_id", "value": None},
         {"name": "@user_id", "value": user_id},
-        {"name": "@status", "value": None},
-        {"name": "@type", "value": None},
     ]
 
     await airlock_request_repo.get_airlock_requests(creator_user_id=user_id)
@@ -189,10 +183,7 @@ async def test_get_airlock_requests_with_status(airlock_request_repo):
     status = AirlockRequestStatus.Submitted
     expected_query = airlock_request_repo.airlock_requests_query() + ' WHERE c.status=@status'
     expected_parameters = [
-        {"name": "@workspace_id", "value": None},
-        {"name": "@user_id", "value": None},
-        {"name": "@status", "value": status},
-        {"name": "@type", "value": None},
+        {"name": "@status", "value": status}
     ]
 
     await airlock_request_repo.get_airlock_requests(status=status)
@@ -204,9 +195,6 @@ async def test_get_airlock_requests_with_type(airlock_request_repo):
     request_type = AirlockRequestType.Import
     expected_query = airlock_request_repo.airlock_requests_query() + ' WHERE c.type=@type'
     expected_parameters = [
-        {"name": "@workspace_id", "value": None},
-        {"name": "@user_id", "value": None},
-        {"name": "@status", "value": None},
         {"name": "@type", "value": request_type},
     ]
 
@@ -221,7 +209,6 @@ async def test_get_airlock_requests_with_multiple_filters(airlock_request_repo):
     request_type = AirlockRequestType.Import
     expected_query = airlock_request_repo.airlock_requests_query() + ' WHERE c.createdBy.id=@user_id AND c.status=@status AND c.type=@type'
     expected_parameters = [
-        {"name": "@workspace_id", "value": None},
         {"name": "@user_id", "value": user_id},
         {"name": "@status", "value": status},
         {"name": "@type", "value": request_type},
@@ -287,7 +274,7 @@ async def test_get_airlock_requests_for_airlock_manager_single_workspace(
 
     assert len(result) == 1
     assert result[0].id == "request-1"
-    mock_get_requests.assert_called_once_with(workspace_id=WORKSPACE_ID)
+    mock_get_requests.assert_called_once_with(workspace_id=WORKSPACE_ID, type=None, status=None, order_by=None, order_ascending=True)
 
 
 @pytest.mark.asyncio
