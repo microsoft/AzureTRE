@@ -2,7 +2,7 @@ import pytest
 from fastapi import status
 from mock import patch
 
-from api_app.resources import strings
+from resources import strings
 from services.authentication import get_current_tre_user_or_tre_admin
 
 
