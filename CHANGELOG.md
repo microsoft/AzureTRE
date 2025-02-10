@@ -5,6 +5,7 @@
 
 ENHANCEMENTS:
 * Allow workspace App Service Plan SKU to be updated ([#4331](https://github.com/microsoft/AzureTRE/issues/4331))
+* Add core requests endpoint and UI to enable requests to be managed TRE wide. ([[#2510](https://github.com/microsoft/AzureTRE/issues/2510)])
 
 BUG FIXES:
 
