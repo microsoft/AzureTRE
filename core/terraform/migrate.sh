@@ -61,6 +61,8 @@ declare -a RESOURCES_TO_REMOVE=(
   "module.network.azurerm_subnet.airlock_events"
   "module.network.azurerm_subnet.firewall_management"
 )
+vnet_address="module.network.azurerm_virtual_network.core"
+
 
 migration_is_needed=0
 for resource in "${RESOURCES_TO_REMOVE[@]}"; do
