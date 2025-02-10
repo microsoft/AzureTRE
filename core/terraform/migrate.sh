@@ -63,37 +63,38 @@ declare -a RESOURCES_TO_REMOVE=(
 )
 vnet_address="module.network.azurerm_virtual_network.core"
 
-
-migration_is_needed=0
+# Check if migration is needed
+migration_needed=0
 for resource in "${RESOURCES_TO_REMOVE[@]}"; do
   resource_id=$(get_resource_id "${terraform_show_json}" "$resource")
   if [ -n "$resource_id" ] && [ "$resource_id" != "null" ]; then
-    migration_is_needed=1
+    migration_needed=1
     break
   fi
 done
 
-if [ "$migration_is_needed" -eq 0 ]; then
-  echo "No old resources found in the state, skipping migration."
-  exit 0
-fi
+# Remove old resources
+if [ "$migration_needed" -eq 1 ]; then
+  for resource in "${RESOURCES_TO_REMOVE[@]}"; do
+    resource_id=$(get_resource_id "${terraform_show_json}" "$resource")
+    if [ -n "$resource_id" ] && [ "$resource_id" != "null" ]; then
+      terraform state rm "$resource"
+    else
+      echo "Resource that was supposed to be removed not found in state: ${resource}"
+    fi
+  done
 
-# remove resources from state
-for resource in "${RESOURCES_TO_REMOVE[@]}"; do
-  resource_id=$(get_resource_id "${terraform_show_json}" "$resource")
-  if [ -n "$resource_id" ] && [ "$resource_id" != "null" ]; then
-    terraform state rm "$resource"
+  # Remove and re-import the VNet
+  vnet_address="module.network.azurerm_virtual_network.core"
+  vnet_id=$(get_resource_id "${terraform_show_json}" "$vnet_address" "vnet")
+  if [ -n "${vnet_id}" ] && [ "${vnet_id}" != "null" ]; then
+    terraform state rm "${vnet_address}"
+    terraform import "${vnet_address}" "${vnet_id}"
   else
-    echo "Resource that supposed to be removed not found in state: ${resource}"
+    echo "VNet resource not found in state: ${vnet_address}"
   fi
-done
-
-# remove & import VNet
-vnet_address="module.network.azurerm_virtual_network.core"
-vnet_id=$(get_resource_id "${terraform_show_json}" "$vnet_address" "vnet")
-if [ -n "${vnet_id}" ] && [ "${vnet_id}" != "null" ]; then
-  terraform state rm "${vnet_address}"
-  terraform import "${vnet_address}" "${vnet_id}"
+  echo "*** Migration Done ***"
 else
-  echo "VNet resource not found in state: ${vnet_address}"
+  echo "No old resources found in the state, skipping migration."
+  echo "*** Migration Skipped ***"
 fi
