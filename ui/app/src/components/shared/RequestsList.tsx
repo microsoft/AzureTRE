@@ -365,7 +365,7 @@ export const RequestsList: React.FunctionComponent = () => {
           columns={requestColumns}
           selectionMode={SelectionMode.none}
           getKey={(item) => item?.id}
-          onItemInvoked={(item) => navigate(item.id)}
+          onItemInvoked={(item) => navigate(`/${ApiEndpoint.Workspaces}/${item.workspaceId}/${ApiEndpoint.AirlockRequests}/${item.id}`)}
           className="tre-table"
           enableShimmer={loadingState === LoadingState.Loading}
         />
@@ -383,12 +383,6 @@ export const RequestsList: React.FunctionComponent = () => {
           </div>
         }
       </div>
-
-      <Routes>
-        <Route path=":requestId" element={
-          <AirlockViewRequest requests={airlockRequests} onUpdateRequest={getAirlockRequests} />
-        } />
-      </Routes>
     </>
   );
 };
