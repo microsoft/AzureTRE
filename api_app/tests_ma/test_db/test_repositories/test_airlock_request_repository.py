@@ -152,3 +152,61 @@ async def test_get_airlock_requests_queries_db(airlock_request_repo):
 
     await airlock_request_repo.get_airlock_requests(WORKSPACE_ID)
     airlock_request_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=expected_parameters)
+
+
+async def test_get_airlock_requests_with_user_id(airlock_request_repo):
+    airlock_request_repo.container.query_items = MagicMock()
+    user_id = "test_user_id"
+    expected_query = airlock_request_repo.airlock_requests_query() + f' WHERE c.createdBy.id=@user_id'
+    expected_parameters = [
+        {"name": "@user_id", "value": user_id},
+        {"name": "@status", "value": None},
+        {"name": "@type", "value": None},
+    ]
+
+    await airlock_request_repo.get_airlock_requests(creator_user_id=user_id)
+    airlock_request_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=expected_parameters)
+
+
+async def test_get_airlock_requests_with_status(airlock_request_repo):
+    airlock_request_repo.container.query_items = MagicMock()
+    status = AirlockRequestStatus.Submitted
+    expected_query = airlock_request_repo.airlock_requests_query() + f' WHERE c.status=@status'
+    expected_parameters = [
+        {"name": "@user_id", "value": None},
+        {"name": "@status", "value": status},
+        {"name": "@type", "value": None},
+    ]
+
+    await airlock_request_repo.get_airlock_requests(status=status)
+    airlock_request_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=expected_parameters)
+
+
+async def test_get_airlock_requests_with_type(airlock_request_repo):
+    airlock_request_repo.container.query_items = MagicMock()
+    request_type = AirlockRequestType.Import
+    expected_query = airlock_request_repo.airlock_requests_query() + f' WHERE c.type=@type'
+    expected_parameters = [
+        {"name": "@user_id", "value": None},
+        {"name": "@status", "value": None},
+        {"name": "@type", "value": request_type},
+    ]
+
+    await airlock_request_repo.get_airlock_requests(type=request_type)
+    airlock_request_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=expected_parameters)
+
+
+async def test_get_airlock_requests_with_multiple_filters(airlock_request_repo):
+    airlock_request_repo.container.query_items = MagicMock()
+    user_id = "test_user_id"
+    status = AirlockRequestStatus.Submitted
+    request_type = AirlockRequestType.Import
+    expected_query = airlock_request_repo.airlock_requests_query() + f' WHERE c.createdBy.id=@user_id AND c.status=@status AND c.type=@type'
+    expected_parameters = [
+        {"name": "@user_id", "value": user_id},
+        {"name": "@status", "value": status},
+        {"name": "@type", "value": request_type},
+    ]
+
+    await airlock_request_repo.get_airlock_requests(creator_user_id=user_id, status=status, type=request_type)
+    airlock_request_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=expected_parameters)

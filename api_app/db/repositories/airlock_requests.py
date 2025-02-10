@@ -84,7 +84,7 @@ class AirlockRequestRepository(BaseRepository):
                             or current_status == AirlockRequestStatus.RejectionInProgress
                             or current_status == AirlockRequestStatus.BlockingInProgress) and new_status == AirlockRequestStatus.Failed
 
-        return approved_condition and rejected_condition and blocked_condition and (approved_in_progress_condition or rejected_in_progress_condition or blocking_in_progress_condition or draft_condition or submit_condition or in_review_condition or cancel_condition or failed_condition)
+        return approved_condition and rejected_condition and blocked condition and (approved_in_progress_condition or rejected_in_progress_condition or blocking_in_progress_condition or draft_condition or submit_condition or in_review_condition or cancel_condition or failed_condition)
 
     def create_airlock_request_item(self, airlock_request_input: AirlockRequestInCreate, workspace_id: str, user) -> AirlockRequest:
         full_airlock_request_id = str(uuid.uuid4())
@@ -107,16 +107,22 @@ class AirlockRequestRepository(BaseRepository):
 
         return airlock_request
 
-    async def get_airlock_requests(self, workspace_id: str, creator_user_id: Optional[str] = None, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
-        query = self.airlock_requests_query() + f' WHERE c.workspaceId = "{workspace_id}"'
+    async def get_airlock_requests(self, workspace_id: Optional[str] = None, creator_user_id: Optional[str] = None, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
+        query = self.airlock_requests_query()
 
         # optional filters
+        conditions = []
+        if workspace_id:
+            conditions.append(f'c.workspaceId = "{workspace_id}"')
         if creator_user_id:
-            query += ' AND c.createdBy.id=@user_id'
+            conditions.append('c.createdBy.id=@user_id')
         if status:
-            query += ' AND c.status=@status'
+            conditions.append('c.status=@status')
         if type:
-            query += ' AND c.type=@type'
+            conditions.append('c.type=@type')
+
+        if conditions:
+            query += ' WHERE ' + ' AND '.join(conditions)
 
         # optional sorting
         if order_by:
