@@ -21,7 +21,6 @@ import { initializeFileTypeIcons } from '@fluentui/react-file-type-icons';
 import { CostResource } from './models/costs';
 import { CostsContext } from './contexts/CostsContext';
 import { LoadingState } from './models/loadingState';
-import { Requests } from './components/requests/Requests';
 
 export const App: React.FunctionComponent = () => {
   const [appRoles, setAppRoles] = useState([] as Array<string>);
@@ -99,7 +98,6 @@ export const App: React.FunctionComponent = () => {
                               <WorkspaceProvider />
                             </WorkspaceContext.Provider>
                           } />
-                          <Route path="/requests" element={<Requests />} />
                         </Routes>
                       </CostsContext.Provider>
                     </GenericErrorBoundary>
