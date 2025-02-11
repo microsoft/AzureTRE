@@ -275,6 +275,7 @@
       "extensions": [
         "ms-python.python",
         "ms-python.pylance",
+        "ms-python.flake8",
         "hashicorp.terraform",
         "github.vscode-pull-request-github",
         "gitHub.copilot",
