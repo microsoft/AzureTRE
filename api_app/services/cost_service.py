@@ -149,25 +149,8 @@ class CostService:
         query_result = self.get_cached_result(cache_key)
 
         if query_result is None:
-            max_retry = 3
-            retry = 0
-            costs_calculated = False
-            while retry < max_retry and not costs_calculated:
-                try:
-                    retry = retry + 1
-                    query_result = self.query_costs(CostService.TRE_ID_TAG, tre_id, granularity, from_date, to_date, list(resource_groups_dict.keys()))
-                    self.cache_result(cache_key, query_result, timedelta(hours=2))                    
-                    costs_calculated = True
-                except HttpResponseError as e:
-                    if e.status_code == 429:
-                        retry_after = 60
-                        if self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY in e.response.headers:
-                            retry_after = int(e.response.headers[self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY])
-
-                        logging.exception(f"Unable to get costs. Retrying after {retry_after} seconds.")
-                        time.sleep(retry_after)
-                    else:
-                        raise e
+            query_result = self.query_costs(CostService.TRE_ID_TAG, tre_id, granularity, from_date, to_date, list(resource_groups_dict.keys()))
+            self.cache_result(cache_key, query_result, timedelta(hours=2))
 
         summerized_result = self.summerize_untagged(query_result, granularity, resource_groups_dict)
 
@@ -338,9 +321,6 @@ class CostService:
                     resource_groups: list) -> QueryResult:
         query_definition = self.build_query_definition(granularity, from_date, to_date, tag_name, tag_value, resource_groups)
         
-        # This wait time is here to avoid problems with rate limit.
-        time.sleep(20)
-                
         try:
             return self.client.query.usage(self.scope, query_definition)
         except ResourceNotFoundError as e:

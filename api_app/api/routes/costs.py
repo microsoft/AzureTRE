@@ -2,6 +2,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from fastapi.responses import JSONResponse
+import asyncio
 import logging
 from typing import Optional
 
@@ -59,6 +60,9 @@ async def costs(
         workspace_repo=Depends(get_repository(WorkspaceRepository)),
         shared_services_repo=Depends(get_repository(SharedServiceRepository))) -> CostReport:
 
+    # This wait time is here to avoid problems with rate limit.
+    await asyncio.sleep(20)
+    
     validate_report_period(params.from_date, params.to_date)
     try:
         return await cost_service.query_tre_costs(
@@ -93,6 +97,8 @@ async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depend
                           workspace_repo=Depends(get_repository(WorkspaceRepository)),
                           workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository)),
                           user_resource_repo=Depends(get_repository(UserResourceRepository))) -> WorkspaceCostReport:
+    # This wait time is here to avoid problems with rate limit.
+    await asyncio.sleep(20)
 
     validate_report_period(params.from_date, params.to_date)
     try:
