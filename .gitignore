@@ -214,3 +214,10 @@ validation.txt
 
 /index.html
 .DS_Store
+
+# Azurite artifacts
+__blobstorage__
+__queuestorage__
+__azurite_db*__.json
+.python_packages
+

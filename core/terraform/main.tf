@@ -159,6 +159,20 @@ module "airlock_resources" {
   ]
 }
 
+module "airlock_auto_cleaner" {
+  source                                = "./airlock_auto_cleaner"
+  tre_id                                = var.tre_id
+  location                              = var.location
+  resource_group_name                   = azurerm_resource_group.core.name
+  web_app_subnet_id                     = module.network.web_app_subnet_id
+  blob_core_dns_zone_id                 = module.network.blob_core_dns_zone_id
+  tre_core_tags                         = local.tre_core_tags
+
+  depends_on = [
+    module.airlock_resources
+  ]
+}
+
 module "resource_processor_vmss_porter" {
   count                                            = var.resource_processor_type == "vmss_porter" ? 1 : 0
   source                                           = "./resource_processor/vmss_porter"
