@@ -8,7 +8,6 @@ resource "azurerm_cosmosdb_account" "tre_db_account" {
   ip_range_filter            = local.cosmos_ip_filter_set
   local_authentication_disabled = true
   tags                          = local.tre_core_tags
-
   dynamic "capabilities" {
     # We can't change an existing cosmos
     for_each = var.is_cosmos_defined_throughput ? [] : [1]
