@@ -47,3 +47,9 @@ variable "kv_mgmt_encryption_key_name" {
   description = "Name of Key Vault Encryption Key for management resources (only used if enable_cmk_encryption is true)"
   default     = "tre-encryption-mgmt"
 }
+
+variable "public_deployment_ip_address" {
+  description = "Your local IP address if https://ipecho.net/plain is blocked."
+  type        = string
+  default     = ""
+}

@@ -34,6 +34,11 @@ resource "azurerm_storage_account" "state_storage" {
   shared_access_key_enabled        = false
   local_user_enabled               = false
 
+  network_rules {
+    default_action = "Deny"
+    ip_rules       = [local.myip]
+  }
+
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {

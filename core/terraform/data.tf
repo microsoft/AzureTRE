@@ -38,3 +38,8 @@ data "azurerm_monitor_diagnostic_categories" "sb" {
     azurerm_servicebus_namespace.sb
   ]
 }
+
+data "azurerm_storage_account" "mgmt_storage" {
+  name                = var.mgmt_storage_account_name
+  resource_group_name = var.mgmt_resource_group_name
+}
