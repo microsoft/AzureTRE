@@ -11,7 +11,7 @@ resource "azurerm_public_ip" "fwtransit" {
 }
 
 moved {
-  from = azurerm_public_ip.fwpip
+  from = azurerm_public_ip.fwtransit
   to   = azurerm_public_ip.fwtransit[0]
 }
 
