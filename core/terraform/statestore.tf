@@ -6,12 +6,6 @@ resource "azurerm_cosmosdb_account" "tre_db_account" {
   kind                       = "GlobalDocumentDB"
   automatic_failover_enabled = false
   ip_range_filter            = local.cosmos_ip_filter_set
-
-
-
-
-
-
   local_authentication_disabled = true
   tags                          = local.tre_core_tags
 
