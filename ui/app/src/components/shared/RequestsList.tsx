@@ -57,6 +57,7 @@ export const RequestsList: React.FunctionComponent = () => {
       try {
         fetchedWorkspaces = await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get);
       } catch (err: any) {
+        setApiError(err);
         console.error("Failed to fetch workspaces:", err);
       }
       let requests: AirlockRequest[];

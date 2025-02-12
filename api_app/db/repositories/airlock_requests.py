@@ -147,17 +147,18 @@ class AirlockRequestRepository(BaseRepository):
         return parse_obj_as(AirlockRequest, airlock_requests)
 
     async def get_airlock_requests_for_airlock_manager(self, user: User, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
-
         workspace_repo = await WorkspaceRepository.create()
         access_service = get_access_service()
 
         workspaces = await workspace_repo.get_active_workspaces()
         user_role_assignments = access_service.get_identity_role_assignments(user.id)
 
+        valid_roles = {ra.role_id for ra in user_role_assignments}
+
         workspace_ids = [
             workspace.id
             for workspace in workspaces
-            if any(ra.role_id == workspace.properties["app_role_id_workspace_airlock_manager"] for ra in user_role_assignments)
+            if workspace.properties["app_role_id_workspace_airlock_manager"] in valid_roles
         ]
         requests = []
 
