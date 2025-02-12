@@ -20,6 +20,7 @@
     "@types/node": "^20.17.14",
     "@types/react": "^18.3.16",
     "@types/react-dom": "^18.2.6",
+    "@vitejs/plugin-react-swc": "latest",
     "moment": "^2.29.4",
     "node-sass": "^8.0.0",
     "react": "^18.3.1",
@@ -29,6 +30,9 @@
     "react-router-dom": "6.28.2",
     "remark-gfm": "^3.0.1",
     "typescript": "^5.6.3",
+    "vite": "latest",
+    "vite-plugin-svgr": "latest",
+    "vite-tsconfig-paths": "latest",
     "web-vitals": "^3.3.0"
   },
   "devDependencies": {
@@ -36,13 +40,21 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/plugin-syntax-flow": "^7.23.3",
     "@babel/plugin-transform-react-jsx": "^7.23.4",
-    "react-scripts": "5.0.1"
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.17.14",
+    "@types/react": "^18.3.16",
+    "@types/react-dom": "^18.2.6",
+    "@vitest/coverage-v8": "latest",
+    "jsdom": "latest",
+    "sass-embedded": "^1.83.4",
+    "vitest": "latest"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "vite",
+    "build": "tsc && vite build",
+    "serve": "vite preview",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage --watch=false"
   },
   "eslintConfig": {
     "extends": [
