@@ -11,7 +11,6 @@ export const LeftNav: React.FunctionComponent = () => {
 
   const isRequestsRoute = location.pathname.startsWith('/requests'); // ← True if URL starts with /requests
 
-
   const navLinkGroups: INavLinkGroup[] = [
     {
       links: [
@@ -58,17 +57,15 @@ export const LeftNav: React.FunctionComponent = () => {
       isExpanded: isRequestsRoute
     });
 
-
   return (
     <Nav
       onLinkClick={(e, item) => {
         e?.preventDefault();
         if (!item || !item.url) return;
         item.isExpanded = true;
-        if (item.url !=="/requests") {
-         navigate(item.url)
+        if (item.url !== "/requests") {
+          navigate(item.url)
         }
-
       }}
       ariaLabel="TRE Left Navigation"
       groups={navLinkGroups}

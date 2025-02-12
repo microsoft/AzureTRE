@@ -9,7 +9,6 @@ from services.authentication import get_current_tre_user_or_tre_admin
 
 router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 
-
 @router.get("/requests", response_model=List[AirlockRequest], name=strings.API_LIST_REQUESTS)
 async def get_requests(
     user=Depends(get_current_tre_user_or_tre_admin),
@@ -30,7 +29,12 @@ async def get_requests(
         else:
             requests = await airlock_request_repo.get_airlock_requests_for_airlock_manager(user)
 
+        if len(requests) > MAX_RESULTS_ALLOWED:
+            raise HTTPException(status_code=status_code.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail=f"{strings.MAX_RESULTS_EXCEEDED}, maximum allowed: {MAX_RESULTS_ALLOWED}")
+
         return requests
 
+    except ValueError as ve:
+        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=status_code.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

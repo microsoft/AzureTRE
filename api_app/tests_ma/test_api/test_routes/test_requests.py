@@ -30,3 +30,13 @@ class TestRequestsThatDontRequireAdminRigths:
 
         assert response.status_code == status.HTTP_200_OK
         mock_get_airlock_requests_for_airlock_manager.assert_called_once()
+
+    @patch("api.routes.airlock.AirlockRequestRepository.get_airlock_requests", side_effect=Exception("Internal Server Error"))
+    async def test_get_all_requests_returns_500(self, _, app, client):
+        response = await client.get(app.url_path_for(strings.API_LIST_REQUESTS))
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
+    @patch("api.routes.airlock.AirlockRequestRepository.get_airlock_requests_for_airlock_manager", side_effect=Exception("Internal Server Error"))
+    async def test_get_airlock_manager_requests_returns_500(self, _, app, client):
+        response = await client.get(app.url_path_for(strings.API_LIST_REQUESTS), params={"airlock_manager": True})
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR

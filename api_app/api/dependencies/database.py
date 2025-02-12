@@ -28,8 +28,8 @@ class Database(metaclass=Singleton):
         logger.debug(f"Connecting to {STATE_STORE_ENDPOINT}")
 
         credential = await get_credential_async()
-        if MANAGED_IDENTITY_CLIENT_ID or ENABLE_LOCAL_DEBUGGING:
-            logger.debug("Connecting with Entra ID")
+        if MANAGED_IDENTITY_CLIENT_ID:
+            logger.debug("Connecting with managed identity")
             cosmos_client = CosmosClient(
                 url=STATE_STORE_ENDPOINT,
                 credential=credential
