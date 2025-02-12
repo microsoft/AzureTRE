@@ -3,6 +3,7 @@ export enum ApiEndpoint {
   WorkspaceServices = 'workspace-services',
   UserResources = 'user-resources',
   SharedServices = 'shared-services',
+  Requests = 'requests',
   AirlockRequests = 'requests',
   AirlockLink = 'link',
   AirlockSubmit = 'submit',
