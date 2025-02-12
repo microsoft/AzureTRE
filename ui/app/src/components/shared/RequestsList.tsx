@@ -32,6 +32,16 @@ export const RequestsList: React.FunctionComponent = () => {
   const theme = getTheme();
   const navigate = useNavigate();
 
+  const mapRequestsToWorkspace = (requests: AirlockRequest[], workspaces: Workspace[]) => {
+    return requests.map(request => {
+      const workspace = workspaces.find(w => w.id === request.workspaceId);
+      return {
+        ...request,
+        workspace: workspace ? workspace.properties.display_name : 'Unknown Workspace'
+      };
+    });
+  };
+
   const getAirlockRequests = useCallback(async () => {
     setApiError(undefined);
     setLoadingState(LoadingState.Loading);
@@ -43,7 +53,7 @@ export const RequestsList: React.FunctionComponent = () => {
       if (orderBy) {
         query += `order_by=${orderBy}&order_ascending=${orderAscending}&`;
       }
-      let fetchedWorkspaces: { workspaces: Workspace[] };
+      let fetchedWorkspaces: { workspaces: Workspace[] } = { workspaces: [] };
       try {
         fetchedWorkspaces = await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get);
       } catch (err: any) {
@@ -52,21 +62,10 @@ export const RequestsList: React.FunctionComponent = () => {
       let requests: AirlockRequest[];
       let airlock_manager_requests: AirlockRequest[];
       requests = await apiCall(`${ApiEndpoint.Requests}${query.slice(0, -1)}`, HttpMethod.Get);
-      requests = requests.map(request => {
-        const workspace = fetchedWorkspaces.workspaces.find(w => w.id === request.workspaceId);
-        return {
-          ...request,
-          workspace: workspace ? workspace.properties.display_name : 'Unknown Workspace'
-        };
-      });
+      requests = mapRequestsToWorkspace(requests, fetchedWorkspaces.workspaces);
       airlock_manager_requests = await apiCall(`${ApiEndpoint.Requests}?${query.slice(0, -1)}&airlock_manager=true`, HttpMethod.Get);
-      airlock_manager_requests = airlock_manager_requests.map(request => {
-        const workspace = fetchedWorkspaces.workspaces.find(w => w.id === request.workspaceId);
-        return {
-          ...request,
-          workspace: workspace ? workspace.properties.display_name : 'Unknown Workspace'
-        };
-      });
+      airlock_manager_requests = mapRequestsToWorkspace(airlock_manager_requests, fetchedWorkspaces.workspaces);
+
       setMyAirlockRequests(requests);
       setAirlockRequests(requests);
       setLoadingState(LoadingState.Ok);
@@ -314,9 +313,7 @@ export const RequestsList: React.FunctionComponent = () => {
           </Stack>
         </Stack.Item>
       </Stack>
-      {
-        apiError && <ExceptionLayout e={apiError} />
-      }
+      {apiError && <ExceptionLayout e={apiError} />}
       <div className="tre-resource-panel" style={{ padding: '0px' }}>
         <ShimmeredDetailsList
           items={airlockRequests}
@@ -327,19 +324,14 @@ export const RequestsList: React.FunctionComponent = () => {
           className="tre-table"
           enableShimmer={loadingState === LoadingState.Loading}
         />
-        {
-          contextMenuProps && <ContextualMenu {...contextMenuProps} />
-        }
-        {
-          airlockRequests.length === 0 && loadingState !== LoadingState.Loading && <div style={{ textAlign: 'center', padding: '50px 10px 100px 10px' }}>
-            <h4>No requests found</h4>
-            {
-              filters.size > 0
-                ? <small>There are no requests matching your selected filter(s).</small>
-                : <small>Looks like there are no airlock requests yet. Create a new request to get started.</small>
-            }
-          </div>
-        }
+        {contextMenuProps && <ContextualMenu {...contextMenuProps} />}
+        {airlockRequests.length === 0 && loadingState !== LoadingState.Loading && <div style={{ textAlign: 'center', padding: '50px 10px 100px 10px' }}>
+          <h4>No requests found</h4>
+          {filters.size > 0
+            ? <small>There are no requests matching your selected filter(s).</small>
+            : <small>Looks like there are no airlock requests yet. Create a new request to get started.</small>
+          }
+        </div>}
       </div>
     </>
   );
