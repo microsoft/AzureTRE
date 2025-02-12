@@ -3,43 +3,43 @@ output "core_vnet_id" {
 }
 
 output "bastion_subnet_id" {
-  value = azurerm_subnet.bastion.id
+  value = local.subnet_ids_map["AzureBastionSubnet"]
 }
 
 output "azure_firewall_subnet_id" {
-  value = azurerm_subnet.azure_firewall.id
+  value = local.subnet_ids_map["AzureFirewallSubnet"]
 }
 
 output "app_gw_subnet_id" {
-  value = azurerm_subnet.app_gw.id
+  value = local.subnet_ids_map["AppGwSubnet"]
 }
 
 output "web_app_subnet_id" {
-  value = azurerm_subnet.web_app.id
+  value = local.subnet_ids_map["WebAppSubnet"]
 }
 
 output "shared_subnet_id" {
-  value = azurerm_subnet.shared.id
+  value = local.subnet_ids_map["SharedSubnet"]
 }
 
 output "airlock_processor_subnet_id" {
-  value = azurerm_subnet.airlock_processor.id
+  value = local.subnet_ids_map["AirlockProcessorSubnet"]
 }
 
 output "airlock_storage_subnet_id" {
-  value = azurerm_subnet.airlock_storage.id
+  value = local.subnet_ids_map["AirlockStorageSubnet"]
 }
 
 output "airlock_events_subnet_id" {
-  value = azurerm_subnet.airlock_events.id
+  value = local.subnet_ids_map["AirlockEventsSubnet"]
 }
 
 output "resource_processor_subnet_id" {
-  value = azurerm_subnet.resource_processor.id
+  value = local.subnet_ids_map["ResourceProcessorSubnet"]
 }
 
 output "airlock_notification_subnet_id" {
-  value = azurerm_subnet.airlock_notification.id
+  value = local.subnet_ids_map["AirlockNotifiactionSubnet"]
 }
 
 # DNS Zones
