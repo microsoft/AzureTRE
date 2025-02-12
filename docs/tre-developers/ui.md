@@ -54,7 +54,7 @@ The UI is deployed as part of the `tre-deploy` make target (unless you set `depl
 To re-deploy _just_ the UI (after an initial deploy), run `make build-and-deploy-ui` from the root of the dev container. This will:
 - Use the environment variables from your deployment to create a `config.json` file for the UI
 - Build the source code, via `yarn build`
-- Deploy the code to Azure blob storage, where it will be statically served behind the App Gateway that also fronts the APi.
+- Deploy the code to Azure blob storage, where it will be statically served behind the App Gateway that also fronts the API.
 
 ## Run the UI
 - Ensure `deploy_ui=false` is not set in your `./config.yaml` file
@@ -96,3 +96,11 @@ Serves the production build from the `build` folder.<br>
 ### `yarn run test:coverage`
 
 Runs the tests and generates a coverage report.<br>
+
+### `yarn lint`
+
+Runs the linter on the project.<br>
+
+### `yarn format`
+
+Runs the formatter on the project.<br>

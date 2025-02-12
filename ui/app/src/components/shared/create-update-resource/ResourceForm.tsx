@@ -1,26 +1,35 @@
 import { Spinner, SpinnerSize } from "@fluentui/react";
 import { useEffect, useState } from "react";
 import { LoadingState } from "../../../models/loadingState";
-import { HttpMethod, ResultType, useAuthApiCall } from "../../../hooks/useAuthApiCall";
+import {
+  HttpMethod,
+  ResultType,
+  useAuthApiCall,
+} from "../../../hooks/useAuthApiCall";
 import Form from "@rjsf/fluent-ui";
 import { Operation } from "../../../models/operation";
 import { Resource } from "../../../models/resource";
 import { ResourceType } from "../../../models/resourceType";
 import { APIError } from "../../../models/exceptions";
 import { ExceptionLayout } from "../ExceptionLayout";
-import { ResourceTemplate, sanitiseTemplateForRJSF } from "../../../models/resourceTemplate";
+import {
+  ResourceTemplate,
+  sanitiseTemplateForRJSF,
+} from "../../../models/resourceTemplate";
 import validator from "@rjsf/validator-ajv8";
 
 interface ResourceFormProps {
-  templateName: string,
-  templatePath: string,
-  resourcePath: string,
-  updateResource?: Resource,
-  onCreateResource: (operation: Operation) => void,
-  workspaceApplicationIdURI?: string
+  templateName: string;
+  templatePath: string;
+  resourcePath: string;
+  updateResource?: Resource;
+  onCreateResource: (operation: Operation) => void;
+  workspaceApplicationIdURI?: string;
 }
 
-export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: ResourceFormProps) => {
+export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (
+  props: ResourceFormProps,
+) => {
   const [template, setTemplate] = useState<any | null>(null);
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(LoadingState.Loading as LoadingState);
@@ -32,7 +41,12 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
     const getFullTemplate = async () => {
       try {
         // Get the full resource template containing the required parameters
-        const templateResponse = (await apiCall(props.updateResource ? `${props.templatePath}?is_update=true&version=${props.updateResource.templateVersion}` : props.templatePath, HttpMethod.Get)) as ResourceTemplate;
+        const templateResponse = (await apiCall(
+          props.updateResource
+            ? `${props.templatePath}?is_update=true&version=${props.updateResource.templateVersion}`
+            : props.templatePath,
+          HttpMethod.Get,
+        )) as ResourceTemplate;
 
         // if it's an update, populate the form with the props that are available in the template
         if (props.updateResource) {
@@ -56,7 +70,6 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
   }, [apiCall, props.templatePath, template, props.updateResource]);
 
   const removeReadOnlyProps = (data: any, template: ResourceTemplate): any => {
-
     // flatten all the nested properties from across the template into a basic array we can iterate easily
     let allProps = {} as any;
 
@@ -67,11 +80,11 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
             allProps[prop] = templateFragment[key][prop];
           });
         }
-        if (typeof (templateFragment[key]) === "object" && key !== "if") {
+        if (typeof templateFragment[key] === "object" && key !== "if") {
           recurseTemplate(templateFragment[key]);
         }
-      })
-    }
+      });
+    };
 
     recurseTemplate(template);
 
@@ -84,7 +97,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
     }
 
     return data;
-  }
+  };
 
   const createUpdateResource = async (formData: any) => {
     const data = removeReadOnlyProps(formData, template);
@@ -95,15 +108,18 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
     try {
       if (props.updateResource) {
         const wsAuth =
-          props.updateResource.resourceType === ResourceType.WorkspaceService
-          || props.updateResource.resourceType === ResourceType.UserResource;
+          props.updateResource.resourceType === ResourceType.WorkspaceService ||
+          props.updateResource.resourceType === ResourceType.UserResource;
         response = await apiCall(
           props.updateResource.resourcePath,
           HttpMethod.Patch,
           wsAuth ? props.workspaceApplicationIdURI : undefined,
           { properties: data },
           ResultType.JSON,
-          undefined, undefined, props.updateResource._etag);
+          undefined,
+          undefined,
+          props.updateResource._etag,
+        );
       } else {
         const resource = { templateName: props.templateName, properties: data };
         response = await apiCall(
@@ -111,57 +127,68 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
           HttpMethod.Post,
           props.workspaceApplicationIdURI,
           resource,
-          ResultType.JSON);
+          ResultType.JSON,
+        );
       }
 
       setSendingData(false);
       props.onCreateResource(response.operation);
     } catch (err: any) {
-      err.userMessage = 'Error sending create / update request';
+      err.userMessage = "Error sending create / update request";
       setApiError(err);
       setLoading(LoadingState.Error);
       setSendingData(false);
     }
-  }
+  };
 
   // use the supplied uiSchema or create a blank one, and set the overview field to textarea manually.
   const uiSchema = (template && template.uiSchema) || {};
   uiSchema.overview = {
-    "ui:widget": "textarea"
-  }
+    "ui:widget": "textarea",
+  };
 
   // if no specific order has been set, set a generic one with the primary fields at the top
   if (!uiSchema["ui:order"] || uiSchema["ui:order"].length === 0) {
-    uiSchema["ui:order"] = [
-      "display_name",
-      "description",
-      "overview",
-      "*"
-    ]
+    uiSchema["ui:order"] = ["display_name", "description", "overview", "*"];
   }
 
   switch (loading) {
     case LoadingState.Ok:
       return (
-        template &&
-        <div style={{ marginTop: 20 }}>
-          {
-            sendingData ?
-              <Spinner label="Sending request" ariaLive="assertive" labelPosition="bottom" size={SpinnerSize.large} />
-              :
-              <Form omitExtraData={true} schema={template} formData={formData} uiSchema={uiSchema} validator={validator} onSubmit={(e: any) => createUpdateResource(e.formData)} />
-          }
-        </div>
-      )
-    case LoadingState.Error:
-      return (
-        <ExceptionLayout e={apiError} />
+        template && (
+          <div style={{ marginTop: 20 }}>
+            {sendingData ? (
+              <Spinner
+                label="Sending request"
+                ariaLive="assertive"
+                labelPosition="bottom"
+                size={SpinnerSize.large}
+              />
+            ) : (
+              <Form
+                omitExtraData={true}
+                schema={template}
+                formData={formData}
+                uiSchema={uiSchema}
+                validator={validator}
+                onSubmit={(e: any) => createUpdateResource(e.formData)}
+              />
+            )}
+          </div>
+        )
       );
+    case LoadingState.Error:
+      return <ExceptionLayout e={apiError} />;
     default:
       return (
         <div style={{ marginTop: 20 }}>
-          <Spinner label="Loading template" ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
+          <Spinner
+            label="Loading template"
+            ariaLive="assertive"
+            labelPosition="top"
+            size={SpinnerSize.large}
+          />
         </div>
-      )
+      );
   }
-}
+};
