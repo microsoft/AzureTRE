@@ -113,7 +113,7 @@ workspace_swagger_disabled_router = APIRouter()
 
 def get_scope(workspace) -> str:
     # Cope with the fact that scope id can have api:// at the front.
-    return f"api://{workspace.properties['scope_id'].replace('api://','')}/user_impersonation"
+    return f"api://{workspace.properties['scope_id'].replace('api://', '')}/user_impersonation"
 
 
 @workspace_swagger_router.get("/workspaces/{workspace_id}/openapi.json", include_in_schema=False, name="openapi_definitions")

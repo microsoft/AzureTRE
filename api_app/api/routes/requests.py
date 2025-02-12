@@ -9,6 +9,7 @@ from services.authentication import get_current_tre_user_or_tre_admin
 
 router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 
+
 @router.get("/requests", response_model=List[AirlockRequest], name=strings.API_LIST_REQUESTS)
 async def get_requests(
     user=Depends(get_current_tre_user_or_tre_admin),
