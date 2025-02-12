@@ -6,7 +6,7 @@ resource "azurerm_cosmosdb_account" "mongo" {
   kind                          = "MongoDB"
   automatic_failover_enabled    = false
   mongo_server_version          = 4.2
-  ip_range_filter               = var.enable_local_debugging ? "${local.azure_portal_cosmos_ips},${local.myip}" : ""
+  ip_range_filter               = local.cosmos_ip_filter_set
   public_network_access_enabled = var.enable_local_debugging
 
   capabilities {

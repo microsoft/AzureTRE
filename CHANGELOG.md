@@ -5,7 +5,10 @@
 
 ENHANCEMENTS:
 * Allow workspace App Service Plan SKU to be updated ([#4331](https://github.com/microsoft/AzureTRE/issues/4331))
+* Add core requests endpoint and UI to enable requests to be managed TRE wide. ([[#2510](https://github.com/microsoft/AzureTRE/issues/2510)])
 * Remove public IP from TRE's firewall when forced tunneling is configured ([#4346](https://github.com/microsoft/AzureTRE/pull/4346))
+* Upgrade AzureRM Terraform provider from `3.117.0` to `4.14.0`. ([[#4255](https://github.com/microsoft/AzureTRE/pull/4255/)])
+* Subnet definitions are now inline in the `azurerm_virtual_network` resource, and NSG associations are set using `security_group` in each subnet block (no separate `azurerm_subnet_network_security_group_association` needed). ([[#4255](https://github.com/microsoft/AzureTRE/pull/4255/)])
 * Azure Cosmos DB should disable public network access ([#4322](https://github.com/microsoft/AzureTRE/issues/4322))
 
 BUG FIXES:
@@ -76,6 +79,7 @@ BUG FIXES:
 * Windows R version must be 4.1.2 otherwise post install script doesn't update package mirror URL ([#4288](https://github.com/microsoft/AzureTRE/issues/4288))
 * Recreate tre_output.json if empty. ([[#4292](https://github.com/microsoft/AzureTRE/issues/4292)])
 * Ensure R directory is present before attempting to update package mirror URL ([#4332](https://github.com/microsoft/AzureTRE/pull/4332))
+
 
 COMPONENTS:
 
