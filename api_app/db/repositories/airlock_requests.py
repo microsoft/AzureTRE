@@ -7,6 +7,8 @@ from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
 from fastapi import HTTPException, status
 from pydantic import parse_obj_as
+from db.repositories.workspaces import WorkspaceRepository
+from services.authentication import get_access_service
 from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
 from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, \
@@ -107,27 +109,33 @@ class AirlockRequestRepository(BaseRepository):
 
         return airlock_request
 
-    async def get_airlock_requests(self, workspace_id: str, creator_user_id: Optional[str] = None, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
-        query = self.airlock_requests_query() + f' WHERE c.workspaceId = "{workspace_id}"'
+    async def get_airlock_requests(self, workspace_id: Optional[str] = None, creator_user_id: Optional[str] = None, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
+        query = self.airlock_requests_query()
 
         # optional filters
+        conditions = []
+        parameters = []
+        if workspace_id:
+            conditions.append('c.workspaceId=@workspace_id')
+            parameters.append({"name": "@workspace_id", "value": workspace_id})
         if creator_user_id:
-            query += ' AND c.createdBy.id=@user_id'
+            conditions.append('c.createdBy.id=@user_id')
+            parameters.append({"name": "@user_id", "value": creator_user_id})
         if status:
-            query += ' AND c.status=@status'
+            conditions.append('c.status=@status')
+            parameters.append({"name": "@status", "value": status})
         if type:
-            query += ' AND c.type=@type'
+            conditions.append('c.type=@type')
+            parameters.append({"name": "@type", "value": type})
+
+        if conditions:
+            query += ' WHERE ' + ' AND '.join(conditions)
 
         # optional sorting
         if order_by:
             query += ' ORDER BY c.' + order_by
             query += ' ASC' if order_ascending else ' DESC'
 
-        parameters = [
-            {"name": "@user_id", "value": creator_user_id},
-            {"name": "@status", "value": status},
-            {"name": "@type", "value": type},
-        ]
         airlock_requests = await self.query(query=query, parameters=parameters)
         return parse_obj_as(List[AirlockRequest], airlock_requests)
 
@@ -137,6 +145,27 @@ class AirlockRequestRepository(BaseRepository):
         except CosmosResourceNotFoundError:
             raise EntityDoesNotExist
         return parse_obj_as(AirlockRequest, airlock_requests)
+
+    async def get_airlock_requests_for_airlock_manager(self, user: User, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
+        workspace_repo = await WorkspaceRepository.create()
+        access_service = get_access_service()
+
+        workspaces = await workspace_repo.get_active_workspaces()
+        user_role_assignments = access_service.get_identity_role_assignments(user.id)
+
+        valid_roles = {ra.role_id for ra in user_role_assignments}
+
+        workspace_ids = [
+            workspace.id
+            for workspace in workspaces
+            if workspace.properties["app_role_id_workspace_airlock_manager"] in valid_roles
+        ]
+        requests = []
+
+        for workspace_id in workspace_ids:
+            requests += await self.get_airlock_requests(workspace_id=workspace_id, type=type, status=status, order_by=order_by, order_ascending=order_ascending)
+
+        return requests
 
     async def update_airlock_request(
             self,
