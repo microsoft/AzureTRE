@@ -5,6 +5,7 @@
 
 ENHANCEMENTS:
 * Allow workspace App Service Plan SKU to be updated ([#4331](https://github.com/microsoft/AzureTRE/issues/4331))
+* Add core requests endpoint and UI to enable requests to be managed TRE wide. ([[#2510](https://github.com/microsoft/AzureTRE/issues/2510)])
 * Remove public IP from TRE's firewall when forced tunneling is configured ([#4346](https://github.com/microsoft/AzureTRE/pull/4346))
 * Upgrade AzureRM Terraform provider from `3.117.0` to `4.14.0`. ([[#4255](https://github.com/microsoft/AzureTRE/pull/4255/)])
 * Subnet definitions are now inline in the `azurerm_virtual_network` resource, and NSG associations are set using `security_group` in each subnet block (no separate `azurerm_subnet_network_security_group_association` needed). ([[#4255](https://github.com/microsoft/AzureTRE/pull/4255/)])
