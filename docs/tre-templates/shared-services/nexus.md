@@ -46,7 +46,6 @@ This will deploy the infrastructure required for Nexus, then start the service a
 
 ## Setup and usage
 
-1. A TRE Administrator can access Nexus though the admin jumpbox provisioned as part of the TRE deployment. The username is `adminuser` and the password is located in the Key Vault under `vm-<tre-id>-jumpbox-password`
 2. A researcher can access Nexus from within the workspace by using the internal Nexus URL of `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`
 3. To fetch Python packages from the PyPI proxy, a researcher can use `pip install` while specifying the proxy server:
 
@@ -201,3 +200,7 @@ for ext in "${extensions[@]}"; do
     fi
 done
 ```
+
+# Virtual Machine Credentials
+
+A TRE Administrator can access Nexus though the bastion provisioned as part of the TRE deployment. The username is `adminuser` and the SSH private key is located in the Key Vault under `nexus-ssh-private-key`.
