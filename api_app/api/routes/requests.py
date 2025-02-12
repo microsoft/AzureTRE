@@ -29,9 +29,6 @@ async def get_requests(
         else:
             requests = await airlock_request_repo.get_airlock_requests_for_airlock_manager(user)
 
-        if len(requests) > MAX_RESULTS_ALLOWED:
-            raise HTTPException(status_code=status_code.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail=f"{strings.MAX_RESULTS_EXCEEDED}, maximum allowed: {MAX_RESULTS_ALLOWED}")
-
         return requests
 
     except ValueError as ve:
