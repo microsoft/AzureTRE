@@ -5,6 +5,9 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
+# shellcheck disable=SC1091
+source "../../devops/scripts/kv_add_network_exception.sh"
+
 # This is where we can migrate any Terraform before we plan and apply
 # For instance deprecated Terraform resources
 # shellcheck disable=SC1091

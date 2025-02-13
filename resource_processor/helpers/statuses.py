@@ -1,5 +1,5 @@
 from collections import defaultdict
-from resources import strings
+from helpers import strings
 
 
 # Specify pass and fail status strings so we can return the right statuses to the api depending on the action type (with a default of custom action)

@@ -5,7 +5,8 @@ resource "azurerm_cosmosdb_account" "tre_db_account" {
   offer_type                    = "Standard"
   kind                          = "GlobalDocumentDB"
   automatic_failover_enabled    = false
-  ip_range_filter               = "${local.azure_portal_cosmos_ips}${var.enable_local_debugging ? ",${local.myip}" : ""}"
+  public_network_access_enabled = var.enable_local_debugging
+  ip_range_filter               = local.cosmos_ip_filter_set
   local_authentication_disabled = true
   tags                          = local.tre_core_tags
 
