@@ -218,6 +218,15 @@ bundle-install: bundle-check-params
 		--credential-set aad_auth \
 		--debug
 
+bundle:
+	case ${BUNDLE_TYPE} in \
+		(workspace) $(MAKE) workspace_bundle BUNDLE=${BUNDLE} ;; \
+		(workspace_service) $(MAKE) workspace_service_bundle BUNDLE=${BUNDLE} ;; \
+		(shared_service) $(MAKE) shared_service_bundle BUNDLE=${BUNDLE} ;; \
+		(user_resource) $(MAKE) user_resource_bundle WORKSPACE_SERVICE=${WORKSPACE_SERVICE} BUNDLE=${BUNDLE} ;; \
+		(*) echo "Invalid BUNDLE_TYPE: ${BUNDLE_TYPE}"; exit 1 ;; \
+	esac
+
 # Validates that the parameters file is synced with the bundle.
 # The file is used when installing the bundle from a local machine.
 # We remove arm_use_msi on both sides since it shouldn't take effect locally anyway.
