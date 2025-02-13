@@ -37,8 +37,8 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
   admin_password             = random_password.password.result
   tags                       = local.tre_shared_service_tags
   encryption_at_host_enabled = true
-  secure_boot_enabled        = true
-  vtpm_enabled               = true
+  secure_boot_enabled        = local.secure_boot_enabled
+  vtpm_enabled               = local.vtpm_enabled
 
   # set source_image_id/reference depending on the config for the selected image
   source_image_id = local.selected_image_source_id
