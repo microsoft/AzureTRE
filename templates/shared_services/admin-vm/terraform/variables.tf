@@ -23,7 +23,6 @@ variable "key_store_id" {
 
 variable "image_gallery_id" {
   type    = string
-  default = ""
 }
 
 variable "image" {
