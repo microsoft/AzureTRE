@@ -864,3 +864,29 @@ def test_get_assignable_users_returns_users(_, request_get_mock, mock_headers):
     assert len(users) == 1
     assert users[0].name == "User 1"
     assert users[0].email == "User1@test.com"
+
+@patch("services.aad_authentication.AzureADAuthorization._get_msgraph_token", return_value="token")
+@patch("services.aad_authentication.AzureADAuthorization._ms_graph_query")
+@patch("services.aad_authentication.AzureADAuthorization._get_auth_header")
+def test_get_workspace_roles_returns_roles(_, ms_graph_query_mock, mock_headers,workspace_without_groups):
+    access_service = AzureADAuthorization()
+
+    # mock the response of _get_auth_header
+    headers = {"Authorization": f"Bearer token"}
+    mock_headers.return_value = headers
+    headers["Content-type"] = "application/json"
+
+    # Mock the response of the get request
+    request_get_mock_response = {
+       "value": [
+            Role(id=1, value="AirlockManager", isEnabled=True, description="", displayName="Airlock Manager", origin="", allowedMemberTypes=[]).dict(),
+            Role(id=2, value="WorkspaceResearcher", isEnabled=True, description="", displayName="Workspace Researcher", origin="", allowedMemberTypes=[]).dict(),
+            Role(id=3, value="WorkspaceOwner", isEnabled=True, description="", displayName="Workspace Owner", origin="", allowedMemberTypes=[]).dict(),
+        ]
+    }
+    ms_graph_query_mock.return_value = request_get_mock_response
+    roles = access_service.get_workspace_roles(workspace_without_groups)
+
+    assert len(roles) == 3
+    assert roles[0].id == "1"
+    assert roles[0].value == "AirlockManager"
