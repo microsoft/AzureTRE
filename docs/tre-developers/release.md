@@ -21,6 +21,7 @@ The process follows these steps:
    5. Include a final line with a link to the full changelog similar to this:
    <!-- markdownlint-disable-next-line MD034 -->
       **Full Changelog**: https://github.com/microsoft/AzureTRE/compare/v0.9.1...v0.9.2
+
 7. Update [AzureTRE-Deployment](https://github.com/microsoft/AzureTRE-Deployment). The procedure may vary depending on the level of changes introduced in the new version but should include the following steps:
    1. Update the tag used in [devcontainer.json](https://github.com/microsoft/AzureTRE-Deployment/blob/main/.devcontainer/devcontainer.json).
    2. Rebuild the container.

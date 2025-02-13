@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bullseye AS base
+FROM python:3.12-slim-bookworm AS base
 
 COPY requirements.txt /.
 RUN pip3 install --no-cache-dir -r requirements.txt

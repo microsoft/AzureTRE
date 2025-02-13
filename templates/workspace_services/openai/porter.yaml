@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-openai
-version: 1.0.5
+version: 1.0.6
 description: "An OpenAI workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl

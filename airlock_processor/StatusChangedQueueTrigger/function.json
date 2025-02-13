@@ -6,20 +6,20 @@
       "type": "serviceBusTrigger",
       "direction": "in",
       "queueName": "%AIRLOCK_STATUS_CHANGED_QUEUE_NAME%",
-      "connection": "SB_CONNECTION_STRING"
+      "connection": "%SERVICEBUS_CONNECTION_NAME%",
+      "accessRights": "listen",
+      "autoComplete": true
     },
     {
       "type": "eventGrid",
       "name": "stepResultEvent",
-      "topicEndpointUri": "EVENT_GRID_STEP_RESULT_TOPIC_URI_SETTING",
-      "topicKeySetting": "EVENT_GRID_STEP_RESULT_TOPIC_KEY_SETTING",
+      "connection": "EVENT_GRID_STEP_RESULT_CONNECTION",
       "direction": "out"
     },
     {
       "type": "eventGrid",
       "name": "dataDeletionEvent",
-      "topicEndpointUri": "EVENT_GRID_DATA_DELETION_TOPIC_URI_SETTING",
-      "topicKeySetting": "EVENT_GRID_DATA_DELETION_TOPIC_KEY_SETTING",
+      "connection": "EVENT_GRID_DATA_DELETION_CONNECTION",
       "direction": "out"
     }
   ]
