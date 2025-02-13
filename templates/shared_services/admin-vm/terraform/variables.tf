@@ -22,7 +22,7 @@ variable "key_store_id" {
 }
 
 variable "image_gallery_id" {
-  type    = string
+  type = string
 }
 
 variable "image" {
