@@ -16,17 +16,16 @@ locals {
   # https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-firewall#allow-requests-from-the-azure-portal
 
   azure_portal_cosmos_ips_list = [
-    "104.42.195.92",
-    "40.76.54.131",
-    "52.176.6.30",
-    "52.169.50.45",
-    "52.187.184.26"
+    "13.91.105.215",
+    "4.210.172.107",
+    "13.88.56.148",
+    "40.91.218.243"
   ]
 
   cosmos_ip_filter_set = toset(
     var.enable_local_debugging
     ? concat(local.azure_portal_cosmos_ips_list, [local.myip])
-    : local.azure_portal_cosmos_ips_list
+    : []
   )
 
   # we define some zones in core despite not used by the core infra because
