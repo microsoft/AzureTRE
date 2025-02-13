@@ -33,8 +33,8 @@ class TestMigrationRoutesThatRequireAdminRights:
             app.dependency_overrides = {}
 
     # [POST] /migrations/
-    @ patch("api.routes.migrations.logger.info")
-    @ patch("api.routes.migrations.OperationRepository")
+    @patch("api.routes.migrations.logger.info")
+    @patch("api.routes.migrations.OperationRepository")
     async def test_post_migrations_returns_202_on_successful(self, _, logging, client, app):
         response = await client.post(app.url_path_for(strings.API_MIGRATE_DATABASE))
 
@@ -42,8 +42,8 @@ class TestMigrationRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_202_ACCEPTED
 
     # [POST] /migrations/
-    @ patch("api.routes.migrations.logger.info")
-    @ patch("api.routes.migrations.ResourceRepository.rename_field_name", side_effect=ValueError)
+    @patch("api.routes.migrations.logger.info")
+    @patch("api.routes.migrations.ResourceRepository.rename_field_name", side_effect=ValueError)
     async def test_post_migrations_returns_400_if_template_does_not_exist(self, resources_repo, logging, client, app):
         response = await client.post(app.url_path_for(strings.API_MIGRATE_DATABASE))
         assert response.status_code == status.HTTP_400_BAD_REQUEST
