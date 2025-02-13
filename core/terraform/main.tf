@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.117.0"
+      version = "=4.14.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -132,6 +132,7 @@ module "airlock_resources" {
   airlock_app_service_plan_sku          = var.core_app_service_plan_sku
   airlock_processor_subnet_id           = module.network.airlock_processor_subnet_id
   airlock_servicebus                    = azurerm_servicebus_namespace.sb
+  airlock_servicebus_fqdn               = azurerm_servicebus_namespace.sb.endpoint
   applicationinsights_connection_string = module.azure_monitor.app_insights_connection_string
   enable_malware_scanning               = var.enable_airlock_malware_scanning
   arm_environment                       = var.arm_environment
