@@ -91,6 +91,19 @@ az role assignment create \
     --assignee "${LOGGED_IN_OBJECT_ID}" \
     --scope "${STATE_STORE_RESOURCE_ID}"
 
+ROLE_DEFINITION_ID=$(az cosmosdb sql role definition list \
+    --resource-group "${RESOURCE_GROUP_NAME}" \
+    --account-name "${COSMOSDB_ACCOUNT_NAME}" \
+    --query "[?roleName=='Cosmos DB Built-in Data Contributor'].id" \
+    --output tsv)
+
+az cosmosdb sql role assignment create \
+    --resource-group "${RESOURCE_GROUP_NAME}" \
+    --account-name "${COSMOSDB_ACCOUNT_NAME}" \
+    --role-definition-id "${ROLE_DEFINITION_ID}" \
+    --principal-id "${LOGGED_IN_OBJECT_ID}" \
+    --scope "${STATE_STORE_RESOURCE_ID}"
+
 az role assignment create \
     --role "Contributor" \
     --assignee "${LOGGED_IN_OBJECT_ID}" \
