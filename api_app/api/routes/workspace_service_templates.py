@@ -30,6 +30,8 @@ async def get_workspace_service_template(service_template_name: str, is_update: 
 
 @workspace_service_templates_core_router.post("/workspace-service-templates", status_code=status.HTTP_201_CREATED, response_model=WorkspaceServiceTemplateInResponse, response_model_exclude_none=True, name=strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES, dependencies=[Depends(get_current_admin_user)])
 async def register_workspace_service_template(template_input: WorkspaceServiceTemplateInCreate, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInResponse:
+    if template_input.resourceType != ResourceType.WorkspaceService:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=strings.INVALID_RESOURCE_TYPE.format(ResourceType.WorkspaceService, template_input.resourceType))
     try:
         return await template_repo.create_and_validate_template(template_input, ResourceType.WorkspaceService)
     except EntityVersionExist:

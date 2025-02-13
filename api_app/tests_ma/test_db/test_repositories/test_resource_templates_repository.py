@@ -41,6 +41,7 @@ async def test_create_workspace_template_succeeds_without_required(uuid_mock, sa
     expected_type = ResourceType.Workspace
     input_workspace_template = WorkspaceTemplateInCreate(
         name="my-tre-workspace",
+        resourceType=ResourceType.Workspace,
         version="0.0.1",
         current=True,
         json_schema={
