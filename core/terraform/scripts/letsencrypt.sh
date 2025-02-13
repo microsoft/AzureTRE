@@ -8,6 +8,11 @@ if [[ -z ${STORAGE_ACCOUNT} ]]; then
   exit 1
 fi
 
+if [[ -n ${KEYVAULT} ]]; then
+  # shellcheck disable=SC1091
+  source "$script_dir/../../../devops/scripts/kv_add_network_exception.sh"
+fi
+
 # The storage account is protected by network rules
 #
 # The rules need to be temporarily lifted so that the script can determine if the index.html file
