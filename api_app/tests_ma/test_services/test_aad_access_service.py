@@ -85,6 +85,58 @@ def get_app_sp_graph_data_mock():
         ]
     }
 
+@pytest.fixture
+def workspace_with_groups():
+    return Workspace(
+        id="ws1",
+        etag="",
+        templateName="test-template",
+        templateVersion="1.0.0",
+        resourcePath="",
+        properties={
+            "create_aad_groups": True,
+            "tre_id": "TRE-001",
+            "workspace_id": "ws1",
+            "client_id": "app-client-id",
+            "sp_id": "sp123",
+            "app_role_id_workspace_owner": "owner-role-id",
+            "app_role_id_workspace_researcher": "researcher-role-id",
+            "app_role_id_workspace_airlock_manager": "airlock-role-id",
+        }
+    )
+
+@pytest.fixture
+def workspace_without_groups():
+    return Workspace(
+        id="ws2",
+        etag="",
+        templateName="test-template",
+        templateVersion="1.0.0",
+        resourcePath="",
+        properties={
+            "create_aad_groups": False,
+            "tre_id": "TRE-002",
+            "workspace_id": "ws2",
+            "client_id": "app-client-id",
+            "sp_id": "sp456",
+            "app_role_id_workspace_owner": "owner-role-id",
+            "app_role_id_workspace_researcher": "researcher-role-id",
+            "app_role_id_workspace_airlock_manager": "airlock-role-id",
+        }
+    )
+
+@pytest.fixture
+def role_owner():
+    return Role(id="owner-role-id", value="WorkspaceOwner", isEnabled=True, description="Owner", displayName="Owner", origin="", allowedMemberTypes=[])
+
+@pytest.fixture
+def user_without_role():
+    return User(id="user1", name="Test User", email="test@example.com", roles=[])
+
+@pytest.fixture
+def user_with_role():
+    return User(id="user2", name="Test User 2", email="test2@example.com", roles=["WorkspaceOwner"])
+
 
 def test_extract_workspace__raises_error_if_client_id_not_available():
     access_service = AzureADAuthorization()
@@ -701,3 +753,114 @@ def get_mock_role_response(principal_roles):
             }
         )
     return response
+
+@patch("services.aad_authentication.AzureADAuthorization._is_user_in_role", return_value=True)
+@patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use")
+@patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group")
+@patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application")
+def test_assign_workspace_user_already_has_role(workspace_role_in_use_mock,
+                                                assign_user_to_group_mock,
+                                                assign_user_to_role_mock, workspace_without_groups, role_owner,
+                                                user_with_role):
+    access_service = AzureADAuthorization()
+    access_service.assign_workspace_user(user_with_role, workspace_without_groups, role_owner)
+
+    assert workspace_role_in_use_mock.call_count == 0
+    assert assign_user_to_group_mock.call_count == 0
+    assert assign_user_to_role_mock.call_count == 0
+
+@patch("services.aad_authentication.AzureADAuthorization._is_user_in_role", return_value=False)
+@patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=False)
+@patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group")
+@patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application")
+def test_assign_workspace_user_if_no_groups(assign_user_to_role_mock,assign_user_to_group_mock,
+                                             workspace_without_groups, role_owner,
+                                                user_with_role):
+
+    access_service = AzureADAuthorization()
+    assign_user_to_role_mock.return_value = None
+
+    access_service.assign_workspace_user(user_with_role, workspace_without_groups, role_owner)
+
+    assert assign_user_to_group_mock.call_count == 0
+    assert assign_user_to_role_mock.call_count == 1
+
+@patch("services.aad_authentication.AzureADAuthorization._is_user_in_role", return_value=False)
+@patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=True)
+@patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group")
+@patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application")
+def test_assign_workspace_user_if_groups(assign_user_to_role_mock,assign_user_to_group_mock,
+                                             workspace_without_groups, role_owner,
+                                                user_with_role):
+
+    access_service = AzureADAuthorization()
+    assign_user_to_role_mock.return_value = None
+
+    access_service.assign_workspace_user(user_with_role, workspace_without_groups, role_owner)
+
+    assert assign_user_to_group_mock.call_count == 1
+    assert assign_user_to_role_mock.call_count == 0
+
+@patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=False)
+@patch("services.aad_authentication.AzureADAuthorization._remove_workspace_user_from_application_group")
+@patch("services.aad_authentication.AzureADAuthorization._remove_workspace_user_from_application")
+@patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_for_user")
+def test_remove_workspace_user_if_no_groups(get_role_assignment_mock,
+                                            remove_user_to_role_mock,remove_user_to_group_mock,
+                                             workspace_without_groups, role_owner,
+                                                user_with_role):
+
+    access_service = AzureADAuthorization()
+    remove_user_to_role_mock.return_value = None
+    get_role_assignment_mock.return_value = []
+
+    access_service.remove_workspace_role_user_assignment(user_with_role, workspace_without_groups, role_owner)
+
+    assert remove_user_to_group_mock.call_count == 0
+    assert remove_user_to_role_mock.call_count == 1
+
+@patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=True)
+@patch("services.aad_authentication.AzureADAuthorization._remove_workspace_user_from_application_group")
+@patch("services.aad_authentication.AzureADAuthorization._remove_workspace_user_from_application")
+@patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_for_user")
+def test_remove_workspace_user_if_groups(get_role_assignment_mock,
+                                            remove_user_to_role_mock,remove_user_to_group_mock,
+                                             workspace_without_groups, role_owner,
+                                                user_with_role):
+
+    access_service = AzureADAuthorization()
+    remove_user_to_role_mock.return_value = None
+    get_role_assignment_mock.return_value = []
+
+    access_service.remove_workspace_role_user_assignment(user_with_role, workspace_without_groups, role_owner)
+
+    assert remove_user_to_group_mock.call_count == 1
+    assert remove_user_to_role_mock.call_count == 0
+
+
+@patch("services.aad_authentication.AzureADAuthorization._get_msgraph_token", return_value="token")
+@patch("requests.get")
+@patch("services.aad_authentication.AzureADAuthorization._get_auth_header")
+def test_get_assignable_users_returns_users(_, request_get_mock, mock_headers):
+    access_service = AzureADAuthorization()
+
+    # mock the response of _get_auth_header
+    headers = {"Authorization": f"Bearer token"}
+    mock_headers.return_value = headers
+    headers["Content-type"] = "application/json"
+
+    # Mock the response of the get request
+    request_get_mock_response = {
+        "value": [
+            {
+                "displayName": "User 1",
+                "userPrincipalName": "User1@test.com"
+            }
+        ]
+    }
+    request_get_mock.return_value.json.return_value = request_get_mock_response
+    users = access_service.get_assignable_users()
+
+    assert len(users) == 1
+    assert users[0].name == "User 1"
+    assert users[0].email == "User1@test.com"

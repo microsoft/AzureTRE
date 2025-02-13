@@ -393,40 +393,52 @@ class AzureADAuthorization(AccessService):
         return any(r for r in user.roles if r == role.value)
 
     def _is_workspace_role_group_in_use(self, workspace: Workspace) -> bool:
-        msgraph_token = self._get_msgraph_token()
-        application_id = workspace.properties["sp_id"]
-        url = self._get_service_principal_assigned_roles_endpoint(application_id)
-        response = requests.get(url, headers=self._get_auth_header(msgraph_token)).json()
+        aad_groups_in_user = workspace.properties["create_aad_groups"]
+        return aad_groups_in_user
 
-        return any (item for item in response["value"] if item["principalType"] == PrincipalType.Group.value)
+    def _get_workspace_group_name(self, workspace: Workspace, role: Role) -> tuple:
+        tre_id = workspace.properties["tre_id"]
+        workspace_id = workspace.properties["workspace_id"]
+        group_suffix = ""
+        app_role_id_suffix = ""
+        if role.value == "WorkspaceResearcher":
+            group_name = "Workspace Researchers"
+            app_role_id_suffix = "workspace_researcher"
+        elif role.value == "WorkspaceOwner":
+            group_name = "Workspace Owners"
+            app_role_id_suffix = "workspace_owner"
+        elif role.value == "AirlockManager":
+            group_name = "Airlock Managers"
+            app_role_id_suffix = "workspace_airlock_manager"
+        else:
+            raise UserRoleAssignmentError(f"Unknown role: {role.value}")
+
+        return (f"{tre_id}-ws-{workspace_id} {group_name}", f"app_role_id_{app_role_id_suffix}")
 
     def _assign_workspace_user_to_application_group(self, user: User, workspace: Workspace, role: Role):
         msgraph_token = self._get_msgraph_token()
         roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"], msgraph_token)
-        sp_graph_data = self._get_app_sp_graph_data(workspace.properties["client_id"])
-        app_id_to_role_name = {app_role["id"]: app_role["value"] for app_role in sp_graph_data["value"][0]["appRoles"]}
+        group_details = self._get_workspace_group_name(workspace, role)
+        group_name = group_details[0]
+        workspace_app_role_field = group_details[1]
 
-        for group in (item for item in roles_graph_data["value"] if item["principalType"] == PrincipalType.Group.value):
-            group_id = group["principalId"]
-            group_roles=self._get_roles_for_principal(group_id, roles_graph_data, app_id_to_role_name)
-            if role.value in group_roles:
-                # Assign user to this group
-                self._add_user_to_group(user.id, group_id)
+        for group in [item for item in roles_graph_data["value"] if item["principalType"] == PrincipalType.Group.value]:
+            if group.get("principalDisplayName") == group_name and group.get("appRoleId") == workspace.properties[workspace_app_role_field]:
+                self._add_user_to_group(user.id, group["principalId"])
                 return
+
         raise UserRoleAssignmentError(f"Unable to assign user to group with role: {role.value}")
 
     def _remove_workspace_user_from_application_group(self, user: User, workspace: Workspace, role: Role):
         msgraph_token = self._get_msgraph_token()
         roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"], msgraph_token)
-        sp_graph_data = self._get_app_sp_graph_data(workspace.properties["client_id"])
-        app_id_to_role_name = {app_role["id"]: app_role["value"] for app_role in sp_graph_data["value"][0]["appRoles"]}
+        group_details = self._get_workspace_group_name(workspace, role)
+        group_name = group_details[0]
+        workspace_app_role_field = group_details[1]
 
-        for group in (item for item in roles_graph_data["value"] if item["principalType"] == PrincipalType.Group.value):
-            group_id = group["principalId"]
-            group_roles=self._get_roles_for_principal(group_id, roles_graph_data, app_id_to_role_name)
-            if role.value in group_roles:
-                # Assign user to this group
-                self._remove_user_from_group(user.id, group_id)
+        for group in [item for item in roles_graph_data["value"] if item["principalType"] == PrincipalType.Group.value]:
+            if group.get("principalDisplayName") == group_name and group.get("appRoleId") == workspace.properties[workspace_app_role_field]:
+                self._remove_user_from_group(user.id, group["principalId"])
                 return
         raise UserRoleAssignmentError(f"Unable to assign user to group with role: {role.value}")
 
@@ -469,18 +481,19 @@ class AzureADAuthorization(AccessService):
     def remove_workspace_role_user_assignment(self, user: User,
                                               role: Role,
                                               workspace: Workspace) -> None:
-        msgraph_token = self._get_msgraph_token()
-
         # Get the role assignment id for the role we want to remove
         role_assignment = self._get_role_assignment_for_user(user.id, role.id)
 
         if self._is_workspace_role_group_in_use(workspace):
             self._remove_workspace_user_from_application_group(user, workspace, role)
         else:
-            # Remove the role assignment directly
-            url = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user.id}/appRoleAssignments/{role_assignment['id']}"
-            response = requests.delete(url, headers=self._get_auth_header(msgraph_token))
-            return response
+            self._remove_workspace_user_from_application(user,role_assignment)
+
+    def _remove_workspace_user_from_application(self, user: User, role_assignment: dict) -> requests.Response:
+        msgraph_token = self._get_msgraph_token()
+        url = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user.id}/appRoleAssignments/{role_assignment['id']}"
+        response = requests.delete(url, headers=self._get_auth_header(msgraph_token))
+        return response
 
     def _get_batch_users_by_role_assignments_body(self, roles_graph_data):
         request_body = {"requests": []}
