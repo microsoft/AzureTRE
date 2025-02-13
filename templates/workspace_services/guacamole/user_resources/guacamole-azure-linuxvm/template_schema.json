@@ -12,6 +12,20 @@
     "WorkspaceOwner", "WorkspaceResearcher"
   ],
   "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Display name for the VM",
+      "description": "The display name of the VM.",
+      "default": "My Linux VM",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the VM",
+      "description": "Describe what this VM is used for.",
+      "default": "I will use this VM for research.",
+      "updateable": true
+    },
     "os_image": {
       "$id": "#/properties/os_image",
       "type": "string",

@@ -9,6 +9,10 @@ terraform {
       source  = "hashicorp/random"
       version = "=3.5.1"
     }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "3.1.0"
+    }
   }
   backend "azurerm" {
   }
@@ -30,4 +34,10 @@ provider "azurerm" {
     }
   }
   storage_use_azuread = true
+}
+
+provider "azuread" {
+  client_id     = var.auth_client_id
+  client_secret = var.auth_client_secret
+  tenant_id     = var.auth_tenant_id
 }
