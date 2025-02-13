@@ -179,9 +179,9 @@ runs:
       shell: bash
       run: |
         # Write command to a command.sh script file
-        echo "#!/bin/bash" > ./command.sh
-        echo "set -x" >> ./command.sh
         cat <<EOF >> ./command.sh
+        #!/bin/bash
+        set -x
         ${{ inputs.COMMAND }}
         EOF
 
