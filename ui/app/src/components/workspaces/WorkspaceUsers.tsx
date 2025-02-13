@@ -98,7 +98,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
         const encodedUser=selectedUserRole?.email?.replaceAll('#', '%23');
         const selectedRole = selectedUserRole?.role;
         await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}/assign?user_email=${encodedUser}&role_name=${selectedRole}`,
-           HttpMethod.Delete, workspaceApplicationIdURI);
+           HttpMethod.Delete, "");
 
         await getUsers();
 
@@ -111,7 +111,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
         setApiError(err);
         setDeassignmentError(true);
       }
-  }, [apiCall, workspaceApplicationIdURI,selectedUserRole, workspace.id, getUsers]);
+  }, [apiCall, selectedUserRole, workspace.id, getUsers]);
 
   const groups: IGroup[] = useMemo(() => {
     const groupMap: any = {};

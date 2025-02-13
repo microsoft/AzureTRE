@@ -44,7 +44,7 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
 
   const getWorkspaceRoles = useCallback(async () => {
     try {
-      const scopeId = roles.length > 0 ? workspaceApplicationIdURI : "";
+      const scopeId = "";
       const response = await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Roles}`, HttpMethod.Get, scopeId);
 
       const options: IDropdownOption[] = response.roles.map((workspaceRole: WorkspaceRole) => ({
@@ -58,7 +58,7 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
       err.userMessage = 'Error retrieving assignable users';
     }
 
-  }, [apiCall, roles.length, workspace.id, workspaceApplicationIdURI]);
+  }, [apiCall, workspace.id]);
 
   useEffect(() => {
     getWorkspaceRoles();
@@ -69,7 +69,7 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
 
     const encodedUser=selectedUser?.replaceAll('#', '%23');
 
-    const scopeId = roles.length > 0 ? workspaceApplicationIdURI : "";
+    const scopeId = "";
     try {
       const response = await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}/assign?user_email=${encodedUser}&role_name=${selectedRole}`, HttpMethod.Post, scopeId);
       props.onAssignUser(response);
@@ -81,7 +81,7 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
     }
     setAssigning(false);
 
-  }, [selectedUser, roles.length, workspaceApplicationIdURI, apiCall, workspace.id, selectedRole, props]);
+  }, [selectedUser, apiCall, workspace.id, selectedRole, props]);
 
   const renderFooter = useCallback(() => {
     let footer = <></>

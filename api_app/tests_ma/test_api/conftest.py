@@ -1,6 +1,7 @@
 import pytest
 import pytest_asyncio
 from mock import patch
+from unittest.mock import patch
 
 from fastapi import FastAPI
 from httpx import AsyncClient
@@ -20,6 +21,12 @@ def no_auth_token():
     with patch('services.aad_authentication.AccessService.__call__', return_value="token"):
         with patch('services.aad_authentication.AzureADAuthorization._decode_token', return_value="decoded_token"):
             yield
+
+
+@pytest.fixture(autouse=True, scope="session")
+def patch_user_management_enabled():
+    with patch("core.config.USER_MANAGEMENT_ENABLED", new=True):
+        yield
 
 
 def create_test_user() -> User:
