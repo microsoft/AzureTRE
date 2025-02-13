@@ -6,6 +6,16 @@
   "description": "Provides VM in the core network",
   "required": [],
   "properties": {
+    "os_image": {
+      "$id": "#/properties/os_image",
+      "type": "string",
+      "title": "Windows image",
+      "description": "Select Windows image to use for VM",
+      "enum": [
+        "Windows 11"
+      ],
+      "default": "Windows 11"
+    },
     "admin_jumpbox_vm_sku": {
       "$id": "#/properties/admin_jumpbox_vm_sku",
       "type": "string",

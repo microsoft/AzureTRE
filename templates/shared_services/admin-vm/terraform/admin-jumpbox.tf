@@ -37,14 +37,19 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
   admin_password             = random_password.password.result
   tags                       = local.tre_shared_service_tags
   encryption_at_host_enabled = true
-  secure_boot_enabled        = true
-  vtpm_enabled               = true
+  secure_boot_enabled        = local.secure_boot_enabled
+  vtpm_enabled               = local.vtpm_enabled
 
-  source_image_reference {
-    publisher = "MicrosoftWindowsDesktop"
-    offer     = "windows-11"
-    sku       = "win11-24h2-pro"
-    version   = "latest"
+  # set source_image_id/reference depending on the config for the selected image
+  source_image_id = local.selected_image_source_id
+  dynamic "source_image_reference" {
+    for_each = local.selected_image_source_refs
+    content {
+      publisher = source_image_reference.value["publisher"]
+      offer     = source_image_reference.value["offer"]
+      sku       = source_image_reference.value["sku"]
+      version   = source_image_reference.value["version"]
+    }
   }
 
   os_disk {
