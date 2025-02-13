@@ -12,10 +12,7 @@ import { Resource } from "../../../models/resource";
 import { ResourceType } from "../../../models/resourceType";
 import { APIError } from "../../../models/exceptions";
 import { ExceptionLayout } from "../ExceptionLayout";
-import {
-  ResourceTemplate,
-  sanitiseTemplateForRJSF,
-} from "../../../models/resourceTemplate";
+import { ResourceTemplate, sanitiseTemplateForRJSF } from "../../../models/resourceTemplate";
 import validator from "@rjsf/validator-ajv8";
 
 interface ResourceFormProps {
@@ -155,27 +152,19 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (
   switch (loading) {
     case LoadingState.Ok:
       return (
-        template && (
-          <div style={{ marginTop: 20 }}>
-            {sendingData ? (
-              <Spinner
-                label="Sending request"
-                ariaLive="assertive"
-                labelPosition="bottom"
-                size={SpinnerSize.large}
-              />
-            ) : (
-              <Form
-                omitExtraData={true}
-                schema={template}
-                formData={formData}
-                uiSchema={uiSchema}
-                validator={validator}
-                onSubmit={(e: any) => createUpdateResource(e.formData)}
-              />
-            )}
-          </div>
-        )
+        template &&
+        <div style={{ marginTop: 20 }}>
+          {
+            sendingData ?
+              <Spinner label="Sending request" ariaLive="assertive" labelPosition="bottom" size={SpinnerSize.large} />
+              :
+              <Form omitExtraData={true} schema={template} formData={formData} uiSchema={uiSchema} validator={validator} onSubmit={(e: any) => createUpdateResource(e.formData)} />
+          }
+        </div>
+      )
+    case LoadingState.Error:
+      return (
+        <ExceptionLayout e={apiError} />
       );
     case LoadingState.Error:
       return <ExceptionLayout e={apiError} />;
