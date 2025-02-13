@@ -66,6 +66,11 @@ then
   no_wait_option="--no-wait"
 fi
 
+script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+
+# shellcheck disable=SC1091
+source "$script_dir/kv_add_network_exception.sh"
+
 group_show_result=$(az group show --name "${core_tre_rg}" > /dev/null 2>&1; echo $?)
 if [[ "$group_show_result" !=  "0" ]]; then
   echo "Resource group ${core_tre_rg} not found - skipping destroy"
