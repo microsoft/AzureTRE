@@ -58,4 +58,10 @@ locals {
 
   cmk_name                 = "tre-encryption-${var.tre_id}"
   encryption_identity_name = "id-encryption-${var.tre_id}"
+
+  # key vault variables
+  kv_name                          = "kv-${var.tre_id}"
+  kv_public_network_access_enabled = true
+  kv_network_default_action        = var.enable_local_debugging ? "Allow" : "Deny"
+  kv_network_bypass                = "AzureServices"
 }
