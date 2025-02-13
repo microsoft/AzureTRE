@@ -20,3 +20,11 @@ variable "enable_cmk_encryption" {
 variable "key_store_id" {
   type = string
 }
+
+variable "image_gallery_id" {
+  type = string
+}
+
+variable "image" {
+  type = string
+}

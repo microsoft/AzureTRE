@@ -13,6 +13,7 @@ ENHANCEMENTS:
 * Azure Cosmos DB should disable public network access ([#4322](https://github.com/microsoft/AzureTRE/issues/4322))
 * Add bundle target to Makefile for handling different bundle types in single command ([#4372](https://github.com/microsoft/AzureTRE/issues/4372))
 * Migrate UI to Vite build engine and update dependencies ([#4368](https://github.com/microsoft/AzureTRE/pull/4368))
+* Add Windows image field to the Admin VM template ([#4274](https://github.com/microsoft/AzureTRE/pull/4274))
 
 BUG FIXES:
 * Fix upgrade when porter install has failed ([#4338](https://github.com/microsoft/AzureTRE/pull/4338))
