@@ -16,6 +16,8 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Fix upgrade when porter install has failed ([#4338](https://github.com/microsoft/AzureTRE/pull/4338))
+* Fix Cosmos DB local debugging configuration ([#4340](https://github.com/microsoft/AzureTRE/pull/4340))
+
 
 COMPONENTS:
 
@@ -61,7 +63,6 @@ ENHANCEMENTS:
 * Downgrade certs shared service App Gateway to Basic SKU ([#4300](https://github.com/microsoft/AzureTRE/issues/4300))
 * Airlock function host storage to use the user-assigned managed identity ([#4276](https://github.com/microsoft/AzureTRE/issues/4276))
 * Disable local authentication in EventGrid ([#4254](https://github.com/microsoft/AzureTRE/issues/4254))
-* Local Debugging: Cosmos DB Data Contributor role assignment ([#4340](https://github.com/microsoft/AzureTRE/pull/4340))
 
 
 BUG FIXES:
