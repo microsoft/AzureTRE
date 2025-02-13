@@ -9,6 +9,7 @@ import { ResourceType } from "../../../models/resourceType";
 import { APIError } from "../../../models/exceptions";
 import { ExceptionLayout } from "../ExceptionLayout";
 import { ResourceTemplate, sanitiseTemplateForRJSF } from "../../../models/resourceTemplate";
+import validator from "@rjsf/validator-ajv8";
 
 interface ResourceFormProps {
   templateName: string,
@@ -148,7 +149,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
             sendingData ?
               <Spinner label="Sending request" ariaLive="assertive" labelPosition="bottom" size={SpinnerSize.large} />
               :
-              <Form omitExtraData={true} schema={template} formData={formData} uiSchema={uiSchema} onSubmit={(e: any) => createUpdateResource(e.formData)} />
+              <Form omitExtraData={true} schema={template} formData={formData} uiSchema={uiSchema} validator={validator} onSubmit={(e: any) => createUpdateResource(e.formData)} />
           }
         </div>
       )
