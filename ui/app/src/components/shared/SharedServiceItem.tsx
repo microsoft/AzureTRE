@@ -1,22 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ApiEndpoint } from '../../models/apiEndpoints';
-import { useAuthApiCall, HttpMethod } from '../../hooks/useAuthApiCall';
-import { Spinner, SpinnerSize } from '@fluentui/react';
-import { LoadingState } from '../../models/loadingState';
-import { SharedService } from '../../models/sharedService';
-import { ResourceHeader } from './ResourceHeader';
-import { useComponentManager } from '../../hooks/useComponentManager';
-import { Resource } from '../../models/resource';
-import { ResourceBody } from './ResourceBody';
-import { APIError } from '../../models/exceptions';
-import { ExceptionLayout } from './ExceptionLayout';
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ApiEndpoint } from "../../models/apiEndpoints";
+import { useAuthApiCall, HttpMethod } from "../../hooks/useAuthApiCall";
+import { Spinner, SpinnerSize } from "@fluentui/react";
+import { LoadingState } from "../../models/loadingState";
+import { SharedService } from "../../models/sharedService";
+import { ResourceHeader } from "./ResourceHeader";
+import { useComponentManager } from "../../hooks/useComponentManager";
+import { Resource } from "../../models/resource";
+import { ResourceBody } from "./ResourceBody";
+import { APIError } from "../../models/exceptions";
+import { ExceptionLayout } from "./ExceptionLayout";
 
 interface SharedServiceItemProps {
-  readonly?: boolean
+  readonly?: boolean;
 }
 
-export const SharedServiceItem: React.FunctionComponent<SharedServiceItemProps> = (props: SharedServiceItemProps) => {
+export const SharedServiceItem: React.FunctionComponent<
+  SharedServiceItemProps
+> = (props: SharedServiceItemProps) => {
   const { sharedServiceId } = useParams();
   const [sharedService, setSharedService] = useState({} as SharedService);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
@@ -27,19 +29,22 @@ export const SharedServiceItem: React.FunctionComponent<SharedServiceItemProps> 
   const latestUpdate = useComponentManager(
     sharedService,
     (r: Resource) => setSharedService(r as SharedService),
-    (r: Resource) => navigate(`/${ApiEndpoint.SharedServices}`)
+    (r: Resource) => navigate(`/${ApiEndpoint.SharedServices}`),
   );
 
   useEffect(() => {
     const getData = async () => {
       try {
-        let ss = await apiCall(`${ApiEndpoint.SharedServices}/${sharedServiceId}`, HttpMethod.Get);
+        let ss = await apiCall(
+          `${ApiEndpoint.SharedServices}/${sharedServiceId}`,
+          HttpMethod.Get,
+        );
         setSharedService(ss.sharedService);
         setLoadingState(LoadingState.Ok);
-      } catch (err:any) {
+      } catch (err: any) {
         err.userMessage = "Error retrieving shared service";
         setApiError(err);
-        setLoadingState(LoadingState.Error)
+        setLoadingState(LoadingState.Error);
       }
     };
     getData();
@@ -49,19 +54,26 @@ export const SharedServiceItem: React.FunctionComponent<SharedServiceItemProps> 
     case LoadingState.Ok:
       return (
         <>
-          <ResourceHeader resource={sharedService} latestUpdate={latestUpdate} readonly={props.readonly} />
+          <ResourceHeader
+            resource={sharedService}
+            latestUpdate={latestUpdate}
+            readonly={props.readonly}
+          />
           <ResourceBody resource={sharedService} readonly={props.readonly} />
         </>
       );
     case LoadingState.Error:
-      return (
-        <ExceptionLayout e={apiError} />
-      );
+      return <ExceptionLayout e={apiError} />;
     default:
       return (
-        <div style={{ marginTop: '20px' }}>
-          <Spinner label="Loading Shared Service" ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
+        <div style={{ marginTop: "20px" }}>
+          <Spinner
+            label="Loading Shared Service"
+            ariaLive="assertive"
+            labelPosition="top"
+            size={SpinnerSize.large}
+          />
         </div>
-      )
+      );
   }
 };

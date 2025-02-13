@@ -1,10 +1,10 @@
 export enum RoleName {
-    TREAdmin = "TREAdmin",
-    TREUser = "TREUser"
+  TREAdmin = "TREAdmin",
+  TREUser = "TREUser",
 }
 
 export enum WorkspaceRoleName {
-    WorkspaceOwner = "WorkspaceOwner",
-    WorkspaceResearcher = "WorkspaceResearcher",
-    AirlockManager = "AirlockManager"
+  WorkspaceOwner = "WorkspaceOwner",
+  WorkspaceResearcher = "WorkspaceResearcher",
+  AirlockManager = "AirlockManager",
 }

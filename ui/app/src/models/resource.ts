@@ -3,49 +3,49 @@ import { ResourceType } from "./resourceType";
 import { User } from "./user";
 
 export interface Resource {
-    id: string,
-    isEnabled: boolean,
-    resourcePath: string,
-    resourceVersion: number,
-    resourceType: ResourceType
-    templateName: string,
-    templateVersion: string,
-    availableUpgrades: Array<AvailableUpgrade>,
-    deploymentStatus: string,
-    updatedWhen: number,
-    user: User,
-    history: Array<HistoryItem>,
-    _etag: string,
-    properties: any,
-    azureStatus?: any
+  id: string;
+  isEnabled: boolean;
+  resourcePath: string;
+  resourceVersion: number;
+  resourceType: ResourceType;
+  templateName: string;
+  templateVersion: string;
+  availableUpgrades: Array<AvailableUpgrade>;
+  deploymentStatus: string;
+  updatedWhen: number;
+  user: User;
+  history: Array<HistoryItem>;
+  _etag: string;
+  properties: any;
+  azureStatus?: any;
 }
 
 export interface HistoryItem {
-    id: string,
-    resourceId: string,
-    isEnabled: boolean,
-    resourceVersion: number,
-    updatedWhen: number,
-    user: User,
-    properties: any,
-    templateVersion: string
+  id: string;
+  resourceId: string;
+  isEnabled: boolean;
+  resourceVersion: number;
+  updatedWhen: number;
+  user: User;
+  properties: any;
+  templateVersion: string;
 }
 
 export interface AvailableUpgrade {
-  version: string,
-  forceUpdateRequired : boolean
+  version: string;
+  forceUpdateRequired: boolean;
 }
 
 export enum ComponentAction {
-    None,
-    Reload,
-    Remove,
-    Lock
+  None,
+  Reload,
+  Remove,
+  Lock,
 }
 
 export interface ResourceUpdate {
-    operation: Operation,
-    componentAction: ComponentAction
+  operation: Operation;
+  componentAction: ComponentAction;
 }
 
 export enum VMPowerStates {
@@ -54,12 +54,12 @@ export enum VMPowerStates {
   Stopping = "VM stopping",
   Stopped = "VM stopped",
   Deallocating = "VM deallocating",
-  Deallocated = "VM deallocated"
+  Deallocated = "VM deallocated",
 }
 
 export const getResourceFromResult = (r: any) => {
-    if (r['userResource']) return r.userResource;
-    if (r['workspaceService']) return r.workspaceService;
-    if (r['workspace']) return r.workspace;
-    if (r['sharedService']) return r.sharedService;
-}
+  if (r["userResource"]) return r.userResource;
+  if (r["workspaceService"]) return r.workspaceService;
+  if (r["workspace"]) return r.workspace;
+  if (r["sharedService"]) return r.sharedService;
+};

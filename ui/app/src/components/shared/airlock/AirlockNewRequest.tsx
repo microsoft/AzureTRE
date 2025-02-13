@@ -1,9 +1,33 @@
-import { DefaultButton, Dialog, DialogFooter, DocumentCard, DocumentCardDetails, DocumentCardPreview, DocumentCardTitle, DocumentCardType, getTheme, Icon, IDocumentCardPreviewProps, IStackTokens, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from "@fluentui/react";
+import {
+  DefaultButton,
+  Dialog,
+  DialogFooter,
+  DocumentCard,
+  DocumentCardDetails,
+  DocumentCardPreview,
+  DocumentCardTitle,
+  DocumentCardType,
+  getTheme,
+  Icon,
+  IDocumentCardPreviewProps,
+  IStackTokens,
+  Panel,
+  PanelType,
+  PrimaryButton,
+  Spinner,
+  SpinnerSize,
+  Stack,
+  TextField,
+} from "@fluentui/react";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { WorkspaceContext } from "../../../contexts/WorkspaceContext";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
-import { AirlockRequest, AirlockRequestType, NewAirlockRequest } from "../../../models/airlock";
+import {
+  AirlockRequest,
+  AirlockRequestType,
+  NewAirlockRequest,
+} from "../../../models/airlock";
 import { ApiEndpoint } from "../../../models/apiEndpoints";
 import { APIError } from "../../../models/exceptions";
 import { ExceptionLayout } from "../ExceptionLayout";
@@ -12,8 +36,12 @@ interface AirlockNewRequestProps {
   onCreateRequest: (request: AirlockRequest) => void;
 }
 
-export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> = (props: AirlockNewRequestProps) => {
-  const [newRequest, setNewRequest] = useState<NewAirlockRequest>({} as NewAirlockRequest);
+export const AirlockNewRequest: React.FunctionComponent<
+  AirlockNewRequestProps
+> = (props: AirlockNewRequestProps) => {
+  const [newRequest, setNewRequest] = useState<NewAirlockRequest>(
+    {} as NewAirlockRequest,
+  );
   const [requestValid, setRequestValid] = useState(false);
   const [hideCreateDialog, setHideCreateDialog] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -24,35 +52,42 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
   const apiCall = useAuthApiCall();
 
   const onChangetitle = useCallback(
-    (event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => {
-      setNewRequest(request => {
+    (
+      event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>,
+      newValue?: string,
+    ) => {
+      setNewRequest((request) => {
         return {
           ...request,
-          title: newValue || ''
-        }
+          title: newValue || "",
+        };
       });
     },
-    [setNewRequest]
+    [setNewRequest],
   );
 
   const onChangeBusinessJustification = useCallback(
-    (event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => {
-      setNewRequest(request => {
+    (
+      event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>,
+      newValue?: string,
+    ) => {
+      setNewRequest((request) => {
         return {
           ...request,
-          businessJustification: newValue || ''
-        }
+          businessJustification: newValue || "",
+        };
       });
     },
-    [setNewRequest]
+    [setNewRequest],
   );
 
   useEffect(
-    () => setRequestValid(
-      newRequest.title?.length > 0 &&
-      newRequest.businessJustification?.length > 0
-    ),
-    [newRequest, setRequestValid]
+    () =>
+      setRequestValid(
+        newRequest.title?.length > 0 &&
+          newRequest.businessJustification?.length > 0,
+      ),
+    [newRequest, setRequestValid],
   );
 
   // Submit Airlock request to API
@@ -65,12 +100,12 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
           `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}`,
           HttpMethod.Post,
           workspaceCtx.workspaceApplicationIdURI,
-          newRequest
+          newRequest,
         );
         props.onCreateRequest(response.airlockRequest);
         setHideCreateDialog(true);
       } catch (err: any) {
-        err.userMessage = 'Error submitting airlock request';
+        err.userMessage = "Error submitting airlock request";
         setApiSubmitError(err);
         setCreateError(true);
       }
@@ -78,17 +113,29 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
     }
   }, [apiCall, newRequest, props, workspaceCtx, requestValid]);
 
-  const dismissPanel = useCallback(() => navigate('../'), [navigate]);
+  const dismissPanel = useCallback(() => navigate("../"), [navigate]);
 
   const renderFooter = useCallback(() => {
-    let footer = <></>
+    let footer = <></>;
     if (newRequest.type) {
-      footer = <>
-        <div style={{textAlign: 'end'}}>
-          <DefaultButton onClick={() => setNewRequest({} as NewAirlockRequest)} styles={{root:{marginRight: 8}}}>Back</DefaultButton>
-          <PrimaryButton onClick={() => setHideCreateDialog(false)} disabled={!requestValid}>Create</PrimaryButton>
-        </div>
-      </>
+      footer = (
+        <>
+          <div style={{ textAlign: "end" }}>
+            <DefaultButton
+              onClick={() => setNewRequest({} as NewAirlockRequest)}
+              styles={{ root: { marginRight: 8 } }}
+            >
+              Back
+            </DefaultButton>
+            <PrimaryButton
+              onClick={() => setHideCreateDialog(false)}
+              disabled={!requestValid}
+            >
+              Create
+            </PrimaryButton>
+          </div>
+        </>
+      );
     }
     return footer;
   }, [newRequest, setNewRequest, setHideCreateDialog, requestValid]);
@@ -99,58 +146,72 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
   // Render current step depending on whether type has been selected
   if (!newRequest.type) {
     title = "New airlock request";
-    currentStep = <Stack style={{marginTop: '40px'}} tokens={stackTokens}>
-      <DocumentCard
-        aria-label="Import"
-        type={DocumentCardType.compact}
-        onClick={() => setNewRequest({ type: AirlockRequestType.Import } as NewAirlockRequest)}>
-        <DocumentCardPreview {...importPreviewGraphic} />
-        <DocumentCardDetails>
-          <DocumentCardTitle title="Import" styles={cardTitleStyles} />
-          <DocumentCardTitle
-            title="Import files into a workspace from outside of the TRE."
-            shouldTruncate
-            showAsSecondaryTitle
-          />
-        </DocumentCardDetails>
-      </DocumentCard>
+    currentStep = (
+      <Stack style={{ marginTop: "40px" }} tokens={stackTokens}>
+        <DocumentCard
+          aria-label="Import"
+          type={DocumentCardType.compact}
+          onClick={() =>
+            setNewRequest({
+              type: AirlockRequestType.Import,
+            } as NewAirlockRequest)
+          }
+        >
+          <DocumentCardPreview {...importPreviewGraphic} />
+          <DocumentCardDetails>
+            <DocumentCardTitle title="Import" styles={cardTitleStyles} />
+            <DocumentCardTitle
+              title="Import files into a workspace from outside of the TRE."
+              shouldTruncate
+              showAsSecondaryTitle
+            />
+          </DocumentCardDetails>
+        </DocumentCard>
 
-      <DocumentCard
-        aria-label="Export"
-        type={DocumentCardType.compact}
-        onClick={() => setNewRequest({ type: AirlockRequestType.Export } as NewAirlockRequest)}>
-        <DocumentCardPreview {...exportPreviewGraphic} />
-        <DocumentCardDetails>
-          <DocumentCardTitle title="Export" styles={cardTitleStyles} />
-          <DocumentCardTitle
-            title="Export files from a workspace to the outside world."
-            shouldTruncate
-            showAsSecondaryTitle
-          />
-        </DocumentCardDetails>
-      </DocumentCard>
-    </Stack>;
+        <DocumentCard
+          aria-label="Export"
+          type={DocumentCardType.compact}
+          onClick={() =>
+            setNewRequest({
+              type: AirlockRequestType.Export,
+            } as NewAirlockRequest)
+          }
+        >
+          <DocumentCardPreview {...exportPreviewGraphic} />
+          <DocumentCardDetails>
+            <DocumentCardTitle title="Export" styles={cardTitleStyles} />
+            <DocumentCardTitle
+              title="Export files from a workspace to the outside world."
+              shouldTruncate
+              showAsSecondaryTitle
+            />
+          </DocumentCardDetails>
+        </DocumentCard>
+      </Stack>
+    );
   } else {
     title = `New airlock ${newRequest.type} request`;
-    currentStep = <Stack style={{marginTop: '40px'}} tokens={stackTokens}>
-      <TextField
-        label="Title"
-        placeholder="Enter a request title."
-        value={newRequest.title}
-        onChange={onChangetitle}
-        rows={1}
-        required
-      />
-      <TextField
-        label="Business Justification"
-        placeholder="Enter a justification for your request."
-        value={newRequest.businessJustification}
-        onChange={onChangeBusinessJustification}
-        multiline
-        rows={10}
-        required
-      />
-    </Stack>;
+    currentStep = (
+      <Stack style={{ marginTop: "40px" }} tokens={stackTokens}>
+        <TextField
+          label="Title"
+          placeholder="Enter a request title."
+          value={newRequest.title}
+          onChange={onChangetitle}
+          rows={1}
+          required
+        />
+        <TextField
+          label="Business Justification"
+          placeholder="Enter a justification for your request."
+          value={newRequest.businessJustification}
+          onChange={onChangeBusinessJustification}
+          multiline
+          rows={10}
+          required
+        />
+      </Stack>
+    );
   }
 
   return (
@@ -165,34 +226,47 @@ export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> 
       type={PanelType.custom}
       customWidth="450px"
     >
-      <h4 style={{fontWeight: '400', marginTop: 5}}>
-        <Icon iconName="CubeShape" style={{ marginRight: '8px', fontSize: '22px', verticalAlign: 'bottom' }} />
+      <h4 style={{ fontWeight: "400", marginTop: 5 }}>
+        <Icon
+          iconName="CubeShape"
+          style={{
+            marginRight: "8px",
+            fontSize: "22px",
+            verticalAlign: "bottom",
+          }}
+        />
         {workspaceCtx.workspace?.properties?.display_name}
       </h4>
-      { currentStep }
-        <Dialog
-            hidden={hideCreateDialog}
-            onDismiss={() => setHideCreateDialog(true)}
-            dialogContentProps={{
-              title: 'Create request?',
-              subText: 'Are you sure you want to create this request?',
-            }}
-          >
-          {
-            createError && <ExceptionLayout e={apiCreateError} />
-          }
-          {
-            creating
-            ? <Spinner label="Creating..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
-            : <DialogFooter>
-              <PrimaryButton onClick={create} text="Create" />
-              <DefaultButton onClick={() => setHideCreateDialog(true)} text="Cancel" />
-            </DialogFooter>
-          }
-        </Dialog>
+      {currentStep}
+      <Dialog
+        hidden={hideCreateDialog}
+        onDismiss={() => setHideCreateDialog(true)}
+        dialogContentProps={{
+          title: "Create request?",
+          subText: "Are you sure you want to create this request?",
+        }}
+      >
+        {createError && <ExceptionLayout e={apiCreateError} />}
+        {creating ? (
+          <Spinner
+            label="Creating..."
+            ariaLive="assertive"
+            labelPosition="top"
+            size={SpinnerSize.large}
+          />
+        ) : (
+          <DialogFooter>
+            <PrimaryButton onClick={create} text="Create" />
+            <DefaultButton
+              onClick={() => setHideCreateDialog(true)}
+              text="Cancel"
+            />
+          </DialogFooter>
+        )}
+      </Dialog>
     </Panel>
-  )
-}
+  );
+};
 
 const stackTokens: IStackTokens = { childrenGap: 20 };
 const { palette, fonts } = getTheme();
@@ -201,11 +275,11 @@ const importPreviewGraphic: IDocumentCardPreviewProps = {
   previewImages: [
     {
       previewIconProps: {
-        iconName: 'ReleaseGate',
+        iconName: "ReleaseGate",
         styles: {
           root: {
             fontSize: fonts.superLarge.fontSize,
-            color: '#0078d7',
+            color: "#0078d7",
             backgroundColor: palette.neutralLighterAlt,
           },
         },
@@ -222,11 +296,11 @@ const exportPreviewGraphic: IDocumentCardPreviewProps = {
   previewImages: [
     {
       previewIconProps: {
-        iconName: 'Leave',
+        iconName: "Leave",
         styles: {
           root: {
             fontSize: fonts.superLarge.fontSize,
-            color: '#0078d7',
+            color: "#0078d7",
             backgroundColor: palette.neutralLighterAlt,
           },
         },
@@ -239,4 +313,4 @@ const exportPreviewGraphic: IDocumentCardPreviewProps = {
   },
 };
 
-const cardTitleStyles = { root: { fontWeight: '600', paddingTop: 15 } };
+const cardTitleStyles = { root: { fontWeight: "600", paddingTop: 15 } };

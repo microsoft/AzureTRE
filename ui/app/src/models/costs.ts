@@ -5,7 +5,7 @@ export interface CostResource {
 }
 
 export interface CostItem {
-  cost: number,
-  currency: string,
-  date?: string
+  cost: number;
+  currency: string;
+  date?: string;
 }

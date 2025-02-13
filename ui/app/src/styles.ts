@@ -6,32 +6,32 @@ export const successButtonStyles = {
   root: {
     background: palette.green,
     color: palette.white,
-    borderColor: palette.green
+    borderColor: palette.green,
   },
   rootDisabled: {
-    background: 'rgb(16 124 16 / 60%)',
+    background: "rgb(16 124 16 / 60%)",
     color: palette.white,
     borderColor: palette.green,
-    iconColor: palette.white
+    iconColor: palette.white,
   },
   iconDisabled: {
-    color: palette.white
-  }
-}
+    color: palette.white,
+  },
+};
 
 export const destructiveButtonStyles = {
   root: {
     marginRight: 5,
     background: palette.red,
     color: palette.white,
-    borderColor: palette.red
+    borderColor: palette.red,
   },
   rootDisabled: {
-    background: 'rgb(232 17 35 / 60%)',
+    background: "rgb(232 17 35 / 60%)",
     color: palette.white,
-    borderColor: palette.red
+    borderColor: palette.red,
   },
   iconDisabled: {
-    color: palette.white
-  }
-}
+    color: palette.white,
+  },
+};

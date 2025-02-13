@@ -10,15 +10,15 @@ export interface AirlockRequest {
   history: Array<AirlockRequestHistoryItem>;
   workspaceId: string;
   type: AirlockRequestType;
-  files: Array<{name: string, size: number}>;
+  files: Array<{ name: string; size: number }>;
   title: string;
   businessJustification: string;
   status: AirlockRequestStatus;
-  reviewUserResources: {[key: string]: AirlockReviewUserResource};
+  reviewUserResources: { [key: string]: AirlockReviewUserResource };
   allowedUserActions: Array<AirlockRequestAction>;
   reviews?: Array<AirlockReview>;
   statusMessage?: string;
-  etag?: string
+  etag?: string;
 }
 
 export interface AirlockRequestHistoryItem {
@@ -29,22 +29,22 @@ export interface AirlockRequestHistoryItem {
 }
 
 export enum AirlockRequestType {
-  Import = 'import',
-  Export = 'export'
+  Import = "import",
+  Export = "export",
 }
 
 export enum AirlockRequestStatus {
-  Draft = 'draft',
-  InReview = 'in_review',
-  Approved = 'approved',
-  ApprovalInProgress = 'approval_in_progress',
-  RejectionInProgress = 'rejection_in_progress',
-  Rejected = 'rejected',
-  Blocked = 'blocked',
-  BlockingInProgress = 'blocking_in_progress',
-  Submitted = 'submitted',
-  Cancelled = 'cancelled',
-  Failed = 'failed'
+  Draft = "draft",
+  InReview = "in_review",
+  Approved = "approved",
+  ApprovalInProgress = "approval_in_progress",
+  RejectionInProgress = "rejection_in_progress",
+  Rejected = "rejected",
+  Blocked = "blocked",
+  BlockingInProgress = "blocking_in_progress",
+  Submitted = "submitted",
+  Cancelled = "cancelled",
+  Failed = "failed",
 }
 
 export interface NewAirlockRequest {
@@ -54,31 +54,31 @@ export interface NewAirlockRequest {
 }
 
 export enum AirlockRequestAction {
-  Cancel = 'cancel',
-  Submit = 'submit',
-  Review = 'review'
+  Cancel = "cancel",
+  Submit = "submit",
+  Review = "review",
 }
 
 export const AirlockFilesLinkValidStatus = [
   AirlockRequestStatus.Draft,
   AirlockRequestStatus.Approved,
-]
+];
 
 export enum AirlockReviewDecision {
-  Approved = 'approved',
-  Rejected = 'rejected'
+  Approved = "approved",
+  Rejected = "rejected",
 }
 
 export interface AirlockReview {
-  id: string,
-  dateCreated: number,
-  reviewDecision: AirlockReviewDecision,
-  decisionExplanation: string,
-  reviewer: User
+  id: string;
+  dateCreated: number;
+  reviewDecision: AirlockReviewDecision;
+  decisionExplanation: string;
+  reviewer: User;
 }
 
 export interface AirlockReviewUserResource {
-  workspaceId: string,
-  workspaceServiceId: string,
-  userResourceId: string
+  workspaceId: string;
+  workspaceServiceId: string;
+  userResourceId: string;
 }

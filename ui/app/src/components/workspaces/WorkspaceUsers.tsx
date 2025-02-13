@@ -1,17 +1,17 @@
-import * as React from 'react';
-import { useState, useCallback, useEffect, useMemo, useContext } from 'react';
-import { GroupedList, IGroup } from '@fluentui/react/lib/GroupedList';
-import { IColumn, DetailsRow } from '@fluentui/react/lib/DetailsList';
-import { SelectionMode } from '@fluentui/react/lib/Selection';
-import { Persona, PersonaSize } from '@fluentui/react/lib/Persona';
-import { HttpMethod, useAuthApiCall } from '../../hooks/useAuthApiCall';
-import { APIError } from '../../models/exceptions';
-import { WorkspaceContext } from '../../contexts/WorkspaceContext';
-import { ApiEndpoint } from '../../models/apiEndpoints';
-import { LoadingState } from '../../models/loadingState';
-import { ExceptionLayout } from '../shared/ExceptionLayout';
-import { User } from '../../models/user';
-import { Stack } from '@fluentui/react';
+import * as React from "react";
+import { useState, useCallback, useEffect, useMemo, useContext } from "react";
+import { GroupedList, IGroup } from "@fluentui/react/lib/GroupedList";
+import { IColumn, DetailsRow } from "@fluentui/react/lib/DetailsList";
+import { SelectionMode } from "@fluentui/react/lib/Selection";
+import { Persona, PersonaSize } from "@fluentui/react/lib/Persona";
+import { HttpMethod, useAuthApiCall } from "../../hooks/useAuthApiCall";
+import { APIError } from "../../models/exceptions";
+import { WorkspaceContext } from "../../contexts/WorkspaceContext";
+import { ApiEndpoint } from "../../models/apiEndpoints";
+import { LoadingState } from "../../models/loadingState";
+import { ExceptionLayout } from "../shared/ExceptionLayout";
+import { User } from "../../models/user";
+import { Stack } from "@fluentui/react";
 
 interface IUser {
   id: string;
@@ -29,24 +29,37 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
   });
 
   const apiCall = useAuthApiCall();
-  const { workspace, roles, workspaceApplicationIdURI } = useContext(WorkspaceContext);
+  const { workspace, roles, workspaceApplicationIdURI } =
+    useContext(WorkspaceContext);
 
   const getUsers = useCallback(async () => {
-    setState(prevState => ({ ...prevState, apiError: undefined, loadingState: LoadingState.Loading }));
+    setState((prevState) => ({
+      ...prevState,
+      apiError: undefined,
+      loadingState: LoadingState.Loading,
+    }));
 
     try {
       const scopeId = roles.length > 0 ? workspaceApplicationIdURI : "";
-      const result = await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}`, HttpMethod.Get, scopeId);
+      const result = await apiCall(
+        `${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}`,
+        HttpMethod.Get,
+        scopeId,
+      );
 
-      const users = result.users.flatMap((user: any) =>
-        user.roles.map((role: string) => ({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: role,
-          roles: user.roles
-        }))
-      ).sort((a: { role: string; }, b: { role: string; }) => a.role.localeCompare(b.role));
+      const users = result.users
+        .flatMap((user: any) =>
+          user.roles.map((role: string) => ({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: role,
+            roles: user.roles,
+          })),
+        )
+        .sort((a: { role: string }, b: { role: string }) =>
+          a.role.localeCompare(b.role),
+        );
 
       setState({ users, apiError: undefined, loadingState: LoadingState.Ok });
     } catch (err: any) {
@@ -61,10 +74,10 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
 
   const groupedUsers = useMemo(() => {
     const groups: { [key: string]: IUser[] } = {};
-    state.users.forEach(user => {
+    state.users.forEach((user) => {
       if (!groups[user.role]) {
         groups[user.role] = [];
-        }
+      }
       groups[user.role].push(user);
     });
     return groups;
@@ -79,12 +92,11 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
     }));
   }, [groupedUsers]);
 
-
   const columns: IColumn[] = [
     {
-      key: 'name',
-      name: 'Name',
-      fieldName: 'name',
+      key: "name",
+      name: "Name",
+      fieldName: "name",
       minWidth: 150,
       onRender: (item: User) => (
         <Persona
@@ -94,7 +106,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
           imageAlt={item.name}
         />
       ),
-    }
+    },
   ];
 
   const onRenderCell = (
@@ -103,7 +115,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
     itemIndex?: number,
     group?: IGroup,
   ): React.ReactNode => {
-    return item && typeof itemIndex === 'number' && itemIndex > -1 ? (
+    return item && typeof itemIndex === "number" && itemIndex > -1 ? (
       <DetailsRow
         columns={columns}
         groupNestingDepth={nestingDepth}
@@ -126,7 +138,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
         </Stack.Item>
       </Stack>
       {state.apiError && <ExceptionLayout e={state.apiError} />}
-      <div className="tre-resource-panel" style={{ padding: '0px' }}>
+      <div className="tre-resource-panel" style={{ padding: "0px" }}>
         <GroupedList
           items={state.users}
           onRenderCell={onRenderCell}
@@ -137,4 +149,4 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
       </div>
     </>
   );
-}
+};

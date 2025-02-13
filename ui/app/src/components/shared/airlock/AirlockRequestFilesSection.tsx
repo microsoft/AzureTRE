@@ -1,4 +1,13 @@
-import { MessageBar, MessageBarType, Pivot, PivotItem, PrimaryButton, Stack, TextField, TooltipHost } from "@fluentui/react";
+import {
+  MessageBar,
+  MessageBarType,
+  Pivot,
+  PivotItem,
+  PrimaryButton,
+  Stack,
+  TextField,
+  TooltipHost,
+} from "@fluentui/react";
 import React, { useCallback, useEffect, useState } from "react";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
 import { AirlockRequest, AirlockRequestStatus } from "../../../models/airlock";
@@ -12,11 +21,14 @@ interface AirlockRequestFilesSectionProps {
   workspaceApplicationIdURI: string;
 }
 
-export const AirlockRequestFilesSection: React.FunctionComponent<AirlockRequestFilesSectionProps> = (props: AirlockRequestFilesSectionProps) => {
+export const AirlockRequestFilesSection: React.FunctionComponent<
+  AirlockRequestFilesSectionProps
+> = (props: AirlockRequestFilesSectionProps) => {
+  const COPY_TOOL_TIP_DEFAULT_MESSAGE = "Copy to clipboard";
 
-  const COPY_TOOL_TIP_DEFAULT_MESSAGE = "Copy to clipboard"
-
-  const [copyToolTipMessage, setCopyToolTipMessage] = useState<string>(COPY_TOOL_TIP_DEFAULT_MESSAGE);
+  const [copyToolTipMessage, setCopyToolTipMessage] = useState<string>(
+    COPY_TOOL_TIP_DEFAULT_MESSAGE,
+  );
   const [sasUrl, setSasUrl] = useState<string>();
 
   const [sasUrlError, setSasUrlError] = useState(false);
@@ -30,11 +42,11 @@ export const AirlockRequestFilesSection: React.FunctionComponent<AirlockRequestF
         const linkObject = await apiCall(
           `${ApiEndpoint.Workspaces}/${props.request.workspaceId}/${ApiEndpoint.AirlockRequests}/${props.request.id}/${ApiEndpoint.AirlockLink}`,
           HttpMethod.Get,
-          props.workspaceApplicationIdURI
+          props.workspaceApplicationIdURI,
         );
         setSasUrl(linkObject.containerUrl);
       } catch (err: any) {
-        err.userMessage = 'Error retrieving storage link';
+        err.userMessage = "Error retrieving storage link";
         setApiSasUrlError(err);
         setSasUrlError(true);
       }
@@ -42,16 +54,18 @@ export const AirlockRequestFilesSection: React.FunctionComponent<AirlockRequestF
   }, [apiCall, props.request, props.workspaceApplicationIdURI]);
 
   const parseSasUrl = (sasUrl: string) => {
-    const match = sasUrl.match(/https:\/\/(.*?).blob.core.windows.net\/(.*)\?(.*)$/);
+    const match = sasUrl.match(
+      /https:\/\/(.*?).blob.core.windows.net\/(.*)\?(.*)$/,
+    );
     if (!match) {
-      return
+      return;
     }
 
     return {
       StorageAccountName: match[1],
       containerName: match[2],
-      sasToken: match[3]
-    }
+      sasToken: match[3],
+    };
   };
 
   const handleCopySasUrl = () => {
@@ -59,28 +73,31 @@ export const AirlockRequestFilesSection: React.FunctionComponent<AirlockRequestF
       return;
     }
     navigator.clipboard.writeText(sasUrl);
-    setCopyToolTipMessage("Copied")
-    setTimeout(() => setCopyToolTipMessage(COPY_TOOL_TIP_DEFAULT_MESSAGE), 3000);
-  }
+    setCopyToolTipMessage("Copied");
+    setTimeout(
+      () => setCopyToolTipMessage(COPY_TOOL_TIP_DEFAULT_MESSAGE),
+      3000,
+    );
+  };
 
   const getAzureCliCommand = (sasUrl: string) => {
-    let containerDetails = parseSasUrl(sasUrl)
+    let containerDetails = parseSasUrl(sasUrl);
     if (!containerDetails) {
-      return '';
+      return "";
     }
 
     let cliCommand = "";
     if (props.request.status === AirlockRequestStatus.Draft) {
-      cliCommand = `az storage blob upload --file </path/to/file> --name <filename.filetype> --account-name ${containerDetails.StorageAccountName} --type block --container-name ${containerDetails.containerName} --sas-token "${containerDetails.sasToken}"`
+      cliCommand = `az storage blob upload --file </path/to/file> --name <filename.filetype> --account-name ${containerDetails.StorageAccountName} --type block --container-name ${containerDetails.containerName} --sas-token "${containerDetails.sasToken}"`;
     } else {
-      cliCommand = `az storage blob download-batch --destination </destination/path/for/file> --source ${containerDetails.containerName} --account-name ${containerDetails.StorageAccountName} --sas-token "${containerDetails.sasToken}"`
+      cliCommand = `az storage blob download-batch --destination </destination/path/for/file> --source ${containerDetails.containerName} --account-name ${containerDetails.StorageAccountName} --sas-token "${containerDetails.sasToken}"`;
     }
 
     return cliCommand;
   };
 
   useEffect(() => {
-    generateSasUrl()
+    generateSasUrl();
   }, [generateSasUrl]);
 
   return (
@@ -88,51 +105,68 @@ export const AirlockRequestFilesSection: React.FunctionComponent<AirlockRequestF
       <Pivot aria-label="Storage options">
         <PivotItem headerText="SAS URL">
           <Stack>
-            <Stack.Item style={{ paddingTop: '10px', paddingBottom: '10px' }}>
-              {
-                props.request.status === AirlockRequestStatus.Draft
-                  ? <small>Use the storage container SAS URL to upload your request file.</small>
-                  : <small>Use the storage container SAS URL to view the request file.</small>
-              }
-              <Stack horizontal styles={{ root: { alignItems: 'center', paddingTop: '7px' } }}>
+            <Stack.Item style={{ paddingTop: "10px", paddingBottom: "10px" }}>
+              {props.request.status === AirlockRequestStatus.Draft ? (
+                <small>
+                  Use the storage container SAS URL to upload your request file.
+                </small>
+              ) : (
+                <small>
+                  Use the storage container SAS URL to view the request file.
+                </small>
+              )}
+              <Stack
+                horizontal
+                styles={{ root: { alignItems: "center", paddingTop: "7px" } }}
+              >
                 <Stack.Item grow>
                   <TextField readOnly value={sasUrl} />
                 </Stack.Item>
                 <TooltipHost content={copyToolTipMessage}>
                   <PrimaryButton
-                    iconProps={{ iconName: 'copy' }}
-                    styles={{ root: { minWidth: '40px' } }}
-                    onClick={() => { handleCopySasUrl() }}
+                    iconProps={{ iconName: "copy" }}
+                    styles={{ root: { minWidth: "40px" } }}
+                    onClick={() => {
+                      handleCopySasUrl();
+                    }}
                   />
                 </TooltipHost>
               </Stack>
             </Stack.Item>
-            {
-              props.request.status === AirlockRequestStatus.Draft && <MessageBar messageBarType={MessageBarType.info}>
-                Please upload a single file. Only single-file imports (including zip files) are supported.
+            {props.request.status === AirlockRequestStatus.Draft && (
+              <MessageBar messageBarType={MessageBarType.info}>
+                Please upload a single file. Only single-file imports (including
+                zip files) are supported.
               </MessageBar>
-            }
+            )}
           </Stack>
         </PivotItem>
         <PivotItem headerText="CLI">
           <Stack>
-            <Stack.Item style={{ paddingTop: '10px', paddingBottom: '10px' }}>
-              <small>Use Azure command-line interface (Azure CLI) to interact with the storage container.</small>
-              <hr style={{ border: "1px solid #faf9f8", borderRadius: "1px" }} />
+            <Stack.Item style={{ paddingTop: "10px", paddingBottom: "10px" }}>
+              <small>
+                Use Azure command-line interface (Azure CLI) to interact with
+                the storage container.
+              </small>
+              <hr
+                style={{ border: "1px solid #faf9f8", borderRadius: "1px" }}
+              />
             </Stack.Item>
-            <Stack.Item style={{ paddingTop: '10px' }}>
+            <Stack.Item style={{ paddingTop: "10px" }}>
               <CliCommand
-                command={sasUrl ? getAzureCliCommand(sasUrl) : ''}
-                title={props.request.status === AirlockRequestStatus.Draft ? "Upload a file to the storage container" : "Download the file from the storage container"}
+                command={sasUrl ? getAzureCliCommand(sasUrl) : ""}
+                title={
+                  props.request.status === AirlockRequestStatus.Draft
+                    ? "Upload a file to the storage container"
+                    : "Download the file from the storage container"
+                }
                 isLoading={!sasUrl && !sasUrlError}
               />
             </Stack.Item>
           </Stack>
         </PivotItem>
       </Pivot>
-      {
-        sasUrlError && <ExceptionLayout e={apiSasUrlError} />
-      }
+      {sasUrlError && <ExceptionLayout e={apiSasUrlError} />}
     </Stack>
   );
 };
