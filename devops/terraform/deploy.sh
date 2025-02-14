@@ -5,6 +5,9 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
+# shellcheck disable=SC1091
+source ../scripts/mgmtstorage_add_network_exception.sh
+
 PLAN_FILE="devops.tfplan"
 
 terraform init -input=false -backend=true -reconfigure
