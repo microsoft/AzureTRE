@@ -874,7 +874,7 @@ def test_get_workspace_roles_returns_roles(_, ms_graph_query_mock, mock_headers,
 
     # Mock the response of the get request
     request_get_mock_response = {
-        "value":[
+        "value": [
             Role(id=1, value="AirlockManager", isEnabled=True, description="", displayName="Airlock Manager", origin="", allowedMemberTypes=[]).dict(),
             Role(id=2, value="WorkspaceResearcher", isEnabled=True, description="", displayName="Workspace Researcher", origin="", allowedMemberTypes=[]).dict(),
             Role(id=3, value="WorkspaceOwner", isEnabled=True, description="", displayName="Workspace Owner", origin="", allowedMemberTypes=[]).dict(),
