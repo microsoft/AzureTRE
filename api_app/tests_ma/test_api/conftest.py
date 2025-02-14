@@ -22,6 +22,12 @@ def no_auth_token():
             yield
 
 
+@pytest.fixture(autouse=True, scope="session")
+def patch_user_management_enabled():
+    with patch("core.config.USER_MANAGEMENT_ENABLED", new=True):
+        yield
+
+
 def create_test_user() -> User:
     return User(
         id="user-guid-here",
