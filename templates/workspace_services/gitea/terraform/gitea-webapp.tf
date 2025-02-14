@@ -76,7 +76,7 @@ resource "azurerm_linux_web_app" "gitea" {
     container_registry_managed_identity_client_id = azurerm_user_assigned_identity.gitea_id.client_id
     ftps_state                                    = "Disabled"
     always_on                                     = true
-    minimum_tls_version                           = "1.2"
+    minimum_tls_version                           = "1.3"
     vnet_route_all_enabled                        = true
 
     application_stack {
@@ -138,11 +138,13 @@ resource "azurerm_monitor_diagnostic_setting" "gitea" {
   target_resource_id         = azurerm_linux_web_app.gitea.id
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
-  dynamic "log" {
-    for_each = data.azurerm_monitor_diagnostic_categories.gitea.log_category_types
+  dynamic "enabled_log" {
+    for_each = [
+      for category in data.azurerm_monitor_diagnostic_categories.gitea.log_category_types:
+      category if contains(local.web_app_diagnostic_categories_enabled, category)
+    ]
     content {
-      category = log.value
-      enabled  = contains(local.web_app_diagnostic_categories_enabled, log.value) ? true : false
+      category = enabled_log.value
     }
   }
 
