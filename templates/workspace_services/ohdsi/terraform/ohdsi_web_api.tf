@@ -33,12 +33,12 @@ resource "azurerm_linux_web_app" "ohdsi_webapi" {
   client_affinity_enabled = false
 
   site_config {
-    always_on  = true
-    ftps_state = "Disabled"
+    always_on           = true
+    ftps_state          = "Disabled"
+    minimum_tls_version = "1.3"
 
     application_stack {
-      docker_image     = "index.docker.io/${local.ohdsi_api_docker_image_name}"
-      docker_image_tag = local.ohdsi_api_docker_image_tag
+      docker_image_name = "index.docker.io/${local.ohdsi_api_docker_image_name}:${local.ohdsi_api_docker_image_tag}"
     }
   }
 
