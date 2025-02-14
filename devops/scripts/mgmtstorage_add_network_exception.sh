@@ -8,9 +8,14 @@
 #
 
 function mgmtstorage_add_network_exception() {
-  local RESOURCE_GROUP=$(get_resource_group_name)
-  local SA_NAME=$(get_storage_account_name)
-  local MY_IP=$(get_my_ip)
+  local RESOURCE_GROUP
+  RESOURCE_GROUP=$(get_resource_group_name)
+
+  local SA_NAME
+  SA_NAME=$(get_storage_account_name)
+
+  local MY_IP
+  MY_IP=$(get_my_ip)
 
   echo -e "\nAdding deployment network exception to storage account $SA_NAME..."
 
@@ -38,9 +43,14 @@ function mgmtstorage_add_network_exception() {
 }
 
 function mgmtstorage_remove_network_exception() {
-  local RESOURCE_GROUP=$(get_resource_group_name)
-  local SA_NAME=$(get_storage_account_name)
-  local MY_IP=$(get_my_ip)
+  local RESOURCE_GROUP
+  RESOURCE_GROUP=$(get_resource_group_name)
+
+  local SA_NAME
+  SA_NAME=$(get_storage_account_name)
+
+  local MY_IP
+  MY_IP=$(get_my_ip)
 
   echo -e "\nRemoving deployment network exception from storage account $SA_NAME..."
 
