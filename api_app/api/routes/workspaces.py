@@ -21,7 +21,6 @@ from models.schemas.workspace import WorkspaceAuthInResponse, WorkspaceInCreate,
 from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse
 from models.schemas.resource import ResourceHistoryInList, ResourcePatch
 from models.schemas.resource_template import ResourceTemplateInformationInList
-from models.schemas.users import UsersInResponse
 from resources import strings
 from services.access_service import AuthConfigValidationError
 from services.authentication import get_current_admin_user, \
@@ -38,11 +37,11 @@ from .resource_helpers import cascaded_update_resource, delete_validation, enric
 from models.domain.request_action import RequestAction
 from services.logging import logger
 
-
 workspaces_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 workspaces_shared_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin)])
 workspace_services_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 user_resources_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
+
 
 
 def validate_user_has_valid_role_for_user_resource(user, user_resource):
@@ -186,14 +185,6 @@ async def invoke_action_on_workspace(response: Response, action: str, user=Depen
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
-
-
-@workspaces_shared_router.get("/workspaces/{workspace_id}/users", response_model=UsersInResponse, name=strings.API_GET_WORKSPACE_USERS)
-async def get_workspace_users(workspace=Depends(get_workspace_by_id_from_path)) -> UsersInResponse:
-    access_service = get_access_service()
-    users = access_service.get_workspace_users(workspace)
-    return UsersInResponse(users=users)
-
 
 # workspace operations
 # This method only returns templates that the authenticated user is authorized to use
@@ -543,3 +534,5 @@ async def retrieve_user_resource_operations_by_user_resource_id_and_operation_id
 async def retrieve_user_resource_history_by_user_resource_id(user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> ResourceHistoryInList:
     validate_user_has_valid_role_for_user_resource(user, user_resource)
     return ResourceHistoryInList(resource_history=await resource_history_repo.get_resource_history_by_resource_id(resource_id=user_resource.id))
+
+

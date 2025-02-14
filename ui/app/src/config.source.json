@@ -7,5 +7,6 @@
     "treId": "my-tre",
     "debug": false,
     "version": "0.0.0",
-    "activeDirectoryUri": ""
+    "activeDirectoryUri": "",
+    "userManagementEnabled": false
 }

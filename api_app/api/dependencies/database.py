@@ -1,7 +1,7 @@
 from azure.cosmos.aio import CosmosClient, DatabaseProxy, ContainerProxy
 from azure.mgmt.cosmosdb.aio import CosmosDBManagementClient
 
-from core.config import MANAGED_IDENTITY_CLIENT_ID, STATE_STORE_ENDPOINT, STATE_STORE_KEY, STATE_STORE_SSL_VERIFY, SUBSCRIPTION_ID, RESOURCE_MANAGER_ENDPOINT, CREDENTIAL_SCOPES, RESOURCE_GROUP_NAME, COSMOSDB_ACCOUNT_NAME, STATE_STORE_DATABASE
+from core.config import MANAGED_IDENTITY_CLIENT_ID, STATE_STORE_ENDPOINT, STATE_STORE_KEY, STATE_STORE_SSL_VERIFY, SUBSCRIPTION_ID, RESOURCE_MANAGER_ENDPOINT, CREDENTIAL_SCOPES, RESOURCE_GROUP_NAME, COSMOSDB_ACCOUNT_NAME, STATE_STORE_DATABASE,ENABLE_LOCAL_DEBUGGING
 from core.credentials import get_credential_async
 from services.logging import logger
 
@@ -28,8 +28,8 @@ class Database(metaclass=Singleton):
         logger.debug(f"Connecting to {STATE_STORE_ENDPOINT}")
 
         credential = await get_credential_async()
-        if MANAGED_IDENTITY_CLIENT_ID:
-            logger.debug("Connecting with managed identity")
+        if MANAGED_IDENTITY_CLIENT_ID or ENABLE_LOCAL_DEBUGGING:
+            logger.debug("Connecting with AAD")
             cosmos_client = CosmosClient(
                 url=STATE_STORE_ENDPOINT,
                 credential=credential

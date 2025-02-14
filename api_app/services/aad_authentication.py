@@ -1,17 +1,19 @@
 import base64
+import json
 from collections import defaultdict
 from enum import Enum
 from typing import List, Optional
 import jwt
 import requests
+import urllib.parse
 
 from fastapi import Request, HTTPException, status
 from msal import ConfidentialClientApplication
 
-from services.access_service import AccessService, AuthConfigValidationError
+from services.access_service import AccessService, AuthConfigValidationError, UserRoleAssignmentError
 from core import config
-from db.errors import EntityDoesNotExist
-from models.domain.authentication import User, RoleAssignment
+from db.errors import DuplicateEntity, EntityDoesNotExist
+from models.domain.authentication import User, AssignableUser, Role, RoleAssignment
 from models.domain.workspace import Workspace, WorkspaceRole
 from resources import strings
 from db.repositories.workspaces import WorkspaceRepository
@@ -37,7 +39,7 @@ class AzureADAuthorization(AccessService):
     require_one_of_roles = None
     aad_instance = config.AAD_AUTHORITY_URL
 
-    TRE_CORE_ROLES = ['TREAdmin', 'TREUser']
+    TRE_CORE_ROLES = ['TREAdmin', 'TREUser', 'TREAirlockAutomation']
     WORKSPACE_ROLES_DICT = {'WorkspaceOwner': 'app_role_id_workspace_owner', 'WorkspaceResearcher': 'app_role_id_workspace_researcher', 'AirlockManager': 'app_role_id_workspace_airlock_manager'}
 
     def __init__(self, auto_error: bool = True, require_one_of_roles: Optional[list] = None):
@@ -227,11 +229,11 @@ class AzureADAuthorization(AccessService):
 
     @staticmethod
     def _get_users_endpoint(user_object_id) -> str:
-        return "/users/" + user_object_id + "?$select=displayName,mail,id"
+        return "/users/" + user_object_id + "?$select=displayName,mail,id,userPrincipalName"
 
     @staticmethod
     def _get_group_members_endpoint(group_object_id) -> str:
-        return "/groups/" + group_object_id + "/transitiveMembers?$select=displayName,mail,id"
+        return "/groups/" + group_object_id + "/transitiveMembers?$select=displayName,mail,id,userPrincipalName"
 
     def _get_app_sp_graph_data(self, client_id: str) -> dict:
         msgraph_token = self._get_msgraph_token()
@@ -278,10 +280,15 @@ class AzureADAuthorization(AccessService):
                 user_name = user_data["body"]["displayName"]
 
                 if "users" in user_data["body"]["@odata.context"]:
-                    user_email = user_data["body"]["mail"]
+                    user_email = user_data["body"]["userPrincipalName"]
                     # if user with id does not already exist in users
+                    user_roles=self._get_roles_for_principal(user_id, roles_graph_data, app_id_to_role_name)
                     if not any(user.id == user_id for user in users):
-                        users.append(User(id=user_id, name=user_name, email=user_email, roles=self._get_roles_for_principal(user_id, roles_graph_data, app_id_to_role_name)))
+                        users.append(User(id=user_id, name=user_name, email=user_email, roles=user_roles))
+                    else:
+                        user = next((user for user in users if user.id == user_id), None)
+                        user.roles = list(set(user.roles + user_roles))
+
 
             # Handle group endpoint response
             elif "directoryObjects" in user_data["body"]["@odata.context"]:
@@ -289,10 +296,14 @@ class AzureADAuthorization(AccessService):
                 for group_member in user_data["body"]["value"]:
                     user_id = group_member["id"]
                     user_name = group_member["displayName"]
-                    user_email = group_member["mail"]
+                    user_email = group_member["userPrincipalName"]
 
+                    group_roles=self._get_roles_for_principal(group_id, roles_graph_data, app_id_to_role_name)
                     if not any(user.id == user_id for user in users):
-                        users.append(User(id=user_id, name=user_name, email=user_email, roles=self._get_roles_for_principal(group_id, roles_graph_data, app_id_to_role_name)))
+                        users.append(User(id=user_id, name=user_name, email=user_email, roles=group_roles))
+                    else:
+                        user = next((user for user in users if user.id == user_id), None)
+                        user.roles = list(set(user.roles + group_roles))
 
         return users
 
@@ -306,6 +317,36 @@ class AzureADAuthorization(AccessService):
 
         return users_inc_groups
 
+    def get_assignable_users(self) -> List[AssignableUser]:
+        msgraph_token = self._get_msgraph_token()
+        users_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/users/"
+        graph_data = requests.get(users_endpoint, headers=self._get_auth_header(msgraph_token)).json()
+
+        result = []
+
+        for user_data in graph_data["value"]:
+            result.append(
+                AssignableUser(name=user_data["displayName"], email=user_data["userPrincipalName"])
+            )
+
+        return result
+
+    def get_workspace_roles(self, workspace: Workspace) -> List[Role]:
+        app_roles_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{workspace.properties['sp_id']}/appRoles"
+        graph_data = self._ms_graph_query(app_roles_endpoint, "GET")
+
+        roles = []
+
+        for role in graph_data["value"]:
+            roles.append(Role(id=role["id"], value=role["value"],
+                            isEnabled=role["isEnabled"],
+                            description=role["description"],
+                            displayName=role["displayName"],
+                            origin=role["origin"],
+                            allowedMemberTypes=role["allowedMemberTypes"]))
+
+        return roles
+
     def get_workspace_user_emails_by_role_assignment(self, workspace: Workspace):
         users = self.get_workspace_users(workspace)
         workspace_role_assignments_details = {}
@@ -316,6 +357,143 @@ class AzureADAuthorization(AccessService):
                         workspace_role_assignments_details[role] = []
                     workspace_role_assignments_details[role].append(user.email)
         return workspace_role_assignments_details
+
+    def get_workspace_role_by_name(self, name: str, workspace: Workspace) -> Role:
+        app_roles_endpoint =  f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{workspace.properties['sp_id']}/appRoles"
+        graph_data = self._ms_graph_query(app_roles_endpoint, "GET")
+
+        for role in graph_data["value"]:
+            if role["value"] == name:
+                return Role(id=role["id"], value=role["value"],
+                            isEnabled=role["isEnabled"],
+                            description=role["description"],
+                            displayName=role["displayName"],
+                            origin=role["origin"],
+                            allowedMemberTypes=role["allowedMemberTypes"])
+
+        return None
+
+    def get_user_by_email(self, user_email: str) -> User:
+        encoded_email = urllib.parse.quote(user_email)
+        user_by_email_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{encoded_email}"
+        user_data = self._ms_graph_query(user_by_email_endpoint, "GET")
+
+        return User(id=user_data["id"][0], name=user_data["displayName"][0], email=user_email, roles=[])
+
+    def assign_workspace_user(self, user: User, workspace: Workspace, role: Role) -> None:
+        # User already has the role, do nothing
+        if self._is_user_in_role(user, role):
+            return
+        if self._is_workspace_role_group_in_use(workspace):
+            return self._assign_workspace_user_to_application_group(user, workspace, role)
+        else:
+            return self._assign_workspace_user_to_application(user, workspace, role)
+
+    def _is_user_in_role(self, user: User, role: Role) -> bool:
+        return any(r for r in user.roles if r == role.value)
+
+    def _is_workspace_role_group_in_use(self, workspace: Workspace) -> bool:
+        aad_groups_in_user = workspace.properties["create_aad_groups"]
+        return aad_groups_in_user
+
+    def _get_workspace_group_name(self, workspace: Workspace, role: Role) -> tuple:
+        tre_id = workspace.properties["tre_id"]
+        workspace_id = workspace.properties["workspace_id"]
+        group_suffix = ""
+        app_role_id_suffix = ""
+        if role.value == "WorkspaceResearcher":
+            group_name = "Workspace Researchers"
+            app_role_id_suffix = "workspace_researcher"
+        elif role.value == "WorkspaceOwner":
+            group_name = "Workspace Owners"
+            app_role_id_suffix = "workspace_owner"
+        elif role.value == "AirlockManager":
+            group_name = "Airlock Managers"
+            app_role_id_suffix = "workspace_airlock_manager"
+        else:
+            raise UserRoleAssignmentError(f"Unknown role: {role.value}")
+
+        return (f"{tre_id}-ws-{workspace_id} {group_name}", f"app_role_id_{app_role_id_suffix}")
+
+    def _assign_workspace_user_to_application_group(self, user: User, workspace: Workspace, role: Role):
+        msgraph_token = self._get_msgraph_token()
+        roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"], msgraph_token)
+        group_details = self._get_workspace_group_name(workspace, role)
+        group_name = group_details[0]
+        workspace_app_role_field = group_details[1]
+
+        for group in [item for item in roles_graph_data["value"] if item["principalType"] == PrincipalType.Group.value]:
+            if group.get("principalDisplayName") == group_name and group.get("appRoleId") == workspace.properties[workspace_app_role_field]:
+                self._add_user_to_group(user.id, group["principalId"])
+                return
+
+        raise UserRoleAssignmentError(f"Unable to assign user to group with role: {role.value}")
+
+    def _remove_workspace_user_from_application_group(self, user: User, workspace: Workspace, role: Role):
+        msgraph_token = self._get_msgraph_token()
+        roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"], msgraph_token)
+        group_details = self._get_workspace_group_name(workspace, role)
+        group_name = group_details[0]
+        workspace_app_role_field = group_details[1]
+
+        for group in [item for item in roles_graph_data["value"] if item["principalType"] == PrincipalType.Group.value]:
+            if group.get("principalDisplayName") == group_name and group.get("appRoleId") == workspace.properties[workspace_app_role_field]:
+                self._remove_user_from_group(user.id, group["principalId"])
+                return
+        raise UserRoleAssignmentError(f"Unable to assign user to group with role: {role.value}")
+
+    def _add_user_to_group(self, user_id: str, group_id: str):
+        msgraph_token = self._get_msgraph_token()
+        url = f"{MICROSOFT_GRAPH_URL}/v1.0/groups/{group_id}/members/$ref"
+        body = {
+            "@odata.id": f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}"
+        }
+        response = requests.post(url, json=body, headers=self._get_auth_header(msgraph_token))
+        return response
+
+    def _remove_user_from_group(self, user_id: str, group_id: str):
+        msgraph_token = self._get_msgraph_token()
+        url = f"{MICROSOFT_GRAPH_URL}/v1.0/groups/{group_id}/members/{user_id}/$ref"
+
+        response = requests.delete(url, headers=self._get_auth_header(msgraph_token))
+        return response
+
+    def _assign_workspace_user_to_application(self, user: User, workspace: Workspace, role: Role):
+        msgraph_token = self._get_msgraph_token()
+        url = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user.id}/appRoleAssignments"
+        application_id = workspace.properties["sp_id"]
+
+        body = {
+            "principalId": user.id,
+            "resourceId": application_id,
+            "appRoleId": role.id,
+        }
+
+        response = requests.post(url, json=body, headers=self._get_auth_header(msgraph_token))
+        return response
+
+    def _get_role_assignment_for_user(self, user_id: str, role_id: str) -> dict:
+        user_role_assignments = self._get_role_assignment_graph_data_for_user(user_id)
+        for role in user_role_assignments["value"]:
+            if role["appRoleId"] == role_id:
+                return role
+
+    def remove_workspace_role_user_assignment(self, user: User,
+                                              role: Role,
+                                              workspace: Workspace) -> None:
+        # Get the role assignment id for the role we want to remove
+        role_assignment = self._get_role_assignment_for_user(user.id, role.id)
+
+        if self._is_workspace_role_group_in_use(workspace):
+            self._remove_workspace_user_from_application_group(user, workspace, role)
+        else:
+            self._remove_workspace_user_from_application(user,role_assignment)
+
+    def _remove_workspace_user_from_application(self, user: User, role_assignment: dict) -> requests.Response:
+        msgraph_token = self._get_msgraph_token()
+        url = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user.id}/appRoleAssignments/{role_assignment['id']}"
+        response = requests.delete(url, headers=self._get_auth_header(msgraph_token))
+        return response
 
     def _get_batch_users_by_role_assignments_body(self, roles_graph_data):
         request_body = {"requests": []}
