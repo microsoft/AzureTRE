@@ -12,8 +12,10 @@ from api.routes import health, ping, workspaces, workspace_templates, workspace_
 from core import config
 from resources import strings
 
+
 def _is_user_management_enabled():
     return config.USER_MANAGEMENT_ENABLED
+
 
 core_tags_metadata = [
     {"name": "health", "description": "Verify that the TRE is up and running"},

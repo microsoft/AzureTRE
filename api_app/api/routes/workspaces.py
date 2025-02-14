@@ -43,7 +43,6 @@ workspace_services_workspace_router = APIRouter(dependencies=[Depends(get_curren
 user_resources_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 
 
-
 def validate_user_has_valid_role_for_user_resource(user, user_resource):
     if "WorkspaceOwner" in user.roles:
         return
@@ -185,6 +184,7 @@ async def invoke_action_on_workspace(response: Response, action: str, user=Depen
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
+
 
 # workspace operations
 # This method only returns templates that the authenticated user is authorized to use
@@ -534,5 +534,3 @@ async def retrieve_user_resource_operations_by_user_resource_id_and_operation_id
 async def retrieve_user_resource_history_by_user_resource_id(user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> ResourceHistoryInList:
     validate_user_has_valid_role_for_user_resource(user, user_resource)
     return ResourceHistoryInList(resource_history=await resource_history_repo.get_resource_history_by_resource_id(resource_id=user_resource.id))
-
-
