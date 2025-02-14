@@ -8,6 +8,7 @@ import { useAuthApiCall, HttpMethod, ResultType } from '../../hooks/useAuthApiCa
 import { RootDashboard } from './RootDashboard';
 import { LeftNav } from './LeftNav';
 import { LoadingState } from '../../models/loadingState';
+import { RequestsList } from '../shared/RequestsList';
 import { SharedServices } from '../shared/SharedServices';
 import { SharedServiceItem } from '../shared/SharedServiceItem';
 import { SecuredByRole } from '../shared/SecuredByRole';
@@ -34,7 +35,7 @@ export const RootLayout: React.FunctionComponent = () => {
         const r = await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get, undefined, undefined, ResultType.JSON);
         setLoadingState(LoadingState.Ok);
         r && r.workspaces && setWorkspaces(r.workspaces);
-      } catch (e:any) {
+      } catch (e: any) {
         e.userMessage = 'Error retrieving resources';
         setApiError(e);
         setLoadingState(LoadingState.Error);
@@ -91,7 +92,7 @@ export const RootLayout: React.FunctionComponent = () => {
       }
     };
 
-   getCosts();
+    getCosts();
 
     const ctx = costsWriteCtx.current;
 
@@ -123,32 +124,38 @@ export const RootLayout: React.FunctionComponent = () => {
     case LoadingState.Ok:
       return (
         <>
-        {
-        loadingCostState === LoadingState.Error &&
-        <ExceptionLayout e={costApiError} />
-        }
-        <Stack horizontal className='tre-body-inner'>
-          <Stack.Item className='tre-left-nav' style={{marginTop:2}}>
-            <LeftNav />
-          </Stack.Item><Stack.Item className='tre-body-content'>
-            <Routes>
-              <Route path="/" element={
-                <RootDashboard
-                  workspaces={workspaces}
-                  addWorkspace={(w: Workspace) => addWorkspace(w)}
-                  updateWorkspace={(w: Workspace) => updateWorkspace(w)}
-                  removeWorkspace={(w: Workspace) => removeWorkspace(w)} />
-              } />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/shared-services/*" element={
-                <Routes>
-                  <Route path="/" element={<SecuredByRole element={<SharedServices />} allowedAppRoles={[RoleName.TREAdmin]} errorString={"You must be a TRE Admin to access this area"}/>} />
-                  <Route path=":sharedServiceId" element={<SecuredByRole element={<SharedServiceItem />} allowedAppRoles={[RoleName.TREAdmin]} errorString={"You must be a TRE Admin to access this area"}/>} />
-                </Routes>
-              } />
-            </Routes>
-          </Stack.Item>
-        </Stack>
+          {
+            loadingCostState === LoadingState.Error &&
+            <ExceptionLayout e={costApiError} />
+          }
+          <Stack horizontal className='tre-body-inner'>
+            <Stack.Item className='tre-left-nav' style={{ marginTop: 2 }}>
+              <LeftNav />
+            </Stack.Item><Stack.Item id="tre-body" className='tre-body-content'>
+              <Routes>
+                <Route path="/" element={
+                  <RootDashboard
+                    workspaces={workspaces}
+                    addWorkspace={(w: Workspace) => addWorkspace(w)}
+                    updateWorkspace={(w: Workspace) => updateWorkspace(w)}
+                    removeWorkspace={(w: Workspace) => removeWorkspace(w)} />
+                } />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/shared-services/*" element={
+                  <Routes>
+                    <Route path="/" element={<SecuredByRole element={<SharedServices />} allowedAppRoles={[RoleName.TREAdmin]} errorString={"You must be a TRE Admin to access this area"} />} />
+                    <Route path=":sharedServiceId" element={<SecuredByRole element={<SharedServiceItem />} allowedAppRoles={[RoleName.TREAdmin]} errorString={"You must be a TRE Admin to access this area"} />} />
+                  </Routes>
+                } />
+                <Route path="/requests/*" element={
+                  <Routes>
+                    <Route path="/"  />
+                    <Route path="airlock/*" element={<RequestsList />} />
+                  </Routes>
+                } />
+              </Routes>
+            </Stack.Item>
+          </Stack>
         </>
       );
     case LoadingState.Error:

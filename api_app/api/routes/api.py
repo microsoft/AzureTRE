@@ -8,7 +8,7 @@ from fastapi.openapi.utils import get_openapi
 from api.helpers import get_repository
 from db.repositories.workspaces import WorkspaceRepository
 from api.routes import health, ping, workspaces, workspace_templates, workspace_service_templates, user_resource_templates, \
-    shared_services, shared_service_templates, migrations, costs, airlock, operations, metadata, workspace_users
+    shared_services, shared_service_templates, migrations, costs, airlock, operations, metadata, requests, workspace_users
 from core import config
 from resources import strings
 
@@ -52,6 +52,7 @@ core_router.include_router(workspaces.workspaces_shared_router, tags=["workspace
 core_router.include_router(migrations.migrations_core_router, tags=["migrations"])
 core_router.include_router(costs.costs_core_router, tags=["costs"])
 core_router.include_router(costs.costs_workspace_router, tags=["costs"])
+core_router.include_router(requests.router, tags=["requests"])
 
 if _is_user_management_enabled():
     core_router.include_router(workspace_users.workspaces_users_admin_router, tags=["users"])
@@ -119,7 +120,7 @@ workspace_swagger_disabled_router = APIRouter()
 
 def get_scope(workspace) -> str:
     # Cope with the fact that scope id can have api:// at the front.
-    return f"api://{workspace.properties['scope_id'].replace('api://','')}/user_impersonation"
+    return f"api://{workspace.properties['scope_id'].replace('api://', '')}/user_impersonation"
 
 
 @workspace_swagger_router.get("/workspaces/{workspace_id}/openapi.json", include_in_schema=False, name="openapi_definitions")
