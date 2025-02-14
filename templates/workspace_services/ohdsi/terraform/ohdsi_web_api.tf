@@ -33,8 +33,8 @@ resource "azurerm_linux_web_app" "ohdsi_webapi" {
   client_affinity_enabled = false
 
   site_config {
-    always_on  = true
-    ftps_state = "Disabled"
+    always_on           = true
+    ftps_state          = "Disabled"
     minimum_tls_version = "1.3"
 
     application_stack {

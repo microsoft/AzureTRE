@@ -140,7 +140,7 @@ resource "azurerm_monitor_diagnostic_setting" "gitea" {
 
   dynamic "enabled_log" {
     for_each = [
-      for category in data.azurerm_monitor_diagnostic_categories.gitea.log_category_types:
+      for category in data.azurerm_monitor_diagnostic_categories.gitea.log_category_types :
       category if contains(local.web_app_diagnostic_categories_enabled, category)
     ]
     content {
