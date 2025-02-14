@@ -13,8 +13,6 @@ locals {
 
   docker_registry_server = data.azurerm_container_registry.mgmt_acr.login_server
 
-  mgmt_storage_account_id = data.azurerm_storage_account.mgmt_storage.id
-
   # https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-firewall#allow-requests-from-the-azure-portal
 
   azure_portal_cosmos_ips_list = [

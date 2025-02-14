@@ -49,7 +49,7 @@ variable "kv_mgmt_encryption_key_name" {
 }
 
 variable "public_deployment_ip_address" {
-  description = "Your local IP address if https://ipecho.net/plain is blocked."
+  description = "Your local IP address if automatic detection via https://ipecho.net/plain is blocked (e.g., due to network restrictions)"
   type        = string
   default     = ""
 }
