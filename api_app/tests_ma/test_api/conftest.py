@@ -1,7 +1,6 @@
 import pytest
 import pytest_asyncio
 from mock import patch
-from unittest.mock import patch
 
 from fastapi import FastAPI
 from httpx import AsyncClient

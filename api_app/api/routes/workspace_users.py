@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends,Response,status
+from fastapi import APIRouter, Depends, Response, status
 from api.dependencies.workspaces import get_workspace_by_id_from_path
 from resources import strings
 from services.authentication import get_access_service
 from models.schemas.users import UsersInResponse, AssignableUsersInResponse
 from models.schemas.roles import RolesInResponse
-from services.authentication import get_current_admin_user,get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin
+from services.authentication import get_current_admin_user, get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin
 
 workspaces_users_admin_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 workspaces_users_shared_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin)])
@@ -48,9 +48,7 @@ async def assign_workspace_user(response: Response, user_email: str, role_name: 
     return UsersInResponse(users=users)
 
 
-@workspaces_users_admin_router.delete("/workspaces/{workspace_id}/users/assign",
-                               status_code=status.HTTP_202_ACCEPTED,
-                               name=strings.API_REMOVE_WORKSPACE_USER_ASSIGNMENT)
+@workspaces_users_admin_router.delete("/workspaces/{workspace_id}/users/assign", status_code=status.HTTP_202_ACCEPTED, name=strings.API_REMOVE_WORKSPACE_USER_ASSIGNMENT)
 async def remove_workspace_user_assignment(user_email: str,
                                            role_name: str,
                                            workspace=Depends(get_workspace_by_id_from_path)) -> UsersInResponse:

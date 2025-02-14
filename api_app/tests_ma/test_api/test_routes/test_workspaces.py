@@ -15,7 +15,7 @@ from models.schemas.operation import OperationInResponse
 from db.errors import EntityDoesNotExist
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
-from models.domain.authentication import RoleAssignment, User, Role
+from models.domain.authentication import RoleAssignment
 from models.domain.operation import Operation, OperationStep, Status
 from models.domain.resource import ResourceHistoryItem, ResourceType
 from models.domain.user_resource import UserResource

@@ -9,8 +9,10 @@ from models.domain.authentication import User, RoleAssignment
 class AuthConfigValidationError(Exception):
     """Raised when the input auth information is invalid"""
 
+
 class UserRoleAssignmentError(Exception):
     """Raised when a user role assignment fails"""
+
 
 class AccessService(OAuth2AuthorizationCodeBearer):
     @abstractmethod

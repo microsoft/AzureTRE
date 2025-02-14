@@ -27,5 +27,6 @@ class UsersInResponse(BaseModel):
             }
         }
 
+
 class AssignableUsersInResponse(BaseModel):
     assignable_users: List[AssignableUser] = Field(..., title="Assignable Users", description="List of users assignable to a workspace")

@@ -1,4 +1,3 @@
-from unittest.mock import AsyncMock
 import pytest
 from mock import patch
 
@@ -23,6 +22,7 @@ SERVICE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
 USER_RESOURCE_ID = 'a33ad738-7265-4b5f-9eae-a1a62928772a'
 CLIENT_ID = 'f0acf127-a672-a672-a672-a15e5bf9f127'
 OPERATION_ID = '11111111-7265-4b5f-9eae-a1a62928772f'
+
 
 def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspace:
     workspace = Workspace(
@@ -83,14 +83,13 @@ class TestWorkspaceUserRoutesWithTreAdmin:
             assert response.status_code == status.HTTP_200_OK
             assert response.json()["users"] == users
 
-
     @pytest.mark.parametrize("auth_class", ["aad_authentication.AzureADAuthorization"])
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     async def test_assign_workspace_user_assigns_workspace_user(self, get_workspace_by_id_mock, auth_class, app, client):
         with patch(f"services.{auth_class}.get_user_by_email") as get_user_by_email_mock, \
-            patch(f"services.{auth_class}.get_workspace_role_by_name") as get_workspace_role_by_name_mock, \
-            patch(f"services.{auth_class}.assign_workspace_user") as assign_workspace_user_mock, \
-            patch(f"services.{auth_class}.get_workspace_users") as get_workspace_users_mock:
+                patch(f"services.{auth_class}.get_workspace_role_by_name") as get_workspace_role_by_name_mock, \
+                patch(f"services.{auth_class}.assign_workspace_user") as assign_workspace_user_mock, \
+                patch(f"services.{auth_class}.get_workspace_users") as get_workspace_users_mock:
 
             workspace = get_workspace_by_id_mock.return_value
 
@@ -181,7 +180,6 @@ class TestWorkspaceUserRoutesWithTreAdmin:
 
             assert response.status_code == status.HTTP_200_OK
             assert response.json()["assignable_users"] == assignable_users
-
 
     @pytest.mark.parametrize("auth_class", ["aad_authentication.AzureADAuthorization"])
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())

@@ -69,7 +69,7 @@ class Database(metaclass=Singleton):
             ) as cosmosdb_mng_client:
                 database_keys = await cosmosdb_mng_client.database_accounts.list_keys(
                     resource_group_name=RESOURCE_GROUP_NAME,
-                    account_name=COSMOSDB_ACCOUNT_NAME,
+                    account_name=COSMOSDB_ACCOUNT_NAME
                 )
                 primary_master_key = database_keys.primary_master_key
 

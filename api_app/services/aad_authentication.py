@@ -1,5 +1,4 @@
 import base64
-import json
 from collections import defaultdict
 from enum import Enum
 from typing import List, Optional
@@ -12,7 +11,7 @@ from msal import ConfidentialClientApplication
 
 from services.access_service import AccessService, AuthConfigValidationError, UserRoleAssignmentError
 from core import config
-from db.errors import DuplicateEntity, EntityDoesNotExist
+from db.errors import EntityDoesNotExist
 from models.domain.authentication import User, AssignableUser, Role, RoleAssignment
 from models.domain.workspace import Workspace, WorkspaceRole
 from resources import strings
@@ -283,12 +282,12 @@ class AzureADAuthorization(AccessService):
                     user_email = user_data["body"]["userPrincipalName"]
                     # if user with id does not already exist in users
                     user_roles=self._get_roles_for_principal(user_id, roles_graph_data, app_id_to_role_name)
+
                     if not any(user.id == user_id for user in users):
                         users.append(User(id=user_id, name=user_name, email=user_email, roles=user_roles))
                     else:
                         user = next((user for user in users if user.id == user_id), None)
                         user.roles = list(set(user.roles + user_roles))
-
 
             # Handle group endpoint response
             elif "directoryObjects" in user_data["body"]["@odata.context"]:
@@ -299,6 +298,7 @@ class AzureADAuthorization(AccessService):
                     user_email = group_member["userPrincipalName"]
 
                     group_roles=self._get_roles_for_principal(group_id, roles_graph_data, app_id_to_role_name)
+
                     if not any(user.id == user_id for user in users):
                         users.append(User(id=user_id, name=user_name, email=user_email, roles=group_roles))
                     else:
@@ -339,11 +339,11 @@ class AzureADAuthorization(AccessService):
 
         for role in graph_data["value"]:
             roles.append(Role(id=role["id"], value=role["value"],
-                            isEnabled=role["isEnabled"],
-                            description=role["description"],
-                            displayName=role["displayName"],
-                            origin=role["origin"],
-                            allowedMemberTypes=role["allowedMemberTypes"]))
+                                isEnabled=role["isEnabled"],
+                                description=role["description"],
+                                displayName=role["displayName"],
+                                origin=role["origin"],
+                                allowedMemberTypes=role["allowedMemberTypes"]))
 
         return roles
 
@@ -359,7 +359,7 @@ class AzureADAuthorization(AccessService):
         return workspace_role_assignments_details
 
     def get_workspace_role_by_name(self, name: str, workspace: Workspace) -> Role:
-        app_roles_endpoint =  f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{workspace.properties['sp_id']}/appRoles"
+        app_roles_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{workspace.properties['sp_id']}/appRoles"
         graph_data = self._ms_graph_query(app_roles_endpoint, "GET")
 
         for role in graph_data["value"]:
@@ -399,7 +399,7 @@ class AzureADAuthorization(AccessService):
     def _get_workspace_group_name(self, workspace: Workspace, role: Role) -> tuple:
         tre_id = workspace.properties["tre_id"]
         workspace_id = workspace.properties["workspace_id"]
-        group_suffix = ""
+        group_name = ""
         app_role_id_suffix = ""
         if role.value == "WorkspaceResearcher":
             group_name = "Workspace Researchers"
@@ -487,7 +487,7 @@ class AzureADAuthorization(AccessService):
         if self._is_workspace_role_group_in_use(workspace):
             self._remove_workspace_user_from_application_group(user, workspace, role)
         else:
-            self._remove_workspace_user_from_application(user,role_assignment)
+            self._remove_workspace_user_from_application(user, role_assignment)
 
     def _remove_workspace_user_from_application(self, user: User, role_assignment: dict) -> requests.Response:
         msgraph_token = self._get_msgraph_token()
