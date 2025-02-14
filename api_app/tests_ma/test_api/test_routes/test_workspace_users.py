@@ -124,9 +124,9 @@ class TestWorkspaceUserRoutesWithTreAdmin:
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     async def test_remove_workspace_user_assignment_removes_workspace_user_assignment(self, get_workspace_by_id_mock, auth_class, app, client):
         with patch(f"services.{auth_class}.remove_workspace_role_user_assignment") as remove_workspace_role_user_assignment_mock, \
-            patch(f"services.{auth_class}.get_user_by_email") as get_user_by_email_mock, \
-            patch(f"services.{auth_class}.get_workspace_role_by_name") as get_workspace_role_by_name_mock, \
-            patch(f"services.{auth_class}.get_workspace_users") as get_workspace_users_mock:
+                patch(f"services.{auth_class}.get_user_by_email") as get_user_by_email_mock, \
+                patch(f"services.{auth_class}.get_workspace_role_by_name") as get_workspace_role_by_name_mock, \
+                patch(f"services.{auth_class}.get_workspace_users") as get_workspace_users_mock:
 
             workspace = get_workspace_by_id_mock.return_value
 

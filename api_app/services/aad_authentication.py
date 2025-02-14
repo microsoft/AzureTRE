@@ -281,7 +281,7 @@ class AzureADAuthorization(AccessService):
                 if "users" in user_data["body"]["@odata.context"]:
                     user_email = user_data["body"]["userPrincipalName"]
                     # if user with id does not already exist in users
-                    user_roles=self._get_roles_for_principal(user_id, roles_graph_data, app_id_to_role_name)
+                    user_roles = self._get_roles_for_principal(user_id, roles_graph_data, app_id_to_role_name)
 
                     if not any(user.id == user_id for user in users):
                         users.append(User(id=user_id, name=user_name, email=user_email, roles=user_roles))
@@ -297,7 +297,7 @@ class AzureADAuthorization(AccessService):
                     user_name = group_member["displayName"]
                     user_email = group_member["userPrincipalName"]
 
-                    group_roles=self._get_roles_for_principal(group_id, roles_graph_data, app_id_to_role_name)
+                    group_roles = self._get_roles_for_principal(group_id, roles_graph_data, app_id_to_role_name)
 
                     if not any(user.id == user_id for user in users):
                         users.append(User(id=user_id, name=user_name, email=user_email, roles=group_roles))
@@ -339,11 +339,11 @@ class AzureADAuthorization(AccessService):
 
         for role in graph_data["value"]:
             roles.append(Role(id=role["id"], value=role["value"],
-                                isEnabled=role["isEnabled"],
-                                description=role["description"],
-                                displayName=role["displayName"],
-                                origin=role["origin"],
-                                allowedMemberTypes=role["allowedMemberTypes"]))
+                              isEnabled=role["isEnabled"],
+                              description=role["description"],
+                              displayName=role["displayName"],
+                              origin=role["origin"],
+                              allowedMemberTypes=role["allowedMemberTypes"]))
 
         return roles
 

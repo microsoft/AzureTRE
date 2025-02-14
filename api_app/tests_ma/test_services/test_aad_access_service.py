@@ -765,9 +765,9 @@ def test_assign_workspace_user_already_has_role(workspace_role_in_use_mock,
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=False)
 @patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group")
 @patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application")
-def test_assign_workspace_user_if_no_groups(assign_user_to_role_mock,assign_user_to_group_mock,
-                                                workspace_without_groups, role_owner,
-                                                user_with_role):
+def test_assign_workspace_user_if_no_groups(assign_user_to_role_mock, assign_user_to_group_mock,
+                                            workspace_without_groups, role_owner,
+                                            user_with_role):
 
     access_service = AzureADAuthorization()
     assign_user_to_role_mock.return_value = None
@@ -782,9 +782,9 @@ def test_assign_workspace_user_if_no_groups(assign_user_to_role_mock,assign_user
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=True)
 @patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group")
 @patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application")
-def test_assign_workspace_user_if_groups(assign_user_to_role_mock,assign_user_to_group_mock,
-                                                workspace_without_groups, role_owner,
-                                                user_with_role):
+def test_assign_workspace_user_if_groups(assign_user_to_role_mock, assign_user_to_group_mock,
+                                         workspace_without_groups, role_owner,
+                                         user_with_role):
 
     access_service = AzureADAuthorization()
     assign_user_to_role_mock.return_value = None
@@ -801,8 +801,8 @@ def test_assign_workspace_user_if_groups(assign_user_to_role_mock,assign_user_to
 @patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_for_user")
 def test_remove_workspace_user_if_no_groups(get_role_assignment_mock,
                                             remove_user_to_role_mock, remove_user_to_group_mock,
-                                             workspace_without_groups, role_owner,
-                                                user_with_role):
+                                            workspace_without_groups, role_owner,
+                                            user_with_role):
 
     access_service = AzureADAuthorization()
     remove_user_to_role_mock.return_value = None
@@ -819,9 +819,9 @@ def test_remove_workspace_user_if_no_groups(get_role_assignment_mock,
 @patch("services.aad_authentication.AzureADAuthorization._remove_workspace_user_from_application")
 @patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_for_user")
 def test_remove_workspace_user_if_groups(get_role_assignment_mock,
-                                            remove_user_to_role_mock, remove_user_to_group_mock,
-                                             workspace_without_groups, role_owner,
-                                                user_with_role):
+                                         remove_user_to_role_mock, remove_user_to_group_mock,
+                                         workspace_without_groups, role_owner,
+                                         user_with_role):
 
     access_service = AzureADAuthorization()
     remove_user_to_role_mock.return_value = None
@@ -840,7 +840,7 @@ def test_get_assignable_users_returns_users(_, request_get_mock, mock_headers):
     access_service = AzureADAuthorization()
 
     # mock the response of _get_auth_header
-    headers = {"Authorization": f"Bearer token"}
+    headers = {"Authorization": "Bearer token"}
     mock_headers.return_value = headers
     headers["Content-type"] = "application/json"
 
@@ -864,22 +864,22 @@ def test_get_assignable_users_returns_users(_, request_get_mock, mock_headers):
 @patch("services.aad_authentication.AzureADAuthorization._get_msgraph_token", return_value="token")
 @patch("services.aad_authentication.AzureADAuthorization._ms_graph_query")
 @patch("services.aad_authentication.AzureADAuthorization._get_auth_header")
-def test_get_workspace_roles_returns_roles(_, ms_graph_query_mock, mock_headers,workspace_without_groups):
+def test_get_workspace_roles_returns_roles(_, ms_graph_query_mock, mock_headers, workspace_without_groups):
     access_service = AzureADAuthorization()
 
     # mock the response of _get_auth_header
-    headers = {"Authorization": f"Bearer token"}
+    headers = {"Authorization": "Bearer token"}
     mock_headers.return_value = headers
     headers["Content-type"] = "application/json"
 
     # Mock the response of the get request
     request_get_mock_response = {
-       "value": [
+        "value":[
             Role(id=1, value="AirlockManager", isEnabled=True, description="", displayName="Airlock Manager", origin="", allowedMemberTypes=[]).dict(),
             Role(id=2, value="WorkspaceResearcher", isEnabled=True, description="", displayName="Workspace Researcher", origin="", allowedMemberTypes=[]).dict(),
             Role(id=3, value="WorkspaceOwner", isEnabled=True, description="", displayName="Workspace Owner", origin="", allowedMemberTypes=[]).dict(),
-            ]
-        }
+        ]
+    }
     ms_graph_query_mock.return_value = request_get_mock_response
     roles = access_service.get_workspace_roles(workspace_without_groups)
 
