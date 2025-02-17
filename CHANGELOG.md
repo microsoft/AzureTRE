@@ -20,6 +20,7 @@ BUG FIXES:
 * Fix upgrade when porter install has failed ([#4338](https://github.com/microsoft/AzureTRE/pull/4338))
 * Certs shared service: Secret nexus-ssl-password is currently in a deleted but recoverable state ([#4294](https://github.com/microsoft/AzureTRE/issues/4294)])
 * Fix Cosmos DB local debugging configuration ([#4340](https://github.com/microsoft/AzureTRE/pull/4340))
+* Add firewall rules to upgrade steps for Guacamole service ([#4343](https://github.com/microsoft/AzureTRE/pull/4343))
 
 COMPONENTS:
 
