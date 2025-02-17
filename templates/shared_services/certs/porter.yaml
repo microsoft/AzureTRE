@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-certs
-version: 0.7.3
+version: 0.7.4
 description: "An Azure TRE shared service to generate certificates for a specified internal domain using Letsencrypt"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -88,6 +88,7 @@ install:
         - name: storage_account_name
         - name: resource_group_name
         - name: keyvault_name
+        - name: password_name
   - az:
       description: "Set Azure Cloud Environment"
       arguments:
@@ -114,6 +115,7 @@ install:
         resource_group_name: ${ bundle.outputs.resource_group_name }
         keyvault_name: ${ bundle.outputs.keyvault_name }
         cert_name: ${ bundle.parameters.cert_name }
+        password_name: ${ bundle.outputs.password_name }
   - az:
       description: "Stop application gateway"
       arguments:
@@ -167,6 +169,7 @@ renew:
         - name: storage_account_name
         - name: resource_group_name
         - name: keyvault_name
+        - name: password_name
   - az:
       description: "Set Azure Cloud Environment"
       arguments:
@@ -202,6 +205,7 @@ renew:
         resource_group_name: ${ bundle.outputs.resource_group_name }
         keyvault_name: ${ bundle.outputs.keyvault_name }
         cert_name: ${ bundle.parameters.cert_name }
+        password_name: ${ bundle.outputs.password_name }
   - az:
       description: "Stop application gateway"
       arguments:
