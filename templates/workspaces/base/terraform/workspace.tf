@@ -110,7 +110,6 @@ module "backup" {
     azurerm_storage_account.stg,
     azapi_resource.shared_storage,
     module.network,
-    module.airlock,
     module.aad
   ]
 }
