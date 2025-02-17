@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../assets/ms_icon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.4">
     
     
       
@@ -30,7 +30,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.8608ea7d.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -2936,6 +2936,93 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#run-the-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run the UI
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#available-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Available Scripts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Available Scripts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#yarn-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      yarn start
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yarn-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      yarn test
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yarn-run-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      yarn run build
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yarn-run-serve" class="md-nav__link">
+    <span class="md-ellipsis">
+      yarn run serve
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yarn-run-testcoverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      yarn run test:coverage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yarn-lint" class="md-nav__link">
+    <span class="md-ellipsis">
+      yarn lint
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yarn-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      yarn format
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3671,6 +3758,93 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#run-the-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run the UI
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#available-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Available Scripts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Available Scripts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#yarn-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      yarn start
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yarn-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      yarn test
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yarn-run-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      yarn run build
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yarn-run-serve" class="md-nav__link">
+    <span class="md-ellipsis">
+      yarn run serve
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yarn-run-testcoverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      yarn run test:coverage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yarn-lint" class="md-nav__link">
+    <span class="md-ellipsis">
+      yarn lint
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yarn-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      yarn format
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3691,7 +3865,7 @@
 <p>This project contains a React-based web UI which covers the core aspects of a TRE, for researchers and workspace owners.</p>
 <h2 id="chosen-ui-stack-components">Chosen UI Stack + Components</h2>
 <p>The UI is built upon several popular web frameworks:
-- React v18 (created via create-react-app, with all build configurations left as defaults)
+- React v18 (with Vite)
   - Typescript
   - React Router v6 for client side routing
 - Fluent UI <a href="https://developer.microsoft.com/en-us/fluentui#/controls/web">Fluent UI Docs</a>
@@ -3730,7 +3904,40 @@ From this access token we can find the Workspace-level roles the user is in (<co
 <p>To re-deploy <em>just</em> the UI (after an initial deploy), run <code>make build-and-deploy-ui</code> from the root of the dev container. This will:
 - Use the environment variables from your deployment to create a <code>config.json</code> file for the UI
 - Build the source code, via <code>yarn build</code>
-- Deploy the code to Azure blob storage, where it will be statically served behind the App Gateway that also fronts the APi.</p>
+- Deploy the code to Azure blob storage, where it will be statically served behind the App Gateway that also fronts the API.</p>
+<h2 id="run-the-ui">Run the UI</h2>
+<ul>
+<li>Ensure <code>deploy_ui=false</code> is not set in your <code>./config.yaml</code> file</li>
+<li>In the root of the repo, run <code>make tre-deploy</code>. This will provision the necessary resources in Azure, build and deploy the UI to Azure blob storage, behind the App Gateway used for the API. The deployment process will also create the necessary <code>config.json</code>, using the <code>config.source.json</code> as a template.</li>
+<li>In Microsoft Entra ID, locate the TRE Client Apps app (possibly called Swagger App). In the Authentication section add reply URIs for:<ul>
+<li><code>http://localhost:3000</code> (if wanting to run locally)</li>
+<li>Your deployed App Url - <code>https://{TRE_ID}.{LOCATION}.cloudapp.azure.com</code>.</li>
+</ul>
+</li>
+</ul>
+<p>At this point you should be able to navigate to the web app in Azure, log in, and see your workspaces.</p>
+<h2 id="available-scripts">Available Scripts</h2>
+<p>In the UI directory, you can run:</p>
+<h3 id="yarn-start"><code>yarn start</code></h3>
+<p>Runs the app in the development mode.<br>
+Open <a href="http://localhost:3000">http://localhost:3000</a> to view it in the browser.</p>
+<p>The page will reload if you make edits.<br>
+You will also see any lint errors in the console.</p>
+<h3 id="yarn-test"><code>yarn test</code></h3>
+<p>Launches the test runner in the interactive watch mode.<br></p>
+<h3 id="yarn-run-build"><code>yarn run build</code></h3>
+<p>Builds the app for production to the <code>build</code> folder.<br>
+It correctly bundles React in production mode and optimizes the build for the best performance.</p>
+<p>The build is minified and the filenames include the hashes.<br>
+Your app is ready to be deployed!</p>
+<h3 id="yarn-run-serve"><code>yarn run serve</code></h3>
+<p>Serves the production build from the <code>build</code> folder.<br></p>
+<h3 id="yarn-run-testcoverage"><code>yarn run test:coverage</code></h3>
+<p>Runs the tests and generates a coverage report.<br></p>
+<h3 id="yarn-lint"><code>yarn lint</code></h3>
+<p>Runs the linter on the project.<br></p>
+<h3 id="yarn-format"><code>yarn format</code></h3>
+<p>Runs the formatter on the project.<br></p>
 
 
 
