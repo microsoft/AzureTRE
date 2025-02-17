@@ -38,8 +38,8 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
   const [hasAssignmentError, setHasAssignmentError] = useState(false);
   const [assignmentError, setAssignmentError] = useState({} as APIError);
 
-  const onUserChange = (event: any) => {
-    setSelectedUser(event ? event.target.value : null);
+  const onUserChange = (event: any, option: any) => {
+    setSelectedUser(option ? option.key : null);
   };
 
   const onRoleChange = (event: any, option: any) => {
