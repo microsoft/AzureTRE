@@ -149,7 +149,7 @@ terraform-upgrade:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR}/terraform/ && ./upgrade.sh
+	&& ./devops/scripts/upgrade.sh ${DIR}
 
 terraform-import:
 	$(call target_title, "Importing ${DIR} with Terraform") \
@@ -200,7 +200,7 @@ bundle-build:
 	&& if [ -d terraform ]; then terraform -chdir=terraform init -backend=false; terraform -chdir=terraform validate; fi \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} IMAGE_NAME_PREFIX=${IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_build.sh \
-	&& porter build \
+	&& ${MAKEFILE_DIR}/devops/scripts/porter_build_bundle.sh \
 	  $(MAKE) bundle-check-params
 
 bundle-install: bundle-check-params
@@ -217,6 +217,15 @@ bundle-install: bundle-check-params
 		--credential-set arm_auth \
 		--credential-set aad_auth \
 		--debug
+
+bundle:
+	case ${BUNDLE_TYPE} in \
+		(workspace) $(MAKE) workspace_bundle BUNDLE=${BUNDLE} ;; \
+		(workspace_service) $(MAKE) workspace_service_bundle BUNDLE=${BUNDLE} ;; \
+		(shared_service) $(MAKE) shared_service_bundle BUNDLE=${BUNDLE} ;; \
+		(user_resource) $(MAKE) user_resource_bundle WORKSPACE_SERVICE=${WORKSPACE_SERVICE} BUNDLE=${BUNDLE} ;; \
+		(*) echo "Invalid BUNDLE_TYPE: ${BUNDLE_TYPE}"; exit 1 ;; \
+	esac
 
 # Validates that the parameters file is synced with the bundle.
 # The file is used when installing the bundle from a local machine.
@@ -309,8 +318,10 @@ deploy-shared-service:
 	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh $${PROPS}
 
 firewall-install:
-	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
-	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
+	. ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
+	&& $(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
+	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service \
+	PROPS="$${FIREWALL_SKU+--firewall_sku $${FIREWALL_SKU} }$${FIREWALL_FORCE_TUNNEL_IP+--firewall_force_tunnel_ip $${FIREWALL_FORCE_TUNNEL_IP} }"
 
 static-web-upload:
 	$(call target_title, "Uploading to static website") \

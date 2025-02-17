@@ -27,3 +27,8 @@ variable "firewall_sku" {
   type    = string
   default = ""
 }
+
+variable "firewall_force_tunnel_ip" {
+  type    = string
+  default = ""
+}

@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 1.0.8
+version: 1.2.7
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -21,6 +21,8 @@ custom:
         sku: win10-22h2-pro-g2
         version: latest
       conda_config: false
+      secure_boot_enabled: true
+      vtpm_enabled: true
     "Windows 11":
       source_image_reference:
         publisher: microsoftwindowsdesktop
@@ -28,6 +30,8 @@ custom:
         sku: win11-24h2-pro
         version: latest
       conda_config: false
+      secure_boot_enabled: true
+      vtpm_enabled: true
     "Server 2019 Data Science VM":
       source_image_reference:
         publisher: microsoft-dsvm
@@ -35,10 +39,14 @@ custom:
         sku: winserver-2019
         version: latest
       conda_config: true
+      secure_boot_enabled: false  # dsvm-win-2019 is not a gen2 image
+      vtpm_enabled: false
     # For information on using custom images, see README.me in the guacamole/user-resources folder
     # "Custom Image From Gallery":
     #   source_image_name: your-image
     #   conda_config: true
+    #  secure_boot_enabled: false
+    #  vtpm_enabled: false
 
 credentials:
   - name: azure_tenant_id
@@ -113,6 +121,13 @@ parameters:
     type: string
     description: "Timezone for the shutdown schedule"
     default: "UTC"
+  - name: enable_cmk_encryption
+    type: boolean
+    default: false
+  - name: key_store_id
+    type: string
+    default: ""
+
 
 outputs:
   - name: ip
@@ -141,7 +156,7 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.4.6
+      clientVersion: 1.9.8
   - az:
       clientVersion: 2.67.0
 
@@ -161,6 +176,8 @@ install:
         enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
         shutdown_time: ${ bundle.parameters.shutdown_time }
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -190,6 +207,8 @@ upgrade:
         enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
         shutdown_time: ${ bundle.parameters.shutdown_time }
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -231,6 +250,8 @@ uninstall:
         enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
         shutdown_time: ${ bundle.parameters.shutdown_time }
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

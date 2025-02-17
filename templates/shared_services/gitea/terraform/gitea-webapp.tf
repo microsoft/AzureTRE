@@ -18,14 +18,16 @@ resource "azurerm_user_assigned_identity" "gitea_id" {
 }
 
 resource "azurerm_linux_web_app" "gitea" {
-  name                            = local.webapp_name
-  resource_group_name             = local.core_resource_group_name
-  location                        = data.azurerm_resource_group.rg.location
-  service_plan_id                 = data.azurerm_service_plan.core.id
-  https_only                      = true
-  key_vault_reference_identity_id = azurerm_user_assigned_identity.gitea_id.id
-  virtual_network_subnet_id       = data.azurerm_subnet.web_app.id
-  tags                            = local.tre_shared_service_tags
+  name                                           = local.webapp_name
+  resource_group_name                            = local.core_resource_group_name
+  location                                       = data.azurerm_resource_group.rg.location
+  service_plan_id                                = data.azurerm_service_plan.core.id
+  https_only                                     = true
+  key_vault_reference_identity_id                = azurerm_user_assigned_identity.gitea_id.id
+  virtual_network_subnet_id                      = data.azurerm_subnet.web_app.id
+  ftp_publish_basic_authentication_enabled       = false
+  webdeploy_publish_basic_authentication_enabled = false
+  tags                                           = local.tre_shared_service_tags
 
   app_settings = {
     WEBSITES_PORT                       = "3000"
@@ -64,12 +66,12 @@ resource "azurerm_linux_web_app" "gitea" {
     container_registry_managed_identity_client_id = azurerm_user_assigned_identity.gitea_id.client_id
     ftps_state                                    = "Disabled"
     always_on                                     = true
-    minimum_tls_version                           = "1.2"
+    minimum_tls_version                           = "1.3"
     vnet_route_all_enabled                        = true
 
     application_stack {
-      docker_image     = "${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/gitea"
-      docker_image_tag = local.version
+      docker_registry_url = "https://${data.azurerm_container_registry.mgmt_acr.login_server}"
+      docker_image_name   = "microsoft/azuretre/gitea:${local.version}"
     }
   }
 
@@ -127,11 +129,14 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
   target_resource_id         = azurerm_linux_web_app.gitea.id
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
-  dynamic "log" {
-    for_each = data.azurerm_monitor_diagnostic_categories.webapp.log_category_types
+  dynamic "enabled_log" {
+    for_each = [
+      for category in data.azurerm_monitor_diagnostic_categories.webapp.log_category_types :
+      category if contains(local.webapp_diagnostic_categories_enabled, category)
+    ]
     content {
-      category = log.value
-      enabled  = contains(local.webapp_diagnostic_categories_enabled, log.value) ? true : false
+      category = enabled_log.value
+
     }
   }
 

@@ -44,9 +44,6 @@ $DaemonConfig = @"
 $DaemonConfig | Out-File -Encoding Ascii ( New-Item -Path $env:ProgramData\docker\config\daemon.json -Force )
 
 # R config
-# $RconfigFilePathWindows = C:\Progra~1\R\4.1.2\etc\Rprofile.site
-#Add-Content $RconfigFilePathWindows "local({`n    r <- getOption(`"repos`")`n    r[`"Nexus`"] <- `"${nexus_proxy_url}/repository/r-proxy/`"`n    options(repos = r)`n})"
-# echo "local({`n    r <- getOption(`"repos`")`n    r[`"Nexus`"] <- `"${nexus_proxy_url}/repository/r-proxy/`"`n    options(repos = r)`n})" > $RconfigFilePathWindows
 $RConfig = @"
 local({
     r <- getOption("repos")
@@ -54,5 +51,14 @@ local({
     options(repos = r)
 })
 "@
-$RConfig | Out-File -Encoding Ascii ( New-Item -Path $Env:ProgramFiles\R\R-4.1.2\etc\Rprofile.site -Force )
 
+$RBasePath = "$Env:ProgramFiles\R"
+
+if (Test-Path $RBasePath) {
+  $RVersions = Get-ChildItem -Path $RBasePath -Directory | Where-Object { $_.Name -like "R-*" }
+
+  foreach ($RVersion in $RVersions) {
+      $ConfigPath = Join-Path -Path $RVersion.FullName -ChildPath "etc\Rprofile.site"
+      $RConfig | Out-File -Encoding Ascii (New-Item -Path $ConfigPath -Force)
+  }
+}

@@ -5,16 +5,25 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
-# Configure AzureRM provider to user Azure AD to connect to storage accounts
+get_resource_id() {
+  local json_data="$1"
+  local resource_addr="$2"
+  echo "$json_data" | jq -r --arg addr "$resource_addr" '
+    def walk_resources:
+      (.resources[]?),
+      (.child_modules[]? | walk_resources);
+    .values.root_module | walk_resources | select(.address==$addr) | .values.id
+  '
+}
+
+# Configure AzureRM provider to use Azure AD to connect to storage accounts
 export ARM_STORAGE_USE_AZUREAD=true
 
-# Configure AzureRM backend to user Azure AD to connect to storage accounts
+# Configure AzureRM backend to use Azure AD to connect to storage accounts
 export ARM_USE_AZUREAD=true
 export ARM_USE_OIDC=true
 
-# terraform_wrapper_path="../../devops/scripts/terraform_wrapper.sh"
-
-# This variables are loaded in for us
+# These variables are loaded in for us
 # shellcheck disable=SC2154
 terraform init -input=false -backend=true -reconfigure \
     -backend-config="resource_group_name=${TF_VAR_mgmt_resource_group_name}" \
@@ -24,41 +33,68 @@ terraform init -input=false -backend=true -reconfigure \
 
 echo "*** Migrating TF Resources... ***"
 
-
-terraform_show_json=$(terraform show -json)
-
-# Remove cnab-state legacy state path form state. Needs to be run before refresh, as refresh will fail.
-state_store_legacy_path=$(echo "${terraform_show_json}" \
-   | jq 'select(.values.root_module.resources != null) | .values.root_module.resources[] | select(.address=="azurerm_storage_share.storage_state_path") | .values.id')
-
-if [ -n "${state_store_legacy_path}" ]; then
-  echo -e "\n\e[96mRemoving legacy state path from TF state\e[0m..."
-  terraform state rm azurerm_storage_share.storage_state_path
-fi
-
-# terraform show might fail if provider schema has changed. Since we don't call apply at this stage a refresh is needed
 terraform refresh
 
-# 1. Check we have a root_module in state
-# 2. Grab the Resource ID
-# 3. Delete the old resource from state
-# 4. Import the new resource type in using the existing Azure Resource ID
-
+# get TF state in JSON
 terraform_show_json=$(terraform show -json)
 
-# example migration
-# # azurerm_app_service_plan -> azurerm_service_plan
-# core_app_service_plan_id=$(echo "${terraform_show_json}" \
-#   | jq -r 'select(.values.root_module.resources != null) | .values.root_module.resources[] | select(.address=="azurerm_app_service_plan.core") | .values.id')
-# if [ -n "${core_app_service_plan_id}" ]; then
-#   echo "Migrating ${core_app_service_plan_id}"
-#   terraform state rm azurerm_app_service_plan.core
-#   if [[ $(az resource list --query "[?id=='${core_app_service_plan_id}'] | length(@)") == 0 ]];
-#   then
-#     echo "The resource doesn't exist on Azure. Skipping importing it back to state."
-#   else
-#     terraform import azurerm_service_plan.core "${core_app_service_plan_id}"
-#   fi
-# fi
+# List of resource addresses to remove.
+declare -a RESOURCES_TO_REMOVE=(
+  "module.network.azurerm_subnet_network_security_group_association.bastion"
+  "module.network.azurerm_subnet_network_security_group_association.app_gw"
+  "module.network.azurerm_subnet_network_security_group_association.shared"
+  "module.network.azurerm_subnet_network_security_group_association.web_app"
+  "module.network.azurerm_subnet_network_security_group_association.resource_processor"
+  "module.network.azurerm_subnet_network_security_group_association.airlock_processor"
+  "module.network.azurerm_subnet_network_security_group_association.airlock_notification"
+  "module.network.azurerm_subnet_network_security_group_association.airlock_storage"
+  "module.network.azurerm_subnet_network_security_group_association.airlock_events"
+  "module.network.azurerm_subnet.bastion"
+  "module.network.azurerm_subnet.azure_firewall"
+  "module.network.azurerm_subnet.app_gw"
+  "module.network.azurerm_subnet.web_app"
+  "module.network.azurerm_subnet.shared"
+  "module.network.azurerm_subnet.resource_processor"
+  "module.network.azurerm_subnet.airlock_processor"
+  "module.network.azurerm_subnet.airlock_notification"
+  "module.network.azurerm_subnet.airlock_storage"
+  "module.network.azurerm_subnet.airlock_events"
+  "module.network.azurerm_subnet.firewall_management"
+)
+vnet_address="module.network.azurerm_virtual_network.core"
 
-echo "*** Migration is done. ***"
+# Check if migration is needed
+migration_needed=0
+for resource in "${RESOURCES_TO_REMOVE[@]}"; do
+  resource_id=$(get_resource_id "${terraform_show_json}" "$resource")
+  if [ -n "$resource_id" ] && [ "$resource_id" != "null" ]; then
+    migration_needed=1
+    break
+  fi
+done
+
+# Remove old resources
+if [ "$migration_needed" -eq 1 ]; then
+  for resource in "${RESOURCES_TO_REMOVE[@]}"; do
+    resource_id=$(get_resource_id "${terraform_show_json}" "$resource")
+    if [ -n "$resource_id" ] && [ "$resource_id" != "null" ]; then
+      terraform state rm "$resource"
+    else
+      echo "Resource that was supposed to be removed not found in state: ${resource}"
+    fi
+  done
+
+  # Remove and re-import the VNet
+  vnet_address="module.network.azurerm_virtual_network.core"
+  vnet_id=$(get_resource_id "${terraform_show_json}" "$vnet_address" "vnet")
+  if [ -n "${vnet_id}" ] && [ "${vnet_id}" != "null" ]; then
+    terraform state rm "${vnet_address}"
+    terraform import "${vnet_address}" "${vnet_id}"
+  else
+    echo "VNet resource not found in state: ${vnet_address}"
+  fi
+  echo "*** Migration Done ***"
+else
+  echo "No old resources found in the state, skipping migration."
+  echo "*** Migration Skipped ***"
+fi

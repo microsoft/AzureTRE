@@ -1,11 +1,3 @@
-data "local_file" "airlock_processor_version" {
-  filename = "${path.root}/../../airlock_processor/_version.py"
-}
-
-locals {
-  version = replace(replace(replace(data.local_file.airlock_processor_version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
-}
-
 resource "azurerm_service_plan" "airlock_plan" {
   name                = "plan-airlock-${var.tre_id}"
   resource_group_name = var.resource_group_name
@@ -28,6 +20,8 @@ resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
   queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
+  local_user_enabled               = false
+  shared_access_key_enabled        = false
   tags                             = var.tre_core_tags
 
   dynamic "identity" {
@@ -41,28 +35,30 @@ resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
 
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
+    }
+  }
+
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
-resource "azurerm_storage_account_customer_managed_key" "sa_airlock_processor_func_app_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.sa_airlock_processor_func_app.id
-  key_vault_id              = var.key_store_id
-  key_name                  = var.kv_encryption_key_name
-  user_assigned_identity_id = var.encryption_identity_id
-}
-
 resource "azurerm_linux_function_app" "airlock_function_app" {
-  name                      = local.airlock_function_app_name
-  resource_group_name       = var.resource_group_name
-  location                  = var.location
-  https_only                = true
-  virtual_network_subnet_id = var.airlock_processor_subnet_id
-  service_plan_id           = azurerm_service_plan.airlock_plan.id
-  storage_account_name      = azurerm_storage_account.sa_airlock_processor_func_app.name
-  # consider moving to a managed identity here
-  storage_account_access_key = azurerm_storage_account.sa_airlock_processor_func_app.primary_access_key
-  tags                       = var.tre_core_tags
+  name                                           = local.airlock_function_app_name
+  resource_group_name                            = var.resource_group_name
+  location                                       = var.location
+  https_only                                     = true
+  virtual_network_subnet_id                      = var.airlock_processor_subnet_id
+  service_plan_id                                = azurerm_service_plan.airlock_plan.id
+  ftp_publish_basic_authentication_enabled       = false
+  webdeploy_publish_basic_authentication_enabled = false
+  storage_account_name                           = azurerm_storage_account.sa_airlock_processor_func_app.name
+  storage_uses_managed_identity                  = true
+
+  tags = var.tre_core_tags
 
   identity {
     type         = "UserAssigned"
@@ -70,7 +66,12 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   }
 
   app_settings = {
-    "SB_CONNECTION_STRING"                       = var.airlock_servicebus.default_primary_connection_string
+    "SERVICEBUS_CONNECTION_NAME"                              = local.servicebus_connection
+    "${local.servicebus_connection}__tenantId"                = azurerm_user_assigned_identity.airlock_id.tenant_id
+    "${local.servicebus_connection}__clientId"                = azurerm_user_assigned_identity.airlock_id.client_id
+    "${local.servicebus_connection}__credential"              = "managedidentity"
+    "${local.servicebus_connection}__fullyQualifiedNamespace" = var.airlock_servicebus_fqdn
+
     "BLOB_CREATED_TOPIC_NAME"                    = azurerm_servicebus_topic.blob_created.name
     "TOPIC_SUBSCRIPTION_NAME"                    = azurerm_servicebus_subscription.airlock_processor.name
     "EVENT_GRID_STEP_RESULT_TOPIC_URI_SETTING"   = azurerm_eventgrid_topic.step_result.endpoint
@@ -87,6 +88,20 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
     "TRE_ID"                                     = var.tre_id
     "WEBSITE_CONTENTOVERVNET"                    = 1
     "STORAGE_ENDPOINT_SUFFIX"                    = module.terraform_azurerm_environment_configuration.storage_suffix
+
+    "TOPIC_SUBSCRIPTION_NAME"         = azurerm_servicebus_subscription.airlock_processor.name
+    "AzureWebJobsStorage__clientId"   = azurerm_user_assigned_identity.airlock_id.client_id
+    "AzureWebJobsStorage__credential" = "managedidentity"
+
+    "EVENT_GRID_STEP_RESULT_CONNECTION"                           = local.step_result_eventgrid_connection
+    "${local.step_result_eventgrid_connection}__topicEndpointUri" = azurerm_eventgrid_topic.step_result.endpoint
+    "${local.step_result_eventgrid_connection}__credential"       = "managedidentity"
+    "${local.step_result_eventgrid_connection}__clientId"         = azurerm_user_assigned_identity.airlock_id.client_id
+
+    "EVENT_GRID_DATA_DELETION_CONNECTION"                           = local.data_deletion_eventgrid_connection
+    "${local.data_deletion_eventgrid_connection}__topicEndpointUri" = azurerm_eventgrid_topic.data_deletion.endpoint
+    "${local.data_deletion_eventgrid_connection}__credential"       = "managedidentity"
+    "${local.data_deletion_eventgrid_connection}__clientId"         = azurerm_user_assigned_identity.airlock_id.client_id
   }
 
   site_config {
@@ -96,6 +111,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
     container_registry_use_managed_identity       = true
     vnet_route_all_enabled                        = true
     ftps_state                                    = "Disabled"
+    minimum_tls_version                           = "1.3"
 
     application_stack {
       docker {

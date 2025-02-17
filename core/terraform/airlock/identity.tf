@@ -1,8 +1,3 @@
-data "azurerm_container_registry" "mgmt_acr" {
-  name                = var.mgmt_acr_name
-  resource_group_name = var.mgmt_resource_group_name
-}
-
 resource "azurerm_user_assigned_identity" "airlock_id" {
   resource_group_name = var.resource_group_name
   location            = var.location
@@ -30,7 +25,7 @@ resource "azurerm_role_assignment" "servicebus_receiver" {
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
-resource "azurerm_role_assignment" "eventgrid_data_sender" {
+resource "azurerm_role_assignment" "eventgrid_data_sender_status_changed" {
   scope                = azurerm_eventgrid_topic.status_changed.id
   role_definition_name = "EventGrid Data Sender"
   principal_id         = var.api_principal_id
@@ -40,6 +35,18 @@ resource "azurerm_role_assignment" "eventgrid_data_sender_notification" {
   scope                = azurerm_eventgrid_topic.airlock_notification.id
   role_definition_name = "EventGrid Data Sender"
   principal_id         = var.api_principal_id
+}
+
+resource "azurerm_role_assignment" "eventgrid_data_sender_step_result" {
+  scope                = azurerm_eventgrid_topic.step_result.id
+  role_definition_name = "EventGrid Data Sender"
+  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
+}
+
+resource "azurerm_role_assignment" "eventgrid_data_sender_data_deletion" {
+  scope                = azurerm_eventgrid_topic.data_deletion.id
+  role_definition_name = "EventGrid Data Sender"
+  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
 resource "azurerm_role_assignment" "airlock_blob_data_contributor" {
@@ -56,4 +63,12 @@ resource "azurerm_role_assignment" "api_sa_data_contributor" {
   scope                = local.api_sa_data_contributor[count.index]
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = var.api_principal_id
+}
+
+# Permissions needed for the Function Host to work correctly.
+resource "azurerm_role_assignment" "function_host_storage" {
+  for_each             = toset(["Storage Account Contributor", "Storage Blob Data Owner", "Storage Queue Data Contributor"])
+  scope                = azurerm_storage_account.sa_airlock_processor_func_app.id
+  role_definition_name = each.value
+  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
