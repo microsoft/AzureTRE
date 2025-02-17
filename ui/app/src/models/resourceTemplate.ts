@@ -1,22 +1,22 @@
 import { ResourceType } from "./resourceType";
 
 export interface ResourceTemplate {
-  id: string,
-  name: string,
-  type: string,
-  description: string,
-  version: string,
-  title: string,
-  resourceType: ResourceType,
-  current: boolean,
-  properties: any,
-  allOf?: Array<any>,
-  system_properties: any,
-  actions: Array<TemplateAction>,
-  customActions: Array<TemplateAction>,
-  required: Array<string>,
-  uiSchema: any,
-  pipeline: any
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  version: string;
+  title: string;
+  resourceType: ResourceType;
+  current: boolean;
+  properties: any;
+  allOf?: Array<any>;
+  system_properties: any;
+  actions: Array<TemplateAction>;
+  customActions: Array<TemplateAction>;
+  required: Array<string>;
+  uiSchema: any;
+  pipeline: any;
 }
 
 export const sanitiseTemplateForRJSF = (template: ResourceTemplate) => {
@@ -24,7 +24,7 @@ export const sanitiseTemplateForRJSF = (template: ResourceTemplate) => {
     Object.keys(template.properties).forEach((key: string) => {
       Object.keys(template.properties[key]).forEach((name: string) => {
         if (template.properties[key][name] === null) {
-          delete template.properties[key][name]
+          delete template.properties[key][name];
         }
       });
     });
@@ -38,8 +38,8 @@ export const sanitiseTemplateForRJSF = (template: ResourceTemplate) => {
     properties: template.properties,
     allOf: template.allOf,
     required: template.required,
-    uiSchema: template.uiSchema
-  }
+    uiSchema: template.uiSchema,
+  };
 
   if (!sanitised.allOf) delete sanitised.allOf;
 
@@ -47,18 +47,18 @@ export const sanitiseTemplateForRJSF = (template: ResourceTemplate) => {
 };
 
 export interface TemplateAction {
-  name: string,
-  description: string
+  name: string;
+  description: string;
 }
 
 // make a sensible guess at an icon
 export const getActionIcon = (actionName: string) => {
-  switch(actionName.toLowerCase()){
-      case 'start':
-          return 'Play';
-      case 'stop':
-          return 'Stop';
-      default:
-          return 'Asterisk'
+  switch (actionName.toLowerCase()) {
+    case "start":
+      return "Play";
+    case "stop":
+      return "Stop";
+    default:
+      return "Asterisk";
   }
 };
