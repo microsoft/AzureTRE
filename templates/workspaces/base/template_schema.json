@@ -73,6 +73,13 @@
         "Manual"
       ],
       "updateable": true
+    },
+    "enable_backup": {
+      "type": "boolean",
+      "title": "Enable Backup",
+      "description": "Enable backups for the workspace, including the vm's & shared storage.",
+      "default": true,
+      "updateable": true
     }
   },
   "allOf": [
@@ -304,6 +311,7 @@
       "create_aad_groups",
       "client_id",
       "client_secret",
+      "enable_backup",
       "enable_airlock",
       "configure_review_vms",
       "airlock_review_config",

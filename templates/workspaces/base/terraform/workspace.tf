@@ -88,3 +88,29 @@ module "azure_monitor" {
     module.airlock
   ]
 }
+
+
+module "backup" {
+  count                                    = var.enable_backup ? 1 : 0
+  source                                   = "./backup"
+  tre_id                                   = var.tre_id
+  tre_resource_id                          = var.tre_resource_id
+  location                                 = var.location
+  resource_group_name                      = azurerm_resource_group.ws.name
+  resource_group_id                        = azurerm_resource_group.ws.id
+  tre_workspace_tags                       = local.tre_workspace_tags
+  arm_environment                          = var.arm_environment
+  azurerm_storage_account_id               = azurerm_storage_account.stg.id
+  enable_local_debugging                   = var.enable_local_debugging
+  enable_cmk_encryption                    = var.enable_cmk_encryption
+  shared_storage_name                      = var.shared_storage_name
+
+
+  depends_on = [
+    azurerm_storage_account.stg,
+    azapi_resource.shared_storage,
+    module.network,
+    module.airlock,
+    module.aad
+  ]
+}
