@@ -111,6 +111,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
     container_registry_use_managed_identity       = true
     vnet_route_all_enabled                        = true
     ftps_state                                    = "Disabled"
+    minimum_tls_version                           = "1.3"
 
     application_stack {
       docker {
