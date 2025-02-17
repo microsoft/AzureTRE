@@ -25,6 +25,10 @@ terraform {
 
 provider "azurerm" {
   features {
+    virtual_machine {
+      skip_shutdown_and_force_delete = true
+      delete_os_disk_on_deletion     = true
+    }
     key_vault {
       # Don't purge on destroy (this would fail due to purge protection being enabled on keyvault)
       purge_soft_delete_on_destroy               = false
