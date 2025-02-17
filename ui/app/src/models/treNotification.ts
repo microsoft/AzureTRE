@@ -3,8 +3,7 @@ import { Resource } from "./resource";
 import { Workspace } from "./workspace";
 
 export interface TRENotification {
-    operation: Operation, 
-    resource: Resource,
-    workspace?: Workspace
-  }
-  
+  operation: Operation;
+  resource: Resource;
+  workspace?: Workspace;
+}
