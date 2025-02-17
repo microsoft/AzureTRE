@@ -4,7 +4,7 @@ This project contains a React-based web UI which covers the core aspects of a TR
 
 ## Chosen UI Stack + Components
 The UI is built upon several popular web frameworks:
-- React v18 (created via create-react-app, with all build configurations left as defaults)
+- React v18 (with Vite)
   - Typescript
   - React Router v6 for client side routing
 - Fluent UI [Fluent UI Docs](https://developer.microsoft.com/en-us/fluentui#/controls/web)
@@ -54,4 +54,53 @@ The UI is deployed as part of the `tre-deploy` make target (unless you set `depl
 To re-deploy _just_ the UI (after an initial deploy), run `make build-and-deploy-ui` from the root of the dev container. This will:
 - Use the environment variables from your deployment to create a `config.json` file for the UI
 - Build the source code, via `yarn build`
-- Deploy the code to Azure blob storage, where it will be statically served behind the App Gateway that also fronts the APi.
+- Deploy the code to Azure blob storage, where it will be statically served behind the App Gateway that also fronts the API.
+
+## Run the UI
+- Ensure `deploy_ui=false` is not set in your `./config.yaml` file
+- In the root of the repo, run `make tre-deploy`. This will provision the necessary resources in Azure, build and deploy the UI to Azure blob storage, behind the App Gateway used for the API. The deployment process will also create the necessary `config.json`, using the `config.source.json` as a template.
+- In Microsoft Entra ID, locate the TRE Client Apps app (possibly called Swagger App). In the Authentication section add reply URIs for:
+  - `http://localhost:3000` (if wanting to run locally)
+  - Your deployed App Url - `https://{TRE_ID}.{LOCATION}.cloudapp.azure.com`.
+
+At this point you should be able to navigate to the web app in Azure, log in, and see your workspaces.
+
+## Available Scripts
+
+In the UI directory, you can run:
+
+### `yarn start`
+
+Runs the app in the development mode.<br>
+Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+
+The page will reload if you make edits.<br>
+You will also see any lint errors in the console.
+
+### `yarn test`
+
+Launches the test runner in the interactive watch mode.<br>
+
+### `yarn run build`
+
+Builds the app for production to the `build` folder.<br>
+It correctly bundles React in production mode and optimizes the build for the best performance.
+
+The build is minified and the filenames include the hashes.<br>
+Your app is ready to be deployed!
+
+### `yarn run serve`
+
+Serves the production build from the `build` folder.<br>
+
+### `yarn run test:coverage`
+
+Runs the tests and generates a coverage report.<br>
+
+### `yarn lint`
+
+Runs the linter on the project.<br>
+
+### `yarn format`
+
+Runs the formatter on the project.<br>

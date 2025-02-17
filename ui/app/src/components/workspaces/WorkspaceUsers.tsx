@@ -56,22 +56,34 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
   const [loadingUsers, setloadingUsers] = useState(false);
 
   const getUsers = useCallback(async () => {
-    setState(prevState => ({ ...prevState, apiError: undefined, loadingState: LoadingState.Loading }));
+    setState((prevState) => ({
+      ...prevState,
+      apiError: undefined,
+      loadingState: LoadingState.Loading,
+    }));
 
     setloadingUsers(true);
     try {
       const scopeId = roles.length > 0 ? workspaceApplicationIdURI : "";
-      const result = await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}`, HttpMethod.Get, scopeId);
+      const result = await apiCall(
+        `${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}`,
+        HttpMethod.Get,
+        scopeId,
+      );
 
-      const users = result.users.flatMap((user: any) =>
-        user.roles.map((role: string) => ({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: role,
-          roles: user.roles
-        }))
-      ).sort((a: { role: string; }, b: { role: string; }) => a.role.localeCompare(b.role));
+      const users = result.users
+        .flatMap((user: any) =>
+          user.roles.map((role: string) => ({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: role,
+            roles: user.roles,
+          })),
+        )
+        .sort((a: { role: string }, b: { role: string }) =>
+          a.role.localeCompare(b.role),
+        );
 
       setState({ users, apiError: undefined, loadingState: LoadingState.Ok });
     } catch (err: any) {
@@ -151,9 +163,9 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
 
   const columns: IColumn[] = useMemo(() => [
     {
-      key: 'name',
-      name: 'Name',
-      fieldName: 'name',
+      key: "name",
+      name: "Name",
+      fieldName: "name",
       minWidth: 150,
       onRender: (item: User) => (
         <Persona
@@ -261,4 +273,4 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
       </Routes>
     </>
   );
-}
+};

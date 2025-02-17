@@ -1,7 +1,8 @@
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
-    'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
+    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -16,7 +17,8 @@ h2 {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
 .tre-logout-message {
@@ -88,7 +90,7 @@ ul.tre-notifications-steps-list li {
 .tre-home-link {
   color: #fff;
   text-decoration: none;
-  font-size:1.2rem;
+  font-size: 1.2rem;
 }
 
 .tre-user-menu {
@@ -118,7 +120,7 @@ ul.tre-notifications-steps-list li {
   }
 }
 
-.tre-hide-chevron i[data-icon-name=ChevronDown] {
+.tre-hide-chevron i[data-icon-name="ChevronDown"] {
   display: none;
 }
 
@@ -174,50 +176,50 @@ ul.tre-notifications-steps-list li {
   margin-bottom: 10px;
 }
 
-input[readonly]{
-  background-color:#efefef;
+input[readonly] {
+  background-color: #efefef;
 }
 
-.tre-badge{
-  border-radius:4px;
+.tre-badge {
+  border-radius: 4px;
   background-color: #efefef;
-  padding:2px 6px;
+  padding: 2px 6px;
   text-transform: capitalize;
-  display:inline-block;
-  font-size:12px;
+  display: inline-block;
+  font-size: 12px;
 }
-.tre-badge-in-progress{
+.tre-badge-in-progress {
   background-color: #ce7b00;
   color: #fff;
 }
-.tre-badge-failed{
+.tre-badge-failed {
   background-color: #990000;
   color: #fff;
   padding-top: 4px;
   padding-left: 7px;
   font-size: 16px;
 }
-.tre-badge-success{
+.tre-badge-success {
   background-color: #006600;
   color: #fff;
 }
-.tre-complex-list{
+.tre-complex-list {
   list-style: none;
-  padding:0 0 0 20px;
-  margin:0;
+  padding: 0 0 0 20px;
+  margin: 0;
 }
-.tre-complex-list-border{
+.tre-complex-list-border {
   border-bottom: 1px #ccc solid;
-  margin-left:-15px;
+  margin-left: -15px;
 }
-.tre-complex-list-string{
-  padding-left:20px;
+.tre-complex-list-string {
+  padding-left: 20px;
 }
-.tre-complex-list .ms-Icon{
-  font-size:12px!important;
+.tre-complex-list .ms-Icon {
+  font-size: 12px !important;
   font-weight: bold;
   position: relative;
-  top:2px;
+  top: 2px;
 }
 
 // Classes for rendering power state badges
@@ -226,7 +228,8 @@ input[readonly]{
   color: #636262;
   margin: 6px;
 
-  .tre-power-on, .tre-power-off {
+  .tre-power-on,
+  .tre-power-off {
     height: 8px;
     width: 8px;
     background-color: #006600;
@@ -267,28 +270,81 @@ input[readonly]{
 }
 
 /* border around sub-blocks */
-.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object,
-.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array {
+.ms-Panel-content
+  .rjsf
+  > .ms-Grid-col
+  > .ms-Grid
+  > .ms-Grid-row
+  > .field-object,
+.ms-Panel-content
+  .rjsf
+  > .ms-Grid-col
+  > .ms-Grid
+  > .ms-Grid-row
+  > .field-array {
   border: 1px #ccc dashed;
   padding: 10px;
   background-color: #fcfcfc;
 }
 
 /* sub titles and sub-sub titles */
-.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > label.ms-Label,
-.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array > label.ms-Label {
+.ms-Panel-content
+  .rjsf
+  > .ms-Grid-col
+  > .ms-Grid
+  > .ms-Grid-row
+  > .field-object
+  > label.ms-Label,
+.ms-Panel-content
+  .rjsf
+  > .ms-Grid-col
+  > .ms-Grid
+  > .ms-Grid-row
+  > .field-array
+  > label.ms-Label {
   font-size: 20px;
 }
 
-.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > .ms-Grid > .ms-Grid-row > .ms-Grid-col > label.ms-Label,
-.ms-Panel-content .rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-array > .ms-Grid > .ms-Grid-row > .ms-Grid-col > label.ms-Label {
+.ms-Panel-content
+  .rjsf
+  > .ms-Grid-col
+  > .ms-Grid
+  > .ms-Grid-row
+  > .field-object
+  > .ms-Grid
+  > .ms-Grid-row
+  > .ms-Grid-col
+  > label.ms-Label,
+.ms-Panel-content
+  .rjsf
+  > .ms-Grid-col
+  > .ms-Grid
+  > .ms-Grid-row
+  > .field-array
+  > .ms-Grid
+  > .ms-Grid-row
+  > .ms-Grid-col
+  > label.ms-Label {
   font-size: 16px;
 }
 
 /* remove secondary template description at the bottom of each template + sub blocks */
 .rjsf > .ms-Grid-col > span:last-of-type,
-.rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > span:last-of-type,
-.rjsf > .ms-Grid-col > .ms-Grid > .ms-Grid-row > .field-object > .ms-Grid > .ms-Grid-row > .ms-Grid-col > span:last-of-type {
+.rjsf
+  > .ms-Grid-col
+  > .ms-Grid
+  > .ms-Grid-row
+  > .field-object
+  > span:last-of-type,
+.rjsf
+  > .ms-Grid-col
+  > .ms-Grid
+  > .ms-Grid-row
+  > .field-object
+  > .ms-Grid
+  > .ms-Grid-row
+  > .ms-Grid-col
+  > span:last-of-type {
   display: none;
 }
 
