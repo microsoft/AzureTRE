@@ -54,26 +54,6 @@ class Database(metaclass=Singleton):
         return cosmos_client
 
     @classmethod
-    async def _get_store_key(cls, credential) -> str:
-        logger.debug("Getting store key")
-        if STATE_STORE_KEY:
-            primary_master_key = STATE_STORE_KEY
-        else:
-            async with CosmosDBManagementClient(
-                credential,
-                subscription_id=SUBSCRIPTION_ID,
-                base_url=RESOURCE_MANAGER_ENDPOINT,
-                credential_scopes=CREDENTIAL_SCOPES
-            ) as cosmosdb_mng_client:
-                database_keys = await cosmosdb_mng_client.database_accounts.list_keys(
-                    resource_group_name=RESOURCE_GROUP_NAME,
-                    account_name=COSMOSDB_ACCOUNT_NAME
-                )
-                primary_master_key = database_keys.primary_master_key
-
-        return primary_master_key
-
-    @classmethod
     async def get_container_proxy(cls, container_name) -> ContainerProxy:
         if cls._cosmos_client is None:
             cls._cosmos_client = await cls._connect_to_db()
