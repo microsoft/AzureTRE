@@ -17,6 +17,8 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Fix upgrade when porter install has failed ([#4338](https://github.com/microsoft/AzureTRE/pull/4338))
+* Fix Cosmos DB local debugging configuration ([#4340](https://github.com/microsoft/AzureTRE/pull/4340))
+
 
 COMPONENTS:
 
