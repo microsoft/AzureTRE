@@ -155,7 +155,7 @@
         ]
       },
       {
-        "stepId": "260421b3-7308-491f-b531-e007cdc0ff46",
+        "stepId": "260421b3-7308-491f-b531-e007cdc0ff47",
         "stepTitle": "Add network firewall rules for guacamole",
         "resourceTemplateName": "tre-shared-service-firewall",
         "resourceType": "shared-service",
