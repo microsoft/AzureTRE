@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-linuxvm
-version: 1.3.5
+version: 1.2.6
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -49,7 +49,6 @@ credentials:
     env: AUTH_CLIENT_SECRET
   - name: auth_tenant_id
     env: AUTH_TENANT_ID
-
 
 parameters:
   - name: workspace_id
