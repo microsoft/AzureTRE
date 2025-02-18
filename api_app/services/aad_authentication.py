@@ -320,7 +320,7 @@ class AzureADAuthorization(AccessService):
     def get_assignable_users(self, filter: str = "", maxResultCount: int = 5) -> List[AssignableUser]:
         msgraph_token = self._get_msgraph_token()
         users_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/users?$filter=startswith(displayName,'{filter}')&$top={maxResultCount}"
-        
+
         graph_data = requests.get(users_endpoint,
                                   headers=self._get_auth_header(msgraph_token)).json()
         result = []
