@@ -27,7 +27,7 @@ resource "azurerm_linux_web_app" "guacamole" {
     container_registry_managed_identity_client_id = azurerm_user_assigned_identity.guacamole_id.client_id
     ftps_state                                    = "Disabled"
     vnet_route_all_enabled                        = true
-    minimum_tls_version                           = "1.2"
+    minimum_tls_version                           = "1.3"
 
     application_stack {
       docker_registry_url = "https://${data.azurerm_container_registry.mgmt_acr.login_server}"
@@ -55,6 +55,7 @@ resource "azurerm_linux_web_app" "guacamole" {
     GUAC_DRIVE_PATH       = var.guac_drive_path
     GUAC_DISABLE_DOWNLOAD = var.guac_disable_download
     GUAC_DISABLE_UPLOAD   = var.guac_disable_upload
+    GUAC_SERVER_LAYOUT    = var.guac_server_layout
 
     AUDIENCE = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_id.id})"
     ISSUER   = local.issuer

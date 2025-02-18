@@ -12,13 +12,13 @@
 #
 name: "CodeQL"
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   push:
     branches: [main]
   pull_request:
     branches: [main]
   schedule:
-    - cron: '41 3 * * 5'
+    - cron: "41 3 * * 5"
 
 # for each ref (branch/pr) run just the most recent,
 # cancel other pending/running ones
@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ['python', 'java', 'javascript', 'typescript']
+        language: ["python", "java", "javascript", "typescript"]
 
     steps:
       - name: Checkout repository

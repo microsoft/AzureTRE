@@ -1,11 +1,11 @@
 ---
 name: Build Validation
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   pull_request:
     branches:
       - main
-      - 'feature/**'
+      - "feature/**"
 
 # for each ref (branch/pr) run just the most recent,
 # cancel other pending/running ones
@@ -112,7 +112,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_TERRAFORM_TFLINT: true
           TERRAFORM_TFLINT_CONFIG_FILE: .tflint_core.hcl
-          FILTER_REGEX_INCLUDE: './core/.*'
+          FILTER_REGEX_INCLUDE: "./core/.*"
 
       - name: Workspace Tags
         if: ${{ steps.filter.outputs.terraform_workspaces == 'true' }}
@@ -123,7 +123,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_TERRAFORM_TFLINT: true
           TERRAFORM_TFLINT_CONFIG_FILE: .tflint_workspaces.hcl
-          FILTER_REGEX_INCLUDE: './templates/workspaces/.*'
+          FILTER_REGEX_INCLUDE: "./templates/workspaces/.*"
 
       - name: Workspace Services Tags
         if: ${{ steps.filter.outputs.terraform_workspace_services == 'true' }}
@@ -134,8 +134,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_TERRAFORM_TFLINT: true
           TERRAFORM_TFLINT_CONFIG_FILE: .tflint_workspace_services.hcl
-          FILTER_REGEX_INCLUDE: './templates/workspaces/.*'
-          FILTER_REGEX_EXCLUDE: '.*user_resource.*'
+          FILTER_REGEX_INCLUDE: "./templates/workspaces/.*"
+          FILTER_REGEX_EXCLUDE: ".*user_resource.*"
 
       - name: User Resources Tags
         if: ${{ steps.filter.outputs.terraform_workspace_services == 'true' }}
@@ -146,7 +146,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_TERRAFORM_TFLINT: true
           TERRAFORM_TFLINT_CONFIG_FILE: .tflint_user_resources.hcl
-          FILTER_REGEX_INCLUDE: './templates/workspace_services/.*/user_resources/.*'
+          FILTER_REGEX_INCLUDE: "./templates/workspace_services/.*/user_resources/.*"
 
       - name: Shared Services Tags
         if: ${{ steps.filter.outputs.terraform_shared_services == 'true' }}
@@ -157,4 +157,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_TERRAFORM_TFLINT: true
           TERRAFORM_TFLINT_CONFIG_FILE: .tflint_shared_services.hcl
-          FILTER_REGEX_INCLUDE: './templates/shared_services/.*'
+          FILTER_REGEX_INCLUDE: "./templates/shared_services/.*"

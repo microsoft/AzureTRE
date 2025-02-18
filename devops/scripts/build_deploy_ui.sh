@@ -28,4 +28,4 @@ yarn build
 
 popd
 
-CONTENT_DIR="$DIR/../../ui/app/build" "$DIR/upload_static_web.sh"
+CONTENT_DIR="$DIR/../../ui/app/dist" "$DIR/upload_static_web.sh"

@@ -36,3 +36,18 @@ resource "azurerm_key_vault_certificate" "tlscert" {
   }
 
 }
+
+# pre-create in advance of the real password being created
+# so if there is a deleted secret it will be recovered
+#
+resource "azurerm_key_vault_secret" "cert_password" {
+  name         = local.password_name
+  value        = "0000000000"
+  key_vault_id = data.azurerm_key_vault.key_vault.id
+  tags         = local.tre_shared_service_tags
+
+  # The password will get replaced with a real one, so we don't want Terraform to try and revert it.
+  lifecycle {
+    ignore_changes = all
+  }
+}
