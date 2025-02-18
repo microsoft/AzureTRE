@@ -13,16 +13,6 @@ resource "azurerm_network_interface" "internal" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "random_string" "username" {
-  length      = 4
-  upper       = true
-  lower       = true
-  numeric     = true
-  min_numeric = 1
-  min_lower   = 1
-  special     = false
-}
-
 resource "random_password" "password" {
   length           = 16
   lower            = true
@@ -43,7 +33,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   network_interface_ids      = [azurerm_network_interface.internal.id]
   size                       = local.vm_sizes[var.vm_size]
   allow_extension_operations = true
-  admin_username             = random_string.username.result
+  admin_username             = local.admin_username
   admin_password             = random_password.password.result
   encryption_at_host_enabled = true
   secure_boot_enabled        = local.secure_boot_enabled
@@ -89,7 +79,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
   # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
   #
-  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled] }
+  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, admin_username] }
 }
 
 resource "azurerm_disk_encryption_set" "windowsvm_disk_encryption" {
@@ -127,7 +117,7 @@ PROT
 
 resource "azurerm_key_vault_secret" "windowsvm_password" {
   name         = "${local.vm_name}-admin-credentials"
-  value        = "${random_string.username.result}\n${random_password.password.result}"
+  value        = "${local.admin_username}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
   tags         = local.tre_user_resources_tags
 
