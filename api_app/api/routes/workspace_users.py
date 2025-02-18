@@ -18,9 +18,9 @@ async def get_workspace_users(workspace=Depends(get_workspace_by_id_from_path)) 
 
 
 @workspaces_users_admin_router.get("/workspaces/{workspace_id}/assignable-users", response_model=AssignableUsersInResponse, name=strings.API_GET_ASSIGNABLE_USERS)
-async def get_assignable_users(workspace=Depends(get_workspace_by_id_from_path)) -> AssignableUsersInResponse:
+async def get_assignable_users(filter: str = "", maxResultCount: int = 5, workspace=Depends(get_workspace_by_id_from_path)) -> AssignableUsersInResponse:
     access_service = get_access_service()
-    assignable_users = access_service.get_assignable_users()
+    assignable_users = access_service.get_assignable_users(filter, maxResultCount)
     return AssignableUsersInResponse(assignable_users=assignable_users)
 
 
