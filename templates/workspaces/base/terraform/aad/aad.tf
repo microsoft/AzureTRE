@@ -103,7 +103,6 @@ resource "azuread_service_principal" "workspace" {
 
 resource "azuread_service_principal_password" "workspace" {
   service_principal_id = azuread_service_principal.workspace.object_id
-
 }
 
 resource "azurerm_key_vault_secret" "client_id" {
