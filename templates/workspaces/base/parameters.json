@@ -165,12 +165,6 @@
       "source": {
         "env": "ENABLE_BACKUP"
       }
-    },
-    {
-      "name": "shared_storage_name",
-      "source": {
-        "env": "SHARED_STORAGE_NAME"
-      }
     }
   ]
 }

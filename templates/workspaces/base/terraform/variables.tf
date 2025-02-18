@@ -81,12 +81,6 @@ variable "enable_backup"{
   description = "Enable backups for the workspace"
 }
 
-variable "shared_storage_name" {
-  type        = string
-  default     = "vm-shared-storage"
-  description = "Name of the VM Shared Storage"
-}
-
 # These variables are only passed in if you are not registering an AAD
 # application as they need passing back out
 variable "app_role_id_workspace_owner" {

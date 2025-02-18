@@ -130,10 +130,6 @@ parameters:
     type: boolean
     default: true
     description: "Enable backups for the workspace, including the vm's & shared storage."
-  - name: shared_storage_name
-    type: string
-    default: "vm-shared-storage"
-    description: "The name of the shared storage used for the workspace VMs"
   - name: backup_vault_name
     type: string
     default: ""
