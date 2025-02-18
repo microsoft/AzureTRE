@@ -115,7 +115,7 @@ class TestWorkspaceUserRoutesWithTreAdmin:
 
             get_user_by_email_mock.assert_called_once_with(user["email"])
             get_workspace_role_by_name_mock.assert_called_once_with(role_name_to_assign, workspace)
-            assign_workspace_user_mock.assert_called_once_with(user, workspace, role)
+            assign_workspace_user_mock.assert_called_once_with(User.parse_obj(user), workspace, role)
             get_workspace_users_mock.assert_called_once()
 
             assert response.json()["users"] == users
