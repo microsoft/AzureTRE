@@ -10,12 +10,7 @@ locals {
   admin_username = (
     length(data.azuread_user.user.mail) > 0 && strcontains(data.azuread_user.user.user_principal_name, "#EXT#") ?
     substr(element(split("@", data.azuread_user.user.mail), 0), 0, 20) :
-    substr(
-      strcontains(element(split("@", data.azuread_user.user.user_principal_name), 0), "#EXT#") ?
-      element(split("#EXT#", element(split("@", data.azuread_user.user.user_principal_name), 0)), 0) :
-      element(split("@", data.azuread_user.user.user_principal_name), 0),
-      0, 20
-    )
+    substr(element(split("#EXT#", element(split("@", data.azuread_user.user.user_principal_name), 0)), 0), 0, 20)
   )
   vm_password_secret_name = "${local.vm_name}-admin-credentials"
   tre_user_resources_tags = {
