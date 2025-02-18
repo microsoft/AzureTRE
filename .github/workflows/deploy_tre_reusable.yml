@@ -90,6 +90,12 @@ on:  # yamllint disable-line rule:truthy
       AZURE_CREDENTIALS:
         description: ""
         required: true
+      ENCRYPTION_KV_NAME:
+        description: ""
+        required: false
+      EXTERNAL_KEY_STORE_ID:
+        description: ""
+        required: false
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
@@ -246,6 +252,9 @@ jobs:
           TERRAFORM_STATE_CONTAINER_NAME: ${{ vars.TERRAFORM_STATE_CONTAINER_NAME }}
           MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
+          ENABLE_CMK_ENCRYPTION: ${{ vars.ENABLE_CMK_ENCRYPTION }}
+          ENCRYPTION_KV_NAME: ${{ secrets.ENCRYPTION_KV_NAME }}
+          EXTERNAL_KEY_STORE_ID: ${{ secrets.EXTERNAL_KEY_STORE_ID }}
 
       - name: ACR Login
         # failure in the first attempt indicates a new ACR, so we need to try again after it's been created
@@ -359,6 +368,9 @@ jobs:
           RP_BUNDLE_VALUES: ${{ vars.RP_BUNDLE_VALUES }}
           FIREWALL_SKU: ${{ vars.FIREWALL_SKU}}
           APP_GATEWAY_SKU: ${{ vars.APP_GATEWAY_SKU }}
+          ENABLE_CMK_ENCRYPTION: ${{ vars.ENABLE_CMK_ENCRYPTION }}
+          ENCRYPTION_KV_NAME: ${{ secrets.ENCRYPTION_KV_NAME }}
+          EXTERNAL_KEY_STORE_ID: ${{ secrets.EXTERNAL_KEY_STORE_ID }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
