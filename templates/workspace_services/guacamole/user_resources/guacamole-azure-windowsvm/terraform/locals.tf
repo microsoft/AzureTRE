@@ -8,10 +8,10 @@ locals {
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   admin_username = (
-    length(data.azuread_user.user.mail) > 0 && contains(data.azuread_user.user.user_principal_name, "#EXT#") ?
+    length(data.azuread_user.user.mail) > 0 && strcontains(data.azuread_user.user.user_principal_name, "#EXT#") ?
     substr(element(split("@", data.azuread_user.user.mail), 0), 0, 20) :
     substr(
-      contains(element(split("@", data.azuread_user.user.user_principal_name), 0), "#EXT#") ?
+      strcontains(element(split("@", data.azuread_user.user.user_principal_name), 0), "#EXT#") ?
       element(split("#EXT#", element(split("@", data.azuread_user.user.user_principal_name), 0)), 0) :
       element(split("@", data.azuread_user.user.user_principal_name), 0),
       0, 20
