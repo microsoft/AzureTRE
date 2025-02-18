@@ -224,6 +224,27 @@ resource "azurerm_role_assignment" "vmss_kv_encryption_key_user" {
   principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
 }
 
+resource "azurerm_private_endpoint" "mgmtblobpe" {
+  name                = "pe-mgmt-blob-${var.tre_id}"
+  location            = var.location
+  resource_group_name = var.mgmt_resource_group_name
+  subnet_id           = var.resource_processor_subnet_id
+  tags                = local.tre_core_tags
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "private-dns-zone-group-blobcore"
+    private_dns_zone_ids = [var.blob_core_dns_zone_id]
+  }
+
+  private_service_connection {
+    name                           = "psc-mgmt-${var.tre_id}"
+    private_connection_resource_id = data.azurerm_storage_account.mgmt_storage.id
+    is_manual_connection           = false
+    subresource_names              = ["Blob"]
+  }
+}
+
 module "terraform_azurerm_environment_configuration" {
   source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
   arm_environment = var.arm_environment

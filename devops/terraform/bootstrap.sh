@@ -20,6 +20,8 @@ if ! az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name"
     --name "$TF_VAR_mgmt_storage_account_name" --location "$LOCATION" \
     --allow-blob-public-access false --min-tls-version TLS1_2 \
     --kind StorageV2 --sku Standard_LRS -o table \
+    --default-action Deny \
+    --bypass AzureServices \
     --encryption-key-type-for-queue "$encryption_type" \
     --encryption-key-type-for-table "$encryption_type" \
     --require-infrastructure-encryption true
@@ -27,6 +29,9 @@ else
   echo "Storage account already exists..."
   az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name" --name "$TF_VAR_mgmt_storage_account_name" --output table
 fi
+
+# shellcheck disable=SC1091
+source ../scripts/mgmtstorage_add_network_exception.sh
 
 # Grant user blob data contributor permissions
 echo -e "\n\e[34m»»» 🔑 \e[96mGranting Storage Blob Data Contributor role to the current user\e[0m..."

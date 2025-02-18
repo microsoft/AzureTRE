@@ -8,6 +8,9 @@ set -o nounset
 # shellcheck disable=SC1091
 source "../../devops/scripts/kv_add_network_exception.sh"
 
+# shellcheck disable=SC1091
+source ../../devops/scripts/mgmtstorage_add_network_exception.sh
+
 # These variables are loaded in for us
 # shellcheck disable=SC2154
 ../../devops/scripts/terraform_wrapper.sh -g "${TF_VAR_mgmt_resource_group_name}" \
