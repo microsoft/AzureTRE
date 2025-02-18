@@ -11,3 +11,12 @@ terraform {
     }
   }
 }
+
+
+provider "azurerm" {
+  features {
+     recovery_services_vault {
+       purge_protected_items_from_vault_on_destroy = true
+     }
+  }
+}

@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.0.10
+version: 2.0.11
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -332,30 +332,6 @@ upgrade:
         register-aad-application: '${ bundle.parameters.register_aad_application }'
 
 uninstall:
-  - az:
-      description: "Set Azure Cloud Environment"
-      arguments:
-        - cloud
-        - set
-      flags:
-        name: ${ bundle.parameters.azure_environment }
-  - az:
-      description: "Azure Login"
-      arguments:
-        - login
-      flags:
-        service-principal: ""
-        username: '${ bundle.credentials.azure_client_id }'
-        password: '${ bundle.credentials.azure_client_secret }'
-        tenant: '${ bundle.credentials.azure_tenant_id }'
-        allow-no-subscriptions: ""
-  - exec:
-      description: "Running Recovery Services Vault Cleanup"
-      command: ./cleanup_vault.sh
-      flags:
-        resource-group: '${ bundle.parameters.workspace_resource_name_suffix }'
-        vault-name: '${ bundle.parameters.backup_vault_name }'
-
   - terraform:
       description: "Tear down workspace"
       vars:
