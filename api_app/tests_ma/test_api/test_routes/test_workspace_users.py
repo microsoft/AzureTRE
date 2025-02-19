@@ -131,7 +131,7 @@ class TestWorkspaceUserRoutesWithTreAdmin:
             })
             assert response.status_code == status.HTTP_202_ACCEPTED
 
-            assign_workspace_user_mock.call_count == 2
+            assert assign_workspace_user_mock.call_count == 2
             get_workspace_users_mock.assert_called_once()
 
     @pytest.mark.parametrize("auth_class", ["aad_authentication.AzureADAuthorization"])
