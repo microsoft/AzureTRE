@@ -281,12 +281,12 @@ class AzureADAuthorization(AccessService):
                 user_name = user_data["body"]["displayName"]
 
                 if "users" in user_data["body"]["@odata.context"]:
-                    user_email = user_data["body"]["userPrincipalName"]
+                    user_principal_name = user_data["body"]["userPrincipalName"]
                     # if user with id does not already exist in users
                     user_roles = self._get_roles_for_principal(user_id, roles_graph_data, app_id_to_role_name)
 
                     if not any(user.id == user_id for user in users):
-                        users.append(AssignedUser(id=user_id, displayName=user_name, userPrincipalName=user_email, roles=user_roles))
+                        users.append(AssignedUser(id=user_id, displayName=user_name, userPrincipalName=user_principal_name, roles=user_roles))
                     else:
                         user = next((user for user in users if user.id == user_id), None)
                         user.roles = list(set(user.roles + user_roles))
@@ -297,12 +297,12 @@ class AzureADAuthorization(AccessService):
                 for group_member in user_data["body"]["value"]:
                     user_id = group_member["id"]
                     user_name = group_member["displayName"]
-                    user_email = group_member["userPrincipalName"]
+                    user_principal_name = group_member["userPrincipalName"]
 
                     group_roles = self._get_roles_for_principal(group_id, roles_graph_data, app_id_to_role_name, AssignmentType.GROUP)
 
                     if not any(user.id == user_id for user in users):
-                        users.append(AssignedUser(id=user_id, displayName=user_name, userPrincipalName=user_email, roles=group_roles))
+                        users.append(AssignedUser(id=user_id, displayName=user_name, userPrincipalName=user_principal_name, roles=group_roles))
                     else:
                         user = next((user for user in users if user.id == user_id), None)
                         user.roles = list(set(user.roles + group_roles))
