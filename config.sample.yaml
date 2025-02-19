@@ -49,7 +49,7 @@ tre:
   # firewall_force_tunnel_ip: __CHANGE_ME__
   firewall_sku: Standard
   app_gateway_sku: Standard_v2
-  # See https://learn.microsoft.com/en-us/azure/bastion/bastion-overview#sku 
+  # See https://learn.microsoft.com/en-us/azure/bastion/bastion-overview#sku
   # Set to Basic if wish to connect to VMs in workspaces.
   bastion_sku: Developer
 
