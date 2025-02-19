@@ -66,6 +66,7 @@ ENHANCEMENTS:
 * Downgrade certs shared service App Gateway to Basic SKU ([#4300](https://github.com/microsoft/AzureTRE/issues/4300))
 * Airlock function host storage to use the user-assigned managed identity ([#4276](https://github.com/microsoft/AzureTRE/issues/4276))
 * Disable local authentication in EventGrid ([#4254](https://github.com/microsoft/AzureTRE/issues/4254))
+* Use user username as VM username rather than random ID ([#4333](https://github.com/microsoft/AzureTRE/pull/4333))
 
 
 BUG FIXES:

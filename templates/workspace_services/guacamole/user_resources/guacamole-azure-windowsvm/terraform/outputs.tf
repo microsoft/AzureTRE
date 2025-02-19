@@ -15,7 +15,7 @@ output "connection_uri" {
 }
 
 output "vm_username" {
-  value = random_string.username.result
+  value = local.admin_username
 }
 
 output "vm_password_secret_name" {
