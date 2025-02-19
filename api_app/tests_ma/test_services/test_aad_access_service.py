@@ -681,7 +681,7 @@ def test_get_workspace_roles_returns_roles(_, ms_graph_query_mock, mock_headers,
         "value": [
             Role(id=1, displayName="Airlock Manager", type=AssignmentType.APP_ROLE).dict(),
             Role(id=2, displayName="Workspace Researcher", type=AssignmentType.APP_ROLE).dict(),
-            Role(id=3, displayName="Workspace Owner", origin="", type=AssignmentType.APP_ROLE).dict(),
+            Role(id=3, displayName="Workspace Owner", type=AssignmentType.APP_ROLE).dict(),
         ]
     }
     ms_graph_query_mock.return_value = request_get_mock_response
