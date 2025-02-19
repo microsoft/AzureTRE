@@ -26,6 +26,7 @@ import json
 
 
 MICROSOFT_GRAPH_URL = config.MICROSOFT_GRAPH_URL.strip("/")
+GRAPH_REQUEST_TIMEOUT = 10
 
 
 class PrincipalType(Enum):
@@ -325,7 +326,8 @@ class AzureADAuthorization(AccessService):
         users_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/users?$filter=startswith(displayName,'{filter}')&$top={maxResultCount}"
 
         graph_data = requests.get(users_endpoint,
-                                  headers=self._get_auth_header(msgraph_token)).json()
+                                  headers=self._get_auth_header(msgraph_token),
+                                  timeout=GRAPH_REQUEST_TIMEOUT).json()
         result = []
 
         for user_data in graph_data["value"]:
@@ -443,7 +445,7 @@ class AzureADAuthorization(AccessService):
             "appRoleId": role_id,
         }
 
-        response = requests.post(url, json=body, headers=self._get_auth_header(msgraph_token))
+        response = requests.post(url, json=body, headers=self._get_auth_header(msgraph_token), timeout=GRAPH_REQUEST_TIMEOUT)
         return response
 
     def _get_role_assignment_for_user(self, user_id: str, role_id: str) -> dict:
@@ -468,7 +470,7 @@ class AzureADAuthorization(AccessService):
 
         msgraph_token = self._get_msgraph_token()
         url = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}/appRoleAssignments/{role_assignment['id']}"
-        response = requests.delete(url, headers=self._get_auth_header(msgraph_token))
+        response = requests.delete(url, headers=self._get_auth_header(msgraph_token), timeout=GRAPH_REQUEST_TIMEOUT)
         return response
 
     def _get_batch_users_by_role_assignments_body(self, roles_graph_data):
@@ -519,9 +521,9 @@ class AzureADAuthorization(AccessService):
                 break
             logger.debug(f"Making request to: {url}")
             if json:
-                response = requests.request(method=http_method, url=url, json=json, headers=auth_headers)
+                response = requests.request(method=http_method, url=url, json=json, headers=auth_headers, timeout=GRAPH_REQUEST_TIMEOUT)
             else:
-                response = requests.request(method=http_method, url=url, headers=auth_headers)
+                response = requests.request(method=http_method, url=url, headers=auth_headers, timeout=GRAPH_REQUEST_TIMEOUT)
             url = ""
             if response.status_code == 200:
                 json_response = response.json()
