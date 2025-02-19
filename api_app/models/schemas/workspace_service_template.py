@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+from typing import Dict, List
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate, Property, CustomAction
 from models.schemas.resource_template import ResourceTemplateInCreate, ResourceTemplateInResponse
@@ -36,6 +38,90 @@ def get_sample_workspace_service_template_in_response() -> dict:
     return workspace_template
 
 
+def get_sample_enabled_versions_in_response() -> dict:
+    return {
+        "service_template_versions" : [
+            {
+                "name": "tre-service-guacamole",
+                "title": "Apache Guacamole - Virtual Desktop Service",
+                "versions": [
+                    {
+                        "version": "0.12.6",
+                        "description": "Enables Windows and Linux virtual machines to be accessed via Apache Guacamole.",
+                        "enabled": {"TRE": False, "Workspace": False},
+                    }
+                ],
+                "user-resources": [
+                    {
+                        "name": "tre-service-guacamole-linuxvm",
+                        "versions": [
+                            {
+                                "version": "1.2.3",
+                                "description": "Linux virtual machine.",
+                                "enabled": {"TRE": False, "Workspace": False},
+                            }
+                        ],
+                    },
+                    {
+                        "name": "tre-service-guacamole-windowsvm",
+                        "versions": [
+                            {
+                                "version": "1.2.3",
+                                "description": "Windows virtual machine.",
+                                "enabled": {"TRE": False, "Workspace": False},
+                            }
+                        ],
+                    },
+                ],
+            },
+            {
+                "name": "tre-service-databricks",
+                "title": "Azure Databricks",
+                "versions": [
+                    {
+                        "version": "1.0.10",
+                        "description": "Azure Databricks",
+                        "enabled": {"TRE": False, "Workspace": False},
+                    }
+                ],
+            },
+            {
+                "name": "tre-workspace-service-mysql",
+                "title": "MySQL Workspace Service",
+                "versions": [
+                    {
+                        "version": "1.0.9",
+                        "description": "Provides MySQL within the workspace",
+                        "enabled": {
+                            "name": "tre-service-azureml",
+                            "title": "Azure Machine Learning",
+                            "versions": [
+                                {
+                                    "version": "0.9.2",
+                                    "description": "Azure Machine Learning",
+                                    "enabled": {"TRE": False, "Workspace": False},
+                                }
+                            ],
+                            "user-resources": [
+                                {
+                                    "name": "tre-user-resource-aml-compute-instance",
+                                    "versions": [
+                                        {
+                                            "version": "0.5.11",
+                                            "description": "An Azure Machine Learning compute instance is a managed cloud-based workstation for data scientists. Each compute instance has only one owner, although you can share files between multiple compute instances.",
+                                            "enabled": {"TRE": False, "Workspace": False},
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                    }
+                ],
+            },
+        ],
+    }
+
+
 class WorkspaceServiceTemplateInCreate(ResourceTemplateInCreate):
 
     class Config:
@@ -69,4 +155,13 @@ class WorkspaceServiceTemplateInResponse(ResourceTemplateInResponse):
     class Config:
         schema_extra = {
             "example": get_sample_workspace_service_template_in_response()
+        }
+
+
+class WorkspaceServiceTemplatesEnabledVersionsInResponse(BaseModel):
+    service_template_versions: List[Dict]
+
+    class Config:
+        schema_extra = {
+            "example": get_sample_enabled_versions_in_response()
         }

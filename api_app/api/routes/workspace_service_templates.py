@@ -8,7 +8,7 @@ from api.helpers import get_repository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
 from models.schemas.resource_template import ResourceTemplateInResponse, ResourceTemplateInformationInList
-from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate, WorkspaceServiceTemplateInResponse
+from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate, WorkspaceServiceTemplateInResponse, WorkspaceServiceTemplatesEnabledVersionsInResponse
 from resources import strings
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
 
@@ -36,3 +36,8 @@ async def register_workspace_service_template(template_input: WorkspaceServiceTe
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_TEMPLATE_VERSION_EXISTS)
     except InvalidInput as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+
+@workspace_service_templates_core_router.get("/workspace-service-templates-enabled-versions", response_model=WorkspaceServiceTemplatesEnabledVersionsInResponse, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES_ENABLED_VERSIONS, dependencies=[Depends(get_current_admin_user)])
+async def get_workspace_service_template_enabled_versions(template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceServiceTemplatesEnabledVersionsInResponse:
+    version_infos = await template_repo.get_templates_enabled_versions(ResourceType.WorkspaceService)
+    return WorkspaceServiceTemplatesEnabledVersionsInResponse(service_template_versions=version_infos)
