@@ -40,6 +40,75 @@
         "title": "Shared storage",
         "default": true,
         "description": "Enable access to shared storage"
+      },
+      "enable_shutdown_schedule": {
+        "$id": "#/properties/enable_shutdown_schedule",
+        "type": "boolean",
+        "title": "Enable Shutdown Schedule",
+        "default": false,
+        "description": "Enable automatic shutdown schedule for the VM"
       }
-    }
+    },
+    "allOf": [
+      {
+        "if": {
+          "properties": {
+            "enable_shutdown_schedule": {
+              "const": true
+            }
+          },
+          "required": [
+            "enable_shutdown_schedule"
+          ]
+        },
+        "then": {
+          "properties": {
+            "shutdown_time": {
+              "type": "string",
+              "title": "Shutdown Time",
+              "description": "Time of day to shutdown the VM (HHmm format), e.g. 1800",
+              "pattern": "^([01]?[0-9]|2[0-3])[0-5][0-9]$",
+              "default": "1800"
+            },
+            "shutdown_timezone": {
+              "type": "string",
+              "title": "Shutdown Timezone",
+              "description": "Timezone for the shutdown schedule",
+              "default": "UTC",
+              "enum": [
+                "UTC -12",
+                "UTC -11",
+                "UTC -10",
+                "UTC -9",
+                "UTC -8",
+                "UTC -7",
+                "UTC -6",
+                "UTC -5",
+                "UTC -4",
+                "UTC -3",
+                "UTC -2",
+                "UTC -1",
+                "UTC",
+                "UTC +1",
+                "UTC +2",
+                "UTC +3",
+                "UTC +4",
+                "UTC +5",
+                "UTC +6",
+                "UTC +7",
+                "UTC +8",
+                "UTC +9",
+                "UTC +10",
+                "UTC +11",
+                "UTC +12"
+              ]
+            }
+          },
+          "required": [
+            "shutdown_time",
+            "shutdown_timezone"
+          ]
+        }
+      }
+    ]
 }
