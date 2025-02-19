@@ -15,8 +15,7 @@ ENHANCEMENTS:
 * Migrate UI to Vite build engine and update dependencies ([#4368](https://github.com/microsoft/AzureTRE/pull/4368))
 * Add Windows image field to the Admin VM template ([#4274](https://github.com/microsoft/AzureTRE/pull/4274))
 * Update TLS to the latest version for web apps / function apps (([#4351](https://github.com/microsoft/AzureTRE/issues/4351))
-* Modify the AML workspace service so does not use local authentication keys for storage access ([#4341](https://github.com/microsoft/AzureTRE/issues/4341))
-
+* Modify the AML workspace service so it does not use local authentication keys for storage access ([#4341](https://github.com/microsoft/AzureTRE/issues/4341))
 BUG FIXES:
 * Fix upgrade when porter install has failed ([#4338](https://github.com/microsoft/AzureTRE/pull/4338))
 * Certs shared service: Secret nexus-ssl-password is currently in a deleted but recoverable state ([#4294](https://github.com/microsoft/AzureTRE/issues/4294)])
