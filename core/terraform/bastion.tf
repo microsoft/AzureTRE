@@ -20,8 +20,11 @@ resource "azurerm_bastion_host" "bastion" {
     public_ip_address_id = azurerm_public_ip.bastion.id
   }
 
+  sku {
+    name = var.bastion_sku
+  }
+
   tags = local.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 }
-
