@@ -78,19 +78,19 @@ function mgmtstorage_remove_network_exception() {
 }
 
 function get_resource_group_name() {
-  if [[ -z "${MGMT_RESOURCE_GROUP_NAME:-}" ]]; then
-    echo -e "Error: MGMT_RESOURCE_GROUP_NAME is not set\nExiting...\n" >&2
+  if [[ -z "${TF_VAR_mgmt_resource_group_name:-}" ]]; then
+    echo -e "Error: TF_VAR_mgmt_resource_group_name is not set\nExiting...\n" >&2
     exit 1
   fi
-  echo "$MGMT_RESOURCE_GROUP_NAME"
+  echo "$TF_VAR_mgmt_resource_group_name"
 }
 
 function get_storage_account_name() {
-  if [[ -z "${MGMT_STORAGE_ACCOUNT_NAME:-}" ]]; then
-    echo -e "Error: MGMT_STORAGE_ACCOUNT_NAME is not set\nExiting...\n" >&2
+  if [[ -z "${TF_VAR_mgmt_storage_account_name:-}" ]]; then
+    echo -e "Error: TF_VAR_mgmt_storage_account_name is not set\nExiting...\n" >&2
     exit 1
   fi
-  echo "$MGMT_STORAGE_ACCOUNT_NAME"
+  echo "$TF_VAR_mgmt_storage_account_name"
 }
 
 function get_my_ip() {
@@ -99,7 +99,7 @@ function get_my_ip() {
   else
     local MY_IP
     MY_IP=$(curl -s "https://ipecho.net/plain") || { echo "Error: Failed to fetch IP address" >&2; exit 1; }
-    
+
     if [[ -z "$MY_IP" ]]; then
       echo "Error: Could not determine IP address." >&2
       exit 1
@@ -123,10 +123,18 @@ function is_ip_in_network_rule() {
   COUNT=$(az storage account network-rule list --resource-group "$RESOURCE_GROUP" --account-name "$SA_NAME" --query "length(ipRules[?ipAddressOrRange=='$MY_IP'])" --output tsv)
 
   if [[ "$COUNT" -gt 0 ]]; then
-    # Step 2: Try accessing storage to confirm access
-    if az storage container list --account-name "$SA_NAME" --auth-mode login --output none 2>/dev/null; then
-      return 0  # Success: IP is in rules AND access is confirmed
+    # Step 2: Verify storage accessibility by listing containers...
+    containers=$(az storage container list --account-name "$SA_NAME" --auth-mode login --query "[].name" --output tsv)
+    if [[ -z "$containers" ]]; then
+      # No containers found, assume success.
+      return 0
     fi
+    for container in $containers; do
+      if ! az storage blob list --container-name "$container" --account-name "$SA_NAME" --auth-mode login --output none; then
+        return 1  # Failure if blob listing fails in any container
+      fi
+    done
+    return 0  # Success if blob list works for all containers
   fi
 
   return 1  # Either rule not added or access is still restricted
