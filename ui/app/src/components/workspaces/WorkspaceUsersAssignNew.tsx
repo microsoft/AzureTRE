@@ -18,12 +18,13 @@ interface WorkspaceUsersAssignProps {
 }
 
 interface AssignableUser {
-  name: string;
-  email: string;
+  displayName: string;
+  userPrincipalName: string;
+  id: string;
 }
 
 interface WorkspaceRole {
-  value: string;
+  id: string;
   displayName: string;
 }
 
@@ -59,8 +60,9 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
       const assignableUsers = response.assignable_users;
 
       const options: IPersonaProps[] = assignableUsers.map((assignableUser: AssignableUser) => ({
-        text: assignableUser.name,
-        secondaryText: assignableUser.email
+        text: assignableUser.displayName,
+        secondaryText: assignableUser.userPrincipalName,
+        key: assignableUser.id
       }));
 
       return options;
@@ -73,7 +75,7 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
 
   const onChange = (items?: IPersonaProps[] | undefined): void => {
     if (items && items.length > 0) {
-      setSelectedUser(items[0].secondaryText as string);
+      setSelectedUser(items[0].key as string);
     }
     else {
       setSelectedUser(null);
@@ -99,7 +101,7 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
       const response = await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Roles}`, HttpMethod.Get, scopeId);
 
       const options: IDropdownOption[] = response.roles.map((workspaceRole: WorkspaceRole) => ({
-        key: workspaceRole.value,
+        key: workspaceRole.id,
         text: workspaceRole.displayName
       }));
 
@@ -122,7 +124,7 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
 
     const scopeId = "";
     try {
-      const response = await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}/assign?user_email=${encodedUser}&role_name=${selectedRole}`, HttpMethod.Post, scopeId);
+      const response = await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}/assign?user_id=${selectedUser}&role_id=${selectedRole}`, HttpMethod.Post, scopeId);
       props.onAssignUser(response);
     }
     catch (err: any) {

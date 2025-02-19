@@ -1,11 +1,11 @@
 from pydantic import BaseModel, Field
 from typing import List
 
-from models.domain.authentication import User, AssignableUser
+from models.domain.authentication import AssignedUser, AssignableUser
 
 
 class UsersInResponse(BaseModel):
-    users: List[User] = Field(..., title="Users", description="List of users assigned to the workspace")
+    users: List[AssignedUser] = Field(..., title="Users", description="List of users assigned to the workspace")
 
     class Config:
         schema_extra = {

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useState, useCallback, useEffect, useMemo, useContext } from 'react';
 import { GroupedList, IGroup } from '@fluentui/react/lib/GroupedList';
 import { IColumn, DetailsRow } from '@fluentui/react/lib/DetailsList';
-import { SelectionMode, Selection, SelectionZone  } from '@fluentui/react/lib/Selection';
+import { SelectionMode, Selection, SelectionZone } from '@fluentui/react/lib/Selection';
 import { Persona, PersonaSize } from '@fluentui/react/lib/Persona';
 import { HttpMethod, useAuthApiCall } from '../../hooks/useAuthApiCall';
 import { APIError } from '../../models/exceptions';
@@ -21,11 +21,18 @@ import config from "../../config.json"
 
 interface IUser {
   id: string;
+  user_id: string;
   key: string;
-  name: string;
-  email: string;
-  role: string;
-  roles: string[];
+  displayName: string;
+  userPrincipalName: string;
+  role: IUserRole;
+  roles: IUserRole[];
+}
+
+interface IUserRole {
+  id: string;
+  displayName: string;
+  type: string;
 }
 
 export const WorkspaceUsers: React.FunctionComponent = () => {
@@ -73,16 +80,17 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
 
       const users = result.users
         .flatMap((user: any) =>
-          user.roles.map((role: string) => ({
-            id: user.id,
-            name: user.name,
-            email: user.email,
+          user.roles.map((role: any) => ({
+            id: `${user.id}__${role.id}`,
+            user_id: user.id,
+            displayName: user.displayName,
+            userPrincipalName: user.userPrincipalName,
             role: role,
             roles: user.roles,
           })),
         )
-        .sort((a: { role: string }, b: { role: string }) =>
-          a.role.localeCompare(b.role),
+        .sort((a: { role: any }, b: { role: any }) =>
+          a.role.id.localeCompare(b.role.id),
         );
 
       setState({ users, apiError: undefined, loadingState: LoadingState.Ok });
@@ -104,25 +112,25 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
 
   // De-assign user from role
   const deassignUser = useCallback(async () => {
-      try {
-        setDeassigning(true);
+    try {
+      setDeassigning(true);
 
-        const encodedUser=selectedUserRole?.email?.replaceAll('#', '%23');
-        const selectedRole = selectedUserRole?.role;
-        await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}/assign?user_email=${encodedUser}&role_name=${selectedRole}`,
-           HttpMethod.Delete, "");
+      await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}/assign?user_id=${selectedUserRole?.user_id}&role_id=${selectedUserRole?.role.id}&assignmentType=${selectedUserRole?.role.type}`,
+        HttpMethod.Delete, "");
 
-        await getUsers();
+      await getUsers();
 
 
-        setSelectedUserRole(undefined);
-        setHideCancelDialog(true);
+      setSelectedUserRole(undefined);
+      setHideCancelDialog(true);
+      setDeassigning(false);
 
-      } catch (err: any) {
-        err.userMessage = 'Error deassigning user';
-        setApiError(err);
-        setDeassignmentError(true);
-      }
+    } catch (err: any) {
+      err.userMessage = 'Error deassigning user';
+      setApiError(err);
+      setDeassignmentError(true);
+      setDeassigning(false);
+    }
   }, [apiCall, selectedUserRole, workspace.id, getUsers]);
 
   const groups: IGroup[] = useMemo(() => {
@@ -131,23 +139,22 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
     let currentIndex = 0;
 
     state.users.forEach(user => {
-      if (!groupMap[user.role]) {
-        groupMap[user.role] = {
+      if (!groupMap[user.role.id]) {
+        groupMap[user.role.id] = {
           count: 0,
-          key: user.role.replace(/\s+/g, '').toLowerCase(),
-          name: user.role,
+          key: user.role.id,
+          name: user.role.displayName,
           startIndex: currentIndex,
           level: 0
         };
 
-        groups.push(groupMap[user.role]);
+        groups.push(groupMap[user.role.id]);
       }
 
-      groupMap[user.role].count += 1;
+      groupMap[user.role.id].count += 1;
       currentIndex += 1;
     });
 
-    console.log("new groups", groups)
     return groups;
   }, [state.users]);
 
@@ -167,12 +174,12 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
       name: "Name",
       fieldName: "name",
       minWidth: 150,
-      onRender: (item: User) => (
+      onRender: (item: IUser) => (
         <Persona
-          text={item.name}
-          secondaryText={item.email}
+          text={item.displayName}
+          secondaryText={item.userPrincipalName}
           size={PersonaSize.size40}
-          imageAlt={item.name}
+          imageAlt={item.displayName}
         />
       )
     }
@@ -199,8 +206,8 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
         <Stack.Item>
           <Stack horizontal horizontalAlign="space-between">
             <h1 style={{ marginBottom: 0, marginRight: 30 }}>Users</h1>
-            { (isTreAdmin && config.userManagementEnabled) &&
-              <Stack horizontal  horizontalAlign="start">
+            {(isTreAdmin && config.userManagementEnabled) &&
+              <Stack horizontal horizontalAlign="start">
                 <CommandBarButton
                   iconProps={{ iconName: 'add' }}
                   text="Assign New"
@@ -209,7 +216,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
                 />
                 {
                   selectedUserRole &&
-                    <CommandBarButton
+                  <CommandBarButton
                     iconProps={{ iconName: 'delete' }}
                     text="De-assign"
                     style={{ background: 'none', color: theme.palette.themePrimary }}
@@ -226,49 +233,49 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
       </Stack>
       {state.apiError && <ExceptionLayout e={state.apiError} />}
       <div className="tre-resource-panel" style={{ padding: '0px' }}>
-      { !loadingUsers && <SelectionZone selection={selection} selectionMode={isTreAdmin ? SelectionMode.single : SelectionMode.none} >
-        <GroupedList
-          items={state.users}
-          onRenderCell={onRenderCell}
-          selectionMode={SelectionMode.none}
-          selection={selection}
-          groups={groups}
-          compact={false}
-        />
+        {!loadingUsers && <SelectionZone selection={selection} selectionMode={isTreAdmin ? SelectionMode.single : SelectionMode.none} >
+          <GroupedList
+            items={state.users}
+            onRenderCell={onRenderCell}
+            selectionMode={SelectionMode.none}
+            selection={selection}
+            groups={groups}
+            compact={false}
+          />
         </SelectionZone>
-}
+        }
       </div>
       {
-          loadingUsers && <Stack>
-              <Stack.Item style={{ paddingTop: '10px', paddingBottom: '10px' }}>
-                  <Spinner />
-              </Stack.Item>
-          </Stack>
-        }
+        loadingUsers && <Stack>
+          <Stack.Item style={{ paddingTop: '10px', paddingBottom: '10px' }}>
+            <Spinner />
+          </Stack.Item>
+        </Stack>
+      }
       <Dialog
-          hidden={hideCancelDialog}
-          onDismiss={() => {setHideCancelDialog(true);}}
-          dialogContentProps={{
-            title: 'De-assign Role?',
-            subText: `Are you sure you want to remove ${selectedUserRole?.name} from the ${selectedUserRole?.role} Role?`,
-          }}
-        >
-          {
-            deassignmentError && <ExceptionLayout e={apiError} />
-          }
-          {
-            deassigning
+        hidden={hideCancelDialog}
+        onDismiss={() => { setHideCancelDialog(true); }}
+        dialogContentProps={{
+          title: 'De-assign Role?',
+          subText: `Are you sure you want to remove ${selectedUserRole?.displayName} from the ${selectedUserRole?.role.displayName} Role?`,
+        }}
+      >
+        {
+          deassignmentError && <ExceptionLayout e={apiError} />
+        }
+        {
+          deassigning
             ? <Spinner label="Submitting..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
             : <DialogFooter>
-                <DefaultButton onClick={deassignUser} text="De-assign User" styles={destructiveButtonStyles} />
-                <DefaultButton onClick={() => {setHideCancelDialog(true);}} text="Back" />
-              </DialogFooter>
-    }
+              <DefaultButton onClick={deassignUser} text="De-assign User" styles={destructiveButtonStyles} />
+              <DefaultButton onClick={() => { setHideCancelDialog(true); }} text="Back" />
+            </DialogFooter>
+        }
       </Dialog>
 
       <Routes>
         <Route path="new" element={
-          <WorkSpaceUsersAssignNew onAssignUser={addedAssignment}/>
+          <WorkSpaceUsersAssignNew onAssignUser={addedAssignment} />
         } />
       </Routes>
     </>
