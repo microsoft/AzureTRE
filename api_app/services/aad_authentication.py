@@ -12,7 +12,8 @@ from msal import ConfidentialClientApplication
 from services.access_service import AccessService, AuthConfigValidationError, UserRoleAssignmentError
 from core import config
 from db.errors import EntityDoesNotExist
-from models.domain.authentication import AssignedRole, AssignedUser, AssignmentType, User, AssignableUser, Role, RoleAssignment
+from models.domain.authentication import User, RoleAssignment
+from models.domain.workspace_users import AssignedUser, AssignmentType, AssignableUser, Role
 from models.domain.workspace import Workspace, WorkspaceRole
 from resources import strings
 from db.repositories.workspaces import WorkspaceRepository
@@ -264,11 +265,11 @@ class AzureADAuthorization(AccessService):
 
         return users_graph_data
 
-    def _get_roles_for_principal(self, user_id, roles_graph_data, app_id_to_role_name, assignmentType: AssignmentType = AssignmentType.APP_ROLE) -> List[AssignedRole]:
+    def _get_roles_for_principal(self, user_id, roles_graph_data, app_id_to_role_name, assignmentType: AssignmentType = AssignmentType.APP_ROLE) -> List[Role]:
         roles = []
         for role_assignment in roles_graph_data["value"]:
             if role_assignment["principalId"] == user_id:
-                roles.append(AssignedRole(id=role_assignment["appRoleId"], displayName=app_id_to_role_name[role_assignment["appRoleId"]], type=assignmentType))
+                roles.append(Role(id=role_assignment["appRoleId"], displayName=app_id_to_role_name[role_assignment["appRoleId"]], type=assignmentType))
         return roles
 
     def _get_users_inc_groups_from_response(self, users_graph_data, roles_graph_data, app_id_to_role_name) -> List[AssignedUser]:
@@ -340,13 +341,14 @@ class AzureADAuthorization(AccessService):
 
         roles = []
 
+        roleAssignmentType = AssignmentType.APP_ROLE
+        if self._is_workspace_role_group_in_use(workspace):
+            roleAssignmentType = AssignmentType.GROUP
+
         for role in graph_data["value"]:
-            roles.append(Role(id=role["id"], value=role["value"],
-                              isEnabled=role["isEnabled"],
-                              description=role["description"],
+            roles.append(Role(id=role["id"],
                               displayName=role["displayName"],
-                              origin=role["origin"],
-                              allowedMemberTypes=role["allowedMemberTypes"]))
+                              type=roleAssignmentType))
 
         return roles
 
@@ -361,21 +363,6 @@ class AzureADAuthorization(AccessService):
                     workspace_role_assignments_details[role].append(user.email)
         return workspace_role_assignments_details
 
-    def get_workspace_role_by_name(self, name: str, workspace: Workspace) -> Role:
-        app_roles_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{workspace.properties['sp_id']}/appRoles"
-        graph_data = self._ms_graph_query(app_roles_endpoint, "GET")
-
-        for role in graph_data["value"]:
-            if role["value"] == name:
-                return Role(id=role["id"], value=role["value"],
-                            isEnabled=role["isEnabled"],
-                            description=role["description"],
-                            displayName=role["displayName"],
-                            origin=role["origin"],
-                            allowedMemberTypes=role["allowedMemberTypes"])
-
-        return None
-
     def assign_workspace_user(self, user_id: str, workspace: Workspace, role_id: str) -> None:
         # User already has the role, do nothing
         if self._is_user_in_role(user_id, role_id):
@@ -385,7 +372,7 @@ class AzureADAuthorization(AccessService):
         else:
             return self._assign_workspace_user_to_application(user_id, workspace, role_id)
 
-    def _is_user_in_role(self, user_id: User, role_id: Role) -> bool:
+    def _is_user_in_role(self, user_id: str, role_id: str) -> bool:
         user_app_role_query = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}/appRoleAssignments"
         user_app_roles = self._ms_graph_query(user_app_role_query, "GET")
         return any(r for r in user_app_roles["value"] if r["appRoleId"] == role_id)

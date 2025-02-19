@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Response, status
 from api.dependencies.workspaces import get_workspace_by_id_from_path
-from models.domain.authentication import AssignmentType
+from models.schemas.workspace_users import UserRoleAssignmentRequest
+from models.domain.workspace_users import AssignmentType
 from resources import strings
 from services.authentication import get_access_service
 from models.schemas.users import UsersInResponse, AssignableUsersInResponse
@@ -31,13 +32,14 @@ async def get_workspace_roles(workspace=Depends(get_workspace_by_id_from_path), 
 
 
 @workspaces_users_admin_router.post("/workspaces/{workspace_id}/users/assign", status_code=status.HTTP_202_ACCEPTED, name=strings.API_ASSIGN_WORKSPACE_USER)
-async def assign_workspace_user(response: Response, user_id: str, role_id: str, workspace=Depends(get_workspace_by_id_from_path), access_service=Depends(get_access_service)) -> UsersInResponse:
+async def assign_workspace_user(response: Response, userRoleAssignmentRequest: UserRoleAssignmentRequest, workspace=Depends(get_workspace_by_id_from_path), access_service=Depends(get_access_service)) -> UsersInResponse:
 
-    access_service.assign_workspace_user(
-        user_id,
-        workspace,
-        role_id
-    )
+    for user_id in userRoleAssignmentRequest.user_ids:
+        access_service.assign_workspace_user(
+            user_id,
+            workspace,
+            userRoleAssignmentRequest.role_id
+        )
 
     users = access_service.get_workspace_users(workspace)
     return UsersInResponse(users=users)

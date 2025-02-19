@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List
 
-from models.domain.authentication import AssignedUser, AssignableUser
+from models.domain.workspace_users import AssignedUser, AssignableUser
 
 
 class UsersInResponse(BaseModel):

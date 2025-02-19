@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List
-from models.domain.authentication import Role
+from models.domain.workspace_users import Role
 
 
 class RolesInResponse(BaseModel):

@@ -75,15 +75,15 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
 
   const onChange = (items?: IPersonaProps[] | undefined): void => {
     if (items && items.length > 0) {
-      setSelectedUser(items[0].key as string);
+      setSelectedUsers(items.map(item => item.key as string));
     }
     else {
-      setSelectedUser(null);
+      setSelectedUsers(null);
     }
   };
 
   const [roleOptions, setRoleOptions] = useState<IDropdownOption[]>([]);
-  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [selectedUsers, setSelectedUsers] = useState<string[] | null>(null);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [assigning, setAssigning] = useState(false);
   const [hasAssignmentError, setHasAssignmentError] = useState(false);
@@ -120,11 +120,12 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
   const assign = useCallback(async () => {
     setAssigning(true);
 
-    const encodedUser = selectedUser?.replaceAll('#', '%23');
-
     const scopeId = "";
     try {
-      const response = await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}/assign?user_id=${selectedUser}&role_id=${selectedRole}`, HttpMethod.Post, scopeId);
+      const response = await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}/assign`, HttpMethod.Post, scopeId, {
+        role_id: selectedRole,
+        user_ids: selectedUsers
+      });
       props.onAssignUser(response);
     }
     catch (err: any) {
@@ -134,21 +135,21 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
     }
     setAssigning(false);
 
-  }, [selectedUser, apiCall, workspace.id, selectedRole, props]);
+  }, [selectedUsers, apiCall, workspace.id, selectedRole, props]);
 
   const renderFooter = useCallback(() => {
     let footer = <></>
     footer = <>
       <div style={{ textAlign: 'end' }}>
-        <PrimaryButton onClick={() => assign()} disabled={assigning || (!selectedUser || !selectedRole)}>Assign</PrimaryButton>
+        <PrimaryButton onClick={() => assign()} disabled={assigning || (!selectedUsers || !selectedRole)}>Assign</PrimaryButton>
       </div>
     </>
     return footer;
-  }, [selectedUser, selectedRole, assign, assigning]);
+  }, [selectedUsers, selectedRole, assign, assigning]);
 
   return (
     <Panel
-      headerText="Assign user to a role"
+      headerText="Assign users to a role"
       isOpen={true}
       isLightDismiss={true}
       onDismiss={dismissPanel}
@@ -174,7 +175,6 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
             componentRef={picker}
             resolveDelay={300}
             required={true}
-            itemLimit={1}
             onChange={onChange}
           />
         </Stack>
