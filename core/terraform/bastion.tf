@@ -14,6 +14,7 @@ resource "azurerm_bastion_host" "bastion" {
   resource_group_name = azurerm_resource_group.core.name
   location            = azurerm_resource_group.core.location
   sku                 = var.bastion_sku
+  virtual_network_id  = module.network.core_vnet_id
 
   ip_configuration {
     name                 = "configuration"
