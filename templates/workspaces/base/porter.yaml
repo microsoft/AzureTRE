@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.0.11
+version: 2.0.12
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -234,9 +234,6 @@ install:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_backup: ${ bundle.parameters.enable_backup }
-        backup_vault_fileshare_backup_policy_name: ${ bundle.parameters.backup_vault_fileshare_backup_policy_name }
-        backup_vault_vm_backup_policy_name: ${ bundle.parameters.backup_vault_vm_backup_policy_name }
-        backup_vault_name: ${ bundle.parameters.backup_vault_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -286,9 +283,6 @@ upgrade:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_backup: ${ bundle.parameters.enable_backup }
-        backup_vault_fileshare_backup_policy_name: ${ bundle.parameters.backup_vault_fileshare_backup_policy_name }
-        backup_vault_vm_backup_policy_name: ${ bundle.parameters.backup_vault_vm_backup_policy_name }
-        backup_vault_name: ${ bundle.parameters.backup_vault_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -361,9 +355,6 @@ uninstall:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_backup: ${ bundle.parameters.enable_backup }
-        backup_vault_fileshare_backup_policy_name: ${ bundle.parameters.backup_vault_fileshare_backup_policy_name }
-        backup_vault_vm_backup_policy_name: ${ bundle.parameters.backup_vault_vm_backup_policy_name }
-        backup_vault_name: ${ bundle.parameters.backup_vault_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

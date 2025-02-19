@@ -21,15 +21,4 @@ resource "azurerm_role_assignment" "api_reader" {
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
 }
 
-# adds the needed permissions to the API to manage the backup and site recovery
-resource "azurerm_role_assignment" "backup_contributor" {
-  scope                = azurerm_resource_group.ws.id
-  role_definition_name = "Backup Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-}
 
-resource "azurerm_role_assignment" "site_recover_contributor" {
-  scope                = azurerm_resource_group.ws.id
-  role_definition_name = "Site Recovery Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-}
