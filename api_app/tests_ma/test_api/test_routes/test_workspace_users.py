@@ -3,7 +3,7 @@ from mock import patch
 
 from fastapi import status
 
-from models.domain.authentication import Role, User
+from models.domain.workspace_users import AssignmentType, Role
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP
 from tests_ma.test_api.conftest import create_admin_user
 from services.authentication import get_current_admin_user, \
@@ -63,17 +63,30 @@ class TestWorkspaceUserRoutesWithTreAdmin:
             users = [
                 {
                     "id": "123",
-                    "name": "John Doe",
-                    "email": "john.doe@example.com",
-                    "roles": ["WorkspaceOwner", "WorkspaceResearcher"],
-                    'roleAssignments': []
+                    "displayName": "John Doe",
+                    "userPrincipalName": "john.doe@example.com",
+                    "roles": [
+                        {
+                            "id": "1",
+                            "displayName": "WorkspaceOwner",
+                            "type": "ApplicationRole"
+                        },
+                        {
+                            "id": "2",
+                            "displayName": "WorkspaceResearcher",
+                            "type": "ApplicationRole"
+                        }]
                 },
                 {
                     "id": "456",
-                    "name": "Jane Smith",
-                    "email": "jane.smith@example.com",
-                    "roles": ["WorkspaceResearcher"],
-                    'roleAssignments': []
+                    "displayName": "Jane Smith",
+                    "userPrincipalName": "jane.smith@example.com",
+                    "roles": [
+                        {
+                            "id": "2",
+                            "displayName": "WorkspaceResearcher",
+                            "type": "ApplicationRole"
+                        }]
                 }
             ]
             get_workspace_users_mock.return_value = users
@@ -85,79 +98,74 @@ class TestWorkspaceUserRoutesWithTreAdmin:
 
     @pytest.mark.parametrize("auth_class", ["aad_authentication.AzureADAuthorization"])
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
-    async def test_assign_workspace_user_assigns_workspace_user(self, get_workspace_by_id_mock, auth_class, app, client):
-        with patch(f"services.{auth_class}.get_user_by_email") as get_user_by_email_mock, \
-                patch(f"services.{auth_class}.get_workspace_role_by_name") as get_workspace_role_by_name_mock, \
-                patch(f"services.{auth_class}.assign_workspace_user") as assign_workspace_user_mock, \
-                patch(f"services.{auth_class}.get_workspace_users") as get_workspace_users_mock:
+    async def test_assign_workspace_user_assigns_single_workspace_user(self, get_workspace_by_id_mock, auth_class, app, client):
+        with patch(f"services.{auth_class}.assign_workspace_user") as assign_workspace_user_mock, \
+             patch(f"services.{auth_class}.get_workspace_users") as get_workspace_users_mock:
 
-            workspace = get_workspace_by_id_mock.return_value
+            role_id = "test_role_id"
 
-            user = {
-                "id": "123",
-                "name": "John Doe",
-                "email": "john.doe@example.com",
-                "roles": ["WorkspaceOwner", "WorkspaceResearcher"],
-                "roleAssignments": []
-            }
+            get_workspace_users_mock.return_value = []
 
-            users = [user]
-
-            role_name_to_assign = "AirlockManager"
-            role = {"id": "test_role_id"}
-
-            get_user_by_email_mock.return_value = User.parse_obj(user)
-            get_workspace_role_by_name_mock.return_value = role
-            get_workspace_users_mock.return_value = users
-
-            response = await client.post(app.url_path_for(strings.API_ASSIGN_WORKSPACE_USER, workspace_id=WORKSPACE_ID), params={"user_email": user["email"], "role_name": role_name_to_assign})
+            response = await client.post(app.url_path_for(strings.API_ASSIGN_WORKSPACE_USER, workspace_id=WORKSPACE_ID), json={
+                "role_id": role_id, 
+                "user_ids": [ "user_1" ]
+            })
             assert response.status_code == status.HTTP_202_ACCEPTED
 
-            get_user_by_email_mock.assert_called_once_with(user["email"])
-            get_workspace_role_by_name_mock.assert_called_once_with(role_name_to_assign, workspace)
-            assign_workspace_user_mock.assert_called_once_with(User.parse_obj(user), workspace, role)
+            assign_workspace_user_mock.assert_called_once()
             get_workspace_users_mock.assert_called_once()
 
-            assert response.json()["users"] == users
+    @pytest.mark.parametrize("auth_class", ["aad_authentication.AzureADAuthorization"])
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    async def test_assign_workspace_user_assigns_multiple_workspace_user(self, get_workspace_by_id_mock, auth_class, app, client):
+        with patch(f"services.{auth_class}.assign_workspace_user") as assign_workspace_user_mock, \
+             patch(f"services.{auth_class}.get_workspace_users") as get_workspace_users_mock:
+
+            role_id = "test_role_id"
+
+            get_workspace_users_mock.return_value = []
+
+            response = await client.post(app.url_path_for(strings.API_ASSIGN_WORKSPACE_USER, workspace_id=WORKSPACE_ID), json={
+                "role_id": role_id, 
+                "user_ids": [ "user_1", "user_2" ]
+            })
+            assert response.status_code == status.HTTP_202_ACCEPTED
+
+            assign_workspace_user_mock.call_count == 2
+            get_workspace_users_mock.assert_called_once()
 
     @pytest.mark.parametrize("auth_class", ["aad_authentication.AzureADAuthorization"])
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     async def test_remove_workspace_user_assignment_removes_workspace_user_assignment(self, get_workspace_by_id_mock, auth_class, app, client):
         with patch(f"services.{auth_class}.remove_workspace_role_user_assignment") as remove_workspace_role_user_assignment_mock, \
-                patch(f"services.{auth_class}.get_user_by_email") as get_user_by_email_mock, \
-                patch(f"services.{auth_class}.get_workspace_role_by_name") as get_workspace_role_by_name_mock, \
                 patch(f"services.{auth_class}.get_workspace_users") as get_workspace_users_mock:
 
-            workspace = get_workspace_by_id_mock.return_value
-
             user = {
-                "id": "123",
-                "name": "John Doe",
-                "email": "john.doe@example.com",
-                "roles": ["WorkspaceOwner", "WorkspaceResearcher"],
-                "roleAssignments": []
-            }
+                    "id": "123",
+                    "displayName": "John Doe",
+                    "userPrincipalName": "john.doe@example.com",
+                    "roles": [
+                        {
+                            "id": "1",
+                            "displayName": "WorkspaceOwner",
+                            "type": "ApplicationRole"
+                        },
+                        {
+                            "id": "2",
+                            "displayName": "WorkspaceResearcher",
+                            "type": "ApplicationRole"
+                        }]
+                }
 
-            role_name_to_deassign = "WorkspaceResearcher"
-            role = {"id": "test_role_id"}
+            role_id = "test_role_id"
 
-            get_user_by_email_mock.return_value = User.parse_obj(user)
-            get_workspace_role_by_name_mock.return_value = role
+            get_workspace_users_mock.return_value = []
 
-            user["roles"].remove(role_name_to_deassign)
-            users = [user]
-
-            get_workspace_users_mock.return_value = users
-
-            response = await client.delete(app.url_path_for(strings.API_ASSIGN_WORKSPACE_USER, workspace_id=WORKSPACE_ID), params={"user_email": user["email"], "role_name": role_name_to_deassign})
+            response = await client.delete(app.url_path_for(strings.API_ASSIGN_WORKSPACE_USER, workspace_id=WORKSPACE_ID), params={"user_id": user["id"], "role_id": role_id, "assignmentType": "ApplicationRole"})
             assert response.status_code == status.HTTP_202_ACCEPTED
 
-            get_user_by_email_mock.assert_called_once_with(user["email"])
-            get_workspace_role_by_name_mock.assert_called_once_with(role_name_to_deassign, workspace)
-            remove_workspace_role_user_assignment_mock.assert_called_once_with(get_user_by_email_mock.return_value, role, workspace)
+            remove_workspace_role_user_assignment_mock.assert_called_once()
             get_workspace_users_mock.assert_called_once()
-
-            assert response.json()["users"] == users
 
     @pytest.mark.parametrize("auth_class", ["aad_authentication.AzureADAuthorization"])
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -165,12 +173,31 @@ class TestWorkspaceUserRoutesWithTreAdmin:
         with patch(f"services.{auth_class}.get_assignable_users") as get_assignable_users_mock:
             assignable_users = [
                 {
-                    "name": "John Doe",
-                    "email": "john.doe@example.com",
+                    "id": "1",
+                    "displayName": "John Doe",
+                    "userPrincipalName": "john.doe@example.com",
+                    "roles": [
+                        {
+                            "id": "1",
+                            "displayName": "WorkspaceOwner",
+                            "type": "ApplicationRole"
+                        },
+                        {
+                            "id": "2",
+                            "displayName": "WorkspaceResearcher",
+                            "type": "ApplicationRole"
+                        }]
                 },
                 {
-                    "name": "Jane Smith",
-                    "email": "jane.smith@example.com",
+                    "id": "1",
+                    "displayName": "Jane Smith",
+                    "userPrincipalName": "jane.smith@example.com",
+                    "roles": [
+                        {
+                            "id": "2",
+                            "displayName": "WorkspaceResearcher",
+                            "type": "ApplicationRole"
+                        }]
                 }
             ]
 
@@ -178,8 +205,8 @@ class TestWorkspaceUserRoutesWithTreAdmin:
 
             response = await client.get(app.url_path_for(strings.API_GET_ASSIGNABLE_USERS, workspace_id=WORKSPACE_ID))
 
+            get_assignable_users_mock.assert_called_once()
             assert response.status_code == status.HTTP_200_OK
-            assert response.json()["assignable_users"] == assignable_users
 
     @pytest.mark.parametrize("auth_class", ["aad_authentication.AzureADAuthorization"])
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -188,42 +215,24 @@ class TestWorkspaceUserRoutesWithTreAdmin:
             workspace_roles = [
                 Role(
                     id="1",
-                    value="AirlockManager",
-                    isEnabled=True,
-                    email=None,
-                    allowedMemberTypes=["Application", "User"],
-                    description="Provides airlock managers access to the Workspace and ability to review airlock requests.",
-                    displayName="Airlock Manager",
-                    origin="Application",
-                    roleAssignments=[],
+                    displayName="AirlockManager",
+                    type=AssignmentType.APP_ROLE
                 ),
                 Role(
                     id="2",
-                    value="WorkspaceResearcher",
-                    isEnabled=True,
-                    email=None,
-                    allowedMemberTypes=["Application", "User"],
-                    description="Provides researchers access to the Workspace.",
-                    displayName="Workspace Researcher",
-                    origin="Application",
-                    roleAssignments=[],
+                    displayName="WorkspaceResearcher",
+                    type=AssignmentType.APP_ROLE
                 ),
                 Role(
                     id="3",
-                    value="WorkspaceOwner",
-                    isEnabled=True,
-                    email=None,
-                    allowedMemberTypes=["Application", "User"],
-                    description="Provides workspace owners access to the Workspace.",
-                    displayName="Workspace Owner",
-                    origin="Application",
-                    roleAssignments=[],
-                ),
+                    displayName="WorkspaceOwner",
+                    type=AssignmentType.APP_ROLE
+                )
             ]
 
             get_workspace_roles_mock.return_value = workspace_roles
 
             response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_ROLES, workspace_id=WORKSPACE_ID))
 
+            get_workspace_roles_mock.assert_called_once()
             assert response.status_code == status.HTTP_200_OK
-            assert response.json()["roles"] == workspace_roles

@@ -352,17 +352,6 @@ class AzureADAuthorization(AccessService):
 
         return roles
 
-    def get_workspace_user_emails_by_role_assignment(self, workspace: Workspace):
-        users = self.get_workspace_users(workspace)
-        workspace_role_assignments_details = {}
-        for user in users:
-            if user.email:
-                for role in user.roles:
-                    if role not in workspace_role_assignments_details:
-                        workspace_role_assignments_details[role] = []
-                    workspace_role_assignments_details[role].append(user.email)
-        return workspace_role_assignments_details
-
     def assign_workspace_user(self, user_id: str, workspace: Workspace, role_id: str) -> None:
         # User already has the role, do nothing
         if self._is_user_in_role(user_id, role_id):
