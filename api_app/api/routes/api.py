@@ -12,11 +12,6 @@ from api.routes import health, ping, workspaces, workspace_templates, workspace_
 from core import config
 from resources import strings
 
-
-def _is_user_management_enabled():
-    return config.USER_MANAGEMENT_ENABLED
-
-
 core_tags_metadata = [
     {"name": "health", "description": "Verify that the TRE is up and running"},
     {"name": "workspace templates", "description": "**TRE admin** registers and can access templates"},
@@ -56,7 +51,7 @@ core_router.include_router(costs.costs_core_router, tags=["costs"])
 core_router.include_router(costs.costs_workspace_router, tags=["costs"])
 core_router.include_router(requests.router, tags=["requests"])
 
-if _is_user_management_enabled():
+if config.USER_MANAGEMENT_ENABLED:
     core_router.include_router(workspace_users.workspaces_users_admin_router, tags=["users"])
 core_router.include_router(workspace_users.workspaces_users_shared_router, tags=["users"])
 
