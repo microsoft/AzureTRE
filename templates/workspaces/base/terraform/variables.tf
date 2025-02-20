@@ -75,7 +75,7 @@ variable "auth_client_secret" {
   type        = string
   description = "Used to authenticate into the AAD Tenant to create the AAD App"
 }
-variable "enable_backup"{
+variable "enable_backup" {
   type        = bool
   default     = true
   description = "Enable backups for the workspace"
@@ -143,22 +143,4 @@ variable "storage_account_redundancy" {
   type        = string
   default     = "GRS"
   description = "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
-}
-
-variable "backup_vault_name" {
-  type        = string
-  default     = ""
-  description = "Name of the backup vault"
-}
-
-variable "backup_vault_vm_backup_policy_name" {
-  type        = string
-  default     = ""
-  description = "Name of the backup policy for VMs"
-}
-
-variable "backup_vault_fileshare_backup_policy_name" {
-  type        = string
-  default     = ""
-  description = "Name of the backup policy for File Shares"
 }

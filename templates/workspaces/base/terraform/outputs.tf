@@ -30,14 +30,13 @@ output "scope_id" {
 }
 
 output "backup_vault_name" {
-  value = var.enable_backup ? module.backup[0].backup_vault_name : var.backup_vault_name
+  value = var.enable_backup ? module.backup[0].backup_vault_name : ""
 }
 
 output "backup_vault_vm_backup_policy_name" {
-  value = var.enable_backup ? module.backup[0].backup_vault_vm_backup_policy_name : var.backup_vault_vm_backup_policy_name
+  value = var.enable_backup ? module.backup[0].backup_vault_vm_backup_policy_name : ""
 }
 
 output "backup_vault_fileshare_backup_policy_name" {
-  value = var.enable_backup ? module.backup[0].backup_vault_fileshare_backup_policy_name : var.backup_vault_fileshare_backup_policy_name
+  value = var.enable_backup ? module.backup[0].backup_vault_fileshare_backup_policy_name : ""
 }
-

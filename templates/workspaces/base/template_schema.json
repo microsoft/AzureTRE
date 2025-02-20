@@ -77,7 +77,7 @@
     "enable_backup": {
       "type": "boolean",
       "title": "Enable Backup",
-      "description": "Enable backups for the workspace. This covers any VMs deployed, and the workspace file share",
+      "description": "Enable backups for the workspace. Workspace services must support this feature.",
       "default": true,
       "updateable": true
     }
