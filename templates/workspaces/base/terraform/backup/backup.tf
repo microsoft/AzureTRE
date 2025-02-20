@@ -4,7 +4,7 @@ resource "azurerm_recovery_services_vault" "vault" {
   location            = var.location
   resource_group_name = var.resource_group_name
   sku                 = "Standard"
-  soft_delete_enabled = true
+  soft_delete_enabled = false
   storage_mode_type   = "ZoneRedundant" #  Possible values are "GeoRedundant", "LocallyRedundant" and "ZoneRedundant". Defaults to "GeoRedundant".
   tags                = var.tre_workspace_tags
 
@@ -18,7 +18,7 @@ resource "azurerm_recovery_services_vault" "vault" {
 
   dynamic "encryption" {
     for_each = var.enable_cmk_encryption ? [1] : []
-    content{
+    content {
       key_id                            = azurerm_key_vault_key.encryption_key[0].versionless_id
       infrastructure_encryption_enabled = true
       user_assigned_identity_id         = azurerm_user_assigned_identity.encryption_identity[0].id
@@ -53,16 +53,16 @@ resource "azurerm_backup_policy_vm" "vm_policy" {
   }
 
   retention_monthly {
-    count     = 12
-    weekdays  = ["Monday"]
-    weeks     = ["First"]
+    count    = 12
+    weekdays = ["Monday"]
+    weeks    = ["First"]
   }
 
   retention_yearly {
-    count = 2
-    months = ["December"]
+    count    = 2
+    months   = ["December"]
     weekdays = ["Sunday"]
-    weeks = ["Last"]
+    weeks    = ["Last"]
   }
 
   depends_on = [
@@ -94,16 +94,16 @@ resource "azurerm_backup_policy_file_share" "file_share_policy" {
   }
 
   retention_monthly {
-    count     = 12
-    weekdays  = ["Monday"]
-    weeks     = ["First"]
+    count    = 12
+    weekdays = ["Monday"]
+    weeks    = ["First"]
   }
 
   retention_yearly {
-    count = 2
-    months = ["December"]
+    count    = 2
+    months   = ["December"]
     weekdays = ["Sunday"]
-    weeks = ["Last"]
+    weeks    = ["Last"]
   }
 
   depends_on = [
@@ -123,11 +123,11 @@ resource "azurerm_backup_container_storage_account" "storage_account" {
 }
 
 resource "azurerm_backup_protected_file_share" "file_share" {
-  resource_group_name        = var.resource_group_name
-  recovery_vault_name        = azurerm_recovery_services_vault.vault.name
-  source_storage_account_id  = var.azurerm_storage_account_id
-  source_file_share_name     = var.shared_storage_name
-  backup_policy_id           = azurerm_backup_policy_file_share.file_share_policy.id
+  resource_group_name       = var.resource_group_name
+  recovery_vault_name       = azurerm_recovery_services_vault.vault.name
+  source_storage_account_id = var.azurerm_storage_account_id
+  source_file_share_name    = var.shared_storage_name
+  backup_policy_id          = azurerm_backup_policy_file_share.file_share_policy.id
 
   depends_on = [
     azurerm_backup_policy_file_share.file_share_policy,
