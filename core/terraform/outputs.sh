@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# shellcheck disable=SC1091
+source ../../devops/scripts/mgmtstorage_add_network_exception.sh
+
 if [ ! -f ../tre_output.json ] || [ ! -s ../tre_output.json ]; then
   # Connect to the remote backend of Terraform
   export TF_LOG=""

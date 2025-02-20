@@ -91,6 +91,9 @@ if [[ -z ${tf_logfile+x} ]]; then
     echo -e "No logfile provided, using ${tf_logfile}\n"
 fi
 
+# shellcheck disable=SC1091
+source "$(dirname "$0")/mgmtstorage_add_network_exception.sh"
+
 terraform init -input=false -backend=true -reconfigure \
     -backend-config="resource_group_name=${mgmt_resource_group_name}" \
     -backend-config="storage_account_name=${mgmt_storage_account_name}" \

@@ -5,6 +5,9 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
+# shellcheck disable=SC1091
+source ../../devops/scripts/mgmtstorage_add_network_exception.sh
+
 get_resource_id() {
   local json_data="$1"
   local resource_addr="$2"
