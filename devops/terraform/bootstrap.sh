@@ -20,6 +20,7 @@ if ! az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name"
     --name "$TF_VAR_mgmt_storage_account_name" --location "$LOCATION" \
     --allow-blob-public-access false --min-tls-version TLS1_2 \
     --kind StorageV2 --sku Standard_LRS -o table \
+    --public-network-access enabled \
     --default-action Deny \
     --bypass AzureServices \
     --encryption-key-type-for-queue "$encryption_type" \

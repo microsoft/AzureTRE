@@ -120,13 +120,20 @@ function is_ip_in_network_rule() {
 
   # Step 1: Check if the IP is present in the network rules
   local COUNT
-  COUNT=$(az storage account network-rule list --resource-group "$RESOURCE_GROUP" --account-name "$SA_NAME" --query "length(ipRules[?ipAddressOrRange=='$MY_IP'])" --output tsv)
+  COUNT=$(az storage account network-rule list \
+    --resource-group "$RESOURCE_GROUP" \
+    --account-name "$SA_NAME" \
+    --query "length(ipRules[?ipAddressOrRange=='$MY_IP'])" \
+    --output tsv)
 
   if [[ "$COUNT" -gt 0 ]]; then
-    # Step 2: Verify storage accessibility by listing containers...
-    containers=$(az storage container list --account-name "$SA_NAME" --auth-mode login --query "[].name" --output tsv)
+    # Step 2: Verify storage accessibility by listing containers.
+    local containers
+    if ! containers=$(az storage container list --account-name "$SA_NAME" --auth-mode login --query "[].name" --output tsv); then
+      return 1
+    fi
     if [[ -z "$containers" ]]; then
-      # No containers found, assume success.
+      # Listing succeeded but no containers exist; move forward.
       return 0
     fi
     for container in $containers; do

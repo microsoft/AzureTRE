@@ -33,6 +33,7 @@ resource "azurerm_storage_account" "state_storage" {
   allow_nested_items_to_be_public  = false
   shared_access_key_enabled        = false
   local_user_enabled               = false
+  public_network_access_enabled    = true
 
   network_rules {
     default_action = "Deny"
