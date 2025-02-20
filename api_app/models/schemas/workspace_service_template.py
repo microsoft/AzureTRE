@@ -40,7 +40,7 @@ def get_sample_workspace_service_template_in_response() -> dict:
 
 def get_sample_enabled_versions_in_response() -> dict:
     return {
-        "service_template_versions" : [
+        "service_template_versions": [
             {
                 "name": "tre-service-guacamole",
                 "title": "Apache Guacamole - Virtual Desktop Service",

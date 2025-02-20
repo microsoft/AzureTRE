@@ -1,5 +1,5 @@
 import uuid
-import packaging.version
+import semantic_version
 from typing import List, Optional, Union
 
 from pydantic import parse_obj_as
@@ -102,16 +102,18 @@ class ResourceTemplateRepository(BaseRepository):
                 }
             )
 
-        get_version = lambda item: packaging.version.parse(item["version"])
+        def get_version(item) -> semantic_version.Version:
+            return semantic_version.Version(item["version"])
+
+        # Convert dictionary with version keys to lists sorted by version
         for v in services.values():
             v["versions"].sort(key=get_version)
             if "user-resources" in v:
                 v["user-resources"] = list(v["user-resources"].values())
                 for u in v["user-resources"]:
                     u["versions"].sort(key=get_version)
-
-
         services_infos = list(services.values())
+
         return services_infos
 
     async def get_current_template(self, template_name: str, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
