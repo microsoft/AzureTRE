@@ -17,7 +17,7 @@ function mgmtstorage_add_network_exception() {
   local MY_IP
   MY_IP=$(get_my_ip)
 
-  echo -e "\nAdding deployment network exception to storage account $SA_NAME..."
+  echo -e "\nAdding deployment network exception to storage account $SA_NAME from IP $MY_IP"
 
   # Ensure storage account exists
   if ! does_storage_account_exist "$SA_NAME"; then
@@ -52,7 +52,7 @@ function mgmtstorage_remove_network_exception() {
   local MY_IP
   MY_IP=$(get_my_ip)
 
-  echo -e "\nRemoving deployment network exception from storage account $SA_NAME..."
+  echo -e "\nRemoving deployment network exception from storage account $SA_NAME from IP $MY_IP"
 
   # Ensure storage account exists
   if ! does_storage_account_exist "$SA_NAME"; then

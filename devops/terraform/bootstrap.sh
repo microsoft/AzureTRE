@@ -20,19 +20,15 @@ if ! az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name"
     --name "$TF_VAR_mgmt_storage_account_name" --location "$LOCATION" \
     --allow-blob-public-access false --min-tls-version TLS1_2 \
     --kind StorageV2 --sku Standard_LRS -o table \
-    --public-network-access enabled \
-    --default-action Deny \
-    --bypass AzureServices \
     --encryption-key-type-for-queue "$encryption_type" \
     --encryption-key-type-for-table "$encryption_type" \
     --require-infrastructure-encryption true
 else
   echo "Storage account already exists..."
   az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name" --name "$TF_VAR_mgmt_storage_account_name" --output table
+  # shellcheck disable=SC1091
+  source ../scripts/mgmtstorage_add_network_exception.sh
 fi
-
-# shellcheck disable=SC1091
-source ../scripts/mgmtstorage_add_network_exception.sh
 
 # Grant user blob data contributor permissions
 echo -e "\n\e[34m»»» 🔑 \e[96mGranting Storage Blob Data Contributor role to the current user\e[0m..."
@@ -94,5 +90,14 @@ if ! terraform state show azurerm_storage_account.state_storage > /dev/null; the
   terraform import azurerm_storage_account.state_storage "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name"
 fi
 echo "State imported"
+
+# Update the storage account network to set default action to Deny and bypass AzureServices
+# shellcheck disable=SC2154
+az storage account update \
+  --name "$TF_VAR_mgmt_storage_account_name" \
+  --resource-group "$TF_VAR_mgmt_resource_group_name" \
+  --public-network-access enabled \
+  --default-action Deny \
+  --bypass AzureServices
 
 set +o nounset
