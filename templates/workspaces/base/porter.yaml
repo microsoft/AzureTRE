@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.0.10
+version: 2.0.12
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -234,9 +234,6 @@ install:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_backup: ${ bundle.parameters.enable_backup }
-        backup_vault_fileshare_backup_policy_name: ${ bundle.parameters.backup_vault_fileshare_backup_policy_name }
-        backup_vault_vm_backup_policy_name: ${ bundle.parameters.backup_vault_vm_backup_policy_name }
-        backup_vault_name: ${ bundle.parameters.backup_vault_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -286,9 +283,6 @@ upgrade:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_backup: ${ bundle.parameters.enable_backup }
-        backup_vault_fileshare_backup_policy_name: ${ bundle.parameters.backup_vault_fileshare_backup_policy_name }
-        backup_vault_vm_backup_policy_name: ${ bundle.parameters.backup_vault_vm_backup_policy_name }
-        backup_vault_name: ${ bundle.parameters.backup_vault_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -332,30 +326,6 @@ upgrade:
         register-aad-application: '${ bundle.parameters.register_aad_application }'
 
 uninstall:
-  - az:
-      description: "Set Azure Cloud Environment"
-      arguments:
-        - cloud
-        - set
-      flags:
-        name: ${ bundle.parameters.azure_environment }
-  - az:
-      description: "Azure Login"
-      arguments:
-        - login
-      flags:
-        service-principal: ""
-        username: '${ bundle.credentials.azure_client_id }'
-        password: '${ bundle.credentials.azure_client_secret }'
-        tenant: '${ bundle.credentials.azure_tenant_id }'
-        allow-no-subscriptions: ""
-  - exec:
-      description: "Running Recovery Services Vault Cleanup"
-      command: ./cleanup_vault.sh
-      flags:
-        resource-group: '${ bundle.parameters.workspace_resource_name_suffix }'
-        vault-name: '${ bundle.parameters.backup_vault_name }'
-
   - terraform:
       description: "Tear down workspace"
       vars:
@@ -385,9 +355,6 @@ uninstall:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_backup: ${ bundle.parameters.enable_backup }
-        backup_vault_fileshare_backup_policy_name: ${ bundle.parameters.backup_vault_fileshare_backup_policy_name }
-        backup_vault_vm_backup_policy_name: ${ bundle.parameters.backup_vault_vm_backup_policy_name }
-        backup_vault_name: ${ bundle.parameters.backup_vault_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
