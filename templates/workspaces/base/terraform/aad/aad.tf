@@ -94,7 +94,7 @@ resource "azuread_application" "workspace" {
 resource "azuread_service_principal" "workspace" {
   client_id                    = azuread_application.workspace.client_id
   app_role_assignment_required = false
-  owners                       = [data.azuread_client_config.current.object_id, var.workspace_owner_object_id]
+  owners                       = [data.azuread_client_config.current.object_id, var.workspace_owner_object_id, data.azuread_service_principal.core_api.object_id]
 
   feature_tags {
     enterprise = true

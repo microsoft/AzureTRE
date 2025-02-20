@@ -436,9 +436,8 @@ class AzureADAuthorization(AccessService):
 
     def _assign_workspace_user_to_application(self, user_id: str, workspace: Workspace, role_id: str):
         msgraph_token = self._get_msgraph_token()
-        url = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}/appRoleAssignments"
         application_id = workspace.properties["sp_id"]
-
+        url = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{application_id}/appRoleAssignedTo"
         body = {
             "principalId": user_id,
             "resourceId": application_id,
