@@ -35,7 +35,7 @@ function mgmtstorage_add_network_exception() {
     fi
 
     echo " Unable to access storage account $SA_NAME after $ATTEMPT/10. Waiting for network rules to take effect..."
-    sleep 5
+    sleep 15
   done
 
   echo -e "Error: Could not add deployment network exception for $SA_NAME after 10 attempts.\n"
@@ -70,7 +70,7 @@ function mgmtstorage_remove_network_exception() {
     fi
 
     echo " Unable to remove network exception for storage account $SA_NAME after $ATTEMPT/10. Waiting for network rules to take effect..."
-    sleep 5
+    sleep 15
   done
 
   echo -e "Error: Could not remove deployment network exception for $SA_NAME after 10 attempts.\n"
