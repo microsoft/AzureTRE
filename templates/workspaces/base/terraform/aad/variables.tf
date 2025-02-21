@@ -16,3 +16,6 @@ variable "aad_redirect_uris_b64" {
 variable "create_aad_groups" {
   type = string
 }
+variable "core_api_client_id" {
+  type = string
+}

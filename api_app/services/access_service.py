@@ -10,6 +10,10 @@ class AuthConfigValidationError(Exception):
     """Raised when the input auth information is invalid"""
 
 
+class UserRoleAssignmentError(Exception):
+    """Raised when a user role assignment fails"""
+
+
 class AccessService(OAuth2AuthorizationCodeBearer):
     @abstractmethod
     def extract_workspace_auth_information(self, data: dict) -> dict:
