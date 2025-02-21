@@ -141,7 +141,7 @@ class TestWorkspaceUserRoutesWithTreAdmin:
                         "id": "2",
                         "displayName": "WorkspaceResearcher"
                     }]
-                    }
+            }
 
             role_id = "test_role_id"
 

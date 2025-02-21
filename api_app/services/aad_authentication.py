@@ -429,7 +429,7 @@ class AzureADAuthorization(AccessService):
             if role["appRoleId"] == role_id:
                 return role
 
-    def remove_workspace_role_user_assignment(self, 
+    def remove_workspace_role_user_assignment(self,
                                               user_id: str,
                                               role_id: str,
                                               workspace: Workspace
