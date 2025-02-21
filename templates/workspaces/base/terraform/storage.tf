@@ -41,8 +41,8 @@ resource "azurerm_storage_account" "stg" {
     }
   }
 
-  file_properties {
-    delete_retention_policy {
+  share_properties {
+    retention_policy {
       days = 7
     }
   }
