@@ -4,5 +4,5 @@
 # TF backend files
 **/*_backend.tf
 Dockerfile.tmpl
-terraform/deploy.sh
+
 terraform/destroy.sh
