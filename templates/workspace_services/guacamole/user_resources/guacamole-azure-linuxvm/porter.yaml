@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-linuxvm
-version: 1.2.4
+version: 1.2.8
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -42,6 +42,13 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
+  # Credentials for interacting with the AAD Auth tenant
+  - name: auth_client_id
+    env: AUTH_CLIENT_ID
+  - name: auth_client_secret
+    env: AUTH_CLIENT_SECRET
+  - name: auth_tenant_id
+    env: AUTH_TENANT_ID
 
 parameters:
   - name: workspace_id
@@ -110,6 +117,8 @@ parameters:
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
+  - name: owner_id
+    type: string
   - name: enable_cmk_encryption
     type: boolean
     default: false
@@ -161,11 +170,15 @@ install:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        owner_id: ${ bundle.parameters.owner_id }
         enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
         shutdown_time: ${ bundle.parameters.shutdown_time }
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -192,11 +205,15 @@ upgrade:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        owner_id: ${ bundle.parameters.owner_id }
         enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
         shutdown_time: ${ bundle.parameters.shutdown_time }
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -235,11 +252,15 @@ uninstall:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        owner_id: ${ bundle.parameters.owner_id }
         enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
         shutdown_time: ${ bundle.parameters.shutdown_time }
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
