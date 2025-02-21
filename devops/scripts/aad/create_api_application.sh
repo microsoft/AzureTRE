@@ -147,7 +147,6 @@ msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "id" --output tsv -
 
 roleUserReadAll=$(get_msgraph_role "User.Read.All" )
 roleDirectoryReadAll=$(get_msgraph_role "Directory.Read.All" )
-groupsReadWriteAll=$(get_msgraph_role "Groups.ReadWrite.All" )
 appRoleAssignmentsReadWriteAll=$(get_msgraph_role "AppRoleAssignments.ReadWriteAll" )
 scope_email=$(get_msgraph_scope "email")
 scope_profile=$(get_msgraph_scope "profile")
@@ -199,7 +198,6 @@ appDefinition=$(jq -c . << JSON
       "resourceAccess": [
           ${roleUserReadAll},
           ${roleDirectoryReadAll},
-          ${groupsReadWriteAll},
           ${appRoleAssignmentsReadWriteAll},
           $scope_email,
           $scope_openid,

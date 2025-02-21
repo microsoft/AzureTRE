@@ -238,14 +238,13 @@ class AzureADAuthorization(AccessService):
         return "/groups/" + group_object_id + "/transitiveMembers?$select=displayName,mail,id,userPrincipalName"
 
     def _get_app_sp_graph_data(self, client_id: str) -> dict:
-        msgraph_token = self._get_msgraph_token()
         sp_endpoint = self._get_service_principal_endpoint(client_id)
-        graph_data = requests.get(sp_endpoint, headers=self._get_auth_header(msgraph_token)).json()
+        graph_data = self._ms_graph_query(sp_endpoint, "GET")
         return graph_data
 
-    def _get_user_role_assignments(self, client_id, msgraph_token):
+    def _get_user_role_assignments(self, client_id):
         sp_roles_endpoint = self._get_service_principal_assigned_roles_endpoint(client_id)
-        return requests.get(sp_roles_endpoint, headers=self._get_auth_header(msgraph_token)).json()
+        return self._ms_graph_query(sp_roles_endpoint, "GET")
 
     def _get_user_details(self, roles_graph_data, msgraph_token):
         batch_endpoint = self._get_batch_endpoint()
@@ -312,22 +311,17 @@ class AzureADAuthorization(AccessService):
 
     def get_workspace_users(self, workspace: Workspace) -> List[AssignedUser]:
         msgraph_token = self._get_msgraph_token()
-
         sp_graph_data = self._get_app_sp_graph_data(workspace.properties["client_id"])
         app_id_to_role_name = {app_role["id"]: (app_role["displayName"]) for app_role in sp_graph_data["value"][0]["appRoles"]}
-        roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"], msgraph_token)
+        roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"])
         users_graph_data = self._get_user_details(roles_graph_data, msgraph_token)
         users_inc_groups = self._get_users_inc_groups_from_response(users_graph_data, roles_graph_data, app_id_to_role_name)
 
         return users_inc_groups
 
     def get_assignable_users(self, filter: str = "", maxResultCount: int = 5) -> List[AssignableUser]:
-        msgraph_token = self._get_msgraph_token()
         users_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/users?$filter=startswith(displayName,'{filter}')&$top={maxResultCount}"
-
-        graph_data = requests.get(users_endpoint,
-                                  headers=self._get_auth_header(msgraph_token),
-                                  timeout=GRAPH_REQUEST_TIMEOUT).json()
+        graph_data = self._ms_graph_query(users_endpoint, "GET")
         result = []
 
         for user_data in graph_data["value"]:
@@ -392,8 +386,7 @@ class AzureADAuthorization(AccessService):
         return (f"{tre_id}-ws-{workspace_id} {group_name}", f"app_role_id_{app_role_id_suffix}")
 
     def _assign_workspace_user_to_application_group(self, user_id: str, workspace: Workspace, role_id: str):
-        msgraph_token = self._get_msgraph_token()
-        roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"], msgraph_token)
+        roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"])
         group_details = self._get_workspace_group_name(workspace, role_id)
         group_name = group_details[0]
         workspace_app_role_field = group_details[1]
@@ -406,8 +399,7 @@ class AzureADAuthorization(AccessService):
         raise UserRoleAssignmentError(f"Unable to assign user to group with role: {role_id}")
 
     def _remove_workspace_user_from_application_group(self, user_id: str, workspace: Workspace, role_id: str):
-        msgraph_token = self._get_msgraph_token()
-        roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"], msgraph_token)
+        roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"])
         group_details = self._get_workspace_group_name(workspace, role_id)
         group_name = group_details[0]
         workspace_app_role_field = group_details[1]
@@ -416,22 +408,21 @@ class AzureADAuthorization(AccessService):
             if group.get("principalDisplayName") == group_name and group.get("appRoleId") == workspace.properties[workspace_app_role_field]:
                 self._remove_user_from_group(user_id, group["principalId"])
                 return
-        raise UserRoleAssignmentError(f"Unable to assign user to group with role: {role.value}")
+        raise UserRoleAssignmentError(f"Unable to assign user to group with role: {role_id}")
 
     def _add_user_to_group(self, user_id: str, group_id: str):
-        msgraph_token = self._get_msgraph_token()
         url = f"{MICROSOFT_GRAPH_URL}/v1.0/groups/{group_id}/members/$ref"
         body = {
             "@odata.id": f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}"
         }
-        response = requests.post(url, json=body, headers=self._get_auth_header(msgraph_token))
+        
+        response = self._ms_graph_query(url, "POST", json=body)
         return response
 
     def _remove_user_from_group(self, user_id: str, group_id: str):
-        msgraph_token = self._get_msgraph_token()
         url = f"{MICROSOFT_GRAPH_URL}/v1.0/groups/{group_id}/members/{user_id}/$ref"
 
-        response = requests.delete(url, headers=self._get_auth_header(msgraph_token))
+        response = self._ms_graph_query(url, "DELETE")
         return response
 
     def _assign_workspace_user_to_application(self, user_id: str, workspace: Workspace, role_id: str):
@@ -444,7 +435,7 @@ class AzureADAuthorization(AccessService):
             "appRoleId": role_id,
         }
 
-        response = requests.post(url, json=body, headers=self._get_auth_header(msgraph_token), timeout=GRAPH_REQUEST_TIMEOUT)
+        response = self._ms_graph_query(url, "POST", json=body)
         return response
 
     def _get_role_assignment_for_user(self, user_id: str, role_id: str) -> dict:
@@ -464,12 +455,11 @@ class AzureADAuthorization(AccessService):
         else:
             self._remove_workspace_user_from_application_group(user_id, workspace, role_id)
 
-    def _remove_workspace_user_from_application(self, user_id: str, role_id: str) -> requests.Response:
+    def _remove_workspace_user_from_application(self, user_id: str, role_id: str):
         role_assignment = self._get_role_assignment_for_user(user_id, role_id)
 
-        msgraph_token = self._get_msgraph_token()
         url = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}/appRoleAssignments/{role_assignment['id']}"
-        response = requests.delete(url, headers=self._get_auth_header(msgraph_token), timeout=GRAPH_REQUEST_TIMEOUT)
+        response = self._ms_graph_query(url, "DELETE")
         return response
 
     def _get_batch_users_by_role_assignments_body(self, roles_graph_data):

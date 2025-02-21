@@ -30,3 +30,8 @@ class UsersInResponse(BaseModel):
 
 class AssignableUsersInResponse(BaseModel):
     assignable_users: List[AssignableUser] = Field(..., title="Assignable Users", description="List of users assignable to a workspace")
+
+
+class WorkspaceUserOperationResponse(BaseModel):
+    user_ids: List[str] = Field(..., title="User IDs", description="List of user IDs")
+    role_id: str = Field(..., title="Role ID", description="Role ID")

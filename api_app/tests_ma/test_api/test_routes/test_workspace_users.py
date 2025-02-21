@@ -99,12 +99,9 @@ class TestWorkspaceUserRoutesWithTreAdmin:
     @pytest.mark.parametrize("auth_class", ["aad_authentication.AzureADAuthorization"])
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     async def test_assign_workspace_user_assigns_single_workspace_user(self, get_workspace_by_id_mock, auth_class, app, client):
-        with patch(f"services.{auth_class}.assign_workspace_user") as assign_workspace_user_mock, \
-             patch(f"services.{auth_class}.get_workspace_users") as get_workspace_users_mock:
+        with patch(f"services.{auth_class}.assign_workspace_user") as assign_workspace_user_mock:
 
             role_id = "test_role_id"
-
-            get_workspace_users_mock.return_value = []
 
             response = await client.post(app.url_path_for(strings.API_ASSIGN_WORKSPACE_USER, workspace_id=WORKSPACE_ID), json={
                 "role_id": role_id, 
@@ -113,17 +110,13 @@ class TestWorkspaceUserRoutesWithTreAdmin:
             assert response.status_code == status.HTTP_202_ACCEPTED
 
             assign_workspace_user_mock.assert_called_once()
-            get_workspace_users_mock.assert_called_once()
 
     @pytest.mark.parametrize("auth_class", ["aad_authentication.AzureADAuthorization"])
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     async def test_assign_workspace_user_assigns_multiple_workspace_user(self, get_workspace_by_id_mock, auth_class, app, client):
-        with patch(f"services.{auth_class}.assign_workspace_user") as assign_workspace_user_mock, \
-             patch(f"services.{auth_class}.get_workspace_users") as get_workspace_users_mock:
+        with patch(f"services.{auth_class}.assign_workspace_user") as assign_workspace_user_mock:
 
             role_id = "test_role_id"
-
-            get_workspace_users_mock.return_value = []
 
             response = await client.post(app.url_path_for(strings.API_ASSIGN_WORKSPACE_USER, workspace_id=WORKSPACE_ID), json={
                 "role_id": role_id, 
@@ -132,13 +125,11 @@ class TestWorkspaceUserRoutesWithTreAdmin:
             assert response.status_code == status.HTTP_202_ACCEPTED
 
             assert assign_workspace_user_mock.call_count == 2
-            get_workspace_users_mock.assert_called_once()
 
     @pytest.mark.parametrize("auth_class", ["aad_authentication.AzureADAuthorization"])
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     async def test_remove_workspace_user_assignment_removes_workspace_user_assignment(self, get_workspace_by_id_mock, auth_class, app, client):
-        with patch(f"services.{auth_class}.remove_workspace_role_user_assignment") as remove_workspace_role_user_assignment_mock, \
-                patch(f"services.{auth_class}.get_workspace_users") as get_workspace_users_mock:
+        with patch(f"services.{auth_class}.remove_workspace_role_user_assignment") as remove_workspace_role_user_assignment_mock:
 
             user = {
                     "id": "123",
@@ -159,13 +150,10 @@ class TestWorkspaceUserRoutesWithTreAdmin:
 
             role_id = "test_role_id"
 
-            get_workspace_users_mock.return_value = []
-
             response = await client.delete(app.url_path_for(strings.API_ASSIGN_WORKSPACE_USER, workspace_id=WORKSPACE_ID), params={"user_id": user["id"], "role_id": role_id, "assignmentType": "ApplicationRole"})
             assert response.status_code == status.HTTP_202_ACCEPTED
 
             remove_workspace_role_user_assignment_mock.assert_called_once()
-            get_workspace_users_mock.assert_called_once()
 
     @pytest.mark.parametrize("auth_class", ["aad_authentication.AzureADAuthorization"])
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())

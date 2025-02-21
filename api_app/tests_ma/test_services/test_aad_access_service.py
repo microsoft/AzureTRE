@@ -636,16 +636,9 @@ def test_remove_workspace_user_if_groups(get_role_assignment_mock,
     assert remove_user_to_role_mock.call_count == 0
 
 
-@patch("services.aad_authentication.AzureADAuthorization._get_msgraph_token", return_value="token")
-@patch("requests.get")
-@patch("services.aad_authentication.AzureADAuthorization._get_auth_header")
-def test_get_assignable_users_returns_users(_, request_get_mock, mock_headers):
+@patch("services.aad_authentication.AzureADAuthorization._ms_graph_query")
+def test_get_assignable_users_returns_users(ms_graph_query_mock):
     access_service = AzureADAuthorization()
-
-    # mock the response of _get_auth_header
-    headers = {"Authorization": "Bearer token"}
-    mock_headers.return_value = headers
-    headers["Content-type"] = "application/json"
 
     # Mock the response of the get request
     request_get_mock_response = {
@@ -657,7 +650,7 @@ def test_get_assignable_users_returns_users(_, request_get_mock, mock_headers):
             }
         ]
     }
-    request_get_mock.return_value.json.return_value = request_get_mock_response
+    ms_graph_query_mock.return_value = request_get_mock_response
     users = access_service.get_assignable_users()
 
     assert len(users) == 1
