@@ -5,7 +5,7 @@ from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace_users import AssignmentType, Role
 from models.domain.workspace import Workspace, WorkspaceRole
 from services.aad_authentication import AzureADAuthorization
-from services.access_service import AuthConfigValidationError
+from services.access_service import AuthConfigValidationError, UserRoleAssignmentError
 
 MOCK_MICROSOFT_GRAPH_URL = "https://graph.microsoft.com"
 
@@ -552,88 +552,72 @@ def get_mock_role_response(principal_roles):
 @patch("services.aad_authentication.AzureADAuthorization._is_user_in_role", return_value=True)
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use")
 @patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group")
-@patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application")
 def test_assign_workspace_user_already_has_role(workspace_role_in_use_mock,
                                                 assign_user_to_group_mock,
-                                                assign_user_to_role_mock, workspace_without_groups, role_owner,
+                                                workspace_without_groups, role_owner,
                                                 user_with_role):
     access_service = AzureADAuthorization()
     access_service.assign_workspace_user(user_with_role.id, workspace_without_groups, role_owner.id)
 
     assert workspace_role_in_use_mock.call_count == 0
     assert assign_user_to_group_mock.call_count == 0
-    assert assign_user_to_role_mock.call_count == 0
 
 
 @patch("services.aad_authentication.AzureADAuthorization._is_user_in_role", return_value=False)
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=False)
 @patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group")
-@patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application")
-def test_assign_workspace_user_if_no_groups(assign_user_to_role_mock, assign_user_to_group_mock,
+def test_assign_workspace_user_if_no_groups_raises_error(assign_user_to_group_mock,
                                             workspace_without_groups, role_owner,
                                             user_with_role):
 
     access_service = AzureADAuthorization()
-    assign_user_to_role_mock.return_value = None
 
-    access_service.assign_workspace_user(user_with_role.id, workspace_without_groups, role_owner.id)
+    with pytest.raises(UserRoleAssignmentError):
+        access_service.assign_workspace_user(user_with_role.id, workspace_without_groups, role_owner.id)
 
-    assert assign_user_to_group_mock.call_count == 0
-    assert assign_user_to_role_mock.call_count == 1
 
 
 @patch("services.aad_authentication.AzureADAuthorization._is_user_in_role", return_value=False)
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=True)
 @patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group")
-@patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application")
-def test_assign_workspace_user_if_groups(assign_user_to_role_mock, assign_user_to_group_mock,
+def test_assign_workspace_user_if_groups(assign_user_to_group_mock,
                                          workspace_without_groups, role_owner,
                                          user_with_role):
 
     access_service = AzureADAuthorization()
-    assign_user_to_role_mock.return_value = None
 
     access_service.assign_workspace_user(user_with_role.id, workspace_without_groups, role_owner.id)
 
     assert assign_user_to_group_mock.call_count == 1
-    assert assign_user_to_role_mock.call_count == 0
 
 
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=False)
-@patch("services.aad_authentication.AzureADAuthorization._remove_workspace_user_from_application_group")
-@patch("services.aad_authentication.AzureADAuthorization._remove_workspace_user_from_application")
 @patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_for_user")
-def test_remove_workspace_user_if_no_groups(get_role_assignment_mock,
-                                            remove_user_to_role_mock, remove_user_to_group_mock,
+def test_remove_workspace_user_if_no_groups_raises_error(get_role_assignment_mock,
                                             workspace_without_groups, role_owner,
                                             user_with_role):
 
     access_service = AzureADAuthorization()
-    remove_user_to_role_mock.return_value = None
     get_role_assignment_mock.return_value = []
 
-    access_service.remove_workspace_role_user_assignment(user_with_role.id, workspace_without_groups, role_owner.id)
-
-    assert remove_user_to_group_mock.call_count == 0
-    assert remove_user_to_role_mock.call_count == 1
+    with pytest.raises(UserRoleAssignmentError):
+        access_service.remove_workspace_role_user_assignment(user_with_role.id, workspace_without_groups, role_owner.id)
 
 
 @patch("services.aad_authentication.AzureADAuthorization._remove_workspace_user_from_application_group")
-@patch("services.aad_authentication.AzureADAuthorization._remove_workspace_user_from_application")
 @patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_for_user")
-def test_remove_workspace_user_if_groups(get_role_assignment_mock,
-                                         remove_user_to_role_mock, remove_user_to_group_mock,
+@patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=True)
+def test_remove_workspace_user_if_groups(_, get_role_assignment_mock,
+                                         remove_user_to_group_mock,
                                          role_owner,
                                          user_with_role):
 
     access_service = AzureADAuthorization()
-    remove_user_to_role_mock.return_value = None
     get_role_assignment_mock.return_value = []
 
-    access_service.remove_workspace_role_user_assignment(user_with_role.id, workspace_without_groups, role_owner.id, AssignmentType.GROUP)
+    access_service.remove_workspace_role_user_assignment(user_with_role.id, workspace_without_groups, role_owner.id)
 
     assert remove_user_to_group_mock.call_count == 1
-    assert remove_user_to_role_mock.call_count == 0
 
 
 @patch("services.aad_authentication.AzureADAuthorization._ms_graph_query")

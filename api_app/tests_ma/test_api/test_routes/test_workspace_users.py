@@ -68,13 +68,11 @@ class TestWorkspaceUserRoutesWithTreAdmin:
                     "roles": [
                         {
                             "id": "1",
-                            "displayName": "WorkspaceOwner",
-                            "type": "ApplicationRole"
+                            "displayName": "WorkspaceOwner"
                         },
                         {
                             "id": "2",
                             "displayName": "WorkspaceResearcher",
-                            "type": "ApplicationRole"
                         }]
                 },
                 {
@@ -84,8 +82,7 @@ class TestWorkspaceUserRoutesWithTreAdmin:
                     "roles": [
                         {
                             "id": "2",
-                            "displayName": "WorkspaceResearcher",
-                            "type": "ApplicationRole"
+                            "displayName": "WorkspaceResearcher"
                         }]
                 }
             ]
