@@ -106,7 +106,8 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
         "properties": {
             "display_name": "Perf test VM",
             "description": "",
-            "os_image": "Ubuntu 22.04 LTS"
+            "os_image": "Ubuntu 22.04 LTS",
+            "admin_username": "admin"
         }
     }
 
