@@ -2,6 +2,7 @@
 ## 0.21.0 (Unreleased)
 
 **BREAKING CHANGES & MIGRATIONS**:
+* Workspace bundle uses infrastructure encryption on shared storage which will recreate storage share. Major verison increase will prevent upgrade, do not force the upgrade unless you are fully aware of the concequences.
 
 ENHANCEMENTS:
 * Core key vault firewall should not be set to "Allow public access from all networks" ([#4250](https://github.com/microsoft/AzureTRE/issues/4250))
