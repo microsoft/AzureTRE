@@ -22,7 +22,7 @@ locals {
     tre_workspace_service_id = var.parent_service_id
     tre_user_resource_id     = var.tre_resource_id
     tre_user_id              = var.owner_id
-    tre_user_username        = data.azuread_user.user.user_principal_name
+    tre_user_username        = var.admin_username == "" ? local.admin_username : var.admin_username
   }
   nexus_proxy_url = "https://nexus-${data.azurerm_public_ip.app_gateway_ip.fqdn}"
 
