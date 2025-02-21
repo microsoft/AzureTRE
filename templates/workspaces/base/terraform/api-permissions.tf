@@ -20,3 +20,5 @@ resource "azurerm_role_assignment" "api_reader" {
   role_definition_name = "Reader"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
 }
+
+

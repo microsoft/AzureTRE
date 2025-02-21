@@ -4,6 +4,8 @@
 
 ENHANCEMENTS:
 
+* Added backup vault to base workspace & updated Azurerm provider to match core. ([[#4362](https://github.com/microsoft/AzureTRE/issues/4362)])
+
 BUG FIXES:
 
 
