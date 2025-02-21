@@ -5,6 +5,9 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
+# shellcheck disable=SC1091
+source ../../devops/scripts/mgmtstorage_enable_public_access.sh
+
 script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 core_rg_rid=$(terraform show -json | jq -r '.values.root_module.resources[] | select(.address=="azurerm_resource_group.core") | .values.id')
