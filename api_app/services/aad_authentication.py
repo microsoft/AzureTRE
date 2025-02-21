@@ -4,7 +4,6 @@ from enum import Enum
 from typing import List, Optional
 import jwt
 import requests
-import urllib.parse
 
 from fastapi import Request, HTTPException, status
 from msal import ConfidentialClientApplication
@@ -22,7 +21,6 @@ from services.logging import logger
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-import json
 
 
 MICROSOFT_GRAPH_URL = config.MICROSOFT_GRAPH_URL.strip("/")
@@ -352,7 +350,7 @@ class AzureADAuthorization(AccessService):
         # User already has the role, do nothing
         if self._is_user_in_role(user_id, role_id):
             return
-        if self._is_workspace_role_group_in_use(workspace) == False:
+        if not self._is_workspace_role_group_in_use(workspace):
             logger.error(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")
             raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Entra ID groups are not in use on this workspace")
         return self._assign_workspace_user_to_application_group(user_id, workspace, role_id)
@@ -415,7 +413,7 @@ class AzureADAuthorization(AccessService):
         body = {
             "@odata.id": f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}"
         }
-        
+
         response = self._ms_graph_query(url, "POST", json=body)
         return response
 
@@ -434,11 +432,9 @@ class AzureADAuthorization(AccessService):
     def remove_workspace_role_user_assignment(self, 
                                               user_id: str,
                                               role_id: str,
-                                              workspace: Workspace,
-                                              assignmentType: AssignmentType = AssignmentType.APP_ROLE
+                                              workspace: Workspace
                                               ) -> None:
-
-        if self._is_workspace_role_group_in_use(workspace) == False:
+        if not self._is_workspace_role_group_in_use(workspace):
             logger.error(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")
             raise UserRoleAssignmentError(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")
         return self._remove_workspace_user_from_application_group(user_id, workspace, role_id)

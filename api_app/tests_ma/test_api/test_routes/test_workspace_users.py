@@ -101,8 +101,8 @@ class TestWorkspaceUserRoutesWithTreAdmin:
             role_id = "test_role_id"
 
             response = await client.post(app.url_path_for(strings.API_ASSIGN_WORKSPACE_USER, workspace_id=WORKSPACE_ID), json={
-                "role_id": role_id, 
-                "user_ids": [ "user_1" ]
+                "role_id": role_id,
+                "user_ids": ["user_1"]
             })
             assert response.status_code == status.HTTP_202_ACCEPTED
 
@@ -116,8 +116,8 @@ class TestWorkspaceUserRoutesWithTreAdmin:
             role_id = "test_role_id"
 
             response = await client.post(app.url_path_for(strings.API_ASSIGN_WORKSPACE_USER, workspace_id=WORKSPACE_ID), json={
-                "role_id": role_id, 
-                "user_ids": [ "user_1", "user_2" ]
+                "role_id": role_id,
+                "user_ids": ["user_1", "user_2"]
             })
             assert response.status_code == status.HTTP_202_ACCEPTED
 
@@ -129,21 +129,19 @@ class TestWorkspaceUserRoutesWithTreAdmin:
         with patch(f"services.{auth_class}.remove_workspace_role_user_assignment") as remove_workspace_role_user_assignment_mock:
 
             user = {
-                    "id": "123",
-                    "displayName": "John Doe",
-                    "userPrincipalName": "john.doe@example.com",
-                    "roles": [
-                        {
-                            "id": "1",
-                            "displayName": "WorkspaceOwner",
-                            "type": "ApplicationRole"
-                        },
-                        {
-                            "id": "2",
-                            "displayName": "WorkspaceResearcher",
-                            "type": "ApplicationRole"
-                        }]
-                }
+                "id": "123",
+                "displayName": "John Doe",
+                "userPrincipalName": "john.doe@example.com",
+                "roles": [
+                    {
+                        "id": "1",
+                        "displayName": "WorkspaceOwner"
+                    },
+                    {
+                        "id": "2",
+                        "displayName": "WorkspaceResearcher"
+                    }]
+                    }
 
             role_id = "test_role_id"
 
