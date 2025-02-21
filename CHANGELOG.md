@@ -1,7 +1,18 @@
 <!-- markdownlint-disable MD041 -->
-## 0.21.0 (Unreleased)
+## 0.22.0 (Unreleased)
+**BREAKING CHANGES & MIGRATIONS**:
+
+ENHANCEMENTS:
+
+* Added backup vault to base workspace & updated Azurerm provider to match core. ([[#4362](https://github.com/microsoft/AzureTRE/issues/4362)])
+
+BUG FIXES:
+
+
+## 0.21.0
 
 **BREAKING CHANGES & MIGRATIONS**:
+* Workspace bundle uses infrastructure encryption on shared storage which will recreate storage share. Major verison increase will prevent upgrade, do not force the upgrade unless you are fully aware of the consequences.
 
 ENHANCEMENTS:
 * Core key vault firewall should not be set to "Allow public access from all networks" ([#4250](https://github.com/microsoft/AzureTRE/issues/4250))
@@ -15,7 +26,6 @@ ENHANCEMENTS:
 * Migrate UI to Vite build engine and update dependencies ([#4368](https://github.com/microsoft/AzureTRE/pull/4368))
 * Add Windows image field to the Admin VM template ([#4274](https://github.com/microsoft/AzureTRE/pull/4274))
 * Update TLS to the latest version for web apps / function apps ([#4351](https://github.com/microsoft/AzureTRE/issues/4351))
-* Added backup vault to base workspace & updated Azurerm provider to match core. ([[#4362](https://github.com/microsoft/AzureTRE/issues/4362)])
 
 BUG FIXES:
 * Fix upgrade when porter install has failed ([#4338](https://github.com/microsoft/AzureTRE/pull/4338))
@@ -24,6 +34,38 @@ BUG FIXES:
 * Add firewall rules to upgrade steps for Guacamole service ([#4343](https://github.com/microsoft/AzureTRE/pull/4343))
 
 COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.5.5 |
+| core | 0.12.3 |
+| ui | 0.7.0 |
+| tre-workspace-airlock-import-review | 0.14.3 |
+| tre-workspace-base | 2.0.0 |
+| tre-workspace-unrestricted | 0.13.3 |
+| tre-shared-service-airlock-notifier | 1.0.8 |
+| tre-shared-service-certs | 0.7.4 |
+| tre-shared-service-firewall | 1.3.2 |
+| tre-shared-service-gitea | 1.1.5 |
+| tre-shared-service-cyclecloud | 0.7.2 |
+| tre-shared-service-databricks-private-auth | 0.1.11 |
+| tre-shared-service-admin-vm | 0.5.3 |
+| tre-shared-service-sonatype-nexus | 3.3.2 |
+| tre-workspace-service-mysql | 1.0.9 |
+| tre-workspace-service-ohdsi | 0.3.3 |
+| tre-user-resource-aml-compute-instance | 0.5.11 |
+| tre-service-azureml | 0.9.2 |
+| tre-service-guacamole-linuxvm | 1.2.8 |
+| tre-service-guacamole-windowsvm | 1.2.10 |
+| tre-service-guacamole-import-reviewvm | 0.3.2 |
+| tre-service-guacamole-export-reviewvm | 0.2.2 |
+| tre-service-guacamole | 0.12.9 |
+| tre-workspace-service-health | 0.2.11 |
+| tre-workspace-service-gitea | 1.2.3 |
+| tre-service-databricks | 1.0.10 |
+| tre-workspace-service-openai | 1.0.6 |
+| tre-workspace-service-azuresql | 1.0.15 |
+
 
 ## 0.20.0 (Feburary 9, 2025)
 
