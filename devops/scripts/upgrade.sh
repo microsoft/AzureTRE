@@ -54,7 +54,7 @@ else
 fi
 
 # shellcheck disable=SC1091
-source "$(dirname "$0")/mgmtstorage_add_network_exception.sh"
+source "$(dirname "$0")/mgmtstorage_enable_public_access.sh"
 
 # Run terraform init with upgrade and reconfigure options
 terraform -chdir="$DIR/terraform" init -upgrade -reconfigure -input=false -backend=true \

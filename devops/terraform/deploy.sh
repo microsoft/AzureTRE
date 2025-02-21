@@ -6,7 +6,7 @@ set -o nounset
 # set -o xtrace
 
 # shellcheck disable=SC1091
-source ../scripts/mgmtstorage_add_network_exception.sh
+source ../scripts/mgmtstorage_enable_public_access.sh
 
 PLAN_FILE="devops.tfplan"
 

@@ -92,7 +92,7 @@ if [[ -z ${tf_logfile+x} ]]; then
 fi
 
 # shellcheck disable=SC1091
-source "$(dirname "$0")/mgmtstorage_add_network_exception.sh"
+source "$(dirname "$0")/mgmtstorage_enable_public_access.sh"
 
 terraform init -input=false -backend=true -reconfigure \
     -backend-config="resource_group_name=${mgmt_resource_group_name}" \

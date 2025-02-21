@@ -33,13 +33,6 @@ resource "azurerm_storage_account" "state_storage" {
   allow_nested_items_to_be_public  = false
   shared_access_key_enabled        = false
   local_user_enabled               = false
-  public_network_access_enabled    = true
-
-  network_rules {
-    default_action = "Deny"
-    bypass         = ["AzureServices"]
-    ip_rules       = [local.myip] # Exception for deployment IP. This is removed in mgmtstorage_add_network_exception.sh
-  }
 
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
