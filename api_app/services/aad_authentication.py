@@ -265,11 +265,11 @@ class AzureADAuthorization(AccessService):
 
         return users_graph_data
 
-    def _get_roles_for_principal(self, user_id, roles_graph_data, app_id_to_role_name, assignmentType: AssignmentType = AssignmentType.APP_ROLE) -> List[Role]:
+    def _get_roles_for_principal(self, user_id, roles_graph_data, app_id_to_role_name) -> List[Role]:
         roles = []
         for role_assignment in roles_graph_data["value"]:
             if role_assignment["principalId"] == user_id:
-                roles.append(Role(id=role_assignment["appRoleId"], displayName=app_id_to_role_name[role_assignment["appRoleId"]], type=assignmentType))
+                roles.append(Role(id=role_assignment["appRoleId"], displayName=app_id_to_role_name[role_assignment["appRoleId"]]))
         return roles
 
     def _get_users_inc_groups_from_response(self, users_graph_data, roles_graph_data, app_id_to_role_name) -> List[AssignedUser]:
@@ -299,7 +299,7 @@ class AzureADAuthorization(AccessService):
                     user_name = group_member["displayName"]
                     user_principal_name = group_member["userPrincipalName"]
 
-                    group_roles = self._get_roles_for_principal(group_id, roles_graph_data, app_id_to_role_name, AssignmentType.GROUP)
+                    group_roles = self._get_roles_for_principal(group_id, roles_graph_data, app_id_to_role_name)
 
                     if not any(user.id == user_id for user in users):
                         users.append(AssignedUser(id=user_id, displayName=user_name, userPrincipalName=user_principal_name, roles=group_roles))
@@ -352,10 +352,10 @@ class AzureADAuthorization(AccessService):
         # User already has the role, do nothing
         if self._is_user_in_role(user_id, role_id):
             return
-        if self._is_workspace_role_group_in_use(workspace):
-            return self._assign_workspace_user_to_application_group(user_id, workspace, role_id)
-        else:
-            return self._assign_workspace_user_to_application(user_id, workspace, role_id)
+        if self._is_workspace_role_group_in_use(workspace) == False:
+            logger.error(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")
+            raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Entra ID groups are not in use on this workspace")
+        return self._assign_workspace_user_to_application_group(user_id, workspace, role_id)
 
     def _is_user_in_role(self, user_id: str, role_id: str) -> bool:
         user_app_role_query = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}/appRoleAssignments"
@@ -425,19 +425,6 @@ class AzureADAuthorization(AccessService):
         response = self._ms_graph_query(url, "DELETE")
         return response
 
-    def _assign_workspace_user_to_application(self, user_id: str, workspace: Workspace, role_id: str):
-        msgraph_token = self._get_msgraph_token()
-        application_id = workspace.properties["sp_id"]
-        url = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{application_id}/appRoleAssignedTo"
-        body = {
-            "principalId": user_id,
-            "resourceId": application_id,
-            "appRoleId": role_id,
-        }
-
-        response = self._ms_graph_query(url, "POST", json=body)
-        return response
-
     def _get_role_assignment_for_user(self, user_id: str, role_id: str) -> dict:
         user_role_assignments = self._get_role_assignment_graph_data_for_user(user_id)
         for role in user_role_assignments["value"]:
@@ -450,17 +437,11 @@ class AzureADAuthorization(AccessService):
                                               workspace: Workspace,
                                               assignmentType: AssignmentType = AssignmentType.APP_ROLE
                                               ) -> None:
-        if assignmentType == AssignmentType.APP_ROLE:
-            self._remove_workspace_user_from_application(user_id, role_id)
-        else:
-            self._remove_workspace_user_from_application_group(user_id, workspace, role_id)
 
-    def _remove_workspace_user_from_application(self, user_id: str, role_id: str):
-        role_assignment = self._get_role_assignment_for_user(user_id, role_id)
-
-        url = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}/appRoleAssignments/{role_assignment['id']}"
-        response = self._ms_graph_query(url, "DELETE")
-        return response
+        if self._is_workspace_role_group_in_use(workspace) == False:
+            logger.error(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")
+            raise UserRoleAssignmentError(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")
+        return self._remove_workspace_user_from_application_group(user_id, workspace, role_id)
 
     def _get_batch_users_by_role_assignments_body(self, roles_graph_data):
         request_body = {"requests": []}

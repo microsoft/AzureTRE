@@ -62,6 +62,12 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
 
   const [loadingUsers, setloadingUsers] = useState(false);
 
+  const allowUserManagement = useMemo(() => {
+    return isTreAdmin
+      && config.userManagementEnabled
+      && (workspace.properties['create_aad_groups'] === 'true' || workspace.properties['create_aad_groups'] === true);
+  }, [isTreAdmin, workspace]);
+
   const getUsers = useCallback(async () => {
     setState((prevState) => ({
       ...prevState,
@@ -115,7 +121,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
     try {
       setDeassigning(true);
 
-      await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}/assign?user_id=${selectedUserRole?.user_id}&role_id=${selectedUserRole?.role.id}&assignmentType=${selectedUserRole?.role.type}`,
+      await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}/assign?user_id=${selectedUserRole?.user_id}&role_id=${selectedUserRole?.role.id}`,
         HttpMethod.Delete, "");
 
       await getUsers();
@@ -193,7 +199,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
         item={item}
         itemIndex={itemIndex!}
         selection={selection}
-        selectionMode={(isTreAdmin && config.userManagementEnabled) ? SelectionMode.single : SelectionMode.none}
+        selectionMode={allowUserManagement ? SelectionMode.single : SelectionMode.none}
         group={group}
       />
     ),
@@ -206,7 +212,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
         <Stack.Item>
           <Stack horizontal horizontalAlign="space-between">
             <h1 style={{ marginBottom: 0, marginRight: 30 }}>Users</h1>
-            {(isTreAdmin && config.userManagementEnabled) &&
+            {allowUserManagement &&
               <Stack horizontal horizontalAlign="start">
                 <CommandBarButton
                   iconProps={{ iconName: 'add' }}

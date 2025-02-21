@@ -239,8 +239,8 @@
         "properties": {
           "create_aad_groups": {
             "type": "boolean",
-            "title": "Create AAD Groups for each workspace role",
-            "description": "Create AAD Groups for the workspace roles. If this is set to true, the workspace will create new AAD Groups.",
+            "title": "Create AAD Groups for each workspace role (Required for user management)",
+            "description": "Create AAD Groups for the workspace roles. If this is set to true, the workspace will create new AAD Groups.  This is required if you want to manage users from the workspace.",
             "default": true,
             "updateable": true
           },

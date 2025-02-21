@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 1.10.9
+version: 1.10.13
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -66,8 +66,8 @@ parameters:
     description: "Whether this bundle should register the workspace in AAD"
   - name: create_aad_groups
     type: boolean
-    default: false
-    description: "Whether this bundle should create AAD groups for the workspace app roles"
+    default: true
+    description: "Whether this bundle should create AAD groups for the workspace app roles (required for User Management)"
   - name: core_api_client_id
     type: string
     description: "The client id of the core API"
