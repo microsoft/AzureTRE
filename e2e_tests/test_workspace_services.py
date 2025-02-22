@@ -32,7 +32,7 @@ async def test_create_guacamole_service_into_base_workspace(setup_test_workspace
             "display_name": "My VM",
             "description": "Will be using this VM for my research",
             "os_image": "Windows 10",
-            "admin_username": "admin"
+            "admin_username": "researcher"
         }
     }
 
