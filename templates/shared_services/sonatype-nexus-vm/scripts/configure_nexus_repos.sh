@@ -20,6 +20,23 @@ while [ ! -d "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config ]; do
   ((timeout--))
 done
 
+echo 'Enabling anonymous access in Nexus...'
+anon_status_code=$(curl -iu admin:"$1" -XPUT \
+  'http://localhost/service/rest/v1/security/anonymous' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+        "enabled": true,
+        "userId": "anonymous",
+        "realmName": "NexusAuthorizingRealm"
+      }' \
+  -k -s -w "%{http_code}" -o /dev/null)
+echo "Response received from Nexus for anonymous access: $anon_status_code"
+if [ "$anon_status_code" -ne 200 ]; then
+    echo "ERROR - Failed to enable anonymous access."
+    exit 1
+fi
+
 # Create proxy for each .json file
 for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
     echo "Found config file: $filename. Sending to Nexus..."
