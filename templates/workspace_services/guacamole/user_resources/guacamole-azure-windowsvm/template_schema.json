@@ -36,6 +36,12 @@
           "Server 2019 Data Science VM"
         ]
       },
+      "admin_username": {
+        "type": "string",
+        "title": "Admin username",
+        "description": "Overide automatic admin username generation.",
+        "default": ""
+      },
       "vm_size": {
         "$id": "#/properties/vm_size",
         "type": "string",
@@ -56,6 +62,11 @@
         "title": "Shared storage",
         "default": true,
         "description": "Enable access to shared storage"
+      }
+    },
+    "uiSchema": {
+      "admin_username": {
+        "classNames": "tre-hidden"
       }
     }
 }
