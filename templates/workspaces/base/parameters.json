@@ -159,6 +159,12 @@
       "source": {
         "env": "KEY_STORE_ID"
       }
+    },
+    {
+      "name": "enable_backup",
+      "source": {
+        "env": "ENABLE_BACKUP"
+      }
     }
   ]
 }
