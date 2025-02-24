@@ -133,6 +133,18 @@ inputs:
     description: "Application Gateway SKU"
     required: false
     default: ""
+  ENABLE_CMK_ENCRYPTION:
+    description: "A boolean indicating if we should enable CMK on supported resources"
+    required: false
+    default: "false"
+  ENCRYPTION_KV_NAME:
+    description: ""
+    required: false
+    default: "The name of the keyvault that will be created for CMK"
+  EXTERNAL_KEY_STORE_ID:
+    description: "The Azure Resource ID for an external key store to use for CMK"
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -254,6 +266,9 @@ runs:
             && inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE) || 5 }}" \
           -e TF_VAR_firewall_sku=${{ inputs.FIREWALL_SKU }} \
           -e TF_VAR_app_gateway_sku=${{ inputs.APP_GATEWAY_SKU }} \
+          -e TF_VAR_enable_cmk_encryption="${{ inputs.ENABLE_CMK_ENCRYPTION }}" \
+          -e TF_VAR_encryption_kv_name="${{ inputs.ENCRYPTION_KV_NAME }}" \
+          -e TF_VAR_external_key_store_id="${{ inputs.EXTERNAL_KEY_STORE_ID }}" \
           -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c -x "./command.sh"
