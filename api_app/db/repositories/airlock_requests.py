@@ -262,10 +262,9 @@ class AirlockRequestRepository(BaseRepository):
         created_when_iso = datetime.fromtimestamp(created_when)
         next_day = created_when_iso
 
-        logging.info(f"created_when -----> {created_when}")
-        logging.info(f"triage_level_code -----> {triage_level_code}")
-        logging.info(f"days_to_add_map -----> {days_to_add_map}")
-        days_to_add = days_to_add_map[triage_level_code]
+        days_to_add = 0
+        if triage_level_code in days_to_add_map:
+            days_to_add = days_to_add_map[triage_level_code]
 
         while days_to_add > 0:	
             next_day = next_day + timedelta(days=1)
