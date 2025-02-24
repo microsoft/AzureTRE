@@ -3,6 +3,7 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 ENHANCEMENTS:
+* Deny public access to TRE management storage account, and add private endpoint for TRE core [#4353](https://github.com/microsoft/AzureTRE/issues/4353)
 
 BUG FIXES:
 
@@ -13,7 +14,6 @@ BUG FIXES:
 * Workspace bundle uses infrastructure encryption on shared storage which will recreate storage share. Major verison increase will prevent upgrade, do not force the upgrade unless you are fully aware of the consequences.
 
 ENHANCEMENTS:
-* Deny public access to TRE management storage account, and add private endpoint for TRE core [#4353](https://github.com/microsoft/AzureTRE/issues/4353)
 * Core key vault firewall should not be set to "Allow public access from all networks" ([#4250](https://github.com/microsoft/AzureTRE/issues/4250))
 * Allow workspace App Service Plan SKU to be updated ([#4331](https://github.com/microsoft/AzureTRE/issues/4331))
 * Add core requests endpoint and UI to enable requests to be managed TRE wide. ([[#2510](https://github.com/microsoft/AzureTRE/issues/2510)])
