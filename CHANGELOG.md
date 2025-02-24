@@ -3,6 +3,7 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 ENHANCEMENTS:
+* Deny public access to TRE management storage account, and add private endpoint for TRE core [#4353](https://github.com/microsoft/AzureTRE/issues/4353)
 
 BUG FIXES:
 
