@@ -165,6 +165,7 @@ module "resource_processor_vmss_porter" {
   acr_id                                           = data.azurerm_container_registry.mgmt_acr.id
   app_insights_connection_string                   = module.azure_monitor.app_insights_connection_string
   resource_processor_subnet_id                     = module.network.resource_processor_subnet_id
+  blob_core_dns_zone_id                            = module.network.blob_core_dns_zone_id
   docker_registry_server                           = local.docker_registry_server
   resource_processor_vmss_porter_image_repository  = var.resource_processor_vmss_porter_image_repository
   service_bus_namespace_id                         = azurerm_servicebus_namespace.sb.id
