@@ -1,11 +1,11 @@
 resource "azapi_resource" "aml_workspace" {
-  type      = "Microsoft.MachineLearningServices/workspaces@2024-10-01-preview"
+  type      = "Microsoft.MachineLearningServices/workspaces@2025-01-01-preview"
   name      = local.workspace_name
   location  = data.azurerm_resource_group.ws.location
   parent_id = data.azurerm_resource_group.ws.id
   tags      = local.tre_workspace_service_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags, imageBuildCompute] }
 
 
   dynamic "identity" {
