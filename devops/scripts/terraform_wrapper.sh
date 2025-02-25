@@ -99,6 +99,10 @@ if [[ -z ${tf_logfile+x} ]]; then
     echo -e "No logfile provided, using ${tf_logfile}\n"
 fi
 
+
+# shellcheck disable=SC1091
+source "$(dirname "$0")/mgmtstorage_enable_public_access.sh"
+
 # Change directory to $DIR
 pushd "$DIR" > /dev/null
 
