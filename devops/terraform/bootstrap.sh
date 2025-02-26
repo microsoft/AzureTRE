@@ -43,17 +43,35 @@ az role assignment create --assignee "$USER_OBJECT_ID" \
   --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name"
 
 # Function to check if the role assignment exists
-check_role_assignment() {
-  az role assignment list --assignee "$USER_OBJECT_ID" --role "Storage Blob Data Contributor" --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" --query "[].id" --output tsv
+check_role_assignments() {
+  local sbdc=$(az role assignment list \
+    --assignee "$USER_OBJECT_ID" \
+    --role "Storage Blob Data Contributor" \
+    --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
+    --query "[].id" --output tsv)
+
+  local sac=$(az role assignment list \
+    --assignee "$USER_OBJECT_ID" \
+    --role "Storage Account Contributor" \
+    --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
+    --query "[].id" --output tsv)
+
+  # Return a non-empty value only if both roles are assigned
+  if [[ -n "$sbdc" && -n "$sac" ]]; then
+    echo "both"
+  fi
 }
 
 # Wait for the role assignment to be applied
 echo -e "\n\e[34m»»» ⏳ \e[96mWaiting for role assignment to be applied\e[0m..."
-while [ -z "$(check_role_assignment)" ]; do
+while [ -z "$(check_role_assignments)" ]; do
   echo "Waiting for role assignment..."
   sleep 10
 done
 echo "Role assignment applied."
+
+# shellcheck disable=SC1091
+source ../scripts/mgmtstorage_enable_public_access.sh
 
 # Blob container
 # shellcheck disable=SC2154
