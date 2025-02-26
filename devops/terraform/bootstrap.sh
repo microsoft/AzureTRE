@@ -28,6 +28,9 @@ else
   az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name" --name "$TF_VAR_mgmt_storage_account_name" --output table
 fi
 
+# shellcheck disable=SC1091
+source ../scripts/mgmtstorage_enable_public_access.sh
+
 # Grant user blob data contributor permissions
 echo -e "\n\e[34m»»» 🔑 \e[96mGranting Storage Blob Data Contributor role to the current user\e[0m..."
 if [ -n "${ARM_CLIENT_ID:-}" ]; then
@@ -46,22 +49,22 @@ az role assignment create --assignee "$USER_OBJECT_ID" \
 
 # Function to check if the role assignment exists
 check_role_assignments() {
-  local sbdc
-  sbdc=$(az role assignment list \
-    --assignee "$USER_OBJECT_ID" \
-    --role "Storage Blob Data Contributor" \
-    --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
-    --query "[].id" --output tsv)
+  local sbdc_count sac_count
 
-  local sac
-  sac=$(az role assignment list \
+  sac_count=$(az role assignment list \
     --assignee "$USER_OBJECT_ID" \
     --role "Storage Account Contributor" \
     --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
-    --query "[].id" --output tsv)
+    --query "length([])" --output tsv)
 
-  # Return a non-empty value only if both roles are assigned
-  if [[ -n "$sbdc" && -n "$sac" ]]; then
+  sbdc_count=$(az role assignment list \
+    --assignee "$USER_OBJECT_ID" \
+    --role "Storage Blob Data Contributor" \
+    --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
+    --query "length([])" --output tsv)
+
+  # If both counts are greater than 0, we have both assignments
+  if [[ $sbdc_count -gt 0 && $sac_count -gt 0 ]]; then
     echo "both"
   fi
 }
@@ -73,9 +76,6 @@ while [ -z "$(check_role_assignments)" ]; do
   sleep 10
 done
 echo "Role assignment applied."
-
-# shellcheck disable=SC1091
-source ../scripts/mgmtstorage_enable_public_access.sh
 
 # Blob container
 # shellcheck disable=SC2154
