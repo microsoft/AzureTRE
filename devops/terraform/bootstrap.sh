@@ -49,22 +49,22 @@ az role assignment create --assignee "$USER_OBJECT_ID" \
 
 # Function to check if the role assignment exists
 check_role_assignments() {
-  local sbdc_count sac_count
-
-  sac_count=$(az role assignment list \
-    --assignee "$USER_OBJECT_ID" \
-    --role "Storage Account Contributor" \
-    --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
-    --query "length([])" --output tsv)
-
-  sbdc_count=$(az role assignment list \
+  local sbdc
+  sbdc=$(az role assignment list \
     --assignee "$USER_OBJECT_ID" \
     --role "Storage Blob Data Contributor" \
     --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
-    --query "length([])" --output tsv)
+    --query "[].id" --output tsv)
 
-  # If both counts are greater than 0, we have both assignments
-  if [[ $sbdc_count -gt 0 && $sac_count -gt 0 ]]; then
+  local sac
+  sac=$(az role assignment list \
+    --assignee "$USER_OBJECT_ID" \
+    --role "Storage Account Contributor" \
+    --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
+    --query "[].id" --output tsv)
+
+  # Return a non-empty value only if both roles are assigned
+  if [[ -n "$sbdc" && -n "$sac" ]]; then
     echo "both"
   fi
 }
@@ -76,13 +76,29 @@ while [ -z "$(check_role_assignments)" ]; do
   sleep 10
 done
 echo "Role assignment applied."
-
+sleep 30
 # Blob container
 # shellcheck disable=SC2154
-az storage container create --account-name "$TF_VAR_mgmt_storage_account_name" --name "$TF_VAR_terraform_state_container_name" --auth-mode login -o table
 
-# logs container
-az storage container create --account-name "$TF_VAR_mgmt_storage_account_name" --name "tflogs" --auth-mode login -o table
+echo -e "\n\e[34m»»» 📦 \e[96mCreating storage containers\e[0m..."
+# List of containers to create
+containers=("$TF_VAR_terraform_state_container_name" "tflogs")
+max_retries=5
+
+for container in "${containers[@]}"; do
+  for ((i=1; i<=max_retries; i++)); do
+    if az storage container create --account-name "$TF_VAR_mgmt_storage_account_name" --name "$container" --auth-mode login -o table; then
+      echo "Container '$container' created successfully."
+      break
+    else
+      sleep 10
+    fi
+    if [ $i -eq $max_retries ]; then
+      echo "ERROR: Failed to create container '$container' after $max_retries attempts."
+      exit 1
+    fi
+  done
+done
 
 cat > bootstrap_backend.tf <<BOOTSTRAP_BACKEND
 terraform {
