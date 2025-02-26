@@ -28,9 +28,6 @@ else
   az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name" --name "$TF_VAR_mgmt_storage_account_name" --output table
 fi
 
-# shellcheck disable=SC1091
-source ../scripts/mgmtstorage_enable_public_access.sh
-
 # Grant user blob data contributor permissions
 echo -e "\n\e[34m»»» 🔑 \e[96mGranting Storage Blob Data Contributor role to the current user\e[0m..."
 if [ -n "${ARM_CLIENT_ID:-}" ]; then
