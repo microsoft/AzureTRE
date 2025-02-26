@@ -35,6 +35,11 @@ if [ -n "${ARM_CLIENT_ID:-}" ]; then
 else
     USER_OBJECT_ID=$(az ad signed-in-user show --query id --output tsv)
 fi
+
+az role assignment create --assignee "$USER_OBJECT_ID" \
+  --role "Storage Account Contributor" \
+  --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name"
+
 az role assignment create --assignee "$USER_OBJECT_ID" \
   --role "Storage Blob Data Contributor" \
   --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name"

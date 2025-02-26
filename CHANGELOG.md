@@ -6,7 +6,7 @@ ENHANCEMENTS:
 * Deny public access to TRE management storage account, and add private endpoint for TRE core [#4353](https://github.com/microsoft/AzureTRE/issues/4353)
 
 BUG FIXES:
-
+* Resolved a 403 storage account error when creating a new TRE environment ([#4405](https://github.com/microsoft/AzureTRE/issues/4405)) in PR [#4406](https://github.com/microsoft/AzureTRE/pull/4406)
 
 ## 0.21.0
 
