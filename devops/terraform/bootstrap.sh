@@ -41,13 +41,15 @@ az role assignment create --assignee "$USER_OBJECT_ID" \
 
 # Function to check if the role assignment exists
 check_role_assignments() {
-  local sbdc=$(az role assignment list \
+  local sbdc
+  sbdc=$(az role assignment list \
     --assignee "$USER_OBJECT_ID" \
     --role "Storage Blob Data Contributor" \
     --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
     --query "[].id" --output tsv)
 
-  local sac=$(az role assignment list \
+  local sac
+  sac=$(az role assignment list \
     --assignee "$USER_OBJECT_ID" \
     --role "Storage Account Contributor" \
     --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
