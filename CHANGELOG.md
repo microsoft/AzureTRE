@@ -27,6 +27,7 @@ ENHANCEMENTS:
 * Migrate UI to Vite build engine and update dependencies ([#4368](https://github.com/microsoft/AzureTRE/pull/4368))
 * Add Windows image field to the Admin VM template ([#4274](https://github.com/microsoft/AzureTRE/pull/4274))
 * Update TLS to the latest version for web apps / function apps ([#4351](https://github.com/microsoft/AzureTRE/issues/4351))
+* Set `stairlockp` Airlock Processor storage account firewall to "Enabled from selected virtual networks and IP addresses" ([#4386](https://github.com/microsoft/AzureTRE/issues/4386))
 
 BUG FIXES:
 * Fix upgrade when porter install has failed ([#4338](https://github.com/microsoft/AzureTRE/pull/4338))

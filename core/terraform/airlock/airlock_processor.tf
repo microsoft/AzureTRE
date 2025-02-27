@@ -22,7 +22,13 @@ resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
   cross_tenant_replication_enabled = false
   local_user_enabled               = false
   shared_access_key_enabled        = false
+  public_network_access_enabled    = true
   tags                             = var.tre_core_tags
+
+  network_rules {
+    default_action = var.enable_local_debugging ? "Allow" : "Deny"
+    bypass         = ["AzureServices"]
+  }
 
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
