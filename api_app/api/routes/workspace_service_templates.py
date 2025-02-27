@@ -40,5 +40,5 @@ async def register_workspace_service_template(template_input: WorkspaceServiceTe
 
 @workspace_service_templates_core_router.get("/workspace-service-templates-enabled-versions", response_model=WorkspaceServiceTemplatesEnabledVersionsInResponse, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES_ENABLED_VERSIONS, dependencies=[Depends(get_current_admin_user)])
 async def get_workspace_service_template_enabled_versions(template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceServiceTemplatesEnabledVersionsInResponse:
-    version_infos = await template_repo.get_templates_enabled_versions(ResourceType.WorkspaceService)
+    version_infos = await template_repo.get_templates_enabled_versions()
     return WorkspaceServiceTemplatesEnabledVersionsInResponse(service_template_versions=version_infos)

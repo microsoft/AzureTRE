@@ -65,11 +65,16 @@ class ResourceTemplateRepository(BaseRepository):
         template_infos = await self.query(query=query)
 
         services = {}
-        initial_enabled = {"TRE": False, "Workspace": False}
+        initial_enabled = {"TRE": False, "Workspace": True}
 
         for item in template_infos:
             name = item["name"]
-            # ignore user_roles for now, method is admin only
+
+            # Not clear if we'll ever actually use user_roles,
+            # the endpoints that currently call this are admin only
+            if user_roles and "authorizedRoles" in item and len(set(item["authorizedRoles"]).intersection(set(user_roles))) == 0:
+                continue
+
             if name not in services:
                 services[name] = {"name": name, "title": item["title"], "versions": []}
 
@@ -87,6 +92,12 @@ class ResourceTemplateRepository(BaseRepository):
         for item in template_infos:
             name = item["name"]
             service_name = item["parentWorkspaceService"]
+
+            if service_name not in services:
+                # parent wasn't authorised
+                # TODO - do user resources use authorizedRoles?
+                continue
+
             if "user-resources" not in services[service_name]:
                 services[service_name]["user-resources"] = {}
             if name not in services[service_name]["user-resources"]:
@@ -102,10 +113,9 @@ class ResourceTemplateRepository(BaseRepository):
                 }
             )
 
+        # Convert dictionary with version keys to lists sorted by version
         def get_version(item) -> semantic_version.Version:
             return semantic_version.Version(item["version"])
-
-        # Convert dictionary with version keys to lists sorted by version
         for v in services.values():
             v["versions"].sort(key=get_version)
             if "user-resources" in v:
