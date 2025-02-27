@@ -10,7 +10,7 @@ function usage() {
         -d, --directory                    Directory to change to before executing commands
         -g, --mgmt-resource-group-name      Management resource group name
         -s, --mgmt-storage-account-name     Management storage account name
-        -n, --state-container name          State container name
+        -n, --state-container-name          State container name
         -k, --key                           Key
         -c, --cmd                           Command to execute
         -l, --logfile                       Log file to write output to
