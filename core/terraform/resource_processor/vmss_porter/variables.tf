@@ -16,6 +16,9 @@ variable "core_api_client_id" {
 variable "resource_processor_subnet_id" {
   type = string
 }
+variable "blob_core_dns_zone_id" {
+  type = string
+}
 variable "resource_processor_vmss_porter_image_repository" {
   type = string
 }
