@@ -158,8 +158,10 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_TEMPLATES_ENABLED_VERSIONS))
 
         assert response.status_code == status.HTTP_200_OK
-        actual_template_infos = response.json()["service_template_versions"]
-        # assert some stuff
+        actual_template_version_infos = response.json()["service_template_versions"]
+        assert len(actual_template_version_infos) == len(expected_template_version_infos)
+        for template_version_info in expected_template_version_infos:
+            assert template_version_info in actual_template_version_infos
 
 
     # POST /workspace-service-templates/
