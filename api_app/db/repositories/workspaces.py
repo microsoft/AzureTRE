@@ -93,6 +93,11 @@ class WorkspaceRepository(ResourceRepository):
 
         auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}
         workspace_owner_param = {"workspace_owner_object_id": self.get_workspace_owner(workspace_input.properties, workspace_owner_object_id)}
+        # TODO - add the default enabled versions info to resource_spec_parameters before
+        # workspace_input.properties (so that workspace_input can override it once if we
+        # make it settable in the GUI), so that patching it only needs to edit the True/False
+        # settings, not copy the whole thing.
+        # versions_enabled_param = await resource_template_repo.get_templates_enabled_versions()
 
         # we don't want something in the input to overwrite the system parameters,
         # so dict.update can't work. Priorities from right to left.
