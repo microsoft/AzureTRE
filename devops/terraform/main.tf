@@ -2,6 +2,7 @@ provider "azurerm" {
   features {}
 
   storage_use_azuread = true
+  skip_provider_registration = false
 }
 
 data "azurerm_client_config" "current" {}
