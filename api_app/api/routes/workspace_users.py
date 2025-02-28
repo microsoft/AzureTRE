@@ -10,7 +10,6 @@ from services.authentication import get_current_admin_user, get_current_workspac
 workspaces_users_admin_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 workspaces_users_shared_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin)])
 
-
 @workspaces_users_shared_router.get("/workspaces/{workspace_id}/users", response_model=UsersInResponse, name=strings.API_GET_WORKSPACE_USERS)
 async def get_workspace_users(workspace=Depends(get_workspace_by_id_from_path), access_service=Depends(get_access_service)) -> UsersInResponse:
     users = access_service.get_workspace_users(workspace)

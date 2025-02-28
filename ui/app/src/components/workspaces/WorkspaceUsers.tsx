@@ -62,11 +62,22 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
 
   const [loadingUsers, setloadingUsers] = useState(false);
 
+  const isTemplateVersionValid = (): Boolean => {
+    const templateVersion = workspace.templateVersion;
+    const templateElements = templateVersion.split('.');
+    const major = parseInt(templateElements[0]);
+    const minor = parseInt(templateElements[1]);
+
+    // Base template version 2.1.0 is the minimum required
+    return (major > 2 || (major === 2 && minor >= 1));
+  }
+
   const allowUserManagement = useMemo(() => {
     return isTreAdmin
+      && isTemplateVersionValid()
       && config.userManagementEnabled
       && (workspace.properties['create_aad_groups'] === 'true' || workspace.properties['create_aad_groups'] === true);
-  }, [isTreAdmin, workspace]);
+  }, [isTreAdmin, workspace, isTemplateVersionValid]);
 
   const getUsers = useCallback(async () => {
     setState((prevState) => ({

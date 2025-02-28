@@ -25,6 +25,7 @@ from cryptography.hazmat.primitives import serialization
 
 MICROSOFT_GRAPH_URL = config.MICROSOFT_GRAPH_URL.strip("/")
 GRAPH_REQUEST_TIMEOUT = 10
+USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION = "2.1.0"
 
 
 class PrincipalType(Enum):
@@ -345,13 +346,18 @@ class AzureADAuthorization(AccessService):
                               type=roleAssignmentType))
 
         return roles
+    
+    
 
     def assign_workspace_user(self, user_id: str, workspace: Workspace, role_id: str) -> None:
         # User already has the role, do nothing
         if self._is_user_in_role(user_id, role_id):
             return
+        if compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
+            logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version 2.1.0 or greater")
+            raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version 2.1.0 or greater")
         if not self._is_workspace_role_group_in_use(workspace):
-            logger.error(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")
+            logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Entra ID groups are not in use on this workspace")
             raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Entra ID groups are not in use on this workspace")
         return self._assign_workspace_user_to_application_group(user_id, workspace, role_id)
 
@@ -434,6 +440,9 @@ class AzureADAuthorization(AccessService):
                                               role_id: str,
                                               workspace: Workspace
                                               ) -> None:
+        if compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
+            logger.error(f"Unable to remove user {user_id} from group with role {role_id}, Workspace needs to be version 2.1.0 or greater")
+            raise UserRoleAssignmentError(f"Unable to remove user {user_id} from group with role {role_id}, Workspace needs to be version 2.1.0 or greater")
         if not self._is_workspace_role_group_in_use(workspace):
             logger.error(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")
             raise UserRoleAssignmentError(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")
@@ -580,6 +589,31 @@ class AzureADAuthorization(AccessService):
         if RoleAssignment(resource_id=workspace_sp_id, role_id=workspace.properties['app_role_id_workspace_airlock_manager']) in user_role_assignments:
             return WorkspaceRole.AirlockManager
         return WorkspaceRole.NoRole
+
+
+def compare_versions(v1: str, v2: str) -> int:
+    """
+    Compare two version strings in the format major.minor.build.
+    
+    Returns:
+         -1 if v1 < v2,
+          0 if v1 == v2,
+          1 if v1 > v2.
+    """
+    parts1 = [int(x) for x in v1.split('.')]
+    parts2 = [int(x) for x in v2.split('.')]
+    
+    # Extend the shorter list with zeros
+    length = max(len(parts1), len(parts2))
+    parts1.extend([0] * (length - len(parts1)))
+    parts2.extend([0] * (length - len(parts2)))
+    
+    for a, b in zip(parts1, parts2):
+        if a < b:
+            return -1
+        elif a > b:
+            return 1
+    return 0
 
 
 def merge_dict(d1, d2):

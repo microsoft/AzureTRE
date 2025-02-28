@@ -4,7 +4,7 @@ from mock import call, patch
 from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace_users import AssignmentType, Role
 from models.domain.workspace import Workspace, WorkspaceRole
-from services.aad_authentication import AzureADAuthorization
+from services.aad_authentication import AzureADAuthorization, compare_versions
 from services.access_service import AuthConfigValidationError, UserRoleAssignmentError
 
 MOCK_MICROSOFT_GRAPH_URL = "https://graph.microsoft.com"
@@ -93,7 +93,7 @@ def workspace_with_groups():
         id="ws1",
         etag="",
         templateName="test-template",
-        templateVersion="1.0.0",
+        templateVersion="2.1.0",
         resourcePath="",
         properties={
             "create_aad_groups": True,
@@ -114,7 +114,7 @@ def workspace_without_groups():
         id="ws2",
         etag="",
         templateName="test-template",
-        templateVersion="1.0.0",
+        templateVersion="2.1.0",
         resourcePath="",
         properties={
             "create_aad_groups": False,
@@ -579,7 +579,7 @@ def test_assign_workspace_user_if_no_groups_raises_error(assign_user_to_group_mo
 @patch("services.aad_authentication.AzureADAuthorization._is_user_in_role", return_value=False)
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=True)
 @patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group")
-def test_assign_workspace_user_if_groups(assign_user_to_group_mock,
+def test_assign_workspace_user_if_groups(_, __, assign_user_to_group_mock,
                                          workspace_without_groups, role_owner,
                                          user_with_role):
 
@@ -592,15 +592,16 @@ def test_assign_workspace_user_if_groups(assign_user_to_group_mock,
 
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=False)
 @patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_for_user")
-def test_remove_workspace_user_if_no_groups_raises_error(get_role_assignment_mock,
-                                                         workspace_without_groups, role_owner,
+def test_remove_workspace_user_if_no_groups_raises_error(_, get_role_assignment_mock,
+                                                         workspace_without_groups, 
+                                                         role_owner,
                                                          user_with_role):
 
     access_service = AzureADAuthorization()
     get_role_assignment_mock.return_value = []
 
     with pytest.raises(UserRoleAssignmentError):
-        access_service.remove_workspace_role_user_assignment(user_with_role.id, workspace_without_groups, role_owner.id)
+        access_service.remove_workspace_role_user_assignment(user_with_role.id, role_owner.id, workspace_without_groups)
 
 
 @patch("services.aad_authentication.AzureADAuthorization._remove_workspace_user_from_application_group")
@@ -608,13 +609,14 @@ def test_remove_workspace_user_if_no_groups_raises_error(get_role_assignment_moc
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=True)
 def test_remove_workspace_user_if_groups(_, get_role_assignment_mock,
                                          remove_user_to_group_mock,
+                                         workspace_without_groups,
                                          role_owner,
                                          user_with_role):
 
     access_service = AzureADAuthorization()
     get_role_assignment_mock.return_value = []
 
-    access_service.remove_workspace_role_user_assignment(user_with_role.id, workspace_without_groups, role_owner.id)
+    access_service.remove_workspace_role_user_assignment(user_with_role.id, role_owner.id, workspace_without_groups)
 
     assert remove_user_to_group_mock.call_count == 1
 
@@ -666,3 +668,15 @@ def test_get_workspace_roles_returns_roles(_, ms_graph_query_mock, mock_headers,
     assert len(roles) == 3
     assert roles[0].id == "1"
     assert roles[0].displayName == "Airlock Manager"
+
+def test_compare_versions_equal():
+    result = compare_versions("1.0.0", "1.0.0")
+    assert result == 0
+
+def test_compare_versions_greater_than():
+    result = compare_versions("1.1.0", "1.0.0")
+    assert result > 0
+
+def test_compare_versions_less_than():
+    result = compare_versions("1.0.0", "1.1.0")
+    assert result < 0
