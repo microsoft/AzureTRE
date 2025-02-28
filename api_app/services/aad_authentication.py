@@ -588,10 +588,11 @@ class AzureADAuthorization(AccessService):
             return WorkspaceRole.AirlockManager
         return WorkspaceRole.NoRole
 
+
 def compare_versions(v1: str, v2: str) -> int:
     """
     Compare two version strings in the format major.minor.build.
-    
+
     Returns:
          -1 if v1 < v2,
           0 if v1 == v2,
@@ -611,6 +612,7 @@ def compare_versions(v1: str, v2: str) -> int:
         elif a > b:
             return 1
     return 0
+
 
 def merge_dict(d1, d2):
     dd = defaultdict(list)
