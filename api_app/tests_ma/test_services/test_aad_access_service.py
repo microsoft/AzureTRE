@@ -593,7 +593,7 @@ def test_assign_workspace_user_if_groups(_, __, assign_user_to_group_mock,
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=False)
 @patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_for_user")
 def test_remove_workspace_user_if_no_groups_raises_error(_, get_role_assignment_mock,
-                                                         workspace_without_groups, 
+                                                         workspace_without_groups,
                                                          role_owner,
                                                          user_with_role):
 
@@ -669,13 +669,16 @@ def test_get_workspace_roles_returns_roles(_, ms_graph_query_mock, mock_headers,
     assert roles[0].id == "1"
     assert roles[0].displayName == "Airlock Manager"
 
+
 def test_compare_versions_equal():
     result = compare_versions("1.0.0", "1.0.0")
     assert result == 0
 
+
 def test_compare_versions_greater_than():
     result = compare_versions("1.1.0", "1.0.0")
     assert result > 0
+
 
 def test_compare_versions_less_than():
     result = compare_versions("1.0.0", "1.1.0")

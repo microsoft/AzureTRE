@@ -346,8 +346,6 @@ class AzureADAuthorization(AccessService):
                               type=roleAssignmentType))
 
         return roles
-    
-    
 
     def assign_workspace_user(self, user_id: str, workspace: Workspace, role_id: str) -> None:
         # User already has the role, do nothing
@@ -590,7 +588,6 @@ class AzureADAuthorization(AccessService):
             return WorkspaceRole.AirlockManager
         return WorkspaceRole.NoRole
 
-
 def compare_versions(v1: str, v2: str) -> int:
     """
     Compare two version strings in the format major.minor.build.
@@ -602,19 +599,18 @@ def compare_versions(v1: str, v2: str) -> int:
     """
     parts1 = [int(x) for x in v1.split('.')]
     parts2 = [int(x) for x in v2.split('.')]
-    
+
     # Extend the shorter list with zeros
     length = max(len(parts1), len(parts2))
     parts1.extend([0] * (length - len(parts1)))
     parts2.extend([0] * (length - len(parts2)))
-    
+
     for a, b in zip(parts1, parts2):
         if a < b:
             return -1
         elif a > b:
             return 1
     return 0
-
 
 def merge_dict(d1, d2):
     dd = defaultdict(list)

@@ -45,6 +45,8 @@
 | `APP_GATEWAY_SKU` | Optional. The SKU of the Application Gateway. Default value is `Standard_v2`. Allowed values [`Standard_v2`, `WAF_v2`] |
 | `CUSTOM_DOMAIN` | Optional. Custom domain name to access the Azure TRE portal. See [Custom domain name](custom-domain.md). |
 | `ENABLE_CMK_ENCRYPTION` | If set to `true`, customer-managed key encryption will be enabled for all supported resources. |
+| `USER_MANAGEMENT_ENABLED` | If set to `true`, TRE Admins will be able to assign and de-assign users to workspaces via the UI (Requires Entra ID groups to be enabled on the workspace and the workspace template version to be 2.1.0 or greater). |
+
 ## For authentication in `/config.yaml`
 
   | Variable | Description |
