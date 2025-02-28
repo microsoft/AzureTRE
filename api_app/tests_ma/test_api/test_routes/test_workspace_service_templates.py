@@ -163,7 +163,6 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         for template_version_info in expected_template_version_infos:
             assert template_version_info in actual_template_version_infos
 
-
     # POST /workspace-service-templates/
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_template")
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_current_template")
