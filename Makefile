@@ -142,14 +142,14 @@ terraform-deploy:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR}/terraform/ && ./deploy.sh
+	&& ./devops/scripts/terraform_deploy.sh ${DIR}
 
 terraform-upgrade:
 	$(call target_title, "Upgrading ${DIR} with Terraform") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
-	&& ./devops/scripts/upgrade.sh ${DIR}
+	&& ./devops/scripts/terraform_upgrade_provider.sh ${DIR}
 
 terraform-import:
 	$(call target_title, "Importing ${DIR} with Terraform") \
@@ -388,7 +388,7 @@ auth: ## 🔐 Create the necessary Azure Active Directory assets
 show-core-output:
 	$(call target_title,"Display TRE core output") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
-	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && terraform show && popd > /dev/null
+	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./show_output.sh && popd > /dev/null
 
 api-healthcheck:
 	$(call target_title,"Checking API Health") \
