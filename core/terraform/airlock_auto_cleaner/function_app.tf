@@ -130,7 +130,7 @@ resource "azurerm_linux_function_app" "airlock_auto_cleaner" {
     "WEBSITE_RUN_FROM_PACKAGE"                     = "https://${azurerm_storage_account.airlock_auto_cleaner.name}.blob.core.windows.net/${azurerm_storage_container.airlock_auto_cleaner.name}/${azurerm_storage_blob.airlock_auto_cleaner.name}"
     "WEBSITE_RUN_FROM_PACKAGE_BLOB_MI_RESOURCE_ID" = azurerm_user_assigned_identity.function_app_airlock_auto_cleaner_identity.id
     "MANAGED_IDENTITY_CLIENT_ID"                   = azurerm_user_assigned_identity.function_app_airlock_auto_cleaner_identity.client_id
-    "WEBSITE_TIME_ZONE"                            = local.execution_tizezone                        
+    "WEBSITE_TIME_ZONE"                            = local.execution_timezone
     "SUBSCRIPTION_ID"                              = data.azurerm_client_config.current.subscription_id
     "ENVIRONMENT_NAME"                             = local.environment_name
     "APPINSIGHTS_INSTRUMENTATIONKEY"               = azurerm_application_insights.airlock_auto_cleaner.instrumentation_key
