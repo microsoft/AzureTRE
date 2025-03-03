@@ -6,6 +6,9 @@
 # Note: Ensure you "source" this script, or else the EXIT trap won't fire at the right time.
 #
 
+# Global variable to capture underlying error
+LAST_PUBLIC_ACCESS_ERROR=""
+
 function mgmtstorage_enable_public_access() {
   local RESOURCE_GROUP
   RESOURCE_GROUP=$(get_resource_group_name)
@@ -17,12 +20,6 @@ function mgmtstorage_enable_public_access() {
   if ! does_storage_account_exist "$SA_NAME"; then
     echo -e "Error: Storage account $SA_NAME does not exist.\n" >&2
     exit 1
-  fi
-
-  # Pre-check: if public access is already enabled, no need to update.
-  if is_public_access_enabled "$RESOURCE_GROUP" "$SA_NAME"; then
-    echo -e " Storage account $SA_NAME is already publicly accessible\n"
-    return
   fi
 
   echo -e "\nEnabling public access on storage account $SA_NAME"
@@ -41,6 +38,7 @@ function mgmtstorage_enable_public_access() {
   done
 
   echo -e "Error: Could not enable public access for $SA_NAME after 10 attempts.\n"
+  echo -e "$LAST_PUBLIC_ACCESS_ERROR\n"
   exit 1
 }
 
@@ -55,12 +53,6 @@ function mgmtstorage_disable_public_access() {
   if ! does_storage_account_exist "$SA_NAME"; then
     echo -e "Error: Storage account $SA_NAME does not exist.\n" >&2
     exit 1
-  fi
-
-  # Pre-check: if public access is already disabled, no need to update.
-  if ! is_public_access_enabled "$RESOURCE_GROUP" "$SA_NAME"; then
-    echo -e " Storage account $SA_NAME is already not publicly accessible\n"
-    return
   fi
 
   echo -e "\nDisabling public access on storage account $SA_NAME"
@@ -105,16 +97,20 @@ function does_storage_account_exist() {
 function is_public_access_enabled() {
   local RESOURCE_GROUP="$1"
   local SA_NAME="$2"
+  LAST_PUBLIC_ACCESS_ERROR=""
 
-  # Try listing containers
+  # Try listing containers and capture error output
   local containers
-  if ! containers=$(az storage container list --account-name "$SA_NAME" --auth-mode login --query "[].name" --output tsv); then
+  if ! containers=$(az storage container list --account-name "$SA_NAME" --auth-mode login --query "[].name" --output tsv 2>&1); then
+    LAST_PUBLIC_ACCESS_ERROR="$containers"
     return 1
   fi
 
-  # For each container found, check blob listing
+  # For each container found, check blob listing and capture error if any
   for container in $containers; do
-    if ! az storage blob list --container-name "$container" --account-name "$SA_NAME" --auth-mode login --output none; then
+    local blob_output
+    if ! blob_output=$(az storage blob list --container-name "$container" --account-name "$SA_NAME" --auth-mode login --output none 2>&1); then
+      LAST_PUBLIC_ACCESS_ERROR="$blob_output"
       return 1
     fi
   done

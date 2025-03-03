@@ -388,7 +388,7 @@ auth: ## 🔐 Create the necessary Azure Active Directory assets
 show-core-output:
 	$(call target_title,"Display TRE core output") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
-	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && terraform show && popd > /dev/null
+	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./show_output.sh && popd > /dev/null
 
 api-healthcheck:
 	$(call target_title,"Checking API Health") \
