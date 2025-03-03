@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 1.2.10
+version: 1.2.14
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -104,6 +104,9 @@ parameters:
   - name: os_image
     type: string
     default: "Windows 10"
+  - name: admin_username
+    type: string
+    default: ""
   - name: vm_size
     type: string
     default: "2 CPU | 8GB RAM"
@@ -164,6 +167,7 @@ install:
         parent_service_id: ${ bundle.parameters.parent_service_id }
         tre_resource_id: ${ bundle.parameters.id }
         image: ${ bundle.parameters.os_image }
+        admin_username: ${ bundle.parameters.admin_username }
         vm_size: ${ bundle.parameters.vm_size }
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
@@ -196,6 +200,7 @@ upgrade:
         parent_service_id: ${ bundle.parameters.parent_service_id }
         tre_resource_id: ${ bundle.parameters.id }
         image: ${ bundle.parameters.os_image }
+        admin_username: ${ bundle.parameters.admin_username }
         vm_size: ${ bundle.parameters.vm_size }
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
@@ -240,6 +245,7 @@ uninstall:
         parent_service_id: ${ bundle.parameters.parent_service_id }
         tre_resource_id: ${ bundle.parameters.id }
         image: ${ bundle.parameters.os_image }
+        admin_username: ${ bundle.parameters.admin_username }
         vm_size: ${ bundle.parameters.vm_size }
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
