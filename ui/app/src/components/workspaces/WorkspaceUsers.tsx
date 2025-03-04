@@ -1,22 +1,21 @@
-import * as React from 'react';
-import { useState, useCallback, useEffect, useMemo, useContext } from 'react';
-import { GroupedList, IGroup } from '@fluentui/react/lib/GroupedList';
-import { IColumn, DetailsRow } from '@fluentui/react/lib/DetailsList';
-import { SelectionMode, Selection, SelectionZone } from '@fluentui/react/lib/Selection';
-import { Persona, PersonaSize } from '@fluentui/react/lib/Persona';
-import { HttpMethod, useAuthApiCall } from '../../hooks/useAuthApiCall';
-import { APIError } from '../../models/exceptions';
-import { WorkspaceContext } from '../../contexts/WorkspaceContext';
-import { ApiEndpoint } from '../../models/apiEndpoints';
-import { LoadingState } from '../../models/loadingState';
-import { ExceptionLayout } from '../shared/ExceptionLayout';
-import { User } from '../../models/user';
-import { AppRolesContext } from '../../contexts/AppRolesContext';
+import * as React from "react";
+import { useState, useCallback, useEffect, useMemo, useContext } from "react";
+import { GroupedList, IGroup } from "@fluentui/react/lib/GroupedList";
+import { IColumn, DetailsRow } from "@fluentui/react/lib/DetailsList";
+import { SelectionMode, Selection, SelectionZone } from "@fluentui/react/lib/Selection";
+import { Persona, PersonaSize } from "@fluentui/react/lib/Persona";
+import { HttpMethod, useAuthApiCall } from "../../hooks/useAuthApiCall";
+import { APIError } from "../../models/exceptions";
+import { WorkspaceContext } from "../../contexts/WorkspaceContext";
+import { ApiEndpoint } from "../../models/apiEndpoints";
+import { LoadingState } from "../../models/loadingState";
+import { ExceptionLayout } from "../shared/ExceptionLayout";
+import { AppRolesContext } from "../../contexts/AppRolesContext";
 
-import { CommandBarButton, DefaultButton, Dialog, DialogFooter, getTheme, Spinner, SpinnerSize, Stack } from '@fluentui/react';
-import { useNavigate, Route, Routes } from 'react-router-dom';
-import { destructiveButtonStyles } from '../../styles';
-import { WorkSpaceUsersAssignNew } from './WorkspaceUsersAssignNew';
+import { CommandBarButton, DefaultButton, Dialog, DialogFooter, getTheme, Spinner, SpinnerSize, Stack } from "@fluentui/react";
+import { useNavigate, Route, Routes } from "react-router-dom";
+import { destructiveButtonStyles } from "../../styles";
+import { WorkSpaceUsersAssignNew } from "./WorkspaceUsersAssignNew";
 import config from "../../config.json"
 
 interface IUser {
@@ -52,7 +51,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
   const [isTreAdmin, setIsTreAdmin] = useState(false);
 
   useEffect(() => {
-    setIsTreAdmin(appRolesCtx.roles.includes('TREAdmin'));
+    setIsTreAdmin(appRolesCtx.roles.includes("TREAdmin"));
   }, [appRolesCtx.roles]);
 
   const navigate = useNavigate();
@@ -62,21 +61,27 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
 
   const [loadingUsers, setloadingUsers] = useState(false);
 
+  const userManagementWorkspaceMinVersion = "2.1.0";
+
   const isTemplateVersionValid = (): Boolean => {
     const templateVersion = workspace.templateVersion;
-    const templateElements = templateVersion.split('.');
+    const templateElements = templateVersion.split(".");
     const major = parseInt(templateElements[0]);
     const minor = parseInt(templateElements[1]);
 
+    const expectedVersion = userManagementWorkspaceMinVersion.split(".");
+    const expectedMajor = parseInt(expectedVersion[0]);
+    const expectedMinor = parseInt(expectedVersion[1]);
+
     // Base template version 2.1.0 is the minimum required
-    return (major > 2 || (major === 2 && minor >= 1));
+    return (major > expectedMajor || (major === expectedMajor && minor >= expectedMinor));
   }
 
   const allowUserManagement = useMemo(() => {
     return isTreAdmin
       && isTemplateVersionValid()
       && config.userManagementEnabled
-      && (workspace.properties['create_aad_groups'] === 'true' || workspace.properties['create_aad_groups'] === true);
+      && (workspace.properties["create_aad_groups"] === "true" || workspace.properties["create_aad_groups"] === true);
   }, [isTreAdmin, workspace, isTemplateVersionValid]);
 
   const getUsers = useCallback(async () => {
@@ -143,7 +148,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
       setDeassigning(false);
 
     } catch (err: any) {
-      err.userMessage = 'Error deassigning user';
+      err.userMessage = "Error deassigning user";
       setApiError(err);
       setDeassignmentError(true);
       setDeassigning(false);
@@ -203,7 +208,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
   ], []);
 
   const onRenderCell = React.useCallback(
-    (nestingDepth?: number, item?: User, itemIndex?: number, group?: IGroup): React.ReactNode => (
+    (nestingDepth?: number, item?: IUser, itemIndex?: number, group?: IGroup): React.ReactNode => (
       <DetailsRow
         columns={columns}
         groupNestingDepth={nestingDepth}
@@ -226,19 +231,19 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
             {allowUserManagement &&
               <Stack horizontal horizontalAlign="start">
                 <CommandBarButton
-                  iconProps={{ iconName: 'add' }}
+                  iconProps={{ iconName: "add" }}
                   text="Assign New"
-                  style={{ background: 'none', color: theme.palette.themePrimary }}
-                  onClick={() => navigate('new')}
+                  style={{ background: "none", color: theme.palette.themePrimary }}
+                  onClick={() => navigate("new")}
                 />
                 {
                   selectedUserRole &&
                   <CommandBarButton
-                    iconProps={{ iconName: 'delete' }}
+                    iconProps={{ iconName: "delete" }}
                     text="De-assign"
-                    style={{ background: 'none', color: theme.palette.themePrimary }}
+                    style={{ background: "none", color: theme.palette.themePrimary }}
                     onClick={() => {
-                      console.log('De-assign', selectedUserRole);
+                      console.log("De-assign", selectedUserRole);
                       setHideCancelDialog(false);
                     }}
                   />
@@ -249,7 +254,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
         </Stack.Item>
       </Stack>
       {state.apiError && <ExceptionLayout e={state.apiError} />}
-      <div className="tre-resource-panel" style={{ padding: '0px' }}>
+      <div className="tre-resource-panel" style={{ padding: "0px" }}>
         {!loadingUsers && <SelectionZone selection={selection} selectionMode={isTreAdmin ? SelectionMode.single : SelectionMode.none} >
           <GroupedList
             items={state.users}
@@ -264,7 +269,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
       </div>
       {
         loadingUsers && <Stack>
-          <Stack.Item style={{ paddingTop: '10px', paddingBottom: '10px' }}>
+          <Stack.Item style={{ paddingTop: "10px", paddingBottom: "10px" }}>
             <Spinner />
           </Stack.Item>
         </Stack>
@@ -273,7 +278,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
         hidden={hideCancelDialog}
         onDismiss={() => { setHideCancelDialog(true); }}
         dialogContentProps={{
-          title: 'De-assign Role?',
+          title: "De-assign Role?",
           subText: `Are you sure you want to remove ${selectedUserRole?.displayName} from the ${selectedUserRole?.role.displayName} Role?`,
         }}
       >

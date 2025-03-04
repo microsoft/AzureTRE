@@ -1,10 +1,10 @@
-import * as React from 'react';
+import * as React from "react";
 import { Dropdown, IDropdownOption, Label, Panel, PanelType, PrimaryButton, Spinner, Stack } from "@fluentui/react";
-import { IPersonaProps } from '@fluentui/react/lib/Persona';
+import { IPersonaProps } from "@fluentui/react/lib/Persona";
 import {
   IBasePickerSuggestionsProps,
   NormalPeoplePicker
-} from '@fluentui/react/lib/Pickers';
+} from "@fluentui/react/lib/Pickers";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
@@ -29,12 +29,12 @@ interface WorkspaceRole {
 }
 
 const suggestionProps: IBasePickerSuggestionsProps = {
-  suggestionsHeaderText: 'Suggested Users',
-  noResultsFoundText: 'No results found',
-  loadingText: 'Loading',
+  suggestionsHeaderText: "Suggested Users",
+  noResultsFoundText: "No results found",
+  loadingText: "Loading",
   showRemoveButtons: true,
-  suggestionsAvailableAlertText: 'People Picker Suggestions available',
-  suggestionsContainerAriaLabel: 'Suggested contacts',
+  suggestionsAvailableAlertText: "People Picker Suggestions available",
+  suggestionsContainerAriaLabel: "Suggested contacts",
 };
 
 export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssignProps> = (props: WorkspaceUsersAssignProps) => {
@@ -68,7 +68,7 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
       return options;
     }
     catch (err: any) {
-      err.userMessage = 'Error retrieving assignable users';
+      err.userMessage = "Error retrieving assignable users";
     }
     return [];
   };
@@ -93,7 +93,7 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
     setSelectedRole(option ? option.key : null);
   };
 
-  const dismissPanel = useCallback(() => navigate('../'), [navigate]);
+  const dismissPanel = useCallback(() => navigate("../"), [navigate]);
 
   const getWorkspaceRoles = useCallback(async () => {
     try {
@@ -108,7 +108,7 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
       setRoleOptions(options);
     }
     catch (err: any) {
-      err.userMessage = 'Error retrieving assignable users';
+      err.userMessage = "Error retrieving assignable users";
     }
 
   }, [apiCall, workspace.id]);
@@ -129,7 +129,7 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
       props.onAssignUser(response);
     }
     catch (err: any) {
-      err.userMessage = 'Error assigning workspace user';
+      err.userMessage = "Error assigning workspace user";
       setHasAssignmentError(true);
       setAssignmentError(err);
     }
@@ -140,7 +140,7 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
   const renderFooter = useCallback(() => {
     let footer = <></>
     footer = <>
-      <div style={{ textAlign: 'end' }}>
+      <div style={{ textAlign: "end" }}>
         <PrimaryButton onClick={() => assign()} disabled={assigning || (!selectedUsers || !selectedRole)}>Assign</PrimaryButton>
       </div>
     </>
@@ -165,12 +165,12 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
           <NormalPeoplePicker
             onResolveSuggestions={onFilterChanged}
             pickerSuggestionsProps={suggestionProps}
-            className={'ms-PeoplePicker'}
-            key={'normal'}
-            selectionAriaLabel={'Selected user'}
-            removeButtonAriaLabel={'Remove'}
+            className={"ms-PeoplePicker"}
+            key={"normal"}
+            selectionAriaLabel={"Selected user"}
+            removeButtonAriaLabel={"Remove"}
             inputProps={{
-              'aria-label': 'User Picker',
+              "aria-label": "User Picker",
             }}
             componentRef={picker}
             resolveDelay={300}
@@ -184,13 +184,13 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
             placeholder="Select a role"
             options={roleOptions}
             disabled={assigning}
-            styles={{ root: { width: '100%' } }}
+            styles={{ root: { width: "100%" } }}
             onChange={onRoleChange}
           />
         </Stack>
         {
           assigning && <Stack>
-            <Stack.Item style={{ paddingTop: '10px', paddingBottom: '10px' }}>
+            <Stack.Item style={{ paddingTop: "10px", paddingBottom: "10px" }}>
               <Spinner />
             </Stack.Item>
           </Stack>

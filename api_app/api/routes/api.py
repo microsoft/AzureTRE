@@ -50,10 +50,10 @@ core_router.include_router(migrations.migrations_core_router, tags=["migrations"
 core_router.include_router(costs.costs_core_router, tags=["costs"])
 core_router.include_router(costs.costs_workspace_router, tags=["costs"])
 core_router.include_router(requests.router, tags=["requests"])
+core_router.include_router(workspace_users.workspaces_users_shared_router, tags=["users"])
 
 if config.USER_MANAGEMENT_ENABLED:
     core_router.include_router(workspace_users.workspaces_users_admin_router, tags=["users"])
-core_router.include_router(workspace_users.workspaces_users_shared_router, tags=["users"])
 
 core_swagger_router = APIRouter()
 swagger_disabled_router = APIRouter()

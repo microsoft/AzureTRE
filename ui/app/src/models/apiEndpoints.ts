@@ -20,7 +20,7 @@ export enum ApiEndpoint {
   Costs = "costs",
   Metadata = ".metadata",
   Health = "health",
-  Users = 'users',
-  AssignableUsers = 'assignable-users',
+  Users = "users",
+  AssignableUsers = "assignable-users",
   Roles = "roles"
 }
