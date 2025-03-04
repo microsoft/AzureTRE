@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.0.17
+version: 2.0.20
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -167,12 +167,12 @@ outputs:
     applyTo:
       - install
       - upgrade
-  - name: backup_vault_vm_backup_policy_name
+  - name: vm_backup_policy_id
     type: string
     applyTo:
       - install
       - upgrade
-  - name: backup_vault_fileshare_backup_policy_name
+  - name: fileshare_backup_policy_id
     type: string
     applyTo:
       - install
@@ -231,8 +231,8 @@ install:
         - name: scope_id
         - name: sp_id
         - name: backup_vault_name
-        - name: backup_vault_vm_backup_policy_name
-        - name: backup_vault_fileshare_backup_policy_name
+        - name: vm_backup_policy_id
+        - name: fileshare_backup_policy_id
 
 upgrade:
   - terraform:
@@ -280,8 +280,8 @@ upgrade:
         - name: scope_id
         - name: sp_id
         - name: backup_vault_name
-        - name: backup_vault_vm_backup_policy_name
-        - name: backup_vault_fileshare_backup_policy_name
+        - name: vm_backup_policy_id
+        - name: fileshare_backup_policy_id
   - az:
       description: "Set Azure Cloud Environment"
       arguments:
@@ -344,13 +344,3 @@ uninstall:
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: ${ bundle.parameters.tre_id }-ws-${ bundle.parameters.id }
-      outputs:
-        - name: app_role_id_workspace_owner
-        - name: app_role_id_workspace_researcher
-        - name: app_role_id_workspace_airlock_manager
-        - name: client_id
-        - name: scope_id
-        - name: sp_id
-        - name: backup_vault_name
-        - name: backup_vault_vm_backup_policy_name
-        - name: backup_vault_fileshare_backup_policy_name
