@@ -51,6 +51,12 @@
       "description": "Network address space to be used by the workspace.",
       "updateable": true
     },
+    "service_template_versions": {
+      "type": "array",
+      "title": "Workspace services versions",
+      "description": "List of service and user resource versions and whether they are enabled.",
+      "updateable": true
+    },
     "auth_type": {
       "type": "string",
       "title": "Workspace Authentication Type",
@@ -277,6 +283,9 @@
       "classNames": "tre-hidden"
     },
     "address_spaces": {
+      "classNames": "tre-hidden"
+    },
+    "service_template_versions": {
       "classNames": "tre-hidden"
     },
     "ui:order": [

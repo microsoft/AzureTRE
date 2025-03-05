@@ -44,9 +44,12 @@ class ResourceRepository(BaseRepository):
     def _validate_resource_parameters(resource_input, resource_template):
         validate(instance=resource_input["properties"], schema=resource_template)
 
-    async def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = "") -> dict:
+    async def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = "", version: Optional[str] = None) -> dict:
         template_repo = await ResourceTemplateRepository.create()
-        template = await template_repo.get_current_template(template_name, resource_type, parent_template_name)
+        if version is None:
+            template = await template_repo.get_current_template(template_name, resource_type, parent_template_name)
+        else:
+            template = await template_repo.get_template_by_name_and_version(template_name, version, resource_type, parent_template_name)
         return template_repo.enrich_template(template)
 
     @staticmethod
@@ -81,9 +84,9 @@ class ResourceRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Resource, resources[0])
 
-    async def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, user_roles: Optional[List[str]] = None, parent_template_name: Optional[str] = None) -> ResourceTemplate:
+    async def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, user_roles: Optional[List[str]] = None, parent_template_name: Optional[str] = None, version: Optional[str] = None) -> ResourceTemplate:
         try:
-            template = await self._get_enriched_template(template_name, resource_type, parent_template_name)
+            template = await self._get_enriched_template(template_name, resource_type, parent_template_name, version)
         except EntityDoesNotExist:
             if resource_type == ResourceType.UserResource:
                 raise ValueError(f'The template "{template_name}" does not exist or is not valid for the workspace service type "{parent_template_name}"')

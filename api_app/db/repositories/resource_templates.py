@@ -1,4 +1,5 @@
 import uuid
+import semantic_version
 from typing import List, Optional, Union
 
 from pydantic import parse_obj_as
@@ -52,6 +53,78 @@ class ResourceTemplateRepository(BaseRepository):
             return templates
         # User can view template if they have at least one of authorizedRoles
         return [t for t in templates if not t.authorizedRoles or len(set(t.authorizedRoles).intersection(set(user_roles))) > 0]
+
+    async def get_templates_enabled_versions(self, user_roles: Optional[List[str]] = None) -> List[dict]:
+        """
+        Returns enabled version information for workspace service templates
+
+        :param user_roles: If set, only return versions from templates that the user is authorized to use.
+                           template.authorizedRoles should contain at least one of user_roles
+        """
+        query = f'SELECT c.name, c.title, c.version, c.description, c.current, c.authorizedRoles FROM c WHERE c.resourceType = "{ResourceType.WorkspaceService}"'
+        template_infos = await self.query(query=query)
+
+        services = {}
+        initial_enabled = {"TRE": False, "Workspace": True}
+
+        for item in template_infos:
+            name = item["name"]
+
+            # Not clear if we'll ever actually use user_roles,
+            # the endpoints that currently call this are admin only
+            if user_roles and "authorizedRoles" in item and len(set(item["authorizedRoles"]).intersection(set(user_roles))) == 0:
+                continue
+
+            if name not in services:
+                services[name] = {"name": name, "title": item["title"], "versions": []}
+
+            services[name]["versions"].append(
+                {
+                    "version": item["version"],
+                    "description": item["description"],
+                    "enabled": initial_enabled,
+                }
+            )
+
+        query = f'SELECT c.name, c.version, c.description, c.parentWorkspaceService FROM c WHERE c.resourceType = "{ResourceType.UserResource}"'
+        template_infos = await self.query(query=query)
+
+        for item in template_infos:
+            name = item["name"]
+            service_name = item["parentWorkspaceService"]
+
+            if service_name not in services:
+                # parent wasn't authorised
+                # TODO - do user resources use authorizedRoles?
+                continue
+
+            if "user-resources" not in services[service_name]:
+                services[service_name]["user-resources"] = {}
+            if name not in services[service_name]["user-resources"]:
+                services[service_name]["user-resources"][name] = {
+                    "name": name,
+                    "versions": [],
+                }
+            services[service_name]["user-resources"][name]["versions"].append(
+                {
+                    "version": item["version"],
+                    "description": item["description"],
+                    "enabled": initial_enabled,
+                }
+            )
+
+        # Convert dictionary with version keys to lists sorted by version
+        def get_version(item) -> semantic_version.Version:
+            return semantic_version.Version(item["version"])
+        for v in services.values():
+            v["versions"].sort(key=get_version)
+            if "user-resources" in v:
+                v["user-resources"] = list(v["user-resources"].values())
+                for u in v["user-resources"]:
+                    u["versions"].sort(key=get_version)
+        services_infos = list(services.values())
+
+        return services_infos
 
     async def get_current_template(self, template_name: str, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
         """

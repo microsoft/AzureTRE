@@ -80,6 +80,89 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         for template_info in expected_template_infos:
             assert template_info in actual_template_infos
 
+    # GET /workspace-service-templates-enabled-versions/
+    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_templates_enabled_versions")
+    async def test_get_workspace_service_templates_enabled_versions_returns_versions(self, get_templates_version_info_mock, app, client):
+        expected_template_version_infos = [
+            {
+                "name": "tre-service-guacamole",
+                "title": "Apache Guacamole - Virtual Desktop Service",
+                "versions": [
+                    {
+                        "version": "0.12.6",
+                        "description": "Enables Windows and Linux virtual machines to be accessed via Apache Guacamole.",
+                        "enabled": {"TRE": False, "Workspace": True},
+                    }
+                ],
+                "user-resources": [
+                    {
+                        "name": "tre-service-guacamole-linuxvm",
+                        "versions": [
+                            {
+                                "version": "1.2.3",
+                                "description": "Linux virtual machine.",
+                                "enabled": {"TRE": False, "Workspace": True},
+                            }
+                        ],
+                    },
+                    {
+                        "name": "tre-service-guacamole-windowsvm",
+                        "versions": [
+                            {
+                                "version": "1.2.3",
+                                "description": "Windows virtual machine.",
+                                "enabled": {"TRE": False, "Workspace": True},
+                            }
+                        ],
+                    },
+                ],
+            },
+            {
+                "name": "tre-service-databricks",
+                "title": "Azure Databricks",
+                "versions": [
+                    {
+                        "version": "1.0.10",
+                        "description": "Azure Databricks",
+                        "enabled": {"TRE": False, "Workspace": True},
+                    }
+                ],
+            },
+            {
+                "name": "tre-service-azureml",
+                "title": "Azure Machine Learning",
+                "versions": [
+                    {
+                        "version": "0.9.2",
+                        "description": "Azure Machine Learning",
+                        "enabled": {"TRE": False, "Workspace": True},
+                    }
+                ],
+                "user-resources": [
+                    {
+                        "name": "tre-user-resource-aml-compute-instance",
+                        "versions": [
+                            {
+                                "version": "0.5.11",
+                                "description": "An Azure Machine Learning compute instance is a managed cloud-based workstation for data scientists. Each compute instance has only one owner, although you can share files between multiple compute instances.",
+                                "enabled": {"TRE": False, "Workspace": True},
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+
+        get_templates_version_info_mock.return_value = expected_template_version_infos
+
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_TEMPLATES_ENABLED_VERSIONS))
+
+        assert response.status_code == status.HTTP_200_OK
+        actual_template_version_infos = response.json()["service_template_versions"]
+        assert len(actual_template_version_infos) == len(expected_template_version_infos)
+        for template_version_info in expected_template_version_infos:
+            assert template_version_info in actual_template_version_infos
+
     # POST /workspace-service-templates/
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_template")
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_current_template")

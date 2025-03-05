@@ -49,6 +49,7 @@ API_CREATE_WORKSPACE_SERVICE_TEMPLATES = "Register workspace service template"
 API_GET_WORKSPACE_SERVICE_TEMPLATES = "Get workspace service templates"
 API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE = "Get workspace service templates (on workspace level)"  # only returns templates that the authenticated user is authorized to use
 API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME = "Get workspace service template by name and optional version"
+API_GET_WORKSPACE_SERVICE_TEMPLATES_ENABLED_VERSIONS = "Get workspace service templates versions and their user resource versions"
 
 API_CREATE_SHARED_SERVICE_TEMPLATES = "Register shared service template"
 API_GET_SHARED_SERVICE_TEMPLATES = "Get shared service templates"
