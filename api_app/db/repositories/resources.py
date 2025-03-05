@@ -46,7 +46,7 @@ class ResourceRepository(BaseRepository):
 
     async def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = "", version: Optional[str] = None) -> dict:
         template_repo = await ResourceTemplateRepository.create()
-        if version == None:
+        if version is None:
             template = await template_repo.get_current_template(template_name, resource_type, parent_template_name)
         else:
             template = await template_repo.get_template_by_name_and_version(template_name, version, resource_type, parent_template_name)
