@@ -31,7 +31,7 @@ check_terraform_role_assignments() {
   elif echo "$terraform_output" | grep -q "Terraform has been successfully initialized"; then
     return 0
   fi
-  echo "ERROR: Unexpected output from terraform init: $terraform_output"
+  echo "Apply Retry mechnism on: ERROR- Unexpected output from terraform init: $terraform_output"
   return 1
 }
 
