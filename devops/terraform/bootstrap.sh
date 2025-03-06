@@ -3,6 +3,11 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+# Validate required environment variables to avoid SC2154 lint warnings
+: "${TF_VAR_mgmt_resource_group_name:?Environment variable not set or empty}"
+: "${TF_VAR_mgmt_storage_account_name:?Environment variable not set or empty}"
+: "${TF_VAR_terraform_state_container_name:?Environment variable not set or empty}"
+
 retry_with_backoff() {
   local func="$1"
   local sleep_time=10
