@@ -3,6 +3,57 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+retry_with_backoff() {
+  local func="$1"
+  local sleep_time=10
+  local max_sleep=180
+
+  while [ "$sleep_time" -lt "$max_sleep" ]; do
+    if "$func"; then
+      return 0
+    fi
+    echo "Waiting for $sleep_time seconds..."
+    sleep "$sleep_time"
+    sleep_time=$((sleep_time * 2))
+  done
+  return 1
+}
+
+check_terraform_role_assignments() {
+  terraform_output=$(terraform init \
+    -backend-config="resource_group_name=$TF_VAR_mgmt_resource_group_name" \
+    -backend-config="storage_account_name=$TF_VAR_mgmt_storage_account_name" \
+    -backend-config="container_name=$TF_VAR_terraform_state_container_name" \
+    -reconfigure -input=false 2>&1)
+  echo "Terraform command output:"
+  echo "$terraform_output"
+
+  if echo "$terraform_output" | grep -q "AuthorizationPermissionMismatch\|403\|Failed to get existing workspaces"; then
+    echo "Permission issue: Terraform backend role assignments not yet propagated. Retrying..."
+    return 1
+  elif echo "$terraform_output" | grep -q "Terraform has been successfully initialized"; then
+    echo "has_access"
+    return 0
+  else
+    echo "Unknown error encountered during terraform init."
+    return 1
+  fi
+}
+
+
+check_role_assignments() {
+  local roles
+  roles=$(az role assignment list \
+    --assignee "$USER_OBJECT_ID" \
+    --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
+    --query "[?roleDefinitionName=='Storage Blob Data Contributor' || roleDefinitionName=='Storage Account Contributor'].roleDefinitionName" --output tsv)
+
+  if [[ $roles == *"Storage Blob Data Contributor"* ]]; then
+    echo "both"
+  fi
+}
+
+
 # Baseline Azure resources
 echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e[0m..."
 # shellcheck disable=SC2154
@@ -47,30 +98,11 @@ az role assignment create --assignee "$USER_OBJECT_ID" \
   --role "Storage Blob Data Contributor" \
   --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name"
 
-check_role_assignments() {
-  if az storage container list \
-    --account-name "$TF_VAR_mgmt_storage_account_name" \
-    --auth-mode login \
-    --output none 2>/dev/null; then
-    echo "has_access"
-  fi
-}
-
-# Wait for the role assignment to be applied
-sleep_time=10
-while [ "$sleep_time" -lt 180 ]; do
-  sleep "$sleep_time"
-  sleep_time=$((sleep_time * 2))
-  if [ -n "$(check_role_assignments)" ]; then
-    break
-  fi
-done
-
-if [ -z "$(check_role_assignments)" ]; then
-  echo "ERROR: Timeout waiting for role assignments."
+if ! retry_with_backoff check_role_assignments; then
+  echo "ERROR: Timeout waiting for az role assignments."
   exit 1
 fi
-
+# check
 # Blob container
 # shellcheck disable=SC2154
 
@@ -107,6 +139,10 @@ terraform {
 }
 BOOTSTRAP_BACKEND
 
+if ! retry_with_backoff check_terraform_role_assignments; then
+  echo "ERROR: Timeout waiting for Terraform backend role assignments."
+  exit 1
+fi
 
 # Set up Terraform
 echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
