@@ -48,15 +48,11 @@ az role assignment create --assignee "$USER_OBJECT_ID" \
   --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name"
 
 check_role_assignments() {
-  local roles
-  roles=$(az role assignment list \
-    --assignee "$USER_OBJECT_ID" \
-    --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
-    --query "[?roleDefinitionName=='Storage Blob Data Contributor' || roleDefinitionName=='Storage Account Contributor'].roleDefinitionName" \
-    --output tsv)
-
-  if [[ $roles == *"Storage Blob Data Contributor"* && $roles == *"Storage Account Contributor"* ]]; then
-    echo "both"
+  if az storage container list \
+    --account-name "$TF_VAR_mgmt_storage_account_name" \
+    --auth-mode login \
+    --output none 2>/dev/null; then
+    echo "has_access"
   fi
 }
 
