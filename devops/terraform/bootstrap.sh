@@ -25,19 +25,14 @@ check_terraform_role_assignments() {
     -backend-config="storage_account_name=$TF_VAR_mgmt_storage_account_name" \
     -backend-config="container_name=$TF_VAR_terraform_state_container_name" \
     -reconfigure -input=false 2>&1)
-  echo "Terraform command output:"
-  echo "$terraform_output"
 
   if echo "$terraform_output" | grep -q "AuthorizationPermissionMismatch\|403\|Failed to get existing workspaces"; then
-    echo "Permission issue: Terraform backend role assignments not yet propagated. Retrying..."
     return 1
   elif echo "$terraform_output" | grep -q "Terraform has been successfully initialized"; then
-    echo "has_access"
     return 0
-  else
-    echo "Unknown error encountered during terraform init."
-    return 1
   fi
+  echo "ERROR: Unexpected output from terraform init: $terraform_output"
+  return 1
 }
 
 
