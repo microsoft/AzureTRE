@@ -12,7 +12,6 @@ retry_with_backoff() {
     if "$func"; then
       return 0
     fi
-    echo "Waiting for $sleep_time seconds..."
     sleep "$sleep_time"
     sleep_time=$((sleep_time * 2))
   done
