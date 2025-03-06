@@ -47,43 +47,41 @@ az role assignment create --assignee "$USER_OBJECT_ID" \
   --role "Storage Blob Data Contributor" \
   --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name"
 
-# Function to check if the role assignment exists
 check_role_assignments() {
-  local sbdc
-  sbdc=$(az role assignment list \
+  local roles
+  roles=$(az role assignment list \
     --assignee "$USER_OBJECT_ID" \
-    --role "Storage Blob Data Contributor" \
     --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
-    --query "[].id" --output tsv)
+    --query "[?roleDefinitionName=='Storage Blob Data Contributor' || roleDefinitionName=='Storage Account Contributor'].roleDefinitionName" \
+    --output tsv)
 
-  local sac
-  sac=$(az role assignment list \
-    --assignee "$USER_OBJECT_ID" \
-    --role "Storage Account Contributor" \
-    --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
-    --query "[].id" --output tsv)
-
-  # Return a non-empty value only if both roles are assigned
-  if [[ -n "$sbdc" && -n "$sac" ]]; then
+  if [[ $roles == *"Storage Blob Data Contributor"* && $roles == *"Storage Account Contributor"* ]]; then
     echo "both"
   fi
 }
 
 # Wait for the role assignment to be applied
-echo -e "\n\e[34m»»» ⏳ \e[96mWaiting for role assignment to be applied\e[0m..."
-while [ -z "$(check_role_assignments)" ]; do
-  echo "Waiting for role assignment..."
-  sleep 10
+sleep_time=10
+while [ "$sleep_time" -lt 180 ]; do
+  sleep "$sleep_time"
+  sleep_time=$((sleep_time * 2))
+  if [ -n "$(check_role_assignments)" ]; then
+    break
+  fi
 done
-echo "Role assignment applied."
-sleep 30
+
+if [ -z "$(check_role_assignments)" ]; then
+  echo "ERROR: Timeout waiting for role assignments."
+  exit 1
+fi
+
 # Blob container
 # shellcheck disable=SC2154
 
 echo -e "\n\e[34m»»» 📦 \e[96mCreating storage containers\e[0m..."
 # List of containers to create
 containers=("$TF_VAR_terraform_state_container_name" "tflogs")
-max_retries=5
+max_retries=8
 
 for container in "${containers[@]}"; do
   for ((i=1; i<=max_retries; i++)); do
