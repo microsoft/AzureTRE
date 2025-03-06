@@ -53,6 +53,9 @@ else
   KEY="${TRE_ID?}_${PARENT_DIR}"
 fi
 
+# shellcheck disable=SC1091
+source "$(dirname "$0")/mgmtstorage_enable_public_access.sh"
+
 # Run terraform init with upgrade and reconfigure options
 terraform -chdir="$DIR/terraform" init -upgrade -reconfigure -input=false -backend=true \
     -backend-config="resource_group_name=${TF_VAR_mgmt_resource_group_name}" \

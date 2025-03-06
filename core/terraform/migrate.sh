@@ -5,6 +5,9 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
+# shellcheck disable=SC1091
+source ../../devops/scripts/mgmtstorage_enable_public_access.sh
+
 get_resource_id() {
   local json_data="$1"
   local resource_addr="$2"

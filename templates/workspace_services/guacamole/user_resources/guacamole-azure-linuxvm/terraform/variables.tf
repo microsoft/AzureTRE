@@ -26,6 +26,9 @@ variable "image_gallery_id" {
   type    = string
   default = ""
 }
+variable "owner_id" {
+  type = string
+}
 variable "enable_shutdown_schedule" {
   type    = bool
   default = false
@@ -42,5 +45,17 @@ variable "enable_cmk_encryption" {
   default = false
 }
 variable "key_store_id" {
+  type = string
+}
+variable "auth_tenant_id" {
+  type = string
+}
+variable "auth_client_id" {
+  type = string
+}
+variable "auth_client_secret" {
+  type = string
+}
+variable "admin_username" {
   type = string
 }
