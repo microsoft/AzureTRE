@@ -230,6 +230,31 @@ resource "azurerm_private_endpoint" "export_inprogress_pe" {
   }
 }
 
+# Enable Airlock Malware Scanning on Core TRE for export
+resource "azapi_resource_action" "enable_defender_for_storage_export" {
+  count       = var.enable_malware_scanning ? 1 : 0
+  type        = "Microsoft.Security/defenderForStorageSettings@2022-12-01-preview"
+  resource_id = "${azurerm_storage_account.sa_export_inprogress.id}/providers/Microsoft.Security/defenderForStorageSettings/current"
+  method      = "PUT"
+
+  body = jsonencode({
+    properties = {
+      isEnabled = true
+      malwareScanning = {
+        onUpload = {
+          isEnabled     = true
+          capGBPerMonth = 5000
+        },
+        scanResultsEventGridTopicResourceId = azurerm_eventgrid_topic.scan_result[0].id
+      }
+      sensitiveDataDiscovery = {
+        isEnabled = false
+      }
+      overrideSubscriptionLevelSettings = true
+    }
+  })
+}
+
 # 'Rejected' location for export
 resource "azurerm_storage_account" "sa_export_rejected" {
   name                             = local.export_rejected_storage_name
@@ -290,7 +315,7 @@ resource "azurerm_private_endpoint" "export_rejected_pe" {
   subnet_id           = var.services_subnet_id
   tags                = var.tre_workspace_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-sa-export-rej"
@@ -354,7 +379,7 @@ resource "azurerm_storage_account" "sa_export_blocked" {
     }
   )
 
-  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
+  lifecycle { ignore changes = [infrastructure_encryption_enabled, tags] }
 }
 
 
@@ -365,7 +390,7 @@ resource "azurerm_private_endpoint" "export_blocked_pe" {
   subnet_id           = var.services_subnet_id
   tags                = var.tre_workspace_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-sa-export-blocked"

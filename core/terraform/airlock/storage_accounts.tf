@@ -1,5 +1,3 @@
-
-
 # 'External' storage account - drop location for import
 resource "azurerm_storage_account" "sa_import_external" {
   name                             = local.import_external_storage_name
@@ -231,6 +229,100 @@ resource "azurerm_private_endpoint" "stg_import_inprogress_pe" {
   }
 }
 
+# Enable Airlock Malware Scanning on Core TRE for export
+resource "azapi_resource_action" "enable_defender_for_storage_export" {
+  count       = var.enable_malware_scanning ? 1 : 0
+  type        = "Microsoft.Security/defenderForStorageSettings@2022-12-01-preview"
+  resource_id = "${azurerm_storage_account.sa_export_inprogress.id}/providers/Microsoft.Security/defenderForStorageSettings/current"
+  method      = "PUT"
+
+  body = jsonencode({
+    properties = {
+      isEnabled = true
+      malwareScanning = {
+        onUpload = {
+          isEnabled     = true
+          capGBPerMonth = 5000
+        },
+        scanResultsEventGridTopicResourceId = azurerm_eventgrid_topic.scan_result[0].id
+      }
+      sensitiveDataDiscovery = {
+        isEnabled = false
+      }
+      overrideSubscriptionLevelSettings = true
+    }
+  })
+}
+
+resource "azurerm_storage_account" "sa_export_inprogress" {
+  name                             = local.export_inprogress_storage_name
+  location                         = var.location
+  resource_group_name              = var.resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
+  local_user_enabled               = false
+
+  # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
+  # This is true ONLY when Hierarchical Namespace is DISABLED
+  is_hns_enabled = false
+
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
+
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
+    }
+  }
+
+  tags = merge(var.tre_core_tags, {
+    description = "airlock;export;in-progress"
+  })
+
+  network_rules {
+    default_action = var.enable_local_debugging ? "Allow" : "Deny"
+    bypass         = ["AzureServices"]
+  }
+
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
+}
+
+resource "azurerm_private_endpoint" "stg_export_inprogress_pe" {
+  name                = "pe-stg-export-inprogress-blob-${var.tre_id}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  subnet_id           = var.airlock_storage_subnet_id
+  tags                = var.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "pdzg-stg-export-inprogress-blob-${var.tre_id}"
+    private_dns_zone_ids = [var.blob_core_dns_zone_id]
+  }
+
+  private_service_connection {
+    name                           = "psc-stg-export-inprogress-blob-${var.tre_id}"
+    private_connection_resource_id = azurerm_storage_account.sa_export_inprogress.id
+    is_manual_connection           = false
+    subresource_names              = ["Blob"]
+  }
+}
 
 # 'Rejected' storage account
 resource "azurerm_storage_account" "sa_import_rejected" {
@@ -373,6 +465,5 @@ resource "azurerm_private_endpoint" "stg_import_blocked_pe" {
 
   tags = var.tre_core_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
-
