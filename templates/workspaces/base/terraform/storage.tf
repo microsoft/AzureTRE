@@ -149,3 +149,21 @@ resource "azurerm_private_endpoint" "stgdfspe" {
     subresource_names              = ["dfs"]
   }
 }
+
+resource "azurerm_backup_container_storage_account" "storage_account" {
+  resource_group_name = azurerm_resource_group.ws.name
+  recovery_vault_name = module.backup[0].vault_name
+  storage_account_id  = azurerm_storage_account.stg.id
+}
+
+resource "azurerm_backup_protected_file_share" "file_share" {
+  resource_group_name       = azurerm_resource_group.ws.name
+  recovery_vault_name       = module.backup[0].vault_name
+  source_storage_account_id = azurerm_storage_account.stg.id
+  source_file_share_name    = azapi_resource.shared_storage.name
+  backup_policy_id          = module.backup[0].fileshare_backup_policy_id
+
+  depends_on = [
+    azurerm_backup_container_storage_account.storage_account
+  ]
+}

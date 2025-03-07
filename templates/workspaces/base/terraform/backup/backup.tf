@@ -111,26 +111,3 @@ resource "azurerm_backup_policy_file_share" "file_share_policy" {
   ]
 
 }
-
-resource "azurerm_backup_container_storage_account" "storage_account" {
-  resource_group_name = var.resource_group_name
-  recovery_vault_name = azurerm_recovery_services_vault.vault.name
-  storage_account_id  = var.azurerm_storage_account_id
-
-  depends_on = [
-    azurerm_recovery_services_vault.vault
-  ]
-}
-
-resource "azurerm_backup_protected_file_share" "file_share" {
-  resource_group_name       = var.resource_group_name
-  recovery_vault_name       = azurerm_recovery_services_vault.vault.name
-  source_storage_account_id = var.azurerm_storage_account_id
-  source_file_share_name    = var.shared_storage_name
-  backup_policy_id          = azurerm_backup_policy_file_share.file_share_policy.id
-
-  depends_on = [
-    azurerm_backup_policy_file_share.file_share_policy,
-    azurerm_backup_container_storage_account.storage_account
-  ]
-}
