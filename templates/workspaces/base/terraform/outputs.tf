@@ -29,3 +29,14 @@ output "scope_id" {
   value = var.register_aad_application ? module.aad[0].scope_id : var.scope_id
 }
 
+output "backup_vault_name" {
+  value = var.enable_backup ? module.backup[0].vault_name : ""
+}
+
+output "vm_backup_policy_id" {
+  value = var.enable_backup ? module.backup[0].vm_backup_policy_id : ""
+}
+
+output "fileshare_backup_policy_id" {
+  value = var.enable_backup ? module.backup[0].fileshare_backup_policy_id : ""
+}

@@ -142,14 +142,14 @@ terraform-deploy:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
-	&& ./devops/scripts/terraform_deploy.sh ${DIR}
+	&& cd ${DIR}/terraform/ && ./deploy.sh
 
 terraform-upgrade:
 	$(call target_title, "Upgrading ${DIR} with Terraform") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
-	&& ./devops/scripts/terraform_upgrade_provider.sh ${DIR}
+	&& ./devops/scripts/upgrade.sh ${DIR}
 
 terraform-import:
 	$(call target_title, "Importing ${DIR} with Terraform") \

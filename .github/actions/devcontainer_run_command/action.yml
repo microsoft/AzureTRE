@@ -179,7 +179,7 @@ runs:
       shell: bash
       run: |
         # Write command to a command.sh script file
-        cat <<EOF > ./command.sh
+        cat <<EOF >> ./command.sh
         #!/bin/bash
         set -x
         ${{ inputs.COMMAND }}
