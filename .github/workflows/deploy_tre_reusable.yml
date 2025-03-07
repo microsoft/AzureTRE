@@ -478,7 +478,7 @@ jobs:
           COMMAND: |
             # Loop to retry the make command up to 3 times
             for i in {1..3}; do
-              make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }} && ec=0 && break || ec=\$? && sleep 30;
+            make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }} && ec=0 && break || ec=\$? && sleep 30;
             done
 
             # Exit with the last status code
