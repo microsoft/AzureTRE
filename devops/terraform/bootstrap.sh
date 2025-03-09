@@ -132,7 +132,6 @@ terraform {
 }
 BOOTSTRAP_BACKEND
 
-write_bootstrap_terraform_backend
 if ! retry_with_backoff init_terraform; then
   echo "ERROR: Timeout waiting for Terraform backend role assignments."
   exit 1
