@@ -25,11 +25,7 @@ anon_status_code=$(curl -iu admin:"$1" -XPUT \
   'http://localhost/service/rest/v1/security/anonymous' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
-  -d '{
-        "enabled": true,
-        "userId": "anonymous",
-        "realmName": "NexusAuthorizingRealm"
-      }' \
+  -d '{"enabled": true}' \
   -k -s -w "%{http_code}" -o /dev/null)
 echo "Response received from Nexus for anonymous access: $anon_status_code"
 if [ "$anon_status_code" -ne 200 ]; then
