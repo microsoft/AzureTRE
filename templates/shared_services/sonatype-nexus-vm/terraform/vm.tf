@@ -34,19 +34,6 @@ resource "azurerm_private_dns_a_record" "nexus_vm" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "random_password" "nexus_vm_password" {
-  length           = 16
-  lower            = true
-  min_lower        = 1
-  upper            = true
-  min_upper        = 1
-  numeric          = true
-  min_numeric      = 1
-  special          = true
-  min_special      = 1
-  override_special = "_%@"
-}
-
 resource "random_password" "nexus_admin_password" {
   length           = 16
   lower            = true
@@ -58,15 +45,6 @@ resource "random_password" "nexus_admin_password" {
   special          = true
   min_special      = 1
   override_special = "_%"
-}
-
-resource "azurerm_key_vault_secret" "nexus_vm_password" {
-  name         = "nexus-vm-password"
-  value        = random_password.nexus_vm_password.result
-  key_vault_id = data.azurerm_key_vault.kv.id
-  tags         = local.tre_shared_service_tags
-
-  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_key_vault_secret" "nexus_admin_password" {
@@ -99,9 +77,8 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   location                        = data.azurerm_resource_group.rg.location
   network_interface_ids           = [azurerm_network_interface.nexus.id]
   size                            = var.vm_size
-  disable_password_authentication = false
+  disable_password_authentication = true
   admin_username                  = "adminuser"
-  admin_password                  = random_password.nexus_vm_password.result
   tags                            = local.tre_shared_service_tags
   encryption_at_host_enabled      = true
   secure_boot_enabled             = true
@@ -143,12 +120,12 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   ]
 
   connection {
-    type     = "ssh"
-    host     = azurerm_network_interface.nexus.private_ip_address
-    user     = "adminuser"
-    password = random_password.nexus_vm_password.result
-    agent    = false
-    timeout  = "10m"
+    type        = "ssh"
+    host        = azurerm_network_interface.nexus.private_ip_address
+    user        = "adminuser"
+    private_key = azurerm_key_vault_secret.ssh_private_key.value
+    agent       = false
+    timeout     = "10m"
   }
 }
 
@@ -271,6 +248,29 @@ resource "azurerm_virtual_machine_extension" "keyvault" {
       "msiClientId" : azurerm_user_assigned_identity.nexus_msi.client_id
     }
   })
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "tls_private_key" "ssh_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "azurerm_key_vault_secret" "ssh_private_key" {
+  name         = "nexus-ssh-private-key"
+  value        = tls_private_key.ssh_key.private_key_pem
+  key_vault_id = data.azurerm_key_vault.kv.id
+  tags         = local.tre_shared_service_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_key_vault_secret" "ssh_public_key" {
+  name         = "nexus-ssh-public-key"
+  value        = tls_private_key.ssh_key.public_key_openssh
+  key_vault_id = data.azurerm_key_vault.kv.id
+  tags         = local.tre_shared_service_tags
 
   lifecycle { ignore_changes = [tags] }
 }
