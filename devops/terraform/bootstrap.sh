@@ -17,6 +17,7 @@ retry_with_backoff() {
   done
   return 1
 }
+
 init_terraform() {
   terraform_output=$(terraform init -input=false -reconfigure 2>&1)
   echo "Terraform command output:"
