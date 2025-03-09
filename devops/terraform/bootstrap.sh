@@ -33,6 +33,7 @@ init_terraform() {
 
 check_role_assignments() {
   local roles
+  # shellcheck disable=SC2154
   roles=$(az role assignment list \
     --assignee "$USER_OBJECT_ID" \
     --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
@@ -44,6 +45,7 @@ check_role_assignments() {
 }
 
 write_bootstrap_terraform_backend() {
+# shellcheck disable=SC2154
 cat > bootstrap_backend.tf <<BOOTSTRAP_BACKEND
 terraform {
   backend "azurerm" {
