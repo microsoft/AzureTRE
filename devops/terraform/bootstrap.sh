@@ -31,7 +31,6 @@ init_terraform() {
   return 1
 }
 
-
 check_role_assignments() {
   local roles
   # shellcheck disable=SC2154
@@ -44,23 +43,6 @@ check_role_assignments() {
     echo "both"
   fi
 }
-
-write_bootstrap_terraform_backend() {
-# shellcheck disable=SC2154
-cat > bootstrap_backend.tf <<BOOTSTRAP_BACKEND
-terraform {
-  backend "azurerm" {
-    resource_group_name  = "$TF_VAR_mgmt_resource_group_name"
-    storage_account_name = "$TF_VAR_mgmt_storage_account_name"
-    container_name       = "$TF_VAR_terraform_state_container_name"
-    key                  = "bootstrap.tfstate"
-    use_azuread_auth     = true
-    use_oidc             = true
-  }
-}
-BOOTSTRAP_BACKEND
-}
-
 
 # Baseline Azure resources
 echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e[0m..."
@@ -136,6 +118,19 @@ done
 
 # Set up Terraform
 echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
+# shellcheck disable=SC2154
+cat > bootstrap_backend.tf <<BOOTSTRAP_BACKEND
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "$TF_VAR_mgmt_resource_group_name"
+    storage_account_name = "$TF_VAR_mgmt_storage_account_name"
+    container_name       = "$TF_VAR_terraform_state_container_name"
+    key                  = "bootstrap.tfstate"
+    use_azuread_auth     = true
+    use_oidc             = true
+  }
+}
+BOOTSTRAP_BACKEND
 
 write_bootstrap_terraform_backend
 if ! retry_with_backoff init_terraform; then
