@@ -20,8 +20,8 @@ retry_with_backoff() {
 
 init_terraform() {
   terraform_output=$(terraform init -input=false -reconfigure 2>&1)
-  echo "Terraform command output:"
-  echo "$terraform_output"
+  echo "Terraform command output:" # TODO remove
+  echo "$terraform_output" # TODO remove
   if echo "$terraform_output" | grep -q "AuthorizationPermissionMismatch\|403\|Failed to get existing workspaces"; then
     return 1
   elif echo "$terraform_output" | grep -q "Terraform has been successfully initialized"; then
