@@ -3,11 +3,6 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-# Validate required environment variables to avoid SC2154 lint warnings
-: "${TF_VAR_mgmt_resource_group_name:?Environment variable not set or empty}"
-: "${TF_VAR_mgmt_storage_account_name:?Environment variable not set or empty}"
-: "${TF_VAR_terraform_state_container_name:?Environment variable not set or empty}"
-
 retry_with_backoff() {
   local func="$1"
   local sleep_time=10
@@ -22,14 +17,10 @@ retry_with_backoff() {
   done
   return 1
 }
-
-check_terraform_role_assignments() {
-  terraform_output=$(terraform init \
-    -backend-config="resource_group_name=$TF_VAR_mgmt_resource_group_name" \
-    -backend-config="storage_account_name=$TF_VAR_mgmt_storage_account_name" \
-    -backend-config="container_name=$TF_VAR_terraform_state_container_name" \
-    -reconfigure -input=false 2>&1)
-
+init_terraform() {
+  terraform_output=$(terraform init -input=false -reconfigure 2>&1)
+  echo "Terraform command output:"
+  echo "$terraform_output"
   if echo "$terraform_output" | grep -q "AuthorizationPermissionMismatch\|403\|Failed to get existing workspaces"; then
     return 1
   elif echo "$terraform_output" | grep -q "Terraform has been successfully initialized"; then
@@ -50,6 +41,21 @@ check_role_assignments() {
   if [[ $roles == *"Storage Blob Data Contributor"* ]]; then
     echo "both"
   fi
+}
+
+write_bootstrap_terraform_backend() {
+cat > bootstrap_backend.tf <<BOOTSTRAP_BACKEND
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "$TF_VAR_mgmt_resource_group_name"
+    storage_account_name = "$TF_VAR_mgmt_storage_account_name"
+    container_name       = "$TF_VAR_terraform_state_container_name"
+    key                  = "bootstrap.tfstate"
+    use_azuread_auth     = true
+    use_oidc             = true
+  }
+}
+BOOTSTRAP_BACKEND
 }
 
 
@@ -125,27 +131,14 @@ for container in "${containers[@]}"; do
   done
 done
 
-cat > bootstrap_backend.tf <<BOOTSTRAP_BACKEND
-terraform {
-  backend "azurerm" {
-    resource_group_name  = "$TF_VAR_mgmt_resource_group_name"
-    storage_account_name = "$TF_VAR_mgmt_storage_account_name"
-    container_name       = "$TF_VAR_terraform_state_container_name"
-    key                  = "bootstrap.tfstate"
-    use_azuread_auth     = true
-    use_oidc             = true
-  }
-}
-BOOTSTRAP_BACKEND
+# Set up Terraform
+echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
 
-if ! retry_with_backoff check_terraform_role_assignments; then
+write_bootstrap_terraform_backend
+if ! retry_with_backoff init_terraform; then
   echo "ERROR: Timeout waiting for Terraform backend role assignments."
   exit 1
 fi
-
-# Set up Terraform
-echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
-terraform init -input=false -backend=true -reconfigure
 
 # Import the storage account & res group into state
 echo -e "\n\e[34m»»» 📤 \e[96mImporting resources to state\e[0m..."
@@ -158,5 +151,4 @@ if ! terraform state show azurerm_storage_account.state_storage > /dev/null; the
   terraform import azurerm_storage_account.state_storage "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name"
 fi
 echo "State imported"
-
 set +o nounset
