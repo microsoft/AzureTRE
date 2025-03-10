@@ -126,6 +126,10 @@ parameters:
     type: string
     default: "GRS"
     description: "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
+  - name: enable_malware_scanning
+    type: boolean
+    default: false
+    description: "Enable malware scanning on the workspace storage account"
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -196,6 +200,7 @@ install:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
+        enable_malware_scanning: ${ bundle.parameters.enable_malware_scanning }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -241,6 +246,7 @@ upgrade:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
+        enable_malware_scanning: ${ bundle.parameters.enable_malware_scanning }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -268,17 +274,17 @@ upgrade:
         - login
       flags:
         service-principal: ""
-        username: '${ bundle.credentials.auth_client_id }'
-        password: '${ bundle.credentials.auth_client_secret }'
-        tenant: '${ bundle.credentials.auth_tenant_id }'
+        username: "${ bundle.credentials.auth_client_id }"
+        password: "${ bundle.credentials.auth_client_secret }"
+        tenant: "${ bundle.credentials.auth_tenant_id }"
         allow-no-subscriptions: ""
   - exec:
       description: "Update workspace app redirect urls"
       command: ./update_redirect_urls.sh
       flags:
-        workspace-api-client-id: '${ bundle.parameters.client_id }'
-        aad-redirect-uris-b64: '${ bundle.parameters.aad_redirect_uris }'
-        register-aad-application: '${ bundle.parameters.register_aad_application }'
+        workspace-api-client-id: "${ bundle.parameters.client_id }"
+        aad-redirect-uris-b64: "${ bundle.parameters.aad_redirect_uris }"
+        register-aad-application: "${ bundle.parameters.register_aad_application }"
 
 uninstall:
   - terraform:
@@ -309,6 +315,7 @@ uninstall:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
+        enable_malware_scanning: ${ bundle.parameters.enable_malware_scanning }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
