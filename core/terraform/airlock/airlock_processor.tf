@@ -180,3 +180,58 @@ resource "azurerm_private_endpoint" "function_storage" {
     subresource_names              = [each.key]
   }
 }
+
+resource "azurerm_dns_resolver" "dns_resolver" {
+  name                = "dns-resolver-${var.tre_id}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  tags                = var.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+
+  inbound_endpoint {
+    name      = "inbound-endpoint"
+    subnet_id = var.airlock_processor_subnet_id
+  }
+
+  outbound_endpoint {
+    name      = "outbound-endpoint"
+    subnet_id = var.airlock_processor_subnet_id
+  }
+}
+
+resource "azurerm_dns_resolver_rule" "dns_resolver_rule" {
+  name                = "dns-resolver-rule-${var.tre_id}"
+  resource_group_name = var.resource_group_name
+  dns_resolver_id     = azurerm_dns_resolver.dns_resolver.id
+  domain_name         = "*"
+  rule_type           = "Forward"
+  target_dns_servers {
+    ip_address = "0.0.0.0"
+  }
+  tags = var.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_dns_resolver_policy" "dns_security_policy" {
+  name                = "dns-security-policy-${var.tre_id}"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  dns_resolver_id     = azurerm_dns_resolver.dns_resolver.id
+  policy_type         = "Security"
+  tags                = var.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_dns_resolver_policy_rule" "dns_security_rule" {
+  name                = "dns-security-rule-${var.tre_id}"
+  resource_group_name = var.resource_group_name
+  dns_resolver_policy_id = azurerm_dns_resolver_policy.dns_security_policy.id
+  action              = "Deny"
+  domain_name         = "*"
+  tags                = var.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+}

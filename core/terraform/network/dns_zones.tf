@@ -75,7 +75,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_agentsvc
   private_dns_zone_name = azurerm_private_dns_zone.azure_monitor_agentsvc.name
   registration_enabled  = false
   tags                  = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
 
 # Blob DNS zone is used by both Azure Monitor and Storage modules
@@ -83,7 +83,7 @@ resource "azurerm_private_dns_zone" "blobcore" {
   name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.blob.core.windows.net"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "blobcore" {
@@ -92,14 +92,14 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blobcore" {
   private_dns_zone_name = azurerm_private_dns_zone.blobcore.name
   virtual_network_id    = azurerm_virtual_network.core.id
   tags                  = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone" "azurewebsites" {
   name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurewebsites.net"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
@@ -109,14 +109,14 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
   name                  = "azurewebsites-link"
   registration_enabled  = false
   tags                  = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone" "static_web" {
   name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.web.core.windows.net"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "webcorelink" {
@@ -125,14 +125,14 @@ resource "azurerm_private_dns_zone_virtual_network_link" "webcorelink" {
   private_dns_zone_name = azurerm_private_dns_zone.static_web.name
   virtual_network_id    = azurerm_virtual_network.core.id
   tags                  = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone" "filecore" {
   name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.file.core.windows.net"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "filecorelink" {
@@ -141,14 +141,14 @@ resource "azurerm_private_dns_zone_virtual_network_link" "filecorelink" {
   private_dns_zone_name = azurerm_private_dns_zone.filecore.name
   virtual_network_id    = azurerm_virtual_network.core.id
   tags                  = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone" "vaultcore" {
   name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.vaultcore.azure.net"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "vaultcore" {
@@ -157,14 +157,14 @@ resource "azurerm_private_dns_zone_virtual_network_link" "vaultcore" {
   private_dns_zone_name = azurerm_private_dns_zone.vaultcore.name
   virtual_network_id    = azurerm_virtual_network.core.id
   tags                  = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone" "azurecr" {
   name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.azurecr.io"]
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "acrlink" {
@@ -173,7 +173,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "acrlink" {
   private_dns_zone_name = azurerm_private_dns_zone.azurecr.name
   virtual_network_id    = azurerm_virtual_network.core.id
   tags                  = local.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone" "eventgrid" {
@@ -181,7 +181,7 @@ resource "azurerm_private_dns_zone" "eventgrid" {
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "eventgridlink" {
@@ -191,7 +191,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "eventgridlink" {
   virtual_network_id    = azurerm_virtual_network.core.id
   tags                  = local.tre_core_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone" "private_dns_zones" {
@@ -200,7 +200,7 @@ resource "azurerm_private_dns_zone" "private_dns_zones" {
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "private_dns_zone_links" {
@@ -211,5 +211,38 @@ resource "azurerm_private_dns_zone_virtual_network_link" "private_dns_zone_links
   virtual_network_id    = azurerm_virtual_network.core.id
   tags                  = local.tre_core_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore changes = [tags] }
+}
+
+resource "azurerm_dns_resolver" "dns_resolver" {
+  name                = "dns-resolver-${var.tre_id}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  tags                = var.tre_core_tags
+
+  lifecycle { ignore changes = [tags] }
+
+  inbound_endpoint {
+    name      = "inbound-endpoint"
+    subnet_id = var.airlock_processor_subnet_id
+  }
+
+  outbound_endpoint {
+    name      = "outbound-endpoint"
+    subnet_id = var.airlock_processor_subnet_id
+  }
+}
+
+resource "azurerm_dns_resolver_rule" "dns_resolver_rule" {
+  name                = "dns-resolver-rule-${var.tre_id}"
+  resource_group_name = var.resource_group_name
+  dns_resolver_id     = azurerm_dns_resolver.dns_resolver.id
+  domain_name         = "*"
+  rule_type           = "Forward"
+  target_dns_servers {
+    ip_address = "0.0.0.0"
+  }
+  tags = var.tre_core_tags
+
+  lifecycle { ignore changes = [tags] }
 }
