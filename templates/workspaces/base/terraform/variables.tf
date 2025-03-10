@@ -139,3 +139,9 @@ variable "storage_account_redundancy" {
   default     = "GRS"
   description = "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
 }
+
+variable "enable_malware_scanning" {
+  type        = bool
+  default     = false
+  description = "Enable malware scanning for the workspace"
+}
