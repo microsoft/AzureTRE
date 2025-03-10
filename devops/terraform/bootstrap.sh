@@ -19,20 +19,6 @@ retry_with_backoff() {
 }
 
 init_terraform() {
-  # shellcheck disable=SC2154
-  cat > bootstrap_backend.tf <<BOOTSTRAP_BACKEND
-terraform {
-  backend "azurerm" {
-    resource_group_name  = "$TF_VAR_mgmt_resource_group_name"
-    storage_account_name = "$TF_VAR_mgmt_storage_account_name"
-    container_name       = "$TF_VAR_terraform_state_container_name"
-    key                  = "bootstrap.tfstate"
-    use_azuread_auth     = true
-    use_oidc             = true
-  }
-}
-BOOTSTRAP_BACKEND
-
   terraform_output=$(terraform init -input=false -reconfigure 2>&1)
   echo "Terraform command output:"
   echo "$terraform_output"
@@ -108,12 +94,10 @@ if ! retry_with_backoff check_role_assignments; then
   echo "ERROR: Timeout waiting for az role assignments."
   exit 1
 fi
-# check
-# Blob container
-# shellcheck disable=SC2154
+
 
 echo -e "\n\e[34m»»» 📦 \e[96mCreating storage containers\e[0m..."
-# List of containers to create
+# shellcheck disable=SC2154
 containers=("$TF_VAR_terraform_state_container_name" "tflogs")
 max_retries=8
 
@@ -132,15 +116,27 @@ for container in "${containers[@]}"; do
   done
 done
 
-# Set up Terraform
+
 echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
+# shellcheck disable=SC2154
+cat > bootstrap_backend.tf <<BOOTSTRAP_BACKEND
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "$TF_VAR_mgmt_resource_group_name"
+    storage_account_name = "$TF_VAR_mgmt_storage_account_name"
+    container_name       = "$TF_VAR_terraform_state_container_name"
+    key                  = "bootstrap.tfstate"
+    use_azuread_auth     = true
+    use_oidc             = true
+  }
+}
+BOOTSTRAP_BACKEND
+
 # shellcheck disable=SC2154
 if ! retry_with_backoff init_terraform; then
   echo "ERROR: Timeout waiting for Terraform backend role assignments."
   exit 1
 fi
-
-# Import the storage account & res group into state
 echo -e "\n\e[34m»»» 📤 \e[96mImporting resources to state\e[0m..."
 if ! terraform state show azurerm_resource_group.mgmt > /dev/null; then
   echo  "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name"
