@@ -19,15 +19,31 @@ retry_with_backoff() {
 }
 
 init_terraform() {
+  # shellcheck disable=SC2154
+  cat > bootstrap_backend.tf <<BOOTSTRAP_BACKEND
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "$TF_VAR_mgmt_resource_group_name"
+    storage_account_name = "$TF_VAR_mgmt_storage_account_name"
+    container_name       = "$TF_VAR_terraform_state_container_name"
+    key                  = "bootstrap.tfstate"
+    use_azuread_auth     = true
+    use_oidc             = true
+  }
+}
+BOOTSTRAP_BACKEND
+
   terraform_output=$(terraform init -input=false -reconfigure 2>&1)
-  echo "Terraform command output:" # TODO remove
-  echo "$terraform_output" # TODO remove
+  echo "Terraform command output:"
+  echo "$terraform_output"
+
   if echo "$terraform_output" | grep -q "AuthorizationPermissionMismatch\|403\|Failed to get existing workspaces"; then
     return 1
   elif echo "$terraform_output" | grep -q "Terraform has been successfully initialized"; then
     return 0
   fi
-  echo "Apply Retry mechnism on: ERROR- Unexpected output from terraform init: $terraform_output"
+
+  echo "Apply Retry mechanism on: ERROR- Unexpected output from terraform init: $terraform_output"
   return 1
 }
 
@@ -119,19 +135,6 @@ done
 # Set up Terraform
 echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
 # shellcheck disable=SC2154
-cat > bootstrap_backend.tf <<BOOTSTRAP_BACKEND
-terraform {
-  backend "azurerm" {
-    resource_group_name  = "$TF_VAR_mgmt_resource_group_name"
-    storage_account_name = "$TF_VAR_mgmt_storage_account_name"
-    container_name       = "$TF_VAR_terraform_state_container_name"
-    key                  = "bootstrap.tfstate"
-    use_azuread_auth     = true
-    use_oidc             = true
-  }
-}
-BOOTSTRAP_BACKEND
-
 if ! retry_with_backoff init_terraform; then
   echo "ERROR: Timeout waiting for Terraform backend role assignments."
   exit 1
