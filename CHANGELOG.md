@@ -8,6 +8,7 @@ ENHANCEMENTS:
 BUG FIXES:
 * Fix the management storage access error while executing `make show-core-output` command, and remove redundant error messages from `mgmtstorage_enable_public_access.sh` script ([#4404](https://github.com/microsoft/AzureTRE/issues/4404))
 * Fix retry loop in devcontainer action and override commands.sh [#4409](https://github.com/microsoft/AzureTRE/pull/4409)
+* Fix CI issue where branch names containing 'bootstrap' would incorrectly skip Azure login steps [#4416](https://github.com/microsoft/AzureTRE/issues/4416) ([#4417](https://github.com/microsoft/AzureTRE/pull/4417))
 
 ## 0.21.0
 
