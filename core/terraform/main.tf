@@ -188,6 +188,7 @@ module "resource_processor_vmss_porter" {
   enable_cmk_encryption                            = var.enable_cmk_encryption
   key_store_id                                     = local.key_store_id
   kv_encryption_key_name                           = local.cmk_name
+  enable_malware_scanning                          = var.enable_airlock_malware_scanning
 
   depends_on = [
     module.network,
