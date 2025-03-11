@@ -39,7 +39,7 @@ check_role_assignments() {
   roles=$(az role assignment list \
     --assignee "$USER_OBJECT_ID" \
     --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
-    --query "[?roleDefinitionName=='Storage Blob Data Contributor' || roleDefinitionName=='Storage Account Contributor'].roleDefinitionName" --output tsv)
+    --query "[?roleDefinitionName=='Storage Blob Data Contributor'].roleDefinitionName" --output tsv)
 
   if [[ $roles == *"Storage Blob Data Contributor"* ]]; then
     echo "both"
