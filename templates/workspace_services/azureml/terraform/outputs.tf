@@ -1,5 +1,5 @@
 output "azureml_workspace_name" {
-  value = azurerm_machine_learning_workspace.aml_workspace.name
+  value = azapi_resource.aml_workspace.output.name
 }
 
 output "azureml_acr_id" {
@@ -15,7 +15,7 @@ output "aml_fqdn" {
 }
 
 output "connection_uri" {
-  value = format("%s/?wsid=%s&tid=%s", module.terraform_azurerm_environment_configuration.aml_studio_endpoint, azurerm_machine_learning_workspace.aml_workspace.id, var.arm_tenant_id)
+  value = format("%s/?wsid=%s&tid=%s", module.terraform_azurerm_environment_configuration.aml_studio_endpoint, azapi_resource.aml_workspace.output.id, var.arm_tenant_id)
 }
 
 output "workspace_address_spaces" {

@@ -29,3 +29,6 @@ output "scope_id" {
   value = var.register_aad_application ? module.aad[0].scope_id : var.scope_id
 }
 
+output "log_analytics_workspace_name" {
+  value = module.azure_monitor.log_analytics_workspace_name
+}
