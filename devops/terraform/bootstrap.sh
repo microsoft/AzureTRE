@@ -42,8 +42,9 @@ check_role_assignments() {
     --query "[?roleDefinitionName=='Storage Blob Data Contributor'].roleDefinitionName" --output tsv)
 
   if [[ $roles == *"Storage Blob Data Contributor"* ]]; then
-    echo "both"
+    return 0
   fi
+  return 1
 }
 
 # Baseline Azure resources
