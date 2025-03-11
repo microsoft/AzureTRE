@@ -39,10 +39,18 @@
       "type": "string",
       "title": "Address space",
       "description": "The address space for use by AML subnets"
+    },
+    "log_analytics_workspace_name": {
+      "$id": "#/properties/log_analytics_workspace_name",
+      "type": "string",
+      "title": "Log Analytics Workspace Name"
     }
   },
   "uiSchema": {
     "address_space": {
+      "classNames": "tre-hidden"
+    },
+    "log_analytics_workspace_name": {
       "classNames": "tre-hidden"
     }
   },
@@ -53,11 +61,17 @@
         "stepTitle": "Upgrade to ensure aware of address space",
         "resourceType": "workspace",
         "resourceAction": "upgrade",
-        "properties": [
-        ]
+        "properties": []
       },
       {
-        "stepId": "main"
+        "stepId": "main",
+        "properties": [
+          {
+            "name": "log_analytics_workspace_name",
+            "type": "string",
+            "value": "{{ resource.parent.properties.log_analytics_workspace_name }}"
+          }
+        ]
       },
       {
         "stepId": "260421b3-7308-491f-b531-e007cdc0ff46",
@@ -128,7 +142,6 @@
                     "AzureResourceManager",
                     "{{ resource.properties.mcr_tag }}",
                     "AzureFrontDoor.FirstParty"
-
                   ],
                   "destination_ports": [
                     "443"
@@ -275,7 +288,6 @@
                     "AzureResourceManager",
                     "{{ resource.properties.mcr_tag }}",
                     "AzureFrontDoor.FirstParty"
-
                   ],
                   "destination_ports": [
                     "443"
@@ -378,7 +390,14 @@
         ]
       },
       {
-        "stepId": "main"
+        "stepId": "main",
+        "properties": [
+          {
+            "name": "log_analytics_workspace_name",
+            "type": "string",
+            "value": "{{ resource.parent.properties.log_analytics_workspace_name }}"
+          }
+        ]
       }
     ]
   }

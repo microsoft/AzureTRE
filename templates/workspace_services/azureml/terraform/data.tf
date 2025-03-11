@@ -7,18 +7,13 @@ data "azurerm_virtual_network" "ws" {
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
-resource "azurerm_application_insights" "ai" {
-  name                = "ai-${local.service_resource_name_suffix}"
-  location            = data.azurerm_resource_group.ws.location
-  resource_group_name = data.azurerm_resource_group.ws.name
-  application_type    = "web"
-  tags                = local.tre_workspace_service_tags
-
-  lifecycle { ignore_changes = [tags] }
-}
-
 data "azurerm_key_vault" "ws" {
   name                = local.keyvault_name
+  resource_group_name = data.azurerm_resource_group.ws.name
+}
+
+data "azurerm_log_analytics_workspace" "ws" {
+  name                = var.log_analytics_workspace_name
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 

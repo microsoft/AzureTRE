@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.0.0
+version: 2.1.2
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -158,6 +158,11 @@ outputs:
     applyTo:
       - install
       - upgrade
+  - name: log_analytics_workspace_name
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
   - exec
@@ -210,6 +215,7 @@ install:
         - name: client_id
         - name: scope_id
         - name: sp_id
+        - name: log_analytics_workspace_name
 
 upgrade:
   - terraform:
@@ -255,6 +261,7 @@ upgrade:
         - name: client_id
         - name: scope_id
         - name: sp_id
+        - name: log_analytics_workspace_name
   - az:
       description: "Set Azure Cloud Environment"
       arguments:
@@ -268,17 +275,17 @@ upgrade:
         - login
       flags:
         service-principal: ""
-        username: '${ bundle.credentials.auth_client_id }'
-        password: '${ bundle.credentials.auth_client_secret }'
-        tenant: '${ bundle.credentials.auth_tenant_id }'
+        username: "${ bundle.credentials.auth_client_id }"
+        password: "${ bundle.credentials.auth_client_secret }"
+        tenant: "${ bundle.credentials.auth_tenant_id }"
         allow-no-subscriptions: ""
   - exec:
       description: "Update workspace app redirect urls"
       command: ./update_redirect_urls.sh
       flags:
-        workspace-api-client-id: '${ bundle.parameters.client_id }'
-        aad-redirect-uris-b64: '${ bundle.parameters.aad_redirect_uris }'
-        register-aad-application: '${ bundle.parameters.register_aad_application }'
+        workspace-api-client-id: "${ bundle.parameters.client_id }"
+        aad-redirect-uris-b64: "${ bundle.parameters.aad_redirect_uris }"
+        register-aad-application: "${ bundle.parameters.register_aad_application }"
 
 uninstall:
   - terraform:

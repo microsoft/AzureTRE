@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-azureml
-version: 0.10.0
+version: 0.10.3
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -69,6 +69,8 @@ parameters:
   - name: key_store_id
     type: string
     default: ""
+  - name: log_analytics_workspace_name
+    type: string
 
 outputs:
   - name: azureml_workspace_name
@@ -147,6 +149,7 @@ install:
         azure_environment: ${ bundle.parameters.azure_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        log_analytics_workspace_name: ${ bundle.parameters.log_analytics_workspace_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -185,6 +188,7 @@ upgrade:
         azure_environment: ${ bundle.parameters.azure_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        log_analytics_workspace_name: ${ bundle.parameters.log_analytics_workspace_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -223,6 +227,7 @@ uninstall:
         azure_environment: ${ bundle.parameters.azure_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        log_analytics_workspace_name: ${ bundle.parameters.log_analytics_workspace_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
