@@ -109,13 +109,3 @@ status_code=$(curl -iu admin:"$1" -XPUT \
   -d @"$(dirname "${BASH_SOURCE[0]}")"/nexus_realms_config.json \
   -k -s -w "%{http_code}" -o /dev/null)
 echo "Response received from Nexus: $status_code"
-
-# Add a new section to handle the VS Code extensions configuration
-echo 'Configuring VS Code extensions proxy...'
-status_code=$(curl -iu admin:"$1" -XPOST \
-  'http://localhost/service/rest/v1/repositories/raw/proxy' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d @"$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/vscode_extensions_proxy_conf.json \
-  -k -s -w "%{http_code}" -o /dev/null)
-echo "Response received from Nexus: $status_code"
