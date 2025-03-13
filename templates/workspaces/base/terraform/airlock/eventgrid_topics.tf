@@ -37,30 +37,30 @@ resource "azurerm_role_assignment" "servicebus_sender_import_approved_blob_creat
   ]
 }
 
-resource "azurerm_eventgrid_system_topic" "export_inprogress_blob_created" {
-  name                   = local.export_inprogress_sys_topic_name
-  location               = var.location
-  resource_group_name    = var.ws_resource_group_name
-  source_arm_resource_id = azurerm_storage_account.sa_export_inprogress.id
-  topic_type             = "Microsoft.Storage.StorageAccounts"
+# resource "azurerm_eventgrid_system_topic" "export_inprogress_blob_created" {
+#   name                   = local.export_inprogress_sys_topic_name
+#   location               = var.location
+#   resource_group_name    = var.ws_resource_group_name
+#   source_arm_resource_id = azurerm_storage_account.sa_export_inprogress.id
+#   topic_type             = "Microsoft.Storage.StorageAccounts"
 
-  tags = merge(
-    var.tre_workspace_tags,
-    {
-      Publishers = "airlock;inprogress-export-sa"
-    }
-  )
+#   tags = merge(
+#     var.tre_workspace_tags,
+#     {
+#       Publishers = "airlock;inprogress-export-sa"
+#     }
+#   )
 
-  identity {
-    type = "SystemAssigned"
-  }
+#   identity {
+#     type = "SystemAssigned"
+#   }
 
-  depends_on = [
-    azurerm_storage_account.sa_export_inprogress,
-  ]
+#   depends_on = [
+#     azurerm_storage_account.sa_export_inprogress,
+#   ]
 
-  lifecycle { ignore_changes = [tags] }
-}
+#   lifecycle { ignore_changes = [tags] }
+# }
 
 resource "azurerm_role_assignment" "servicebus_sender_export_inprogress_blob_created" {
   scope                = data.azurerm_servicebus_namespace.airlock_sb.id
@@ -142,6 +142,27 @@ resource "azurerm_role_assignment" "servicebus_sender_export_blocked_blob_create
   ]
 }
 
+
+
+resource "azurerm_eventgrid_topic" "scan_result" {
+  count               = var.enable_malware_scanning ? 1 : 0
+  name                = local.scan_result_topic_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  # This is mandatory for the scan result to be published since private networks are not supported yet
+  public_network_access_enabled = true
+  local_auth_enabled            = false
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  tags = merge(var.tre_core_tags, {
+    Publishers = "Airlock Processor;"
+  })
+
+  lifecycle { ignore_changes = [tags] }
+}
 
 ## Subscriptions
 resource "azurerm_eventgrid_event_subscription" "import_approved_blob_created" {
