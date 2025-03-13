@@ -13,15 +13,29 @@ class UsersInResponse(BaseModel):
                 "users": [
                     {
                         "id": 1,
-                        "name": "John Doe",
-                        "email": "john.doe@example.com",
-                        "roles": ["WorkspaceOwner", "WorkspaceResearcher"]
+                        "displayName": "John Doe",
+                        "userPrincipalName": "john.doe@example.com",
+                        "roles": [
+                            {
+                                "id": 1,
+                                "displayName": "WorkspaceOwner"
+                            },
+                            {
+                                "id": 2,
+                                "displayName": "WorkspaceResearcher"
+                            }
+                        ]
                     },
                     {
                         "id": 2,
-                        "name": "Jane Smith",
-                        "email": "jane.smith@example.com",
-                        "roles": ["WorkspaceResearcher"]
+                        "displayName": "Jane Smith",
+                        "userPrincipalName": "jane.smith@example.com",
+                        "roles": [
+                            {
+                                "id": 2,
+                                "displayName": "WorkspaceResearcher"
+                            }
+                        ]
                     }
                 ]
             }

@@ -31,4 +31,4 @@ class AssignedUser(BaseModel):
     id: str
     displayName: str
     userPrincipalName: str
-    roles: List[Role] = Field([])
+    roles: List[Role] = Field(default_factory=list)

@@ -138,13 +138,9 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
   }, [selectedUsers, apiCall, workspace.id, selectedRole, props]);
 
   const renderFooter = useCallback(() => {
-    let footer = <></>
-    footer = <>
-      <div style={{ textAlign: "end" }}>
-        <PrimaryButton onClick={() => assign()} disabled={assigning || (!selectedUsers || !selectedRole)}>Assign</PrimaryButton>
-      </div>
-    </>
-    return footer;
+    return (<div style={{ textAlign: "end" }}>
+      <PrimaryButton onClick={() => assign()} disabled={assigning || (!selectedUsers || !selectedRole)}>Assign</PrimaryButton>
+    </div>);
   }, [selectedUsers, selectedRole, assign, assigning]);
 
   return (
