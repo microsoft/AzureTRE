@@ -53,6 +53,11 @@ variable "create_aad_groups" {
   description = "Create AAD groups automatically for the Workspace Application Roles."
 }
 
+variable "core_api_client_id" {
+  type        = string
+  description = "The client id of the core API application."
+}
+
 variable "enable_airlock" {
   type        = bool
   description = "Controls the deployment of Airlock resources in the workspace."

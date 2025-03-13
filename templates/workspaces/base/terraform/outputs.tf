@@ -29,3 +29,14 @@ output "scope_id" {
   value = var.register_aad_application ? module.aad[0].scope_id : var.scope_id
 }
 
+output "workspace_owners_group_id" {
+  value = var.register_aad_application ? module.aad[0].workspace_owners_group_id : ""
+}
+
+output "workspace_researchers_group_id" {
+  value = var.register_aad_application ? module.aad[0].workspace_researchers_group_id : ""
+}
+
+output "workspace_airlock_managers_group_id" {
+  value = var.register_aad_application ? module.aad[0].workspace_airlock_managers_group_id : ""
+}

@@ -14,6 +14,7 @@ interface WorkspaceLeftNavProps {
   sharedServices: Array<SharedService>;
   setWorkspaceService: (workspaceService: WorkspaceService) => void;
   addWorkspaceService: (w: WorkspaceService) => void;
+  isTREAdminUser: boolean;
 }
 
 export const WorkspaceLeftNav: React.FunctionComponent<
@@ -29,69 +30,71 @@ export const WorkspaceLeftNav: React.FunctionComponent<
       // get the workspace services
       if (!workspaceCtx.workspace.id) return;
       let serviceLinkArray: Array<any> = [];
-      props.workspaceServices.forEach((service: WorkspaceService) => {
-        serviceLinkArray.push({
-          name: service.properties.display_name,
-          url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${service.id}`,
-          key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${service.id}`,
-        });
-      });
+      let navLinks: INavLinkGroup[] = [{ links: [] }];
 
-      let sharedServiceLinkArray: Array<any> = [];
-      props.sharedServices.forEach((service: SharedService) => {
-        sharedServiceLinkArray.push({
-          name: service.properties.display_name,
-          url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}/${service.id}`,
-          key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}/${service.id}`,
+      if (!props.isTREAdminUser) {
+        props.workspaceServices.forEach((service: WorkspaceService) => {
+          serviceLinkArray.push({
+            name: service.properties.display_name,
+            url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${service.id}`,
+            key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${service.id}`,
+          });
         });
-      });
 
-      const serviceNavLinks: INavLinkGroup[] = [
-        {
-          links: [
-            {
-              name: "Overview",
-              key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}`,
-              url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}`,
-              isExpanded: true,
-            },
-            {
-              name: "Services",
-              key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}`,
-              url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}`,
-              isExpanded: true,
-              links: serviceLinkArray,
-            },
-            {
-              name: "Shared Services",
-              key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}`,
-              url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}`,
-              isExpanded: false,
-              links: sharedServiceLinkArray,
-            },
-            {
-              name: "Users",
-              key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
-              url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
-              isExpanded: false,
-            },
-          ],
-        },
-      ];
-
-      // Only show airlock link if enabled for workspace
-      if (
-        workspaceCtx.workspace.properties !== undefined &&
-        workspaceCtx.workspace.properties.enable_airlock
-      ) {
-        serviceNavLinks[0].links.push({
-          name: "Airlock",
-          key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}`,
-          url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}`,
+        let sharedServiceLinkArray: Array<any> = [];
+        props.sharedServices.forEach((service: SharedService) => {
+          sharedServiceLinkArray.push({
+            name: service.properties.display_name,
+            url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}/${service.id}`,
+            key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}/${service.id}`,
+          });
         });
+
+        navLinks[0].links.push(
+          {
+            name: "Overview",
+            key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}`,
+            url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}`,
+            isExpanded: true,
+          },
+          {
+            name: "Services",
+            key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}`,
+            url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}`,
+            isExpanded: true,
+            links: serviceLinkArray,
+          },
+          {
+            name: "Shared Services",
+            key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}`,
+            url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}`,
+            isExpanded: false,
+            links: sharedServiceLinkArray,
+          });
+
+
+        // Only show airlock link if enabled for workspace
+        if (
+          workspaceCtx.workspace.properties !== undefined &&
+          workspaceCtx.workspace.properties.enable_airlock
+        ) {
+          navLinks[0].links.push({
+            name: "Airlock",
+            key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}`,
+            url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}`,
+          });
+        }
       }
 
-      setServiceLinks(serviceNavLinks);
+      navLinks[0].links.push(
+        {
+          name: "Users",
+          key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
+          url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
+          isExpanded: false,
+        })
+
+      setServiceLinks(navLinks);
     };
     getWorkspaceServices();
   }, [
