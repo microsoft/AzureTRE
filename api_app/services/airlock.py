@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 import logging
+import time
 
-from azure.storage.blob import generate_container_sas, ContainerSasPermissions, BlobServiceClient
+from azure.storage.blob import generate_container_sas, ContainerSasPermissions, BlobServiceClient, ContainerClient
 from fastapi import HTTPException, status
 from core import config, credentials
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReviewUserResource, AirlockReviewDecision, AirlockActions, AirlockFile, AirlockReview
@@ -111,6 +112,8 @@ def get_airlock_request_container_sas_token(account_name: str,
     udk = blob_service_client.get_user_delegation_key(datetime.utcnow(), expiry)
     required_permission = get_required_permission(airlock_request)
 
+    source_container_client = blob_service_client.get_container_client(airlock_request.id)
+    wait_for_container(source_container_client)
     token = generate_container_sas(container_name=airlock_request.id,
                                    account_name=account_name,
                                    user_delegation_key=udk,
@@ -725,3 +728,27 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
         triage_level_input = strings.API_TRIAGE_LEVEL1
         airlock_request = await airlock_request_repo.set_triage_level_and_review_due_date(airlock_request, triage_level_input)
         return airlock_request
+
+
+def wait_for_container(client: ContainerClient, max_retries=5, initial_delay=2):
+    """
+    Waits for a container to exist by checking its existence with retries and exponential backoff.
+
+    Parameters:
+    - client (ContainerClient): The container client to check for existence.
+    - max_retries (int): The maximum number of retries before giving up. Default is 5.
+    - initial_delay (int): The initial delay in seconds before the first retry. Default is 2 seconds.
+
+    Returns:
+    - None
+    """
+    retries = 0
+    delay = initial_delay
+    while retries < max_retries:
+        if client.exists():
+            return  # Container exists, exit the function
+        else:
+            retries += 1
+            time.sleep(delay)  # Wait for the specified delay
+            delay *= 2  # Exponential backoff: double the delay for the next retry
+    return  # Max retries reached, exit the function
