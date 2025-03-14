@@ -224,7 +224,7 @@ resource "azapi_resource_action" "enable_defender_for_storage_export" {
           isEnabled     = true
           capGBPerMonth = 5000
         },
-        scanResultsEventGridTopicResourceId = azurerm_eventgrid_topic.scan_result[0].id
+        scanResultsEventGridTopicResourceId = azurerm_eventgrid_topic.export_scan_result[0].id
       }
       sensitiveDataDiscovery = {
         isEnabled = false
