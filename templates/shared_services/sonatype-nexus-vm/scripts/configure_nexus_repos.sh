@@ -8,7 +8,6 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-# Retry function with exponential backoff.
 retry_with_backoff() {
   local func="$1"
   shift
@@ -25,18 +24,16 @@ retry_with_backoff() {
   return 1
 }
 
-# Function to check if the nexus_repos_config directory exists.
-wait_for_repos_config() {
+check_repos_config() {
   [ -d "$(dirname "${BASH_SOURCE[0]}")/nexus_repos_config" ]
 }
 
 echo 'Checking for ./nexus_repos_config directory...'
-if ! retry_with_backoff wait_for_repos_config; then
+if ! retry_with_backoff check_repos_config; then
   echo 'ERROR - Timeout while waiting for nexus_repos_config directory'
   exit 1
 fi
 
-# Function to check if Nexus service is ready.
 nexus_ready() {
   curl -s http://localhost/service/rest/v1/status -k > /dev/null
 }
@@ -47,7 +44,6 @@ if ! retry_with_backoff nexus_ready; then
   exit 1
 fi
 
-# Check current anonymous settings
 echo "Getting current anonymous settings in Nexus..."
 current_anon_json=$(curl -iu admin:"$1" -X GET \
   'http://localhost/service/rest/v1/security/anonymous' \
@@ -55,7 +51,6 @@ current_anon_json=$(curl -iu admin:"$1" -X GET \
   -k -s)
 echo "Current anonymous settings: $current_anon_json"
 
-# Enable anonymous access
 echo "Enabling anonymous access in Nexus..."
 anon_status_code=$(curl -iu admin:"$1" -X PUT \
   'http://localhost/service/rest/v1/security/anonymous' \
@@ -78,7 +73,6 @@ for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
     repo_name=$( jq .name "$filename" | sed 's/"//g')
     base_url="http://localhost/service/rest/v1/repositories/$base_type/$repo_type"
 
-    # Function to configure a repository.
     configure_repo() {
       local file="$1"
       local url="$2"
@@ -100,7 +94,6 @@ for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
     fi
 done
 
-# Configure realms required for repo authentication
 echo 'Configuring realms...'
 status_code=$(curl -iu admin:"$1" -XPUT \
   'http://localhost/service/rest/v1/security/realms/active' \
