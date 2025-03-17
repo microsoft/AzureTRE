@@ -16,45 +16,58 @@ target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
 
 # Command: all
 # Description: Provision all the application resources from beginning to end
+# Example: make all
 all: bootstrap mgmt-deploy images tre-deploy ## 🚀 Provision all the application resources from beginning to end
 
 # Command: tre-deploy
-# Description: Provision TRE using existing images
+# Description: This command will reuse existing management resource group and the images to provision TRE.
+# Example: make tre-deploy
 tre-deploy: deploy-core build-and-deploy-ui firewall-install db-migrate show-core-output ## 🚀 Provision TRE using existing images
 
 # Command: images
-# Description: Build and push all images
+# Description: Build and push images for API, resource processor and airlock processor.
+# Example: make images
 images: build-and-push-api build-and-push-resource-processor build-and-push-airlock-processor ## 📦 Build and push all images
 
-# Command: images
+# Command: build-and-push-api
 # Description: Build and push API image
+# Example: make build-and-push-api
 build-and-push-api: build-api-image push-api-image
 
-# Command: images
+# Command: build-and-push-resource-processor
 # Description: Build and push Resource Processor image
+# Example: make build-and-push-resource-processor
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 
-# Command: images
+# Command: build-and-push-airlock-processor
 # Description: Build and push Airlock Processor image
+# Example: make build-and-push-airlock-processor
 build-and-push-airlock-processor: build-airlock-processor push-airlock-processor
 
+# Command: help
+# Description: Display help message on the existing make commands.
+# Example: make help
 help: ## 💬 This help message :)
 	@grep -E '[a-zA-Z_-]+:.*?## .*$$' $(firstword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
-# to move your environment from the single 'core' deployment (which includes the firewall)
-# toward the shared services model, where it is split out - run the following make target before a tre-deploy
-# This will remove + import the resource state into a shared service
+# Command: migrate-firewall-state
+# Description: Migrate the firewall state from the core deployment to the shared services deployment.
+# This is a one-time operation and should only be run when you are moving from the core deployment to the shared services deployment.
+# This command will remove the firewall state from the core deployment and import it into the shared services deployment.
+# Example: make migrate-firewall-state
 migrate-firewall-state: prepare-tf-state
 
 # Command: bootstrap
 # Description: Bootstrap Terraform
+# Example: make bootstrap
 bootstrap:
 	$(call target_title, "Bootstrap Terraform") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
 	&& cd ${MAKEFILE_DIR}/devops/terraform && ./bootstrap.sh
 
 # Command: mgmt-deploy
-# Description: Deploy management infrastructure. This will create the management resource group with the necessary resources such as Azure Container Registry, Storage Account for the tfstate and KV for Encryption Keys if enabled.
+# Description: Deploy management infrastructure. This will create the management resource group (named <mgmt_resource_group_name> from the config.yaml file) with the necessary resources such as Azure Container Registry, Storage Account for the tfstate and KV for Encryption Keys if enabled.
+# Example: make mgmt-deploy
 mgmt-deploy:
 	$(call target_title, "Deploying management infrastructure") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
@@ -62,6 +75,7 @@ mgmt-deploy:
 
 # Command: mgmt-destroy
 # Description: Destroy management infrastructure. This will destroy the management resource group with the resources in it.
+# Example: make mgmt-destroy
 mgmt-destroy:
 	$(call target_title, "Destroying management infrastructure") \
 	. ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
@@ -88,17 +102,20 @@ $(call target_title, "Building $(1) Image") \
 endef
 
 # Command: build-api-image
-# Description: Build API image
+# Description: Build API image using the build_image method.
+# Example: make build-api-image
 build-api-image:
 	$(call build_image,"api","${MAKEFILE_DIR}/api_app/_version.py","${MAKEFILE_DIR}/api_app/Dockerfile","${MAKEFILE_DIR}/api_app/")
 
 # Command: build-resource-processor-vm-porter-image
-# Description: Build Resource Processor VM Porter image
+# Description: Build Resource Processor VM Porter image using the build_image method.
+# Example: make build-resource-processor-vm-porter-image
 build-resource-processor-vm-porter-image:
 	$(call build_image,"resource-processor-vm-porter","${MAKEFILE_DIR}/resource_processor/_version.py","${MAKEFILE_DIR}/resource_processor/vmss_porter/Dockerfile","${MAKEFILE_DIR}/resource_processor/")
 
 # Command: build-airlock-processor
-# Description: Build Airlock Processor image
+# Description: Build Airlock Processor image using the build_image method.
+# Example: make build-airlock-processor
 build-airlock-processor:
 	$(call build_image,"airlock-processor","${MAKEFILE_DIR}/airlock_processor/_version.py","${MAKEFILE_DIR}/airlock_processor/Dockerfile","${MAKEFILE_DIR}/airlock_processor/")
 
@@ -116,17 +133,20 @@ $(call target_title, "Pushing $(1) Image") \
 endef
 
 # Command: push-api-image
-# Description: Push API image to ACR
+# Description: Push API image to ACR using the push_image method.
+# Example: make push-api-image
 push-api-image:
 	$(call push_image,"api","${MAKEFILE_DIR}/api_app/_version.py")
 
 # Command: push-resource-processor-vm-porter-image
-# Description: Push Resource Processor VM Porter image to ACR
+# Description: Push Resource Processor VM Porter image to ACR using the push_image method.
+# Example: make push-resource-processor-vm-porter-image
 push-resource-processor-vm-porter-image:
 	$(call push_image,"resource-processor-vm-porter","${MAKEFILE_DIR}/resource_processor/_version.py")
 
 # Command: push-airlock-processor
-# Description: Push Airlock Processor image to ACR
+# Description: Push Airlock Processor image to ACR using the push_image method.
+# Example: make push-airlock-processor
 push-airlock-processor:
 	$(call push_image,"airlock-processor","${MAKEFILE_DIR}/airlock_processor/_version.py")
 
@@ -135,6 +155,7 @@ push-airlock-processor:
 # # These targets are for a graceful migration of Firewall
 # # from terraform state in Core to a Shared Service.
 # # See https://github.com/microsoft/AzureTRE/issues/1177
+# Example: make prepare-tf-state
 prepare-tf-state:
 	$(call target_title, "Preparing terraform state") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
@@ -144,6 +165,8 @@ prepare-tf-state:
 
 # Command: deploy-core
 # Description: Deploy the core infrastructure of TRE.
+# This will create the core resource group (named rg-<TRE_ID>) with the necessary resources.
+# Example: make deploy-core
 deploy-core: tre-start
 	$(call target_title, "Deploying TRE") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
@@ -155,6 +178,7 @@ deploy-core: tre-start
 
 # Command: letsencrypt
 # Description: Request LetsEncrypt SSL certificate
+# Example: make letsencrypt
 letsencrypt:
 	$(call target_title, "Requesting LetsEncrypt SSL certificate") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,certbot,env \
@@ -163,14 +187,19 @@ letsencrypt:
 	&& ${MAKEFILE_DIR}/core/terraform/scripts/letsencrypt.sh
 
 # Command: tre-start
-# Description: Start the TRE Service. This will allocate the Azure Firewall settings with a public IP and start the Azure Application Gateway service, starting billing of both services.
+# Description: Start the TRE Service.
+# # This will allocate the Azure Firewall settings with a public IP and start the Azure Application Gateway service,
+# # starting billing of both services.
+# Example: make tre-start
 tre-start: ## ⏩ Start the TRE Service
 	$(call target_title, "Starting TRE") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& ${MAKEFILE_DIR}/devops/scripts/control_tre.sh start
 
 # Command: tre-stop
-# Description: Stop the TRE Service. This will deallocate the Azure Firewall public IP and stop the Azure Application Gateway service, stopping billing of both services.
+# Description: Stop the TRE Service.
+# # This will deallocate the Azure Firewall public IP and stop the Azure Application Gateway service, stopping billing of both services.
+# Example: make tre-stop
 tre-stop: ## ⛔ Stop the TRE Service
 	$(call target_title, "Stopping TRE") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
@@ -178,6 +207,7 @@ tre-stop: ## ⛔ Stop the TRE Service
 
 # Command: tre-destroy
 # Description: Destroy the TRE Service. This will destroy all the resources of the TRE service, including the Azure Firewall and Application Gateway.
+# Example: make tre-destroy
 tre-destroy: ## 🧨 Destroy the TRE Service
 	$(call target_title, "Destroying TRE") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
@@ -185,6 +215,8 @@ tre-destroy: ## 🧨 Destroy the TRE Service
 
 # Command: terraform-deploy
 # Description: Deploy the Terraform resources in the specified directory.
+# Arguments: DIR - the directory of the bundle
+# Example: make terraform-deploy DIR="./templates/workspaces/base"
 terraform-deploy:
 	$(call target_title, "Deploying ${DIR} with Terraform") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
@@ -194,6 +226,8 @@ terraform-deploy:
 
 # Command: terraform-upgrade
 # Description: Upgrade the Terraform resources in the specified directory.
+# Arguments: DIR - the directory of the bundle
+# Example: make terraform-upgrade DIR="./templates/workspaces/base"
 terraform-upgrade:
 	$(call target_title, "Upgrading ${DIR} with Terraform") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
@@ -203,6 +237,8 @@ terraform-upgrade:
 
 # Command: terraform-import
 # Description: Import the Terraform resources in the specified directory.
+# Arguments: DIR - the directory of the bundle
+# Example: make terraform-import DIR="./templates/workspaces/base"
 terraform-import:
 	$(call target_title, "Importing ${DIR} with Terraform") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
@@ -210,6 +246,8 @@ terraform-import:
 
 # Command: terraform-destroy
 # Description: Destroy the Terraform resources in the specified directory.
+# Arguments: DIR - the directory of the bundle
+# Example: make terraform-destroy DIR="./templates/workspaces/base"
 terraform-destroy:
 	$(call target_title, "Destroying ${DIR} Service") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
@@ -219,6 +257,7 @@ terraform-destroy:
 
 # Command: lint
 # Description: Lint files. This will validate all files, not only the changed ones as the CI version does.
+# Example: make lint
 lint: ## 🧹 Lint all files
 	$(call target_title, "Linting")
 	@terraform fmt -check -recursive -diff
@@ -244,13 +283,15 @@ lint: ## 🧹 Lint all files
 
 # Command: lint-docs
 # Description: Lint documentation files
+# # This will validate all files, not only the changed ones as the CI version does.
+# Example: make lint-docs
 lint-docs:
 	LINTER_REGEX_INCLUDE='./docs/.*\|./mkdocs.yml' $(MAKE) lint
 
 # Command: bundle-build
 # Description: Build the bundle with Porter.
-# check-params is called at the end since it needs the bundle image,
-# so we build it first and then run the check.
+# # check-params is called at the end since it needs the bundle image,
+# # so we build it first and then run the check.
 # Arguments: DIR - the directory of the bundle
 # Example: make bundle-build DIR="./templates/workspaces/base"
 bundle-build:
@@ -405,6 +446,7 @@ user_resource_bundle:
 
 # Command: bundle-publish-register-all
 # Description: Publish and register all bundles.
+# Example: make bundle-publish-register-all
 bundle-publish-register-all:
 	${MAKEFILE_DIR}/devops/scripts/publish_and_register_all_bundles.sh
 
@@ -421,12 +463,14 @@ deploy-shared-service:
 
 # Command: firewall-install
 # Description: Build, publish and register the firewall shared service. And then deploy the firewall shared service.
+# Example: make firewall-install
 firewall-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
 	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
 # Command: static-web-upload
 # Description: Upload the static website to the storage account
+# Example: make static-web-upload
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
@@ -436,6 +480,7 @@ static-web-upload:
 
 # Command: build-and-deploy-ui
 # Description: Build and deploy the UI
+# Example: make build-and-deploy-ui
 build-and-deploy-ui:
 	$(call target_title, "Build and deploy UI") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
@@ -445,6 +490,7 @@ build-and-deploy-ui:
 
 # Command: prepare-for-e2e
 # Description: Prepare for E2E tests by building and registering the necessary bundles such as base workspace, guacamole, gitea, guacamole-azure-windowsvm, guacamole-azure-linuxvm
+# Example: make prepare-for-e2e
 prepare-for-e2e:
 	$(MAKE) workspace_bundle BUNDLE=base
 	$(MAKE) workspace_service_bundle BUNDLE=guacamole
@@ -454,24 +500,44 @@ prepare-for-e2e:
 
 # Command: test-e2e-smoke
 # Description: Run E2E smoke tests
+# The E2E smoke tests include:
+# - test_get_workspace_templates: GET Request to get all workspace templates
+# - test_get_workspace_template: GET Request to get a specific workspace template: base
+# - test_get_workspace_service_templates: GET Request to get all workspace service templates
+# - test_get_workspace_service_template: GET Request to get a specific workspace service template for example: guacamole
+# - test_get_shared_service_templates:	GET Request to get all shared service templates
+# - test_get_shared_service_template: GET Request to get a specific shared service template for example: gitea
 test-e2e-smoke:	## 🧪 Run E2E smoke tests
 	$(call target_title, "Running E2E smoke tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=smoke
 
 # Command: test-e2e-extended
 # Description: Run E2E extended tests
+# # The E2E extended tests include:
+# # - test_create_workspace_templates: POST Request to create a workspace template
+# # - test_create_guacamole_service_into_base_workspace: POST Request to create a workspace and a separate POST call to create a guacamole workspace service into the base workspace
+# # - test_airlock_flow: test import and export flow
+# Example: make test-e2e-extended
 test-e2e-extended: ## 🧪 Run E2E extended tests
 	$(call target_title, "Running E2E extended tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=extended
 
 # Command: test-e2e-extended-aad
 # Description: Run E2E extended AAD tests
+# # The E2E extended AAD tests include:
+# # - test_create_guacamole_service_into_aad_workspace: This test will create a Guacamole service but will create a workspace and automatically register the AAD Application
+# Example: make test-e2e-extended-aad
 test-e2e-extended-aad: ## 🧪 Run E2E extended AAD tests
 	$(call target_title, "Running E2E extended AAD tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=extended_aad
 
 # Command: test-e2e-shared-services
 # Description: Run E2E shared service tests
+# # The E2E shared service tests include:
+# # - test_patch_firewall: verifies the ability to update the firewall shared service with new rule collections by sending a PATCH request to the appropriate API endpoint.
+# # - test_create_certs_nexus_shared_service: verifies the creation and subsequent deletion of the Nexus shared service with SSL certificates by deploying both the Certs and Nexus shared services and ensuring they are properly configured and removed.
+# # - test_create_shared_service: verifies the creation and subsequent deletion of various shared services by deploying them via API requests and ensuring they are properly configured and removed.
+# Example: make test-e2e-shared-services
 test-e2e-shared-services: ## 🧪 Run E2E shared service tests
 	$(call target_title, "Running E2E shared service tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=shared_services
@@ -494,7 +560,8 @@ test-e2e-custom: ## 🧪 Run E2E tests with custom selector (SELECTOR=)
 			python -m pytest -n "${E2E_TESTS_NUMBER_PROCESSES_DEFAULT}" -m "${SELECTOR}" --verify $${IS_API_SECURED:-true} --junit-xml "pytest_e2e_$${SELECTOR// /_}.xml"; fi
 
 # Command: setup-local-debugging
-# Description: Setup the ability to debug the API and Resource Processor
+# Description: Setup the ability to debug the API and Resource Processor by  configuring settings and permissions required for debugging.
+# Example: make setup-local-debugging
 setup-local-debugging: ## 🛠️ Setup local debugging
 	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
@@ -504,6 +571,7 @@ setup-local-debugging: ## 🛠️ Setup local debugging
 
 # Command: auth
 # Description: Create the necessary Azure Active Directory assets for TRE.
+# Example: make auth
 auth: ## 🔐 Create the necessary Azure Active Directory assets
 	$(call target_title,"Setting up Azure Active Directory") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
@@ -511,6 +579,7 @@ auth: ## 🔐 Create the necessary Azure Active Directory assets
 
 # Command: show-core-output
 # Description: Display TRE core output
+# Example: make show-core-output
 show-core-output:
 	$(call target_title,"Display TRE core output") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
@@ -518,6 +587,7 @@ show-core-output:
 
 # Command: api-healthcheck
 # Description: Check the API health
+# Example: make api-healthcheck
 api-healthcheck:
 	$(call target_title,"Checking API Health") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
@@ -526,6 +596,7 @@ api-healthcheck:
 
 # Command: db-migrate
 # Description: Run database migrations
+# Example: make db-migrate
 db-migrate: api-healthcheck ## 🗄️ Run database migrations
 	$(call target_title,"Migrating Cosmos Data") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
