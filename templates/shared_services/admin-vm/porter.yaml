@@ -1,10 +1,26 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-admin-vm
-version: 0.5.1
+version: 0.5.3
 description: "An admin vm shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
+
+custom:
+  image_options:
+    "Windows 11":
+      source_image_reference:
+        publisher: MicrosoftWindowsDesktop
+        offer: windows-11
+        sku: win11-24h2-pro
+        version: latest
+      secure_boot_enabled: true
+      vtpm_enabled: true
+    # For information on using custom images, see README.me in the guacamole/user-resources folder
+    # "Custom Image From Gallery":
+    #   source_image_name: your-image
+    #   secure_boot_enabled: false
+    #   vtpm_enabled: false
 
 credentials:
   - name: azure_tenant_id
@@ -50,6 +66,13 @@ parameters:
   - name: key_store_id
     type: string
     default: ""
+  - name: os_image
+    type: string
+    default: "Windows 11"
+  - name: image_gallery_id
+    type: string
+    description: Azure resource ID for the compute image gallery to pull images from (if specifying custom images by name)
+    default: ""
 
 mixins:
   - terraform:
@@ -64,6 +87,8 @@ install:
         admin_jumpbox_vm_sku: ${ bundle.parameters.admin_jumpbox_vm_sku }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        image: ${ bundle.parameters.os_image }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -81,6 +106,8 @@ upgrade:
         admin_jumpbox_vm_sku: ${ bundle.parameters.admin_jumpbox_vm_sku }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        image: ${ bundle.parameters.os_image }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -98,6 +125,8 @@ uninstall:
         admin_jumpbox_vm_sku: ${ bundle.parameters.admin_jumpbox_vm_sku }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        image: ${ bundle.parameters.os_image }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

@@ -36,12 +36,20 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
   admin_username             = "adminuser"
   admin_password             = random_password.password.result
   tags                       = local.tre_shared_service_tags
+  encryption_at_host_enabled = true
+  secure_boot_enabled        = local.secure_boot_enabled
+  vtpm_enabled               = local.vtpm_enabled
 
-  source_image_reference {
-    publisher = "MicrosoftWindowsDesktop"
-    offer     = "windows-11"
-    sku       = "win11-24h2-pro"
-    version   = "latest"
+  # set source_image_id/reference depending on the config for the selected image
+  source_image_id = local.selected_image_source_id
+  dynamic "source_image_reference" {
+    for_each = local.selected_image_source_refs
+    content {
+      publisher = source_image_reference.value["publisher"]
+      offer     = source_image_reference.value["offer"]
+      sku       = source_image_reference.value["sku"]
+      version   = source_image_reference.value["version"]
+    }
   }
 
   os_disk {
@@ -51,7 +59,10 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
     disk_encryption_set_id = var.enable_cmk_encryption ? azurerm_disk_encryption_set.jumpbox_disk_encryption[0].id : null
   }
 
-  lifecycle { ignore_changes = [tags] }
+  # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
+  # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
+  #
+  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled] }
 }
 
 resource "azurerm_disk_encryption_set" "jumpbox_disk_encryption" {

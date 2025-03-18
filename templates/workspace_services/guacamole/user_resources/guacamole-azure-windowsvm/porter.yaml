@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 1.2.3
+version: 1.2.14
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -21,6 +21,8 @@ custom:
         sku: win10-22h2-pro-g2
         version: latest
       conda_config: false
+      secure_boot_enabled: true
+      vtpm_enabled: true
     "Windows 11":
       source_image_reference:
         publisher: microsoftwindowsdesktop
@@ -28,6 +30,8 @@ custom:
         sku: win11-24h2-pro
         version: latest
       conda_config: false
+      secure_boot_enabled: true
+      vtpm_enabled: true
     "Server 2019 Data Science VM":
       source_image_reference:
         publisher: microsoft-dsvm
@@ -35,10 +39,14 @@ custom:
         sku: winserver-2019
         version: latest
       conda_config: true
+      secure_boot_enabled: false # dsvm-win-2019 is not a gen2 image
+      vtpm_enabled: false
     # For information on using custom images, see README.me in the guacamole/user-resources folder
     # "Custom Image From Gallery":
     #   source_image_name: your-image
     #   conda_config: true
+    #  secure_boot_enabled: false
+    #  vtpm_enabled: false
 
 credentials:
   - name: azure_tenant_id
@@ -49,6 +57,13 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
+  # Credentials for interacting with the AAD Auth tenant
+  - name: auth_client_id
+    env: AUTH_CLIENT_ID
+  - name: auth_client_secret
+    env: AUTH_CLIENT_SECRET
+  - name: auth_tenant_id
+    env: AUTH_TENANT_ID
 
 parameters:
   - name: workspace_id
@@ -89,6 +104,9 @@ parameters:
   - name: os_image
     type: string
     default: "Windows 10"
+  - name: admin_username
+    type: string
+    default: ""
   - name: vm_size
     type: string
     default: "2 CPU | 8GB RAM"
@@ -98,6 +116,8 @@ parameters:
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
+  - name: owner_id
+    type: string
   - name: arm_environment
     type: string
   - name: enable_cmk_encryption
@@ -147,12 +167,17 @@ install:
         parent_service_id: ${ bundle.parameters.parent_service_id }
         tre_resource_id: ${ bundle.parameters.id }
         image: ${ bundle.parameters.os_image }
+        admin_username: ${ bundle.parameters.admin_username }
         vm_size: ${ bundle.parameters.vm_size }
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        owner_id: ${ bundle.parameters.owner_id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -175,12 +200,17 @@ upgrade:
         parent_service_id: ${ bundle.parameters.parent_service_id }
         tre_resource_id: ${ bundle.parameters.id }
         image: ${ bundle.parameters.os_image }
+        admin_username: ${ bundle.parameters.admin_username }
         vm_size: ${ bundle.parameters.vm_size }
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        owner_id: ${ bundle.parameters.owner_id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -215,12 +245,17 @@ uninstall:
         parent_service_id: ${ bundle.parameters.parent_service_id }
         tre_resource_id: ${ bundle.parameters.id }
         image: ${ bundle.parameters.os_image }
+        admin_username: ${ bundle.parameters.admin_username }
         vm_size: ${ bundle.parameters.vm_size }
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        owner_id: ${ bundle.parameters.owner_id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.117.0"
+      version = "=4.14.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -20,10 +20,6 @@ terraform {
     azapi = {
       source  = "Azure/azapi"
       version = "~> 1.15.0"
-    }
-    null = {
-      source  = "hashicorp/null"
-      version = "~> 3.2"
     }
   }
 
@@ -78,8 +74,7 @@ module "azure_monitor" {
   tre_core_tags                            = local.tre_core_tags
   enable_local_debugging                   = var.enable_local_debugging
   enable_cmk_encryption                    = var.enable_cmk_encryption
-  key_store_id                             = local.key_store_id
-  kv_encryption_key_name                   = local.cmk_name
+  encryption_key_versionless_id            = var.enable_cmk_encryption ? azurerm_key_vault_key.tre_encryption[0].versionless_id : null
   encryption_identity_id                   = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
@@ -110,10 +105,9 @@ module "appgateway" {
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
   app_gateway_sku            = var.app_gateway_sku
 
-  enable_cmk_encryption  = var.enable_cmk_encryption
-  key_store_id           = local.key_store_id
-  kv_encryption_key_name = local.cmk_name
-  encryption_identity_id = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
+  enable_cmk_encryption         = var.enable_cmk_encryption
+  encryption_key_versionless_id = var.enable_cmk_encryption ? azurerm_key_vault_key.tre_encryption[0].versionless_id : null
+  encryption_identity_id        = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
     module.network,
@@ -138,6 +132,7 @@ module "airlock_resources" {
   airlock_app_service_plan_sku          = var.core_app_service_plan_sku
   airlock_processor_subnet_id           = module.network.airlock_processor_subnet_id
   airlock_servicebus                    = azurerm_servicebus_namespace.sb
+  airlock_servicebus_fqdn               = azurerm_servicebus_namespace.sb.endpoint
   applicationinsights_connection_string = module.azure_monitor.app_insights_connection_string
   enable_malware_scanning               = var.enable_airlock_malware_scanning
   arm_environment                       = var.arm_environment
@@ -148,12 +143,11 @@ module "airlock_resources" {
   queue_core_dns_zone_id                = module.network.queue_core_dns_zone_id
   table_core_dns_zone_id                = module.network.table_core_dns_zone_id
 
-  enable_local_debugging = var.enable_local_debugging
-  myip                   = local.myip
-  enable_cmk_encryption  = var.enable_cmk_encryption
-  key_store_id           = local.key_store_id
-  kv_encryption_key_name = local.cmk_name
-  encryption_identity_id = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
+  enable_local_debugging        = var.enable_local_debugging
+  myip                          = local.myip
+  enable_cmk_encryption         = var.enable_cmk_encryption
+  encryption_key_versionless_id = var.enable_cmk_encryption ? azurerm_key_vault_key.tre_encryption[0].versionless_id : null
+  encryption_identity_id        = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
     azurerm_servicebus_namespace.sb,
@@ -171,6 +165,7 @@ module "resource_processor_vmss_porter" {
   acr_id                                           = data.azurerm_container_registry.mgmt_acr.id
   app_insights_connection_string                   = module.azure_monitor.app_insights_connection_string
   resource_processor_subnet_id                     = module.network.resource_processor_subnet_id
+  blob_core_dns_zone_id                            = module.network.blob_core_dns_zone_id
   docker_registry_server                           = local.docker_registry_server
   resource_processor_vmss_porter_image_repository  = var.resource_processor_vmss_porter_image_repository
   service_bus_namespace_id                         = azurerm_servicebus_namespace.sb.id

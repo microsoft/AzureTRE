@@ -20,18 +20,18 @@ resource "azurerm_storage_account" "aml" {
     }
   }
 
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = data.azurerm_key_vault_key.ws_encryption_key[0].versionless_id
+      user_assigned_identity_id = data.azurerm_user_assigned_identity.ws_encryption_identity[0].id
+    }
+  }
+
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
 
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
-}
-
-resource "azurerm_storage_account_customer_managed_key" "aml_stg_encryption" {
-  count                     = var.enable_cmk_encryption ? 1 : 0
-  storage_account_id        = azurerm_storage_account.aml.id
-  key_vault_id              = var.key_store_id
-  key_name                  = local.cmk_name
-  user_assigned_identity_id = data.azurerm_user_assigned_identity.ws_encryption_identity[0].id
 }
 
 data "azurerm_private_dns_zone" "blobcore" {

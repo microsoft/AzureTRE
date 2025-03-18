@@ -5,7 +5,7 @@ from helpers import check_aad_auth_redirect
 from resources.resource import get_resource, post_resource
 from resources import strings
 
-pytestmark = pytest.mark.asyncio
+pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 workspace_services = [
     strings.AZUREML_SERVICE,
@@ -31,7 +31,8 @@ async def test_create_guacamole_service_into_base_workspace(setup_test_workspace
         "properties": {
             "display_name": "My VM",
             "description": "Will be using this VM for my research",
-            "os_image": "Windows 10"
+            "os_image": "Windows 10",
+            "admin_username": "researcher"
         }
     }
 

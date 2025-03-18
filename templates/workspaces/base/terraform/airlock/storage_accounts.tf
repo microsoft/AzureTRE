@@ -32,6 +32,14 @@ resource "azurerm_storage_account" "sa_import_approved" {
     }
   }
 
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
+    }
+  }
+
   tags = merge(
     var.tre_workspace_tags,
     {
@@ -99,6 +107,14 @@ resource "azurerm_storage_account" "sa_export_internal" {
     }
   }
 
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
+    }
+  }
+
   tags = merge(
     var.tre_workspace_tags,
     {
@@ -155,6 +171,14 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
     content {
       type         = "UserAssigned"
       identity_ids = [var.encryption_identity_id]
+    }
+  }
+
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
     }
   }
 
@@ -240,6 +264,14 @@ resource "azurerm_storage_account" "sa_export_rejected" {
     }
   }
 
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
+    }
+  }
+
   tags = merge(
     var.tre_workspace_tags,
     {
@@ -307,6 +339,14 @@ resource "azurerm_storage_account" "sa_export_blocked" {
     }
   }
 
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
+    }
+  }
+
   tags = merge(
     var.tre_workspace_tags,
     {
@@ -355,19 +395,4 @@ resource "azurerm_role_assignment" "api_sa_data_contributor" {
   scope                = local.api_sa_data_contributor[count.index]
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-}
-
-resource "azurerm_storage_account_customer_managed_key" "sa_encryption" {
-  for_each = var.enable_cmk_encryption ? {
-    "sa_import_approved"   = azurerm_storage_account.sa_import_approved,
-    "sa_export_internal"   = azurerm_storage_account.sa_export_internal,
-    "sa_export_inprogress" = azurerm_storage_account.sa_export_inprogress,
-    "sa_export_rejected"   = azurerm_storage_account.sa_export_rejected,
-    "sa_export_blocked"    = azurerm_storage_account.sa_export_blocked
-  } : {}
-
-  storage_account_id        = each.value.id
-  key_vault_id              = var.key_store_id
-  key_name                  = var.kv_encryption_key_name
-  user_assigned_identity_id = var.encryption_identity_id
 }

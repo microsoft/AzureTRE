@@ -12,31 +12,10 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
     export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh
 
-# TODO: Remove porter v0 https://github.com/microsoft/AzureTRE/issues/2990
-# Install Porter
-ARG PORTER_MIRROR=https://cdn.porter.sh
-ARG PORTER_VERSION=v0.38.13
-ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.0-rc.1
-ARG PORTER_AZ_MIXIN_VERSION=v0.7.3
-ARG PORTER_AZURE_PLUGIN_VERSION=v0.11.2
-ARG PORTER_HOME=/root/.porter-v0/
-COPY scripts/porter.sh /tmp/
-RUN export PORTER_MIRROR=${PORTER_MIRROR} \
-    PORTER_VERSION=${PORTER_VERSION} \
-    PORTER_TERRAFORM_MIXIN_VERSION=${PORTER_TERRAFORM_MIXIN_VERSION} \
-    PORTER_AZ_MIXIN_VERSION=${PORTER_AZ_MIXIN_VERSION} \
-    PORTER_AZURE_PLUGIN_VERSION=${PORTER_AZURE_PLUGIN_VERSION} \
-    PORTER_HOME=${PORTER_HOME} \
-    && /tmp/porter.sh
-
-ENV PORTER_HOME_V0 ${PORTER_HOME}
-
-# can't be in a non default path
-# ARG PORTER_HOME_V1=/home/$USERNAME/.porter-v1/
 ARG PORTER_HOME_V1=/root/.porter/
-ARG PORTER_VERSION=v1.1.1
-ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.3
-ARG PORTER_AZ_MIXIN_VERSION=v1.0.2
+ARG PORTER_VERSION=v1.2.1
+ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.5
+ARG PORTER_AZ_MIXIN_VERSION=v1.0.4
 ARG PORTER_AZURE_PLUGIN_VERSION=v1.2.3
 COPY scripts/porter-v1.sh /tmp/
 RUN export PORTER_VERSION=${PORTER_VERSION} \
@@ -46,7 +25,7 @@ RUN export PORTER_VERSION=${PORTER_VERSION} \
     PORTER_HOME=${PORTER_HOME_V1} \
     && /tmp/porter-v1.sh
 
-ENV PATH ${PORTER_HOME_V1}:$PATH
+ENV PATH=${PORTER_HOME_V1}:$PATH
 
 # Install Docker
 ARG DOCKER_CE_VERSION="5:27.4.1-1~debian.12~bookworm"
@@ -61,7 +40,7 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 
 COPY ./vmss_porter/config.yaml ${PORTER_HOME_V1}/
 
-ENV PYTHONPATH .
+ENV PYTHONPATH=.
 
 COPY ./vmss_porter/requirements.txt /tmp/
 RUN pip3 --no-cache-dir install -r /tmp/requirements.txt

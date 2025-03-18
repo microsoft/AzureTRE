@@ -222,7 +222,7 @@ terraform-deploy:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR}/terraform/ && ./deploy.sh
+	&& ./devops/scripts/terraform_deploy.sh ${DIR}
 
 # Command: terraform-upgrade
 # Description: Upgrade the Terraform resources in the specified directory.
@@ -233,7 +233,7 @@ terraform-upgrade:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR}/terraform/ && ./upgrade.sh
+	&& ./devops/scripts/terraform_upgrade_provider.sh ${DIR}
 
 # Command: terraform-import
 # Description: Import the Terraform resources in the specified directory.
@@ -323,6 +323,19 @@ bundle-install: bundle-check-params
 		--credential-set arm_auth \
 		--credential-set aad_auth \
 		--debug
+
+# Command: bundle
+# Description: Build, publish and register a bundle based on its type
+# Arguments: BUNDLE_TYPE - allowed types are: workspace, workspace_service, shared_service, BUNDLE - bundle name, WORKSPACE_SERVICE - in case of a user resource, provide its parent workspace service
+# Example: make bundle BUNDLE_TYPE=workspace BUNDLE=base OR make bundle BUNDLE_TYPE=user_Resource BUNDLE=guacamole-azure-linuxvm WORKSPACE_SERVICE=guacamole
+bundle:
+	case ${BUNDLE_TYPE} in \
+		(workspace) $(MAKE) workspace_bundle BUNDLE=${BUNDLE} ;; \
+		(workspace_service) $(MAKE) workspace_service_bundle BUNDLE=${BUNDLE} ;; \
+		(shared_service) $(MAKE) shared_service_bundle BUNDLE=${BUNDLE} ;; \
+		(user_resource) $(MAKE) user_resource_bundle WORKSPACE_SERVICE=${WORKSPACE_SERVICE} BUNDLE=${BUNDLE} ;; \
+		(*) echo "Invalid BUNDLE_TYPE: ${BUNDLE_TYPE}"; exit 1 ;; \
+	esac
 
 # Command: bundle-check-params
 # Description: Validates that the parameters file is synced with the bundle.
@@ -465,8 +478,10 @@ deploy-shared-service:
 # Description: Build, publish and register the firewall shared service. And then deploy the firewall shared service.
 # Example: make firewall-install
 firewall-install:
-	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
-	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
+	. ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
+	&& $(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
+	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service \
+	PROPS="$${FIREWALL_SKU+--firewall_sku $${FIREWALL_SKU} }$${FIREWALL_FORCE_TUNNEL_IP+--firewall_force_tunnel_ip $${FIREWALL_FORCE_TUNNEL_IP} }"
 
 # Command: static-web-upload
 # Description: Upload the static website to the storage account
@@ -583,7 +598,7 @@ auth: ## 🔐 Create the necessary Azure Active Directory assets
 show-core-output:
 	$(call target_title,"Display TRE core output") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
-	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && terraform show && popd > /dev/null
+	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./show_output.sh && popd > /dev/null
 
 # Command: api-healthcheck
 # Description: Check the API health

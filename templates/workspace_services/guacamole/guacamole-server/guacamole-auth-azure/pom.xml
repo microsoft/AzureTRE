@@ -6,7 +6,7 @@
 
     <groupId>org.apache.guacamole</groupId>
     <artifactId>guacamole-auth-tre</artifactId>
-    <version>0.4.0</version>
+    <version>0.4.1</version>
     <packaging>jar</packaging>
     <name>guacamole-azure-tre</name>
 
@@ -48,12 +48,12 @@
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-security-keyvault-secrets</artifactId>
-            <version>4.9.0</version>
+            <version>4.9.1</version>
         </dependency>
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-identity</artifactId>
-            <version>1.14.0</version>
+            <version>1.14.2</version>
         </dependency>
         <!-- Http and Json Components -->
         <dependency>

@@ -145,14 +145,14 @@ runs:
 
     - name: Azure Login
       uses: azure/login@v2
-      if: contains(inputs.COMMAND, 'bootstrap') != true
+      if: contains(inputs.COMMAND, 'make bootstrap') != true
       with:
         creds: ${{ inputs.AZURE_CREDENTIALS }}
         environment: "${{ env.AZURE_ENVIRONMENT }}"
 
     - name: ACR Login
       shell: bash
-      if: contains(inputs.COMMAND, 'bootstrap') != true
+      if: contains(inputs.COMMAND, 'make bootstrap') != true
       run: |
         az acr login --name "${{ inputs.CI_CACHE_ACR_NAME }}"
 
@@ -178,9 +178,19 @@ runs:
     - name: Run command in DevContainer
       shell: bash
       run: |
+        # Write command to a command.sh script file
+        cat <<EOF > ./command.sh
+        #!/bin/bash
+        set -x
+        ${{ inputs.COMMAND }}
+        EOF
+
+        chmod +x ./command.sh
+
         docker run --rm --mount \
           "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
           -v /var/run/docker.sock:/var/run/docker.sock \
+          -v "./command.sh:/workspaces/tre/command.sh" \
           --workdir /workspaces/tre \
           --user vscode \
           -e TF_INPUT="0" \
@@ -246,4 +256,7 @@ runs:
           -e TF_VAR_app_gateway_sku=${{ inputs.APP_GATEWAY_SKU }} \
           -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
-        bash -c "${{ inputs.COMMAND }}"
+        bash -c -x "./command.sh"
+
+        # Clean up temporary script file
+        rm ./command.sh

@@ -1,7 +1,10 @@
 #!/bin/bash
 set -e
 
-if [ ! -f ../tre_output.json ]; then
+# shellcheck disable=SC1091
+source ../../devops/scripts/mgmtstorage_enable_public_access.sh
+
+if [ ! -f ../tre_output.json ] || [ ! -s ../tre_output.json ]; then
   # Connect to the remote backend of Terraform
   export TF_LOG=""
   # shellcheck disable=SC2154

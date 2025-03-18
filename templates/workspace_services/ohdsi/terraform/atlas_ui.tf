@@ -30,12 +30,12 @@ resource "azurerm_linux_web_app" "atlas_ui" {
   client_affinity_enabled = false
 
   site_config {
-    always_on  = false
-    ftps_state = "Disabled"
+    always_on           = false
+    ftps_state          = "Disabled"
+    minimum_tls_version = "1.3"
 
     application_stack {
-      docker_image     = "index.docker.io/${local.atlas_ui_docker_image_name}"
-      docker_image_tag = local.atlas_ui_docker_image_tag
+      docker_image_name = "index.docker.io/${local.atlas_ui_docker_image_name}:${local.atlas_ui_docker_image_tag}"
     }
   }
 
