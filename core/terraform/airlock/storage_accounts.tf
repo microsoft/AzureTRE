@@ -191,7 +191,7 @@ resource "azapi_resource_action" "enable_defender_for_storage" {
   resource_id = "${azurerm_storage_account.sa_import_in_progress.id}/providers/Microsoft.Security/defenderForStorageSettings/current"
   method      = "PUT"
 
-  body = jsonencode({
+  body = {
     properties = {
       isEnabled = true
       malwareScanning = {
@@ -206,7 +206,7 @@ resource "azapi_resource_action" "enable_defender_for_storage" {
       }
       overrideSubscriptionLevelSettings = true
     }
-  })
+  }
 }
 
 resource "azurerm_private_endpoint" "stg_import_inprogress_pe" {

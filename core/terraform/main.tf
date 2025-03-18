@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=4.14.0"
+      version = "=4.23.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -19,11 +19,9 @@ terraform {
     }
     azapi = {
       source  = "Azure/azapi"
-      version = "~> 1.15.0"
+      version = "~> 2.3.0"
     }
   }
-
-  backend "azurerm" {}
 }
 
 provider "azapi" {
@@ -31,6 +29,7 @@ provider "azapi" {
 }
 
 provider "azurerm" {
+  storage_use_azuread = true
   features {
     key_vault {
       # Don't purge on destroy (this would fail due to purge protection being enabled on keyvault)
