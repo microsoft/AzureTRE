@@ -104,7 +104,7 @@ resource "azapi_resource" "core_vnet_link" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "dns_policy" {
-  count     = var.enable_dns_policy ? 1 : 0
+  count                      = var.enable_dns_policy ? 1 : 0
   name                       = "diagnostics"
   target_resource_id         = azapi_resource.dnspolicy[0].id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
@@ -113,6 +113,6 @@ resource "azurerm_monitor_diagnostic_setting" "dns_policy" {
   }
   metric {
     category = "AllMetrics"
-    enabled = false
+    enabled  = false
   }
 }
