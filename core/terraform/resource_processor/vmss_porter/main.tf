@@ -177,9 +177,6 @@ resource "azurerm_role_assignment" "mgmt_storage_account_blob_contributor" {
   scope                = data.azurerm_storage_account.mgmt_storage.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
-  lifecycle {
-    ignore_changes = [ scope ]
-  }
 }
 
 resource "azurerm_role_assignment" "vmss_acr_pull" {
@@ -233,7 +230,7 @@ resource "azurerm_private_endpoint" "mgmtblobpe" {
   resource_group_name = var.mgmt_resource_group_name
   subnet_id           = var.resource_processor_subnet_id
   tags                = local.tre_core_tags
-  lifecycle { ignore_changes = [tags, private_service_connection[0].private_connection_resource_id] }
+  lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-blobcore"
