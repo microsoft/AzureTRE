@@ -1,11 +1,13 @@
 locals {
   allowedDomains = tolist(jsondecode(file("${path.module}/allowed-dns.json")))
   # Maximum of 100 domains per rule, so split into sub-arrays
-  numRules = floor((length(local.allowedDomains) + 100) / 100)
+  numRules          = floor((length(local.allowedDomains) + 100) / 100)
+  dnsResolverApiVer = "2023-07-01-preview"
 }
 
 resource "azapi_resource" "dnspolicy" {
-  type      = "Microsoft.Network/dnsResolverPolicies@2023-07-01-preview"
+  count     = var.enable_dns_policy ? 1 : 0
+  type      = "Microsoft.Network/dnsResolverPolicies@${local.dnsResolverApiVer}"
   parent_id = azurerm_resource_group.core.id
   name      = "dnspol-${var.tre_id}"
   location  = var.location
@@ -18,20 +20,21 @@ resource "azapi_resource" "dnspolicy" {
 }
 
 resource "azapi_resource" "domain_list_allow" {
-  count     = local.numRules
-  type      = "Microsoft.Network/dnsResolverDomainLists@2023-07-01-preview"
+  count     = var.enable_dns_policy ? local.numRules : 0
+  type      = "Microsoft.Network/dnsResolverDomainLists@${local.dnsResolverApiVer}"
   parent_id = azurerm_resource_group.core.id
   name      = "dl-allowed-${count.index + 1}"
   location  = var.location
   body = {
     properties = {
-      domains : slice(local.allowedDomains, count.index * 100, min((count.index * 100)+100, local.numRules))
+      domains : slice(local.allowedDomains, count.index * 100, min((count.index * 100) + 100, length(local.allowedDomains)))
     }
   }
 }
 
 resource "azapi_resource" "domain_list_all" {
-  type      = "Microsoft.Network/dnsResolverDomainLists@2023-07-01-preview"
+  count     = var.enable_dns_policy ? 1 : 0
+  type      = "Microsoft.Network/dnsResolverDomainLists@${local.dnsResolverApiVer}"
   parent_id = azurerm_resource_group.core.id
   name      = "dl-all"
   location  = var.location
@@ -43,8 +46,9 @@ resource "azapi_resource" "domain_list_all" {
 }
 
 resource "azapi_resource" "allow_rule" {
-  type      = "Microsoft.Network/dnsResolverPolicies/dnsSecurityRules@2023-07-01-preview"
-  parent_id = azapi_resource.dnspolicy.id
+  count     = var.enable_dns_policy ? 1 : 0
+  type      = "Microsoft.Network/dnsResolverPolicies/dnsSecurityRules@${local.dnsResolverApiVer}"
+  parent_id = azapi_resource.dnspolicy[0].id
   name      = "allow"
   location  = var.location
 
@@ -62,8 +66,9 @@ resource "azapi_resource" "allow_rule" {
 
 
 resource "azapi_resource" "deny_rule" {
-  type      = "Microsoft.Network/dnsResolverPolicies/dnsSecurityRules@2023-07-01-preview"
-  parent_id = azapi_resource.dnspolicy.id
+  count     = var.enable_dns_policy ? 1 : 0
+  type      = "Microsoft.Network/dnsResolverPolicies/dnsSecurityRules@${local.dnsResolverApiVer}"
+  parent_id = azapi_resource.dnspolicy[0].id
   name      = "deny"
   location  = var.location
 
@@ -75,10 +80,39 @@ resource "azapi_resource" "deny_rule" {
       }
       dnsResolverDomainLists = [
         {
-          id = azapi_resource.domain_list_all.id
+          id = azapi_resource.domain_list_all[0].id
         }
       ]
       dnsSecurityRuleState = "Enabled"
     }
+  }
+}
+
+resource "azapi_resource" "core_vnet_link" {
+  count     = var.enable_dns_policy ? 1 : 0
+  type      = "Microsoft.Network/dnsResolverPolicies/virtualNetworkLinks@${local.dnsResolverApiVer}"
+  parent_id = azapi_resource.dnspolicy[0].id
+  name      = "core"
+  location  = var.location
+  body = {
+    properties = {
+      virtualNetwork = {
+        id = module.network.core_vnet_id
+      }
+    }
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "dns_policy" {
+  count     = var.enable_dns_policy ? 1 : 0
+  name                       = "diagnostics"
+  target_resource_id         = azapi_resource.dnspolicy[0].id
+  log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
+  enabled_log {
+    category = "DnsResponse"
+  }
+  metric {
+    category = "AllMetrics"
+    enabled = false
   }
 }
