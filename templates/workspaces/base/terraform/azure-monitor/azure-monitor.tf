@@ -86,14 +86,14 @@ resource "azapi_resource" "ampls_workspace" {
   location  = "global"
   tags      = var.tre_workspace_tags
 
-  body = jsonencode({
+  body = {
     properties = {
       accessModeSettings = {
         ingestionAccessMode = "PrivateOnly"
         queryAccessMode     = "PrivateOnly"
       }
     }
-  })
+  }
 
   response_export_values = [
     "id"
