@@ -10,22 +10,44 @@
       "WorkspaceOwner", "WorkspaceResearcher"
     ],
     "properties": {
+      "display_name": {
+        "type": "string",
+        "title": "Display name for the VM",
+        "description": "The display name of the VM.",
+        "default": "My Windows VM",
+        "updateable": true
+      },
+      "description": {
+        "type": "string",
+        "title": "Description of the VM",
+        "description": "Describe what this VM is used for.",
+        "default": "I will use this VM for research.",
+        "updateable": true
+      },
       "os_image": {
         "$id": "#/properties/os_image",
         "type": "string",
         "title": "Windows image",
         "description": "Select Windows image to use for VM",
+        "default": "Windows 10",
         "enum": [
           "Windows 10",
           "Windows 11",
           "Server 2019 Data Science VM"
         ]
       },
+      "admin_username": {
+        "type": "string",
+        "title": "Admin username",
+        "description": "Overide automatic admin username generation.",
+        "default": ""
+      },
       "vm_size": {
         "$id": "#/properties/vm_size",
         "type": "string",
         "title": "VM Size",
         "description": "Select size of VM",
+        "default": "2 CPU | 8GB RAM",
         "enum": [
           "2 CPU | 8GB RAM",
           "4 CPU | 16GB RAM",
@@ -111,4 +133,10 @@
         }
       }
     ]
+  },
+  "uiSchema": {
+    "admin_username": {
+      "classNames": "tre-hidden"
+    }
+  }
 }
