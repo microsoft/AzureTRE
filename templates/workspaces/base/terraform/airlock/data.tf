@@ -25,6 +25,6 @@ data "azurerm_servicebus_topic" "blob_created" {
 }
 
 data "azurerm_eventgrid_topic" "scan_result" {
-  name                = var.scan_result_topic_name
+  name                = local.scan_result_topic_name
   resource_group_name = local.core_resource_group_name
 }
