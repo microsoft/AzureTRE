@@ -207,35 +207,6 @@ resource "azurerm_storage_account_network_rules" "sa_export_inprogress_rules" {
   bypass         = ["AzureServices"]
 }
 
-
-
-# Enable Airlock Malware Scanning on Core TRE for Export In-Progress
-resource "azapi_resource_action" "enable_defender_for_storage_export" {
-  count       = var.enable_malware_scanning ? 1 : 0
-  type        = "Microsoft.Security/defenderForStorageSettings@2022-12-01-preview"
-  resource_id = "${azurerm_storage_account.sa_export_inprogress.id}/providers/Microsoft.Security/defenderForStorageSettings/current"
-  method      = "PUT"
-
-  body = jsonencode({
-    properties = {
-      isEnabled = true
-      malwareScanning = {
-        onUpload = {
-          isEnabled     = true
-          capGBPerMonth = 5000
-        },
-        scanResultsEventGridTopicResourceId = azurerm_eventgrid_topic.export_scan_result[0].id
-      }
-      sensitiveDataDiscovery = {
-        isEnabled = false
-      }
-      overrideSubscriptionLevelSettings = true
-    }
-  })
-}
-
-
-
 resource "azurerm_private_endpoint" "export_inprogress_pe" {
   name                = "pe-sa-export-ip-blob-${var.short_workspace_id}"
   location            = var.location
@@ -256,6 +227,31 @@ resource "azurerm_private_endpoint" "export_inprogress_pe" {
     is_manual_connection           = false
     subresource_names              = ["Blob"]
   }
+}
+
+# Enable Airlock Malware Scanning on Core TRE for Export In-Progress
+resource "azapi_resource_action" "enable_defender_for_storage_export" {
+  count       = var.enable_malware_scanning ? 1 : 0
+  type        = "Microsoft.Security/defenderForStorageSettings@2022-12-01-preview"
+  resource_id = "${azurerm_storage_account.sa_export_inprogress.id}/providers/Microsoft.Security/defenderForStorageSettings/current"
+  method      = "PUT"
+
+  body = jsonencode({
+    properties = {
+      isEnabled = true
+      malwareScanning = {
+        onUpload = {
+          isEnabled     = true
+          capGBPerMonth = 5000
+        },
+        scanResultsEventGridTopicResourceId = data.azurerm_eventgrid_topic.scan_result.id
+      }
+      sensitiveDataDiscovery = {
+        isEnabled = false
+      }
+      overrideSubscriptionLevelSettings = true
+    }
+  })
 }
 
 # 'Rejected' location for export

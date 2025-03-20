@@ -8,6 +8,7 @@ locals {
   export_blocked_sys_topic_name    = "evgt-airlock-export-blocked-${local.workspace_resource_name_suffix}"
 
   blob_created_topic_name = "airlock-blob-created"
+  scan_result_topic_name  = var.scan_result_topic_name
 
   # STorage AirLock IMport APProved
   import_approved_storage_name = lower(replace("stalimapp${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))

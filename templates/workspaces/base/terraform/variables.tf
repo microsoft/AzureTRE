@@ -145,3 +145,8 @@ variable "enable_malware_scanning" {
   default     = false
   description = "Enable malware scanning for the workspace"
 }
+
+variable "scan_result_topic_name" {
+  type        = string
+  description = "The name of the topic to publish scan results to"
+}

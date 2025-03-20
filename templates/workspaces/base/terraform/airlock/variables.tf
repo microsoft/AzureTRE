@@ -37,3 +37,6 @@ variable "encryption_key_versionless_id" {
 variable "enable_malware_scanning" {
   type = bool
 }
+variable "scan_result_topic_name" {
+  type = string
+}

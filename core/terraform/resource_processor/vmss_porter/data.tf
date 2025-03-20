@@ -34,6 +34,8 @@ data "template_file" "cloudconfig" {
     rp_bundle_values                                 = local.rp_bundle_values_formatted
     enable_cmk_encryption                            = var.enable_cmk_encryption
     key_store_id                                     = var.key_store_id
+    enable_malware_scanning                          = var.enable_malware_scanning
+    scan_result_topic_name                           = var.scan_result_topic_name
   }
 }
 

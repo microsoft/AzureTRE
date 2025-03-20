@@ -130,6 +130,10 @@ parameters:
     type: boolean
     default: false
     description: "Enable malware scanning on the workspace storage account"
+  - name: scan_result_topic_name
+    type: string
+    default: ""
+    description: "The name of the topic to publish scan results to"
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -201,6 +205,7 @@ install:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_malware_scanning: ${ bundle.parameters.enable_malware_scanning }
+        scan_result_topic_name: ${ bundle.parameters.scan_result_topic_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -247,6 +252,7 @@ upgrade:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_malware_scanning: ${ bundle.parameters.enable_malware_scanning }
+        scan_result_topic_name: ${ bundle.parameters.scan_result_topic_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -316,6 +322,7 @@ uninstall:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_malware_scanning: ${ bundle.parameters.enable_malware_scanning }
+        scan_result_topic_name: ${ bundle.parameters.scan_result_topic_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

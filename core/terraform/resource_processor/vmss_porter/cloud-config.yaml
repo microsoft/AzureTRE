@@ -64,6 +64,7 @@ write_files:
       ENABLE_CMK_ENCRYPTION=${enable_cmk_encryption}
       KEY_STORE_ID=${key_store_id}
       ENABLE_MALWARE_SCANNING=${enable_malware_scanning}
+      SCAN_RESULT_TOPIC_NAME=${scan_result_topic_name}
       ${rp_bundle_values}
   - path: /etc/cron.hourly/docker-prune
     # An hourly cron job to have docker free disk space. Running this frquently

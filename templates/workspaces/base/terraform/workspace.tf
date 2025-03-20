@@ -60,6 +60,7 @@ module "airlock" {
   encryption_key_versionless_id = var.enable_cmk_encryption ? azurerm_key_vault_key.encryption_key[0].versionless_id : null
   encryption_identity_id        = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
   enable_malware_scanning       = var.enable_malware_scanning
+  scan_result_topic_name        = var.scan_result_topic_name
   depends_on = [
     module.network,
   ]

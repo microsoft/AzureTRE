@@ -142,28 +142,6 @@ resource "azurerm_role_assignment" "servicebus_sender_export_blocked_blob_create
   ]
 }
 
-resource "azurerm_eventgrid_topic" "export_scan_result" {
-  count               = var.enable_malware_scanning ? 1 : 0
-  name                = local.export_inprogress_sys_topic_name
-  location            = var.location
-  resource_group_name = var.ws_resource_group_name
-
-  # This is mandatory for the scan result to be published since private networks are not supported yet
-  public_network_access_enabled = true
-  local_auth_enabled            = false
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  tags = merge(var.tre_workspace_tags,
-    {
-      Publishers = "airlock"
-  })
-
-  lifecycle { ignore_changes = [tags] }
-}
-
 ## Subscriptions
 resource "azurerm_eventgrid_event_subscription" "import_approved_blob_created" {
   name  = "import-approved-blob-created-${var.short_workspace_id}"
