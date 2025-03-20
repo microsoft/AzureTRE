@@ -281,11 +281,12 @@ class AzureADAuthorization(AccessService):
 
                 if "users" in user_data["body"]["@odata.context"]:
                     user_principal_name = user_data["body"]["userPrincipalName"]
+                    user_email = user_data["body"]["mail"]
                     # if user with id does not already exist in users
                     user_roles = self._get_roles_for_principal(user_id, roles_graph_data, app_id_to_role_name)
 
                     if not any(user.id == user_id for user in users):
-                        users.append(AssignedUser(id=user_id, displayName=user_name, userPrincipalName=user_principal_name, roles=user_roles))
+                        users.append(AssignedUser(id=user_id, displayName=user_name, userPrincipalName=user_principal_name, email=user_email, roles=user_roles))
                     else:
                         user = next((user for user in users if user.id == user_id), None)
                         user.roles = list(set(user.roles + user_roles))
@@ -297,11 +298,12 @@ class AzureADAuthorization(AccessService):
                     user_id = group_member["id"]
                     user_name = group_member["displayName"]
                     user_principal_name = group_member["userPrincipalName"]
+                    user_email = group_member["mail"]
 
                     group_roles = self._get_roles_for_principal(group_id, roles_graph_data, app_id_to_role_name)
 
                     if not any(user.id == user_id for user in users):
-                        users.append(AssignedUser(id=user_id, displayName=user_name, userPrincipalName=user_principal_name, roles=group_roles))
+                        users.append(AssignedUser(id=user_id, displayName=user_name, userPrincipalName=user_principal_name, email=user_email, roles=group_roles))
                     else:
                         user = next((user for user in users if user.id == user_id), None)
                         user.roles = list(set(user.roles + group_roles))
@@ -311,12 +313,23 @@ class AzureADAuthorization(AccessService):
     def get_workspace_users(self, workspace: Workspace) -> List[AssignedUser]:
         msgraph_token = self._get_msgraph_token()
         sp_graph_data = self._get_app_sp_graph_data(workspace.properties["client_id"])
-        app_id_to_role_name = {app_role["id"]: (app_role["displayName"]) for app_role in sp_graph_data["value"][0]["appRoles"]}
+        app_id_to_role_name = {app_role["id"]: (app_role["value"]) for app_role in sp_graph_data["value"][0]["appRoles"]}
         roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"])
         users_graph_data = self._get_user_details(roles_graph_data, msgraph_token)
         users_inc_groups = self._get_users_inc_groups_from_response(users_graph_data, roles_graph_data, app_id_to_role_name)
 
         return users_inc_groups
+
+    def get_workspace_user_emails_by_role_assignment(self, workspace: Workspace):
+        users = self.get_workspace_users(workspace)
+        workspace_role_assignments_details = {}
+        for user in users:
+            if user.email:
+                for role in user.roles:
+                    if role.displayName not in workspace_role_assignments_details:
+                        workspace_role_assignments_details[role.displayName] = []
+                    workspace_role_assignments_details[role.displayName].append(user.email)
+        return workspace_role_assignments_details
 
     def get_assignable_users(self, filter: str = "", maxResultCount: int = 5) -> List[AssignableUser]:
         users_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/users?$filter=startswith(displayName,'{filter}')&$top={maxResultCount}"
@@ -325,7 +338,7 @@ class AzureADAuthorization(AccessService):
 
         for user_data in graph_data["value"]:
             result.append(
-                AssignableUser(id=user_data["id"], displayName=user_data["displayName"], userPrincipalName=user_data["userPrincipalName"])
+                AssignableUser(id=user_data["id"], displayName=user_data["displayName"], userPrincipalName=user_data["userPrincipalName"], email=user_data["mail"])
             )
 
         return result

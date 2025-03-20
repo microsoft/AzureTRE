@@ -65,6 +65,7 @@ class TestWorkspaceUserRoutesWithTreAdmin:
                     "id": "123",
                     "displayName": "John Doe",
                     "userPrincipalName": "john.doe@example.com",
+                    "email": "john.doe@example.com",
                     "roles": [
                         {
                             "id": "1",
@@ -79,6 +80,7 @@ class TestWorkspaceUserRoutesWithTreAdmin:
                     "id": "456",
                     "displayName": "Jane Smith",
                     "userPrincipalName": "jane.smith@example.com",
+                    "email": "jane.smith@example.com",
                     "roles": [
                         {
                             "id": "2",

@@ -18,10 +18,11 @@ class PrincipalRole:
 
 
 class UserPrincipal:
-    def __init__(self, principal_id, mail, name):
+    def __init__(self, principal_id, userPrincipalName, name, mail):
         self.principal_id = principal_id
         self.mail = mail
         self.display_name = name
+        self.userPrincipalName = userPrincipalName
 
 
 class GroupPrincipal:
@@ -30,10 +31,10 @@ class GroupPrincipal:
         self.members = members
 
 
-user_principal_1 = UserPrincipal("user_principal_id1", "test_user1@email.com", "test_user1")
-user_principal_2 = UserPrincipal("user_principal_id2", "test_user2@email.com", "test_user2")
-user_principal_3 = UserPrincipal("user_principal_id3", "test_user3@email.com", "test_user3")
-user_principal_4 = UserPrincipal("user_principal_id4", "test_user4@email.com", "test_user4")
+user_principal_1 = UserPrincipal("user_principal_id1", "test_user1@email.com", "test_user1", "test_user1@email.com")
+user_principal_2 = UserPrincipal("user_principal_id2", "test_user2@email.com", "test_user2", "test_user2@email.com")
+user_principal_3 = UserPrincipal("user_principal_id3", "test_user3@email.com", "test_user3", "test_user3@email.com")
+user_principal_4 = UserPrincipal("user_principal_id4", "test_user4@email.com", "test_user4", "test_user4@email.com")
 
 group_principal = GroupPrincipal("group_principal_id", [user_principal_3, user_principal_4])
 
@@ -77,9 +78,9 @@ def get_app_sp_graph_data_mock():
             {
                 "id": "12345",
                 "appRoles": [
-                    {"id": "1abc3", "value": "WorkspaceResearcher"},
-                    {"id": "1abc4", "value": "WorkspaceOwner"},
-                    {"id": "1abc5", "value": "AirlockManager"},
+                    {"id": "1abc3", "value": "WorkspaceResearcher", "displayName": "Workspace Researcher"},
+                    {"id": "1abc4", "value": "WorkspaceOwner", "displayName": "Workspace Owner"},
+                    {"id": "1abc5", "value": "AirlockManager", "displayName": "Airlock Manager"},
                 ],
                 "servicePrincipalNames": ["api://tre_ws_1234"],
             }
@@ -131,7 +132,7 @@ def workspace_without_groups():
 
 @pytest.fixture
 def role_owner():
-    return Role(id="owner-role-id", displayName="WorkspaceOwner", type=AssignmentType.APP_ROLE)
+    return Role(id="owner-role-id", displayName="Workspace Owner", type=AssignmentType.APP_ROLE)
 
 
 @pytest.fixture
@@ -148,6 +149,161 @@ def test_extract_workspace__raises_error_if_client_id_not_available():
     access_service = AzureADAuthorization()
     with pytest.raises(AuthConfigValidationError):
         access_service.extract_workspace_auth_information(data={"auth_type": "Manual"})
+
+
+@patch("services.aad_authentication.AzureADAuthorization._get_app_sp_graph_data")
+@patch("services.aad_authentication.AzureADAuthorization._get_user_role_assignments")
+@patch("services.aad_authentication.AzureADAuthorization._get_user_details")
+@patch(
+    "services.aad_authentication.AzureADAuthorization._get_msgraph_token",
+    return_value="token",
+)
+def test_get_workspace_user_emails_by_role_assignment_with_single_user_returns_user_mail_and_role_assignment(
+    _, users, roles, app_sp_graph_data_mock, user_response, roles_response, get_app_sp_graph_data_mock
+):
+    access_service = AzureADAuthorization()
+
+    # Use fixtures
+    users.return_value = user_response
+    roles.return_value = roles_response
+    app_sp_graph_data_mock.return_value = get_app_sp_graph_data_mock
+
+    # Act
+    role_assignment_details = access_service.get_workspace_user_emails_by_role_assignment(
+        Workspace(
+            id="id",
+            templateName="tre-workspace-base",
+            templateVersion="0.1.0",
+            etag="",
+            properties={
+                "sp_id": "ab123",
+                "client_id": "ab124",
+                "app_role_id_workspace_owner": "1abc4",
+                "app_role_id_workspace_researcher": "ab125",
+                "app_role_id_workspace_airlock_manager": "ab130",
+            },
+        )
+    )
+
+    assert role_assignment_details["WorkspaceOwner"] == ["test_user1@email.com"]
+
+
+@patch("services.aad_authentication.AzureADAuthorization._get_app_sp_graph_data")
+@patch("services.aad_authentication.AzureADAuthorization._get_user_role_assignments")
+@patch("services.aad_authentication.AzureADAuthorization._get_user_details")
+@patch(
+    "services.aad_authentication.AzureADAuthorization._get_msgraph_token",
+    return_value="token",
+)
+def test_get_workspace_user_emails_by_role_assignment_with_single_user_with_no_mail_is_not_returned(
+    _, users, roles, app_sp_graph_data_mock, user_response, roles_response, get_app_sp_graph_data_mock
+):
+    access_service = AzureADAuthorization()
+
+    # Build user response
+    user_response_no_mail = user_response.copy()
+    user_response_no_mail["responses"][0]["body"]["mail"] = None
+    users.return_value = user_response_no_mail
+
+    roles.return_value = roles_response
+    app_sp_graph_data_mock.return_value = get_app_sp_graph_data_mock
+
+    # Act
+    role_assignment_details = access_service.get_workspace_user_emails_by_role_assignment(
+        Workspace(
+            id="id",
+            templateName="tre-workspace-base",
+            templateVersion="0.1.0",
+            etag="",
+            properties={
+                "sp_id": "ab123",
+                "client_id": "ab124",
+                "app_role_id_workspace_owner": "1abc4",
+                "app_role_id_workspace_researcher": "ab125",
+                "app_role_id_workspace_airlock_manager": "ab130",
+            },
+        )
+    )
+
+    assert len(role_assignment_details) == 0
+
+
+@patch("services.aad_authentication.AzureADAuthorization._get_app_sp_graph_data")
+@patch("services.aad_authentication.AzureADAuthorization._get_user_role_assignments")
+@patch("services.aad_authentication.AzureADAuthorization._get_user_details")
+@patch(
+    "services.aad_authentication.AzureADAuthorization._get_msgraph_token",
+    return_value="token",
+)
+def test_get_workspace_user_emails_by_role_assignment_with_only_groups_assigned_returns_group_members(
+    _, users_and_groups, roles, app_sp_graph_data_mock, group_response, roles_response, get_app_sp_graph_data_mock
+):
+    access_service = AzureADAuthorization()
+
+    users_and_groups.return_value = group_response
+    roles.return_value = roles_response
+    app_sp_graph_data_mock.return_value = get_app_sp_graph_data_mock
+
+    # Act
+    role_assignment_details = access_service.get_workspace_user_emails_by_role_assignment(
+        Workspace(
+            id="id",
+            templateName="tre-workspace-base",
+            templateVersion="0.1.0",
+            etag="",
+            properties={
+                "sp_id": "ab123",
+                "client_id": "ab124",
+                "app_role_id_workspace_owner": "1abc4",
+                "app_role_id_workspace_researcher": "ab125",
+                "app_role_id_workspace_airlock_manager": "ab130",
+            },
+        )
+    )
+
+    assert len(role_assignment_details) == 1
+    assert "test_user3@email.com" in role_assignment_details["WorkspaceOwner"]
+    assert "test_user4@email.com" in role_assignment_details["WorkspaceOwner"]
+
+
+@patch("services.aad_authentication.AzureADAuthorization._get_app_sp_graph_data")
+@patch("services.aad_authentication.AzureADAuthorization._get_user_role_assignments")
+@patch("services.aad_authentication.AzureADAuthorization._get_user_details")
+@patch(
+    "services.aad_authentication.AzureADAuthorization._get_msgraph_token",
+    return_value="token",
+)
+def test_get_workspace_user_emails_by_role_assignment_with_groups_and_users_assigned_returned_as_expected(
+    _, users_and_groups, roles, app_sp_graph_data_mock, roles_response, get_app_sp_graph_data_mock, users_and_group_response
+):
+
+    access_service = AzureADAuthorization()
+
+    roles.return_value = roles_response
+    app_sp_graph_data_mock.return_value = get_app_sp_graph_data_mock
+    users_and_groups.return_value = users_and_group_response
+
+    # Act
+    role_assignment_details = access_service.get_workspace_user_emails_by_role_assignment(
+        Workspace(
+            id="id",
+            templateName="tre-workspace-base",
+            templateVersion="0.1.0",
+            etag="",
+            properties={
+                "sp_id": "ab123",
+                "client_id": "ab123",
+                "app_role_id_workspace_owner": "ab124",
+                "app_role_id_workspace_researcher": "ab125",
+                "app_role_id_workspace_airlock_manager": "ab130",
+            },
+        )
+    )
+
+    assert len(role_assignment_details) == 1
+    assert "test_user1@email.com" in role_assignment_details["WorkspaceOwner"]
+    assert "test_user3@email.com" in role_assignment_details["WorkspaceOwner"]
+    assert "test_user4@email.com" in role_assignment_details["WorkspaceOwner"]
 
 
 @patch(
@@ -493,21 +649,21 @@ def get_mock_batch_response(user_principals, group_principals):
     response_body = {"responses": []}
     for user_principal in user_principals:
         response_body["responses"].append(
-            get_mock_user_response(user_principal.principal_id, user_principal.mail, user_principal.display_name)
+            get_mock_user_response(user_principal.principal_id, user_principal.userPrincipalName, user_principal.display_name, user_principal.mail)
         )
     for group_principal in group_principals:
         response_body["responses"].append(get_mock_group_response(group_principal))
     return response_body
 
 
-def get_mock_user_response(principal_id, mail, name):
+def get_mock_user_response(principal_id, mail, name, userPrincipalName):
     headers = '{"Cache-Control":"no-cache","x-ms-resource-unit":"1","OData-Version":"4.0","Content-Type":"application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8"}'
     user_odata = f'@odata.context":"{MOCK_MICROSOFT_GRAPH_URL}/v1.0/$metadata#users(mail,id)/$entity'
     user_response_body = {
         "id": "1",
         "status": 200,
         "headers": headers,
-        "body": {"@odata.context": user_odata, "userPrincipalName": mail, "id": principal_id, "displayName": name},
+        "body": {"@odata.context": user_odata, "userPrincipalName": userPrincipalName, "id": principal_id, "displayName": name, "mail": mail},
     }
     return user_response_body
 
@@ -523,6 +679,7 @@ def get_mock_group_response(group):
                 "userPrincipalName": member.mail,
                 "id": member.principal_id,
                 "displayName": member.display_name,
+                "mail": member.mail,
             }
         )
     group_response_body = {
@@ -631,7 +788,8 @@ def test_get_assignable_users_returns_users(ms_graph_query_mock):
             {
                 "id": "123",
                 "displayName": "User 1",
-                "userPrincipalName": "User1@test.com"
+                "userPrincipalName": "User1@test.com",
+                "mail": "User1@test.com"
             }
         ]
     }

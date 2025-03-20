@@ -7,6 +7,7 @@ class AssignableUser(BaseModel):
     id: str
     displayName: str
     userPrincipalName: str
+    email: str = Field(default=None)
 
 
 class AssignmentType(Enum):
@@ -31,4 +32,5 @@ class AssignedUser(BaseModel):
     id: str
     displayName: str
     userPrincipalName: str
+    email: str = Field(default=None)
     roles: List[Role] = Field(default_factory=list)
