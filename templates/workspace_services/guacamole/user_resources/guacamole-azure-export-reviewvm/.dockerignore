@@ -10,5 +10,5 @@
 Dockerfile.tmpl
 
 .env*
-terraform/deploy.sh
+
 terraform/destroy.sh

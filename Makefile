@@ -135,14 +135,14 @@ terraform-deploy:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR}/terraform/ && ./deploy.sh
+	&& ./devops/scripts/terraform_deploy.sh ${DIR}
 
 terraform-upgrade:
 	$(call target_title, "Upgrading ${DIR} with Terraform") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
-	&& ./devops/scripts/upgrade.sh ${DIR}
+	&& ./devops/scripts/terraform_upgrade_provider.sh ${DIR}
 
 terraform-import:
 	$(call target_title, "Importing ${DIR} with Terraform") \
@@ -210,6 +210,15 @@ bundle-install: bundle-check-params
 		--credential-set arm_auth \
 		--credential-set aad_auth \
 		--debug
+
+bundle:
+	case ${BUNDLE_TYPE} in \
+		(workspace) $(MAKE) workspace_bundle BUNDLE=${BUNDLE} ;; \
+		(workspace_service) $(MAKE) workspace_service_bundle BUNDLE=${BUNDLE} ;; \
+		(shared_service) $(MAKE) shared_service_bundle BUNDLE=${BUNDLE} ;; \
+		(user_resource) $(MAKE) user_resource_bundle WORKSPACE_SERVICE=${WORKSPACE_SERVICE} BUNDLE=${BUNDLE} ;; \
+		(*) echo "Invalid BUNDLE_TYPE: ${BUNDLE_TYPE}"; exit 1 ;; \
+	esac
 
 # Validates that the parameters file is synced with the bundle.
 # The file is used when installing the bundle from a local machine.
@@ -371,7 +380,7 @@ auth: ## 🔐 Create the necessary Azure Active Directory assets
 show-core-output:
 	$(call target_title,"Display TRE core output") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
-	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && terraform show && popd > /dev/null
+	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./show_output.sh && popd > /dev/null
 
 api-healthcheck:
 	$(call target_title,"Checking API Health") \

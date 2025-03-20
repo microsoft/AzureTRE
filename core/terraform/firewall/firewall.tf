@@ -1,4 +1,5 @@
 resource "azurerm_public_ip" "fwtransit" {
+  count               = var.firewall_force_tunnel_ip != "" ? 0 : 1
   name                = "pip-fw-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
   location            = var.location
@@ -7,6 +8,11 @@ resource "azurerm_public_ip" "fwtransit" {
   tags                = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags, zones] }
+}
+
+moved {
+  from = azurerm_public_ip.fwtransit
+  to   = azurerm_public_ip.fwtransit[0]
 }
 
 resource "azurerm_public_ip" "fwmanagement" {
@@ -31,8 +37,8 @@ resource "azurerm_firewall" "fw" {
   tags                = var.tre_core_tags
   ip_configuration {
     name                 = "fw-ip-configuration"
-    subnet_id            = var.firewall_subnet_id
-    public_ip_address_id = azurerm_public_ip.fwtransit.id
+    subnet_id            = data.azurerm_subnet.firewall.id
+    public_ip_address_id = var.firewall_force_tunnel_ip != "" ? null : azurerm_public_ip.fwtransit[0].id
   }
 
   dynamic "management_ip_configuration" {
