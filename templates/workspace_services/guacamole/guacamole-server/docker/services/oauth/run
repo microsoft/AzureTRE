@@ -8,6 +8,7 @@ cookiesecret=$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d -- 
 --provider oidc \
 --skip-provider-button \
 --cookie-secret "${cookiesecret}" \
+--cookie-expire 0m \
 --oidc-issuer-url "${OAUTH2_PROXY_OIDC_ISSUER_URL}" \
 --upstream http://0.0.0.0:8080 \
 --email-domain "${OAUTH2_PROXY_EMAIL_DOMAIN}" \
