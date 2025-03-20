@@ -97,3 +97,13 @@ variable "kv_encryption_key_name" {
   type        = string
   description = "Name of Key Vault Encryption Key (only used if enable_cmk_encryption is true)"
 }
+
+variable "enable_malware_scanning" {
+  type        = bool
+  description = "If False, Airlock requests will skip the malware scanning stage"
+}
+
+variable "scan_result_topic_name" {
+  type        = string
+  description = "Name of the topic to publish scan results to"
+}

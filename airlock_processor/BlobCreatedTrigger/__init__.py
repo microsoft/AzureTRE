@@ -32,7 +32,7 @@ def main(msg: func.ServiceBusMessage,
             logging.error("environment variable 'ENABLE_MALWARE_SCANNING' does not exists. Cannot continue.")
             raise
 
-        if enable_malware_scanning and constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS in topic:
+        if enable_malware_scanning and (constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS in topic):
             # If malware scanning is enabled, the fact that the blob was created can be dismissed.
             # It will be consumed by the malware scanning service
             logging.info('Malware scanning is enabled. no action to perform.')
