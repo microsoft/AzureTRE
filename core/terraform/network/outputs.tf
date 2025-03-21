@@ -11,7 +11,7 @@ output "azure_firewall_subnet_id" {
 }
 
 output "firewall_management_subnet_id" {
-  value = azurerm_subnet.firewall_management.id
+  value = local.subnet_ids_map["AzureFirewallManagementSubnet"]
 }
 
 output "app_gw_subnet_id" {

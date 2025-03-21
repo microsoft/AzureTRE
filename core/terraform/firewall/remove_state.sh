@@ -8,6 +8,9 @@ echo "REMOVING STATE FOR FIREWALL..."
 
 set -e
 
+# shellcheck disable=SC1091
+source "$(dirname "$0")/../../../devops/scripts/mgmtstorage_enable_public_access.sh"
+
 terraform init -input=false -backend=true -reconfigure -upgrade \
     -backend-config="resource_group_name=${TF_VAR_mgmt_resource_group_name}" \
     -backend-config="storage_account_name=${TF_VAR_mgmt_storage_account_name}" \
@@ -41,9 +44,10 @@ remove_if_present azurerm_subnet_route_table_association.rt_airlock_events_subne
 remove_if_present azurerm_firewall_network_rule_collection.core
 
 # firewall.tf
-remove_if_present azurerm_public_ip.fwtransit
+remove_if_present azurerm_public_ip.fwtransit[0]
 remove_if_present azurerm_public_ip.fwmanagement[0]
 remove_if_present azurerm_firewall.fw
 remove_if_present azurerm_monitor_diagnostic_categories.firewall
 remove_if_present azurerm_monitor_diagnostic_setting.firewall
+remove_if_present azurerm_firewall_policy_rule_collection_group.core
 remove_if_present azurerm_firewall_policy.root

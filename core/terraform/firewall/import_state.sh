@@ -14,6 +14,9 @@ fi
 
 set -e
 
+# shellcheck disable=SC1091
+source "$(dirname "$0")/../../../devops/scripts/mgmtstorage_enable_public_access.sh"
+
 # Initialise state for Terraform
 terraform init -input=false -backend=true -reconfigure -upgrade \
     -backend-config="resource_group_name=${TF_VAR_mgmt_resource_group_name}" \
@@ -65,7 +68,7 @@ if [[ "${FIREWALL_SKU}" == "Basic" ]]; then
   import_if_exists module.firewall.azurerm_public_ip.fwmanagement[0] "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/publicIPAddresses/pip-fw-management-${TRE_ID}"
 fi
 
-import_if_exists module.firewall.azurerm_public_ip.fwtransit "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/publicIPAddresses/pip-fw-${TRE_ID}"
+import_if_exists module.firewall.azurerm_public_ip.fwtransit[0] "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/publicIPAddresses/pip-fw-${TRE_ID}"
 
 # Firewall policy
 import_if_exists module.firewall.azurerm_firewall_policy.root "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/firewallPolicies/fw-policy-${TRE_ID}"
@@ -82,20 +85,20 @@ import_if_exists module.firewall.azurerm_monitor_diagnostic_setting.firewall \
 import_if_exists azurerm_route_table.rt \
   "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/routeTables/rt-${TRE_ID}"
 
-import_if_exists azurerm_subnet_route_table_association.rt_shared_subnet_association \
-  "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/virtualNetworks/vnet-${TRE_ID}/subnets/SharedSubnet"
+# import_if_exists azurerm_subnet_route_table_association.rt_shared_subnet_association \
+#   "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/virtualNetworks/vnet-${TRE_ID}/subnets/SharedSubnet"
 
-import_if_exists azurerm_subnet_route_table_association.rt_resource_processor_subnet_association \
-  "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/virtualNetworks/vnet-${TRE_ID}/subnets/ResourceProcessorSubnet"
+# import_if_exists azurerm_subnet_route_table_association.rt_resource_processor_subnet_association \
+#   "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/virtualNetworks/vnet-${TRE_ID}/subnets/ResourceProcessorSubnet"
 
-import_if_exists azurerm_subnet_route_table_association.rt_web_app_subnet_association \
-  "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/virtualNetworks/vnet-${TRE_ID}/subnets/WebAppSubnet"
+# import_if_exists azurerm_subnet_route_table_association.rt_web_app_subnet_association \
+#   "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/virtualNetworks/vnet-${TRE_ID}/subnets/WebAppSubnet"
 
-import_if_exists azurerm_subnet_route_table_association.rt_airlock_processor_subnet_association \
-  "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/virtualNetworks/vnet-${TRE_ID}/subnets/AirlockProcessorSubnet"
+# import_if_exists azurerm_subnet_route_table_association.rt_airlock_processor_subnet_association \
+#   "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/virtualNetworks/vnet-${TRE_ID}/subnets/AirlockProcessorSubnet"
 
-import_if_exists azurerm_subnet_route_table_association.rt_airlock_storage_subnet_association \
-  "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/virtualNetworks/vnet-${TRE_ID}/subnets/AirlockStorageSubnet"
+# import_if_exists azurerm_subnet_route_table_association.rt_airlock_storage_subnet_association \
+#   "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/virtualNetworks/vnet-${TRE_ID}/subnets/AirlockStorageSubnet"
 
-import_if_exists azurerm_subnet_route_table_association.rt_airlock_events_subnet_association \
-  "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/virtualNetworks/vnet-${TRE_ID}/subnets/AirlockEventsSubnet"
+# import_if_exists azurerm_subnet_route_table_association.rt_airlock_events_subnet_association \
+#   "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/virtualNetworks/vnet-${TRE_ID}/subnets/AirlockEventsSubnet"

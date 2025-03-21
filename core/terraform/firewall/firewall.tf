@@ -37,7 +37,7 @@ resource "azurerm_firewall" "fw" {
   tags                = var.tre_core_tags
   ip_configuration {
     name                 = "fw-ip-configuration"
-    subnet_id            = data.azurerm_subnet.firewall.id
+    subnet_id            = var.firewall_subnet_id
     public_ip_address_id = var.firewall_force_tunnel_ip != "" ? null : azurerm_public_ip.fwtransit[0].id
   }
 
