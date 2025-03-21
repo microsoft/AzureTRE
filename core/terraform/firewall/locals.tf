@@ -3,8 +3,18 @@ locals {
   firewall_name            = "fw-${var.tre_id}"
   firewall_diagnostic_categories_enabled = [
     "AZFWApplicationRule",
-    "AZFWNetworkRule",
+    "AZFWApplicationRuleAggregation",
     "AZFWDnsProxy",
+    "AZFWDnsQuery",
+    "AZFWFatFlow",
+    "AZFWFlowTrace",
+    "AZFWIdpsSignature",
+    "AZFWInternalFqdnResolutionFailure",
+    "AZFWNatRule",
+    "AZFWNatRuleAggregation",
+    "AZFWNetworkRule",
+    "AZFWNetworkRuleAggregation",
+    "AZFWThreatIntel"
   ]
 
   firewall_policy_name = "fw-policy-${var.tre_id}"
