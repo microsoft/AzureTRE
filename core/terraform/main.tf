@@ -205,7 +205,6 @@ module "resource_processor_vmss_porter" {
   resource_processor_vmss_sku                      = var.resource_processor_vmss_sku
   arm_environment                                  = var.arm_environment
   logging_level                                    = var.logging_level
-  firewall_sku                                     = var.firewall_sku
   rp_bundle_values                                 = var.rp_bundle_values
   enable_cmk_encryption                            = var.enable_cmk_encryption
   key_store_id                                     = local.key_store_id
