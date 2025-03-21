@@ -44,7 +44,7 @@
 | `FIREWALL_SKU` | Optional. The SKU of the Azure Firewall instance. Default value is `Standard`. Allowed values [`Basic`, `Standard`, `Premium`]. See [Azure Firewall SKU feature comparison](https://learn.microsoft.com/en-us/azure/firewall/choose-firewall-sku). |
 | `APP_GATEWAY_SKU` | Optional. The SKU of the Application Gateway. Default value is `Standard_v2`. Allowed values [`Standard_v2`, `WAF_v2`] |
 | `DEPLOY_BASTION` | Optional. If set to `true`, an Azure Bastion instance will be deployed. Default value is `true`. |
-| `BASTION_SKU` | Optional. The SKU of the Azure Bastion instance. Default value is `Developer`. Allowed values [`Developer`, `Standard`, `Basic`, `Premium`]. See [Azure Bastion SKU feature comparison](https://learn.microsoft.com/en-us/azure/bastion/bastion-overview#sku). |
+| `BASTION_SKU` | Optional. The SKU of the Azure Bastion instance. Default value is `Basic`. Allowed values [`Developer`, `Standard`, `Basic`, `Premium`]. See [Azure Bastion SKU feature comparison](https://learn.microsoft.com/en-us/azure/bastion/bastion-overview#sku). |
 | `CUSTOM_DOMAIN` | Optional. Custom domain name to access the Azure TRE portal. See [Custom domain name](custom-domain.md). |
 | `ENABLE_CMK_ENCRYPTION` | If set to `true`, customer-managed key encryption will be enabled for all supported resources. |
 
