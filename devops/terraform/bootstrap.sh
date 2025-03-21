@@ -3,6 +3,47 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+retry_with_backoff() {
+  local func="$1"
+  local sleep_time=10
+  local max_sleep=180
+
+  while [ "$sleep_time" -lt "$max_sleep" ]; do
+    if "$func"; then
+      return 0
+    fi
+    sleep "$sleep_time"
+    sleep_time=$((sleep_time * 2))
+  done
+  return 1
+}
+
+init_terraform() {
+  terraform_output=$(terraform init -input=false -backend=true -reconfigure 2>&1)
+  if echo "$terraform_output" | grep -q "AuthorizationPermissionMismatch\|403\|Failed to get existing workspaces"; then
+    return 1
+  elif echo "$terraform_output" | grep -q "Terraform has been successfully initialized"; then
+    return 0
+  fi
+
+  echo "Apply Retry mechanism on: ERROR- Unexpected output from terraform init: $terraform_output"
+  return 1
+}
+
+check_role_assignments() {
+  local roles
+  # shellcheck disable=SC2154
+  roles=$(az role assignment list \
+    --assignee "$USER_OBJECT_ID" \
+    --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" \
+    --query "[?roleDefinitionName=='Storage Blob Data Contributor'].roleDefinitionName" --output tsv)
+
+  if [[ $roles == *"Storage Blob Data Contributor"* ]]; then
+    return 0
+  fi
+  return 1
+}
+
 # Baseline Azure resources
 echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e[0m..."
 # shellcheck disable=SC2154
@@ -28,6 +69,9 @@ else
   az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name" --name "$TF_VAR_mgmt_storage_account_name" --output table
 fi
 
+# shellcheck disable=SC1091
+source ../scripts/mgmtstorage_enable_public_access.sh
+
 # Grant user blob data contributor permissions
 echo -e "\n\e[34m»»» 🔑 \e[96mGranting Storage Blob Data Contributor role to the current user\e[0m..."
 if [ -n "${ARM_CLIENT_ID:-}" ]; then
@@ -35,30 +79,41 @@ if [ -n "${ARM_CLIENT_ID:-}" ]; then
 else
     USER_OBJECT_ID=$(az ad signed-in-user show --query id --output tsv)
 fi
+
+# shellcheck disable=SC2154
 az role assignment create --assignee "$USER_OBJECT_ID" \
   --role "Storage Blob Data Contributor" \
   --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name"
 
-# Function to check if the role assignment exists
-check_role_assignment() {
-  az role assignment list --assignee "$USER_OBJECT_ID" --role "Storage Blob Data Contributor" --scope "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name" --query "[].id" --output tsv
-}
+if ! retry_with_backoff check_role_assignments; then
+  echo "ERROR: Timeout waiting for az role assignments."
+  exit 1
+fi
 
-# Wait for the role assignment to be applied
-echo -e "\n\e[34m»»» ⏳ \e[96mWaiting for role assignment to be applied\e[0m..."
-while [ -z "$(check_role_assignment)" ]; do
-  echo "Waiting for role assignment..."
-  sleep 10
-done
-echo "Role assignment applied."
 
-# Blob container
+echo -e "\n\e[34m»»» 📦 \e[96mCreating storage containers\e[0m..."
 # shellcheck disable=SC2154
-az storage container create --account-name "$TF_VAR_mgmt_storage_account_name" --name "$TF_VAR_terraform_state_container_name" --auth-mode login -o table
+containers=("$TF_VAR_terraform_state_container_name" "tflogs")
+max_retries=8
 
-# logs container
-az storage container create --account-name "$TF_VAR_mgmt_storage_account_name" --name "tflogs" --auth-mode login -o table
+for container in "${containers[@]}"; do
+  for ((i=1; i<=max_retries; i++)); do
+    if az storage container create --account-name "$TF_VAR_mgmt_storage_account_name" --name "$container" --auth-mode login -o table; then
+      echo "Container '$container' created successfully."
+      break
+    else
+      sleep 10
+    fi
+    if [ $i -eq $max_retries ]; then
+      echo "ERROR: Failed to create container '$container' after $max_retries attempts."
+      exit 1
+    fi
+  done
+done
 
+
+echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
+# shellcheck disable=SC2154
 cat > bootstrap_backend.tf <<BOOTSTRAP_BACKEND
 terraform {
   backend "azurerm" {
@@ -72,12 +127,11 @@ terraform {
 }
 BOOTSTRAP_BACKEND
 
-
-# Set up Terraform
-echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
-terraform init -input=false -backend=true -reconfigure
-
-# Import the storage account & res group into state
+# shellcheck disable=SC2154
+if ! retry_with_backoff init_terraform; then
+  echo "ERROR: Timeout waiting for Terraform backend role assignments."
+  exit 1
+fi
 echo -e "\n\e[34m»»» 📤 \e[96mImporting resources to state\e[0m..."
 if ! terraform state show azurerm_resource_group.mgmt > /dev/null; then
   echo  "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name"
@@ -88,5 +142,4 @@ if ! terraform state show azurerm_storage_account.state_storage > /dev/null; the
   terraform import azurerm_storage_account.state_storage "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name/providers/Microsoft.Storage/storageAccounts/$TF_VAR_mgmt_storage_account_name"
 fi
 echo "State imported"
-
 set +o nounset
