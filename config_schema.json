@@ -93,6 +93,10 @@
           "description": "SKU of the Application Gateway.",
           "type": "string"
         },
+        "deploy_bastion": {
+          "description": "Deploy Azure Bastion.",
+          "type": "boolean"
+        },
         "bastion_sku": {
           "description": "SKU of the Azure Bastion.",
           "type": "string"

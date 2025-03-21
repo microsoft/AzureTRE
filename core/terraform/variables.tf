@@ -242,8 +242,14 @@ variable "encryption_kv_name" {
   default     = null
 }
 
+variable "deploy_bastion" {
+  type        = bool
+  description = "Deploy Azure Bastion"
+  default     = true
+}
+
 variable "bastion_sku" {
   type        = string
   description = "Azure Bastion SKU"
-  default     = "Developer"
+  default     = "Basic"
 }

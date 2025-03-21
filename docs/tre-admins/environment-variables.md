@@ -43,9 +43,11 @@
 | `RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE` | Optional. The number of processes to instantiate when the Resource Processor starts. Equates to the number of parallel deployment operations possible in your TRE. Defaults to `5`. |
 | `FIREWALL_SKU` | Optional. The SKU of the Azure Firewall instance. Default value is `Standard`. Allowed values [`Basic`, `Standard`, `Premium`]. See [Azure Firewall SKU feature comparison](https://learn.microsoft.com/en-us/azure/firewall/choose-firewall-sku). |
 | `APP_GATEWAY_SKU` | Optional. The SKU of the Application Gateway. Default value is `Standard_v2`. Allowed values [`Standard_v2`, `WAF_v2`] |
+| `DEPLOY_BASTION` | Optional. If set to `true`, an Azure Bastion instance will be deployed. Default value is `true`. |
 | `BASTION_SKU` | Optional. The SKU of the Azure Bastion instance. Default value is `Developer`. Allowed values [`Developer`, `Standard`, `Basic`, `Premium`]. See [Azure Bastion SKU feature comparison](https://learn.microsoft.com/en-us/azure/bastion/bastion-overview#sku). |
 | `CUSTOM_DOMAIN` | Optional. Custom domain name to access the Azure TRE portal. See [Custom domain name](custom-domain.md). |
 | `ENABLE_CMK_ENCRYPTION` | If set to `true`, customer-managed key encryption will be enabled for all supported resources. |
+
 ## For authentication in `/config.yaml`
 
   | Variable | Description |
@@ -61,6 +63,7 @@
   | `WORKSPACE_API_CLIENT_SECRET` | Each workspace is secured behind it's own AD Application. This is the secret for that application.|
 
 ## For CI/CD pipelines in github environment secrets
+
   | Variable | Description |
   | -------- | ----------- |
   | `AZURE_CREDENTIALS`| Credentials used to authorize CI/CD workflows to provision resources for the TRE workspaces and workspace services. This is basically your ARM client credentials in json format. Read more about how to create it and its format [here](./setup-instructions/workflows.md##create-a-service principal-for-provisioning-resources)|
