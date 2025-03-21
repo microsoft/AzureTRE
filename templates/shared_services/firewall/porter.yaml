@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-firewall
-version: 1.3.3
+version: 1.4.0
 description: "An Azure TRE Firewall shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -57,7 +57,6 @@ install:
       description: "Deploy shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
-        tre_resource_id: ${ bundle.parameters.id }
         api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
       backendConfig:
@@ -73,7 +72,6 @@ upgrade:
       description: "Upgrade shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
-        tre_resource_id: ${ bundle.parameters.id }
         api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
       backendConfig:
@@ -89,7 +87,6 @@ uninstall:
       description: "Tear down shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
-        tre_resource_id: ${ bundle.parameters.id }
         api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
       backendConfig:
