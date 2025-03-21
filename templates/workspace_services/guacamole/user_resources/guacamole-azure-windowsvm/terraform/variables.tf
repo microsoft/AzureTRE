@@ -37,14 +37,14 @@ variable "key_store_id" {
   type = string
 }
 variable "auth_tenant_id" {
-  type        = string
-  description = "Used to authenticate into the AAD Tenant to create the AAD App"
+  type = string
 }
 variable "auth_client_id" {
-  type        = string
-  description = "Used to authenticate into the AAD Tenant to create the AAD App"
+  type = string
 }
 variable "auth_client_secret" {
-  type        = string
-  description = "Used to authenticate into the AAD Tenant to create the AAD App"
+  type = string
+}
+variable "admin_username" {
+  type = string
 }
