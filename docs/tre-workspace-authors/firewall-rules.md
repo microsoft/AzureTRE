@@ -1,128 +1,231 @@
-# Adding Firewall Rules as part of a workspace or service deployment
+# Configuring Firewall Rules in Azure TRE
 
-!!! note
-    Creating firewall rules will in the future only be allowed through the firewall shared services [#882](https://github.com/microsoft/AzureTRE/issues/882).
+This guide explains how to configure firewall rules for your Azure TRE environment.
 
-A TRE service may require certain firewall rules to be opened in the TRE firewall. Examples include:
+## Contents
+- [Overview](#overview)
+- [Types of Firewall Rules](#types-of-firewall-rules)
+- [Configuring Application Rules](#configuring-application-rules)
+- [Configuring Network Rules](#configuring-network-rules)
+- [Applying Your Configuration](#applying-your-configuration)
+- [Examples](#examples)
 
-- Access to an external authorisation endpoint
-- Access to an external data store
-- Access to an external API
+## Overview
 
-Please be aware when opening firewall rules there is the potential for data to be leaked from the workspace to the external location.
+The Azure TRE Firewall shared service controls network traffic flowing in and out of your research environment. The firewall configuration is defined using a JSON file that specifies rule collections and their associated rules.
 
-## Using Terraform to open firewall rules
+## Types of Firewall Rules
 
-Until a mechanism to update shared services has been implemented, firewall rule updates should be done using terraform as part of the service deployment. The aim is to create a firewall rule that grants access from the workspace's address space to the external location. A challenge with this is that the rule must use a priority that has not been used by any other rule.
+The Azure TRE Firewall supports two types of rules:
 
-1. Create a `firewall.tf` file in the `terraform` directory of the workspace.
+1. **Application Rules**: Control outbound access to specific websites/FQDNs
+2. **Network Rules**: Control traffic based on source, destination, port, and protocol
 
-1. Add the following code to the `firewall.tf` file to enable the TRE firewall and workspace network to be referenced:
+## Configuring Application Rules
 
-    ```terraform
-    data "azurerm_firewall" "fw" {
-        name                = "fw-${var.tre_id}"
-        resource_group_name = "rg-${var.tre_id}"
-    }
+Application rules control HTTP/HTTPS traffic to specific web destinations.
 
-    data "azurerm_virtual_network" "ws" {
-        name                = "vnet-${var.tre_id}-ws-${var.workspace_id}"
-        resource_group_name = data.azurerm_resource_group.ws.name
-    }
-    ```
+To configure application rules:
 
-1. Define a local variable that contains the locations that access should be allowed to, and the naming format for the service resources for example:
+1. Create a JSON file containing a `rule_collections` array
+2. Define one or more rule collections, each with a unique name
+3. Within each collection, define individual rules
 
-    ```terraform
-    locals {
-        allowed_urls                     = ["*.anaconda.com", "*.anaconda.org"]
-        service_resource_name_suffix    = "${var.tre_id}-ws-${var.workspace_id}-svc-${local.service_id}"
-    }
-    ```
+### Application Rule Structure
 
-1. Log into the Azure CLI using service principal details:
-
-    ```terraform
-    resource "null_resource" "az_login" {
-        provisioner "local-exec" {
-            command = "az login --identity -u '${var.arm_client_id}'"
-        }
-
-        triggers = {
-            timestamp = timestamp()
-        }
-    }
-    ```
-
-1. Call the `get_firewall_priorities.sh` script to find the next available priority:
-
-    ```terraform
-    data "external" "rule_priorities" {
-        program = ["bash", "-c", "./get_firewall_priorities.sh"]
-
-        query = {
-            firewall_name       = data.azurerm_firewall.fw.name
-            resource_group_name = data.azurerm_firewall.fw.resource_group_name
-            service_resource_name_suffix = local.service_resource_name_suffix
-        }
-        depends_on = [
-            null_resource.az_login
-        ]
-    }
-    ```
-
-1. Save the `get_firewall_priorities.sh` script as a file in the `terraform` directory:
-
-    ```bash
-    #!/bin/bash
-
-    set -e
-
-    eval "$(jq -r '@sh "firewall_name=\(.firewall_name) resource_group_name=\(.resource_group_name) service_resource_name_suffix=\(.service_resource_name_suffix)"')"
-
-    if NETWORK_RULES=$(az network firewall network-rule list -g $resource_group_name -f  $firewall_name --collection-name "nrc-$service_resource_name_suffix" -o json); then
-        NETWORK_RULE_PRIORITY=$(echo $NETWORK_RULES | jq '.priority')
-    else
-        NETWORK_RULE_MAX_PRIORITY=$(az network firewall network-rule collection list -f $firewall_name -g $resource_group_name -o json --query 'not_null(max_by([],&priority).priority) || `100`')
-        NETWORK_RULE_PRIORITY=$(($NETWORK_RULE_MAX_PRIORITY+1))
-    fi
-
-    if APPLICATION_RULES=$(az network firewall application-rule list -g $resource_group_name -f  $firewall_name --collection-name "arc-$service_resource_name_suffix" -o json); then
-        APPLICATION_RULE_PRIORITY=$(echo $APPLICATION_RULES | jq '.priority')
-    else
-        APPLICATION_RULE_MAX_PRIORITY=$(az network firewall application-rule collection list -f $firewall_name -g $resource_group_name -o json --query 'not_null(max_by([],&priority).priority) || `100`')
-        APPLICATION_RULE_PRIORITY=$(($APPLICATION_RULE_MAX_PRIORITY+1))
-    fi
-
-    # Safely produce a JSON object containing the result value.
-    jq -n --arg network_rule_priority "$NETWORK_RULE_PRIORITY" --arg application_rule_priority "$APPLICATION_RULE_PRIORITY" '{ "network_rule_priority":$network_rule_priority, "application_rule_priority":$application_rule_priority }'
-    ```
-
-1. Create the firewall rule using a resource similar to the below:
-
-    ```terraform
-    resource "azurerm_firewall_application_rule_collection" "apprulecollection" {
-        name                = "arc-${local.service_resource_name_suffix}"
-        azure_firewall_name = data.azurerm_firewall.fw.name
-        resource_group_name = data.azurerm_firewall.fw.resource_group_name
-        priority            = data.external.rule_priorities.result.application_rule_priority
-        action              = "Allow"
-
-        rule {
-            name = "allowServiceXRules"
-
-            source_addresses = data.azurerm_virtual_network.ws.address_space
-
-            target_fqdns = local.allowed_urls
-
-            protocol {
-                port = "443"
-                type = "Https"
+```json
+{
+  "rule_collections": [
+    {
+      "name": "my-app-rule-collection",
+      "rules": [
+        {
+          "name": "allow-microsoft-services",
+          "description": "Allow access to Microsoft services",
+          "protocols": [
+            {
+              "port": "443",
+              "type": "Https"
             }
-            protocol {
-                port = "80"
-                type = "Http"
-            }
+          ],
+          "target_fqdns": [
+            "*.microsoft.com",
+            "*.windowsazure.com"
+          ],
+          "source_addresses": [
+            "10.1.0.0/22"
+          ]
         }
+      ]
     }
-    ```
+  ]
+}
+```
+
+## Application Rule Properties
+
+| Property | Description | Required | Example|
+|----------|-------------|----------|--------|
+|`name` | Name of the rule | Yes | `"allow-github"`|
+|`description` | Description of the rule | No | `"Allow access to GitHub"`|
+|`protocols` | Array of protocol objects | Yes | See below|
+|`target_fqdns` | Array of destination FQDNs | No |`["github.com", "*.github.io"]`|
+|`fqdn_tags` | Array of predefined FQDN tags | No |`["AzureKubernetesService"]`|
+|`source_addresses` | Array of source IP addresses/ranges | No | `["10.1.0.0/22"]`|
+|`source_ip_group_ids` | Array of source IP group resource IDs | No | `["/subscriptions/.../ipGroups/myIpGroup"]`|
+|`source_ip_groups_in_core` | Array of IP group names in the core resource group | No | `["core_ip_group"]`|
+
+Each protocol object requires:
+
+`port`: The port number (e.g., `"443"`)
+`type`: One of: `"Http"`, `"Https"`, or `"Mssql"`
+
+## Configuring Network Rules
+Network rules control traffic based on IP addresses, ports, and protocols.
+
+To configure network rules:
+
+1. Create a JSON file containing a `network_rule_collections` array
+2. Define one or more rule collections, each with a unique name
+3. Within each collection, define individual rules
+
+## Network Rule Structure
+ ```json
+ {
+  "network_rule_collections": [
+    {
+      "name": "my-network-rule-collection",
+      "rules": [
+        {
+          "name": "allow-rdp-access",
+          "source_addresses": [
+            "10.1.0.0/22"
+          ],
+          "destination_addresses": [
+            "10.2.0.0/24"
+          ],
+          "destination_ports": [
+            "3389"
+          ],
+          "protocols": [
+            "TCP"
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+## Network Rule Properties
+
+|Property |Description |Required |Example |
+|---------|------------|---------|--------|
+|`name` |Name of the rule (5-80 characters) |Yes |`"allow-ssh-access"` |
+|`description` |Description of the rule (Deprecated) |No |`"Allow SSH access to VMs"` |
+|`source_addresses` |Array of source IP addresses/ranges |No |`["10.1.0.0/22"]` |
+|`source_ip_group_ids` |Array of source IP group resource IDs |No |`["/subscriptions/.../ipGroups/myIpGroup"]` |
+|`source_ip_groups_in_core`| Array of IP group names in the core resource group |No |`["core_ip_group"]` |
+|`destination_addresses`| Array of destination IP addresses/ranges |No |`["10.2.0.0/24"]` |
+|`destination_ip_group_ids`| Array of destination IP group resource IDs |No |`["/subscriptions/.../ipGroups/destIpGroup"]` |
+|`destination_fqdns`| Array of destination FQDNs |No |`["example.com"]` |
+|`destination_ports`| Array of destination ports |No |`["22", "443", "1000-2000"]` |
+|`protocols`| Array of protocols |No |`["TCP", "UDP"]`|
+
+Valid protocols: `"Any"`, `"ICMP"`, `"TCP"`, `"UDP"`
+
+## Applying Your Configuration
+To apply your firewall configuration:
+
+1. Save your JSON file with your rule definitions
+2. Use the Azure TRE API or UI to update the firewall shared service with your configuration
+
+## Examples
+
+## Example 1: Allow access to Azure services
+```json
+{
+  "rule_collections": [
+    {
+      "name": "allow-azure-services",
+      "rules": [
+        {
+          "name": "azure-public-services",
+          "protocols": [
+            {
+              "port": "443",
+              "type": "Https"
+            }
+          ],
+          "fqdn_tags": [
+            "AzureBackup",
+            "WindowsUpdate"
+          ],
+          "source_addresses": [
+            "10.1.0.0/22"
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Example 2: Allow outbound internet access
+
+```json
+{
+  "network_rule_collections": [
+    {
+      "name": "outbound-internet",
+      "rules": [
+        {
+          "name": "allow-https-outbound",
+          "source_addresses": [
+            "10.1.0.0/22"
+          ],
+          "destination_addresses": [
+            "*"
+          ],
+          "destination_ports": [
+            "443"
+          ],
+          "protocols": [
+            "TCP"
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Example 3: Combined Application and Network Rules
+
+```json
+{
+  "network_rule_collections": [
+    {
+      "name": "outbound-internet",
+      "rules": [
+        {
+          "name": "allow-https-outbound",
+          "source_addresses": [
+            "10.1.0.0/22"
+          ],
+          "destination_addresses": [
+            "*"
+          ],
+          "destination_ports": [
+            "443"
+          ],
+          "protocols": [
+            "TCP"
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+This configuration allows for both application-level access to Python package repositories and network-level SSH communication between specific subnets.
