@@ -157,14 +157,14 @@ runs:
 
     - name: Azure Login
       uses: azure/login@v2
-      if: contains(inputs.COMMAND, 'bootstrap') != true
+      if: contains(inputs.COMMAND, 'make bootstrap') != true
       with:
         creds: ${{ inputs.AZURE_CREDENTIALS }}
         environment: "${{ env.AZURE_ENVIRONMENT }}"
 
     - name: ACR Login
       shell: bash
-      if: contains(inputs.COMMAND, 'bootstrap') != true
+      if: contains(inputs.COMMAND, 'make bootstrap') != true
       run: |
         az acr login --name "${{ inputs.CI_CACHE_ACR_NAME }}"
 
@@ -191,7 +191,7 @@ runs:
       shell: bash
       run: |
         # Write command to a command.sh script file
-        cat <<EOF >> ./command.sh
+        cat <<EOF > ./command.sh
         #!/bin/bash
         set -x
         ${{ inputs.COMMAND }}
