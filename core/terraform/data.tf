@@ -14,7 +14,7 @@ data "azurerm_container_registry" "mgmt_acr" {
 }
 
 data "azurerm_key_vault" "encryption_kv" {
-  count               = var.enable_cmk_encryption && var.external_key_store_id == null ? 1 : 0
+  count               = var.enable_cmk_encryption && var.external_key_store_id == "" ? 1 : 0
   name                = var.encryption_kv_name
   resource_group_name = var.mgmt_resource_group_name
 }
