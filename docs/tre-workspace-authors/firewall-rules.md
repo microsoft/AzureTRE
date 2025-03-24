@@ -203,20 +203,45 @@ To apply your firewall configuration:
 
 ```json
 {
-  "network_rule_collections": [
+  "rule_collections": [
     {
-      "name": "outbound-internet",
+      "name": "data-science-sites",
       "rules": [
         {
-          "name": "allow-https-outbound",
+          "name": "allow-python-pkg-repos",
+          "protocols": [
+            {
+              "port": "443",
+              "type": "Https"
+            }
+          ],
+          "target_fqdns": [
+            "pypi.org",
+            "files.pythonhosted.org",
+            "conda.io",
+            "anaconda.org"
+          ],
+          "source_addresses": [
+            "10.1.0.0/22"
+          ]
+        }
+      ]
+    }
+  ],
+  "network_rule_collections": [
+    {
+      "name": "internal-communication",
+      "rules": [
+        {
+          "name": "allow-internal-ssh",
           "source_addresses": [
             "10.1.0.0/22"
           ],
           "destination_addresses": [
-            "*"
+            "10.2.0.0/24"
           ],
           "destination_ports": [
-            "443"
+            "22"
           ],
           "protocols": [
             "TCP"
