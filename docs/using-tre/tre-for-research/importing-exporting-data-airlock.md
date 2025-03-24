@@ -39,7 +39,7 @@ To bring in external data to a secure TRE workspace so you can use it for your r
 
 3. Copy the URL and use it to upload your data to the Azure Storage account. You can use several tools for this that accept SAS URLs, such as the Azure Storage Explorer, or the Azure CLI, depending on your preference.
 
-   - To use Storage Explorer, follow [this guide](https://learn.microsoft.com/en-us/azure/vs-azure-tools-storage-manage-with-storage-explorer?tabs=macos)
+   - To use Storage Explorer, follow [this guide](https://learn.microsoft.com/en-us/azure/storage/storage-explorer/vs-azure-tools-storage-manage-with-storage-explorer?tabs=macos#shared-access-signature-sas-url) to connect to container.
 
    - With the Azure CLI, you can run `az storage blob upload -f /path/to/file --blob-url SAS_URL`. [More info](https://learn.microsoft.com/en-us/cli/azure/storage/blob?view=azure-cli-latest#az-storage-blob-upload)
 
@@ -82,17 +82,26 @@ Exporting data from a secure TRE workspace to the outside world involves similar
 
 3. Fill in a suitable **Title** and **Business Justification** for the request then hit *Create*
 
+
+[![Create draft export request](../../assets/using-tre/airlock-export-fill-form.png)](../../assets/using-tre/airlock-export-fill-form.png)
+
 4. Once the draft request pop-out opens, click *Generate* in the **Files** section to generate a Storage SAS URL to use for uploading your data.
 
-5. You now need to head into your Workspace VM/resource containing the data you wish to export, and paste in the SAS URL you've just generated. Use your preferred storage tool to upload the data to the request container. See Step 2 in the [Importing data](#importing-data-to-a-workspace) section for more details on using these tools
+[![Generate SAS token for export request](../../assets/using-tre/airlock-export-sas.png)](../../assets/using-tre/airlock-export-sas.png)
+
+5. Since this is an export, this means the data is exported from the workspace outside. Therefore, to upload the requested export file, you will now need to head into your *Workspace VM/resource* containing the data you wish to export. Use your preferred storage tool to upload the data to the request container and paste in the SAS URL you've just generated. See Step 2 in the [Importing data](#importing-data-to-a-workspace) section for more details on using these tools.
 
 6. Once you've uploaded your data, head back to the TRE UI in your host and click *Submit* on your draft request. This will submit your request for approval.
+
+[![Submit export request](../../assets/using-tre/airlock-export-submit.png)](../../assets/using-tre/airlock-export-submit.png)
 
 7. Like in Step 3 of [Importing data](#importing-data-to-a-workspace), your request will be in an *In Review* state until it's either approved or rejected by your organisation's approval workflow.
 
 8. Once it's approved, head back to your request in the UI and click *Generate* a second time to get a download link.
 
-9. In your host, you can use this link with your tool of choice to download the data from the request container.
+[![Get link for export approved request](../../assets/using-tre/airlock-export-sas-after-approval.png)](../../assets/using-tre/airlock-export-sas-after-approval.png)
+
+9. In your host (outside of the workspace), you can use this link with your tool of choice to download the data from the request container.
 
 ## How to Contribute to our Documentation
 [Contribute to Documentation](https://microsoft.github.io/AzureTRE/coming-soon/)
