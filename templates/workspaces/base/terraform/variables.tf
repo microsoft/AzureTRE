@@ -149,4 +149,5 @@ variable "enable_malware_scanning" {
 variable "scan_result_topic_name" {
   type        = string
   description = "The name of the topic to publish scan results to"
+  default     = null
 }
