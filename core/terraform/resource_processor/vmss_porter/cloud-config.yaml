@@ -57,14 +57,9 @@ write_files:
       AZURE_ENVIRONMENT=${azure_environment}
       AAD_AUTHORITY_URL=${aad_authority_url}
       MICROSOFT_GRAPH_FQDN=${microsoft_graph_fqdn}
-      FIREWALL_SKU=${firewall_sku}
       OTEL_RESOURCE_ATTRIBUTES=service.name=resource_processor,service.version=${resource_processor_vmss_porter_image_tag}
       OTEL_EXPERIMENTAL_RESOURCE_DETECTORS=azure_vm
       LOGGING_LEVEL=${logging_level}
-      ENABLE_CMK_ENCRYPTION=${enable_cmk_encryption}
-      KEY_STORE_ID=${key_store_id}
-      ENABLE_MALWARE_SCANNING=${enable_malware_scanning}
-      SCAN_RESULT_TOPIC_NAME=${scan_result_topic_name}
       ${rp_bundle_values}
   - path: /etc/cron.hourly/docker-prune
     # An hourly cron job to have docker free disk space. Running this frquently
@@ -78,7 +73,7 @@ write_files:
         echo "Free space too low, pruning..."
         docker system prune -f
       fi
-    permissions: '0755'
+    permissions: "0755"
 
 runcmd:
   # Those are useful live debug commands. Check the docs for details:

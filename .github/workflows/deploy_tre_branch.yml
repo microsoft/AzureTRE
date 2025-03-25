@@ -88,3 +88,5 @@ jobs:
       TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
       TRE_ID: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
+      ENCRYPTION_KV_NAME: ${{ format('tre{0}mgmt', needs.prepare-not-main.outputs.refid) }}
+      EXTERNAL_KEY_STORE_ID: ${{ secrets.EXTERNAL_KEY_STORE_ID }}

@@ -24,11 +24,6 @@ def get_config() -> dict:
         config["azure_environment"] = os.environ.get("AZURE_ENVIRONMENT", "AzureCloud")
         config["aad_authority_url"] = os.environ.get("AAD_AUTHORITY_URL", "https://login.microsoftonline.com")
         config["microsoft_graph_fqdn"] = os.environ.get("MICROSOFT_GRAPH_FQDN", "graph.microsoft.com")
-        config["firewall_sku"] = os.environ.get("FIREWALL_SKU", "")
-        config["enable_cmk_encryption"] = os.environ.get("ENABLE_CMK_ENCRYPTION", "false")
-        config["key_store_id"] = os.environ.get("KEY_STORE_ID", None)
-        config["enable_malware_scanning"] = os.environ.get("ENABLE_MALWARE_SCANNING", "false")
-        config["scan_result_topic_name"] = os.environ.get("SCAN_RESULT_TOPIC_NAME")
 
         try:
             config["number_processes_int"] = int(config["number_processes"])
