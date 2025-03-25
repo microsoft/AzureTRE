@@ -25,6 +25,11 @@ module "network" {
   tre_resource_id        = var.tre_resource_id
   tre_workspace_tags     = local.tre_workspace_tags
   arm_environment        = var.arm_environment
+
+  providers = {
+    azurerm      = azurerm
+    azurerm.core = azurerm.core
+  }
 }
 
 module "aad" {
@@ -38,7 +43,6 @@ module "aad" {
   create_aad_groups              = var.create_aad_groups
 
   depends_on = [
-    azurerm_role_assignment.keyvault_deployer_ws_role,
     azurerm_role_assignment.keyvault_resourceprocessor_ws_role,
     terraform_data.wait_for_dns_vault
   ]
@@ -59,6 +63,12 @@ module "airlock" {
   enable_cmk_encryption         = var.enable_cmk_encryption
   encryption_key_versionless_id = var.enable_cmk_encryption ? azurerm_key_vault_key.encryption_key[0].versionless_id : null
   encryption_identity_id        = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
+
+  providers = {
+    azurerm      = azurerm
+    azurerm.core = azurerm.core
+  }
+
   depends_on = [
     module.network,
   ]
@@ -83,6 +93,7 @@ module "azure_monitor" {
   encryption_key_versionless_id            = var.enable_cmk_encryption ? azurerm_key_vault_key.encryption_key[0].versionless_id : null
   encryption_identity_id                   = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
   enable_local_debugging                   = var.enable_local_debugging
+
   depends_on = [
     module.network,
     module.airlock

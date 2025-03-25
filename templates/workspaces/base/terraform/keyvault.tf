@@ -7,7 +7,7 @@ resource "azurerm_key_vault" "kv" {
   sku_name                  = "standard"
   enable_rbac_authorization = true
   purge_protection_enabled  = true
-  tenant_id                 = data.azurerm_client_config.current.tenant_id
+  tenant_id                 = data.azurerm_client_config.core.current.tenant_id
   tags                      = local.tre_workspace_tags
 
   network_acls {
@@ -80,7 +80,7 @@ resource "azurerm_role_assignment" "keyvault_deployer_ws_role" {
   count                = var.enable_local_debugging ? 1 : 0
   scope                = azurerm_key_vault.kv.id
   role_definition_name = "Key Vault Administrator"
-  principal_id         = data.azurerm_client_config.current.object_id
+  principal_id         = data.azurerm_client_config.core.current.object_id
 }
 
 resource "terraform_data" "wait_for_dns_vault" {
