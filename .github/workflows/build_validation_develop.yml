@@ -57,11 +57,6 @@ jobs:
         with:
           terraform_version: "1.9.8"
 
-      - uses: hashicorp/setup-terraform@v3
-        if: ${{ steps.filter.outputs.terraform == 'true' }}
-        with:
-          terraform_version: "1.9.8"
-
       - name: Terraform format check
         if: ${{ steps.filter.outputs.terraform == 'true' }}
         run: terraform fmt -check -recursive
