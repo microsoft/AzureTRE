@@ -115,8 +115,8 @@ jq -r '
             "env_var": "EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID"
         },
         {
-            "path": "scan_result_topic_name",
-            "env_var": "SCAN_RESULT_TOPIC_NAME"
+            "path": "airlock_malware_scan_result_topic_name",
+            "env_var": "AIRLOCK_MALWARE_SCAN_RESULT_TOPIC_NAME"
         }
     ]
         as $env_vars_to_extract

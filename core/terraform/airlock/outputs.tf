@@ -18,6 +18,6 @@ output "event_grid_airlock_notification_topic_resource_id" {
   value = azurerm_eventgrid_topic.airlock_notification.id
 }
 
-output "scan_result_topic_name" {
+output "airlock_malware_scan_result_topic_name" {
   value = local.scan_result_topic_name
 }

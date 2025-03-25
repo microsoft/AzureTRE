@@ -99,7 +99,7 @@ variable "enable_airlock_malware_scanning" {
   description = "If False, Airlock requests will skip the malware scanning stage"
 }
 
-variable "scan_result_topic_name" {
+variable "airlock_malware_scan_result_topic_name" {
   type        = string
-  description = "Name of the topic to publish scan results to"
+  description = "Name of the topic to publish Airlock malware scan results to"
 }

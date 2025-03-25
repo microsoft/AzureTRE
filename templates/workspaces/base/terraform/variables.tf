@@ -146,7 +146,7 @@ variable "enable_airlock_malware_scanning" {
   description = "Enable Airlock malware scanning for the workspace"
 }
 
-variable "scan_result_topic_name" {
+variable "airlock_malware_scan_result_topic_name" {
   type        = string
   description = "The name of the topic to publish scan results to"
   default     = null
