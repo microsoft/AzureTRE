@@ -3,8 +3,11 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 ENHANCEMENTS:
+* Enabled Structured Azure Firewall logs for TRE firewall. [#4430](https://github.com/microsoft/AzureTRE/issues/4430)
 * Deny public access to TRE management storage account, and add private endpoint for TRE core [#4353](https://github.com/microsoft/AzureTRE/issues/4353)
 * Added anonymous access enablement for Nexus by default issue. [#4387](https://github.com/microsoft/AzureTRE/pull/4387)
+* Update mysql commands in control_tre script. [#4438](https://github.com/microsoft/AzureTRE/pull/4438)
+* Organize how we pass config.yaml settings to bundles. [#4436](https://github.com/microsoft/AzureTRE/pull/4436)
 * Add documentation for make commands ([[#4296](https://github.com/microsoft/AzureTRE/issues/4296)])
 
 BUG FIXES:
@@ -14,6 +17,7 @@ BUG FIXES:
 * Fix CI issue where branch names containing 'bootstrap' would incorrectly skip Azure login steps [#4416](https://github.com/microsoft/AzureTRE/issues/4416) ([#4417](https://github.com/microsoft/AzureTRE/pull/4417))
 * Fix 403 storage account error when creating a new TRE environment ([#4405](https://github.com/microsoft/AzureTRE/issues/4405)) in PR [#4406](https://github.com/microsoft/AzureTRE/pull/4406)
 * Bug Fix: Approaching Nexus when it wasn’t fully available is now handled via a retry with exponential backoff [#4387](https://github.com/microsoft/AzureTRE/pull/4387)
+* Update deprecated Terraform static website configuration to use new separate resource ([#4443](https://github.com/microsoft/AzureTRE/pull/4443)
 
 ## 0.21.0
 
