@@ -3,6 +3,7 @@ data "azurerm_client_config" "core" {
 }
 
 data "azurerm_user_assigned_identity" "api_id" {
+  provider            = azurerm.core
   name                = "id-api-${var.tre_id}"
   resource_group_name = "rg-${var.tre_id}"
 }

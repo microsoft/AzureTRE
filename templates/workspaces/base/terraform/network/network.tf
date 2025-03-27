@@ -64,6 +64,7 @@ moved {
 }
 
 resource "azurerm_virtual_network_peering" "core_ws_peer" {
+  provider = azurerm.core
   name                      = "core-ws-peer-${local.workspace_resource_name_suffix}"
   resource_group_name       = local.core_resource_group_name
   virtual_network_name      = local.core_vnet
