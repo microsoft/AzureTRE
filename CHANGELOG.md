@@ -1,15 +1,229 @@
 <!-- markdownlint-disable MD041 -->
-## 0.19.0 (Unreleased)
+## 0.22.0 (Unreleased)
+**BREAKING CHANGES & MIGRATIONS**:
+
+ENHANCEMENTS:
+
+BUG FIXES:
+
+
+## 0.21.0
 
 **BREAKING CHANGES & MIGRATIONS**:
+* Workspace bundle uses infrastructure encryption on shared storage which will recreate storage share. Major verison increase will prevent upgrade, do not force the upgrade unless you are fully aware of the consequences.
+
+ENHANCEMENTS:
+* Core key vault firewall should not be set to "Allow public access from all networks" ([#4250](https://github.com/microsoft/AzureTRE/issues/4250))
+* Allow workspace App Service Plan SKU to be updated ([#4331](https://github.com/microsoft/AzureTRE/issues/4331))
+* Add core requests endpoint and UI to enable requests to be managed TRE wide. ([[#2510](https://github.com/microsoft/AzureTRE/issues/2510)])
+* Remove public IP from TRE's firewall when forced tunneling is configured ([#4346](https://github.com/microsoft/AzureTRE/pull/4346))
+* Upgrade AzureRM Terraform provider from `3.117.0` to `4.14.0`. ([[#4255](https://github.com/microsoft/AzureTRE/pull/4255/)])
+* Subnet definitions are now inline in the `azurerm_virtual_network` resource, and NSG associations are set using `security_group` in each subnet block (no separate `azurerm_subnet_network_security_group_association` needed). ([[#4255](https://github.com/microsoft/AzureTRE/pull/4255/)])
+* Azure Cosmos DB should disable public network access ([#4322](https://github.com/microsoft/AzureTRE/issues/4322))
+* Add bundle target to Makefile for handling different bundle types in single command ([#4372](https://github.com/microsoft/AzureTRE/issues/4372))
+* Migrate UI to Vite build engine and update dependencies ([#4368](https://github.com/microsoft/AzureTRE/pull/4368))
+* Add Windows image field to the Admin VM template ([#4274](https://github.com/microsoft/AzureTRE/pull/4274))
+* Update TLS to the latest version for web apps / function apps ([#4351](https://github.com/microsoft/AzureTRE/issues/4351))
+
+BUG FIXES:
+* Fix upgrade when porter install has failed ([#4338](https://github.com/microsoft/AzureTRE/pull/4338))
+* Certs shared service: Secret nexus-ssl-password is currently in a deleted but recoverable state ([#4294](https://github.com/microsoft/AzureTRE/issues/4294))
+* Fix Cosmos DB local debugging configuration ([#4340](https://github.com/microsoft/AzureTRE/pull/4340))
+* Add firewall rules to upgrade steps for Guacamole service ([#4343](https://github.com/microsoft/AzureTRE/pull/4343))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.5.5 |
+| core | 0.12.3 |
+| ui | 0.7.0 |
+| tre-workspace-airlock-import-review | 0.14.3 |
+| tre-workspace-base | 2.0.0 |
+| tre-workspace-unrestricted | 0.13.3 |
+| tre-shared-service-airlock-notifier | 1.0.8 |
+| tre-shared-service-certs | 0.7.4 |
+| tre-shared-service-firewall | 1.3.2 |
+| tre-shared-service-gitea | 1.1.5 |
+| tre-shared-service-cyclecloud | 0.7.2 |
+| tre-shared-service-databricks-private-auth | 0.1.11 |
+| tre-shared-service-admin-vm | 0.5.3 |
+| tre-shared-service-sonatype-nexus | 3.3.2 |
+| tre-workspace-service-mysql | 1.0.9 |
+| tre-workspace-service-ohdsi | 0.3.3 |
+| tre-user-resource-aml-compute-instance | 0.5.11 |
+| tre-service-azureml | 0.9.2 |
+| tre-service-guacamole-linuxvm | 1.2.8 |
+| tre-service-guacamole-windowsvm | 1.2.10 |
+| tre-service-guacamole-import-reviewvm | 0.3.2 |
+| tre-service-guacamole-export-reviewvm | 0.2.2 |
+| tre-service-guacamole | 0.12.9 |
+| tre-workspace-service-health | 0.2.11 |
+| tre-workspace-service-gitea | 1.2.3 |
+| tre-service-databricks | 1.0.10 |
+| tre-workspace-service-openai | 1.0.6 |
+| tre-workspace-service-azuresql | 1.0.15 |
+
+
+## 0.20.0 (Feburary 9, 2025)
+
+**BREAKING CHANGES & MIGRATIONS**:
+* InnerEye and MLFlow bundles depreciated and removed from main. If you wish to update and deploy these workspace services they can be retrieved from release 0.19.1. ([#4127](https://github.com/microsoft/AzureTRE/issues/4127))
+* This release removed support for Porter v0.*. If you're upgrading from a much earlier version you can't go directly to this one. ([#4228](https://github.com/microsoft/AzureTRE/issues/4228))
+
+FEATURES:
+* Add support for customer-managed keys encryption. Core support ([#4141](https://github.com/microsoft/AzureTRE/issues/4142), [#4144](https://github.com/microsoft/AzureTRE/issues/4144)), Base workspace ([#4161](https://github.com/microsoft/AzureTRE/pull/4161)), other templates ([#4145](https://github.com/microsoft/AzureTRE/issues/4145))
+
+ENHANCEMENTS:
+* Disable storage account cross tenant replication ([#4116](https://github.com/microsoft/AzureTRE/pull/4116))
+* Key Vaults should use RBAC instead of access policies for access control ([#4000](https://github.com/microsoft/AzureTRE/issues/4000))
+* Split log entries with [Log chunk X of Y] for better readability. ([#3992](https://github.com/microsoft/AzureTRE/issues/3992))
+* Expose APP_SERVICE_SKU build variable to allow enablement of App Gateway WAF ([#4111](https://github.com/microsoft/AzureTRE/pull/4111))
+* Update Terraform to use Azure AD authentication rather than storage account keys ([#4103](https://github.com/microsoft/AzureTRE/issues/4103))
+* Consolidate Terraform upgrade scripts ([#4099](https://github.com/microsoft/AzureTRE/issues/4099))
+* Storage accounts should use infrastructure encryption ([#4001](https://github.com/microsoft/AzureTRE/issues/4001))
+* Update obsolete Terraform properties ([#4136](https://github.com/microsoft/AzureTRE/issues/4136))
+* Update Guacamole version and dependencies ([#4140](https://github.com/microsoft/AzureTRE/issues/4140))
+* Update the Azure CLI version to 2.67.0 in dev container and vmss ([#4157](https://github.com/microsoft/AzureTRE/pull/4157))
+* Move Github PR bot commands into main documentation ([#4167](https://github.com/microsoft/AzureTRE/pull/4167))
+* Block Authentication with keys to CosmosDB SQL account ([#4175](https://github.com/microsoft/AzureTRE/pull/4175))
+* Change the way "inherited" workspaces retrieve the base workspace code ([#4162](https://github.com/microsoft/AzureTRE/issues/4162))
+* Add option to configure auto shutdown for Linux VM  ([#4186](https://github.com/microsoft/AzureTRE/issues/4186))
+* Add ability to download VSCode Extensions ([[#4187](https://github.com/microsoft/AzureTRE/issues/4187)])
+* Update Windows VM Images ([#4198](https://github.com/microsoft/AzureTRE/pull/4198))
+* Enhance DPI of Linux display ([[#4200](https://github.com/microsoft/AzureTRE/issues/4200)])
+* Update Admin VM versions ([[#4217](https://github.com/microsoft/AzureTRE/issues/4217)])
+* Update devcontainer/RP/API package versions: base image, docker, az cli, YQ ([#4225](https://github.com/microsoft/AzureTRE/pull/4225))
+* Purge container repos individually in when using `make tre-destroy` ([#4230](https://github.com/microsoft/AzureTRE/pull/4230))
+* Upgrade Python version from 3.8 to 3.12 ([#3949](https://github.com/microsoft/AzureTRE/issues/3949))Upgrade Python version from 3.8 to 3.12 (#3949)
+* Disable storage account key usage ([[#4227](https://github.com/microsoft/AzureTRE/issues/4227)])
+* Update Guacamole dependencies ([[#4232](https://github.com/microsoft/AzureTRE/issues/4232)])
+* Add option to force tunnel TRE's Firewall ([#4237](https://github.com/microsoft/AzureTRE/issues/4237))
+* Add EventGrid diagnostics to identify airlock issues ([#4258](https://github.com/microsoft/AzureTRE/issues/4258))
+* Disable local authentication in ServiceBus ([#4259](https://github.com/microsoft/AzureTRE/issues/4259))
+* Allow enablement of Secure Boot and vTPM for Guacamole VMs ([#4235](https://github.com/microsoft/AzureTRE/issues/4235))
+* Surface the server-layout parameter of Guacamole [server-layout](https://guacamole.apache.org/doc/gug/configuring-guacamole.html#session-settings) ([#4234](https://github.com/microsoft/AzureTRE/issues/4234))
+* Add encryption at host for VMs ([#4263](https://github.com/microsoft/AzureTRE/pull/4263))
+* Downgrade certs shared service App Gateway to Basic SKU ([#4300](https://github.com/microsoft/AzureTRE/issues/4300))
+* Airlock function host storage to use the user-assigned managed identity ([#4276](https://github.com/microsoft/AzureTRE/issues/4276))
+* Disable local authentication in EventGrid ([#4254](https://github.com/microsoft/AzureTRE/issues/4254))
+* Use user username as VM username rather than random ID ([#4333](https://github.com/microsoft/AzureTRE/pull/4333))
+
+
+BUG FIXES:
+* Update KeyVault references in API to use the version so Terraform cascades the update ([#4112](https://github.com/microsoft/AzureTRE/pull/4112))
+* Template images are showing CVEs ([#4153](https://github.com/microsoft/AzureTRE/issues/4153))
+* Fix Dockerfile 'as' casting ([#4170](https://github.com/microsoft/AzureTRE/pull/4170))
+* Create policy to allow all user to configure color profiles to remove auth dialog. ([#4184](https://github.com/microsoft/AzureTRE/pull/4184))
+* Pre configure VS code option to prevent script failure ([#4185](https://github.com/microsoft/AzureTRE/pull/4185))
+* Increase size of Nexus VM, and derive Java VM memory limits from machine size ([#4074](https://github.com/microsoft/AzureTRE/issues/4074))
+* Enable symlinks to work on Linux VM shared storage ([#4180](https://github.com/microsoft/AzureTRE/issues/4180))
+* Upgrade aiohttp version for security fixes ([#4197](https://github.com/microsoft/AzureTRE/pull/4197))
+* Fix failing tests, .env missing and storage logs ([#4207](https://github.com/microsoft/AzureTRE/issues/4207))
+* Unable to delete virtual machines, add skip_shutdown_and_force_delete = true ([#4135](https://github.com/microsoft/AzureTRE/issues/4135))
+* Bump terraform version in windows VM template ([#4212](https://github.com/microsoft/AzureTRE/issues/4212))
+* Upgrade azurerm terraform provider from v3.112.0 to v3.117.0 to mitigate storage account deployment issue ([#4004](https://github.com/microsoft/AzureTRE/issues/4004))
+* Fix VM actions where Workspace shared storage doesn't allow shared key access ([#4222](https://github.com/microsoft/AzureTRE/issues/4222))
+* Fix public exposure in Guacamole service ([[#4199](https://github.com/microsoft/AzureTRE/issues/4199)])
+* Fix Azure ML network tags to use name rather than ID ([[#4151](https://github.com/microsoft/AzureTRE/issues/4151)])
+* Windows R version must be 4.1.2 otherwise post install script doesn't update package mirror URL ([#4288](https://github.com/microsoft/AzureTRE/issues/4288))
+* Recreate tre_output.json if empty. ([[#4292](https://github.com/microsoft/AzureTRE/issues/4292)])
+* Ensure R directory is present before attempting to update package mirror URL ([#4332](https://github.com/microsoft/AzureTRE/pull/4332))
+
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.5.5 |
+| core | 0.11.23 |
+| ui | 0.6.3 |
+| tre-shared-service-databricks-private-auth | 0.1.11 |
+| tre-shared-service-gitea | 1.1.4 |
+| tre-shared-service-sonatype-nexus | 3.3.2 |
+| tre-shared-service-firewall | 1.3.0 |
+| tre-shared-service-admin-vm | 0.5.2 |
+| tre-shared-service-certs | 0.7.3 |
+| tre-shared-service-airlock-notifier | 1.0.8 |
+| tre-shared-service-cyclecloud | 0.7.2 |
+| tre-workspace-airlock-import-review | 0.14.2 |
+| tre-workspace-base | 1.9.2 |
+| tre-workspace-unrestricted | 0.13.2 |
+| tre-workspace-service-gitea | 1.2.2 |
+| tre-workspace-service-mysql | 1.0.9 |
+| tre-workspace-service-health | 0.2.11 |
+| tre-workspace-service-openai | 1.0.6 |
+| tre-service-azureml | 0.9.2 |
+| tre-user-resource-aml-compute-instance | 0.5.11 |
+| tre-service-databricks | 1.0.10 |
+| tre-workspace-service-azuresql | 1.0.15 |
+| tre-service-guacamole | 0.12.7 |
+| tre-service-guacamole-export-reviewvm | 0.2.2 |
+| tre-service-guacamole-linuxvm | 1.2.4 |
+| tre-service-guacamole-import-reviewvm | 0.3.2 |
+| tre-service-guacamole-windowsvm | 1.2.6 |
+| tre-workspace-service-ohdsi | 0.3.2 |
+
+## 0.19.1
+
+**BREAKING CHANGES & MIGRATIONS**:
+* Workspace creation blocked due to Azure API depreciation ([#4095](https://github.com/microsoft/AzureTRE/issues/4095))
+
+ENHANCEMENTS:
+* Update Unrestricted and Airlock Import Review workspaces to be built off the Base workspace 0.19.0 ([#4087](https://github.com/microsoft/AzureTRE/pull/4087))
+* Update Release Docs (part of [#2727](https://github.com/microsoft/AzureTRE/issues/2727))
+* Add info regarding workspace limit into docs ([#3920](https://github.com/microsoft/AzureTRE/issues/3920))
+
+BUG FIXES:
+* Add Snyk Security updates for September
+* Workspace creation blocked due to Azure API depreciation ([#4095](https://github.com/microsoft/AzureTRE/issues/4095))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.5.2 |
+| core | 0.10.8 |
+| ui | 0.5.28 |
+| tre-service-guacamole-linuxvm | 1.0.3 |
+| tre-service-guacamole-import-reviewvm | 0.2.9 |
+| tre-service-guacamole-export-reviewvm | 0.1.9 |
+| tre-service-guacamole-windowsvm | 1.0.1 |
+| tre-service-guacamole | 0.10.9 |
+| tre-service-databricks | 1.0.4 |
+| tre-service-mlflow | 0.7.9 |
+| tre-service-innereye | 0.6.5 |
+| tre-workspace-service-ohdsi | 0.2.5 |
+| tre-workspace-service-gitea | 1.0.5 |
+| tre-workspace-service-mysql | 1.0.4 |
+| tre-workspace-service-azuresql | 1.0.10 |
+| tre-user-resource-aml-compute-instance | 0.5.7 |
+| tre-service-azureml | 0.8.11 |
+| tre-workspace-service-health | 0.2.6 |
+| tre-workspace-service-openai | 1.0.1 |
+| tre-workspace-airlock-import-review | 0.13.1 |
+| tre-workspace-unrestricted | 0.12.1 |
+| tre-workspace-base | 1.5.7 |
+| tre-shared-service-cyclecloud | 0.6.3 |
+| tre-shared-service-databricks-private-auth | 0.1.6 |
+| tre-shared-service-sonatype-nexus | 3.0.1 |
+| tre-shared-service-admin-vm | 0.4.4 |
+| tre-shared-service-firewall | 1.2.1 |
+| tre-shared-service-gitea | 1.0.3 |
+| tre-shared-service-certs | 0.5.2 |
+| tre-shared-service-airlock-notifier | 1.0.2 |
+
+## 0.19.0
 
 FEATURES:
 * Azure SQL Workspace Service ([#3969](https://github.com/microsoft/AzureTRE/issues/3969))
+* OpenAI Workspace Service ([#3810](https://github.com/microsoft/AzureTRE/issues/3810))
 
 ENHANCEMENTS:
 * Add Case Study Docs ([#1366](https://github.com/microsoft/AzureTRE/issues/1366))
 * Ability to host TRE on a custom domain ([#4014](https://github.com/microsoft/AzureTRE/pull/4014))
 * Remove AppServiceFileAuditLogs diagnostic setting ([#4033](https://github.com/microsoft/AzureTRE/issues/4033))
+* Update to the Airlock Notifier Shared Service ([#3909](https://github.com/microsoft/AzureTRE/issues/3909))
 
 BUG FIXES:
 * Removed 429 Error (Costs API) form presenting in UI ([#3929](https://github.com/microsoft/AzureTRE/issues/3929))
@@ -20,8 +234,42 @@ BUG FIXES:
 * Update Docs to format emojis properly ([#4027](https://github.com/microsoft/AzureTRE/issues/4027))
 * Update API and Resource Processor opentelemetry versions ([#4052](https://github.com/microsoft/AzureTRE/issues/4052))
 * Fix broken links in new Case Study Docs
+* Update Linux VM to stop screensaver locking out the user ([#4065](https://github.com/microsoft/AzureTRE/issues/4065))
+* Update .NET version on Linux VMs ([#4067](https://github.com/microsoft/AzureTRE/issues/4067))
 
 COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.5.1 |
+| core | 0.10.6 |
+| ui | 0.5.28 |
+| tre-service-guacamole-linuxvm | 1.0.2 |
+| tre-service-guacamole-import-reviewvm | 0.2.8 |
+| tre-service-guacamole-export-reviewvm | 0.1.8 |
+| tre-service-guacamole-windowsvm | 1.0.0 |
+| tre-service-guacamole | 0.10.8 |
+| tre-service-databricks | 1.0.3 |
+| tre-service-mlflow | 0.7.8 |
+| tre-service-innereye | 0.6.4 |
+| tre-workspace-service-ohdsi | 0.2.4 |
+| tre-workspace-service-gitea | 1.0.3 |
+| tre-workspace-service-mysql | 1.0.2 |
+| tre-workspace-service-azuresql | 1.0.9 |
+| tre-user-resource-aml-compute-instance | 0.5.7 |
+| tre-service-azureml | 0.8.10 |
+| tre-workspace-service-health | 0.2.5 |
+| tre-workspace-airlock-import-review | 0.12.16 |
+| tre-workspace-unrestricted | 0.11.4 |
+| tre-workspace-base | 1.5.4 |
+| tre-shared-service-cyclecloud | 0.5.5 |
+| tre-shared-service-databricks-private-auth | 0.1.5 |
+| tre-shared-service-sonatype-nexus | 3.0.0 |
+| tre-shared-service-admin-vm | 0.4.3 |
+| tre-shared-service-firewall | 1.2.0 |
+| tre-shared-service-gitea | 1.0.2 |
+| tre-shared-service-certs | 0.5.1 |
+| tre-shared-service-airlock-notifier | 1.0.1 |
 
 ## 0.18.0
 
@@ -54,6 +302,7 @@ BUG FIXES:
 * Add lifecycle rule to the Gitea Shared Service template for the MySQL resource to stop it recreating on `update` ([#4006](https://github.com/microsoft/AzureTRE/issues/4006))
 
 COMPONENTS:
+
 | name | version |
 | ----- | ----- |
 | devops | 0.5.1 |
@@ -108,6 +357,7 @@ BUG FIXES:
 * Fix issue with firewall failing to deploy on a new TRE deploy ([#3775](https://github.com/microsoft/AzureTRE/issues/3775))
 
 COMPONENTS:
+
 | name | version |
 | ----- | ----- |
 | devops | 0.5.1 |
@@ -157,6 +407,7 @@ BUG FIXES:
 * Airlock Import Review workspace uses dedicated DNS zone to prevent conflict with core ([#3767](https://github.com/microsoft/AzureTRE/pull/3767))
 
 COMPONENTS:
+
 | name | version |
 | ----- | ----- |
 | devops | 0.5.1 |
@@ -199,6 +450,7 @@ BUG FIXES:
 * Fix workspace not loading fails if operation or history roles are not loaded  ([#3755](https://github.com/microsoft/AzureTRE/issues/3755))
 
 COMPONENTS:
+
 | name | version |
 | ----- | ----- |
 | devops | 0.5.1 |
@@ -237,6 +489,7 @@ BUG FIXES:
 * SecuredByRole failing if roles are null ([#3740](https://github.com/microsoft/AzureTRE/issues/3740  ))
 
 COMPONENTS:
+
 | name | version |
 | ----- | ----- |
 | devops | 0.5.1 |
@@ -286,6 +539,7 @@ BUG FIXES:
 * Fix issue with cost tags not displaying correctly for some user roles ([#3721](https://github.com/microsoft/AzureTRE/issues/3721))
 
 COMPONENTS:
+
 | name | version |
 | ----- | ----- |
 | devops | 0.5.1 |
@@ -322,6 +576,7 @@ BUG FIXES:
 * Fix firewall config related to Nexus so that `pypi.org` is added to the allow-list  ([#3694](https://github.com/microsoft/AzureTRE/issues/3694))
 
 COMPONENTS:
+
 | name | version |
 | ----- | ----- |
 | devops | 0.5.1 |
@@ -371,6 +626,7 @@ BUG FIXES:
 * Added missing region entries in `databricks-udr.json` ([[#3688](https://github.com/microsoft/AzureTRE/pull/3688))
 
 COMPONENTS:
+
 | name | version |
 | ----- | ----- |
 | devops | 0.5.1 |
@@ -410,6 +666,7 @@ BUG FIXES:
 * Upgrade airlock and unrestricted workspaces to base workspace version 0.12.0 ([#3659](https://github.com/microsoft/AzureTRE/pull/3659))
 
 COMPONENTS:
+
 | name | version |
 | ----- | ----- |
 | devops | 0.5.1 |
@@ -469,6 +726,7 @@ BUG FIXES:
 
 
 COMPONENTS:
+
 | name | version |
 | ----- | ----- |
 | devops | 0.5.1 |
@@ -510,6 +768,7 @@ BUG FIXES:
 * Nexus fails to install due to `az login` and firewall rules ([#3453](https://github.com/microsoft/AzureTRE/issues/3453))
 
 COMPONENTS:
+
 | name | version |
 | ----- | ----- |
 | devops | 0.5.1 |
@@ -712,6 +971,7 @@ BUG FIXES:
 * Fix KeyVault purge error on MLFlow uninstall ([#3082](https://github.com/microsoft/AzureTRE/pull/3082))
 
 COMPONENTS:
+
 | name | version |
 | ----- | ----- |
 | devops | 0.4.4 |
@@ -788,6 +1048,7 @@ BUG FIXES:
 * Handle 429 TooManyRequests and 503 ServiceUnavailable which might return from Azure Cost Management in TRE Cost API ([#2835](https://github.com/microsoft/AzureTRE/issues/2835))
 
 COMPONENTS:
+
 | name | version |
 | ----- | ----- |
 | devops | 0.4.2 |
@@ -835,6 +1096,7 @@ BUG FIXES:
 * Fix issues with AML workspace service deployment ([#2768](https://github.com/microsoft/AzureTRE/pull/2768))
 
 COMPONENTS:
+
 | name | version |
 | ----- | ----- |
 | devops | 0.4.2 |
