@@ -1,3 +1,11 @@
+data "azurerm_client_config" "core" {
+  provider = azurerm.core
+}
+
+data "azurerm_client_config" "workspace" {
+  provider = azurerm
+}
+
 data "azurerm_virtual_network" "core" {
   provider            = azurerm.core
   name                = local.core_vnet
@@ -37,6 +45,12 @@ data "azurerm_subnet" "airlockprocessor" {
   resource_group_name  = local.core_resource_group_name
   virtual_network_name = local.core_vnet
   name                 = "AirlockProcessorSubnet"
+}
+
+data "azurerm_firewall" "firewall" {
+  provider            = azurerm.core
+  name                = "fw-${var.tre_id}"
+  resource_group_name = local.core_resource_group_name
 }
 
 data "azurerm_route_table" "rt" {
