@@ -32,11 +32,24 @@ class WorkspaceServiceRepository(ResourceRepository):
     def active_workspace_services_query(workspace_id: str):
         return f'SELECT * FROM c WHERE {IS_NOT_DELETED_CLAUSE} AND c.resourceType = "{ResourceType.WorkspaceService}" AND c.workspaceId = "{workspace_id}"'
 
+    @staticmethod
+    def active_guacamole_workspace_services_query(workspace_ids: List[str]):
+        workspace_ids_str = ",".join(f"'{wid}'" for wid in workspace_ids)
+        return f'SELECT * FROM c WHERE {IS_NOT_DELETED_CLAUSE} AND c.resourceType = "{ResourceType.WorkspaceService}" AND c.workspaceId IN ({workspace_ids_str})'
+
     async def get_active_workspace_services_for_workspace(self, workspace_id: str) -> List[WorkspaceService]:
         """
         returns list of "non-deleted" workspace services linked to this workspace
         """
         query = WorkspaceServiceRepository.active_workspace_services_query(workspace_id)
+        workspace_services = await self.query(query=query)
+        return parse_obj_as(List[WorkspaceService], workspace_services)
+
+    async def get_active_guacamole_workspace_services_for_workspaces(self,workspace_ids: List[str]) -> List[WorkspaceService]:
+        """
+        returns list of "non-deleted" guacamole workspace services linked to this workspaces
+        """
+        query = WorkspaceServiceRepository.active_guacamole_workspace_services_query(workspace_ids)
         workspace_services = await self.query(query=query)
         return parse_obj_as(List[WorkspaceService], workspace_services)
 

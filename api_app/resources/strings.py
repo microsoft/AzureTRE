@@ -24,6 +24,7 @@ API_INVOKE_ACTION_ON_WORKSPACE_SERVICE = "Invoke action on a workspace service"
 API_GET_RESOURCE_OPERATIONS = "Get all operations for a resource"
 API_GET_RESOURCE_OPERATION_BY_ID = "Get a single resource operation by id"
 API_GET_RESOURCE_HISTORY = "Get history for a resource"
+API_GET_ACTIVE_VM_COUNT = "Get active vm count"
 
 API_CREATE_USER_RESOURCE = "Create a user resource"
 API_GET_MY_USER_RESOURCES = "Get my user resources in the workspace service"

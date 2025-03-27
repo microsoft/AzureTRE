@@ -22,6 +22,7 @@ from models.schemas.workspace import WorkspaceAuthInResponse, WorkspaceInCreate,
 from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse
 from models.schemas.resource import ResourceHistoryInList, ResourcePatch
 from models.schemas.resource_template import ResourceTemplateInformationInList
+from models.schemas.Active_Vm_Count import WorkspaceIds,ResourceCount
 from resources import strings
 from services.access_service import AuthConfigValidationError
 from services.authentication import get_current_admin_user, \
@@ -41,7 +42,7 @@ workspaces_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or
 workspaces_shared_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin)])
 workspace_services_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 user_resources_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
-
+user_resources_workspace_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 
 def validate_user_has_valid_role_for_user_resource(user, user_resource):
     if "WorkspaceOwner" in user.roles:
@@ -529,3 +530,37 @@ async def retrieve_user_resource_operations_by_user_resource_id_and_operation_id
 async def retrieve_user_resource_history_by_user_resource_id(user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> ResourceHistoryInList:
     validate_user_has_valid_role_for_user_resource(user, user_resource)
     return ResourceHistoryInList(resource_history=await resource_history_repo.get_resource_history_by_resource_id(resource_id=user_resource.id))
+
+@user_resources_workspace_core_router.post("/active-vm-count", response_model=ResourceCount, name=strings.API_GET_ACTIVE_VM_COUNT)
+async def retrieve_active_vm_count(
+        workspace_ids_data: WorkspaceIds,
+        user=Depends(get_current_tre_user_or_tre_admin),
+        user_resource_repo=Depends(get_repository(UserResourceRepository)),
+        workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository))) -> ResourceCount:
+
+    if not workspace_ids_data.workspace_ids:
+        return ResourceCount(count=0)
+
+    total_count = 0
+
+    try:
+        workspace_services = await workspace_services_repo.get_active_guacamole_workspace_services_for_workspaces(workspace_ids_data.workspace_ids)
+        for service in workspace_services:
+            if service.templateName == "tre-service-guacamole":
+                user_resources = await user_resource_repo.get_user_resources_for_workspace_service(service.workspaceId, service.id)
+
+                # Filter resources based on user roles
+                if ("WorkspaceResearcher" in user.roles or "AirlockManager" in user.roles) and "WorkspaceOwner" not in user.roles:
+                    user_resources = [resource for resource in user_resources if resource.ownerId == user.id]
+
+                # Count active VMs
+                for user_resource in user_resources:
+                    if 'azure_resource_id' in user_resource.properties:
+                        user_resource.azureStatus = get_azure_resource_status(user_resource.properties['azure_resource_id'])
+                        if user_resource.azureStatus and user_resource.azureStatus.get("powerState") == "VM running":
+                            total_count += 1
+    except Exception as e:
+        logging.exception("Error while retrieving active VM count")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to retrieve active VM count")
+
+    return ResourceCount(count=total_count)
