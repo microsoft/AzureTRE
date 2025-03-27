@@ -142,7 +142,8 @@ async def test_multi_step_document_sends_first_step(
         resource_history_repo=resource_history_repo_mock,
         etag=basic_shared_service.etag,
         resource_template_repo=resource_template_repo,
-        user=test_user
+        user=test_user,
+        resource_action="upgrade"
     )
 
 
