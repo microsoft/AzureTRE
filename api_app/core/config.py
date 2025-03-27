@@ -67,7 +67,7 @@ NOTIFY_UK_ISS_ID: str = config("NOTIFY_UK_ISS_ID", default="")
 NOTIFY_UK_EMAIL_SUBJECT_TAG: str = config("NOTIFY_UK_EMAIL_SUBJECT_TAG", default="")
 
 # Triage level due date
-DUE_DATE_DAYS_TO_ADD: map = config("DUE_DATE_DAYS_TO_ADD", default={"L1": 3, "L2": 3, "L2a": 3, "L2b": 3, "L3": 15, "L4": 0})
+DUE_DATE_DAYS_TO_ADD: map = config("DUE_DATE_DAYS_TO_ADD", default={"L1": 3, "L2": 5, "L2a": 5, "L2b": 15, "L3": 15, "L4": 0})
 BANK_HOLIDAYS_FILE_PATH = "/api/resources/bank-holidays.json"
 
 # Custom header for setting ClientType
