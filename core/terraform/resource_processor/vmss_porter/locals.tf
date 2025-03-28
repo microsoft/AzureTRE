@@ -16,6 +16,7 @@ locals {
     firewall_sku          = var.firewall_sku
     enable_cmk_encryption = var.enable_cmk_encryption
     key_store_id          = var.key_store_id
+    core_api_client_id    = var.core_api_client_id
   })
   rp_bundle_values_dic       = [for key in keys(local.rp_bundle_values_all) : "RP_BUNDLE_${key}=${local.rp_bundle_values_all[key]}"]
   rp_bundle_values_formatted = join("\n      ", local.rp_bundle_values_dic)

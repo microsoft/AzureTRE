@@ -48,7 +48,6 @@ write_files:
       AZURE_SUBSCRIPTION_ID=${arm_subscription_id}
       ARM_CLIENT_ID=${vmss_msi_id}
       AZURE_TENANT_ID=${arm_tenant_id}
-      CORE_API_CLIENT_ID=${core_api_client_id}
       ARM_USE_MSI=true
       APPLICATIONINSIGHTS_CONNECTION_STRING=${app_insights_connection_string}
       NUMBER_PROCESSES=${resource_processor_number_processes_per_instance}
