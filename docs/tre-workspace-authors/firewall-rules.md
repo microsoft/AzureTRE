@@ -1,256 +1,146 @@
-# Configuring Firewall Rules in Azure TRE
+# Adding Firewall Rules as part of a workspace or service deployment
 
-This guide explains how to configure firewall rules for your Azure TRE environment.
+A TRE service may require certain firewall rules to be opened in the TRE firewall. Examples include:
 
-## Contents
-- [Overview](#overview)
-- [Types of Firewall Rules](#types-of-firewall-rules)
-- [Configuring Application Rules](#configuring-application-rules)
-- [Configuring Network Rules](#configuring-network-rules)
-- [Applying Your Configuration](#applying-your-configuration)
-- [Examples](#examples)
+- Access to an external authorisation endpoint
+- Access to an external data store
+- Access to an external API
 
-## Overview
+Please be aware when opening firewall rules there is the potential for data to be leaked from the workspace to the external location.
 
-The Azure TRE Firewall shared service controls network traffic flowing in and out of your research environment. The firewall configuration is defined using a JSON file that specifies rule collections and their associated rules.
+## Firewall Rules in Template Schema
 
-## Types of Firewall Rules
+Azure TRE uses the `template_schema.json` file of the service in question (e.g. `templates/workspace_services/azureml/template_schema.json`) to define firewall rules. These rules are configured in the `pipeline` section of the schema file.
 
-The Azure TRE Firewall supports two types of rules:
+### Pipeline Structure
 
-1. **Application Rules**: Control outbound access to specific websites/FQDNs
-2. **Network Rules**: Control traffic based on source, destination, port, and protocol
+Firewall rules are defined in steps within the pipeline sections for `install`, `upgrade`, and `uninstall` operations. Each operation contains steps that modify the firewall configuration during that operation.
 
-## Configuring Application Rules
+Please see `docs/tre-templates/pipeline-templates/overview.` for more information on the pipline structure.
 
-Application rules control HTTP/HTTPS traffic to specific web destinations.
-
-To configure application rules:
-
-1. Create a JSON file containing a `rule_collections` array
-2. Define one or more rule collections, each with a unique name
-3. Within each collection, define individual rules
-
-### Application Rule Structure
+Example pipeline step:
 
 ```json
 {
-  "rule_collections": [
-    {
-      "name": "my-app-rule-collection",
-      "rules": [
-        {
-          "name": "allow-microsoft-services",
-          "description": "Allow access to Microsoft services",
-          "protocols": [
-            {
-              "port": "443",
-              "type": "Https"
-            }
-          ],
-          "target_fqdns": [
-            "*.microsoft.com",
-            "*.windowsazure.com"
-          ],
-          "source_addresses": [
-            "10.1.0.0/22"
-          ]
-        }
-      ]
-    }
+  "stepId": "260421b3-7308-491f-b531-e007cdc0ff46",
+  "stepTitle": "Add network firewall rules",
+  "resourceTemplateName": "tre-shared-service-firewall",
+  "resourceType": "shared-service",
+  "resourceAction": "upgrade",
+  "properties": [
+    // Rule collections defined here
   ]
 }
 ```
 
-## Application Rule Properties
+### Rule Collection Types
 
-| Property | Description | Required | Example|
-|----------|-------------|----------|--------|
-|`name` | Name of the rule | Yes | `"allow-github"`|
-|`description` | Description of the rule | No | `"Allow access to GitHub"`|
-|`protocols` | Array of protocol objects | Yes | See below|
-|`target_fqdns` | Array of destination FQDNs | No |`["github.com", "*.github.io"]`|
-|`fqdn_tags` | Array of predefined FQDN tags | No |`["AzureKubernetesService"]`|
-|`source_addresses` | Array of source IP addresses/ranges | No | `["10.1.0.0/22"]`|
-|`source_ip_group_ids` | Array of source IP group resource IDs | No | `["/subscriptions/.../ipGroups/myIpGroup"]`|
-|`source_ip_groups_in_core` | Array of IP group names in the core resource group | No | `["core_ip_group"]`|
+There are two main types of rule collections in Azure TRE:
 
-Each protocol object requires:
+| Collection Type | Description |
+|-----------------|-------------|
+| `network_rule_collections` | Controls traffic based on source, destination, protocol, and port |
+| `rule_collections` | Application-level rules controlling traffic to specific FQDNs |
 
-`port`: The port number (e.g., `"443"`)
-`type`: One of: `"Http"`, `"Https"`, or `"Mssql"`
+### Network Rule Collections
 
-## Configuring Network Rules
-Network rules control traffic based on IP addresses, ports, and protocols.
+Network rule collections control traffic at the network level and are configured with the following properties:
 
-To configure network rules:
+| Property | Description |
+|----------|-------------|
+| `name` | Unique identifier for the rule collection |
+| `action` | Action to take (Allow/Deny) |
+| `rules` | Array of individual network rules |
 
-1. Create a JSON file containing a `network_rule_collections` array
-2. Define one or more rule collections, each with a unique name
-3. Within each collection, define individual rules
+Each network rule has the following structure:
 
-## Network Rule Structure
- ```json
- {
-  "network_rule_collections": [
-    {
-      "name": "my-network-rule-collection",
-      "rules": [
-        {
-          "name": "allow-rdp-access",
-          "source_addresses": [
-            "10.1.0.0/22"
-          ],
-          "destination_addresses": [
-            "10.2.0.0/24"
-          ],
-          "destination_ports": [
-            "3389"
-          ],
-          "protocols": [
-            "TCP"
-          ]
-        }
-      ]
-    }
-  ]
-}
-```
-## Network Rule Properties
+| Property | Description | Example |
+|----------|-------------|---------|
+| `name` | Rule name | "AzureMachineLearning" |
+| `description` | Human-readable description | "Azure Machine Learning rules" |
+| `source_addresses` | Origin of traffic | "{{ resource.properties.aml_subnet_address_prefixes }}" |
+| `destination_addresses` | Target of traffic | ["AzureMachineLearning"] |
+| `destination_ports` | Allowed ports | ["443", "8787"] |
+| `protocols` | Allowed protocols | ["TCP"] |
 
-|Property |Description |Required |Example |
-|---------|------------|---------|--------|
-|`name` |Name of the rule (5-80 characters) |Yes |`"allow-ssh-access"` |
-|`description` |Description of the rule (Deprecated) |No |`"Allow SSH access to VMs"` |
-|`source_addresses` |Array of source IP addresses/ranges |No |`["10.1.0.0/22"]` |
-|`source_ip_group_ids` |Array of source IP group resource IDs |No |`["/subscriptions/.../ipGroups/myIpGroup"]` |
-|`source_ip_groups_in_core`| Array of IP group names in the core resource group |No |`["core_ip_group"]` |
-|`destination_addresses`| Array of destination IP addresses/ranges |No |`["10.2.0.0/24"]` |
-|`destination_ip_group_ids`| Array of destination IP group resource IDs |No |`["/subscriptions/.../ipGroups/destIpGroup"]` |
-|`destination_fqdns`| Array of destination FQDNs |No |`["example.com"]` |
-|`destination_ports`| Array of destination ports |No |`["22", "443", "1000-2000"]` |
-|`protocols`| Array of protocols |No |`["TCP", "UDP"]`|
+### Application Rule Collections
 
-Valid protocols: `"Any"`, `"ICMP"`, `"TCP"`, `"UDP"`
+Application rule collections control traffic at the application level and are configured with the following properties:
 
-## Applying Your Configuration
-To apply your firewall configuration:
+| Property | Description |
+|----------|-------------|
+| `name` | Unique identifier for the rule collection |
+| `action` | Action to take (Allow/Deny) |
+| `rules` | Array of individual application rules |
 
-1. Save your JSON file with your rule definitions
-2. Use the Azure TRE API or UI to update the firewall shared service with your configuration
+Each application rule has the following structure:
 
-## Examples
+| Property | Description | Example |
+|----------|-------------|---------|
+| `name` | Rule name | "AzureML_client" |
+| `description` | Human-readable description | "AzureML rules" |
+| `source_addresses` | Origin of traffic | "{{ resource.properties.workspace_address_spaces }}" |
+| `target_fqdns` | Target FQDNs | ["aadcdn.msauth.net"] |
+| `protocols` | Protocol configuration | [{"port": "443", "type": "Https"}] |
 
-## Example 1: Allow access to Azure services
-```json
-{
-  "rule_collections": [
-    {
-      "name": "allow-azure-services",
-      "rules": [
-        {
-          "name": "azure-public-services",
-          "protocols": [
-            {
-              "port": "443",
-              "type": "Https"
-            }
-          ],
-          "fqdn_tags": [
-            "AzureBackup",
-            "WindowsUpdate"
-          ],
-          "source_addresses": [
-            "10.1.0.0/22"
-          ]
-        }
-      ]
-    }
-  ]
-}
-```
+### Rule Collection Operations
 
-## Example 2: Allow outbound internet access
+When modifying rule collections, you can specify how the rules should be applied:
+
+| Operation | Description |
+|-----------|-------------|
+| `replace` | Replace existing rules that match the specified criteria, typically used in `install` and `upgrade` steps |
+| `remove` | Remove rules that match the specified criteria, typically used in `uninstall` steps |
+
+This is controlled by the `arraySubstitutionAction` property:
 
 ```json
 {
-  "network_rule_collections": [
-    {
-      "name": "outbound-internet",
-      "rules": [
-        {
-          "name": "allow-https-outbound",
-          "source_addresses": [
-            "10.1.0.0/22"
-          ],
-          "destination_addresses": [
-            "*"
-          ],
-          "destination_ports": [
-            "443"
-          ],
-          "protocols": [
-            "TCP"
-          ]
-        }
-      ]
-    }
-  ]
+  "name": "network_rule_collections",
+  "type": "array",
+  "arraySubstitutionAction": "replace",
+  "arrayMatchField": "name",
+  "value": {
+    // Rule collection definition
+  }
 }
 ```
 
-## Example 3: Combined Application and Network Rules
+### Template Variables
+
+Firewall rules often use template variables to dynamically set values:
+
+| Variable Pattern | Description | Example |
+|------------------|-------------|---------|
+| `{{ resource.id }}` | The resource ID | Used in rule collection names |
+| `{{ resource.properties.x }}` | Resource-specific properties | Address spaces, FQDNs |
+
+### Example Rule Collection
+
+Below is an example of a network rule collection for Azure Machine Learning:
 
 ```json
 {
-  "rule_collections": [
+  "name": "nrc_svc_{{ resource.id }}_azureml",
+  "action": "Allow",
+  "rules": [
     {
-      "name": "data-science-sites",
-      "rules": [
-        {
-          "name": "allow-python-pkg-repos",
-          "protocols": [
-            {
-              "port": "443",
-              "type": "Https"
-            }
-          ],
-          "target_fqdns": [
-            "pypi.org",
-            "files.pythonhosted.org",
-            "conda.io",
-            "anaconda.org"
-          ],
-          "source_addresses": [
-            "10.1.0.0/22"
-          ]
-        }
-      ]
-    }
-  ],
-  "network_rule_collections": [
-    {
-      "name": "internal-communication",
-      "rules": [
-        {
-          "name": "allow-internal-ssh",
-          "source_addresses": [
-            "10.1.0.0/22"
-          ],
-          "destination_addresses": [
-            "10.2.0.0/24"
-          ],
-          "destination_ports": [
-            "22"
-          ],
-          "protocols": [
-            "TCP"
-          ]
-        }
-      ]
+      "name": "AzureMachineLearning",
+      "description": "Azure Machine Learning rules",
+      "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
+      "destination_addresses": ["AzureMachineLearning"],
+      "destination_ports": ["443", "8787", "18881"],
+      "protocols": ["TCP"]
     }
   ]
 }
 ```
 
-This configuration allows for both application-level access to Python package repositories and network-level SSH communication between specific subnets.
+## Best Practices
+
+1. **Use descriptive names and descriptions** for rule collections and individual rules.
+2. **Minimize the scope** of firewall rules to only what is necessary.
+3. **Document any custom rules** in your service documentation.
+4. **Test thoroughly** after making changes to firewall rules.
+5. **Review rules periodically** to ensure they are still required.
+
