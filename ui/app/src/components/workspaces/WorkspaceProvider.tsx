@@ -230,18 +230,17 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
           <WorkspaceHeader />
           <Stack horizontal className="tre-body-inner">
             <Stack.Item className="tre-left-nav">
-              {!isTREAdminUser && (
-                <WorkspaceLeftNav
-                  workspaceServices={workspaceServices}
-                  sharedServices={sharedServices}
-                  setWorkspaceService={(ws: WorkspaceService) =>
-                    setSelectedWorkspaceService(ws)
-                  }
-                  addWorkspaceService={(ws: WorkspaceService) =>
-                    addWorkspaceService(ws)
-                  }
-                />
-              )}
+              <WorkspaceLeftNav
+                workspaceServices={workspaceServices}
+                sharedServices={sharedServices}
+                setWorkspaceService={(ws: WorkspaceService) =>
+                  setSelectedWorkspaceService(ws)
+                }
+                addWorkspaceService={(ws: WorkspaceService) =>
+                  addWorkspaceService(ws)
+                }
+                isTREAdminUser={isTREAdminUser}
+              />
             </Stack.Item>
             <Stack.Item className="tre-body-content">
               <Stack>
@@ -331,9 +330,8 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                           element={<SharedServiceItem readonly={true} />}
                         />
                         <Route path="requests/*" element={<Airlock />} />
-                        <Route path="users/*" element={<WorkspaceUsers />} />
-                      </>
-                    )}
+                      </>)}
+                    <Route path="users/*" element={<WorkspaceUsers />} />
                   </Routes>
                 </Stack.Item>
               </Stack>

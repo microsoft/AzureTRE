@@ -19,6 +19,7 @@ data "template_file" "cloudconfig" {
     vmss_msi_id                                      = azurerm_user_assigned_identity.vmss_msi.client_id
     arm_subscription_id                              = data.azurerm_subscription.current.subscription_id
     arm_tenant_id                                    = data.azurerm_client_config.current.tenant_id
+    core_api_client_id                               = var.core_api_client_id
     resource_processor_vmss_porter_image_repository  = var.resource_processor_vmss_porter_image_repository
     resource_processor_vmss_porter_image_tag         = local.version
     app_insights_connection_string                   = var.app_insights_connection_string
