@@ -723,8 +723,7 @@ def test_assign_workspace_user_already_has_role(workspace_role_in_use_mock,
 @patch("services.aad_authentication.AzureADAuthorization._is_user_in_role", return_value=False)
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=False)
 @patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group")
-def test_assign_workspace_user_if_no_groups_raises_error(assign_user_to_group_mock,
-                                                         workspace_without_groups, role_owner,
+def test_assign_workspace_user_if_no_groups_raises_error(_, __, ___, workspace_without_groups, role_owner,
                                                          user_with_role):
 
     access_service = AzureADAuthorization()

@@ -21,6 +21,7 @@ from services.logging import logger
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
+from semantic_version import Version
 
 
 MICROSOFT_GRAPH_URL = config.MICROSOFT_GRAPH_URL.strip("/")
@@ -611,20 +612,14 @@ def compare_versions(v1: str, v2: str) -> int:
           0 if v1 == v2,
           1 if v1 > v2.
     """
-    parts1 = [int(x) for x in v1.split('.')]
-    parts2 = [int(x) for x in v2.split('.')]
-
-    # Extend the shorter list with zeros
-    length = max(len(parts1), len(parts2))
-    parts1.extend([0] * (length - len(parts1)))
-    parts2.extend([0] * (length - len(parts2)))
-
-    for a, b in zip(parts1, parts2):
-        if a < b:
-            return -1
-        elif a > b:
-            return 1
-    return 0
+    version1 = Version(v1)
+    version2 = Version(v2)
+    if version1 < version2:
+        return -1
+    elif version1 > version2:
+        return 1
+    else:
+        return 0
 
 
 def merge_dict(d1, d2):
