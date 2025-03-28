@@ -24,7 +24,6 @@ def get_config() -> dict:
         config["azure_environment"] = os.environ.get("AZURE_ENVIRONMENT", "AzureCloud")
         config["aad_authority_url"] = os.environ.get("AAD_AUTHORITY_URL", "https://login.microsoftonline.com")
         config["microsoft_graph_fqdn"] = os.environ.get("MICROSOFT_GRAPH_FQDN", "graph.microsoft.com")
-        config["core_api_client_id"] = os.environ.get("CORE_API_CLIENT_ID", None)
 
         try:
             config["number_processes_int"] = int(config["number_processes"])
