@@ -21,14 +21,19 @@ To configure the feature, the following prerequisites need to be fulfilled:
 For import:
 
 1. [Airlock Import Workspace](../tre-templates/workspaces/airlock-import-review.md) A dedicated workspace used for import reviews. It needs to be deployed once per TRE. To make this template available in your TRE run the following make command:
-`make workspace_bundle BUNDLE=airlock-import-review`
+```bash
+make workspace_bundle BUNDLE=airlock-import-review
+```
+
 Note: TRE Admin permissions are required to register the template
 Having the template in place. Deploy a new workspace using that template that will be used for Airlock import reviews.
 
 1. [Guacamole Workspace Service](../tre-templates/workspace-services/guacamole.md) need to be deployed in Airlock Import Workspace from the previous step.
 
 1. [Template for import review VM](../tre-templates/user-resources/import-reviewvm.md) needs to be installed in the TRE, or a custom template if used. To add the existing review VM template to your TRE run the following make command:
-`make user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-import-reviewvm`
+```bash
+make user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-import-reviewvm
+```
 Note: TRE Admin permissions are required to register the template
 
 For export:

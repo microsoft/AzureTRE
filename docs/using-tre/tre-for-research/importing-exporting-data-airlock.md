@@ -53,7 +53,7 @@ To bring in external data to a secure TRE workspace so you can use it for your r
 The request will be in an *In Review* state until it is either approved or rejected by your Airlock Manager(s) manually or by an automated workflow (depending on your organisation's specific configuration).
 
 !!! note
-    Your organisation may have the Airlock Notifier service configured which will send email notifications when your request has been approved/rejected, or you may have another mechanism in place. Please check with your TRE administrator.
+    Your organisation may have the Airlock Notifier service configured which will send email notifications when your request has been approved/rejected, or you may have another mechanism in place. Please check with your TRE administrator to see which mechanism are you using to send notifications.
 
 If the request is rejected, your data will be deleted and your request will move into a *Rejected* state. You will be able to see feedback in the **Reviews** section on why your request was rejected so you can create a new request that addresses any concerns.
 
