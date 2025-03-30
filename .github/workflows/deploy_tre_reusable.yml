@@ -180,6 +180,10 @@ jobs:
             echo "Missing variable: LOCATION" && exit 1
           fi
 
+          if [ "${{ secrets.CI_CACHE_ACR_NAME }}" == '' ]; then
+            echo "CI_CACHE_ACR_NAME is not set. Please run the workflow on the main branch first." && exit 1
+          fi
+
       - name: Report check status start
         if: inputs.prHeadSha != ''
         uses: LouisBrunner/checks-action@v2.0.0

@@ -23,6 +23,13 @@ jobs:
       - name: Checkout (GitHub)
         uses: actions/checkout@v4
 
+      - name: Check CI_CACHE_ACR_NAME
+        run: |
+          if [ -z "${{ secrets.CI_CACHE_ACR_NAME }}" ]; then
+            echo "CI_CACHE_ACR_NAME is not set. Please run the workflow on the main branch first."
+            exit 1
+          fi
+
       - name: Build and run dev container task
         uses: ./.github/actions/devcontainer_run_command
         with:

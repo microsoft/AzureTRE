@@ -136,9 +136,9 @@ In your repository you will find that the pipelines under the folder `.github/wo
 
 With all the repository secrets set, you can trigger a workflow run by pushing to develop/main of your repo, or by dispatching the workflow manually.
 
-**Run CI/CD on Main Branch First**
+### Run CI/CD on Main Branch First
 
-Running the CI/CD pipeline on the main branch initially is essential. This action will establish an environment that mirrors the current main branch and will set the CI_CACHE_ACR_NAME for caching purposes.
+It is important to run the CI/CD pipeline on the main branch first. This will create an environment that represents the current main branch. It will also define the `CI_CACHE_ACR_NAME` used for caching.
 
 ## Next steps
 
