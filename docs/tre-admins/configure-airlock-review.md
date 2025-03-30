@@ -20,7 +20,7 @@ To configure the feature, the following prerequisites need to be fulfilled:
 
 For import:
 
-1. [Airlock Import Workspace](../tre-templates/workspaces/airlock-import-review.md) A dedicated worspace used for import reviews. It needs to be deployed once per TRE. To make this template available in your TRE run the following make command:
+1. [Airlock Import Workspace](../tre-templates/workspaces/airlock-import-review.md) A dedicated workspace used for import reviews. It needs to be deployed once per TRE. To make this template available in your TRE run the following make command:
 `make workspace_bundle BUNDLE=airlock-import-review`
 Note: TRE Admin permissions are required to register the template
 Having the template in place. Deploy a new workspace using that template that will be used for Airlock import reviews.
@@ -63,11 +63,11 @@ For troubleshooting guidance please review [the airlock troubleshooting FAQ](../
 
 ## Example
 
-I have a research workspace called Umbrella. It was created using a base workspace template (it can be any other template or custom template) and it was it was created withought configuring any airlock review properties. For the sake of example lets say the workspace id is - `research-workspace-id`
+I have a research workspace called Umbrella. It was created using a base workspace template (it can be any other template or custom template) and it was it was created without configuring any airlock review properties. For the sake of example lets say the workspace id is - `research-workspace-id`
 
 [![Create Research Workspace](../assets/airlock-review/workspace-creation.png)](../assets/airlock-review/workspace-creation.png)
 
-I have created a Guacamole workspace service inside the Umbrella workspace and called it Virtual Desktops. I will be using this Virtual Desktops service to spin up review VMs for **export**. For the sake of example lets say this workspace service id is - `research-workspace-guacqamole-id`
+I have created a Guacamole workspace service inside the Umbrella workspace and called it Virtual Desktops. I will be using this Virtual Desktops service to spin up review VMs for **export**. For the sake of example lets say this workspace service id is - `research-workspace-guacamole-id`
 
 [![Research Workspace Guacamole](../assets/airlock-review/research-workspace-guacamole-for%20export-reviews.png)](../assets/airlock-review/research-workspace-guacamole-for%20export-reviews.png)
 
@@ -75,13 +75,13 @@ The next thing I did  is create an Airlock Import Review Workspace using Airlock
 
 [![Import Review Workspace](../assets/airlock-review/create-airlock-import-review-workspace.png)](../assets/airlock-review/create-airlock-import-review-workspace.png)
 
-And inside of it I have created a Guacamole workspace service called Virtual Desktops. I will be using this Virtual Desktops service to spin up review VMs for **import**. For the sake of example lets say this workspace service id is - `import-review-workspace-guacqamole-id`
+And inside of it I have created a Guacamole workspace service called Virtual Desktops. I will be using this Virtual Desktops service to spin up review VMs for **import**. For the sake of example lets say this workspace service id is - `import-review-workspace-guacamole-id`
 
-[![Update Reserach Workspace](../assets/airlock-review/airlock-import-review-workspace-guacamole.png)](../assets/airlock-review/airlock-import-review-workspace-guacamole.png)
+[![Update Research Workspace](../assets/airlock-review/airlock-import-review-workspace-guacamole.png)](../assets/airlock-review/airlock-import-review-workspace-guacamole.png)
 
 Now I basically have everything in place. I can configure now the review VM properties in my Research Workspace - Umbrella. I will click update on it -
 
-[![Update Reserach Workspace](../assets/airlock-review/update-research-workspace.png)](../assets/airlock-review/update-research-workspace.png)
+[![Update Research Workspace](../assets/airlock-review/update-research-workspace.png)](../assets/airlock-review/update-research-workspace.png)
 
 
 And fill in the ids -
