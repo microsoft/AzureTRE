@@ -76,7 +76,7 @@ function kv_remove_network_exception() {
 
   # ensure resource group isn't being deleted
   #
-  if is_core_rg_deleting; then
+  if is_kv_rg_deleting "$KV_NAME"; then
     return 0   # don't cause outer sourced script to fail
   fi
 
@@ -128,9 +128,15 @@ function does_kv_exist() {
   return 0
 }
 
-function is_core_rg_deleting() {
-  if [[ "$(az group show --name "${core_tre_rg:-}" --query "properties.provisioningState" -o tsv)" == "Deleting" ]]; then
-    echo -e " Resource group ${core_tre_rg:-} is being deleted\n"
+function is_kv_rg_deleting() {
+
+  KV_NAME=$1
+
+  local KV_RG_NAME
+  KV_RG_NAME=$(az keyvault show --name "$KV_NAME" --query "resourceGroup" -o tsv)
+
+  if [[ "$(az group show --name "${KV_RG_NAME}" --query "properties.provisioningState" -o tsv)" == "Deleting" ]]; then
+    echo -e " Resource group ${KV_RG_NAME} is being deleted\n"
     return 0
   fi
 
