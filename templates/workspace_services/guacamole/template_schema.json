@@ -71,6 +71,13 @@
       "title": "Expose externally",
       "description": "Is the Guacamole service exposed outside of the vnet",
       "default": true
+    },
+    "workspace_subscription_id": {
+      "$id": "#/properties/workspace_subscription_id",
+      "type": "string",
+      "title": "Workspace subscription id",
+      "description": "The Azure subscription the workspace is deployed to",
+      "default": true
     }
   },
   "pipeline": {
