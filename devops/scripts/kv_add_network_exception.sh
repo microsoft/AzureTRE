@@ -74,6 +74,12 @@ function kv_remove_network_exception() {
     return 0   # don't cause outer sourced script to fail
   fi
 
+  # ensure resource group isn't being deleted
+  #
+  if is_core_rg_deleting; then
+    return 0   # don't cause outer sourced script to fail
+  fi
+
   # remove keyvault network exception
   #
   az keyvault network-rule remove --name "$KV_NAME" --ip-address "$MY_IP" --output none
@@ -110,7 +116,6 @@ function get_my_ip() {
   echo "$MY_IP"
 }
 
-
 function does_kv_exist() {
 
   KV_NAME=$1
@@ -121,6 +126,15 @@ function does_kv_exist() {
   fi
 
   return 0
+}
+
+function is_core_rg_deleting() {
+  if [[ "$(az group show --name "${core_tre_rg:-}" --query "properties.provisioningState" -o tsv)" == "Deleting" ]]; then
+    echo -e " Resource group ${core_tre_rg:-} is being deleted\n"
+    return 0
+  fi
+
+  return 1
 }
 
 
