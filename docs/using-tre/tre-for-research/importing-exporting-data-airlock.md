@@ -89,7 +89,8 @@ Exporting data from a secure TRE workspace to the outside world involves similar
 
 [![Generate SAS token for export request](../../assets/using-tre/airlock-export-sas.png)](../../assets/using-tre/airlock-export-sas.png)
 
-5. Since this is an export, this means the data is exported from the workspace outside. Therefore, to upload the requested export file, you will now need to head into your *Workspace VM/resource* containing the data you wish to export. Use your preferred storage tool to upload the data to the request container and paste in the SAS URL you've just generated. See Step 2 in the [Importing data](#importing-data-to-a-workspace) section for more details on using these tools.
+5. Since this is an export, this means the data is exported from the workspace outside. Therefore, to upload the requested export file, you will now need to head into your *Workspace VM/resource* containing the data you wish to export.
+Use your preferred storage tool to upload the data to the request container and paste in the SAS URL you've just generated. See Step 2 in the [Importing data](#importing-data-to-a-workspace) section for more details on using these tools.
 
 6. Once you've uploaded your data, head back to the TRE UI in your host and click *Submit* on your draft request. This will submit your request for approval.
 

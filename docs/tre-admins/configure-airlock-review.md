@@ -1,6 +1,7 @@
 # Configuring Airlock Review feature
 
-The Airlock Review feature enables the setup of a process for manually reviewing Airlock requests. With this functionality, users assigned the Airlock Manager role—who have the necessary privileges to review requests—can quickly spin up a Virtual Machine. This VM is provisioned with the required access to the requested data, allowing the Airlock Manager to efficiently perform the review process in an isolated environment.
+The Airlock Review feature enables the setup of a process for manually reviewing Airlock requests.
+With this functionality, users assigned the Airlock Manager role—who have the necessary privileges to review requests—can quickly spin up a Virtual Machine. This VM is provisioned with the required access to the requested data, allowing the Airlock Manager to efficiently perform the review process in an isolated environment.
 
 For information on Airlock feature, please refer to the [overview page](../azure-tre-overview/airlock.md).
 
