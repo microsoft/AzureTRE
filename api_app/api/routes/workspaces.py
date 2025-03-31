@@ -258,13 +258,6 @@ async def create_workspace_service(response: Response, workspace_service_input: 
         logger.exception("User not authorized to use template")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
-    # Get the workspace subscription id (if set)
-    if workspace.properties.get("workspace_subscription_id"):
-        if not resource_template.properties.get("workspace_subscription_id"):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.TODO_WRITE_ERROR)
-        workspace_service.properties["workspace_subscription_id"] = workspace.properties["workspace_subscription_id"]
-
-
     # if template has address_space get an address space
     if resource_template.properties.get("address_space"):
         # check workspace has address_spaces property
