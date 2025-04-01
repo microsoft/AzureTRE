@@ -3,9 +3,7 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 ENHANCEMENTS:
-* Added ability to manage user workspace roles from the UI (only visible if feature is enabled with the `user_management_enabled` flag, user is a TREAdmin and the workspace has Entra ID (AAD) Groups enabled) [#4337](https://github.com/microsoft/AzureTRE/issues/4337)
-* `Create AAD Groups for each workspace role` is now defaulted to True for new workspaces.
-
+* Added ability to manage user workspace roles from the UI (only visible if feature is enabled with the `user_management_enabled` flag, user is a TREAdmin, the workspace has Entra ID (AAD) Groups enabled and workspace version is > 2.1.0 ) [#4337](https://github.com/microsoft/AzureTRE/issues/4337)
 
 ## 0.22.0 (Unreleased)
 **BREAKING CHANGES & MIGRATIONS**:
