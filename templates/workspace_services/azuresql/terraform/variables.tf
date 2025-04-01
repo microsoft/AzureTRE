@@ -30,3 +30,13 @@ variable "storage_gb" {
 variable "arm_environment" {
   type = string
 }
+
+variable "arm_client_id" {
+  type        = string
+  description = "The Service Princiapl ID for managing Azure resources"
+}
+
+variable "arm_subscription_id" {
+  type        = string
+  description = "The Subscription ID of the TRE"
+}
