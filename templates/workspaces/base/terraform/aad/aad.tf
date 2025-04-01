@@ -1,5 +1,9 @@
 data "azuread_client_config" "current" {}
 
+data "azuread_service_principal" "ui" {
+  application_id = var.ui_client_id
+}
+
 resource "random_uuid" "oauth2_user_impersonation_id" {}
 resource "random_uuid" "app_role_workspace_owner_id" {}
 resource "random_uuid" "app_role_workspace_researcher_id" {}
@@ -99,6 +103,13 @@ resource "azuread_service_principal" "workspace" {
   feature_tags {
     enterprise = true
   }
+}
+
+resource "azuread_service_principal_delegated_permission_grant" "ui" {
+  count                                = var.auto_grant_workspace_consent ? 1 : 0
+  service_principal_object_id          = data.azuread_service_principal.ui.object_id
+  resource_service_principal_object_id = azuread_service_principal.workspace.object_id
+  claim_values                         = ["user_impersonation"]
 }
 
 resource "azuread_service_principal_password" "workspace" {

@@ -93,3 +93,14 @@ variable "kv_encryption_key_name" {
   type        = string
   description = "Name of Key Vault Encryption Key (only used if enable_cmk_encryption is true)"
 }
+
+variable "ui_client_id" {
+  type        = string
+  description = "The client id of the UI application"
+}
+
+variable "auto_grant_workspace_consent" {
+  type        = bool
+  description = "A boolean indicating if admin consent should be auto granted to the workspace"
+  default     = false
+}

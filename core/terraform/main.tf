@@ -188,6 +188,8 @@ module "resource_processor_vmss_porter" {
   enable_cmk_encryption                            = var.enable_cmk_encryption
   key_store_id                                     = local.key_store_id
   kv_encryption_key_name                           = local.cmk_name
+  ui_client_id                                     = var.swagger_ui_client_id
+  auto_grant_workspace_consent                     = var.auto_grant_workspace_consent
 
   depends_on = [
     module.network,
