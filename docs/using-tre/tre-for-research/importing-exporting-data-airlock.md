@@ -105,4 +105,4 @@ Use your preferred storage tool to upload the data to the request container and 
 9. In your host (outside of the workspace), you can use this link with your tool of choice to download the data from the request container.
 
 ## How to Contribute to our Documentation
-[Contribute to Documentation](https://microsoft.github.io/AzureTRE/coming-soon/)
+[Contribute to Documentation](https://microsoft.github.io/AzureTRE/latest/contributing/)
