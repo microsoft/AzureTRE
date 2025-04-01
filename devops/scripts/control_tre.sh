@@ -49,10 +49,10 @@ if [[ "$1" == *"start"* ]]; then
     echo "Application Gateway already running"
   fi
 
-  az mysql server list --resource-group "${core_rg_name}" --query "[?userVisibleState=='Stopped'].name" -o tsv |
+  az mysql flexible-server list --resource-group "${core_rg_name}" --query "[?userVisibleState=='Stopped'].name" -o tsv |
   while read -r mysql_name; do
     echo "Starting MySQL ${mysql_name}"
-    az mysql server start --resource-group "${core_rg_name}" --name "${mysql_name}" &
+    az mysql flexible-server start --resource-group "${core_rg_name}" --name "${mysql_name}" &
   done
 
   az vmss list --resource-group "${core_rg_name}" --query "[].name" -o tsv |
@@ -91,10 +91,10 @@ elif [[ "$1" == *"stop"* ]]; then
     echo "Application Gateway already stopped"
   fi
 
-  az mysql server list --resource-group "${core_rg_name}" --query "[?userVisibleState=='Ready'].name" -o tsv |
+  az mysql flexible-server list --resource-group "${core_rg_name}" --query "[?userVisibleState=='Ready'].name" -o tsv |
   while read -r mysql_name; do
     echo "Stopping MySQL ${mysql_name}"
-    az mysql server stop --resource-group "${core_rg_name}" --name "${mysql_name}" &
+    az mysql flexible-server stop --resource-group "${core_rg_name}" --name "${mysql_name}" &
   done
 
   az vmss list --resource-group "${core_rg_name}" --query "[].name" -o tsv |
