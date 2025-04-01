@@ -14,7 +14,7 @@ terraform {
 }
 
 provider "azurerm" {
-  subscription_id = var.workspace_subscription_id
+  subscription_id = coalesce(var.workspace_subscription_id, data.azurerm_client_config.current.subscription_id)
 
   features {
     key_vault {

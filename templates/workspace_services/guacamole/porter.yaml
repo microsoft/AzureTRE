@@ -156,7 +156,7 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
-        workspace_subscription_id: ${ bundle.workspace_subscription_id }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -191,7 +191,7 @@ upgrade:
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
-        workspace_subscription_id: ${ bundle.workspace_subscription_id }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -226,7 +226,7 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
-        workspace_subscription_id: ${ bundle.workspace_subscription_id }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

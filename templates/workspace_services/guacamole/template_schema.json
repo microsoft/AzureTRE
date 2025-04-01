@@ -76,8 +76,7 @@
       "$id": "#/properties/workspace_subscription_id",
       "type": "string",
       "title": "Workspace subscription id",
-      "description": "The Azure subscription the workspace is deployed to",
-      "default": true
+      "description": "The Azure subscription the workspace is deployed to"
     }
   },
   "pipeline": {
@@ -237,5 +236,10 @@
         "stepId": "main"
       }
     ]
+  },
+  "uiSchema": {
+    "workspace_subscription_id": {
+      "classNames": "tre-hidden"
+    }
   }
 }
