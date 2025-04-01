@@ -256,3 +256,6 @@ PARAMETERS_WITH_WRONG_TYPE = "Parameters with wrong type"
 
 # Value that a sensitive is replaced with in Cosmos
 REDACTED_SENSITIVE_VALUE = "REDACTED"
+
+# Common error message for invalid resource type
+INVALID_RESOURCE_TYPE = "Invalid resourceType. Expected '{}'."

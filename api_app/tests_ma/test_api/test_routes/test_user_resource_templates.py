@@ -102,6 +102,16 @@ class TestUserResourceTemplatesRequiringAdminRights:
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
+    @patch("api.dependencies.workspace_service_templates.ResourceTemplateRepository.get_current_template")
+    async def test_post_user_resource_template_with_invalid_resource_type(self, _, app, client, input_user_resource_template):
+        input_data = input_user_resource_template.dict()
+        input_data["resourceType"] = ResourceType.WorkspaceService
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, service_template_name="guacamole"), json=input_data)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.text == strings.INVALID_RESOURCE_TYPE.format(ResourceType.UserResource, input_data["resourceType"])
+
 
 class TestUserResourceTemplatesNotRequiringAdminRights:
     @pytest.fixture(autouse=True, scope='class')

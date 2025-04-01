@@ -219,6 +219,16 @@ class TestWorkspaceTemplate:
         get_current_template_mock.side_effect = EntityDoesNotExist
         create_template_mock.return_value = basic_workspace_service_template
 
-        await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.dict())
+        await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
 
-        create_template_mock.assert_called_once_with(input_workspace_template, ResourceType.WorkspaceService, '')
+        create_template_mock.assert_called_once_with(input_workspace_template, ResourceType.Workspace, '')
+
+    # POST /workspace-templates
+    async def test_post_workspace_template_with_invalid_resource_type(self, app, client, input_workspace_template):
+        input_data = input_workspace_template.dict()
+        input_data["resourceType"] = ResourceType.WorkspaceService
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_data)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.text == strings.INVALID_RESOURCE_TYPE.format(ResourceType.Workspace, input_data["resourceType"])
