@@ -34,6 +34,8 @@ API_DELETE_USER_RESOURCE = "Delete user resource"
 API_UPDATE_USER_RESOURCE = "Update an existing user resource"
 API_INVOKE_ACTION_ON_USER_RESOURCE = "Invoke action on a user resource"
 
+API_LIST_REQUESTS = "Get requests"
+
 API_CREATE_AIRLOCK_REQUEST = "Create an airlock request"
 API_GET_AIRLOCK_REQUEST = "Get an airlock request"
 API_LIST_AIRLOCK_REQUESTS = "Get all airlock requests for a workspace"

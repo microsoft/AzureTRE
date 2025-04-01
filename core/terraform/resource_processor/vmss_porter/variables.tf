@@ -13,6 +13,9 @@ variable "resource_group_name" {
 variable "resource_processor_subnet_id" {
   type = string
 }
+variable "blob_core_dns_zone_id" {
+  type = string
+}
 variable "resource_processor_vmss_porter_image_repository" {
   type = string
 }
@@ -74,10 +77,6 @@ variable "firewall_sku" {
 }
 variable "rp_bundle_values" {
   type = map(string)
-}
-
-locals {
-  rp_bundle_values_formatted = join("\n      ", [for key in keys(var.rp_bundle_values) : "RP_BUNDLE_${key}=${var.rp_bundle_values[key]}"])
 }
 
 variable "enable_cmk_encryption" {
