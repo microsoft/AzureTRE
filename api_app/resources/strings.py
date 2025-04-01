@@ -256,4 +256,4 @@ PARAMETERS_WITH_WRONG_TYPE = "Parameters with wrong type"
 REDACTED_SENSITIVE_VALUE = "REDACTED"
 
 # Common error message for invalid resource type
-INVALID_RESOURCE_TYPE = "Invalid resourceType. Expected '{}'. Received '{}'."
+INVALID_RESOURCE_TYPE = "Invalid resourceType. Expected '{}'."
