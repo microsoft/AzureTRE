@@ -73,6 +73,13 @@
         "Manual"
       ],
       "updateable": true
+    },
+    "enable_dns_policy": {
+      "type": "boolean",
+      "title": "Enable DNS Security Policy",
+      "description": "Enable DNS Security Policy for the workspace.",
+      "default": false,
+      "updateable": true
     }
   },
   "allOf": [
