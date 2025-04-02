@@ -62,10 +62,19 @@
         "title": "Shared storage",
         "default": true,
         "description": "Enable access to shared storage"
+      },
+      "workspace_subscription_id": {
+        "$id": "#/properties/workspace_subscription_id",
+        "type": "string",
+        "title": "Workspace subscription id",
+        "description": "The Azure subscription the workspace is deployed to"
       }
     },
     "uiSchema": {
       "admin_username": {
+        "classNames": "tre-hidden"
+      },
+      "workspace_subscription_id": {
         "classNames": "tre-hidden"
       }
     }
