@@ -145,3 +145,15 @@ variable "enable_dns_policy" {
   description = "Whether, or not, to add a DNS security policy with an allow-list. This is a preview feature that can be enabled to prevent data exfiltration via DNS."
   default     = false
 }
+
+variable "enable_airlock_malware_scanning" {
+  type        = bool
+  default     = false
+  description = "Enable Airlock malware scanning for the workspace"
+}
+
+variable "airlock_malware_scan_result_topic_name" {
+  type        = string
+  description = "The name of the topic to publish scan results to"
+  default     = null
+}

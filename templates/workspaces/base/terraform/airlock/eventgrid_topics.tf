@@ -142,7 +142,6 @@ resource "azurerm_role_assignment" "servicebus_sender_export_blocked_blob_create
   ]
 }
 
-
 ## Subscriptions
 resource "azurerm_eventgrid_event_subscription" "import_approved_blob_created" {
   name  = "import-approved-blob-created-${var.short_workspace_id}"

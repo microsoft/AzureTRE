@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.1.5
+version: 2.1.6
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -130,6 +130,14 @@ parameters:
     type: boolean
     default: false
     description: "Whether to enable DNS security policy for the workspace."
+  - name: enable_airlock_malware_scanning
+    type: boolean
+    default: false
+    description: "Enable malware scanning on the workspace storage account"
+  - name: airlock_malware_scan_result_topic_name
+    type: string
+    default: ""
+    description: "The name of the topic to publish scan results to"
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -201,6 +209,8 @@ install:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
+        enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
+        airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -247,6 +257,8 @@ upgrade:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
+        enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
+        airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -316,6 +328,8 @@ uninstall:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
+        enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
+        airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
