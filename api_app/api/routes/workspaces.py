@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Header, status, Request, Response
 
@@ -23,6 +24,7 @@ from models.schemas.workspace_service import WorkspaceServiceInCreate, Workspace
 from models.schemas.resource import ResourceHistoryInList, ResourcePatch
 from models.schemas.resource_template import ResourceTemplateInformationInList
 from models.schemas.Active_Vm_Count import WorkspaceIds,ResourceCount
+from models.schemas.EmslWsList import EmslWorkspaceList,EmslWorkspace
 from resources import strings
 from services.access_service import AuthConfigValidationError
 from services.authentication import get_current_admin_user, \
@@ -564,3 +566,30 @@ async def retrieve_active_vm_count(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to retrieve active VM count")
 
     return ResourceCount(count=total_count)
+
+#e-mslWorkspaces not peered with a-msl
+@workspaces_core_router.get("/emsl_workspaces", response_model=EmslWorkspaceList, name=strings.API_GET_EMSL_WORKSPACES)
+async def retrive_emsl_workspaces(
+        workspace_repo=Depends(get_repository(WorkspaceRepository))) -> EmslWorkspaceList :
+    try:
+        workspaces = await workspace_repo.get_esml_and_asml_workspaces()
+        emsls = [w for w in workspaces if w.templateName == "tre-workspace-e-msl"]
+        amsls = {w.properties.get("e_msl_peering_ws_name_suffix") for w in workspaces if w.templateName == "tre-workspace-a-msl" and w.properties}
+
+        non_peered_emsls = [
+            EmslWorkspace(id=e.id, display_name=e.properties.get("display_name"))
+            for e in emsls
+            if e.id[-4:] not in amsls
+        ]
+
+        return EmslWorkspaceList(workspaces=non_peered_emsls)
+
+    except Exception as e:
+        logging.error(f"Error retrieving e-msl workspaces: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+
+
+
+
