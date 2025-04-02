@@ -1,14 +1,9 @@
 <!-- markdownlint-disable MD041 -->
-## 0.23.0 (Unreleased)
-**BREAKING CHANGES & MIGRATIONS**:
-
-ENHANCEMENTS:
-* Added ability to manage user workspace roles from the UI (only visible if feature is enabled with the `user_management_enabled` flag, user is a TREAdmin, the workspace has Entra ID (AAD) Groups enabled and workspace version is > 2.1.0 ) [#4337](https://github.com/microsoft/AzureTRE/issues/4337)
-
 ## 0.22.0 (Unreleased)
 **BREAKING CHANGES & MIGRATIONS**:
 
 ENHANCEMENTS:
+* Added ability to manage user workspace roles from the UI (only visible if feature is enabled with the `user_management_enabled` flag, user is a TREAdmin, the workspace has Entra ID (AAD) Groups enabled and workspace version is > 2.1.0 ) [#4337](https://github.com/microsoft/AzureTRE/issues/4337)
 * Enabled Structured Azure Firewall logs for TRE firewall. [#4430](https://github.com/microsoft/AzureTRE/issues/4430)
 * Deny public access to TRE management storage account, and add private endpoint for TRE core [#4353](https://github.com/microsoft/AzureTRE/issues/4353)
 * Added anonymous access enablement for Nexus by default issue. [#4387](https://github.com/microsoft/AzureTRE/pull/4387)
