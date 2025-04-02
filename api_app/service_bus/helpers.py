@@ -83,6 +83,8 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
     for step in parent_template_pipeline_dict[primary_action]:
         if step["stepId"] == operation_step.templateStepId:
             template_step = parse_obj_as(PipelineStep, step)
+            if (template_step.resourceAction is None):
+                template_step.resourceAction = primary_action
             break
 
     if template_step is None:
@@ -164,6 +166,7 @@ async def try_patch(resource_repo: ResourceRepository, resource_template_repo: R
         etag=resource_to_update.etag,
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo,
-        user=user)
+        user=user,
+        resource_action=template_step.resourceAction)
 
     return resource_to_send
