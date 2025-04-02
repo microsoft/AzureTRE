@@ -66,6 +66,11 @@ then
   no_wait_option="--no-wait"
 fi
 
+script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+
+# shellcheck disable=SC1091
+source "$script_dir/kv_add_network_exception.sh"
+
 group_show_result=$(az group show --name "${core_tre_rg}" > /dev/null 2>&1; echo $?)
 if [[ "$group_show_result" !=  "0" ]]; then
   echo "Resource group ${core_tre_rg} not found - skipping destroy"
@@ -153,11 +158,35 @@ if [ "${workspace}" != "0" ]; then
   | xargs -P 10 -I {} az rest --method delete --uri "{}?api-version=2020-08-01"
 fi
 
+# delete container repositories individually otherwise defender doesn't purge image scans
+function purge_container_repositories() {
+  local rg=$1
+
+  local acrs
+  acrs=$(az acr list --resource-group "$rg" --query [].name --output tsv)
+
+  local acr
+  for acr in $acrs; do
+    echo "Found container registry ${acr}, deleting repositories..."
+
+    local repositories
+    repositories=$(az acr repository list --name "$acr" --output tsv)
+
+    local repository
+    for repository in $repositories; do
+        echo "  Deleting: $repository"
+        az acr repository delete --name "$acr" --repository "$repository" --yes --output none
+    done
+  done
+}
+
 # this will find the mgmt, core resource groups as well as any workspace ones
 # we are reverse-sorting to first delete the workspace groups (might not be
 # good enough because we use no-wait sometimes)
 az group list --query "[?starts_with(name, '${core_tre_rg}')].[name]" -o tsv | sort -r |
 while read -r rg_item; do
+  purge_container_repositories "$rg_item"
+
   echo "Deleting resource group: ${rg_item}"
   az group delete --resource-group "${rg_item}" --yes ${no_wait_option}
 done

@@ -97,13 +97,12 @@ nav:
           - Azure ML: tre-templates/workspace-services/azure-ml.md
           - Gitea: tre-templates/workspace-services/gitea.md
           - Guacamole: tre-templates/workspace-services/guacamole.md
-          - InnerEye: tre-templates/workspace-services/inner-eye.md
-          - MLFlow: tre-templates/workspace-services/mlflow.md
           - Health Services: tre-templates/workspace-services/health_services.md
           - Azure Databricks: tre-templates/workspace-services/databricks.md
           - OHDSI: tre-templates/workspace-services/ohdsi.md
           - MySQL: tre-templates/workspace-services/mysql.md
           - Azure SQL: tre-templates/workspace-services/azuresql.md
+          - Open AI: tre-templates/workspace-services/openai.md
       - Shared Services:
           - Gitea (Source Mirror): tre-templates/shared-services/gitea.md
           - Nexus (Package Mirror): tre-templates/shared-services/nexus.md
@@ -139,7 +138,9 @@ nav:
           - Upgrading Resources Version: tre-admins/upgrading-resources.md
           - Configuring Airlock Reviews: tre-admins/configure-airlock-review.md
           - Supported Clouds: tre-admins/supported-clouds.md
+          - Customer Managed Keys: tre-admins/customer-managed-keys.md
           - Custom Domain Name: tre-admins/custom-domain.md
+          - Firewall Force Tunneling: tre-admins/configure-firewall-force-tunneling.md
 
       - Development: # Docs related to the developing code for the AzureTRE
           - Local Development: using-tre/local-development/local-development.md
@@ -152,6 +153,7 @@ nav:
               - Letsencrypt: tre-developers/letsencrypt.md
               - Releases: tre-developers/release.md
               - GitHub Actions: tre-admins/setup-instructions/workflows.md
+              - GitHub PR Bot Commands: tre-developers/github-pr-bot-commands.md
 
           - Developing Workspace Templates: # Docs aimed at developers creating workspace templates
               - Authoring Workspace Templates: tre-workspace-authors/authoring-workspace-templates.md
