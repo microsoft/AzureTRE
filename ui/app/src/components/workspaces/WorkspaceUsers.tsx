@@ -61,7 +61,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
 
   const [loadingUsers, setloadingUsers] = useState(false);
 
-  const userManagementWorkspaceMinVersion = "2.1.0";
+  const userManagementWorkspaceMinVersion = "2.2.0";
 
   const isTemplateVersionValid = (): Boolean => {
     const templateVersion = workspace.templateVersion;
@@ -73,7 +73,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
     const expectedMajor = parseInt(expectedVersion[0]);
     const expectedMinor = parseInt(expectedVersion[1]);
 
-    // Base template version 2.1.0 is the minimum required
+    // Base template version 2.2.0 is the minimum required
     return (major > expectedMajor || (major === expectedMajor && minor >= expectedMinor));
   }
 

@@ -1,16 +1,9 @@
 <!-- markdownlint-disable MD041 -->
-## 0.23.0 (Unreleased)
-**BREAKING CHANGES & MIGRATIONS**:
-
-ENHANCEMENTS:
-* Added ability to manage user workspace roles from the UI (only visible if feature is enabled with the `user_management_enabled` flag, user is a TREAdmin and the workspace has Entra ID (AAD) Groups enabled) [#4337](https://github.com/microsoft/AzureTRE/issues/4337)
-* `Create AAD Groups for each workspace role` is now defaulted to True for new workspaces.
-
-
 ## 0.22.0 (Unreleased)
 **BREAKING CHANGES & MIGRATIONS**:
 
 ENHANCEMENTS:
+* Added ability to manage user workspace roles from the UI (only visible if feature is enabled with the `user_management_enabled` flag, user is a TREAdmin, the workspace has Entra ID (AAD) Groups enabled and workspace version is > 2.2.0 ) [#4337](https://github.com/microsoft/AzureTRE/issues/4337)
 * Add 7 day retention on workspace storage accounts. ([#4389](https://github.com/microsoft/AzureTRE/issues/4389))
 * Enabled Structured Azure Firewall logs for TRE firewall. [#4430](https://github.com/microsoft/AzureTRE/issues/4430)
 * Deny public access to TRE management storage account, and add private endpoint for TRE core [#4353](https://github.com/microsoft/AzureTRE/issues/4353)
