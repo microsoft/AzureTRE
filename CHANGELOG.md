@@ -8,6 +8,7 @@ ENHANCEMENTS:
 * Enabled Structured Azure Firewall logs for TRE firewall. [#4430](https://github.com/microsoft/AzureTRE/issues/4430)
 * Deny public access to TRE management storage account, and add private endpoint for TRE core [#4353](https://github.com/microsoft/AzureTRE/issues/4353)
 * Added anonymous access enablement for Nexus by default issue. [#4387](https://github.com/microsoft/AzureTRE/pull/4387)
+* Add shutdown schedule to Windows VMs ([#4211](https://github.com/microsoft/AzureTRE/pull/4211))
 * Update mysql commands in control_tre script. [#4438](https://github.com/microsoft/AzureTRE/pull/4438)
 * Organize how we pass config.yaml settings to bundles. [#4436](https://github.com/microsoft/AzureTRE/pull/4436)
 * Add documentation for make commands ([[#4296](https://github.com/microsoft/AzureTRE/issues/4296)])

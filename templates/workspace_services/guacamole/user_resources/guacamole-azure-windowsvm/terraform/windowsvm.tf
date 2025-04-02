@@ -123,3 +123,16 @@ resource "azurerm_key_vault_secret" "windowsvm_password" {
 
   lifecycle { ignore_changes = [tags] }
 }
+
+resource "azurerm_dev_test_global_vm_shutdown_schedule" "shutdown_schedule" {
+  count = var.enable_shutdown_schedule ? 1 : 0
+
+  location              = data.azurerm_resource_group.ws.location
+  virtual_machine_id    = azurerm_windows_virtual_machine.windowsvm.id
+  daily_recurrence_time = var.shutdown_time
+  timezone              = var.shutdown_timezone
+  enabled               = var.enable_shutdown_schedule
+  notification_settings {
+    enabled = false
+  }
+}
