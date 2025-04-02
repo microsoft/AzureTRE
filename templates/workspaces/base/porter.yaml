@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.1.1
+version: 2.2.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -129,6 +129,14 @@ parameters:
     type: string
     default: "GRS"
     description: "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
+  - name: enable_airlock_malware_scanning
+    type: boolean
+    default: false
+    description: "Enable malware scanning on the workspace storage account"
+  - name: airlock_malware_scan_result_topic_name
+    type: string
+    default: ""
+    description: "The name of the topic to publish scan results to"
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -215,6 +223,8 @@ install:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
+        enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
+        airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -264,6 +274,8 @@ upgrade:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
+        enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
+        airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -336,6 +348,8 @@ uninstall:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
+        enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
+        airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
