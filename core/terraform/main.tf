@@ -162,6 +162,7 @@ module "resource_processor_vmss_porter" {
   tre_id                                           = var.tre_id
   location                                         = var.location
   resource_group_name                              = azurerm_resource_group.core.name
+  core_api_client_id                               = var.api_client_id
   acr_id                                           = data.azurerm_container_registry.mgmt_acr.id
   app_insights_connection_string                   = module.azure_monitor.app_insights_connection_string
   resource_processor_subnet_id                     = module.network.resource_processor_subnet_id
