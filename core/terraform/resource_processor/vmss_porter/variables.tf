@@ -104,3 +104,13 @@ variable "auto_grant_workspace_consent" {
   description = "A boolean indicating if admin consent should be auto granted to the workspace"
   default     = false
 }
+
+variable "enable_airlock_malware_scanning" {
+  type        = bool
+  description = "If False, Airlock requests will skip the malware scanning stage"
+}
+
+variable "airlock_malware_scan_result_topic_name" {
+  type        = string
+  description = "Name of the topic to publish Airlock malware scan results to"
+}
