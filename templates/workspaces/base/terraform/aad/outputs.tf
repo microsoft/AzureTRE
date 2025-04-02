@@ -11,7 +11,7 @@ output "app_role_workspace_airlock_manager_id" {
 }
 
 output "client_id" {
-  value = azuread_application.workspace.application_id
+  value = azuread_application.workspace.client_id
 }
 
 output "scope_id" {

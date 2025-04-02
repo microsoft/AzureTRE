@@ -92,7 +92,7 @@ resource "azuread_application" "workspace" {
 }
 
 resource "azuread_service_principal" "workspace" {
-  application_id               = azuread_application.workspace.application_id
+  client_id                    = azuread_application.workspace.client_id
   app_role_assignment_required = false
   owners                       = [data.azuread_client_config.current.object_id, var.workspace_owner_object_id]
 
@@ -102,12 +102,12 @@ resource "azuread_service_principal" "workspace" {
 }
 
 resource "azuread_service_principal_password" "workspace" {
-  service_principal_id = azuread_service_principal.workspace.object_id
+  service_principal_id = azuread_service_principal.workspace.id
 }
 
 resource "azurerm_key_vault_secret" "client_id" {
   name         = "workspace-client-id"
-  value        = azuread_application.workspace.application_id
+  value        = azuread_application.workspace.client_id
   key_vault_id = var.key_vault_id
   tags         = var.tre_workspace_tags
 

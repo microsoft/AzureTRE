@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=4.14.0"
+      version = ">= 4.24.0"
     }
     local = {
       source  = "hashicorp/local"
@@ -14,6 +14,8 @@ terraform {
 }
 
 provider "azurerm" {
+  subscription_id = var.workspace_subscription_id
+
   features {
     key_vault {
       # Don't purge on destroy (this would fail due to purge protection being enabled on keyvault)
@@ -29,6 +31,12 @@ provider "azurerm" {
     }
   }
   storage_use_azuread = true
+}
+
+provider "azurerm" {
+  alias = "core"
+  features {
+  }
 }
 
 module "terraform_azurerm_environment_configuration" {

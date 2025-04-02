@@ -70,3 +70,7 @@ variable "arm_environment" {
   type        = string
   description = "The ARM cloud environment"
 }
+variable "workspace_subscription_id" {
+  type = string
+  description = "The id of the subscription that the workspace is deployed to."
+}

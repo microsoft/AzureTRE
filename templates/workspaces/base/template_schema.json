@@ -73,6 +73,13 @@
         "Manual"
       ],
       "updateable": true
+    },
+    "deploy_to_another_subscription": {
+      "type": "boolean",
+      "title": "Deploy workspace to another subscription",
+      "description": "Check this box if you want to deploy the workspace to another subscription.",
+      "default": false,
+      "updateable": false
     }
   },
   "allOf": [
@@ -278,6 +285,31 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "deploy_to_another_subscription": {
+            "const": true
+          }
+        },
+        "required": [
+          "deploy_to_another_subscription"
+        ]
+      },
+      "then": {
+        "properties": {
+          "workspace_subscription_id": {
+            "type": "string",
+            "title": "Workspace Subscription ID",
+            "description": "The subscription ID where the workspace will be deployed.",
+            "updateable": true
+          }
+        },
+        "required": [
+          "workspace_subscription_id"
+        ]
       }
     }
   ],

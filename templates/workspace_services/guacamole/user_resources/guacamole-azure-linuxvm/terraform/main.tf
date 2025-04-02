@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.117.0"
+      version = ">= 4.24.0"
     }
     template = {
       source  = "hashicorp/template"
@@ -11,11 +11,11 @@ terraform {
     }
     random = {
       source  = "hashicorp/random"
-      version = "=3.4.3"
+      version = ">= 3.7.1"
     }
     azuread = {
       source  = "hashicorp/azuread"
-      version = "3.1.0"
+      version = ">= 3.2.0"
     }
   }
   backend "azurerm" {

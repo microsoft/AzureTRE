@@ -110,6 +110,8 @@ parameters:
     default: false
   - name: arm_environment
     type: string
+  - name: workspace_subscription_id
+    type: string
 
 outputs:
   - name: authentication_callback_uri
