@@ -366,8 +366,8 @@ class AzureADAuthorization(AccessService):
         if self._is_user_in_role(user_id, role_id):
             return
         if compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
-            logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version 2.1.0 or greater")
-            raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version 2.1.0 or greater")
+            logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version 2.2.0 or greater")
+            raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version 2.2.0 or greater")
         if not self._is_workspace_role_group_in_use(workspace):
             logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Entra ID groups are not in use on this workspace")
             raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Entra ID groups are not in use on this workspace")
@@ -453,8 +453,8 @@ class AzureADAuthorization(AccessService):
                                               workspace: Workspace
                                               ) -> None:
         if compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
-            logger.error(f"Unable to remove user {user_id} from group with role {role_id}, Workspace needs to be version 2.1.0 or greater")
-            raise UserRoleAssignmentError(f"Unable to remove user {user_id} from group with role {role_id}, Workspace needs to be version 2.1.0 or greater")
+            logger.error(f"Unable to remove user {user_id} from group with role {role_id}, Workspace needs to be version 2.2.0 or greater")
+            raise UserRoleAssignmentError(f"Unable to remove user {user_id} from group with role {role_id}, Workspace needs to be version 2.2.0 or greater")
         if not self._is_workspace_role_group_in_use(workspace):
             logger.error(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")
             raise UserRoleAssignmentError(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")

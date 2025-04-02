@@ -94,7 +94,7 @@ def workspace_with_groups():
         id="ws1",
         etag="",
         templateName="test-template",
-        templateVersion="2.1.0",
+        templateVersion="2.2.0",
         resourcePath="",
         properties={
             "create_aad_groups": True,
@@ -115,7 +115,7 @@ def workspace_without_groups():
         id="ws2",
         etag="",
         templateName="test-template",
-        templateVersion="2.1.0",
+        templateVersion="2.2.0",
         resourcePath="",
         properties={
             "create_aad_groups": False,

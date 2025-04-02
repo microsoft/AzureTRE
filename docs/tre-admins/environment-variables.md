@@ -46,7 +46,7 @@
 | `CUSTOM_DOMAIN` | Optional. Custom domain name to access the Azure TRE portal. See [Custom domain name](custom-domain.md). |
 | `ENABLE_CMK_ENCRYPTION` | Optional. Default is `false`, if set to `true` customer-managed key encryption will be enabled for all supported resources. |
 
-| `USER_MANAGEMENT_ENABLED` | If set to `true`, TRE Admins will be able to assign and de-assign users to workspaces via the UI (Requires Entra ID groups to be enabled on the workspace and the workspace template version to be 2.1.0 or greater). |
+| `USER_MANAGEMENT_ENABLED` | If set to `true`, TRE Admins will be able to assign and de-assign users to workspaces via the UI (Requires Entra ID groups to be enabled on the workspace and the workspace template version to be 2.2.0 or greater). |
 
 ## For authentication in `/config.yaml`
 
