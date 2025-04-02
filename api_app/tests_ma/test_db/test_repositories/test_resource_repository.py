@@ -380,7 +380,7 @@ def test_validate_patch_with_good_fields_passes(template_repo, resource_repo):
 
     # check it's valid when updating a single updateable prop
     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large'})
-    resource_repo.validate_patch(patch, template_repo, template, "update")
+   resource_repo.validate_patch(patch, template_repo, template, "upgrade")
 
 
 @patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
