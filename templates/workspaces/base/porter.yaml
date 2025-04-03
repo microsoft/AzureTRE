@@ -136,7 +136,7 @@ parameters:
   - name: auto_grant_workspace_consent
     type: boolean
     default: true
-    description: "Whether to automatically grant consent for the workspace app registration."
+    description: "Setting this to `true` will prevent the need for users to manually grant consent to new workspaces"
   - name: enable_airlock_malware_scanning
     type: boolean
     default: false
