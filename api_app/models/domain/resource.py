@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Optional, Union, List
 from pydantic import BaseModel, Field, validator
 from models.domain.azuretremodel import AzureTREModel
@@ -6,7 +6,7 @@ from models.domain.request_action import RequestAction
 from resources import strings
 
 
-class ResourceType(str, Enum):
+class ResourceType(StrEnum):
     """
     Type of resource to deploy
     """
