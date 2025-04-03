@@ -253,5 +253,10 @@ variable "encryption_kv_name" {
 variable "auto_grant_workspace_consent" {
   type        = bool
   description = "A boolean indicating if admin consent should be auto granted to the workspace"
+}
+
+variable "user_management_enabled" {
+  type        = bool
+  description = "Is the Entra ID user management feature enabled (requires a workspace with Entra ID groups enabled, default to false)?"
   default     = false
 }

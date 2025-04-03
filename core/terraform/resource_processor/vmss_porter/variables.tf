@@ -10,6 +10,9 @@ variable "acr_id" {
 variable "resource_group_name" {
   type = string
 }
+variable "core_api_client_id" {
+  type = string
+}
 variable "resource_processor_subnet_id" {
   type = string
 }
