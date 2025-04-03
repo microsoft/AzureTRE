@@ -1028,7 +1028,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
-    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_workspace_service())
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_resource_template())
     @ patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -1054,7 +1054,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.resource_helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
-    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_workspace_service())
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_resource_template())
     @ patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -1080,9 +1080,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.status_code == status.HTTP_202_ACCEPTED
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
+    @ patch("api.routes.workspaces.OperationRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
-    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_workspace_service())
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_resource_template())
     @ patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -1090,8 +1091,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @ patch("api.routes.workspaces.UserResourceRepository.update_item_with_etag", return_value=sample_user_resource_object())
     @ patch("api.routes.workspaces.UserResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     @ patch("db.repositories.resources.ResourceRepository.create", return_value=AsyncMock())
-    @ patch("db.repositories.resources.ResourceRepository.get_resource_by_id", return_value=AsyncMock())
-    async def test_patch_user_resource_with_downgrade_version_returns_bad_request(self, _, __, ___, update_item_mock, ____, _____, ______, _______, ________, _________, __________, app, client):
+    async def test_patch_user_resource_with_downgrade_version_returns_bad_request(self, _, __, ___, ____, _____, ______, _______, ________, _________, __________, ___________, app, client):
         user_resource_service_patch = {"templateVersion": "0.0.1"}
         etag = "some-etag-value"
 
@@ -1109,7 +1109,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.resource_helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
-    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_workspace_service())
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_resource_template())
     @ patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -1117,7 +1117,8 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @ patch("api.routes.workspaces.UserResourceRepository.update_item_with_etag", return_value=sample_user_resource_object())
     @ patch("api.routes.workspaces.UserResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     @ patch("db.repositories.resources.ResourceRepository.create", return_value=AsyncMock())
-    async def test_patch_user_resource_with_upgrade_minor_version_patches_user_resource(self, resource_repo_create_mock, ___, update_item_mock, ____, _____, ______, _______, ________, _________, __________, app, client):
+    @ patch("db.repositories.resources.ResourceRepository.get_resource_by_id", return_value=AsyncMock())
+    async def test_patch_user_resource_with_upgrade_minor_version_patches_user_resource(self, __, ___, ____, update_item_mock, _____, ______, _______, ________, _________, __________, ___________, app, client):
         user_resource_service_patch = {"templateVersion": "0.2.0"}
         etag = "some-etag-value"
 
@@ -1135,13 +1136,16 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.resource_helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
-    @ patch("api.routes.workspaces.UserResourceRepository.update_item_with_etag", return_value=sample_user_resource_object())
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_resource_template())
+    @ patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
+    @ patch("api.routes.workspaces.UserResourceRepository.update_item_with_etag", return_value=sample_user_resource_object())
     @ patch("api.routes.workspaces.UserResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
-    async def test_patch_user_resource_validates_against_template(self, _, __, ___, ____, _____, update_item_mock, ______, _______, app, client):
+    @ patch("db.repositories.resources.ResourceRepository.create", return_value=AsyncMock())
+    @ patch("db.repositories.resources.ResourceRepository.get_resource_by_id", return_value=AsyncMock())
+    async def test_patch_user_resource_validates_against_template(self, _, __, ___, update_item_mock, ____, _____, ______, _______, ________, _________, __________, app, client):
         user_resource_service_patch = {'isEnabled': False, 'properties': {'vm_size': 'large'}}
         etag = "some-etag-value"
 
@@ -1240,7 +1244,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace_service().__dict__])
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
-    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_workspace_service())
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_resource_template())
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.update_item_with_etag", return_value=sample_workspace_service())
@@ -1266,7 +1270,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace_service().__dict__])
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
-    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_workspace_service())
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_resource_template())
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.update_item_with_etag", return_value=sample_workspace_service())
@@ -1294,7 +1298,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace_service().__dict__])
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
-    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_workspace_service())
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_resource_template())
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.update_item_with_etag", return_value=sample_workspace_service())
@@ -1321,7 +1325,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @ patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace_service().__dict__])
     @ patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
-    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_workspace_service())
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_resource_template())
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.update_item_with_etag", return_value=sample_workspace_service())
@@ -1645,3 +1649,31 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["operation"]["resourceId"] == user_resource.id
+
+    @pytest.mark.parametrize("auth_class", ["aad_authentication.AzureADAuthorization"])
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    async def test_get_workspace_users_returns_users(self, _, auth_class, app, client):
+        with patch(f"services.{auth_class}.get_workspace_users") as get_workspace_users_mock:
+
+            users = [
+                {
+                    "id": "123",
+                    "name": "John Doe",
+                    "email": "john.doe@example.com",
+                    "roles": ["WorkspaceOwner", "WorkspaceResearcher"],
+                    'roleAssignments': []
+                },
+                {
+                    "id": "456",
+                    "name": "Jane Smith",
+                    "email": "jane.smith@example.com",
+                    "roles": ["WorkspaceResearcher"],
+                    'roleAssignments': []
+                }
+            ]
+            get_workspace_users_mock.return_value = users
+
+            response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_USERS, workspace_id=WORKSPACE_ID))
+
+            assert response.status_code == status.HTTP_200_OK
+            assert response.json()["users"] == users

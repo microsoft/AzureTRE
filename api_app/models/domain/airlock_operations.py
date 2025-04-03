@@ -1,8 +1,7 @@
 from pydantic import Field
 from pydantic.types import UUID4
-from pydantic.schema import Optional
 from models.domain.azuretremodel import AzureTREModel
-from typing import List
+from typing import List, Optional
 from models.domain.airlock_request import AirlockFile
 
 

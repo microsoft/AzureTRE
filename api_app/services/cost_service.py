@@ -232,7 +232,7 @@ class CostService:
         else:
             c = ["UsageDate", "ResourceGroup", "Tag", "Currency"]
 
-        df = df.groupby(c).agg({'PreTaxCost': sum})
+        df = df.groupby(c).agg({'PreTaxCost': 'sum'})
 
         # reset index and reorder columns
         df.reset_index(inplace=True)

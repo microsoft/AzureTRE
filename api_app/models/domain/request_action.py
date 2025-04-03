@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class RequestAction(str, Enum):
+class RequestAction(StrEnum):
     Install = "install"
     UnInstall = "uninstall"
     Upgrade = "upgrade"
