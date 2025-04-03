@@ -68,7 +68,7 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
   # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
   #
-  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, admin_username] }
+  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, admin_username, custom_data] }
 }
 
 resource "azurerm_disk_encryption_set" "linuxvm_disk_encryption" {
