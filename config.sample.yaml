@@ -63,7 +63,7 @@ authentication:
   auto_workspace_app_registration: true
   # Setting AUTO_WORKSPACE_GROUP_CREATION to true will create an identity with `Group.ReadWrite.All`
   auto_workspace_group_creation: false
-  # Setting this to true will prevent users from needing to grant consent to new workspaces.
+  # Setting this to true will remove the need for users to manually grant consent when creating new workspaces.
   # The identity will be granted Application.ReadWrite.All and Directory.ReadWrite.All permissions.
   auto_grant_workspace_consent: false
 
