@@ -47,7 +47,7 @@
 | `ENABLE_CMK_ENCRYPTION` | Optional. Default is `false`, if set to `true` customer-managed key encryption will be enabled for all supported resources. |
 | `AUTO_WORKSPACE_APP_REGISTRATION`| Set to `false` by default. Setting this to `true` grants the `Application.ReadWrite.All` and `Directory.Read.All` permission to the *Application Admin* identity. This identity is used to manage other Microsoft Entra ID applications that it owns, e.g. Workspaces. If you do not set this, the identity will have `Application.ReadWrite.OwnedBy` permission. [Further information on Application Admin can be found here](./identities/application_admin.md). |
 | `AUTO_WORKSPACE_GROUP_CREATION`| Set to `false` by default. Setting this to `true` grants the `Group.ReadWrite.All` permission to the *Application Admin* identity. This identity can then create security groups aligned to each applciation role. Microsoft Entra ID licencing implications need to be considered as Group assignment is a premium feature. [You can read mode about Group Assignment here](https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/app-roles#roles-using-azure-ad-app-roles). |
-| `AUTO_GRANT_WORKSPACE_CONSENT`| Set to `false` by default. Setting this to `true` grants the `Application.ReadWrite.All` `DelegatedPermissionGrant.ReadWrite.All` permissions to the *Application Admin* identity. This will prevent users from needing to grant consent to new workspaces. |
+| `AUTO_GRANT_WORKSPACE_CONSENT`| Default of `false`.  Setting this to `true` will remove the need for users to manually grant consent when creating new workspaces. The identity will be granted `Application.ReadWrite.All` and `Directory.ReadWrite.All` permissions. |
 
 ## For authentication in `/config.yaml`
 
