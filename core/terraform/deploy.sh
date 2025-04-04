@@ -5,13 +5,16 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
+# shellcheck disable=SC1091
+source "../../devops/scripts/kv_add_network_exception.sh"
+
 # This is where we can migrate any Terraform before we plan and apply
 # For instance deprecated Terraform resources
 # shellcheck disable=SC1091
 source ./migrate.sh
 
-PLAN_FILE="tfplan$$"
 TS=$(date +"%s")
+PLAN_FILE="${TS}-tre-core.tfplan"
 LOG_FILE="${TS}-tre-core.log"
 
 # This variables are loaded in for us

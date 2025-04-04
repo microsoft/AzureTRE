@@ -62,6 +62,9 @@ variable "airlock_servicebus" {
     default_primary_connection_string = string
   })
 }
+variable "airlock_servicebus_fqdn" {
+  type = string
+}
 variable "tre_core_tags" {
   type = map(string)
 }
@@ -90,4 +93,19 @@ variable "queue_core_dns_zone_id" {
 }
 variable "table_core_dns_zone_id" {
   type = string
+}
+
+variable "encryption_identity_id" {
+  type        = string
+  description = "User Managed Identity with permissions to get encryption keys from key vault"
+}
+
+variable "enable_cmk_encryption" {
+  type        = bool
+  description = "A boolean indicating if customer managed keys will be used for encryption of supporting resources"
+}
+
+variable "encryption_key_versionless_id" {
+  type        = string
+  description = "Versionless ID of the encryption key in the key vault"
 }

@@ -1,8 +1,3 @@
-data "azurerm_private_dns_zone" "eventgrid" {
-  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.eventgrid.azure.net"]
-  resource_group_name = var.resource_group_name
-}
-
 # Below we assign a SYSTEM-assigned identity for the topics. note that a user-assigned identity will not work.
 
 # Event grid topics
@@ -11,6 +6,7 @@ resource "azurerm_eventgrid_topic" "step_result" {
   location                      = var.location
   resource_group_name           = var.resource_group_name
   public_network_access_enabled = var.enable_local_debugging
+  local_auth_enabled            = false
 
   identity {
     type = "SystemAssigned"
@@ -65,6 +61,7 @@ resource "azurerm_eventgrid_topic" "status_changed" {
   location                      = var.location
   resource_group_name           = var.resource_group_name
   public_network_access_enabled = var.enable_local_debugging
+  local_auth_enabled            = false
 
   identity {
     type = "SystemAssigned"
@@ -118,6 +115,7 @@ resource "azurerm_eventgrid_topic" "data_deletion" {
   location                      = var.location
   resource_group_name           = var.resource_group_name
   public_network_access_enabled = var.enable_local_debugging
+  local_auth_enabled            = false
 
   identity {
     type = "SystemAssigned"
@@ -168,6 +166,7 @@ resource "azurerm_eventgrid_topic" "scan_result" {
   resource_group_name = var.resource_group_name
   # This is mandatory for the scan result to be published since private networks are not supported yet
   public_network_access_enabled = true
+  local_auth_enabled            = false
 
   identity {
     type = "SystemAssigned"
@@ -328,6 +327,7 @@ resource "azurerm_eventgrid_topic" "airlock_notification" {
   location                      = var.location
   resource_group_name           = var.resource_group_name
   public_network_access_enabled = var.enable_local_debugging
+  local_auth_enabled            = false
 
   identity {
     type = "SystemAssigned"
@@ -511,3 +511,50 @@ resource "azurerm_eventgrid_event_subscription" "export_approved_blob_created" {
   ]
 }
 
+resource "azurerm_monitor_diagnostic_setting" "eventgrid_custom_topics" {
+  for_each = merge({
+    (azurerm_eventgrid_topic.airlock_notification.name) = azurerm_eventgrid_topic.airlock_notification.id,
+    (azurerm_eventgrid_topic.step_result.name)          = azurerm_eventgrid_topic.step_result.id,
+    (azurerm_eventgrid_topic.status_changed.name)       = azurerm_eventgrid_topic.status_changed.id,
+    (azurerm_eventgrid_topic.data_deletion.name)        = azurerm_eventgrid_topic.data_deletion.id,
+    },
+    var.enable_malware_scanning ? { (azurerm_eventgrid_topic.scan_result[0].name) = azurerm_eventgrid_topic.scan_result[0].id } : null
+  )
+
+  name                       = "${each.key}-diagnostics"
+  target_resource_id         = each.value
+  log_analytics_workspace_id = var.log_analytics_workspace_id
+  dynamic "enabled_log" {
+    for_each = data.azurerm_monitor_diagnostic_categories.eventgrid_custom_topics.log_category_types
+    content {
+      category = enabled_log.value
+    }
+  }
+
+  metric {
+    category = "AllMetrics"
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "eventgrid_system_topics" {
+  for_each = {
+    (azurerm_eventgrid_system_topic.import_inprogress_blob_created.name) = azurerm_eventgrid_system_topic.import_inprogress_blob_created.id,
+    (azurerm_eventgrid_system_topic.import_rejected_blob_created.name)   = azurerm_eventgrid_system_topic.import_rejected_blob_created.id,
+    (azurerm_eventgrid_system_topic.import_blocked_blob_created.name)    = azurerm_eventgrid_system_topic.import_blocked_blob_created.id,
+    (azurerm_eventgrid_system_topic.export_approved_blob_created.name)   = azurerm_eventgrid_system_topic.export_approved_blob_created.id,
+  }
+
+  name                       = "${each.key}-diagnostics"
+  target_resource_id         = each.value
+  log_analytics_workspace_id = var.log_analytics_workspace_id
+  dynamic "enabled_log" {
+    for_each = data.azurerm_monitor_diagnostic_categories.eventgrid_system_topics.log_category_types
+    content {
+      category = enabled_log.value
+    }
+  }
+
+  metric {
+    category = "AllMetrics"
+  }
+}
