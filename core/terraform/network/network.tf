@@ -5,145 +5,112 @@ resource "azurerm_virtual_network" "core" {
   address_space       = [var.core_address_space]
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
-}
 
-resource "azurerm_subnet" "bastion" {
-  name                 = "AzureBastionSubnet"
-  virtual_network_name = azurerm_virtual_network.core.name
-  resource_group_name  = var.resource_group_name
-  address_prefixes     = [local.bastion_subnet_address_prefix]
-}
-
-resource "azurerm_subnet" "azure_firewall" {
-  name                 = "AzureFirewallSubnet"
-  virtual_network_name = azurerm_virtual_network.core.name
-  resource_group_name  = var.resource_group_name
-  address_prefixes     = [local.firewall_subnet_address_space]
-  depends_on           = [azurerm_subnet.bastion]
-}
-
-resource "azurerm_subnet" "app_gw" {
-  name                                          = "AppGwSubnet"
-  virtual_network_name                          = azurerm_virtual_network.core.name
-  resource_group_name                           = var.resource_group_name
-  address_prefixes                              = [local.app_gw_subnet_address_prefix]
-  private_endpoint_network_policies_enabled     = false
-  private_link_service_network_policies_enabled = true
-  depends_on                                    = [azurerm_subnet.azure_firewall]
-}
-
-resource "azurerm_subnet" "web_app" {
-  name                                          = "WebAppSubnet"
-  virtual_network_name                          = azurerm_virtual_network.core.name
-  resource_group_name                           = var.resource_group_name
-  address_prefixes                              = [local.web_app_subnet_address_prefix]
-  private_endpoint_network_policies_enabled     = false
-  private_link_service_network_policies_enabled = true
-  depends_on                                    = [azurerm_subnet.app_gw]
-
-  delegation {
-    name = "delegation"
-
-    service_delegation {
-      name    = "Microsoft.Web/serverFarms"
-      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
-    }
+  subnet {
+    name             = "AzureBastionSubnet"
+    address_prefixes = [local.bastion_subnet_address_prefix]
+    security_group   = azurerm_network_security_group.bastion.id
   }
-}
 
-resource "azurerm_subnet" "shared" {
-  name                 = "SharedSubnet"
-  virtual_network_name = azurerm_virtual_network.core.name
-  resource_group_name  = var.resource_group_name
-  address_prefixes     = [local.shared_services_subnet_address_prefix]
-  # notice that private endpoints do not adhere to NSG rules
-  private_endpoint_network_policies_enabled = false
-  depends_on                                = [azurerm_subnet.web_app]
-}
+  subnet {
+    name             = "AzureFirewallSubnet"
+    address_prefixes = [local.firewall_subnet_address_space]
+  }
 
-resource "azurerm_subnet" "resource_processor" {
-  name                 = "ResourceProcessorSubnet"
-  virtual_network_name = azurerm_virtual_network.core.name
-  resource_group_name  = var.resource_group_name
-  address_prefixes     = [local.resource_processor_subnet_address_prefix]
-  # notice that private endpoints do not adhere to NSG rules
-  private_endpoint_network_policies_enabled = false
-  depends_on                                = [azurerm_subnet.shared]
-}
+  subnet {
+    name                                          = "AppGwSubnet"
+    address_prefixes                              = [local.app_gw_subnet_address_prefix]
+    private_endpoint_network_policies             = "Disabled"
+    private_link_service_network_policies_enabled = true
+    security_group                                = azurerm_network_security_group.app_gw.id
+  }
 
-resource "azurerm_subnet" "airlock_processor" {
-  name                 = "AirlockProcessorSubnet"
-  virtual_network_name = azurerm_virtual_network.core.name
-  resource_group_name  = var.resource_group_name
-  address_prefixes     = [local.airlock_processor_subnet_address_prefix]
-  # notice that private endpoints do not adhere to NSG rules
-  private_endpoint_network_policies_enabled = false
-  depends_on                                = [azurerm_subnet.resource_processor]
+  subnet {
+    name                                          = "WebAppSubnet"
+    address_prefixes                              = [local.web_app_subnet_address_prefix]
+    private_endpoint_network_policies             = "Disabled"
+    private_link_service_network_policies_enabled = true
+    security_group                                = azurerm_network_security_group.default_rules.id
 
-  delegation {
-    name = "delegation"
+    delegation {
+      name = "delegation"
 
-    service_delegation {
-      name    = "Microsoft.Web/serverFarms"
-      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+      service_delegation {
+        name    = "Microsoft.Web/serverFarms"
+        actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+      }
     }
   }
 
-  # Todo: needed as we want to open the fw for this subnet in some of the airlock storages (export inprogress)
-  # https://github.com/microsoft/AzureTRE/issues/2098
-  service_endpoints = ["Microsoft.Storage"]
-}
-
-resource "azurerm_subnet" "airlock_notification" {
-  name                 = "AirlockNotifiactionSubnet"
-  virtual_network_name = azurerm_virtual_network.core.name
-  resource_group_name  = var.resource_group_name
-  address_prefixes     = [local.airlock_notifications_subnet_address_prefix]
-  # notice that private endpoints do not adhere to NSG rules
-  private_endpoint_network_policies_enabled = false
-  depends_on                                = [azurerm_subnet.airlock_processor]
-
-  delegation {
-    name = "delegation"
-
-    service_delegation {
-      name    = "Microsoft.Web/serverFarms"
-      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
-    }
+  subnet {
+    name                              = "SharedSubnet"
+    address_prefixes                  = [local.shared_services_subnet_address_prefix]
+    private_endpoint_network_policies = "Disabled"
+    security_group                    = azurerm_network_security_group.default_rules.id
   }
-}
 
-resource "azurerm_subnet" "airlock_storage" {
-  name                 = "AirlockStorageSubnet"
-  virtual_network_name = azurerm_virtual_network.core.name
-  resource_group_name  = var.resource_group_name
-  address_prefixes     = [local.airlock_storage_subnet_address_prefix]
-  # notice that private endpoints do not adhere to NSG rules
-  private_endpoint_network_policies_enabled = false
-  depends_on                                = [azurerm_subnet.airlock_notification]
-}
+  subnet {
+    name                              = "ResourceProcessorSubnet"
+    address_prefixes                  = [local.resource_processor_subnet_address_prefix]
+    private_endpoint_network_policies = "Disabled"
+    security_group                    = azurerm_network_security_group.default_rules.id
+  }
 
-resource "azurerm_subnet" "airlock_events" {
-  name                 = "AirlockEventsSubnet"
-  virtual_network_name = azurerm_virtual_network.core.name
-  resource_group_name  = var.resource_group_name
-  address_prefixes     = [local.airlock_events_subnet_address_prefix]
-  # notice that private endpoints do not adhere to NSG rules
-  private_endpoint_network_policies_enabled = false
-  depends_on                                = [azurerm_subnet.airlock_storage]
+  subnet {
+    name                              = "AirlockProcessorSubnet"
+    address_prefixes                  = [local.airlock_processor_subnet_address_prefix]
+    private_endpoint_network_policies = "Disabled"
+    security_group                    = azurerm_network_security_group.default_rules.id
 
-  # Eventgrid CAN'T send messages over private endpoints, hence we need to allow service endpoints to the service bus
-  # We are using service endpoints + managed identity to send these messaages
-  # https://docs.microsoft.com/en-us/azure/event-grid/consume-private-endpoints
-  service_endpoints = ["Microsoft.ServiceBus"]
-}
+    delegation {
+      name = "delegation"
 
-resource "azurerm_subnet" "firewall_management" {
-  name                 = "AzureFirewallManagementSubnet"
-  virtual_network_name = azurerm_virtual_network.core.name
-  resource_group_name  = var.resource_group_name
-  address_prefixes     = [local.firewall_management_subnet_address_prefix]
-  depends_on           = [azurerm_subnet.airlock_events]
+      service_delegation {
+        name    = "Microsoft.Web/serverFarms"
+        actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+      }
+    }
+
+    service_endpoints = ["Microsoft.Storage"]
+  }
+
+  subnet {
+    name                              = "AirlockNotifiactionSubnet"
+    address_prefixes                  = [local.airlock_notifications_subnet_address_prefix]
+    private_endpoint_network_policies = "Disabled"
+    security_group                    = azurerm_network_security_group.default_rules.id
+
+    delegation {
+      name = "delegation"
+
+      service_delegation {
+        name    = "Microsoft.Web/serverFarms"
+        actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+      }
+    }
+    service_endpoints = ["Microsoft.ServiceBus"]
+  }
+
+  subnet {
+    name                              = "AirlockStorageSubnet"
+    address_prefixes                  = [local.airlock_storage_subnet_address_prefix]
+    private_endpoint_network_policies = "Disabled"
+    security_group                    = azurerm_network_security_group.default_rules.id
+  }
+
+  subnet {
+    name                              = "AirlockEventsSubnet"
+    address_prefixes                  = [local.airlock_events_subnet_address_prefix]
+    private_endpoint_network_policies = "Disabled"
+    security_group                    = azurerm_network_security_group.default_rules.id
+
+    service_endpoints = ["Microsoft.ServiceBus"]
+  }
+
+  subnet {
+    name             = "AzureFirewallManagementSubnet"
+    address_prefixes = [local.firewall_management_subnet_address_prefix]
+  }
 }
 
 resource "azurerm_ip_group" "resource_processor" {

@@ -186,6 +186,17 @@ variable "firewall_sku" {
   default     = ""
 }
 
+variable "app_gateway_sku" {
+  description = "Application Gateway SKU"
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = contains(["", "Standard_v2", "WAF_v2"], var.app_gateway_sku)
+    error_message = "Invalid app_gateway_sku value"
+  }
+}
+
 variable "rp_bundle_values" {
   description = "Additional environment values to set on the resource processor that can be supplied to template bundles"
   type        = map(string)
@@ -211,4 +222,22 @@ variable "logging_level" {
     condition     = contains(["INFO", "DEBUG", "WARNING", "ERROR"], var.logging_level)
     error_message = "logging_level must be one of ERROR, WARNING, INFO, DEBUG"
   }
+}
+
+variable "enable_cmk_encryption" {
+  type        = bool
+  description = "A boolean indicating if customer managed keys will be used for encryption of supporting resources"
+  default     = false
+}
+
+variable "external_key_store_id" {
+  type        = string
+  description = "ID of external Key Vault to store CMKs in (only required if enable_cmk_encryption is true)"
+  default     = null
+}
+
+variable "encryption_kv_name" {
+  type        = string
+  description = "Name of Key Vault for encryption keys, required only if external_key_store_id is not set (only used if enable_cmk_encryption is true)"
+  default     = null
 }
