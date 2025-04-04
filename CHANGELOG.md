@@ -11,6 +11,7 @@ ENHANCEMENTS:
 * Update mysql commands in control_tre script. [#4438](https://github.com/microsoft/AzureTRE/pull/4438)
 * Organize how we pass config.yaml settings to bundles. [#4436](https://github.com/microsoft/AzureTRE/pull/4436)
 * Add documentation for make commands ([[#4296](https://github.com/microsoft/AzureTRE/issues/4296)])
+* Allow administrators to automatically grant consent over new workspaces ([#4408](https://github.com/microsoft/AzureTRE/issues/4408))
 
 BUG FIXES:
 * Fix the management storage access error while executing `make show-core-output` command, and remove redundant error messages from `mgmtstorage_enable_public_access.sh` script ([#4404](https://github.com/microsoft/AzureTRE/issues/4404))
