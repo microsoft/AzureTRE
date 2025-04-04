@@ -10,13 +10,13 @@ Please be aware when opening firewall rules there is the potential for data to b
 
 ## Firewall Rules in Template Schema
 
-Azure TRE uses the `template_schema.json` file of the service in question (e.g. `templates/workspace_services/azureml/template_schema.json`) to define firewall rules. These rules are configured in the `pipeline` section of the schema file.
+Azure TRE uses the `template_schema.json` file of the service in question (e.g. `templates/workspace_services/azureml/template_schema.json`) to define firewall rules. These rules are configured in the `pipeline` section of the end of the schema file.
 
 ### Pipeline Structure
 
-Firewall rules are defined in steps within the pipeline sections for `install`, `upgrade`, and `uninstall` operations. Each operation contains steps that modify the firewall configuration during that operation.
+Firewall rules are defined in steps within the pipeline sections for `install`, `upgrade`, and `uninstall` operations. Each operation contains steps that modify the firewall configuration during that operation. Please note that at the moment only the `upgrade` step is implemented, `install` and `uninstall` will be implemented in the future.
 
-Please see `docs/tre-templates/pipeline-templates/overview.` for more information on the pipline structure.
+Please see [Pipeline Templates Overview](../tre-templates/pipeline-templates/overview.md) for more information on the pipeline structure.
 
 Example pipeline step:
 
@@ -27,9 +27,38 @@ Example pipeline step:
   "resourceTemplateName": "tre-shared-service-firewall",
   "resourceType": "shared-service",
   "resourceAction": "upgrade",
-  "properties": [
-    // Rule collections defined here
-  ]
+  "properties":  "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_azureml",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureMachineLearning",
+                  "description": "Azure Machine Learning rules",
+                  "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
+                  "destination_addresses": [
+                    "AzureMachineLearning"
+                  ],
+                  "destination_ports": [
+                    "443",
+                    "8787",
+                    "18881"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+               // More property values defined here as needed.
+              ]
+            }
+          },
+
+        ]
 }
 ```
 
@@ -42,7 +71,7 @@ There are two main types of rule collections in Azure TRE:
 | `network_rule_collections` | Controls traffic based on source, destination, protocol, and port |
 | `rule_collections` | Application-level rules controlling traffic to specific FQDNs |
 
-### Network Rule Collections
+#### Network Rule Collections
 
 Network rule collections control traffic at the network level and are configured with the following properties:
 
@@ -63,7 +92,7 @@ Each network rule has the following structure:
 | `destination_ports` | Allowed ports | ["443", "8787"] |
 | `protocols` | Allowed protocols | ["TCP"] |
 
-### Application Rule Collections
+#### Application Rule Collections
 
 Application rule collections control traffic at the application level and are configured with the following properties:
 
@@ -101,8 +130,28 @@ This is controlled by the `arraySubstitutionAction` property:
   "arraySubstitutionAction": "replace",
   "arrayMatchField": "name",
   "value": {
-    // Rule collection definition
-  }
+              "name": "nrc_svc_{{ resource.id }}_azureml",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureMachineLearning",
+                  "description": "Azure Machine Learning rules",
+                  "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
+                  "destination_addresses": [
+                    "AzureMachineLearning"
+                  ],
+                  "destination_ports": [
+                    "443",
+                    "8787",
+                    "18881"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+               // More property values defined here as needed.
+              ]
+            }
 }
 ```
 
