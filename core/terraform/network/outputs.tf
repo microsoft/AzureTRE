@@ -1,6 +1,9 @@
 output "core_vnet_id" {
   value = azurerm_virtual_network.core.id
 }
+output "core_vnet_name" {
+  value = azurerm_virtual_network.core.name
+}
 
 output "bastion_subnet_id" {
   value = local.subnet_ids_map["AzureBastionSubnet"]
