@@ -5,6 +5,7 @@ resource "azurerm_servicebus_namespace" "sb" {
   sku                          = "Premium"
   premium_messaging_partitions = "1"
   capacity                     = "1"
+  local_auth_enabled           = false
   tags                         = local.tre_core_tags
 
   # Block public access
@@ -23,6 +24,27 @@ resource "azurerm_servicebus_namespace" "sb" {
       subnet_id                            = module.network.airlock_events_subnet_id
       ignore_missing_vnet_service_endpoint = false
     }
+    network_rules {
+      subnet_id                            = module.network.airlock_notification_subnet_id
+      ignore_missing_vnet_service_endpoint = false
+    }
+  }
+
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id                  = azurerm_key_vault_key.tre_encryption[0].id
+      identity_id                       = azurerm_user_assigned_identity.encryption[0].id
+      infrastructure_encryption_enabled = true
+    }
+  }
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [azurerm_user_assigned_identity.encryption[0].id]
+    }
   }
 
   lifecycle { ignore_changes = [tags] }
@@ -32,8 +54,8 @@ resource "azurerm_servicebus_queue" "workspacequeue" {
   name         = "workspacequeue"
   namespace_id = azurerm_servicebus_namespace.sb.id
 
-  enable_partitioning = false
-  requires_session    = true # use sessions here to make sure updates to each resource happen in serial, in order
+  partitioning_enabled = false
+  requires_session     = true # use sessions here to make sure updates to each resource happen in serial, in order
 }
 
 resource "azurerm_servicebus_queue" "service_bus_deployment_status_update_queue" {
@@ -44,8 +66,8 @@ resource "azurerm_servicebus_queue" "service_bus_deployment_status_update_queue"
   # Cosmos is the final destination of the messages where 2048 is the limit.
   max_message_size_in_kilobytes = 2048 # default=1024
 
-  enable_partitioning = false
-  requires_session    = true
+  partitioning_enabled = false
+  requires_session     = true
 }
 
 resource "azurerm_private_dns_zone" "servicebus" {
