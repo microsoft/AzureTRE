@@ -1,7 +1,7 @@
 data "azuread_client_config" "current" {}
 
 data "azuread_service_principal" "ui" {
-  application_id = var.ui_client_id
+  client_id = var.ui_client_id
 }
 
 resource "random_uuid" "oauth2_user_impersonation_id" {}
