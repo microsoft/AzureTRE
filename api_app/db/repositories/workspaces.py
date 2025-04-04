@@ -43,7 +43,7 @@ class WorkspaceRepository(ResourceRepository):
 
     @staticmethod
     def esml_workspaces_query_string():
-        return f'SELECT * FROM c WHERE c."{ResourceType.Workspace}" AND c.templateName IN ["tre-workspace-a-msl","tre-workspace-e-msl"]'
+        return f'SELECT * FROM c WHERE c.resourceType ="{ResourceType.Workspace}" AND {IS_NOT_DELETED_CLAUSE} AND c.templateName IN ("tre-workspace-a-msl","tre-workspace-e-msl")'
 
     async def get_workspaces(self) -> List[Workspace]:
         query = WorkspaceRepository.workspaces_query_string()
@@ -159,11 +159,9 @@ class WorkspaceRepository(ResourceRepository):
         return params
 
     # its mine
-    async def get_esml_and_asml_workspaces(self, workspace_ids:List[str]) -> List[Workspace]:
+    async def get_esml_and_asml_workspaces(self) -> List[Workspace]:
         query=self.esml_workspaces_query_string()
         workspaces = await self.query(query=query)
-        if not workspaces:
-            raise EntityDoesNotExist
         return parse_obj_as(List[Workspace], workspaces)
 
 
