@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.41.0"
+      version = "=3.117.0"
     }
     template = {
       source  = "hashicorp/template"
@@ -13,6 +13,10 @@ terraform {
       source  = "hashicorp/random"
       version = "=3.4.3"
     }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "3.1.0"
+    }
   }
   backend "azurerm" {
   }
@@ -21,6 +25,10 @@ terraform {
 
 provider "azurerm" {
   features {
+    virtual_machine {
+      skip_shutdown_and_force_delete = true
+      delete_os_disk_on_deletion     = true
+    }
     key_vault {
       # Don't purge on destroy (this would fail due to purge protection being enabled on keyvault)
       purge_soft_delete_on_destroy               = false
@@ -34,38 +42,11 @@ provider "azurerm" {
       recover_soft_deleted_keys         = true
     }
   }
+  storage_use_azuread = true
 }
 
-data "azurerm_resource_group" "ws" {
-  name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
-}
-
-data "azurerm_resource_group" "core" {
-  name = "rg-${var.tre_id}"
-}
-
-data "azurerm_virtual_network" "ws" {
-  name                = "vnet-${var.tre_id}-ws-${local.short_workspace_id}"
-  resource_group_name = data.azurerm_resource_group.ws.name
-}
-
-data "azurerm_subnet" "services" {
-  name                 = "ServicesSubnet"
-  virtual_network_name = data.azurerm_virtual_network.ws.name
-  resource_group_name  = data.azurerm_resource_group.ws.name
-}
-
-data "azurerm_key_vault" "ws" {
-  name                = local.keyvault_name
-  resource_group_name = data.azurerm_resource_group.ws.name
-}
-
-data "azurerm_linux_web_app" "guacamole" {
-  name                = "guacamole-${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_parent_id}"
-  resource_group_name = data.azurerm_resource_group.ws.name
-}
-
-data "azurerm_public_ip" "app_gateway_ip" {
-  name                = "pip-agw-${var.tre_id}"
-  resource_group_name = data.azurerm_resource_group.core.name
+provider "azuread" {
+  client_id     = var.auth_client_id
+  client_secret = var.auth_client_secret
+  tenant_id     = var.auth_tenant_id
 }

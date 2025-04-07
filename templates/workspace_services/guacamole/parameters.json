@@ -9,7 +9,8 @@
       "source": {
         "env": "ID"
       }
-    },    {
+    },
+    {
       "name": "workspace_id",
       "source": {
         "env": "WORKSPACE_ID"
@@ -76,6 +77,12 @@
       }
     },
     {
+      "name": "guac_server_layout",
+      "source": {
+        "env": "GUAC_SERVER_LAYOUT"
+      }
+    },
+    {
       "name": "image_tag",
       "source": {
         "env": "IMAGE_TAG"
@@ -101,4 +108,3 @@
     }
   ]
 }
-
