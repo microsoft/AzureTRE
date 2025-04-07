@@ -1,10 +1,7 @@
-resource "azurerm_key_vault_access_policy" "app_gw_managed_identity" {
-  key_vault_id = data.azurerm_key_vault.key_vault.id
-  tenant_id    = azurerm_user_assigned_identity.agw_id.tenant_id
-  object_id    = azurerm_user_assigned_identity.agw_id.principal_id
-
-  key_permissions    = ["Get"]
-  secret_permissions = ["Get"]
+resource "azurerm_role_assignment" "keyvault_appgwcerts_role" {
+  scope                = data.azurerm_key_vault.key_vault.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.agw_id.principal_id
 }
 
 resource "azurerm_key_vault_certificate" "tlscert" {
@@ -38,4 +35,19 @@ resource "azurerm_key_vault_certificate" "tlscert" {
     ignore_changes = all
   }
 
+}
+
+# pre-create in advance of the real password being created
+# so if there is a deleted secret it will be recovered
+#
+resource "azurerm_key_vault_secret" "cert_password" {
+  name         = local.password_name
+  value        = "0000000000"
+  key_vault_id = data.azurerm_key_vault.key_vault.id
+  tags         = local.tre_shared_service_tags
+
+  # The password will get replaced with a real one, so we don't want Terraform to try and revert it.
+  lifecycle {
+    ignore_changes = all
+  }
 }
