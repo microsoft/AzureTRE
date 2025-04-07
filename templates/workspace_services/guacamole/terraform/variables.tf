@@ -42,6 +42,10 @@ variable "guac_drive_path" {
   type        = string
   description = "The drive path"
 }
+variable "guac_server_layout" {
+  type        = string
+  description = "Server keyboard layout"
+}
 variable "is_exposed_externally" {
   type        = bool
   description = "Is the Guacamole workspace to be exposed externally?"
