@@ -1,5 +1,5 @@
 import uuid
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 
 from pydantic import parse_obj_as
 from db.repositories.resources_history import ResourceHistoryRepository
@@ -57,14 +57,10 @@ class WorkspaceServiceRepository(ResourceRepository):
     def get_workspace_service_spec_params(self):
         return self.get_resource_base_spec_params()
 
-    async def create_workspace_service_item(self, workspace_service_input: WorkspaceServiceInCreate, workspace_id: str, user_roles=List[str], version: Optional[str] = None) -> Tuple[WorkspaceService, ResourceTemplate]:
+    async def create_workspace_service_item(self, workspace_service_input: WorkspaceServiceInCreate, workspace_id: str, user_roles=List[str]) -> Tuple[WorkspaceService, ResourceTemplate]:
         full_workspace_service_id = str(uuid.uuid4())
 
-        template = await self.validate_input_against_template(workspace_service_input.templateName, workspace_service_input, ResourceType.WorkspaceService, user_roles, version)
-
-        # TODO: look up workspace by id, check version against enabled_service_versions.
-        # (Or add a mock workspace to the tests, in which case the API route can pass the
-        # workspace it already has instead of just the id.)
+        template = await self.validate_input_against_template(workspace_service_input.templateName, workspace_service_input, ResourceType.WorkspaceService, user_roles)
 
         # we don't want something in the input to overwrite the system parameters, so dict.update can't work.
         resource_spec_parameters = {**workspace_service_input.properties, **self.get_workspace_service_spec_params()}

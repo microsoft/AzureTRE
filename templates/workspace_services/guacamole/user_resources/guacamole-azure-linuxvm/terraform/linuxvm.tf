@@ -123,7 +123,7 @@ data "template_file" "vm_config" {
     NEXUS_PROXY_URL       = local.nexus_proxy_url
     CONDA_CONFIG          = local.selected_image.conda_config ? 1 : 0
     VM_USER               = local.admin_username
-    APT_SKU               = replace(local.apt_sku, ".", "")
+    # APT_SKU               = replace(local.apt_sku, ".", "")
   }
 }
 
