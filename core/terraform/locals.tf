@@ -64,4 +64,5 @@ locals {
   kv_public_network_access_enabled = true
   kv_network_default_action        = var.enable_local_debugging ? "Allow" : "Deny"
   kv_network_bypass                = "AzureServices"
+  allowed_subnet_id                = var.allowed_subnet_id
 }

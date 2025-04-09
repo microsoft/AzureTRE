@@ -261,3 +261,9 @@ variable "user_management_enabled" {
   description = "Is the Entra ID user management feature enabled (requires a workspace with Entra ID groups enabled, default to false)?"
   default     = false
 }
+
+variable "allowed_subnet_id" {
+  description = "Subnet ID of the github runners"
+  type        = string
+  default     = ""
+}
