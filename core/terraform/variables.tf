@@ -253,6 +253,7 @@ variable "encryption_kv_name" {
 variable "auto_grant_workspace_consent" {
   type        = bool
   description = "A boolean indicating if admin consent should be auto granted to the workspace"
+  default     = false
 }
 
 variable "user_management_enabled" {
