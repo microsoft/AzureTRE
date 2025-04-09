@@ -26,6 +26,17 @@ variable "image_gallery_id" {
   type    = string
   default = ""
 }
+variable "enable_shutdown_schedule" {
+  type    = bool
+  default = false
+}
+variable "shutdown_time" {
+  type = string
+}
+variable "shutdown_timezone" {
+  type    = string
+  default = "UTC"
+}
 variable "owner_id" {
   type = string
 }
