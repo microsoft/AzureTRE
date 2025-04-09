@@ -94,10 +94,6 @@ class WorkspaceRepository(ResourceRepository):
         auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}
         workspace_owner_param = {"workspace_owner_object_id": self.get_workspace_owner(workspace_input.properties, workspace_owner_object_id)}
 
-        # TODO: possibly the service_template_versions check currently in create_workspace in the API route belongs here.
-        # It needs the ResourceTemplateRepo to call get_templates_enabled_versions(). Issue #218
-        # Longer term the UI should be populating workspace_input.properties with that information.
-
         # we don't want something in the input to overwrite the system parameters,
         # so dict.update can't work. Priorities from right to left.
         resource_spec_parameters = {**workspace_input.properties,

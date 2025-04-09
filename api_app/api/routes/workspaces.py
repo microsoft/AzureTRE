@@ -4,8 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException, Header, status, Request, 
 
 from jsonschema.exceptions import ValidationError
 
-from typing import Optional
-
 from api.helpers import get_repository
 from api.dependencies.workspaces import get_operation_by_id_from_path, get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_user_resource_by_id_from_path
 from db.errors import InvalidInput, MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, UserNotAuthorizedToUseTemplate, VersionDowngradeDenied
@@ -104,14 +102,6 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
     try:
         # TODO: This requires Directory.ReadAll ( Application.Read.All ) to be enabled in the Azure AD application to enable a users workspaces to be listed. This should be made optional.
         auth_info = extract_auth_information(workspace_create.properties)
-
-        if "service_template_versions" not in workspace_create.properties or len(workspace_create.properties["service_template_versions"]) == 0:
-            # Add the default enabled versions info to workspace_input.properties if not set
-            # TODO: this might be better inside create_workspace_item, but passing down resource_template_repo
-            # means changing more callers in tests. See issue #218
-            versions_enabled_param = await resource_template_repo.get_templates_enabled_versions()
-            workspace_create.properties["service_template_versions"] = versions_enabled_param
-
         workspace, resource_template = await workspace_repo.create_workspace_item(workspace_create, auth_info, user.id, user.roles)
     except (ValidationError, ValueError) as e:
         logger.exception("Failed to create workspace model instance")
@@ -260,12 +250,7 @@ async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspa
 async def create_workspace_service(response: Response, workspace_service_input: WorkspaceServiceInCreate, user=Depends(get_current_workspace_owner_user), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> OperationInResponse:
 
     try:
-        # TODO: decide whether we want to look up the latest enabled version here in
-        # workspace.properties["service_enabled_versions"], and pass that down, or to
-        # pass None which will continue to assume a unique version has "current" true
-        # See Issue #128
-
-        workspace_service, resource_template = await workspace_service_repo.create_workspace_service_item(workspace_service_input, workspace.id, user.roles, version)
+        workspace_service, resource_template = await workspace_service_repo.create_workspace_service_item(workspace_service_input, workspace.id, user.roles)
     except (ValidationError, ValueError) as e:
         logger.exception("Failed create workspace service model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -416,7 +401,6 @@ async def retrieve_user_resource_by_id(
     return UserResourceInResponse(userResource=user_resource)
 
 
-# TODO: should have version: Optional[str]=None handled analogously to create_workspace_service, Issue #208
 @user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_USER_RESOURCE)
 async def create_user_resource(
         response: Response,

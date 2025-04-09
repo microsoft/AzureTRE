@@ -53,7 +53,8 @@
         "Standard_B8ms",
         "Standard_D2s_v3",
         "Standard_D4s_v3",
-        "Standard_D2ads_v5"
+        "Standard_D2ads_v5",
+        "Standard_D8_v5"
       ]
     }
   },
