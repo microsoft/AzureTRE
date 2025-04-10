@@ -10,7 +10,7 @@ Please be aware when opening firewall rules there is the potential for data to b
 
 ## Firewall Rules in Template Schema
 
-Azure TRE uses the `template_schema.json` file of the service in question (e.g. `templates/workspace_services/azureml/template_schema.json`) to define firewall rules. These rules are configured in the `pipeline` section of the end of the schema file.
+Azure TRE uses the `template_schema.json` file of the service in question (e.g. `templates/workspace_services/azureml/template_schema.json`) to define firewall rules. These rules are configured in the `pipeline` section at the end of the schema file.
 
 ### Pipeline Structure
 
