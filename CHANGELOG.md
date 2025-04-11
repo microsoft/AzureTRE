@@ -24,6 +24,7 @@ BUG FIXES:
 * Skip removing Keyvault rule when resource group is deleting ([#4454](https://github.com/microsoft/AzureTRE/pull/4454))
 * Fix malware scanning not enabled on AirLock export requests ([#4403](https://github.com/microsoft/AzureTRE/issues/4403))
 * Upgrade workspaces no longer causes VM recreation ([#4421](https://github.com/microsoft/AzureTRE/issues/4421))
+* Add dependency between the private endpoint on the storage account used by the Airlock processor function app and the function app itself. This is to try and fix ([#4433](https://github.com/microsoft/AzureTRE/issues/4433))
 
 ## 0.21.0
 
