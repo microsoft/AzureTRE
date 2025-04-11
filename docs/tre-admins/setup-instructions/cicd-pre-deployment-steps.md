@@ -68,7 +68,7 @@ Configure the following secrets in your github environment:
 | `ACR_NAME` | A globally unique name for the Azure Container Registry (ACR) that will be created to store deployment images. |
 | `EXTERNAL_KEY_STORE_ID` | Optional. The ID of the external Key Vault to store CMKs in. Should not be set if `ENCRYPTION_KV_NAME` is set and only required if `ENABLE_CMK_ENCRYPTION` is true. |
 | `ENCRYPTION_KV_NAME` | Optional. The name of the Key Vault for encryption keys. Should not be set if `EXTERNAL_KEY_STORE_ID` is set and only required if `ENABLE_CMK_ENCRYPTION` is true. |
-
+| `CI_CACHE_ACR_NAME` | Optional. The name of the Azure Container Registry (ACR) used for caching in CI/CD workflows. This secret is injected from parent workflows and not needed to be present in GitHub environment secrets. |
 
 ### Configure Core Variables
 
@@ -135,6 +135,10 @@ In your repository you will find that the pipelines under the folder `.github/wo
 ### Deploy the TRE using the workflow
 
 With all the repository secrets set, you can trigger a workflow run by pushing to develop/main of your repo, or by dispatching the workflow manually.
+
+### Run CI/CD on Main Branch First
+
+It is important to run the CI/CD pipeline on the main branch first. This will create an environment that represents the current main branch. It will also define the `CI_CACHE_ACR_NAME` used for caching.
 
 ## Next steps
 
