@@ -1,8 +1,5 @@
 # Adding Firewall Rules as part of a workspace or service deployment
 
-!!! note
-    Creating firewall rules will in the future only be allowed through the firewall shared services [#882](https://github.com/microsoft/AzureTRE/issues/882).
-
 A TRE service may require certain firewall rules to be opened in the TRE firewall. Examples include:
 
 - Access to an external authorisation endpoint
@@ -11,118 +8,188 @@ A TRE service may require certain firewall rules to be opened in the TRE firewal
 
 Please be aware when opening firewall rules there is the potential for data to be leaked from the workspace to the external location.
 
-## Using Terraform to open firewall rules
+## Firewall Rules in Template Schema
 
-Until a mechanism to update shared services has been implemented, firewall rule updates should be done using terraform as part of the service deployment. The aim is to create a firewall rule that grants access from the workspace's address space to the external location. A challenge with this is that the rule must use a priority that has not been used by any other rule.
+Azure TRE uses the `template_schema.json` file of the service in question (e.g. `templates/workspace_services/azureml/template_schema.json`) to define firewall rules. These rules are configured in the `pipeline` section at the end of the schema file.
 
-1. Create a `firewall.tf` file in the `terraform` directory of the workspace.
+### Pipeline Structure
 
-1. Add the following code to the `firewall.tf` file to enable the TRE firewall and workspace network to be referenced:
+Firewall rules are defined in steps within the pipeline sections for `install`, `upgrade`, and `uninstall` operations. Each operation contains steps that modify the firewall configuration during that operation. Please note that at the moment only the `upgrade` step is implemented, `install` and `uninstall` will be implemented in the future.
 
-    ```terraform
-    data "azurerm_firewall" "fw" {
-        name                = "fw-${var.tre_id}"
-        resource_group_name = "rg-${var.tre_id}"
-    }
+Please see [Pipeline Templates Overview](../tre-templates/pipeline-templates/overview.md) for more information on the pipeline structure.
 
-    data "azurerm_virtual_network" "ws" {
-        name                = "vnet-${var.tre_id}-ws-${var.workspace_id}"
-        resource_group_name = data.azurerm_resource_group.ws.name
-    }
-    ```
+Example pipeline step:
 
-1. Define a local variable that contains the locations that access should be allowed to, and the naming format for the service resources for example:
+```json
+{
+  "stepId": "260421b3-7308-491f-b531-e007cdc0ff46",
+  "stepTitle": "Add network firewall rules",
+  "resourceTemplateName": "tre-shared-service-firewall",
+  "resourceType": "shared-service",
+  "resourceAction": "upgrade",
+  "properties":  "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_azureml",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureMachineLearning",
+                  "description": "Azure Machine Learning rules",
+                  "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
+                  "destination_addresses": [
+                    "AzureMachineLearning"
+                  ],
+                  "destination_ports": [
+                    "443",
+                    "8787",
+                    "18881"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+               // More property values defined here as needed.
+              ]
+            }
+          },
 
-    ```terraform
-    locals {
-        allowed_urls                     = ["*.anaconda.com", "*.anaconda.org"]
-        service_resource_name_suffix    = "${var.tre_id}-ws-${var.workspace_id}-svc-${local.service_id}"
-    }
-    ```
-
-1. Log into the Azure CLI using service principal details:
-
-    ```terraform
-    resource "null_resource" "az_login" {
-        provisioner "local-exec" {
-            command = "az login --identity -u '${var.arm_client_id}'"
-        }
-
-        triggers = {
-            timestamp = timestamp()
-        }
-    }
-    ```
-
-1. Call the `get_firewall_priorities.sh` script to find the next available priority:
-
-    ```terraform
-    data "external" "rule_priorities" {
-        program = ["bash", "-c", "./get_firewall_priorities.sh"]
-
-        query = {
-            firewall_name       = data.azurerm_firewall.fw.name
-            resource_group_name = data.azurerm_firewall.fw.resource_group_name
-            service_resource_name_suffix = local.service_resource_name_suffix
-        }
-        depends_on = [
-            null_resource.az_login
         ]
-    }
-    ```
+}
+```
 
-1. Save the `get_firewall_priorities.sh` script as a file in the `terraform` directory:
+### Rule Collection Types
 
-    ```bash
-    #!/bin/bash
+There are two main types of rule collections in Azure TRE:
 
-    set -e
+| Collection Type | Description |
+|-----------------|-------------|
+| `network_rule_collections` | Controls traffic based on source, destination, protocol, and port |
+| `rule_collections` | Application-level rules controlling traffic to specific FQDNs |
 
-    eval "$(jq -r '@sh "firewall_name=\(.firewall_name) resource_group_name=\(.resource_group_name) service_resource_name_suffix=\(.service_resource_name_suffix)"')"
+#### Network Rule Collections
 
-    if NETWORK_RULES=$(az network firewall network-rule list -g $resource_group_name -f  $firewall_name --collection-name "nrc-$service_resource_name_suffix" -o json); then
-        NETWORK_RULE_PRIORITY=$(echo $NETWORK_RULES | jq '.priority')
-    else
-        NETWORK_RULE_MAX_PRIORITY=$(az network firewall network-rule collection list -f $firewall_name -g $resource_group_name -o json --query 'not_null(max_by([],&priority).priority) || `100`')
-        NETWORK_RULE_PRIORITY=$(($NETWORK_RULE_MAX_PRIORITY+1))
-    fi
+Network rule collections control traffic at the network level and are configured with the following properties:
 
-    if APPLICATION_RULES=$(az network firewall application-rule list -g $resource_group_name -f  $firewall_name --collection-name "arc-$service_resource_name_suffix" -o json); then
-        APPLICATION_RULE_PRIORITY=$(echo $APPLICATION_RULES | jq '.priority')
-    else
-        APPLICATION_RULE_MAX_PRIORITY=$(az network firewall application-rule collection list -f $firewall_name -g $resource_group_name -o json --query 'not_null(max_by([],&priority).priority) || `100`')
-        APPLICATION_RULE_PRIORITY=$(($APPLICATION_RULE_MAX_PRIORITY+1))
-    fi
+| Property | Description |
+|----------|-------------|
+| `name` | Unique identifier for the rule collection |
+| `action` | Action to take (Allow/Deny) |
+| `rules` | Array of individual network rules |
 
-    # Safely produce a JSON object containing the result value.
-    jq -n --arg network_rule_priority "$NETWORK_RULE_PRIORITY" --arg application_rule_priority "$APPLICATION_RULE_PRIORITY" '{ "network_rule_priority":$network_rule_priority, "application_rule_priority":$application_rule_priority }'
-    ```
+Each network rule has the following structure:
 
-1. Create the firewall rule using a resource similar to the below:
+| Property | Description | Example |
+|----------|-------------|---------|
+| `name` | Rule name | "AzureMachineLearning" |
+| `description` | Human-readable description | "Azure Machine Learning rules" |
+| `source_addresses` | Origin of traffic | "{{ resource.properties.aml_subnet_address_prefixes }}" |
+| `destination_addresses` | Target of traffic | ["AzureMachineLearning"] |
+| `destination_ports` | Allowed ports | ["443", "8787"] |
+| `protocols` | Allowed protocols | ["TCP"] |
 
-    ```terraform
-    resource "azurerm_firewall_application_rule_collection" "apprulecollection" {
-        name                = "arc-${local.service_resource_name_suffix}"
-        azure_firewall_name = data.azurerm_firewall.fw.name
-        resource_group_name = data.azurerm_firewall.fw.resource_group_name
-        priority            = data.external.rule_priorities.result.application_rule_priority
-        action              = "Allow"
+#### Application Rule Collections
 
-        rule {
-            name = "allowServiceXRules"
+Application rule collections control traffic at the application level and are configured with the following properties:
 
-            source_addresses = data.azurerm_virtual_network.ws.address_space
+| Property | Description |
+|----------|-------------|
+| `name` | Unique identifier for the rule collection |
+| `action` | Action to take (Allow/Deny) |
+| `rules` | Array of individual application rules |
 
-            target_fqdns = local.allowed_urls
+Each application rule has the following structure:
 
-            protocol {
-                port = "443"
-                type = "Https"
+| Property | Description | Example |
+|----------|-------------|---------|
+| `name` | Rule name | "AzureML_client" |
+| `description` | Human-readable description | "AzureML rules" |
+| `source_addresses` | Origin of traffic | "{{ resource.properties.workspace_address_spaces }}" |
+| `target_fqdns` | Target FQDNs | ["aadcdn.msauth.net"] |
+| `protocols` | Protocol configuration | [{"port": "443", "type": "Https"}] |
+
+### Rule Collection Operations
+
+When modifying rule collections, you can specify how the rules should be applied:
+
+| Operation | Description |
+|-----------|-------------|
+| `replace` | Replace existing rules that match the specified criteria, typically used in `install` and `upgrade` steps |
+| `remove` | Remove rules that match the specified criteria, typically used in `uninstall` steps |
+
+This is controlled by the `arraySubstitutionAction` property:
+
+```json
+{
+  "name": "network_rule_collections",
+  "type": "array",
+  "arraySubstitutionAction": "replace",
+  "arrayMatchField": "name",
+  "value": {
+              "name": "nrc_svc_{{ resource.id }}_azureml",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AzureMachineLearning",
+                  "description": "Azure Machine Learning rules",
+                  "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
+                  "destination_addresses": [
+                    "AzureMachineLearning"
+                  ],
+                  "destination_ports": [
+                    "443",
+                    "8787",
+                    "18881"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+               // More property values defined here as needed.
+              ]
             }
-            protocol {
-                port = "80"
-                type = "Http"
-            }
-        }
+}
+```
+
+### Template Variables
+
+Firewall rules often use template variables to dynamically set values:
+
+| Variable Pattern | Description | Example |
+|------------------|-------------|---------|
+| `{{ resource.id }}` | The resource ID | Used in rule collection names |
+| `{{ resource.properties.x }}` | Resource-specific properties | Address spaces, FQDNs |
+
+### Example Rule Collection
+
+Below is an example of a network rule collection for Azure Machine Learning:
+
+```json
+{
+  "name": "nrc_svc_{{ resource.id }}_azureml",
+  "action": "Allow",
+  "rules": [
+    {
+      "name": "AzureMachineLearning",
+      "description": "Azure Machine Learning rules",
+      "source_addresses": "{{ resource.properties.aml_subnet_address_prefixes }}",
+      "destination_addresses": ["AzureMachineLearning"],
+      "destination_ports": ["443", "8787", "18881"],
+      "protocols": ["TCP"]
     }
-    ```
+  ]
+}
+```
+
+## Best Practices
+
+1. **Use descriptive names and descriptions** for rule collections and individual rules.
+2. **Minimize the scope** of firewall rules to only what is necessary.
+3. **Document any custom rules** in your service documentation.
+4. **Test thoroughly** after making changes to firewall rules.
+5. **Review rules periodically** to ensure they are still required.
+
