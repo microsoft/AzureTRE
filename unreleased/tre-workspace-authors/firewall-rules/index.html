@@ -3218,9 +3218,93 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#using-terraform-to-open-firewall-rules" class="md-nav__link">
+  <a href="#firewall-rules-in-template-schema" class="md-nav__link">
     <span class="md-ellipsis">
-      Using Terraform to open firewall rules
+      Firewall Rules in Template Schema
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Firewall Rules in Template Schema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pipeline-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pipeline Structure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rule-collection-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rule Collection Types
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rule Collection Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#network-rule-collections" class="md-nav__link">
+    <span class="md-ellipsis">
+      Network Rule Collections
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#application-rule-collections" class="md-nav__link">
+    <span class="md-ellipsis">
+      Application Rule Collections
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rule-collection-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rule Collection Operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template Variables
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-rule-collection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Rule Collection
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
     </span>
   </a>
   
@@ -3689,9 +3773,93 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#using-terraform-to-open-firewall-rules" class="md-nav__link">
+  <a href="#firewall-rules-in-template-schema" class="md-nav__link">
     <span class="md-ellipsis">
-      Using Terraform to open firewall rules
+      Firewall Rules in Template Schema
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Firewall Rules in Template Schema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pipeline-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pipeline Structure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rule-collection-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rule Collection Types
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rule Collection Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#network-rule-collections" class="md-nav__link">
+    <span class="md-ellipsis">
+      Network Rule Collections
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#application-rule-collections" class="md-nav__link">
+    <span class="md-ellipsis">
+      Application Rule Collections
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rule-collection-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rule Collection Operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template Variables
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-rule-collection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Rule Collection
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
     </span>
   </a>
   
@@ -3714,10 +3882,6 @@
 
 
 <h1 id="adding-firewall-rules-as-part-of-a-workspace-or-service-deployment">Adding Firewall Rules as part of a workspace or service deployment</h1>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Creating firewall rules will in the future only be allowed through the firewall shared services <a href="https://github.com/microsoft/AzureTRE/issues/882">#882</a>.</p>
-</div>
 <p>A TRE service may require certain firewall rules to be opened in the TRE firewall. Examples include:</p>
 <ul>
 <li>Access to an external authorisation endpoint</li>
@@ -3725,116 +3889,297 @@
 <li>Access to an external API</li>
 </ul>
 <p>Please be aware when opening firewall rules there is the potential for data to be leaked from the workspace to the external location.</p>
-<h2 id="using-terraform-to-open-firewall-rules">Using Terraform to open firewall rules</h2>
-<p>Until a mechanism to update shared services has been implemented, firewall rule updates should be done using terraform as part of the service deployment. The aim is to create a firewall rule that grants access from the workspace's address space to the external location. A challenge with this is that the rule must use a priority that has not been used by any other rule.</p>
+<h2 id="firewall-rules-in-template-schema">Firewall Rules in Template Schema</h2>
+<p>Azure TRE uses the <code>template_schema.json</code> file of the service in question (e.g. <code>templates/workspace_services/azureml/template_schema.json</code>) to define firewall rules. These rules are configured in the <code>pipeline</code> section at the end of the schema file.</p>
+<h3 id="pipeline-structure">Pipeline Structure</h3>
+<p>Firewall rules are defined in steps within the pipeline sections for <code>install</code>, <code>upgrade</code>, and <code>uninstall</code> operations. Each operation contains steps that modify the firewall configuration during that operation. Please note that at the moment only the <code>upgrade</code> step is implemented, <code>install</code> and <code>uninstall</code> will be implemented in the future.</p>
+<p>Please see <a href="../../tre-templates/pipeline-templates/overview/">Pipeline Templates Overview</a> for more information on the pipeline structure.</p>
+<p>Example pipeline step:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;stepId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;260421b3-7308-491f-b531-e007cdc0ff46&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;stepTitle&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Add network firewall rules&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;resourceTemplateName&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tre-shared-service-firewall&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;resourceType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;shared-service&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;resourceAction&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;upgrade&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w">  </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">          </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;network_rule_collections&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;array&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;arraySubstitutionAction&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;replace&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;arrayMatchField&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;name&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">              </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;nrc_svc_{{ resource.id }}_azureml&quot;</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">&quot;rules&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                </span><span class="p">{</span>
+<span class="w">                  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;AzureMachineLearning&quot;</span><span class="p">,</span>
+<span class="w">                  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Azure Machine Learning rules&quot;</span><span class="p">,</span>
+<span class="w">                  </span><span class="nt">&quot;source_addresses&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{{ resource.properties.aml_subnet_address_prefixes }}&quot;</span><span class="p">,</span>
+<span class="w">                  </span><span class="nt">&quot;destination_addresses&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                    </span><span class="s2">&quot;AzureMachineLearning&quot;</span>
+<span class="w">                  </span><span class="p">],</span>
+<span class="w">                  </span><span class="nt">&quot;destination_ports&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                    </span><span class="s2">&quot;443&quot;</span><span class="p">,</span>
+<span class="w">                    </span><span class="s2">&quot;8787&quot;</span><span class="p">,</span>
+<span class="w">                    </span><span class="s2">&quot;18881&quot;</span>
+<span class="w">                  </span><span class="p">],</span>
+<span class="w">                  </span><span class="nt">&quot;protocols&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                    </span><span class="s2">&quot;TCP&quot;</span>
+<span class="w">                  </span><span class="p">]</span>
+<span class="w">                </span><span class="p">},</span>
+<span class="w">               </span><span class="c1">// More property values defined here as needed.</span>
+<span class="w">              </span><span class="p">]</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">          </span><span class="p">},</span>
+
+<span class="w">        </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="rule-collection-types">Rule Collection Types</h3>
+<p>There are two main types of rule collections in Azure TRE:</p>
+<table>
+<thead>
+<tr>
+<th>Collection Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>network_rule_collections</code></td>
+<td>Controls traffic based on source, destination, protocol, and port</td>
+</tr>
+<tr>
+<td><code>rule_collections</code></td>
+<td>Application-level rules controlling traffic to specific FQDNs</td>
+</tr>
+</tbody>
+</table>
+<h4 id="network-rule-collections">Network Rule Collections</h4>
+<p>Network rule collections control traffic at the network level and are configured with the following properties:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>Unique identifier for the rule collection</td>
+</tr>
+<tr>
+<td><code>action</code></td>
+<td>Action to take (Allow/Deny)</td>
+</tr>
+<tr>
+<td><code>rules</code></td>
+<td>Array of individual network rules</td>
+</tr>
+</tbody>
+</table>
+<p>Each network rule has the following structure:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>Rule name</td>
+<td>"AzureMachineLearning"</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Human-readable description</td>
+<td>"Azure Machine Learning rules"</td>
+</tr>
+<tr>
+<td><code>source_addresses</code></td>
+<td>Origin of traffic</td>
+<td>"{{ resource.properties.aml_subnet_address_prefixes }}"</td>
+</tr>
+<tr>
+<td><code>destination_addresses</code></td>
+<td>Target of traffic</td>
+<td>["AzureMachineLearning"]</td>
+</tr>
+<tr>
+<td><code>destination_ports</code></td>
+<td>Allowed ports</td>
+<td>["443", "8787"]</td>
+</tr>
+<tr>
+<td><code>protocols</code></td>
+<td>Allowed protocols</td>
+<td>["TCP"]</td>
+</tr>
+</tbody>
+</table>
+<h4 id="application-rule-collections">Application Rule Collections</h4>
+<p>Application rule collections control traffic at the application level and are configured with the following properties:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>Unique identifier for the rule collection</td>
+</tr>
+<tr>
+<td><code>action</code></td>
+<td>Action to take (Allow/Deny)</td>
+</tr>
+<tr>
+<td><code>rules</code></td>
+<td>Array of individual application rules</td>
+</tr>
+</tbody>
+</table>
+<p>Each application rule has the following structure:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>Rule name</td>
+<td>"AzureML_client"</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Human-readable description</td>
+<td>"AzureML rules"</td>
+</tr>
+<tr>
+<td><code>source_addresses</code></td>
+<td>Origin of traffic</td>
+<td>"{{ resource.properties.workspace_address_spaces }}"</td>
+</tr>
+<tr>
+<td><code>target_fqdns</code></td>
+<td>Target FQDNs</td>
+<td>["aadcdn.msauth.net"]</td>
+</tr>
+<tr>
+<td><code>protocols</code></td>
+<td>Protocol configuration</td>
+<td>[{"port": "443", "type": "Https"}]</td>
+</tr>
+</tbody>
+</table>
+<h3 id="rule-collection-operations">Rule Collection Operations</h3>
+<p>When modifying rule collections, you can specify how the rules should be applied:</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>replace</code></td>
+<td>Replace existing rules that match the specified criteria, typically used in <code>install</code> and <code>upgrade</code> steps</td>
+</tr>
+<tr>
+<td><code>remove</code></td>
+<td>Remove rules that match the specified criteria, typically used in <code>uninstall</code> steps</td>
+</tr>
+</tbody>
+</table>
+<p>This is controlled by the <code>arraySubstitutionAction</code> property:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;network_rule_collections&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;array&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;arraySubstitutionAction&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;replace&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;arrayMatchField&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;name&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">              </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;nrc_svc_{{ resource.id }}_azureml&quot;</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">&quot;rules&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                </span><span class="p">{</span>
+<span class="w">                  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;AzureMachineLearning&quot;</span><span class="p">,</span>
+<span class="w">                  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Azure Machine Learning rules&quot;</span><span class="p">,</span>
+<span class="w">                  </span><span class="nt">&quot;source_addresses&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{{ resource.properties.aml_subnet_address_prefixes }}&quot;</span><span class="p">,</span>
+<span class="w">                  </span><span class="nt">&quot;destination_addresses&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                    </span><span class="s2">&quot;AzureMachineLearning&quot;</span>
+<span class="w">                  </span><span class="p">],</span>
+<span class="w">                  </span><span class="nt">&quot;destination_ports&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                    </span><span class="s2">&quot;443&quot;</span><span class="p">,</span>
+<span class="w">                    </span><span class="s2">&quot;8787&quot;</span><span class="p">,</span>
+<span class="w">                    </span><span class="s2">&quot;18881&quot;</span>
+<span class="w">                  </span><span class="p">],</span>
+<span class="w">                  </span><span class="nt">&quot;protocols&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                    </span><span class="s2">&quot;TCP&quot;</span>
+<span class="w">                  </span><span class="p">]</span>
+<span class="w">                </span><span class="p">},</span>
+<span class="w">               </span><span class="c1">// More property values defined here as needed.</span>
+<span class="w">              </span><span class="p">]</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="template-variables">Template Variables</h3>
+<p>Firewall rules often use template variables to dynamically set values:</p>
+<table>
+<thead>
+<tr>
+<th>Variable Pattern</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>{{ resource.id }}</code></td>
+<td>The resource ID</td>
+<td>Used in rule collection names</td>
+</tr>
+<tr>
+<td><code>{{ resource.properties.x }}</code></td>
+<td>Resource-specific properties</td>
+<td>Address spaces, FQDNs</td>
+</tr>
+</tbody>
+</table>
+<h3 id="example-rule-collection">Example Rule Collection</h3>
+<p>Below is an example of a network rule collection for Azure Machine Learning:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;nrc_svc_{{ resource.id }}_azureml&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;rules&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;AzureMachineLearning&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Azure Machine Learning rules&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;source_addresses&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{{ resource.properties.aml_subnet_address_prefixes }}&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;destination_addresses&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;AzureMachineLearning&quot;</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">&quot;destination_ports&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;443&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;8787&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;18881&quot;</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">&quot;protocols&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;TCP&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="best-practices">Best Practices</h2>
 <ol>
-<li>
-<p>Create a <code>firewall.tf</code> file in the <code>terraform</code> directory of the workspace.</p>
-</li>
-<li>
-<p>Add the following code to the <code>firewall.tf</code> file to enable the TRE firewall and workspace network to be referenced:</p>
-<div class="highlight"><pre><span></span><code><span class="kr">data</span><span class="w"> </span><span class="nc">&quot;azurerm_firewall&quot;</span><span class="w"> </span><span class="nv">&quot;fw&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">name</span><span class="w">                </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;fw-${var.tre_id}&quot;</span>
-<span class="w">    </span><span class="na">resource_group_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rg-${var.tre_id}&quot;</span>
-<span class="p">}</span>
-
-<span class="kr">data</span><span class="w"> </span><span class="nc">&quot;azurerm_virtual_network&quot;</span><span class="w"> </span><span class="nv">&quot;ws&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">name</span><span class="w">                </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;vnet-${var.tre_id}-ws-${var.workspace_id}&quot;</span>
-<span class="w">    </span><span class="na">resource_group_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">data.azurerm_resource_group.ws.name</span>
-<span class="p">}</span>
-</code></pre></div>
-</li>
-<li>
-<p>Define a local variable that contains the locations that access should be allowed to, and the naming format for the service resources for example:</p>
-<div class="highlight"><pre><span></span><code><span class="nb">locals</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">allowed_urls</span><span class="w">                     </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;*.anaconda.com&quot;, &quot;*.anaconda.org&quot;</span><span class="p">]</span>
-<span class="w">    </span><span class="na">service_resource_name_suffix</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;${var.tre_id}-ws-${var.workspace_id}-svc-${local.service_id}&quot;</span>
-<span class="p">}</span>
-</code></pre></div>
-</li>
-<li>
-<p>Log into the Azure CLI using service principal details:</p>
-<div class="highlight"><pre><span></span><code><span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;null_resource&quot;</span><span class="w"> </span><span class="nv">&quot;az_login&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="kr">provisioner</span><span class="w"> </span><span class="nv">&quot;local-exec&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="na">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;az login --identity -u &#39;${var.arm_client_id}&#39;&quot;</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="nb">triggers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="na">timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">timestamp</span><span class="p">()</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div>
-</li>
-<li>
-<p>Call the <code>get_firewall_priorities.sh</code> script to find the next available priority:</p>
-<div class="highlight"><pre><span></span><code><span class="kr">data</span><span class="w"> </span><span class="nc">&quot;external&quot;</span><span class="w"> </span><span class="nv">&quot;rule_priorities&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">program</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;bash&quot;, &quot;-c&quot;, &quot;./get_firewall_priorities.sh&quot;</span><span class="p">]</span>
-
-<span class="w">    </span><span class="nb">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="na">firewall_name</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="nv">data.azurerm_firewall.fw.name</span>
-<span class="w">        </span><span class="na">resource_group_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">data.azurerm_firewall.fw.resource_group_name</span>
-<span class="w">        </span><span class="na">service_resource_name_suffix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">local.service_resource_name_suffix</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="na">depends_on</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
-<span class="w">        </span><span class="nv">null_resource.az_login</span>
-<span class="w">    </span><span class="p">]</span>
-<span class="p">}</span>
-</code></pre></div>
-</li>
-<li>
-<p>Save the <code>get_firewall_priorities.sh</code> script as a file in the <code>terraform</code> directory:</p>
-<div class="highlight"><pre><span></span><code><span class="ch">#!/bin/bash</span>
-
-<span class="nb">set</span><span class="w"> </span>-e
-
-<span class="nb">eval</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;@sh &quot;firewall_name=\(.firewall_name) resource_group_name=\(.resource_group_name) service_resource_name_suffix=\(.service_resource_name_suffix)&quot;&#39;</span><span class="k">)</span><span class="s2">&quot;</span>
-
-<span class="k">if</span><span class="w"> </span><span class="nv">NETWORK_RULES</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>network<span class="w"> </span>firewall<span class="w"> </span>network-rule<span class="w"> </span>list<span class="w"> </span>-g<span class="w"> </span><span class="nv">$resource_group_name</span><span class="w"> </span>-f<span class="w">  </span><span class="nv">$firewall_name</span><span class="w"> </span>--collection-name<span class="w"> </span><span class="s2">&quot;nrc-</span><span class="nv">$service_resource_name_suffix</span><span class="s2">&quot;</span><span class="w"> </span>-o<span class="w"> </span>json<span class="k">)</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-<span class="w">    </span><span class="nv">NETWORK_RULE_PRIORITY</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span><span class="w"> </span><span class="nv">$NETWORK_RULES</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.priority&#39;</span><span class="k">)</span>
-<span class="k">else</span>
-<span class="w">    </span><span class="nv">NETWORK_RULE_MAX_PRIORITY</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>network<span class="w"> </span>firewall<span class="w"> </span>network-rule<span class="w"> </span>collection<span class="w"> </span>list<span class="w"> </span>-f<span class="w"> </span><span class="nv">$firewall_name</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$resource_group_name</span><span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span>--query<span class="w"> </span><span class="s1">&#39;not_null(max_by([],&amp;priority).priority) || `100`&#39;</span><span class="k">)</span>
-<span class="w">    </span><span class="nv">NETWORK_RULE_PRIORITY</span><span class="o">=</span><span class="k">$((</span><span class="nv">$NETWORK_RULE_MAX_PRIORITY</span><span class="o">+</span><span class="m">1</span><span class="k">))</span>
-<span class="k">fi</span>
-
-<span class="k">if</span><span class="w"> </span><span class="nv">APPLICATION_RULES</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>network<span class="w"> </span>firewall<span class="w"> </span>application-rule<span class="w"> </span>list<span class="w"> </span>-g<span class="w"> </span><span class="nv">$resource_group_name</span><span class="w"> </span>-f<span class="w">  </span><span class="nv">$firewall_name</span><span class="w"> </span>--collection-name<span class="w"> </span><span class="s2">&quot;arc-</span><span class="nv">$service_resource_name_suffix</span><span class="s2">&quot;</span><span class="w"> </span>-o<span class="w"> </span>json<span class="k">)</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-<span class="w">    </span><span class="nv">APPLICATION_RULE_PRIORITY</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span><span class="w"> </span><span class="nv">$APPLICATION_RULES</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.priority&#39;</span><span class="k">)</span>
-<span class="k">else</span>
-<span class="w">    </span><span class="nv">APPLICATION_RULE_MAX_PRIORITY</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>network<span class="w"> </span>firewall<span class="w"> </span>application-rule<span class="w"> </span>collection<span class="w"> </span>list<span class="w"> </span>-f<span class="w"> </span><span class="nv">$firewall_name</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$resource_group_name</span><span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span>--query<span class="w"> </span><span class="s1">&#39;not_null(max_by([],&amp;priority).priority) || `100`&#39;</span><span class="k">)</span>
-<span class="w">    </span><span class="nv">APPLICATION_RULE_PRIORITY</span><span class="o">=</span><span class="k">$((</span><span class="nv">$APPLICATION_RULE_MAX_PRIORITY</span><span class="o">+</span><span class="m">1</span><span class="k">))</span>
-<span class="k">fi</span>
-
-<span class="c1"># Safely produce a JSON object containing the result value.</span>
-jq<span class="w"> </span>-n<span class="w"> </span>--arg<span class="w"> </span>network_rule_priority<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$NETWORK_RULE_PRIORITY</span><span class="s2">&quot;</span><span class="w"> </span>--arg<span class="w"> </span>application_rule_priority<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$APPLICATION_RULE_PRIORITY</span><span class="s2">&quot;</span><span class="w"> </span><span class="s1">&#39;{ &quot;network_rule_priority&quot;:$network_rule_priority, &quot;application_rule_priority&quot;:$application_rule_priority }&#39;</span>
-</code></pre></div>
-</li>
-<li>
-<p>Create the firewall rule using a resource similar to the below:</p>
-<div class="highlight"><pre><span></span><code><span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;azurerm_firewall_application_rule_collection&quot;</span><span class="w"> </span><span class="nv">&quot;apprulecollection&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">name</span><span class="w">                </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arc-${local.service_resource_name_suffix}&quot;</span>
-<span class="w">    </span><span class="na">azure_firewall_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">data.azurerm_firewall.fw.name</span>
-<span class="w">    </span><span class="na">resource_group_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">data.azurerm_firewall.fw.resource_group_name</span>
-<span class="w">    </span><span class="na">priority</span><span class="w">            </span><span class="o">=</span><span class="w"> </span><span class="nv">data.external.rule_priorities.result.application_rule_priority</span>
-<span class="w">    </span><span class="na">action</span><span class="w">              </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Allow&quot;</span>
-
-<span class="w">    </span><span class="nb">rule</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;allowServiceXRules&quot;</span>
-
-<span class="w">        </span><span class="na">source_addresses</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">data.azurerm_virtual_network.ws.address_space</span>
-
-<span class="w">        </span><span class="na">target_fqdns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">local.allowed_urls</span>
-
-<span class="w">        </span><span class="nb">protocol</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="na">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;443&quot;</span>
-<span class="w">            </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Https&quot;</span>
-<span class="w">        </span><span class="p">}</span>
-<span class="w">        </span><span class="nb">protocol</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="na">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;80&quot;</span>
-<span class="w">            </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Http&quot;</span>
-<span class="w">        </span><span class="p">}</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div>
-</li>
+<li><strong>Use descriptive names and descriptions</strong> for rule collections and individual rules.</li>
+<li><strong>Minimize the scope</strong> of firewall rules to only what is necessary.</li>
+<li><strong>Document any custom rules</strong> in your service documentation.</li>
+<li><strong>Test thoroughly</strong> after making changes to firewall rules.</li>
+<li><strong>Review rules periodically</strong> to ensure they are still required.</li>
 </ol>
 
 
