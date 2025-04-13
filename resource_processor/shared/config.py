@@ -24,6 +24,7 @@ def get_config() -> dict:
         config["azure_environment"] = os.environ.get("AZURE_ENVIRONMENT", "AzureCloud")
         config["aad_authority_url"] = os.environ.get("AAD_AUTHORITY_URL", "https://login.microsoftonline.com")
         config["microsoft_graph_fqdn"] = os.environ.get("MICROSOFT_GRAPH_FQDN", "graph.microsoft.com")
+        config["disable_acr_public_access"] = os.environ.get("DISABLE_ACR_PUBLIC_ACCESS", "false")
 
         try:
             config["number_processes_int"] = int(config["number_processes"])
@@ -64,6 +65,7 @@ def get_config() -> dict:
             "ARM_CLIENT_SECRET": config["arm_client_secret"],
             "ARM_SUBSCRIPTION_ID": config["arm_subscription_id"],
             "ARM_TENANT_ID": config["arm_tenant_id"],
+            "DISABLE_ACR_PUBLIC_ACCESS": config["disable_acr_public_access"],
         }
 
         if config["arm_use_msi"] == "false":

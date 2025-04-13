@@ -31,6 +31,7 @@ data "template_file" "cloudconfig" {
     microsoft_graph_fqdn                             = regex("(?:(?P<scheme>[^:/?#]+):)?(?://(?P<fqdn>[^/?#:]*))?", module.terraform_azurerm_environment_configuration.microsoft_graph_endpoint).fqdn
     logging_level                                    = var.logging_level
     rp_bundle_values                                 = local.rp_bundle_values_formatted
+    disable_acr_public_access = var.disable_acr_public_access
   }
 }
 

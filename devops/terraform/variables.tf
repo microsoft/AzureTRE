@@ -55,3 +55,9 @@ variable "kv_mgmt_encryption_key_name" {
   description = "Name of Key Vault Encryption Key for management resources (only used if enable_cmk_encryption is true)"
   default     = "tre-encryption-mgmt"
 }
+
+variable "disable_acr_public_access" {
+   type        = bool
+   description = "A boolean indicating if ACR public access should be disabled"
+   default     = false
+ }

@@ -70,3 +70,8 @@ variable "arm_environment" {
   type        = string
   description = "The ARM cloud environment"
 }
+variable "disable_acr_public_access" {
+   type        = bool
+   description = "A boolean indicating if ACR public access should be disabled"
+   default     = false
+ }

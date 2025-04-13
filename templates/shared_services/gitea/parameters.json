@@ -51,6 +51,12 @@
       "source": {
         "env": "SQL_SKU"
       }
+    },
+    {
+      "name": "disable_acr_public_access",
+      "source": {
+        "env": "DISABLE_ACR_PUBLIC_ACCESS"
+      }
     }
   ]
 }

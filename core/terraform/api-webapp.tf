@@ -117,6 +117,27 @@ resource "azurerm_linux_web_app" "api" {
   ]
 }
 
+resource "azapi_update_resource" "api_vnet_container_pull_routing" {
+   count       = var.disable_acr_public_access ? 1 : 0
+   resource_id = azurerm_linux_web_app.api.id
+   type        = "Microsoft.Web/sites@2022-09-01"
+   body = jsonencode({
+     properties = {
+       vnetImagePullEnabled: true
+     }
+   })
+   depends_on = [azurerm_linux_web_app.api]
+ }
+
+ resource "azapi_resource_action" "restart_api_webapp" {
+   count        = var.disable_acr_public_access ? 1 : 0
+   type        = "Microsoft.Web/sites@2022-09-01"
+   resource_id = azurerm_linux_web_app.api.id
+   method      = "POST"
+   action      = "restart"
+   depends_on = [azapi_update_resource.api_vnet_container_pull_routing]
+ }
+ 
 resource "azurerm_private_endpoint" "api_private_endpoint" {
   name                = "pe-api-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name

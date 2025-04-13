@@ -106,3 +106,9 @@ variable "airlock_malware_scan_result_topic_name" {
   type        = string
   description = "Name of the topic to publish Airlock malware scan results to"
 }
+
+variable "disable_acr_public_access" {
+   type        = bool
+   description = "If true, disables public access to the ACR"
+   default     = false
+}
