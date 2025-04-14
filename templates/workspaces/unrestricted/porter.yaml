@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-unrestricted
-version: 0.14.0
+version: 0.13.5
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -209,6 +209,7 @@ install:
         workspace_owner_object_id: ${ bundle.parameters.workspace_owner_object_id }
         client_id: ${ bundle.parameters.client_id }
         client_secret: ${ bundle.parameters.client_secret }
+        ui_client_id: ${ bundle.parameters.ui_client_id }
         scope_id: ${ bundle.parameters.scope_id }
         sp_id: ${ bundle.parameters.sp_id }
         app_role_id_workspace_owner: ${ bundle.parameters.app_role_id_workspace_owner }
@@ -220,6 +221,7 @@ install:
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -257,6 +259,7 @@ upgrade:
         workspace_owner_object_id: ${ bundle.parameters.workspace_owner_object_id }
         client_id: ${ bundle.parameters.client_id }
         client_secret: ${ bundle.parameters.client_secret }
+        ui_client_id: ${ bundle.parameters.ui_client_id }
         scope_id: ${ bundle.parameters.scope_id }
         sp_id: ${ bundle.parameters.sp_id }
         app_role_id_workspace_owner: ${ bundle.parameters.app_role_id_workspace_owner }
@@ -268,6 +271,7 @@ upgrade:
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -329,6 +333,7 @@ uninstall:
         workspace_owner_object_id: ${ bundle.parameters.workspace_owner_object_id }
         client_id: ${ bundle.parameters.client_id }
         scope_id: ${ bundle.parameters.scope_id }
+        ui_client_id: ${ bundle.parameters.ui_client_id }
         sp_id: ${ bundle.parameters.sp_id }
         app_role_id_workspace_owner: ${ bundle.parameters.app_role_id_workspace_owner }
         app_role_id_workspace_researcher: ${ bundle.parameters.app_role_id_workspace_researcher }
@@ -339,6 +344,7 @@ uninstall:
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
