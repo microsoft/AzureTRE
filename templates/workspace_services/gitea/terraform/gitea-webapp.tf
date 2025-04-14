@@ -122,16 +122,16 @@ resource "azapi_update_resource" "gitea_vnet_container_pull_routing" {
      }
    })
    depends_on = [azurerm_linux_web_app.gitea]
- }
+}
 
- resource "azapi_resource_action" "restart_gitea_webapp" {
+resource "azapi_resource_action" "restart_gitea_webapp" {
    count        = var.disable_acr_public_access ? 1 : 0
    type        = "Microsoft.Web/sites@2022-09-01"
    resource_id = azurerm_linux_web_app.gitea.id
    method      = "POST"
    action      = "restart"
    depends_on = [azapi_update_resource.gitea_vnet_container_pull_routing]
- }
+}
  
 resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   name                = "pe-${local.webapp_name}"

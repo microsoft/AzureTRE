@@ -122,6 +122,7 @@ resource "azapi_resource_action" "restart_gitea_webapp" {
   action      = "restart"
   depends_on = [azapi_update_resource.gitea_vnet_container_pull_routing]
 }
+
 resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   name                = "pe-${local.webapp_name}"
   resource_group_name = local.core_resource_group_name
