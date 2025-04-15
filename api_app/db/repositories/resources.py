@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional, Tuple, List
 
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
+from resources.strings import RESOURCE_ACTION_INSTALL
 from core import config
 from db.errors import VersionDowngradeDenied, EntityDoesNotExist, MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, UserNotAuthorizedToUseTemplate
 from db.repositories.resources_history import ResourceHistoryRepository
@@ -100,7 +101,7 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(ResourceTemplate, template)
 
-    async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
+    async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_action: str, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         await resource_history_repo.create_resource_history_item(resource)
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
@@ -115,7 +116,7 @@ class ResourceRepository(BaseRepository):
             resource.templateVersion = resource_patch.templateVersion
 
         if resource_patch.properties is not None and len(resource_patch.properties) > 0:
-            self.validate_patch(resource_patch, resource_template_repo, resource_template)
+            self.validate_patch(resource_patch, resource_template_repo, resource_template, resource_action)
 
             # if we're here then we're valid - update the props + persist
             resource.properties.update(resource_patch.properties)
@@ -168,7 +169,7 @@ class ResourceRepository(BaseRepository):
         except EntityDoesNotExist:
             raise TargetTemplateVersionDoesNotExist(f"Template '{resource_template.name}' not found for resource type '{resource_template.resourceType}' with target template version '{resource_patch.templateVersion}'")
 
-    def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate):
+    def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, resource_action: str):
         # get the enriched (combined) template
         enriched_template = resource_template_repo.enrich_template(resource_template, is_update=True)
 
@@ -177,7 +178,7 @@ class ResourceRepository(BaseRepository):
         update_template["required"] = []
         update_template["properties"] = {}
         for prop_name, prop in enriched_template["properties"].items():
-            if ("updateable" in prop.keys() and prop["updateable"] is True):
+            if (resource_action == RESOURCE_ACTION_INSTALL or prop.get("updateable", False) is True):
                 update_template["properties"][prop_name] = prop
 
         self._validate_resource_parameters(resource_patch.dict(), update_template)

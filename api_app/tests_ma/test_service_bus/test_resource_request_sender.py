@@ -5,6 +5,7 @@ import uuid
 
 from azure.servicebus import ServiceBusMessage
 from mock import AsyncMock, patch
+from resources import strings
 from models.schemas.resource import ResourcePatch
 from service_bus.helpers import (
     try_update_with_retries,
@@ -128,7 +129,7 @@ async def test_multi_step_document_sends_first_step(
         step_resource=user_resource_multi,
         root_resource=None,
         resource_to_update_id=basic_shared_service.id,
-        primary_action="install",
+        primary_action=strings.RESOURCE_ACTION_INSTALL,
         user=test_user,
     )
 
@@ -142,7 +143,8 @@ async def test_multi_step_document_sends_first_step(
         resource_history_repo=resource_history_repo_mock,
         etag=basic_shared_service.etag,
         resource_template_repo=resource_template_repo,
-        user=test_user
+        user=test_user,
+        resource_action=strings.RESOURCE_ACTION_UPDATE
     )
 
 

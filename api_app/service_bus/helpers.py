@@ -1,6 +1,7 @@
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
 from pydantic import parse_obj_as
+from resources import strings
 from db.repositories.resources_history import ResourceHistoryRepository
 from service_bus.substitutions import substitute_properties
 from models.domain.resource_template import PipelineStep
@@ -83,6 +84,8 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
     for step in parent_template_pipeline_dict[primary_action]:
         if step["stepId"] == operation_step.templateStepId:
             template_step = parse_obj_as(PipelineStep, step)
+            if (template_step.resourceAction is None and primary_action == strings.RESOURCE_ACTION_INSTALL):
+                template_step.resourceAction = strings.RESOURCE_ACTION_INSTALL
             break
 
     if template_step is None:
@@ -164,6 +167,7 @@ async def try_patch(resource_repo: ResourceRepository, resource_template_repo: R
         etag=resource_to_update.etag,
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo,
-        user=user)
+        user=user,
+        resource_action=template_step.resourceAction)
 
     return resource_to_send
