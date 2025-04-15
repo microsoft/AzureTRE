@@ -143,6 +143,7 @@ Configure variables used in the deployment workflow:
 | `AZURE_ENVIRONMENT` | Optional. The name of the Azure environment. Supported values are `AzureCloud` and `AzureUSGovernment`. Default value is `AzureCloud`. |
 | `CORE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan for core infrastructure. Default value is `P1v2`. |
 | `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests. Default value is `P1v2`. |
+| `E2E_TESTS_NUMBER_PROCESSES` | Optional. The number of pytest processes to instantiate when the E2E tests start. Defaults to `1`. |
 | `RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE` | Optional. The number of processes to instantiate when the Resource Processor starts. Equates to the number of parallel deployment operations possible in your TRE. Defaults to `5`. |
 | `ENABLE_SWAGGER` | Optional. Determines whether the Swagger interface for the API will be available. Default value is `false`. |
 | `FIREWALL_SKU` | Optional. The SKU of the Azure Firewall instance. Default value is `Standard`. Allowed values [`Basic`, `Standard`, `Premium`]. See [Azure Firewall SKU feature comparison](https://learn.microsoft.com/en-us/azure/firewall/choose-firewall-sku). |
