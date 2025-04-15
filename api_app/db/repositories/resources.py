@@ -178,7 +178,7 @@ class ResourceRepository(BaseRepository):
         update_template["required"] = []
         update_template["properties"] = {}
         for prop_name, prop in enriched_template["properties"].items():
-            if (resource_action == RESOURCE_ACTION_INSTALL or ("updateable" in prop.keys() and prop["updateable"] is True)):
+            if (resource_action == RESOURCE_ACTION_INSTALL or prop.get("updateable", False) is True):
                 update_template["properties"][prop_name] = prop
 
         self._validate_resource_parameters(resource_patch.dict(), update_template)
