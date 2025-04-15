@@ -8,7 +8,7 @@ terraform {
       source  = "Azure/azapi"
       version = "~>1.15.0"
     }
-  local = {
+    local = {
       source  = "hashicorp/local"
       version = "=2.4.0"
     }
