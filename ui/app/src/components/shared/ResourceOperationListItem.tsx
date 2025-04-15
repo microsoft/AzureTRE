@@ -1,5 +1,6 @@
-import { DefaultPalette, IStackItemStyles, Stack, Panel, PanelType, Link } from "@fluentui/react";
+import { DefaultPalette, IStackItemStyles, Stack, Link } from "@fluentui/react";
 import React from "react";
+import { ErrorPanel } from "./ErrorPanel";
 import stripAnsi from 'strip-ansi';
 interface ResourceOperationListItemProps {
   header: string;
@@ -15,17 +16,7 @@ export const ResourceOperationListItem: React.FunctionComponent<
       color: DefaultPalette.neutralSecondary,
     },
   };
-  const [isOpen, setIsOpen] = React.useState(false);
-  const cleanupError = (error: string) => {
-    // Remove ANSI escape codes
-    let cleanedError = stripAnsi(error);
-
-    //Replace various vertical bars with new lines
-    cleanedError = cleanedError.replace(/[│╷╵]/g, "\n");
-
-    // Remove leading and trailing whitespace
-    return cleanedError.trim();
-  };
+  const [isErrorPanelOpen, setIsErrorPanelOpen] = React.useState(false);
 
   // Check if the value is an error message
   const isError = props.val.includes("Error:") || props.val.includes("error:");
@@ -40,20 +31,13 @@ export const ResourceOperationListItem: React.FunctionComponent<
         {isError ? (
           <>
             <Stack.Item styles={stackItemStyles} style={{ width: "80%" }}>
-              <Link onClick={() => setIsOpen(true)}>An error occurred, click to view the error details</Link>
+              <Link onClick={() => setIsErrorPanelOpen(true)}>An error occurred, click to view the error details</Link>
             </Stack.Item>
-            <Panel
-              headerText="Error Details"
-              isOpen={isOpen}
-              type={PanelType.large}
-              closeButtonAriaLabel="Close"
-              isLightDismiss
-              onDismiss={() => setIsOpen(false)}
-            >
-              <div style={{ width: "100%", whiteSpace: "pre-wrap", fontFamily: "monospace", backgroundColor: "#000", color: "#fff", padding: "10px" }}>
-                {cleanupError(props.val)}
-              </div>
-            </Panel>
+            <ErrorPanel
+              errorMessage={props.val}
+              isOpen={isErrorPanelOpen}
+              onDismiss={() => setIsErrorPanelOpen(false)}
+            />
           </>
         ) : (
           <Stack.Item styles={stackItemStyles} style={{ width: "80%" }}>
