@@ -133,6 +133,8 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   }
 
   lifecycle { ignore_changes = [tags] }
+  # Ensure the private endpoint is created on the storage account to try to avoid a race condition.
+  depends_on = [azurerm_private_endpoint.function_storage]
 }
 
 
