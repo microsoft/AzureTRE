@@ -4,7 +4,8 @@
     "indent": 2
   },
   "MD013": {
-    "line_length": 400
+    "line_length": 400,
+    "tables": false
   },
   "MD026": {
     "punctuation": ".,;:!。，；:"
