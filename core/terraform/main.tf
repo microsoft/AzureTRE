@@ -192,6 +192,7 @@ module "resource_processor_vmss_porter" {
   enable_airlock_malware_scanning                  = var.enable_airlock_malware_scanning
   airlock_malware_scan_result_topic_name           = module.airlock_resources.airlock_malware_scan_result_topic_name
   disable_acr_public_access                        = var.disable_acr_public_access
+
   depends_on = [
     module.network,
     module.azure_monitor,

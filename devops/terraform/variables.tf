@@ -57,7 +57,7 @@ variable "kv_mgmt_encryption_key_name" {
 }
 
 variable "disable_acr_public_access" {
-   type        = bool
-   description = "A boolean indicating if ACR public access should be disabled"
-   default     = false
- }
+  type        = bool
+  description = "A boolean indicating if ACR public access should be disabled"
+  default     = false
+}

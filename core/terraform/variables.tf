@@ -257,7 +257,7 @@ variable "user_management_enabled" {
 }
 
 variable "disable_acr_public_access" {
-   type        = bool
-   description = "If true, disables public access to the ACR"
-   default     = false
+  type        = bool
+  description = "If true, disables public access to the ACR"
+  default     = false
 }
