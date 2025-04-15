@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional, Tuple, List
 
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
+from resources.strings import RESOURCE_ACTION_INSTALL
 from core import config
 from db.errors import VersionDowngradeDenied, EntityDoesNotExist, MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, UserNotAuthorizedToUseTemplate
 from db.repositories.resources_history import ResourceHistoryRepository
@@ -100,7 +101,7 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(ResourceTemplate, template)
 
-    async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, force_version_update: bool = False, resource_action: str = 'upgrade') -> Tuple[Resource, ResourceTemplate]:
+    async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_action: str, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         await resource_history_repo.create_resource_history_item(resource)
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
@@ -177,7 +178,7 @@ class ResourceRepository(BaseRepository):
         update_template["required"] = []
         update_template["properties"] = {}
         for prop_name, prop in enriched_template["properties"].items():
-            if (resource_action == "install" or ("updateable" in prop.keys() and prop["updateable"] is True)):
+            if (resource_action == RESOURCE_ACTION_INSTALL or ("updateable" in prop.keys() and prop["updateable"] is True)):
                 update_template["properties"][prop_name] = prop
 
         self._validate_resource_parameters(resource_patch.dict(), update_template)
