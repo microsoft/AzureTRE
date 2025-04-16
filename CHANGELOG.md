@@ -3,12 +3,30 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 ENHANCEMENTS:
+* Added ability to manage user workspace roles from the UI (only visible if feature is enabled with the `user_management_enabled` flag, user is a TREAdmin, the workspace has Entra ID (AAD) Groups enabled and workspace version is > 2.2.0 ) [#4337](https://github.com/microsoft/AzureTRE/issues/4337)
+* Add 7 day retention on workspace storage accounts. ([#4389](https://github.com/microsoft/AzureTRE/issues/4389))
+* Enabled Structured Azure Firewall logs for TRE firewall. [#4430](https://github.com/microsoft/AzureTRE/issues/4430)
 * Deny public access to TRE management storage account, and add private endpoint for TRE core [#4353](https://github.com/microsoft/AzureTRE/issues/4353)
 
 * Added backup vault to base workspace & updated Azurerm provider to match core. ([[#4362](https://github.com/microsoft/AzureTRE/issues/4362)])
+* Added anonymous access enablement for Nexus by default issue. [#4387](https://github.com/microsoft/AzureTRE/pull/4387)
+* Update mysql commands in control_tre script. [#4438](https://github.com/microsoft/AzureTRE/pull/4438)
+* Organize how we pass config.yaml settings to bundles. [#4436](https://github.com/microsoft/AzureTRE/pull/4436)
+* Add documentation for make commands ([[#4296](https://github.com/microsoft/AzureTRE/issues/4296)])
 
 BUG FIXES:
 * Fix the management storage access error while executing `make show-core-output` command, and remove redundant error messages from `mgmtstorage_enable_public_access.sh` script ([#4404](https://github.com/microsoft/AzureTRE/issues/4404))
+* Fix retry loop in devcontainer action and override commands.sh [#4409](https://github.com/microsoft/AzureTRE/pull/4409)
+* Fix terraform output command by adding working directory parameterPR ([#4413](https://github.com/microsoft/AzureTRE/pull/4413))  [#4412](https://github.com/microsoft/AzureTRE/issues/4412)
+* Fix CI issue where branch names containing 'bootstrap' would incorrectly skip Azure login steps [#4416](https://github.com/microsoft/AzureTRE/issues/4416) ([#4417](https://github.com/microsoft/AzureTRE/pull/4417))
+* Fix 403 storage account error when creating a new TRE environment ([#4405](https://github.com/microsoft/AzureTRE/issues/4405)) in PR [#4406](https://github.com/microsoft/AzureTRE/pull/4406)
+* Bug Fix: Approaching Nexus when it wasn’t fully available is now handled via a retry with exponential backoff [#4387](https://github.com/microsoft/AzureTRE/pull/4387)
+* Fix Guacamole sessions to end when the browser is closed by adding `--cookie-expire 0m` parameter to the `oauth2-proxy` command ([#4418](https://github.com/microsoft/AzureTRE/issues/4418))
+* Update deprecated Terraform static website configuration to use new separate resource ([#4443](https://github.com/microsoft/AzureTRE/pull/4443))
+* Skip removing Keyvault rule when resource group is deleting ([#4454](https://github.com/microsoft/AzureTRE/pull/4454))
+* Fix malware scanning not enabled on AirLock export requests ([#4403](https://github.com/microsoft/AzureTRE/issues/4403))
+* Upgrade workspaces no longer causes VM recreation ([#4421](https://github.com/microsoft/AzureTRE/issues/4421))
+* Add dependency between the private endpoint on the storage account used by the Airlock processor function app and the function app itself. This is to try and fix ([#4433](https://github.com/microsoft/AzureTRE/issues/4433))
 
 ## 0.21.0
 

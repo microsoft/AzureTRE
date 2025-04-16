@@ -8,6 +8,7 @@ function usage() {
     Usage: $0 [-g | --mgmt-resource-group-name ]  [-s | --mgmt-storage-account-name] [-n | --state-container-name] [-k | --key] [-c | --cmd] [-l | --logfile]
 
     Options:
+        -d, --directory                     Directory to change to before executing commands
         -g, --mgmt-resource-group-name      Management resource group name
         -s, --mgmt-storage-account-name     Management storage account name
         -n, --state-container-name          State container name
