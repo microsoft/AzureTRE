@@ -3,7 +3,7 @@ import logging
 import time
 
 from azure.storage.blob import generate_container_sas, ContainerSasPermissions, BlobServiceClient, ContainerClient
-from fastapi import HTTPException, status
+from fastapi import HTTPException, UploadFile, status
 from core import config, credentials
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReviewUserResource, AirlockReviewDecision, AirlockActions, AirlockFile, AirlockReview
 from models.domain.authentication import User
@@ -326,9 +326,9 @@ async def update_and_publish_event_airlock_request(
     try:
         if (airlock_request.type == AirlockRequestType.Import and
            airlock_request.isEUUAAccepted and
-           airlock_request.status == AirlockRequestStatus.Submitted and 
+           airlock_request.status == AirlockRequestStatus.Submitted and
            updated_airlock_request.status == AirlockRequestStatus.InReview):
-            logging.info(f"Auto approving import request: {airlock_request.id}") 
+            logging.info(f"Auto approving import request: {airlock_request.id}")
             decisionApproval = f"EUUA has been accepted. Import request {airlock_request.id} is approved automatically."
             airlock_review_input: AirlockReviewInCreate = AirlockReviewInCreate(approval=True, decisionExplanation=decisionApproval)
             user_resource_repo = get_repository(UserResourceRepository)
@@ -752,3 +752,19 @@ def wait_for_container(client: ContainerClient, max_retries=5, initial_delay=2):
             time.sleep(delay)  # Wait for the specified delay
             delay *= 2  # Exponential backoff: double the delay for the next retry
     return  # Max retries reached, exit the function
+
+async def save_file_into_blobStorage(file: UploadFile, airlock_request: AirlockRequest, workspace):
+    account_name: str = get_account_by_request(airlock_request, workspace)
+    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
+                                            credential=credentials.get_credential())
+    container_name = airlock_request.id
+    container_client = blob_service_client.get_container_client(container_name)
+    try:
+        wait_for_container(container_client,3,10)
+        blob_client = container_client.get_blob_client(file.filename)
+        blob_client.upload_blob(file.file, overwrite=True)
+        logging.info(f"File '{file.filename}' uploaded to container '{container_name}'.")
+    except Exception as e:
+        logging.error(f"Error uploading '{file.filename}' to Azure Blob Storage: {e}")
+    finally:
+        await file.close()

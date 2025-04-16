@@ -1,9 +1,10 @@
+import json
 import logging
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status as status_code, Response
+from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, UploadFile, status as status_code, Response
 
 from jsonschema.exceptions import ValidationError
 from db.repositories.resources_history import ResourceHistoryRepository
@@ -19,7 +20,7 @@ from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deplo
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
-from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestWithAllowedUserActions, \
+from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestInResponse, AirlockRequestWithAllowedUserActions, \
     AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestContactTeamForm, \
     AirlockRequestStatisticsStatements
 from resources import strings
@@ -29,21 +30,21 @@ from services.authentication import get_current_workspace_owner_or_researcher_us
 from .resource_helpers import construct_location_header
 
 from services.airlock import create_review_vm, review_airlock_request, get_airlock_container_link, get_allowed_actions, save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, \
-    enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace, cancel_request, save_and_check_triage_statements, exit_and_reject_airlock_request, save_and_check_statistics_statements, exit_and_reject_statistics_airlock_request
+    enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace, cancel_request, save_and_check_triage_statements, exit_and_reject_airlock_request, save_and_check_statistics_statements, exit_and_reject_statistics_airlock_request, save_file_into_blobStorage
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 
-def validate_time_period(from_date: Optional[datetime], to_date: Optional[datetime]):  
+def validate_time_period(from_date: Optional[datetime], to_date: Optional[datetime]):
     # Valid option, no period of time was set
-    if from_date is None and to_date is None:        
+    if from_date is None and to_date is None:
         return
     # Valid option, only a upper limit is set
-    if from_date is None and to_date is not None:        
+    if from_date is None and to_date is not None:
         return
     # Valid option, only a lower limit is set
-    if from_date is not None and to_date is None:        
+    if from_date is not None and to_date is None:
         return
-    
+
     # From_date is higher then to_date
     if from_date > to_date:
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST,
@@ -303,3 +304,34 @@ async def exit_and_reject_statistics(airlock_request=Depends(get_airlock_request
     except (ValidationError, ValueError) as e:
         logging.exception("Failed exiting and auto-reject export request.")
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
+
+@airlock_workspace_router.post("/workspaces/{workspace_id}/requests/setup", status_code=status_code.HTTP_200_OK,
+                             response_model=AirlockRequestWithAllowedUserActions, name=strings.API_EXPORT_IMPORT_FILE,
+                             dependencies=[Depends(get_current_workspace_owner_or_researcher_user),
+                                           Depends(get_workspace_by_id_from_path)])
+async def create_airlock_request_setup(
+    airlock_request_input: str  = Form(...),
+    file: UploadFile = File(...),
+    user = Depends(get_current_workspace_owner_or_researcher_user),
+    airlock_request_repo: AirlockRequestRepository = Depends(get_repository(AirlockRequestRepository)),
+    workspace=Depends(get_deployed_workspace_by_id_from_path),
+) -> AirlockRequestWithAllowedUserActions:
+    if workspace.properties.get("enable_airlock") is False:
+        raise HTTPException(status_code=status_code.HTTP_405_METHOD_NOT_ALLOWED,
+                            detail=strings.AIRLOCK_NOT_ENABLED_IN_WORKSPACE)
+    try:
+        airlock_data_dict = json.loads(airlock_request_input)
+        airlock_request_input_obj = AirlockRequestInCreate(**airlock_data_dict)
+        airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_input_obj, workspace.id, user)
+        await save_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace)
+        await save_file_into_blobStorage(file, airlock_request, workspace)
+        return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request)
+
+    except (ValidationError, ValueError) as e:
+        logging.exception("Failed creating airlock request model instance")
+        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"An unexpected error occurred: {e}")
+        raise HTTPException(status_code=status_code.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.SERVER_ERROR)
