@@ -60,7 +60,6 @@ write_files:
       OTEL_RESOURCE_ATTRIBUTES=service.name=resource_processor,service.version=${resource_processor_vmss_porter_image_tag}
       OTEL_EXPERIMENTAL_RESOURCE_DETECTORS=azure_vm
       LOGGING_LEVEL=${logging_level}
-      DISABLE_ACR_PUBLIC_ACCESS=${disable_acr_public_access}
       ${rp_bundle_values}
   - path: /etc/cron.hourly/docker-prune
     # An hourly cron job to have docker free disk space. Running this frquently
