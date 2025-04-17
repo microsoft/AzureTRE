@@ -123,6 +123,12 @@
       "source": {
         "env": "ARM_ENVIRONMENT"
       }
+    },
+    {
+      "name": "disable_acr_public_access",
+      "source": {
+        "env": "DISABLE_ACR_PUBLIC_ACCESS"
+      }
     }
   ]
 }

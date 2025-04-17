@@ -81,6 +81,12 @@
       "source": {
         "env": "KEY_STORE_ID"
       }
+    },
+    {
+      "name": "disable_acr_public_access",
+      "source": {
+        "env": "DISABLE_ACR_PUBLIC_ACCESS"
+      }
     }
   ]
 }
