@@ -19,6 +19,7 @@ ENHANCEMENTS:
 * Organize how we pass config.yaml settings to bundles. [#4436](https://github.com/microsoft/AzureTRE/pull/4436)
 * Add documentation for make commands ([[#4296](https://github.com/microsoft/AzureTRE/issues/4296)])
 * Allow administrators to automatically grant consent over new workspaces ([#4408](https://github.com/microsoft/AzureTRE/issues/4408)). If extending the `base` workspace template variable `ui_client_id` will need to be provided in `porter.yaml`. Additionally `auto_grant_workspace_consent` may be provided but will default to `false`.
+* Added support for allowed subnet ID configuration in config.yaml for core Key Vault network access from runner vnet. [#4463](https://github.com/microsoft/AzureTRE/issues/4463)
 
 
 BUG FIXES:
