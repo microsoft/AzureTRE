@@ -6,7 +6,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
-## 0.22.0 (April 17, 2025)
+## 0.22.0 (April 20, 2025)
 
 ENHANCEMENTS:
 * Added ability to manage user workspace roles from the UI (only visible if feature is enabled with the `user_management_enabled` flag, user is a TREAdmin, the workspace has Entra ID (AAD) Groups enabled and workspace version is > 2.2.0 ) [#4337](https://github.com/microsoft/AzureTRE/issues/4337)
