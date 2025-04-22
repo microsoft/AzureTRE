@@ -255,3 +255,15 @@ variable "enable_dns_policy" {
   description = "Whether, or not, to add a DNS security policy with an allow-list. This is a preview feature that can be enabled to prevent data exfiltration via DNS."
   default     = false
 }
+
+variable "auto_grant_workspace_consent" {
+  type        = bool
+  description = "A boolean indicating if admin consent should be auto granted to the workspace"
+  default     = false
+}
+
+variable "user_management_enabled" {
+  type        = bool
+  description = "Is the Entra ID user management feature enabled (requires a workspace with Entra ID groups enabled, default to false)?"
+  default     = false
+}

@@ -88,7 +88,8 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspa
         etag="",
         properties={
             "client_id": "12345",
-            "scope_id": "test_scope_id"
+            "scope_id": "test_scope_id",
+            "sp_id": "test_sp_id"
         },
         resourcePath=f'/workspaces/{workspace_id}',
         updatedWhen=FAKE_CREATE_TIMESTAMP,
@@ -1649,31 +1650,3 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["operation"]["resourceId"] == user_resource.id
-
-    @pytest.mark.parametrize("auth_class", ["aad_authentication.AzureADAuthorization"])
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
-    async def test_get_workspace_users_returns_users(self, _, auth_class, app, client):
-        with patch(f"services.{auth_class}.get_workspace_users") as get_workspace_users_mock:
-
-            users = [
-                {
-                    "id": "123",
-                    "name": "John Doe",
-                    "email": "john.doe@example.com",
-                    "roles": ["WorkspaceOwner", "WorkspaceResearcher"],
-                    'roleAssignments': []
-                },
-                {
-                    "id": "456",
-                    "name": "Jane Smith",
-                    "email": "jane.smith@example.com",
-                    "roles": ["WorkspaceResearcher"],
-                    'roleAssignments': []
-                }
-            ]
-            get_workspace_users_mock.return_value = users
-
-            response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_USERS, workspace_id=WORKSPACE_ID))
-
-            assert response.status_code == status.HTTP_200_OK
-            assert response.json()["users"] == users

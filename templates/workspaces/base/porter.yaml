@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.1.6
+version: 2.3.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -66,8 +66,11 @@ parameters:
     description: "Whether this bundle should register the workspace in AAD"
   - name: create_aad_groups
     type: boolean
-    default: false
-    description: "Whether this bundle should create AAD groups for the workspace app roles"
+    default: true
+    description: "Whether this bundle should create AAD groups for the workspace app roles (required for User Management)"
+  - name: core_api_client_id
+    type: string
+    description: "The client id of the core API"
   - name: workspace_owner_object_id
     type: string
     description: "The object id of the user that will be granted WorkspaceOwner after it is created."
@@ -83,6 +86,10 @@ parameters:
       "The client secret of the workspace in the identity provider. This value is typically provided to you
       when you create the ws application"
     default: ""
+  - name: ui_client_id
+    type: string
+    default: ""
+    description: "The client ID of the UI"
   - name: scope_id
     type: string
     default: ""
@@ -130,6 +137,10 @@ parameters:
     type: boolean
     default: false
     description: "Whether to enable DNS security policy for the workspace."
+  - name: auto_grant_workspace_consent
+    type: boolean
+    default: true
+    description: "Setting this to `true` will prevent the need for users to manually grant consent to new workspaces"
   - name: enable_airlock_malware_scanning
     type: boolean
     default: false
@@ -170,6 +181,21 @@ outputs:
     applyTo:
       - install
       - upgrade
+  - name: workspace_owners_group_id
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: workspace_researchers_group_id
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: workspace_airlock_managers_group_id
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
   - exec
@@ -190,12 +216,14 @@ install:
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
         register_aad_application: ${ bundle.parameters.register_aad_application }
         create_aad_groups: ${ bundle.parameters.create_aad_groups }
+        core_api_client_id: ${ bundle.parameters.core_api_client_id }
         auth_client_id: ${ bundle.credentials.auth_client_id }
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         workspace_owner_object_id: ${ bundle.parameters.workspace_owner_object_id }
         client_id: ${ bundle.parameters.client_id }
         client_secret: ${ bundle.parameters.client_secret }
+        ui_client_id: ${ bundle.parameters.ui_client_id }
         scope_id: ${ bundle.parameters.scope_id }
         sp_id: ${ bundle.parameters.sp_id }
         app_role_id_workspace_owner: ${ bundle.parameters.app_role_id_workspace_owner }
@@ -209,6 +237,7 @@ install:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
+        auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
         enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
         airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
@@ -225,6 +254,9 @@ install:
         - name: client_id
         - name: scope_id
         - name: sp_id
+        - name: workspace_owners_group_id
+        - name: workspace_researchers_group_id
+        - name: workspace_airlock_managers_group_id
 
 upgrade:
   - terraform:
@@ -238,12 +270,14 @@ upgrade:
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
         register_aad_application: ${ bundle.parameters.register_aad_application }
         create_aad_groups: ${ bundle.parameters.create_aad_groups }
+        core_api_client_id: ${ bundle.parameters.core_api_client_id }
         auth_client_id: ${ bundle.credentials.auth_client_id }
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         workspace_owner_object_id: ${ bundle.parameters.workspace_owner_object_id }
         client_id: ${ bundle.parameters.client_id }
         client_secret: ${ bundle.parameters.client_secret }
+        ui_client_id: ${ bundle.parameters.ui_client_id }
         scope_id: ${ bundle.parameters.scope_id }
         sp_id: ${ bundle.parameters.sp_id }
         app_role_id_workspace_owner: ${ bundle.parameters.app_role_id_workspace_owner }
@@ -257,6 +291,7 @@ upgrade:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
+        auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
         enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
         airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
@@ -273,6 +308,9 @@ upgrade:
         - name: client_id
         - name: scope_id
         - name: sp_id
+        - name: workspace_owners_group_id
+        - name: workspace_researchers_group_id
+        - name: workspace_airlock_managers_group_id
   - az:
       description: "Set Azure Cloud Environment"
       arguments:
@@ -310,12 +348,14 @@ uninstall:
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
         register_aad_application: ${ bundle.parameters.register_aad_application }
         create_aad_groups: ${ bundle.parameters.create_aad_groups }
+        core_api_client_id: ${ bundle.parameters.core_api_client_id }
         auth_client_id: ${ bundle.credentials.auth_client_id }
         auth_client_secret: ${ bundle.credentials.auth_client_secret }
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         workspace_owner_object_id: ${ bundle.parameters.workspace_owner_object_id }
         client_id: ${ bundle.parameters.client_id }
         scope_id: ${ bundle.parameters.scope_id }
+        ui_client_id: ${ bundle.parameters.ui_client_id }
         sp_id: ${ bundle.parameters.sp_id }
         app_role_id_workspace_owner: ${ bundle.parameters.app_role_id_workspace_owner }
         app_role_id_workspace_researcher: ${ bundle.parameters.app_role_id_workspace_researcher }
@@ -328,6 +368,7 @@ uninstall:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
+        auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
         enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
         airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:

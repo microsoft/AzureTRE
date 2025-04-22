@@ -10,6 +10,9 @@ variable "acr_id" {
 variable "resource_group_name" {
   type = string
 }
+variable "core_api_client_id" {
+  type = string
+}
 variable "resource_processor_subnet_id" {
   type = string
 }
@@ -92,6 +95,17 @@ variable "key_store_id" {
 variable "kv_encryption_key_name" {
   type        = string
   description = "Name of Key Vault Encryption Key (only used if enable_cmk_encryption is true)"
+}
+
+variable "ui_client_id" {
+  type        = string
+  description = "The client id of the UI application"
+}
+
+variable "auto_grant_workspace_consent" {
+  type        = bool
+  description = "A boolean indicating if admin consent should be auto granted to the workspace"
+  default     = false
 }
 
 variable "enable_airlock_malware_scanning" {
