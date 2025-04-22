@@ -36,6 +36,9 @@ module "aad" {
   workspace_owner_object_id      = var.workspace_owner_object_id
   aad_redirect_uris_b64          = var.aad_redirect_uris_b64
   create_aad_groups              = var.create_aad_groups
+  ui_client_id                   = var.ui_client_id
+  auto_grant_workspace_consent   = var.auto_grant_workspace_consent
+  core_api_client_id             = var.core_api_client_id
 
   depends_on = [
     azurerm_role_assignment.keyvault_deployer_ws_role,
