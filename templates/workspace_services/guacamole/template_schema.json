@@ -76,7 +76,9 @@
       "$id": "#/properties/workspace_subscription_id",
       "type": "string",
       "title": "Workspace subscription id",
-      "description": "The Azure subscription the workspace is deployed to"
+      "description": "The Azure subscription the workspace is deployed to",
+      "updateable": false,
+      "default": ""
     }
   },
   "pipeline": {
