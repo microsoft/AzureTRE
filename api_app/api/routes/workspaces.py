@@ -249,6 +249,12 @@ async def create_workspace_service(response: Response, workspace_service_input: 
         logger.exception("User not authorized to use template")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
+    # Get the workspace subscription id (if set)
+    if workspace.properties.get("workspace_subscription_id"):
+        if not resource_template.properties.get("workspace_subscription_id"):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICE_TEMPATE_DOES_NOT_SUPPORT_SUBSCRIPTION)
+        workspace_service.properties["workspace_subscription_id"] = workspace.properties["workspace_subscription_id"]
+
     # if template has address_space get an address space
     if resource_template.properties.get("address_space"):
         # check workspace has address_spaces property
@@ -412,6 +418,12 @@ async def create_user_resource(
     except UserNotAuthorizedToUseTemplate as e:
         logger.exception("User not authorized to use template")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+    # Get the workspace subscription id (if set)
+    if workspace.properties.get("workspace_subscription_id"):
+        if not resource_template.properties.get("workspace_subscription_id"):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICE_TEMPATE_DOES_NOT_SUPPORT_SUBSCRIPTION)
+        workspace_service.properties["workspace_subscription_id"] = workspace.properties["workspace_subscription_id"]
 
     operation = await save_and_deploy_resource(
         resource=user_resource,
