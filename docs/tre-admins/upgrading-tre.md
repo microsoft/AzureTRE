@@ -28,7 +28,7 @@ Once the code is merged, follow the same process used to initially deploy the TR
 
 ## Deploying a specific version of Azure TRE
 
-If you wish to upgrade or deploy a specific version, or unreleased version of Azure TRE and are using the [Azure TRE deployment repository](https://github.com/Microsoft/AzureTRE-Deployment) you can change the value of `OSS_VERSION` in `.devcontainer/devcontainer.json`, for example:
+If you wish to upgrade or deploy a specific version, or unreleased version of Azure TRE and are using the [Azure TRE deployment repository](https://github.com/Microsoft/AzureTRE-Deployment) you can change the value of `UPSTREAM_REPO_VERSION` in `.devcontainer/devcontainer.json`, for example:
 
 - `"OSS_VERSION": "v0.9.0"` (to use the specified tag; be sure to specify the complete tag name (prefixed with `v` and not the release name))
 - `"OSS_VERSION": "main"` (to use the latest code in the `main` branch)
