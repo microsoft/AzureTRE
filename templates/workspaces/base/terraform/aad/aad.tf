@@ -1,5 +1,9 @@
 data "azuread_client_config" "current" {}
 
+data "azuread_service_principal" "ui" {
+  client_id = var.ui_client_id
+}
+
 resource "random_uuid" "oauth2_user_impersonation_id" {}
 resource "random_uuid" "app_role_workspace_owner_id" {}
 resource "random_uuid" "app_role_workspace_researcher_id" {}
@@ -8,7 +12,7 @@ resource "random_uuid" "app_role_workspace_airlock_manager_id" {}
 resource "azuread_application" "workspace" {
   display_name    = var.workspace_resource_name_suffix
   identifier_uris = ["api://${var.workspace_resource_name_suffix}"]
-  owners          = [data.azuread_client_config.current.object_id]
+  owners          = [data.azuread_client_config.current.object_id, data.azuread_service_principal.core_api.object_id]
 
   api {
     mapped_claims_enabled          = true
@@ -94,11 +98,18 @@ resource "azuread_application" "workspace" {
 resource "azuread_service_principal" "workspace" {
   client_id                    = azuread_application.workspace.client_id
   app_role_assignment_required = false
-  owners                       = [data.azuread_client_config.current.object_id, var.workspace_owner_object_id]
+  owners                       = [data.azuread_client_config.current.object_id, var.workspace_owner_object_id, data.azuread_service_principal.core_api.object_id]
 
   feature_tags {
     enterprise = true
   }
+}
+
+resource "azuread_service_principal_delegated_permission_grant" "ui" {
+  count                                = var.auto_grant_workspace_consent ? 1 : 0
+  service_principal_object_id          = data.azuread_service_principal.ui.object_id
+  resource_service_principal_object_id = azuread_service_principal.workspace.object_id
+  claim_values                         = ["user_impersonation"]
 }
 
 resource "azuread_service_principal_password" "workspace" {
@@ -132,47 +143,47 @@ resource "azuread_app_role_assignment" "workspace_owner" {
 resource "azuread_group" "workspace_owners" {
   count            = var.create_aad_groups ? 1 : 0
   display_name     = "${var.workspace_resource_name_suffix} Workspace Owners"
-  owners           = [var.workspace_owner_object_id]
+  owners           = [var.workspace_owner_object_id, data.azuread_service_principal.core_api.object_id]
   security_enabled = true
 }
 
 resource "azuread_group" "workspace_researchers" {
   count            = var.create_aad_groups ? 1 : 0
   display_name     = "${var.workspace_resource_name_suffix} Workspace Researchers"
-  owners           = [var.workspace_owner_object_id]
+  owners           = [var.workspace_owner_object_id, data.azuread_service_principal.core_api.object_id]
   security_enabled = true
 }
 
 resource "azuread_group" "workspace_airlock_managers" {
   count            = var.create_aad_groups ? 1 : 0
   display_name     = "${var.workspace_resource_name_suffix} Airlock Managers"
-  owners           = [var.workspace_owner_object_id]
+  owners           = [var.workspace_owner_object_id, data.azuread_service_principal.core_api.object_id]
   security_enabled = true
 }
 
 resource "azuread_group_member" "workspace_owner" {
   count            = var.create_aad_groups ? 1 : 0
-  group_object_id  = azuread_group.workspace_owners[count.index].id
+  group_object_id  = azuread_group.workspace_owners[count.index].object_id
   member_object_id = var.workspace_owner_object_id
 }
 
 resource "azuread_app_role_assignment" "workspace_owners_group" {
   count               = var.create_aad_groups ? 1 : 0
   app_role_id         = azuread_service_principal.workspace.app_role_ids["WorkspaceOwner"]
-  principal_object_id = azuread_group.workspace_owners[count.index].id
+  principal_object_id = azuread_group.workspace_owners[count.index].object_id
   resource_object_id  = azuread_service_principal.workspace.object_id
 }
 
 resource "azuread_app_role_assignment" "workspace_researchers_group" {
   count               = var.create_aad_groups ? 1 : 0
   app_role_id         = azuread_service_principal.workspace.app_role_ids["WorkspaceResearcher"]
-  principal_object_id = azuread_group.workspace_researchers[count.index].id
+  principal_object_id = azuread_group.workspace_researchers[count.index].object_id
   resource_object_id  = azuread_service_principal.workspace.object_id
 }
 
 resource "azuread_app_role_assignment" "workspace_airlock_managers_group" {
   count               = var.create_aad_groups ? 1 : 0
   app_role_id         = azuread_service_principal.workspace.app_role_ids["AirlockManager"]
-  principal_object_id = azuread_group.workspace_airlock_managers[count.index].id
+  principal_object_id = azuread_group.workspace_airlock_managers[count.index].object_id
   resource_object_id  = azuread_service_principal.workspace.object_id
 }

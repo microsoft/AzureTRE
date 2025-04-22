@@ -21,3 +21,17 @@ output "scope_id" {
 output "sp_id" {
   value = azuread_service_principal.workspace.object_id
 }
+
+output "workspace_owners_group_id" {
+  value = var.create_aad_groups ? azuread_group.workspace_owners[0].object_id : ""
+}
+
+output "workspace_researchers_group_id" {
+  value = var.create_aad_groups ? azuread_group.workspace_researchers[0].object_id : ""
+}
+
+output "workspace_airlock_managers_group_id" {
+  value = var.create_aad_groups ? azuread_group.workspace_airlock_managers[0].object_id : ""
+}
+
+

@@ -249,3 +249,15 @@ variable "encryption_kv_name" {
   description = "Name of Key Vault for encryption keys, required only if external_key_store_id is not set (only used if enable_cmk_encryption is true)"
   default     = ""
 }
+
+variable "auto_grant_workspace_consent" {
+  type        = bool
+  description = "A boolean indicating if admin consent should be auto granted to the workspace"
+  default     = false
+}
+
+variable "user_management_enabled" {
+  type        = bool
+  description = "Is the Entra ID user management feature enabled (requires a workspace with Entra ID groups enabled, default to false)?"
+  default     = false
+}
