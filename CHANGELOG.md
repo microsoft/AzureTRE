@@ -1,6 +1,12 @@
 <!-- markdownlint-disable MD041 -->
-## 0.22.0 (Unreleased)
+## 0.23.0
 **BREAKING CHANGES & MIGRATIONS**:
+
+ENHANCEMENTS:
+
+BUG FIXES:
+
+## 0.22.0 (April 20, 2025)
 
 ENHANCEMENTS:
 * Added ability to manage user workspace roles from the UI (only visible if feature is enabled with the `user_management_enabled` flag, user is a TREAdmin, the workspace has Entra ID (AAD) Groups enabled and workspace version is > 2.2.0 ) [#4337](https://github.com/microsoft/AzureTRE/issues/4337)
@@ -26,6 +32,39 @@ BUG FIXES:
 * Fix malware scanning not enabled on AirLock export requests ([#4403](https://github.com/microsoft/AzureTRE/issues/4403))
 * Upgrade workspaces no longer causes VM recreation ([#4421](https://github.com/microsoft/AzureTRE/issues/4421))
 * Add dependency between the private endpoint on the storage account used by the Airlock processor function app and the function app itself. This is to try and fix ([#4433](https://github.com/microsoft/AzureTRE/issues/4433))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.5.7 |
+| core | 0.13.1 |
+| ui | 0.8.2 |
+| tre-shared-service-databricks-private-auth | 0.1.11 |
+| tre-shared-service-gitea | 1.1.5 |
+| tre-shared-service-sonatype-nexus | 3.3.3 |
+| tre-shared-service-firewall | 1.3.3 |
+| tre-shared-service-admin-vm | 0.5.3 |
+| tre-shared-service-certs | 0.7.4 |
+| tre-shared-service-airlock-notifier | 1.0.8 |
+| tre-shared-service-cyclecloud | 0.7.2 |
+| tre-workspace-airlock-import-review | 0.14.4 |
+| tre-workspace-base | 2.2.0 |
+| tre-workspace-unrestricted | 0.13.4 |
+| tre-workspace-service-gitea | 1.2.3 |
+| tre-workspace-service-mysql | 1.0.9 |
+| tre-workspace-service-health | 0.2.11 |
+| tre-workspace-service-openai | 1.0.6 |
+| tre-service-azureml | 0.9.2 |
+| tre-user-resource-aml-compute-instance | 0.5.11 |
+| tre-service-databricks | 1.0.10 |
+| tre-workspace-service-azuresql | 1.0.15 |
+| tre-service-guacamole | 0.12.10 |
+| tre-service-guacamole-export-reviewvm | 0.3.0 |
+| tre-service-guacamole-linuxvm | 1.3.0 |
+| tre-service-guacamole-import-reviewvm | 0.4.0 |
+| tre-service-guacamole-windowsvm | 1.3.0 |
+| tre-workspace-service-ohdsi | 0.3.3 |
 
 ## 0.21.0
 
