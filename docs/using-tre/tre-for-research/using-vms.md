@@ -70,4 +70,4 @@ You can also view any current operations by clicking on the bell in the top righ
 
 
 ## How to Contribute to our Documentation
-[Contribute to Documentation](https://microsoft.github.io/AzureTRE/coming-soon/)
+[Contribute to Documentation](https://microsoft.github.io/AzureTRE/latest/contributing/)
