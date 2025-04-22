@@ -69,7 +69,14 @@
       "title": "Enable Shutdown Schedule",
       "default": false,
       "description": "Enable automatic shutdown schedule for the VM"
-    }
+    },
+      "assign_to_another_user": {
+      "type": "boolean",
+      "title": "Assign this VM to another user",
+      "description": "Check this box if you want to assign this VM to another user.",
+      "default": false,
+      "updateable": false
+      }
   },
   "allOf": [
     {
@@ -129,6 +136,32 @@
         "required": [
           "shutdown_time",
           "shutdown_timezone"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "assign_to_another_user": {
+            "const": true
+          }
+        },
+        "required": [
+          "assign_to_another_user"
+        ]
+      },
+      "then": {
+        "properties": {
+          "owner_id": {
+            "type": "string",
+            "title": "Owner ID",
+            "description": "Enter the GUID of the user you want to assign this VM to.",
+            "default": false,
+            "updateable": false
+          }
+        },
+        "required": [
+          "owner_id"
         ]
       }
     }
