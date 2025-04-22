@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../assets/ms_icon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.12">
     
     
       
@@ -30,7 +30,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.4af4bdda.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.2afb09e1.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -3841,7 +3841,11 @@
 </tr>
 <tr>
 <td>AUTO_WORKSPACE_GROUP_CREATION</td>
-<td>Default of <code>false</code>. Setting this to true grants the <code>Group.ReadWrite.All</code> permission to the <em>Application Admin</em> identity. This identity can then create security groups aligned to each applciation role. Microsoft Entra ID licencing implications need to be considered as Group assignment is a <a href="https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/app-roles#roles-using-azure-ad-app-roles">premium feature</a>.</td>
+<td>Set to <code>false</code> by default. Setting this to <code>true</code> grants the <code>Group.ReadWrite.All</code> permission to the <em>Application Admin</em> identity. This identity can then create security groups aligned to each applciation role. Microsoft Entra ID licencing implications need to be considered as Group assignment is a premium feature. <a href="https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/app-roles#roles-using-azure-ad-app-roles">You can read mode about Group Assignment here</a>.</td>
+</tr>
+<tr>
+<td>AUTO_GRANT_WORKSPACE_CONSENT</td>
+<td>Default of <code>false</code>.  Setting this to <code>true</code> will remove the need for users to manually grant consent when creating new workspaces. The identity will be granted <code>Application.ReadWrite.All</code> and <code>DelegatedPermissionGrant.ReadWrite.All</code> permissions.</td>
 </tr>
 </tbody>
 </table>

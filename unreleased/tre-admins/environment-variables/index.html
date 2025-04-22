@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../assets/ms_icon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.12">
     
     
       
@@ -30,7 +30,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.4af4bdda.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.2afb09e1.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -3922,9 +3922,24 @@
 <td><code>ENABLE_CMK_ENCRYPTION</code></td>
 <td>Optional. Default is <code>false</code>, if set to <code>true</code> customer-managed key encryption will be enabled for all supported resources.</td>
 </tr>
+<tr>
+<td><code>AUTO_WORKSPACE_APP_REGISTRATION</code></td>
+<td>Set to <code>false</code> by default. Setting this to <code>true</code> grants the <code>Application.ReadWrite.All</code> and <code>Directory.Read.All</code> permission to the <em>Application Admin</em> identity. This identity is used to manage other Microsoft Entra ID applications that it owns, e.g. Workspaces. If you do not set this, the identity will have <code>Application.ReadWrite.OwnedBy</code> permission. <a href="../identities/application_admin/">Further information on Application Admin can be found here</a>.</td>
+</tr>
+<tr>
+<td><code>AUTO_WORKSPACE_GROUP_CREATION</code></td>
+<td>Set to <code>false</code> by default. Setting this to <code>true</code> grants the <code>Group.ReadWrite.All</code> permission to the <em>Application Admin</em> identity. This identity can then create security groups aligned to each applciation role. Microsoft Entra ID licencing implications need to be considered as Group assignment is a premium feature. <a href="https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/app-roles#roles-using-azure-ad-app-roles">You can read mode about Group Assignment here</a>.</td>
+</tr>
+<tr>
+<td><code>AUTO_GRANT_WORKSPACE_CONSENT</code></td>
+<td>Default of <code>false</code>.  Setting this to <code>true</code> will remove the need for users to manually grant consent when creating new workspaces. The identity will be granted <code>Application.ReadWrite.All</code> and <code>DelegatedPermissionGrant.ReadWrite.All</code> permissions.</td>
+</tr>
+<tr>
+<td><code>USER_MANAGEMENT_ENABLED</code></td>
+<td>If set to <code>true</code>, TRE Admins will be able to assign and de-assign users to workspaces via the UI (Requires Entra ID groups to be enabled on the workspace and the workspace template version to be 2.2.0 or greater).</td>
+</tr>
 </tbody>
 </table>
-<p>| <code>USER_MANAGEMENT_ENABLED</code> | If set to <code>true</code>, TRE Admins will be able to assign and de-assign users to workspaces via the UI (Requires Entra ID groups to be enabled on the workspace and the workspace template version to be 2.2.0 or greater). |</p>
 <h2 id="for-authentication-in-configyaml">For authentication in <code>/config.yaml</code></h2>
 <table>
 <thead>
