@@ -28,7 +28,7 @@ export const ResourceHistoryListItem: React.FunctionComponent<
         {isError ? (
           <>
             <Stack.Item styles={stackItemStyles} style={{ width: "80%" }}>
-              <Link onClick={() => setIsErrorPanelOpen(true)}>An error occurred, click to view the error details</Link>
+              <Link onClick={() => setIsErrorPanelOpen(true)}>An error occurred; click to view the error details</Link>
             </Stack.Item>
             <ErrorPanel
               errorMessage={props.val as string}
