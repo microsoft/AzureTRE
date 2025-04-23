@@ -111,6 +111,19 @@ resource "azurerm_virtual_network" "core" {
     name             = "AzureFirewallManagementSubnet"
     address_prefixes = [local.firewall_management_subnet_address_prefix]
   }
+
+  subnet {
+    name             = "AzurePrivateDnsResolverSubnet"
+    address_prefixes = [local.dns_resolver_subnet_address_prefix]
+    delegation {
+      name = "Microsoft.Network.dnsResolvers"
+      service_delegation {
+        actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
+        name    = "Microsoft.Network/dnsResolvers"
+      }
+    }
+  }
+
 }
 
 resource "azurerm_ip_group" "resource_processor" {

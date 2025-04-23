@@ -45,6 +45,10 @@ output "airlock_notification_subnet_id" {
   value = local.subnet_ids_map["AirlockNotifiactionSubnet"]
 }
 
+output "dns_resolver_subnet_id" {
+  value = local.subnet_ids_map["AzurePrivateDnsResolverSubnet"]
+}
+
 # DNS Zones
 
 output "azure_monitor_dns_zone_id" {

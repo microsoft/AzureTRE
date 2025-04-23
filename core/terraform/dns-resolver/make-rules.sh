@@ -2,6 +2,8 @@
 #
 # Generate a JSON object with the DNS rules for the private resolver
 #
+set -o errexit
+set -o pipefail
 
 cd $(dirname $(realpath $0))
 
