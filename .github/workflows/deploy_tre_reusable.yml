@@ -215,7 +215,7 @@ jobs:
         id: ci_cache_cr_login
         # will fail if this is a new env which is expected
         continue-on-error: true
-        run: az acr login --name "${{ secrets.CI_CACHE_ACR_NAME }}"
+        run: az acr login --name "${{ secrets.TEST_IGNORE }}"
 
       - name: Build new devcontainer
         env:
