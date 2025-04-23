@@ -57,10 +57,6 @@ function kv_add_network_exception() {
 }
 
 function kv_remove_network_exception() {
-  # If we have allowed access from a specific subnet, don't set or remove public access
-  if [[ -n ${ALLOWED_SUBNET_ID:-} ]]; then
-    return 0
-  fi
 
   # set up variables
   #

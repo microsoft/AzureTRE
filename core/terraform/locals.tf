@@ -62,7 +62,7 @@ locals {
   # key vault variables
   kv_name                          = "kv-${var.tre_id}"
   kv_public_network_access_enabled = true
-  kv_network_default_action        = var.enable_local_debugging ? "Allow" : "Deny"
+  kv_network_default_action        = "Allow" # Exception to allow public access during deployment. This will be changed to "Deny" in kv_remove_network_exception.sh
   kv_network_bypass                = "AzureServices"
   allowed_subnet_id                = var.allowed_subnet_id
 }
