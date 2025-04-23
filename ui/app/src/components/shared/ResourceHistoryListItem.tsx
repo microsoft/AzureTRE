@@ -1,8 +1,10 @@
-import { DefaultPalette, IStackItemStyles, Stack } from "@fluentui/react";
+import { DefaultPalette, IStackItemStyles, Stack, Link } from "@fluentui/react";
+import React from "react";
+import { ErrorPanel } from "./ErrorPanel";
 
 interface ResourceHistoryListItemProps {
-  header: String;
-  val: String;
+  header: string;
+  val: string;
 }
 
 export const ResourceHistoryListItem: React.FunctionComponent<
@@ -14,15 +16,31 @@ export const ResourceHistoryListItem: React.FunctionComponent<
       color: DefaultPalette.neutralSecondary,
     },
   };
+  const [isErrorPanelOpen, setIsErrorPanelOpen] = React.useState(false);
+  const isError = typeof props.val === "string" && (props.val.includes("Error:") || props.val.includes("error:"));
+
   return (
     <>
       <Stack wrap horizontal>
         <Stack.Item styles={stackItemStyles} style={{ width: "20%" }}>
           {props.header}
         </Stack.Item>
-        <Stack.Item styles={stackItemStyles} style={{ width: "80%" }}>
-          : {props.val}
-        </Stack.Item>
+        {isError ? (
+          <>
+            <Stack.Item styles={stackItemStyles} style={{ width: "80%" }}>
+              <Link onClick={() => setIsErrorPanelOpen(true)}>An error occurred; click to view the error details</Link>
+            </Stack.Item>
+            <ErrorPanel
+              errorMessage={props.val as string}
+              isOpen={isErrorPanelOpen}
+              onDismiss={() => setIsErrorPanelOpen(false)}
+            />
+          </>
+        ) : (
+          <Stack.Item styles={stackItemStyles} style={{ width: "80%" }}>
+            : {props.val}
+          </Stack.Item>
+        )}
       </Stack>
     </>
   );
