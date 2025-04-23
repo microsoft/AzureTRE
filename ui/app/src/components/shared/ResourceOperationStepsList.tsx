@@ -39,7 +39,7 @@ export const ResourceOperationStepsList: React.FunctionComponent<
               {isError ? (
                 <>
                   <Link onClick={() => setIsErrorPanelOpen(true)}>
-                    An error occurred, click to view the error details
+                    An error occurred; click to view the error details
                   </Link>
                   <ErrorPanel
                     errorMessage={step.message}
