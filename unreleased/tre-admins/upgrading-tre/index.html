@@ -3790,19 +3790,19 @@ The <code>git remote add</code> command is only necessary the first time you upg
 <p>If running commands manually, please ensure that you build and push the container images. Running <code>make tre-deploy</code> alone will update the infrastructure but not the container images. <code>make all</code> runs all the required commands.</p>
 </blockquote>
 <h2 id="deploying-a-specific-version-of-azure-tre">Deploying a specific version of Azure TRE</h2>
-<p>If you wish to upgrade or deploy a specific version, or unreleased version of Azure TRE and are using the <a href="https://github.com/Microsoft/AzureTRE-Deployment">Azure TRE deployment repository</a> you can change the value of <code>OSS_VERSION</code> in <code>.devcontainer/devcontainer.json</code>, for example:</p>
+<p>If you wish to upgrade or deploy a specific version, or unreleased version of Azure TRE and are using the <a href="https://github.com/Microsoft/AzureTRE-Deployment">Azure TRE deployment repository</a> you can change the value of <code>UPSTREAM_REPO_VERSION</code> in <code>.devcontainer/devcontainer.json</code>, for example:</p>
 <ul>
-<li><code>"OSS_VERSION": "v0.9.0"</code> (to use the specified tag; be sure to specify the complete tag name (prefixed with <code>v</code> and not the release name)</li>
-<li><code>"OSS_VERSION": "main"</code> (to use the latest code in the "main" branch)</li>
+<li><code>"UPSTREAM_REPO_VERSION": "v0.9.0"</code> (to use the specified tag; be sure to specify the complete tag name (prefixed with <code>v</code> and not the release name))</li>
+<li><code>"UPSTREAM_REPO_VERSION": "main"</code> (to use the latest code in the <code>main</code> branch)</li>
 <li><code>"OSS_VERSION": "1c6ff35ec9246e53b86e93b9da5b97911edc71c1"</code> (to use the code at the time of the commit identified by the hash)</li>
 </ul>
 <h2 id="deploying-a-fork-of-azure-tre">Deploying a fork of Azure TRE</h2>
-<p>If you wish to deploy the Azure TRE from a forked repository you can change the value of <code>OSS_REPO</code> in <code>.devcontainer/devcontainer.json</code>, for example:</p>
+<p>If you wish to deploy the Azure TRE from a forked repository you can change the values of <code>UPSTREAM_REPO</code> and <code>UPSTREAM_REPO_VERSION</code> in <code>.devcontainer/devcontainer.json</code>, for example, change:</p>
 <ul>
-<li><code>"OSS_REPO": "microsoft/AzureTRE"</code> (the default)</li>
-<li><code>"OSS_REPO": "myorg/AzureTRE"</code> (to point to fork of the Azure TRE in your GitHub organisation)</li>
+<li><code>"UPSTREAM_REPO": "microsoft/AzureTRE"</code> (the default)</li>
+<li><code>"UPSTREAM_REPO": "myorg/AzureTRE"</code> (to point to a fork of the Azure TRE in your GitHub organisation)</li>
 </ul>
-<p>When changing <code>OSS_REPO</code> ensure the <code>OSS_VERSION</code> variable refers to a GitHub ref on the repository fork.</p>
+<p>When changing <code>UPSTREAM_REPO</code> ensure the <code>UPSTREAM_REPO_VERSION</code> variable refers to a GitHub ref on your repository fork.</p>
 
 
 
