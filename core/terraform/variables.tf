@@ -256,6 +256,12 @@ variable "enable_dns_policy" {
   default     = false
 }
 
+variable "allowed_dns" {
+  type        = list(string)
+  description = "When DNS security policy is enabled this list of domains will be added to the allow list."
+  default     = []
+}
+
 variable "auto_grant_workspace_consent" {
   type        = bool
   description = "A boolean indicating if admin consent should be auto granted to the workspace"
