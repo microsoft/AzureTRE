@@ -64,5 +64,5 @@ locals {
   kv_public_network_access_enabled = true
   kv_network_default_action        = "Allow" # Exception to allow public access during deployment. This will be changed to "Deny" in kv_remove_network_exception.sh
   kv_network_bypass                = "AzureServices"
-  allowed_subnet_id                = var.allowed_subnet_id
+  private_agent_subnet_id                = var.private_agent_subnet_id
 }

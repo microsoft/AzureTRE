@@ -96,7 +96,7 @@ on: # yamllint disable-line rule:truthy
       EXTERNAL_KEY_STORE_ID:
         description: ""
         required: false
-      ALLOWED_SUBNET_ID:
+      PRIVATE_AGENT_SUBNET_ID:
         description: ""
         required: false
 
@@ -258,7 +258,7 @@ jobs:
           ENABLE_CMK_ENCRYPTION: ${{ vars.ENABLE_CMK_ENCRYPTION }}
           ENCRYPTION_KV_NAME: ${{ secrets.ENCRYPTION_KV_NAME }}
           EXTERNAL_KEY_STORE_ID: ${{ secrets.EXTERNAL_KEY_STORE_ID }}
-          ALLOWED_SUBNET_ID: ${{ secrets.ALLOWED_SUBNET_ID }}
+          PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}
 
       - name: ACR Login
         # failure in the first attempt indicates a new ACR, so we need to try again after it's been created
@@ -375,7 +375,7 @@ jobs:
           ENABLE_CMK_ENCRYPTION: ${{ vars.ENABLE_CMK_ENCRYPTION }}
           ENCRYPTION_KV_NAME: ${{ secrets.ENCRYPTION_KV_NAME }}
           EXTERNAL_KEY_STORE_ID: ${{ secrets.EXTERNAL_KEY_STORE_ID }}
-          ALLOWED_SUBNET_ID: ${{ secrets.ALLOWED_SUBNET_ID }}
+          PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command

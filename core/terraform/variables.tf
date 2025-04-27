@@ -262,7 +262,7 @@ variable "user_management_enabled" {
   default     = false
 }
 
-variable "allowed_subnet_id" {
+variable "private_agent_subnet_id" {
   description = "Subnet ID of the github runners"
   type        = string
   default     = ""

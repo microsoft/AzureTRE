@@ -22,9 +22,9 @@ function kv_add_network_exception() {
 
   # If we have allowed access from a specific subnet, don't set public access and allow access from the subnet
   # This logic is needed to avoid error, if there is a change in subnet after the initial deployment
-  if [[ -n ${ALLOWED_SUBNET_ID:-} ]]; then
+  if [[ -n ${PRIVATE_AGENT_SUBNET_ID:-} ]]; then
     echo -e "\nAdding network rule to allow subnet access for key vault $KV_NAME..."
-    az keyvault network-rule add --name "$KV_NAME" --subnet "$ALLOWED_SUBNET_ID" --output none
+    az keyvault network-rule add --name "$KV_NAME" --subnet "$PRIVATE_AGENT_SUBNET_ID" --output none
   else
     echo -e "\nSetting key vault $KV_NAME to public access for deployment..."
     az keyvault update --name "$KV_NAME" --default-action Allow --output none
