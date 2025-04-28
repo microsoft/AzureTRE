@@ -269,7 +269,7 @@ jobs:
             az acr login --name "${{ secrets.CI_CACHE_ACR_NAME }}" && ec=0 && break || ec="$?" && sleep 10
           done
           if [ "$ec" != 0 ]; then
-            echo "::error::Failed to login to ACR after 3 attempt. Make sure to run the pipleline on the main branch first."
+            echo "::error::Failed to login to ACR after 3 attempts. Make sure to run the pipleline on the main branch first."
           fi
           # shellcheck disable=SC2242
           (exit "$ec")
