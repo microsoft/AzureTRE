@@ -30,6 +30,11 @@ data "azurerm_private_dns_zone" "azurewebsites" {
   resource_group_name = local.core_resource_group_name
 }
 
+data "azurerm_private_dns_zone" "file" {
+  name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.file.core.windows.net"]
+  resource_group_name = local.core_resource_group_name
+}
+
 data "azurerm_storage_account" "gitea" {
   name                = local.storage_account_name
   resource_group_name = local.core_resource_group_name
