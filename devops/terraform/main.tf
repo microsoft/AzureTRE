@@ -62,7 +62,7 @@ resource "azurerm_container_registry" "shared_acr" {
   name                = var.acr_name
   resource_group_name = azurerm_resource_group.mgmt.name
   location            = azurerm_resource_group.mgmt.location
-  sku                 = var.acr_sku != null ? var.acr_sku : (var.enable_cmk_encryption ? "Premium" : "Standard")
+  sku                 = var.acr_sku != "" ? var.acr_sku : (var.enable_cmk_encryption ? "Premium" : "Standard")
   admin_enabled       = true
 
   dynamic "identity" {
@@ -114,7 +114,7 @@ EOF
 
 # Key Vault for encryption keys
 resource "azurerm_key_vault" "encryption_kv" {
-  count                       = var.enable_cmk_encryption && var.external_key_store_id == null ? 1 : 0
+  count                       = var.enable_cmk_encryption && var.external_key_store_id == "" ? 1 : 0
   name                        = var.encryption_kv_name
   resource_group_name         = azurerm_resource_group.mgmt.name
   location                    = azurerm_resource_group.mgmt.location
@@ -128,7 +128,7 @@ resource "azurerm_key_vault" "encryption_kv" {
 }
 
 resource "azurerm_role_assignment" "current_user_to_key_vault_crypto_officer" {
-  count                = var.enable_cmk_encryption && var.external_key_store_id == null ? 1 : 0
+  count                = var.enable_cmk_encryption && var.external_key_store_id == "" ? 1 : 0
   scope                = azurerm_key_vault.encryption_kv[0].id
   role_definition_name = "Key Vault Crypto Officer"
   principal_id         = data.azurerm_client_config.current.object_id
