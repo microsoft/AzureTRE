@@ -24,8 +24,15 @@ variable "deploy_fhir" {
 }
 
 variable "fhir_kind" {
-  type        = string
+  type    = string
+  default = "R4"
+
   description = "FHIR version that will be deployed."
+
+  validation {
+    condition     = var.fhir_kind == "" || contains(["R4", "STU3"], var.fhir_kind)
+    error_message = "fhir_kind must be either 'R4' or 'STU 3' or left empty."
+  }
 }
 
 variable "deploy_dicom" {
