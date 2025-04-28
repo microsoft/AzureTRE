@@ -63,8 +63,6 @@ resource "azurerm_private_endpoint" "blobpe" {
     is_manual_connection           = false
     subresource_names              = ["Blob"]
   }
-
-
 }
 
 resource "azurerm_private_endpoint" "filepe" {
