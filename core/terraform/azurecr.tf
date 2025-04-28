@@ -17,8 +17,4 @@ resource "azurerm_private_endpoint" "acrpe" {
     is_manual_connection           = false
     subresource_names              = ["registry"]
   }
-
-  depends_on = [
-    azurerm_private_endpoint.sbpe
-  ]
 }
