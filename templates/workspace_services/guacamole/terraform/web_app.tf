@@ -44,6 +44,10 @@ resource "azurerm_linux_web_app" "guacamole" {
     WORKSPACE_ID               = var.workspace_id
     MANAGED_IDENTITY_CLIENT_ID = azurerm_user_assigned_identity.guacamole_id.client_id
 
+    # Needed for Azure SDK to authenticate with User Assigned Managed Identity
+    AZURE_CLIENT_ID = azurerm_user_assigned_identity.guacamole_id.client_id
+    AZURE_TENANT_ID = data.azurerm_client_config.current.tenant_id
+
     APPLICATIONINSIGHTS_CONNECTION_STRING             = data.azurerm_application_insights.ws.connection_string
     APPLICATIONINSIGHTS_INSTRUMENTATION_LOGGING_LEVEL = "INFO"
 
