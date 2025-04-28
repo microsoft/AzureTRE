@@ -25,6 +25,15 @@ resource "azurerm_healthcare_fhir_service" "fhir" {
     type = "SystemAssigned"
   }
 
+  timeouts {
+    create = "15m"
+    delete = "15m"
+  }
+
+  depends_on = [
+    azurerm_healthcare_workspace.healthcare_workspace
+  ]
+
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -39,6 +48,15 @@ resource "azurerm_healthcare_dicom_service" "dicom" {
   identity {
     type = "SystemAssigned"
   }
+
+  timeouts {
+    create = "15m"
+    delete = "15m"
+  }
+
+  depends_on = [
+    azurerm_healthcare_workspace.healthcare_workspace
+  ]
 
   lifecycle { ignore_changes = [tags] }
 }
