@@ -156,7 +156,7 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   administrator_login    = local.postgres_admin_username
   administrator_password = azurerm_key_vault_secret.postgres_admin_password.value
   storage_mb             = var.postgres_storage_size_in_mb
-  zone                   = "1"
+  zone                   = "3"
   tags                   = local.tre_workspace_service_tags
 
   timeouts {
@@ -221,6 +221,10 @@ resource "terraform_data" "deployment_ohdsi_webapi_init" {
 
   depends_on = [
     terraform_data.postgres_core_dns_link,
-    azurerm_subnet_network_security_group_association.postgres
+    azurerm_subnet_network_security_group_association.postgres,
+    azurerm_key_vault_secret.postgres_webapi_admin_password,
+    azurerm_key_vault_secret.postgres_webapi_app_password
   ]
 }
+
+    
