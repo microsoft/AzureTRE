@@ -28,7 +28,8 @@ export const ResourceOperationStepsList: React.FunctionComponent<
           const [isErrorPanelOpen, setIsErrorPanelOpen] = React.useState(false);
           const isError =
             typeof step.message === "string" &&
-            (step.message.includes("Error:") || step.message.includes("error:"));
+            (step.message.toLowerCase().includes("error:") ||
+              step.message.toLowerCase().includes("error message:"))
 
           return (
             <Stack.Item styles={stackItemStyles} key={i}>

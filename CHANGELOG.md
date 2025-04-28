@@ -6,6 +6,7 @@ ENHANCEMENTS:
 * Format the error message in the Operations panel for enhanced readability ([#4493](https://github.com/microsoft/AzureTRE/issues/4493))
 
 BUG FIXES:
+* Some error messages not displayed in side panel ([#4502](https://github.com/microsoft/AzureTRE/issues/4502))
 
 ## 0.22.0 (April 20, 2025)
 

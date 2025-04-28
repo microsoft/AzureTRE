@@ -19,7 +19,7 @@ export const ResourceOperationListItem: React.FunctionComponent<
   const [isErrorPanelOpen, setIsErrorPanelOpen] = React.useState(false);
 
   // Check if the value is an error message
-  const isError = props.val.includes("Error:") || props.val.includes("error:");
+  const isError = typeof props.val === "string" && (props.val.toLowerCase().includes("error:") || props.val.toLowerCase().includes("error message:"));
 
   return (
     <>

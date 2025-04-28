@@ -17,7 +17,7 @@ export const ResourceHistoryListItem: React.FunctionComponent<
     },
   };
   const [isErrorPanelOpen, setIsErrorPanelOpen] = React.useState(false);
-  const isError = typeof props.val === "string" && (props.val.includes("Error:") || props.val.includes("error:"));
+  const isError = typeof props.val === "string" && (props.val.toLowerCase().includes("error:") || props.val.toLowerCase().includes("error message:"));
 
   return (
     <>
