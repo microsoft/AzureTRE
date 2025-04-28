@@ -217,7 +217,14 @@
     ],
     "upgrade": [
       {
-        "stepId": "main"
+        "stepId": "main",
+        "properties": [
+          {
+            "name": "log_analytics_workspace_name",
+            "type": "string",
+            "value": "{{ resource.parent.properties.log_analytics_workspace_name }}"
+          }
+        ]
       },
       {
         "stepId": "260421b3-7308-491f-b531-e007cdc0ff47",

@@ -259,7 +259,6 @@ install:
         - name: workspace_researchers_group_id
         - name: workspace_airlock_managers_group_id
 
-
 upgrade:
   - terraform:
       description: "Upgrade workspace"
@@ -313,7 +312,6 @@ upgrade:
         - name: workspace_owners_group_id
         - name: workspace_researchers_group_id
         - name: workspace_airlock_managers_group_id
-
   - az:
       description: "Set Azure Cloud Environment"
       arguments:
