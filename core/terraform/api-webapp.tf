@@ -118,7 +118,6 @@ resource "azurerm_linux_web_app" "api" {
 }
 
 resource "azapi_update_resource" "api_vnet_container_pull_routing" {
-  count       = var.disable_acr_public_access ? 1 : 0
   resource_id = azurerm_linux_web_app.api.id
   type        = "Microsoft.Web/sites@2022-09-01"
 
@@ -134,7 +133,6 @@ resource "azapi_update_resource" "api_vnet_container_pull_routing" {
 }
 
 resource "azapi_resource_action" "restart_api_webapp" {
-  count       = var.disable_acr_public_access ? 1 : 0
   type        = "Microsoft.Web/sites@2022-09-01"
   resource_id = azurerm_linux_web_app.api.id
   method      = "POST"
