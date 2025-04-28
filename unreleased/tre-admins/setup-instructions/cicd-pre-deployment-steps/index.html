@@ -1055,6 +1055,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#run-cicd-on-main-branch-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run CI/CD on Main Branch First
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3875,6 +3884,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#run-cicd-on-main-branch-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run CI/CD on Main Branch First
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4141,6 +4159,8 @@ az account set --subscription &lt;subscription ID&gt;
 <p><img alt="Setup env in pipeline" src="../../../assets/using-tre/pipelines_set_env.png" /></p>
 <h3 id="deploy-the-tre-using-the-workflow">Deploy the TRE using the workflow</h3>
 <p>With all the repository secrets set, you can trigger a workflow run by pushing to develop/main of your repo, or by dispatching the workflow manually.</p>
+<h3 id="run-cicd-on-main-branch-first">Run CI/CD on Main Branch First</h3>
+<p>It is important to run the CI/CD pipeline on the main branch first. This will create an environment that represents the current main branch. It will also define the <code>CI_CACHE_ACR_NAME</code> used for caching.</p>
 <h2 id="next-steps">Next steps</h2>
 <ul>
 <li><a href="../cicd-deployment/">Deploying Azure TRE in Pipelines</a></li>
