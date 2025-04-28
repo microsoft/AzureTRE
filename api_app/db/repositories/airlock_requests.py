@@ -115,7 +115,7 @@ class AirlockRequestRepository(BaseRepository):
 
         return airlock_request
 
-    async def get_airlock_requests(self, workspace_id: str, creator_user_id: Optional[str] = None, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, 
+    async def get_airlock_requests(self, workspace_id: str, creator_user_id: Optional[str] = None, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None,
                                    order_by: Optional[str] = None, order_ascending=True, from_date: Optional[datetime] = None, to_date: Optional[datetime] = None) -> List[AirlockRequest]:
         query = self.airlock_requests_query() + f' WHERE c.workspaceId = "{workspace_id}"'
 
@@ -131,17 +131,17 @@ class AirlockRequestRepository(BaseRepository):
         from_date_timestamp = None
         if from_date:
             from_date_timestamp = from_date.timestamp()
-            query += ' AND c.createdWhen>=@from_date_timestamp'
+            query += ' AND c.updatedWhen>=@from_date_timestamp'
         to_date_timestamp = None
         if to_date:
             to_date_timestamp = to_date.timestamp()
-            query += ' AND c.createdWhen<=@to_date_timestamp'
+            query += ' AND c.updatedWhen<=@to_date_timestamp'
 
         # optional sorting
         if order_by:
             query += ' ORDER BY c.' + order_by
             query += ' ASC' if order_ascending else ' DESC'
-        
+
         parameters = [
             {"name": "@user_id", "value": creator_user_id},
             {"name": "@status", "value": status},
@@ -266,10 +266,10 @@ class AirlockRequestRepository(BaseRepository):
         if triage_level_code in days_to_add_map:
             days_to_add = days_to_add_map[triage_level_code]
 
-        while days_to_add > 0:	
+        while days_to_add > 0:
             next_day = next_day + timedelta(days=1)
             is_weekend = next_day.weekday() == 5 or next_day.weekday() == 6
-            
+
             # If next_day is an UK holiday or Saturday or Sunday, we ignore this day
             if non_working_days != []:
                 if next_day.strftime("%Y-%m-%d") not in non_working_days and not is_weekend:
@@ -277,7 +277,7 @@ class AirlockRequestRepository(BaseRepository):
             else:
                 if not is_weekend:
                     days_to_add = days_to_add - 1
-            
+
         due_date = next_day
         due_date_timestamp = due_date.timestamp()
         logging.info(f"due_date -----> {due_date}, {due_date_timestamp}")
@@ -285,15 +285,15 @@ class AirlockRequestRepository(BaseRepository):
 
     async def set_triage_level_and_review_due_date(self, request: AirlockRequest, triage_level_input: str) -> AirlockRequest:
         request.triageLevel = triage_level_input
-        
+
         # We need only the substring L1, L2, etc.
         triage_level_split = request.triageLevel.split(":")
         triage_leve_code = triage_level_split[0]
         request.triageLevelCode = triage_leve_code
         # Export requests will have a due date for reviewing.
         logging.info(f"set_triage_level_and_review_due_date -----> {request.createdWhen}, {triage_leve_code}")
-        request.exportReviewDueDate = self._calculate_export_review_due_date(request.createdWhen, triage_leve_code)        
-        
+        request.exportReviewDueDate = self._calculate_export_review_due_date(request.createdWhen, triage_leve_code)
+
         await self.update_item(request)
         return request
 
