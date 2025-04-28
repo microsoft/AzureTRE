@@ -1,5 +1,4 @@
 resource "azurerm_private_endpoint" "acrpe" {
-  count               = var.disable_acr_public_access ? 1 : 0
   name                = "pe-${data.azurerm_container_registry.mgmt_acr.name}-${var.tre_id}"
   location            = var.location
   resource_group_name = var.mgmt_resource_group_name
