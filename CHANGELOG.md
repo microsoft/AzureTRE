@@ -3,6 +3,7 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 ENHANCEMENTS:
+* Add ability to pass values to install stage on pipleine [#4451](https://github.com/microsoft/AzureTRE/pull/4451)
 * Format the error message in the Operations panel for enhanced readability ([#4493](https://github.com/microsoft/AzureTRE/issues/4493))
 
 BUG FIXES:
