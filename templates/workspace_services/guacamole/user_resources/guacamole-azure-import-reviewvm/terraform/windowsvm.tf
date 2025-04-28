@@ -1,3 +1,19 @@
+resource "null_resource" "nic_destroy_delay" {
+  # Preventing the following error:
+  # Error: Delete: unexpected status 400 (400 Bad Request) with error: NicReservedForAnotherVm: Nic(s)
+  #        in request is reserved for another Virtual Machine for 180 seconds.
+  #        Please provide another nic(s) or retry after 180 seconds. Reserved
+
+  triggers = {
+    nic_id = azurerm_network_interface.internal.id
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = "sleep 180"
+  }
+}
+
 resource "azurerm_network_interface" "internal" {
   name                = "internal-nic-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
