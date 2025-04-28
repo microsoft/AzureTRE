@@ -25,7 +25,7 @@ resource "terraform_data" "deployment_atlas_security" {
       WEB_API_URL                   = local.ohdsi_webapi_url
     }
 
-    command = "../scripts/atlas_security.sh"
+    command = "sleep 90 && ../scripts/atlas_security.sh"
   }
 
   depends_on = [
