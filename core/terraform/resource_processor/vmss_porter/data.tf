@@ -29,11 +29,8 @@ data "template_file" "cloudconfig" {
     azure_environment                                = local.azure_environment
     aad_authority_url                                = module.terraform_azurerm_environment_configuration.active_directory_endpoint
     microsoft_graph_fqdn                             = regex("(?:(?P<scheme>[^:/?#]+):)?(?://(?P<fqdn>[^/?#:]*))?", module.terraform_azurerm_environment_configuration.microsoft_graph_endpoint).fqdn
-    firewall_sku                                     = var.firewall_sku
     logging_level                                    = var.logging_level
     rp_bundle_values                                 = local.rp_bundle_values_formatted
-    enable_cmk_encryption                            = var.enable_cmk_encryption
-    key_store_id                                     = var.key_store_id
   }
 }
 
