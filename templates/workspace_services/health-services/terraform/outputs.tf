@@ -3,11 +3,11 @@ output "healthcare_workspace_id" {
 }
 
 output "fhir_url" {
-  value = var.deploy_fhir ? "https://hs${local.service_resource_name_suffix}-fhir${local.service_resource_name_suffix}.fhir.azurehealthcareapis.com" : ""
+  value = var.deploy_fhir ? "https://hs${local.service_resource_name_suffix}-fhir${local.service_resource_name_suffix}.fhir.azurehealthcareapis.com" : "not-deployed"
 }
 
 output "dicom_url" {
-  value = var.deploy_dicom ? "https://hs${local.service_resource_name_suffix}-dicom${local.service_resource_name_suffix}.dicom.azurehealthcareapis.com" : ""
+  value = var.deploy_dicom ? "https://hs${local.service_resource_name_suffix}-dicom${local.service_resource_name_suffix}.dicom.azurehealthcareapis.com" : "not-deployed"
 }
 
 output "workspace_address_space" {
