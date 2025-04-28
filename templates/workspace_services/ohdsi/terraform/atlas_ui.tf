@@ -66,6 +66,10 @@ resource "azurerm_linux_web_app" "atlas_ui" {
     }
   }
 
+  identity {
+    type = "SystemAssigned"
+  }
+
   depends_on = [
     azurerm_storage_share_file.config_local,
   ]
