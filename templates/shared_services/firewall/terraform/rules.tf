@@ -15,8 +15,8 @@ resource "azurerm_firewall_policy_rule_collection_group" "dynamic_network" {
         for_each = network_rule_collection.value.rules
 
         content {
-          name             = rule.value.name
-          description      = rule.value.description
+          name = rule.value.name
+          # description      = rule.value.description
           source_addresses = try(rule.value.source_addresses, [])
           source_ip_groups = concat(
             try(rule.value.source_ip_group_ids, []),

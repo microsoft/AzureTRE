@@ -108,10 +108,6 @@ module "firewall" {
   shared_services_ip_group_id    = module.network.shared_services_ip_group_id
   web_app_ip_group_id            = module.network.web_app_ip_group_id
   airlock_processor_ip_group_id  = module.network.airlock_processor_ip_group_id
-
-  depends_on = [
-    module.network,
-  ]
 }
 
 module "appgateway" {

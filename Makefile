@@ -92,12 +92,6 @@ push-resource-processor-vm-porter-image:
 push-airlock-processor:
 	$(call push_image,"airlock-processor","${MAKEFILE_DIR}/airlock_processor/_version.py")
 
-migrate-firewall-state:
-	$(call target_title, "Preparing terraform state") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
-	&& pushd ${MAKEFILE_DIR}/templates/shared_services/firewall/terraform > /dev/null && ${MAKEFILE_DIR}/core/terraform/firewall/remove_state.sh && popd > /dev/null \
-	&& pushd ${MAKEFILE_DIR}/core/terraform > /dev/null && ${MAKEFILE_DIR}/core/terraform/firewall/import_state.sh && popd > /dev/null
-
 
 deploy-core: tre-start
 	$(call target_title, "Deploying TRE") \
@@ -311,7 +305,6 @@ deploy-shared-service:
 	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh $${PROPS}
 
 firewall-install:
-	$(MAKE) migrate-firewall-state
 	. ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& $(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
 	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
