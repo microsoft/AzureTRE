@@ -110,10 +110,6 @@ parameters:
     default: false
   - name: arm_environment
     type: string
-  - name: disable_acr_public_access
-    env: DISABLE_ACR_PUBLIC_ACCESS
-    type: boolean
-    default: false
 
 outputs:
   - name: authentication_callback_uri
@@ -158,7 +154,6 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
-        disable_acr_public_access: ${bundle.parameters.disable_acr_public_access}
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -193,7 +188,6 @@ upgrade:
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
-        disable_acr_public_access: ${bundle.parameters.disable_acr_public_access}
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -228,7 +222,6 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
-        disable_acr_public_access: ${bundle.parameters.disable_acr_public_access}
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
