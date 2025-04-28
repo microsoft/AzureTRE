@@ -148,3 +148,11 @@ resource "azurerm_dev_test_global_vm_shutdown_schedule" "shutdown_schedule" {
     enabled = false
   }
 }
+
+resource "azurerm_role_assignment" "grant_guacamole_read_secret" {
+  scope                = data.azurerm_key_vault.ws.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = data.azurerm_user_assigned_identity.guacamole_id.principal_id
+
+  skip_service_principal_aad_check = true
+}
