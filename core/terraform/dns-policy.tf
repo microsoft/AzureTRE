@@ -1,5 +1,5 @@
 locals {
-  allowedDomains = sort(distinct(concat(tolist(jsondecode(file("${path.module}/allowed-dns.json"))),var.allowed_dns)))
+  allowedDomains = sort(distinct(concat(tolist(jsondecode(file("${path.module}/allowed-dns.json"))), var.allowed_dns)))
   # Maximum of 100 domains per rule, so split into sub-arrays
   numRules          = floor((length(local.allowedDomains) + 100) / 100)
   dnsResolverApiVer = "2023-07-01-preview"
