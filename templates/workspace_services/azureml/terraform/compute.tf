@@ -54,7 +54,7 @@ resource "azapi_resource" "compute_cluster" {
           id = azurerm_subnet.aml.id
         }
         vmPriority = "Dedicated"
-        vmSize     = "Standard_DS2_v2"
+        vmSize     = "Standard_DS2_v3"
       }
     }
   })
