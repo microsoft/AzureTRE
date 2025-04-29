@@ -1,3 +1,14 @@
+resource "null_resource" "nic_destroy_delay" {
+  triggers = {
+    nic_id = azurerm_network_interface.internal.id
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = "sleep 180"
+  }
+}
+
 resource "azurerm_network_interface" "internal" {
   name                = "internal-nic-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
