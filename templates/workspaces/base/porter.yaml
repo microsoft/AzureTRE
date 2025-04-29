@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.2.0
+version: 2.3.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -86,6 +86,10 @@ parameters:
       "The client secret of the workspace in the identity provider. This value is typically provided to you
       when you create the ws application"
     default: ""
+  - name: ui_client_id
+    type: string
+    default: ""
+    description: "The client ID of the UI"
   - name: scope_id
     type: string
     default: ""
@@ -129,6 +133,10 @@ parameters:
     type: string
     default: "GRS"
     description: "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
+  - name: auto_grant_workspace_consent
+    type: boolean
+    default: true
+    description: "Setting this to `true` will prevent the need for users to manually grant consent to new workspaces"
   - name: enable_airlock_malware_scanning
     type: boolean
     default: false
@@ -211,6 +219,7 @@ install:
         workspace_owner_object_id: ${ bundle.parameters.workspace_owner_object_id }
         client_id: ${ bundle.parameters.client_id }
         client_secret: ${ bundle.parameters.client_secret }
+        ui_client_id: ${ bundle.parameters.ui_client_id }
         scope_id: ${ bundle.parameters.scope_id }
         sp_id: ${ bundle.parameters.sp_id }
         app_role_id_workspace_owner: ${ bundle.parameters.app_role_id_workspace_owner }
@@ -223,6 +232,7 @@ install:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
+        auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
         enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
         airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
@@ -262,6 +272,7 @@ upgrade:
         workspace_owner_object_id: ${ bundle.parameters.workspace_owner_object_id }
         client_id: ${ bundle.parameters.client_id }
         client_secret: ${ bundle.parameters.client_secret }
+        ui_client_id: ${ bundle.parameters.ui_client_id }
         scope_id: ${ bundle.parameters.scope_id }
         sp_id: ${ bundle.parameters.sp_id }
         app_role_id_workspace_owner: ${ bundle.parameters.app_role_id_workspace_owner }
@@ -274,6 +285,7 @@ upgrade:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
+        auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
         enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
         airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
@@ -337,6 +349,7 @@ uninstall:
         workspace_owner_object_id: ${ bundle.parameters.workspace_owner_object_id }
         client_id: ${ bundle.parameters.client_id }
         scope_id: ${ bundle.parameters.scope_id }
+        ui_client_id: ${ bundle.parameters.ui_client_id }
         sp_id: ${ bundle.parameters.sp_id }
         app_role_id_workspace_owner: ${ bundle.parameters.app_role_id_workspace_owner }
         app_role_id_workspace_researcher: ${ bundle.parameters.app_role_id_workspace_researcher }
@@ -348,6 +361,7 @@ uninstall:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
+        auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
         enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
         airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
