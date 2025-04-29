@@ -7,6 +7,7 @@ ENHANCEMENTS:
 * Format the error message in the Operations panel for enhanced readability ([#4493](https://github.com/microsoft/AzureTRE/issues/4493))
 
 BUG FIXES:
+* Letsencrypt.yml fails with "Invalid reference in variable validation" ([#4506](https://github.com/microsoft/AzureTRE/4506))
 
 ## 0.22.0 (April 20, 2025)
 
