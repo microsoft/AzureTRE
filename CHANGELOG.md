@@ -8,6 +8,7 @@ ENHANCEMENTS:
 * Modify the AML workspace service so it does not use local authentication keys for storage access ([#4341](https://github.com/microsoft/AzureTRE/issues/4341))
 
 BUG FIXES:
+* Letsencrypt.yml fails with "Invalid reference in variable validation" ([#4506](https://github.com/microsoft/AzureTRE/4506))
 
 ## 0.22.0 (April 20, 2025)
 
