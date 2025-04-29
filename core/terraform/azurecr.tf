@@ -1,7 +1,7 @@
 resource "azurerm_private_endpoint" "acrpe" {
   name                = "pe-${data.azurerm_container_registry.mgmt_acr.name}-${var.tre_id}"
   location            = var.location
-  resource_group_name = var.mgmt_resource_group_name
+  resource_group_name = azurerm_resource_group.core.name
   subnet_id           = module.network.shared_subnet_id
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
