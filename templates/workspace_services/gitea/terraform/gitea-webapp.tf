@@ -113,7 +113,6 @@ resource "azurerm_linux_web_app" "gitea" {
 }
 
 resource "azapi_update_resource" "gitea_vnet_container_pull_routing" {
-  count       = var.disable_acr_public_access ? 1 : 0
   resource_id = azurerm_linux_web_app.gitea.id
   type        = "Microsoft.Web/sites@2022-09-01"
 
@@ -129,7 +128,6 @@ resource "azapi_update_resource" "gitea_vnet_container_pull_routing" {
 }
 
 resource "azapi_resource_action" "restart_gitea_webapp" {
-  count       = var.disable_acr_public_access ? 1 : 0
   type        = "Microsoft.Web/sites@2022-09-01"
   resource_id = azurerm_linux_web_app.gitea.id
   method      = "POST"

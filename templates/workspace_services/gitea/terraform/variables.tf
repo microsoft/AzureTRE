@@ -34,8 +34,3 @@ variable "enable_cmk_encryption" {
 variable "key_store_id" {
   type = string
 }
-variable "disable_acr_public_access" {
-  type        = bool
-  description = "A boolean indicating if ACR public access should be disabled"
-  default     = false
-}

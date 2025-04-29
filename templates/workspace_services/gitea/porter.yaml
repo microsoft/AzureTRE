@@ -72,10 +72,6 @@ parameters:
   - name: key_store_id
     type: string
     default: ""
-  - name: disable_acr_public_access
-    env: DISABLE_ACR_PUBLIC_ACCESS
-    type: boolean
-    default: false
 
 mixins:
   - exec
@@ -118,7 +114,6 @@ install:
         sql_sku: ${ bundle.parameters.sql_sku }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
-        disable_acr_public_access: ${bundle.parameters.disable_acr_public_access}
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -146,7 +141,6 @@ upgrade:
         sql_sku: ${ bundle.parameters.sql_sku }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
-        disable_acr_public_access: ${bundle.parameters.disable_acr_public_access}
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -174,7 +168,6 @@ uninstall:
         sql_sku: ${ bundle.parameters.sql_sku }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
-        disable_acr_public_access: ${bundle.parameters.disable_acr_public_access}
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
