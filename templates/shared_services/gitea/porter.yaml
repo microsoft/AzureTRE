@@ -54,10 +54,6 @@ parameters:
   - name: sql_sku
     type: string
     default: "B | 4GB 2vCores"
-  - name: disable_acr_public_access
-    env: DISABLE_ACR_PUBLIC_ACCESS
-    type: boolean
-    default: false
 
 mixins:
   - terraform:
@@ -97,7 +93,6 @@ install:
         acr_name: ${ bundle.parameters.mgmt_acr_name }
         arm_environment: ${ bundle.parameters.arm_environment }
         sql_sku: ${ bundle.parameters.sql_sku }
-        disable_acr_public_access: ${bundle.parameters.disable_acr_public_access}
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -121,7 +116,6 @@ upgrade:
         acr_name: ${ bundle.parameters.mgmt_acr_name }
         arm_environment: ${ bundle.parameters.arm_environment }
         sql_sku: ${ bundle.parameters.sql_sku }
-        disable_acr_public_access: ${bundle.parameters.disable_acr_public_access}
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -145,7 +139,6 @@ uninstall:
         acr_name: ${ bundle.parameters.mgmt_acr_name }
         arm_environment: ${ bundle.parameters.arm_environment }
         sql_sku: ${ bundle.parameters.sql_sku }
-        disable_acr_public_access: ${bundle.parameters.disable_acr_public_access}
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
