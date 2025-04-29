@@ -9,6 +9,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Letsencrypt.yml fails with "Invalid reference in variable validation" ([#4506](https://github.com/microsoft/AzureTRE/4506))
+* Intermittent management storage account access failure during core deployment ([#4505](https://github.com/microsoft/AzureTRE/4505))
 
 ## 0.22.0 (April 20, 2025)
 
