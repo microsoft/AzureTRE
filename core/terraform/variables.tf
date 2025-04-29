@@ -255,9 +255,3 @@ variable "user_management_enabled" {
   description = "Is the Entra ID user management feature enabled (requires a workspace with Entra ID groups enabled, default to false)?"
   default     = false
 }
-
-variable "disable_acr_public_access" {
-  type        = bool
-  description = "If true, disables public access to the ACR"
-  default     = false
-}
