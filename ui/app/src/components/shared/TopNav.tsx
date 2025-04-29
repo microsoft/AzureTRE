@@ -1,5 +1,5 @@
 import React from "react";
-import { getTheme, Icon, mergeStyles, Stack } from "@fluentui/react";
+import { getTheme, Icon, mergeStyles, Stack, Image, ImageFit } from "@fluentui/react";
 import { Link } from "react-router-dom";
 import { UserMenu } from "./UserMenu";
 import { NotificationPanel } from "./notifications/NotificationPanel";
@@ -11,15 +11,12 @@ export const TopNav: React.FunctionComponent = () => {
         <Stack horizontal>
           <Stack.Item grow={100}>
             <Link to="/" className="tre-home-link">
-              <Icon
-                iconName="TestBeakerSolid"
-                style={{
-                  marginLeft: "10px",
-                  marginRight: "10px",
-                  verticalAlign: "middle",
-                }}
+              <Image
+                src="/images/SPECTRE_HD_Logo.jpg"
+                height={50}
+                imageFit={ImageFit.contain}
+                styles={{ root: { marginLeft: 10, marginRight: 10, verticalAlign: "middle" } }}
               />
-              <h5 style={{ display: "inline" }}>Azure TRE</h5>
             </Link>
           </Stack.Item>
           <Stack.Item>
