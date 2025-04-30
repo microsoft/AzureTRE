@@ -31,6 +31,21 @@ resource "azurerm_storage_account" "stg" {
   infrastructure_encryption_enabled = true
 
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
+
+  blob_properties {
+    delete_retention_policy {
+      days = 7
+    }
+    container_delete_retention_policy {
+      days = 7
+    }
+  }
+
+  share_properties {
+    retention_policy {
+      days = 7
+    }
+  }
 }
 
 # Using AzAPI as AzureRM uses shared account key for Azure files operations

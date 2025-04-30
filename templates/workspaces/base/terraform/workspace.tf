@@ -36,6 +36,9 @@ module "aad" {
   workspace_owner_object_id      = var.workspace_owner_object_id
   aad_redirect_uris_b64          = var.aad_redirect_uris_b64
   create_aad_groups              = var.create_aad_groups
+  ui_client_id                   = var.ui_client_id
+  auto_grant_workspace_consent   = var.auto_grant_workspace_consent
+  core_api_client_id             = var.core_api_client_id
 
   depends_on = [
     azurerm_role_assignment.keyvault_deployer_ws_role,
@@ -45,20 +48,22 @@ module "aad" {
 }
 
 module "airlock" {
-  count                         = var.enable_airlock ? 1 : 0
-  source                        = "./airlock"
-  location                      = var.location
-  tre_id                        = var.tre_id
-  tre_workspace_tags            = local.tre_workspace_tags
-  ws_resource_group_name        = azurerm_resource_group.ws.name
-  enable_local_debugging        = var.enable_local_debugging
-  services_subnet_id            = module.network.services_subnet_id
-  short_workspace_id            = local.short_workspace_id
-  airlock_processor_subnet_id   = module.network.airlock_processor_subnet_id
-  arm_environment               = var.arm_environment
-  enable_cmk_encryption         = var.enable_cmk_encryption
-  encryption_key_versionless_id = var.enable_cmk_encryption ? azurerm_key_vault_key.encryption_key[0].versionless_id : null
-  encryption_identity_id        = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
+  count                                  = var.enable_airlock ? 1 : 0
+  source                                 = "./airlock"
+  location                               = var.location
+  tre_id                                 = var.tre_id
+  tre_workspace_tags                     = local.tre_workspace_tags
+  ws_resource_group_name                 = azurerm_resource_group.ws.name
+  enable_local_debugging                 = var.enable_local_debugging
+  services_subnet_id                     = module.network.services_subnet_id
+  short_workspace_id                     = local.short_workspace_id
+  airlock_processor_subnet_id            = module.network.airlock_processor_subnet_id
+  arm_environment                        = var.arm_environment
+  enable_cmk_encryption                  = var.enable_cmk_encryption
+  encryption_key_versionless_id          = var.enable_cmk_encryption ? azurerm_key_vault_key.encryption_key[0].versionless_id : null
+  encryption_identity_id                 = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
+  enable_airlock_malware_scanning        = var.enable_airlock_malware_scanning
+  airlock_malware_scan_result_topic_name = var.enable_airlock_malware_scanning ? var.airlock_malware_scan_result_topic_name : null
   depends_on = [
     module.network,
   ]

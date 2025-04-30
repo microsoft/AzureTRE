@@ -1,139 +1,171 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm/template_schema.json",
-    "type": "object",
-    "title": "Windows Virtual Machine",
-    "description": "Windows virtual machine.",
-    "required": [
-    ],
-    "authorizedRoles": [
-      "WorkspaceOwner", "WorkspaceResearcher"
-    ],
-    "properties": {
-      "display_name": {
-        "type": "string",
-        "title": "Display name for the VM",
-        "description": "The display name of the VM.",
-        "default": "My Windows VM",
-        "updateable": true
-      },
-      "description": {
-        "type": "string",
-        "title": "Description of the VM",
-        "description": "Describe what this VM is used for.",
-        "default": "I will use this VM for research.",
-        "updateable": true
-      },
-      "os_image": {
-        "$id": "#/properties/os_image",
-        "type": "string",
-        "title": "Windows image",
-        "description": "Select Windows image to use for VM",
-        "default": "Windows 10",
-        "enum": [
-          "Windows 10",
-          "Windows 11",
-          "Server 2019 Data Science VM"
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm/template_schema.json",
+  "type": "object",
+  "title": "Windows Virtual Machine",
+  "description": "Windows virtual machine.",
+  "required": [],
+  "authorizedRoles": [
+    "WorkspaceOwner",
+    "WorkspaceResearcher"
+  ],
+  "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Display name for the VM",
+      "description": "The display name of the VM.",
+      "default": "My Windows VM",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the VM",
+      "description": "Describe what this VM is used for.",
+      "default": "I will use this VM for research.",
+      "updateable": true
+    },
+    "os_image": {
+      "$id": "#/properties/os_image",
+      "type": "string",
+      "title": "Windows image",
+      "description": "Select Windows image to use for VM",
+      "default": "Windows 10",
+      "enum": [
+        "Windows 10",
+        "Windows 11",
+        "Server 2019 Data Science VM"
+      ]
+    },
+    "admin_username": {
+      "type": "string",
+      "title": "Admin username",
+      "description": "Overide automatic admin username generation.",
+      "default": ""
+    },
+    "vm_size": {
+      "$id": "#/properties/vm_size",
+      "type": "string",
+      "title": "VM Size",
+      "description": "Select size of VM",
+      "default": "2 CPU | 8GB RAM",
+      "enum": [
+        "2 CPU | 8GB RAM",
+        "4 CPU | 16GB RAM",
+        "8 CPU | 32GB RAM",
+        "16 CPU | 64GB RAM"
+      ],
+      "updateable": true
+    },
+    "shared_storage_access": {
+      "$id": "#/properties/shared_storage_access",
+      "type": "boolean",
+      "title": "Shared storage",
+      "default": true,
+      "description": "Enable access to shared storage"
+    },
+    "enable_shutdown_schedule": {
+      "$id": "#/properties/enable_shutdown_schedule",
+      "type": "boolean",
+      "title": "Enable Shutdown Schedule",
+      "default": false,
+      "description": "Enable automatic shutdown schedule for the VM"
+    },
+    "assign_to_another_user": {
+      "type": "boolean",
+      "title": "Assign this VM to another user",
+      "description": "Check this box if you want to assign this VM to another user.",
+      "default": false,
+      "updateable": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "enable_shutdown_schedule": {
+            "const": true
+          }
+        },
+        "required": [
+          "enable_shutdown_schedule"
         ]
       },
-      "admin_username": {
-        "type": "string",
-        "title": "Admin username",
-        "description": "Overide automatic admin username generation.",
-        "default": ""
-      },
-      "vm_size": {
-        "$id": "#/properties/vm_size",
-        "type": "string",
-        "title": "VM Size",
-        "description": "Select size of VM",
-        "default": "2 CPU | 8GB RAM",
-        "enum": [
-          "2 CPU | 8GB RAM",
-          "4 CPU | 16GB RAM",
-          "8 CPU | 32GB RAM",
-          "16 CPU | 64GB RAM"
-        ],
-        "updateable": true
-      },
-      "shared_storage_access": {
-        "$id": "#/properties/shared_storage_access",
-        "type": "boolean",
-        "title": "Shared storage",
-        "default": true,
-        "description": "Enable access to shared storage"
-      },
-      "enable_shutdown_schedule": {
-        "$id": "#/properties/enable_shutdown_schedule",
-        "type": "boolean",
-        "title": "Enable Shutdown Schedule",
-        "default": false,
-        "description": "Enable automatic shutdown schedule for the VM"
+      "then": {
+        "properties": {
+          "shutdown_time": {
+            "type": "string",
+            "title": "Shutdown Time",
+            "description": "Time of day to shutdown the VM (HHmm format), e.g. 1800",
+            "pattern": "^([01]?[0-9]|2[0-3])[0-5][0-9]$",
+            "default": "1800"
+          },
+          "shutdown_timezone": {
+            "type": "string",
+            "title": "Shutdown Timezone",
+            "description": "Timezone for the shutdown schedule",
+            "default": "UTC",
+            "enum": [
+              "UTC -12",
+              "UTC -11",
+              "UTC -10",
+              "UTC -9",
+              "UTC -8",
+              "UTC -7",
+              "UTC -6",
+              "UTC -5",
+              "UTC -4",
+              "UTC -3",
+              "UTC -2",
+              "UTC -1",
+              "UTC",
+              "UTC +1",
+              "UTC +2",
+              "UTC +3",
+              "UTC +4",
+              "UTC +5",
+              "UTC +6",
+              "UTC +7",
+              "UTC +8",
+              "UTC +9",
+              "UTC +10",
+              "UTC +11",
+              "UTC +12"
+            ]
+          }
+        },
+        "required": [
+          "shutdown_time",
+          "shutdown_timezone"
+        ]
       }
     },
-    "allOf": [
-      {
-        "if": {
-          "properties": {
-            "enable_shutdown_schedule": {
-              "const": true
-            }
-          },
-          "required": [
-            "enable_shutdown_schedule"
-          ]
+    {
+      "if": {
+        "properties": {
+          "assign_to_another_user": {
+            "const": true
+          }
         },
-        "then": {
-          "properties": {
-            "shutdown_time": {
-              "type": "string",
-              "title": "Shutdown Time",
-              "description": "Time of day to shutdown the VM (HHmm format), e.g. 1800",
-              "pattern": "^([01]?[0-9]|2[0-3])[0-5][0-9]$",
-              "default": "1800"
-            },
-            "shutdown_timezone": {
-              "type": "string",
-              "title": "Shutdown Timezone",
-              "description": "Timezone for the shutdown schedule",
-              "default": "UTC",
-              "enum": [
-                "UTC -12",
-                "UTC -11",
-                "UTC -10",
-                "UTC -9",
-                "UTC -8",
-                "UTC -7",
-                "UTC -6",
-                "UTC -5",
-                "UTC -4",
-                "UTC -3",
-                "UTC -2",
-                "UTC -1",
-                "UTC",
-                "UTC +1",
-                "UTC +2",
-                "UTC +3",
-                "UTC +4",
-                "UTC +5",
-                "UTC +6",
-                "UTC +7",
-                "UTC +8",
-                "UTC +9",
-                "UTC +10",
-                "UTC +11",
-                "UTC +12"
-              ]
-            }
-          },
-          "required": [
-            "shutdown_time",
-            "shutdown_timezone"
-          ]
-        }
+        "required": [
+          "assign_to_another_user"
+        ]
+      },
+      "then": {
+        "properties": {
+          "owner_id": {
+            "type": "string",
+            "title": "Owner ID",
+            "description": "Enter the Object ID of the user you want to assign this VM to.",
+            "default": false,
+            "updateable": false
+          }
+        },
+        "required": [
+          "owner_id"
+        ]
       }
-    ]
-  },
+    }
+  ],
   "uiSchema": {
     "admin_username": {
       "classNames": "tre-hidden"
