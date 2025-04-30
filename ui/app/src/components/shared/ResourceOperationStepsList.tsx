@@ -1,6 +1,6 @@
 import React from "react";
 import { DefaultPalette, IStackItemStyles, Stack, Link } from "@fluentui/react";
-import { OperationStep } from "../../models/operation";
+import { OperationStep, failedStates } from "../../models/operation";
 import { ErrorPanel } from "./ErrorPanel";
 
 interface ResourceOperationStepsListProps {
@@ -18,6 +18,7 @@ export const ResourceOperationStepsList: React.FunctionComponent<
     },
   };
 
+  const [openErrorPanelIndex, setOpenErrorPanelIndex] = React.useState<number | null>(null);
   return (
     <Stack wrap horizontal>
       <Stack.Item styles={stackItemStyles} style={{ width: "20%" }}>
@@ -25,12 +26,7 @@ export const ResourceOperationStepsList: React.FunctionComponent<
       </Stack.Item>
       <div style={{ width: "80%" }}>
         {props.val?.map((step: OperationStep, i: number) => {
-          const [isErrorPanelOpen, setIsErrorPanelOpen] = React.useState(false);
-          const isError =
-            typeof step.message === "string" &&
-            (step.message.toLowerCase().includes("error:") ||
-              step.message.toLowerCase().includes("error message:"))
-
+          const isError = step.status && failedStates.includes(step.status);
           return (
             <Stack.Item styles={stackItemStyles} key={i}>
               <div>
@@ -39,14 +35,16 @@ export const ResourceOperationStepsList: React.FunctionComponent<
               </div>
               {isError ? (
                 <>
-                  <Link onClick={() => setIsErrorPanelOpen(true)}>
+                  <Link onClick={() => setOpenErrorPanelIndex(i)}>
                     An error occurred; click to view the error details
                   </Link>
-                  <ErrorPanel
-                    errorMessage={step.message}
-                    isOpen={isErrorPanelOpen}
-                    onDismiss={() => setIsErrorPanelOpen(false)}
-                  />
+                  {openErrorPanelIndex === i && (
+                    <ErrorPanel
+                      errorMessage={step.message}
+                      isOpen={openErrorPanelIndex === i}
+                      onDismiss={() => setOpenErrorPanelIndex(null)}
+                    />
+                  )}
                 </>
               ) : (
                 <div style={{ color: DefaultPalette.neutralTertiary }}>

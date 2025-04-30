@@ -1,10 +1,11 @@
 import { DefaultPalette, IStackItemStyles, Stack, Link } from "@fluentui/react";
 import React from "react";
 import { ErrorPanel } from "./ErrorPanel";
-import stripAnsi from 'strip-ansi';
+
 interface ResourceOperationListItemProps {
   header: string;
   val: string;
+  isError?: boolean;
 }
 
 export const ResourceOperationListItem: React.FunctionComponent<
@@ -18,9 +19,6 @@ export const ResourceOperationListItem: React.FunctionComponent<
   };
   const [isErrorPanelOpen, setIsErrorPanelOpen] = React.useState(false);
 
-  // Check if the value is an error message
-  const isError = typeof props.val === "string" && (props.val.toLowerCase().includes("error:") || props.val.toLowerCase().includes("error message:"));
-
   return (
     <>
       <Stack wrap horizontal>
@@ -28,7 +26,7 @@ export const ResourceOperationListItem: React.FunctionComponent<
           {props.header}
         </Stack.Item>
 
-        {isError ? (
+        {props.isError ? (
           <>
             <Stack.Item styles={stackItemStyles} style={{ width: "80%" }}>
               <Link onClick={() => setIsErrorPanelOpen(true)}>An error occurred; click to view the error details</Link>
