@@ -177,6 +177,12 @@ RESOURCE_STATUS_UPDATING = "updating"
 RESOURCE_STATUS_UPDATED = "updated"
 RESOURCE_STATUS_UPDATING_FAILED = "updating_failed"
 
+# Resource Action
+RESOURCE_ACTION_INSTALL = "install"
+RESOURCE_ACTION_UPDATE = "upgrade"
+RESOURCE_ACTION_UNINSTALL = "uninstall"
+
+
 # Resource Action Status
 RESOURCE_STATUS_AWAITING_ACTION = "awaiting_action"
 RESOURCE_ACTION_STATUS_INVOKING = "invoking_action"

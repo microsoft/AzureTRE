@@ -410,8 +410,27 @@ async def create_user_resource(
         workspace=Depends(get_deployed_workspace_by_id_from_path),
         workspace_service=Depends(get_deployed_workspace_service_by_id_from_path)) -> OperationInResponse:
 
+    owner_id: str = None
+
+    # Check for assign_to_another_user logic
+    if (
+        hasattr(user_resource_create, "properties")
+        and isinstance(user_resource_create.properties, dict)
+        and user_resource_create.properties.get("assign_to_another_user") is True
+    ):
+        if user_resource_create.properties.get("owner_id"):
+            owner_id = user_resource_create.properties.get("owner_id")
+
     try:
-        user_resource, resource_template = await user_resource_repo.create_user_resource_item(user_resource_create, workspace.id, workspace_service.id, workspace_service.templateName, user.id, user.roles)
+        user_resource, resource_template = await user_resource_repo.create_user_resource_item(
+            user_resource_create,
+            workspace.id,
+            workspace_service.id,
+            workspace_service.templateName,
+            user.id,
+            user.roles,
+            owner_id
+        )
     except (ValidationError, ValueError) as e:
         logger.exception("Failed create user resource model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
