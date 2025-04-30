@@ -37,7 +37,6 @@ function remove_if_present() {
 function import_if_exists() {
   ADDRESS=$1
   ID=$2
-  CMD=$3
 
   # Check if the resource exists in Terraform
   echo "Checking if ${ADDRESS} exists in Terraform state..."
@@ -51,9 +50,14 @@ function import_if_exists() {
 
   # Some resources, e.g. Firewall rules and Diagnostics, don't show up in `az resource show`,
   # so we need a way to set up a custom command for them
-  if [[ -z ${CMD} ]]; then
+  if [[ $# -eq 3 ]]; then
+    # If a command is provided, use it to check if the resource exists in Azure
+    CMD=$3
+  else
+    # Default command to check if the resource exists in Azure
     CMD="az resource show --ids ${ID}"
   fi
+
   ${CMD} > /dev/null
   AZ_RESOURCE_EXISTS=$?
 
@@ -193,31 +197,33 @@ remove_if_present azurerm_firewall_policy.root
 
 popd > /dev/null
 
-tf_state_list="$(terraform state list)"
 
 echo "IMPORTING STATE FOR FIREWALL..."
 
+tf_state_list="$(terraform state list)"
+RESOURCE_GROUP_NAME="rg-${TRE_ID}"
+
 # Firewall
-import_if_exists module.firewall.azurerm_firewall.fw "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/azureFirewalls/fw-${TRE_ID}"
+import_if_exists module.firewall.azurerm_firewall.fw "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_NAME}/providers/Microsoft.Network/azureFirewalls/fw-${TRE_ID}"
 
 # Firewall IPs
 if [[ "${FIREWALL_SKU}" == "Basic" ]]; then
-  import_if_exists module.firewall.azurerm_public_ip.fwmanagement[0] "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/publicIPAddresses/pip-fw-management-${TRE_ID}"
+  import_if_exists module.firewall.azurerm_public_ip.fwmanagement[0] "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_NAME}/providers/Microsoft.Network/publicIPAddresses/pip-fw-management-${TRE_ID}"
 fi
 
-import_if_exists module.firewall.azurerm_public_ip.fwtransit[0] "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/publicIPAddresses/pip-fw-${TRE_ID}"
+import_if_exists module.firewall.azurerm_public_ip.fwtransit[0] "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_NAME}/providers/Microsoft.Network/publicIPAddresses/pip-fw-${TRE_ID}"
 
 # Firewall policy
-import_if_exists module.firewall.azurerm_firewall_policy.root "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/firewallPolicies/fw-policy-${TRE_ID}"
+import_if_exists module.firewall.azurerm_firewall_policy.root "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_NAME}/providers/Microsoft.Network/firewallPolicies/fw-policy-${TRE_ID}"
 import_if_exists module.firewall.azurerm_firewall_policy_rule_collection_group.core \
-  "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/firewallPolicies/fw-policy-${TRE_ID}/ruleCollectionGroups/rcg-core"
+  "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_NAME}/providers/Microsoft.Network/firewallPolicies/fw-policy-${TRE_ID}/ruleCollectionGroups/rcg-core"
 
 
 # Diagnostic settings
 import_if_exists module.firewall.azurerm_monitor_diagnostic_setting.firewall \
-  "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/azureFirewalls/fw-${TRE_ID}|diagnostics-fw-${TRE_ID}" \
+  "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_NAME}/providers/Microsoft.Network/azureFirewalls/fw-${TRE_ID}|diagnostics-fw-${TRE_ID}" \
   "az monitor diagnostic-settings show --resource /subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/rg-${TRE_ID}/providers/microsoft.network/azureFirewalls/fw-${TRE_ID} --name diagnostics-fw-${TRE_ID}"
 
 # Route tables
 import_if_exists azurerm_route_table.rt \
-  "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/routeTables/rt-${TRE_ID}"
+  "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_NAME}/providers/Microsoft.Network/routeTables/rt-${TRE_ID}"
