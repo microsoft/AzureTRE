@@ -6,6 +6,7 @@ from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 
+import resources.strings as strings
 from db.errors import EntityDoesNotExist
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources import ResourceRepository, IS_NOT_DELETED_CLAUSE
@@ -30,7 +31,7 @@ class UserResourceRepository(ResourceRepository):
     def active_user_resources_query(workspace_id: str, service_id: str):
         return f'SELECT * FROM c WHERE {IS_NOT_DELETED_CLAUSE} AND c.resourceType = "{ResourceType.UserResource}" AND c.parentWorkspaceServiceId = "{service_id}" AND c.workspaceId = "{workspace_id}"'
 
-    async def create_user_resource_item(self, user_resource_input: UserResourceInCreate, workspace_id: str, parent_workspace_service_id: str, parent_template_name: str, user_id: str, user_roles: List[str]) -> Tuple[UserResource, ResourceTemplate]:
+    async def create_user_resource_item(self, user_resource_input: UserResourceInCreate, workspace_id: str, parent_workspace_service_id: str, parent_template_name: str, user_id: str, user_roles: List[str], owner_id: str = None) -> Tuple[UserResource, ResourceTemplate]:
         full_user_resource_id = str(uuid.uuid4())
 
         template = await self.validate_input_against_template(user_resource_input.templateName, user_resource_input, ResourceType.UserResource, user_roles, parent_template_name)
@@ -41,7 +42,7 @@ class UserResourceRepository(ResourceRepository):
         user_resource = UserResource(
             id=full_user_resource_id,
             workspaceId=workspace_id,
-            ownerId=user_id,
+            ownerId=owner_id if owner_id is not None else user_id,
             parentWorkspaceServiceId=parent_workspace_service_id,
             templateName=user_resource_input.templateName,
             templateVersion=template.version,
@@ -73,4 +74,4 @@ class UserResourceRepository(ResourceRepository):
     async def patch_user_resource(self, user_resource: UserResource, user_resource_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, parent_template_name: str, user: User, force_version_update: bool) -> Tuple[UserResource, ResourceTemplate]:
         # get user resource template
         user_resource_template = await resource_template_repo.get_template_by_name_and_version(user_resource.templateName, user_resource.templateVersion, ResourceType.UserResource, parent_service_name=parent_template_name)
-        return await self.patch_resource(user_resource, user_resource_patch, user_resource_template, etag, resource_template_repo, resource_history_repo, user, force_version_update)
+        return await self.patch_resource(user_resource, user_resource_patch, user_resource_template, etag, resource_template_repo, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE, force_version_update)

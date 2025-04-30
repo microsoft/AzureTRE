@@ -1,81 +1,116 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm/template_schema.json",
-    "type": "object",
-    "title": "Windows Virtual Machine",
-    "description": "Windows virtual machine.",
-    "required": [
-    ],
-    "authorizedRoles": [
-      "WorkspaceOwner", "WorkspaceResearcher"
-    ],
-    "properties": {
-      "display_name": {
-        "type": "string",
-        "title": "Display name for the VM",
-        "description": "The display name of the VM.",
-        "default": "My Windows VM",
-        "updateable": true
-      },
-      "description": {
-        "type": "string",
-        "title": "Description of the VM",
-        "description": "Describe what this VM is used for.",
-        "default": "I will use this VM for research.",
-        "updateable": true
-      },
-      "os_image": {
-        "$id": "#/properties/os_image",
-        "type": "string",
-        "title": "Windows image",
-        "description": "Select Windows image to use for VM",
-        "default": "Windows 10",
-        "enum": [
-          "Windows 10",
-          "Windows 11",
-          "Server 2019 Data Science VM"
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm/template_schema.json",
+  "type": "object",
+  "title": "Windows Virtual Machine",
+  "description": "Windows virtual machine.",
+  "required": [],
+  "authorizedRoles": [
+    "WorkspaceOwner",
+    "WorkspaceResearcher"
+  ],
+  "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Display name for the VM",
+      "description": "The display name of the VM.",
+      "default": "My Windows VM",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the VM",
+      "description": "Describe what this VM is used for.",
+      "default": "I will use this VM for research.",
+      "updateable": true
+    },
+    "os_image": {
+      "$id": "#/properties/os_image",
+      "type": "string",
+      "title": "Windows image",
+      "description": "Select Windows image to use for VM",
+      "default": "Windows 10",
+      "enum": [
+        "Windows 10",
+        "Windows 11",
+        "Server 2019 Data Science VM"
+      ]
+    },
+    "admin_username": {
+      "type": "string",
+      "title": "Admin username",
+      "description": "Overide automatic admin username generation.",
+      "default": ""
+    },
+    "vm_size": {
+      "$id": "#/properties/vm_size",
+      "type": "string",
+      "title": "VM Size",
+      "description": "Select size of VM",
+      "default": "2 CPU | 8GB RAM",
+      "enum": [
+        "2 CPU | 8GB RAM",
+        "4 CPU | 16GB RAM",
+        "8 CPU | 32GB RAM",
+        "16 CPU | 64GB RAM"
+      ],
+      "updateable": true
+    },
+    "shared_storage_access": {
+      "$id": "#/properties/shared_storage_access",
+      "type": "boolean",
+      "title": "Shared storage",
+      "default": true,
+      "description": "Enable access to shared storage"
+    },
+    "workspace_subscription_id": {
+      "$id": "#/properties/workspace_subscription_id",
+      "type": "string",
+      "title": "Workspace subscription id",
+      "description": "The Azure subscription the workspace is deployed to"
+    },
+    "assign_to_another_user": {
+      "type": "boolean",
+      "title": "Assign this VM to another user",
+      "description": "Check this box if you want to assign this VM to another user.",
+      "default": false,
+      "updateable": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "assign_to_another_user": {
+            "const": true
+          }
+        },
+        "required": [
+          "assign_to_another_user"
         ]
       },
-      "admin_username": {
-        "type": "string",
-        "title": "Admin username",
-        "description": "Overide automatic admin username generation.",
-        "default": ""
-      },
-      "vm_size": {
-        "$id": "#/properties/vm_size",
-        "type": "string",
-        "title": "VM Size",
-        "description": "Select size of VM",
-        "default": "2 CPU | 8GB RAM",
-        "enum": [
-          "2 CPU | 8GB RAM",
-          "4 CPU | 16GB RAM",
-          "8 CPU | 32GB RAM",
-          "16 CPU | 64GB RAM"
-        ],
-        "updateable": true
-      },
-      "shared_storage_access": {
-        "$id": "#/properties/shared_storage_access",
-        "type": "boolean",
-        "title": "Shared storage",
-        "default": true,
-        "description": "Enable access to shared storage"
-      },
-      "workspace_subscription_id": {
-        "$id": "#/properties/workspace_subscription_id",
-        "type": "string",
-        "title": "Workspace subscription id",
-        "description": "The Azure subscription the workspace is deployed to"
-      }
-    },
-    "uiSchema": {
-      "admin_username": {
-        "classNames": "tre-hidden"
-      },
-      "workspace_subscription_id": {
-        "classNames": "tre-hidden"
+      "then": {
+        "properties": {
+          "owner_id": {
+            "type": "string",
+            "title": "Owner ID",
+            "description": "Enter the Object ID of the user you want to assign this VM to.",
+            "default": false,
+            "updateable": false
+          }
+        },
+        "required": [
+          "owner_id"
+        ]
       }
     }
+  ],
+  "uiSchema": {
+    "admin_username": {
+      "classNames": "tre-hidden"
+    },
+    "workspace_subscription_id": {
+      "classNames": "tre-hidden"
+    }
+  }
 }
