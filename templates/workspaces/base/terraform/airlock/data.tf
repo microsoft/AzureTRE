@@ -23,13 +23,13 @@ data "azurerm_servicebus_namespace" "airlock_sb" {
 }
 
 data "azurerm_servicebus_topic" "blob_created" {
-  provider            = azurerm.core
-  name                = local.blob_created_topic_name
-  resource_group_name = local.core_resource_group_name
-  namespace_name      = data.azurerm_servicebus_namespace.airlock_sb.name
+  provider     = azurerm.core
+  name         = local.blob_created_topic_name
+  namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
 }
 
 data "azurerm_eventgrid_topic" "scan_result" {
+  provider            = azurerm.core
   count               = var.enable_airlock_malware_scanning ? 1 : 0
   name                = local.airlock_malware_scan_result_topic_name
   resource_group_name = local.core_resource_group_name

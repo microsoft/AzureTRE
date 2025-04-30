@@ -303,8 +303,7 @@
           "workspace_subscription_id": {
             "type": "string",
             "title": "Workspace Subscription ID",
-            "description": "The subscription ID where the workspace will be deployed.",
-            "updateable": true
+            "description": "The subscription ID where the workspace will be deployed."
           }
         },
         "required": [
