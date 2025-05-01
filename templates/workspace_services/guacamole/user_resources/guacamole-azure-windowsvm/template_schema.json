@@ -62,8 +62,42 @@
         "title": "Shared storage",
         "default": true,
         "description": "Enable access to shared storage"
+      },
+      "assign_to_another_user": {
+      "type": "boolean",
+      "title": "Assign this VM to another user",
+      "description": "Check this box if you want to assign this VM to another user.",
+      "default": false,
+      "updateable": false
       }
     },
+    "allOf": [
+    {
+      "if": {
+        "properties": {
+          "assign_to_another_user": {
+            "const": true
+          }
+        },
+        "required": [
+          "assign_to_another_user"
+        ]
+      },
+      "then": {
+        "properties": {
+          "owner_id": {
+            "type": "string",
+            "title": "Owner ID",
+            "description": "Enter the Object ID of the user you want to assign this VM to.",
+            "default": false,
+            "updateable": false
+          }
+        },
+        "required": [
+          "owner_id"
+        ]
+      }
+    }],
     "uiSchema": {
       "admin_username": {
         "classNames": "tre-hidden"
