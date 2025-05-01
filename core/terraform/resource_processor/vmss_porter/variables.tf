@@ -75,9 +75,6 @@ variable "subscription_id" {
 variable "logging_level" {
   type = string
 }
-variable "firewall_sku" {
-  type = string
-}
 variable "rp_bundle_values" {
   type = map(string)
 }

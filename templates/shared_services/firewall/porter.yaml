@@ -1,8 +1,8 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-firewall
-version: 1.3.3
-description: "An Azure TRE Firewall shared service"
+version: 1.4.0
+description: "Azure TRE Shared Service that manages dynamic firewall rules"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
 
@@ -45,18 +45,8 @@ parameters:
     type: string
     default: "W10=" # b64 for []
     description: "Network rule collection array"
-  - name: firewall_sku
-    type: string
-    default: Standard
-    description: The firewall and its policy SKU tier
-  - name: microsoft_graph_fqdn
-    type: string
-    default: "graph.microsoft.com"
   - name: arm_environment
     type: string
-  - name: firewall_force_tunnel_ip
-    type: string
-    default: ""
 
 mixins:
   - terraform:
@@ -67,12 +57,8 @@ install:
       description: "Deploy shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
-        tre_resource_id: ${ bundle.parameters.id }
         api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
-        firewall_sku: ${ bundle.parameters.firewall_sku }
-        microsoft_graph_fqdn: ${ bundle.parameters.microsoft_graph_fqdn }
-        firewall_force_tunnel_ip: ${ bundle.parameters.firewall_force_tunnel_ip }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -86,12 +72,8 @@ upgrade:
       description: "Upgrade shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
-        tre_resource_id: ${ bundle.parameters.id }
         api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
-        firewall_sku: ${ bundle.parameters.firewall_sku }
-        microsoft_graph_fqdn: ${ bundle.parameters.microsoft_graph_fqdn }
-        firewall_force_tunnel_ip: ${ bundle.parameters.firewall_force_tunnel_ip }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -105,12 +87,8 @@ uninstall:
       description: "Tear down shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
-        tre_resource_id: ${ bundle.parameters.id }
         api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
-        firewall_sku: ${ bundle.parameters.firewall_sku }
-        microsoft_graph_fqdn: ${ bundle.parameters.microsoft_graph_fqdn }
-        firewall_force_tunnel_ip: ${ bundle.parameters.firewall_force_tunnel_ip }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
