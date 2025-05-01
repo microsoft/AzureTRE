@@ -272,4 +272,8 @@ variable "bastion_sku" {
   type        = string
   description = "Azure Bastion SKU"
   default     = "Basic"
+  validation {
+    condition     = contains(["Developer", "Basic", "Standard", "Premium"], var.bastion_sku)
+    error_message = "Invalid bastion_sku value"
+  }
 }
