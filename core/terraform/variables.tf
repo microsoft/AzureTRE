@@ -261,3 +261,19 @@ variable "user_management_enabled" {
   description = "Is the Entra ID user management feature enabled (requires a workspace with Entra ID groups enabled, default to false)?"
   default     = false
 }
+
+variable "deploy_bastion" {
+  type        = bool
+  description = "Deploy Azure Bastion"
+  default     = true
+}
+
+variable "bastion_sku" {
+  type        = string
+  description = "Azure Bastion SKU"
+  default     = "Basic"
+  validation {
+    condition     = contains(["Developer", "Basic", "Standard", "Premium"], var.bastion_sku)
+    error_message = "Invalid bastion_sku value"
+  }
+}
