@@ -51,6 +51,14 @@
           "description": "The Azure subscription ID for all resources.",
           "type": "string",
           "pattern": "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$"
+        },
+        "encryption_kv_name": {
+          "description": "Name of Key Vault for encryption keys.",
+          "type": "string"
+        },
+        "external_key_store_id": {
+          "description": "ID of external Key Vault to store CMKs.",
+          "type": "string"
         }
       },
       "required": [
@@ -104,6 +112,10 @@
         "custom_domain": {
           "description": "Custom domain name.",
           "type": "string"
+        },
+        "enable_cmk_encryption": {
+          "description": "Enables customer-managed key encryption for all supported resources.",
+          "type": "boolean"
         }
       }
     },
@@ -122,6 +134,10 @@
         },
         "auto_workspace_group_creation": {
           "description": "This identity can create security groups aligned to each applciation role. Read more about it here: docs/tre-admins/auth.md",
+          "type": "boolean"
+        },
+        "auto_grant_workspace_consent": {
+          "description": "The identity will be be able to grant admin consent on new workspaces.",
           "type": "boolean"
         },
         "api_client_id": {

@@ -24,14 +24,30 @@ if [ "${RESET_AAD_PASSWORDS:-}" == false ]; then
   RESET_PASSWORDS=0
 fi
 
-APPLICATION_PERMISSION="Application.ReadWrite.OwnedBy"
+# Initialize an array for permissions
+APPLICATION_PERMISSIONS=()
+APPLICATION_PERMISSIONS+=("Application.ReadWrite.OwnedBy")
+
 if [ "${AUTO_WORKSPACE_APP_REGISTRATION:-}" == true ]; then
-  APPLICATION_PERMISSION="Application.ReadWrite.All,Directory.Read.All"
+  APPLICATION_PERMISSIONS+=("Application.ReadWrite.All" "Directory.Read.All")
 fi
 
 if [ "${AUTO_WORKSPACE_GROUP_CREATION:-}" == true ]; then
-  APPLICATION_PERMISSION="Application.ReadWrite.All,Directory.Read.All,Group.ReadWrite.All"
+  APPLICATION_PERMISSIONS+=("Group.ReadWrite.All")
 fi
+
+if [ "${AUTO_GRANT_WORKSPACE_CONSENT:-}" == true ]; then
+  APPLICATION_PERMISSIONS+=("Application.ReadWrite.All" "DelegatedPermissionGrant.ReadWrite.All")
+fi
+
+# Check if the array contains more than 1 item
+if [ ${#APPLICATION_PERMISSIONS[@]} -gt 1 ]; then
+  # Check for and remove duplicates
+  mapfile -t APPLICATION_PERMISSIONS < <(printf "%s\n" "${APPLICATION_PERMISSIONS[@]}" | sort -u)
+fi
+
+# Join the array into a comma-separated string
+APPLICATION_PERMISSION=$(IFS=,; echo "${APPLICATION_PERMISSIONS[*]}")
 
 # Create the identity that is able to administer other applications
 "$DIR/aad/create_application_administrator.sh" \

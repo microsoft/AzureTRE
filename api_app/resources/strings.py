@@ -16,6 +16,10 @@ API_UPDATE_WORKSPACE = "Update an existing workspace"
 API_INVOKE_ACTION_ON_WORKSPACE = "Invoke action on a workspace"
 
 API_GET_WORKSPACE_USERS = "Get all users for a workspace"
+API_GET_ASSIGNABLE_USERS = "Get all users assignable to a workspace"
+API_GET_WORKSPACE_ROLES = "Get all the roles belonging to a workspace"
+API_ASSIGN_WORKSPACE_USER = "Assign a user to a workspace role"
+API_REMOVE_WORKSPACE_USER_ASSIGNMENT = "Remove a user from a workspace role"
 
 API_GET_ALL_WORKSPACE_SERVICES = "Get all workspace services for workspace"
 API_GET_WORKSPACE_SERVICE_BY_ID = "Get workspace service by Id"
@@ -172,6 +176,12 @@ RESOURCE_STATUS_UPDATING = "updating"
 RESOURCE_STATUS_UPDATED = "updated"
 RESOURCE_STATUS_UPDATING_FAILED = "updating_failed"
 
+# Resource Action
+RESOURCE_ACTION_INSTALL = "install"
+RESOURCE_ACTION_UPDATE = "upgrade"
+RESOURCE_ACTION_UNINSTALL = "uninstall"
+
+
 # Resource Action Status
 RESOURCE_STATUS_AWAITING_ACTION = "awaiting_action"
 RESOURCE_ACTION_STATUS_INVOKING = "invoking_action"
@@ -256,3 +266,6 @@ PARAMETERS_WITH_WRONG_TYPE = "Parameters with wrong type"
 
 # Value that a sensitive is replaced with in Cosmos
 REDACTED_SENSITIVE_VALUE = "REDACTED"
+
+# User Management
+USER_MANAGEMENT_DISABLED = "User management is disabled"
