@@ -84,11 +84,11 @@ def initialize_logging() -> logging.Logger:
             }
         )
 
-    LoggingInstrumentor().instrument(
-        set_logging_format=True,
-        log_level=logging_level,
-        tracer_provider=tracer._real_tracer
-    )
+    # LoggingInstrumentor().instrument(
+    #     set_logging_format=True,
+    #     log_level=logging_level,
+    #     tracer_provider=tracer._real_tracer
+    # )
 
     logger.info("Logging initialized with level: %s", LOGGING_LEVEL)
 
