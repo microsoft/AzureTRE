@@ -52,7 +52,7 @@ async def cascaded_update_resource(resource_patch: ResourcePatch, parent_resourc
             primary_parent_service_name = primary_parent_workspace_service.templateName
 
         child_resource_template = await resource_template_repo.get_template_by_name_and_version(child_resource.templateName, child_resource.templateVersion, child_resource.resourceType, parent_service_name=primary_parent_service_name)
-        await resource_repo.patch_resource(child_resource, resource_patch, child_resource_template, child_etag, resource_template_repo, resource_history_repo, user, force_version_update)
+        await resource_repo.patch_resource(child_resource, resource_patch, child_resource_template, child_etag, resource_template_repo, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE, force_version_update)
 
 
 async def save_and_deploy_resource(
