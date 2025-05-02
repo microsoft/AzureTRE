@@ -1,12 +1,8 @@
-resource "null_resource" "nic_destroy_delay" {
-  triggers = {
-    nic_id = azurerm_network_interface.internal.id
-  }
 
-  provisioner "local-exec" {
-    when    = destroy
-    command = "sleep 180"
-  }
+resource "time_sleep" "wait_180_seconds" {
+  depends_on = [azurerm_network_interface.internal]
+
+  destroy_duration = "180s"
 }
 
 resource "azurerm_network_interface" "internal" {
@@ -91,6 +87,8 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
   #
   lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, custom_data] }
+
+  depends_on = [time_sleep.wait_180_seconds]
 }
 
 resource "azurerm_disk_encryption_set" "windowsvm_disk_encryption" {
