@@ -5,9 +5,11 @@
 ENHANCEMENTS:
 * Add ability to pass values to install stage on pipleine [#4451](https://github.com/microsoft/AzureTRE/pull/4451)
 * Format the error message in the Operations panel for enhanced readability ([#4493](https://github.com/microsoft/AzureTRE/issues/4493))
+* Modify the AML workspace service so it does not use local authentication keys for storage access ([#4341](https://github.com/microsoft/AzureTRE/issues/4341))
 * Added ability to assign VMs to other users at creation time ([#1179](https://github.com/microsoft/AzureTRE/issues/1179))
 * Add shutdown schedule to Windows VMs ([#4211](https://github.com/microsoft/AzureTRE/pull/4211))
 * Add deploy and sku variables to control deployment of Azure Bastion ([#4383](https://github.com/microsoft/AzureTRE/pull/4383))
+
 
 BUG FIXES:
 * Letsencrypt.yml fails with "Invalid reference in variable validation" ([#4506](https://github.com/microsoft/AzureTRE/4506))

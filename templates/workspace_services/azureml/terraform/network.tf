@@ -30,7 +30,7 @@ resource "azapi_resource" "aml_service_endpoint_policy" {
   location  = data.azurerm_virtual_network.ws.location
   parent_id = data.azurerm_resource_group.ws.id
   tags      = local.tre_workspace_service_tags
-  body = jsonencode({
+  body = {
     properties = {
       serviceEndpointPolicyDefinitions = [
         {
@@ -55,7 +55,7 @@ resource "azapi_resource" "aml_service_endpoint_policy" {
         }
       ]
     }
-  })
+  }
 
   lifecycle { ignore_changes = [tags] }
 }
