@@ -189,6 +189,20 @@
       "required": [
         "aad_tenant_id"
       ]
+    },
+    "ui_config": {
+      "description": "UI customisation",
+      "type": "object",
+      "properties": {
+        "ui_product_name": {
+          "description": "Product name shown in top left corner of portal. Default value is 'Azure TRE'",
+          "type": "string"
+        },
+        "ui_footer_text": {
+          "description": "Text shown in bottom left corner of portal. Default value is 'Azure Trusted Research Environment'",
+          "type": "string"
+        }
+      }
     }
   },
   "required": [
