@@ -34,6 +34,7 @@ provider "azurerm" {
     }
     virtual_machine {
       skip_shutdown_and_force_delete = true
+      delete_os_disk_on_deletion     = true
     }
   }
   storage_use_azuread = true
