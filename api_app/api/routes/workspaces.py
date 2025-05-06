@@ -251,8 +251,6 @@ async def create_workspace_service(response: Response, workspace_service_input: 
 
     # Get the workspace subscription id (if set)
     if workspace.properties.get("workspace_subscription_id"):
-        if not resource_template.properties.get("workspace_subscription_id"):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICE_TEMPATE_DOES_NOT_SUPPORT_SUBSCRIPTION)
         workspace_service.properties["workspace_subscription_id"] = workspace.properties["workspace_subscription_id"]
 
     # if template has address_space get an address space
