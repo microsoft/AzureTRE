@@ -15,7 +15,7 @@ export const TopNav: React.FunctionComponent = () => {
                 src="/images/SPECTRE_HD_Logo.jpg"
                 height={50}
                 imageFit={ImageFit.contain}
-                styles={{ root: { marginLeft: 10, marginRight: 10, verticalAlign: "middle" } }}
+                styles={{ root: { marginLeft: 10, marginRight: 10, verticalAlign: "middle",  float: "left"} }}
               />
             </Link>
           </Stack.Item>
