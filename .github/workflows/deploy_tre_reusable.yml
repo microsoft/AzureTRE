@@ -764,7 +764,7 @@ jobs:
           MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
           SWAGGER_UI_CLIENT_ID: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
-          UI_PRODUCT_NAME: "${{ vars.UI_PRODUCT_NAME }}"
+          UI_SITE_NAME: "${{ vars.UI_SITE_NAME }}"
           UI_FOOTER_TEXT: "${{ vars.UI_FOOTER_TEXT }}"
 
   e2e_tests_smoke:

@@ -9,6 +9,6 @@
     "version": "0.0.0",
     "activeDirectoryUri": "",
     "userManagementEnabled": false,
-    "uiProductName": "Azure TRE",
+    "uiSiteName": "Azure TRE",
     "uiFooterText": "Azure Trusted Research Environment"
 }

@@ -194,7 +194,7 @@
       "description": "UI customisation",
       "type": "object",
       "properties": {
-        "ui_product_name": {
+        "ui_site_name": {
           "description": "Product name shown in top left corner of portal. Default value is 'Azure TRE'",
           "type": "string"
         },

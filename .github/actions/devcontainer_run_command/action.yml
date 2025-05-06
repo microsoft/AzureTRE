@@ -145,7 +145,7 @@ inputs:
     description: "The Azure Resource ID for an external key store to use for CMK"
     required: false
     default: ""
-  UI_PRODUCT_NAME:
+  UI_SITE_NAME:
     description: "Product name shown in top left corner of TRE portal"
     required: false
     default: "Azure TRE"
@@ -270,7 +270,7 @@ runs:
             && inputs.WORKSPACE_APP_SERVICE_PLAN_SKU) || 'P1v2' }}" \
           -e TF_VAR_rp_bundle_values='${{ (toJson(inputs.RP_BUNDLE_VALUES) != '""'
             && inputs.RP_BUNDLE_VALUES) || '{}' }}' \
-          -e UI_PRODUCT_NAME="${{ inputs.UI_PRODUCT_NAME }}" \
+          -e UI_SITE_NAME="${{ inputs.UI_SITE_NAME }}" \
           -e UI_FOOTER_TEXT="${{ inputs.UI_FOOTER_TEXT }}" \
           -e TF_VAR_resource_processor_number_processes_per_instance="${{ (inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE != ''
             && inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE) || 5 }}" \

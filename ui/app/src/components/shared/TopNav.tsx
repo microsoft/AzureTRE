@@ -20,7 +20,7 @@ export const TopNav: React.FunctionComponent = () => {
                   verticalAlign: "middle",
                 }}
               />
-              <h5 style={{ display: "inline" }}>{(config.uiProductName ?? "") === "" ? "Azure TRE" : config.uiProductName}</h5>
+              <h5 style={{ display: "inline" }}>{(config.uiSiteName ?? "") === "" ? "Azure TRE" : config.uiSiteName}</h5>
             </Link>
           </Stack.Item>
           <Stack.Item>

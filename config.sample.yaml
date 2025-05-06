@@ -86,7 +86,7 @@ resource_processor:
 
 ui_config:
   # Product name shown in the top left hand corner of the TRE portal
-  ui_product_name: "Azure TRE"
+  ui_site_name: "Azure TRE"
   # Footer text shown in the bottom left hand corner of the TRE portal
   ui_footer_text: "Azure Trusted Research Environment"
 
