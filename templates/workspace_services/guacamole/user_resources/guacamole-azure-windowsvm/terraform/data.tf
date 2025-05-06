@@ -1,3 +1,7 @@
+data "azurerm_client_config" "current" {
+  provider = azurerm.core
+}
+
 data "azurerm_resource_group" "ws" {
   name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
 }
