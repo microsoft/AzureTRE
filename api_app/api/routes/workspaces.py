@@ -419,10 +419,6 @@ async def create_user_resource(
         if user_resource_create.properties.get("owner_id"):
             owner_id = user_resource_create.properties.get("owner_id")
 
-    # Get the workspace subscription id (if set)
-    if workspace.properties.get("workspace_subscription_id"):
-        user_resource_create.properties["workspace_subscription_id"] = workspace.properties["workspace_subscription_id"]
-
     try:
         user_resource, resource_template = await user_resource_repo.create_user_resource_item(
             user_resource_create,
@@ -439,6 +435,10 @@ async def create_user_resource(
     except UserNotAuthorizedToUseTemplate as e:
         logger.exception("User not authorized to use template")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+    # Get the workspace subscription id (if set)
+    if workspace.properties.get("workspace_subscription_id"):
+        user_resource.properties["workspace_subscription_id"] = workspace.properties["workspace_subscription_id"]
 
     operation = await save_and_deploy_resource(
         resource=user_resource,
