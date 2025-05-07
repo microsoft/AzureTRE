@@ -5,6 +5,7 @@
 ENHANCEMENTS:
 * Add ability to pass values to install stage on pipleine [#4451](https://github.com/microsoft/AzureTRE/pull/4451)
 * Format the error message in the Operations panel for enhanced readability ([#4493](https://github.com/microsoft/AzureTRE/issues/4493))
+* Enhanced the logout message to emphasize session security. ([#4410](https://github.com/AzureTRE/AzureTRE/issues/4410))
 * Added ability to assign VMs to other users at creation time ([#1179](https://github.com/microsoft/AzureTRE/issues/1179))
 * Add shutdown schedule to Windows VMs ([#4211](https://github.com/microsoft/AzureTRE/pull/4211))
 * Add deploy and sku variables to control deployment of Azure Bastion ([#4383](https://github.com/microsoft/AzureTRE/pull/4383))
@@ -14,6 +15,7 @@ BUG FIXES:
 * Intermittent management storage account access failure during core deployment ([#4505](https://github.com/microsoft/AzureTRE/4505))
 * Some error messages not displayed in side panel ([#4502](https://github.com/microsoft/AzureTRE/issues/4502))
 * Airlock Review Template Leaves OS Disk Behind ([4514](https://github.com/microsoft/AzureTRE/issues/4514))
+* Enabled Shared Access Key access on the core storage account. ([#4448](https://github.com/microsoft/AzureTRE/issues/4448))
 
 ## 0.22.0 (April 20, 2025)
 
