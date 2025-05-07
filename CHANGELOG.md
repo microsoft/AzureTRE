@@ -9,6 +9,7 @@ ENHANCEMENTS:
 * Added ability to assign VMs to other users at creation time ([#1179](https://github.com/microsoft/AzureTRE/issues/1179))
 * Add shutdown schedule to Windows VMs ([#4211](https://github.com/microsoft/AzureTRE/pull/4211))
 * Add deploy and sku variables to control deployment of Azure Bastion ([#4383](https://github.com/microsoft/AzureTRE/pull/4383))
+* Allow USER_MANAGEMENT_ENABLED config variable to set via CI/CD ([#4517](https://github.com/microsoft/AzureTRE/issues/4517))
 * Added support for private agent subnet ID configuration in config.yaml for core Key Vault network access from runner vnet. [#4463](https://github.com/microsoft/AzureTRE/issues/4463)
 
 BUG FIXES:
