@@ -15,6 +15,7 @@ BUG FIXES:
 * Letsencrypt.yml fails with "Invalid reference in variable validation" ([#4506](https://github.com/microsoft/AzureTRE/4506))
 * Intermittent management storage account access failure during core deployment ([#4505](https://github.com/microsoft/AzureTRE/4505))
 * Airlock Review Template Leaves OS Disk Behind ([4514](https://github.com/microsoft/AzureTRE/issues/4514))
+* Enabled Shared Access Key access on the core storage account. ([#4448](https://github.com/microsoft/AzureTRE/issues/4448))
 
 ## 0.22.0 (April 20, 2025)
 
