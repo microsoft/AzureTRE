@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-import-reviewvm
-version: 0.4.1
+version: 0.4.2
 description: "An Azure TRE User Resource Template for reviewing Airlock import requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -243,6 +243,13 @@ start:
         identity:
         username: ${ bundle.credentials.azure_client_id }
   - az:
+      description: "Select the Azure subscription"
+      arguments:
+        - account
+        - set
+      flags:
+        subscription: ${ bundle.credentials.azure_subscription_id }
+  - az:
       description: "Start the VM"
       arguments:
         - vm
@@ -278,6 +285,13 @@ stop:
       flags:
         identity:
         username: ${ bundle.credentials.azure_client_id }
+  - az:
+      description: "Select the Azure subscription"
+      arguments:
+        - account
+        - set
+      flags:
+        subscription: ${ bundle.credentials.azure_subscription_id }
   - az:
       description: "Stop the VM"
       arguments:
@@ -317,6 +331,13 @@ reset_password:
       flags:
         identity:
         username: ${ bundle.credentials.azure_client_id }
+  - az:
+      description: "Select the Azure subscription"
+      arguments:
+        - account
+        - set
+      flags:
+        subscription: ${ bundle.credentials.azure_subscription_id }
   - exec:
       description: "Reset password and persist to keyvault"
       suppress-output: true
