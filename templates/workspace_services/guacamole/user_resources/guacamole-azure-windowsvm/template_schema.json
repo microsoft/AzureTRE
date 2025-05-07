@@ -40,7 +40,7 @@
       "type": "string",
       "title": "Admin username",
       "description": "Overide automatic admin username generation.",
-      "default": ","
+      "default": ""
     },
     "vm_size": {
       "$id": "#/properties/vm_size",
