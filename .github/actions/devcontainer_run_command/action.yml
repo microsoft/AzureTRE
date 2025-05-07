@@ -278,8 +278,7 @@ runs:
             && inputs.ENABLE_CMK_ENCRYPTION) || 'false' }}" \
           -e TF_VAR_encryption_kv_name="${{ inputs.ENCRYPTION_KV_NAME }}" \
           -e TF_VAR_external_key_store_id="${{ inputs.EXTERNAL_KEY_STORE_ID }}" \
-          -e TF_VAR_user_management_enabled="${{ (inputs.USER_MANAGEMENT_ENABLED != ''
-            && inputs.USER_MANAGEMENT_ENABLED) || 'false' }}" \
+          -e TF_VAR_user_management_enabled="${{ (inputs.USER_MANAGEMENT_ENABLED != '' && inputs.USER_MANAGEMENT_ENABLED) || 'false' }}" \
           -e USER_MANAGEMENT_ENABLED="${{ inputs.USER_MANAGEMENT_ENABLED }}" \
           -e PRIVATE_AGENT_SUBNET_ID=${{ inputs.PRIVATE_AGENT_SUBNET_ID }} \
           -e TF_VAR_private_agent_subnet_id=${{ inputs.PRIVATE_AGENT_SUBNET_ID }} \
