@@ -116,6 +116,10 @@
         "enable_cmk_encryption": {
           "description": "Enables customer-managed key encryption for all supported resources.",
           "type": "boolean"
+        },
+        "private_agent_subnet_id": {
+          "description": "Subnet ID of private runner agent.",
+          "type": "string"
         }
       }
     },

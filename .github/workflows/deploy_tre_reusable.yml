@@ -1,7 +1,7 @@
 ---
 name: Deploy Azure TRE Reusable
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   workflow_call:
     inputs:
       prRef:
@@ -94,6 +94,9 @@ on:  # yamllint disable-line rule:truthy
         description: ""
         required: false
       EXTERNAL_KEY_STORE_ID:
+        description: ""
+        required: false
+      PRIVATE_AGENT_SUBNET_ID:
         description: ""
         required: false
 
@@ -259,6 +262,7 @@ jobs:
           ENABLE_CMK_ENCRYPTION: ${{ vars.ENABLE_CMK_ENCRYPTION }}
           ENCRYPTION_KV_NAME: ${{ secrets.ENCRYPTION_KV_NAME }}
           EXTERNAL_KEY_STORE_ID: ${{ secrets.EXTERNAL_KEY_STORE_ID }}
+          PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}
 
       - name: ACR Login
         # failure in the first attempt indicates a new ACR, so we need to try again after it's been created
@@ -379,6 +383,7 @@ jobs:
           ENCRYPTION_KV_NAME: ${{ secrets.ENCRYPTION_KV_NAME }}
           EXTERNAL_KEY_STORE_ID: ${{ secrets.EXTERNAL_KEY_STORE_ID }}
           USER_MANAGEMENT_ENABLED: ${{ vars.USER_MANAGEMENT_ENABLED }}
+          PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
