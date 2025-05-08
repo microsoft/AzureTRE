@@ -93,11 +93,29 @@ class CostService:
     def __init__(self) -> None:
         self.scope = "/subscriptions/{}".format(config.SUBSCRIPTION_ID)
         self.client = CostManagementClient(credential=credentials.get_credential())
-        self.resource_client = ResourceManagementClient(credentials.get_credential(),
-                                                        config.SUBSCRIPTION_ID,
-                                                        base_url=config.RESOURCE_MANAGER_ENDPOINT,
-                                                        credential_scopes=config.CREDENTIAL_SCOPES)
+        self.__resource_clients = {
+            config.SUBSCRIPTION_ID: ResourceManagementClient(
+                credentials.get_credential(),
+                config.SUBSCRIPTION_ID,
+                base_url=config.RESOURCE_MANAGER_ENDPOINT,
+                credential_scopes=config.CREDENTIAL_SCOPES
+            )
+        }
         self.cache = {}
+
+    def get_resource_management_client(self, subscription_id: Optional[str] = None) -> ResourceManagementClient:
+        if subscription_id is None:
+            subscription_id = config.SUBSCRIPTION_ID
+
+        # Check if resource client is already created for the subscription
+        if subscription_id not in self.__resource_clients.keys():
+            self.__resource_clients[subscription_id] = ResourceManagementClient(
+                credentials.get_credential(),
+                subscription_id,
+                base_url=config.RESOURCE_MANAGER_ENDPOINT,
+                credential_scopes=config.CREDENTIAL_SCOPES
+            )
+        return self.__resource_clients[subscription_id]
 
     def get_cached_result(self, key: str) -> Union[QueryResult, None]:
         """Returns cached item result.
@@ -141,18 +159,28 @@ class CostService:
                               workspace_repo: WorkspaceRepository,
                               shared_services_repo: SharedServiceRepository) -> CostReport:
 
-        resource_groups_dict = self.get_resource_groups_by_tag(self.TRE_ID_TAG, tre_id)
+        subscription_ids = {config.SUBSCRIPTION_ID}
 
-        cache_key = f"{CostService.TRE_ID_TAG}_{tre_id}_granularity{granularity}_from_date{from_date}_to_date{to_date}_rgs{'_'.join(list(resource_groups_dict.keys()))}"
-        query_result = self.get_cached_result(cache_key)
+        #  get all subscription ids from the workspace objects
+        subscription_ids.update(await self.__get_workspace_subscription_ids(workspace_repo))
 
-        if query_result is None:
-            query_result = self.query_costs(CostService.TRE_ID_TAG, tre_id, granularity, from_date, to_date, list(resource_groups_dict.keys()))
-            self.cache_result(cache_key, query_result, timedelta(hours=2))
+        #  loop through all subscription ids and get resource groups and costs
+        resource_groups_dict = {}
+        summarized_result = []
+        for subscription_id in subscription_ids:
+            resource_groups_dict[subscription_id] = self.get_resource_groups_by_tag(self.TRE_ID_TAG, tre_id, subscription_id)
 
-        summerized_result = self.summerize_untagged(query_result, granularity, resource_groups_dict)
+            cache_key = f"{CostService.TRE_ID_TAG}_{tre_id}_granularity{granularity}_from_date{from_date}_to_date{to_date}_subscription{subscription_id}_rgs{'_'.join(list(resource_groups_dict[subscription_id].keys()))}"
+            query_result = self.get_cached_result(cache_key)
 
-        query_result_dict = self.__query_result_to_dict(summerized_result, granularity)
+            if query_result is None:
+                query_result = self.query_costs(CostService.TRE_ID_TAG, tre_id, granularity, from_date, to_date, list(resource_groups_dict[subscription_id].keys()), subscription_id)
+                self.cache_result(cache_key, query_result, timedelta(hours=2))
+
+            #  append the result to the summarized result
+            summarized_result.extend(self.summarize_untagged(query_result, granularity, resource_groups_dict[subscription_id]))
+
+        query_result_dict = self.__query_result_to_dict(summarized_result, granularity)
 
         cost_report = CostReport(core_services=[], shared_services=[], workspaces=[])
 
@@ -166,6 +194,19 @@ class CostService:
 
         return cost_report
 
+    async def __get_workspace_subscription_ids(self, workspace_repo: WorkspaceRepository) -> list:
+        workspaces = await workspace_repo.get_active_workspaces()
+        subscription_ids = []
+        for workspace in workspaces:
+            # check if the property exists and is not empty
+            if not workspace.properties.get("workspace_subscription_id"):
+                continue
+            # add the subscription id to the set
+            subscription_id = workspace.properties["workspace_subscription_id"]
+            if subscription_id not in subscription_ids:
+                subscription_ids.append(subscription_id)
+        return subscription_ids
+
     async def query_tre_workspace_costs(self, workspace_id: str, granularity: GranularityEnum, from_date: Optional[datetime],
                                         to_date: Optional[datetime],
                                         workspace_repo: WorkspaceRepository,
@@ -174,18 +215,33 @@ class CostService:
 
         resource_groups_dict = self.get_resource_groups_by_tag(self.TRE_WORKSPACE_ID_TAG, workspace_id)
 
+        subscription_id = None
+
+        #  if no resource groups are found with the tag, they may be in another subscription
+        #  so we need to get the workspace subscription id and query the resource groups again
+        if not resource_groups_dict:
+            try:
+                workspace = await workspace_repo.get_workspace_by_id(workspace_id)
+                subscription_id = workspace.properties["workspace_subscription_id"]
+                resource_groups_dict = self.get_resource_groups_by_tag(self.TRE_WORKSPACE_ID_TAG, workspace_id, subscription_id)
+
+            except EntityDoesNotExist:
+                raise WorkspaceDoesNotExist(f"workspace_id [{workspace_id}] does not exist")
+
         cache_key = f"{CostService.TRE_WORKSPACE_ID_TAG}_{workspace_id}_granularity{granularity}_from_date{from_date}_to_date{to_date}_rgs{'_'.join(list(resource_groups_dict.keys()))}"
         query_result = self.get_cached_result(cache_key)
 
         if query_result is None:
-            query_result = self.query_costs(CostService.TRE_WORKSPACE_ID_TAG, workspace_id, granularity, from_date, to_date, list(resource_groups_dict.keys()))
+            query_result = self.query_costs(CostService.TRE_WORKSPACE_ID_TAG, workspace_id, granularity, from_date, to_date, list(resource_groups_dict.keys()), subscription_id)
             self.cache_result(cache_key, query_result, timedelta(hours=2))
 
-        summerized_result = self.summerize_untagged(query_result, granularity, resource_groups_dict)
-        query_result_dict = self.__query_result_to_dict(summerized_result, granularity)
+        summarized_result = self.summarize_untagged(query_result, granularity, resource_groups_dict)
+        query_result_dict = self.__query_result_to_dict(summarized_result, granularity)
 
         try:
-            workspace = await workspace_repo.get_workspace_by_id(workspace_id)
+            #  check if workspace is already loaded
+            if 'workspace' not in locals() or workspace is None:
+                workspace = await workspace_repo.get_workspace_by_id(workspace_id)
             workspace_cost_report: WorkspaceCostReport = WorkspaceCostReport(
                 id=workspace_id,
                 name=self.__get_resource_name(workspace),
@@ -206,11 +262,14 @@ class CostService:
         else:
             return f'"{self.TRE_ID_TAG}":"{tags[self.TRE_ID_TAG]}"'
 
-    def get_resource_groups_by_tag(self, tag_name, tag_value) -> dict:
-        resource_groups = self.resource_client.resource_groups.list(filter=f"tagName eq '{tag_name}' and tagValue eq '{tag_value}'")
+    def get_resource_groups_by_tag(self, tag_name, tag_value, subscription_id: Optional[str] = None) -> dict:
+
+        resource_client = self.get_resource_management_client(subscription_id)
+        resource_groups = resource_client.resource_groups.list(filter=f"tagName eq '{tag_name}' and tagValue eq '{tag_value}'")
+
         return {resouce_group.name: self.extract_resource_group_tag(resouce_group.tags) for resouce_group in resource_groups}
 
-    def summerize_untagged(self, query_result: QueryResult, granularity: GranularityEnum, resource_groups_dict: dict) -> list:
+    def summarize_untagged(self, query_result: QueryResult, granularity: GranularityEnum, resource_groups_dict: dict) -> list:
         if len(query_result.rows) == 0:
             return []
 
@@ -316,11 +375,16 @@ class CostService:
     def query_costs(self, tag_name: str, tag_value: str,
                     granularity: GranularityEnum, from_date: Optional[datetime],
                     to_date: Optional[datetime],
-                    resource_groups: list) -> QueryResult:
+                    resource_groups: list,
+                    subscription_id: Optional[str] = None) -> QueryResult:
+
         query_definition = self.build_query_definition(granularity, from_date, to_date, tag_name, tag_value, resource_groups)
 
+        scope = "/subscriptions/{}".format(subscription_id) if subscription_id else self.scope
+        logger.debug(f"Querying cost management API with scope: {scope} and query definition: {query_definition}")
+
         try:
-            return self.client.query.usage(self.scope, query_definition)
+            return self.client.query.usage(scope, query_definition)
         except ResourceNotFoundError as e:
             # when cost management API returns 404 with an message:
             # Given subscription {subscription_id} doesn't have valid WebDirect/AIRS offer type.
