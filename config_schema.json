@@ -101,6 +101,14 @@
           "description": "SKU of the Application Gateway.",
           "type": "string"
         },
+        "deploy_bastion": {
+          "description": "Deploy Azure Bastion.",
+          "type": "boolean"
+        },
+        "bastion_sku": {
+          "description": "SKU of the Azure Bastion.",
+          "type": "string"
+        },
         "custom_domain": {
           "description": "Custom domain name.",
           "type": "string"
@@ -108,6 +116,10 @@
         "enable_cmk_encryption": {
           "description": "Enables customer-managed key encryption for all supported resources.",
           "type": "boolean"
+        },
+        "private_agent_subnet_id": {
+          "description": "Subnet ID of private runner agent.",
+          "type": "string"
         }
       }
     },
