@@ -145,6 +145,14 @@ inputs:
     description: "The Azure Resource ID for an external key store to use for CMK"
     required: false
     default: ""
+  USER_MANAGEMENT_ENABLED:
+    description: "If set to true TRE Admins are able to assign and de-assign users to workspaces via the UI"
+    required: false
+    default: "false"
+  PRIVATE_AGENT_SUBNET_ID:
+    description: Enables vnet exception for the subnet to access private resources
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -270,6 +278,10 @@ runs:
             && inputs.ENABLE_CMK_ENCRYPTION) || 'false' }}" \
           -e TF_VAR_encryption_kv_name="${{ inputs.ENCRYPTION_KV_NAME }}" \
           -e TF_VAR_external_key_store_id="${{ inputs.EXTERNAL_KEY_STORE_ID }}" \
+          -e TF_VAR_user_management_enabled="${{ (inputs.USER_MANAGEMENT_ENABLED != '' && inputs.USER_MANAGEMENT_ENABLED) || 'false' }}" \
+          -e USER_MANAGEMENT_ENABLED="${{ inputs.USER_MANAGEMENT_ENABLED }}" \
+          -e PRIVATE_AGENT_SUBNET_ID=${{ inputs.PRIVATE_AGENT_SUBNET_ID }} \
+          -e TF_VAR_private_agent_subnet_id=${{ inputs.PRIVATE_AGENT_SUBNET_ID }} \
           -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c -x "./command.sh"

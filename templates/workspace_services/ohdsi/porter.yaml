@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-ohdsi
-version: 0.3.3
+version: 0.3.4
 description: "An OHDSI workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -110,6 +110,13 @@ install:
       flags:
         identity:
         username: ${ bundle.credentials.azure_client_id }
+  - az:
+      description: "Select the Azure subscription"
+      arguments:
+        - account
+        - set
+      flags:
+        subscription: ${ bundle.credentials.azure_subscription_id }
   - terraform:
       description: "Deploy OHDSI workspace service"
       vars:
@@ -156,6 +163,13 @@ upgrade:
       flags:
         identity:
         username: ${ bundle.credentials.azure_client_id }
+  - az:
+      description: "Select the Azure subscription"
+      arguments:
+        - account
+        - set
+      flags:
+        subscription: ${ bundle.credentials.azure_subscription_id }
   - terraform:
       description: "Upgrade shared service"
       vars:
