@@ -13,12 +13,6 @@ variable "location" {
   description = "Location used for all resources"
 }
 
-variable "acr_sku" {
-  type        = string
-  description = "Price tier for ACR"
-  default     = ""
-}
-
 variable "acr_name" {
   type        = string
   description = "Name of ACR"
