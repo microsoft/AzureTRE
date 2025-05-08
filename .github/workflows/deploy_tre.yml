@@ -3,7 +3,7 @@ name: Deploy Azure TRE
 # This workflow is the integration build run for pushes to the main branch
 # It also runs on a schedule, serving as the nightly build
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   schedule:
     # midnight every day https://crontab.guru/#0_0_*_*_*
     - cron: "0 0 * * *"
@@ -37,7 +37,7 @@ jobs:
         || 'extended or extended_aad or shared_services or airlock' }}
       environmentName: ${{ github.event.inputs.environment || 'CICD' }}
       E2E_TESTS_NUMBER_PROCESSES: 1
-      DEVCONTAINER_TAG: 'latest'
+      DEVCONTAINER_TAG: "latest"
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ secrets.ACR_NAME }}
@@ -59,3 +59,4 @@ jobs:
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
       ENCRYPTION_KV_NAME: ${{ secrets.ENCRYPTION_KV_NAME }}
       EXTERNAL_KEY_STORE_ID: ${{ secrets.EXTERNAL_KEY_STORE_ID }}
+      PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}

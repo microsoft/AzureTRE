@@ -59,6 +59,9 @@ tre:
 
   # Uncomment to deploy to a custom domain
   # custom_domain: __CHANGE_ME__
+
+  # Uncomment to enable vnet exception for the subnet to access private resources like TRE key vault and management storage account.
+  # private_agent_subnet_id: __CHANGE_ME__
 authentication:
   aad_tenant_id: __CHANGE_ME__
   # Setting AUTO_WORKSPACE_APP_REGISTRATION to false will:
