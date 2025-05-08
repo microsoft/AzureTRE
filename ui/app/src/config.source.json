@@ -8,5 +8,7 @@
     "debug": false,
     "version": "0.0.0",
     "activeDirectoryUri": "",
-    "userManagementEnabled": false
+    "userManagementEnabled": false,
+    "uiSiteName": "Azure TRE",
+    "uiFooterText": "Azure Trusted Research Environment"
 }

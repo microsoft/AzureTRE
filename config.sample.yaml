@@ -87,6 +87,12 @@ resource_processor:
 # yamllint disable-line rule:line-length
 #  rp_bundle_values: '{"custom_key_1":"custom_value_1","image_gallery_id":"/subscriptions/<subscription-id>/resourceGroups/<your-rg>/providers/Microsoft.Compute/galleries/<your-gallery-name>"}'
 
+ui_config:
+  # Product name shown in the top left hand corner of the TRE portal
+  ui_site_name: "Azure TRE"
+  # Footer text shown in the bottom left hand corner of the TRE portal
+  ui_footer_text: "Azure Trusted Research Environment"
+
 developer_settings:
 # Locks will not be added to stateful resources so they can be easily removed
 # stateful_resources_locked: false
