@@ -1,8 +1,8 @@
 import { DefaultPalette, IStackItemStyles, Stack } from "@fluentui/react";
 
 interface ResourceOperationListItemProps {
-  header: String;
-  val: String;
+  header: string;
+  val: string;
 }
 
 export const ResourceOperationListItem: React.FunctionComponent<
