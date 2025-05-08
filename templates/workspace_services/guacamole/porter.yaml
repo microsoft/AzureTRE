@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole
-version: 0.13.2
+version: 0.13.3
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -112,6 +112,7 @@ parameters:
     type: string
   - name: workspace_subscription_id
     type: string
+    default: ""
 
 outputs:
   - name: authentication_callback_uri
