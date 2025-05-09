@@ -3,11 +3,11 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "3.117.0"
+      version = "= 3.117.0"
     }
     external = {
       source  = "hashicorp/external"
-      version = "=2.2.3"
+      version = "= 2.3.5"
     }
   }
 

@@ -86,14 +86,14 @@ resource "azapi_resource" "ampls_workspace" {
   location  = "global"
   tags      = var.tre_workspace_tags
 
-  body = jsonencode({
+  body = {
     properties = {
       accessModeSettings = {
         ingestionAccessMode = "PrivateOnly"
         queryAccessMode     = "PrivateOnly"
       }
     }
-  })
+  }
 
   response_export_values = [
     "id"
@@ -135,7 +135,7 @@ resource "azapi_resource" "appinsights" {
   location  = var.location
   tags      = var.tre_workspace_tags
 
-  body = jsonencode({
+  body = {
     kind = "web"
     properties = {
       Application_Type                = "web"
@@ -146,7 +146,7 @@ resource "azapi_resource" "appinsights" {
       ForceCustomerStorageForProfiler = true
       publicNetworkAccessForIngestion = var.enable_local_debugging ? "Enabled" : "Disabled"
     }
-  })
+  }
 
   response_export_values = [
     "id",
@@ -162,7 +162,7 @@ resource "azurerm_monitor_private_link_scoped_service" "ampls_app_insights" {
   scope_name          = azapi_resource.ampls_workspace.name
 
   # linked_resource_id  = azurerm_application_insights.workspace.id
-  linked_resource_id = replace(jsondecode(azapi_resource.appinsights.output).id, "microsoft.insights", "Microsoft.Insights")
+  linked_resource_id = replace(azapi_resource.appinsights.output.id, "microsoft.insights", "Microsoft.Insights")
 }
 
 resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
@@ -175,7 +175,7 @@ resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
   lifecycle { ignore_changes = [tags] }
 
   private_service_connection {
-    private_connection_resource_id = jsondecode(azapi_resource.ampls_workspace.output).id
+    private_connection_resource_id = azapi_resource.ampls_workspace.output.id
     name                           = "psc-ampls-${var.tre_id}-ws-${local.short_workspace_id}"
     subresource_names              = ["azuremonitor"]
     is_manual_connection           = false
@@ -221,7 +221,7 @@ resource "azurerm_monitor_smart_detector_alert_rule" "failure_anomalies" {
   severity            = "Sev3"
   scope_resource_ids = [
     # azurerm_application_insights.workspace.id
-    jsondecode(azapi_resource.appinsights.output).id
+    azapi_resource.appinsights.output.id
   ]
   frequency     = "PT1M"
   detector_type = "FailureAnomaliesDetector"

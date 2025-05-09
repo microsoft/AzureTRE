@@ -34,7 +34,7 @@ resource "azapi_resource" "compute_cluster" {
     type = "SystemAssigned"
   }
 
-  body = jsonencode({
+  body = {
     properties = {
       computeLocation  = data.azurerm_resource_group.ws.location
       description      = "Default Compute Cluster"
@@ -57,7 +57,7 @@ resource "azapi_resource" "compute_cluster" {
         vmSize     = "Standard_DS2_v2"
       }
     }
-  })
+  }
 
   depends_on = [
     azurerm_private_endpoint.mlpe,
@@ -81,11 +81,11 @@ resource "azapi_update_resource" "set_image_build_compute" {
   name      = azurerm_machine_learning_workspace.aml_workspace.name
   parent_id = data.azurerm_resource_group.ws.id
 
-  body = jsonencode({
+  body = {
     properties = {
-      imageBuildCompute = jsondecode(azapi_resource.compute_cluster.output).name
+      imageBuildCompute = azapi_resource.compute_cluster.output.name
     }
-  })
+  }
 
   depends_on = [
     azapi_resource.compute_cluster

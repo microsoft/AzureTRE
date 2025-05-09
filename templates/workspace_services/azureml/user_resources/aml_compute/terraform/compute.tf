@@ -7,7 +7,7 @@ resource "azapi_resource" "compute_instance" {
   tags                      = local.tre_user_resources_tags
   schema_validation_enabled = false
 
-  body = jsonencode({
+  body = {
     properties = {
       computeType = "ComputeInstance"
       properties = {
@@ -25,7 +25,7 @@ resource "azapi_resource" "compute_instance" {
         }
       }
     }
-  })
+  }
 
   lifecycle { ignore_changes = [tags] }
 }
