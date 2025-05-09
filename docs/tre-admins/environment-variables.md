@@ -52,6 +52,8 @@
 | `AUTO_GRANT_WORKSPACE_CONSENT`| Default of `false`.  Setting this to `true` will remove the need for users to manually grant consent when creating new workspaces. The identity will be granted `Application.ReadWrite.All` and `DelegatedPermissionGrant.ReadWrite.All` permissions. |
 | `USER_MANAGEMENT_ENABLED` | If set to `true`, TRE Admins will be able to assign and de-assign users to workspaces via the UI (Requires Entra ID groups to be enabled on the workspace and the workspace template version to be 2.2.0 or greater). |
 | `PRIVATE_AGENT_SUBNET_ID` | Optional. Vnet exception is enabled for the provided runner agent subnet id, enabling access to private resources like TRE key vault. |
+| `UI_SITE_NAME` | Optional. Overrides the title text shown in top left corner of portal. Default value is: `Azure TRE`  |
+| `UI_FOOTER_TEXT` | Optional. Overrides the footer text shown in the bottom left corner of the portal.  Default value is `Azure Trusted Research Environment` |
 
 ## For authentication in `/config.yaml`
 
