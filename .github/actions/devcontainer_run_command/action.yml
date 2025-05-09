@@ -161,6 +161,10 @@ inputs:
     description: "Text shown in bottom left corner of TRE portal"
     required: false
     default: "Azure Trusted Research Environment"
+  AUTO_GRANT_WORKSPACE_CONSENT:
+    description: "When set to true removes the need for users to manually grant consent when creating new workspaces"
+    required: false
+    default: "false"
 
 runs:
   using: composite
@@ -292,6 +296,7 @@ runs:
           -e USER_MANAGEMENT_ENABLED="${{ inputs.USER_MANAGEMENT_ENABLED }}" \
           -e PRIVATE_AGENT_SUBNET_ID=${{ inputs.PRIVATE_AGENT_SUBNET_ID }} \
           -e TF_VAR_private_agent_subnet_id=${{ inputs.PRIVATE_AGENT_SUBNET_ID }} \
+          -e TF_VAR_auto_grant_workspace_consent="${{ (inputs.AUTO_GRANT_WORKSPACE_CONSENT != '' && inputs.AUTO_GRANT_WORKSPACE_CONSENT) || 'false' }}" \
           -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c -x "./command.sh"
