@@ -1,3 +1,10 @@
+
+resource "time_sleep" "wait_180_seconds" {
+  depends_on = [azurerm_network_interface.internal]
+
+  destroy_duration = "180s"
+}
+
 resource "azurerm_network_interface" "internal" {
   name                = "internal-nic-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
@@ -80,6 +87,8 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
   #
   lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, custom_data] }
+
+  depends_on = [time_sleep.wait_180_seconds]
 }
 
 resource "azurerm_disk_encryption_set" "windowsvm_disk_encryption" {
