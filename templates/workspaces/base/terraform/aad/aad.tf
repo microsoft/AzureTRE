@@ -91,7 +91,7 @@ resource "azuread_application" "workspace" {
   }
 
   web {
-    redirect_uris = jsondecode(base64decode(var.aad_redirect_uris_b64))[*].value
+    redirect_uris = base64decode(var.aad_redirect_uris_b64)[*].value
   }
 }
 
