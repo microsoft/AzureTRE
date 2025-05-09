@@ -42,8 +42,8 @@ def validate_report_period(from_date: Optional[datetime], to_date: Optional[date
 class CostsQueryParams:
     def __init__(
         self,
-        from_date: Optional[datetime] = Query(default=None, description="The start date to pull data from, requiered if to_date is set, otherwise report will return month to date (iso-8601, UTC)."),
-        to_date: Optional[datetime] = Query(default=None, description="The end date to pull data to, requiered if from_date is set, otherwise report will return month to date (iso-8601, UTC)."),
+        from_date: Optional[datetime] = Query(default=None, description="The start date to pull data from, required if to_date is set, otherwise report will return month to date (iso-8601, UTC)."),
+        to_date: Optional[datetime] = Query(default=None, description="The end date to pull data to, required if from_date is set, otherwise report will return month to date (iso-8601, UTC)."),
         granularity: GranularityEnum = Query(default="None", description="The granularity of rows in the query.")
     ):
         self.from_date = from_date

@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-certs
-version: 0.7.4
+version: 0.7.6
 description: "An Azure TRE shared service to generate certificates for a specified internal domain using Letsencrypt"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -103,6 +103,13 @@ install:
       flags:
         identity:
         username: ${ bundle.credentials.azure_client_id }
+  - az:
+      description: "Select the Azure subscription"
+      arguments:
+        - account
+        - set
+      flags:
+        subscription: ${ bundle.credentials.azure_subscription_id }
   - exec:
       description: "Generate certificate"
       command: bash
@@ -184,6 +191,13 @@ renew:
       flags:
         identity:
         username: ${ bundle.credentials.azure_client_id }
+  - az:
+      description: "Select the Azure subscription"
+      arguments:
+        - account
+        - set
+      flags:
+        subscription: ${ bundle.credentials.azure_subscription_id }
   - az:
       description: "Start application gateway"
       arguments:
