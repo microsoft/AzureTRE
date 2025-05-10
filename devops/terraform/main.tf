@@ -61,8 +61,11 @@ resource "azurerm_container_registry" "shared_acr" {
   name                = var.acr_name
   resource_group_name = azurerm_resource_group.mgmt.name
   location            = azurerm_resource_group.mgmt.location
-  sku                 = var.acr_sku != "" ? var.acr_sku : (var.enable_cmk_encryption ? "Premium" : "Standard")
+  sku                 = "Premium"
   admin_enabled       = true
+
+  # Conditionally disable public network access
+  public_network_access_enabled = var.disable_acr_public_access ? false : true
 
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []

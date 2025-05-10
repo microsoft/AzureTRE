@@ -1,6 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.23.0
 **BREAKING CHANGES & MIGRATIONS**:
+* The management container registry now uses a private endpoint, and public network access is controlled via the disable_acr_public_access variable. In future versions, public access will be fully removed, and the ACR will become private by default. Please ensure that relevant templates are updated to their latest versions to support communication through the private endpoint.
 
 ENHANCEMENTS:
 * Add ability to pass values to install stage on pipleine [#4451](https://github.com/microsoft/AzureTRE/pull/4451)

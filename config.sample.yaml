@@ -8,6 +8,8 @@ management:
   mgmt_storage_account_name: __CHANGE_ME__
   terraform_state_container_name: tfstate
   acr_name: __CHANGE_ME__
+  # Set this to true if you want to disable public access to mgmt acr
+  disable_acr_public_access: true
   # ID of external Key Vault to store CMKs in (only required if enable_cmk_encryption is true)
   # external_key_store_id: __CHANGE_ME__
   # Name of Key Vault for encryption, required if enable_cmk_encryption is true and external_key_store_id is not set

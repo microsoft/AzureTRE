@@ -112,6 +112,32 @@ resource "azurerm_linux_web_app" "gitea" {
   ]
 }
 
+resource "azapi_update_resource" "gitea_vnet_container_pull_routing" {
+  resource_id = azurerm_linux_web_app.gitea.id
+  type        = "Microsoft.Web/sites@2022-09-01"
+
+  body = jsonencode({
+    properties = {
+      vnetImagePullEnabled : true
+    }
+  })
+
+  depends_on = [
+    azurerm_linux_web_app.gitea
+  ]
+}
+
+resource "azapi_resource_action" "restart_gitea_webapp" {
+  type        = "Microsoft.Web/sites@2022-09-01"
+  resource_id = azurerm_linux_web_app.gitea.id
+  method      = "POST"
+  action      = "restart"
+
+  depends_on = [
+    azapi_update_resource.gitea_vnet_container_pull_routing
+  ]
+}
+
 resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   name                = "pe-${local.webapp_name}"
   location            = data.azurerm_resource_group.ws.location
