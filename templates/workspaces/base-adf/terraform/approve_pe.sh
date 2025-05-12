@@ -7,11 +7,11 @@ set -ex
 WS_NAME=$1
 STORAGE_NAME=$2
 WORKSPACE_RESOURCE_NAME_SUFFIX=$3
-ARM_CLIENT_ID=$4
+CLIENT_ID=$4
 ARM_SUBSCRIPTION_ID=$5
 
 # Login using the Managed Identity
-az login --identity -u "$ARM_CLIENT_ID"
+az login --identity -u "$CLIENT_ID"
 
 # Get the name of the private-endpoint-connection
 name=$(az network private-endpoint-connection list \

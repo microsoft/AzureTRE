@@ -1,13 +1,14 @@
 data "azurerm_client_config" "current" {}
 
 resource "azurerm_key_vault" "kv" {
-  name                     = local.keyvault_name
-  location                 = azurerm_resource_group.ws.location
-  resource_group_name      = azurerm_resource_group.ws.name
-  sku_name                 = "standard"
-  purge_protection_enabled = true
-  tenant_id                = data.azurerm_client_config.current.tenant_id
-  tags                     = local.tre_workspace_tags
+  name                      = local.keyvault_name
+  location                  = azurerm_resource_group.ws.location
+  resource_group_name       = azurerm_resource_group.ws.name
+  sku_name                  = "standard"
+  enable_rbac_authorization = true
+  purge_protection_enabled  = true
+  tenant_id                 = data.azurerm_client_config.current.tenant_id
+  tags                      = local.tre_workspace_tags
 
   network_acls {
     bypass         = "AzureServices"
@@ -66,22 +67,20 @@ data "azurerm_user_assigned_identity" "resource_processor_vmss_id" {
   resource_group_name = "rg-${var.tre_id}"
 }
 
-resource "azurerm_key_vault_access_policy" "resource_processor" {
-  key_vault_id = azurerm_key_vault.kv.id
-  tenant_id    = data.azurerm_user_assigned_identity.resource_processor_vmss_id.tenant_id
-  object_id    = data.azurerm_user_assigned_identity.resource_processor_vmss_id.principal_id
+resource "azurerm_role_assignment" "keyvault_resourceprocessor_ws_role" {
+  scope                = azurerm_key_vault.kv.id
+  role_definition_name = "Key Vault Administrator"
+  principal_id         = data.azurerm_user_assigned_identity.resource_processor_vmss_id.principal_id
 
-  secret_permissions = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
+
 }
 
 # If running the terraform locally
-resource "azurerm_key_vault_access_policy" "deployer" {
-  count        = var.enable_local_debugging ? 1 : 0
-  key_vault_id = azurerm_key_vault.kv.id
-  tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = data.azurerm_client_config.current.object_id
-
-  secret_permissions = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
+resource "azurerm_role_assignment" "keyvault_deployer_ws_role" {
+  count                = var.enable_local_debugging ? 1 : 0
+  scope                = azurerm_key_vault.kv.id
+  role_definition_name = "Key Vault Administrator"
+  principal_id         = data.azurerm_client_config.current.object_id
 }
 
 resource "terraform_data" "wait_for_dns_vault" {
@@ -104,8 +103,8 @@ resource "azurerm_key_vault_secret" "aad_tenant_id" {
   key_vault_id = azurerm_key_vault.kv.id
   tags         = local.tre_workspace_tags
   depends_on = [
-    azurerm_key_vault_access_policy.deployer,
-    azurerm_key_vault_access_policy.resource_processor,
+    azurerm_role_assignment.keyvault_deployer_ws_role,
+    azurerm_role_assignment.keyvault_resourceprocessor_ws_role,
     terraform_data.wait_for_dns_vault
   ]
 
@@ -121,8 +120,8 @@ resource "azurerm_key_vault_secret" "client_id" {
   count        = var.register_aad_application ? 0 : 1
   tags         = local.tre_workspace_tags
   depends_on = [
-    azurerm_key_vault_access_policy.deployer,
-    azurerm_key_vault_access_policy.resource_processor,
+    azurerm_role_assignment.keyvault_deployer_ws_role,
+    azurerm_role_assignment.keyvault_resourceprocessor_ws_role,
     terraform_data.wait_for_dns_vault
   ]
 
@@ -144,8 +143,8 @@ resource "azurerm_key_vault_secret" "client_secret" {
   count        = var.register_aad_application ? 0 : 1
   tags         = local.tre_workspace_tags
   depends_on = [
-    azurerm_key_vault_access_policy.deployer,
-    azurerm_key_vault_access_policy.resource_processor,
+    azurerm_role_assignment.keyvault_deployer_ws_role,
+    azurerm_role_assignment.keyvault_resourceprocessor_ws_role,
     terraform_data.wait_for_dns_vault
   ]
 

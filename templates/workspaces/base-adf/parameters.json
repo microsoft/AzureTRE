@@ -143,9 +143,27 @@
       }
     },
     {
+      "name": "arm_subscription_id",
+      "source": {
+        "env": "ARM_SUBSCRIPTION_ID"
+      }
+    },
+    {
       "name": "azure_environment",
       "source": {
         "env": "AZURE_ENVIRONMENT"
+      }
+    },
+    {
+      "name": "enable_cmk_encryption",
+      "source": {
+        "env": "ENABLE_CMK_ENCRYPTION"
+      }
+    },
+    {
+      "name": "key_store_id",
+      "source": {
+        "env": "KEY_STORE_ID"
       }
     }
   ]

@@ -1,7 +1,12 @@
 
+# data "azurerm_data_factory" "adf_core" {
+#   name                = "adf-${var.tre_id}"
+#   resource_group_name = "rg-${var.tre_id}"
+# }
+
 data "azurerm_data_factory" "adf_core" {
-  name                = "adf-${var.tre_id}"
-  resource_group_name = "rg-${var.tre_id}"
+  name                = "adf-sdebeta"
+  resource_group_name = "rg-sdebeta"
 }
 
 # Create a private endpoint to the storage account from the data platform
@@ -15,7 +20,7 @@ resource "azurerm_data_factory_managed_private_endpoint" "adf_dataplatform_pe" {
 
 resource "null_resource" "approve_private_endpoint" {
   provisioner "local-exec" {
-    command = "sh approve_pe.sh '${azurerm_resource_group.ws.name}' '${local.storage_name}' '${local.workspace_resource_name_suffix}' '${var.arm_client_id}' '${var.arm_subscription_id}'"
+    command = "sh approve_pe.sh '${azurerm_resource_group.ws.name}' '${local.storage_name}' '${local.workspace_resource_name_suffix}' '${var.client_id}' '${var.arm_subscription_id}'"
   }
   depends_on = [azurerm_data_factory_managed_private_endpoint.adf_dataplatform_pe]
 }
@@ -26,6 +31,7 @@ resource "azurerm_data_factory_linked_service_azure_file_storage" "ls_shared_fil
   name                     = "ls-adf-shared_storage-${local.workspace_resource_name_suffix}"
   data_factory_id          = data.azurerm_data_factory.adf_core.id
   connection_string        = azurerm_storage_account.stg.primary_connection_string
-  integration_runtime_name = "adf-ir-${var.tre_id}"
+  # integration_runtime_name = "adf-ir-${var.tre_id}"
+  integration_runtime_name = "adf-ir-sdebeta"
   file_share               = "vm-shared-storage"
 }
