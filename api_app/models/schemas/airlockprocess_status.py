@@ -1,23 +1,14 @@
 from pydantic import BaseModel
 
-def getAirlockStatus(status:int):
-    return {
-        "status":status
-    }
-
-def getAirlockMessage(message:str):
-    return {
-        "message": message
-    }
-class AirlockStatus(BaseModel):
-    status:int=getAirlockStatus("status")
-    message:str=getAirlockMessage("message")
+class AirlockProcessStatus(BaseModel):
+    status:int
+    message:str
 
     class config:
         schema_extra= {
             "example" :  {
-                "status": getAirlockStatus("status"),
-                "message": getAirlockMessage("message")
+                "status": 1,
+                "message": "message updated"
             }
         }
 

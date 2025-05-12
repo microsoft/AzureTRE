@@ -20,8 +20,9 @@ from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
+from models.domain.airlockstatus import AirLockStatus
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
-from models.schemas.airlockprocess_status import AirlockStatus
+from models.schemas.airlockprocess_status import AirlockProcessStatus
 from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestInResponse, AirlockRequestWithAllowedUserActions, \
     AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestContactTeamForm, \
     AirlockRequestStatisticsStatements
@@ -342,19 +343,20 @@ async def create_airlock_request_setup(
 
 
 @airlock_core_router.get("/airlock/get-status", status_code=status_code.HTTP_200_OK,
-                              response_model=AirlockStatus,
+                              response_model=AirlockProcessStatus,
                               name=strings.API_TO_GET_AIRLOCK_STATUS,
                               dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin)])
 async def get_airlock_status(airlock_status_repo: AirlockStatusRepository = Depends(get_repository(AirlockStatusRepository))):
 
-    airlockstatus=airlock_status_repo.get_status()
-    return AirlockStatus(airlockstatus)
+    airlockstatus = await airlock_status_repo.get_status()
+    return AirlockProcessStatus(status=airlockstatus.status, message=airlockstatus.message)
 
 
 @airlock_core_router.post("/airlock/set-status",status_code=status_code.HTTP_200_OK,
-                               response_model=AirlockStatus,name=strings.API_TO_SET_AIRLOCK_STATUS,
+                               response_model=AirlockProcessStatus,name=strings.API_TO_SET_AIRLOCK_STATUS,
                                dependencies=[Depends(get_current_admin_user)])
-async def set_airlock_status(airlock_status_request :AirlockStatus,
+async def set_airlock_status(airlock_status_request :AirlockProcessStatus,
+                            user = Depends(get_current_admin_user),
                             airlock_status_repo:AirlockStatusRepository=Depends(get_repository(AirlockStatusRepository))):
-    airlockstatus= await airlock_status_repo.set_status(airlock_status_request)
-    return AirlockStatus(airlockstatus)
+    airlockstatus= await airlock_status_repo.set_status(airlock_status_request,user)
+    return AirlockProcessStatus(status=airlockstatus.status, message=airlockstatus.message)
