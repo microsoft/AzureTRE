@@ -1,4 +1,3 @@
-from distutils.util import strtobool
 import logging
 
 import azure.functions as func
@@ -6,7 +5,7 @@ import datetime
 import uuid
 import json
 import os
-from shared_code import constants, blob_operations
+from shared_code import constants, blob_operations, parsers
 
 
 def main(msg: func.ServiceBusMessage,
@@ -18,7 +17,7 @@ def main(msg: func.ServiceBusMessage,
     status_message = None
 
     try:
-        enable_malware_scanning = strtobool(os.environ["ENABLE_MALWARE_SCANNING"])
+        enable_malware_scanning = parsers.parse_bool(os.environ["ENABLE_MALWARE_SCANNING"])
     except KeyError as e:
         logging.error("environment variable 'ENABLE_MALWARE_SCANNING' does not exists. cannot continue.")
         raise e
