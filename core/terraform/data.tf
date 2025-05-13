@@ -43,3 +43,8 @@ data "azurerm_storage_account" "mgmt_storage" {
   name                = var.mgmt_storage_account_name
   resource_group_name = var.mgmt_resource_group_name
 }
+
+data "azurerm_container_registry" "acr" {
+  name                = var.acr_name
+  resource_group_name = var.mgmt_resource_group_name
+}

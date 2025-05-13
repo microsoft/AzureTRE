@@ -44,6 +44,11 @@ variable "mgmt_acr_name" {
   description = "Management ACR name"
 }
 
+variable "acr_id" {
+  type        = string
+  description = "ACR ID"
+}
+
 variable "airlock_app_service_plan_sku" {
   type    = string
   default = "P1v3"

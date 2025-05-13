@@ -7,11 +7,6 @@ data "azurerm_private_dns_zone" "eventgrid" {
   resource_group_name = var.resource_group_name
 }
 
-data "azurerm_container_registry" "mgmt_acr" {
-  name                = var.mgmt_acr_name
-  resource_group_name = var.mgmt_resource_group_name
-}
-
 data "azurerm_monitor_diagnostic_categories" "eventgrid_custom_topics" {
   resource_id = azurerm_eventgrid_topic.airlock_notification.id
 }

@@ -129,6 +129,7 @@ module "airlock_resources" {
   docker_registry_server                = local.docker_registry_server
   mgmt_resource_group_name              = var.mgmt_resource_group_name
   mgmt_acr_name                         = var.acr_name
+  acr_id                                = data.azurerm_container_registry.acr.id
   api_principal_id                      = azurerm_user_assigned_identity.id.principal_id
   airlock_app_service_plan_sku          = var.core_app_service_plan_sku
   airlock_processor_subnet_id           = module.network.airlock_processor_subnet_id
