@@ -38,9 +38,9 @@ resource "azurerm_firewall_policy_rule_collection_group" "core" {
       destination_addresses = [
         "AzureActiveDirectory",
         "AzureResourceManager",
-        "AzureContainerRegistry",
-        "Storage",
-        "AzureKeyVault"
+
+        // Needed when a workspace key vault is created before its private endpoint
+        "AzureKeyVault.${data.azurerm_resource_group.rg.location}"
       ]
       destination_ports = [
         "443"
@@ -61,7 +61,6 @@ resource "azurerm_firewall_policy_rule_collection_group" "core" {
       ]
       destination_addresses = [
         "AzureActiveDirectory",
-        "AzureContainerRegistry",
         "AzureResourceManager"
       ]
       destination_ports = [
