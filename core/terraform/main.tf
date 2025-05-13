@@ -104,6 +104,7 @@ module "appgateway" {
   static_web_dns_zone_id     = module.network.static_web_dns_zone_id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
   app_gateway_sku            = var.app_gateway_sku
+  deployer_principal_id      = data.azurerm_client_config.current.object_id
 
   enable_cmk_encryption         = var.enable_cmk_encryption
   encryption_key_versionless_id = var.enable_cmk_encryption ? azurerm_key_vault_key.tre_encryption[0].versionless_id : null
@@ -174,6 +175,7 @@ module "resource_processor_vmss_porter" {
   service_bus_resource_request_queue               = azurerm_servicebus_queue.workspacequeue.name
   service_bus_deployment_status_update_queue       = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
   mgmt_storage_account_name                        = var.mgmt_storage_account_name
+  mgmt_storage_account_id                          = data.azurerm_storage_account.mgmt_storage.id
   mgmt_resource_group_name                         = var.mgmt_resource_group_name
   terraform_state_container_name                   = var.terraform_state_container_name
   key_vault_name                                   = azurerm_key_vault.kv.name
