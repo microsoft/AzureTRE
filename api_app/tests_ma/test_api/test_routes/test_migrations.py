@@ -20,7 +20,8 @@ class TestMigrationRoutesWithNonAdminRights:
     # [POST] /migrations/
     async def test_post_migrations_throws_unauthenticated_when_not_admin(self, client, app):
         response = await client.post(app.url_path_for(strings.API_MIGRATE_DATABASE))
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        if response.status_code != status.HTTP_403_FORBIDDEN:
+            raise AssertionError(f"Expected status code {status.HTTP_403_FORBIDDEN}, but got {response.status_code}")
 
 
 class TestMigrationRoutesThatRequireAdminRights:
@@ -34,16 +35,9 @@ class TestMigrationRoutesThatRequireAdminRights:
 
     # [POST] /migrations/
     @patch("api.routes.migrations.logger.info")
-    @patch("api.routes.migrations.OperationRepository")
-    async def test_post_migrations_returns_202_on_successful(self, _, logging, client, app):
+    async def test_post_migrations_returns_202_on_successful(self, logging, client, app):
         response = await client.post(app.url_path_for(strings.API_MIGRATE_DATABASE))
 
         logging.assert_called()
-        assert response.status_code == status.HTTP_202_ACCEPTED
-
-    # [POST] /migrations/
-    @patch("api.routes.migrations.logger.info")
-    @patch("api.routes.migrations.ResourceRepository.rename_field_name", side_effect=ValueError)
-    async def test_post_migrations_returns_400_if_template_does_not_exist(self, resources_repo, logging, client, app):
-        response = await client.post(app.url_path_for(strings.API_MIGRATE_DATABASE))
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        if response.status_code != status.HTTP_202_ACCEPTED:
+            raise AssertionError(f"Expected status code {status.HTTP_202_ACCEPTED}, but got {response.status_code}")

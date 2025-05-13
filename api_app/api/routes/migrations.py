@@ -21,6 +21,7 @@ async def migrate_database():
         # https://github.com/microsoft/AzureTRE/blob/v0.22.0/api_app/api/routes/migrations.py#L32-L84
         # and this folder:
         # https://github.com/microsoft/AzureTRE/tree/v0.22.0/api_app/db/migrations
+        logger.info("No migrations exist.")
 
         return MigrationOutList(migrations=migrations)
     except Exception as e:
