@@ -36,7 +36,7 @@ jobs:
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.2.9
+          terraform_version: 1.9.8
           terraform_wrapper: false
 
       - name: Renew Certificates
@@ -52,6 +52,7 @@ jobs:
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           TF_VAR_mgmt_storage_account_name: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
           CUSTOM_DOMAIN: ${{ secrets.CUSTOM_DOMAIN }}
+          PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}
         run: |
           sudo apt-get install -y python3 python3-venv libaugeas0 \
             && python3 -m venv /opt/certbot/ \

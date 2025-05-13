@@ -1,6 +1,28 @@
 <!-- markdownlint-disable MD041 -->
-## 0.22.0 (Unreleased)
+## 0.23.0
 **BREAKING CHANGES & MIGRATIONS**:
+* The management container registry now uses a private endpoint, and public network access is controlled via the disable_acr_public_access variable. In future versions, public access will be fully removed, and the ACR will become private by default. Please ensure that relevant templates are updated to their latest versions to support communication through the private endpoint.
+
+ENHANCEMENTS:
+* Add ability to pass values to install stage on pipleine [#4451](https://github.com/microsoft/AzureTRE/pull/4451)
+* Format the error message in the Operations panel for enhanced readability ([#4493](https://github.com/microsoft/AzureTRE/issues/4493))
+* Enhanced the logout message to emphasize session security. ([#4410](https://github.com/AzureTRE/AzureTRE/issues/4410))
+* Added ability to assign VMs to other users at creation time ([#1179](https://github.com/microsoft/AzureTRE/issues/1179))
+* Add shutdown schedule to Windows VMs ([#4211](https://github.com/microsoft/AzureTRE/pull/4211))
+* Add deploy and sku variables to control deployment of Azure Bastion ([#4383](https://github.com/microsoft/AzureTRE/pull/4383))
+* Allow USER_MANAGEMENT_ENABLED config variable to be set via CI/CD ([#4517](https://github.com/microsoft/AzureTRE/issues/4517))
+* Added support for private agent subnet ID configuration in config.yaml for core Key Vault network access from runner vnet. [#4463](https://github.com/microsoft/AzureTRE/issues/4463)
+* Ability to customise UI header and footer text ([#4201](https://github.com/microsoft/AzureTRE/issues/4201))
+* Allow AUTO_GRANT_WORKSPACE_CONSENT config variable to set be set via CI/CD ([#4533](https://github.com/microsoft/AzureTRE/pull/4533))
+
+BUG FIXES:
+* Letsencrypt.yml fails with "Invalid reference in variable validation" ([#4506](https://github.com/microsoft/AzureTRE/4506))
+* Intermittent management storage account access failure during core deployment ([#4505](https://github.com/microsoft/AzureTRE/4505))
+* Airlock Review Template Leaves OS Disk Behind ([4514](https://github.com/microsoft/AzureTRE/issues/4514))
+* Enabled Shared Access Key access on the core storage account. ([#4448](https://github.com/microsoft/AzureTRE/issues/4448))
+* Remove `strtobool` from airlock_processor. ([#4535](https://github.com/microsoft/AzureTRE/issues/4535))
+
+## 0.22.0 (April 20, 2025)
 
 ENHANCEMENTS:
 * Added ability to manage user workspace roles from the UI (only visible if feature is enabled with the `user_management_enabled` flag, user is a TREAdmin, the workspace has Entra ID (AAD) Groups enabled and workspace version is > 2.2.0 ) [#4337](https://github.com/microsoft/AzureTRE/issues/4337)
@@ -13,6 +35,7 @@ ENHANCEMENTS:
 * Update mysql commands in control_tre script. [#4438](https://github.com/microsoft/AzureTRE/pull/4438)
 * Organize how we pass config.yaml settings to bundles. [#4436](https://github.com/microsoft/AzureTRE/pull/4436)
 * Add documentation for make commands ([[#4296](https://github.com/microsoft/AzureTRE/issues/4296)])
+* Allow administrators to automatically grant consent over new workspaces ([#4408](https://github.com/microsoft/AzureTRE/issues/4408)). If extending the `base` workspace template variable `ui_client_id` will need to be provided in `porter.yaml`. Additionally `auto_grant_workspace_consent` may be provided but will default to `false`.
 
 BUG FIXES:
 * Fix the management storage access error while executing `make show-core-output` command, and remove redundant error messages from `mgmtstorage_enable_public_access.sh` script ([#4404](https://github.com/microsoft/AzureTRE/issues/4404))
@@ -27,6 +50,39 @@ BUG FIXES:
 * Fix malware scanning not enabled on AirLock export requests ([#4403](https://github.com/microsoft/AzureTRE/issues/4403))
 * Upgrade workspaces no longer causes VM recreation ([#4421](https://github.com/microsoft/AzureTRE/issues/4421))
 * Add dependency between the private endpoint on the storage account used by the Airlock processor function app and the function app itself. This is to try and fix ([#4433](https://github.com/microsoft/AzureTRE/issues/4433))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.5.7 |
+| core | 0.13.1 |
+| ui | 0.8.2 |
+| tre-shared-service-databricks-private-auth | 0.1.11 |
+| tre-shared-service-gitea | 1.1.5 |
+| tre-shared-service-sonatype-nexus | 3.3.3 |
+| tre-shared-service-firewall | 1.3.3 |
+| tre-shared-service-admin-vm | 0.5.3 |
+| tre-shared-service-certs | 0.7.4 |
+| tre-shared-service-airlock-notifier | 1.0.8 |
+| tre-shared-service-cyclecloud | 0.7.2 |
+| tre-workspace-airlock-import-review | 0.14.4 |
+| tre-workspace-base | 2.2.0 |
+| tre-workspace-unrestricted | 0.13.4 |
+| tre-workspace-service-gitea | 1.2.3 |
+| tre-workspace-service-mysql | 1.0.9 |
+| tre-workspace-service-health | 0.2.11 |
+| tre-workspace-service-openai | 1.0.6 |
+| tre-service-azureml | 0.9.2 |
+| tre-user-resource-aml-compute-instance | 0.5.11 |
+| tre-service-databricks | 1.0.10 |
+| tre-workspace-service-azuresql | 1.0.15 |
+| tre-service-guacamole | 0.12.10 |
+| tre-service-guacamole-export-reviewvm | 0.3.0 |
+| tre-service-guacamole-linuxvm | 1.3.0 |
+| tre-service-guacamole-import-reviewvm | 0.4.0 |
+| tre-service-guacamole-windowsvm | 1.3.0 |
+| tre-workspace-service-ohdsi | 0.3.3 |
 
 ## 0.21.0
 
