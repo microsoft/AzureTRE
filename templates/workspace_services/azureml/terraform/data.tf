@@ -54,3 +54,15 @@ data "azurerm_user_assigned_identity" "ws_encryption_identity" {
   name                = local.encryption_identity_name
   resource_group_name = data.azurerm_resource_group.ws.name
 }
+
+data "azurerm_role_definition" "reader" {
+  name = "Reader"
+}
+
+data "azurerm_role_definition" "storage_blob_data_contributor" {
+  name = "Storage Blob Data Contributor"
+}
+
+data "azurerm_role_definition" "storage_file_data_contributor" {
+  name = "Storage File Data Privileged Contributor"
+}

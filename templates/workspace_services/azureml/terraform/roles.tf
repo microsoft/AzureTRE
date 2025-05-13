@@ -27,10 +27,6 @@ resource "azurerm_role_assignment" "app_role_members_aml_data_scientist" {
   principal_id       = each.value
 }
 
-data "azurerm_role_definition" "reader" {
-  name = "Reader"
-}
-
 resource "azurerm_role_assignment" "app_role_members_reader" {
   for_each           = (data.external.app_role_members.result.principals == "") ? [] : toset(split("\n", data.external.app_role_members.result.principals))
   scope              = azapi_resource.aml_workspace.output.id
@@ -38,19 +34,11 @@ resource "azurerm_role_assignment" "app_role_members_reader" {
   principal_id       = each.value
 }
 
-data "azurerm_role_definition" "storage_blob_data_contributor" {
-  name = "Storage Blob Data Contributor"
-}
-
 resource "azurerm_role_assignment" "app_role_members_storage_blob_data_contributor" {
   for_each           = (data.external.app_role_members.result.principals == "") ? [] : toset(split("\n", data.external.app_role_members.result.principals))
   scope              = azurerm_storage_account.aml.id
   role_definition_id = data.azurerm_role_definition.storage_blob_data_contributor.id
   principal_id       = each.value
-}
-
-data "azurerm_role_definition" "storage_file_data_contributor" {
-  name = "Storage File Data Privileged Contributor"
 }
 
 resource "azurerm_role_assignment" "app_role_members_storage_file_data_contributor" {
