@@ -116,6 +116,10 @@
         "enable_cmk_encryption": {
           "description": "Enables customer-managed key encryption for all supported resources.",
           "type": "boolean"
+        },
+        "private_agent_subnet_id": {
+          "description": "Subnet ID of private runner agent.",
+          "type": "string"
         }
       }
     },
@@ -189,6 +193,20 @@
       "required": [
         "aad_tenant_id"
       ]
+    },
+    "ui_config": {
+      "description": "UI customisation",
+      "type": "object",
+      "properties": {
+        "ui_site_name": {
+          "description": "Product name shown in top left corner of portal. Default value is 'Azure TRE'",
+          "type": "string"
+        },
+        "ui_footer_text": {
+          "description": "Text shown in bottom left corner of portal. Default value is 'Azure Trusted Research Environment'",
+          "type": "string"
+        }
+      }
     }
   },
   "required": [

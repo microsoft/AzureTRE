@@ -1,4 +1,3 @@
-from distutils.util import strtobool
 import logging
 import datetime
 import uuid
@@ -8,7 +7,7 @@ import os
 
 import azure.functions as func
 
-from shared_code import constants
+from shared_code import constants, parsers
 from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_client_from_blob_info
 
 
@@ -27,7 +26,7 @@ def main(msg: func.ServiceBusMessage,
     # message originated from in-progress blob creation
     if constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS in topic:
         try:
-            enable_malware_scanning = strtobool(os.environ["ENABLE_MALWARE_SCANNING"])
+            enable_malware_scanning = parsers.parse_bool(os.environ["ENABLE_MALWARE_SCANNING"])
         except KeyError:
             logging.error("environment variable 'ENABLE_MALWARE_SCANNING' does not exists. Cannot continue.")
             raise

@@ -289,3 +289,9 @@ variable "bastion_sku" {
     error_message = "Invalid bastion_sku value"
   }
 }
+
+variable "private_agent_subnet_id" {
+  description = "Subnet ID of the github runners"
+  type        = string
+  default     = ""
+}
