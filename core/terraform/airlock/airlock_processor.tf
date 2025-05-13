@@ -138,21 +138,6 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   depends_on = [azurerm_private_endpoint.function_storage]
 }
 
-resource "azapi_update_resource" "airlock_vnet_container_pull_routing" {
-  resource_id = azurerm_linux_function_app.airlock_function_app.id
-  type        = "Microsoft.Web/sites@2022-09-01"
-
-  body = jsonencode({
-    properties = {
-      vnetImagePullEnabled : true
-    }
-  })
-
-  depends_on = [
-    azurerm_linux_function_app.airlock_function_app
-  ]
-}
-
 resource "azapi_resource_action" "restart_airlock_function_app" {
   type        = "Microsoft.Web/sites@2022-09-01"
   resource_id = azurerm_linux_function_app.airlock_function_app.id
