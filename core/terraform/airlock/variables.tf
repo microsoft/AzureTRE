@@ -34,11 +34,6 @@ variable "airlock_processor_image_repository" {
   default     = "microsoft/azuretre/airlock-processor"
 }
 
-variable "mgmt_resource_group_name" {
-  type        = string
-  description = "Shared management resource group"
-}
-
 variable "acr_id" {
   type        = string
   description = "ACR ID"
