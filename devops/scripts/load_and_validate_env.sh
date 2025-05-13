@@ -66,11 +66,18 @@ else
     FORMAT_FOR_ENV_EXPORT="to_entries| map(.key + \"=\" +  .value)|join(\" \")"
 
     # Export as UPPERCASE keys env vars
-    # shellcheck disable=SC2046
-    export $(yq e "$GET_LEAF_KEYS|$UPCASE_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)
+    # (process line by line to preserve values with spaces in)
+    while IFS= read -r KV; do
+      # shellcheck disable=SC2163
+      export "$KV"
+    done <<< "$(yq e "$GET_LEAF_KEYS|$UPCASE_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)"
+
     # Export as Terraform keys env vars
-    # shellcheck disable=SC2046
-    export $(yq e "$GET_LEAF_KEYS|$TF_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)
+    # (process line by line to preserve values with spaces in)
+    while IFS= read -r KV; do
+      # shellcheck disable=SC2163
+      export "$KV"
+    done <<< "$(yq e "$GET_LEAF_KEYS|$TF_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)"
 
     # Source AZURE_ENVIRONMENT and setup the ARM_ENVIRONMENT based on it
     AZURE_ENVIRONMENT=$(az cloud show --query name --output tsv)

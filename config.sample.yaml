@@ -8,6 +8,8 @@ management:
   mgmt_storage_account_name: __CHANGE_ME__
   terraform_state_container_name: tfstate
   acr_name: __CHANGE_ME__
+  # Set this to true if you want to disable public access to mgmt acr
+  disable_acr_public_access: true
   # ID of external Key Vault to store CMKs in (only required if enable_cmk_encryption is true)
   # external_key_store_id: __CHANGE_ME__
   # Name of Key Vault for encryption, required if enable_cmk_encryption is true and external_key_store_id is not set
@@ -86,6 +88,12 @@ resource_processor:
 # For example, to specify your image_gallery_id for use in VM user resources with custom VM images:
 # yamllint disable-line rule:line-length
 #  rp_bundle_values: '{"custom_key_1":"custom_value_1","image_gallery_id":"/subscriptions/<subscription-id>/resourceGroups/<your-rg>/providers/Microsoft.Compute/galleries/<your-gallery-name>"}'
+
+ui_config:
+  # Product name shown in the top left hand corner of the TRE portal
+  ui_site_name: "Azure TRE"
+  # Footer text shown in the bottom left hand corner of the TRE portal
+  ui_footer_text: "Azure Trusted Research Environment"
 
 developer_settings:
 # Locks will not be added to stateful resources so they can be easily removed
