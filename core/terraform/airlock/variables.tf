@@ -39,11 +39,6 @@ variable "mgmt_resource_group_name" {
   description = "Shared management resource group"
 }
 
-variable "mgmt_acr_name" {
-  type        = string
-  description = "Management ACR name"
-}
-
 variable "acr_id" {
   type        = string
   description = "ACR ID"
