@@ -143,10 +143,6 @@ resource "azapi_resource_action" "restart_airlock_function_app" {
   resource_id = azurerm_linux_function_app.airlock_function_app.id
   method      = "POST"
   action      = "restart"
-
-  depends_on = [
-    azapi_update_resource.airlock_vnet_container_pull_routing
-  ]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "airlock_function_app" {
