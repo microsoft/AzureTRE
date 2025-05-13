@@ -17,6 +17,10 @@ async def migrate_database():
         migrations = list()
 
         # ADD MIGRATIONS HERE
+        # Examples of migrations can be found in this file:
+        # https://github.com/microsoft/AzureTRE/blob/v0.22.0/api_app/api/routes/migrations.py#L32-L84
+        # and this folder:
+        # https://github.com/microsoft/AzureTRE/tree/v0.22.0/api_app/db/migrations
 
         return MigrationOutList(migrations=migrations)
     except Exception as e:
