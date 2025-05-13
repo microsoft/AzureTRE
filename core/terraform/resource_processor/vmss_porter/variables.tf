@@ -117,3 +117,8 @@ variable "airlock_malware_scan_result_topic_name" {
   type        = string
   description = "Name of the topic to publish Airlock malware scan results to"
 }
+
+variable "mgmt_storage_account_id" {
+  type        = string
+  description = "ID of the management storage account"
+}
