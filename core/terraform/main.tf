@@ -143,6 +143,7 @@ module "airlock_resources" {
   file_core_dns_zone_id                 = module.network.file_core_dns_zone_id
   queue_core_dns_zone_id                = module.network.queue_core_dns_zone_id
   table_core_dns_zone_id                = module.network.table_core_dns_zone_id
+  eventgrid_private_dns_zone_id         = module.network.eventgrid_private_dns_zone_id
 
   enable_local_debugging        = var.enable_local_debugging
   myip                          = local.myip
