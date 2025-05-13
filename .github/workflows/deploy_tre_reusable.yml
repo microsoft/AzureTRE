@@ -384,6 +384,7 @@ jobs:
           EXTERNAL_KEY_STORE_ID: ${{ secrets.EXTERNAL_KEY_STORE_ID }}
           USER_MANAGEMENT_ENABLED: ${{ vars.USER_MANAGEMENT_ENABLED }}
           PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}
+          AUTO_GRANT_WORKSPACE_CONSENT: ${{ vars.AUTO_GRANT_WORKSPACE_CONSENT }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
@@ -771,6 +772,8 @@ jobs:
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
           SWAGGER_UI_CLIENT_ID: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           USER_MANAGEMENT_ENABLED: ${{ vars.USER_MANAGEMENT_ENABLED }}
+          UI_SITE_NAME: "${{ vars.UI_SITE_NAME }}"
+          UI_FOOTER_TEXT: "${{ vars.UI_FOOTER_TEXT }}"
 
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"
