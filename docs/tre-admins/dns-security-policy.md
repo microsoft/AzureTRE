@@ -2,15 +2,26 @@
 
 ## DNS Tunneling
 
-A potential vector for data exfiltration is the use of a technique called DNS tunneling. Even when most outbound network requests are blocked by firewall DNS on port 53 is required for most systems to function. DNS tunneling works by registering a domain and running a name server that will extract data that has been encoded in the names of DNS requests. A malisious user would need access to a workspace in order to run the client-side component of this. Tools are readily available such as [Iodine][iodine] or [dns2tcp][dns2tcp]. Read more here about the threat of [DNS tunnelling][dnstunneling].
+A potential vector for data exfiltration is the use of a technique called DNS tunneling. Even when most outbound
+network requests are blocked by firewall DNS on port 53 is required for most systems to function. DNS tunneling
+works by registering a domain and running a name server that will extract data that has been encoded in the names
+of DNS requests. A malisious user would need access to a workspace in order to run the client-side component of
+this. Tools are readily available such as [Iodine][iodine] or [dns2tcp][dns2tcp]. Read more here about the threat
+of [DNS tunnelling][dnstunneling].
 
 ## Azure DNS Security Policy
 
-[Azure DNS security policy][azdnssec] is currently (May 2025) in public preview and enables a policy to log and filter all DNS requests originating from a virtual network. As the service is in preview it is not enabeld by default on the TRE, but can be configured with a flag in the `config.yaml` file. Uncomment the line from the sample config file and set `enable_dns_policy` to __`true`__.
+[Azure DNS security policy][azdnssec] is currently (May 2025) in public preview and enables a policy to log and
+filter all DNS requests originating from a virtual network. As the service is in preview it is not enabeld by
+default on the TRE, but can be configured with a flag in the `config.yaml` file. Uncomment the line from the
+sample config file and set `enable_dns_policy` to __`true`__.
 
-The filters applied include an allow-list of domains that are required for the TRE to function. This list can be seen in the [`allowed-dns.json`][allowed] file. DNS requests to all other domains are blocked. To add domain named to the allow list, add them as list items to `allowed_dns` in the config file. Not that domains nmust be fully qualified, i.e. they must end with a dot (`.`).
+The filters applied include an allow-list of domains that are required for the TRE to function. This list can be
+seen in the [`allowed-dns.json`][allowed] file. DNS requests to all other domains are blocked. To add domain
+named to the allow list, add them as list items to `allowed_dns` in the config file. Not that domains nmust be
+fully qualified, i.e. they must end with a dot (`.`).
 
-To enable the service 
+To enable the service
 ```yaml
   enable_dns_policy: true
   allowed_dns:
@@ -18,7 +29,9 @@ To enable the service
     - anotherdomain.net.
 ```
 
-When enabled, the DNS security policy always applies to the core TRE network. When a workspace is deployed there is an optional setting "Enable DNS Security Policy" which must be checked to enrole the workspace in the policy. If this option is not selected the workspace will be able to make DNS requests to any domain.
+When enabled, the DNS security policy always applies to the core TRE network. When a workspace is deployed there
+is an optional setting "Enable DNS Security Policy" which must be checked to enrole the workspace in the policy.
+If this option is not selected the workspace will be able to make DNS requests to any domain.
 
 ## Logging
 
