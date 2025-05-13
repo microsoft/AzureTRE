@@ -16,6 +16,7 @@ ENHANCEMENTS:
 * Added support for private agent subnet ID configuration in config.yaml for core Key Vault network access from runner vnet ([#4463](https://github.com/microsoft/AzureTRE/issues/4463))
 * Ability to customise UI header and footer text ([#4201](https://github.com/microsoft/AzureTRE/issues/4201))
 * Allow AUTO_GRANT_WORKSPACE_CONSENT config variable to set be set via CI/CD ([#4533](https://github.com/microsoft/AzureTRE/pull/4533))
+* Delete old database migrations ([#4168](https://github.com/microsoft/AzureTRE/issues/4168))
 
 BUG FIXES:
 * Letsencrypt.yml fails with "Invalid reference in variable validation" ([#4506](https://github.com/microsoft/AzureTRE/4506))
