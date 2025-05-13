@@ -10,7 +10,13 @@ variable "acr_id" {
 variable "resource_group_name" {
   type = string
 }
+variable "core_api_client_id" {
+  type = string
+}
 variable "resource_processor_subnet_id" {
+  type = string
+}
+variable "blob_core_dns_zone_id" {
   type = string
 }
 variable "resource_processor_vmss_porter_image_repository" {
@@ -76,10 +82,6 @@ variable "rp_bundle_values" {
   type = map(string)
 }
 
-locals {
-  rp_bundle_values_formatted = join("\n      ", [for key in keys(var.rp_bundle_values) : "RP_BUNDLE_${key}=${var.rp_bundle_values[key]}"])
-}
-
 variable "enable_cmk_encryption" {
   type        = bool
   description = "A boolean indicating if customer managed keys will be used for encryption of supporting resources"
@@ -93,4 +95,25 @@ variable "key_store_id" {
 variable "kv_encryption_key_name" {
   type        = string
   description = "Name of Key Vault Encryption Key (only used if enable_cmk_encryption is true)"
+}
+
+variable "ui_client_id" {
+  type        = string
+  description = "The client id of the UI application"
+}
+
+variable "auto_grant_workspace_consent" {
+  type        = bool
+  description = "A boolean indicating if admin consent should be auto granted to the workspace"
+  default     = false
+}
+
+variable "enable_airlock_malware_scanning" {
+  type        = bool
+  description = "If False, Airlock requests will skip the malware scanning stage"
+}
+
+variable "airlock_malware_scan_result_topic_name" {
+  type        = string
+  description = "Name of the topic to publish Airlock malware scan results to"
 }

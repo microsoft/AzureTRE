@@ -1,8 +1,6 @@
 from collections import namedtuple
 from typing import List
-
 from pydantic import BaseModel, Field
-
 
 RoleAssignment = namedtuple("RoleAssignment", "resource_id, role_id")
 

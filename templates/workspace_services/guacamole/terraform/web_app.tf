@@ -27,7 +27,7 @@ resource "azurerm_linux_web_app" "guacamole" {
     container_registry_managed_identity_client_id = azurerm_user_assigned_identity.guacamole_id.client_id
     ftps_state                                    = "Disabled"
     vnet_route_all_enabled                        = true
-    minimum_tls_version                           = "1.2"
+    minimum_tls_version                           = "1.3"
 
     application_stack {
       docker_registry_url = "https://${data.azurerm_container_registry.mgmt_acr.login_server}"
@@ -91,6 +91,32 @@ resource "azurerm_linux_web_app" "guacamole" {
   depends_on = [
     azurerm_role_assignment.guac_acr_pull,
     azurerm_role_assignment.keyvault_guacamole_ws_role
+  ]
+}
+
+resource "azapi_update_resource" "guac_vnet_container_pull_routing" {
+  resource_id = azurerm_linux_web_app.guacamole.id
+  type        = "Microsoft.Web/sites@2022-09-01"
+
+  body = jsonencode({
+    properties = {
+      vnetImagePullEnabled : true
+    }
+  })
+
+  depends_on = [
+    azurerm_linux_web_app.guacamole
+  ]
+}
+
+resource "azapi_resource_action" "restart_guac_webapp" {
+  type        = "Microsoft.Web/sites@2022-09-01"
+  resource_id = azurerm_linux_web_app.guacamole.id
+  method      = "POST"
+  action      = "restart"
+
+  depends_on = [
+    azapi_update_resource.guac_vnet_container_pull_routing
   ]
 }
 

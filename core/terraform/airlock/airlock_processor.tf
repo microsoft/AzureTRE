@@ -22,7 +22,13 @@ resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
   cross_tenant_replication_enabled = false
   local_user_enabled               = false
   shared_access_key_enabled        = false
+  public_network_access_enabled    = true
   tags                             = var.tre_core_tags
+
+  network_rules {
+    default_action = var.enable_local_debugging ? "Allow" : "Deny"
+    bypass         = ["AzureServices"]
+  }
 
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
@@ -111,6 +117,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
     container_registry_use_managed_identity       = true
     vnet_route_all_enabled                        = true
     ftps_state                                    = "Disabled"
+    minimum_tls_version                           = "1.3"
 
     application_stack {
       docker {
@@ -126,8 +133,35 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   }
 
   lifecycle { ignore_changes = [tags] }
+  # Ensure the private endpoint is created on the storage account to try to avoid a race condition.
+  depends_on = [azurerm_private_endpoint.function_storage]
 }
 
+resource "azapi_update_resource" "airlock_vnet_container_pull_routing" {
+  resource_id = azurerm_linux_function_app.airlock_function_app.id
+  type        = "Microsoft.Web/sites@2022-09-01"
+
+  body = jsonencode({
+    properties = {
+      vnetImagePullEnabled : true
+    }
+  })
+
+  depends_on = [
+    azurerm_linux_function_app.airlock_function_app
+  ]
+}
+
+resource "azapi_resource_action" "restart_airlock_function_app" {
+  type        = "Microsoft.Web/sites@2022-09-01"
+  resource_id = azurerm_linux_function_app.airlock_function_app.id
+  method      = "POST"
+  action      = "restart"
+
+  depends_on = [
+    azapi_update_resource.airlock_vnet_container_pull_routing
+  ]
+}
 
 resource "azurerm_monitor_diagnostic_setting" "airlock_function_app" {
   name                       = "diagnostics-airlock-function-${var.tre_id}"

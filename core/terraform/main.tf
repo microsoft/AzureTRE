@@ -162,9 +162,11 @@ module "resource_processor_vmss_porter" {
   tre_id                                           = var.tre_id
   location                                         = var.location
   resource_group_name                              = azurerm_resource_group.core.name
+  core_api_client_id                               = var.api_client_id
   acr_id                                           = data.azurerm_container_registry.mgmt_acr.id
   app_insights_connection_string                   = module.azure_monitor.app_insights_connection_string
   resource_processor_subnet_id                     = module.network.resource_processor_subnet_id
+  blob_core_dns_zone_id                            = module.network.blob_core_dns_zone_id
   docker_registry_server                           = local.docker_registry_server
   resource_processor_vmss_porter_image_repository  = var.resource_processor_vmss_porter_image_repository
   service_bus_namespace_id                         = azurerm_servicebus_namespace.sb.id
@@ -187,6 +189,10 @@ module "resource_processor_vmss_porter" {
   enable_cmk_encryption                            = var.enable_cmk_encryption
   key_store_id                                     = local.key_store_id
   kv_encryption_key_name                           = local.cmk_name
+  ui_client_id                                     = var.swagger_ui_client_id
+  auto_grant_workspace_consent                     = var.auto_grant_workspace_consent
+  enable_airlock_malware_scanning                  = var.enable_airlock_malware_scanning
+  airlock_malware_scan_result_topic_name           = module.airlock_resources.airlock_malware_scan_result_topic_name
 
   depends_on = [
     module.network,

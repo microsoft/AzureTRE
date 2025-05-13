@@ -76,7 +76,7 @@ resource "azurerm_linux_web_app" "gitea" {
     container_registry_managed_identity_client_id = azurerm_user_assigned_identity.gitea_id.client_id
     ftps_state                                    = "Disabled"
     always_on                                     = true
-    minimum_tls_version                           = "1.2"
+    minimum_tls_version                           = "1.3"
     vnet_route_all_enabled                        = true
 
     application_stack {
@@ -112,6 +112,32 @@ resource "azurerm_linux_web_app" "gitea" {
   ]
 }
 
+resource "azapi_update_resource" "gitea_vnet_container_pull_routing" {
+  resource_id = azurerm_linux_web_app.gitea.id
+  type        = "Microsoft.Web/sites@2022-09-01"
+
+  body = jsonencode({
+    properties = {
+      vnetImagePullEnabled : true
+    }
+  })
+
+  depends_on = [
+    azurerm_linux_web_app.gitea
+  ]
+}
+
+resource "azapi_resource_action" "restart_gitea_webapp" {
+  type        = "Microsoft.Web/sites@2022-09-01"
+  resource_id = azurerm_linux_web_app.gitea.id
+  method      = "POST"
+  action      = "restart"
+
+  depends_on = [
+    azapi_update_resource.gitea_vnet_container_pull_routing
+  ]
+}
+
 resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   name                = "pe-${local.webapp_name}"
   location            = data.azurerm_resource_group.ws.location
@@ -138,11 +164,13 @@ resource "azurerm_monitor_diagnostic_setting" "gitea" {
   target_resource_id         = azurerm_linux_web_app.gitea.id
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
-  dynamic "log" {
-    for_each = data.azurerm_monitor_diagnostic_categories.gitea.log_category_types
+  dynamic "enabled_log" {
+    for_each = [
+      for category in data.azurerm_monitor_diagnostic_categories.gitea.log_category_types :
+      category if contains(local.web_app_diagnostic_categories_enabled, category)
+    ]
     content {
-      category = log.value
-      enabled  = contains(local.web_app_diagnostic_categories_enabled, log.value) ? true : false
+      category = enabled_log.value
     }
   }
 

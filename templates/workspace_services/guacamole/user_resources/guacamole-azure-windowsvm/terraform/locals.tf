@@ -7,12 +7,22 @@ locals {
   vm_name                        = "windowsvm${local.short_service_id}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
-  vm_password_secret_name        = "${local.vm_name}-admin-credentials"
+  admin_username = (
+    var.admin_username == "" ?
+    (length(data.azuread_user.user[0].mail) > 0 && strcontains(data.azuread_user.user[0].user_principal_name, "#EXT#") ?
+      substr(element(split("@", data.azuread_user.user[0].mail), 0), 0, 20) :
+      substr(element(split("#EXT#", element(split("@", data.azuread_user.user[0].user_principal_name), 0)), 0), 0, 20)
+    ) :
+    var.admin_username
+  )
+  vm_password_secret_name = "${local.vm_name}-admin-credentials"
   tre_user_resources_tags = {
     tre_id                   = var.tre_id
     tre_workspace_id         = var.workspace_id
     tre_workspace_service_id = var.parent_service_id
     tre_user_resource_id     = var.tre_resource_id
+    tre_user_id              = var.owner_id
+    tre_user_username        = var.admin_username == "" ? local.admin_username : var.admin_username
   }
   nexus_proxy_url = "https://nexus-${data.azurerm_public_ip.app_gateway_ip.fqdn}"
 
