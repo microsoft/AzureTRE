@@ -33,7 +33,7 @@ make letsencrypt
 
     The script can do this for you if you run it with `LETSENCRYPT_DROP_ALL_RULES` environment variable to `1`:
 
-    ```bash
+    ```console
     LETSENCRYPT_DROP_ALL_RULES=1 make letsencrypt
     ```
 
