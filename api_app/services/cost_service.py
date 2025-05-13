@@ -195,13 +195,15 @@ class CostService:
         return cost_report
 
     async def __get_workspace_subscription_ids(self, workspace_repo: WorkspaceRepository) -> list:
-        workspaces = await workspace_repo.get_active_workspaces()
+        #  we currently have to query ALL workspace resources to get the subscription ids to calculate costs for
+        #  this may be able to change if we store subscriptions in config as per this issue: https://github.com/microsoft/AzureTRE/issues/4528
+        workspaces = await workspace_repo.get_workspaces()
         subscription_ids = []
         for workspace in workspaces:
-            # check if the property exists and is not empty
+            #  check if the property exists and is not empty
             if not workspace.properties.get("workspace_subscription_id"):
                 continue
-            # add the subscription id to the set
+            #  add the subscription id to the set
             subscription_id = workspace.properties["workspace_subscription_id"]
             if subscription_id not in subscription_ids:
                 subscription_ids.append(subscription_id)
