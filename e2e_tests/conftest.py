@@ -5,7 +5,7 @@ import random
 from filelock import FileLock
 import pytest
 import asyncio
-from typing import Tuple
+from typing import Tuple, AsyncGenerator
 import config
 import logging
 
@@ -124,50 +124,66 @@ def write_json_file(file_path: Path, data: dict):
     file_path.write_text(json.dumps(data))
 
 
-@pytest.fixture(scope="session")
-async def setup_test_workspace(verify, worker_id, tmp_path_factory) -> Tuple[str, str, str]:
-    LOCK_SUFFIX = ".lock"
-    WORKSPACE_DETAILS_FILE = "setup_test_workspace.json"
+# Constants for repeated strings
+LOCK_SUFFIX = ".lock"
+WORKSPACE_DETAILS_FILE = "setup_test_workspace.json"
+WORKER_LOCKS_DIR = "worker_locks"
 
+
+@pytest.fixture(scope="session")
+async def setup_test_workspace(verify: bool, worker_id: str, tmp_path_factory) -> AsyncGenerator[Tuple[str, str], None]:
     root_tmp_dir = tmp_path_factory.getbasetemp().parent
     fn = root_tmp_dir / WORKSPACE_DETAILS_FILE
     lock_fn = root_tmp_dir / (WORKSPACE_DETAILS_FILE + LOCK_SUFFIX)
-    worker_lock = root_tmp_dir / "worker_locks" / worker_id
+    worker_lock_dir = root_tmp_dir / WORKER_LOCKS_DIR
+    worker_lock = worker_lock_dir / worker_id
 
-    worker_lock.parent.mkdir(parents=True, exist_ok=True)
+    # Ensure worker lock directory exists
+    worker_lock_dir.mkdir(parents=True, exist_ok=True)
     worker_lock.touch()
 
-    if worker_id == "master":
-        # Set up - uses a pre-created app reg as it has appropriate roles assigned
-        workspace_path, workspace_id = await create_or_get_test_workspace(
-            auth_type="Manual" if config.TEST_WORKSPACE_APP_ID else "Automatic", verify=verify, pre_created_workspace_id=config.TEST_WORKSPACE_ID, client_id=config.TEST_WORKSPACE_APP_ID, client_secret=config.TEST_WORKSPACE_APP_SECRET)
-    else:
-        with FileLock(lock_fn):
-            if fn.is_file():
-                data = read_json_file(fn)
-                workspace_path = data["workspace_path"]
-                workspace_id = data["workspace_id"]
-            else:
-                # Set up - uses a pre-created app reg as it has appropriate roles assigned
-                workspace_path, workspace_id = await create_or_get_test_workspace(
-                    auth_type="Manual" if config.TEST_WORKSPACE_APP_ID else "Automatic", verify=verify, pre_created_workspace_id=config.TEST_WORKSPACE_ID, client_id=config.TEST_WORKSPACE_APP_ID, client_secret=config.TEST_WORKSPACE_APP_SECRET)
+    try:
+        if worker_id == "master":
+            workspace_path, workspace_id = await create_or_get_test_workspace(
+                auth_type="Manual" if config.TEST_WORKSPACE_APP_ID else "Automatic",
+                verify=verify,
+                pre_created_workspace_id=config.TEST_WORKSPACE_ID,
+                client_id=config.TEST_WORKSPACE_APP_ID,
+                client_secret=config.TEST_WORKSPACE_APP_SECRET
+            )
+        else:
+            with FileLock(lock_fn):
+                if fn.is_file():
+                    data = read_json_file(fn)
+                    workspace_path = data["workspace_path"]
+                    workspace_id = data["workspace_id"]
+                else:
+                    workspace_path, workspace_id = await create_or_get_test_workspace(
+                        auth_type="Manual" if config.TEST_WORKSPACE_APP_ID else "Automatic",
+                        verify=verify,
+                        pre_created_workspace_id=config.TEST_WORKSPACE_ID,
+                        client_id=config.TEST_WORKSPACE_APP_ID,
+                        client_secret=config.TEST_WORKSPACE_APP_SECRET
+                    )
 
-    yield workspace_path, workspace_id
+        yield workspace_path, workspace_id
 
-    # Tear-down
-    # Check if there are any other worker locks
-    if len(list(worker_lock.glob("*"))) > 1:
-        (root_tmp_dir / "worker_locks" / (worker_id)).unlink(missing_ok=True)
-        while True:
-            # Wait for other workers to finish
-            if len(list(worker_lock.glob("*"))) > 0:
-                await asyncio.sleep(10)
-            else:
-                break
-    # This is the last worker, clean up the workspace
-    elif len(list(worker_lock.glob("*"))) == 1:
-        await clean_up_test_workspace(pre_created_workspace_id=config.TEST_WORKSPACE_ID, workspace_path=workspace_path, verify=verify)
-        (root_tmp_dir / "worker_locks" / (worker_id)).unlink(missing_ok=True)
+    finally:
+        # Tear-down logic
+        try:
+            if len(list(worker_lock_dir.glob("*"))) > 1:
+                worker_lock.unlink(missing_ok=True)
+                while len(list(worker_lock_dir.glob("*"))) > 0:
+                    await asyncio.sleep(10)
+            elif len(list(worker_lock_dir.glob("*"))) == 1:
+                await clean_up_test_workspace(
+                    pre_created_workspace_id=config.TEST_WORKSPACE_ID,
+                    workspace_path=workspace_path,
+                    verify=verify
+                )
+                worker_lock.unlink(missing_ok=True)
+        except Exception as e:
+            LOGGER.error(f"Error during workspace cleanup: {e}")
 
 
 @pytest.fixture(scope="session")
@@ -189,7 +205,7 @@ async def setup_test_workspace_and_guacamole_service(setup_test_workspace, verif
 
 
 @pytest.fixture(scope="session")
-async def setup_test_aad_workspace(verify) -> Tuple[str, str, str]:
+async def setup_test_aad_workspace(verify) -> AsyncGenerator[Tuple[str, str], None]:
     pre_created_workspace_id = config.TEST_AAD_WORKSPACE_ID
     # Set up
     workspace_path, workspace_id = await create_or_get_test_workspace(auth_type="Automatic", verify=verify, pre_created_workspace_id=pre_created_workspace_id)
@@ -217,7 +233,7 @@ async def disable_and_delete_tre_resource(resource_path, verify):
 
 
 @pytest.fixture(scope="session")
-async def setup_test_airlock_import_review_workspace_and_guacamole_service(verify) -> Tuple[str, str, str, str, str]:
+async def setup_test_airlock_import_review_workspace_and_guacamole_service(verify) -> AsyncGenerator[Tuple[str, str, str, str, str], None]:
     pre_created_workspace_id = config.TEST_AIRLOCK_IMPORT_REVIEW_WORKSPACE_ID
     # Set up
     workspace_path, workspace_id = await create_or_get_test_workspace(auth_type="Automatic", verify=verify, template_name=resource_strings.AIRLOCK_IMPORT_REVIEW_WORKSPACE, pre_created_workspace_id=pre_created_workspace_id)

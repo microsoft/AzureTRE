@@ -79,18 +79,6 @@ Configure the TRE API and Swagger UI repository secrets
 | `API_CLIENT_ID` | The application (client) ID of the TRE API app. |
 | `API_CLIENT_SECRET` | The application password (client secret) of the TRE API app. |
 
-### Create an app registration and a user for the E2E tests
-
-Follow the instructions to [create an app registration and a test user for the E2E tests in the Authentication and Authorization](../auth.md#tre-e2e-test) document.
-
-Configure the E2E Test repository secrets
-
-| <div style="width: 230px">Secret name</div> | Description |
-| ----------- | ----------- |
-| `TEST_APP_ID` | The application (client) ID of the E2E Test app |
-| `TEST_USER_NAME` | The username of the E2E Test User |
-| `TEST_USER_PASSWORD` | The password of the E2E Test User |
-
 ### Create a workspace app registration for setting up workspaces (for the E2E tests)
 
 Follow the [instructions to create a workspace app registration](../auth.md#workspaces) (used for the E2E tests) - and make the E2E test user a **WorkspaceOwner** for the app registration.
