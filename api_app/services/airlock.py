@@ -666,7 +666,10 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
                        airlock_request.statisticsStatements[0].hazardSurvivalTablesExitDatesRelatives and
                        airlock_request.statisticsStatements[0].hazardSurvivalTablesNoDatesWithSingleExit)
 
-    criteriumCheck21 = (airlock_request.statisticsStatements[0].other)
+    criteriumCheck21 = (criteriumCheck20 and
+                        not (airlock_request.statisticsStatements[0].isAcroUsedPosition or airlock_request.statisticsStatements[0].isAcroUsedLinearAggregates))
+
+    criteriumCheck22 = (airlock_request.statisticsStatements[0].other)
 
     if criteriumCheck1 or criteriumCheck2 or criteriumCheck3 or criteriumCheck6:
         try:
@@ -709,12 +712,12 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
                     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
-    if criteriumCheck4 or criteriumCheck5 or criteriumCheck7 or criteriumCheck8 or criteriumCheck9 or criteriumCheck10 or criteriumCheck11 or criteriumCheck12 or criteriumCheck21:
+    if criteriumCheck4 or criteriumCheck5 or criteriumCheck7 or criteriumCheck8 or criteriumCheck9 or criteriumCheck10 or criteriumCheck11 or criteriumCheck12 or criteriumCheck22:
         triage_level_input = strings.API_TRIAGE_LEVEL3
         airlock_request = await airlock_request_repo.set_triage_level_and_review_due_date(airlock_request, triage_level_input)
         return airlock_request
 
-    if criteriumCheck15 or criteriumCheck18:
+    if criteriumCheck15 or criteriumCheck18 or criteriumCheck21:
         triage_level_input = strings.API_TRIAGE_LEVEL2A
         airlock_request = await airlock_request_repo.set_triage_level_and_review_due_date(airlock_request, triage_level_input)
         return airlock_request
