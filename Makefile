@@ -201,7 +201,7 @@ terraform-deploy:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
-	&& ./devops/scripts/terraform_deploy.sh ${DIR}
+	&& cd ${DIR}/terraform/ && ./deploy.sh
 
 # Description: Upgrade the Terraform resources in the specified directory.
 # Arguments: DIR - the directory of the bundle
@@ -211,7 +211,7 @@ terraform-upgrade:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
-	&& ./devops/scripts/terraform_upgrade_provider.sh ${DIR}
+	&& ./devops/scripts/upgrade.sh ${DIR}
 
 # Description: Import the Terraform resources in the specified directory.
 # Arguments: DIR - the directory of the bundle
