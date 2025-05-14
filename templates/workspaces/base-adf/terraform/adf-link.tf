@@ -15,7 +15,7 @@ resource "azurerm_data_factory_managed_private_endpoint" "adf_dataplatform_pe" {
 
 resource "null_resource" "approve_private_endpoint" {
   provisioner "local-exec" {
-    command = "sh approve_pe.sh '${azurerm_resource_group.ws.name}' '${local.storage_name}' '${local.workspace_resource_name_suffix}' '${var.arm_client_id}' '${var.arm_subscription_id}'"
+    command = "sh approve_pe.sh '${azurerm_resource_group.ws.name}' '${local.storage_name}' '${local.workspace_resource_name_suffix}' '${var.client_id}' '${var.arm_subscription_id}'"
   }
   depends_on = [azurerm_data_factory_managed_private_endpoint.adf_dataplatform_pe]
 }

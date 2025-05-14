@@ -75,22 +75,6 @@ variable "auth_client_secret" {
   type        = string
   description = "Used to authenticate into the AAD Tenant to create the AAD App"
 }
-variable "arm_tenant_id" {
-  type        = string
-  description = "The tenant ID of the TRE"
-}
-variable "arm_client_id" {
-  type        = string
-  description = "The Service Princiapl ID for managing Azure resources"
-}
-variable "arm_client_secret" {
-  type        = string
-  description = "The Service Princiapl client secret for managing Azure resources"
-}
-variable "arm_subscription_id" {
-  type        = string
-  description = "The Subscription ID of the TRE"
-}
 
 # These variables are only passed in if you are not registering an AAD
 # application as they need passing back out
@@ -134,6 +118,29 @@ variable "workspace_owner_object_id" {
   default     = ""
   description = "The Object Id of the user that you wish to be the Workspace Owner. E.g. the TEST_AUTOMATION_ACCOUNT."
 }
+
 variable "arm_environment" {
   type = string
 }
+
+variable "enable_cmk_encryption" {
+  type        = bool
+  default     = false
+  description = "Enable CMK encryption for the workspace"
+}
+
+variable "key_store_id" {
+  type        = string
+  description = "ID of the Key Vault to store CMKs in (only used if enable_cmk_encryption is true)"
+}
+
+variable "storage_account_redundancy" {
+  type        = string
+  default     = "GRS"
+  description = "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
+}
+variable "arm_subscription_id" {
+  type        = string
+  description = "The Subscription ID of the TRE"
+}
+
