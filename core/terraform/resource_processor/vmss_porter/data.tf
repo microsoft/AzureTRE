@@ -49,8 +49,3 @@ data "azurerm_key_vault_key" "tre_encryption" {
   name         = var.kv_encryption_key_name
   key_vault_id = var.key_store_id
 }
-
-data "azurerm_storage_account" "mgmt_storage" {
-  name                = var.mgmt_storage_account_name
-  resource_group_name = var.mgmt_resource_group_name
-}
