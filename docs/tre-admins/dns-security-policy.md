@@ -16,10 +16,10 @@ filter all DNS requests originating from a virtual network. As the service is in
 default on the TRE, but can be configured with a flag in the `config.yaml` file. Uncomment the line from the
 sample config file and set `enable_dns_policy` to __`true`__.
 
-The filters applied include an allow-list of domains that are required for the TRE to function. This list can be
+The filters applied include an allow-list of domains that are required for basic functionality of the TRE. This list can be
 seen in the [`allowed-dns.json`][allowed] file. DNS requests to all other domains are blocked. To add domain
-named to the allow list, add them as list items to `allowed_dns` in the config file. Not that domains nmust be
-fully qualified, i.e. they must end with a dot (`.`).
+named to the allow list, add them as list items to `allowed_dns` in the config file. Note that domains must be
+fully qualified, i.e. they must end with a dot (`.`). Until `allowed-dns.json` contains a comprehensive list of required domain names, additional values may need adding to this list to the `allowed_dns` list to enable workspace services to function correctly.
 
 To enable the service
 ```yaml
