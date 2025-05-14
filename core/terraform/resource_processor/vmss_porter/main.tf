@@ -174,7 +174,7 @@ resource "terraform_data" "vm_linux_reimage" {
 }
 
 resource "azurerm_role_assignment" "mgmt_storage_account_blob_contributor" {
-  scope                = data.azurerm_storage_account.mgmt_storage.id
+  scope                = var.mgmt_storage_account_id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
 }
@@ -239,7 +239,7 @@ resource "azurerm_private_endpoint" "mgmtblobpe" {
 
   private_service_connection {
     name                           = "psc-mgmt-${var.tre_id}"
-    private_connection_resource_id = data.azurerm_storage_account.mgmt_storage.id
+    private_connection_resource_id = var.mgmt_storage_account_id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
   }
