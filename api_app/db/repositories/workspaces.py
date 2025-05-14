@@ -158,7 +158,7 @@ class WorkspaceRepository(ResourceRepository):
         })
         return params
 
-    # its mine
+
     async def get_esml_and_asml_workspaces(self) -> List[Workspace]:
         query=self.esml_workspaces_query_string()
         workspaces = await self.query(query=query)
