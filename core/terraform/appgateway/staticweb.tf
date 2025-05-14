@@ -52,7 +52,7 @@ resource "azurerm_storage_account_static_website" "staticweb_site" {
 resource "azurerm_role_assignment" "stgwriter" {
   scope                = azurerm_storage_account.staticweb.id
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = data.azurerm_client_config.deployer.object_id
+  principal_id         = var.deployer_principal_id
 }
 
 resource "azurerm_private_endpoint" "webpe" {

@@ -63,6 +63,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   webdeploy_publish_basic_authentication_enabled = false
   storage_account_name                           = azurerm_storage_account.sa_airlock_processor_func_app.name
   storage_uses_managed_identity                  = true
+  vnet_image_pull_enabled                        = true
 
   tags = var.tre_core_tags
 
@@ -137,30 +138,11 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   depends_on = [azurerm_private_endpoint.function_storage]
 }
 
-resource "azapi_update_resource" "airlock_vnet_container_pull_routing" {
-  resource_id = azurerm_linux_function_app.airlock_function_app.id
-  type        = "Microsoft.Web/sites@2022-09-01"
-
-  body = {
-    properties = {
-      vnetImagePullEnabled : true
-    }
-  }
-
-  depends_on = [
-    azurerm_linux_function_app.airlock_function_app
-  ]
-}
-
 resource "azapi_resource_action" "restart_airlock_function_app" {
   type        = "Microsoft.Web/sites@2022-09-01"
   resource_id = azurerm_linux_function_app.airlock_function_app.id
   method      = "POST"
   action      = "restart"
-
-  depends_on = [
-    azapi_update_resource.airlock_vnet_container_pull_routing
-  ]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "airlock_function_app" {
