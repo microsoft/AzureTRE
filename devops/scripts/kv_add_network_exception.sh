@@ -1,8 +1,7 @@
 #!/bin/bash
 
 #
-# Add an IP exception to the Key Vault firewall for deployment, and remove on script exit
-# The current machine's IP address is used, or $PUBLIC_DEPLOYMENT_IP_ADDRESS if set
+# Temporarily set Key Vault to public access for deployment, and restore to private on script exit
 #
 # Note:  Ensure you "source" this script, or else the EXIT trap won't fire at the right time
 #
@@ -15,20 +14,21 @@ function kv_add_network_exception() {
   local KV_NAME
   KV_NAME=$(get_kv_name)
 
-  local MY_IP
-  MY_IP=$(get_my_ip)
-
-  echo -e "\nAdding deployment network exception to key vault $KV_NAME..."
-
   # ensure kv exists
   #
   if ! does_kv_exist "$KV_NAME"; then
     return 0   # don't cause outer sourced script to fail
   fi
 
-  # add keyvault network exception
-  #
-  az keyvault network-rule add --name "$KV_NAME" --ip-address "$MY_IP" --output none
+  # If we have allowed access from a specific subnet, don't set public access and allow access from the subnet
+  # This logic is needed to avoid error, if there is a change in subnet after the initial deployment
+  if [[ -n ${PRIVATE_AGENT_SUBNET_ID:-} ]]; then
+    echo -e "\nAdding network rule to allow subnet access for key vault $KV_NAME..."
+    az keyvault network-rule add --name "$KV_NAME" --subnet "$PRIVATE_AGENT_SUBNET_ID" --output none
+  else
+    echo -e "\nSetting key vault $KV_NAME to public access for deployment..."
+    az keyvault update --name "$KV_NAME" --default-action Allow --output none
+  fi
 
   local ATTEMPT=1
   local MAX_ATTEMPTS=10
@@ -41,7 +41,7 @@ function kv_add_network_exception() {
     fi
 
     if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
-      echo -e "Could not add deployment network exception for $KV_NAME"
+      echo -e "Could not set public access for $KV_NAME"
       echo -e "Unable to access keyvault $KV_NAME after $ATTEMPT/$MAX_ATTEMPTS.\n"
       echo -e "$KV_OUTPUT\n"
 
@@ -63,10 +63,7 @@ function kv_remove_network_exception() {
   local KV_NAME
   KV_NAME=$(get_kv_name)
 
-  local MY_IP
-  MY_IP=$(get_my_ip)
-
-  echo -e "\nRemoving deployment network exception to key vault $KV_NAME..."
+  echo -e "\nSetting key vault $KV_NAME back to private access..."
 
   # ensure kv exists
   #
@@ -80,10 +77,10 @@ function kv_remove_network_exception() {
     return 0   # don't cause outer sourced script to fail
   fi
 
-  # remove keyvault network exception
+  # set keyvault back to private access
   #
-  az keyvault network-rule remove --name "$KV_NAME" --ip-address "$MY_IP" --output none
-  echo -e " Deployment network exception removed\n"
+  az keyvault update --name "$KV_NAME" --default-action Deny --output none
+  echo -e " Key vault set back to private access\n"
 }
 
 
@@ -98,22 +95,11 @@ function get_kv_name() {
   fi
 
   if [[ -z "$TRE_ID_LOCAL" ]]; then
-    echo -e "Could not add/remove keyvault deployment network exception: TRE_ID is not set\nExiting...\n"
+    echo -e "Could not add/remove keyvault network access: TRE_ID is not set\nExiting...\n"
     exit 1
   fi
 
   echo "kv-${TRE_ID_LOCAL}"
-}
-
-function get_my_ip() {
-
-  local MY_IP="${PUBLIC_DEPLOYMENT_IP_ADDRESS:-}"
-
-  if [[ -z "$MY_IP" ]]; then
-    MY_IP=$(curl -s "ipecho.net/plain"; echo)
-  fi
-
-  echo "$MY_IP"
 }
 
 function does_kv_exist() {
