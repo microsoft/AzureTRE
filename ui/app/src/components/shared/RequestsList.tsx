@@ -104,7 +104,7 @@ export const RequestsList: React.FunctionComponent = () => {
       );
       requests = mapRequestsToWorkspace(requests, fetchedWorkspaces.workspaces);
       airlock_manager_requests = await apiCall(
-        `${ApiEndpoint.Requests}?${query.slice(0, -1)}&airlock_manager=true`,
+        `${ApiEndpoint.Requests}${query.slice(0, -1)}&airlock_manager=true`,
         HttpMethod.Get,
       );
       airlock_manager_requests = mapRequestsToWorkspace(
