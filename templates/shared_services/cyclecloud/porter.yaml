@@ -65,7 +65,6 @@ outputs:
       - install
       - upgrade
 
-
 mixins:
   - exec
   - terraform:

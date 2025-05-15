@@ -94,7 +94,6 @@ outputs:
       - install
       - upgrade
 
-
 install:
   - az:
       description: "Set Azure Cloud Environment"

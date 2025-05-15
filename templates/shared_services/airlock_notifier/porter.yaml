@@ -157,7 +157,6 @@ install:
         subscription: ${ bundle.credentials.azure_subscription_id }
         src: /cnab/app/LogicApp.zip
 
-
 upgrade:
   - terraform:
       description: "Update shared service"
@@ -236,7 +235,6 @@ upgrade:
         resource-group: ${ bundle.outputs.airlock_notifier_logic_app_resource_group_name }
         subscription: ${ bundle.credentials.azure_subscription_id }
         src: /cnab/app/LogicApp.zip
-
 
 uninstall:
   - terraform:

@@ -44,7 +44,7 @@ resource "azurerm_private_endpoint" "eg_step_result" {
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.eventgrid.id]
+    private_dns_zone_ids = [var.eventgrid_private_dns_zone_id]
   }
 
   private_service_connection {
@@ -99,7 +99,7 @@ resource "azurerm_private_endpoint" "eg_status_changed" {
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.eventgrid.id]
+    private_dns_zone_ids = [var.eventgrid_private_dns_zone_id]
   }
 
   private_service_connection {
@@ -148,7 +148,7 @@ resource "azurerm_private_endpoint" "eg_data_deletion" {
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.eventgrid.id]
+    private_dns_zone_ids = [var.eventgrid_private_dns_zone_id]
   }
 
   private_service_connection {
@@ -365,7 +365,7 @@ resource "azurerm_private_endpoint" "eg_airlock_notification" {
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.eventgrid.id]
+    private_dns_zone_ids = [var.eventgrid_private_dns_zone_id]
   }
 
   private_service_connection {

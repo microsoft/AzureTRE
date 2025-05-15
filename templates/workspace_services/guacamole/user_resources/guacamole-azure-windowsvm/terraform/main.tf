@@ -8,11 +8,11 @@ terraform {
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.7"
+      version = "= 3.7.2"
     }
     azuread = {
       source  = "hashicorp/azuread"
-      version = "~> 3.3"
+      version = "= 3.3.0"
     }
   }
   backend "azurerm" {
