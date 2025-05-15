@@ -62,7 +62,7 @@ resource "azurerm_container_registry" "shared_acr" {
   resource_group_name = azurerm_resource_group.mgmt.name
   location            = azurerm_resource_group.mgmt.location
   sku                 = "Premium"
-  admin_enabled       = true
+  admin_enabled       = false
 
   # Conditionally disable public network access
   public_network_access_enabled = var.disable_acr_public_access ? false : true
@@ -78,7 +78,6 @@ resource "azurerm_container_registry" "shared_acr" {
   dynamic "encryption" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
-      enabled            = true
       key_vault_key_id   = azurerm_key_vault_key.tre_mgmt_encryption[0].id
       identity_client_id = azurerm_user_assigned_identity.tre_mgmt_encryption[0].client_id
     }
@@ -135,4 +134,3 @@ resource "azurerm_role_assignment" "current_user_to_key_vault_crypto_officer" {
   role_definition_name = "Key Vault Crypto Officer"
   principal_id         = data.azurerm_client_config.current.object_id
 }
-
