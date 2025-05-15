@@ -2,7 +2,7 @@ import { IStackStyles, Spinner, SpinnerSize, Stack } from "@fluentui/react";
 import React, { useEffect, useContext, useState } from "react";
 import { useParams } from "react-router-dom";
 import { HttpMethod, useAuthApiCall } from "../../hooks/useAuthApiCall";
-import { Operation } from "../../models/operation";
+import { Operation, failedStates } from "../../models/operation";
 import { Resource } from "../../models/resource";
 import { ApiEndpoint } from "../../models/apiEndpoints";
 import { ResourceOperationListItem } from "./ResourceOperationListItem";
@@ -112,6 +112,7 @@ export const ResourceOperationsList: React.FunctionComponent<
                     <ResourceOperationListItem
                       header={"Message"}
                       val={op.message}
+                      isError={typeof op.status === "string" && failedStates.includes(op.status)}
                     />
                     <ResourceOperationListItem
                       header={"Created"}
