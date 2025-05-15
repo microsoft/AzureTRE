@@ -18,6 +18,7 @@ ENHANCEMENTS:
 * Allow AUTO_GRANT_WORKSPACE_CONSENT config variable to set be set via CI/CD ([#4533](https://github.com/microsoft/AzureTRE/pull/4533))
 * Delete old database migrations ([#4168](https://github.com/microsoft/AzureTRE/issues/4168))
 * Update terraform to reduce recreation of private endpoints and other resources ([#4539](https://github.com/microsoft/AzureTRE/pull/4539))
+* Disable ACR admin account ([#4542](https://github.com/microsoft/AzureTRE/pull/4542))
 
 BUG FIXES:
 * Letsencrypt.yml fails with "Invalid reference in variable validation" ([#4506](https://github.com/microsoft/AzureTRE/4506))

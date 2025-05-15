@@ -138,13 +138,6 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   depends_on = [azurerm_private_endpoint.function_storage]
 }
 
-resource "azapi_resource_action" "restart_airlock_function_app" {
-  type        = "Microsoft.Web/sites@2022-09-01"
-  resource_id = azurerm_linux_function_app.airlock_function_app.id
-  method      = "POST"
-  action      = "restart"
-}
-
 resource "azurerm_monitor_diagnostic_setting" "airlock_function_app" {
   name                       = "diagnostics-airlock-function-${var.tre_id}"
   target_resource_id         = azurerm_linux_function_app.airlock_function_app.id
