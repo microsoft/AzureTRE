@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from httpx import AsyncClient, Timeout, Response
 import logging
 from starlette import status
-from azure.identity import ClientSecretCredential, UsernamePasswordCredential
+from azure.identity import ClientSecretCredential
 
 import config
 from e2e_tests import cloud
