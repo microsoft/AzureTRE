@@ -26,6 +26,7 @@ BUG FIXES:
 * Airlock Review Template Leaves OS Disk Behind ([4514](https://github.com/microsoft/AzureTRE/issues/4514))
 * Enabled Shared Access Key access on the core storage account ([#4448](https://github.com/microsoft/AzureTRE/issues/4448))
 * Remove `strtobool` from airlock_processor ([#4535](https://github.com/microsoft/AzureTRE/issues/4535))
+* Fix missing arguments for airlock manager requests ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
 
 ## 0.22.0 (April 20, 2025)
 

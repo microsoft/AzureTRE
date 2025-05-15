@@ -28,7 +28,7 @@ async def get_requests(
                 order_ascending=order_ascending,
             )
         else:
-            requests = await airlock_request_repo.get_airlock_requests_for_airlock_manager(user)
+            requests = await airlock_request_repo.get_airlock_requests_for_airlock_manager(user_id=user.id, type=type, status=status, order_by=order_by, order_ascending=order_ascending)
 
         return requests
 
