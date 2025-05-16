@@ -68,7 +68,7 @@ resource "azapi_resource" "shared_storage" {
 
 resource "azurerm_storage_container" "stgcontainer" {
   name                  = "datalake"
-  storage_account_name  = azurerm_storage_account.stg.name
+  storage_account_id    = azurerm_storage_account.stg.id
   container_access_type = "private"
 
   depends_on = [
