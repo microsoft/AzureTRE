@@ -153,6 +153,12 @@ variable "auto_grant_workspace_consent" {
   description = "A boolean indicating if the admin consent should be auto granted to the workspace"
 }
 
+variable "enable_dns_policy" {
+  type        = bool
+  description = "Whether, or not, to add a DNS security policy with an allow-list. This is a preview feature that can be enabled to prevent data exfiltration via DNS."
+  default     = false
+}
+
 variable "enable_airlock_malware_scanning" {
   type        = bool
   default     = false

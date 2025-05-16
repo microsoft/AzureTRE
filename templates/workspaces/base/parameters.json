@@ -159,6 +159,12 @@
       "source": {
         "env": "KEY_STORE_ID"
       }
+    },
+    {
+      "name": "enable_dns_policy",
+      "source": {
+        "env": "ENABLE_DNS_POLICY"
+      }
     }
   ]
 }
