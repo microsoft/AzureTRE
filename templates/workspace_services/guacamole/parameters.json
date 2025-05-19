@@ -105,6 +105,12 @@
       "source": {
         "env": "IS_EXPOSED_EXTERNALLY"
       }
+    },
+    {
+      "name": "tre_url",
+      "source": {
+        "env": "TRE_URL"
+      }
     }
   ]
 }

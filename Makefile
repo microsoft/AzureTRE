@@ -12,7 +12,7 @@ E2E_TESTS_NUMBER_PROCESSES_DEFAULT=4  # can be overridden in e2e_tests/.env
 target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
 
 all: bootstrap mgmt-deploy images tre-deploy
-tre-deploy: deploy-core build-and-deploy-ui firewall-install db-migrate show-core-output
+tre-deploy: deploy-core build-and-deploy-ui firewall-install application-gateway-install db-migrate show-core-output ## 🚀 Provision TRE using existing images
 
 images: build-and-push-api build-and-push-resource-processor build-and-push-airlock-processor
 build-and-push-api: build-api-image push-api-image
@@ -312,6 +312,10 @@ deploy-shared-service:
 firewall-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
 	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
+
+application-gateway-install:
+	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
+	DIR=${MAKEFILE_DIR}/templates/shared_services/core-application-gateway/ BUNDLE_TYPE=shared_service
 
 static-web-upload:
 	$(call target_title, "Uploading to static website") \

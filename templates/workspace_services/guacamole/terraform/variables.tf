@@ -13,3 +13,6 @@ variable "guac_disable_download" {}
 variable "guac_disable_upload" {}
 variable "is_exposed_externally" {}
 variable "tre_resource_id" {}
+variable "tre_url" {
+  type = string
+}

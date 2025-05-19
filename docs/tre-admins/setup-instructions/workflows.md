@@ -132,6 +132,7 @@ Configure additional repository secrets used in the deployment workflow
 | `CORE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan for core infrastructure. Default value is `P1v2`. |
 | `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests. Default value is `P1v2`. |
 | `ENABLE_SWAGGER` | Optional. Determines whether the Swagger interface for the API will be available. Default value is `false`. |
+| `TRE_URL` | Optional. A custom URL for the TRE as registered in the DNS. Defaults to the DNS name used by Azure Application Gateway.|
 
 ### Deploy the TRE using the workflow
 

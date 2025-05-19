@@ -49,12 +49,38 @@
       "title": "Expose externally",
       "description": "Is the Guacamole service exposed outside of the vnet",
       "default": true
+    },
+    "tre_url": {
+      "$id": "#/properties/tre_url",
+      "type": "string",
+      "title": "Custom URL which will be useed instead default one",
+      "description": "Custom URL which will be useed instead default one",
+      "default": true
     }
   },
   "pipeline": {
     "install": [
       {
         "stepId": "main"
+      },
+      {
+        "stepId": "f8259f78-8659-4393-b602-ce2dec677a41",
+        "stepTitle": "Update AppGW",
+        "resourceTemplateName": "tre-shared-service-application-gateway",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "backend_collection",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}",
+              "fqdn": "{{ resource.properties.routing_fqdn }}"
+            }
+          }
+        ]
       },
       {
         "stepId": "12ba0dad-ea6c-4d0d-9255-d316212f5ffa",
@@ -115,6 +141,25 @@
         "stepId": "main"
       },
       {
+        "stepId": "f8259f78-8659-4393-b602-ce2dec677a41",
+        "stepTitle": "Update AppGW",
+        "resourceTemplateName": "tre-shared-service-application-gateway",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "backend_collection",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}",
+              "fqdn": "{{ resource.properties.routing_fqdn }}"
+            }
+          }
+        ]
+      },
+      {
         "stepId": "741c7ff2-eff5-47b2-bf62-2b410d65c96b",
         "stepTitle": "Update Guacamole URI in AAD",
         "resourceType": "workspace",
@@ -160,6 +205,24 @@
         "properties": [
           {
             "name": "aad_redirect_uris",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "62d9f3b7-bc49-456f-b909-23011ad6d448",
+        "stepTitle": "Update AppGW",
+        "resourceTemplateName": "tre-shared-service-application-gateway",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "backend_collection",
             "type": "array",
             "arraySubstitutionAction": "remove",
             "arrayMatchField": "name",
