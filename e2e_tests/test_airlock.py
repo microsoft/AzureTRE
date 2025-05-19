@@ -173,7 +173,6 @@ async def test_airlock_review_vm_flow(setup_airlock_test_workspaces_and_guacamol
 async def test_airlock_flow(setup_test_base_workspace, verify) -> None:
     # 1. Get the workspace set up
     base_workspace_path, base_workspace_id = setup_test_base_workspace
-    workspace_owner_token = await get_workspace_owner_token(base_workspace_id, verify)
 
     # Preparation: Assign the airlock manager role to the user
     await assign_airlock_manager_role(
@@ -181,6 +180,9 @@ async def test_airlock_flow(setup_test_base_workspace, verify) -> None:
         workspace_id=base_workspace_id,
         verify=verify
     )
+
+    # Preparation: Get the workspace owner token after assigning the airlock manager role
+    workspace_owner_token = await get_workspace_owner_token(base_workspace_id, verify)
 
     # 2. create and submit airlock request
     request_id, container_url = await submit_airlock_import_request(base_workspace_path, workspace_owner_token, verify)
