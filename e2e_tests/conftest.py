@@ -177,6 +177,11 @@ async def setup_test_base_workspace_with_locks(worker_id: str, tmp_path_factory,
                         client_secret=config.TEST_WORKSPACE_APP_SECRET,
                         verify=verify
                     )
+                    data = {
+                        "workspace_path": workspace_path,
+                        "workspace_id": workspace_id
+                    }
+                    write_json_file(fn, data)
 
         yield workspace_path, workspace_id
 
