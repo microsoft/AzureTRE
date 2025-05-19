@@ -187,12 +187,3 @@ variable "is_cosmos_defined_throughput" {
   type    = bool
   default = false
 }
-
-variable "tre_url" {
-  type    = string
-  default = ""
-  validation {
-    condition     = startswith(var.tre_url, "http") && length(var.tre_url) > 10
-    error_message = "Invalid tre_url. Must start with http or https."
-  }
-}
