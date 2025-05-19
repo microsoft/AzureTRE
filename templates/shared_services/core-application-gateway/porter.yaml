@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-application-gateway
-version: 0.1.15
+version: 0.1.16
 description: "An Azure Application Gateway shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -45,6 +45,10 @@ parameters:
     env: ARM_ENVIRONMENT
     type: string
     default: "public"
+  - name: certificate_name
+    env: CERTIFICATE_NAME
+    type: string
+
 
 mixins:
   - terraform:
@@ -64,6 +68,7 @@ install:
         key: ${ bundle.parameters.tre_id }-${ bundle.name }_${ bundle.parameters.id }
         tre_id: ${ bundle.parameters.tre_id }
         azure_subscription_id: ${ bundle.credentials.azure_subscription_id }
+        certificate_name: ${ bundle.parameters.certificate_name }
       envs:
         ARM_USE_MSI: ${ bundle.parameters.arm_use_msi }
         ARM_ENVIRONMENT: ${ bundle.parameters.arm_environment }
@@ -86,6 +91,7 @@ upgrade:
       vars:
         tre_id: ${ bundle.parameters.tre_id }
         backend_collection_b64: ${ bundle.parameters.backend_collection }
+        certificate_name: ${ bundle.parameters.certificate_name }
       backendConfig:
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }

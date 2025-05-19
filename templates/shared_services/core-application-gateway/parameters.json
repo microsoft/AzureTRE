@@ -45,6 +45,12 @@
       "source": {
         "env": "BACKEND_COLLECTION"
       }
+    },
+    {
+      "name": "certificate_name",
+      "source": {
+        "env": "CERTIFICATE_NAME"
+      }
     }
   ]
 }

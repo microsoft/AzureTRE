@@ -38,6 +38,13 @@
 					}
 				}
 			}
+    },
+    "certificate_name": {
+      "$id": "#/properties/certificate_name",
+      "type": "string",
+      "title": "Custom certificate name",
+      "description": "Custom certificate name",
+      "default": true
     }
   }
 }
