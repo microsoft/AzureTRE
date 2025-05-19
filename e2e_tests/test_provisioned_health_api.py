@@ -9,8 +9,8 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 
 @pytest.mark.smoke
-async def test_health() -> None:
-    async with AsyncClient(verify=False) as client:
+async def test_health(verify) -> None:
+    async with AsyncClient(verify) as client:
         url = f"{config.TRE_URL}{strings.API_HEALTH}"
         response = await client.get(url)
         assert response.status_code == 200

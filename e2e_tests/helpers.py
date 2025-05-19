@@ -106,15 +106,21 @@ async def check_aad_auth_redirect(endpoint, verify) -> None:
 
 async def get_admin_token(verify) -> str:
     scope_uri = f"api://{config.API_CLIENT_ID}"
-    return get_token(scope_uri, verify)
+    return get_token(scope_uri)
 
 
-def get_token(scope_uri, verify) -> str:
+def get_token(scope_uri) -> str:
 
     # Logging in as an Enterprise Application: Use Client Credentials flow
-    credential = ClientSecretCredential(config.AAD_TENANT_ID, config.TEST_ACCOUNT_CLIENT_ID, config.TEST_ACCOUNT_CLIENT_SECRET, connection_verify=verify, authority=cloud.get_aad_authority_fqdn())
+    credential = ClientSecretCredential(config.AAD_TENANT_ID, config.TEST_ACCOUNT_CLIENT_ID, config.TEST_ACCOUNT_CLIENT_SECRET, authority=cloud.get_aad_authority_fqdn())
     token = credential.get_token(f'{scope_uri}/.default')
 
+    return token.token
+
+
+def get_msgraph_token() -> str:
+    credential = ClientSecretCredential(config.AAD_TENANT_ID, config.APPLICATION_ADMIN_CLIENT_ID, config.APPLICATION_ADMIN_CLIENT_SECRET, authority=cloud.get_aad_authority_fqdn())
+    token = credential.get_token('https://graph.microsoft.com/.default')
     return token.token
 
 

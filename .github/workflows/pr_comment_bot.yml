@@ -160,7 +160,6 @@ jobs:
       ciGitRef: ${{ needs.pr_comment.outputs.ciGitRef }}
       e2eTestsCustomSelector: >-
         ${{ (needs.pr_comment.outputs.command == 'run-tests-extended' && 'extended') ||
-        (needs.pr_comment.outputs.command == 'run-tests-extended-aad' && 'extended_aad') ||
         (needs.pr_comment.outputs.command == 'run-tests-shared-services' && 'shared_services') ||
         (needs.pr_comment.outputs.command == 'run-tests' && '') }}
       environmentName: CICD

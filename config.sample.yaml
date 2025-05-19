@@ -116,3 +116,12 @@ developer_settings:
 # If you want to use TRE_URL to point to your local TRE API instance or be configured to another cloud provider
 # uncomment and set this variable
 #  tre_url: __CHANGE_ME__
+
+e2e_tests:
+#   # The number of processes to start in the resource processor VMSS image
+#   e2e_tests_number_processes_per_instance: 5
+#   # Preexisting resource IDs to use for e2e tests
+#   test_workspace_id: __CHANGE_ME__
+#   test_airlock_import_review_workspace_id: __CHANGE_ME__
+#   test_airlock_import_review_workspace_service_id: __CHANGE_ME__
+#   test_guacamole_workspace_service_id: __CHANGE_ME__
