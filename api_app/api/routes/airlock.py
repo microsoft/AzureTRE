@@ -13,19 +13,23 @@ from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.operations import OperationRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.airlock_requests import AirlockRequestRepository
+from db.repositories.airlock_status import AirlockStatusRepository
 from db.errors import EntityDoesNotExist, UserNotAuthorizedToUseTemplate
 
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
+from models.domain.airlockstatus import AirLockStatus
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
+from models.schemas.airlockprocess_status import AirlockProcessStatus
 from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestInResponse, AirlockRequestWithAllowedUserActions, \
     AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate, AirlockRequestTriageStatements, AirlockRequestContactTeamForm, \
     AirlockRequestStatisticsStatements
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
-    get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user
+    get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user,get_current_admin_user, \
+    get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin,get_current_tre_user_or_tre_admin
 
 from .resource_helpers import construct_location_header
 
@@ -33,6 +37,7 @@ from services.airlock import create_review_vm, review_airlock_request, get_airlo
     enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace, cancel_request, save_and_check_triage_statements, exit_and_reject_airlock_request, save_and_check_statistics_statements, exit_and_reject_statistics_airlock_request, save_file_into_blobStorage
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
+airlock_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 
 def validate_time_period(from_date: Optional[datetime], to_date: Optional[datetime]):
     # Valid option, no period of time was set
@@ -335,3 +340,23 @@ async def create_airlock_request_setup(
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}")
         raise HTTPException(status_code=status_code.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.SERVER_ERROR)
+
+
+@airlock_core_router.get("/airlock/get-status", status_code=status_code.HTTP_200_OK,
+                              response_model=AirlockProcessStatus,
+                              name=strings.API_TO_GET_AIRLOCK_STATUS,
+                              dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin)])
+async def get_airlock_status(airlock_status_repo: AirlockStatusRepository = Depends(get_repository(AirlockStatusRepository))):
+
+    airlockstatus = await airlock_status_repo.get_status()
+    return AirlockProcessStatus(status=airlockstatus.status, message=airlockstatus.message)
+
+
+@airlock_core_router.post("/airlock/set-status",status_code=status_code.HTTP_200_OK,
+                               response_model=AirlockProcessStatus,name=strings.API_TO_SET_AIRLOCK_STATUS,
+                               dependencies=[Depends(get_current_admin_user)])
+async def set_airlock_status(airlock_status_request :AirlockProcessStatus,
+                            user = Depends(get_current_admin_user),
+                            airlock_status_repo:AirlockStatusRepository=Depends(get_repository(AirlockStatusRepository))):
+    airlockstatus= await airlock_status_repo.set_status(airlock_status_request,user)
+    return AirlockProcessStatus(status=airlockstatus.status, message=airlockstatus.message)
