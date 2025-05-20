@@ -11,7 +11,7 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 async def test_ui(verify) -> None:
     endpoint = f"{config.TRE_URL}"
 
-    async with AsyncClient(verify) as client:
+    async with AsyncClient(verify=verify) as client:
         response = await client.get(endpoint)
         assert response.status_code == 200
         assert "<title>Azure TRE</title>" in response.text
