@@ -80,6 +80,13 @@
       "description": "Enable backups for the workspace. Workspace services must support this feature.",
       "default": true,
       "updateable": true
+    },
+    "enable_dns_policy": {
+      "type": "boolean",
+      "title": "Enable DNS Security Policy",
+      "description": "Enable DNS Security Policy for the workspace.",
+      "default": false,
+      "updateable": true
     }
   },
   "allOf": [

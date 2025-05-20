@@ -165,6 +165,12 @@
       "source": {
         "env": "ENABLE_BACKUP"
       }
+    },
+    {
+      "name": "enable_dns_policy",
+      "source": {
+        "env": "ENABLE_DNS_POLICY"
+      }
     }
   ]
 }

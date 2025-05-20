@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.3.1
+version: 2.4.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -137,6 +137,10 @@ parameters:
     type: boolean
     default: true
     description: "Enable backups for the workspace, including the vm's & shared storage."
+  - name: enable_dns_policy
+    type: boolean
+    default: false
+    description: "Whether to enable DNS security policy for the workspace."
   - name: auto_grant_workspace_consent
     type: boolean
     default: true
@@ -252,6 +256,7 @@ install:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_backup: ${ bundle.parameters.enable_backup }
+        enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
         enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
         airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
@@ -309,6 +314,7 @@ upgrade:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_backup: ${ bundle.parameters.enable_backup }
+        enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
         enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
         airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
@@ -389,6 +395,7 @@ uninstall:
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_backup: ${ bundle.parameters.enable_backup }
+        enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
         enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
         airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
