@@ -1,3 +1,4 @@
+import time
 from typing import Optional
 from multiprocessing import Process
 import json
@@ -44,10 +45,20 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
     If no messages are there, the session connection will time out, sleep, and retry.
     """
     q_name = config["resource_request_queue"]
+    last_heartbeat_time = 0
+    polling_count = 0
 
     while keep_running():
         try:
-            logger.info("Looking for new session...")
+            current_time = time.time()
+            polling_count += 1
+            # Log a heartbeat message every 60 seconds to show the service is still working
+            if current_time - last_heartbeat_time >= 60:
+                logger.info(f"Queue reader heartbeat: Polled for sessions {polling_count} times in the last minute")
+                last_heartbeat_time = current_time
+                polling_count = 0
+                
+            logger.debug("Looking for new session...")
             # max_wait_time=1 -> don't hold the session open after processing of the message has finished
             async with service_bus_client.get_queue_receiver(queue_name=q_name, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
                 logger.info(f"Got a session containing messages: {receiver.session.session_id}")
