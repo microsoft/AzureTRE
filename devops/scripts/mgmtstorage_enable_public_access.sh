@@ -9,6 +9,13 @@
 # Global variable to capture underlying error
 LAST_PUBLIC_ACCESS_ERROR=""
 
+# Prevent the script from running multiple times within the current shell
+if [ -n "${MGMTSTORAGE_PUBLIC_ACCESS_SCRIPT_GUARD+x}" ]; then
+  echo -e "\nEnabling public access on storage account script already executed in current shell, not running again.\n"
+  return 0
+fi
+export MGMTSTORAGE_PUBLIC_ACCESS_SCRIPT_GUARD=true # export so guard is visible in sub shells
+
 function mgmtstorage_enable_public_access() {
   local RESOURCE_GROUP
   RESOURCE_GROUP=$(get_resource_group_name)

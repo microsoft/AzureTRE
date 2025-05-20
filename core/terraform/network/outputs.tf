@@ -3,43 +3,43 @@ output "core_vnet_id" {
 }
 
 output "bastion_subnet_id" {
-  value = local.subnet_ids_map["AzureBastionSubnet"]
+  value = "${azurerm_virtual_network.core.id}/subnets/AzureBastionSubnet"
 }
 
 output "azure_firewall_subnet_id" {
-  value = local.subnet_ids_map["AzureFirewallSubnet"]
+  value = "${azurerm_virtual_network.core.id}/subnets/AzureFirewallSubnet"
 }
 
 output "app_gw_subnet_id" {
-  value = local.subnet_ids_map["AppGwSubnet"]
+  value = "${azurerm_virtual_network.core.id}/subnets/AppGwSubnet"
 }
 
 output "web_app_subnet_id" {
-  value = local.subnet_ids_map["WebAppSubnet"]
+  value = "${azurerm_virtual_network.core.id}/subnets/WebAppSubnet"
 }
 
 output "shared_subnet_id" {
-  value = local.subnet_ids_map["SharedSubnet"]
-}
-
-output "airlock_processor_subnet_id" {
-  value = local.subnet_ids_map["AirlockProcessorSubnet"]
-}
-
-output "airlock_storage_subnet_id" {
-  value = local.subnet_ids_map["AirlockStorageSubnet"]
-}
-
-output "airlock_events_subnet_id" {
-  value = local.subnet_ids_map["AirlockEventsSubnet"]
+  value = "${azurerm_virtual_network.core.id}/subnets/SharedSubnet"
 }
 
 output "resource_processor_subnet_id" {
-  value = local.subnet_ids_map["ResourceProcessorSubnet"]
+  value = "${azurerm_virtual_network.core.id}/subnets/ResourceProcessorSubnet"
+}
+
+output "airlock_processor_subnet_id" {
+  value = "${azurerm_virtual_network.core.id}/subnets/AirlockProcessorSubnet"
 }
 
 output "airlock_notification_subnet_id" {
-  value = local.subnet_ids_map["AirlockNotifiactionSubnet"]
+  value = "${azurerm_virtual_network.core.id}/subnets/AirlockNotifiactionSubnet"
+}
+
+output "airlock_storage_subnet_id" {
+  value = "${azurerm_virtual_network.core.id}/subnets/AirlockStorageSubnet"
+}
+
+output "airlock_events_subnet_id" {
+  value = "${azurerm_virtual_network.core.id}/subnets/AirlockEventsSubnet"
 }
 
 # DNS Zones
@@ -82,4 +82,12 @@ output "queue_core_dns_zone_id" {
 
 output "table_core_dns_zone_id" {
   value = azurerm_private_dns_zone.private_dns_zones["privatelink.table.core.windows.net"].id
+}
+
+output "eventgrid_private_dns_zone_id" {
+  value = azurerm_private_dns_zone.eventgrid.id
+}
+
+output "azurecr_dns_zone_id" {
+  value = azurerm_private_dns_zone.azurecr.id
 }

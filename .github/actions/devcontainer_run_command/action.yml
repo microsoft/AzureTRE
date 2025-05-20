@@ -133,6 +133,38 @@ inputs:
     description: "Application Gateway SKU"
     required: false
     default: ""
+  ENABLE_CMK_ENCRYPTION:
+    description: "A boolean indicating if we should enable CMK on supported resources"
+    required: false
+    default: "false"
+  ENCRYPTION_KV_NAME:
+    description: ""
+    required: false
+    default: "The name of the keyvault that will be created for CMK"
+  EXTERNAL_KEY_STORE_ID:
+    description: "The Azure Resource ID for an external key store to use for CMK"
+    required: false
+    default: ""
+  USER_MANAGEMENT_ENABLED:
+    description: "If set to true TRE Admins are able to assign and de-assign users to workspaces via the UI"
+    required: false
+    default: "false"
+  PRIVATE_AGENT_SUBNET_ID:
+    description: Enables vnet exception for the subnet to access private resources
+    required: false
+    default: ""
+  UI_SITE_NAME:
+    description: "Product name shown in top left corner of TRE portal"
+    required: false
+    default: "Azure TRE"
+  UI_FOOTER_TEXT:
+    description: "Text shown in bottom left corner of TRE portal"
+    required: false
+    default: "Azure Trusted Research Environment"
+  AUTO_GRANT_WORKSPACE_CONSENT:
+    description: "When set to true removes the need for users to manually grant consent when creating new workspaces"
+    required: false
+    default: "false"
 
 runs:
   using: composite
@@ -145,14 +177,14 @@ runs:
 
     - name: Azure Login
       uses: azure/login@v2
-      if: contains(inputs.COMMAND, 'bootstrap') != true
+      if: contains(inputs.COMMAND, 'make bootstrap') != true
       with:
         creds: ${{ inputs.AZURE_CREDENTIALS }}
         environment: "${{ env.AZURE_ENVIRONMENT }}"
 
     - name: ACR Login
       shell: bash
-      if: contains(inputs.COMMAND, 'bootstrap') != true
+      if: contains(inputs.COMMAND, 'make bootstrap') != true
       run: |
         az acr login --name "${{ inputs.CI_CACHE_ACR_NAME }}"
 
@@ -250,10 +282,21 @@ runs:
             && inputs.WORKSPACE_APP_SERVICE_PLAN_SKU) || 'P1v2' }}" \
           -e TF_VAR_rp_bundle_values='${{ (toJson(inputs.RP_BUNDLE_VALUES) != '""'
             && inputs.RP_BUNDLE_VALUES) || '{}' }}' \
+          -e UI_SITE_NAME="${{ inputs.UI_SITE_NAME }}" \
+          -e UI_FOOTER_TEXT="${{ inputs.UI_FOOTER_TEXT }}" \
           -e TF_VAR_resource_processor_number_processes_per_instance="${{ (inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE != ''
             && inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE) || 5 }}" \
           -e TF_VAR_firewall_sku=${{ inputs.FIREWALL_SKU }} \
           -e TF_VAR_app_gateway_sku=${{ inputs.APP_GATEWAY_SKU }} \
+          -e TF_VAR_enable_cmk_encryption="${{ (inputs.ENABLE_CMK_ENCRYPTION != ''
+            && inputs.ENABLE_CMK_ENCRYPTION) || 'false' }}" \
+          -e TF_VAR_encryption_kv_name="${{ inputs.ENCRYPTION_KV_NAME }}" \
+          -e TF_VAR_external_key_store_id="${{ inputs.EXTERNAL_KEY_STORE_ID }}" \
+          -e TF_VAR_user_management_enabled="${{ (inputs.USER_MANAGEMENT_ENABLED != '' && inputs.USER_MANAGEMENT_ENABLED) || 'false' }}" \
+          -e USER_MANAGEMENT_ENABLED="${{ inputs.USER_MANAGEMENT_ENABLED }}" \
+          -e PRIVATE_AGENT_SUBNET_ID=${{ inputs.PRIVATE_AGENT_SUBNET_ID }} \
+          -e TF_VAR_private_agent_subnet_id=${{ inputs.PRIVATE_AGENT_SUBNET_ID }} \
+          -e TF_VAR_auto_grant_workspace_consent="${{ (inputs.AUTO_GRANT_WORKSPACE_CONSENT != '' && inputs.AUTO_GRANT_WORKSPACE_CONSENT) || 'false' }}" \
           -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c -x "./command.sh"

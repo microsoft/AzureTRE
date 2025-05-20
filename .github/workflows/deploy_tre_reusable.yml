@@ -1,7 +1,7 @@
 ---
 name: Deploy Azure TRE Reusable
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   workflow_call:
     inputs:
       prRef:
@@ -90,6 +90,15 @@ on:  # yamllint disable-line rule:truthy
       AZURE_CREDENTIALS:
         description: ""
         required: true
+      ENCRYPTION_KV_NAME:
+        description: ""
+        required: false
+      EXTERNAL_KEY_STORE_ID:
+        description: ""
+        required: false
+      PRIVATE_AGENT_SUBNET_ID:
+        description: ""
+        required: false
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
@@ -174,6 +183,10 @@ jobs:
             echo "Missing variable: LOCATION" && exit 1
           fi
 
+          if [ "${{ secrets.CI_CACHE_ACR_NAME }}" == '' ]; then
+            echo "CI_CACHE_ACR_NAME is not set. Please run the workflow on the main branch first." && exit 1
+          fi
+
       - name: Report check status start
         if: inputs.prHeadSha != ''
         uses: LouisBrunner/checks-action@v2.0.0
@@ -202,7 +215,7 @@ jobs:
           environment: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
 
       - name: ACR Login
-        id: ci_cache_cr_login
+        id: ci_cache_acr_login
         # will fail if this is a new env which is expected
         continue-on-error: true
         run: az acr login --name "${{ secrets.CI_CACHE_ACR_NAME }}"
@@ -220,7 +233,7 @@ jobs:
           echo "CI_CACHE_ACR_URI=$CI_CACHE_ACR_URI" >> "$GITHUB_ENV"
 
           docker_cache=()
-          if [ "${{ steps.ci_cache_cr_login.outcome }}" = "success" ]; then
+          if [ "${{ steps.ci_cache_acr_login.outcome }}" = "success" ]; then
             docker_cache+=(--cache-from "$CI_CACHE_ACR_URI/tredev:${{ inputs.DEVCONTAINER_TAG }}")
             docker_cache+=(--cache-from "$CI_CACHE_ACR_URI/tredev:latest")
           fi
@@ -246,15 +259,22 @@ jobs:
           TERRAFORM_STATE_CONTAINER_NAME: ${{ vars.TERRAFORM_STATE_CONTAINER_NAME }}
           MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
+          ENABLE_CMK_ENCRYPTION: ${{ vars.ENABLE_CMK_ENCRYPTION }}
+          ENCRYPTION_KV_NAME: ${{ secrets.ENCRYPTION_KV_NAME }}
+          EXTERNAL_KEY_STORE_ID: ${{ secrets.EXTERNAL_KEY_STORE_ID }}
+          PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}
 
       - name: ACR Login
         # failure in the first attempt indicates a new ACR, so we need to try again after it's been created
-        if: steps.ci_cache_cr_login.outcome != 'success'
+        if: steps.ci_cache_acr_login.outcome != 'success'
         run: |
           # shellcheck disable=SC2034,SC2015,SC2125
           for i in {1..3}; do
             az acr login --name "${{ secrets.CI_CACHE_ACR_NAME }}" && ec=0 && break || ec="$?" && sleep 10
           done
+          if [ "$ec" != 0 ]; then
+            echo "::error::Failed to login to ACR after 3 attempts. Make sure to run the pipleline on the main branch first."
+          fi
           # shellcheck disable=SC2242
           (exit "$ec")
 
@@ -359,6 +379,12 @@ jobs:
           RP_BUNDLE_VALUES: ${{ vars.RP_BUNDLE_VALUES }}
           FIREWALL_SKU: ${{ vars.FIREWALL_SKU}}
           APP_GATEWAY_SKU: ${{ vars.APP_GATEWAY_SKU }}
+          ENABLE_CMK_ENCRYPTION: ${{ vars.ENABLE_CMK_ENCRYPTION }}
+          ENCRYPTION_KV_NAME: ${{ secrets.ENCRYPTION_KV_NAME }}
+          EXTERNAL_KEY_STORE_ID: ${{ secrets.EXTERNAL_KEY_STORE_ID }}
+          USER_MANAGEMENT_ENABLED: ${{ vars.USER_MANAGEMENT_ENABLED }}
+          PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}
+          AUTO_GRANT_WORKSPACE_CONSENT: ${{ vars.AUTO_GRANT_WORKSPACE_CONSENT }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
@@ -745,6 +771,9 @@ jobs:
           MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
           SWAGGER_UI_CLIENT_ID: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
+          USER_MANAGEMENT_ENABLED: ${{ vars.USER_MANAGEMENT_ENABLED }}
+          UI_SITE_NAME: "${{ vars.UI_SITE_NAME }}"
+          UI_FOOTER_TEXT: "${{ vars.UI_FOOTER_TEXT }}"
 
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"

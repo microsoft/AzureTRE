@@ -162,7 +162,7 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
   shared_access_key_enabled        = false
   local_user_enabled               = false
 
-  # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
+  # Important! we rely on the fact that the blob created events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
@@ -207,7 +207,6 @@ resource "azurerm_storage_account_network_rules" "sa_export_inprogress_rules" {
   bypass         = ["AzureServices"]
 }
 
-
 resource "azurerm_private_endpoint" "export_inprogress_pe" {
   name                = "pe-sa-export-ip-blob-${var.short_workspace_id}"
   location            = var.location
@@ -227,6 +226,31 @@ resource "azurerm_private_endpoint" "export_inprogress_pe" {
     private_connection_resource_id = azurerm_storage_account.sa_export_inprogress.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
+  }
+}
+
+# Enable Airlock Malware Scanning on Core TRE for Export In-Progress
+resource "azapi_resource_action" "enable_defender_for_storage_export" {
+  count       = var.enable_airlock_malware_scanning ? 1 : 0
+  type        = "Microsoft.Security/defenderForStorageSettings@2022-12-01-preview"
+  resource_id = "${azurerm_storage_account.sa_export_inprogress.id}/providers/Microsoft.Security/defenderForStorageSettings/current"
+  method      = "PUT"
+
+  body = {
+    properties = {
+      isEnabled = true
+      malwareScanning = {
+        onUpload = {
+          isEnabled     = true
+          capGBPerMonth = 5000
+        },
+        scanResultsEventGridTopicResourceId = data.azurerm_eventgrid_topic.scan_result[0].id
+      }
+      sensitiveDataDiscovery = {
+        isEnabled = false
+      }
+      overrideSubscriptionLevelSettings = true
+    }
   }
 }
 
