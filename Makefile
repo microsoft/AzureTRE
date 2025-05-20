@@ -527,7 +527,7 @@ test-e2e-workspace-services: ## 🧪 Run E2E workspace services tests
 test-e2e-custom: ## 🧪 Run E2E tests with custom selector (SELECTOR=)
 	$(call target_title, "Running E2E tests with custom selector ${SELECTOR}") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env,auth \
-	&& . ${MAKEFILE_DIR}/devops/scripts/consolidate_env.sh ${MAKEFILE_DIR}  ${MAKEFILE_DIR}/e2e_tests/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/consolidate_env.sh ${MAKEFILE_DIR} ${MAKEFILE_DIR}/e2e_tests/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/e2e_tests/.env \
 	&& cd ${MAKEFILE_DIR}/e2e_tests \
 	&& \
