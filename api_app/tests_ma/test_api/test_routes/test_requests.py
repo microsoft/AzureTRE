@@ -2,6 +2,7 @@ import pytest
 from fastapi import status
 from mock import patch
 
+from models.domain.airlock_request import AirlockRequestStatus
 from resources import strings
 from services.authentication import get_current_tre_user_or_tre_admin
 
@@ -40,3 +41,25 @@ class TestRequestsThatDontRequireAdminRigths:
     async def test_get_airlock_manager_requests_returns_500(self, _, app, client):
         response = await client.get(app.url_path_for(strings.API_LIST_REQUESTS), params={"airlock_manager": True})
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
+    @patch("api.routes.airlock.AirlockRequestRepository.get_airlock_requests", return_value=[{"id": "1", "status": AirlockRequestStatus.InReview}])
+    async def test_get_requests_with_status_filter_returns_correct_results(self, mock_get_airlock_requests, app, client):
+        response = await client.get(app.url_path_for(strings.API_LIST_REQUESTS), params={"status": AirlockRequestStatus.InReview})
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_get_airlock_requests.assert_called_once_with(
+            creator_user_id='user-guid-here', type=None, status=AirlockRequestStatus.InReview, order_by=None, order_ascending=True
+        )
+        assert len(response.json()) == 1
+        assert response.json()[0]["status"] == AirlockRequestStatus.InReview
+
+    @patch("api.routes.airlock.AirlockRequestRepository.get_airlock_requests_for_airlock_manager", return_value=[{"id": "2", "status": AirlockRequestStatus.InReview}])
+    async def test_get_requests_with_airlock_manager_filter_returns_correct_results(self, mock_get_airlock_requests_for_airlock_manager, app, client):
+        response = await client.get(app.url_path_for(strings.API_LIST_REQUESTS), params={"airlock_manager": True})
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_get_airlock_requests_for_airlock_manager.assert_called_once_with(
+            user_id='user-guid-here', type=None, status=None, order_by=None, order_ascending=True
+        )
+        assert len(response.json()) == 1
+        assert response.json()[0]["status"] == AirlockRequestStatus.InReview
