@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 1.2.14
+version: 1.4.0
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -120,6 +120,19 @@ parameters:
     type: string
   - name: arm_environment
     type: string
+  - name: enable_shutdown_schedule
+    type: boolean
+    default: false
+    description: "Enable automatic shutdown schedule for the VM"
+  - name: shutdown_time
+    default: ""
+    type: string
+    description: "Time of day to shutdown the VM (HHmm format)"
+    pattern: "^([01]?[0-9]|2[0-3])[0-5][0-9]$"
+  - name: shutdown_timezone
+    type: string
+    description: "Timezone for the shutdown schedule"
+    default: "UTC"
   - name: enable_cmk_encryption
     type: boolean
     default: false
@@ -172,6 +185,9 @@ install:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
+        shutdown_time: ${ bundle.parameters.shutdown_time }
+        shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
         owner_id: ${ bundle.parameters.owner_id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
@@ -205,6 +221,9 @@ upgrade:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
+        shutdown_time: ${ bundle.parameters.shutdown_time }
+        shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
         owner_id: ${ bundle.parameters.owner_id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
@@ -250,6 +269,9 @@ uninstall:
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
+        enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
+        shutdown_time: ${ bundle.parameters.shutdown_time }
+        shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
         owner_id: ${ bundle.parameters.owner_id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }

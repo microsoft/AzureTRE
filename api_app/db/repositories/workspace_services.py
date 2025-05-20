@@ -7,6 +7,7 @@ from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 from db.repositories.resource_templates import ResourceTemplateRepository
 
+import resources.strings as strings
 from db.repositories.resources import ResourceRepository, IS_NOT_DELETED_CLAUSE
 from db.repositories.operations import OperationRepository
 from models.domain.workspace_service import WorkspaceService
@@ -80,4 +81,4 @@ class WorkspaceServiceRepository(ResourceRepository):
     async def patch_workspace_service(self, workspace_service: WorkspaceService, workspace_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, force_version_update: bool) -> Tuple[WorkspaceService, ResourceTemplate]:
         # get workspace service template
         workspace_service_template = await resource_template_repo.get_template_by_name_and_version(workspace_service.templateName, workspace_service.templateVersion, ResourceType.WorkspaceService)
-        return await self.patch_resource(workspace_service, workspace_service_patch, workspace_service_template, etag, resource_template_repo, resource_history_repo, user, force_version_update)
+        return await self.patch_resource(workspace_service, workspace_service_patch, workspace_service_template, etag, resource_template_repo, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE, force_version_update)

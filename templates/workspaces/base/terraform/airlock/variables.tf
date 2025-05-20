@@ -34,3 +34,9 @@ variable "encryption_identity_id" {
 variable "encryption_key_versionless_id" {
   type = string
 }
+variable "enable_airlock_malware_scanning" {
+  type = bool
+}
+variable "airlock_malware_scan_result_topic_name" {
+  type = string
+}

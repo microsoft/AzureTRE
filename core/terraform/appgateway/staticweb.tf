@@ -18,11 +18,6 @@ resource "azurerm_storage_account" "staticweb" {
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
 
-  static_website {
-    index_document     = "index.html"
-    error_404_document = "index.html"
-  }
-
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 
   network_rules {
@@ -47,11 +42,17 @@ resource "azurerm_storage_account" "staticweb" {
   }
 }
 
+resource "azurerm_storage_account_static_website" "staticweb_site" {
+  storage_account_id = azurerm_storage_account.staticweb.id
+  index_document     = "index.html"
+  error_404_document = "index.html"
+}
+
 # Assign the "Storage Blob Data Contributor" role needed for uploading certificates to the storage account
 resource "azurerm_role_assignment" "stgwriter" {
   scope                = azurerm_storage_account.staticweb.id
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = data.azurerm_client_config.deployer.object_id
+  principal_id         = var.deployer_principal_id
 }
 
 resource "azurerm_private_endpoint" "webpe" {

@@ -8,7 +8,7 @@ resource "azurerm_user_assigned_identity" "airlock_id" {
 }
 
 resource "azurerm_role_assignment" "acrpull_role" {
-  scope                = data.azurerm_container_registry.mgmt_acr.id
+  scope                = var.acr_id
   role_definition_name = "AcrPull"
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }

@@ -53,6 +53,11 @@ variable "create_aad_groups" {
   description = "Create AAD groups automatically for the Workspace Application Roles."
 }
 
+variable "core_api_client_id" {
+  type        = string
+  description = "The client id of the core API application."
+}
+
 variable "enable_airlock" {
   type        = bool
   description = "Controls the deployment of Airlock resources in the workspace."
@@ -108,6 +113,9 @@ variable "client_secret" {
   default     = ""
   description = "The client secret of the workspace in the identity provider, this is passed in so that we may return it as an output."
 }
+variable "ui_client_id" {
+  type = string
+}
 variable "sp_id" {
   type        = string
   default     = ""
@@ -143,4 +151,21 @@ variable "storage_account_redundancy" {
   type        = string
   default     = "GRS"
   description = "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
+}
+variable "auto_grant_workspace_consent" {
+  type        = bool
+  default     = false
+  description = "A boolean indicating if the admin consent should be auto granted to the workspace"
+}
+
+variable "enable_airlock_malware_scanning" {
+  type        = bool
+  default     = false
+  description = "Enable Airlock malware scanning for the workspace"
+}
+
+variable "airlock_malware_scan_result_topic_name" {
+  type        = string
+  description = "The name of the topic to publish scan results to"
+  default     = null
 }

@@ -54,7 +54,7 @@ locals {
   service_bus_namespace_fqdn = regex("(?:(?P<scheme>[^:/?#]+):)?(?://(?P<fqdn>[^/?#:]*))?(?::(?P<port>[0-9]+))?(?P<path>[^?#]*)(?:\\?(?P<query>[^#]*))?(?:#(?P<fragment>.*))?", azurerm_servicebus_namespace.sb.endpoint).fqdn
 
   # The key store for encryption keys could either be external or created by terraform
-  key_store_id = var.enable_cmk_encryption ? (var.external_key_store_id != null ? var.external_key_store_id : data.azurerm_key_vault.encryption_kv[0].id) : ""
+  key_store_id = var.enable_cmk_encryption ? (var.external_key_store_id != "" ? var.external_key_store_id : data.azurerm_key_vault.encryption_kv[0].id) : ""
 
   cmk_name                 = "tre-encryption-${var.tre_id}"
   encryption_identity_name = "id-encryption-${var.tre_id}"
@@ -62,6 +62,7 @@ locals {
   # key vault variables
   kv_name                          = "kv-${var.tre_id}"
   kv_public_network_access_enabled = true
-  kv_network_default_action        = var.enable_local_debugging ? "Allow" : "Deny"
+  kv_network_default_action        = var.private_agent_subnet_id != "" ? "Deny" : "Allow" # Deny if private agent subnet is defined, Allow otherwise for public deployment. This will be changed to "Deny" later in trap kv_remove_network_exception
   kv_network_bypass                = "AzureServices"
+  private_agent_subnet_id          = var.private_agent_subnet_id
 }

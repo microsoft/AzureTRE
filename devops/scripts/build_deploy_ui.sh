@@ -20,7 +20,10 @@ jq --arg rootClientId "${SWAGGER_UI_CLIENT_ID}" \
   --arg treId "${TRE_ID}" \
   --arg version "${ui_version}" \
   --arg activeDirectoryUri "${activeDirectoryUri}" \
-  '.rootClientId = $rootClientId | .rootTenantId = $rootTenantId | .treApplicationId = $treApplicationId | .treUrl = $treUrl | .treId = $treId | .version = $version | .activeDirectoryUri = $activeDirectoryUri' ./src/config.source.json > ./src/config.json
+  --arg userManagementEnabled "${USER_MANAGEMENT_ENABLED:-False}" \
+  --arg uiSiteName "${UI_SITE_NAME:-}" \
+  --arg uiFooterText "${UI_FOOTER_TEXT:-}" \
+  '.rootClientId = $rootClientId | .rootTenantId = $rootTenantId | .treApplicationId = $treApplicationId | .treUrl = $treUrl | .treId = $treId | .version = $version | .activeDirectoryUri = $activeDirectoryUri | .userManagementEnabled = $userManagementEnabled | .uiSiteName = $uiSiteName | .uiFooterText = $uiFooterText' ./src/config.source.json > ./src/config.json
 
 # build and deploy the app
 yarn install

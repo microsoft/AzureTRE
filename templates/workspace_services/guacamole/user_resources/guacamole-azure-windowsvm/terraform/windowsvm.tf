@@ -79,7 +79,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
   # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
   #
-  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, admin_username] }
+  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, admin_username, custom_data] }
 }
 
 resource "azurerm_disk_encryption_set" "windowsvm_disk_encryption" {
@@ -122,4 +122,17 @@ resource "azurerm_key_vault_secret" "windowsvm_password" {
   tags         = local.tre_user_resources_tags
 
   lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_dev_test_global_vm_shutdown_schedule" "shutdown_schedule" {
+  count = var.enable_shutdown_schedule ? 1 : 0
+
+  location              = data.azurerm_resource_group.ws.location
+  virtual_machine_id    = azurerm_windows_virtual_machine.windowsvm.id
+  daily_recurrence_time = var.shutdown_time
+  timezone              = var.shutdown_timezone
+  enabled               = var.enable_shutdown_schedule
+  notification_settings {
+    enabled = false
+  }
 }

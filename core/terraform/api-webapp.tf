@@ -65,6 +65,7 @@ resource "azurerm_linux_web_app" "api" {
     LOGGING_LEVEL                                    = var.logging_level
     OTEL_RESOURCE_ATTRIBUTES                         = "service.name=api,service.version=${local.version}"
     OTEL_EXPERIMENTAL_RESOURCE_DETECTORS             = "azure_app_service"
+    USER_MANAGEMENT_ENABLED                          = var.user_management_enabled
   }
 
   identity {
@@ -113,6 +114,32 @@ resource "azurerm_linux_web_app" "api" {
 
   depends_on = [
     module.airlock_resources
+  ]
+}
+
+resource "azapi_update_resource" "api_vnet_container_pull_routing" {
+  resource_id = azurerm_linux_web_app.api.id
+  type        = "Microsoft.Web/sites@2022-09-01"
+
+  body = {
+    properties = {
+      vnetImagePullEnabled : true
+    }
+  }
+
+  depends_on = [
+    azurerm_linux_web_app.api
+  ]
+}
+
+resource "azapi_resource_action" "restart_api_webapp" {
+  type        = "Microsoft.Web/sites@2022-09-01"
+  resource_id = azurerm_linux_web_app.api.id
+  method      = "POST"
+  action      = "restart"
+
+  depends_on = [
+    azapi_update_resource.api_vnet_container_pull_routing
   ]
 }
 
