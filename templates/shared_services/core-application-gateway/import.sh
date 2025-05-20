@@ -36,6 +36,10 @@ while [ "$1" != "" ]; do
         shift
         certificate_name=$1
         ;;
+    --ui_app_service)
+        shift
+        ui_app_service=$1
+        ;;
     *)
         echo "Unexpected argument: '$1'"
         usage
@@ -64,5 +68,6 @@ terraform -chdir=terraform init -input=false -backend=true -reconfigure \
 terraform -chdir=terraform import \
   -var "tre_id=${tre_id}" \
   -var "certificate_name=${certificate_name}" \
+  -var "ui_app_service=${ui_app_service}" \
   azurerm_application_gateway.agw \
   "/subscriptions/${azure_subscription_id}/resourceGroups/${core_resource_group_name}/providers/Microsoft.Network/applicationGateways/${application_gateway_name}"

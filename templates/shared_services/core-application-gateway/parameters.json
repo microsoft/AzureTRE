@@ -51,6 +51,12 @@
       "source": {
         "env": "CERTIFICATE_NAME"
       }
+    },
+    {
+      "name": "ui_app_service",
+      "source": {
+        "env": "UI_APP_SERVICE"
+      }
     }
   ]
 }

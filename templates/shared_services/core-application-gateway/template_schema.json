@@ -45,6 +45,13 @@
       "title": "Custom certificate name",
       "description": "Custom certificate name",
       "default": true
+    },
+    "ui_app_service": {
+      "$id": "#/properties/ui_app_service",
+      "type": "string",
+      "title": "Custom UI App Service name",
+      "description": "Custom UI App Service name",
+      "default": true
     }
   }
 }
