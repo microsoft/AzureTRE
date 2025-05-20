@@ -20,9 +20,9 @@ if [ -z "${USE_ENV_VARS_NOT_FILES:-}" ]; then
   FORMAT_TO_ENV_FILE="to_entries| map(.key + \"=\" +  .value)|.[]"
 
   # Export as UPPERCASE keys to file
-  yq e "$GET_LEAF_KEYS|$UPCASE_KEYS| $FORMAT_TO_ENV_FILE" config.yaml > $FILE
+  yq e "$GET_LEAF_KEYS|$UPCASE_KEYS| $FORMAT_TO_ENV_FILE" config.yaml > "$FILE"
 
   if [ -f "$WORKDIR/core/private.env" ]; then
-    cat "$WORKDIR/core/private.env" >> $FILE
+    cat "$WORKDIR/core/private.env" >> "$FILE"
   fi
 fi
