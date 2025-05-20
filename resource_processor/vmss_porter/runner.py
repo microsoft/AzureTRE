@@ -57,7 +57,7 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
                 logger.info(f"Queue reader heartbeat: Polled for sessions {polling_count} times in the last minute")
                 last_heartbeat_time = current_time
                 polling_count = 0
-                
+
             logger.debug("Looking for new session...")
             # max_wait_time=1 -> don't hold the session open after processing of the message has finished
             async with service_bus_client.get_queue_receiver(queue_name=q_name, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
