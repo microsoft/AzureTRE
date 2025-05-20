@@ -59,6 +59,13 @@ tre:
   # Set to true if TreAdmins should be able to assign and de-assign users to workspaces via the UI
   user_management_enabled: false
 
+  # Uncomment to enable DNS Security policy on the system, and add any known DNS names that you need to allow
+  # DNS queries on, in addition to those in the core list in core/terraform/allowed-dns.json
+  # Note, these need to be fully qualified, i.e. they end in a dot(.)
+  # enable_dns_policy: true
+  # allowed_dns:
+  #   - mydomain.com.
+
   # Uncomment to deploy to a custom domain
   # custom_domain: __CHANGE_ME__
 
