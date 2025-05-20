@@ -190,8 +190,14 @@ async def setup_test_base_workspace_with_locks(worker_id: str, tmp_path_factory,
         try:
             if len(list(worker_lock_dir.glob("*"))) > 1:
                 worker_lock.unlink(missing_ok=True)
+                timeout = 7200  # Maximum time to wait in seconds - 120 minutes
+                elapsed = 0
                 while len(list(worker_lock_dir.glob("*"))) > 0:
+                    if elapsed >= timeout:
+                        LOGGER.warning(f"Timeout reached while waiting for worker locks to be released in {worker_lock_dir}.")
+                        break
                     await asyncio.sleep(10)
+                    elapsed += 10
             elif len(list(worker_lock_dir.glob("*"))) == 1:
                 await clean_up_test_workspace(
                     pre_created_workspace_id=config.TEST_WORKSPACE_ID,
