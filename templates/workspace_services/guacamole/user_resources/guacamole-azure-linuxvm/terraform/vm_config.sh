@@ -187,6 +187,15 @@ update-alternatives --config x-www-browser
 echo "init_vm.sh: environment"
 echo "export NEXUS_PROXY_URL=${NEXUS_PROXY_URL}" > /etc/profile.d/99-sde-environment.sh
 
+#
+# Clean up conda config. Because this may go sideways, disable exit-on-fail,
+# so the script will continue
+for repo in $(/opt/anaconda/bin/conda config --show-sources | grep repo.anaconda.com | sort | uniq | awk '{ print $NF }')
+do
+  echo "Remove $repo from global config"
+  /opt/anaconda/bin/conda config --remove channels $repo --system
+done
+
 ## Cleanup
 echo "init_vm.sh: Cleanup & restart"
 rm -f /etc/apt/sources.list.d/* # Again, because of VS Code
