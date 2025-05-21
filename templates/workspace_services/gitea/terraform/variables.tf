@@ -34,8 +34,3 @@ variable "enable_cmk_encryption" {
 variable "key_store_id" {
   type = string
 }
-variable "is_exposed_externally" {
-  type        = bool
-  description = "Is the Gitea service to be exposed externally?"
-  default     = false
-}

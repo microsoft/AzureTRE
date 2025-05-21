@@ -84,11 +84,6 @@ outputs:
     applyTo:
       - install
       - upgrade
-  - name: is_exposed_externally
-    type: boolean
-    applyTo:
-      - install
-      - upgrade
   - name: authentication_callback_uri
     type: string
     applyTo:
@@ -123,7 +118,6 @@ install:
         key: tre-workspace-service-gitea-${ bundle.parameters.id }
       outputs:
         - name: connection_uri
-        - name: is_exposed_externally
         - name: authentication_callback_uri
         - name: workspace_address_space
 
@@ -150,7 +144,6 @@ upgrade:
         key: tre-workspace-service-gitea-${ bundle.parameters.id }
       outputs:
         - name: connection_uri
-        - name: is_exposed_externally
         - name: authentication_callback_uri
         - name: workspace_address_space
 
