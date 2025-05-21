@@ -15,5 +15,5 @@ output "workspace_address_space" {
 }
 
 output "is_exposed_externally" {
-  value = false
+  value = var.is_exposed_externally
 }
