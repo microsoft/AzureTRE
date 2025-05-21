@@ -24,7 +24,6 @@ Azure TRE uses the following key technologies:
 - **Infrastructure as Code**:
   - Terraform for infrastructure provisioning
   - Porter/CNAB for bundle packaging
-  - ARM templates (in some cases)
 
 - **Languages**:
   - Python (API, resource processor)
@@ -156,16 +155,16 @@ When editing components or bundles, you must increase their version numbers acco
 3. **PATCH** version: Backward-compatible bug or typo fixes
 
 Version updates should be documented in:
-1. The component's version file (porter.yaml for bundles)
-2. The CHANGELOG.md file under the COMPONENTS section
+1. The component's version file:
+   - Porter bundles: in porter.yaml
+   - API: in api_app/_version.py
+   - Resource Processor: in resource_processor/_version.py
+   - Airlock Processor: in airlock_processor/_version.py
+   - UI: in ui/app/package.json
 
 Example CHANGELOG entry for version updates:
 ```markdown
-COMPONENTS:
-
-| name | version |
-| ----- | ----- |
-| tre-service-example | 1.2.3 |
+* Brief description of change ([#1234](https://github.com/microsoft/AzureTRE/issues/1234))
 ```
 
 Always use semantic versioning (MAJOR.MINOR.PATCH) and follow versioning guidelines in the documentation.
