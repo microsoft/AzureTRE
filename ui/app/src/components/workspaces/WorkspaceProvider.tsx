@@ -66,27 +66,33 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
           )
         ).workspaceAuth.scopeId;
 
-        const authProvisioned = scopeId !== "";
+        let authProvisioned: boolean = false;
 
         let wsRoles: Array<string> = [];
         let ws: Workspace = {} as Workspace;
 
-        if (authProvisioned) {
+        if (scopeId) {
           // use the client ID to get a token against the workspace (tokenOnly), and set the workspace roles in the context
-          await apiCall(
-            `${ApiEndpoint.Workspaces}/${workspaceId}`,
-            HttpMethod.Get,
-            scopeId,
-            undefined,
-            ResultType.JSON,
-            (roles: Array<string>) => {
-              wsRoles = roles;
-            },
-            true,
-          );
+          try {
+            await apiCall(
+              `${ApiEndpoint.Workspaces}/${workspaceId}`,
+              HttpMethod.Get,
+              scopeId,
+              undefined,
+              ResultType.JSON,
+              (roles: Array<string>) => {
+                wsRoles = roles;
+              },
+              true,
+            );
+            authProvisioned = true;
+          } catch (e: any) {
+            console.error("Authorization provisioning failed:", e);
+            authProvisioned = false;
+          }
         }
 
-        if (wsRoles && wsRoles.length > 0) {
+        if (authProvisioned && wsRoles && wsRoles.length > 0) {
           ws = (
             await apiCall(
               `${ApiEndpoint.Workspaces}/${workspaceId}`,
