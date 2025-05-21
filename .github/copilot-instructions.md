@@ -163,8 +163,6 @@ Version updates should be documented in:
    - UI: in ui/app/package.json
 
 Example CHANGELOG entry for version updates:
-```markdown
-* Brief description of change ([#1234](https://github.com/microsoft/AzureTRE/issues/1234))
-```
+Refer to the example provided under "Format for changelog entries" above.
 
 Always use semantic versioning (MAJOR.MINOR.PATCH) and follow versioning guidelines in the documentation.
