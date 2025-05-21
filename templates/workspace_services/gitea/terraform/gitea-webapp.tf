@@ -140,8 +140,7 @@ resource "azapi_resource_action" "restart_gitea_webapp" {
 }
 
 resource "azurerm_private_endpoint" "gitea_private_endpoint" {
-  # disabling this makes the webapp available on the public internet
-  count               = var.is_exposed_externally == false ? 1 : 0
+  # Always create the private endpoint for internal access
   name                = "pe-${local.webapp_name}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
