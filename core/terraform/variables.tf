@@ -250,6 +250,18 @@ variable "encryption_kv_name" {
   default     = ""
 }
 
+variable "enable_dns_policy" {
+  type        = bool
+  description = "Whether, or not, to add a DNS security policy with an allow-list. This is a preview feature that can be enabled to prevent data exfiltration via DNS."
+  default     = false
+}
+
+variable "allowed_dns" {
+  type        = list(string)
+  description = "When DNS security policy is enabled this list of domains will be added to the allow list."
+  default     = []
+}
+
 variable "auto_grant_workspace_consent" {
   type        = bool
   description = "A boolean indicating if admin consent should be auto granted to the workspace"
