@@ -33,7 +33,7 @@ resource "azurerm_linux_web_app" "gitea" {
   ftp_publish_basic_authentication_enabled       = false
   webdeploy_publish_basic_authentication_enabled = false
   tags                                           = local.workspace_service_tags
-  public_network_access_enabled                  = var.is_exposed_externally
+  public_network_access_enabled                  = false
 
   app_settings = {
     WEBSITES_PORT                                    = "3000"

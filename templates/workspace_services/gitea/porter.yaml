@@ -72,10 +72,6 @@ parameters:
   - name: key_store_id
     type: string
     default: ""
-  - name: is_exposed_externally
-    type: boolean
-    default: false
-    description: "Is the Gitea service to be exposed externally?"
 
 mixins:
   - exec
@@ -113,7 +109,6 @@ install:
         id: ${ bundle.parameters.id }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
-        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
         sql_sku: ${ bundle.parameters.sql_sku }
@@ -140,7 +135,6 @@ upgrade:
         tre_id: ${ bundle.parameters.tre_id }
         id: ${ bundle.parameters.id }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
-        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
@@ -167,7 +161,6 @@ uninstall:
         workspace_id: ${ bundle.parameters.workspace_id }
         tre_id: ${ bundle.parameters.tre_id }
         id: ${ bundle.parameters.id }
-        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
         mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
