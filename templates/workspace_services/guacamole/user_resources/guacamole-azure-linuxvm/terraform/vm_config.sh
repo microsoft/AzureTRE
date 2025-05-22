@@ -160,10 +160,19 @@ if [ "${CONDA_CONFIG}" -eq 1 ]; then
   if [ -d "/opt/anaconda" ]; then
     export PATH="/opt/anaconda/condabin:/opt/anaconda/bin":$PATH
   fi
+  which conda
+  set +o errexit # Don't exit on error if one of these fails
   conda config --add channels "${NEXUS_PROXY_URL}"/repository/conda-mirror/main/ --system
   conda config --add channels "${NEXUS_PROXY_URL}"/repository/conda-repo/main/ --system
   conda config --remove channels defaults --system
   conda config --set channel_alias "${NEXUS_PROXY_URL}"/repository/conda-mirror/ --system
+
+  for repo in $(conda config --show-sources | grep repo.anaconda.com | sort | uniq | awk '{ print $NF }')
+  do
+    echo "Remove $repo from global config"
+    conda config --remove channels $repo --system
+  done
+  set -o errexit
 fi
 
 # Docker install and config
