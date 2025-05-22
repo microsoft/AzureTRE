@@ -6,15 +6,15 @@ terraform {
     }
     azapi = {
       source  = "Azure/azapi"
-      version = "=2.2.0"
+      version = "= 2.3.0"
     }
     external = {
       source  = "hashicorp/external"
-      version = "=2.2.2"
+      version = "= 2.3.5"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.4.3"
+      version = "= 3.7.2"
     }
   }
 
