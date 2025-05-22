@@ -62,9 +62,10 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
             files=airlock_request.files,
             status=airlock_request.status.value,
             business_justification=airlock_request.businessJustification,
+            title=airlock_request.title,
             triage_level=airlock_request.triageLevel,
             triage_level_code=airlock_request.triageLevelCode,
-            export_review_due_date=airlock_request.exportReviewDueDate),            
+            export_review_due_date=airlock_request.exportReviewDueDate),
         workspace=AirlockNotificationWorkspaceData(
             id=workspace.id,
             display_name=workspace.properties["display_name"],

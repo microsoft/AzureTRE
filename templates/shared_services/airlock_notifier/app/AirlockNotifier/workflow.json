@@ -136,6 +136,9 @@
                                     },
                                     "request": {
                                         "properties": {
+                                            "title": {
+                                                "type": "string"
+                                            },
                                             "business_justification": {
                                                 "type": "string"
                                             },
@@ -378,7 +381,7 @@
                                         "Set_rejected_message": {
                                             "inputs": {
                                                 "name": "message",
-                                                "value": "Your airlock request from Workspace @{body('Parse_JSON')?['data']?['workspace']?['id']} was rejected"
+                                                "value": "Your CPRD Safe export request has been rejected"
                                             },
                                             "runAfter": {
                                                 "Set_recipients_as_researchers_emails_rejected": [
@@ -390,7 +393,7 @@
                                         "Set_rejected_email_body": {
                                             "inputs": {
                                                 "name": "email_body",
-                                                "value": "Your airlock request from Workspace @{body('Parse_JSON')?['data']?['workspace']?['id']} was rejected"
+                                                "value": "<p>Dear @{body('Parse_JSON')?['data']?['request']?['created_by']?['name']},</p><p>Export request: @{body('Parse_JSON')?['data']?['request']?['title']}</p><p>Your CPRD Safe airlock export request has been rejected as it did not meet CPRD Safe output criteria. Guidance can be found at: <a href=\"https://www.cprd.com/sites/default/files/2024-10/CPRD%20Safe%20Outputs%20Guidance.pdf\">CPRD Safe Outputs Guidance</a>.</p><p>To view more information about your request, log in to <a href=\"@{parameters('tre_url')}\">CPRD Safe</a> and navigate to your workspace > Airlock dashboard > Export requests > View. Scroll down to Overview of request to see the reason for the decision.</p><p>If you need further help, please email <a href=\"mailto:enquiries@cprd.com?subject=CPRD%20Safe%20export%20request%20rejection\">enquiries@cprd.com</a></p>.<p>Many thanks,</p><p><b>CPRD Safe Team</b></p>"
                                             },
                                             "runAfter": {
                                                 "Set_rejected_message": [
