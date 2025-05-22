@@ -160,10 +160,19 @@ if [ "${CONDA_CONFIG}" -eq 1 ]; then
   if [ -d "/opt/anaconda" ]; then
     export PATH="/opt/anaconda/condabin:/opt/anaconda/bin":$PATH
   fi
+  which conda
+  set +o errexit # Don't exit on error if one of these fails
   conda config --add channels "${NEXUS_PROXY_URL}"/repository/conda-mirror/main/ --system
   conda config --add channels "${NEXUS_PROXY_URL}"/repository/conda-repo/main/ --system
   conda config --remove channels defaults --system
   conda config --set channel_alias "${NEXUS_PROXY_URL}"/repository/conda-mirror/ --system
+
+  for repo in $(conda config --show-sources | grep repo.anaconda.com | sort | uniq | awk '{ print $NF }')
+  do
+    echo "Remove $repo from global config"
+    conda config --remove channels $repo --system
+  done
+  set -o errexit
 fi
 
 # Docker install and config
@@ -186,15 +195,6 @@ update-alternatives --config x-www-browser
 
 echo "init_vm.sh: environment"
 echo "export NEXUS_PROXY_URL=${NEXUS_PROXY_URL}" > /etc/profile.d/99-sde-environment.sh
-
-#
-# Clean up conda config. Because this may go sideways, disable exit-on-fail,
-# so the script will continue
-for repo in $(/opt/anaconda/bin/conda config --show-sources | grep repo.anaconda.com | sort | uniq | awk '{ print $NF }')
-do
-  echo "Remove $repo from global config"
-  /opt/anaconda/bin/conda config --remove channels $repo --system
-done
 
 ## Cleanup
 echo "init_vm.sh: Cleanup & restart"
