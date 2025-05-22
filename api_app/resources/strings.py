@@ -143,7 +143,6 @@ WORKSPACE_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The workspace service 
 WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE = "All workspace services need to be deleted before you can delete the workspace"
 WORKSPACE_DOES_NOT_HAVE_ADDRESS_SPACES_PROPERTY = "Workspace does not have address_spaces property"
 WORKSPACE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
-WORKSPACE_SERVICE_TEMPATE_DOES_NOT_SUPPORT_SUBSCRIPTION = "The workspace service template does not support multi-subscription deployment."
 OPERATION_DOES_NOT_EXIST = "Operation does not exist"
 CUSTOM_ACTION_NOT_DEFINED = "The specified custom action isn't defined in the targeted resource."
 CUSTOM_ACTIONS_DO_NOT_EXIST = "The resource being targeted does not implement any custom actions."
