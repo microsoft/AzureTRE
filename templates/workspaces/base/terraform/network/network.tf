@@ -129,3 +129,19 @@ module "terraform_azurerm_environment_configuration" {
   source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.6.0"
   arm_environment = var.arm_environment
 }
+
+# Link the workspace network to the DNS Security Policy defined in the core resource group.
+resource "azapi_resource" "dns_policy_vnet_link" {
+  count     = var.enable_dns_policy ? 1 : 0
+  type      = "Microsoft.Network/dnsResolverPolicies/virtualNetworkLinks@2023-07-01-preview"
+  parent_id = "${data.azurerm_resource_group.core.id}/providers/Microsoft.Network/dnsResolverPolicies/${local.dns_policy_name}"
+  name      = azurerm_virtual_network.ws.name
+  location  = var.location
+  body = {
+    properties = {
+      virtualNetwork = {
+        id = azurerm_virtual_network.ws.id
+      }
+    }
+  }
+}
