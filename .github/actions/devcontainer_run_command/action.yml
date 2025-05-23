@@ -292,12 +292,12 @@ runs:
             && inputs.ENABLE_CMK_ENCRYPTION) || 'false' }}" \
           -e TF_VAR_encryption_kv_name="${{ inputs.ENCRYPTION_KV_NAME }}" \
           -e TF_VAR_external_key_store_id="${{ inputs.EXTERNAL_KEY_STORE_ID }}" \
+          -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES || 1 }}" \
           -e TF_VAR_user_management_enabled="${{ (inputs.USER_MANAGEMENT_ENABLED != '' && inputs.USER_MANAGEMENT_ENABLED) || 'false' }}" \
           -e USER_MANAGEMENT_ENABLED="${{ inputs.USER_MANAGEMENT_ENABLED }}" \
           -e PRIVATE_AGENT_SUBNET_ID=${{ inputs.PRIVATE_AGENT_SUBNET_ID }} \
           -e TF_VAR_private_agent_subnet_id=${{ inputs.PRIVATE_AGENT_SUBNET_ID }} \
           -e TF_VAR_auto_grant_workspace_consent="${{ (inputs.AUTO_GRANT_WORKSPACE_CONSENT != '' && inputs.AUTO_GRANT_WORKSPACE_CONSENT) || 'false' }}" \
-          -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c -x "./command.sh"
 
