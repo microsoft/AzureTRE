@@ -8,6 +8,7 @@ function add_exit_trap() {
 
   local new_command=$1
 
+  local existing_command
   existing_command=$(trap -p EXIT | sed "s/trap -- '\(.*\)' EXIT/\1/")
 
   if [[ -n "$existing_command" ]]; then
