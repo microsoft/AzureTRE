@@ -6,6 +6,9 @@
 # Note: Ensure you "source" this script, or else the EXIT trap won't fire at the right time.
 #
 
+# shellcheck disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/bash_trap_helper.sh"
+
 # Global variable to capture underlying error
 LAST_PUBLIC_ACCESS_ERROR=""
 
@@ -127,7 +130,7 @@ function is_public_access_enabled() {
 }
 
 # Setup the trap to disable public access on exit
-trap mgmtstorage_disable_public_access EXIT
+add_exit_trap "mgmtstorage_disable_public_access"
 
 # Enable public access for deployment
 mgmtstorage_enable_public_access "$@"
