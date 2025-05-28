@@ -43,7 +43,9 @@ resource "azurerm_storage_account" "sa_import_approved" {
   tags = merge(
     var.tre_workspace_tags,
     {
-      description = "airlock;import;approved"
+      description = "airlock;import;approved",
+      backup      = "true",
+      archive     = "false"
     }
   )
 
