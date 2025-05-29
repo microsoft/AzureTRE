@@ -41,7 +41,7 @@ resource "azurerm_storage_account" "staticweb" {
 resource "azurerm_storage_account_static_website" "staticweb_site" {
   storage_account_id = azurerm_storage_account.staticweb.id
   index_document     = "index.html"
-  error_404_document = "index.html"
+  error_404_document = "404.html"
 
   depends_on = [azurerm_private_endpoint.blobpe, azurerm_private_endpoint.webpe]
 }
