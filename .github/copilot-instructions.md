@@ -38,14 +38,16 @@ Azure TRE uses the following key technologies:
   - Azure VMSS for resource processor
 
 - **Development Tools**:
-  - Docker for containerization
+  - Docker for containerization and as devcontainer for Visual Studio Code Dev Containers extension
   - GitHub Actions for CI/CD
   - Make for build/deployment automation
+  - TRE CLI for common TRE setup, authentication, and management commands
 
 ## Repository Structure
 
 ```text
 ├── .github               - GitHub workflows, issue templates, and configuration
+├── cli                   - TRE CLI for common setup, auth, and management commands
 ├── devops                - DevOps scripts and bootstrapping tools
 ├── docs                  - Documentation
 ├── e2e_tests             - pytest-based end-to-end tests
@@ -110,7 +112,35 @@ name: tre-service-example
 version: 0.1.0
 description: "An example TRE service"
 registry: azuretre
-...
+dockerfile: Dockerfile.tmpl
+
+credentials:
+  - name: azure_tenant_id
+    env: ARM_TENANT_ID
+  - name: azure_subscription_id
+    env: ARM_SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: ARM_CLIENT_ID
+  - name: azure_client_secret
+    env: ARM_CLIENT_SECRET
+
+parameters:
+  - name: param_name
+    type: string
+    description: "param_description"
+    # ... additional parameters
+
+mixins:
+  # ... mixins used
+
+install:
+  # ... install actions
+
+upgrade:
+  # ... upgrade actions
+
+uninstall:
+  # ... uninstall actions
 ```
 
 ### template_schema.json
@@ -121,6 +151,8 @@ Key sections include:
 - Properties with types, descriptions, and defaults
 - Required fields
 - UI schema for customizing the display in the UI
+
+**Important**: The property names in template_schema.json and the parameters section in porter.yaml should match.
 
 ### Terraform
 
