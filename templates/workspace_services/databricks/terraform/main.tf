@@ -26,3 +26,30 @@ resource "azurerm_databricks_workspace" "databricks" {
     azurerm_subnet_network_security_group_association.container
   ]
 }
+
+
+resource "azurerm_monitor_diagnostic_setting" "databricks_diagnostics" {
+  name                       = "diagnostics-${local.databricks_workspace_name}"
+  target_resource_id         = azurerm_databricks_workspace.databricks.id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
+
+  enabled_log {
+    category = "accounts"
+  }
+
+  enabled_log {
+    category = "workspace"
+  }
+
+  enabled_log {
+    category = "gitCredentials"
+  }
+
+  enabled_log {
+    category = "iamRole"
+  }
+
+  enabled_log {
+    category = "secrets"
+  }
+}
