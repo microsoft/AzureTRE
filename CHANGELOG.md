@@ -28,6 +28,8 @@ BUG FIXES:
 * Airlock Review Template Leaves OS Disk Behind ([4514](https://github.com/microsoft/AzureTRE/issues/4514))
 * Enabled Shared Access Key access on the core storage account ([#4448](https://github.com/microsoft/AzureTRE/issues/4448))
 * Remove `strtobool` from airlock_processor ([#4535](https://github.com/microsoft/AzureTRE/issues/4535))
+* Keyvault + mgmt storage just in time access scripts traps conflict in the same shell ([#4564](https://github.com/microsoft/AzureTRE/issues/4564))
+* Fix Gitea workspace service being exposed externally ([#4558](https://github.com/microsoft/AzureTRE/issues/4558))
 
 ## 0.22.0 (April 20, 2025)
 

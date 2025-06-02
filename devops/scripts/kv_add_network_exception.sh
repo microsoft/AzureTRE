@@ -6,6 +6,9 @@
 # Note:  Ensure you "source" this script, or else the EXIT trap won't fire at the right time
 #
 
+# shellcheck disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/bash_trap_helper.sh"
+
 
 function kv_add_network_exception() {
 
@@ -131,7 +134,7 @@ function is_kv_rg_deleting() {
 
 
 # setup the trap to remove network exception on exit
-trap kv_remove_network_exception EXIT
+add_exit_trap "kv_remove_network_exception"
 
 # now add the network exception
 kv_add_network_exception "$@"
