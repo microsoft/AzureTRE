@@ -1,13 +1,13 @@
 import { DefaultPalette, IStackItemStyles, Stack } from "@fluentui/react";
 
-interface ResourceOperationListItemProps {
+interface ResourceHistoryListItemProps {
   header: string;
   val: string;
 }
 
-export const ResourceOperationListItem: React.FunctionComponent<
-  ResourceOperationListItemProps
-> = (props: ResourceOperationListItemProps) => {
+export const ResourceHistoryListItem: React.FunctionComponent<
+  ResourceHistoryListItemProps
+> = (props: ResourceHistoryListItemProps) => {
   const stackItemStyles: IStackItemStyles = {
     root: {
       padding: "5px 0",

@@ -33,6 +33,7 @@ resource "azurerm_linux_web_app" "gitea" {
   ftp_publish_basic_authentication_enabled       = false
   webdeploy_publish_basic_authentication_enabled = false
   tags                                           = local.workspace_service_tags
+  public_network_access_enabled                  = false
 
   app_settings = {
     WEBSITES_PORT                                    = "3000"
@@ -139,6 +140,7 @@ resource "azapi_resource_action" "restart_gitea_webapp" {
 }
 
 resource "azurerm_private_endpoint" "gitea_private_endpoint" {
+  # Always create the private endpoint for internal access
   name                = "pe-${local.webapp_name}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
