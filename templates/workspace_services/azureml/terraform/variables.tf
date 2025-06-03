@@ -48,3 +48,6 @@ variable "enable_cmk_encryption" {
 variable "key_store_id" {
   type = string
 }
+variable "log_analytics_workspace_name" {
+  type = string
+}

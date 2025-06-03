@@ -8,6 +8,7 @@ In future versions, public access will be fully removed, and the ACR will become
 ENHANCEMENTS:
 * Add ability to pass values to install stage on pipleine ([#4451](https://github.com/microsoft/AzureTRE/pull/4451))
 * Format the error message in the Operations panel for enhanced readability ([#4493](https://github.com/microsoft/AzureTRE/issues/4493))
+* Modify the AML workspace service so it does not use local authentication keys for storage access ([#4341](https://github.com/microsoft/AzureTRE/issues/4341))
 * Enhanced the logout message to emphasize session security. ([#4410](https://github.com/AzureTRE/AzureTRE/issues/4410))
 * Added ability to assign VMs to other users at creation time ([#1179](https://github.com/microsoft/AzureTRE/issues/1179))
 * Add shutdown schedule to Windows VMs ([#4211](https://github.com/microsoft/AzureTRE/pull/4211))
@@ -19,6 +20,7 @@ ENHANCEMENTS:
 * Delete old database migrations ([#4168](https://github.com/microsoft/AzureTRE/issues/4168))
 * Update terraform to reduce recreation of private endpoints and other resources ([#4539](https://github.com/microsoft/AzureTRE/pull/4539))
 * Disable ACR admin account ([#4542](https://github.com/microsoft/AzureTRE/pull/4542))
+
 
 BUG FIXES:
 * Letsencrypt.yml fails with "Invalid reference in variable validation" ([#4506](https://github.com/microsoft/AzureTRE/4506))
