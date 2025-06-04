@@ -31,6 +31,7 @@ BUG FIXES:
 * Remove `strtobool` from airlock_processor ([#4535](https://github.com/microsoft/AzureTRE/issues/4535))
 * Keyvault + mgmt storage just in time access scripts traps conflict in the same shell ([#4564](https://github.com/microsoft/AzureTRE/issues/4564))
 * Fix Gitea workspace service being exposed externally ([#4558](https://github.com/microsoft/AzureTRE/issues/4558))
+* Certs service deployment failed updating static website ([#4572](https://github.com/microsoft/AzureTRE/issues/4572))
 
 ## 0.22.0 (April 20, 2025)
 
