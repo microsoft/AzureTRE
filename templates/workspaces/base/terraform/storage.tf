@@ -166,12 +166,14 @@ resource "azurerm_private_endpoint" "stgdfspe" {
 }
 
 resource "azurerm_backup_container_storage_account" "storage_account" {
+  count               = var.enable_backup ? 1 : 0
   resource_group_name = azurerm_resource_group.ws.name
   recovery_vault_name = module.backup[0].vault_name
   storage_account_id  = azurerm_storage_account.stg.id
 }
 
 resource "azurerm_backup_protected_file_share" "file_share" {
+  count                     = var.enable_backup ? 1 : 0
   resource_group_name       = azurerm_resource_group.ws.name
   recovery_vault_name       = module.backup[0].vault_name
   source_storage_account_id = azurerm_storage_account.stg.id
