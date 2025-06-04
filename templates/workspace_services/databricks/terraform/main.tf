@@ -31,7 +31,7 @@ resource "azurerm_databricks_workspace" "databricks" {
 resource "azurerm_monitor_diagnostic_setting" "databricks_diagnostics" {
   name                       = "diagnostics-${local.databricks_workspace_name}"
   target_resource_id         = azurerm_databricks_workspace.databricks.id
-  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.workspace.id
 
   enabled_log {
     category = "accounts"
