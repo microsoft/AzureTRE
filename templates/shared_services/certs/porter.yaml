@@ -75,6 +75,7 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -150,6 +151,7 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
