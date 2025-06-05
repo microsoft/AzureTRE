@@ -339,6 +339,7 @@ class CostService:
                 if self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY in e.response.headers:
                     raise TooManyRequests(int(e.response.headers[self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY]))
                 else:
+                    logger.warning(f"{self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY} header was not found in response. Using default retry time of 60 seconds.")
                     raise TooManyRequests(60)  # Default retry after 60 seconds if header is not found
             elif e.status_code == 503:
                 # Service unavailable - Service is temporarily unavailable.
