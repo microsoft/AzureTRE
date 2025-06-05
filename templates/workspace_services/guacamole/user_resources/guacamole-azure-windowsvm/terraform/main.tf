@@ -2,8 +2,9 @@
 terraform {
   required_providers {
     azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "=3.117.0"
+      source                = "hashicorp/azurerm"
+      version               = "= 4.27.0"
+      configuration_aliases = [azurerm.core]
     }
     random = {
       source  = "hashicorp/random"
@@ -19,6 +20,8 @@ terraform {
 }
 
 provider "azurerm" {
+  subscription_id = coalesce(var.workspace_subscription_id, data.azurerm_client_config.current.subscription_id)
+
   features {
     virtual_machine {
       skip_shutdown_and_force_delete = true
@@ -38,6 +41,12 @@ provider "azurerm" {
     }
   }
   storage_use_azuread = true
+}
+
+provider "azurerm" {
+  alias = "core"
+  features {
+  }
 }
 
 provider "azuread" {
