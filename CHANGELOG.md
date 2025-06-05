@@ -31,6 +31,7 @@ BUG FIXES:
 * Keyvault + mgmt storage just in time access scripts traps conflict in the same shell ([#4564](https://github.com/microsoft/AzureTRE/issues/4564))
 * Fix Gitea workspace service being exposed externally ([#4558](https://github.com/microsoft/AzureTRE/issues/4558))
 * Certs service deployment failed updating static website ([#4572](https://github.com/microsoft/AzureTRE/issues/4572))
+* Fix CostTag calling Costs API for every tag. ([#4577](https://github.com/microsoft/AzureTRE/issues/4577))
 
 ## 0.22.0 (April 20, 2025)
 
