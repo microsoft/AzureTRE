@@ -26,8 +26,8 @@ resource "azurerm_healthcare_fhir_service" "fhir" {
   }
 
   timeouts {
-    create = "15m"
-    delete = "15m"
+    create = "30m"
+    delete = "30m"
   }
 
   depends_on = [
@@ -50,8 +50,8 @@ resource "azurerm_healthcare_dicom_service" "dicom" {
   }
 
   timeouts {
-    create = "15m"
-    delete = "15m"
+    create = "30m"
+    delete = "30m"
   }
 
   depends_on = [
