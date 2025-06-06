@@ -23,10 +23,14 @@ ENHANCEMENTS:
 BUG FIXES:
 * Letsencrypt.yml fails with "Invalid reference in variable validation" ([#4506](https://github.com/microsoft/AzureTRE/4506))
 * Intermittent management storage account access failure during core deployment ([#4505](https://github.com/microsoft/AzureTRE/4505))
+* Some error messages not displayed in side panel ([#4502](https://github.com/microsoft/AzureTRE/issues/4502))
 * Fix AirLock VM not deleting ([#4474](https://github.com/microsoft/AzureTRE/issues/4474))
 * Airlock Review Template Leaves OS Disk Behind ([4514](https://github.com/microsoft/AzureTRE/issues/4514))
 * Enabled Shared Access Key access on the core storage account ([#4448](https://github.com/microsoft/AzureTRE/issues/4448))
 * Remove `strtobool` from airlock_processor ([#4535](https://github.com/microsoft/AzureTRE/issues/4535))
+* Keyvault + mgmt storage just in time access scripts traps conflict in the same shell ([#4564](https://github.com/microsoft/AzureTRE/issues/4564))
+* Fix Gitea workspace service being exposed externally ([#4558](https://github.com/microsoft/AzureTRE/issues/4558))
+* Certs service deployment failed updating static website ([#4572](https://github.com/microsoft/AzureTRE/issues/4572))
 
 ## 0.22.0 (April 20, 2025)
 

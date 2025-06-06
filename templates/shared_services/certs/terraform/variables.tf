@@ -23,3 +23,7 @@ variable "enable_cmk_encryption" {
 variable "key_store_id" {
   type = string
 }
+
+variable "arm_environment" {
+  type = string
+}
