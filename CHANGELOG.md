@@ -19,6 +19,7 @@ ENHANCEMENTS:
 * Delete old database migrations ([#4168](https://github.com/microsoft/AzureTRE/issues/4168))
 * Update terraform to reduce recreation of private endpoints and other resources ([#4539](https://github.com/microsoft/AzureTRE/pull/4539))
 * Disable ACR admin account ([#4542](https://github.com/microsoft/AzureTRE/pull/4542))
+* Enable firewall support for Databricks storage account ([#4391](https://github.com/microsoft/AzureTRE/issues/4391))
 
 BUG FIXES:
 * Letsencrypt.yml fails with "Invalid reference in variable validation" ([#4506](https://github.com/microsoft/AzureTRE/4506))
