@@ -76,7 +76,7 @@ resource "azurerm_storage_account" "sa_export_approved" {
 resource "azurerm_storage_management_policy" "sa_export_approved" {
   storage_account_id = azurerm_storage_account.sa_export_approved.id
   rule {
-    name = "auto_delete_after_given_period"
+    name    = "auto_delete_after_given_period"
     enabled = true
     filters {
       blob_types = ["blockBlob"]
@@ -213,7 +213,7 @@ resource "azurerm_storage_account" "sa_import_rejected" {
 resource "azurerm_storage_management_policy" "sa_import_rejected" {
   storage_account_id = azurerm_storage_account.sa_import_rejected.id
   rule {
-    name = "auto_delete_after_given_period"
+    name    = "auto_delete_after_given_period"
     enabled = true
     filters {
       blob_types = ["blockBlob"]
@@ -278,7 +278,7 @@ resource "azurerm_storage_account" "sa_import_blocked" {
 resource "azurerm_storage_management_policy" "sa_import_blocked" {
   storage_account_id = azurerm_storage_account.sa_import_blocked.id
   rule {
-    name = "auto_delete_after_given_period"
+    name    = "auto_delete_after_given_period"
     enabled = true
     filters {
       blob_types = ["blockBlob"]

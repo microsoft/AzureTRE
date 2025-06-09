@@ -121,7 +121,7 @@ resource "azurerm_key_vault_secret" "notify_uk_template_id" {
     azurerm_key_vault_access_policy.deployer
   ]
 
-  lifecycle { ignore_changes = [ value ] }
+  lifecycle { ignore_changes = [value] }
 }
 
 resource "azurerm_key_vault_secret" "notify_uk_url" {
@@ -133,7 +133,7 @@ resource "azurerm_key_vault_secret" "notify_uk_url" {
     azurerm_key_vault_access_policy.deployer
   ]
 
-  lifecycle { ignore_changes = [ value ] }
+  lifecycle { ignore_changes = [value] }
 }
 
 resource "azurerm_key_vault_secret" "notify_uk_secret" {
@@ -145,7 +145,7 @@ resource "azurerm_key_vault_secret" "notify_uk_secret" {
     azurerm_key_vault_access_policy.deployer
   ]
 
-  lifecycle { ignore_changes = [ value ] }
+  lifecycle { ignore_changes = [value] }
 }
 
 resource "azurerm_key_vault_secret" "notify_uk_iss_id" {
@@ -157,7 +157,7 @@ resource "azurerm_key_vault_secret" "notify_uk_iss_id" {
     azurerm_key_vault_access_policy.deployer
   ]
 
-  lifecycle { ignore_changes = [ value ] }
+  lifecycle { ignore_changes = [value] }
 }
 
 resource "azurerm_key_vault_secret" "notify_uk_email_subject_tag" {
@@ -169,7 +169,7 @@ resource "azurerm_key_vault_secret" "notify_uk_email_subject_tag" {
     azurerm_key_vault_access_policy.deployer
   ]
 
-  lifecycle { ignore_changes = [ value ] }
+  lifecycle { ignore_changes = [value] }
 }
 
 resource "azurerm_key_vault_secret" "client_type_custom_header" {
@@ -181,7 +181,7 @@ resource "azurerm_key_vault_secret" "client_type_custom_header" {
     azurerm_key_vault_access_policy.deployer
   ]
 
-  lifecycle { ignore_changes = [ value ] }
+  lifecycle { ignore_changes = [value] }
 }
 
 resource "azurerm_monitor_diagnostic_setting" "kv" {

@@ -139,6 +139,7 @@ dmypy.json
 
 # Local .terraform directories
 **/.terraform/*
+**/.terraform.lock.hcl
 
 # .tfstate files
 *.tfstate
@@ -221,3 +222,5 @@ __queuestorage__
 __azurite_db*__.json
 .python_packages
 
+# Vim swap files
+*.swp
