@@ -43,3 +43,8 @@ data "azurerm_storage_account" "databricks_managed_storage_account" {
   name                = data.azurerm_resources.databricks_managed_resource_list.resources[0].name
   resource_group_name = data.azurerm_resources.databricks_managed_resource_list.resource_group_name
 }
+
+data "azurerm_log_analytics_workspace" "tre" {
+  name                = "log-${var.tre_id}"
+  resource_group_name = local.core_resource_group_name
+}
