@@ -1,9 +1,9 @@
 <!-- markdownlint-disable MD041 -->
-## [Unreleased]
+## 0.24.0 [Unreleased]
 
 * _No changes yet_
 
-## 0.23.0
+## 0.23.0 (June 10, 2025)
 **BREAKING CHANGES & MIGRATIONS**:
 * The management container registry now uses a private endpoint, and public network access is controlled via the disable_acr_public_access variable. The ACR SKU has been changed to premuim so you need to run `make deploy-mgmt` to upgrade it.
 In future versions, public access will be fully removed, and the ACR will become private only. Please ensure that relevant templates are updated to their latest versions to support communication through the private endpoint ([#4533](https://github.com/microsoft/AzureTRE/pull/4533))
