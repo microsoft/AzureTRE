@@ -51,7 +51,7 @@ resource "azurerm_storage_account" "stg" {
 # Using AzAPI as AzureRM uses shared account key for Azure files operations
 resource "azapi_resource" "shared_storage" {
   type      = "Microsoft.Storage/storageAccounts/fileServices/shares@2023-05-01"
-  name      = "vm-shared-storage"
+  name      = local.shared_storage_name
   parent_id = "${azurerm_storage_account.stg.id}/fileServices/default"
   body = {
     properties = {
@@ -163,4 +163,24 @@ resource "azurerm_private_endpoint" "stgdfspe" {
     is_manual_connection           = false
     subresource_names              = ["dfs"]
   }
+}
+
+resource "azurerm_backup_container_storage_account" "storage_account" {
+  count               = var.enable_backup ? 1 : 0
+  resource_group_name = azurerm_resource_group.ws.name
+  recovery_vault_name = module.backup[0].vault_name
+  storage_account_id  = azurerm_storage_account.stg.id
+}
+
+resource "azurerm_backup_protected_file_share" "file_share" {
+  count                     = var.enable_backup ? 1 : 0
+  resource_group_name       = azurerm_resource_group.ws.name
+  recovery_vault_name       = module.backup[0].vault_name
+  source_storage_account_id = azurerm_storage_account.stg.id
+  source_file_share_name    = azapi_resource.shared_storage.name
+  backup_policy_id          = module.backup[0].fileshare_backup_policy_id
+
+  depends_on = [
+    azurerm_backup_container_storage_account.storage_account
+  ]
 }
