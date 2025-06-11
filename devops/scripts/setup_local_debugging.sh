@@ -162,6 +162,10 @@ sed -i '/ARM_CLIENT_SECRET/d' "${private_env_path}"
 sed -i '/AAD_TENANT_ID/d' "${private_env_path}"
 sed -i '/APPLICATION_ADMIN_CLIENT_ID/d' "${private_env_path}"
 sed -i '/APPLICATION_ADMIN_CLIENT_SECRET/d' "${private_env_path}"
+if [[ -z ${WORKSPACE_API_CLIENT_ID:-} ]]; then
+ sed -i '/WORKSPACE_API_CLIENT_ID/d' "${private_env_path}"
+ sed -i '/WORKSPACE_API_CLIENT_SECRET/d' "${private_env_path}"
+fi
 sed -i '/TEST_WORKSPACE_APP_ID/d' "${private_env_path}"
 sed -i '/TEST_WORKSPACE_APP_SECRET/d' "${private_env_path}"
 
