@@ -2,6 +2,7 @@
 ## 0.24.0 [Unreleased]
 
 ENHANCEMENTS:
+* Migrate Azure Firewall and Route Tables to Core Terraform ([#4342](https://github.com/microsoft/AzureTRE/pull/4342))
 
 BUG FIXES:
 * Fix "log analytics workspaces not found" error when deploying Databricks workspace service ([#4585](https://github.com/microsoft/AzureTRE/pull/4585))

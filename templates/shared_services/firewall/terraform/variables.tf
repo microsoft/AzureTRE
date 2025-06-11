@@ -3,14 +3,9 @@ variable "tre_id" {
   description = "Unique TRE ID"
 }
 
-variable "microsoft_graph_fqdn" {
+variable "firewall_policy_id" {
   type        = string
-  description = "Microsoft Graph FQDN"
-}
-
-variable "tre_resource_id" {
-  type        = string
-  description = "Resource ID"
+  description = "ID of the firewall policy to use"
 }
 
 variable "api_driven_rule_collections_b64" {
@@ -21,14 +16,4 @@ variable "api_driven_rule_collections_b64" {
 variable "api_driven_network_rule_collections_b64" {
   type    = string
   default = "W10=" #b64 for []
-}
-
-variable "firewall_sku" {
-  type    = string
-  default = ""
-}
-
-variable "firewall_force_tunnel_ip" {
-  type    = string
-  default = ""
 }
