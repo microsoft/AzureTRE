@@ -7,8 +7,3 @@ data "azurerm_ip_group" "referenced" {
   name                = each.value
   resource_group_name = local.core_resource_group_name
 }
-
-data "azurerm_firewall_policy" "root" {
-  name                = local.firewall_policy_name
-  resource_group_name = local.core_resource_group_name
-}
