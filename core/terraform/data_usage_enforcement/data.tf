@@ -11,3 +11,8 @@ data "azurerm_application_insights" "core" {
   name                = "appi-${var.tre_id}"
   resource_group_name = var.resource_group_name
 }
+
+data "azurerm_storage_account" "stg" {
+  name                = var.core_storage_name
+  resource_group_name = var.resource_group_name
+}

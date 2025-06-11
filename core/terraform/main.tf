@@ -196,15 +196,15 @@ module "resource_processor_vmss_porter" {
 }
 
 module "data_usage_enforcement" {
-  source                  = "./data_usage_enforcement"
-  tre_id                  = var.tre_id
-  location                = var.location
-  resource_group_name     = azurerm_resource_group.core.name
-  shared_subnet_id        = module.network.shared_subnet_id
-  web_app_subnet_id       = module.network.web_app_subnet_id
-  blob_core_dns_zone_id   = module.network.blob_core_dns_zone_id
-  tre_core_tags           = local.tre_core_tags
-  core_storage_access_key = azurerm_storage_account.stg.primary_access_key
+  source                = "./data_usage_enforcement"
+  tre_id                = var.tre_id
+  location              = var.location
+  resource_group_name   = azurerm_resource_group.core.name
+  shared_subnet_id      = module.network.shared_subnet_id
+  web_app_subnet_id     = module.network.web_app_subnet_id
+  blob_core_dns_zone_id = module.network.blob_core_dns_zone_id
+  tre_core_tags         = local.tre_core_tags
+  core_storage_name     = azurerm_storage_account.stg.name
 
   depends_on = [
     module.network,
