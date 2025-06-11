@@ -1,8 +1,8 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-firewall
-version: 1.4.0
-description: "Azure TRE Shared Service that manages dynamic firewall rules"
+version: 1.5.0
+description: "An Azure TRE Firewall shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
 

@@ -255,6 +255,18 @@ variable "encryption_kv_name" {
   default     = ""
 }
 
+variable "enable_dns_policy" {
+  type        = bool
+  description = "Whether, or not, to add a DNS security policy with an allow-list. This is a preview feature that can be enabled to prevent data exfiltration via DNS."
+  default     = false
+}
+
+variable "allowed_dns" {
+  type        = list(string)
+  description = "When DNS security policy is enabled this list of domains will be added to the allow list."
+  default     = []
+}
+
 variable "auto_grant_workspace_consent" {
   type        = bool
   description = "A boolean indicating if admin consent should be auto granted to the workspace"
@@ -265,4 +277,26 @@ variable "user_management_enabled" {
   type        = bool
   description = "Is the Entra ID user management feature enabled (requires a workspace with Entra ID groups enabled, default to false)?"
   default     = false
+}
+
+variable "deploy_bastion" {
+  type        = bool
+  description = "Deploy Azure Bastion"
+  default     = true
+}
+
+variable "bastion_sku" {
+  type        = string
+  description = "Azure Bastion SKU"
+  default     = "Basic"
+  validation {
+    condition     = contains(["Developer", "Basic", "Standard", "Premium"], var.bastion_sku)
+    error_message = "Invalid bastion_sku value"
+  }
+}
+
+variable "private_agent_subnet_id" {
+  description = "Subnet ID of the github runners"
+  type        = string
+  default     = ""
 }

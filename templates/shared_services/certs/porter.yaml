@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-certs
-version: 0.7.4
+version: 0.7.6
 description: "An Azure TRE shared service to generate certificates for a specified internal domain using Letsencrypt"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -75,6 +75,7 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -143,6 +144,7 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

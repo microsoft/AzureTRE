@@ -43,12 +43,17 @@
 | `RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE` | Optional. The number of processes to instantiate when the Resource Processor starts. Equates to the number of parallel deployment operations possible in your TRE. Defaults to `5`. |
 | `FIREWALL_SKU` | Optional. The SKU of the Azure Firewall instance. Default value is `Standard`. Allowed values [`Basic`, `Standard`, `Premium`]. See [Azure Firewall SKU feature comparison](https://learn.microsoft.com/en-us/azure/firewall/choose-firewall-sku). |
 | `APP_GATEWAY_SKU` | Optional. The SKU of the Application Gateway. Default value is `Standard_v2`. Allowed values [`Standard_v2`, `WAF_v2`] |
+| `DEPLOY_BASTION` | Optional. If set to `true`, an Azure Bastion instance will be deployed. Default value is `true`. |
+| `BASTION_SKU` | Optional. The SKU of the Azure Bastion instance. Default value is `Basic`. Allowed values [`Developer`, `Standard`, `Basic`, `Premium`]. See [Azure Bastion SKU feature comparison](https://learn.microsoft.com/en-us/azure/bastion/bastion-overview#sku). |
 | `CUSTOM_DOMAIN` | Optional. Custom domain name to access the Azure TRE portal. See [Custom domain name](custom-domain.md). |
 | `ENABLE_CMK_ENCRYPTION` | Optional. Default is `false`, if set to `true` customer-managed key encryption will be enabled for all supported resources. |
 | `AUTO_WORKSPACE_APP_REGISTRATION`| Set to `false` by default. Setting this to `true` grants the `Application.ReadWrite.All` and `Directory.Read.All` permission to the *Application Admin* identity. This identity is used to manage other Microsoft Entra ID applications that it owns, e.g. Workspaces. If you do not set this, the identity will have `Application.ReadWrite.OwnedBy` permission. [Further information on Application Admin can be found here](./identities/application_admin.md). |
 | `AUTO_WORKSPACE_GROUP_CREATION`| Set to `false` by default. Setting this to `true` grants the `Group.ReadWrite.All` permission to the *Application Admin* identity. This identity can then create security groups aligned to each applciation role. Microsoft Entra ID licencing implications need to be considered as Group assignment is a premium feature. [You can read mode about Group Assignment here](https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/app-roles#roles-using-azure-ad-app-roles). |
 | `AUTO_GRANT_WORKSPACE_CONSENT`| Default of `false`.  Setting this to `true` will remove the need for users to manually grant consent when creating new workspaces. The identity will be granted `Application.ReadWrite.All` and `DelegatedPermissionGrant.ReadWrite.All` permissions. |
 | `USER_MANAGEMENT_ENABLED` | If set to `true`, TRE Admins will be able to assign and de-assign users to workspaces via the UI (Requires Entra ID groups to be enabled on the workspace and the workspace template version to be 2.2.0 or greater). |
+| `PRIVATE_AGENT_SUBNET_ID` | Optional. Vnet exception is enabled for the provided runner agent subnet id, enabling access to private resources like TRE key vault. |
+| `UI_SITE_NAME` | Optional. Overrides the title text shown in top left corner of portal. Default value is: `Azure TRE`  |
+| `UI_FOOTER_TEXT` | Optional. Overrides the footer text shown in the bottom left corner of the portal.  Default value is `Azure Trusted Research Environment` |
 
 ## For authentication in `/config.yaml`
 

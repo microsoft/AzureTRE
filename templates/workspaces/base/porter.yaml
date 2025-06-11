@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.3.0
+version: 2.4.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -133,6 +133,10 @@ parameters:
     type: string
     default: "GRS"
     description: "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
+  - name: enable_dns_policy
+    type: boolean
+    default: false
+    description: "Whether to enable DNS security policy for the workspace."
   - name: auto_grant_workspace_consent
     type: boolean
     default: true
@@ -173,6 +177,11 @@ outputs:
       - install
       - upgrade
   - name: sp_id
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: log_analytics_workspace_name
     type: string
     applyTo:
       - install
@@ -232,6 +241,7 @@ install:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
+        enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
         enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
         airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
@@ -249,6 +259,7 @@ install:
         - name: client_id
         - name: scope_id
         - name: sp_id
+        - name: log_analytics_workspace_name
         - name: workspace_owners_group_id
         - name: workspace_researchers_group_id
         - name: workspace_airlock_managers_group_id
@@ -285,6 +296,7 @@ upgrade:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
+        enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
         enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
         airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
@@ -302,6 +314,7 @@ upgrade:
         - name: client_id
         - name: scope_id
         - name: sp_id
+        - name: log_analytics_workspace_name
         - name: workspace_owners_group_id
         - name: workspace_researchers_group_id
         - name: workspace_airlock_managers_group_id
@@ -361,6 +374,7 @@ uninstall:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
+        enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
         enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
         airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }

@@ -75,6 +75,7 @@ define build_image
 $(call target_title, "Building $(1) Image") \
 && . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 && . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
+&& if [ "$${DISABLE_ACR_PUBLIC_ACCESS}" = "true" ]; then source ${MAKEFILE_DIR}/devops/scripts/mgmtacr_enable_public_access.sh; fi \
 && source <(grep = $(2) | sed 's/ *= */=/g') \
 && az acr login -n ${ACR_NAME} \
 && if [ -n "$${CI_CACHE_ACR_NAME:-}" ]; then \
@@ -107,6 +108,7 @@ define push_image
 $(call target_title, "Pushing $(1) Image") \
 && . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 && . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
+&& if [ "$${DISABLE_ACR_PUBLIC_ACCESS}" = "true" ]; then source ${MAKEFILE_DIR}/devops/scripts/mgmtacr_enable_public_access.sh; fi \
 && source <(grep = $(2) | sed 's/ *= */=/g') \
 && az acr login -n ${ACR_NAME} \
 && docker push "${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__}"
@@ -170,6 +172,7 @@ tre-stop: ## ⛔ Stop the TRE Service
 tre-destroy: ## 🧨 Destroy the TRE Service
 	$(call target_title, "Destroying TRE") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
+	&& if [ "$${DISABLE_ACR_PUBLIC_ACCESS}" = "true" ]; then source ${MAKEFILE_DIR}/devops/scripts/mgmtacr_enable_public_access.sh; fi \
 	&& . ${MAKEFILE_DIR}/devops/scripts/destroy_env_no_terraform.sh
 
 # Description: Deploy the Terraform resources in the specified directory.
@@ -250,6 +253,7 @@ bundle-build:
 	$(call target_title, "Building ${DIR} bundle with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
+	&& if [ "$${DISABLE_ACR_PUBLIC_ACCESS}" = "true" ]; then source ${MAKEFILE_DIR}/devops/scripts/mgmtacr_enable_public_access.sh; fi \
 	&& cd ${DIR} \
 	&& if [ -d terraform ]; then terraform -chdir=terraform init -backend=false; terraform -chdir=terraform validate; fi \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} IMAGE_NAME_PREFIX=${IMAGE_NAME_PREFIX} \
@@ -345,6 +349,7 @@ bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
+	&& if [ "$${DISABLE_ACR_PUBLIC_ACCESS}" = "true" ]; then source ${MAKEFILE_DIR}/devops/scripts/mgmtacr_enable_public_access.sh; fi \
 	&& az acr login --name ${ACR_NAME}	\
 	&& cd ${DIR} \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} \
@@ -358,6 +363,7 @@ bundle-register:
 	$(call target_title, "Registering ${DIR} bundle") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
+	&& if [ "$${DISABLE_ACR_PUBLIC_ACCESS}" = "true" ]; then source ${MAKEFILE_DIR}/devops/scripts/mgmtacr_enable_public_access.sh; fi \
 	&& az acr login --name ${ACR_NAME}	\
 	&& ${MAKEFILE_DIR}/devops/scripts/ensure_cli_signed_in.sh $${TRE_URL} \
 	&& cd ${DIR} \

@@ -3,23 +3,23 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=4.14.0"
+      version = "= 4.27.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.6"
+      version = "= 3.7.2"
     }
     local = {
       source  = "hashicorp/local"
-      version = "~> 2.5"
+      version = "= 2.5.2"
     }
     http = {
       source  = "hashicorp/http"
-      version = "~> 3.4"
+      version = "= 3.5.0"
     }
     azapi = {
       source  = "Azure/azapi"
-      version = "~> 1.15.0"
+      version = "= 2.3.0"
     }
   }
 
@@ -122,6 +122,7 @@ module "appgateway" {
   static_web_dns_zone_id     = module.network.static_web_dns_zone_id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
   app_gateway_sku            = var.app_gateway_sku
+  deployer_principal_id      = data.azurerm_client_config.current.object_id
 
   enable_cmk_encryption         = var.enable_cmk_encryption
   encryption_key_versionless_id = var.enable_cmk_encryption ? azurerm_key_vault_key.tre_encryption[0].versionless_id : null
@@ -144,8 +145,7 @@ module "airlock_resources" {
   airlock_storage_subnet_id             = module.network.airlock_storage_subnet_id
   airlock_events_subnet_id              = module.network.airlock_events_subnet_id
   docker_registry_server                = local.docker_registry_server
-  mgmt_resource_group_name              = var.mgmt_resource_group_name
-  mgmt_acr_name                         = var.acr_name
+  acr_id                                = data.azurerm_container_registry.acr.id
   api_principal_id                      = azurerm_user_assigned_identity.id.principal_id
   airlock_app_service_plan_sku          = var.core_app_service_plan_sku
   airlock_processor_subnet_id           = module.network.airlock_processor_subnet_id
@@ -160,6 +160,7 @@ module "airlock_resources" {
   file_core_dns_zone_id                 = module.network.file_core_dns_zone_id
   queue_core_dns_zone_id                = module.network.queue_core_dns_zone_id
   table_core_dns_zone_id                = module.network.table_core_dns_zone_id
+  eventgrid_private_dns_zone_id         = module.network.eventgrid_private_dns_zone_id
 
   enable_local_debugging        = var.enable_local_debugging
   myip                          = local.myip
@@ -192,6 +193,7 @@ module "resource_processor_vmss_porter" {
   service_bus_resource_request_queue               = azurerm_servicebus_queue.workspacequeue.name
   service_bus_deployment_status_update_queue       = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
   mgmt_storage_account_name                        = var.mgmt_storage_account_name
+  mgmt_storage_account_id                          = data.azurerm_storage_account.mgmt_storage.id
   mgmt_resource_group_name                         = var.mgmt_resource_group_name
   terraform_state_container_name                   = var.terraform_state_container_name
   key_vault_name                                   = azurerm_key_vault.kv.name
