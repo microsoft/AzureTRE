@@ -35,6 +35,16 @@ on: # yamllint disable-line rule:truthy
         description: ""
         type: string
         required: true
+      UI_SITE_NAME:
+        description: Change the header text in the TRE portal
+        type: string
+        default: ""
+        required: false
+      UI_FOOTER_TEXT:
+        description: Change the footer text in the TRE portal
+        type: string
+        default: ""
+        required: false
     secrets:
       AAD_TENANT_ID:
         description: ""
@@ -772,8 +782,8 @@ jobs:
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
           SWAGGER_UI_CLIENT_ID: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           USER_MANAGEMENT_ENABLED: ${{ vars.USER_MANAGEMENT_ENABLED }}
-          UI_SITE_NAME: "${{ vars.UI_SITE_NAME }}"
-          UI_FOOTER_TEXT: "${{ vars.UI_FOOTER_TEXT }}"
+          UI_SITE_NAME: "${{ inputs.UI_SITE_NAME || vars.UI_SITE_NAME }}"
+          UI_FOOTER_TEXT: "${{ inputs.UI_FOOTER_TEXT || vars.UI_FOOTER_TEXT }}"
 
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"

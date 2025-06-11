@@ -1,5 +1,12 @@
 <!-- markdownlint-disable MD041 -->
-## 0.23.0
+## 0.24.0 [Unreleased]
+
+ENHANCEMENTS:
+
+BUG FIXES:
+* Fix "log analytics workspaces not found" error when deploying Databricks workspace service ([#4585](https://github.com/microsoft/AzureTRE/pull/4585))
+
+## 0.23.0 (June 10, 2025)
 **BREAKING CHANGES & MIGRATIONS**:
 * The management container registry now uses a private endpoint, and public network access is controlled via the disable_acr_public_access variable. The ACR SKU has been changed to premuim so you need to run `make deploy-mgmt` to upgrade it.
 In future versions, public access will be fully removed, and the ACR will become private only. Please ensure that relevant templates are updated to their latest versions to support communication through the private endpoint ([#4533](https://github.com/microsoft/AzureTRE/pull/4533))
@@ -20,6 +27,8 @@ ENHANCEMENTS:
 * Delete old database migrations ([#4168](https://github.com/microsoft/AzureTRE/issues/4168))
 * Update terraform to reduce recreation of private endpoints and other resources ([#4539](https://github.com/microsoft/AzureTRE/pull/4539))
 * Disable ACR admin account ([#4542](https://github.com/microsoft/AzureTRE/pull/4542))
+* Allow UI_SITE_NAME and UI_FOOTER_TEXT to be dynamically calculated passed in deploy_tre_reusable.yaml ([#4575](https://github.com/microsoft/AzureTRE/pull/4575))
+* Enable diagnostic settings for Databricks workspaces ([#4576](https://github.com/microsoft/AzureTRE/pull/4576))
 
 
 BUG FIXES:
@@ -30,6 +39,10 @@ BUG FIXES:
 * Airlock Review Template Leaves OS Disk Behind ([4514](https://github.com/microsoft/AzureTRE/issues/4514))
 * Enabled Shared Access Key access on the core storage account ([#4448](https://github.com/microsoft/AzureTRE/issues/4448))
 * Remove `strtobool` from airlock_processor ([#4535](https://github.com/microsoft/AzureTRE/issues/4535))
+* Keyvault + mgmt storage just in time access scripts traps conflict in the same shell ([#4564](https://github.com/microsoft/AzureTRE/issues/4564))
+* Fix Gitea workspace service being exposed externally ([#4558](https://github.com/microsoft/AzureTRE/issues/4558))
+* Certs service deployment failed updating static website ([#4572](https://github.com/microsoft/AzureTRE/issues/4572))
+* Pin package versions in resource processor cloud-init script to avoid breaking changes ([#4580](https://github.com/microsoft/AzureTRE/issues/4580))
 
 ## 0.22.0 (April 20, 2025)
 
