@@ -37,6 +37,9 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: firewall_policy_id
+    type: string
+    description: "The ID of the Azure Firewall Policy to use"
   - name: rule_collections
     type: string
     default: "W10=" # b64 for []
@@ -57,6 +60,7 @@ install:
       description: "Deploy shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
+        firewall_policy_id: ${ bundle.parameters.firewall_policy_id }
         api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
       backendConfig:
@@ -72,6 +76,7 @@ upgrade:
       description: "Upgrade shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
+        firewall_policy_id: ${ bundle.parameters.firewall_policy_id }
         api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
       backendConfig:
@@ -87,6 +92,7 @@ uninstall:
       description: "Tear down shared service"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
+        firewall_policy_id: ${ bundle.parameters.firewall_policy_id }
         api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
         api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
       backendConfig:

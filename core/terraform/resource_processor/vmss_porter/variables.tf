@@ -119,3 +119,8 @@ variable "mgmt_storage_account_id" {
   type        = string
   description = "ID of the management storage account"
 }
+
+variable "firewall_policy_id" {
+  type        = string
+  description = "ID of the firewall policy to use for the resource processor"
+}

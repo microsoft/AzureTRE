@@ -1,6 +1,6 @@
 resource "azurerm_firewall_policy_rule_collection_group" "dynamic_network" {
   name               = "rcg-dynamic-network"
-  firewall_policy_id = data.azurerm_firewall_policy.root.id
+  firewall_policy_id = var.firewall_policy_id
   priority           = 510
 
   dynamic "network_rule_collection" {
@@ -35,7 +35,7 @@ resource "azurerm_firewall_policy_rule_collection_group" "dynamic_network" {
 
 resource "azurerm_firewall_policy_rule_collection_group" "dynamic_application" {
   name               = "rcg-dynamic-application"
-  firewall_policy_id = data.azurerm_firewall_policy.root.id
+  firewall_policy_id = var.firewall_policy_id
   priority           = 520
 
   dynamic "application_rule_collection" {

@@ -40,7 +40,7 @@ resource "azurerm_firewall_policy_rule_collection_group" "core" {
         "AzureResourceManager",
 
         // Needed when a workspace key vault is created before its private endpoint
-        "AzureKeyVault.${data.azurerm_resource_group.rg.location}"
+        "AzureKeyVault.${var.location}"
       ]
       destination_ports = [
         "443"
