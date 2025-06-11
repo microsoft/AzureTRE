@@ -1,7 +1,10 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.24.0 [Unreleased]
 
-* _No changes yet_
+ENHANCEMENTS:
+
+BUG FIXES:
+* Fix "log analytics workspaces not found" error when deploying Databricks workspace service ([#4585](https://github.com/microsoft/AzureTRE/pull/4585))
 
 ## 0.23.0 (June 10, 2025)
 **BREAKING CHANGES & MIGRATIONS**:
