@@ -47,7 +47,8 @@ class DataUsageService:
                         storage_name=entity['StorageName'],
                         storage_usage=entity['StorageUsage'],
                         storage_limits=entity['StorageLimits'],
-                        storage_percentage=entity['StoragePercentage'],
+                        storage_limits_update_time=entity['StorageLimitsUpdateTime'],
+                        storage_percentage_used=entity['StoragePercentage'],
                         update_time=entity['UpdateTime']
                     )
                 )
@@ -64,7 +65,8 @@ class DataUsageService:
                         storage_name=entity['StorageName'],
                         fileshare_usage=entity['FileshareUsage'],
                         fileshare_limits=entity['FileshareLimits'],
-                        fileshare_percentage=entity['FilesharePercentage'],
+                        fileshare_limits_update_time=entity['FileshareLimitsUpdateTime'],
+                        fileshare_percentage_used=entity['FilesharePercentage'],
                         update_time=entity['UpdateTime']
                     )
                 )

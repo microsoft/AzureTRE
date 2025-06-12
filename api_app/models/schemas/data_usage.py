@@ -12,7 +12,8 @@ def get_workspace_data_usage_responses():
                             "storage_name": "storage_container_1",
                             "storage_usage": 1.2,
                             "storage_limits": 5000,
-                            "storage_percentage": 20.0,
+                            "storage_limits_update_time": "1708503415",
+                            "storage_percentage_used": 20.0,
                             "update_time": "1708593415"
                         }
                     },
@@ -24,7 +25,8 @@ def get_workspace_data_usage_responses():
                             "storage_name": "storage_container_1",
                             "fileshare_usage": 0.0,
                             "fileshare_limits": 5000,
-                            "fileshare_percentage": 0.0,
+                            "fileshare_limits_update_time": "1708145415",
+                            "fileshare_percentage_used": 0.0,
                             "update_time": "1708345415"
                         }
                     }
