@@ -366,6 +366,7 @@ def get_allowed_actions(request: AirlockRequest, user: User, airlock_request_rep
     can_review_request = airlock_request_repo.validate_status_update(request.status, AirlockRequestStatus.ApprovalInProgress)
     can_cancel_request = airlock_request_repo.validate_status_update(request.status, AirlockRequestStatus.Cancelled)
     can_submit_request = airlock_request_repo.validate_status_update(request.status, AirlockRequestStatus.Submitted)
+    can_revoke_request = airlock_request_repo.validate_status_update(request.status, AirlockRequestStatus.Revoked)
 
     if can_review_request and "AirlockManager" in user.roles:
         allowed_actions.append(AirlockActions.Review)
@@ -375,6 +376,9 @@ def get_allowed_actions(request: AirlockRequest, user: User, airlock_request_rep
 
     if can_submit_request and ("WorkspaceOwner" in user.roles or "WorkspaceResearcher" in user.roles):
         allowed_actions.append(AirlockActions.Submit)
+
+    if can_revoke_request and "AirlockManager" in user.roles:
+        allowed_actions.append(AirlockActions.Revoke)
 
     return allowed_actions
 
@@ -467,6 +471,21 @@ async def cancel_request(airlock_request: AirlockRequest, user: User, workspace:
                          resource_template_repo: ResourceTemplateRepository, operations_repo: OperationRepository, resource_history_repo: ResourceHistoryRepository) -> AirlockRequest:
     updated_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, updated_by=user, workspace=workspace, new_status=AirlockRequestStatus.Cancelled)
     await delete_all_review_user_resources(airlock_request, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, resource_history_repo, user)
+    return updated_request
+
+
+async def revoke_request(airlock_request: AirlockRequest, user: User, workspace: Workspace,
+                         airlock_request_repo: AirlockRequestRepository) -> AirlockRequest:
+    """
+    Revoke an approved airlock request. This invalidates any existing download links.
+    """
+    updated_request = await update_and_publish_event_airlock_request(
+        airlock_request=airlock_request, 
+        airlock_request_repo=airlock_request_repo, 
+        updated_by=user, 
+        workspace=workspace, 
+        new_status=AirlockRequestStatus.Revoked
+    )
     return updated_request
 
 
