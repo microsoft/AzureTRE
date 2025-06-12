@@ -2,6 +2,12 @@ from datetime import datetime, timedelta, date
 from typing import List, Optional
 from pydantic import BaseModel
 
+class MHRAStorageAccountLimit(BaseModel):
+    workspace_name: str
+    storage_name: str
+    storage_limits: float
+    storage_limits_update_time: str
+
 class MHRAContainerUsageItem(BaseModel):
     workspace_name: str
     storage_name: str
