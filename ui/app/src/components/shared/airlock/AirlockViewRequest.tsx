@@ -59,6 +59,9 @@ export const AirlockViewRequest: React.FunctionComponent<
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const [hideCancelDialog, setHideCancelDialog] = useState(true);
+  const [hideRevokeDialog, setHideRevokeDialog] = useState(true);
+  const [revoking, setRevoking] = useState(false);
+  const [revokeError, setRevokeError] = useState(false);
   const [apiError, setApiError] = useState({} as APIError);
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
@@ -137,6 +140,28 @@ export const AirlockViewRequest: React.FunctionComponent<
     }
   }, [apiCall, request, props, workspaceCtx.workspaceApplicationIdURI]);
 
+  // Revoke an airlock request
+  const revokeRequest = useCallback(async () => {
+    if (request && request.workspaceId) {
+      setRevoking(true);
+      setRevokeError(false);
+      try {
+        const response = await apiCall(
+          `${ApiEndpoint.Workspaces}/${request.workspaceId}/${ApiEndpoint.AirlockRequests}/${request.id}/${ApiEndpoint.AirlockRevoke}`,
+          HttpMethod.Post,
+          workspaceCtx.workspaceApplicationIdURI,
+        );
+        props.onUpdateRequest(response.airlockRequest);
+        setHideRevokeDialog(true);
+      } catch (err: any) {
+        err.userMessage = "Error revoking airlock request";
+        setApiError(err);
+        setRevokeError(true);
+      }
+      setRevoking(false);
+    }
+  }, [apiCall, request, props, workspaceCtx.workspaceApplicationIdURI]);
+
   // Render the panel footer along with buttons that the signed-in user is allowed to see according to the API
   const renderFooter = useCallback(() => {
     let footer = <></>;
@@ -190,6 +215,19 @@ export const AirlockViewRequest: React.FunctionComponent<
               <PrimaryButton onClick={() => setReviewIsOpen(true)}>
                 Review
               </PrimaryButton>
+            )}
+            {request.allowedUserActions?.includes(
+              AirlockRequestAction.Revoke,
+            ) && (
+              <DefaultButton
+                onClick={() => {
+                  setRevokeError(false);
+                  setHideRevokeDialog(false);
+                }}
+                styles={destructiveButtonStyles}
+              >
+                Revoke
+              </DefaultButton>
             )}
           </div>
         </>
@@ -477,6 +515,42 @@ export const AirlockViewRequest: React.FunctionComponent<
                 onClick={() => {
                   setHideCancelDialog(true);
                   setSubmitError(false);
+                }}
+                text="Back"
+              />
+            </DialogFooter>
+          )}
+        </Dialog>
+        <Dialog
+          hidden={hideRevokeDialog}
+          onDismiss={() => {
+            setHideRevokeDialog(true);
+            setRevokeError(false);
+          }}
+          dialogContentProps={{
+            title: "Revoke Airlock Request?",
+            subText: "Are you sure you want to revoke this approved airlock request? This will invalidate any existing download links.",
+          }}
+        >
+          {revokeError && <ExceptionLayout e={apiError} />}
+          {revoking ? (
+            <Spinner
+              label="Revoking..."
+              ariaLive="assertive"
+              labelPosition="top"
+              size={SpinnerSize.large}
+            />
+          ) : (
+            <DialogFooter>
+              <DefaultButton
+                onClick={revokeRequest}
+                text="Revoke Request"
+                styles={destructiveButtonStyles}
+              />
+              <DefaultButton
+                onClick={() => {
+                  setHideRevokeDialog(true);
+                  setRevokeError(false);
                 }}
                 text="Back"
               />
