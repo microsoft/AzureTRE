@@ -320,7 +320,7 @@ class CostService:
                     to_date: Optional[datetime],
                     resource_groups: list) -> QueryResult:
         query_definition = self.build_query_definition(granularity, from_date, to_date, tag_name, tag_value, resource_groups)
-        
+
         try:
             return self.client.query.usage(self.scope, query_definition)
         except ResourceNotFoundError as e:

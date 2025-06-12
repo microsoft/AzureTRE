@@ -62,7 +62,7 @@ async def costs(
 
     # This wait time is here to avoid problems with rate limit.
     await asyncio.sleep(20)
-    
+
     validate_report_period(params.from_date, params.to_date)
     try:
         return await cost_service.query_tre_costs(

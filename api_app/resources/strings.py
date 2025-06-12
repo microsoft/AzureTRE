@@ -91,7 +91,8 @@ API_GET_COSTS_SERVICE_UNAVAILABLE = "Azure cost management API is temporarily un
 API_GET_COSTS_INTERNAL_SERVER_ERROR = "Failed to query Azure TRE costs."
 API_GET_COSTS_MHRA_CLIENTS = "Return MHRA clients costs."
 API_GET_COSTS_MHRA_CLIENTS_INTERNAL_SERVER_ERROR = "Error returning MHRA clients costs."
-
+API_GET_WORKSPACE_DATA_USAGE_CLIENTS = "Return Workspace data usage."
+API_GET_WORKSPACE_DATA_USAGE_INTERNAL_SERVER_ERROR = "Error returning Workspace data usage."
 
 # State store status
 OK = "OK"
