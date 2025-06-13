@@ -42,3 +42,41 @@ def get_workspace_data_usage_responses():
             }
         }
     }
+
+
+def get_storage_account_limits_responses():
+    return {
+        200: {
+            "description": "Success",
+            "content": {
+                "application/json": {
+                    "storage_account_limits_items": {
+                        "workspace_1": {
+                            "partition_key": "None",
+                            "row_key": "aa0ef4e2-0b45-4d41-988b-e0ec59e0272e",
+                            "workspace_name": "workspace_1",
+                            "storage_name": "storage_container_1",
+                            "storage_limits": 5000,
+                            "storage_limits_update_time": "1708503415"
+                        },
+                        "workspace_2": {
+                            "partition_key": "None",
+                            "row_key": "b8b8b071-2855-4cfa-8a3a-01b06c615cc4",
+                            "workspace_name": "workspace_2",
+                            "storage_name": "storage_container_2",
+                            "storage_limits": 15000,
+                            "storage_limits_update_time": "1708598307"
+                        }
+                    }
+                }
+            }
+        },
+        401: {
+            "description": "Unauthorized",
+            "content": {
+                "text/plain": {
+                    "example": "Not authenticated"
+                }
+            }
+        }
+    }

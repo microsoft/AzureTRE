@@ -89,3 +89,25 @@ resource "azurerm_role_assignment" "workspace_costs_table_reader" {
   role_definition_name = "Storage Table Data Reader"
   principal_id         = azurerm_user_assigned_identity.id.principal_id
 }
+
+resource "azurerm_storage_table" "storageusage" {
+  name                 = "storageusage"
+  storage_account_name = azurerm_storage_account.stg.name
+}
+
+resource "azurerm_role_assignment" "storageusage" {
+  scope                = azurerm_storage_table.storageusage.id
+  role_definition_name = "Storage Table Data Contributor"
+  principal_id         = azurerm_user_assigned_identity.id.principal_id
+}
+
+resource "azurerm_storage_table" "fileshareusage" {
+  name                 = "fileshareusage"
+  storage_account_name = azurerm_storage_account.stg.name
+}
+
+resource "azurerm_role_assignment" "fileshareusage" {
+  scope                = azurerm_storage_table.fileshareusage.id
+  role_definition_name = "Storage Table Data Contributor"
+  principal_id         = azurerm_user_assigned_identity.id.principal_id
+}
