@@ -22,6 +22,7 @@ class AirlockRequestStatus(StrEnum):
     Blocked = strings.AIRLOCK_RESOURCE_STATUS_BLOCKED
     BlockingInProgress = strings.AIRLOCK_RESOURCE_STATUS_BLOCKING_INPROGRESS
     Failed = strings.AIRLOCK_RESOURCE_STATUS_FAILED
+    Revoked = strings.AIRLOCK_RESOURCE_STATUS_REVOKED
 
 
 class AirlockRequestType(StrEnum):
@@ -33,6 +34,7 @@ class AirlockActions(StrEnum):
     Review = strings.AIRLOCK_ACTION_REVIEW
     Cancel = strings.AIRLOCK_ACTION_CANCEL
     Submit = strings.AIRLOCK_ACTION_SUBMIT
+    Revoke = strings.AIRLOCK_ACTION_REVOKE
 
 
 class AirlockFile(AzureTREModel):

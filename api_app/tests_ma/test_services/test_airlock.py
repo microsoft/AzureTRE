@@ -4,7 +4,7 @@ import pytest_asyncio
 import time
 from resources import strings
 from services.airlock import validate_user_allowed_to_access_storage_account, get_required_permission, \
-    validate_request_status, cancel_request, delete_review_user_resource, check_email_exists
+    validate_request_status, cancel_request, delete_review_user_resource, check_email_exists, revoke_request
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReview, AirlockReviewDecision, AirlockActions, AirlockReviewUserResource
 from tests_ma.test_api.conftest import create_workspace_owner_user, create_workspace_researcher_user, get_required_roles
 from mock import AsyncMock, patch, MagicMock
@@ -16,7 +16,7 @@ from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.workspace import Workspace
 from tests_ma.test_api.conftest import create_test_user, create_workspace_airlock_manager_user
 from azure.eventgrid import EventGridEvent
-from api.routes.airlock import create_airlock_review, create_cancel_request, create_submit_request
+from api.routes.airlock import create_airlock_review, create_cancel_request, create_submit_request, create_revoke_request
 from services.aad_authentication import AzureADAuthorization
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
@@ -493,7 +493,8 @@ async def test_get_airlock_requests_by_user_and_workspace_with_status_filter_cal
 @pytest.mark.parametrize("action, required_roles, airlock_request_repo_mock", [
     (AirlockActions.Review, get_required_roles(endpoint=create_airlock_review), airlock_request_repo_mock),
     (AirlockActions.Cancel, get_required_roles(endpoint=create_cancel_request), airlock_request_repo_mock),
-    (AirlockActions.Submit, get_required_roles(endpoint=create_submit_request), airlock_request_repo_mock)])
+    (AirlockActions.Submit, get_required_roles(endpoint=create_submit_request), airlock_request_repo_mock),
+    (AirlockActions.Revoke, get_required_roles(endpoint=create_revoke_request), airlock_request_repo_mock)])
 async def test_get_allowed_actions_requires_same_roles_as_endpoint(action, required_roles, airlock_request_repo_mock):
     airlock_request_repo_mock.validate_status_update = MagicMock(return_value=True)
     user = create_test_user()
@@ -507,7 +508,8 @@ async def test_get_allowed_actions_requires_same_roles_as_endpoint(action, requi
 @pytest.mark.parametrize("action, endpoint_roles, airlock_request_repo_mock", [
     (AirlockActions.Review, get_required_roles(endpoint=create_airlock_review), airlock_request_repo_mock),
     (AirlockActions.Cancel, get_required_roles(endpoint=create_cancel_request), airlock_request_repo_mock),
-    (AirlockActions.Submit, get_required_roles(endpoint=create_submit_request), airlock_request_repo_mock)])
+    (AirlockActions.Submit, get_required_roles(endpoint=create_submit_request), airlock_request_repo_mock),
+    (AirlockActions.Revoke, get_required_roles(endpoint=create_revoke_request), airlock_request_repo_mock)])
 async def test_get_allowed_actions_does_not_return_actions_that_are_forbidden_to_the_user_role(action, endpoint_roles, airlock_request_repo_mock):
     airlock_request_repo_mock.validate_status_update = MagicMock(return_value=True)
     user = create_test_user()
@@ -516,6 +518,32 @@ async def test_get_allowed_actions_does_not_return_actions_that_are_forbidden_to
         user.roles = [forbidden_role]
         allowed_actions = get_allowed_actions(request=sample_airlock_request(), user=user, airlock_request_repo=airlock_request_repo_mock)
         assert action not in allowed_actions
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.update_and_publish_event_airlock_request")
+async def test_revoke_request_calls_update_with_revoked_status(update_mock, airlock_request_repo_mock):
+    user = create_test_user()
+    workspace = sample_workspace()
+    airlock_request = sample_airlock_request(status=AirlockRequestStatus.Approved)
+    
+    update_mock.return_value = sample_airlock_request(status=AirlockRequestStatus.Revoked)
+    
+    result = await revoke_request(
+        airlock_request=airlock_request,
+        user=user,
+        workspace=workspace,
+        airlock_request_repo=airlock_request_repo_mock
+    )
+    
+    update_mock.assert_called_once_with(
+        airlock_request=airlock_request,
+        airlock_request_repo=airlock_request_repo_mock,
+        updated_by=user,
+        workspace=workspace,
+        new_status=AirlockRequestStatus.Revoked
+    )
+    assert result.status == AirlockRequestStatus.Revoked
 
 
 @pytest.mark.asyncio

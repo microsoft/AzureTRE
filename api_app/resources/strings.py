@@ -46,6 +46,7 @@ API_LIST_AIRLOCK_REQUESTS = "Get all airlock requests for a workspace"
 API_SUBMIT_AIRLOCK_REQUEST = "Submit an airlock request"
 API_CANCEL_AIRLOCK_REQUEST = "Cancel an airlock request"
 API_REVIEW_AIRLOCK_REQUEST = "Review an airlock request"
+API_REVOKE_AIRLOCK_REQUEST = "Revoke an airlock request"
 API_AIRLOCK_REQUEST_LINK = "Get a token to access airlock request"
 API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE = "Create an Airlock Review User Resource"
 
@@ -215,6 +216,7 @@ AIRLOCK_RESOURCE_STATUS_CANCELLED = "cancelled"
 AIRLOCK_RESOURCE_STATUS_BLOCKING_INPROGRESS = "blocking_in_progress"
 AIRLOCK_RESOURCE_STATUS_BLOCKED = "blocked_by_scan"
 AIRLOCK_RESOURCE_STATUS_FAILED = "failed"
+AIRLOCK_RESOURCE_STATUS_REVOKED = "revoked"
 
 # Airlock Request Types
 AIRLOCK_REQUEST_TYPE_IMPORT = "import"
@@ -236,6 +238,7 @@ AIRLOCK_NO_AIRLOCK_MANAGER_EMAIL = "There are no Airlock Managers in the workspa
 AIRLOCK_ACTION_REVIEW = "review"
 AIRLOCK_ACTION_CANCEL = "cancel"
 AIRLOCK_ACTION_SUBMIT = "submit"
+AIRLOCK_ACTION_REVOKE = "revoke"
 
 # Airlock Review Decisions
 AIRLOCK_REVIEW_DECISION_APPROVED = "approved"
