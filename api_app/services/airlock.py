@@ -86,7 +86,7 @@ def validate_request_status(airlock_request: AirlockRequest):
                                   AirlockRequestStatus.RejectionInProgress,
                                   AirlockRequestStatus.BlockingInProgress]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_IN_PROGRESS)
-    elif airlock_request.status == AirlockRequestStatus.Cancelled:
+    elif airlock_request.status in [AirlockRequestStatus.Cancelled, AirlockRequestStatus.Revoked]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_IS_CANCELED)
     elif airlock_request.status in [AirlockRequestStatus.Failed,
                                     AirlockRequestStatus.Rejected,
