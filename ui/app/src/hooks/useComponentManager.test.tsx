@@ -29,7 +29,13 @@ const mockResource1: Resource = {
   availableUpgrades: [],
   deploymentStatus: "deployed",
   updatedWhen: Date.now(),
-  user: { name: "user1", id: "uid1", email: "user1@example.com" },
+  user: {
+    name: "user1",
+    id: "uid1",
+    email: "user1@example.com",
+    roleAssignments: [],
+    roles: []
+  },
   history: [],
   _etag: "etag1",
   properties: {},
@@ -47,7 +53,7 @@ describe("useComponentManager", () => {
     const mockOnRemove = jest.fn();
 
     const { result, rerender } = renderHook(
-      ({ resource }: { resource: Resource | undefined }) =>
+      ({ resource }: { resource: Resource }) =>
         useComponentManager(resource, mockOnUpdate, mockOnRemove),
       {
         initialProps: { resource: mockResource1 },
@@ -71,20 +77,20 @@ describe("useComponentManager", () => {
     expect(result.current.componentAction).toBe(ComponentAction.None);
   });
 
-  it("should reset componentAction when resource becomes undefined", () => {
+  it("should reset componentAction when resource is changed", () => {
     const mockOnUpdate = jest.fn();
     const mockOnRemove = jest.fn();
 
     const { result, rerender } = renderHook(
-      ({ resource }: { resource: Resource | undefined }) =>
+      ({ resource }: { resource: Resource }) =>
         useComponentManager(resource, mockOnUpdate, mockOnRemove),
       {
         initialProps: { resource: mockResource1 },
       },
     );
 
-    // Change resource to undefined
-    rerender({ resource: undefined });
+    // Change resource to a new resource
+    rerender({ resource: mockResource2 });
 
     // componentAction should be reset to None
     expect(result.current.componentAction).toBe(ComponentAction.None);
