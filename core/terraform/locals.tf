@@ -32,4 +32,6 @@ locals {
     "privatelink.mysql.database.azure.com",
     "privatelink.azuredatabricks.net"
   ])
+
+  storage_table_scope = "/subscriptions/${data.azurerm_subscription.current.subscription_id}/resourceGroups/rg-${var.tre_id}/providers/Microsoft.Storage/storageAccounts/stg${var.tre_id}/tableServices/default/tables"
 }
