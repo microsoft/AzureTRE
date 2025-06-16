@@ -58,8 +58,12 @@ function import_if_exists() {
     CMD="az resource show --ids ${ID}"
   fi
 
+  echo "Checking if ${ADDRESS} exists in Azure..."
+  # Temporarily disable errexit to capture command failure
+  set +o errexit
   ${CMD} > /dev/null
   AZ_RESOURCE_EXISTS=$?
+  set -o errexit  # Restore errexit
 
 
   # If resource exists in Terraform, it's already managed -- don't do anything
@@ -68,6 +72,8 @@ function import_if_exists() {
   if [[ ${TF_RESOURCE_EXISTS} -ne 0 && ${AZ_RESOURCE_EXISTS} -eq 0 ]]; then
     echo "IMPORTING ${ADDRESS} ${ID}"
     terraform import -var "tre_id=${TRE_ID}" -var "location=${LOCATION}" "${ADDRESS}" "${ID}"
+  else
+    echo "Resource ${ADDRESS} does not exist in Azure or is already managed by Terraform, skipping import."
   fi
 }
 
