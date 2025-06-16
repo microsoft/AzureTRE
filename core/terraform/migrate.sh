@@ -211,7 +211,7 @@ if az group show --name "${RESOURCE_GROUP_NAME}" > /dev/null 2>&1; then
   import_if_exists module.firewall.azurerm_firewall.fw "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_NAME}/providers/Microsoft.Network/azureFirewalls/fw-${TRE_ID}"
 
   # Firewall IPs
-  if [[ "${FIREWALL_SKU}" == "Basic" ]]; then
+  if [[ "${FIREWALL_SKU:-}" == "Basic" ]]; then
     import_if_exists module.firewall.azurerm_public_ip.fwmanagement[0] "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_NAME}/providers/Microsoft.Network/publicIPAddresses/pip-fw-management-${TRE_ID}"
   fi
 
