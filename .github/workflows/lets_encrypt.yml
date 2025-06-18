@@ -40,7 +40,7 @@ jobs:
           AZ_VER=2.73.0
 
           apt-cache policy azure-cli
-          sudo apt-get install azure-cli=${AZ_VER}-1~${AZ_DIST} --allow-downgrades
+          sudo apt-get install azure-cli="${AZ_VER}-1~${AZ_DIST}" --allow-downgrades
           az version
 
       - name: Install Terraform
