@@ -164,9 +164,8 @@ fi
 
 
 
-# Manually remove the firewall state from the core deployment - https://github.com/microsoft/AzureTRE/pull/4342
-# and import it into the firewall deployment. It's used for migration purposes only and will be removed when clients are all
-# using the shared services model
+# Remove the firewall adn other resources from the shared service state and import it into the core state.
+# https://github.com/microsoft/AzureTRE/pull/4342
 echo "REMOVING STATE FOR FIREWALL..."
 
 pushd ../../templates/shared_services/firewall/terraform
