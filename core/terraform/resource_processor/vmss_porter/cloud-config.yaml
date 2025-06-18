@@ -87,7 +87,7 @@ runcmd:
   - printf '\nalias rpstatus='\''tmux new-session -d "watch docker ps"; tmux split-window -p 100 -v "docker logs --since 1m --follow resource_processor1"; tmux split-window -v -p 90; tmux -2 attach-session -d'\''\n' >> /etc/bash.bashrc
   - export DEBIAN_FRONTEND=noninteractive
   - az cloud set --name ${azure_environment}
-  - az login --identity -u ${vmss_msi_id}
+  - az login --identity --client-id ${vmss_msi_id}
   - az acr login --name ${docker_registry_server}
   - docker run -d -p 8080:8080 -v /var/run/docker.sock:/var/run/docker.sock
     --restart always --env-file .env
