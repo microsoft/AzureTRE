@@ -75,9 +75,6 @@ variable "subscription_id" {
 variable "logging_level" {
   type = string
 }
-variable "firewall_sku" {
-  type = string
-}
 variable "rp_bundle_values" {
   type = map(string)
 }
@@ -121,4 +118,9 @@ variable "airlock_malware_scan_result_topic_name" {
 variable "mgmt_storage_account_id" {
   type        = string
   description = "ID of the management storage account"
+}
+
+variable "firewall_policy_id" {
+  type        = string
+  description = "ID of the firewall policy to use for the resource processor"
 }
