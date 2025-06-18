@@ -6,22 +6,6 @@
   "description": "Provides Firewall shared service",
   "required": [],
   "properties": {
-    "firewall_sku": {
-      "type": "string",
-      "title": "Firewall SKU",
-      "description": "The SKU that will be used when deploying The Firewall.",
-      "default": "Standard",
-      "enum": [
-        "Basic",
-        "Standard",
-        "Premium"
-      ]
-    },
-    "firewall_force_tunnel_ip": {
-      "type": "string",
-      "title": "Force Tunnel IP",
-      "description": "Optionally specify an IP address to forward all traffic to"
-    },
     "rule_collections": {
       "$id": "#properties/rule_collections",
       "title": "application rule collections",
