@@ -1,5 +1,6 @@
 import datetime, logging, math
 from models.domain.data_usage import MHRAWorkspaceDataUsage, MHRAContainerUsageItem, MHRAFileshareUsageItem, MHRAStorageAccountLimits, MHRAStorageAccountLimitsItem, StorageAccountLimitsInput
+from models.schemas.storage_info_request import StorageInfoRequest
 from core import config, credentials
 from resources import constants, strings
 from functools import lru_cache
@@ -46,6 +47,7 @@ class DataUsageService:
                         storage_name=entity['StorageName'],
                         storage_usage=entity['StorageUsage'],
                         storage_limits=entity['StorageLimits'],
+                        storage_remaining=entity['StorageLimits']-entity['StorageUsage'],
                         storage_limits_update_time=entity['StorageLimitsUpdateTime'],
                         storage_percentage_used=entity['StoragePercentage'],
                         update_time=entity['UpdateTime']
@@ -64,6 +66,7 @@ class DataUsageService:
                         storage_name=entity['StorageName'],
                         fileshare_usage=entity['FileshareUsage'],
                         fileshare_limits=entity['FileshareLimits'],
+                        fileshare_remaining=entity['FileshareLimits']-entity['FileshareUsage'],
                         fileshare_limits_update_time=entity['FileshareLimitsUpdateTime'],
                         fileshare_percentage_used=entity['FilesharePercentage'],
                         update_time=entity['UpdateTime']
@@ -170,6 +173,65 @@ class DataUsageService:
         except:
             logging.exception("Unknown error when calling table_client.")
             raise Exception("Unknown error when calling table_client.")
+
+    async def get_workspace_storage_info(self, storage_info_request: StorageInfoRequest) -> MHRAWorkspaceDataUsage:
+        container_usage_table = constants.WORKSPACE_CONTAINER_USAGE_TABLE_NAME
+        fileshare_usage_table = constants.WORKSPACE_FILESHARE_USAGE_TABLE_NAME
+
+        try:
+            container_usage_items = []
+            fileshare_usage_items = []
+
+
+            query_filter = " and ".join([f"WorkspaceName eq '{workspaceId}'" for workspaceId in storage_info_request.workspaceIds])
+
+            # For performing this operation, the identity used for running the API must have the role
+            # "Storage Table Data Reader" (the scope is the storage account holding the table).
+            table_client = self.client.get_table_client(table_name=container_usage_table)
+            entities = table_client.query_entities(query_filter)
+
+            for entity in entities:
+                container_usage_items.append(
+                    MHRAContainerUsageItem(
+                        workspace_name=entity['WorkspaceName'],
+                        storage_name=entity['StorageName'],
+                        storage_usage=entity['StorageUsage'],
+                        storage_limits=entity['StorageLimits'],
+                        storage_remaining=entity['StorageLimits']-entity['StorageUsage'],
+                        storage_limits_update_time=entity['StorageLimitsUpdateTime'],
+                        storage_percentage_used=entity['StoragePercentage'],
+                        update_time=entity['UpdateTime']
+                    )
+                )
+            if storage_info_request.workspaceType in ["eMSL", "", None]:
+                # For performing this operation, the identity used for running the API must have the role
+                # "Storage Table Data Reader" (the scope is the storage account holding the table).
+                table_client = self.client.get_table_client(table_name=fileshare_usage_table)
+                entities = table_client.query_entities(query_filter)
+
+                for entity in entities:
+                    fileshare_usage_items.append(
+                        MHRAFileshareUsageItem(
+                            workspace_name=entity['WorkspaceName'],
+                            storage_name=entity['StorageName'],
+                            fileshare_usage=entity['FileshareUsage'],
+                            fileshare_limits=entity['FileshareLimits'],
+                            fileshare_remaining=entity['FileshareLimits']-entity['FileshareUsage'],
+                            fileshare_limits_update_time=entity['FileshareLimitsUpdateTime'],
+                            fileshare_percentage_used=entity['FilesharePercentage'],
+                            update_time=entity['UpdateTime']
+                        )
+                    )
+
+            return MHRAWorkspaceDataUsage(workspace_container_usage_items=container_usage_items,workspace_fileshare_usage_items=fileshare_usage_items)
+
+        except HttpResponseError:
+            logging.exception("HTTP error when calling table_client.")
+            raise HttpResponseError
+        except:
+            logging.exception("Unknown error when calling table_client.")
+            raise Exception("Unknown error when calling table_client.")
+
 
 @lru_cache(maxsize=None)
 def data_usage_service_factory() -> DataUsageService:

@@ -30,6 +30,7 @@ class MHRAContainerUsageItem(BaseModel):
     storage_name: str
     storage_usage: float
     storage_limits: float
+    storage_remaining: float
     storage_limits_update_time: str
     storage_percentage_used: float
     update_time: str
@@ -39,6 +40,7 @@ class MHRAFileshareUsageItem(BaseModel):
     storage_name: str
     fileshare_usage: float
     fileshare_limits: float
+    fileshare_remaining: float
     fileshare_limits_update_time: str
     fileshare_percentage_used: float
     update_time: str

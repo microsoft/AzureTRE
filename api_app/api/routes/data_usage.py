@@ -6,7 +6,8 @@ import logging
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_tre_user_or_tre_admin
 from models.domain.data_usage import MHRAWorkspaceDataUsage, MHRAStorageAccountLimits, MHRAStorageAccountLimitsItem, StorageAccountLimitsInput
-from models.schemas.data_usage import get_workspace_data_usage_responses, get_storage_account_limits_responses
+from models.schemas.data_usage import get_workspace_data_usage_responses, get_storage_account_limits_responses, get_storage_info_responses
+from models.schemas.storage_info_request import StorageInfoRequest
 from services.data_usage import DataUsageService, data_usage_service_factory
 
 data_usage_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_tre_user_or_tre_admin)])
@@ -51,4 +52,22 @@ async def set_storage_account_limits_method(storage_account_lits_properties: Sto
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=ex.detail)
     except:
         logging.exception(f"{strings.API_GET_WORKSPACE_DATA_USAGE_INTERNAL_SERVER_ERROR}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.API_GET_WORKSPACE_DATA_USAGE_INTERNAL_SERVER_ERROR)
+
+
+
+@data_usage_router.post("/storage_info", response_model=MHRAWorkspaceDataUsage,
+                       status_code=status.HTTP_200_OK,
+                       name=strings.API_GET_WORKSPACE_STORAGE_INFO,
+                       dependencies=[Depends(get_current_workspace_owner_or_tre_user_or_tre_admin)],
+                       responses=get_storage_info_responses())
+async def get_workspace_storage(storage_info_request :StorageInfoRequest,
+                                     data_usage_service: DataUsageService = Depends(data_usage_service_factory)) -> MHRAWorkspaceDataUsage:
+    try:
+        if not storage_info_request.workspaceIds:
+            return await data_usage_service.get_workspace_storage_info(storage_info_request)
+        else :
+            return await data_usage_service.get_workspace_data_usage()
+    except:
+        logging.exception("Failed to retrieve Workspace data usage.")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.API_GET_WORKSPACE_DATA_USAGE_INTERNAL_SERVER_ERROR)

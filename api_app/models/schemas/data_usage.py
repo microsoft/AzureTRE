@@ -80,3 +80,36 @@ def get_storage_account_limits_responses():
             }
         }
     }
+
+def get_storage_info_responses():
+    return {
+        200: {
+            "description": "Success",
+            "content": {
+                "application/json": {
+                    "storage_account_limits_items": {
+                        "workspace_1": {
+                            "storage_usage": 1.2,
+                            "storage_remaining": 1.2,
+                            "storage_limits": 5000,
+                            "storage_percentage_used": 20.0
+                        },
+                        "workspace_2": {
+                            "storage_usage": 1.2,
+                            "storage_remaining": 1.2,
+                            "storage_limits": 5000,
+                            "storage_percentage_used": 20.0
+                        }
+                    }
+                }
+            }
+        },
+        401: {
+            "description": "Unauthorized",
+            "content": {
+                "text/plain": {
+                    "example": "Not authenticated"
+                }
+            }
+        }
+    }
