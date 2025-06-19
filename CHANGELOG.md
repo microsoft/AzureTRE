@@ -6,6 +6,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Fix "log analytics workspaces not found" error when deploying Databricks workspace service ([#4585](https://github.com/microsoft/AzureTRE/pull/4585))
+* Renew Letsencrypt GitHub action is failing to access storage account ([#4593](https://github.com/microsoft/AzureTRE/issues/4593))
 
 ## 0.23.0 (June 10, 2025)
 **BREAKING CHANGES & MIGRATIONS**:
