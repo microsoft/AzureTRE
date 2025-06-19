@@ -96,7 +96,7 @@ resource "azurerm_storage_table" "storageusage" {
 }
 
 resource "azurerm_role_assignment" "storageusage" {
-  scope                = azurerm_storage_table.storageusage.id
+  scope                = "${local.storage_table_scope}/${azurerm_storage_table.storageusage.name}"
   role_definition_name = "Storage Table Data Contributor"
   principal_id         = azurerm_user_assigned_identity.id.principal_id
 }
@@ -107,7 +107,8 @@ resource "azurerm_storage_table" "fileshareusage" {
 }
 
 resource "azurerm_role_assignment" "fileshareusage" {
-  scope                = azurerm_storage_table.fileshareusage.id
+  # scope                = azurerm_storage_table.fileshareusage.id
+  scope                = "${local.storage_table_scope}/${azurerm_storage_table.fileshareusage.name}"
   role_definition_name = "Storage Table Data Contributor"
   principal_id         = azurerm_user_assigned_identity.id.principal_id
 }

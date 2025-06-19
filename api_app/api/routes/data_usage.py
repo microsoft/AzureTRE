@@ -40,7 +40,7 @@ async def get_storage_account_limits_method(data_usage_service: DataUsageService
 
 @set_storage_account_limits.post("/storage_account_limit", response_model=MHRAStorageAccountLimitsItem,
                        status_code=status.HTTP_200_OK,
-                       name=strings.API_GET_WORKSPACE_DATA_USAGE_CLIENTS,
+                       name=strings.API_CREATE_WORKSPACE_DATA_USAGE_CLIENTS,
                        dependencies=[Depends(get_current_workspace_owner_or_tre_user_or_tre_admin)],
                        responses=get_storage_account_limits_responses())
 async def set_storage_account_limits_method(storage_account_lits_properties: StorageAccountLimitsInput = Depends(),

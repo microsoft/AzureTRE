@@ -140,11 +140,12 @@ class DataUsageService:
             )
 
             # Fail if entity is not found
-            if len(list(entities)) == 0:
+            entities_list = list(entities)
+            if len(list(entities_list)) == 0:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.DATA_USAGE_WORKSPACE_OR_STORAGE_ACCOUNT_NOT_FOUND)
 
             # Only 1 interation should happen.
-            for entity in entities:
+            for entity in entities_list:
                 # Create a new entity to replace the old one.
                 new_entity = {
                     "PartitionKey": entity['PartitionKey'],
@@ -157,6 +158,8 @@ class DataUsageService:
                     "StoragePercentage": math.floor(((entity['StorageUsage'] * 100.0) / storage_limits)),
                     "UpdateTime": entity['UpdateTime']
                 }
+
+                logging.info(f"Updating data limits for storage account {entity['StorageName']} - New limit: {storage_limits} - Timestamp: {storage_limits_update_time}")
 
                 # Merge the entity
                 table_client.update_entity(mode=UpdateMode.MERGE, entity=new_entity)
