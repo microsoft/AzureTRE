@@ -98,11 +98,11 @@ resource "azapi_update_resource" "guac_vnet_container_pull_routing" {
   resource_id = azurerm_linux_web_app.guacamole.id
   type        = "Microsoft.Web/sites@2022-09-01"
 
-  body = jsonencode({
+  body = {
     properties = {
       vnetImagePullEnabled : true
     }
-  })
+  }
 
   depends_on = [
     azurerm_linux_web_app.guacamole
