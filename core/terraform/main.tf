@@ -92,6 +92,24 @@ module "network" {
   arm_environment     = var.arm_environment
 }
 
+module "firewall" {
+  source                         = "./firewall"
+  tre_id                         = var.tre_id
+  firewall_sku                   = var.firewall_sku
+  firewall_subnet_id             = module.network.azure_firewall_subnet_id
+  firewall_force_tunnel_ip       = var.firewall_force_tunnel_ip
+  location                       = var.location
+  resource_group_name            = azurerm_resource_group.core.name
+  tre_core_tags                  = local.tre_core_tags
+  microsoft_graph_fqdn           = regex("(?:(?P<scheme>[^:/?#]+):)?(?://(?P<fqdn>[^/?#:]*))?", module.terraform_azurerm_environment_configuration.microsoft_graph_endpoint).fqdn
+  log_analytics_workspace_id     = module.azure_monitor.log_analytics_workspace_id
+  firewall_management_subnet_id  = module.network.firewall_management_subnet_id
+  resource_processor_ip_group_id = module.network.resource_processor_ip_group_id
+  shared_services_ip_group_id    = module.network.shared_services_ip_group_id
+  web_app_ip_group_id            = module.network.web_app_ip_group_id
+  airlock_processor_ip_group_id  = module.network.airlock_processor_ip_group_id
+}
+
 module "appgateway" {
   source                     = "./appgateway"
   tre_id                     = var.tre_id
@@ -186,7 +204,6 @@ module "resource_processor_vmss_porter" {
   resource_processor_vmss_sku                      = var.resource_processor_vmss_sku
   arm_environment                                  = var.arm_environment
   logging_level                                    = var.logging_level
-  firewall_sku                                     = var.firewall_sku
   rp_bundle_values                                 = var.rp_bundle_values
   enable_cmk_encryption                            = var.enable_cmk_encryption
   key_store_id                                     = local.key_store_id
@@ -195,6 +212,7 @@ module "resource_processor_vmss_porter" {
   auto_grant_workspace_consent                     = var.auto_grant_workspace_consent
   enable_airlock_malware_scanning                  = var.enable_airlock_malware_scanning
   airlock_malware_scan_result_topic_name           = module.airlock_resources.airlock_malware_scan_result_topic_name
+  firewall_policy_id                               = module.firewall.firewall_policy_id
 
   depends_on = [
     module.network,

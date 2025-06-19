@@ -200,6 +200,11 @@ outputs:
     applyTo:
       - install
       - upgrade
+  - name: log_analytics_workspace_name
+    type: string
+    applyTo:
+      - install
+      - upgrade
   - name: workspace_owners_group_id
     type: string
     applyTo:
@@ -277,6 +282,7 @@ install:
         - name: backup_vault_name
         - name: vm_backup_policy_id
         - name: fileshare_backup_policy_id
+        - name: log_analytics_workspace_name
         - name: workspace_owners_group_id
         - name: workspace_researchers_group_id
         - name: workspace_airlock_managers_group_id
@@ -335,6 +341,7 @@ upgrade:
         - name: backup_vault_name
         - name: vm_backup_policy_id
         - name: fileshare_backup_policy_id
+        - name: log_analytics_workspace_name
         - name: workspace_owners_group_id
         - name: workspace_researchers_group_id
         - name: workspace_airlock_managers_group_id

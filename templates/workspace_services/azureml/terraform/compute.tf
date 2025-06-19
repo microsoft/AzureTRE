@@ -25,7 +25,7 @@ resource "azapi_resource" "compute_cluster" {
   type      = "Microsoft.MachineLearningServices/workspaces/computes@2022-10-01"
   name      = "cp-${local.short_service_id}"
   location  = data.azurerm_resource_group.ws.location
-  parent_id = azurerm_machine_learning_workspace.aml_workspace.id
+  parent_id = azapi_resource.aml_workspace.output.id
   tags      = local.tre_workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
@@ -69,16 +69,9 @@ resource "azapi_resource" "compute_cluster" {
 
 }
 
-# This seems to be added automatically
-# resource "azurerm_role_assignment" "compute_cluster_acr_pull" {
-#   scope                = azurerm_container_registry.acr.id
-#   role_definition_name = "AcrPull"
-#   principal_id         = jsondecode(azapi_resource.compute_cluster.output).identity.principalId
-# }
-
 resource "azapi_update_resource" "set_image_build_compute" {
   type      = "Microsoft.MachineLearningServices/workspaces@2022-10-01"
-  name      = azurerm_machine_learning_workspace.aml_workspace.name
+  name      = azapi_resource.aml_workspace.output.name
   parent_id = data.azurerm_resource_group.ws.id
 
   body = {
@@ -89,7 +82,5 @@ resource "azapi_update_resource" "set_image_build_compute" {
 
   depends_on = [
     azapi_resource.compute_cluster
-    #,
-    #azurerm_role_assignment.compute_cluster_acr_pull
   ]
 }
