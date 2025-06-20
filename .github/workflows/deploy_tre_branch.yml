@@ -32,7 +32,7 @@ concurrency: "${{ github.workflow }}-${{ github.ref }}"
 jobs:
   prepare-not-main:
     name: Preparation
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}
     if: |
       github.ref != 'refs/heads/main'
     outputs:
@@ -69,6 +69,8 @@ jobs:
       environmentName: ${{ github.event.inputs.environment }}
       E2E_TESTS_NUMBER_PROCESSES: ${{ fromJSON(github.event.inputs.e2eProcesses) }}
       DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
+      RUNNER: ${{ vars.RUNNER || 'ubuntu-latest' }}
+      DEPLOYMENT_RUNNER: ${{ vars.DEPLOYMENT_RUNNER || 'ubuntu-latest' }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
