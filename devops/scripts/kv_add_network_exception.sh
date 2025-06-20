@@ -23,14 +23,28 @@ function kv_add_network_exception() {
     return 0   # don't cause outer sourced script to fail
   fi
 
+  # Check current public network access state
+  local CURRENT_PUBLIC_ACCESS
+  CURRENT_PUBLIC_ACCESS=$(az keyvault show --name "$KV_NAME" --query 'properties.publicNetworkAccess' --output tsv 2>/dev/null)
+  
+  # Store original state for restoration in kv_remove_network_exception
+  # Using a file-based approach since environment variables don't persist across script calls
+  echo "$CURRENT_PUBLIC_ACCESS" > "/tmp/kv_original_public_access_${KV_NAME}"
+
   # If we have allowed access from a specific subnet, don't set public access and allow access from the subnet
   # This logic is needed to avoid error, if there is a change in subnet after the initial deployment
   if [[ -n ${PRIVATE_AGENT_SUBNET_ID:-} ]]; then
     echo -e "\nAdding network rule to allow subnet access for key vault $KV_NAME..."
     az keyvault network-rule add --name "$KV_NAME" --subnet "$PRIVATE_AGENT_SUBNET_ID" --output none
   else
-    echo -e "\nSetting key vault $KV_NAME to public access for deployment..."
-    az keyvault update --name "$KV_NAME" --default-action Allow --output none
+    # Check if public network access is disabled and enable it temporarily if needed
+    if [[ "$CURRENT_PUBLIC_ACCESS" == "Disabled" ]]; then
+      echo -e "\nKey vault $KV_NAME has public network access disabled. Temporarily enabling public access for deployment..."
+      az keyvault update --name "$KV_NAME" --public-network-access Enabled --default-action Allow --output none
+    else
+      echo -e "\nSetting key vault $KV_NAME to public access for deployment..."
+      az keyvault update --name "$KV_NAME" --default-action Allow --output none
+    fi
   fi
 
   local ATTEMPT=1
@@ -80,9 +94,28 @@ function kv_remove_network_exception() {
     return 0   # don't cause outer sourced script to fail
   fi
 
-  # set keyvault back to private access
-  #
-  az keyvault update --name "$KV_NAME" --default-action Deny --output none
+  # Restore original public network access state if we have it stored
+  local ORIGINAL_PUBLIC_ACCESS_FILE="/tmp/kv_original_public_access_${KV_NAME}"
+  if [[ -f "$ORIGINAL_PUBLIC_ACCESS_FILE" ]]; then
+    local ORIGINAL_PUBLIC_ACCESS
+    ORIGINAL_PUBLIC_ACCESS=$(cat "$ORIGINAL_PUBLIC_ACCESS_FILE" 2>/dev/null)
+    
+    if [[ "$ORIGINAL_PUBLIC_ACCESS" == "Disabled" ]]; then
+      echo -e " Restoring key vault $KV_NAME to original state: public network access disabled"
+      az keyvault update --name "$KV_NAME" --public-network-access Disabled --output none
+    else
+      echo -e " Restoring key vault $KV_NAME to private access (default action: Deny)"
+      az keyvault update --name "$KV_NAME" --default-action Deny --output none
+    fi
+    
+    # Clean up the temporary file
+    rm -f "$ORIGINAL_PUBLIC_ACCESS_FILE"
+  else
+    # Fallback to original behavior if no state file found
+    echo -e " Setting key vault $KV_NAME back to private access (default action: Deny)"
+    az keyvault update --name "$KV_NAME" --default-action Deny --output none
+  fi
+  
   echo -e " Key vault set back to private access\n"
 }
 
