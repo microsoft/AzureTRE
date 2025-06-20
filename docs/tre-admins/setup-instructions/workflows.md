@@ -148,6 +148,8 @@ Configure variables used in the deployment workflow:
 | `FIREWALL_SKU` | Optional. The SKU of the Azure Firewall instance. Default value is `Standard`. Allowed values [`Basic`, `Standard`, `Premium`]. See [Azure Firewall SKU feature comparison](https://learn.microsoft.com/en-us/azure/firewall/choose-firewall-sku). |
 | `APP_GATEWAY_SKU` | Optional. The SKU of the Application Gateway. Default value is `Standard_v2`. Allowed values [`Standard_v2`, `WAF_v2`] |
 | `ENABLE_CMK_ENCRYPTION` | Optional. Default is `false`, if set to `true` customer-managed key encryption will be enabled for all supported resources. |
+| `RUNNER` | Optional. The GitHub runner to use for general workflow jobs. Default value is `ubuntu-latest`. |
+| `DEPLOYMENT_RUNNER` | Optional. The GitHub runner to use for deployment jobs that need KeyVault access (deploy_management and deploy_tre). Default value is `ubuntu-latest`. Use this to specify private runners when subscription policies prevent KeyVault access over the public internet. |
 
 ### Deploy the TRE using the workflow
 
