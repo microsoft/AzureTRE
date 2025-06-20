@@ -29,7 +29,9 @@ function kv_add_network_exception() {
   
   # Store original state for restoration in kv_remove_network_exception
   # Using a file-based approach since environment variables don't persist across script calls
-  echo "$CURRENT_PUBLIC_ACCESS" > "/tmp/kv_original_public_access_${KV_NAME}"
+  local TEMP_FILE
+  TEMP_FILE=$(mktemp "/tmp/kv_original_public_access_${KV_NAME}.XXXXXX")
+  echo "$CURRENT_PUBLIC_ACCESS" > "$TEMP_FILE"
 
   # If we have allowed access from a specific subnet, don't set public access and allow access from the subnet
   # This logic is needed to avoid error, if there is a change in subnet after the initial deployment
