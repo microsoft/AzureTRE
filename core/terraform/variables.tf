@@ -186,6 +186,11 @@ variable "firewall_sku" {
   default     = ""
 }
 
+variable "firewall_force_tunnel_ip" {
+  type    = string
+  default = ""
+}
+
 variable "app_gateway_sku" {
   description = "Application Gateway SKU"
   type        = string

@@ -2,10 +2,12 @@
 ## 0.24.0 [Unreleased]
 
 ENHANCEMENTS:
+* Migrate Azure Firewall and Route Tables to Core Terraform ([#4342](https://github.com/microsoft/AzureTRE/pull/4342))
 
 BUG FIXES:
 * Fix "log analytics workspaces not found" error when deploying Databricks workspace service ([#4585](https://github.com/microsoft/AzureTRE/pull/4585))
 * Fix resource lock indicator persisting when switching between resources ([#4590](https://github.com/microsoft/AzureTRE/issues/4590))
+* Renew Letsencrypt GitHub action is failing to access storage account ([#4593](https://github.com/microsoft/AzureTRE/issues/4593))
 
 ## 0.23.0 (June 10, 2025)
 **BREAKING CHANGES & MIGRATIONS**:
