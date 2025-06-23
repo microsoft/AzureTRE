@@ -12,7 +12,7 @@ def azure_login_command(config):
 
     if config.get("vmss_msi_id"):
         # Use the Managed Identity when in VMSS context
-        login_command = f"az login --identity -u {config['vmss_msi_id']} >/dev/null "
+        login_command = f"az login --identity --client-id {config['vmss_msi_id']} >/dev/null "
 
     else:
         # Use a Service Principal when running locally

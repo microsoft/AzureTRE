@@ -1,16 +1,15 @@
----
-# cloud-config
+#cloud-config
+package_update: true
 package_upgrade: true
+
 apt:
   sources:
     docker.list:
-      source: deb [arch=amd64]
-        https://download.docker.com/linux/ubuntu $RELEASE stable
+      source: "deb [arch=amd64] https://download.docker.com/linux/ubuntu $RELEASE stable"
       keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
       keyserver: hkp://keyserver.ubuntu.com:80
     azure-cli.list:
-      source: deb [arch=amd64]
-        https://packages.microsoft.com/repos/azure-cli/ $RELEASE main
+      source: "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $RELEASE main"
       keyid: BC528686B50D79E339D3721CEB3E94ADBE1229CF
       keyserver: hkp://keyserver.ubuntu.com:80
 
@@ -23,17 +22,68 @@ packages:
   - gnupg2
   - pass
 
-# create the docker group
 groups:
   - docker
 
-# add default auto created user to docker group
 system_info:
   default_user:
     groups: [docker]
 
 write_files:
-  - path: .env
+  - path: /etc/systemd/system/tre-bootstrap.service
+    content: |
+      [Unit]
+      Description=TRE Resource Processor Startup
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=simple
+      ExecStart=/opt/tre/startup.sh
+      Restart=on-failure
+      TimeoutStartSec=600
+
+      [Install]
+      WantedBy=multi-user.target
+
+  - path: /opt/tre/startup.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      LOG_FILE="/var/log/tre-bootstrap.log"
+      echo "[startup] Waiting for Managed Identity to become available..." | tee -a $LOG_FILE
+
+      i=1
+      while [ $i -le 60 ]; do
+        TOKEN=$(curl -s -H Metadata:true \
+          "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2021-02-01&resource=https://management.azure.com")
+
+        if echo "$TOKEN" | grep -q 'access_token'; then
+          echo "[startup] Identity metadata is ready. Proceeding with az login." | tee -a $LOG_FILE
+          break
+        else
+          echo "[startup] IMDS not ready yet (attempt $i), retrying in 5s..." | tee -a $LOG_FILE
+          sleep 5
+          i=$((i+1))
+        fi
+      done
+
+      # Now perform actual login
+      az login --identity --client-id "${vmss_msi_id}" >> $LOG_FILE 2>&1
+
+      echo "[startup] Logging into ACR..." | tee -a $LOG_FILE
+      az acr login --name ${docker_registry_server} >> $LOG_FILE 2>&1
+
+      echo "[startup] Starting Docker container..." | tee -a $LOG_FILE
+      docker run -d -p 8080:8080 \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        --restart always --env-file /opt/tre/env \
+        --name resource_processor1 \
+        --log-driver local \
+        ${docker_registry_server}/${resource_processor_vmss_porter_image_repository}:${resource_processor_vmss_porter_image_tag} >> $LOG_FILE 2>&1
+
+  - path: /opt/tre/env
+    permissions: "0644"
     content: |
       REGISTRY_SERVER=${docker_registry_server}
       TERRAFORM_STATE_CONTAINER_NAME=${terraform_state_container_name}
@@ -43,7 +93,6 @@ write_files:
       SERVICE_BUS_RESOURCE_REQUEST_QUEUE=${service_bus_resource_request_queue}
       SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE=${service_bus_namespace}
       VMSS_MSI_ID=${vmss_msi_id}
-      # the following line makes sure the right msi will be used if multiple are available on the VM
       AZURE_CLIENT_ID=${vmss_msi_id}
       AZURE_SUBSCRIPTION_ID=${arm_subscription_id}
       ARM_CLIENT_ID=${vmss_msi_id}
@@ -61,9 +110,9 @@ write_files:
       OTEL_EXPERIMENTAL_RESOURCE_DETECTORS=azure_vm
       LOGGING_LEVEL=${logging_level}
       ${rp_bundle_values}
+
   - path: /etc/cron.hourly/docker-prune
-    # An hourly cron job to have docker free disk space. Running this frquently
-    # since disk might get full fast, but we prune only when free space is low.
+    permissions: "0755"
     content: |
       #!/bin/bash
       set -o errexit
@@ -73,21 +122,10 @@ write_files:
         echo "Free space too low, pruning..."
         docker system prune -f
       fi
-    permissions: "0755"
 
 runcmd:
-  # Those are useful live debug commands. Check the docs for details:
-  # (https://microsoft.github.io/AzureTRE/troubleshooting-faq/troubleshooting-rp/#Logs)
-  - printf '\nalias dlf="docker logs --since 1m --follow"' >> /etc/bash.bashrc
-  - printf '\nalias dlf1='\''dlf $(docker ps -q | head -n 1)'\''' >> /etc/bash.bashrc
-  # the following line can't be split
-  - printf '\nalias rpstatus='\''tmux new-session -d "watch docker ps"; tmux split-window -p 100 -v "docker logs --since 1m --follow resource_processor1"; tmux split-window -v -p 90; tmux -2 attach-session -d'\''\n' >> /etc/bash.bashrc
-  - export DEBIAN_FRONTEND=noninteractive
-  - az cloud set --name ${azure_environment}
-  - az login --identity -u ${vmss_msi_id}
-  - az acr login --name ${docker_registry_server}
-  - docker run -d -p 8080:8080 -v /var/run/docker.sock:/var/run/docker.sock
-    --restart always --env-file .env
-    --name resource_processor1
-    --log-driver local
-    ${docker_registry_server}/${resource_processor_vmss_porter_image_repository}:${resource_processor_vmss_porter_image_tag}
+  - systemctl daemon-reexec
+  - systemctl enable tre-bootstrap.service
+  - systemctl start tre-bootstrap.service
+  - echo "Rebooting to activate new kernel and services..."
+  - reboot
