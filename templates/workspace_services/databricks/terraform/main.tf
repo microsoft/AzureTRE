@@ -7,6 +7,8 @@ resource "azurerm_databricks_workspace" "databricks" {
   infrastructure_encryption_enabled     = true
   public_network_access_enabled         = var.is_exposed_externally
   network_security_group_rules_required = "NoAzureDatabricksRules"
+  default_storage_firewall_enabled      = true
+  access_connector_id                   = azurerm_databricks_access_connector.connector.id
   tags                                  = local.tre_workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
@@ -27,6 +29,21 @@ resource "azurerm_databricks_workspace" "databricks" {
   ]
 }
 
+// required to set default_storage_firewall_enabled = true
+// https://learn.microsoft.com/en-us/azure/databricks/security/network/storage/firewall-support
+//
+resource "azurerm_databricks_access_connector" "connector" {
+  name                = "${local.databricks_workspace_name}-access-connector"
+  resource_group_name = data.azurerm_resource_group.ws.name
+  location            = data.azurerm_resource_group.ws.location
+  tags                = local.tre_workspace_service_tags
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  lifecycle { ignore_changes = [tags] }
+}
 
 resource "azurerm_monitor_diagnostic_setting" "databricks_diagnostics" {
   name                       = "diagnostics-${local.databricks_workspace_name}"
