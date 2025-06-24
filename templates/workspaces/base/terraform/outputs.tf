@@ -40,7 +40,7 @@ output "vm_backup_policy_id" {
 output "fileshare_backup_policy_id" {
   value = var.enable_backup ? module.backup[0].fileshare_backup_policy_id : ""
 }
-  
+
 output "log_analytics_workspace_name" {
   value = module.azure_monitor.log_analytics_workspace_name
 }
