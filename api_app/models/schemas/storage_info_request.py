@@ -1,9 +1,9 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 class StorageInfoRequest(BaseModel):
-    workspaceIds: List[str]
-    workspaceType: str
+    workspaceIds: Optional[List[str]] = None
+    workspaceType: Optional[str] = None
 
     class Config:
         schema_extra = {

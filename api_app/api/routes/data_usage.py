@@ -61,10 +61,10 @@ async def set_storage_account_limits_method(storage_account_lits_properties: Sto
                        name=strings.API_GET_WORKSPACE_STORAGE_INFO,
                        dependencies=[Depends(get_current_workspace_owner_or_tre_user_or_tre_admin)],
                        responses=get_storage_info_responses())
-async def get_workspace_storage(storage_info_request :StorageInfoRequest,
+async def get_workspace_storage(storage_info_request :StorageInfoRequest = None,
                                      data_usage_service: DataUsageService = Depends(data_usage_service_factory)) -> MHRAWorkspaceDataUsage:
     try:
-        if not storage_info_request.workspaceIds:
+        if storage_info_request is not None and storage_info_request.workspaceIds:
             return await data_usage_service.get_workspace_storage_info(storage_info_request)
         else :
             return await data_usage_service.get_workspace_data_usage()
