@@ -457,7 +457,7 @@ async def test_receive_messages_with_restart_check_restarts_on_exception(mock_lo
 async def test_check_heartbeat_recent(mock_open, mock_exists, mock_time):
     """Test checking a recent heartbeat."""
     mock_open.return_value.__enter__.return_value.read.return_value = "1234567890.0"
-    
+
     status_updater = DeploymentStatusUpdater()
     result = status_updater.check_heartbeat(max_age_seconds=300)
     assert result is True
@@ -469,7 +469,7 @@ async def test_check_heartbeat_recent(mock_open, mock_exists, mock_time):
 async def test_check_heartbeat_stale(mock_open, mock_exists, mock_time):
     """Test checking a stale heartbeat."""
     mock_open.return_value.__enter__.return_value.read.return_value = "1234567890.0"
-    
+
     status_updater = DeploymentStatusUpdater()
     result = status_updater.check_heartbeat(max_age_seconds=300)
     assert result is False
@@ -489,6 +489,6 @@ async def test_update_heartbeat(mock_open, mock_time):
     """Test updating heartbeat."""
     status_updater = DeploymentStatusUpdater()
     status_updater.update_heartbeat()
-    
+
     mock_open.assert_called_once_with("/tmp/deployment_status_updater_heartbeat.txt", 'w')
     mock_open.return_value.__enter__.return_value.write.assert_called_once_with("1234567890.0")

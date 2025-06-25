@@ -54,13 +54,13 @@ class DeploymentStatusUpdater():
         try:
             if not os.path.exists(self.heartbeat_file):
                 return False
-            
+
             with open(self.heartbeat_file, 'r') as f:
                 heartbeat_time = float(f.read().strip())
-            
+
             current_time = time.time()
             age = current_time - heartbeat_time
-            
+
             return age <= max_age_seconds
         except (ValueError, IOError) as e:
             logger.warning(f"Failed to read heartbeat: {e}")
@@ -92,13 +92,13 @@ class DeploymentStatusUpdater():
                             await task  # Check for any exception
                         except Exception as e:
                             logger.exception(f"receive_messages task failed: {e}")
-                    
+
                     logger.info("Starting receive_messages task...")
                     task = asyncio.create_task(self.receive_messages())
 
                 # Wait before checking heartbeat
                 await asyncio.sleep(60)  # Check every minute
-                
+
                 # Check if heartbeat is stale
                 if not self.check_heartbeat(max_age_seconds=300):  # 5 minutes max age
                     logger.warning("Heartbeat is stale, restarting receive_messages task...")
@@ -108,7 +108,6 @@ class DeploymentStatusUpdater():
                     except asyncio.CancelledError:
                         pass
                     task = None
-                    
             except Exception as e:
                 logger.exception(f"Supervisor error: {e}")
                 await asyncio.sleep(30)
@@ -122,10 +121,9 @@ class DeploymentStatusUpdater():
                 try:
                     current_time = time.time()
                     polling_count += 1
-                    
+
                     # Update heartbeat file for supervisor monitoring
                     self.update_heartbeat()
-                    
                     # Log a heartbeat message every 60 seconds to show the service is still working
                     if current_time - last_heartbeat_time >= 60:
                         logger.info(f"Queue reader heartbeat: Polled {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue {polling_count} times in the last minute")
