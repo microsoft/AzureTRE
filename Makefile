@@ -43,12 +43,6 @@ build-and-push-airlock-processor: build-airlock-processor push-airlock-processor
 help: ## 💬 This help message :)
 	@grep -E '[a-zA-Z_-]+:.*?## .*$$' $(firstword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
-# Description: Migrate the firewall state from the core deployment to the shared services deployment.
-# This is a one-time operation and should only be run when you are moving from the core deployment to the shared services deployment.
-# This command will remove the firewall state from the core deployment and import it into the shared services deployment.
-# Example: make migrate-firewall-state
-migrate-firewall-state: prepare-tf-state
-
 # Description: Bootstrap Terraform
 # Example: make bootstrap
 bootstrap:
@@ -134,18 +128,6 @@ push-resource-processor-vm-porter-image:
 # Example: make push-airlock-processor
 push-airlock-processor:
 	$(call push_image,"airlock-processor","${MAKEFILE_DIR}/airlock_processor/_version.py")
-
-# Description: Prepare terraform state for migration
-# # These targets are for a graceful migration of Firewall
-# # from terraform state in Core to a Shared Service.
-# # See https://github.com/microsoft/AzureTRE/issues/1177
-# Example: make prepare-tf-state
-prepare-tf-state:
-	$(call target_title, "Preparing terraform state") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
-	&& pushd ${MAKEFILE_DIR}/core/terraform > /dev/null && ../../shared_services/firewall/terraform/remove_state.sh && popd > /dev/null \
-	&& pushd ${MAKEFILE_DIR}/templates/shared_services/firewall/terraform > /dev/null && ./import_state.sh && popd > /dev/null
-# / End migration targets
 
 # Description: Deploy the core infrastructure of TRE.
 # This will create the core resource group (named rg-<TRE_ID>) with the necessary resources.
@@ -442,8 +424,7 @@ deploy-shared-service:
 firewall-install:
 	. ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
 	&& $(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
-	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service \
-	PROPS="$${FIREWALL_SKU+--firewall_sku $${FIREWALL_SKU} }$${FIREWALL_FORCE_TUNNEL_IP+--firewall_force_tunnel_ip $${FIREWALL_FORCE_TUNNEL_IP} }"
+	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
 # Description: Upload the static website to the storage account
 # Example: make static-web-upload
