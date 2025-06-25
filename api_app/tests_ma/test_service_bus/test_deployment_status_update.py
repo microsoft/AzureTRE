@@ -413,3 +413,39 @@ async def test_convert_outputs_to_dict():
         'list2': ['one', 'two']
     }
     assert status_updater.convert_outputs_to_dict(deployment_status_update_message.outputs) == expected_result
+
+
+@patch('service_bus.deployment_status_updater.asyncio.sleep')
+@patch('services.logging.logger.exception')
+@patch('services.logging.logger.info')
+async def test_receive_messages_with_restart_check_restarts_on_exception(mock_logger_info, mock_logger_exception, mock_sleep):
+    """Test that receive_messages_with_restart_check properly restarts when receive_messages fails"""
+    status_updater = DeploymentStatusUpdater()
+
+    # Mock receive_messages to fail once, then succeed (stopping the loop)
+    call_count = 0
+
+    async def mock_receive_messages():
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            raise Exception("Test exception")
+        # Second call succeeds but we need to stop the loop somehow
+        # For testing purposes, we'll just raise a different exception to break the loop
+        raise KeyboardInterrupt("Test interrupt to stop loop")
+
+    status_updater.receive_messages = mock_receive_messages
+
+    # Test that the restart mechanism works
+    try:
+        await status_updater.receive_messages_with_restart_check()
+    except KeyboardInterrupt:
+        pass  # Expected to stop the loop
+
+    # Verify the restart mechanism worked
+    assert call_count == 2, "receive_messages should have been called twice (once failed, once succeeded)"
+
+    # Verify logging calls
+    mock_logger_info.assert_called_with("Starting the receive_messages loop...")
+    mock_logger_exception.assert_called_once_with("receive_messages stopped unexpectedly. Restarting... - Test exception")
+    mock_sleep.assert_called_once_with(5)

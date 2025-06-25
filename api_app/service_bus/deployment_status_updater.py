@@ -33,7 +33,19 @@ class DeploymentStatusUpdater():
         self.resource_history_repo = await ResourceHistoryRepository.create()
 
     def run(self, *args, **kwargs):
-        asyncio.run(self.receive_messages())
+        asyncio.run(self.receive_messages_with_restart_check())
+
+    async def receive_messages_with_restart_check(self):
+        """
+        Continuously run the receive_messages method, restarting it if it stops unexpectedly.
+        """
+        while True:
+            try:
+                logger.info("Starting the receive_messages loop...")
+                await self.receive_messages()
+            except Exception as e:
+                logger.exception(f"receive_messages stopped unexpectedly. Restarting... - {e}")
+                await asyncio.sleep(5)
 
     async def receive_messages(self):
         with tracer.start_as_current_span("deployment_status_receive_messages"):
