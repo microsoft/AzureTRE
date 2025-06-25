@@ -8,6 +8,7 @@ BUG FIXES:
 * Fix "log analytics workspaces not found" error when deploying Databricks workspace service ([#4585](https://github.com/microsoft/AzureTRE/pull/4585))
 * Fix resource lock indicator persisting when switching between resources ([#4590](https://github.com/microsoft/AzureTRE/issues/4590))
 * Renew Letsencrypt GitHub action is failing to access storage account ([#4593](https://github.com/microsoft/AzureTRE/issues/4593))
+* Fix deployment pipeline failures due to KeyVault network policies preventing public access ([#4597](https://github.com/microsoft/AzureTRE/issues/4597))
 
 ## 0.23.0 (June 10, 2025)
 **BREAKING CHANGES & MIGRATIONS**:
@@ -34,6 +35,8 @@ ENHANCEMENTS:
 * Allow UI_SITE_NAME and UI_FOOTER_TEXT to be dynamically calculated passed in deploy_tre_reusable.yaml ([#4575](https://github.com/microsoft/AzureTRE/pull/4575))
 * Enable diagnostic settings for Databricks workspaces ([#4576](https://github.com/microsoft/AzureTRE/pull/4576))
 
+
+* Added backup vault to base workspace & updated Azurerm provider to match core. ([[#4362](https://github.com/microsoft/AzureTRE/issues/4362)])
 
 BUG FIXES:
 * Letsencrypt.yml fails with "Invalid reference in variable validation" ([#4506](https://github.com/microsoft/AzureTRE/4506))
