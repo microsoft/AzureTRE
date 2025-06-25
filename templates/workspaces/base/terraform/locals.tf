@@ -11,4 +11,5 @@ locals {
   kv_encryption_key_name    = "tre-encryption-${local.workspace_resource_name_suffix}"
   encryption_identity_name  = "id-encryption-${var.tre_id}-${local.short_workspace_id}"
   workspace_subscription_id = var.workspace_subscription_id == "" ? data.azurerm_client_config.core.subscription_id : var.workspace_subscription_id
+  shared_storage_name      = "vm-shared-storage"
 }
