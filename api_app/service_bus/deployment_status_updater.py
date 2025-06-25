@@ -1,6 +1,7 @@
 import asyncio
 import json
 import uuid
+import time
 
 from pydantic import ValidationError, parse_obj_as
 
@@ -49,12 +50,23 @@ class DeploymentStatusUpdater():
 
     async def receive_messages(self):
         with tracer.start_as_current_span("deployment_status_receive_messages"):
+            last_heartbeat_time = 0
+            polling_count = 0
+
             while True:
                 try:
+                    current_time = time.time()
+                    polling_count += 1
+                    # Log a heartbeat message every 60 seconds to show the service is still working
+                    if current_time - last_heartbeat_time >= 60:
+                        logger.info(f"Queue reader heartbeat: Polled {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue {polling_count} times in the last minute")
+                        last_heartbeat_time = current_time
+                        polling_count = 0
+
                     async with credentials.get_credential_async_context() as credential:
                         service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
 
-                        logger.info(f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue...")
+                        logger.debug(f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue...")
                         # max_wait_time=1 -> don't hold the session open after processing of the message has finished
                         async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
                             logger.info(f"Got a session containing messages: {receiver.session.session_id}")

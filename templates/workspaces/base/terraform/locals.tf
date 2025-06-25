@@ -10,4 +10,5 @@ locals {
   }
   kv_encryption_key_name   = "tre-encryption-${local.workspace_resource_name_suffix}"
   encryption_identity_name = "id-encryption-${var.tre_id}-${local.short_workspace_id}"
+  shared_storage_name      = "vm-shared-storage"
 }
