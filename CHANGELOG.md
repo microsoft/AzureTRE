@@ -7,6 +7,7 @@ ENHANCEMENTS:
 BUG FIXES:
 * Fix "log analytics workspaces not found" error when deploying Databricks workspace service ([#4585](https://github.com/microsoft/AzureTRE/pull/4585))
 * Reduce frequency of queue reader logging to improve log readability ([#4530](https://github.com/microsoft/AzureTRE/issues/4530))
+* Fix resource lock indicator persisting when switching between resources ([#4590](https://github.com/microsoft/AzureTRE/issues/4590))
 * Renew Letsencrypt GitHub action is failing to access storage account ([#4593](https://github.com/microsoft/AzureTRE/issues/4593))
 * Fix deployment pipeline failures due to KeyVault network policies preventing public access ([#4597](https://github.com/microsoft/AzureTRE/issues/4597))
 
