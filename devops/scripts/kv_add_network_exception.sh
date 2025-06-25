@@ -23,14 +23,15 @@ function kv_add_network_exception() {
     return 0   # don't cause outer sourced script to fail
   fi
 
-  # If we have allowed access from a specific subnet, don't set public access and allow access from the subnet
+  # If we have allowed access from a specific subnet, enable public access with deny default and add the network rule
   # This logic is needed to avoid error, if there is a change in subnet after the initial deployment
   if [[ -n ${PRIVATE_AGENT_SUBNET_ID:-} ]]; then
-    echo -e "\nAdding network rule to allow subnet access for key vault $KV_NAME..."
+    echo -e "\nEnabling public access and adding network rule to allow subnet access for key vault $KV_NAME..."
+    az keyvault update --name "$KV_NAME" --public-network-access Enabled --default-action Deny --output none
     az keyvault network-rule add --name "$KV_NAME" --subnet "$PRIVATE_AGENT_SUBNET_ID" --output none
   else
-    echo -e "\nSetting key vault $KV_NAME to public access for deployment..."
-    az keyvault update --name "$KV_NAME" --default-action Allow --output none
+    echo -e "\nEnabling public access for key vault $KV_NAME for deployment..."
+    az keyvault update --name "$KV_NAME" --public-network-access Enabled --default-action Allow --output none
   fi
 
   local ATTEMPT=1
@@ -80,9 +81,9 @@ function kv_remove_network_exception() {
     return 0   # don't cause outer sourced script to fail
   fi
 
-  # set keyvault back to private access
-  #
-  az keyvault update --name "$KV_NAME" --default-action Deny --output none
+  # Always disable public network access after deployment
+  # Private endpoint is used during normal TRE operation
+  az keyvault update --name "$KV_NAME" --public-network-access Disabled --output none
   echo -e " Key vault set back to private access\n"
 }
 
