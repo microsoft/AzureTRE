@@ -5,6 +5,7 @@ import json
 import asyncio
 import logging
 import sys
+import os
 from helpers.commands import azure_acr_login_command, azure_login_command, build_porter_command, build_porter_command_for_outputs, apply_porter_credentials_sets_command
 from shared.config import get_config
 from helpers.httpserver import start_server
@@ -38,7 +39,19 @@ async def default_credentials(msi_id):
     await credential.close()
 
 
-async def receive_message(service_bus_client, config: dict, keep_running=lambda: True):
+def update_heartbeat(process_number: int):
+    """
+    Update heartbeat file for this process
+    """
+    heartbeat_file = f"/tmp/resource_processor_heartbeat_{process_number}.txt"
+    try:
+        with open(heartbeat_file, 'w') as f:
+            f.write(str(time.time()))
+    except Exception as e:
+        logger.warning(f"Failed to update heartbeat for process {process_number}: {e}")
+
+
+async def receive_message(service_bus_client, config: dict, process_number: int, keep_running=lambda: True):
     """
     This method is run per process. Each process will connect to service bus and try to establish a session.
     If messages are there, the process will continue to receive all the messages associated with that session.
@@ -52,6 +65,10 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
         try:
             current_time = time.time()
             polling_count += 1
+            
+            # Update heartbeat file for supervisor monitoring
+            update_heartbeat(process_number)
+            
             # Log a heartbeat message every 60 seconds to show the service is still working
             if current_time - last_heartbeat_time >= 60:
                 logger.info(f"Queue reader heartbeat: Polled for sessions {polling_count} times in the last minute")
@@ -274,7 +291,28 @@ async def runner(process_number: int, config: dict):
     with tracer.start_as_current_span(process_number):
         async with default_credentials(config["vmss_msi_id"]) as credential:
             service_bus_client = ServiceBusClient(config["service_bus_namespace"], credential)
-            await receive_message(service_bus_client, config)
+            await receive_message(service_bus_client, config, process_number)
+
+
+def check_process_heartbeat(process_number: int, max_age_seconds: int = 300) -> bool:
+    """
+    Check if a process heartbeat is recent enough
+    """
+    heartbeat_file = f"/tmp/resource_processor_heartbeat_{process_number}.txt"
+    try:
+        if not os.path.exists(heartbeat_file):
+            return False
+        
+        with open(heartbeat_file, 'r') as f:
+            heartbeat_time = float(f.read().strip())
+        
+        current_time = time.time()
+        age = current_time - heartbeat_time
+        
+        return age <= max_age_seconds
+    except (ValueError, IOError) as e:
+        logger.warning(f"Failed to read heartbeat for process {process_number}: {e}")
+        return False
 
 
 async def check_runners(processes: list, httpserver: Process, keep_running=lambda: True):
@@ -282,9 +320,36 @@ async def check_runners(processes: list, httpserver: Process, keep_running=lambd
 
     while keep_running():
         await asyncio.sleep(30)
-        if all(not process.is_alive() for process in processes):
+        
+        # Check if all processes are alive
+        all_dead = all(not process.is_alive() for process in processes)
+        if all_dead:
             logger.error("All runner processes have failed!")
             httpserver.kill()
+            return
+        
+        # Check heartbeats for alive processes
+        stale_processes = []
+        for i, process in enumerate(processes):
+            if process.is_alive() and not check_process_heartbeat(i):
+                logger.warning(f"Process {i} appears to be stuck (no heartbeat update)")
+                stale_processes.append((i, process))
+        
+        # Restart stale processes
+        for process_num, process in stale_processes:
+            logger.warning(f"Terminating and restarting stuck process {process_num}")
+            process.terminate()
+            process.join(timeout=10)  # Wait up to 10 seconds for graceful termination
+            if process.is_alive():
+                logger.warning(f"Force killing process {process_num}")
+                process.kill()
+            
+            # Start new process
+            logger.info(f"Restarting process {process_num}")
+            config = set_up_config()  # Get fresh config
+            new_process = Process(target=lambda pnum=process_num: asyncio.run(runner(pnum, config)))
+            processes[process_num] = new_process
+            new_process.start()
 
 
 if __name__ == "__main__":

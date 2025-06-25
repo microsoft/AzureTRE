@@ -1,8 +1,9 @@
 import json
-from unittest.mock import patch, AsyncMock, Mock
+from unittest.mock import patch, AsyncMock, Mock, mock_open
 import pytest
 from resource_processor.vmss_porter.runner import (
-    set_up_config, receive_message, invoke_porter_action, get_porter_outputs, check_runners, runner
+    set_up_config, receive_message, invoke_porter_action, get_porter_outputs, check_runners, runner,
+    update_heartbeat, check_process_heartbeat
 )
 from azure.servicebus.aio import ServiceBusClient
 from azure.servicebus import ServiceBusSessionFilter
@@ -59,7 +60,7 @@ async def test_runner(mock_receive_message, mock_service_bus_client, mock_defaul
 
     mock_default_credential.assert_called_once_with('test_msi_id')
     mock_service_bus_client.assert_called_once_with("test_namespace", mock_credential)
-    mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, config)
+    mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, config, 0)
 
 
 @pytest.mark.asyncio
@@ -74,7 +75,7 @@ async def test_runner_no_msi_id(mock_receive_message, mock_service_bus_client, m
 
     mock_default_credential.assert_called_once_with(None)
     mock_service_bus_client.assert_called_once_with("test_namespace", mock_credential)
-    mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, config)
+    mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, config, 0)
 
 
 @pytest.mark.asyncio
@@ -91,7 +92,7 @@ async def test_runner_exception(mock_receive_message, mock_service_bus_client, m
 
     mock_default_credential.assert_called_once_with('test_msi_id')
     mock_service_bus_client.assert_called_once_with("test_namespace", mock_credential)
-    mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, config)
+    mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, config, 0)
 
 
 @pytest.mark.asyncio
@@ -113,7 +114,7 @@ async def test_receive_message(mock_invoke_porter_action, mock_service_bus_clien
 
     config = {"resource_request_queue": "test_queue"}
 
-    await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
+    await receive_message(mock_service_bus_client_instance, config, 0, keep_running=run_once)
     mock_receiver.complete_message.assert_called_once()
     mock_service_bus_client_instance.get_queue_receiver.assert_called_once_with(queue_name="test_queue", max_wait_time=1, session_id=ServiceBusSessionFilter.NEXT_AVAILABLE)
 
@@ -138,7 +139,7 @@ async def test_receive_message_unknown_exception(mock_auto_lock_renewer, mock_se
     config = {"resource_request_queue": "test_queue"}
 
     with patch("resource_processor.vmss_porter.runner.receive_message", side_effect=Exception("Test Exception")):
-        await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
+        await receive_message(mock_service_bus_client_instance, config, 0, keep_running=run_once)
         mock_logger.exception.assert_any_call("Unknown exception. Will retry...")
 
 
@@ -282,3 +283,38 @@ async def test_check_runners(_):
 
     await check_runners(processes, mock_httpserver, keep_running=run_once)
     mock_httpserver.kill.assert_called_once()
+
+
+@patch("resource_processor.vmss_porter.runner.time.time", return_value=1234567890.0 + 100)  # 100 seconds later
+@patch("resource_processor.vmss_porter.runner.os.path.exists", return_value=True)
+@patch("resource_processor.vmss_porter.runner.open", new_callable=mock_open, read_data="1234567890.0")
+def test_check_process_heartbeat_recent(mock_file, mock_exists, mock_time):
+    """Test checking a recent heartbeat."""
+    result = check_process_heartbeat(0, max_age_seconds=300)
+    assert result is True
+
+
+@patch("resource_processor.vmss_porter.runner.time.time", return_value=1234567890.0 + 400)  # 400 seconds later
+@patch("resource_processor.vmss_porter.runner.os.path.exists", return_value=True)
+@patch("resource_processor.vmss_porter.runner.open", new_callable=mock_open, read_data="1234567890.0")
+def test_check_process_heartbeat_stale(mock_file, mock_exists, mock_time):
+    """Test checking a stale heartbeat."""
+    result = check_process_heartbeat(0, max_age_seconds=300)
+    assert result is False
+
+
+@patch("resource_processor.vmss_porter.runner.os.path.exists", return_value=False)
+def test_check_process_heartbeat_no_file(mock_exists):
+    """Test checking heartbeat when file doesn't exist."""
+    result = check_process_heartbeat(0)
+    assert result is False
+
+
+@patch("resource_processor.vmss_porter.runner.time.time", return_value=1234567890.0)
+@patch("resource_processor.vmss_porter.runner.open", new_callable=mock_open)
+def test_update_heartbeat(mock_file, mock_time):
+    """Test updating heartbeat."""
+    update_heartbeat(0)
+    mock_file.assert_called_once_with("/tmp/resource_processor_heartbeat_0.txt", 'w')
+    handle = mock_file.return_value.__enter__.return_value
+    handle.write.assert_called_once_with("1234567890.0")
