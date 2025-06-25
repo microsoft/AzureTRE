@@ -2,6 +2,7 @@ import asyncio
 import json
 import uuid
 import time
+import os
 
 from pydantic import ValidationError, parse_obj_as
 
@@ -25,7 +26,7 @@ from services.logging import logger, tracer
 
 class DeploymentStatusUpdater():
     def __init__(self):
-        pass
+        self.heartbeat_file = "/tmp/deployment_status_updater_heartbeat.txt"
 
     async def init_repos(self):
         self.operations_repo = await OperationRepository.create()
@@ -35,6 +36,35 @@ class DeploymentStatusUpdater():
 
     def run(self, *args, **kwargs):
         asyncio.run(self.receive_messages_with_restart_check())
+
+    def update_heartbeat(self):
+        """
+        Update heartbeat file for monitoring
+        """
+        try:
+            with open(self.heartbeat_file, 'w') as f:
+                f.write(str(time.time()))
+        except Exception as e:
+            logger.warning(f"Failed to update heartbeat: {e}")
+
+    def check_heartbeat(self, max_age_seconds: int = 300) -> bool:
+        """
+        Check if the heartbeat is recent enough
+        """
+        try:
+            if not os.path.exists(self.heartbeat_file):
+                return False
+            
+            with open(self.heartbeat_file, 'r') as f:
+                heartbeat_time = float(f.read().strip())
+            
+            current_time = time.time()
+            age = current_time - heartbeat_time
+            
+            return age <= max_age_seconds
+        except (ValueError, IOError) as e:
+            logger.warning(f"Failed to read heartbeat: {e}")
+            return False
 
     async def receive_messages_with_restart_check(self):
         """
@@ -48,6 +78,41 @@ class DeploymentStatusUpdater():
                 logger.exception(f"receive_messages stopped unexpectedly. Restarting... - {e}")
                 await asyncio.sleep(5)
 
+    async def supervisor_with_heartbeat_check(self):
+        """
+        Supervisor function that monitors the heartbeat and restarts if stuck.
+        """
+        task = None
+        while True:
+            try:
+                # Start the receive_messages task if not running
+                if task is None or task.done():
+                    if task and task.done():
+                        try:
+                            await task  # Check for any exception
+                        except Exception as e:
+                            logger.exception(f"receive_messages task failed: {e}")
+                    
+                    logger.info("Starting receive_messages task...")
+                    task = asyncio.create_task(self.receive_messages())
+
+                # Wait before checking heartbeat
+                await asyncio.sleep(60)  # Check every minute
+                
+                # Check if heartbeat is stale
+                if not self.check_heartbeat(max_age_seconds=300):  # 5 minutes max age
+                    logger.warning("Heartbeat is stale, restarting receive_messages task...")
+                    task.cancel()
+                    try:
+                        await task
+                    except asyncio.CancelledError:
+                        pass
+                    task = None
+                    
+            except Exception as e:
+                logger.exception(f"Supervisor error: {e}")
+                await asyncio.sleep(30)
+
     async def receive_messages(self):
         with tracer.start_as_current_span("deployment_status_receive_messages"):
             last_heartbeat_time = 0
@@ -57,6 +122,10 @@ class DeploymentStatusUpdater():
                 try:
                     current_time = time.time()
                     polling_count += 1
+                    
+                    # Update heartbeat file for supervisor monitoring
+                    self.update_heartbeat()
+                    
                     # Log a heartbeat message every 60 seconds to show the service is still working
                     if current_time - last_heartbeat_time >= 60:
                         logger.info(f"Queue reader heartbeat: Polled {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue {polling_count} times in the last minute")

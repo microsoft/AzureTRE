@@ -449,3 +449,46 @@ async def test_receive_messages_with_restart_check_restarts_on_exception(mock_lo
     mock_logger_info.assert_called_with("Starting the receive_messages loop...")
     mock_logger_exception.assert_called_once_with("receive_messages stopped unexpectedly. Restarting... - Test exception")
     mock_sleep.assert_called_once_with(5)
+
+
+@patch("service_bus.deployment_status_updater.time.time", return_value=1234567890.0 + 100)  # 100 seconds later
+@patch("service_bus.deployment_status_updater.os.path.exists", return_value=True)
+@patch("builtins.open", create=True)
+async def test_check_heartbeat_recent(mock_open, mock_exists, mock_time):
+    """Test checking a recent heartbeat."""
+    mock_open.return_value.__enter__.return_value.read.return_value = "1234567890.0"
+    
+    status_updater = DeploymentStatusUpdater()
+    result = status_updater.check_heartbeat(max_age_seconds=300)
+    assert result is True
+
+
+@patch("service_bus.deployment_status_updater.time.time", return_value=1234567890.0 + 400)  # 400 seconds later
+@patch("service_bus.deployment_status_updater.os.path.exists", return_value=True)
+@patch("builtins.open", create=True)
+async def test_check_heartbeat_stale(mock_open, mock_exists, mock_time):
+    """Test checking a stale heartbeat."""
+    mock_open.return_value.__enter__.return_value.read.return_value = "1234567890.0"
+    
+    status_updater = DeploymentStatusUpdater()
+    result = status_updater.check_heartbeat(max_age_seconds=300)
+    assert result is False
+
+
+@patch("service_bus.deployment_status_updater.os.path.exists", return_value=False)
+async def test_check_heartbeat_no_file(mock_exists):
+    """Test checking heartbeat when file doesn't exist."""
+    status_updater = DeploymentStatusUpdater()
+    result = status_updater.check_heartbeat()
+    assert result is False
+
+
+@patch("service_bus.deployment_status_updater.time.time", return_value=1234567890.0)
+@patch("builtins.open", create=True)
+async def test_update_heartbeat(mock_open, mock_time):
+    """Test updating heartbeat."""
+    status_updater = DeploymentStatusUpdater()
+    status_updater.update_heartbeat()
+    
+    mock_open.assert_called_once_with("/tmp/deployment_status_updater_heartbeat.txt", 'w')
+    mock_open.return_value.__enter__.return_value.write.assert_called_once_with("1234567890.0")

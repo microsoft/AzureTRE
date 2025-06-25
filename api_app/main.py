@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
     airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
 
-    asyncio.create_task(deploymentStatusUpdater.receive_messages_with_restart_check())
+    asyncio.create_task(deploymentStatusUpdater.supervisor_with_heartbeat_check())
     asyncio.create_task(airlockStatusUpdater.receive_messages())
     yield
 
