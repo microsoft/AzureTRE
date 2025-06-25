@@ -80,6 +80,11 @@ variable "auth_client_secret" {
   type        = string
   description = "Used to authenticate into the AAD Tenant to create the AAD App"
 }
+variable "enable_backup" {
+  type        = bool
+  default     = true
+  description = "Enable backups for the workspace"
+}
 
 # These variables are only passed in if you are not registering an AAD
 # application as they need passing back out
