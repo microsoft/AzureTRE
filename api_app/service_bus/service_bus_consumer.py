@@ -65,7 +65,7 @@ class ServiceBusConsumer:
                             logger.exception(f"receive_messages task failed: {e}")
 
                     logger.info("Starting receive_messages task...")
-                    task = asyncio.create_task(self.receive_messages())
+                    task = asyncio.create_task(self.receive_messages_with_restart_check())
 
                 # Wait before checking heartbeat
                 await asyncio.sleep(60)  # Check every minute

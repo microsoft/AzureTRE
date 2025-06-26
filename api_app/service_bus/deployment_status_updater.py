@@ -34,9 +34,6 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
         self.resource_template_repo = await ResourceTemplateRepository.create()
         self.resource_history_repo = await ResourceHistoryRepository.create()
 
-    def run(self, *args, **kwargs):
-        asyncio.run(self.receive_messages_with_restart_check())
-
     async def receive_messages(self):
         with tracer.start_as_current_span("deployment_status_receive_messages"):
             last_heartbeat_time = 0
