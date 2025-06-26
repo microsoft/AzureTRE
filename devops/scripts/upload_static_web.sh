@@ -18,7 +18,7 @@ fi
 # The storage account is protected by network rules
 # Use the standardized script with exit trap to ensure cleanup
 # shellcheck disable=SC1091
-source "$(dirname "${BASH_SOURCE[0]}")/mgmtstorage_enable_public_access.sh" \
+source "$(dirname "${BASH_SOURCE[0]}")/storage_enable_public_access.sh" \
   --storage-account-name "${STORAGE_ACCOUNT}" \
   --resource-group-name "${RESOURCE_GROUP_NAME}"
 

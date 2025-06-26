@@ -9,7 +9,7 @@ set -o nounset
 source "../../devops/scripts/kv_add_network_exception.sh"
 
 # shellcheck disable=SC1091
-source "../../devops/scripts/mgmtstorage_enable_public_access.sh"
+source "../../devops/scripts/storage_enable_public_access.sh"
 
 # This is where we can migrate any Terraform before we plan and apply
 # For instance deprecated Terraform resources

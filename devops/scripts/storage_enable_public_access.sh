@@ -32,7 +32,7 @@ function parse_arguments() {
       ;;
     *)
       echo "Unexpected argument: '$1'"
-      echo "Usage: mgmtstorage_enable_public_access.sh [--storage-account-name <name> --resource-group-name <rg>]"
+      echo "Usage: storage_enable_public_access.sh [--storage-account-name <name> --resource-group-name <rg>]"
       echo "If no arguments provided, uses TF_VAR_mgmt_resource_group_name and TF_VAR_mgmt_storage_account_name environment variables"
       exit 1
       ;;
