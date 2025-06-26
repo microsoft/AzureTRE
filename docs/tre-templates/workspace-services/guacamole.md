@@ -28,7 +28,7 @@ The TRE Authorization extension implements the following detailed authentication
 
 2. **Role Validation**: Validates that the token contains the required `roles` claim with at least one of the following roles:
    - `WorkspaceOwner`
-   - `WorkspaceResearcher` 
+   - `WorkspaceResearcher`
    - `AirlockManager`
 
 3. **VM Discovery**: Calls the TRE API (`/api/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources`) to get the list of VMs the authenticated user may access.
