@@ -161,8 +161,7 @@ resource "azurerm_monitor_private_link_scoped_service" "ampls_app_insights" {
   resource_group_name = var.resource_group_name
   scope_name          = azapi_resource.ampls_workspace.name
 
-  # linked_resource_id  = azurerm_application_insights.workspace.id
-  linked_resource_id = replace(azapi_resource.appinsights.output.id, "microsoft.insights", "Microsoft.Insights")
+  linked_resource_id = azapi_resource.appinsights.id
 }
 
 resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
@@ -220,8 +219,7 @@ resource "azurerm_monitor_smart_detector_alert_rule" "failure_anomalies" {
   resource_group_name = var.resource_group_name
   severity            = "Sev3"
   scope_resource_ids = [
-    # azurerm_application_insights.workspace.id
-    azapi_resource.appinsights.output.id
+    azapi_resource.appinsights.id
   ]
   frequency     = "PT1M"
   detector_type = "FailureAnomaliesDetector"

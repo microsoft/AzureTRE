@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "= 3.117.0"
+      version = "= 4.27.0"
     }
     azuread = {
       source  = "hashicorp/azuread"
@@ -30,6 +30,9 @@ provider "azurerm" {
       recover_soft_deleted_secrets      = true
       recover_soft_deleted_certificates = true
       recover_soft_deleted_keys         = true
+    }
+    resource_group {
+      prevent_deletion_if_contains_resources = false
     }
   }
   storage_use_azuread = true

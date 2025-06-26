@@ -80,6 +80,11 @@ variable "auth_client_secret" {
   type        = string
   description = "Used to authenticate into the AAD Tenant to create the AAD App"
 }
+variable "enable_backup" {
+  type        = bool
+  default     = true
+  description = "Enable backups for the workspace"
+}
 
 # These variables are only passed in if you are not registering an AAD
 # application as they need passing back out
@@ -151,6 +156,12 @@ variable "auto_grant_workspace_consent" {
   type        = bool
   default     = false
   description = "A boolean indicating if the admin consent should be auto granted to the workspace"
+}
+
+variable "enable_dns_policy" {
+  type        = bool
+  description = "Whether, or not, to add a DNS security policy with an allow-list. This is a preview feature that can be enabled to prevent data exfiltration via DNS."
+  default     = false
 }
 
 variable "enable_airlock_malware_scanning" {

@@ -65,4 +65,10 @@ locals {
   kv_network_default_action        = var.private_agent_subnet_id != "" ? "Deny" : "Allow" # Deny if private agent subnet is defined, Allow otherwise for public deployment. This will be changed to "Deny" later in trap kv_remove_network_exception
   kv_network_bypass                = "AzureServices"
   private_agent_subnet_id          = var.private_agent_subnet_id
+
+  # DNS Security Policy
+  dns_policy_allowed_domains = sort(distinct(concat(tolist(jsondecode(file("${path.module}/allowed-dns.json"))), var.allowed_dns)))
+  # Maximum of 100 domains per rule, so split into sub-arrays
+  dns_policy_num_rules = floor((length(local.dns_policy_allowed_domains) + 100) / 100)
+  dns_policy_azapi_ver = "2023-07-01-preview"
 }

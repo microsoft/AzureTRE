@@ -25,6 +25,7 @@ module "network" {
   tre_resource_id        = var.tre_resource_id
   tre_workspace_tags     = local.tre_workspace_tags
   arm_environment        = var.arm_environment
+  enable_dns_policy      = var.enable_dns_policy
 }
 
 module "aad" {
@@ -91,5 +92,24 @@ module "azure_monitor" {
   depends_on = [
     module.network,
     module.airlock
+  ]
+}
+
+module "backup" {
+  count                 = var.enable_backup ? 1 : 0
+  source                = "./backup"
+  tre_id                = var.tre_id
+  tre_resource_id       = var.tre_resource_id
+  location              = var.location
+  resource_group_name   = azurerm_resource_group.ws.name
+  tre_workspace_tags    = local.tre_workspace_tags
+  enable_cmk_encryption = var.enable_cmk_encryption
+
+  depends_on = [
+    azurerm_storage_account.stg,
+    azurerm_private_endpoint.stgfilepe,
+    azurerm_private_endpoint.stgblobpe,
+    azurerm_private_endpoint.stgdfspe,
+    azapi_resource.shared_storage
   ]
 }

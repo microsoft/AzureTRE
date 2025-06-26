@@ -6,6 +6,9 @@
 # Note: Ensure you "source" this script, or else the EXIT trap won't fire at the right time.
 #
 
+# shellcheck disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/bash_trap_helper.sh"
+
 # Global variable to capture underlying error
 LAST_PUBLIC_ACCESS_ERROR=""
 
@@ -113,7 +116,7 @@ fi
 }
 
 # Setup the trap to disable public access on exit
-trap mgmtacr_disable_public_access EXIT
+add_exit_trap "mgmtacr_disable_public_access"
 
 # Enable public access for deployment
 mgmtacr_enable_public_access "$@" 
