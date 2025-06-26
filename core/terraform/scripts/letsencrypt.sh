@@ -19,10 +19,6 @@ fi
 # already exists and, if not, create it. The firewall rules also need lifting so that the
 # certificate can be uploaded.
 #
-# Use the sa_add_network_exception.sh script to enable public access and ensure cleanup happens
-# even if this script fails. This approach opens the storage to all addresses rather than
-# specific IP addresses, which is more reliable and eliminates the need for LETSENCRYPT_DROP_ALL_RULES.
-
 # shellcheck disable=SC1091
 source "$script_dir/../../../devops/scripts/sa_add_network_exception.sh" \
   --storage-account-name "${STORAGE_ACCOUNT}" \
@@ -125,5 +121,3 @@ else
         --cert-password "${CERT_PASSWORD}"
 fi
 
-# Storage account network rules are automatically cleaned up via exit trap
-# in sa_add_network_exception.sh - no manual cleanup needed
