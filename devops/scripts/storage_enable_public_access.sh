@@ -2,7 +2,7 @@
 
 #
 # Add an exception to a storage account by making it public for deployment, and remove it on script exit.
-# 
+#
 # Usage: source storage_enable_public_access.sh --storage-account-name <name> --resource-group-name <rg>
 #
 # Note: Ensure you "source" this script, or else the EXIT trap won't fire at the right time.
@@ -35,7 +35,7 @@ function parse_arguments() {
       ;;
     esac
 
-    if [[ -z "$2" ]]; then
+    if [[ -z "${2:-}" ]]; then
       # if no more args then stop processing
       break
     fi
@@ -51,7 +51,7 @@ function initialize_names() {
     echo "Error: --storage-account-name argument is required" >&2
     exit 1
   fi
-  
+
   if [[ -z "${RESOURCE_GROUP_NAME:-}" ]]; then
     echo "Error: --resource-group-name argument is required" >&2
     exit 1
