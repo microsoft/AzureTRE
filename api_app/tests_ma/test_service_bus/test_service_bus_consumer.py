@@ -55,6 +55,15 @@ async def test_check_heartbeat_stale(mock_open, mock_exists):
 
 
 @pytest.mark.asyncio
+@patch("service_bus.service_bus_consumer.os.path.exists", return_value=False)
+async def test_check_heartbeat_no_file(mock_exists):
+    """Test checking heartbeat when file doesn't exist."""
+    consumer = MockConsumer()
+    result = consumer.check_heartbeat()
+    assert result is False
+
+
+@pytest.mark.asyncio
 @patch("service_bus.service_bus_consumer.os.getpid", return_value=12345)
 @patch("service_bus.service_bus_consumer.time.time", return_value=1234567890.0)
 @patch("builtins.open", create=True)
