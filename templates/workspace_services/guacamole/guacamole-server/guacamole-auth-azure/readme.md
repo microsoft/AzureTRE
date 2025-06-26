@@ -6,11 +6,31 @@ Read more [here](https://guacamole.apache.org/doc/gug/guacamole-ext.html).
 
 ## TRE Authorization extension
 
-This extension works in the following manner:
+This extension provides secure authentication and authorization for VM access in Azure TRE. It works in the following manner:
 
-1. receives a token from the OpenId extension
-2. The extension call the project api to get the user's vm list
-3. When connect request is made, the extension call the project api to get the password to the selected vm and inject it into the Guacamole configurations.
+### Authentication Flow
+
+1. **Token Reception**: Receives and validates an OIDC token from the OAuth2 Proxy extension after the user has authenticated via Azure Entra ID.
+
+2. **Role Validation**: Validates that the token contains the required `roles` claim with at least one of the following roles:
+   - `WorkspaceOwner`
+   - `WorkspaceResearcher` 
+   - `AirlockManager`
+
+3. **VM Discovery**: Calls the TRE API (`/api/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources`) to get the list of VMs the authenticated user may access.
+
+4. **Credential Injection**: When a connection request is made to a specific VM, the extension:
+   - Retrieves VM credentials from Azure Key Vault using the managed identity
+   - Extracts the username and password from the secret named `{hostname}-admin-credentials`
+   - Transparently injects these credentials into the Guacamole connection configuration
+   - The user never sees or handles these credentials directly
+
+### Security Features
+
+- **Zero-Trust Access**: Users never have direct access to VM credentials
+- **API-Mediated Authorization**: All access decisions are made through the TRE API
+- **External User Support**: Enables secure VM access for guest users who may not have Azure AD accounts on the VM OS
+- **Credential Rotation**: VM credentials are managed centrally in Azure Key Vault and can be rotated without user impact
 
 ## OAuth2 Proxy
 
