@@ -10,9 +10,19 @@ if [[ -z ${STORAGE_ACCOUNT:-} ]]; then
   exit 1
 fi
 
+if [[ -z ${RESOURCE_GROUP_NAME:-} ]]; then
+  echo "RESOURCE_GROUP_NAME not set"
+  exit 1
+fi
+
 # The storage account is protected by network rules
-echo "Enabling public access to storage account..."
-az storage account update --default-action Allow --name "${STORAGE_ACCOUNT}"
+# Use the standardized script with exit trap to ensure cleanup
+# shellcheck disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/mgmtstorage_enable_public_access.sh" \
+  --storage-account-name "${STORAGE_ACCOUNT}" \
+  --resource-group-name "${RESOURCE_GROUP_NAME}"
+
+echo "Waiting for network rule to take effect"
 sleep 30
 
 echo "Uploading ${CONTENT_DIR} to static web storage"
@@ -27,5 +37,4 @@ az storage blob upload-batch \
     --only-show-errors \
     --overwrite
 
-echo "Disabling public access to storage account..."
-az storage account update --default-action Deny --name "${STORAGE_ACCOUNT}"
+# No need for manual cleanup - exit trap handles it automatically

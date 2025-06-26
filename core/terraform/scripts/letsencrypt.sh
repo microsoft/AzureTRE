@@ -20,7 +20,7 @@ fi
 # certificate can be uploaded.
 #
 # shellcheck disable=SC1091
-source "$script_dir/../../../devops/scripts/sa_add_network_exception.sh" \
+source "$script_dir/../../../devops/scripts/mgmtstorage_enable_public_access.sh" \
   --storage-account-name "${STORAGE_ACCOUNT}" \
   --resource-group-name "${RESOURCE_GROUP_NAME}"
 
