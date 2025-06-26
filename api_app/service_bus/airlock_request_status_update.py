@@ -16,12 +16,13 @@ from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.airlock_operations import StepResultStatusUpdateMessage
 from core import config, credentials
 from resources import strings
+from service_bus.service_bus_consumer import ServiceBusConsumer
 
 
-class AirlockStatusUpdater():
+class AirlockStatusUpdater(ServiceBusConsumer):
 
     def __init__(self):
-        pass
+        super().__init__("airlock_status_updater")
 
     async def init_repos(self):
         self.airlock_request_repo = await AirlockRequestRepository.create()
@@ -36,9 +37,13 @@ class AirlockStatusUpdater():
                 try:
                     current_time = time.time()
                     polling_count += 1
+
+                    # Update heartbeat file for supervisor monitoring
+                    self.update_heartbeat()
+
                     # Log a heartbeat message every 60 seconds to show the service is still working
                     if current_time - last_heartbeat_time >= 60:
-                        logger.info(f"Queue reader heartbeat: Polled {config.SERVICE_BUS_STEP_RESULT_QUEUE} queue {polling_count} times in the last minute")
+                        logger.info(f"{config.SERVICE_BUS_STEP_RESULT_QUEUE} queue polled {polling_count} times in the last minute")
                         last_heartbeat_time = current_time
                         polling_count = 0
 

@@ -452,7 +452,7 @@ async def test_receive_messages_with_restart_check_restarts_on_exception(mock_lo
 
 
 @patch("service_bus.deployment_status_updater.time.time", return_value=1234567890.0 + 100)  # 100 seconds later
-@patch("service_bus.deployment_status_updater.os.path.exists", return_value=True)
+@patch("service_bus.service_bus_consumer.os.path.exists", return_value=True)
 @patch("builtins.open", create=True)
 async def test_check_heartbeat_recent(mock_open, mock_exists, mock_time):
     """Test checking a recent heartbeat."""
@@ -463,8 +463,8 @@ async def test_check_heartbeat_recent(mock_open, mock_exists, mock_time):
     assert result is True
 
 
-@patch("service_bus.deployment_status_updater.time.time", return_value=1234567890.0 + 400)  # 400 seconds later
-@patch("service_bus.deployment_status_updater.os.path.exists", return_value=True)
+@patch("service_bus.service_bus_consumer.time.time", return_value=1234567890.0 + 400)  # 400 seconds later
+@patch("service_bus.service_bus_consumer.os.path.exists", return_value=True)
 @patch("builtins.open", create=True)
 async def test_check_heartbeat_stale(mock_open, mock_exists, mock_time):
     """Test checking a stale heartbeat."""
@@ -475,7 +475,7 @@ async def test_check_heartbeat_stale(mock_open, mock_exists, mock_time):
     assert result is False
 
 
-@patch("service_bus.deployment_status_updater.os.path.exists", return_value=False)
+@patch("service_bus.service_bus_consumer.os.path.exists", return_value=False)
 async def test_check_heartbeat_no_file(mock_exists):
     """Test checking heartbeat when file doesn't exist."""
     status_updater = DeploymentStatusUpdater()
@@ -483,12 +483,15 @@ async def test_check_heartbeat_no_file(mock_exists):
     assert result is False
 
 
-@patch("service_bus.deployment_status_updater.time.time", return_value=1234567890.0)
+@patch("service_bus.service_bus_consumer.time.time", return_value=1234567890.0)
 @patch("builtins.open", create=True)
 async def test_update_heartbeat(mock_open, mock_time):
     """Test updating heartbeat."""
     status_updater = DeploymentStatusUpdater()
     status_updater.update_heartbeat()
 
-    mock_open.assert_called_once_with("/tmp/deployment_status_updater_heartbeat.txt", 'w')
+    # Using the worker_id in the assertion
+    import tempfile
+    expected_path = f"{tempfile.gettempdir()}/deployment_status_updater_heartbeat_{status_updater.worker_id}.txt"
+    mock_open.assert_called_once_with(expected_path, 'w')
     mock_open.return_value.__enter__.return_value.write.assert_called_once_with("1234567890.0")
