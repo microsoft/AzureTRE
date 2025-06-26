@@ -1,10 +1,12 @@
 # Guacamole Service bundle
 
+The Guacamole workspace service is a remote desktop gateway service that uses Apache Guacamole to access Virtual Machines (VMs) within Azure TRE workspaces. The service acts as a web-based remote desktop proxy, allowing users to connect to VMs through a web browser without requiring client software installation.
+
 See: [https://guacamole.apache.org/](https://guacamole.apache.org/)
 
 ## Authentication to VMs via Apache Guacamole in Azure TRE
 
-The Guacamole workspace service provides secure remote access to Virtual Machines (VMs) through a sophisticated authentication and authorization process that works seamlessly for both internal and external users:
+The Guacamole workspace service uses a multi-step authentication and authorization process to broker access to Virtual Machines (VMs):
 
 - **Initial Authentication**: Users authenticate to Guacamole using OIDC (OpenID Connect) via Azure Entra ID (Azure AD), typically mediated by OAuth2 Proxy.
 
@@ -14,9 +16,9 @@ The Guacamole workspace service provides secure remote access to Virtual Machine
 
 - **Credential Injection**: When the user connects to a VM, the extension fetches the VM credentials (username and password) from the TRE API (sourced from Azure Key Vault) and transparently injects these into the Guacamole connection configuration. The user never sees these credentials directly.
 
-- **Secure Access**: This approach allows both internal and external (guest) users to access VMs securely, regardless of whether native Azure AD login to the VM OS is supported.
+- **Secure Access**: This approach works for both internal and external (guest) users, regardless of whether native Azure AD login to the VM OS is configured.
 
-All access is brokered via the TRE API and local VM credentials are managed securely, enabling VM access for users that may not have direct accounts on the VM OS or direct Azure AD login capability.
+All access is brokered via the TRE API and local VM credentials are managed through Azure Key Vault, supporting users who may not have direct accounts on the VM OS or direct Azure AD login capability.
 
 ### Detailed Authentication Flow
 
@@ -41,14 +43,13 @@ The TRE Authorization extension implements the following detailed authentication
 
 - **Zero-Trust Access**: Users never have direct access to VM credentials
 - **API-Mediated Authorization**: All access decisions are made through the TRE API
-- **External User Support**: Enables secure VM access for guest users who may not have Azure AD accounts on the VM OS
+- **External User Support**: Functions with guest users who may not have Azure AD accounts on the VM OS
 - **Credential Rotation**: VM credentials are managed centrally in Azure Key Vault and can be rotated without user impact
 
 ### OAuth2 Proxy Integration
 
-The authentication system uses [OAuth2_Proxy](https://github.com/oauth2-proxy/oauth2-proxy) which is a reverse proxy and static file server that provides authentication using Providers to validate accounts by email, domain or group.
+The authentication system uses [OAuth2_Proxy](https://github.com/oauth2-proxy/oauth2-proxy) which is a reverse proxy and static file server that handles authentication using Providers to validate accounts by email, domain or group.
 
-- The current version in use is **7.4.0**
 - The main configuration is controlled by the runtime arguments in the OAuth2 Proxy service
 - The Guacamole auth extension uses the generic provider (OIDC) since the Azure provider has known issues
 - Important configuration includes:
