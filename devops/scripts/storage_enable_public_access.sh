@@ -3,9 +3,7 @@
 #
 # Add an exception to a storage account by making it public for deployment, and remove it on script exit.
 # 
-# This script can be used in two ways:
-# 1. For TRE management storage account (backward compatibility): Set environment variables TF_VAR_mgmt_resource_group_name and TF_VAR_mgmt_storage_account_name
-# 2. For any storage account: Pass --storage-account-name and --resource-group-name arguments
+# Usage: source storage_enable_public_access.sh --storage-account-name <name> --resource-group-name <rg>
 #
 # Note: Ensure you "source" this script, or else the EXIT trap won't fire at the right time.
 #
@@ -32,8 +30,7 @@ function parse_arguments() {
       ;;
     *)
       echo "Unexpected argument: '$1'"
-      echo "Usage: storage_enable_public_access.sh [--storage-account-name <name> --resource-group-name <rg>]"
-      echo "If no arguments provided, uses TF_VAR_mgmt_resource_group_name and TF_VAR_mgmt_storage_account_name environment variables"
+      echo "Usage: storage_enable_public_access.sh --storage-account-name <name> --resource-group-name <rg>"
       exit 1
       ;;
     esac
@@ -49,13 +46,15 @@ function parse_arguments() {
 
 # Initialize storage account and resource group names
 function initialize_names() {
-  # If command line arguments weren't provided, use environment variables (backward compatibility)
+  # Require both arguments to be provided
   if [[ -z "${STORAGE_ACCOUNT_NAME:-}" ]]; then
-    STORAGE_ACCOUNT_NAME=$(get_mgmt_storage_account_name)
+    echo "Error: --storage-account-name argument is required" >&2
+    exit 1
   fi
   
   if [[ -z "${RESOURCE_GROUP_NAME:-}" ]]; then
-    RESOURCE_GROUP_NAME=$(get_mgmt_resource_group_name)
+    echo "Error: --resource-group-name argument is required" >&2
+    exit 1
   fi
 }
 
@@ -117,22 +116,6 @@ function storage_disable_public_access() {
 
   echo -e "Error: Could not disable public access for $STORAGE_ACCOUNT_NAME after 10 attempts.\n"
   exit 1
-}
-
-function get_mgmt_resource_group_name() {
-  if [[ -z "${TF_VAR_mgmt_resource_group_name:-}" ]]; then
-    echo -e "Error: TF_VAR_mgmt_resource_group_name is not set\nExiting...\n" >&2
-    exit 1
-  fi
-  echo "$TF_VAR_mgmt_resource_group_name"
-}
-
-function get_mgmt_storage_account_name() {
-  if [[ -z "${TF_VAR_mgmt_storage_account_name:-}" ]]; then
-    echo -e "Error: TF_VAR_mgmt_storage_account_name is not set\nExiting...\n" >&2
-    exit 1
-  fi
-  echo "$TF_VAR_mgmt_storage_account_name"
 }
 
 function does_storage_account_exist() {
