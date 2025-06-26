@@ -12,9 +12,9 @@
 source "$(dirname "${BASH_SOURCE[0]}")/bash_trap_helper.sh"
 
 # Global variables
+STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME=""
+STORAGE_ENABLE_PUBLIC_ACCESS_RESOURCE_GROUP_NAME=""
 LAST_PUBLIC_ACCESS_ERROR=""
-STORAGE_ACCOUNT_NAME=""
-RESOURCE_GROUP_NAME=""
 
 # Parse command line arguments
 function parse_arguments() {
@@ -22,11 +22,11 @@ function parse_arguments() {
     case $1 in
     --storage-account-name)
       shift
-      STORAGE_ACCOUNT_NAME=$1
+      STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME=$1
       ;;
     --resource-group-name)
       shift
-      RESOURCE_GROUP_NAME=$1
+      STORAGE_ENABLE_PUBLIC_ACCESS_RESOURCE_GROUP_NAME=$1
       ;;
     *)
       echo "Unexpected argument: '$1'"
@@ -47,75 +47,77 @@ function parse_arguments() {
 # Initialize storage account and resource group names
 function initialize_names() {
   # Require both arguments to be provided
-  if [[ -z "${STORAGE_ACCOUNT_NAME:-}" ]]; then
+  if [[ -z "${STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME:-}" ]]; then
     echo "Error: --storage-account-name argument is required" >&2
     exit 1
   fi
 
-  if [[ -z "${RESOURCE_GROUP_NAME:-}" ]]; then
+  if [[ -z "${STORAGE_ENABLE_PUBLIC_ACCESS_RESOURCE_GROUP_NAME:-}" ]]; then
     echo "Error: --resource-group-name argument is required" >&2
     exit 1
   fi
 }
 
-# Prevent the script from running multiple times within the current shell
-if [ -n "${STORAGE_PUBLIC_ACCESS_SCRIPT_GUARD+x}" ]; then
-  echo -e "\nEnabling public access on storage account script already executed in current shell, not running again.\n"
-  return 0
-fi
-export STORAGE_PUBLIC_ACCESS_SCRIPT_GUARD=true # export so guard is visible in sub shells
-
 function storage_enable_public_access() {
+  echo -e "\nEnabling public access on storage account"
   # Check that the storage account exists before making changes
-  if ! does_storage_account_exist "$STORAGE_ACCOUNT_NAME"; then
-    echo -e "Error: Storage account $STORAGE_ACCOUNT_NAME does not exist.\n" >&2
+  if ! does_storage_account_exist "$STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME"; then
+    echo -e "Error: Storage account $STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME does not exist.\n" >&2
     exit 1
   fi
 
-  echo -e "\nEnabling public access on storage account $STORAGE_ACCOUNT_NAME"
+  echo -e "\nEnabling public access on storage account $STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME"
 
   # Enable public network access with explicit default action allow
-  az storage account update --resource-group "$RESOURCE_GROUP_NAME" --name "$STORAGE_ACCOUNT_NAME" --public-network-access Enabled --default-action Allow --output none
+  az storage account update --resource-group "$STORAGE_ENABLE_PUBLIC_ACCESS_RESOURCE_GROUP_NAME" --name "$STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME" --public-network-access Enabled --default-action Allow --output none
 
   for ATTEMPT in {1..10}; do
-    if is_public_access_enabled "$STORAGE_ACCOUNT_NAME"; then
-      echo -e " Storage account $STORAGE_ACCOUNT_NAME is now publicly accessible\n"
+    if is_public_access_enabled "$STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME"; then
+      echo -e " Storage account $STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME is now publicly accessible\n"
       return
     fi
 
-    echo " Unable to confirm public access on storage account $STORAGE_ACCOUNT_NAME after $ATTEMPT/10. Waiting for update to take effect..."
+    echo " Unable to confirm public access on storage account $STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME after $ATTEMPT/10. Waiting for update to take effect..."
     sleep 10
   done
 
-  echo -e "Error: Could not enable public access for $STORAGE_ACCOUNT_NAME after 10 attempts.\n"
+  echo -e "Error: Could not enable public access for $STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME after 10 attempts.\n"
   echo -e "$LAST_PUBLIC_ACCESS_ERROR\n"
   exit 1
 }
 
-function storage_disable_public_access() {
+function storage_disable_public_access_for_account() {
+  local ACCOUNT_NAME="$1"
+  local RESOURCE_GROUP="$2"
+
+  echo -e "\nDisabling public access on storage account"
   # Check that the storage account exists before making changes
-  if ! does_storage_account_exist "$STORAGE_ACCOUNT_NAME"; then
-    echo -e "Error: Storage account $STORAGE_ACCOUNT_NAME does not exist.\n" >&2
-    exit 1
+  if ! does_storage_account_exist "$ACCOUNT_NAME"; then
+    echo -e "Error: Storage account $ACCOUNT_NAME does not exist.\n" >&2
+    return 1
   fi
 
-  echo -e "\nDisabling public access on storage account $STORAGE_ACCOUNT_NAME"
+  echo -e "\nStorage account name: $ACCOUNT_NAME"
+  echo -e "\nResource group name: $RESOURCE_GROUP"
 
   # Disable public network access with explicit default action deny
-  az storage account update --resource-group "$RESOURCE_GROUP_NAME" --name "$STORAGE_ACCOUNT_NAME" --public-network-access Disabled --default-action Deny --output none
+  az storage account update --resource-group "$RESOURCE_GROUP" --name "$ACCOUNT_NAME" --public-network-access Disabled --default-action Deny --output none
 
   for ATTEMPT in {1..10}; do
-    if ! is_public_access_enabled "$STORAGE_ACCOUNT_NAME"; then
+    if ! is_public_access_enabled "$ACCOUNT_NAME"; then
       echo -e " Public access has been disabled successfully\n"
+      # Clean up the guard variable for this storage account
+      STORAGE_GUARD_VAR="STORAGE_PUBLIC_ACCESS_SCRIPT_GUARD_${ACCOUNT_NAME}"
+      unset "$STORAGE_GUARD_VAR"
       return
     fi
 
-    echo " Unable to confirm public access is disabled on storage account $STORAGE_ACCOUNT_NAME after $ATTEMPT/10. Waiting for update to take effect..."
+    echo " Unable to confirm public access is disabled on storage account $ACCOUNT_NAME after $ATTEMPT/10. Waiting for update to take effect..."
     sleep 10
   done
 
-  echo -e "Error: Could not disable public access for $STORAGE_ACCOUNT_NAME after 10 attempts.\n"
-  exit 1
+  echo -e "Error: Could not disable public access for $ACCOUNT_NAME after 10 attempts.\n"
+  return 1
 }
 
 function does_storage_account_exist() {
@@ -150,8 +152,17 @@ function is_public_access_enabled() {
 parse_arguments "$@"
 initialize_names
 
-# Setup the trap to disable public access on exit
-add_exit_trap "storage_disable_public_access"
+# Prevent the script from running multiple times for the same storage account within the current shell
+STORAGE_GUARD_VAR="STORAGE_PUBLIC_ACCESS_SCRIPT_GUARD_${STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME}"
+if [ -n "${!STORAGE_GUARD_VAR+x}" ]; then
+  echo -e "\nEnabling public access on storage account $STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME already executed in current shell, not running again.\n"
+  return 0
+fi
+export "$STORAGE_GUARD_VAR"=true # export so guard is visible in sub shells
+
+# Setup the trap to disable public access on exit (only on first run)
+# Capture the current values to avoid conflicts with subsequent calls
+add_exit_trap "storage_disable_public_access_for_account '$STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME' '$STORAGE_ENABLE_PUBLIC_ACCESS_RESOURCE_GROUP_NAME'"
 
 # Enable public access for deployment
 storage_enable_public_access
