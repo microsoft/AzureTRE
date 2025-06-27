@@ -4,7 +4,8 @@ import pytest_asyncio
 import time
 from resources import strings
 from services.airlock import validate_user_allowed_to_access_storage_account, get_required_permission, \
-    validate_request_status, cancel_request, delete_review_user_resource, check_email_exists
+    validate_request_status, cancel_request, delete_review_user_resource, check_email_exists, \
+    upload_airlock_file, list_airlock_files, download_airlock_file
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReview, AirlockReviewDecision, AirlockActions, AirlockReviewUserResource
 from tests_ma.test_api.conftest import create_workspace_owner_user, create_workspace_researcher_user, get_required_roles
 from mock import AsyncMock, patch, MagicMock
@@ -549,3 +550,73 @@ async def test_delete_review_user_resource_disables_the_resource_before_deletion
                                       resource_history_repo=AsyncMock(),
                                       user=create_test_user())
     disable_user_resource.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.get_airlock_blob_service_client")
+async def test_upload_airlock_file_validates_user_access(mock_blob_client):
+    # Test that uploading a file validates user access
+    user = create_workspace_researcher_user()
+    request = sample_airlock_request()
+    workspace = sample_workspace()
+    
+    # Mock the blob client
+    mock_blob_service = AsyncMock()
+    mock_blob_client.return_value = mock_blob_service
+    mock_blob_service.get_blob_client.return_value.upload_blob = AsyncMock()
+    
+    from services.airlock import upload_airlock_file
+    
+    # Should work for a researcher with draft request
+    result = await upload_airlock_file(b"test content", "test.txt", request, workspace, user)
+    
+    assert result["message"] == "File uploaded successfully"
+    assert result["fileName"] == "test.txt"
+    assert result["size"] == 12
+
+
+@pytest.mark.asyncio  
+@patch("services.airlock.get_airlock_blob_service_client")
+async def test_upload_airlock_file_rejects_non_draft_requests(mock_blob_client):
+    # Test that uploading fails for non-draft requests
+    user = create_workspace_researcher_user()
+    request = sample_airlock_request(status=AirlockRequestStatus.Submitted)
+    workspace = sample_workspace()
+    
+    from services.airlock import upload_airlock_file
+    
+    with pytest.raises(HTTPException) as ex:
+        await upload_airlock_file(b"test content", "test.txt", request, workspace, user)
+    
+    assert ex.value.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.get_airlock_blob_service_client")  
+async def test_list_airlock_files_returns_file_metadata(mock_blob_client):
+    # Test that listing files returns metadata
+    user = create_workspace_researcher_user()
+    request = sample_airlock_request()
+    workspace = sample_workspace()
+    
+    # Mock blob data
+    mock_blob = MagicMock()
+    mock_blob.name = "test.txt"
+    mock_blob.size = 1024
+    mock_blob.last_modified = MagicMock()
+    mock_blob.last_modified.timestamp.return_value = 1672531200
+    
+    mock_blob_service = AsyncMock()
+    mock_blob_client.return_value = mock_blob_service
+    mock_container_client = AsyncMock()
+    mock_blob_service.get_container_client.return_value = mock_container_client
+    mock_container_client.list_blobs.return_value = [mock_blob]
+    
+    from services.airlock import list_airlock_files
+    
+    files = await list_airlock_files(request, workspace, user)
+    
+    assert len(files) == 1
+    assert files[0]["name"] == "test.txt"
+    assert files[0]["size"] == 1024
+    assert files[0]["lastModified"] == 1672531200
