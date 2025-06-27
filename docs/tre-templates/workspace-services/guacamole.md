@@ -15,10 +15,10 @@ The Guacamole workspace service uses a multi-step authentication and authorizati
 - **VM Discovery**: The extension queries the TRE API (`/api/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources`) to fetch the list of VMs the authenticated user may access based on their permissions.
 
 - **Credential Injection**: When a connection request is made to a specific VM, the extension:
-   - Retrieves VM credentials from Azure Key Vault using the managed identity
-   - Extracts the username and password from the secret named `{hostname}-admin-credentials`
-   - Transparently injects these credentials into the Guacamole connection configuration
-   - The user never sees or handles these credentials directly
+  - Retrieves VM credentials from Azure Key Vault using the managed identity
+  - Extracts the username and password from the secret named `{hostname}-admin-credentials`
+  - Transparently injects these credentials into the Guacamole connection configuration
+  - The user never sees or handles these credentials directly
 
 
 - **Secure Access**: This approach works for both internal and external (guest) users, regardless of whether native Azure AD login to the VM OS is configured.
