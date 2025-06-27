@@ -184,16 +184,17 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
               <Stack.Item grow={5} style={headerStyles}>
                 {props.resource.properties.display_name}
               </Stack.Item>
+
               {headerBadge}
             </Stack>
-
+            {props.resource.resourceType === ResourceType.UserResource && getOwnerDisplayName() && (<Stack>
+              <Stack.Item grow={3} style={userResourceOwner}>
+                <Text variant="small" style={{ color: DefaultPalette.neutralSecondary, marginTop: 5 }}>
+                  {getOwnerDisplayName()}
+                </Text>
+              </Stack.Item></Stack>)}
             <Stack.Item grow={3} style={bodyStyles}>
               <Text>{props.resource.properties.description}</Text>
-              {props.resource.resourceType === ResourceType.UserResource && getOwnerDisplayName() && (
-                <Text variant="small" style={{ color: DefaultPalette.neutralSecondary, marginTop: 5 }}>
-                  Owner: {getOwnerDisplayName()}
-                </Text>
-              )}
             </Stack.Item>
 
             <Stack horizontal style={footerStyles}>
@@ -293,18 +294,18 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
                     {props.resource.user.name}
                   </Stack.Item>
                 </Stack>
-                {props.resource.resourceType === ResourceType.UserResource && 
-                 (props.resource as UserResource).ownerId && 
-                 (props.resource as UserResource).ownerId.trim() && (
-                  <Stack horizontal tokens={{ childrenGap: 5 }}>
-                    <Stack.Item style={calloutKeyStyles}>
-                      Owner ID:
-                    </Stack.Item>
-                    <Stack.Item style={calloutValueStyles}>
-                      {getOwnerDisplayName()}
-                    </Stack.Item>
-                  </Stack>
-                )}
+                {props.resource.resourceType === ResourceType.UserResource &&
+                  (props.resource as UserResource).ownerId &&
+                  (props.resource as UserResource).ownerId.trim() && (
+                    <Stack horizontal tokens={{ childrenGap: 5 }}>
+                      <Stack.Item style={calloutKeyStyles}>
+                        Owner ID:
+                      </Stack.Item>
+                      <Stack.Item style={calloutValueStyles}>
+                        {(props.resource as UserResource).ownerId}
+                      </Stack.Item>
+                    </Stack>
+                  )}
                 <Stack horizontal tokens={{ childrenGap: 5 }}>
                   <Stack.Item style={calloutKeyStyles}>
                     Last Updated:
@@ -355,6 +356,11 @@ const headerStyles: React.CSSProperties = {
 
 const bodyStyles: React.CSSProperties = {
   padding: "10px 10px",
+  minHeight: "40px",
+};
+
+const userResourceOwner: React.CSSProperties = {
+  padding: "0px 10px",
   minHeight: "40px",
 };
 
