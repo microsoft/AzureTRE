@@ -47,12 +47,6 @@
       }
     },
     {
-      "name": "firewall_sku",
-      "source": {
-        "env": "FIREWALL_SKU"
-      }
-    },
-    {
       "name": "microsoft_graph_fqdn",
       "source": {
         "env": "MICROSOFT_GRAPH_FQDN"

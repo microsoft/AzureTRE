@@ -81,7 +81,7 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
 def extract_properties(msg: func.ServiceBusMessage) -> RequestProperties:
     try:
         body = msg.get_body().decode('utf-8')
-        logging.info('Python ServiceBus queue trigger processed message: %s', body)
+        logging.debug('Python ServiceBus queue trigger processed message: %s', body)
         json_body = json.loads(body)
         result = parse_obj_as(RequestProperties, json_body["data"])
         if not result:
