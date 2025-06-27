@@ -21,7 +21,7 @@ const createMockWorkspace = (
   availableUpgrades: [],
   deploymentStatus: "deployed",
   updatedWhen,
-  user: { id: "user1", email: "user1@test.com" },
+  user: { id: "user1", email: "user1@test.com", name: "User One", roleAssignments: [], roles: [] },
   history: [],
   _etag: "etag1",
   properties: {
@@ -171,7 +171,7 @@ describe("WorkspaceList Business Logic", () => {
     it("filters then sorts correctly", () => {
       const workspacesWithWorkspace = filterWorkspaces(mockWorkspaces, "Workspace");
       const sortedFiltered = sortWorkspacesByName(workspacesWithWorkspace, true);
-      
+
       expect(sortedFiltered).toHaveLength(3);
       expect(sortedFiltered[0].properties.display_name).toBe("Alpha Workspace");
       expect(sortedFiltered[1].properties.display_name).toBe("Beta Workspace");
