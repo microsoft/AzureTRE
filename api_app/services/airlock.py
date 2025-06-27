@@ -86,7 +86,7 @@ def validate_request_status(airlock_request: AirlockRequest):
                                   AirlockRequestStatus.RejectionInProgress,
                                   AirlockRequestStatus.BlockingInProgress]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_IN_PROGRESS)
-    elif airlock_request.status == AirlockRequestStatus.Cancelled:
+    elif airlock_request.status in [AirlockRequestStatus.Cancelled, AirlockRequestStatus.Revoked]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_IS_CANCELED)
     elif airlock_request.status in [AirlockRequestStatus.Failed,
                                     AirlockRequestStatus.Rejected,
@@ -366,6 +366,7 @@ def get_allowed_actions(request: AirlockRequest, user: User, airlock_request_rep
     can_review_request = airlock_request_repo.validate_status_update(request.status, AirlockRequestStatus.ApprovalInProgress)
     can_cancel_request = airlock_request_repo.validate_status_update(request.status, AirlockRequestStatus.Cancelled)
     can_submit_request = airlock_request_repo.validate_status_update(request.status, AirlockRequestStatus.Submitted)
+    can_revoke_request = airlock_request_repo.validate_status_update(request.status, AirlockRequestStatus.Revoked)
 
     if can_review_request and "AirlockManager" in user.roles:
         allowed_actions.append(AirlockActions.Review)
@@ -375,6 +376,9 @@ def get_allowed_actions(request: AirlockRequest, user: User, airlock_request_rep
 
     if can_submit_request and ("WorkspaceOwner" in user.roles or "WorkspaceResearcher" in user.roles):
         allowed_actions.append(AirlockActions.Submit)
+
+    if can_revoke_request and "AirlockManager" in user.roles:
+        allowed_actions.append(AirlockActions.Revoke)
 
     return allowed_actions
 
@@ -467,6 +471,25 @@ async def cancel_request(airlock_request: AirlockRequest, user: User, workspace:
                          resource_template_repo: ResourceTemplateRepository, operations_repo: OperationRepository, resource_history_repo: ResourceHistoryRepository) -> AirlockRequest:
     updated_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, updated_by=user, workspace=workspace, new_status=AirlockRequestStatus.Cancelled)
     await delete_all_review_user_resources(airlock_request, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, resource_history_repo, user)
+    return updated_request
+
+
+async def revoke_request(airlock_request: AirlockRequest, user: User, workspace: Workspace,
+                         airlock_request_repo: AirlockRequestRepository, revocation_reason: str) -> AirlockRequest:
+    """
+    Revoke an approved airlock request. This prevents new download links from being generated.
+    """
+    # Create a review entry for the revocation
+    revoke_review = airlock_request_repo.create_airlock_revoke_review_item(revocation_reason, user)
+    
+    updated_request = await update_and_publish_event_airlock_request(
+        airlock_request=airlock_request, 
+        airlock_request_repo=airlock_request_repo, 
+        updated_by=user, 
+        workspace=workspace, 
+        new_status=AirlockRequestStatus.Revoked,
+        airlock_review=revoke_review
+    )
     return updated_request
 
 

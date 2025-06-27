@@ -117,3 +117,14 @@ class AirlockReviewInCreate(BaseModel):
                 "decisionExplanation": "the reason why this request was approved/rejected"
             }
         }
+
+
+class AirlockRevokeInCreate(BaseModel):
+    reason: str = Field("Revocation Reason", title="Reason for revoking the approved request")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "reason": "Request was approved in error or security concerns identified"
+            }
+        }
