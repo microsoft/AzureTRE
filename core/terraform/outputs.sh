@@ -2,7 +2,10 @@
 set -e
 
 # shellcheck disable=SC1091
-source ../../devops/scripts/mgmtstorage_enable_public_access.sh
+# shellcheck disable=SC2154
+source ../../devops/scripts/storage_enable_public_access.sh \
+  --storage-account-name "${TF_VAR_mgmt_storage_account_name}" \
+  --resource-group-name "${TF_VAR_mgmt_resource_group_name}"
 
 if [ ! -f ../tre_output.json ] || [ ! -s ../tre_output.json ]; then
   # Connect to the remote backend of Terraform
