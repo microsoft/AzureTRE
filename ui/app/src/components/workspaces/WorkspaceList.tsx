@@ -203,10 +203,19 @@ export const WorkspaceList: React.FunctionComponent<WorkspaceListProps> = ({
     },
   ];
 
+  const getSortDisplayText = () => {
+    const sortLabel = sortBy === "name" ? "Workspace Name" :
+      sortBy === "id" ? "Workspace ID" :
+        sortBy === "created" ? "Creation Date" :
+          "Workspace Cost";
+    const direction = sortAscending ? "↑" : "↓";
+    return `Sort: ${sortLabel} ${direction}`;
+  };
+
   const farCommandBarItems: ICommandBarItemProps[] = [
     {
       key: "sort",
-      text: "Sort",
+      text: getSortDisplayText(),
       iconProps: { iconName: "Sort" },
       onClick: handleSortButtonClick,
     },
@@ -228,23 +237,6 @@ export const WorkspaceList: React.FunctionComponent<WorkspaceListProps> = ({
             farItems={farCommandBarItems}
             ariaLabel="Workspace list controls"
           />
-        </Stack.Item>
-        <Stack.Item>
-          {/* Display current sort info */}
-          <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 10 }}>
-            <Text variant="small" styles={{ root: { color: theme.palette.neutralSecondary } }}>
-              Sorted by {sortBy === "name" ? "Workspace Name" : 
-                        sortBy === "id" ? "Workspace ID" : 
-                        sortBy === "created" ? "Creation Date" : 
-                        "Workspace Cost"} 
-              ({sortAscending ? "ascending" : "descending"})
-            </Text>
-            {searchFilter && (
-              <Text variant="small" styles={{ root: { color: theme.palette.neutralSecondary } }}>
-                • Filtered by "{searchFilter}"
-              </Text>
-            )}
-          </Stack>
         </Stack.Item>
         <Stack.Item>
           <ResourceCardList
