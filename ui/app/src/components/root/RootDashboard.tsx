@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { Workspace } from "../../models/workspace";
 
-import { ResourceCardList } from "../shared/ResourceCardList";
+import { WorkspaceList } from "../workspaces/WorkspaceList";
 import { Resource } from "../../models/resource";
 import { PrimaryButton, Stack } from "@fluentui/react";
 import { ResourceType } from "../../models/resourceType";
@@ -51,15 +51,11 @@ export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (
           </Stack>
         </Stack.Item>
         <Stack.Item>
-          <ResourceCardList
-            resources={props.workspaces}
-            updateResource={(r: Resource) =>
-              props.updateWorkspace(r as Workspace)
-            }
-            removeResource={(r: Resource) =>
-              props.removeWorkspace(r as Workspace)
-            }
-            emptyText="No workspaces to display. Create one to get started."
+          <WorkspaceList
+            workspaces={props.workspaces}
+            updateWorkspace={props.updateWorkspace}
+            removeWorkspace={props.removeWorkspace}
+            addWorkspace={props.addWorkspace}
           />
         </Stack.Item>
       </Stack>
