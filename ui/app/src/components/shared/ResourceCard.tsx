@@ -374,7 +374,7 @@ const calloutKeyStyles: React.CSSProperties = {
 };
 
 const calloutValueStyles: React.CSSProperties = {
-  width: 180,
+  maxWidth: 400,
 };
 
 const styles = mergeStyleSets({
@@ -383,8 +383,9 @@ const styles = mergeStyleSets({
     margin: 10,
   },
   callout: {
-    width: 350,
     padding: "20px 24px",
+    maxWidth: 600,
+    minWidth: 220,
   },
   title: {
     marginBottom: 12,
