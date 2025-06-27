@@ -10,9 +10,11 @@ import {
   ResultType,
 } from "../../hooks/useAuthApiCall";
 import { ApiEndpoint } from "../../models/apiEndpoints";
+import { ResourceType } from "../../models/resourceType";
 
 interface CostsTagProps {
   resourceId: string;
+  resourceType?: ResourceType;
 }
 
 export const CostsTag: React.FunctionComponent<CostsTagProps> = (
@@ -75,6 +77,21 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (
     workspaceCtx.workspace.id,
   ]);
 
+  // Generate tooltip content based on resource type and cost availability
+  const getTooltipContent = () => {
+    if (!formattedCost) {
+      return "Cost data not yet available";
+    }
+
+    let baseMessage = "Month-to-date costs";
+    
+    if (props.resourceType === ResourceType.Workspace) {
+      baseMessage += " (includes all workspace services and user resources)";
+    }
+    
+    return baseMessage;
+  };
+
   const costBadge = (
     <Stack.Item style={{ maxHeight: 18 }} className="tre-badge">
       {loadingState === LoadingState.Loading ? (
@@ -82,9 +99,11 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (
       ) : (
         <>
           {formattedCost ? (
-            formattedCost
+            <TooltipHost content={getTooltipContent()}>
+              {formattedCost}
+            </TooltipHost>
           ) : (
-            <TooltipHost content="Cost data not yet available">
+            <TooltipHost content={getTooltipContent()}>
               <Icon iconName="Clock" />
             </TooltipHost>
           )}

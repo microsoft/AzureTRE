@@ -13,6 +13,24 @@ Cost APIs are based on [Azure Cost Management](https://docs.microsoft.com/en-us
 | GET | /api/costs | Get overall costs of a TRE Instance | TRE Admin | Core services, Shared services, workspaces |
 | GET | /api/workspace/{workspace\_id}/costs | Get workspace costs | TRE Admin, Workspace Owner | Workspace, workspace services, user resources |
 
+## Cost Labels in UI
+
+The Azure TRE user interface displays cost labels on resource cards to provide quick cost visibility:
+
+### Time Period
+- **Default behavior**: Cost labels show **month-to-date** costs when no custom date range is specified
+- **Custom date ranges**: Can be specified via API parameters (from_date, to_date) but UI currently shows default month-to-date
+
+### Cost Aggregation
+- **Workspace costs**: Include the total costs for the workspace itself **plus all sub-resources** (workspace services and user resources)
+- **Workspace service costs**: Include the service itself plus any associated user resources  
+- **User resource costs**: Show only the specific user resource costs
+- **Shared service costs**: Show only the specific shared service costs
+
+### Data Availability
+- Cost data is typically available within 8-24 hours from Azure Cost Management
+- If cost data is not yet available, a clock icon is displayed with a tooltip
+
 
 ## Get overall cost report
 
