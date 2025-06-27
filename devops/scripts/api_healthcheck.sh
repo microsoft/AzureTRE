@@ -1,7 +1,9 @@
 #!/bin/bash
 # This script checks if the api server endpoint /api/health is available(response code 200) and then verifies that the response contains all OK
 # Both verifications have a retry(4 retries, including call above makes total 5 calls).
-set -e
+set -o errexit
+set -o pipefail
+set -o nounset
 
 # Get the directory that this script is in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
