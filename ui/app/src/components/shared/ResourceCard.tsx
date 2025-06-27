@@ -204,18 +204,6 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
                 <Stack.Item grow={3} style={userResourceOwner}>
                   <Text variant="small" style={{ color: DefaultPalette.neutralSecondary, marginTop: 5 }}>
                     {getOwnerDisplayName()}
-                    {getOwnerEmail() && (
-                      <>
-                        {" "}
-                        <a 
-                          href={`mailto:${getOwnerEmail()}`}
-                          style={{ color: DefaultPalette.themePrimary, textDecoration: "none" }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          ({getOwnerEmail()})
-                        </a>
-                      </>
-                    )}
                   </Text>
                 </Stack.Item>
               </Stack>
@@ -343,7 +331,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
                             {getOwnerEmail() && (
                               <>
                                 {" "}
-                                <a 
+                                <a
                                   href={`mailto:${getOwnerEmail()}`}
                                   style={{ color: DefaultPalette.themePrimary, textDecoration: "none" }}
                                 >
