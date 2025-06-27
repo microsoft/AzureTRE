@@ -85,7 +85,3 @@ fi
 echo -e "\e[34m»»» 🔨 \e[96mAzure details from logged on user \e[0m"
 echo -e "\e[34m»»»   • \e[96mSubscription: \e[33m$SUB_NAME\e[0m"
 echo -e "\e[34m»»»   • \e[96mTenant:       \e[33m$TENANT_ID\e[0m\n"
-
-# This shouldn't be here but since other scripts don't use this option we must reset it.
-# For tracking: https://github.com/microsoft/AzureTRE/issues/1672
-set +o nounset

@@ -1,4 +1,8 @@
 #!/bin/bash
+set -o errexit
+set -o pipefail
+set -o nounset
+
 VERSION=${1:-"16"}
 CMD=node
 NAME="Node.js"

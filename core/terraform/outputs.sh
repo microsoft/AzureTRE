@@ -1,5 +1,7 @@
 #!/bin/bash
-set -e
+set -o errexit
+set -o pipefail
+set -o nounset
 
 # shellcheck disable=SC1091
 source ../../devops/scripts/mgmtstorage_enable_public_access.sh

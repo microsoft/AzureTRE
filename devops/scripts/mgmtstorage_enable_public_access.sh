@@ -1,4 +1,7 @@
 #!/bin/bash
+set -o errexit
+set -o pipefail
+set -o nounset
 
 #
 # Add an exception to the TRE management storage account by making it public for deployment, and remove it on script exit.

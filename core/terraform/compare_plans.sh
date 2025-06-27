@@ -1,5 +1,7 @@
 #!/bin/bash
-set -e
+set -o errexit
+set -o pipefail
+set -o nounset
 
 # if no arguments are provided, return usage function
 if [[ $# -ne 2 || -z $1 || -z $2 ]]; then

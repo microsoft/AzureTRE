@@ -1,5 +1,7 @@
 #!/bin/bash
-set -e
+set -o errexit
+set -o pipefail
+set -o nounset
 
 # This script is used to upgrade terraform providers in a specified directory
 
