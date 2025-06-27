@@ -10,6 +10,7 @@ export enum ApiEndpoint {
   AirlockCancel = "cancel",
   AirlockReview = "review",
   AirlockCreateReviewResource = "review-user-resource",
+  AirlockFiles = "files",
   WorkspaceTemplates = "workspace-templates",
   WorkspaceServiceTemplates = "workspace-service-templates",
   UserResourceTemplates = "user-resource-templates",

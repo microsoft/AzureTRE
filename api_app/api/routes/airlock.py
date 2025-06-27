@@ -1,6 +1,7 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status as status_code, Response
+from fastapi import APIRouter, Depends, HTTPException, status as status_code, Response, File, UploadFile, Form
+from fastapi.responses import StreamingResponse
 
 from jsonschema.exceptions import ValidationError
 from api.helpers import get_repository
@@ -18,6 +19,7 @@ from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestTy
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestWithAllowedUserActions, \
     AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate
+from models.schemas.airlock_file import AirlockFileListResponse, AirlockFileUploadResponse
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
     get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user
@@ -25,8 +27,9 @@ from services.authentication import get_current_workspace_owner_or_researcher_us
 from .resource_helpers import construct_location_header
 
 from services.airlock import create_review_vm, review_airlock_request, get_airlock_container_link, get_allowed_actions, save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, \
-    enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace, cancel_request
+    enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace, cancel_request, upload_airlock_file, list_airlock_files, download_airlock_file
 from services.logging import logger
+import io
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 
@@ -184,3 +187,70 @@ async def get_airlock_container_link_method(workspace=Depends(get_deployed_works
                                             user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)) -> AirlockRequestTokenInResponse:
     container_url = get_airlock_container_link(airlock_request, user, workspace)
     return AirlockRequestTokenInResponse(containerUrl=container_url)
+
+
+@airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/files",
+                               status_code=status_code.HTTP_201_CREATED, response_model=AirlockFileUploadResponse,
+                               name="upload_airlock_file",
+                               dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
+async def upload_file(
+        file: UploadFile = File(...),
+        workspace=Depends(get_deployed_workspace_by_id_from_path),
+        airlock_request=Depends(get_airlock_request_by_id_from_path),
+        user=Depends(get_current_workspace_owner_or_researcher_user)) -> AirlockFileUploadResponse:
+    """Upload a file to the airlock request container."""
+    try:
+        file_content = await file.read()
+        result = await upload_airlock_file(file_content, file.filename, airlock_request, workspace, user)
+        return AirlockFileUploadResponse(**result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Failed to upload file {file.filename}")
+        raise HTTPException(status_code=status_code.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@airlock_workspace_router.get("/workspaces/{workspace_id}/requests/{airlock_request_id}/files",
+                              status_code=status_code.HTTP_200_OK, response_model=AirlockFileListResponse,
+                              name="list_airlock_files",
+                              dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
+async def list_files(
+        workspace=Depends(get_deployed_workspace_by_id_from_path),
+        airlock_request=Depends(get_airlock_request_by_id_from_path),
+        user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)) -> AirlockFileListResponse:
+    """List files in the airlock request container."""
+    try:
+        files = await list_airlock_files(airlock_request, workspace, user)
+        return AirlockFileListResponse(files=files)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Failed to list files for airlock request {airlock_request.id}")
+        raise HTTPException(status_code=status_code.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@airlock_workspace_router.get("/workspaces/{workspace_id}/requests/{airlock_request_id}/files/{file_name}",
+                              status_code=status_code.HTTP_200_OK,
+                              name="download_airlock_file",
+                              dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
+async def download_file(
+        file_name: str,
+        workspace=Depends(get_deployed_workspace_by_id_from_path),
+        airlock_request=Depends(get_airlock_request_by_id_from_path),
+        user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)):
+    """Download a file from the airlock request container."""
+    try:
+        file_content = await download_airlock_file(file_name, airlock_request, workspace, user)
+        
+        # Create a streaming response for the file download
+        file_stream = io.BytesIO(file_content)
+        return StreamingResponse(
+            io.BytesIO(file_content), 
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": f"attachment; filename={file_name}"}
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Failed to download file {file_name} from airlock request {airlock_request.id}")
+        raise HTTPException(status_code=status_code.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

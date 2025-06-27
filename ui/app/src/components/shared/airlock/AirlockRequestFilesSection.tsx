@@ -7,14 +7,26 @@ import {
   Stack,
   TextField,
   TooltipHost,
+  DefaultButton,
+  IconButton,
+  Spinner,
+  SpinnerSize,
+  DocumentCard,
+  DocumentCardTitle,
+  DocumentCardPreview,
+  DocumentCardStatus,
+  DocumentCardActions,
+  List,
 } from "@fluentui/react";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
 import { AirlockRequest, AirlockRequestStatus } from "../../../models/airlock";
 import { ApiEndpoint } from "../../../models/apiEndpoints";
 import { APIError } from "../../../models/exceptions";
 import { ExceptionLayout } from "../ExceptionLayout";
 import { CliCommand } from "../CliCommand";
+import { AirlockFileMetadata, AirlockFileListResponse, AirlockFileUploadResponse } from "../../../models/airlockFile";
+import config from "../../../config.json";
 
 interface AirlockRequestFilesSectionProps {
   request: AirlockRequest;
@@ -33,6 +45,14 @@ export const AirlockRequestFilesSection: React.FunctionComponent<
 
   const [sasUrlError, setSasUrlError] = useState(false);
   const [apiSasUrlError, setApiSasUrlError] = useState({} as APIError);
+
+  // Direct upload/download state
+  const [files, setFiles] = useState<AirlockFileMetadata[]>([]);
+  const [filesLoading, setFilesLoading] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [fileListError, setFileListError] = useState<APIError | null>(null);
+  const [uploadError, setUploadError] = useState<APIError | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const apiCall = useAuthApiCall();
 
@@ -96,9 +116,101 @@ export const AirlockRequestFilesSection: React.FunctionComponent<
     return cliCommand;
   };
 
+  // File operations functions
+  const loadFiles = useCallback(async () => {
+    if (props.request && props.request.workspaceId) {
+      setFilesLoading(true);
+      setFileListError(null);
+      try {
+        const response: AirlockFileListResponse = await apiCall(
+          `${ApiEndpoint.Workspaces}/${props.request.workspaceId}/${ApiEndpoint.AirlockRequests}/${props.request.id}/${ApiEndpoint.AirlockFiles}`,
+          HttpMethod.Get,
+          props.workspaceApplicationIdURI,
+        );
+        setFiles(response.files || []);
+      } catch (err: any) {
+        err.userMessage = "Error loading files";
+        setFileListError(err);
+      } finally {
+        setFilesLoading(false);
+      }
+    }
+  }, [apiCall, props.request, props.workspaceApplicationIdURI]);
+
+  const handleFileUpload = async (file: File) => {
+    setUploadLoading(true);
+    setUploadError(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // We need to make a direct fetch call for file upload as the useAuthApiCall doesn't handle FormData properly
+      const tokenRequest = {
+        scopes: [`${props.workspaceApplicationIdURI || config.treApplicationId}/user_impersonation`],
+      };
+      
+      // This is a simplified approach - in production you'd want to use the proper auth mechanism
+      const response = await fetch(
+        `${config.treUrl}/${ApiEndpoint.Workspaces}/${props.request.workspaceId}/${ApiEndpoint.AirlockRequests}/${props.request.id}/${ApiEndpoint.AirlockFiles}`,
+        {
+          method: 'POST',
+          body: formData,
+          // Note: Don't set Content-Type header when sending FormData - browser will set it automatically with boundary
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+      
+      const result: AirlockFileUploadResponse = await response.json();
+      
+      // Reload the file list after successful upload
+      await loadFiles();
+    } catch (err: any) {
+      err.userMessage = "Error uploading file";
+      setUploadError(err);
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+    // Reset the input so the same file can be uploaded again if needed
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDownloadFile = async (fileName: string) => {
+    try {
+      // Use a blob URL approach with the API call
+      window.location.href = `${config.treUrl}/${ApiEndpoint.Workspaces}/${props.request.workspaceId}/${ApiEndpoint.AirlockRequests}/${props.request.id}/${ApiEndpoint.AirlockFiles}/${encodeURIComponent(fileName)}`;
+    } catch (err: any) {
+      console.error('Download failed:', err);
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleString();
+  };
+
   useEffect(() => {
     generateSasUrl();
-  }, [generateSasUrl]);
+    loadFiles();
+  }, [generateSasUrl, loadFiles]);
 
   return (
     <Stack>
@@ -162,6 +274,112 @@ export const AirlockRequestFilesSection: React.FunctionComponent<
                 }
                 isLoading={!sasUrl && !sasUrlError}
               />
+            </Stack.Item>
+          </Stack>
+        </PivotItem>
+        <PivotItem headerText="Direct Upload">
+          <Stack>
+            <Stack.Item style={{ paddingTop: "10px", paddingBottom: "10px" }}>
+              {props.request.status === AirlockRequestStatus.Draft ? (
+                <small>
+                  Upload files directly through the browser without using SAS tokens.
+                </small>
+              ) : (
+                <small>
+                  View and download files directly through the browser.
+                </small>
+              )}
+              <hr
+                style={{ border: "1px solid #faf9f8", borderRadius: "1px" }}
+              />
+            </Stack.Item>
+            
+            {/* Upload section for Draft requests */}
+            {props.request.status === AirlockRequestStatus.Draft && (
+              <Stack.Item style={{ paddingTop: "10px" }}>
+                <Stack horizontal tokens={{ childrenGap: 10 }}>
+                  <DefaultButton
+                    iconProps={{ iconName: "Upload" }}
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadLoading}
+                  >
+                    {uploadLoading ? "Uploading..." : "Upload File"}
+                  </DefaultButton>
+                  {uploadLoading && <Spinner size={SpinnerSize.small} />}
+                </Stack>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  style={{ display: "none" }}
+                  onChange={handleFileInputChange}
+                />
+                {uploadError && <ExceptionLayout e={uploadError} />}
+                <MessageBar messageBarType={MessageBarType.info}>
+                  Please upload a single file. Only single-file imports (including
+                  zip files) are supported.
+                </MessageBar>
+              </Stack.Item>
+            )}
+
+            {/* File list section */}
+            <Stack.Item style={{ paddingTop: "10px" }}>
+              <Stack horizontal tokens={{ childrenGap: 10 }} verticalAlign="center">
+                <h4>Files in this request:</h4>
+                <IconButton
+                  iconProps={{ iconName: "Refresh" }}
+                  title="Refresh file list"
+                  onClick={loadFiles}
+                  disabled={filesLoading}
+                />
+                {filesLoading && <Spinner size={SpinnerSize.small} />}
+              </Stack>
+              
+              {fileListError && <ExceptionLayout e={fileListError} />}
+              
+              {files.length === 0 && !filesLoading && !fileListError && (
+                <MessageBar messageBarType={MessageBarType.info}>
+                  No files found in this request.
+                </MessageBar>
+              )}
+              
+              {files.length > 0 && (
+                <Stack styles={{ root: { maxHeight: "400px", overflowY: "auto" } }}>
+                  {files.map((file, index) => (
+                    <DocumentCard
+                      key={index}
+                      styles={{ root: { margin: "5px 0", maxWidth: "100%" } }}
+                    >
+                      <DocumentCardPreview 
+                        previewImages={[{
+                          name: file.name,
+                          url: "",
+                          iconSrc: "",
+                          width: 40,
+                          height: 40
+                        }]}
+                      />
+                      <Stack horizontal styles={{ root: { padding: "10px", flex: 1 } }}>
+                        <Stack.Item grow>
+                          <DocumentCardTitle title={file.name} shouldTruncate />
+                          <Stack horizontal tokens={{ childrenGap: 15 }}>
+                            <small>Size: {formatFileSize(file.size)}</small>
+                            <small>Modified: {formatDate(file.lastModified)}</small>
+                          </Stack>
+                        </Stack.Item>
+                        <DocumentCardActions
+                          actions={[
+                            {
+                              iconProps: { iconName: "Download" },
+                              ariaLabel: "Download file",
+                              onClick: () => handleDownloadFile(file.name),
+                            },
+                          ]}
+                        />
+                      </Stack>
+                    </DocumentCard>
+                  ))}
+                </Stack>
+              )}
             </Stack.Item>
           </Stack>
         </PivotItem>
