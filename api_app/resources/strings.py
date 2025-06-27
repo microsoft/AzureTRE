@@ -243,6 +243,7 @@ AIRLOCK_ACTION_REVOKE = "revoke"
 # Airlock Review Decisions
 AIRLOCK_REVIEW_DECISION_APPROVED = "approved"
 AIRLOCK_REVIEW_DECISION_REJECTED = "rejected"
+AIRLOCK_REVIEW_DECISION_REVOKED = "revoked"
 
 # Deployments
 RESOURCE_STATUS_AWAITING_DEPLOYMENT_MESSAGE = "This resource is waiting to be deployed"

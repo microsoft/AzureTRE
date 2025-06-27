@@ -45,6 +45,7 @@ class AirlockFile(AzureTREModel):
 class AirlockReviewDecision(StrEnum):
     Approved = strings.AIRLOCK_REVIEW_DECISION_APPROVED
     Rejected = strings.AIRLOCK_REVIEW_DECISION_REJECTED
+    Revoked = strings.AIRLOCK_REVIEW_DECISION_REVOKED
 
 
 class AirlockReview(AzureTREModel):

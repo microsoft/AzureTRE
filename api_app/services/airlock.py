@@ -475,16 +475,20 @@ async def cancel_request(airlock_request: AirlockRequest, user: User, workspace:
 
 
 async def revoke_request(airlock_request: AirlockRequest, user: User, workspace: Workspace,
-                         airlock_request_repo: AirlockRequestRepository) -> AirlockRequest:
+                         airlock_request_repo: AirlockRequestRepository, revocation_reason: str) -> AirlockRequest:
     """
-    Revoke an approved airlock request. This invalidates any existing download links.
+    Revoke an approved airlock request. This prevents new download links from being generated.
     """
+    # Create a review entry for the revocation
+    revoke_review = airlock_request_repo.create_airlock_revoke_review_item(revocation_reason, user)
+    
     updated_request = await update_and_publish_event_airlock_request(
         airlock_request=airlock_request, 
         airlock_request_repo=airlock_request_repo, 
         updated_by=user, 
         workspace=workspace, 
-        new_status=AirlockRequestStatus.Revoked
+        new_status=AirlockRequestStatus.Revoked,
+        airlock_review=revoke_review
     )
     return updated_request
 

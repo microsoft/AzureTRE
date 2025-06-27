@@ -24,6 +24,7 @@ import {
   Spinner,
   SpinnerSize,
   Stack,
+  TextField,
 } from "@fluentui/react";
 import moment from "moment";
 import React, { useCallback, useContext, useEffect, useState } from "react";
@@ -62,6 +63,7 @@ export const AirlockViewRequest: React.FunctionComponent<
   const [hideRevokeDialog, setHideRevokeDialog] = useState(true);
   const [revoking, setRevoking] = useState(false);
   const [revokeError, setRevokeError] = useState(false);
+  const [revokeReason, setRevokeReason] = useState("");
   const [apiError, setApiError] = useState({} as APIError);
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
@@ -142,7 +144,7 @@ export const AirlockViewRequest: React.FunctionComponent<
 
   // Revoke an airlock request
   const revokeRequest = useCallback(async () => {
-    if (request && request.workspaceId) {
+    if (request && request.workspaceId && revokeReason.trim()) {
       setRevoking(true);
       setRevokeError(false);
       try {
@@ -150,9 +152,11 @@ export const AirlockViewRequest: React.FunctionComponent<
           `${ApiEndpoint.Workspaces}/${request.workspaceId}/${ApiEndpoint.AirlockRequests}/${request.id}/${ApiEndpoint.AirlockRevoke}`,
           HttpMethod.Post,
           workspaceCtx.workspaceApplicationIdURI,
+          { reason: revokeReason }
         );
         props.onUpdateRequest(response.airlockRequest);
         setHideRevokeDialog(true);
+        setRevokeReason("");
       } catch (err: any) {
         err.userMessage = "Error revoking airlock request";
         setApiError(err);
@@ -160,7 +164,7 @@ export const AirlockViewRequest: React.FunctionComponent<
       }
       setRevoking(false);
     }
-  }, [apiCall, request, props, workspaceCtx.workspaceApplicationIdURI]);
+  }, [apiCall, request, props, workspaceCtx.workspaceApplicationIdURI, revokeReason]);
 
   // Render the panel footer along with buttons that the signed-in user is allowed to see according to the API
   const renderFooter = useCallback(() => {
@@ -222,6 +226,7 @@ export const AirlockViewRequest: React.FunctionComponent<
               <DefaultButton
                 onClick={() => {
                   setRevokeError(false);
+                  setRevokeReason("");
                   setHideRevokeDialog(false);
                 }}
                 styles={destructiveButtonStyles}
@@ -434,6 +439,17 @@ export const AirlockViewRequest: React.FunctionComponent<
                               Rejected
                             </>
                           )}
+                          {review.reviewDecision ===
+                            AirlockReviewDecision.Revoked && (
+                            <>
+                              <FontIcon
+                                aria-label="Revoked"
+                                iconName="StatusCircleBlock2"
+                                className={revokedIcon}
+                              />
+                              Revoked
+                            </>
+                          )}
                         </div>
                       </DocumentCard>
                     );
@@ -526,10 +542,11 @@ export const AirlockViewRequest: React.FunctionComponent<
           onDismiss={() => {
             setHideRevokeDialog(true);
             setRevokeError(false);
+            setRevokeReason("");
           }}
           dialogContentProps={{
             title: "Revoke Airlock Request?",
-            subText: "Are you sure you want to revoke this approved airlock request? This will invalidate any existing download links.",
+            subText: "Are you sure you want to revoke this approved airlock request? This will prevent new download links from being generated, but existing links will remain valid until they expire.",
           }}
         >
           {revokeError && <ExceptionLayout e={apiError} />}
@@ -541,20 +558,33 @@ export const AirlockViewRequest: React.FunctionComponent<
               size={SpinnerSize.large}
             />
           ) : (
-            <DialogFooter>
-              <DefaultButton
-                onClick={revokeRequest}
-                text="Revoke Request"
-                styles={destructiveButtonStyles}
+            <>
+              <TextField
+                label="Reason for revocation (required)"
+                multiline
+                rows={3}
+                value={revokeReason}
+                onChange={(_, newValue) => setRevokeReason(newValue || "")}
+                placeholder="Please provide a reason for revoking this approved request (e.g., approved in error, security concerns identified)"
+                required
               />
-              <DefaultButton
-                onClick={() => {
-                  setHideRevokeDialog(true);
-                  setRevokeError(false);
-                }}
-                text="Back"
-              />
-            </DialogFooter>
+              <DialogFooter>
+                <DefaultButton
+                  onClick={revokeRequest}
+                  text="Revoke Request"
+                  styles={destructiveButtonStyles}
+                  disabled={!revokeReason.trim()}
+                />
+                <DefaultButton
+                  onClick={() => {
+                    setHideRevokeDialog(true);
+                    setRevokeError(false);
+                    setRevokeReason("");
+                  }}
+                  text="Cancel"
+                />
+              </DialogFooter>
+            </>
           )}
         </Dialog>
         <Modal
@@ -604,6 +634,12 @@ const approvedIcon = mergeStyles({
 
 const rejectedIcon = mergeStyles({
   color: palette.red,
+  marginRight: 5,
+  fontSize: 12,
+});
+
+const revokedIcon = mergeStyles({
+  color: palette.orange,
   marginRight: 5,
   fontSize: 12,
 });

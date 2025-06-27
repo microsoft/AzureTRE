@@ -526,23 +526,32 @@ async def test_revoke_request_calls_update_with_revoked_status(update_mock, airl
     user = create_test_user()
     workspace = sample_workspace()
     airlock_request = sample_airlock_request(status=AirlockRequestStatus.Approved)
+    revocation_reason = "Test revocation reason"
     
     update_mock.return_value = sample_airlock_request(status=AirlockRequestStatus.Revoked)
+    airlock_request_repo_mock.create_airlock_revoke_review_item.return_value = sample_airlock_review()
     
     result = await revoke_request(
         airlock_request=airlock_request,
         user=user,
         workspace=workspace,
-        airlock_request_repo=airlock_request_repo_mock
+        airlock_request_repo=airlock_request_repo_mock,
+        revocation_reason=revocation_reason
     )
     
-    update_mock.assert_called_once_with(
-        airlock_request=airlock_request,
-        airlock_request_repo=airlock_request_repo_mock,
-        updated_by=user,
-        workspace=workspace,
-        new_status=AirlockRequestStatus.Revoked
-    )
+    # Verify that a revoke review is created
+    airlock_request_repo_mock.create_airlock_revoke_review_item.assert_called_once_with(revocation_reason, user)
+    
+    # Verify update is called with review and status
+    update_mock.assert_called_once()
+    args, kwargs = update_mock.call_args
+    assert kwargs['airlock_request'] == airlock_request
+    assert kwargs['airlock_request_repo'] == airlock_request_repo_mock
+    assert kwargs['updated_by'] == user
+    assert kwargs['workspace'] == workspace
+    assert kwargs['new_status'] == AirlockRequestStatus.Revoked
+    assert kwargs['airlock_review'] is not None
+    
     assert result.status == AirlockRequestStatus.Revoked
 
 

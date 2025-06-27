@@ -69,6 +69,7 @@ export const AirlockFilesLinkValidStatus = [
 export enum AirlockReviewDecision {
   Approved = "approved",
   Rejected = "rejected",
+  Revoked = "revoked",
 }
 
 export interface AirlockReview {

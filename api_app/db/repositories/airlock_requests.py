@@ -225,6 +225,19 @@ class AirlockRequestRepository(BaseRepository):
 
         return airlock_review
 
+    def create_airlock_revoke_review_item(self, revocation_reason: str, reviewer: User) -> AirlockReview:
+        full_airlock_review_id = str(uuid.uuid4())
+
+        airlock_review = AirlockReview(
+            id=full_airlock_review_id,
+            dateCreated=self.get_timestamp(),
+            reviewDecision=AirlockReviewDecision.Revoked,
+            decisionExplanation=revocation_reason,
+            reviewer=reviewer
+        )
+
+        return airlock_review
+
     def _build_updated_request(
             self,
             original_request: AirlockRequest,

@@ -427,20 +427,23 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
     @patch("services.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Approved))
     @patch("services.airlock.update_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Revoked))
     async def test_post_revoke_airlock_request_revokes_request_returns_200(self, _, __, app, client):
-        response = await client.post(app.url_path_for(strings.API_REVOKE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        reason_data = {"reason": "Test revocation reason"}
+        response = await client.post(app.url_path_for(strings.API_REVOKE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=reason_data)
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["airlockRequest"]["id"] == AIRLOCK_REQUEST_ID
         assert response.json()["airlockRequest"]["status"] == AirlockRequestStatus.Revoked
 
     @patch("services.airlock.AirlockRequestRepository.read_item_by_id", side_effect=EntityDoesNotExist)
     async def test_post_revoke_airlock_request_if_request_not_found_returns_404(self, _, app, client):
-        response = await client.post(app.url_path_for(strings.API_REVOKE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        reason_data = {"reason": "Test revocation reason"}
+        response = await client.post(app.url_path_for(strings.API_REVOKE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=reason_data)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     @patch("services.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Approved))
     @patch("services.airlock.AirlockRequestRepository.validate_status_update", return_value=False)
     async def test_post_revoke_airlock_request_with_illegal_status_change_returns_400(self, _, __, app, client):
-        response = await client.post(app.url_path_for(strings.API_REVOKE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        reason_data = {"reason": "Test revocation reason"}
+        response = await client.post(app.url_path_for(strings.API_REVOKE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=reason_data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @patch("services.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Approved))
@@ -448,8 +451,14 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
     @patch("services.airlock.AirlockRequestRepository.delete_item")
     @patch("event_grid.event_sender.send_status_changed_event", side_effect=HttpResponseError)
     async def test_post_revoke_airlock_request_with_event_grid_not_responding_returns_503(self, _, __, ___, ____, app, client):
-        response = await client.post(app.url_path_for(strings.API_REVOKE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        reason_data = {"reason": "Test revocation reason"}
+        response = await client.post(app.url_path_for(strings.API_REVOKE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=reason_data)
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+    @patch("services.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Approved))
+    async def test_post_revoke_airlock_request_missing_reason_returns_422(self, _, app, client):
+        response = await client.post(app.url_path_for(strings.API_REVOKE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json={})
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 class TestAirlockRoutesPermissions():
