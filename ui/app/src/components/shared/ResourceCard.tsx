@@ -119,8 +119,10 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
   useEffect(() => {
     if (showInfo && props.resource.resourceType === ResourceType.UserResource && ownerInfo === null) {
       const userResource = props.resource as UserResource;
-      if (userResource.ownerId) {
+      if (userResource.ownerId && userResource.ownerId.trim()) {
         fetchOwnerInfo(userResource.ownerId);
+      } else {
+        setOwnerInfo("Unknown"); // Handle missing ownerId
       }
     }
   }, [showInfo, props.resource, fetchOwnerInfo, ownerInfo]);
@@ -316,7 +318,9 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
                     {props.resource.user.name}
                   </Stack.Item>
                 </Stack>
-                {props.resource.resourceType === ResourceType.UserResource && (
+                {props.resource.resourceType === ResourceType.UserResource && 
+                 (props.resource as UserResource).ownerId && 
+                 (props.resource as UserResource).ownerId.trim() && (
                   <Stack horizontal tokens={{ childrenGap: 5 }}>
                     <Stack.Item style={calloutKeyStyles}>
                       Owner:
