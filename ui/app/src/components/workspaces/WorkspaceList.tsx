@@ -19,8 +19,6 @@ import { Workspace } from "../../models/workspace";
 import { ResourceCardList } from "../shared/ResourceCardList";
 import { Resource } from "../../models/resource";
 import { CostsContext } from "../../contexts/CostsContext";
-import moment from "moment";
-
 interface WorkspaceListProps {
   workspaces: Array<Workspace>;
   updateWorkspace: (w: Workspace) => void;
