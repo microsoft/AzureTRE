@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useState } from "react";
+import React, { useCallback, useContext, useState, useEffect } from "react";
 import {
   ComponentAction,
   VMPowerStates,
@@ -32,6 +32,9 @@ import { ConfirmCopyUrlToClipboard } from "./ConfirmCopyUrlToClipboard";
 import { AppRolesContext } from "../../contexts/AppRolesContext";
 import { SecuredByRole } from "./SecuredByRole";
 import { RoleName, WorkspaceRoleName } from "../../models/roleNames";
+import { UserResource } from "../../models/userResource";
+import { useAuthApiCall, HttpMethod } from "../../hooks/useAuthApiCall";
+import { ApiEndpoint } from "../../models/apiEndpoints";
 
 interface ResourceCardProps {
   resource: Resource;
@@ -49,7 +52,9 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
   const [loading] = useState(false);
   const [showCopyUrl, setShowCopyUrl] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [ownerInfo, setOwnerInfo] = useState<string | null>(null);
   const workspaceCtx = useContext(WorkspaceContext);
+  const apiCall = useAuthApiCall();
   const latestUpdate = useComponentManager(
     props.resource,
     (r: Resource) => {
@@ -87,6 +92,38 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
     props.selectResource?.(resource);
     navigate(resourceUrl);
   }, [navigate, props, workspaceCtx.workspace]);
+
+  // Fetch owner information when needed
+  const fetchOwnerInfo = useCallback(async (ownerId: string) => {
+    try {
+      const response = await apiCall(
+        `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
+        HttpMethod.Get,
+        workspaceCtx.workspaceApplicationIdURI
+      );
+      
+      const users = response.users || [];
+      const owner = users.find((user: any) => user.id === ownerId);
+      if (owner) {
+        setOwnerInfo(owner.displayName);
+      } else {
+        setOwnerInfo(ownerId); // Fallback to ownerId if user not found
+      }
+    } catch (error) {
+      console.warn("Failed to fetch owner info:", error);
+      setOwnerInfo(ownerId); // Fallback to ownerId on error
+    }
+  }, [apiCall, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI]);
+
+  // Effect to fetch owner info when showInfo changes and we have a UserResource with ownerId
+  useEffect(() => {
+    if (showInfo && props.resource.resourceType === ResourceType.UserResource && ownerInfo === null) {
+      const userResource = props.resource as UserResource;
+      if (userResource.ownerId) {
+        fetchOwnerInfo(userResource.ownerId);
+      }
+    }
+  }, [showInfo, props.resource, fetchOwnerInfo, ownerInfo]);
 
   let connectUri =
     props.resource.properties && props.resource.properties.connection_uri;
@@ -188,6 +225,9 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
                       onClick={(e) => {
                         // Stop onClick triggering parent handler
                         e.stopPropagation();
+                        if (!showInfo) {
+                          setOwnerInfo(null); // Reset owner info when opening
+                        }
                         setShowInfo(!showInfo);
                       }}
                     />
@@ -245,7 +285,10 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
           role="dialog"
           gapSpace={0}
           target={`#item-${props.itemId}`}
-          onDismiss={() => setShowInfo(false)}
+          onDismiss={() => {
+            setShowInfo(false);
+            setOwnerInfo(null); // Reset owner info when closing
+          }}
           setInitialFocus
         >
           <Text
@@ -273,6 +316,16 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
                     {props.resource.user.name}
                   </Stack.Item>
                 </Stack>
+                {props.resource.resourceType === ResourceType.UserResource && (
+                  <Stack horizontal tokens={{ childrenGap: 5 }}>
+                    <Stack.Item style={calloutKeyStyles}>
+                      Owner:
+                    </Stack.Item>
+                    <Stack.Item style={calloutValueStyles}>
+                      {ownerInfo || "Loading..."}
+                    </Stack.Item>
+                  </Stack>
+                )}
                 <Stack horizontal tokens={{ childrenGap: 5 }}>
                   <Stack.Item style={calloutKeyStyles}>
                     Last Updated:
