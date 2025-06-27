@@ -20,6 +20,7 @@ import { SecuredByRole } from "../shared/SecuredByRole";
 import { WorkspaceRoleName } from "../../models/roleNames";
 import { APIError } from "../../models/exceptions";
 import { ExceptionLayout } from "../shared/ExceptionLayout";
+import { CachedUser } from "../../models/user";
 
 interface WorkspaceServiceItemProps {
   workspaceService?: WorkspaceService;
@@ -41,7 +42,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<
   );
   const [hasUserResourceTemplates, setHasUserResourceTemplates] =
     useState(false);
-  const [usersCache, setUsersCache] = useState(new Map<string, string>());
+  const [usersCache, setUsersCache] = useState(new Map<string, CachedUser>());
   const workspaceCtx = useContext(WorkspaceContext);
   const createFormCtx = useContext(CreateUpdateResourceContext);
   const navigate = useNavigate();
@@ -112,10 +113,13 @@ export const WorkspaceServiceItem: React.FunctionComponent<
             workspaceCtx.workspaceApplicationIdURI,
           );
           
-          const cache = new Map<string, string>();
+          const cache = new Map<string, CachedUser>();
           if (usersResponse.users) {
             usersResponse.users.forEach((user: any) => {
-              cache.set(user.id, user.displayName);
+              cache.set(user.id, {
+                displayName: user.displayName,
+                email: user.email || user.userPrincipalName
+              });
             });
           }
           setUsersCache(cache);

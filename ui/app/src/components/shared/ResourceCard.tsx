@@ -33,6 +33,7 @@ import { AppRolesContext } from "../../contexts/AppRolesContext";
 import { SecuredByRole } from "./SecuredByRole";
 import { RoleName, WorkspaceRoleName } from "../../models/roleNames";
 import { UserResource } from "../../models/userResource";
+import { CachedUser } from "../../models/user";
 
 interface ResourceCardProps {
   resource: Resource;
@@ -42,7 +43,7 @@ interface ResourceCardProps {
   onDelete: (resource: Resource) => void;
   readonly?: boolean;
   isExposedExternally?: boolean;
-  usersCache?: Map<string, string>; // ownerId -> displayName mapping
+  usersCache?: Map<string, CachedUser>; // ownerId -> user info mapping
 }
 
 export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
@@ -68,7 +69,18 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
     if (props.resource.resourceType === ResourceType.UserResource) {
       const userResource = props.resource as UserResource;
       if (userResource.ownerId && userResource.ownerId.trim()) {
-        return props.usersCache?.get(userResource.ownerId) || userResource.ownerId;
+        return props.usersCache?.get(userResource.ownerId)?.displayName || userResource.ownerId;
+      }
+    }
+    return null;
+  }, [props.resource, props.usersCache]);
+
+  // Get owner email from cache
+  const getOwnerEmail = useCallback(() => {
+    if (props.resource.resourceType === ResourceType.UserResource) {
+      const userResource = props.resource as UserResource;
+      if (userResource.ownerId && userResource.ownerId.trim()) {
+        return props.usersCache?.get(userResource.ownerId)?.email;
       }
     }
     return null;
@@ -187,12 +199,27 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
 
               {headerBadge}
             </Stack>
-            {props.resource.resourceType === ResourceType.UserResource && getOwnerDisplayName() && (<Stack>
-              <Stack.Item grow={3} style={userResourceOwner}>
-                <Text variant="small" style={{ color: DefaultPalette.neutralSecondary, marginTop: 5 }}>
-                  {getOwnerDisplayName()}
-                </Text>
-              </Stack.Item></Stack>)}
+            {props.resource.resourceType === ResourceType.UserResource && getOwnerDisplayName() && (
+              <Stack>
+                <Stack.Item grow={3} style={userResourceOwner}>
+                  <Text variant="small" style={{ color: DefaultPalette.neutralSecondary, marginTop: 5 }}>
+                    {getOwnerDisplayName()}
+                    {getOwnerEmail() && (
+                      <>
+                        {" "}
+                        <a 
+                          href={`mailto:${getOwnerEmail()}`}
+                          style={{ color: DefaultPalette.themePrimary, textDecoration: "none" }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          ({getOwnerEmail()})
+                        </a>
+                      </>
+                    )}
+                  </Text>
+                </Stack.Item>
+              </Stack>
+            )}
             <Stack.Item grow={3} style={bodyStyles}>
               <Text>{props.resource.properties.description}</Text>
             </Stack.Item>
@@ -297,14 +324,37 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
                 {props.resource.resourceType === ResourceType.UserResource &&
                   (props.resource as UserResource).ownerId &&
                   (props.resource as UserResource).ownerId.trim() && (
-                    <Stack horizontal tokens={{ childrenGap: 5 }}>
-                      <Stack.Item style={calloutKeyStyles}>
-                        Owner ID:
-                      </Stack.Item>
-                      <Stack.Item style={calloutValueStyles}>
-                        {(props.resource as UserResource).ownerId}
-                      </Stack.Item>
-                    </Stack>
+                    <>
+                      <Stack horizontal tokens={{ childrenGap: 5 }}>
+                        <Stack.Item style={calloutKeyStyles}>
+                          Owner ID:
+                        </Stack.Item>
+                        <Stack.Item style={calloutValueStyles}>
+                          {(props.resource as UserResource).ownerId}
+                        </Stack.Item>
+                      </Stack>
+                      {getOwnerDisplayName() && (
+                        <Stack horizontal tokens={{ childrenGap: 5 }}>
+                          <Stack.Item style={calloutKeyStyles}>
+                            Owner:
+                          </Stack.Item>
+                          <Stack.Item style={calloutValueStyles}>
+                            {getOwnerDisplayName()}
+                            {getOwnerEmail() && (
+                              <>
+                                {" "}
+                                <a 
+                                  href={`mailto:${getOwnerEmail()}`}
+                                  style={{ color: DefaultPalette.themePrimary, textDecoration: "none" }}
+                                >
+                                  ({getOwnerEmail()})
+                                </a>
+                              </>
+                            )}
+                          </Stack.Item>
+                        </Stack>
+                      )}
+                    </>
                   )}
                 <Stack horizontal tokens={{ childrenGap: 5 }}>
                   <Stack.Item style={calloutKeyStyles}>
