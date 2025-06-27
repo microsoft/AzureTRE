@@ -12,6 +12,7 @@ interface ResourceCardListProps {
   emptyText: string;
   readonly?: boolean;
   isExposedExternally?: boolean;
+  usersCache?: Map<string, string>; // ownerId -> displayName mapping
 }
 
 export const ResourceCardList: React.FunctionComponent<
@@ -42,6 +43,7 @@ export const ResourceCardList: React.FunctionComponent<
                       ? props.isExposedExternally
                       : r.properties.is_exposed_externally
                   }
+                  usersCache={props.usersCache}
                 />
               </Stack.Item>
             );

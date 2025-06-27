@@ -41,6 +41,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<
   );
   const [hasUserResourceTemplates, setHasUserResourceTemplates] =
     useState(false);
+  const [usersCache, setUsersCache] = useState(new Map<string, string>());
   const workspaceCtx = useContext(WorkspaceContext);
   const createFormCtx = useContext(CreateUpdateResourceContext);
   const navigate = useNavigate();
@@ -102,6 +103,27 @@ export const WorkspaceServiceItem: React.FunctionComponent<
           ut && ut.templates && ut.templates.length > 0,
         );
         setUserResources(u.userResources);
+
+        // Fetch users for caching owner information
+        try {
+          const usersResponse = await apiCall(
+            `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
+            HttpMethod.Get,
+            workspaceCtx.workspaceApplicationIdURI,
+          );
+          
+          const cache = new Map<string, string>();
+          if (usersResponse.users) {
+            usersResponse.users.forEach((user: any) => {
+              cache.set(user.id, user.displayName);
+            });
+          }
+          setUsersCache(cache);
+        } catch (userError) {
+          console.warn("Failed to fetch workspace users for owner cache:", userError);
+          // Continue without user cache - owner will show as ID
+        }
+
         setLoadingState(LoadingState.Ok);
       } catch (err: any) {
         err.userMessage = "Error retrieving resources";
@@ -217,6 +239,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<
                             isExposedExternally={
                               workspaceService.properties.is_exposed_externally
                             }
+                            usersCache={usersCache}
                           />
                         )}
                       </Stack.Item>
