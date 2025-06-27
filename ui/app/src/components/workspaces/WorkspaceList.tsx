@@ -202,10 +202,13 @@ export const WorkspaceList: React.FunctionComponent<WorkspaceListProps> = ({
   ];
 
   const getSortDisplayText = () => {
-    const sortLabel = sortBy === "name" ? "Workspace Name" :
-      sortBy === "id" ? "Workspace ID" :
-        sortBy === "created" ? "Creation Date" :
-          "Workspace Cost";
+    const sortLabels: Record<string, string> = {
+      name: "Workspace Name",
+      id: "Workspace ID",
+      created: "Creation Date",
+      cost: "Workspace Cost",
+    };
+    const sortLabel = sortLabels[sortBy] || "Unknown Sort";
     const direction = sortAscending ? "↑" : "↓";
     return `Sort: ${sortLabel} ${direction}`;
   };
