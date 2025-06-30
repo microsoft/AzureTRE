@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useState } from "react";
+import React, { useCallback, useContext, useState, useEffect } from "react";
 import {
   ComponentAction,
   VMPowerStates,
@@ -32,6 +32,8 @@ import { ConfirmCopyUrlToClipboard } from "./ConfirmCopyUrlToClipboard";
 import { AppRolesContext } from "../../contexts/AppRolesContext";
 import { SecuredByRole } from "./SecuredByRole";
 import { RoleName, WorkspaceRoleName } from "../../models/roleNames";
+import { UserResource } from "../../models/userResource";
+import { CachedUser } from "../../models/user";
 
 interface ResourceCardProps {
   resource: Resource;
@@ -41,6 +43,7 @@ interface ResourceCardProps {
   onDelete: (resource: Resource) => void;
   readonly?: boolean;
   isExposedExternally?: boolean;
+  usersCache?: Map<string, CachedUser>; // ownerId -> user info mapping
 }
 
 export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
@@ -60,6 +63,28 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
     },
   );
   const navigate = useNavigate();
+
+  // Get owner display name from cache or fallback to ownerId
+  const getOwnerDisplayName = useCallback(() => {
+    if (props.resource.resourceType === ResourceType.UserResource) {
+      const userResource = props.resource as UserResource;
+      if (userResource.ownerId && userResource.ownerId.trim()) {
+        return props.usersCache?.get(userResource.ownerId)?.displayName || userResource.ownerId;
+      }
+    }
+    return null;
+  }, [props.resource, props.usersCache]);
+
+  // Get owner email from cache
+  const getOwnerEmail = useCallback(() => {
+    if (props.resource.resourceType === ResourceType.UserResource) {
+      const userResource = props.resource as UserResource;
+      if (userResource.ownerId && userResource.ownerId.trim()) {
+        return props.usersCache?.get(userResource.ownerId)?.email;
+      }
+    }
+    return null;
+  }, [props.resource, props.usersCache]);
 
   const costTagRolesByResourceType = {
     [ResourceType.Workspace]: [
@@ -171,9 +196,18 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
               <Stack.Item grow={5} style={headerStyles}>
                 {props.resource.properties.display_name}
               </Stack.Item>
+
               {headerBadge}
             </Stack>
-
+            {props.resource.resourceType === ResourceType.UserResource && getOwnerDisplayName() && (
+              <Stack>
+                <Stack.Item grow={3} style={userResourceOwner}>
+                  <Text variant="small" style={{ color: DefaultPalette.neutralSecondary, marginTop: 5 }}>
+                    {getOwnerDisplayName()}
+                  </Text>
+                </Stack.Item>
+              </Stack>
+            )}
             <Stack.Item grow={3} style={bodyStyles}>
               <Text>{props.resource.properties.description}</Text>
             </Stack.Item>
@@ -245,7 +279,9 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
           role="dialog"
           gapSpace={0}
           target={`#item-${props.itemId}`}
-          onDismiss={() => setShowInfo(false)}
+          onDismiss={() => {
+            setShowInfo(false);
+          }}
           setInitialFocus
         >
           <Text
@@ -273,6 +309,41 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
                     {props.resource.user.name}
                   </Stack.Item>
                 </Stack>
+                {props.resource.resourceType === ResourceType.UserResource &&
+                  (props.resource as UserResource).ownerId &&
+                  (props.resource as UserResource).ownerId.trim() && (
+                    <>
+                      <Stack horizontal tokens={{ childrenGap: 5 }}>
+                        <Stack.Item style={calloutKeyStyles}>
+                          Owner ID:
+                        </Stack.Item>
+                        <Stack.Item style={calloutValueStyles}>
+                          {(props.resource as UserResource).ownerId}
+                        </Stack.Item>
+                      </Stack>
+                      {getOwnerDisplayName() && (
+                        <Stack horizontal tokens={{ childrenGap: 5 }}>
+                          <Stack.Item style={calloutKeyStyles}>
+                            Owner:
+                          </Stack.Item>
+                          <Stack.Item style={calloutValueStyles}>
+                            {getOwnerDisplayName()}
+                            {getOwnerEmail() && (
+                              <>
+                                {" "}
+                                <a
+                                  href={`mailto:${getOwnerEmail()}`}
+                                  style={{ color: DefaultPalette.themePrimary, textDecoration: "none" }}
+                                >
+                                  ({getOwnerEmail()})
+                                </a>
+                              </>
+                            )}
+                          </Stack.Item>
+                        </Stack>
+                      )}
+                    </>
+                  )}
                 <Stack horizontal tokens={{ childrenGap: 5 }}>
                   <Stack.Item style={calloutKeyStyles}>
                     Last Updated:
@@ -326,6 +397,11 @@ const bodyStyles: React.CSSProperties = {
   minHeight: "40px",
 };
 
+const userResourceOwner: React.CSSProperties = {
+  padding: "0px 10px",
+  minHeight: "40px",
+};
+
 const footerStyles: React.CSSProperties = {
   minHeight: "30px",
   alignItems: "center",
@@ -336,7 +412,7 @@ const calloutKeyStyles: React.CSSProperties = {
 };
 
 const calloutValueStyles: React.CSSProperties = {
-  width: 180,
+  maxWidth: 400,
 };
 
 const styles = mergeStyleSets({
@@ -345,8 +421,9 @@ const styles = mergeStyleSets({
     margin: 10,
   },
   callout: {
-    width: 350,
     padding: "20px 24px",
+    maxWidth: 600,
+    minWidth: 220,
   },
   title: {
     marginBottom: 12,
