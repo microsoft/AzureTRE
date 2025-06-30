@@ -3,7 +3,7 @@
 #
 # Add an exception to a storage account by making it public for deployment, and remove it on script exit.
 #
-# Usage: source storage_enable_public_access.sh --storage-account-name <name> --resource-group-name <rg>
+# Usage: source storage_enable_public_access.sh --storage-account-name <n> --resource-group-name <rg>
 #
 # Note: Ensure you "source" this script, or else the EXIT trap won't fire at the right time.
 #
@@ -11,26 +11,27 @@
 # shellcheck disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/bash_trap_helper.sh"
 
-# Global variables
-STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME=""
-STORAGE_ENABLE_PUBLIC_ACCESS_RESOURCE_GROUP_NAME=""
+# Global variable for error tracking
 LAST_PUBLIC_ACCESS_ERROR=""
 
-# Parse command line arguments
+# Parse command line arguments and return values via stdout
 function parse_arguments() {
+  local storage_account_name=""
+  local resource_group_name=""
+  
   while [ "$1" != "" ]; do
     case $1 in
     --storage-account-name)
       shift
-      STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME=$1
+      storage_account_name=$1
       ;;
     --resource-group-name)
       shift
-      STORAGE_ENABLE_PUBLIC_ACCESS_RESOURCE_GROUP_NAME=$1
+      resource_group_name=$1
       ;;
     *)
       echo "Unexpected argument: '$1'"
-      echo "Usage: storage_enable_public_access.sh --storage-account-name <name> --resource-group-name <rg>"
+      echo "Usage: storage_enable_public_access.sh --storage-account-name <n> --resource-group-name <rg>"
       exit 1
       ;;
     esac
@@ -42,46 +43,55 @@ function parse_arguments() {
 
     shift # remove the current value for `$1` and use the next
   done
+  
+  # Return the parsed values
+  echo "${storage_account_name}|${resource_group_name}"
 }
 
-# Initialize storage account and resource group names
-function initialize_names() {
+# Validate arguments
+function validate_arguments() {
+  local storage_account_name="$1"
+  local resource_group_name="$2"
+  
   # Require both arguments to be provided
-  if [[ -z "${STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME:-}" ]]; then
+  if [[ -z "${storage_account_name:-}" ]]; then
     echo "Error: --storage-account-name argument is required" >&2
     exit 1
   fi
 
-  if [[ -z "${STORAGE_ENABLE_PUBLIC_ACCESS_RESOURCE_GROUP_NAME:-}" ]]; then
+  if [[ -z "${resource_group_name:-}" ]]; then
     echo "Error: --resource-group-name argument is required" >&2
     exit 1
   fi
 }
 
 function storage_enable_public_access() {
+  local storage_account_name="$1"
+  local resource_group_name="$2"
+  
   echo -e "\nEnabling public access on storage account"
   # Check that the storage account exists before making changes
-  if ! does_storage_account_exist "$STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME"; then
-    echo -e "Error: Storage account $STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME does not exist.\n" >&2
+  if ! does_storage_account_exist "$storage_account_name"; then
+    echo -e "Error: Storage account $storage_account_name does not exist.\n" >&2
     exit 1
   fi
 
-  echo -e "\nEnabling public access on storage account $STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME"
+  echo -e "\nEnabling public access on storage account $storage_account_name"
 
   # Enable public network access with explicit default action allow
-  az storage account update --resource-group "$STORAGE_ENABLE_PUBLIC_ACCESS_RESOURCE_GROUP_NAME" --name "$STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME" --public-network-access Enabled --default-action Allow --output none
+  az storage account update --resource-group "$resource_group_name" --name "$storage_account_name" --public-network-access Enabled --default-action Allow --output none
 
   for ATTEMPT in {1..10}; do
-    if is_public_access_enabled "$STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME"; then
-      echo -e " Storage account $STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME is now publicly accessible\n"
+    if is_public_access_enabled "$storage_account_name"; then
+      echo -e " Storage account $storage_account_name is now publicly accessible\n"
       return
     fi
 
-    echo " Unable to confirm public access on storage account $STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME after $ATTEMPT/10. Waiting for update to take effect..."
+    echo " Unable to confirm public access on storage account $storage_account_name after $ATTEMPT/10. Waiting for update to take effect..."
     sleep 10
   done
 
-  echo -e "Error: Could not enable public access for $STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME after 10 attempts.\n"
+  echo -e "Error: Could not enable public access for $storage_account_name after 10 attempts.\n"
   echo -e "$LAST_PUBLIC_ACCESS_ERROR\n"
   exit 1
 }
@@ -149,20 +159,24 @@ function is_public_access_enabled() {
 }
 
 # Main execution
-parse_arguments "$@"
-initialize_names
+# Parse arguments into local variables to avoid global variable conflicts
+parsed_args=$(parse_arguments "$@")
+storage_account_name=$(echo "$parsed_args" | cut -d'|' -f1)
+resource_group_name=$(echo "$parsed_args" | cut -d'|' -f2)
+
+validate_arguments "$storage_account_name" "$resource_group_name"
 
 # Prevent the script from running multiple times for the same storage account within the current shell
-STORAGE_GUARD_VAR="STORAGE_PUBLIC_ACCESS_SCRIPT_GUARD_${STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME}"
+STORAGE_GUARD_VAR="STORAGE_PUBLIC_ACCESS_SCRIPT_GUARD_${storage_account_name}"
 if [ -n "${!STORAGE_GUARD_VAR+x}" ]; then
-  echo -e "\nEnabling public access on storage account $STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME already executed in current shell, not running again.\n"
+  echo -e "\nEnabling public access on storage account $storage_account_name already executed in current shell, not running again.\n"
   return 0
 fi
 export "$STORAGE_GUARD_VAR"=true # export so guard is visible in sub shells
 
 # Setup the trap to disable public access on exit (only on first run)
 # Capture the current values to avoid conflicts with subsequent calls
-add_exit_trap "storage_disable_public_access_for_account '$STORAGE_ENABLE_PUBLIC_ACCESS_STORAGE_ACCOUNT_NAME' '$STORAGE_ENABLE_PUBLIC_ACCESS_RESOURCE_GROUP_NAME'"
+add_exit_trap "storage_disable_public_access_for_account '$storage_account_name' '$resource_group_name'"
 
 # Enable public access for deployment
-storage_enable_public_access
+storage_enable_public_access "$storage_account_name" "$resource_group_name"
