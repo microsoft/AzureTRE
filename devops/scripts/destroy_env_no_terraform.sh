@@ -188,5 +188,7 @@ while read -r rg_item; do
   purge_container_repositories "$rg_item"
 
   echo "Deleting resource group: ${rg_item}"
+  # remove any resource locks on resources inside the resource group
+  az lock list --resource-group "${rg_item}" --query "[].id" -o tsv | xargs -r -I {} az lock delete --id "{}"
   az group delete --resource-group "${rg_item}" --yes ${no_wait_option}
 done
