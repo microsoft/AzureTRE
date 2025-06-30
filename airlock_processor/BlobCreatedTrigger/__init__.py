@@ -1,4 +1,3 @@
-from distutils.util import strtobool
 import logging
 import datetime
 import uuid
@@ -10,6 +9,13 @@ import azure.functions as func
 
 from shared_code import constants
 from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_client_from_blob_info
+
+
+def strtobool(value: str) -> bool:
+    value = value.lower()
+    if value in ("y", "yes", "on", "1", "true", "t"):
+        return True
+    return False
 
 
 def main(msg: func.ServiceBusMessage,
