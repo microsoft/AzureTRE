@@ -29,6 +29,14 @@ export const useComponentManager = (
   const apiCall = useAuthApiCall();
   const operations = useAppSelector((state) => state.operations);
 
+  // Reset the component action state when the resource changes
+  useEffect(() => {
+    setLatestUpdate({
+      componentAction: ComponentAction.None,
+      operation: {} as Operation,
+    } as ResourceUpdate);
+  }, [resource?.id]);
+
   useEffect(() => {
     const checkOps = async () => {
       if (resource) {
