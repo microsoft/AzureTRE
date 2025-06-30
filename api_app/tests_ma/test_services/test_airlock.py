@@ -4,8 +4,7 @@ import pytest_asyncio
 import time
 from resources import strings
 from services.airlock import validate_user_allowed_to_access_storage_account, get_required_permission, \
-    validate_request_status, cancel_request, delete_review_user_resource, check_email_exists, \
-    upload_airlock_file, list_airlock_files, download_airlock_file
+    validate_request_status, cancel_request, delete_review_user_resource, check_email_exists, upload_airlock_file, list_airlock_files
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReview, AirlockReviewDecision, AirlockActions, AirlockReviewUserResource
 from tests_ma.test_api.conftest import create_workspace_owner_user, create_workspace_researcher_user, get_required_roles
 from mock import AsyncMock, patch, MagicMock
@@ -17,7 +16,7 @@ from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.workspace import Workspace
 from tests_ma.test_api.conftest import create_test_user, create_workspace_airlock_manager_user
 from azure.eventgrid import EventGridEvent
-from api.routes.airlock import create_airlock_review, create_cancel_request, create_submit_request
+from api.routes.airlock import create_airlock_review, create_cancel_request, create_submit_request, create_revoke_request
 from services.aad_authentication import AzureADAuthorization
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
@@ -494,7 +493,8 @@ async def test_get_airlock_requests_by_user_and_workspace_with_status_filter_cal
 @pytest.mark.parametrize("action, required_roles, airlock_request_repo_mock", [
     (AirlockActions.Review, get_required_roles(endpoint=create_airlock_review), airlock_request_repo_mock),
     (AirlockActions.Cancel, get_required_roles(endpoint=create_cancel_request), airlock_request_repo_mock),
-    (AirlockActions.Submit, get_required_roles(endpoint=create_submit_request), airlock_request_repo_mock)])
+    (AirlockActions.Submit, get_required_roles(endpoint=create_submit_request), airlock_request_repo_mock),
+    (AirlockActions.Revoke, get_required_roles(endpoint=create_revoke_request), airlock_request_repo_mock)])
 async def test_get_allowed_actions_requires_same_roles_as_endpoint(action, required_roles, airlock_request_repo_mock):
     airlock_request_repo_mock.validate_status_update = MagicMock(return_value=True)
     user = create_test_user()
@@ -508,7 +508,8 @@ async def test_get_allowed_actions_requires_same_roles_as_endpoint(action, requi
 @pytest.mark.parametrize("action, endpoint_roles, airlock_request_repo_mock", [
     (AirlockActions.Review, get_required_roles(endpoint=create_airlock_review), airlock_request_repo_mock),
     (AirlockActions.Cancel, get_required_roles(endpoint=create_cancel_request), airlock_request_repo_mock),
-    (AirlockActions.Submit, get_required_roles(endpoint=create_submit_request), airlock_request_repo_mock)])
+    (AirlockActions.Submit, get_required_roles(endpoint=create_submit_request), airlock_request_repo_mock),
+    (AirlockActions.Revoke, get_required_roles(endpoint=create_revoke_request), airlock_request_repo_mock)])
 async def test_get_allowed_actions_does_not_return_actions_that_are_forbidden_to_the_user_role(action, endpoint_roles, airlock_request_repo_mock):
     airlock_request_repo_mock.validate_status_update = MagicMock(return_value=True)
     user = create_test_user()
@@ -517,6 +518,41 @@ async def test_get_allowed_actions_does_not_return_actions_that_are_forbidden_to
         user.roles = [forbidden_role]
         allowed_actions = get_allowed_actions(request=sample_airlock_request(), user=user, airlock_request_repo=airlock_request_repo_mock)
         assert action not in allowed_actions
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.update_and_publish_event_airlock_request")
+async def test_revoke_request_calls_update_with_revoked_status(update_mock, airlock_request_repo_mock):
+    user = create_test_user()
+    workspace = sample_workspace()
+    airlock_request = sample_airlock_request(status=AirlockRequestStatus.Approved)
+    revocation_reason = "Test revocation reason"
+
+    update_mock.return_value = sample_airlock_request(status=AirlockRequestStatus.Revoked)
+    airlock_request_repo_mock.create_airlock_revoke_review_item.return_value = sample_airlock_review()
+
+    result = await revoke_request(
+        airlock_request=airlock_request,
+        user=user,
+        workspace=workspace,
+        airlock_request_repo=airlock_request_repo_mock,
+        revocation_reason=revocation_reason
+    )
+
+    # Verify that a revoke review is created
+    airlock_request_repo_mock.create_airlock_revoke_review_item.assert_called_once_with(revocation_reason, user)
+
+    # Verify update is called with review and status
+    update_mock.assert_called_once()
+    args, kwargs = update_mock.call_args
+    assert kwargs['airlock_request'] == airlock_request
+    assert kwargs['airlock_request_repo'] == airlock_request_repo_mock
+    assert kwargs['updated_by'] == user
+    assert kwargs['workspace'] == workspace
+    assert kwargs['new_status'] == AirlockRequestStatus.Revoked
+    assert kwargs['airlock_review'] is not None
+
+    assert result.status == AirlockRequestStatus.Revoked
 
 
 @pytest.mark.asyncio
@@ -559,63 +595,59 @@ async def test_upload_airlock_file_validates_user_access(mock_blob_client):
     user = create_workspace_researcher_user()
     request = sample_airlock_request()
     workspace = sample_workspace()
-    
+
     # Mock the blob client
     mock_blob_service = AsyncMock()
     mock_blob_client.return_value = mock_blob_service
     mock_blob_service.get_blob_client.return_value.upload_blob = AsyncMock()
-    
+
     from services.airlock import upload_airlock_file
-    
+
     # Should work for a researcher with draft request
     result = await upload_airlock_file(b"test content", "test.txt", request, workspace, user)
-    
+
     assert result["message"] == "File uploaded successfully"
     assert result["fileName"] == "test.txt"
     assert result["size"] == 12
 
 
-@pytest.mark.asyncio  
+@pytest.mark.asyncio
 @patch("services.airlock.get_airlock_blob_service_client")
 async def test_upload_airlock_file_rejects_non_draft_requests(mock_blob_client):
     # Test that uploading fails for non-draft requests
     user = create_workspace_researcher_user()
     request = sample_airlock_request(status=AirlockRequestStatus.Submitted)
     workspace = sample_workspace()
-    
-    from services.airlock import upload_airlock_file
-    
+
     with pytest.raises(HTTPException) as ex:
         await upload_airlock_file(b"test content", "test.txt", request, workspace, user)
-    
+
     assert ex.value.status_code == status.HTTP_400_BAD_REQUEST
 
 
 @pytest.mark.asyncio
-@patch("services.airlock.get_airlock_blob_service_client")  
+@patch("services.airlock.get_airlock_blob_service_client")
 async def test_list_airlock_files_returns_file_metadata(mock_blob_client):
     # Test that listing files returns metadata
     user = create_workspace_researcher_user()
     request = sample_airlock_request()
     workspace = sample_workspace()
-    
+
     # Mock blob data
     mock_blob = MagicMock()
     mock_blob.name = "test.txt"
     mock_blob.size = 1024
     mock_blob.last_modified = MagicMock()
     mock_blob.last_modified.timestamp.return_value = 1672531200
-    
+
     mock_blob_service = AsyncMock()
     mock_blob_client.return_value = mock_blob_service
     mock_container_client = AsyncMock()
     mock_blob_service.get_container_client.return_value = mock_container_client
     mock_container_client.list_blobs.return_value = [mock_blob]
-    
-    from services.airlock import list_airlock_files
-    
+
     files = await list_airlock_files(request, workspace, user)
-    
+
     assert len(files) == 1
     assert files[0]["name"] == "test.txt"
     assert files[0]["size"] == 1024
