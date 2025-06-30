@@ -206,7 +206,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
                 allowedAppRoles={costsTagsRoles}
                 allowedWorkspaceRoles={costsTagsRoles}
                 workspaceId={workspaceId}
-                element={<CostsTag resourceId={props.resource.id} />}
+                element={<CostsTag resourceId={props.resource.id} resourceType={props.resource.resourceType} />}
               />
               {connectUri && (
                 <PrimaryButton
