@@ -472,3 +472,110 @@ async def cancel_request(airlock_request: AirlockRequest, user: User, workspace:
 
 def _user_has_one_of_roles(user: User, roles) -> bool:
     return any(role in roles for role in user.roles)
+
+
+def get_airlock_blob_service_client(airlock_request: AirlockRequest, workspace: Workspace) -> BlobServiceClient:
+    """Get a BlobServiceClient for the airlock request's storage account."""
+    account_name = get_account_by_request(airlock_request, workspace)
+    account_url = get_account_url(account_name)
+    return BlobServiceClient(account_url=account_url, credential=credentials.get_credential())
+
+
+async def upload_airlock_file(file_content: bytes, file_name: str, airlock_request: AirlockRequest, 
+                              workspace: Workspace, user: User) -> dict:
+    """Upload a file to the airlock request container."""
+    validate_user_allowed_to_access_storage_account(user, airlock_request)
+    validate_request_status(airlock_request)
+    
+    # Only allow uploads for Draft requests
+    if airlock_request.status != AirlockRequestStatus.Draft:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="File uploads are only allowed for draft requests"
+        )
+    
+    try:
+        blob_service_client = get_airlock_blob_service_client(airlock_request, workspace)
+        blob_client = blob_service_client.get_blob_client(
+            container=airlock_request.id, 
+            blob=file_name
+        )
+        
+        # Upload the file
+        blob_client.upload_blob(file_content, overwrite=True)
+        
+        logger.info(f"Successfully uploaded file {file_name} to airlock request {airlock_request.id}")
+        return {
+            "message": "File uploaded successfully",
+            "fileName": file_name,
+            "size": len(file_content)
+        }
+    except Exception as e:
+        logger.exception(f"Failed to upload file {file_name} to airlock request {airlock_request.id}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Failed to upload file: {str(e)}"
+        )
+
+
+async def list_airlock_files(airlock_request: AirlockRequest, workspace: Workspace, user: User) -> list:
+    """List files in the airlock request container."""
+    validate_user_allowed_to_access_storage_account(user, airlock_request)
+    validate_request_status(airlock_request)
+    
+    try:
+        blob_service_client = get_airlock_blob_service_client(airlock_request, workspace)
+        container_client = blob_service_client.get_container_client(airlock_request.id)
+        
+        files = []
+        for blob in container_client.list_blobs():
+            files.append({
+                "name": blob.name,
+                "size": blob.size,
+                "lastModified": int(blob.last_modified.timestamp()) if blob.last_modified else 0
+            })
+        
+        logger.info(f"Listed {len(files)} files in airlock request {airlock_request.id}")
+        return files
+    except Exception as e:
+        logger.exception(f"Failed to list files in airlock request {airlock_request.id}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Failed to list files: {str(e)}"
+        )
+
+
+async def download_airlock_file(file_name: str, airlock_request: AirlockRequest, 
+                                workspace: Workspace, user: User) -> bytes:
+    """Download a file from the airlock request container."""
+    validate_user_allowed_to_access_storage_account(user, airlock_request)
+    validate_request_status(airlock_request)
+    
+    try:
+        blob_service_client = get_airlock_blob_service_client(airlock_request, workspace)
+        blob_client = blob_service_client.get_blob_client(
+            container=airlock_request.id, 
+            blob=file_name
+        )
+        
+        # Check if file exists
+        if not blob_client.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail=f"File {file_name} not found"
+            )
+        
+        # Download the file
+        download_stream = blob_client.download_blob()
+        file_content = download_stream.readall()
+        
+        logger.info(f"Successfully downloaded file {file_name} from airlock request {airlock_request.id}")
+        return file_content
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Failed to download file {file_name} from airlock request {airlock_request.id}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Failed to download file: {str(e)}"
+        )
