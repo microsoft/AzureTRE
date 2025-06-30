@@ -12,10 +12,6 @@ BUG FIXES:
 * Renew Letsencrypt GitHub action is failing to access storage account ([#4593](https://github.com/microsoft/AzureTRE/issues/4593))
 * Fix deployment pipeline failures due to KeyVault network policies preventing public access ([#4597](https://github.com/microsoft/AzureTRE/issues/4597))
 
-COMPONENTS:
-* API: 0.24.3 -> 0.24.4 ([#4309](https://github.com/microsoft/AzureTRE/issues/4309))
-* UI: 0.8.8 -> 0.8.9 ([#4309](https://github.com/microsoft/AzureTRE/issues/4309))
-
 ## 0.23.0 (June 10, 2025)
 **BREAKING CHANGES & MIGRATIONS**:
 * The management container registry now uses a private endpoint, and public network access is controlled via the disable_acr_public_access variable. The ACR SKU has been changed to premuim so you need to run `make deploy-mgmt` to upgrade it.

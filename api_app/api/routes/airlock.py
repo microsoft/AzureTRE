@@ -241,11 +241,10 @@ async def download_file(
     """Download a file from the airlock request container."""
     try:
         file_content = await download_airlock_file(file_name, airlock_request, workspace, user)
-        
+
         # Create a streaming response for the file download
-        file_stream = io.BytesIO(file_content)
         return StreamingResponse(
-            io.BytesIO(file_content), 
+            io.BytesIO(file_content),
             media_type="application/octet-stream",
             headers={"Content-Disposition": f"attachment; filename={file_name}"}
         )
