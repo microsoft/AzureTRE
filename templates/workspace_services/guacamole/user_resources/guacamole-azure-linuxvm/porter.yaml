@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-linuxvm
-version: 1.3.1
+version: 1.3.7
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -114,6 +114,14 @@ parameters:
   - name: vm_size
     type: string
     default: "2 CPU | 8GB RAM"
+  - name: r_config
+    type: boolean
+    default: false
+    description: "Enable R configuration for the VM"
+  - name: vscode_config
+    type: boolean
+    default: false
+    description: "Enable VS Code configuration for the VM"
   - name: shared_storage_access
     type: boolean
     default: true

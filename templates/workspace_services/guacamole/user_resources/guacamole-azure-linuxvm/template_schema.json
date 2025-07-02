@@ -9,7 +9,8 @@
     "vm_size"
   ],
   "authorizedRoles": [
-    "WorkspaceOwner", "WorkspaceResearcher"
+    "WorkspaceOwner",
+    "WorkspaceResearcher"
   ],
   "properties": {
     "display_name": {
@@ -63,6 +64,20 @@
       "default": true,
       "description": "Enable access to shared storage"
     },
+    "r_config": {
+      "$id": "#/properties/r_config",
+      "type": "boolean",
+      "title": "RStudio",
+      "default": false,
+      "description": "Install RStudio"
+    },
+    "vscode_config": {
+      "$id": "#/properties/vscode_config",
+      "type": "boolean",
+      "title": "VS Code",
+      "default": false,
+      "description": "Install VS Code"
+    },
     "enable_shutdown_schedule": {
       "$id": "#/properties/enable_shutdown_schedule",
       "type": "boolean",
@@ -70,13 +85,13 @@
       "default": false,
       "description": "Enable automatic shutdown schedule for the VM"
     },
-      "assign_to_another_user": {
+    "assign_to_another_user": {
       "type": "boolean",
       "title": "Assign this VM to another user",
       "description": "Check this box if you want to assign this VM to another user.",
       "default": false,
       "updateable": false
-      }
+    }
   },
   "allOf": [
     {

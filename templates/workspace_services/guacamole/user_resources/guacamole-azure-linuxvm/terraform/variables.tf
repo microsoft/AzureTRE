@@ -22,6 +22,14 @@ variable "shared_storage_access" {
 variable "shared_storage_name" {
   type = string
 }
+variable "r_config" {
+  type    = bool
+  default = false
+}
+variable "vscode_config" {
+  type    = bool
+  default = false
+}
 variable "image_gallery_id" {
   type    = string
   default = ""

@@ -116,6 +116,8 @@ data "template_file" "vm_config" {
   vars = {
     INSTALL_UI            = local.selected_image.install_ui ? 1 : 0
     SHARED_STORAGE_ACCESS = tobool(var.shared_storage_access) ? 1 : 0
+    VSCODE_CONFIG         = tobool(var.vscode_config) ? 1 : 0
+    R_CONFIG              = tobool(var.r_config) ? 1 : 0
     STORAGE_ACCOUNT_NAME  = data.azurerm_storage_account.stg.name
     STORAGE_ACCOUNT_KEY   = data.azurerm_storage_account.stg.primary_access_key
     HTTP_ENDPOINT         = data.azurerm_storage_account.stg.primary_file_endpoint
@@ -147,12 +149,4 @@ resource "azurerm_dev_test_global_vm_shutdown_schedule" "shutdown_schedule" {
   notification_settings {
     enabled = false
   }
-}
-
-resource "azurerm_role_assignment" "grant_guacamole_read_secret" {
-  scope                = data.azurerm_key_vault.ws.id
-  role_definition_name = "Key Vault Secrets User"
-  principal_id         = data.azurerm_user_assigned_identity.guacamole_id.principal_id
-
-  skip_service_principal_aad_check = true
 }

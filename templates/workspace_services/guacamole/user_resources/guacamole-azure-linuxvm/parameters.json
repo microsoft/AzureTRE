@@ -1,6 +1,6 @@
 {
   "schemaType": "ParameterSet",
-  "schemaVersion": "1.0.1",
+  "schemaVersion": "1.0.3",
   "namespace": "",
   "name": "tre-service-guacamole-linuxvm",
   "parameters": [
@@ -50,6 +50,18 @@
       "name": "os_image",
       "source": {
         "env": "OS_IMAGE"
+      }
+    },
+    {
+      "name": "r_config",
+      "source": {
+        "env": "R_CONFIG"
+      }
+    },
+    {
+      "name": "vscode_config",
+      "source": {
+        "env": "VSCODE_CONFIG"
       }
     },
     {

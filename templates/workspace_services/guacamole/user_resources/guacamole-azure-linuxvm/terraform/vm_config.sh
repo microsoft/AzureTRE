@@ -23,18 +23,26 @@ DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true dpkg-reconfigure
 sudo apt install -y xfce4 xfce4-goodies xorg dbus-x11 x11-xserver-utils
 echo /usr/sbin/gdm3 > /etc/X11/default-display-manager
 
-## Python 3.8 and Jupyter
-sudo apt install -y jupyter-notebook microsoft-edge-dev
+## VS Code + Jupyter
+if [ "${VSCODE_CONFIG}" -eq 1 ]; then
+  echo "init_vm.sh: VS Code + Jupyter"
+  sudo apt install -y jupyter-notebook microsoft-edge-dev
 
-## VS Code
-echo "init_vm.sh: VS Code"
-echo code code/add-microsoft-repo boolean false | sudo debconf-set-selections
-sudo apt install -y code
-sudo apt install -y gvfs-bin || true
+  echo code code/add-microsoft-repo boolean false | sudo debconf-set-selections
+  sudo apt install -y code
+  sudo apt install -y gvfs-bin || true
 
-echo "init_vm.sh: Folders"
-sudo mkdir -p /opt/vscode/user-data
-sudo mkdir -p /opt/vscode/extensions
+  echo "init_vm.sh: Folders"
+  sudo mkdir -p /opt/vscode/user-data
+  sudo mkdir -p /opt/vscode/extensions
+
+  # Optional extensions (commented out)
+  # sudo -u "${VM_USER}" code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension ms-python.python
+  # sudo -u "${VM_USER}" code --extensions-dir="/opt/vscode/extensions" --user-data-dir="/opt/vscode/user-data" --install-extension ms-toolsai.jupyter
+
+  # Jupyter shortcut fix
+  sudo sed -i -e 's/Terminal=true/Terminal=false/g' /usr/share/applications/jupyter-notebook.desktop
+fi
 
 # echo "init_vm.sh: azure-cli"
 sudo apt install azure-cli -y
@@ -78,15 +86,26 @@ StartupWMClass=Code
 Categories=Development;
 END
 
-## R
-echo "init_vm.sh: R Setup"
-sudo apt install -y r-base
+## R + RStudio
+if [ "${R_CONFIG}" -eq 1 ]; then
+  echo "init_vm.sh: R Setup"
+  sudo apt install -y r-base
 
-# RStudio Desktop
-echo "init_vm.sh: RStudio"
-wget "${NEXUS_PROXY_URL}"/repository/r-studio-download/electron/jammy/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2204
-wget "${NEXUS_PROXY_URL}"/repository/r-studio-download/electron/focal/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2004
-sudo gdebi --non-interactive /tmp/"${APT_SKU}"/rstudio-2023.12.1-402-amd64.deb
+  echo "init_vm.sh: RStudio"
+  wget "${NEXUS_PROXY_URL}"/repository/r-studio-download/electron/jammy/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2204
+  wget "${NEXUS_PROXY_URL}"/repository/r-studio-download/electron/focal/amd64/rstudio-2023.12.1-402-amd64.deb -P /tmp/2004
+  sudo gdebi --non-interactive /tmp/"${APT_SKU}"/rstudio-2023.12.1-402-amd64.deb
+
+  echo "init_vm.sh: R Config"
+  sudo apt-get install -y r-base-core
+  sudo bash -c "cat >/etc/R/Rprofile.site" <<EOF
+local({
+  r <- getOption("repos")
+  r["Nexus"] <- "${NEXUS_PROXY_URL}/repository/r-proxy/"
+  options(repos = r)
+})
+EOF
+fi
 
 if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   # Install required packages
