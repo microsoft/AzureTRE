@@ -1,15 +1,14 @@
 from contextlib import asynccontextmanager
-from core.config import MANAGED_IDENTITY_CLIENT_ID, AAD_AUTHORITY_URL
+from core.config import MANAGED_IDENTITY_CLIENT_ID, AAD_TENANT_ID
 from azure.core.credentials import TokenCredential
-from urllib.parse import urlparse
 
 from azure.identity import (
-    DefaultAzureCredential,
+    AzureCliCredential,
     ManagedIdentityCredential,
     ChainedTokenCredential,
 )
 from azure.identity.aio import (
-    DefaultAzureCredential as DefaultAzureCredentialASync,
+    AzureCliCredential as AzureCliCredentialASync,
     ManagedIdentityCredential as ManagedIdentityCredentialASync,
     ChainedTokenCredential as ChainedTokenCredentialASync,
 )
@@ -21,13 +20,7 @@ def get_credential() -> TokenCredential:
             ManagedIdentityCredential(client_id=MANAGED_IDENTITY_CLIENT_ID)
         )
     else:
-        return DefaultAzureCredential(authority=urlparse(AAD_AUTHORITY_URL).netloc,
-                                      exclude_shared_token_cache_credential=True,
-                                      exclude_workload_identity_credential=True,
-                                      exclude_developer_cli_credential=True,
-                                      exclude_managed_identity_credential=True,
-                                      exclude_powershell_credential=True
-                                      )
+        return AzureCliCredential(tenant_id=AAD_TENANT_ID)
 
 
 async def get_credential_async():
@@ -36,13 +29,7 @@ async def get_credential_async():
             ManagedIdentityCredentialASync(client_id=MANAGED_IDENTITY_CLIENT_ID)
         )
         if MANAGED_IDENTITY_CLIENT_ID
-        else DefaultAzureCredentialASync(authority=urlparse(AAD_AUTHORITY_URL).netloc,
-                                         exclude_shared_token_cache_credential=True,
-                                         exclude_workload_identity_credential=True,
-                                         exclude_developer_cli_credential=True,
-                                         exclude_managed_identity_credential=True,
-                                         exclude_powershell_credential=True
-                                         )
+        else AzureCliCredentialASync(tenant_id=AAD_TENANT_ID)
     )
 
 

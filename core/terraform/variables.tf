@@ -180,6 +180,18 @@ variable "enable_airlock_email_check" {
   description = "If True, prior to airlock requests creation will check users have email addresses"
 }
 
+variable "enable_airlock_import_sas" {
+  type        = bool
+  default     = true
+  description = "If True, SAS token functionality (SAS URL, CLI, and SAS Upload) will be available for import requests in the UI"
+}
+
+variable "enable_airlock_import_direct_upload" {
+  type        = bool
+  default     = true
+  description = "If True, direct upload will be available for import requests in the UI"
+}
+
 variable "firewall_sku" {
   description = "Azure Firewall SKU"
   type        = string
@@ -299,4 +311,16 @@ variable "private_agent_subnet_id" {
   description = "Subnet ID of the github runners"
   type        = string
   default     = ""
+}
+
+variable "encryption_key_versionless_id" {
+  type        = string
+  description = "Versionless ID of the encryption key in the key vault"
+  default     = null
+}
+
+variable "custom_domain" {
+  type        = string
+  description = "Custom domain for the TRE (e.g., mytre.example.com). If not set, will use the default App Gateway FQDN"
+  default     = null
 }

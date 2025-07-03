@@ -110,18 +110,28 @@ export const useAuthApiCall = () => {
         console.log(`Calling ${method} on authenticated api: ${endpoint}`);
 
       // set the headers for auth + http method
+      const isFormData = body instanceof FormData;
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${tokenResponse.accessToken}`,
+        etag: etag ? etag : "",
+      };
+
+      // Don't set Content-Type for FormData - browser will set it automatically with boundary
+      if (!isFormData) {
+        headers["Content-Type"] = "application/json";
+      }
+
       const opts: RequestInit = {
         mode: "cors",
-        headers: {
-          Authorization: `Bearer ${tokenResponse.accessToken}`,
-          "Content-Type": "application/json",
-          etag: etag ? etag : "",
-        },
+        headers,
         method: method,
       };
 
       // add a body if we're given one
-      if (body) opts.body = JSON.stringify(body);
+      if (body) {
+        // For FormData, pass it directly; for others, stringify as JSON
+        opts.body = isFormData ? body : JSON.stringify(body);
+      }
 
       let resp;
       try {

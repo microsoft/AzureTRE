@@ -43,6 +43,15 @@ tre:
   # Used if rely on email notifications for governance purposes
   # enable_airlock_email_check: true
 
+  # Set to true to enable SAS token functionality for import requests in the UI
+  # This includes SAS URL viewing, CLI commands, and SAS Upload methods
+  # When false, only direct upload through the API is available for import requests
+  enable_airlock_import_sas: true
+
+  # Set to true to enable direct uploads for import requests in the UI
+  # When false, only SAS token and CLI methods are available for import requests
+  enable_airlock_import_direct_upload: true
+
   # TODO: move to RP default with https://github.com/microsoft/AzureTRE/issues/2948
   workspace_app_service_plan_sku: P1v2
   # The TRE Web UI is deployed by default.

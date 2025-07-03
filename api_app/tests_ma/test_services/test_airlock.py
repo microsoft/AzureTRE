@@ -16,7 +16,7 @@ from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.workspace import Workspace
 from tests_ma.test_api.conftest import create_test_user, create_workspace_airlock_manager_user
 from azure.eventgrid import EventGridEvent
-from api.routes.airlock import create_airlock_review, create_cancel_request, create_submit_request, create_revoke_request
+from api.routes.airlock import create_airlock_review, create_cancel_request, create_submit_request, create_revoke_request, revoke_request
 from services.aad_authentication import AzureADAuthorization
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
@@ -48,11 +48,11 @@ def sample_workspace():
         resourcePath="test")
 
 
-def sample_airlock_request(status=AirlockRequestStatus.Draft):
+def sample_airlock_request(status=AirlockRequestStatus.Draft, request_type=AirlockRequestType.Import):
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
         workspaceId=WORKSPACE_ID,
-        type=AirlockRequestType.Import,
+        type=request_type,
         reviewUserResources={"user-guid-here": sample_airlock_user_resource_object()},
         files=[AirlockFile(
             name="data.txt",
@@ -627,6 +627,61 @@ async def test_upload_airlock_file_rejects_non_draft_requests(mock_blob_client):
 
 @pytest.mark.asyncio
 @patch("services.airlock.get_airlock_blob_service_client")
+async def test_upload_airlock_file_rejects_multiple_files(mock_blob_client):
+    # Test that uploading fails when there's already a different file in the container
+    user = create_workspace_researcher_user()
+    request = sample_airlock_request()
+    workspace = sample_workspace()
+
+    # Mock the blob client and container client
+    mock_blob_service = AsyncMock()
+    mock_blob_client.return_value = mock_blob_service
+    mock_container_client = AsyncMock()
+    mock_blob_service.get_container_client.return_value = mock_container_client
+
+    # Mock existing blob with different name
+    mock_existing_blob = MagicMock()
+    mock_existing_blob.name = "existing_file.txt"
+    mock_container_client.list_blobs.return_value = [mock_existing_blob]
+
+    with pytest.raises(HTTPException) as ex:
+        await upload_airlock_file(b"test content", "new_file.txt", request, workspace, user)
+
+    assert ex.value.status_code == status.HTTP_400_BAD_REQUEST
+    assert "Only one file is allowed per airlock request" in str(ex.value.detail)
+    assert "existing_file.txt" in str(ex.value.detail)
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.get_airlock_blob_service_client")
+async def test_upload_airlock_file_allows_overwrite_same_file(mock_blob_client):
+    # Test that uploading succeeds when overwriting the same file
+    user = create_workspace_researcher_user()
+    request = sample_airlock_request()
+    workspace = sample_workspace()
+
+    # Mock the blob client and container client
+    mock_blob_service = AsyncMock()
+    mock_blob_client.return_value = mock_blob_service
+    mock_container_client = AsyncMock()
+    mock_blob_service.get_container_client.return_value = mock_container_client
+    mock_blob_service.get_blob_client.return_value.upload_blob = AsyncMock()
+
+    # Mock existing blob with same name
+    mock_existing_blob = MagicMock()
+    mock_existing_blob.name = "test_file.txt"
+    mock_container_client.list_blobs.return_value = [mock_existing_blob]
+
+    # Should work when overwriting same file
+    result = await upload_airlock_file(b"updated content", "test_file.txt", request, workspace, user)
+
+    assert result["message"] == "File uploaded successfully"
+    assert result["fileName"] == "test_file.txt"
+    assert result["size"] == 15
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.get_airlock_blob_service_client")
 async def test_list_airlock_files_returns_file_metadata(mock_blob_client):
     # Test that listing files returns metadata
     user = create_workspace_researcher_user()
@@ -652,3 +707,108 @@ async def test_list_airlock_files_returns_file_metadata(mock_blob_client):
     assert files[0]["name"] == "test.txt"
     assert files[0]["size"] == 1024
     assert files[0]["lastModified"] == 1672531200
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.config.AIRLOCK_IMPORT_DIRECT_UPLOAD_ENABLED", False)
+@patch("services.airlock.get_airlock_blob_service_client")
+async def test_upload_airlock_file_rejects_when_direct_upload_disabled(mock_blob_client):
+    # Test that uploading fails when direct upload is disabled
+    user = create_workspace_researcher_user()
+    request = sample_airlock_request(request_type=AirlockRequestType.Import)
+    workspace = sample_workspace()
+
+    with pytest.raises(HTTPException) as ex:
+        await upload_airlock_file(b"test content", "test.txt", request, workspace, user)
+
+    assert ex.value.status_code == status.HTTP_403_FORBIDDEN
+    assert "Direct file upload is disabled" in str(ex.value.detail)
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.get_airlock_blob_service_client")
+async def test_upload_airlock_file_rejects_export_requests(mock_blob_client):
+    # Test that uploading fails for export requests
+    user = create_workspace_researcher_user()
+    request = sample_airlock_request(request_type=AirlockRequestType.Export)
+    workspace = sample_workspace()
+
+    with pytest.raises(HTTPException) as ex:
+        await upload_airlock_file(b"test content", "test.txt", request, workspace, user)
+
+    assert ex.value.status_code == status.HTTP_403_FORBIDDEN
+    assert "Direct file upload is only allowed for import requests" in str(ex.value.detail)
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.config.AIRLOCK_IMPORT_SAS_ENABLED", False)
+@patch("services.airlock.get_airlock_blob_service_client")
+async def test_get_airlock_upload_sas_url_rejects_when_sas_upload_disabled(mock_blob_client):
+    # Test that SAS upload URL generation fails when SAS upload is disabled for import
+    user = create_workspace_researcher_user()
+    request = sample_airlock_request(request_type=AirlockRequestType.Import)
+    workspace = sample_workspace()
+
+    from services.airlock import get_airlock_upload_sas_url
+
+    with pytest.raises(HTTPException) as ex:
+        await get_airlock_upload_sas_url(request, workspace, user)
+
+    assert ex.value.status_code == status.HTTP_403_FORBIDDEN
+    assert "SAS token upload is disabled for import requests" in str(ex.value.detail)
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.get_airlock_blob_service_client")
+async def test_get_airlock_upload_sas_url_rejects_export_requests(mock_blob_client):
+    # Test that SAS upload URL generation fails for export requests
+    user = create_workspace_researcher_user()
+    request = sample_airlock_request(request_type=AirlockRequestType.Export)
+    workspace = sample_workspace()
+
+    from services.airlock import get_airlock_upload_sas_url
+
+    with pytest.raises(HTTPException) as ex:
+        await get_airlock_upload_sas_url(request, workspace, user)
+
+    assert ex.value.status_code == status.HTTP_403_FORBIDDEN
+    assert "SAS token upload is only allowed for import requests" in str(ex.value.detail)
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.config.AIRLOCK_IMPORT_SAS_ENABLED", False)
+@patch("services.airlock.get_airlock_blob_service_client")
+async def test_get_airlock_container_link_rejects_import_when_sas_disabled(mock_blob_client):
+    # Test that SAS link generation fails when SAS upload is disabled for import
+    user = create_workspace_researcher_user()
+    request = sample_airlock_request(request_type=AirlockRequestType.Import)
+    workspace = sample_workspace()
+
+    from services.airlock import get_airlock_container_link
+
+    with pytest.raises(HTTPException) as ex:
+        get_airlock_container_link(request, user, workspace)
+
+    assert ex.value.status_code == status.HTTP_403_FORBIDDEN
+    assert "SAS token access is disabled for import requests" in str(ex.value.detail)
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.config.AIRLOCK_IMPORT_SAS_ENABLED", False)
+@patch("services.airlock.get_airlock_blob_service_client")
+async def test_get_airlock_container_link_allows_export_when_sas_disabled_for_import(mock_blob_client):
+    # Test that SAS link generation works for export even when disabled for import
+    user = create_workspace_researcher_user()
+    request = sample_airlock_request(request_type=AirlockRequestType.Export)
+    workspace = sample_workspace()
+
+    # Mock the blob service client
+    mock_blob_service = AsyncMock()
+    mock_blob_client.return_value = mock_blob_service
+    mock_blob_service.get_user_delegation_key.return_value = MagicMock()
+
+    from services.airlock import get_airlock_container_link
+
+    # Should work for export requests even when import SAS is disabled
+    result = get_airlock_container_link(request, user, workspace)
+    assert result is not None

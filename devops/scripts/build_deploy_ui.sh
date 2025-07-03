@@ -23,7 +23,9 @@ jq --arg rootClientId "${SWAGGER_UI_CLIENT_ID}" \
   --arg userManagementEnabled "${USER_MANAGEMENT_ENABLED:-False}" \
   --arg uiSiteName "${UI_SITE_NAME:-}" \
   --arg uiFooterText "${UI_FOOTER_TEXT:-}" \
-  '.rootClientId = $rootClientId | .rootTenantId = $rootTenantId | .treApplicationId = $treApplicationId | .treUrl = $treUrl | .treId = $treId | .version = $version | .activeDirectoryUri = $activeDirectoryUri | .userManagementEnabled = $userManagementEnabled | .uiSiteName = $uiSiteName | .uiFooterText = $uiFooterText' ./src/config.source.json > ./src/config.json
+  --arg airlockImportSasEnabled "${AIRLOCK_IMPORT_SAS_ENABLED:-true}" \
+  --arg airlockImportDirectUploadEnabled "${AIRLOCK_IMPORT_DIRECT_UPLOAD_ENABLED:-true}" \
+  '.rootClientId = $rootClientId | .rootTenantId = $rootTenantId | .treApplicationId = $treApplicationId | .treUrl = $treUrl | .treId = $treId | .version = $version | .activeDirectoryUri = $activeDirectoryUri | .userManagementEnabled = $userManagementEnabled | .uiSiteName = $uiSiteName | .uiFooterText = $uiFooterText | .airlockImportSasEnabled = ($airlockImportSasEnabled | test("^([Tt]rue|[Yy]es|1)$")) | .airlockImportDirectUploadEnabled = ($airlockImportDirectUploadEnabled | test("^([Tt]rue|[Yy]es|1)$"))' ./src/config.source.json > ./src/config.json
 
 # build and deploy the app
 yarn install

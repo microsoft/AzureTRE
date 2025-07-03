@@ -1,6 +1,20 @@
 locals {
   version = replace(replace(replace(data.local_file.airlock_processor_version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
 
+  # Construct TRE FQDN for CORS configuration
+  # Use custom_domain if provided, otherwise fallback to App Gateway FQDN pattern
+  tre_fqdn = var.custom_domain != null ? var.custom_domain : "${var.tre_id}.${var.location}.cloudapp.azure.com"
+
+  # Build CORS allowed origins list
+  # Include localhost when local debugging is enabled for development
+  cors_allowed_origins = var.enable_local_debugging ? [
+    "https://${local.tre_fqdn}",
+    "http://localhost:3000",
+    "https://localhost:3000"
+    ] : [
+    "https://${local.tre_fqdn}"
+  ]
+
   # STorage AirLock EXternal
   import_external_storage_name = lower(replace("stalimex${var.tre_id}", "-", ""))
   # STorage AirLock IMport InProgress

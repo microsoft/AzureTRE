@@ -62,6 +62,8 @@ resource "azurerm_linux_web_app" "api" {
     MICROSOFT_GRAPH_URL                              = module.terraform_azurerm_environment_configuration.microsoft_graph_endpoint
     STORAGE_ENDPOINT_SUFFIX                          = module.terraform_azurerm_environment_configuration.storage_suffix
     ENABLE_AIRLOCK_EMAIL_CHECK                       = var.enable_airlock_email_check
+    AIRLOCK_IMPORT_SAS_ENABLED                       = var.enable_airlock_import_sas
+    AIRLOCK_IMPORT_DIRECT_UPLOAD_ENABLED             = var.enable_airlock_import_direct_upload
     LOGGING_LEVEL                                    = var.logging_level
     OTEL_RESOURCE_ATTRIBUTES                         = "service.name=api,service.version=${local.version}"
     OTEL_EXPERIMENTAL_RESOURCE_DETECTORS             = "azure_app_service"

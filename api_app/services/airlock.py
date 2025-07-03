@@ -55,7 +55,7 @@ def get_account_by_request(airlock_request: AirlockRequest, workspace: Workspace
     else:
         if airlock_request.status == AirlockRequestStatus.Draft:
             return constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL.format(short_workspace_id)
-        elif airlock_request.status in AirlockRequestStatus.Submitted:
+        elif airlock_request.status == AirlockRequestStatus.Submitted:
             return constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
         elif airlock_request.status == AirlockRequestStatus.InReview:
             return constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
@@ -166,6 +166,13 @@ async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, ai
 
 
 def get_airlock_container_link(airlock_request: AirlockRequest, user, workspace):
+    # Check configuration for import requests
+    if airlock_request.type == AirlockRequestType.Import and not config.AIRLOCK_IMPORT_SAS_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="SAS token access is disabled for import requests"
+        )
+
     validate_user_allowed_to_access_storage_account(user, airlock_request)
     validate_request_status(airlock_request)
     account_name: str = get_account_by_request(airlock_request, workspace)
@@ -481,12 +488,12 @@ async def revoke_request(airlock_request: AirlockRequest, user: User, workspace:
     """
     # Create a review entry for the revocation
     revoke_review = airlock_request_repo.create_airlock_revoke_review_item(revocation_reason, user)
-    
+
     updated_request = await update_and_publish_event_airlock_request(
-        airlock_request=airlock_request, 
-        airlock_request_repo=airlock_request_repo, 
-        updated_by=user, 
-        workspace=workspace, 
+        airlock_request=airlock_request,
+        airlock_request_repo=airlock_request_repo,
+        updated_by=user,
+        workspace=workspace,
         new_status=AirlockRequestStatus.Revoked,
         airlock_review=revoke_review
     )
@@ -504,39 +511,75 @@ def get_airlock_blob_service_client(airlock_request: AirlockRequest, workspace: 
     return BlobServiceClient(account_url=account_url, credential=credentials.get_credential())
 
 
-async def upload_airlock_file(file_content: bytes, file_name: str, airlock_request: AirlockRequest, 
+async def upload_airlock_file(file_content: bytes, file_name: str, airlock_request: AirlockRequest,
                               workspace: Workspace, user: User) -> dict:
-    """Upload a file to the airlock request container."""
+    """
+    Upload a file to the airlock request container via direct upload.
+
+    This method is only available for import requests when direct upload is enabled.
+    Only one file is allowed per airlock request. If a different file already exists
+    in the container, the upload will be rejected. The same file can be uploaded
+    again to overwrite the existing content.
+    """
+    # Check if direct upload is enabled for import requests
+    if not config.AIRLOCK_IMPORT_DIRECT_UPLOAD_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Direct file upload is disabled"
+        )
+
+    # Only allow direct uploads for import requests
+    if airlock_request.type != AirlockRequestType.Import:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Direct file upload is only allowed for import requests. For export requests, use SAS token methods."
+        )
+
     validate_user_allowed_to_access_storage_account(user, airlock_request)
     validate_request_status(airlock_request)
-    
+
     # Only allow uploads for Draft requests
     if airlock_request.status != AirlockRequestStatus.Draft:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="File uploads are only allowed for draft requests"
         )
-    
+
     try:
         blob_service_client = get_airlock_blob_service_client(airlock_request, workspace)
+        container_client = blob_service_client.get_container_client(airlock_request.id)
+
+        # Check if there are already files in the container and if the file being uploaded is different
+        existing_blobs = list(container_client.list_blobs())
+        if existing_blobs:
+            # If there's already a file and it's not the same file being uploaded, reject
+            existing_file_names = [blob.name for blob in existing_blobs]
+            if file_name not in existing_file_names:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Only one file is allowed per airlock request. Existing file(s): {', '.join(existing_file_names)}"
+                )
+
         blob_client = blob_service_client.get_blob_client(
-            container=airlock_request.id, 
+            container=airlock_request.id,
             blob=file_name
         )
-        
+
         # Upload the file
         blob_client.upload_blob(file_content, overwrite=True)
-        
+
         logger.info(f"Successfully uploaded file {file_name} to airlock request {airlock_request.id}")
         return {
             "message": "File uploaded successfully",
             "fileName": file_name,
             "size": len(file_content)
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(f"Failed to upload file {file_name} to airlock request {airlock_request.id}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to upload file: {str(e)}"
         )
 
@@ -545,11 +588,11 @@ async def list_airlock_files(airlock_request: AirlockRequest, workspace: Workspa
     """List files in the airlock request container."""
     validate_user_allowed_to_access_storage_account(user, airlock_request)
     validate_request_status(airlock_request)
-    
+
     try:
         blob_service_client = get_airlock_blob_service_client(airlock_request, workspace)
         container_client = blob_service_client.get_container_client(airlock_request.id)
-        
+
         files = []
         for blob in container_client.list_blobs():
             files.append({
@@ -557,41 +600,41 @@ async def list_airlock_files(airlock_request: AirlockRequest, workspace: Workspa
                 "size": blob.size,
                 "lastModified": int(blob.last_modified.timestamp()) if blob.last_modified else 0
             })
-        
+
         logger.info(f"Listed {len(files)} files in airlock request {airlock_request.id}")
         return files
     except Exception as e:
         logger.exception(f"Failed to list files in airlock request {airlock_request.id}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to list files: {str(e)}"
         )
 
 
-async def download_airlock_file(file_name: str, airlock_request: AirlockRequest, 
+async def download_airlock_file(file_name: str, airlock_request: AirlockRequest,
                                 workspace: Workspace, user: User) -> bytes:
     """Download a file from the airlock request container."""
     validate_user_allowed_to_access_storage_account(user, airlock_request)
     validate_request_status(airlock_request)
-    
+
     try:
         blob_service_client = get_airlock_blob_service_client(airlock_request, workspace)
         blob_client = blob_service_client.get_blob_client(
-            container=airlock_request.id, 
+            container=airlock_request.id,
             blob=file_name
         )
-        
+
         # Check if file exists
         if not blob_client.exists():
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, 
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"File {file_name} not found"
             )
-        
+
         # Download the file
         download_stream = blob_client.download_blob()
         file_content = download_stream.readall()
-        
+
         logger.info(f"Successfully downloaded file {file_name} from airlock request {airlock_request.id}")
         return file_content
     except HTTPException:
@@ -599,6 +642,64 @@ async def download_airlock_file(file_name: str, airlock_request: AirlockRequest,
     except Exception as e:
         logger.exception(f"Failed to download file {file_name} from airlock request {airlock_request.id}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to download file: {str(e)}"
         )
+
+
+async def get_airlock_upload_sas_url(airlock_request: AirlockRequest, workspace: Workspace, user: User) -> str:
+    """
+    Get a SAS URL specifically for web-based upload to the airlock request container.
+
+    This provides an alternative to direct file upload that can be used in web interfaces.
+    Only available for import requests when SAS upload is enabled.
+    """
+    # Only allow SAS uploads for import requests
+    if airlock_request.type != AirlockRequestType.Import:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="SAS token upload is only allowed for import requests. For export requests, use SAS token methods without upload permissions."
+        )
+
+    # Check configuration for import requests
+    if not config.AIRLOCK_IMPORT_SAS_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="SAS token upload is disabled for import requests"
+        )
+
+    # Only allow uploads for Draft requests
+    if airlock_request.status != AirlockRequestStatus.Draft:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File uploads are only allowed for draft requests"
+        )
+
+    validate_user_allowed_to_access_storage_account(user, airlock_request)
+    validate_request_status(airlock_request)
+
+    # Generate SAS URL with write permissions
+    account_name = get_account_by_request(airlock_request, workspace)
+    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
+                                            credential=credentials.get_credential())
+
+    start = datetime.utcnow() - timedelta(minutes=15)
+    expiry = datetime.utcnow() + timedelta(hours=config.AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS)
+
+    try:
+        udk = blob_service_client.get_user_delegation_key(key_start_time=start, key_expiry_time=expiry)
+    except Exception:
+        raise Exception(f"Failed getting user delegation key, has the API identity been granted 'Storage Blob Data Contributor' access to the storage account {account_name}?")
+
+    # For upload, we need write, read, list, and delete permissions
+    upload_permission = ContainerSasPermissions(read=True, write=True, list=True, delete=True)
+
+    token = generate_container_sas(container_name=airlock_request.id,
+                                   account_name=account_name,
+                                   user_delegation_key=udk,
+                                   permission=upload_permission,
+                                   start=start,
+                                   expiry=expiry)
+
+    return "https://{}.blob.{}/{}?{}" \
+        .format(account_name, STORAGE_ENDPOINT, airlock_request.id, token)

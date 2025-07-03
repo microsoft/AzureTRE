@@ -116,3 +116,11 @@ output "event_grid_airlock_notification_topic_resource_id" {
 output "service_bus_step_result_queue" {
   value = module.airlock_resources.service_bus_step_result_queue
 }
+
+output "enable_airlock_import_sas" {
+  value = var.enable_airlock_import_sas
+}
+
+output "enable_airlock_import_direct_upload" {
+  value = var.enable_airlock_import_direct_upload
+}

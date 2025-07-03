@@ -107,3 +107,9 @@ variable "encryption_key_versionless_id" {
   type        = string
   description = "Versionless ID of the encryption key in the key vault"
 }
+
+variable "custom_domain" {
+  type        = string
+  description = "Custom domain for the TRE (e.g., mytre.example.com). If not set, will use the default App Gateway FQDN"
+  default     = null
+}

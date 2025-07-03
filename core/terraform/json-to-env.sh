@@ -117,6 +117,14 @@ jq -r '
         {
             "path": "airlock_malware_scan_result_topic_name",
             "env_var": "AIRLOCK_MALWARE_SCAN_RESULT_TOPIC_NAME"
+        },
+        {
+            "path": "enable_airlock_import_sas",
+            "env_var": "AIRLOCK_IMPORT_SAS_ENABLED"
+        },
+        {
+            "path": "enable_airlock_import_direct_upload",
+            "env_var": "AIRLOCK_IMPORT_DIRECT_UPLOAD_ENABLED"
         }
     ]
         as $env_vars_to_extract

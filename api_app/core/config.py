@@ -70,6 +70,10 @@ API_AUDIENCE: str = config("API_AUDIENCE", default=API_CLIENT_ID)
 AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS: int = config("AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS", default=1)
 ENABLE_AIRLOCK_EMAIL_CHECK: bool = config("ENABLE_AIRLOCK_EMAIL_CHECK", cast=bool, default=False)
 
+# Airlock upload configuration
+AIRLOCK_IMPORT_DIRECT_UPLOAD_ENABLED: bool = config("AIRLOCK_IMPORT_DIRECT_UPLOAD_ENABLED", cast=bool, default=True)
+AIRLOCK_IMPORT_SAS_ENABLED: bool = config("AIRLOCK_IMPORT_SAS_ENABLED", cast=bool, default=True)
+
 API_ROOT_SCOPE: str = f"api://{API_CLIENT_ID}/user_impersonation"
 
 # User Management

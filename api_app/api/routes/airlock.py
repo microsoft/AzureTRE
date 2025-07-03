@@ -26,10 +26,9 @@ from services.authentication import get_current_workspace_owner_or_researcher_us
 
 from .resource_helpers import construct_location_header
 
-from services.airlock import create_review_vm, review_airlock_request, get_airlock_container_link, get_allowed_actions, save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace, cancel_request, revoke_request, upload_airlock_file, list_airlock_files, download_airlock_file
+from services.airlock import create_review_vm, review_airlock_request, get_airlock_container_link, get_allowed_actions, save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace, cancel_request, revoke_request, upload_airlock_file, list_airlock_files, download_airlock_file, get_airlock_upload_sas_url
 
 from services.logging import logger
-import io
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
 
@@ -202,6 +201,17 @@ async def get_airlock_container_link_method(workspace=Depends(get_deployed_works
     return AirlockRequestTokenInResponse(containerUrl=container_url)
 
 
+@airlock_workspace_router.get("/workspaces/{workspace_id}/requests/{airlock_request_id}/upload-link",
+                              status_code=status_code.HTTP_200_OK, response_model=AirlockRequestTokenInResponse,
+                              name="get_airlock_upload_link",
+                              dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
+async def get_airlock_upload_link_method(workspace=Depends(get_deployed_workspace_by_id_from_path),
+                                         airlock_request=Depends(get_airlock_request_by_id_from_path),
+                                         user=Depends(get_current_workspace_owner_or_researcher_user)) -> AirlockRequestTokenInResponse:
+    upload_url = await get_airlock_upload_sas_url(airlock_request, workspace, user)
+    return AirlockRequestTokenInResponse(containerUrl=upload_url)
+
+
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/files",
                                status_code=status_code.HTTP_201_CREATED, response_model=AirlockFileUploadResponse,
                                name="upload_airlock_file",
@@ -211,7 +221,6 @@ async def upload_file(
         workspace=Depends(get_deployed_workspace_by_id_from_path),
         airlock_request=Depends(get_airlock_request_by_id_from_path),
         user=Depends(get_current_workspace_owner_or_researcher_user)) -> AirlockFileUploadResponse:
-    """Upload a file to the airlock request container."""
     try:
         file_content = await file.read()
         result = await upload_airlock_file(file_content, file.filename, airlock_request, workspace, user)
@@ -256,6 +265,7 @@ async def download_file(
         file_content = await download_airlock_file(file_name, airlock_request, workspace, user)
 
         # Create a streaming response for the file download
+        import io
         return StreamingResponse(
             io.BytesIO(file_content),
             media_type="application/octet-stream",

@@ -22,6 +22,17 @@ resource "azurerm_storage_account" "sa_import_external" {
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
 
+  # CORS configuration to enable SAS upload from TRE UI
+  blob_properties {
+    cors_rule {
+      allowed_headers    = ["*"]
+      allowed_methods    = ["PUT", "GET", "HEAD", "OPTIONS"]
+      allowed_origins    = local.cors_allowed_origins
+      exposed_headers    = ["*"]
+      max_age_in_seconds = 3600
+    }
+  }
+
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
@@ -90,6 +101,17 @@ resource "azurerm_storage_account" "sa_export_approved" {
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
 
+  # CORS configuration to enable SAS access from TRE UI for downloads
+  blob_properties {
+    cors_rule {
+      allowed_headers    = ["*"]
+      allowed_methods    = ["GET", "HEAD", "OPTIONS"]
+      allowed_origins    = local.cors_allowed_origins
+      exposed_headers    = ["*"]
+      max_age_in_seconds = 3600
+    }
+  }
+
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
@@ -155,6 +177,17 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
 
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
+
+  # CORS configuration to enable SAS upload from TRE UI
+  blob_properties {
+    cors_rule {
+      allowed_headers    = ["*"]
+      allowed_methods    = ["PUT", "GET", "HEAD", "OPTIONS"]
+      allowed_origins    = local.cors_allowed_origins
+      exposed_headers    = ["*"]
+      max_age_in_seconds = 3600
+    }
+  }
 
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []

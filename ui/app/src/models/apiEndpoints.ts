@@ -6,6 +6,7 @@ export enum ApiEndpoint {
   Requests = "requests",
   AirlockRequests = "requests",
   AirlockLink = "link",
+  AirlockUploadLink = "upload-link",
   AirlockSubmit = "submit",
   AirlockCancel = "cancel",
   AirlockRevoke = "revoke",
