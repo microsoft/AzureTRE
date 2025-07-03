@@ -481,12 +481,12 @@ async def revoke_request(airlock_request: AirlockRequest, user: User, workspace:
     """
     # Create a review entry for the revocation
     revoke_review = airlock_request_repo.create_airlock_revoke_review_item(revocation_reason, user)
-    
+
     updated_request = await update_and_publish_event_airlock_request(
-        airlock_request=airlock_request, 
-        airlock_request_repo=airlock_request_repo, 
-        updated_by=user, 
-        workspace=workspace, 
+        airlock_request=airlock_request,
+        airlock_request_repo=airlock_request_repo,
+        updated_by=user,
+        workspace=workspace,
         new_status=AirlockRequestStatus.Revoked,
         airlock_review=revoke_review
     )
