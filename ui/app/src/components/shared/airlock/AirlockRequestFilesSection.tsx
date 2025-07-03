@@ -7,6 +7,7 @@ import {
   Stack,
   TextField,
   TooltipHost,
+  ProgressIndicator
 } from "@fluentui/react";
 import React, { useCallback, useEffect, useState } from "react";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
@@ -15,6 +16,7 @@ import { ApiEndpoint } from "../../../models/apiEndpoints";
 import { APIError } from "../../../models/exceptions";
 import { ExceptionLayout } from "../ExceptionLayout";
 import { CliCommand } from "../CliCommand";
+import { BlobServiceClient } from "@azure/storage-blob";
 
 interface AirlockRequestFilesSectionProps {
   request: AirlockRequest;
@@ -35,6 +37,8 @@ export const AirlockRequestFilesSection: React.FunctionComponent<
   const [apiSasUrlError, setApiSasUrlError] = useState({} as APIError);
 
   const apiCall = useAuthApiCall();
+
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
 
   const generateSasUrl = useCallback(async () => {
     if (props.request && props.request.workspaceId) {
@@ -96,6 +100,57 @@ export const AirlockRequestFilesSection: React.FunctionComponent<
     return cliCommand;
   };
 
+  const downloadFile = async () => {
+    if (!sasUrl) return;
+
+    const parsed = parseSasUrl(sasUrl);
+    if (!parsed) {
+      alert("Invalid SAS URL");
+      return;
+    }
+
+    const { StorageAccountName, containerName, sasToken } = parsed;
+
+    try {
+      const blobServiceClient = new BlobServiceClient(
+        `https://${StorageAccountName}.blob.core.windows.net/?${sasToken}`
+      );
+
+      const containerClient = blobServiceClient.getContainerClient(containerName);
+
+      // Get first blob
+      const blobIterator = containerClient.listBlobsFlat();
+      const blobItem = (await blobIterator.next()).value;
+
+      if (!blobItem?.name) {
+        alert("No file found in container.");
+        return;
+      }
+
+      const blobClient = containerClient.getBlobClient(blobItem.name);
+      const blobUrl = blobClient.url;
+
+      const res = await fetch(blobUrl);
+      if (!res.ok) {
+        alert("Failed to fetch file from blob storage.");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = blobItem.name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed:", error);
+      alert("Download failed. See console for details.");
+    }
+  };
+
+
   useEffect(() => {
     generateSasUrl();
   }, [generateSasUrl]);
@@ -103,6 +158,68 @@ export const AirlockRequestFilesSection: React.FunctionComponent<
   return (
     <Stack>
       <Pivot aria-label="Storage options">
+        <PivotItem headerText="File Dialog">
+          <Stack.Item style={{ paddingTop: "10px" }}>
+            {props.request.status === AirlockRequestStatus.Draft ? (
+              <>
+                <input
+                  type="file"
+                  id="fileInput"
+                  style={{ display: "none" }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file || !sasUrl) return;
+
+                    const parsed = parseSasUrl(sasUrl);
+                    if (!parsed) return;
+
+                    const { StorageAccountName, containerName, sasToken } = parsed;
+                    const blobServiceClient = new BlobServiceClient(
+                      `https://${StorageAccountName}.blob.core.windows.net/?${sasToken}`
+                    );
+
+                    const containerClient = blobServiceClient.getContainerClient(containerName);
+                    const blockBlobClient = containerClient.getBlockBlobClient(file.name);
+
+                    try {
+                      await blockBlobClient.uploadBrowserData(file, {
+                        blobHTTPHeaders: { blobContentType: file.type },
+                        onProgress: (ev: { loadedBytes: number }) => {
+                          const percent = (ev.loadedBytes / file.size) * 100;
+                          console.log(`Progress: ${percent.toFixed(2)}%`);
+                          setUploadProgress(percent);
+                        },
+                      });
+                      alert("Upload complete!");
+                      setTimeout(() => setUploadProgress(0), 1000);
+                    } catch (err) {
+                      console.error("Upload failed", err);
+                      alert("Upload failed. See console for details.");
+                      setTimeout(() => setUploadProgress(0), 1000);
+                    }
+                  }}
+                />
+                <PrimaryButton
+                  text="Upload File"
+                  onClick={() => document.getElementById("fileInput")?.click()}
+                  disabled={!sasUrl}
+                />
+                {uploadProgress > 0 && uploadProgress < 100 && (
+                  <ProgressIndicator
+                    label="Uploading..."
+                    percentComplete={uploadProgress / 100}
+                  />
+                )}
+              </>
+            ) : (
+              <PrimaryButton
+                text="Download File"
+                onClick={downloadFile}
+                disabled={!sasUrl}
+              />
+            )}
+          </Stack.Item>
+        </PivotItem>
         <PivotItem headerText="SAS URL">
           <Stack>
             <Stack.Item style={{ paddingTop: "10px", paddingBottom: "10px" }}>
