@@ -529,7 +529,7 @@ async def test_revoke_request_calls_update_with_revoked_status(update_mock, airl
     revocation_reason = "Test revocation reason"
 
     update_mock.return_value = sample_airlock_request(status=AirlockRequestStatus.Revoked)
-    airlock_request_repo_mock.create_airlock_revoke_review_item.return_value = sample_airlock_review()
+    airlock_request_repo_mock.create_airlock_revoke_review_item = MagicMock(return_value=sample_airlock_review())
 
     result = await revoke_request(
         airlock_request=airlock_request,

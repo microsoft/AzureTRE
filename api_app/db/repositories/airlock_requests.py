@@ -1,7 +1,7 @@
 import copy
 import uuid
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
@@ -32,7 +32,7 @@ class AirlockRequestRepository(BaseRepository):
         return {"tre_id": config.TRE_ID}
 
     def get_timestamp(self) -> float:
-        return datetime.utcnow().timestamp()
+        return datetime.now(timezone.utc).timestamp()
 
     async def update_airlock_request_item(self, original_request: AirlockRequest, new_request: AirlockRequest, updated_by: User, request_properties: dict) -> AirlockRequest:
         history_item = AirlockRequestHistoryItem(
