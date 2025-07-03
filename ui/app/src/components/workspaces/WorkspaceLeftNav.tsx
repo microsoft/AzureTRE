@@ -5,6 +5,7 @@ import { ApiEndpoint } from "../../models/apiEndpoints";
 import { WorkspaceService } from "../../models/workspaceService";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { SharedService } from "../../models/sharedService";
+import { successStates } from "../../models/operation";
 
 // TODO:
 // - active item is sometimes lost
@@ -86,13 +87,16 @@ export const WorkspaceLeftNav: React.FunctionComponent<
         }
       }
 
-      navLinks[0].links.push(
-        {
-          name: "Users",
-          key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
-          url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
-          isExpanded: false,
-        })
+      // Only add Users link if workspace is fully deployed
+      if (successStates.includes(workspaceCtx.workspace.deploymentStatus)) {
+        navLinks[0].links.push(
+          {
+            name: "Users",
+            key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
+            url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
+            isExpanded: false,
+          })
+      }
 
       setServiceLinks(navLinks);
     };
@@ -102,6 +106,7 @@ export const WorkspaceLeftNav: React.FunctionComponent<
     props.sharedServices,
     workspaceCtx.workspace.id,
     workspaceCtx.workspace.properties,
+    workspaceCtx.workspace.deploymentStatus,
   ]);
 
   return (
