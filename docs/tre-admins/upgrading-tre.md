@@ -42,3 +42,7 @@ If you wish to deploy the Azure TRE from a forked repository you can change the 
 - `"UPSTREAM_REPO": "myorg/AzureTRE"` (to point to a fork of the Azure TRE in your GitHub organisation)
 
 When changing `UPSTREAM_REPO` ensure the `UPSTREAM_REPO_VERSION` variable refers to a GitHub ref on your repository fork.
+
+## Check infrastructure changes using a Terraform plan
+
+You can run `make plan-core` to generate a terraform plan and view any potential changes prior to running the `make tre-deploy` command. This can be useful when you are evaluating an upgrade and don't want to make any actual changes to the deployed infrastructure.

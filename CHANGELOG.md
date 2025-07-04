@@ -26,6 +26,7 @@ ENHANCEMENTS:
 * Display VM owner information on resource cards with clickable mailto links ([#4592](https://github.com/microsoft/AzureTRE/issues/4592))
 * Add sort/filter options to Workspace list ([#4462](https://github.com/microsoft/AzureTRE/issues/4462))
 * Added backup vault to base workspace & updated Azurerm provider to match core. ([[#4362](https://github.com/microsoft/AzureTRE/issues/4362)])
+* Add `make plan-core` command for testing core deployments ([#4029](https://github.com/microsoft/AzureTRE/issues/4029))
 
 BUG FIXES:
 * Fix "log analytics workspaces not found" error when deploying Databricks workspace service ([#4585](https://github.com/microsoft/AzureTRE/pull/4585))
