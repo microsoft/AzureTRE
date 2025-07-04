@@ -1,4 +1,5 @@
 import logging
+import os
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry import trace
 from azure.monitor.opentelemetry import configure_azure_monitor
@@ -45,6 +46,23 @@ LOGGERS_FOR_ERRORS_ONLY = [
     "urllib3.connectionpool"
 ]
 
+
+class WorkerIdFilter(logging.Filter):
+    """
+    A filter that adds worker_id to all log records.
+    """
+
+    def __init__(self):
+        super().__init__()
+        # Get the process ID as a unique worker identifier
+        self.worker_id = os.getpid()
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        # Add worker_id as an attribute to the log record
+        record.worker_id = self.worker_id
+        return True
+
+
 logger = logging.getLogger("azuretre_api")
 tracer = trace.get_tracer("azuretre_api")
 
@@ -55,6 +73,20 @@ def configure_loggers():
 
     for logger_name in UNWANTED_LOGGERS:
         logging.getLogger(logger_name).setLevel(logging.CRITICAL)
+
+
+def apply_worker_id_to_logger(logger_instance):
+    """
+    Apply the worker ID filter to a logger instance.
+    """
+    worker_filter = WorkerIdFilter()
+    logger_instance.addFilter(worker_filter)
+
+    # Update handlers to include worker_id in the format
+    for handler in logger_instance.handlers:
+        if isinstance(handler, logging.StreamHandler):
+            formatter = logging.Formatter('%(asctime)s - Worker %(worker_id)s - %(name)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
 
 
 def initialize_logging() -> logging.Logger:
@@ -84,11 +116,23 @@ def initialize_logging() -> logging.Logger:
             }
         )
 
+    # Custom log format including worker_id
+    log_format = '%(asctime)s - Worker %(worker_id)s - %(name)s - %(levelname)s - %(message)s'
+
     LoggingInstrumentor().instrument(
         set_logging_format=True,
         log_level=logging_level,
-        tracer_provider=tracer._real_tracer
+        tracer_provider=tracer._real_tracer,
+        log_format=log_format
     )
+
+    # Set up a handler if none exists
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        logger.addHandler(handler)
+
+    # Apply worker ID filter
+    apply_worker_id_to_logger(logger)
 
     logger.info("Logging initialized with level: %s", LOGGING_LEVEL)
 
