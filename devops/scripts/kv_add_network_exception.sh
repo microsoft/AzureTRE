@@ -1,4 +1,7 @@
 #!/bin/bash
+set -o errexit
+set -o pipefail
+set -o nounset
 
 #
 # Temporarily set Key Vault to public access for deployment, and restore to private on script exit

@@ -1,4 +1,7 @@
 #!/bin/bash
+set -o errexit
+set -o pipefail
+set -o nounset
 
 cat << EOF > 'validation.txt'
 ${CERTBOT_VALIDATION}

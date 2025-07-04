@@ -100,5 +100,3 @@ if [ -f "$DIR/../../core/private.env" ]; then
   KEY_VAULT_URL=$KEYVAULT_URI
   export KEY_VAULT_URL
 fi
-
-set +o nounset

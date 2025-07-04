@@ -49,6 +49,3 @@ do
     fi
   done < <(grep -v -e '^[[:space:]]*$' -e '^#' "$f" )
 done
-
-
-set +o nounset
