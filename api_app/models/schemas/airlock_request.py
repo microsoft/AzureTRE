@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 from pydantic import BaseModel, Field
 from models.domain.operation import Operation
@@ -28,7 +28,7 @@ def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> di
             "id": "a user id",
             "name": "a user name"
         },
-        "createdWhen": datetime.utcnow().timestamp(),
+        "createdWhen": datetime.now(timezone.utc).timestamp(),
         "reviews": [
             get_sample_airlock_review("29990431-5451-40e7-a58a-02e2b7c3d7c8"),
             get_sample_airlock_review("02dc0f29-351a-43ec-87e7-3dd2b5177b7f")]
@@ -115,5 +115,16 @@ class AirlockReviewInCreate(BaseModel):
             "example": {
                 "approval": "True",
                 "decisionExplanation": "the reason why this request was approved/rejected"
+            }
+        }
+
+
+class AirlockRevokeInCreate(BaseModel):
+    reason: str = Field(title="Reason for revoking the approved request")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "reason": "Request was approved in error or security concerns identified"
             }
         }
