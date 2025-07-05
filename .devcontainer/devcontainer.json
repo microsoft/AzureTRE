@@ -280,7 +280,8 @@
         "mikestead.dotenv",
         "humao.rest-client",
         "timonwong.shellcheck",
-        "ms-azuretools.vscode-azurefunctions"
+        "ms-azuretools.vscode-azurefunctions",
+        "vitest.explorer"
       ]
     }
   },
