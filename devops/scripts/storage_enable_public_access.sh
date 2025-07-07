@@ -14,57 +14,6 @@ source "$(dirname "${BASH_SOURCE[0]}")/bash_trap_helper.sh"
 # Global variable for error tracking
 LAST_PUBLIC_ACCESS_ERROR=""
 
-# Parse command line arguments and return values via stdout
-function parse_arguments() {
-  local storage_account_name=""
-  local resource_group_name=""
-
-  while [ "$1" != "" ]; do
-    case $1 in
-    --storage-account-name)
-      shift
-      storage_account_name=$1
-      ;;
-    --resource-group-name)
-      shift
-      resource_group_name=$1
-      ;;
-    *)
-      echo "Unexpected argument: '$1'"
-      echo "Usage: storage_enable_public_access.sh --storage-account-name <n> --resource-group-name <rg>"
-      exit 1
-      ;;
-    esac
-
-    if [[ -z "${2:-}" ]]; then
-      # if no more args then stop processing
-      break
-    fi
-
-    shift # remove the current value for `$1` and use the next
-  done
-
-  # Return the parsed values
-  echo "${storage_account_name}|${resource_group_name}"
-}
-
-# Validate arguments
-function validate_arguments() {
-  local storage_account_name="$1"
-  local resource_group_name="$2"
-
-  # Require both arguments to be provided
-  if [[ -z "${storage_account_name:-}" ]]; then
-    echo "Error: --storage-account-name argument is required" >&2
-    exit 1
-  fi
-
-  if [[ -z "${resource_group_name:-}" ]]; then
-    echo "Error: --resource-group-name argument is required" >&2
-    exit 1
-  fi
-}
-
 function storage_enable_public_access() {
   local storage_account_name="$1"
   local resource_group_name="$2"
@@ -159,12 +108,45 @@ function is_public_access_enabled() {
 }
 
 # Main execution
-# Parse arguments into local variables to avoid global variable conflicts
-parsed_args=$(parse_arguments "$@")
-storage_account_name=$(echo "$parsed_args" | cut -d'|' -f1)
-resource_group_name=$(echo "$parsed_args" | cut -d'|' -f2)
+# Parse arguments inline
+storage_account_name=""
+resource_group_name=""
 
-validate_arguments "$storage_account_name" "$resource_group_name"
+while [ "$1" != "" ]; do
+  case $1 in
+  --storage-account-name)
+    shift
+    storage_account_name=$1
+    ;;
+  --resource-group-name)
+    shift
+    resource_group_name=$1
+    ;;
+  *)
+    echo "Unexpected argument: '$1'"
+    echo "Usage: storage_enable_public_access.sh --storage-account-name <n> --resource-group-name <rg>"
+    exit 1
+    ;;
+  esac
+
+  if [[ -z "${2:-}" ]]; then
+    # if no more args then stop processing
+    break
+  fi
+
+  shift # remove the current value for `$1` and use the next
+done
+
+# Validate arguments inline
+if [[ -z "${storage_account_name:-}" ]]; then
+  echo "Error: --storage-account-name argument is required" >&2
+  exit 1
+fi
+
+if [[ -z "${resource_group_name:-}" ]]; then
+  echo "Error: --resource-group-name argument is required" >&2
+  exit 1
+fi
 
 # Prevent the script from running multiple times for the same storage account within the current shell
 STORAGE_GUARD_VAR="STORAGE_PUBLIC_ACCESS_SCRIPT_GUARD_${storage_account_name}"
