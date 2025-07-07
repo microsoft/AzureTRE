@@ -17,7 +17,7 @@ from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockRequestWithAllowedUserActions, \
-    AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate
+    AirlockRequestWithAllowedUserActionsInList, AirlockReviewInCreate, AirlockRevokeInCreate
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
     get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user
@@ -25,7 +25,7 @@ from services.authentication import get_current_workspace_owner_or_researcher_us
 from .resource_helpers import construct_location_header
 
 from services.airlock import create_review_vm, review_airlock_request, get_airlock_container_link, get_allowed_actions, save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, \
-    enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace, cancel_request
+    enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace, cancel_request, revoke_request
 from services.logging import logger
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
@@ -109,6 +109,19 @@ async def create_cancel_request(airlock_request=Depends(get_airlock_request_by_i
                                 operation_repo=Depends(get_repository(OperationRepository)),
                                 resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),) -> AirlockRequestWithAllowedUserActions:
     updated_request = await cancel_request(airlock_request, user, workspace, airlock_request_repo, user_resource_repo, workspace_service_repo, resource_template_repo, operation_repo, resource_history_repo)
+    allowed_actions = get_allowed_actions(updated_request, user, airlock_request_repo)
+    return AirlockRequestWithAllowedUserActions(airlockRequest=updated_request, allowedUserActions=allowed_actions)
+
+
+@airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/revoke", status_code=status_code.HTTP_200_OK,
+                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_REVOKE_AIRLOCK_REQUEST,
+                               dependencies=[Depends(get_current_airlock_manager_user), Depends(get_workspace_by_id_from_path)])
+async def create_revoke_request(revoke_input: AirlockRevokeInCreate,
+                                airlock_request=Depends(get_airlock_request_by_id_from_path),
+                                user=Depends(get_current_airlock_manager_user),
+                                workspace=Depends(get_workspace_by_id_from_path),
+                                airlock_request_repo=Depends(get_repository(AirlockRequestRepository))) -> AirlockRequestWithAllowedUserActions:
+    updated_request = await revoke_request(airlock_request, user, workspace, airlock_request_repo, revoke_input.reason)
     allowed_actions = get_allowed_actions(updated_request, user, airlock_request_repo)
     return AirlockRequestWithAllowedUserActions(airlockRequest=updated_request, allowedUserActions=allowed_actions)
 
