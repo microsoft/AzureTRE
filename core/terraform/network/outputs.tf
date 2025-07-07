@@ -83,3 +83,7 @@ output "queue_core_dns_zone_id" {
 output "table_core_dns_zone_id" {
   value = azurerm_private_dns_zone.private_dns_zones["privatelink.table.core.windows.net"].id
 }
+
+output "private_dns_zone_name" {
+  value = azurerm_private_dns_zone.agw_private.name
+}

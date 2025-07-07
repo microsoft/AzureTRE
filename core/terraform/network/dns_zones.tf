@@ -14,6 +14,21 @@ resource "azurerm_private_dns_zone" "azure_monitor" {
   lifecycle { ignore_changes = [tags] }
 }
 
+resource "azurerm_private_dns_zone" "agw_private" {
+  name                = "internal.${var.tre_id}.com"
+  resource_group_name = var.resource_group_name
+  tags                = local.tre_core_tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "agw_private" {
+  name                  = "agw-private-link"
+  resource_group_name   = var.resource_group_name
+  virtual_network_id    = azurerm_virtual_network.core.id
+  private_dns_zone_name = azurerm_private_dns_zone.agw_private.name
+  registration_enabled  = false
+  tags                  = local.tre_core_tags
+}
+
 resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor" {
   name                  = "azure-monitor-link"
   resource_group_name   = var.resource_group_name
