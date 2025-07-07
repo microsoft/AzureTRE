@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, createPartialFluentUIMock } from "../../test-utils";
 import { ConfirmDisableEnableResource } from "./ConfirmDisableEnableResource";
 import { Resource } from "../../models/resource";
 import { ResourceType } from "../../models/resourceType";
@@ -24,38 +24,25 @@ vi.mock("../../hooks/customReduxHooks", () => ({
 
 vi.mock("../shared/notifications/operationsSlice", () => ({
   addUpdateOperation: vi.fn(),
+  default: {
+    name: 'operations',
+    reducer: vi.fn()
+  }
 }));
 
-// Mock FluentUI components
+// Mock FluentUI components using centralized mocks
 vi.mock("@fluentui/react", async () => {
   const actual = await vi.importActual("@fluentui/react");
   return {
     ...actual,
-    Dialog: ({ children, onDismiss, dialogContentProps }: any) => (
-      <div data-testid="dialog">
-        <div data-testid="dialog-title">{dialogContentProps.title}</div>
-        <div data-testid="dialog-subtext">{dialogContentProps.subText}</div>
-        <button data-testid="dialog-close" onClick={onDismiss} aria-label="Close dialog">×</button>
-        {children}
-      </div>
-    ),
-    DialogFooter: ({ children }: any) => (
-      <div data-testid="dialog-footer">{children}</div>
-    ),
-    PrimaryButton: ({ text, onClick, ...props }: any) => (
-      <button data-testid="primary-button" onClick={onClick} {...props}>
-        {text}
-      </button>
-    ),
-    DefaultButton: ({ text, onClick }: any) => (
-      <button data-testid="default-button" onClick={onClick}>
-        {text}
-      </button>
-    ),
-    Spinner: ({ label }: any) => (
-      <div data-testid="spinner">{label}</div>
-    ),
-    DialogType: { normal: "normal" },
+    ...createPartialFluentUIMock([
+      'Dialog',
+      'DialogFooter',
+      'DialogType',
+      'PrimaryButton',
+      'DefaultButton',
+      'Spinner'
+    ]),
   };
 });
 

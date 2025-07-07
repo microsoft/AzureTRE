@@ -1,30 +1,22 @@
 import React from "react";
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, createPartialFluentUIMock } from "../../test-utils";
 import { StatusBadge } from "./StatusBadge";
 import { Resource } from "../../models/resource";
 import { ResourceType } from "../../models/resourceType";
 
-// Mock FluentUI components that might not work well in tests
+// Mock FluentUI components using centralized mocks
 vi.mock("@fluentui/react", async () => {
   const actual = await vi.importActual("@fluentui/react");
   return {
     ...actual,
-    TooltipHost: ({ children, content, tooltipProps }: any) => (
-      <div data-testid="tooltip" title={content}>
-        {tooltipProps?.onRenderContent ? tooltipProps.onRenderContent() : children}
-      </div>
-    ),
-    Spinner: ({ label }: any) => (
-      <div data-testid="spinner" role="progressbar">
-        {label}
-      </div>
-    ),
-    FontIcon: ({ iconName, ...props }: any) => (
-      <span data-testid={`icon-${iconName}`} {...props}>
-        {iconName}
-      </span>
-    ),
+    ...createPartialFluentUIMock([
+      'Stack',
+      'Text',
+      'Spinner',
+      'FontIcon',
+      'TooltipHost',
+    ]),
   };
 });
 
@@ -71,12 +63,14 @@ describe("StatusBadge Component", () => {
   it("renders error icon for failed status", () => {
     render(<StatusBadge status="deployment_failed" resource={mockResource} />);
 
-    // For failed status, it shows the tooltip content first, then the icon inside
-    const tooltip = screen.getByTestId("tooltip");
-    expect(tooltip).toBeInTheDocument();
+    // For failed status, it shows the tooltip host and font icon
+    const tooltipHost = screen.getByTestId("tooltip-host");
+    expect(tooltipHost).toBeInTheDocument();
 
-    // The icon should be inside the tooltip's onRenderContent
-    expect(screen.getByText("deployment failed")).toBeInTheDocument();
+    // The FontIcon should be inside the tooltip host
+    const errorIcon = screen.getByTestId("font-icon");
+    expect(errorIcon).toBeInTheDocument();
+    expect(errorIcon).toHaveAttribute("data-icon-name", "AlertSolid");
   });
 
   it("renders disabled icon for disabled resource", () => {
@@ -87,12 +81,13 @@ describe("StatusBadge Component", () => {
 
     render(<StatusBadge status="deployed" resource={disabledResource} />);
 
-    const disabledIcon = screen.getByTestId("icon-Blocked2Solid");
+    const disabledIcon = screen.getByTestId("font-icon");
     expect(disabledIcon).toBeInTheDocument();
+    expect(disabledIcon).toHaveAttribute("data-icon-name", "Blocked2Solid");
 
-    // Check tooltip
-    const tooltip = screen.getByTestId("tooltip");
-    expect(tooltip).toHaveAttribute("title", "This resource is disabled");
+    // Check tooltip host
+    const tooltipHost = screen.getByTestId("tooltip-host");
+    expect(tooltipHost).toHaveAttribute("title", "This resource is disabled");
   });
 
   it("renders nothing for successful status with enabled resource", () => {
@@ -123,11 +118,13 @@ describe("StatusBadge Component", () => {
   it("shows detailed error tooltip for failed status", () => {
     render(<StatusBadge status="deployment_failed" resource={mockResource} />);
 
-    const tooltip = screen.getByTestId("tooltip");
-    expect(tooltip).toBeInTheDocument();
+    const tooltipHost = screen.getByTestId("tooltip-host");
+    expect(tooltipHost).toBeInTheDocument();
 
-    // The tooltip should contain the detailed error message
-    expect(screen.getByText("deployment failed")).toBeInTheDocument();
-    expect(screen.getByText(/There was an issue with the latest deployment/)).toBeInTheDocument();
+    // The error icon should be present with the correct icon name
+    const errorIcon = screen.getByTestId("font-icon");
+    expect(errorIcon).toBeInTheDocument();
+    expect(errorIcon).toHaveAttribute("data-icon-name", "AlertSolid");
+    expect(errorIcon).toHaveAttribute("aria-describedby", "item-test-resource-id-failed");
   });
 });

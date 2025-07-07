@@ -1,64 +1,28 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, createPartialFluentUIMock, mockClipboardAPI } from "../../test-utils";
 import { CliCommand } from "./CliCommand";
 
-// Mock FluentUI components
+// Mock FluentUI components using the centralized mock
 vi.mock("@fluentui/react", async () => {
   const actual = await vi.importActual("@fluentui/react");
-
-  // Create mock Stack with Item as a property
-  const MockStackComponent = ({ children, horizontal, style, styles }: any) => (
-    <div
-      data-testid="stack"
-      data-horizontal={horizontal}
-      style={style}
-    >
-      {children}
-    </div>
-  );
-
-  MockStackComponent.Item = ({ children, align, grow, style }: any) => (
-    <div
-      data-testid="stack-item"
-      data-align={align}
-      data-grow={grow}
-      style={style}
-    >
-      {children}
-    </div>
-  );
-
   return {
     ...actual,
-    Stack: MockStackComponent,
-    Text: ({ children }: any) => <span data-testid="text">{children}</span>,
-    IconButton: ({ iconProps, onClick, styles }: any) => (
-      <button
-        data-testid="icon-button"
-        data-icon-name={iconProps?.iconName}
-        onClick={onClick}
-        style={styles?.root}
-      >
-        {iconProps?.iconName}
-      </button>
-    ),
-    TooltipHost: ({ content, children, ...props }: any) => (
-      <div data-testid="tooltip-host" title={content} {...props}>
-        {children}
-      </div>
-    ),
-    Spinner: ({ label }: any) => (
-      <div data-testid="spinner">{label}</div>
-    )
+    ...createPartialFluentUIMock([
+      'Stack',
+      'Text',
+      'IconButton',
+      'TooltipHost',
+      'Spinner'
+    ]),
   };
 });
 
-// Mock clipboard API
-Object.assign(navigator, {
-  clipboard: {
-    writeText: vi.fn(() => Promise.resolve()),
-  },
+// Setup mock clipboard API before each test
+beforeEach(() => {
+  mockClipboardAPI();
+  vi.clearAllMocks();
+  vi.clearAllTimers();
 });
 
 describe("CliCommand Component", () => {

@@ -1,7 +1,12 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { BrowserRouter } from "react-router-dom";
+import {
+  render,
+  screen,
+  fireEvent,
+  createPartialFluentUIMock,
+  createReactRouterMocks
+} from "../../test-utils";
 import { ResourceCard } from "./ResourceCard";
 import { Resource, ComponentAction, VMPowerStates } from "../../models/resource";
 import { ResourceType } from "../../models/resourceType";
@@ -14,13 +19,8 @@ import { CostResource } from "../../models/costs";
 const mockNavigate = vi.fn();
 const mockUseComponentManager = vi.fn();
 
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual("react-router-dom");
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
+// Mock React Router using centralized utility
+vi.mock("react-router-dom", () => createReactRouterMocks(mockNavigate));
 
 vi.mock("../../hooks/useComponentManager", () => ({
   useComponentManager: () => mockUseComponentManager(),
@@ -201,15 +201,10 @@ const renderWithContexts = (
   workspaceContext = mockWorkspaceContext,
   appRolesContext = mockAppRolesContext
 ) => {
-  return render(
-    <BrowserRouter>
-      <WorkspaceContext.Provider value={workspaceContext}>
-        <AppRolesContext.Provider value={appRolesContext}>
-          {component}
-        </AppRolesContext.Provider>
-      </WorkspaceContext.Provider>
-    </BrowserRouter>
-  );
+  return render(component, {
+    workspaceContext,
+    appRolesContext
+  });
 };
 
 describe("ResourceCard Component", () => {

@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, createPartialFluentUIMock } from "../../test-utils";
 import { ConfirmDeleteResource } from "./ConfirmDeleteResource";
 import { Resource } from "../../models/resource";
 import { ResourceType } from "../../models/resourceType";
@@ -34,45 +34,25 @@ const mockOperationsSlice = {
 const mockAddUpdateOperation = vi.fn();
 vi.mock("../shared/notifications/operationsSlice", () => ({
   addUpdateOperation: (...args: any[]) => mockAddUpdateOperation(...args),
+  default: {
+    name: 'operations',
+    reducer: vi.fn()
+  }
 }));
 
-// Mock FluentUI components
+// Mock FluentUI components - only the ones we need for this test
 vi.mock("@fluentui/react", async () => {
   const actual = await vi.importActual("@fluentui/react");
   return {
     ...actual,
-    Dialog: ({ children, hidden, onDismiss, dialogContentProps }: any) =>
-      !hidden ? (
-        <div data-testid="dialog" role="dialog">
-          <div data-testid="dialog-title">{dialogContentProps.title}</div>
-          <div data-testid="dialog-subtext">{dialogContentProps.subText}</div>
-          <button data-testid="dialog-close" onClick={onDismiss}>
-            X
-          </button>
-          {children}
-        </div>
-      ) : null,
-    DialogFooter: ({ children }: any) => (
-      <div data-testid="dialog-footer">{children}</div>
-    ),
-    PrimaryButton: ({ text, onClick }: any) => (
-      <button data-testid="primary-button" onClick={onClick}>
-        {text}
-      </button>
-    ),
-    DefaultButton: ({ text, onClick }: any) => (
-      <button data-testid="default-button" onClick={onClick}>
-        {text}
-      </button>
-    ),
-    Spinner: ({ label }: any) => (
-      <div data-testid="spinner" role="progressbar">
-        {label}
-      </div>
-    ),
-    DialogType: {
-      normal: "normal",
-    },
+    ...createPartialFluentUIMock([
+      'Dialog',
+      'DialogFooter',
+      'DialogType',
+      'PrimaryButton',
+      'DefaultButton',
+      'Spinner'
+    ]),
   };
 });
 

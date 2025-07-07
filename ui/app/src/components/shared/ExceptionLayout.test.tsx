@@ -1,39 +1,11 @@
 import React from "react";
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, createPartialFluentUIMock } from "../../test-utils";
 import { ExceptionLayout } from "./ExceptionLayout";
 import { APIError } from "../../models/exceptions";
 
-// Mock FluentUI components
-vi.mock("@fluentui/react", async () => {
-  const actual = await vi.importActual("@fluentui/react");
-  return {
-    ...actual,
-    MessageBar: ({ children, messageBarType, isMultiline, onDismiss, dismissButtonAriaLabel }: any) => (
-      <div data-testid="message-bar" data-type={messageBarType} data-multiline={isMultiline}>
-        {children}
-        {onDismiss && (
-          <button data-testid="dismiss-button" onClick={onDismiss} aria-label={dismissButtonAriaLabel}>
-            X
-          </button>
-        )}
-      </div>
-    ),
-    MessageBarType: {
-      error: "error",
-    },
-    Link: ({ children, onClick, href, title, style }: any) => (
-      <a data-testid="fluent-link" onClick={onClick} href={href} title={title} style={style}>
-        {children}
-      </a>
-    ),
-    Icon: ({ iconName, ...props }: any) => (
-      <span data-testid="icon" data-icon-name={iconName} {...props}>
-        {iconName}
-      </span>
-    ),
-  };
-});
+// Mock FluentUI components using centralized utility
+vi.mock("@fluentui/react", () => createPartialFluentUIMock(['MessageBar', 'Link', 'Icon']));
 
 describe("ExceptionLayout Component", () => {
   const createMockError = (overrides: Partial<APIError> = {}): APIError => {

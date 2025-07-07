@@ -1,6 +1,13 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  createAuthApiCallMock,
+  createApiEndpointsMock,
+  createPartialFluentUIMock
+} from "../../test-utils";
 import { CostsTag } from "./CostsTag";
 import { CostsContext } from "../../contexts/CostsContext";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
@@ -8,36 +15,15 @@ import { LoadingState } from "../../models/loadingState";
 import { CostResource } from "../../models/costs";
 import { ResourceType } from "../../models/resourceType";
 
-// Mock the API hook
+// Mock the API hook using centralized utility
 const mockApiCall = vi.fn();
-vi.mock("../../hooks/useAuthApiCall", () => ({
-  useAuthApiCall: () => mockApiCall,
-  HttpMethod: { Get: "GET" },
-  ResultType: { JSON: "JSON" },
-}));
+vi.mock("../../hooks/useAuthApiCall", () => createAuthApiCallMock(mockApiCall));
 
-// Mock API endpoints
-vi.mock("../../models/apiEndpoints", () => ({
-  ApiEndpoint: {
-    Workspaces: "/api/workspaces",
-    Costs: "costs",
-  },
-}));
+// Mock API endpoints using centralized utility
+vi.mock("../../models/apiEndpoints", () => createApiEndpointsMock());
 
-// Mock FluentUI components
-vi.mock("@fluentui/react", async () => {
-  const actual = await vi.importActual("@fluentui/react");
-  return {
-    ...actual,
-    Shimmer: () => <div data-testid="shimmer">Loading...</div>,
-    TooltipHost: ({ children, content }: any) => (
-      <div data-testid="tooltip" title={content}>
-        {children}
-      </div>
-    ),
-    Icon: ({ iconName }: any) => <span data-testid={`icon-${iconName}`}>{iconName}</span>,
-  };
-});
+// Mock FluentUI components using centralized utility
+vi.mock("@fluentui/react", () => createPartialFluentUIMock(['Shimmer', 'TooltipHost', 'Icon']));
 
 // Create proper mock workspace
 const mockWorkspace = {
