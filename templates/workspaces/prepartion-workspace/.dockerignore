@@ -1,0 +1,9 @@
+# Local .terraform directories
+**/.terraform/*
+
+# TF backend files
+**/*_backend.tf
+
+Dockerfile.tmpl
+
+terraform/destroy.sh

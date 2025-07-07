@@ -1,0 +1,23 @@
+# syntax=docker/dockerfile-upstream:1.4.0
+FROM --platform=linux/amd64 debian:bookworm-slim
+
+# PORTER_INIT
+
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Git is required for terraform_azurerm_environment_configuration
+RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+    apt-get update && apt-get install -y git jq curl ca-certificates patch --no-install-recommends
+
+WORKDIR $BUNDLE_DIR
+
+# copy files from the base workspace (dir passed to porter via --build-context)
+# ignoring hadolint DL3022; for details see https://github.com/hadolint/hadolint/issues/830
+#
+# hadolint ignore=DL3022
+COPY --from=base --link . ${BUNDLE_DIR}/
+
+# PORTER_MIXINS
+
+# Use the BUNDLE_DIR build argument to copy files into the bundle
+COPY --link . ${BUNDLE_DIR}/
