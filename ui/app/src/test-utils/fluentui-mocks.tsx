@@ -277,7 +277,12 @@ export const createFluentUIMocks = () => ({
   ),
 
   Icon: ({ iconName, styles, ...props }: any) => (
-    <span data-testid="icon" data-icon-name={iconName} style={styles?.root} {...props}>
+    <span 
+      data-testid={`icon${iconName ? `-${iconName}` : ''}`} 
+      data-icon-name={iconName} 
+      style={styles?.root} 
+      {...props}
+    >
       {iconName}
     </span>
   ),
@@ -334,6 +339,21 @@ export const createFluentUIMocks = () => ({
     />
   ),
 
+  Shimmer: ({ width, height, styles, ...props }: any) => (
+    <div
+      data-testid="shimmer"
+      style={{
+        width,
+        height,
+        background: '#f3f2f1',
+        ...styles?.root
+      }}
+      {...props}
+    >
+      Loading...
+    </div>
+  ),
+
   ProgressIndicator: ({
     label,
     description,
@@ -353,7 +373,7 @@ export const createFluentUIMocks = () => ({
 
   // Overlay components
   TooltipHost: ({ content, children, styles, ...props }: any) => (
-    <div data-testid="tooltip-host" title={content} style={styles?.root} {...props}>
+    <div data-testid="tooltip" title={content} style={styles?.root} {...props}>
       {children}
     </div>
   ),

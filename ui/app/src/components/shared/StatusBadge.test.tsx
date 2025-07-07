@@ -64,7 +64,7 @@ describe("StatusBadge Component", () => {
     render(<StatusBadge status="deployment_failed" resource={mockResource} />);
 
     // For failed status, it shows the tooltip host and font icon
-    const tooltipHost = screen.getByTestId("tooltip-host");
+    const tooltipHost = screen.getByTestId("tooltip");
     expect(tooltipHost).toBeInTheDocument();
 
     // The FontIcon should be inside the tooltip host
@@ -86,7 +86,7 @@ describe("StatusBadge Component", () => {
     expect(disabledIcon).toHaveAttribute("data-icon-name", "Blocked2Solid");
 
     // Check tooltip host
-    const tooltipHost = screen.getByTestId("tooltip-host");
+    const tooltipHost = screen.getByTestId("tooltip");
     expect(tooltipHost).toHaveAttribute("title", "This resource is disabled");
   });
 
@@ -118,7 +118,7 @@ describe("StatusBadge Component", () => {
   it("shows detailed error tooltip for failed status", () => {
     render(<StatusBadge status="deployment_failed" resource={mockResource} />);
 
-    const tooltipHost = screen.getByTestId("tooltip-host");
+    const tooltipHost = screen.getByTestId("tooltip");
     expect(tooltipHost).toBeInTheDocument();
 
     // The error icon should be present with the correct icon name

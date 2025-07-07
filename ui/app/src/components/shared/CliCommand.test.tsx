@@ -65,7 +65,7 @@ describe("CliCommand Component", () => {
       />
     );
 
-    const tooltip = screen.getByTestId("tooltip-host");
+    const tooltip = screen.getByTestId("tooltip");
     expect(tooltip).toHaveAttribute("title", "Copy to clipboard");
   });
 
@@ -112,7 +112,7 @@ describe("CliCommand Component", () => {
     fireEvent.click(copyButton);
 
     await waitFor(() => {
-      const tooltip = screen.getByTestId("tooltip-host");
+      const tooltip = screen.getByTestId("tooltip");
       expect(tooltip).toHaveAttribute("title", "Copied");
     });
   });

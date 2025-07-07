@@ -1,29 +1,33 @@
-import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  render,
-  screen,
-  fireEvent,
-  createPartialFluentUIMock,
-  createReactRouterMocks
-} from "../../test-utils";
-import { ResourceCard } from "./ResourceCard";
-import { Resource, ComponentAction, VMPowerStates } from "../../models/resource";
-import { ResourceType } from "../../models/resourceType";
-import { WorkspaceContext } from "../../contexts/WorkspaceContext";
-import { AppRolesContext } from "../../contexts/AppRolesContext";
-import { RoleName, WorkspaceRoleName } from "../../models/roleNames";
-import { CostResource } from "../../models/costs";
+// NOTE: All vi.mock calls are hoisted to the top of the file at runtime
+// Store needed mocks in global variables to access them across the file
 
-// Mock dependencies
-const mockNavigate = vi.fn();
-const mockUseComponentManager = vi.fn();
+// Define mocks at the global level before imports to avoid hoisting issues
+// These are defined before any other code to prevent "Cannot access before initialization" errors
+// Extend globalThis to include our mock properties
+declare global {
+  var __mockNavigate: ReturnType<typeof vi.fn>;
+  var __mockUseComponentManager: ReturnType<typeof vi.fn>;
+}
 
-// Mock React Router using centralized utility
-vi.mock("react-router-dom", () => createReactRouterMocks(mockNavigate));
+globalThis.__mockNavigate = vi.fn();
+globalThis.__mockUseComponentManager = vi.fn();
 
+// *** ALL MOCK DECLARATIONS FIRST ***
+// Mock React Router - preserving original exports and overriding specific functions
+vi.mock("react-router-dom", async () => {
+  // Import the actual module to preserve exports like MemoryRouter that our tests need
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => globalThis.__mockNavigate,
+    useParams: () => ({}),
+    useLocation: () => ({ pathname: '/test', search: '', hash: '', state: null })
+  };
+});
+
+// Mock useComponentManager hook
 vi.mock("../../hooks/useComponentManager", () => ({
-  useComponentManager: () => mockUseComponentManager(),
+  useComponentManager: () => globalThis.__mockUseComponentManager(),
 }));
 
 // Mock child components
@@ -71,8 +75,11 @@ vi.mock("moment", () => ({
   },
 }));
 
-// Mock FluentUI components
-vi.mock("@fluentui/react", () => {
+// Mock FluentUI components - Use async importActual to maintain all exports
+vi.mock("@fluentui/react", async () => {
+  const actual = await vi.importActual("@fluentui/react");
+  
+  // Create custom mock components
   const MockStack = ({ children, horizontal, styles, onClick }: any) => (
     <div
       data-testid={onClick ? "clickable-stack" : "stack"}
@@ -83,49 +90,71 @@ vi.mock("@fluentui/react", () => {
       {children}
     </div>
   );
-  MockStack.Item = ({ children, grow, style }: any) => (
-    <div data-testid="stack-item" data-grow={grow} style={style}>
+  
+  // Add Item property to Stack
+  MockStack.Item = ({ children, align, grow, styles }: any) => (
+    <div
+      data-testid="stack-item"
+      data-align={align}
+      data-grow={grow}
+      style={styles?.root}
+    >
       {children}
     </div>
   );
-
+  
   return {
+    ...actual,
     Stack: MockStack,
-    Text: ({ children }: any) => <div data-testid="text">{children}</div>,
-    IconButton: ({ iconProps, onClick, id }: any) => (
-      <button data-testid="icon-button" onClick={onClick} id={id}>
-        {iconProps.iconName}
-      </button>
-    ),
-    PrimaryButton: ({ onClick, disabled, title, className, children }: any) => (
+    PrimaryButton: ({ text, children, iconProps, styles, onClick, disabled }: any) => (
       <button
         data-testid="primary-button"
         onClick={onClick}
         disabled={disabled}
-        title={title}
-        className={className}
+        style={styles?.root}
       >
-        {children}
+        {text || children}
       </button>
     ),
-    TooltipHost: ({ children, content, id }: any) => (
-      <div data-testid="tooltip-host" title={content} id={id}>
-        {children}
-      </div>
+    Icon: ({ iconName }: any) => (
+      <div data-testid={`icon-${iconName}`}>{iconName}</div>
     ),
-    Callout: ({ children, onDismiss, target }: any) => (
-      <div data-testid="callout" onClick={onDismiss}>
-        {children}
-      </div>
+    IconButton: ({ onClick, title }: any) => (
+      <button data-testid="icon-button" onClick={onClick} title={title}></button>
     ),
-    Shimmer: ({ width }: any) => (
-      <div data-testid="shimmer" style={{ width }}>Loading...</div>
+    TooltipHost: ({ content, children }: any) => (
+      <div data-testid="tooltip" title={content}>{children}</div>
+    ),
+    Callout: ({ children, hidden }: any) => 
+      !hidden ? <div data-testid="callout">{children}</div> : null,
+    Text: ({ children }: any) => <span>{children}</span>,
+    Link: ({ children }: any) => <a data-testid="fluent-link">{children}</a>,
+    Shimmer: ({ width, height }: any) => (
+      <div data-testid="shimmer" style={{ width, height }}>Loading...</div>
     ),
     mergeStyleSets: (styles: any) => styles,
     DefaultPalette: { white: "#ffffff" },
     FontWeights: { semilight: 300 },
   };
 });
+
+// *** NOW IMPORTS AFTER ALL MOCKS ***
+import React from "react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  render,
+  screen,
+  fireEvent
+} from "../../test-utils";
+import { ResourceCard } from "./ResourceCard";
+import { Resource, ComponentAction, VMPowerStates } from "../../models/resource";
+import { ResourceType } from "../../models/resourceType";
+import { RoleName } from "../../models/roleNames";
+import { CostResource } from "../../models/costs";
+
+// Access the mocks from the global variables
+const mockNavigate = globalThis.__mockNavigate;
+const mockUseComponentManager = globalThis.__mockUseComponentManager;
 
 const mockResource: Resource = {
   id: "test-resource-id",
@@ -202,6 +231,8 @@ const renderWithContexts = (
   appRolesContext = mockAppRolesContext
 ) => {
   return render(component, {
+    // Use spread operator to include children property which is required by AllProvidersProps
+    children: component,
     workspaceContext,
     appRolesContext
   });

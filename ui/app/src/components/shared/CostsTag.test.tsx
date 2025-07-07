@@ -5,9 +5,9 @@ import {
   screen,
   waitFor,
   createAuthApiCallMock,
-  createApiEndpointsMock,
-  createPartialFluentUIMock
+  createApiEndpointsMock
 } from "../../test-utils";
+import { createCompleteFluentUIMock } from "../../test-utils/fluentui-mocks";
 import { CostsTag } from "./CostsTag";
 import { CostsContext } from "../../contexts/CostsContext";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
@@ -16,14 +16,23 @@ import { CostResource } from "../../models/costs";
 import { ResourceType } from "../../models/resourceType";
 
 // Mock the API hook using centralized utility
-const mockApiCall = vi.fn();
-vi.mock("../../hooks/useAuthApiCall", () => createAuthApiCallMock(mockApiCall));
+vi.mock("../../hooks/useAuthApiCall", () => {
+  // Create the mock inside the factory function to avoid hoisting issues
+  const mockApiCall = vi.fn();
+  const mock = createAuthApiCallMock(mockApiCall);
+  // Store a reference to the mock for tests to access
+  (globalThis as any).__mockApiCall = mockApiCall;
+  return mock;
+});
 
 // Mock API endpoints using centralized utility
 vi.mock("../../models/apiEndpoints", () => createApiEndpointsMock());
 
-// Mock FluentUI components using centralized utility
-vi.mock("@fluentui/react", () => createPartialFluentUIMock(['Shimmer', 'TooltipHost', 'Icon']));
+// Mock FluentUI components using centralized mocks
+vi.mock("@fluentui/react", () => {
+  // Import directly to avoid hoisting issues
+  return createCompleteFluentUIMock();
+});
 
 // Create proper mock workspace
 const mockWorkspace = {
@@ -88,6 +97,9 @@ const renderWithContexts = (
 };
 
 describe("CostsTag Component", () => {
+  // Get a reference to the mock API call function
+  const mockApiCall = (globalThis as any).__mockApiCall;
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockApiCall.mockReset();

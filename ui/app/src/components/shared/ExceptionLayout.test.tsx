@@ -123,13 +123,13 @@ describe("ExceptionLayout Component", () => {
     render(<ExceptionLayout e={error} />);
 
     // Initially should show ChevronDown icon
-    expect(screen.getByTestId("icon")).toHaveAttribute("data-icon-name", "ChevronDown");
+    expect(screen.getByTestId("icon-ChevronDown")).toHaveAttribute("data-icon-name", "ChevronDown");
 
     // Click to show details
     fireEvent.click(screen.getByTestId("fluent-link"));
 
     // Should now show ChevronUp icon
-    expect(screen.getByTestId("icon")).toHaveAttribute("data-icon-name", "ChevronUp");
+    expect(screen.getByTestId("icon-ChevronUp")).toHaveAttribute("data-icon-name", "ChevronUp");
   });
 
   it("handles missing error properties gracefully", () => {

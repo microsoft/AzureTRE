@@ -89,7 +89,7 @@ describe("ConfirmCopyUrlToClipboard Component", () => {
       <ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />
     );
 
-    const tooltip = screen.getByTestId("tooltip-host");
+    const tooltip = screen.getByTestId("tooltip");
     expect(tooltip).toHaveAttribute("title", "Copy to clipboard");
   });
 
@@ -116,7 +116,7 @@ describe("ConfirmCopyUrlToClipboard Component", () => {
 
     // Should show "Copied" message
     await waitFor(() => {
-      const tooltip = screen.getByTestId("tooltip-host");
+      const tooltip = screen.getByTestId("tooltip");
       expect(tooltip).toHaveAttribute("title", "Copied");
     });
   });
