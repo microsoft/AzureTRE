@@ -233,7 +233,43 @@ resource "azurerm_network_security_rule" "allow_inbound_from_webapp_to_services"
   source_port_range            = "*"
 }
 
+resource "azurerm_network_security_rule" "allow_inbound_from_appgw_to_services" {
+  access                       = "Allow"
+  destination_address_prefixes = azurerm_subnet.services.address_prefixes
+  destination_port_ranges = [
+    "80",
+    "443"
+  ]
+  direction                   = "Inbound"
+  name                        = "allow-inbound-from-appgw-to-services"
+  network_security_group_name = azurerm_network_security_group.ws.name
+  priority                    = 150
+  protocol                    = "Tcp"
+  resource_group_name         = var.ws_resource_group_name
+  source_address_prefixes = [
+    data.azurerm_subnet.appgw.address_prefix
+  ]
+  source_port_range = "*"
+}
 
+resource "azurerm_network_security_rule" "allow_outbound_from_services_to_appgw" {
+  access                       = "Allow"
+  destination_address_prefixes = azurerm_subnet.services.address_prefixes
+  destination_port_ranges = [
+    "80",
+    "443"
+  ]
+  direction                   = "Outbound"
+  name                        = "allow-outbound-from-services-to-appgw"
+  network_security_group_name = azurerm_network_security_group.ws.name
+  priority                    = 150
+  protocol                    = "Tcp"
+  resource_group_name         = var.ws_resource_group_name
+  source_address_prefixes = [
+    data.azurerm_subnet.appgw.address_prefix
+  ]
+  source_port_range = "*"
+}
 
 moved {
   from = azurerm_network_security_rule.deny-outbound-overrid
