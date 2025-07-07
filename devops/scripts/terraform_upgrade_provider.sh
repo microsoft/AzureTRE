@@ -54,9 +54,7 @@ else
 fi
 
 # shellcheck disable=SC1091
-source "$(dirname "$0")/storage_enable_public_access.sh" \
-  --storage-account-name "${TF_VAR_mgmt_storage_account_name}" \
-  --resource-group-name "${TF_VAR_mgmt_resource_group_name}"
+source "$(dirname "$0")/mgmtstorage_enable_public_access.sh"
 
 # Run terraform init with upgrade and reconfigure options
 terraform -chdir="$DIR/terraform" init -upgrade -reconfigure -input=false -backend=true \

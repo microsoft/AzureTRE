@@ -101,9 +101,7 @@ fi
 
 
 # shellcheck disable=SC1091
-source "$(dirname "$0")/storage_enable_public_access.sh" \
-  --storage-account-name "${mgmt_storage_account_name}" \
-  --resource-group-name "${mgmt_resource_group_name}"
+source "$(dirname "$0")/mgmtstorage_enable_public_access.sh"
 
 # Change directory to $DIR
 pushd "$DIR" > /dev/null

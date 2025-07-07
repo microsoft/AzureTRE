@@ -9,10 +9,7 @@ set -o nounset
 source "../../devops/scripts/kv_add_network_exception.sh"
 
 # shellcheck disable=SC1091
-# shellcheck disable=SC2154
-source "../../devops/scripts/storage_enable_public_access.sh" \
-  --storage-account-name "${TF_VAR_mgmt_storage_account_name}" \
-  --resource-group-name "${TF_VAR_mgmt_resource_group_name}"
+source "../../devops/scripts/mgmtstorage_enable_public_access.sh"
 
 # This is where we can migrate any Terraform before we plan and apply
 # For instance deprecated Terraform resources

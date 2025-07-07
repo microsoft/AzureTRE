@@ -19,14 +19,43 @@ fi
 # already exists and, if not, create it. The firewall rules also need lifting so that the
 # certificate can be uploaded.
 #
-# shellcheck disable=SC1091
-source "$script_dir/../../../devops/scripts/storage_enable_public_access.sh" \
-  --storage-account-name "${STORAGE_ACCOUNT}" \
-  --resource-group-name "${RESOURCE_GROUP_NAME}"
+# By default, this process adds the IP address of the machine running this script to the allow-list
+# of the storage account network rules. In some situations this approach may not work. For example,
+# where the machine running this script (an AzDo build agent, for example), and the storage account
+# are both on the same private network, and the public IP of the machine running the script is never
+# used. In this situation, you may need to drop the default Deny rule.
+#
+# If the environment variable LETSENCRYPT_DROP_ALL_RULES=1 is set then this script will drop the
+# default Deny rule, and then re-enable it once the script is complete, rather add the IP address
+# to the allow rules.
+
+if  [[ "${LETSENCRYPT_DROP_ALL_RULES}" == "1" ]]; then
+
+  echo "Removing default DENY rule on storage account ${STORAGE_ACCOUNT}"
+  az storage account update \
+    --default-action Allow \
+    --name "${STORAGE_ACCOUNT}" \
+    --resource-group "${RESOURCE_GROUP_NAME}"
+
+else
+
+  if [[ -z ${PUBLIC_DEPLOYMENT_IP_ADDRESS:-} ]]; then
+    IPADDR=$(curl ipecho.net/plain; echo)
+  else
+    IPADDR=${PUBLIC_DEPLOYMENT_IP_ADDRESS}
+  fi
+
+  echo "Creating network rule on storage account ${STORAGE_ACCOUNT} for $IPADDR"
+  az storage account network-rule add \
+    --account-name "${STORAGE_ACCOUNT}" \
+    --resource-group "${RESOURCE_GROUP_NAME}" \
+    --ip-address "$IPADDR"
+
+fi
 
 echo "Waiting for network rule to take effect"
 sleep 30s
-echo "Storage account network access configured"
+echo "Created network rule on storage account"
 
 echo "Checking for index.html file in storage account"
 
@@ -121,3 +150,20 @@ else
         --cert-password "${CERT_PASSWORD}"
 fi
 
+if  [[ "${LETSENCRYPT_DROP_ALL_RULES}" == "1" ]]; then
+
+  echo "Resetting the default DENY rule on storage account ${STORAGE_ACCOUNT}"
+  az storage account update \
+    --default-action Deny \
+    --name "${STORAGE_ACCOUNT}" \
+    --resource-group "${RESOURCE_GROUP_NAME}"
+
+else
+
+  echo "Ressetting network rule on storage account (removing $IPADDR from allow list)"
+  az storage account network-rule remove \
+    --account-name "${STORAGE_ACCOUNT}" \
+    --resource-group "${RESOURCE_GROUP_NAME}" \
+    --ip-address "${IPADDR}"
+
+fi
