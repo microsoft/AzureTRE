@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -7,8 +7,8 @@ from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace, WorkspaceAuth
 
 
-def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> dict:
-    return {
+def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001", sibling_workspace_id: str = None) -> dict:
+    workspace_data = {
         "id": workspace_id,
         "templateName": "tre-workspace-base",
         "templateVersion": "0.1.0",
@@ -21,6 +21,11 @@ def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> 
         "resourceType": ResourceType.Workspace,
         "workspaceURL": ""
     }
+
+    if sibling_workspace_id:
+        workspace_data["siblingWorkspaceId"] = sibling_workspace_id
+
+    return workspace_data
 
 
 class AuthProvider(StrEnum):
@@ -65,7 +70,7 @@ class WorkspacesInList(BaseModel):
             "example": {
                 "workspaces": [
                     get_sample_workspace("933ad738-7265-4b5f-9eae-a1a62928772e", "0001"),
-                    get_sample_workspace("2fdc9fba-726e-4db6-a1b8-9018a2165748", "0002"),
+                    get_sample_workspace("2fdc9fba-726e-4db6-a1b8-9018a2165748", "0002", "933ad738-7265-4b5f-9eae-a1a62928772e"),
                 ]
             }
         }
@@ -74,6 +79,7 @@ class WorkspacesInList(BaseModel):
 class WorkspaceInCreate(BaseModel):
     templateName: str = Field(title="Workspace type", description="Bundle name")
     properties: dict = Field({}, title="Workspace parameters", description="Values for the parameters required by the workspace resource specification")
+    siblingWorkspaceId: Optional[str] = Field(None, title="Sibling Workspace ID", description="ID of a related sibling workspace")
 
     class Config:
         schema_extra = {
@@ -86,6 +92,7 @@ class WorkspaceInCreate(BaseModel):
                     "client_id": "<WORKSPACE_CLIENT_ID>",
                     "client_secret": "<WORKSPACE_CLIENT_SECRET>",
                     "address_space_size": "small"
-                }
+                },
+                "siblingWorkspaceId": "93a61e2c-302d-4dc9-b5e3-70711f22630f"
             }
         }

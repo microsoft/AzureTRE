@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 from pydantic import Field
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.resource import Resource, ResourceType
@@ -16,6 +17,7 @@ class Workspace(Resource):
     Workspace request
     """
     workspaceURL: str = Field("", title="Workspace URL", description="Main endpoint for workspace users")
+    siblingWorkspaceId: Optional[str] = Field(None, title="Sibling Workspace ID", description="ID of a related sibling workspace")
     resourceType: ResourceType = ResourceType.Workspace
 
 

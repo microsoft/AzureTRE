@@ -110,6 +110,7 @@ class WorkspaceRepository(ResourceRepository):
             templateName=workspace_input.templateName,
             templateVersion=template.version,
             properties=resource_spec_parameters,
+            siblingWorkspaceId=workspace_input.siblingWorkspaceId,
             resourcePath=f'/workspaces/{full_workspace_id}',
             etag=''  # need to validate the model
         )
@@ -158,6 +159,10 @@ class WorkspaceRepository(ResourceRepository):
         return new_address_space
 
     async def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, force_version_update: bool) -> Tuple[Workspace, ResourceTemplate]:
+        # Handle siblingWorkspaceId update before calling base patch_resource
+        if workspace_patch.siblingWorkspaceId is not None:
+            workspace.siblingWorkspaceId = workspace_patch.siblingWorkspaceId
+
         # get the workspace template
         workspace_template = await resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
         return await self.patch_resource(workspace, workspace_patch, workspace_template, etag, resource_template_repo, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE, force_version_update)

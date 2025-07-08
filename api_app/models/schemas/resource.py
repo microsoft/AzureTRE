@@ -8,6 +8,7 @@ class ResourcePatch(BaseModel):
     isEnabled: Optional[bool]
     properties: Optional[dict]
     templateVersion: Optional[str]
+    siblingWorkspaceId: Optional[str] = Field(None, title="Sibling Workspace ID", description="ID of a related sibling workspace")
 
     class Config:
         extra = Extra.forbid
@@ -19,7 +20,8 @@ class ResourcePatch(BaseModel):
                     "display_name": "the display name",
                     "description": "a description",
                     "other_fields": "other properties defined by the resource template"
-                }
+                },
+                "siblingWorkspaceId": "93a61e2c-302d-4dc9-b5e3-70711f22630f"
             }
         }
 
