@@ -480,6 +480,44 @@ async def patch_user_resource(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
+@user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/update", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_DELETE_USER_RESOURCE, dependencies=[Depends(get_workspace_by_id_from_path), Depends(get_workspace_service_by_id_from_path)])
+async def mange_user_resource(
+        user_resource_patch: ResourcePatch,
+        response: Response,
+        user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager),
+        user_resource=Depends(get_user_resource_by_id_from_path),
+        workspace_service=Depends(get_workspace_service_by_id_from_path),
+        user_resource_repo=Depends(get_repository(UserResourceRepository)),
+        resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
+        resource_history_repo=Depends(get_repository(ResourceHistoryRepository)),
+        operations_repo=Depends(get_repository(OperationRepository)),
+        etag: str = Header(...),
+        force_version_update: bool = False) -> OperationInResponse:
+    validate_user_has_valid_role_for_user_resource(user, user_resource)
+
+    try:
+        await update_user_resource(user_resource, user_resource_patch, force_version_update, user, etag, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
+        resource_template = await resource_template_repo.get_template_by_name_and_version(user_resource.templateName, user_resource.templateVersion, ResourceType.UserResource, workspace_service.templateName)
+        operation = await send_uninstall_message(
+        resource=user_resource,
+        resource_repo=user_resource_repo,
+        operations_repo=operations_repo,
+        resource_type=ResourceType.UserResource,
+        resource_template_repo=resource_template_repo,
+        resource_history_repo=resource_history_repo,
+        user=user,
+        resource_template=resource_template)
+
+        response.headers["Location"] = construct_location_header(operation)
+        return OperationInResponse(operation=operation)
+    except CosmosAccessConditionFailedError:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
+    except ValidationError as v:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
+    except (MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied) as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
 # user resource actions
 @user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_USER_RESOURCE)
 async def invoke_action_on_user_resource(
