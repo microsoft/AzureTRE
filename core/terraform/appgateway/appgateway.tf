@@ -64,7 +64,7 @@ resource "azurerm_application_gateway" "agw" {
   # Primary SSL cert linked to KeyVault
   ssl_certificate {
     name                = var.certificate_name
-    key_vault_secret_id = azurerm_key_vault_certificate.tlscert.secret_id
+    key_vault_secret_id = data.azurerm_key_vault_certificate.tlscert.secret_id
   }
 
   # Backend pool with the static website in storage account.
