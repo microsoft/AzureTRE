@@ -63,6 +63,11 @@ Azure TRE uses the following key technologies:
 
 ## Coding Conventions
 
+- **General Formatting**:
+  - Follow the formatting rules defined in `.editorconfig`
+  - Use consistent indentation, line endings, and character encoding as specified
+  - Ensure final newlines and trim trailing whitespace per .editorconfig settings
+
 - **Python**:
   - Follow PEP 8 style guidelines
   - Use FastAPI for API endpoints
@@ -193,6 +198,8 @@ Version updates should be documented in:
    - Resource Processor: in resource_processor/_version.py
    - Airlock Processor: in airlock_processor/_version.py
    - UI: in ui/app/package.json
+   - Core: in core/version.txt
+   - DevOps: in devops/version.txt
 
 Example CHANGELOG entry for version updates:
 Refer to the example provided under "Format for changelog entries" above.
