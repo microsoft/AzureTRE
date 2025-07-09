@@ -1,3 +1,12 @@
+resource "azurerm_user_assigned_identity" "agw_id" {
+  resource_group_name = local.core_resource_group_name
+  location            = data.azurerm_resource_group.core.location
+  name                = "id-agw-${var.tre_id}"
+  tags                = local.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
 resource "azurerm_application_gateway" "agw" {
   name                = "agw-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
@@ -36,6 +45,12 @@ resource "azurerm_application_gateway" "agw" {
   frontend_ip_configuration {
     name                 = local.frontend_ip_configuration_name
     public_ip_address_id = data.azurerm_public_ip.agw.id
+  }
+
+  # Primary SSL cert linked to KeyVault
+  ssl_certificate {
+    name                = var.certificate_name
+    key_vault_secret_id = data.azurerm_key_vault_certificate.tlscert.secret_id
   }
 
   # Backend pool with the static website in storage account.
