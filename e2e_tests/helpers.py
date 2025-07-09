@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from httpx import AsyncClient, Timeout, Response
 import logging
 from starlette import status
-from azure.identity import ClientSecretCredential, UsernamePasswordCredential
+from azure.identity import ClientSecretCredential
 
 import config
 from e2e_tests import cloud
@@ -106,19 +106,21 @@ async def check_aad_auth_redirect(endpoint, verify) -> None:
 
 async def get_admin_token(verify) -> str:
     scope_uri = f"api://{config.API_CLIENT_ID}"
-    return get_token(scope_uri, verify)
+    return get_token(scope_uri)
 
 
-def get_token(scope_uri, verify) -> str:
-    if config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != "":
-        # Logging in as an Enterprise Application: Use Client Credentials flow
-        credential = ClientSecretCredential(config.AAD_TENANT_ID, config.TEST_ACCOUNT_CLIENT_ID, config.TEST_ACCOUNT_CLIENT_SECRET, connection_verify=verify, authority=cloud.get_aad_authority_fqdn())
-        token = credential.get_token(f'{scope_uri}/.default')
-    else:
-        # Logging in as a User: Use Resource Owner Password Credentials flow
-        credential = UsernamePasswordCredential(config.TEST_APP_ID, config.TEST_USER_NAME, config.TEST_USER_PASSWORD, connection_verify=verify, authority=cloud.get_aad_authority_fqdn(), tenant_id=config.AAD_TENANT_ID)
-        token = credential.get_token(f'{scope_uri}/user_impersonation')
+def get_token(scope_uri) -> str:
 
+    # Logging in as an Enterprise Application: Use Client Credentials flow
+    credential = ClientSecretCredential(config.AAD_TENANT_ID, config.TEST_ACCOUNT_CLIENT_ID, config.TEST_ACCOUNT_CLIENT_SECRET, authority=cloud.get_aad_authority_fqdn())
+    token = credential.get_token(f'{scope_uri}/.default')
+
+    return token.token
+
+
+def get_msgraph_token() -> str:
+    credential = ClientSecretCredential(config.AAD_TENANT_ID, config.APPLICATION_ADMIN_CLIENT_ID, config.APPLICATION_ADMIN_CLIENT_SECRET, authority=cloud.get_aad_authority_fqdn())
+    token = credential.get_token('https://graph.microsoft.com/.default')
     return token.token
 
 

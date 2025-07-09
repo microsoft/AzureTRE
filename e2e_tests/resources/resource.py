@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import Tuple
 from httpx import AsyncClient, Timeout
 from starlette import status
 from e2e_tests.helpers import assert_status, get_auth_header, get_full_endpoint
@@ -22,7 +23,7 @@ async def get_resource(endpoint, access_token, verify):
         return response.json()
 
 
-async def post_resource(payload, endpoint, access_token, verify, method="POST", wait=True, etag="*", access_token_for_wait=None):
+async def post_resource(payload, endpoint, access_token, verify, method="POST", wait=True, etag="*", access_token_for_wait=None) -> Tuple[str, str]:
     async with AsyncClient(verify=verify, timeout=30.0) as client:
 
         full_endpoint = get_full_endpoint(endpoint)

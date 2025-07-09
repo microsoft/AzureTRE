@@ -27,8 +27,7 @@ async def test_parallel_resource_creations(verify) -> None:
                 "display_name": f'Perf Test Workspace {i}',
                 "description": "workspace for perf test",
                 "address_space_size": "small",
-                "auth_type": "Manual",
-                "client_id": f"{config.TEST_WORKSPACE_APP_ID}"
+                "auth_type": "Automatic"
             }
         }
 
@@ -80,7 +79,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
 
     workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
-    workspace_service_id = config.TEST_WORKSPACE_SERVICE_ID
+    workspace_service_id = config.TEST_GUACAMOLE_WORKSPACE_SERVICE_ID
 
     if workspace_service_id == "":
         # create a guac service

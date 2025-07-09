@@ -59,3 +59,18 @@ async def test_create_workspace_templates(template_name, verify) -> None:
 
     # Tear-down in a cascaded way
     await clean_up_test_workspace(pre_created_workspace_id="", workspace_path=workspace_path, verify=verify)
+
+
+@pytest.mark.manual
+async def test_manual_workspace(verify) -> None:
+
+    workspace_path, workspace_id = await create_or_get_test_workspace(auth_type="Manual", template_name=strings.BASE_WORKSPACE, client_id=config.TEST_WORKSPACE_APP_ID, client_secret=config.TEST_WORKSPACE_APP_SECRET)
+    async with AsyncClient() as client:
+        admin_token = await get_admin_token(verify)
+        auth_headers = get_auth_header(admin_token)
+        workspace = await get_workspace(client, workspace_id, auth_headers)
+
+    assert workspace["deploymentStatus"] == strings.RESOURCE_STATUS_DEPLOYED
+
+    # Tear-down
+    await clean_up_test_workspace(pre_created_workspace_id="", workspace_path=workspace_path, verify=verify)

@@ -448,10 +448,13 @@ build-and-deploy-ui:
 # Example: make prepare-for-e2e
 prepare-for-e2e:
 	$(MAKE) workspace_bundle BUNDLE=base
+	$(MAKE) workspace_bundle BUNDLE=unrestricted
+	$(MAKE) workspace_bundle BUNDLE=airlock-import-review
 	$(MAKE) workspace_service_bundle BUNDLE=guacamole
 	$(MAKE) shared_service_bundle BUNDLE=gitea
 	$(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-windowsvm
 	$(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-linuxvm
+	$(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-import-reviewvm
 
 # Description: Run E2E smoke tests
 # The E2E smoke tests include:
@@ -475,13 +478,14 @@ test-e2e-extended: ## 🧪 Run E2E extended tests
 	$(call target_title, "Running E2E extended tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=extended
 
-# Description: Run E2E extended AAD tests
-# # The E2E extended AAD tests include:
-# # - test_create_guacamole_service_into_aad_workspace: This test will create a Guacamole service but will create a workspace and automatically register the AAD Application
-# Example: make test-e2e-extended-aad
-test-e2e-extended-aad: ## 🧪 Run E2E extended AAD tests
-	$(call target_title, "Running E2E extended AAD tests") && \
-	$(MAKE) test-e2e-custom SELECTOR=extended_aad
+# Description: Run E2E airlock tests
+# # The E2E airlock tests include:
+# # - test_airlock_flow: test import request creation and approval flow
+# # - test_airlock_review_vm_flow: test import request creation and approval and creation of review VM
+test-e2e-airlock: ## 🧪 Run E2E airlock tests
+	$(call target_title, "Running E2E airlock tests") && \
+	$(MAKE) test-e2e-custom SELECTOR=airlock
+
 
 # Description: Run E2E shared service tests
 # # The E2E shared service tests include:
@@ -493,12 +497,18 @@ test-e2e-shared-services: ## 🧪 Run E2E shared service tests
 	$(call target_title, "Running E2E shared service tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=shared_services
 
+test-e2e-workspace-services: ## 🧪 Run E2E workspace services tests
+	$(call target_title, "Running E2E workspace services tests") && \
+	$(MAKE) test-e2e-custom SELECTOR=workspace_services
+
+
 # Description: Run E2E tests with custom selector
 # Arguments: SELECTOR - the selector to run the tests with
 # Example: make test-e2e-custom SELECTOR=smoke
 test-e2e-custom: ## 🧪 Run E2E tests with custom selector (SELECTOR=)
 	$(call target_title, "Running E2E tests with custom selector ${SELECTOR}") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env,auth \
+	&& . ${MAKEFILE_DIR}/devops/scripts/consolidate_env.sh ${MAKEFILE_DIR} ${MAKEFILE_DIR}/e2e_tests/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/e2e_tests/.env \
 	&& cd ${MAKEFILE_DIR}/e2e_tests \
 	&& \
