@@ -27,3 +27,13 @@ data "azurerm_subnet" "agw" {
   virtual_network_name = "vnet-${var.tre_id}"
   resource_group_name  = local.core_resource_group_name
 }
+
+data "azurerm_key_vault" "kv" {
+  name                = "kv-${var.tre_id}"
+  resource_group_name = local.core_resource_group_name
+}
+
+data "azurerm_key_vault_certificate" "tlscert" {
+  name         = var.certificate_name
+  key_vault_id = data.azurerm_key_vault.kv.id
+}

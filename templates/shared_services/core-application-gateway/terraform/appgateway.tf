@@ -1,12 +1,3 @@
-resource "azurerm_user_assigned_identity" "agw_id" {
-  resource_group_name = local.core_resource_group_name
-  location            = data.azurerm_resource_group.core.location
-  name                = "id-agw-${var.tre_id}"
-  tags                = local.tre_core_tags
-
-  lifecycle { ignore_changes = [tags] }
-}
-
 resource "azurerm_application_gateway" "agw" {
   name                = "agw-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
