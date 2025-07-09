@@ -21,6 +21,7 @@ variable "address_space" {
 variable "is_exposed_externally" {
   type        = bool
   description = "If the databricks workspace is exposed externally or not."
+  default = false
 }
 
 variable "arm_environment" {

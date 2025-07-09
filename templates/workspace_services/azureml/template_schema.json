@@ -27,13 +27,6 @@
       "default": "Azure Machine Learning is a cloud service for accelerating and managing the machine learning project lifecycle. Machine learning professionals, data scientists, and engineers can use it in their day-to-day workflows: Train and deploy models, and manage MLOps. \nYou can create a model in Azure Machine Learning or use a model built from an open-source platform, such as Pytorch, TensorFlow, or scikit-learn. MLOps tools help you monitor, retrain, and redeploy models.\n- [Azure Machine Learning Documentation](https://learn.microsoft.com/en-us/azure/machine-learning/)\n- [Azure Machine Learning Python SDK](https://docs.microsoft.com/en-us/python/api/overview/azure/ml/intro?view=azure-ml-py)",
       "updateable": true
     },
-    "is_exposed_externally": {
-      "$id": "#/properties/is_exposed_externally",
-      "type": "boolean",
-      "title": "Expose externally",
-      "description": "Is the Azure ML workspace accessible from outside of the workspace network. Also opens firewall rules to allow compute instances with public IP addresses.",
-      "default": false
-    },
     "address_space": {
       "$id": "#/properties/address_space",
       "type": "string",

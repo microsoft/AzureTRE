@@ -18,4 +18,5 @@ variable "openai_model" {
 
 variable "is_exposed_externally" {
   type = bool
+  default = false
 }

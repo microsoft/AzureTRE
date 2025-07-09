@@ -27,13 +27,6 @@
       "default": "The Azure Databricks Lakehouse Platform provides a unified set of tools for building, deploying, sharing, and maintaining enterprise-grade data solutions at scale.\nAzure Databricks integrates with cloud storage and security in your cloud account, and manages and deploys cloud infrastructure on your behalf.\n[Azure Databricks documentation](https://learn.microsoft.com/en-us/azure/databricks/introduction/)",
       "updateable": true
     },
-    "is_exposed_externally": {
-      "$id": "#/properties/is_exposed_externally",
-      "type": "boolean",
-      "title": "Expose externally",
-      "description": "Is the Databricks workspace accessible from outside of the workspace network",
-      "default": false
-    },
     "address_space": {
       "$id": "#/properties/address_space",
       "type": "string",

@@ -15,6 +15,7 @@ variable "description" {
 }
 variable "is_exposed_externally" {
   type = bool
+  default = false
 }
 variable "address_space" {
   type = string

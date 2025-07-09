@@ -27,14 +27,6 @@
       "default": "Azure OpenAI Service provides REST API access to OpenAI's powerful language models including the GPT-4, GPT-4 Turbo with Vision, GPT-3.5-Turbo, and Embeddings model series. For more information, see the [Azure OpenAI Service documentation](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview).",
       "updateable": true
     },
-    "is_exposed_externally": {
-      "$id": "#/properties/is_exposed_externally",
-      "type": "boolean",
-      "title": "Expose externally",
-      "description": "Should the OpenAI instance be publicly accessible?",
-      "default": false,
-      "updateable": true
-    },
     "openai_model": {
       "$id": "#/properties/openai_model",
       "type": "string",
@@ -46,5 +38,110 @@
       "default": "gpt-35-turbo | 0125",
       "updateable": true
     }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "d5504764-94cd-11ed-a1eb-0242ac120002",
+        "stepTitle": "Add network firewall rules for openai",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_openai",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "Azure AI Foundry",
+                  "description": "Connection to Azure AI Foundry to allow for API token retrieval",
+                  "source_addresses": "{{ resource.properties.workspace_address_space }}",
+                  "target_fqdns": [
+                    "ai.azure.com"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "12c0cf8c-94f7-11ed-a1eb-0242ac120002",
+        "stepTitle": "Update network firewall rules for openai",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_openai",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "Azure AI Foundry",
+                  "description": "Connection to Azure AI Foundry to allow for API token retrieval",
+                  "source_addresses": "{{ resource.properties.workspace_address_space }}",
+                  "target_fqdns": [
+                    "ai.azure.com"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "1fc155ee-94f7-11ed-a1eb-0242ac120002",
+        "stepTitle": "Remove network firewall rules for openai",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_openai"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ]
   }
 }

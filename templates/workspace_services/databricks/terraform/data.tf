@@ -28,3 +28,8 @@ data "azurerm_private_dns_zone" "dfscore" {
   name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.dfs.core.windows.net"]
   resource_group_name = local.core_resource_group_name
 }
+
+data "azurerm_storage_account" "shared" {
+  name                = local.shared_storage_account_name
+  resource_group_name = local.resource_group_name
+}

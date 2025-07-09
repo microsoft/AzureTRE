@@ -4,6 +4,8 @@ locals {
   host_subnet_address_space      = local.databricks_subnets[1] # .128 - .254
   short_service_id               = substr(var.tre_resource_id, -4, -1)
   short_workspace_id             = substr(var.workspace_id, -4, -1)
+  shared_storage_account_name    = "stgws${local.short_workspace_id}"
+  access_connector_id            = "/subscriptions/${data.azurerm_subscription.current.id}/resourceGroups/${local.managed_resource_group_name}/providers/Microsoft.Databricks/accessConnectors/unity-catalog-access-connector"
   workspace_resource_name_suffix = "${var.tre_id}-ws-${local.short_workspace_id}"
   service_resource_name_suffix   = "${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_service_id}"
   resource_group_name            = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
