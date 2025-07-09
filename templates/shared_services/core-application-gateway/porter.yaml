@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-application-gateway
-version: 0.1.19
+version: 0.1.20
 description: "An Azure Application Gateway shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre

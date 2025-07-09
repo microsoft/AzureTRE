@@ -10,4 +10,3 @@ variable "backend_collection_b64" {
 
 variable "certificate_name" {}
 variable "ui_app_service" {}
-variable "keyvault_id" {}
