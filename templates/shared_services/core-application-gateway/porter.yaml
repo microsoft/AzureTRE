@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-application-gateway
-version: 0.1.22
+version: 0.1.23
 description: "An Azure Application Gateway shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -90,23 +90,6 @@ install:
   #       key: ${ bundle.parameters.tre_id }-${ bundle.name }_${ bundle.parameters.id }
 
 upgrade:
-  - exec:
-      command: bash
-      arguments:
-        - ./import.sh
-      flags:
-        mgmt_resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
-        mgmt_storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
-        container_name: ${ bundle.parameters.tfstate_container_name }
-        key: ${ bundle.parameters.tre_id }-${ bundle.name }_${ bundle.parameters.id }
-        tre_id: ${ bundle.parameters.tre_id }
-        azure_subscription_id: ${ bundle.credentials.azure_subscription_id }
-        certificate_name: ${ bundle.parameters.certificate_name }
-        ui_app_service: ${ bundle.parameters.ui_app_service }
-      envs:
-        ARM_USE_MSI: ${ bundle.parameters.arm_use_msi }
-        ARM_ENVIRONMENT: ${ bundle.parameters.arm_environment }
-
   - terraform:
       description: "Upgrade shared service"
       vars:
