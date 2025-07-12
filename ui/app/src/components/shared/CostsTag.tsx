@@ -27,46 +27,56 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (
   );
 
   useEffect(() => {
+    let isMounted = true;
+    setLoadingState(LoadingState.Loading);
     async function fetchCostData() {
-      let costs: CostResource[] = [];
-      if (workspaceCtx.costs.length > 0) {
-        costs = workspaceCtx.costs;
-      } else if (costsCtx.costs.length > 0) {
-        costs = costsCtx.costs;
-      } else if (!workspaceCtx.workspace.id) {
-        let scopeId = (
-          await apiCall(
-            `${ApiEndpoint.Workspaces}/${props.resourceId}/scopeid`,
+      try {
+        let costs: CostResource[] = [];
+        if (workspaceCtx.costs && workspaceCtx.costs.length > 0) {
+          costs = workspaceCtx.costs;
+        } else if (costsCtx.costs && costsCtx.costs.length > 0) {
+          costs = costsCtx.costs;
+        } else if (!workspaceCtx.workspace.id) {
+          let scopeId = (
+            await apiCall(
+              `${ApiEndpoint.Workspaces}/${props.resourceId}/scopeid`,
+              HttpMethod.Get,
+            )
+          ).workspaceAuth.scopeId;
+          const r = await apiCall(
+            `${ApiEndpoint.Workspaces}/${props.resourceId}/${ApiEndpoint.Costs}`,
             HttpMethod.Get,
-          )
-        ).workspaceAuth.scopeId;
-        const r = await apiCall(
-          `${ApiEndpoint.Workspaces}/${props.resourceId}/${ApiEndpoint.Costs}`,
-          HttpMethod.Get,
-          scopeId,
-          undefined,
-          ResultType.JSON,
-        );
-        costs = [{ costs: r.costs, id: r.id, name: r.name }];
-      }
+            scopeId,
+            undefined,
+            ResultType.JSON,
+          );
+          costs = [{ costs: r.costs, id: r.id, name: r.name }];
+        }
 
-      const resourceCosts = costs.find((cost) => {
-        return cost.id === props.resourceId;
-      });
+        const resourceCosts = costs.find((cost) => {
+          return cost.id === props.resourceId;
+        });
 
-      if (resourceCosts && resourceCosts.costs.length > 0) {
-        const formattedCost = new Intl.NumberFormat(undefined, {
-          style: "currency",
-          currency: resourceCosts?.costs[0].currency,
-          currencyDisplay: "narrowSymbol",
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }).format(resourceCosts.costs[0].cost);
-        setFormattedCost(formattedCost);
+        if (resourceCosts && resourceCosts.costs.length > 0) {
+          const formattedCost = new Intl.NumberFormat(undefined, {
+            style: "currency",
+            currency: resourceCosts?.costs[0].currency,
+            currencyDisplay: "narrowSymbol",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }).format(resourceCosts.costs[0].cost);
+          if (isMounted) setFormattedCost(formattedCost);
+        }
+      } catch (e) {
+        // error handled by fallback UI
+      } finally {
+        if (isMounted) setLoadingState(LoadingState.Ok);
       }
-      setLoadingState(LoadingState.Ok);
     }
     fetchCostData();
+    return () => {
+      isMounted = false;
+    };
   }, [
     apiCall,
     props.resourceId,
