@@ -306,7 +306,7 @@ runs:
           -e TF_VAR_private_agent_subnet_id=${{ inputs.PRIVATE_AGENT_SUBNET_ID }} \
           -e TF_VAR_auto_grant_workspace_consent="${{ (inputs.AUTO_GRANT_WORKSPACE_CONSENT != '' && inputs.AUTO_GRANT_WORKSPACE_CONSENT) || 'false' }}" \
           -e TF_VAR_enable_dns_policy="${{ (inputs.ENABLE_DNS_POLICY != '' && inputs.ENABLE_DNS_POLICY) || 'false' }}" \
-          -e TF_VAR_allowed_dns="${{ inputs.ALLOWED_DNS != '' && inputs.ALLOWED_DNS || '[]' }}" \
+          -e TF_VAR_allowed_dns='${{ (toJson(inputs.ALLOWED_DNS) != '""' && inputs.ALLOWED_DNS) || '[]' }}' \
           -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c -x "./command.sh"
