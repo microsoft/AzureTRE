@@ -1,5 +1,6 @@
 import {
   DefaultButton,
+  Dialog,
   DialogFooter,
   FontWeights,
   getTheme,
@@ -71,6 +72,8 @@ export const AirlockReviewRequest: React.FunctionComponent<
   const [reviewResource, setReviewResource] = useState<UserResource>();
   const [reviewWorkspaceScope, setReviewWorkspaceScope] = useState<string>();
   const [otherReviewers, setOtherReviewers] = useState<Array<string>>();
+  const [showApproveConfirmation, setShowApproveConfirmation] = useState(false);
+  const [showRejectConfirmation, setShowRejectConfirmation] = useState(false);
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
   const dispatch = useAppDispatch();
@@ -416,14 +419,14 @@ export const AirlockReviewRequest: React.FunctionComponent<
           />
           <DefaultButton
             iconProps={{ iconName: "Cancel" }}
-            onClick={() => reviewRequest(false)}
+            onClick={() => setShowRejectConfirmation(true)}
             text="Reject"
             styles={destructiveButtonStyles}
             disabled={reviewExplanation.length <= 0}
           />
           <DefaultButton
             iconProps={{ iconName: "Accept" }}
-            onClick={() => reviewRequest(true)}
+            onClick={() => setShowApproveConfirmation(true)}
             text="Approve"
             styles={successButtonStyles}
             disabled={reviewExplanation.length <= 0}
@@ -445,6 +448,56 @@ export const AirlockReviewRequest: React.FunctionComponent<
         />
       </div>
       <div className={contentStyles.body}>{currentStep}</div>
+      
+      {/* Approve Confirmation Dialog */}
+      <Dialog
+        hidden={!showApproveConfirmation}
+        onDismiss={() => setShowApproveConfirmation(false)}
+        dialogContentProps={{
+          title: "Approve Airlock Request?",
+          subText: `Are you sure you want to approve "${request?.title}"? This will allow the data to be downloaded.`,
+        }}
+      >
+        <DialogFooter>
+          <PrimaryButton
+            onClick={() => {
+              setShowApproveConfirmation(false);
+              reviewRequest(true);
+            }}
+            text="Yes, Approve"
+            styles={successButtonStyles}
+          />
+          <DefaultButton
+            onClick={() => setShowApproveConfirmation(false)}
+            text="Cancel"
+          />
+        </DialogFooter>
+      </Dialog>
+
+      {/* Reject Confirmation Dialog */}
+      <Dialog
+        hidden={!showRejectConfirmation}
+        onDismiss={() => setShowRejectConfirmation(false)}
+        dialogContentProps={{
+          title: "Reject Airlock Request?",
+          subText: `Are you sure you want to reject "${request?.title}"?`,
+        }}
+      >
+        <DialogFooter>
+          <PrimaryButton
+            onClick={() => {
+              setShowRejectConfirmation(false);
+              reviewRequest(false);
+            }}
+            text="Yes, Reject"
+            styles={destructiveButtonStyles}
+          />
+          <DefaultButton
+            onClick={() => setShowRejectConfirmation(false)}
+            text="Cancel"
+          />
+        </DialogFooter>
+      </Dialog>
     </>
   );
 };

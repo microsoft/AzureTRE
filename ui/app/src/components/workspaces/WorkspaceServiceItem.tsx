@@ -20,6 +20,7 @@ import { SecuredByRole } from "../shared/SecuredByRole";
 import { WorkspaceRoleName } from "../../models/roleNames";
 import { APIError } from "../../models/exceptions";
 import { ExceptionLayout } from "../shared/ExceptionLayout";
+import { CachedUser } from "../../models/user";
 
 interface WorkspaceServiceItemProps {
   workspaceService?: WorkspaceService;
@@ -41,6 +42,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<
   );
   const [hasUserResourceTemplates, setHasUserResourceTemplates] =
     useState(false);
+  const [usersCache, setUsersCache] = useState(new Map<string, CachedUser>());
   const workspaceCtx = useContext(WorkspaceContext);
   const createFormCtx = useContext(CreateUpdateResourceContext);
   const navigate = useNavigate();
@@ -102,6 +104,30 @@ export const WorkspaceServiceItem: React.FunctionComponent<
           ut && ut.templates && ut.templates.length > 0,
         );
         setUserResources(u.userResources);
+
+        // Fetch users for caching owner information
+        try {
+          const usersResponse = await apiCall(
+            `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
+            HttpMethod.Get,
+            workspaceCtx.workspaceApplicationIdURI,
+          );
+          
+          const cache = new Map<string, CachedUser>();
+          if (usersResponse.users) {
+            usersResponse.users.forEach((user: any) => {
+              cache.set(user.id, {
+                displayName: user.displayName,
+                email: user.email || user.userPrincipalName
+              });
+            });
+          }
+          setUsersCache(cache);
+        } catch (userError) {
+          console.warn("Failed to fetch workspace users for owner cache:", userError);
+          // Continue without user cache - owner will show as ID
+        }
+
         setLoadingState(LoadingState.Ok);
       } catch (err: any) {
         err.userMessage = "Error retrieving resources";
@@ -217,6 +243,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<
                             isExposedExternally={
                               workspaceService.properties.is_exposed_externally
                             }
+                            usersCache={usersCache}
                           />
                         )}
                       </Stack.Item>

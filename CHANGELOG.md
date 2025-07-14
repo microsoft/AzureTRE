@@ -3,7 +3,10 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 ENHANCEMENTS:
+* Add revoke functionality and confirmation dialogs for Airlock requests ([#4543](https://github.com/microsoft/AzureTRE/issues/4543))
 * Migrate Azure Firewall and Route Tables to Core Terraform ([#4342](https://github.com/microsoft/AzureTRE/pull/4342))
+* Display VM owner information on resource cards with clickable mailto links ([#4592](https://github.com/microsoft/AzureTRE/issues/4592))
+* Add sort/filter options to Workspace list ([#4462](https://github.com/microsoft/AzureTRE/issues/4462))
 * Added backup vault to base workspace & updated Azurerm provider to match core. ([[#4362](https://github.com/microsoft/AzureTRE/issues/4362)])
 
 BUG FIXES:
@@ -13,7 +16,10 @@ BUG FIXES:
 * Fix resource lock indicator persisting when switching between resources ([#4590](https://github.com/microsoft/AzureTRE/issues/4590))
 * Renew Letsencrypt GitHub action is failing to access storage account ([#4593](https://github.com/microsoft/AzureTRE/issues/4593))
 * Fix deployment pipeline failures due to KeyVault network policies preventing public access ([#4597](https://github.com/microsoft/AzureTRE/issues/4597))
+* Ensure storage account network rules are properly cleaned up on script failure ([#472](https://github.com/microsoft/AzureTRE/issues/472))
+* Fix UI display issue when workspace is deploying & user management is enabled ([#4521](https://github.com/microsoft/AzureTRE/issues/4521))
 * Fix error details display when workspace deletion fails with deleted Entra app ([#4500](https://github.com/microsoft/AzureTRE/pull/4500))
+* Fixed cloud-init failure on VMSS startup by upgrading `gnupg2` to the latest available version in Ubuntu Jammy([#4620](https://github.com/microsoft/AzureTRE/pull/4620))
 
 ## 0.23.0 (June 10, 2025)
 **BREAKING CHANGES & MIGRATIONS**:
