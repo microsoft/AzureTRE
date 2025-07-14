@@ -8,6 +8,12 @@ variable "tre_resource_id" {
   description = "Resource ID"
 }
 
+variable "workspace_subscription_id" {
+  type        = string
+  description = "Subscription ID for the workspace resources"
+  default     = ""
+}
+
 variable "shared_storage_quota" {
   type        = number
   default     = 50
