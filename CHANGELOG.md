@@ -20,6 +20,7 @@ BUG FIXES:
 * Fix UI display issue when workspace is deploying & user management is enabled ([#4521](https://github.com/microsoft/AzureTRE/issues/4521))
 * Fix error details display when workspace deletion fails with deleted Entra app ([#4500](https://github.com/microsoft/AzureTRE/pull/4500))
 * Fixed cloud-init failure on VMSS startup by upgrading `gnupg2` to the latest available version in Ubuntu Jammy([#4620](https://github.com/microsoft/AzureTRE/pull/4620))
+* Allow ENABLE_DNS_POLICY and ALLOWED_DNS variables to set via CI/CD ([#4623](https://github.com/microsoft/AzureTRE/issues/4623))
 
 ## 0.23.0 (June 10, 2025)
 **BREAKING CHANGES & MIGRATIONS**:
