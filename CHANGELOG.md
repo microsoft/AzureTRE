@@ -11,6 +11,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Fix "log analytics workspaces not found" error when deploying Databricks workspace service ([#4585](https://github.com/microsoft/AzureTRE/pull/4585))
+* Fix CostTag calling Costs API for every tag. ([#4577](https://github.com/microsoft/AzureTRE/issues/4577))
 * Reduce frequency of queue reader logging to improve log readability ([#4530](https://github.com/microsoft/AzureTRE/issues/4530))
 * Fix resource lock indicator persisting when switching between resources ([#4590](https://github.com/microsoft/AzureTRE/issues/4590))
 * Renew Letsencrypt GitHub action is failing to access storage account ([#4593](https://github.com/microsoft/AzureTRE/issues/4593))
@@ -57,6 +58,7 @@ BUG FIXES:
 * Fix Gitea workspace service being exposed externally ([#4558](https://github.com/microsoft/AzureTRE/issues/4558))
 * Certs service deployment failed updating static website ([#4572](https://github.com/microsoft/AzureTRE/issues/4572))
 * Pin package versions in resource processor cloud-init script to avoid breaking changes ([#4580](https://github.com/microsoft/AzureTRE/issues/4580))
+
 
 ## 0.22.0 (April 20, 2025)
 
