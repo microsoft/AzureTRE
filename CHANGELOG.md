@@ -3,7 +3,7 @@
 
 * _No changes yet_
 
-## 0.24.0 (June 16 2025)
+## 0.24.0 (July 16, 2025)
 
 ENHANCEMENTS:
 * Add revoke functionality and confirmation dialogs for Airlock requests ([#4543](https://github.com/microsoft/AzureTRE/issues/4543))
