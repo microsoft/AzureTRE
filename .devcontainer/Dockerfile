@@ -52,21 +52,7 @@ RUN if [ "${INTERACTIVE}" = "true" ]; then \
     && /opt/certbot/bin/pip install --no-cache-dir certbot \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/* ; fi
 
-# Install Porter, updates should be propagated to the RP.
-ARG PORTER_HOME_V1=/home/$USERNAME/.porter/
-ARG PORTER_VERSION=v1.2.1
-ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.5
-ARG PORTER_AZ_MIXIN_VERSION=v1.0.4
-ARG PORTER_AZURE_PLUGIN_VERSION=v1.2.3
-COPY .devcontainer/scripts/porter-v1.sh /tmp/
-RUN export PORTER_VERSION=${PORTER_VERSION} \
-    PORTER_TERRAFORM_MIXIN_VERSION=${PORTER_TERRAFORM_MIXIN_VERSION} \
-    PORTER_AZ_MIXIN_VERSION=${PORTER_AZ_MIXIN_VERSION} \
-    PORTER_AZURE_PLUGIN_VERSION=${PORTER_AZURE_PLUGIN_VERSION} \
-    PORTER_HOME=${PORTER_HOME_V1} \
-    && /tmp/porter-v1.sh
 
-ENV PATH ${PORTER_HOME_V1}:$PATH
 
 # Install requirements
 ARG PIP_VERSION=23.3.1

@@ -12,20 +12,7 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
     export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh
 
-ARG PORTER_HOME_V1=/root/.porter/
-ARG PORTER_VERSION=v1.2.1
-ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.5
-ARG PORTER_AZ_MIXIN_VERSION=v1.0.4
-ARG PORTER_AZURE_PLUGIN_VERSION=v1.2.3
-COPY scripts/porter-v1.sh /tmp/
-RUN export PORTER_VERSION=${PORTER_VERSION} \
-    PORTER_TERRAFORM_MIXIN_VERSION=${PORTER_TERRAFORM_MIXIN_VERSION} \
-    PORTER_AZ_MIXIN_VERSION=${PORTER_AZ_MIXIN_VERSION} \
-    PORTER_AZURE_PLUGIN_VERSION=${PORTER_AZURE_PLUGIN_VERSION} \
-    PORTER_HOME=${PORTER_HOME_V1} \
-    && /tmp/porter-v1.sh
 
-ENV PATH=${PORTER_HOME_V1}:$PATH
 
 # Install Docker
 ARG DOCKER_CE_VERSION="5:27.4.1-1~debian.12~bookworm"
@@ -38,7 +25,7 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
     | tee /etc/apt/sources.list.d/docker.list > /dev/null \
     && apt-get update && apt-get install -y docker-ce="$DOCKER_CE_VERSION" docker-ce-cli="$DOCKER_CE_CLI_VERSION" containerd.io="$DOCKER_CONTAINERD_VERSION" --no-install-recommends
 
-COPY ./vmss_porter/config.yaml ${PORTER_HOME_V1}/
+
 
 ENV PYTHONPATH=.
 
