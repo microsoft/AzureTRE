@@ -67,7 +67,6 @@ declare automationAppId=""
 declare automationAppObjectId=""
 declare msGraphUri=""
 declare spPassword=""
-declare customDomain=""
 
 # Initialize parameters specified from command line
 while [[ $# -gt 0 ]]; do
