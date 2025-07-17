@@ -201,7 +201,7 @@ resource "azurerm_application_gateway" "agw" {
     include_query_string = true
   }
 
-  # We don't want Terraform to revert certificate cycle changes. We assume the certificate will be renewed in keyvault.
+  # ssl_certificate: we don't want Terraform to revert certificate cycle changes. We assume the certificate will be renewed in keyvault.
   # zones: see https://github.com/hashicorp/terraform-provider-azurerm/issues/30129
   lifecycle { ignore_changes = [ssl_certificate, zones, tags] }
 
