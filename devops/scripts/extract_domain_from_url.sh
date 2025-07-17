@@ -10,10 +10,10 @@ function extract_domain_from_url()
   domain=$(echo "$url" | sed -E 's|^https?://||')
   
   # Remove path and query parameters (everything after the first /)
-  domain=$(echo "$domain" | sed 's|/.*||')
+  domain=${domain%%/*}
   
   # Remove port if present (everything after the first :)
-  domain=$(echo "$domain" | sed 's|:.*||')
+  domain=${domain%%:*}
   
   echo "$domain"
 }
