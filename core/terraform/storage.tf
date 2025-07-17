@@ -112,3 +112,15 @@ resource "azurerm_role_assignment" "fileshareusage" {
   role_definition_name = "Storage Table Data Contributor"
   principal_id         = azurerm_user_assigned_identity.id.principal_id
 }
+
+resource "azurerm_storage_table" "perstudyusage" {
+  name                 = "perstudyusage"
+  storage_account_name = azurerm_storage_account.stg.name
+}
+
+resource "azurerm_role_assignment" "perstudtusage" {
+  # scope                = azurerm_storage_table.perstudyusage.id
+  scope                = "${local.storage_table_scope}/${azurerm_storage_table.perstudyusage.name}"
+  role_definition_name = "Storage Table Data Contributor"
+  principal_id         = azurerm_user_assigned_identity.id.principal_id
+}
