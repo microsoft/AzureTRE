@@ -109,8 +109,8 @@
           "description": "SKU of the Azure Bastion.",
           "type": "string"
         },
-        "custom_domain": {
-          "description": "Custom domain name.",
+        "tre_url": {
+          "description": "Custom TRE URL (full URL including https://). If not specified, will be constructed automatically.",
           "type": "string"
         },
         "enable_cmk_encryption": {

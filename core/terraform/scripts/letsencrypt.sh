@@ -69,6 +69,7 @@ ledir=$(pwd)/letsencrypt
 mkdir -p "${ledir}/logs"
 
 CERT_FQDN=$FQDN
+# CUSTOM_DOMAIN is automatically extracted from TRE_URL by load_and_validate_env.sh
 if [[ -n "$CUSTOM_DOMAIN" ]]; then
   CERT_FQDN=$CUSTOM_DOMAIN
 fi

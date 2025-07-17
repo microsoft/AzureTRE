@@ -10,15 +10,18 @@ management:
   acr_name: __CHANGE_ME__
   # Set this to true if you want to disable public access to mgmt acr
   disable_acr_public_access: true
-  # ID of external Key Vault to store CMKs in (only required if enable_cmk_encryption is true)
+  # ID of external Key Vault to store CMKs in
+  # (only required if enable_cmk_encryption is true)
   # external_key_store_id: __CHANGE_ME__
-  # Name of Key Vault for encryption, required if enable_cmk_encryption is true and external_key_store_id is not set
+  # Name of Key Vault for encryption, required if enable_cmk_encryption is true
+  # and external_key_store_id is not set
   # encryption_kv_name: __CHANGE_ME__
   # Azure Resource Manager credentials used for CI/CD pipelines
   arm_subscription_id: __CHANGE_ME__
 
   # If you want to override the currently signed in credentials
-  # You would do this if running commands like `make terraform-install DIR=./templates/workspaces/base`
+  # You would do this if running commands like
+  # `make terraform-install DIR=./templates/workspaces/base`
   # arm_tenant_id: __CHANGE_ME__
   # arm_client_id: __CHANGE_ME__
   # arm_client_secret: __CHANGE_ME__
@@ -39,11 +42,13 @@ tre:
   enable_swagger: true
   enable_airlock_malware_scanning: true
 
-  # Set to true if want to ensure users have an email address before airlock request is created
+  # Set to true if want to ensure users have an email address before airlock
+  # request is created
   # Used if rely on email notifications for governance purposes
   # enable_airlock_email_check: true
 
-  # TODO: move to RP default with https://github.com/microsoft/AzureTRE/issues/2948
+  # TODO: move to RP default with
+  # https://github.com/microsoft/AzureTRE/issues/2948
   workspace_app_service_plan_sku: P1v2
   # The TRE Web UI is deployed by default.
   # Uncomment the following to disable deployment of the Web UI.
@@ -56,43 +61,56 @@ tre:
   # Set to Basic if wish to connect to VMs in workspaces.
   bastion_sku: Basic
 
-  # Set to true if TreAdmins should be able to assign and de-assign users to workspaces via the UI
+  # Set to true if TreAdmins should be able to assign and de-assign users to
+  # workspaces via the UI
   user_management_enabled: false
 
-  # Uncomment to enable DNS Security policy on the system, and add any known DNS names that you need to allow
-  # DNS queries on, in addition to those in the core list in core/terraform/allowed-dns.json
+  # Uncomment to enable DNS Security policy on the system, and add any known
+  # DNS names that you need to allow
+  # DNS queries on, in addition to those in the core list in
+  # core/terraform/allowed-dns.json
   # Note, these need to be fully qualified, i.e. they end in a dot(.)
   # enable_dns_policy: true
   # allowed_dns:
   #   - mydomain.com.
 
-  # Uncomment to deploy to a custom domain
-  # custom_domain: __CHANGE_ME__
+  # Uncomment to deploy to a custom domain. If set, this should be the full
+  # TRE URL (e.g., https://mytre.example.com). If not set, the TRE URL will be
+  # constructed automatically based on tre_id and location.
+  # tre_url: __CHANGE_ME__
 
-  # Uncomment to enable vnet exception for the subnet to access private resources like TRE key vault and management storage account.
+  # Uncomment to enable vnet exception for the subnet to access private
+  # resources like TRE key vault and management storage account.
   # private_agent_subnet_id: __CHANGE_ME__
 authentication:
   aad_tenant_id: __CHANGE_ME__
   # Setting AUTO_WORKSPACE_APP_REGISTRATION to false will:
   # create an identity with `Application.ReadWrite.OwnedBy`.
   # Setting AUTO_WORKSPACE_APP_REGISTRATION to true will:
-  # create an identity with `Application.ReadWrite.All` and `Directory.Read.All`.
-  # When this is true, create Workspaces will also create an AAD Application automatically.
+  # create an identity with `Application.ReadWrite.All` and
+  # `Directory.Read.All`.
+  # When this is true, create Workspaces will also create an AAD Application
+  # automatically.
   # When this is false, the AAD Application will need creating manually.
   auto_workspace_app_registration: true
-  # Setting AUTO_WORKSPACE_GROUP_CREATION to true will create an identity with `Group.ReadWrite.All`
+  # Setting AUTO_WORKSPACE_GROUP_CREATION to true will create an identity with
+  # `Group.ReadWrite.All`
   auto_workspace_group_creation: false
-  # Setting this to true will remove the need for users to manually grant consent when creating new workspaces.
-  # The identity will be granted Application.ReadWrite.All and DelegatedPermissionGrant.ReadWrite.All permissions.
+  # Setting this to true will remove the need for users to manually grant
+  # consent when creating new workspaces.
+  # The identity will be granted Application.ReadWrite.All and
+  # DelegatedPermissionGrant.ReadWrite.All permissions.
   auto_grant_workspace_consent: false
 
 resource_processor:
   # The number of processes to start in the resource processor VMSS image
   resource_processor_number_processes_per_instance: 5
 
-# This setting provides a way to pass environment values to the resource processor
+# This setting provides a way to pass environment values to the resource
+# processor
 # to use as a source of bundle parameter values
-# For example, to specify your image_gallery_id for use in VM user resources with custom VM images:
+# For example, to specify your image_gallery_id for use in VM user resources
+# with custom VM images:
 # yamllint disable-line rule:line-length
 #  rp_bundle_values: '{"custom_key_1":"custom_value_1","image_gallery_id":"/subscriptions/<subscription-id>/resourceGroups/<your-rg>/providers/Microsoft.Compute/galleries/<your-gallery-name>"}'
 
@@ -105,7 +123,8 @@ ui_config:
 developer_settings:
 # Locks will not be added to stateful resources so they can be easily removed
 # stateful_resources_locked: false
-# TRE Core Key Vault purge protection will be disabled so it can be reused upon deletion
+# TRE Core Key Vault purge protection will be disabled so it can be reused
+# upon deletion
 # kv_purge_protection_enabled: false
 
 # This setting will enable your local machine to be able to
@@ -113,13 +132,10 @@ developer_settings:
 # the base workspace.
 #  enable_local_debugging: true
 
-# This setting enables customer-managed key encryption for all supported resources
+# This setting enables customer-managed key encryption for all supported
+# resources
 #  enable_cmk_encryption: true
 
 # Used by the API and Resource processor application to change log level
 # Can be "ERROR", "WARNING", "INFO", "DEBUG"
 #  logging_level: "INFO"
-
-# If you want to use TRE_URL to point to your local TRE API instance or be configured to another cloud provider
-# uncomment and set this variable
-#  tre_url: __CHANGE_ME__

@@ -4,11 +4,18 @@ In order to use a custom domain name with the Azure TRE:
 
 1. Register a domain name, and create a DNS entry for the domain name pointing to the FQDN of the Azure App Gateway, e.g. `mytre-domain-name.org.  CNAME  mytre.region.cloudapp.azure.com.`
 
-2. Set the domain name in the `CUSTOM_DOMAIN` variable in `config.yaml` or create a GitHub Actions secret, depending on your deployment method.
+2. Set the full custom URL in the `tre_url` setting in `config.yaml`. For example:
+
+```yaml
+tre:
+  tre_url: https://mytre-domain-name.org
+```
+
+**Note:** The `CUSTOM_DOMAIN` environment variable has been deprecated. Use `tre_url` instead, which should contain the full URL including the protocol.
 
 3. Update the *TRE UX* App Registration redirect URIs:
 
-   a. If you haven't deployed your TRE yet, this is done automatically for you using the `make auth` command.  Refer to the setup instructions to deploy your TRE.
+   a. If you haven't deployed your TRE yet, this is done automatically for you using the `make auth` command. The script will automatically detect the custom domain from your `tre_url` setting and configure the redirect URIs accordingly.
 
    b. If your TRE has already been deployed, manually add the following redirect URIs in Entra ID > App Registrations > *TRE_ID UX* > Authentication > Single-page application Redirect URIs:
 

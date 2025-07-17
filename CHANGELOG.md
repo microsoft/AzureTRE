@@ -1,7 +1,8 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.25.0 (Unreleased)
 
-* _No changes yet_
+**BREAKING CHANGES & MIGRATIONS**:
+* Consolidated `custom_domain` and `tre_url` settings into single `tre_url` setting. The `custom_domain` configuration option has been removed. Users should update their `config.yaml` to use `tre_url` with full URLs instead (e.g., `tre_url: https://mytre.example.com`). The `CUSTOM_DOMAIN` environment variable is now automatically derived from `TRE_URL` for backward compatibility ([#4248](https://github.com/microsoft/AzureTRE/issues/4248))
 
 ## 0.24.0 (July 16, 2025)
 
