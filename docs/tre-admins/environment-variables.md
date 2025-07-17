@@ -24,7 +24,7 @@
 | <div style="width: 330px">Environment variable name</div> | Description |
 | ------------------------- | ----------- |
 | `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `mytre-dev` will result in a resource group name for Azure TRE instance of `rg-mytre-dev`. This must be less than 12 characters. Allowed characters: lowercase alphanumerics|
-| `TRE_URL`| This will be generated for you by populating your `TRE_ID`. This is used so that you can automatically register bundles |
+| `TRE_URL`| This will be generated for you based on your `TRE_ID` and `LOCATION`, or can be set to a custom URL (e.g., `https://mytre.example.com`) for custom domains. Used for automatic registration of bundles and authentication redirects. |
 | `CORE_ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. `/22` or larger. |
 | `TRE_ADDRESS_SPACE` | The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). E.g. `10.0.0.0/12`|
 | `ENABLE_SWAGGER` | Determines whether the Swagger interface for the API will be available. |
@@ -45,7 +45,7 @@
 | `APP_GATEWAY_SKU` | Optional. The SKU of the Application Gateway. Default value is `Standard_v2`. Allowed values [`Standard_v2`, `WAF_v2`] |
 | `DEPLOY_BASTION` | Optional. If set to `true`, an Azure Bastion instance will be deployed. Default value is `true`. |
 | `BASTION_SKU` | Optional. The SKU of the Azure Bastion instance. Default value is `Basic`. Allowed values [`Developer`, `Standard`, `Basic`, `Premium`]. See [Azure Bastion SKU feature comparison](https://learn.microsoft.com/en-us/azure/bastion/bastion-overview#sku). |
-| `CUSTOM_DOMAIN` | Optional. Custom domain name to access the Azure TRE portal. See [Custom domain name](custom-domain.md). |
+| `CUSTOM_DOMAIN` | **Deprecated and automatically derived.** This is now automatically extracted from `TRE_URL`. Do not set this manually. |
 | `ENABLE_CMK_ENCRYPTION` | Optional. Default is `false`, if set to `true` customer-managed key encryption will be enabled for all supported resources. |
 | `AUTO_WORKSPACE_APP_REGISTRATION`| Set to `false` by default. Setting this to `true` grants the `Application.ReadWrite.All` and `Directory.Read.All` permission to the *Application Admin* identity. This identity is used to manage other Microsoft Entra ID applications that it owns, e.g. Workspaces. If you do not set this, the identity will have `Application.ReadWrite.OwnedBy` permission. [Further information on Application Admin can be found here](./identities/application_admin.md). |
 | `AUTO_WORKSPACE_GROUP_CREATION`| Set to `false` by default. Setting this to `true` grants the `Group.ReadWrite.All` permission to the *Application Admin* identity. This identity can then create security groups aligned to each applciation role. Microsoft Entra ID licencing implications need to be considered as Group assignment is a premium feature. [You can read mode about Group Assignment here](https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/app-roles#roles-using-azure-ad-app-roles). |
