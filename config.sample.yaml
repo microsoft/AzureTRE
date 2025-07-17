@@ -121,7 +121,3 @@ developer_settings:
 # Used by the API and Resource processor application to change log level
 # Can be "ERROR", "WARNING", "INFO", "DEBUG"
 #  logging_level: "INFO"
-
-# If you want to use TRE_URL to point to your local TRE API instance or be configured to another cloud provider
-# uncomment and set this variable
-#  tre_url: __CHANGE_ME__

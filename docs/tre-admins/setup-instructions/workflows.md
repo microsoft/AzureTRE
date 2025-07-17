@@ -127,7 +127,7 @@ Configure additional secrets used in the deployment workflow:
 | `MGMT_RESOURCE_GROUP_NAME` | The name of the shared resource group for all Azure TRE core resources. |
 | `MGMT_STORAGE_ACCOUNT_NAME` | The name of the storage account to hold the Terraform state and other deployment artifacts. E.g. `mystorageaccount`. |
 | `ACR_NAME` | A globally unique name for the Azure Container Registry (ACR) that will be created to store deployment images. |
-| `CUSTOM_DOMAIN` | **Deprecated.** Use `TRE_URL` in the configuration instead. Custom domains are now specified as full URLs in the `tre_url` configuration setting. |
+| `TRE_URL` | Optional. Specify a custom URL for the TRE instance (e.g., `https://mytre.example.com`). If not set, the TRE URL will be constructed automatically based on `TRE_ID` and location. Can be configured in `config.yaml` as `tre_url`. |
 
 
 ### Configure repository/environment variables
