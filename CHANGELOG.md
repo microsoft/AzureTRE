@@ -2,9 +2,9 @@
 ## 0.25.0 (Unreleased)
 
 ENHANCEMENTS:
+* Allow ENABLE_DNS_POLICY and ALLOWED_DNS variables to set via CI/CD ([#4623](https://github.com/microsoft/AzureTRE/issues/4623))
 
 BUG FIXES:
-* Allow ENABLE_DNS_POLICY and ALLOWED_DNS variables to set via CI/CD ([#4623](https://github.com/microsoft/AzureTRE/issues/4623))
 * App Gateway is destroyed on 2nd and subsequent deploys ([#4632](https://github.com/microsoft/AzureTRE/issues/4632))
 
 ## 0.24.0 (July 16, 2025)
