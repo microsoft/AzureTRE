@@ -5,6 +5,13 @@ set -euo pipefail
 
 # AZURE_CORE_OUTPUT=jsonc # force CLI output to JSON for the script (user can still change default for interactive usage in the dev container)
 
+# Get the directory that this script is in
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+# Source the helper function for extracting domain from URL
+# shellcheck disable=SC1091
+source "${SCRIPT_DIR}/../extract_domain_from_url.sh"
+
 function show_usage()
 {
     cat << USAGE
@@ -18,14 +25,15 @@ Usage: $0 -n <app-name> [-r <reply-url>] [-a] [-s] [--automation-account]
 Options:
     -n,--name                   Required. The prefix for the app (registration) names e.g., "TRE", or "Workspace One".
     -u,--tre-url                TRE URL, used to construct auth redirection URLs for the UI and Swagger app.
+                                If the URL contains a custom domain, it will be used automatically.
     -a,--admin-consent          Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
                                 Requires directory admin privileges to the Azure AD in question.
     -t,--automation-clientid    Optional, when --workspace is specified the client ID of the automation account can be added to the TRE workspace.
     -r,--reset-password         Optional, switch to automatically reset the password. Default 0
-    -d,--custom-domain          Optional, custom domain, used to construct auth redirection URLs (in addition to --tre-url)
 
 Examples:
-    1. $0 -n TRE -r https://mytre.region.cloudapp.azure.com -a
+    1. $0 -n TRE -u https://mytre.region.cloudapp.azure.com -a
+    2. $0 -n TRE -u https://mytre.example.com -a  (with custom domain)
 
     Using an Automation account
     3. $0 --name 'TRE' --tre-url https://mytre.region.cloudapp.azure.com --admin-consent --automation-account
@@ -82,10 +90,6 @@ while [[ $# -gt 0 ]]; do
         ;;
         -r|--reset-password)
             resetPassword=$2
-            shift 2
-        ;;
-        -d|--custom-domain)
-            customDomain=$2
             shift 2
         ;;
         *)
@@ -249,11 +253,14 @@ redirectUris="\"http://localhost:8000/api/docs/oauth2-redirect\", \"http://local
 if [[ -n ${treUrl} ]]; then
     echo "Adding reply/redirect URL \"${treUrl}\" to \"${appName}\""
     redirectUris="${redirectUris}, \"${treUrl}\", \"${treUrl}/api/docs/oauth2-redirect\""
-fi
-if [[ -n ${customDomain} ]]; then
-    customDomainUrl="https://${customDomain}"
-    echo "Adding reply/redirect URL \"${customDomainUrl}\" to \"${appName}\""
-    redirectUris="${redirectUris}, \"${customDomainUrl}\", \"${customDomainUrl}/api/docs/oauth2-redirect\""
+    
+    # Check if this is a custom domain (not the default cloudapp.azure.com pattern)
+    # If so, we don't need to add it again as it's already the main URL
+    treUrlDomain=$(extract_domain_from_url "${treUrl}")
+    if [[ "${treUrlDomain}" != *".cloudapp.azure.com" && "${treUrlDomain}" != *".cloudapp.usgovcloudapi.net" ]]; then
+        echo "Detected custom domain in TRE URL: ${treUrlDomain}"
+        # The custom domain URL is already included as the main treUrl, no need to add separately
+    fi
 fi
 
 uxAppDefinition=$(jq -c . << JSON

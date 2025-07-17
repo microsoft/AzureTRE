@@ -11,6 +11,8 @@ set -o nounset
 # shellcheck disable=SC1091
 source "${DIR}"/construct_tre_url.sh
 # shellcheck disable=SC1091
+source "${DIR}"/extract_domain_from_url.sh
+# shellcheck disable=SC1091
 source "${DIR}"/convert_azure_env_to_arm_env.sh
 
 if [ ! -f "config.yaml" ]; then
@@ -88,8 +90,21 @@ else
     export ARM_ENVIRONMENT
     export TF_VAR_arm_environment="${ARM_ENVIRONMENT}"
 
-    TRE_URL=$(construct_tre_url "${TRE_ID}" "${LOCATION}" "${AZURE_ENVIRONMENT}")
+    # Set TRE_URL - either from config or constructed automatically
+    if [[ -n "${TRE_URL:-}" ]]; then
+        # TRE_URL was provided in config, use it as-is
+        echo "Using TRE_URL from config: ${TRE_URL}"
+    else
+        # Construct TRE_URL automatically
+        TRE_URL=$(construct_tre_url "${TRE_ID}" "${LOCATION}" "${AZURE_ENVIRONMENT}")
+        echo "Constructed TRE_URL: ${TRE_URL}"
+    fi
     export TRE_URL
+    
+    # Set CUSTOM_DOMAIN by extracting domain from TRE_URL 
+    # This maintains backward compatibility for scripts that expect CUSTOM_DOMAIN
+    CUSTOM_DOMAIN=$(extract_domain_from_url "${TRE_URL}")
+    export CUSTOM_DOMAIN
 fi
 
 # if local debugging is configured, then set vars required by ~/.porter/config.yaml

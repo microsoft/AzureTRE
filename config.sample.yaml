@@ -66,8 +66,10 @@ tre:
   # allowed_dns:
   #   - mydomain.com.
 
-  # Uncomment to deploy to a custom domain
-  # custom_domain: __CHANGE_ME__
+  # Uncomment to deploy to a custom domain. If set, this should be the full TRE URL
+  # (e.g., https://mytre.example.com). If not set, the TRE URL will be constructed
+  # automatically based on tre_id and location.
+  # tre_url: __CHANGE_ME__
 
   # Uncomment to enable vnet exception for the subnet to access private resources like TRE key vault and management storage account.
   # private_agent_subnet_id: __CHANGE_ME__
