@@ -1,7 +1,11 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.25.0 (Unreleased)
 
-* _No changes yet_
+ENHANCEMENTS:
+
+BUG FIXES:
+* Allow ENABLE_DNS_POLICY and ALLOWED_DNS variables to set via CI/CD ([#4623](https://github.com/microsoft/AzureTRE/issues/4623))
+* App Gateway is destroyed on 2nd and subsequent deploys ([#4632](https://github.com/microsoft/AzureTRE/issues/4632))
 
 ## 0.24.0 (July 16, 2025)
 
@@ -23,7 +27,6 @@ BUG FIXES:
 * Fix UI display issue when workspace is deploying & user management is enabled ([#4521](https://github.com/microsoft/AzureTRE/issues/4521))
 * Fix error details display when workspace deletion fails with deleted Entra app ([#4500](https://github.com/microsoft/AzureTRE/pull/4500))
 * Fixed cloud-init failure on VMSS startup by upgrading `gnupg2` to the latest available version in Ubuntu Jammy([#4620](https://github.com/microsoft/AzureTRE/pull/4620))
-* Allow ENABLE_DNS_POLICY and ALLOWED_DNS variables to set via CI/CD ([#4623](https://github.com/microsoft/AzureTRE/issues/4623))
 * Fix terraform dependency introduced by the migration of Azure Firewall and Route Tables to Core Terraform ([#4624](https://github.com/microsoft/AzureTRE/issues/4624))
 
 ## 0.23.0 (June 10, 2025)
