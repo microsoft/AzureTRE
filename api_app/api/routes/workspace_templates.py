@@ -1,6 +1,12 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import parse_obj_as
+try:
+    # Pydantic v2
+    from pydantic import TypeAdapter
+    parse_obj_as = TypeAdapter
+except ImportError:
+    # Pydantic v1 fallback
+    from pydantic import parse_obj_as
 
 from api.helpers import get_repository
 from db.errors import EntityVersionExist, InvalidInput
@@ -25,7 +31,12 @@ async def get_workspace_templates(authorized_only: bool = False, template_repo=D
 @workspace_templates_admin_router.get("/workspace-templates/{workspace_template_name}", response_model=WorkspaceTemplateInResponse, name=strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, response_model_exclude_none=True)
 async def get_workspace_template(workspace_template_name: str, is_update: bool = False, version: Optional[str] = None, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceTemplateInResponse:
     template = await get_template(workspace_template_name, template_repo, ResourceType.Workspace, is_update=is_update, version=version)
-    return parse_obj_as(WorkspaceTemplateInResponse, template)
+    try:
+        # Pydantic v2
+        return TypeAdapter(WorkspaceTemplateInResponse).validate_python(template)
+    except AttributeError:
+        # Pydantic v1 fallback
+        return parse_obj_as(WorkspaceTemplateInResponse, template)
 
 
 @workspace_templates_admin_router.post("/workspace-templates", status_code=status.HTTP_201_CREATED, response_model=WorkspaceTemplateInResponse, response_model_exclude_none=True, name=strings.API_CREATE_WORKSPACE_TEMPLATES)
