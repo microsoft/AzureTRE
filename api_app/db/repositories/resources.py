@@ -20,7 +20,14 @@ from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.resource import ResourcePatch
-from pydantic import UUID4, parse_obj_as
+try:
+    # Pydantic v2
+    from pydantic import TypeAdapter
+    parse_obj_as = TypeAdapter
+except ImportError:
+    # Pydantic v1 fallback
+    from pydantic import parse_obj_as
+from pydantic import UUID4
 
 
 class ResourceRepository(BaseRepository):
@@ -140,7 +147,7 @@ class ResourceRepository(BaseRepository):
         await resource_history_repo.create_resource_history_item(resource)
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
-        resource.user = user
+        resource.user = user.model_dump()
         resource.updatedWhen = self.get_timestamp()
 
         if resource_patch.isEnabled is not None:

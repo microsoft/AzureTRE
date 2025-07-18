@@ -187,8 +187,8 @@ class TestWorkspaceTemplate:
 
             expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_template(basic_resource_template))
 
-        assert json.loads(response.text)["required"] == expected_template.dict(exclude_unset=True)["required"]
-        assert json.loads(response.text)["properties"] == expected_template.dict(exclude_unset=True)["properties"]
+        assert json.loads(response.text)["required"] == expected_template.model_dump(exclude_unset=True)["required"]
+        assert json.loads(response.text)["properties"] == expected_template.model_dump(exclude_unset=True)["properties"]
 
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
@@ -218,7 +218,7 @@ class TestWorkspaceTemplate:
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.model_dump())
 
-        assert json.loads(response.text)["customActions"] == expected_template.dict(exclude_unset=True)["customActions"]
+        assert json.loads(response.text)["customActions"] == expected_template.model_dump(exclude_unset=True)["customActions"]
 
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
