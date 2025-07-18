@@ -2,7 +2,15 @@ from enum import StrEnum
 from typing import List, Dict, Optional
 
 from models.domain.azuretremodel import AzureTREModel
-from pydantic import Field, validator
+try:
+    # Pydantic v2
+    from pydantic import field_validator, Field
+    PYDANTIC_V2 = True
+except ImportError:
+    # Pydantic v1 fallback  
+    from pydantic import validator, Field
+    PYDANTIC_V2 = False
+
 from resources import strings
 
 
@@ -101,7 +109,14 @@ class AirlockRequest(AzureTREModel):
     reviewUserResources: Dict[str, AirlockReviewUserResource] = Field({}, title="User resources created for Airlock Reviews")
 
     # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931
-    @validator("etag", pre=True)
-    def parse_etag_to_remove_escaped_quotes(cls, value):
-        if value:
-            return value.replace('\"', '')
+    if PYDANTIC_V2:
+        @field_validator("etag", mode="before")
+        @classmethod
+        def parse_etag_to_remove_escaped_quotes(cls, value):
+            if value:
+                return value.replace('\"', '')
+    else:
+        @validator("etag", pre=True)
+        def parse_etag_to_remove_escaped_quotes(cls, value):
+            if value:
+                return value.replace('\"', '')
