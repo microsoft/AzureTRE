@@ -139,7 +139,7 @@ async def test_receiving_bad_json_logs_error(logging_mock, payload):
 @patch('services.logging.logger.exception')
 async def test_receiving_good_message(logging_mock, resource_repo, operation_repo, _, __):
     expected_workspace = create_sample_workspace_object(test_sb_message["id"])
-    resource_repo.return_value.get_resource_dict_by_id.return_value = expected_workspace.dict()
+    resource_repo.return_value.get_resource_dict_by_id.return_value = expected_workspace.model_dump()
 
     operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
     operation_repo.return_value.get_operation_by_id.return_value = operation
@@ -150,7 +150,7 @@ async def test_receiving_good_message(logging_mock, resource_repo, operation_rep
 
     assert complete_message is True
     resource_repo.return_value.get_resource_dict_by_id.assert_called_once_with(uuid.UUID(test_sb_message["id"]))
-    resource_repo.return_value.update_item_dict.assert_called_once_with(expected_workspace.dict())
+    resource_repo.return_value.update_item_dict.assert_called_once_with(expected_workspace.model_dump())
     logging_mock.assert_not_called()
 
 
@@ -205,7 +205,7 @@ async def test_state_transitions_from_deployed_to_deleted(resource_repo, operati
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(updated_message)
 
     workspace = create_sample_workspace_object(test_sb_message["id"])
-    resource_repo.return_value.get_resource_dict_by_id.return_value = workspace.dict()
+    resource_repo.return_value.get_resource_dict_by_id.return_value = workspace.model_dump()
 
     operation = create_sample_operation(workspace.id, RequestAction.UnInstall)
     operation.steps[0].status = Status.Deployed
@@ -236,7 +236,7 @@ async def test_outputs_are_added_to_resource_item(resource_repo, operations_repo
 
     resource = create_sample_workspace_object(received_message["id"])
     resource.properties = {"exitingName": "exitingValue"}
-    resource_repo.return_value.get_resource_dict_by_id.return_value = resource.dict()
+    resource_repo.return_value.get_resource_dict_by_id.return_value = resource.model_dump()
 
     new_params = {
         "string1": "value1",
@@ -273,7 +273,7 @@ async def test_properties_dont_change_with_no_outputs(resource_repo, operations_
 
     resource = create_sample_workspace_object(received_message["id"])
     resource.properties = {"exitingName": "exitingValue"}
-    resource_repo.return_value.get_resource_dict_by_id.return_value = resource.dict()
+    resource_repo.return_value.get_resource_dict_by_id.return_value = resource.model_dump()
 
     operation = create_sample_operation(resource.id, RequestAction.UnInstall)
     operations_repo.return_value.get_operation_by_id.return_value = operation
@@ -285,7 +285,7 @@ async def test_properties_dont_change_with_no_outputs(resource_repo, operations_
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True
-    resource_repo.return_value.update_item_dict.assert_called_once_with(expected_resource.dict())
+    resource_repo.return_value.update_item_dict.assert_called_once_with(expected_resource.model_dump())
 
 
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
@@ -301,7 +301,7 @@ async def test_multi_step_operation_sends_next_step(sb_sender_client, resource_r
     sb_sender_client().get_queue_sender().send_messages = AsyncMock()
 
     # step 1 resource
-    resource_repo.return_value.get_resource_dict_by_id.return_value = basic_shared_service.dict()
+    resource_repo.return_value.get_resource_dict_by_id.return_value = basic_shared_service.model_dump()
 
     # step 2 resource
     resource_repo.return_value.get_resource_by_id.return_value = user_resource_multi
@@ -355,7 +355,7 @@ async def test_multi_step_operation_ends_at_last_step(sb_sender_client, resource
     sb_sender_client().get_queue_sender().send_messages = AsyncMock()
 
     # step 2 resource
-    resource_repo.return_value.get_resource_dict_by_id.return_value = user_resource_multi.dict()
+    resource_repo.return_value.get_resource_dict_by_id.return_value = user_resource_multi.model_dump()
 
     # step 3 resource
     resource_repo.return_value.get_resource_by_id.return_value = basic_shared_service

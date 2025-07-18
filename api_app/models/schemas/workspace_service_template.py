@@ -24,7 +24,7 @@ def get_sample_workspace_service_template_object(template_name: str = "tre-works
 
 
 def get_sample_workspace_service_template() -> dict:
-    return get_sample_workspace_service_template_object().dict()
+    return get_sample_workspace_service_template_object().model_dump()
 
 
 def get_sample_workspace_service_template_in_response() -> dict:

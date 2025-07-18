@@ -27,7 +27,7 @@ def get_sample_user_resource_template_object(template_name: str = "guacamole-vm"
 
 
 def get_sample_user_resource_template() -> dict:
-    return get_sample_user_resource_template_object().dict()
+    return get_sample_user_resource_template_object().model_dump()
 
 
 def get_sample_user_resource_template_in_response() -> dict:

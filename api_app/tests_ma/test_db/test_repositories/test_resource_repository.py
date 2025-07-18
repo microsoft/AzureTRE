@@ -153,7 +153,7 @@ async def test_validate_input_against_template_returns_template_version_if_templ
                                                            current=True,
                                                            required=[],
                                                            properties={},
-                                                           customActions=[]).dict()
+                                                           customActions=[]).model_dump()
 
     template = await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, [])
 
@@ -190,7 +190,7 @@ async def test_validate_input_against_template_raises_value_error_if_payload_is_
         current=True,
         required=["display_name"],
         properties={},
-        customActions=[]).dict()
+        customActions=[]).model_dump()
 
     # the enrich template method does this
     template_dict.pop("allOf")
@@ -216,7 +216,7 @@ async def test_validate_input_against_template_raises_if_user_does_not_have_requ
                                                            required=[],
                                                            authorizedRoles=["missing_role"],
                                                            properties={},
-                                                           customActions=[]).dict()
+                                                           customActions=[]).model_dump()
 
     with pytest.raises(UserNotAuthorizedToUseTemplate):
         _ = await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_role", "another_role"])
@@ -235,7 +235,7 @@ async def test_validate_input_against_template_valid_if_user_has_only_one_role(_
                                                            required=[],
                                                            authorizedRoles=["test_role", "missing_role"],
                                                            properties={},
-                                                           customActions=[]).dict()
+                                                           customActions=[]).model_dump()
 
     template = await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_role", "another_role"])
 
@@ -255,7 +255,7 @@ async def test_validate_input_against_template_valid_if_required_roles_set_is_em
                                                            current=True,
                                                            required=[],
                                                            properties={},
-                                                           customActions=[]).dict()
+                                                           customActions=[]).model_dump()
 
     template = await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_user_role"])
 

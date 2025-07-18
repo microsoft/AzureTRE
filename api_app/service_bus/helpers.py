@@ -68,7 +68,7 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
     if not parent_template.pipeline:
         return step_resource
 
-    parent_template_pipeline_dict = parent_template.pipeline.dict()
+    parent_template_pipeline_dict = parent_template.pipeline.model_dump()
 
     # if action not defined as a pipeline, custom action, no need to continue with substitutions.
     if primary_action not in parent_template_pipeline_dict:
