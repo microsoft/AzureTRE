@@ -1,4 +1,4 @@
-aiohttp==3.11.10
+aiohttp==3.12.14
 azure-core==1.31.0
 azure-cosmos==4.7.0
 azure-eventgrid==4.20.0
