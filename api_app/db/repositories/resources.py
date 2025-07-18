@@ -97,7 +97,7 @@ class ResourceRepository(BaseRepository):
             if len(set(template["authorizedRoles"]).intersection(set(user_roles))) == 0:
                 raise UserNotAuthorizedToUseTemplate(f"User not authorized to use template {template_name}")
 
-        self._validate_resource_parameters(resource_input.dict(), template)
+        self._validate_resource_parameters(resource_input.model_dump(), template)
 
         return parse_obj_as(ResourceTemplate, template)
 
@@ -181,7 +181,7 @@ class ResourceRepository(BaseRepository):
             if (resource_action == RESOURCE_ACTION_INSTALL or prop.get("updateable", False) is True):
                 update_template["properties"][prop_name] = prop
 
-        self._validate_resource_parameters(resource_patch.dict(), update_template)
+        self._validate_resource_parameters(resource_patch.model_dump(), update_template)
 
     def get_timestamp(self) -> float:
         return datetime.utcnow().timestamp()

@@ -134,7 +134,7 @@ def mask_sensitive_properties(
             if isinstance(prop, dict) and prop_name != "if":
                 flatten_template_props(prop)
 
-    flatten_template_props(template.dict())
+    flatten_template_props(template.model_dump())
 
     def recurse_input_props(prop_dict: dict):
         for prop_name, prop in prop_dict.items():

@@ -46,7 +46,7 @@ class TestUserResourceTemplatesRequiringAdminRights:
     async def test_creating_user_resource_template_raises_404_if_service_template_does_not_exist(self, _, input_user_resource_template, app, client):
         parent_workspace_service_name = "some_template_name"
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, service_template_name=parent_workspace_service_name), json=input_user_resource_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, service_template_name=parent_workspace_service_name), json=input_user_resource_template.model_dump())
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
@@ -60,7 +60,7 @@ class TestUserResourceTemplatesRequiringAdminRights:
         user_resource_template_in_response.parentWorkspaceService = parent_workspace_service_name
         create_template_mock.return_value = user_resource_template_in_response
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, service_template_name=parent_workspace_service_name), json=input_user_resource_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, service_template_name=parent_workspace_service_name), json=input_user_resource_template.model_dump())
 
         assert json.loads(response.text)["resourceType"] == ResourceType.UserResource
         assert json.loads(response.text)["parentWorkspaceService"] == parent_workspace_service_name
@@ -77,7 +77,7 @@ class TestUserResourceTemplatesRequiringAdminRights:
         create_template_mock.return_value = user_resource_template_in_response
         expected_template = user_resource_template_in_response
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, service_template_name=parent_workspace_service_name), json=input_user_resource_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, service_template_name=parent_workspace_service_name), json=input_user_resource_template.model_dump())
 
         assert json.loads(response.text)["properties"] == expected_template.properties
         assert json.loads(response.text)["required"] == expected_template.required
@@ -91,14 +91,14 @@ class TestUserResourceTemplatesRequiringAdminRights:
         parent_workspace_service_name = "guacamole"
         create_user_resource_template_mock.side_effect = EntityVersionExist
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, service_template_name=parent_workspace_service_name), json=input_user_resource_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, service_template_name=parent_workspace_service_name), json=input_user_resource_template.model_dump())
 
         assert response.status_code == status.HTTP_409_CONFLICT
 
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template", side_effect=InvalidInput)
     @patch("api.dependencies.workspace_service_templates.ResourceTemplateRepository.get_current_template")
     async def test_creating_a_user_resource_template_raises_http_422_if_step_ids_are_duplicated(self, _, __, client, app, input_user_resource_template):
-        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, service_template_name="guacamole"), json=input_user_resource_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, service_template_name="guacamole"), json=input_user_resource_template.model_dump())
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 

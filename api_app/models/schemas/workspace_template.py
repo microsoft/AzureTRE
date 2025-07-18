@@ -32,7 +32,7 @@ def get_sample_workspace_template_object(template_name: str = "tre-workspace-bas
 
 
 def get_sample_workspace_template_in_response() -> dict:
-    workspace_template = get_sample_workspace_template_object().dict()
+    workspace_template = get_sample_workspace_template_object().model_dump()
     workspace_template["system_properties"] = {
         "tre_id": Property(type="string"),
         "workspace_id": Property(type="string"),

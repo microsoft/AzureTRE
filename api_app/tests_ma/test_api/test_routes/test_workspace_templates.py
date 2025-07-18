@@ -79,7 +79,7 @@ class TestWorkspaceTemplate:
         get_current_mock.side_effect = EntityDoesNotExist
         create_template_mock.return_value = basic_resource_template
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.model_dump())
 
         assert response.status_code == status.HTTP_201_CREATED
 
@@ -93,11 +93,11 @@ class TestWorkspaceTemplate:
         get_current_template_mock.return_value = basic_resource_template
         create_template_mock.return_value = basic_resource_template
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.model_dump())
 
         updated_current_workspace_template = basic_resource_template
         updated_current_workspace_template.current = False
-        update_item_mock.assert_called_once_with(updated_current_workspace_template.dict())
+        update_item_mock.assert_called_once_with(updated_current_workspace_template.model_dump())
         assert response.status_code == status.HTTP_201_CREATED
 
     # POST /workspace-templates
@@ -105,13 +105,13 @@ class TestWorkspaceTemplate:
     async def test_same_name_and_version_template_not_allowed(self, get_template_by_name_and_version_mock, app, client, input_workspace_template):
         get_template_by_name_and_version_mock.return_value = ["exists"]
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.model_dump())
 
         assert response.status_code == status.HTTP_409_CONFLICT
 
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template", side_effect=InvalidInput)
     async def test_creating_a_workspace_template_raises_http_422_if_step_ids_are_duplicated(self, _, client, app, input_workspace_template):
-        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.model_dump())
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
@@ -149,7 +149,7 @@ class TestWorkspaceTemplate:
         get_current_mock.side_effect = EntityDoesNotExist
         create_template_mock.return_value = basic_resource_template
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.model_dump())
 
         assert response.status_code == status.HTTP_201_CREATED
         assert json.loads(response.text)["current"]
@@ -162,7 +162,7 @@ class TestWorkspaceTemplate:
         get_current_template_mock.side_effect = EntityDoesNotExist
         create_template_mock.return_value = basic_resource_template
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.model_dump())
 
         expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_template(basic_resource_template))
 
@@ -180,7 +180,7 @@ class TestWorkspaceTemplate:
 
         expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_template(basic_resource_template))
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.model_dump())
 
         assert json.loads(response.text)["customActions"] == expected_template.dict(exclude_unset=True)["customActions"]
 
@@ -192,7 +192,7 @@ class TestWorkspaceTemplate:
         get_current_template_mock.side_effect = EntityDoesNotExist
         basic_resource_template.customActions = []
         create_template_mock.return_value = basic_resource_template
-        input_workspace_template_dict = input_workspace_template.dict()
+        input_workspace_template_dict = input_workspace_template.model_dump()
         input_workspace_template_dict.pop("customActions")
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template_dict)
@@ -207,7 +207,7 @@ class TestWorkspaceTemplate:
         get_current_template_mock.side_effect = EntityDoesNotExist
         create_template_mock.return_value = basic_resource_template
 
-        await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
+        await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.model_dump())
 
         create_template_mock.assert_called_once_with(input_workspace_template, ResourceType.Workspace, '')
 
@@ -219,6 +219,6 @@ class TestWorkspaceTemplate:
         get_current_template_mock.side_effect = EntityDoesNotExist
         create_template_mock.return_value = basic_workspace_service_template
 
-        await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.dict())
+        await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.model_dump())
 
         create_template_mock.assert_called_once_with(input_workspace_template, ResourceType.WorkspaceService, '')
