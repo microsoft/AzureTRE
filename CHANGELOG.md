@@ -5,6 +5,7 @@
 * <!-- markdownlint-disable-next-line MD013 -->
 * Add data science tooling (Azure CLI, VS Code, Storage Explorer, Git, Python/JupyterLab, R/RStudio) to Guacamole Windows VMs via a shared `vm_config.ps1` bootstrap pulled through Nexus. Existing `tre-service-guacamole-windowsvm`, `tre-service-guacamole-import-reviewvm`, and `tre-service-guacamole-export-reviewvm` resources **must not be upgraded** to these new versions — redeploy instead. Upgrade the Nexus shared service to `sonatype-nexus` 3.9.0 before deploying the new Windows VM templates to ensure the required proxy repositories are available. (`tre-service-guacamole-windowsvm` 3.0.0, `tre-service-guacamole-import-reviewvm`/`tre-service-guacamole-export-reviewvm` 2.0.0, `sonatype-nexus` 3.9.0) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
 
+<<<<<<< HEAD
 ENHANCEMENTS:
 * Enable graceful upgrading of the Nexus shared service: modified or added repository configs and the container image (now `3.94.0`) are applied to the existing VM on upgrade without recreating it. Removed the non-functional `snapcraft` proxy (dead remote URL) and skip repositories left in a failed state so they don't block upgrades. (`sonatype-nexus` 3.10.0) ([#2721](https://github.com/microsoft/AzureTRE/issues/2721))
 * Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
@@ -15,6 +16,7 @@ ENHANCEMENTS:
 * Strengthen TRE API authentication with a layered `auth/` package (typed exceptions, `PyJWKClient`-backed token validation, immutable `AuthenticatedUser` model, composable RBAC factories), remove the redundant `AccessService` abstraction, and add Event Grid publish resilience with distinct Graph/publish failure reporting. ([#4989](https://github.com/microsoft/AzureTRE/pull/4989))
 * Add support for formatting UI code via `pre-commit` and fix existing formatting issues. ([#4955](https://github.com/microsoft/AzureTRE/issues/4955))
 * Update the version of `super-linter` used in the `build_validation_develop` workflow to 8.7.0 ([#4957](https://github.com/microsoft/AzureTRE/issues/4957))
+* Migration to Pydantic v2: Updates codebase to be compatible with Pydantic v2 for future FastAPI upgrades ([#4637](https://github.com/microsoft/AzureTRE/issues/4637))
 
 BUG FIXES:
 * Fix Nexus shared service security: fetch admin password from Key Vault at runtime via managed identity (IMDS) instead of embedding it in the VM Run Command script content. Fix `deploy_nexus_container.sh` short-circuit path to fail loudly if the container does not start. (`sonatype-nexus` 3.10.0) ([#4983](https://github.com/microsoft/AzureTRE/pull/4983))

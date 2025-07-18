@@ -1,6 +1,7 @@
 from models.domain.resource import ResourceType
 from models.domain.resource_template import CustomAction, ResourceTemplate, Property
 from models.schemas.resource_template import ResourceTemplateInCreate, ResourceTemplateInResponse
+from pydantic import ConfigDict
 
 
 def get_sample_workspace_template_object(template_name: str = "tre-workspace-base") -> ResourceTemplate:
@@ -41,60 +42,56 @@ def get_sample_workspace_template_in_response() -> dict:
 
 
 class WorkspaceTemplateInCreate(ResourceTemplateInCreate):
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "name": "my-tre-workspace",
-                "version": "0.0.1",
-                "current": "true",
-                "json_schema": {
-                    "$schema": "http://json-schema.org/draft-07/schema",
-                    "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace.json",
-                    "type": "object",
-                    "title": "My Workspace Template",
-                    "description": "This is a test workspace template schema",
-                    "required": [
-                        "vm_size",
-                        "no_of_vms"
-                    ],
-                    "authorizedRoles": [],
-                    "properties": {
-                        "display_name": {
-                            "type": "string",
-                            "title": "Name for the workspace",
-                            "description": "The name of the workspace to be displayed to users"
-                        },
-                        "description": {
-                            "type": "string",
-                            "title": "Description of the workspace",
-                            "description": "Description of the workspace"
-                        },
-                        "address_space_size": {
-                            "type": "string",
-                            "title": "Address space size",
-                            "description": "Network address size (small, medium, large or custom) to be used by the workspace"
-                        },
-                        "address_space": {
-                            "type": "string",
-                            "title": "Address space",
-                            "description": "Network address space to be used by the workspace if address_space_size is custom"
-                        }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "name": "my-tre-workspace",
+            "version": "0.0.1",
+            "current": "true",
+            "json_schema": {
+                "$schema": "http://json-schema.org/draft-07/schema",
+                "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace.json",
+                "type": "object",
+                "title": "My Workspace Template",
+                "description": "This is a test workspace template schema",
+                "required": [
+                    "vm_size",
+                    "no_of_vms"
+                ],
+                "authorizedRoles": [],
+                "properties": {
+                    "display_name": {
+                        "type": "string",
+                        "title": "Name for the workspace",
+                        "description": "The name of the workspace to be displayed to users"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description of the workspace",
+                        "description": "Description of the workspace"
+                    },
+                    "address_space_size": {
+                        "type": "string",
+                        "title": "Address space size",
+                        "description": "Network address size (small, medium, large or custom) to be used by the workspace"
+                    },
+                    "address_space": {
+                        "type": "string",
+                        "title": "Address space",
+                        "description": "Network address space to be used by the workspace if address_space_size is custom"
                     }
-                },
-                "customActions": [
-                    {
-                        "name": "disable",
-                        "description": "Deallocates resources"
-                    }
-                ]
-            }
+                }
+            },
+            "customActions": [
+                {
+                    "name": "disable",
+                    "description": "Deallocates resources"
+                }
+            ]
         }
+    })
 
 
 class WorkspaceTemplateInResponse(ResourceTemplateInResponse):
-
-    class Config:
-        schema_extra = {
-            "example": get_sample_workspace_template_in_response()
-        }
+    model_config = ConfigDict(json_schema_extra={
+        "example": get_sample_workspace_template_in_response()
+    })

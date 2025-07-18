@@ -1,6 +1,15 @@
 from enum import StrEnum
 from typing import Optional, Union, List
-from pydantic import BaseModel, Field, validator
+
+try:
+    # Pydantic v2
+    from pydantic import field_validator, BaseModel, Field
+    PYDANTIC_V2 = True
+except ImportError:
+    # Pydantic v1 fallback
+    from pydantic import validator, BaseModel, Field
+    PYDANTIC_V2 = False
+
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.request_action import RequestAction
 from resources import strings
@@ -76,9 +85,15 @@ class Resource(AzureTREModel):
 
     # SQL API CosmosDB saves etag as an escaped string by default, with no apparent way to change it.
     # Removing escaped quotes on pydantic deserialization. https://github.com/microsoft/AzureTRE/issues/1931
-    @validator("etag", pre=True)
-    def parse_etag_to_remove_escaped_quotes(cls, value):
-        return value.replace('\"', '')
+    if PYDANTIC_V2:
+        @field_validator("etag", mode="before")
+        @classmethod
+        def parse_etag_to_remove_escaped_quotes(cls, value):
+            return value.replace('\"', '')
+    else:
+        @validator("etag", pre=True)
+        def parse_etag_to_remove_escaped_quotes(cls, value):
+            return value.replace('\"', '')
 
 
 class Output(AzureTREModel):

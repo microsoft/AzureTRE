@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from models.domain.resource import ResourceType
 from models.domain.resource_template import CustomAction, Property
@@ -36,41 +36,37 @@ def get_sample_user_resource_template_in_response() -> dict:
 
 
 class UserResourceTemplateInCreate(ResourceTemplateInCreate):
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "name": "my-tre-user-resource",
-                "version": "0.0.1",
-                "current": "true",
-                "json_schema": {
-                    "$schema": "http://json-schema.org/draft-07/schema",
-                    "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/user_resource.json",
-                    "type": "object",
-                    "title": "My User Resource Template",
-                    "description": "These is a test user resource template schema",
-                    "required": [],
-                    "authorizedRoles": [],
-                    "properties": {},
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "name": "my-tre-user-resource",
+            "version": "0.0.1",
+            "current": "true",
+            "json_schema": {
+                "$schema": "http://json-schema.org/draft-07/schema",
+                "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/user_resource.json",
+                "type": "object",
+                "title": "My User Resource Template",
+                "description": "These is a test user resource template schema",
+                "required": [],
+                "authorizedRoles": [],
+                "properties": {},
+            },
+            "customActions": [
+                {
+                    "name": "start",
+                    "description": "Starts a VM"
                 },
-                "customActions": [
-                    {
-                        "name": "start",
-                        "description": "Starts a VM"
-                    },
-                    {
-                        "name": "stop",
-                        "description": "Stops a VM"
-                    }
-                ]
-            }
+                {
+                    "name": "stop",
+                    "description": "Stops a VM"
+                }
+            ]
         }
+    })
 
 
 class UserResourceTemplateInResponse(ResourceTemplateInResponse):
     parentWorkspaceService: str = Field(title="Workspace type", description="Bundle name")
-
-    class Config:
-        schema_extra = {
-            "example": get_sample_user_resource_template_in_response()
-        }
+    model_config = ConfigDict(json_schema_extra={
+        "example": get_sample_user_resource_template_in_response()
+    })
