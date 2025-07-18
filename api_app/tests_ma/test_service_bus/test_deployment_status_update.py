@@ -1,13 +1,7 @@
 import copy
 import json
 from unittest.mock import MagicMock, ANY
-try:
-    # Pydantic v2
-    from pydantic import TypeAdapter
-    parse_obj_as = TypeAdapter
-except ImportError:
-    # Pydantic v1 fallback
-    from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 import pytest
 import uuid
 
@@ -417,7 +411,7 @@ async def test_convert_outputs_to_dict():
 
         # Pydantic v1 fallback
 
-        deployment_status_update_message = parse_obj_as(DeploymentStatusUpdateMessage, test_sb_message_with_outputs)
+        deployment_status_update_message = TypeAdapter(DeploymentStatusUpdateMessage).validate_python(test_sb_message_with_outputs)
 
     expected_result = {
         'string1': 'value1',

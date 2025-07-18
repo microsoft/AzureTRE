@@ -2,13 +2,7 @@ import json
 import pytest
 from mock import patch
 
-try:
-    # Pydantic v2
-    from pydantic import TypeAdapter
-    parse_obj_as = TypeAdapter
-except ImportError:
-    # Pydantic v1 fallback
-    from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 from starlette import status
 
 from db.errors import EntityDoesNotExist, EntityVersionExist, InvalidInput, UnableToAccessDatabase
@@ -102,22 +96,7 @@ class TestSharedServiceTemplates:
 
         response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_shared_service_template.model_dump())
 
-        try:
-
-
-            # Pydantic v2
-
-
-            expected_template = TypeAdapter(SharedServiceTemplateInResponse).validate_python(enrich_shared_service_template(basic_shared_service_template)
-
-
-        except AttributeError:
-
-
-            # Pydantic v1 fallback
-
-
-            expected_template = parse_obj_as(SharedServiceTemplateInResponse, enrich_shared_service_template(basic_shared_service_template))
+        expected_template = TypeAdapter(SharedServiceTemplateInResponse).validate_python(enrich_shared_service_template(basic_shared_service_template))
         assert json.loads(response.text)["required"] == expected_template.model_dump(exclude_unset=True)["required"]
         assert json.loads(response.text)["properties"] == expected_template.model_dump(exclude_unset=True)["properties"]
 

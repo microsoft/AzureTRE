@@ -7,7 +7,7 @@ try:
     parse_obj_as = TypeAdapter
 except ImportError:
     # Pydantic v1 fallback
-    from pydantic import parse_obj_as
+    from pydantic import TypeAdapter
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
@@ -55,7 +55,7 @@ class WorkspaceRepository(ResourceRepository):
             return TypeAdapter(List[Workspace]).validate_python(workspaces)
         except AttributeError:
             # Pydantic v1 fallback
-            return parse_obj_as(List[Workspace], workspaces)
+            return TypeAdapter(List[Workspace]).validate_python(workspaces)
 
     async def get_active_workspaces(self) -> List[Workspace]:
         query = WorkspaceRepository.active_workspaces_query_string()
@@ -65,7 +65,7 @@ class WorkspaceRepository(ResourceRepository):
             return TypeAdapter(List[Workspace]).validate_python(workspaces)
         except AttributeError:
             # Pydantic v1 fallback
-            return parse_obj_as(List[Workspace], workspaces)
+            return TypeAdapter(List[Workspace]).validate_python(workspaces)
 
     async def get_deployed_workspace_by_id(self, workspace_id: str, operations_repo: OperationRepository) -> Workspace:
         workspace = await self.get_workspace_by_id(workspace_id)
@@ -85,7 +85,7 @@ class WorkspaceRepository(ResourceRepository):
             return TypeAdapter(Workspace).validate_python(workspaces[0])
         except AttributeError:
             # Pydantic v1 fallback
-            return parse_obj_as(Workspace, workspaces[0])
+            return TypeAdapter(Workspace).validate_python(workspaces[0])
 
     # Remove this method once not using last 4 digits for naming - https://github.com/microsoft/AzureTRE/issues/3666
     async def is_workspace_storage_account_available(self, workspace_id: str) -> bool:

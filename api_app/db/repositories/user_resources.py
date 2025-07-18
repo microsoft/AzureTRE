@@ -7,7 +7,7 @@ try:
     parse_obj_as = TypeAdapter
 except ImportError:
     # Pydantic v1 fallback
-    from pydantic import parse_obj_as
+    from pydantic import TypeAdapter
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
@@ -70,7 +70,7 @@ class UserResourceRepository(ResourceRepository):
             return TypeAdapter(List[UserResource]).validate_python(user_resources)
         except AttributeError:
             # Pydantic v1 fallback
-            return parse_obj_as(List[UserResource], user_resources)
+            return TypeAdapter(List[UserResource]).validate_python(user_resources)
 
     async def get_user_resource_by_id(self, workspace_id: str, service_id: str, resource_id: str) -> UserResource:
         query = self.user_resources_query(workspace_id, service_id) + f' AND c.id = "{resource_id}"'
@@ -82,7 +82,7 @@ class UserResourceRepository(ResourceRepository):
             return TypeAdapter(UserResource).validate_python(user_resources[0])
         except AttributeError:
             # Pydantic v1 fallback
-            return parse_obj_as(UserResource, user_resources[0])
+            return TypeAdapter(UserResource).validate_python(user_resources[0])
 
     def get_user_resource_spec_params(self):
         return self.get_resource_base_spec_params()

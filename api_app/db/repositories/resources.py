@@ -20,14 +20,7 @@ from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.resource import ResourcePatch
-try:
-    # Pydantic v2
-    from pydantic import TypeAdapter
-    parse_obj_as = TypeAdapter
-except ImportError:
-    # Pydantic v1 fallback
-    from pydantic import parse_obj_as
-from pydantic import UUID4
+from pydantic import UUID4, TypeAdapter
 
 
 class ResourceRepository(BaseRepository):
@@ -77,35 +70,35 @@ class ResourceRepository(BaseRepository):
                 return TypeAdapter(SharedService).validate_python(resource)
             except AttributeError:
                 # Pydantic v1 fallback
-                return parse_obj_as(SharedService, resource)
+                return TypeAdapter(SharedService).validate_python(resource)
         if resource["resourceType"] == ResourceType.Workspace:
             try:
                 # Pydantic v2
                 return TypeAdapter(Workspace).validate_python(resource)
             except AttributeError:
                 # Pydantic v1 fallback
-                return parse_obj_as(Workspace, resource)
+                return TypeAdapter(Workspace).validate_python(resource)
         if resource["resourceType"] == ResourceType.WorkspaceService:
             try:
                 # Pydantic v2
                 return TypeAdapter(WorkspaceService).validate_python(resource)
             except AttributeError:
                 # Pydantic v1 fallback
-                return parse_obj_as(WorkspaceService, resource)
+                return TypeAdapter(WorkspaceService).validate_python(resource)
         if resource["resourceType"] == ResourceType.UserResource:
             try:
                 # Pydantic v2
                 return TypeAdapter(UserResource).validate_python(resource)
             except AttributeError:
                 # Pydantic v1 fallback
-                return parse_obj_as(UserResource, resource)
+                return TypeAdapter(UserResource).validate_python(resource)
 
         try:
             # Pydantic v2
             return TypeAdapter(Resource).validate_python(resource)
         except AttributeError:
             # Pydantic v1 fallback
-            return parse_obj_as(Resource, resource)
+            return TypeAdapter(Resource).validate_python(resource)
 
     async def get_active_resource_by_template_name(self, template_name: str) -> Resource:
         query = f"SELECT TOP 1 * FROM c WHERE c.templateName = '{template_name}' AND {IS_ACTIVE_RESOURCE}"
@@ -117,7 +110,7 @@ class ResourceRepository(BaseRepository):
             return TypeAdapter(Resource).validate_python(resources[0])
         except AttributeError:
             # Pydantic v1 fallback
-            return parse_obj_as(Resource, resources[0])
+            return TypeAdapter(Resource).validate_python(resources[0])
 
     async def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, user_roles: Optional[List[str]] = None, parent_template_name: Optional[str] = None) -> ResourceTemplate:
         try:
@@ -141,13 +134,13 @@ class ResourceRepository(BaseRepository):
             return TypeAdapter(ResourceTemplate).validate_python(template)
         except AttributeError:
             # Pydantic v1 fallback
-            return parse_obj_as(ResourceTemplate, template)
+            return TypeAdapter(ResourceTemplate).validate_python(template)
 
     async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_action: str, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         await resource_history_repo.create_resource_history_item(resource)
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
-        resource.user = user.model_dump()
+        resource.user = user
         resource.updatedWhen = self.get_timestamp()
 
         if resource_patch.isEnabled is not None:

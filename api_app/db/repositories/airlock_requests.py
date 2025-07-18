@@ -12,7 +12,7 @@ try:
     parse_obj_as = TypeAdapter
 except ImportError:
     # Pydantic v1 fallback
-    from pydantic import parse_obj_as
+    from pydantic import TypeAdapter
 from db.repositories.workspaces import WorkspaceRepository
 from services.authentication import get_access_service
 from models.domain.authentication import User
@@ -162,7 +162,7 @@ class AirlockRequestRepository(BaseRepository):
             return TypeAdapter(List[AirlockRequest]).validate_python(airlock_requests)
         except AttributeError:
             # Pydantic v1 fallback
-            return parse_obj_as(List[AirlockRequest], airlock_requests)
+            return TypeAdapter(List[AirlockRequest]).validate_python(airlock_requests)
 
     async def get_airlock_request_by_id(self, airlock_request_id: UUID4) -> AirlockRequest:
         try:
@@ -174,7 +174,7 @@ class AirlockRequestRepository(BaseRepository):
             return TypeAdapter(AirlockRequest).validate_python(airlock_requests)
         except AttributeError:
             # Pydantic v1 fallback
-            return parse_obj_as(AirlockRequest, airlock_requests)
+            return TypeAdapter(AirlockRequest).validate_python(airlock_requests)
 
     async def get_airlock_requests_for_airlock_manager(self, user: User, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
         workspace_repo = await WorkspaceRepository.create()

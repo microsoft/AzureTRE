@@ -12,13 +12,7 @@ from db.repositories.resources import ResourceRepository
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
-try:
-    # Pydantic v2
-    from pydantic import TypeAdapter
-    parse_obj_as = TypeAdapter
-except ImportError:
-    # Pydantic v1 fallback
-    from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 
 from db.errors import DuplicateEntity, EntityDoesNotExist
 from db.repositories.operations import OperationRepository
@@ -51,29 +45,9 @@ async def cascaded_update_resource(resource_patch: ResourcePatch, parent_resourc
         child_etag = child_resource["_etag"]
         primary_parent_service_name = ""
         if child_resource["resourceType"] == ResourceType.WorkspaceService:
-            try:
-
-                # Pydantic v2
-
-                child_resource = TypeAdapter(WorkspaceService).validate_python(child_resource)
-
-            except AttributeError:
-
-                # Pydantic v1 fallback
-
-                child_resource = parse_obj_as(WorkspaceService, child_resource)
+            child_resource = TypeAdapter(WorkspaceService).validate_python(child_resource)
         elif child_resource["resourceType"] == ResourceType.UserResource:
-            try:
-
-                # Pydantic v2
-
-                child_resource = TypeAdapter(UserResource).validate_python(child_resource)
-
-            except AttributeError:
-
-                # Pydantic v1 fallback
-
-                child_resource = parse_obj_as(UserResource, child_resource)
+            child_resource = TypeAdapter(UserResource).validate_python(child_resource)
             primary_parent_workspace_service = await resource_repo.get_resource_by_id(child_resource.parentWorkspaceServiceId)
             primary_parent_service_name = primary_parent_workspace_service.templateName
 
