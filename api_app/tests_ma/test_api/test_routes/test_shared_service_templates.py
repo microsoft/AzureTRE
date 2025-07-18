@@ -118,8 +118,8 @@ class TestSharedServiceTemplates:
 
 
             expected_template = parse_obj_as(SharedServiceTemplateInResponse, enrich_shared_service_template(basic_shared_service_template))
-        assert json.loads(response.text)["required"] == expected_template.dict(exclude_unset=True)["required"]
-        assert json.loads(response.text)["properties"] == expected_template.dict(exclude_unset=True)["properties"]
+        assert json.loads(response.text)["required"] == expected_template.model_dump(exclude_unset=True)["required"]
+        assert json.loads(response.text)["properties"] == expected_template.model_dump(exclude_unset=True)["properties"]
 
     # POST /shared_services-templates
     @patch("api.routes.shared_service_templates.ResourceTemplateRepository.create_and_validate_template", side_effect=EntityVersionExist)

@@ -68,7 +68,7 @@ async def test_resource_request_message_generated_correctly(
         resource=resource,
         operations_repo=operations_repo_mock,
         resource_repo=resource_repo,
-        user=create_test_user(),
+        user=create_test_user().model_dump(),
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo_mock,
         action=request_action

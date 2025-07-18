@@ -38,7 +38,7 @@ def sample_resource() -> Resource:
         etag="some-etag-value",
         resourceVersion=RESOURCE_VERSION,
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_test_user()
+        user=create_test_user().model_dump()
     )
 
 
@@ -56,7 +56,7 @@ def sample_resource_history() -> ResourceHistoryItem:
             'computed_prop': 'computed_val'
         },
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_test_user()
+        user=create_test_user().model_dump()
     )
 
 
