@@ -2,6 +2,7 @@ import copy
 import pytest
 
 from models.domain.resource_template import PipelineStep, PipelineStepProperty
+from models.domain.resource import ResourceType
 from service_bus.substitutions import substitute_properties, substitute_value
 
 
@@ -232,6 +233,11 @@ def test_simple_substitution(
 
 def test_substitution_list_strings(primary_resource, resource_to_update):
     pipeline_step_with_list_strings = PipelineStep(
+        stepId="test-list-strings-step",
+        stepTitle="Test List Strings Step",
+        resourceTemplateName="test-template",
+        resourceType=ResourceType.Workspace,
+        resourceAction="install",
         properties=[
             PipelineStepProperty(
                 name="obj_list_strings",

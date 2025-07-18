@@ -2,7 +2,13 @@ import json
 import pytest
 from mock import patch
 
-from pydantic import parse_obj_as
+try:
+    # Pydantic v2
+    from pydantic import TypeAdapter
+    parse_obj_as = TypeAdapter
+except ImportError:
+    # Pydantic v1 fallback
+    from pydantic import parse_obj_as
 from starlette import status
 
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
@@ -122,7 +128,22 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.model_dump())
 
-        expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_service_template(basic_workspace_service_template))
+        try:
+
+
+            # Pydantic v2
+
+
+            expected_template = TypeAdapter(WorkspaceTemplateInResponse).validate_python(enrich_workspace_service_template(basic_workspace_service_template)
+
+
+        except AttributeError:
+
+
+            # Pydantic v1 fallback
+
+
+            expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_service_template(basic_workspace_service_template))
         assert json.loads(response.text)["required"] == expected_template.dict(exclude_unset=True)["required"]
         assert json.loads(response.text)["properties"] == expected_template.dict(exclude_unset=True)["properties"]
 

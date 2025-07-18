@@ -2,7 +2,13 @@ import json
 import pytest
 from mock import patch
 
-from pydantic import parse_obj_as
+try:
+    # Pydantic v2
+    from pydantic import TypeAdapter
+    parse_obj_as = TypeAdapter
+except ImportError:
+    # Pydantic v1 fallback
+    from pydantic import parse_obj_as
 from starlette import status
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
 
@@ -164,7 +170,22 @@ class TestWorkspaceTemplate:
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.model_dump())
 
-        expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_template(basic_resource_template))
+        try:
+
+
+            # Pydantic v2
+
+
+            expected_template = TypeAdapter(WorkspaceTemplateInResponse).validate_python(enrich_workspace_template(basic_resource_template)
+
+
+        except AttributeError:
+
+
+            # Pydantic v1 fallback
+
+
+            expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_template(basic_resource_template))
 
         assert json.loads(response.text)["required"] == expected_template.dict(exclude_unset=True)["required"]
         assert json.loads(response.text)["properties"] == expected_template.dict(exclude_unset=True)["properties"]
@@ -178,7 +199,22 @@ class TestWorkspaceTemplate:
         basic_resource_template.customActions = [CustomAction(name='my-custom-action', description='This is a test custom action')]
         create_template_mock.return_value = basic_resource_template
 
-        expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_template(basic_resource_template))
+        try:
+
+
+            # Pydantic v2
+
+
+            expected_template = TypeAdapter(WorkspaceTemplateInResponse).validate_python(enrich_workspace_template(basic_resource_template)
+
+
+        except AttributeError:
+
+
+            # Pydantic v1 fallback
+
+
+            expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_template(basic_resource_template))
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.model_dump())
 
