@@ -6,7 +6,7 @@ try:
     parse_obj_as = TypeAdapter
 except ImportError:
     # Pydantic v1 fallback
-    from pydantic import parse_obj_as
+    from pydantic import TypeAdapter
 
 from api.helpers import get_repository
 from db.errors import EntityDoesNotExist, EntityVersionExist, InvalidInput
@@ -37,7 +37,7 @@ async def get_shared_service_template(shared_service_template_name: str, is_upda
             return TypeAdapter(SharedServiceTemplateInResponse).validate_python(template)
         except AttributeError:
             # Pydantic v1 fallback
-            return parse_obj_as(SharedServiceTemplateInResponse, template)
+            return TypeAdapter(SharedServiceTemplateInResponse).validate_python(template)
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.SHARED_SERVICE_TEMPLATE_DOES_NOT_EXIST)
 

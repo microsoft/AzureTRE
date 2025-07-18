@@ -56,6 +56,7 @@ class WorkspaceRepository(ResourceRepository):
         return query, parameters
 
     async def get_workspaces(self) -> List[Workspace]:
+<<<<<<< HEAD
         query, parameters = WorkspaceRepository.workspaces_query_string()
         workspaces = await self.query(query=query, parameters=parameters)
         return TypeAdapter(List[Workspace]).validate_python(workspaces)
@@ -64,6 +65,26 @@ class WorkspaceRepository(ResourceRepository):
         query, parameters = WorkspaceRepository.active_workspaces_query_string()
         workspaces = await self.query(query=query, parameters=parameters)
         return TypeAdapter(List[Workspace]).validate_python(workspaces)
+=======
+        query = WorkspaceRepository.workspaces_query_string()
+        workspaces = await self.query(query=query)
+        try:
+            # Pydantic v2
+            return TypeAdapter(List[Workspace]).validate_python(workspaces)
+        except AttributeError:
+            # Pydantic v1 fallback
+            return TypeAdapter(List[Workspace]).validate_python(workspaces)
+
+    async def get_active_workspaces(self) -> List[Workspace]:
+        query = WorkspaceRepository.active_workspaces_query_string()
+        workspaces = await self.query(query=query)
+        try:
+            # Pydantic v2
+            return TypeAdapter(List[Workspace]).validate_python(workspaces)
+        except AttributeError:
+            # Pydantic v1 fallback
+            return TypeAdapter(List[Workspace]).validate_python(workspaces)
+>>>>>>> 9a1731f0 (Remove Pydantic v1 backward compatibility and fix linting issues)
 
     async def get_deployed_workspace_by_id(self, workspace_id: str, operations_repo: OperationRepository) -> Workspace:
         workspace = await self.get_workspace_by_id(workspace_id)

@@ -1,13 +1,7 @@
 import uuid
 from typing import List, Tuple
 
-try:
-    # Pydantic v2
-    from pydantic import TypeAdapter
-    parse_obj_as = TypeAdapter
-except ImportError:
-    # Pydantic v1 fallback
-    from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
@@ -89,12 +83,7 @@ class UserResourceRepository(ResourceRepository):
         user_resources = await self.query(query=query, parameters=parameters)
         if not user_resources:
             raise EntityDoesNotExist
-        try:
-            # Pydantic v2
-            return TypeAdapter(UserResource).validate_python(user_resources[0])
-        except AttributeError:
-            # Pydantic v1 fallback
-            return parse_obj_as(UserResource, user_resources[0])
+        return TypeAdapter(UserResource).validate_python(user_resources[0])
 
     def get_user_resource_spec_params(self):
         return self.get_resource_base_spec_params()
