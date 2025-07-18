@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.26.0 (Unreleased)
 
-* _No changes yet_
+* Migration to Pydantic v2: Updates codebase to be compatible with Pydantic v2 for future FastAPI upgrades ([#4637](https://github.com/microsoft/AzureTRE/issues/4637))
 
 ## 0.25.0 (July 18, 2025)
 **IMPORTANT**:

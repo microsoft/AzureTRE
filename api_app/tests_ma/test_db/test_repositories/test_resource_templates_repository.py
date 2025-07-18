@@ -31,7 +31,7 @@ def sample_resource_template_as_dict(name: str, version: str = "1.0", resource_t
         properties={},
         customActions=[],
         required=[]
-    ).dict()
+    ).model_dump()
 
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')

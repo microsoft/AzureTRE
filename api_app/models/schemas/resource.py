@@ -1,27 +1,24 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field, Extra
+from pydantic import ConfigDict, BaseModel, Field
 
 from models.domain.resource import ResourceHistoryItem
 
 
 class ResourcePatch(BaseModel):
-    isEnabled: Optional[bool]
-    properties: Optional[dict]
-    templateVersion: Optional[str]
-
-    class Config:
-        extra = Extra.forbid
-        schema_extra = {
-            "example": {
-                "isEnabled": False,
-                "templateVersion": "1.0.1",
-                "properties": {
-                    "display_name": "the display name",
-                    "description": "a description",
-                    "other_fields": "other properties defined by the resource template"
-                }
+    isEnabled: Optional[bool] = None
+    properties: Optional[dict] = None
+    templateVersion: Optional[str] = None
+    model_config = ConfigDict(extra="forbid", json_schema_extra={
+        "example": {
+            "isEnabled": False,
+            "templateVersion": "1.0.1",
+            "properties": {
+                "display_name": "the display name",
+                "description": "a description",
+                "other_fields": "other properties defined by the resource template"
             }
         }
+    })
 
 
 def get_sample_resource_history(resource_id: str) -> dict:
@@ -43,13 +40,11 @@ def get_sample_resource_history(resource_id: str) -> dict:
 
 class ResourceHistoryInList(BaseModel):
     resource_history: List[ResourceHistoryItem] = Field([], title="Resource history")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "resource_history": [
-                    get_sample_resource_history("2fdc9fba-726e-4db6-a1b8-9018a2165748"),
-                    get_sample_resource_history("abcc9fba-726e-4db6-a1b8-9018a2165748")
-                ]
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "resource_history": [
+                get_sample_resource_history("2fdc9fba-726e-4db6-a1b8-9018a2165748"),
+                get_sample_resource_history("abcc9fba-726e-4db6-a1b8-9018a2165748")
+            ]
         }
+    })

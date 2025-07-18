@@ -48,7 +48,7 @@ def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
         },
         resourcePath=f'/shared-services/{shared_service_id}',
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_admin_user()
+        user=create_admin_user().model_dump()
     )
 
 

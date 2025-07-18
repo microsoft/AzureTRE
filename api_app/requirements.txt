@@ -22,4 +22,4 @@ pytz==2024.2
 python-dateutil==2.9.0
 semantic-version==2.10.0
 uvicorn[standard]==0.31.0
-pydantic==1.10.19
+pydantic==2.10.5

@@ -29,17 +29,17 @@ class BaseRepository:
         return await self.container.read_item(item=item_id, partition_key=item_id)
 
     async def save_item(self, item: BaseModel):
-        await self.container.create_item(body=item.dict())
+        await self.container.create_item(body=item.model_dump())
 
     async def update_item(self, item: BaseModel):
-        await self.container.upsert_item(body=item.dict())
+        await self.container.upsert_item(body=item.model_dump())
 
     async def update_item_with_etag(self, item: BaseModel, etag: str) -> BaseModel:
-        await self.container.replace_item(item=item.id, body=item.dict(), etag=etag, match_condition=MatchConditions.IfNotModified)
+        await self.container.replace_item(item=item.id, body=item.model_dump(), etag=etag, match_condition=MatchConditions.IfNotModified)
         return await self.read_item_by_id(item.id)
 
     async def upsert_item_with_etag(self, item: BaseModel, etag: str) -> BaseModel:
-        return await self.container.upsert_item(body=item.dict(), etag=etag, match_condition=MatchConditions.IfNotModified)
+        return await self.container.upsert_item(body=item.model_dump(), etag=etag, match_condition=MatchConditions.IfNotModified)
 
     async def update_item_dict(self, item_dict: dict):
         await self.container.upsert_item(body=item_dict)

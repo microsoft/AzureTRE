@@ -93,7 +93,7 @@ def generate_workspace_cost_report_dict_example(name: str, granularity: Granular
 class CostRow(BaseModel):
     cost: float
     currency: str
-    date: Optional[date]
+    date: Optional[date] = None
 
 
 class CostItem(BaseModel):

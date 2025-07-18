@@ -56,7 +56,7 @@ def sample_resource(workspace_id=WORKSPACE_ID):
             "client_id": "12345"
         },
         resourcePath=f'/workspaces/{workspace_id}',
-        user=create_test_user(),
+        user=create_test_user().model_dump(),
         updatedWhen=FAKE_CREATE_TIMESTAMP
     )
 
@@ -75,7 +75,7 @@ def sample_resource_with_secret():
             }
         },
         resourcePath=f'/workspaces/{WORKSPACE_ID}',
-        user=create_test_user(),
+        user=create_test_user().model_dump(),
         updatedWhen=FAKE_CREATE_TIMESTAMP
     )
 
@@ -91,7 +91,7 @@ def sample_resource_operation(resource_id: str, operation_id: str):
         Status=Status.Deployed,
         createdWhen=FAKE_CREATE_TIMESTAMP,
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_test_user(),
+        user=create_test_user().model_dump(),
         steps=[
             OperationStep(
                 id="random-uuid-1",
@@ -126,7 +126,7 @@ class TestResourceHelpers:
             operations_repo=operations_repo,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
-            user=create_test_user(),
+            user=create_test_user().model_dump(),
             resource_template=basic_resource_template)
 
         resource_repo.save_item.assert_called_once_with(resource)
@@ -144,7 +144,7 @@ class TestResourceHelpers:
                 operations_repo=operations_repo,
                 resource_template_repo=resource_template_repo,
                 resource_history_repo=resource_history_repo,
-                user=create_test_user(),
+                user=create_test_user().model_dump(),
                 resource_template=basic_resource_template)
 
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
@@ -166,7 +166,7 @@ class TestResourceHelpers:
             operations_repo=operations_repo,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
-            user=create_test_user(),
+            user=create_test_user().model_dump(),
             resource_template=basic_resource_template)
 
         send_resource_request_mock.assert_called_once_with(
@@ -193,7 +193,7 @@ class TestResourceHelpers:
                 operations_repo=operations_repo,
                 resource_template_repo=resource_template_repo,
                 resource_history_repo=resource_history_repo,
-                user=create_test_user(),
+                user=create_test_user().model_dump(),
                 resource_template=basic_resource_template)
 
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
@@ -215,7 +215,7 @@ class TestResourceHelpers:
                 operations_repo=operations_repo,
                 resource_template_repo=resource_template_repo,
                 resource_history_repo=resource_history_repo,
-                user=create_test_user(),
+                user=create_test_user().model_dump(),
                 resource_template=basic_resource_template)
 
         resource_repo.delete_item.assert_called_once_with(resource.id)
@@ -260,7 +260,7 @@ class TestResourceHelpers:
                 resource_type=ResourceType.Workspace,
                 resource_template_repo=resource_template_repo,
                 resource_history_repo=resource_history_repo,
-                user=create_test_user())
+                user=create_test_user().model_dump())
 
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
