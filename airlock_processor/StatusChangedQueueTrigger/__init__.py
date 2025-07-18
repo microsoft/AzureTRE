@@ -10,7 +10,18 @@ import json
 from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
 
 from shared_code import blob_operations, constants
-from pydantic import BaseModel, parse_obj_as
+try:
+    # Pydantic v2
+    from pydantic import BaseModel, TypeAdapter
+    
+    def parse_obj_as(type_hint, obj):
+        """Compatibility function for parse_obj_as in Pydantic v2"""
+        adapter = TypeAdapter(type_hint)
+        return adapter.validate_python(obj)
+        
+except ImportError:
+    # Pydantic v1 fallback
+    from pydantic import BaseModel, parse_obj_as
 
 
 class RequestProperties(BaseModel):
