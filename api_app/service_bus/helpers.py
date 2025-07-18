@@ -1,6 +1,12 @@
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
-from pydantic import parse_obj_as
+try:
+    # Pydantic v2
+    from pydantic import TypeAdapter
+    parse_obj_as = TypeAdapter
+except ImportError:
+    # Pydantic v1 fallback
+    from pydantic import parse_obj_as
 from resources import strings
 from db.repositories.resources_history import ResourceHistoryRepository
 from service_bus.substitutions import substitute_properties
@@ -83,7 +89,12 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
     template_step = None
     for step in parent_template_pipeline_dict[primary_action]:
         if step["stepId"] == operation_step.templateStepId:
-            template_step = parse_obj_as(PipelineStep, step)
+            try:
+                # Pydantic v2
+                template_step = TypeAdapter(PipelineStep).validate_python(step)
+            except AttributeError:
+                # Pydantic v1 fallback
+                template_step = parse_obj_as(PipelineStep, step)
             if (template_step.resourceAction is None and primary_action == strings.RESOURCE_ACTION_INSTALL):
                 template_step.resourceAction = strings.RESOURCE_ACTION_INSTALL
             break

@@ -87,7 +87,12 @@ class DeploymentStatusUpdater():
 
         with tracer.start_as_current_span("process_message") as current_span:
             try:
-                message = parse_obj_as(DeploymentStatusUpdateMessage, json.loads(str(msg)))
+                try:
+                    # Pydantic v2
+                    message = TypeAdapter(DeploymentStatusUpdateMessage).validate_python(json.loads(str(msg)))
+                except AttributeError:
+                    # Pydantic v1 fallback
+                    message = parse_obj_as(DeploymentStatusUpdateMessage, json.loads(str(msg)))
 
                 current_span.set_attribute("step_id", message.stepId)
                 current_span.set_attribute("operation_id", message.operationId)

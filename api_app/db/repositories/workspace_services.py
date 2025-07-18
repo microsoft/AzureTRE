@@ -1,7 +1,13 @@
 import uuid
 from typing import List, Tuple
 
-from pydantic import parse_obj_as
+try:
+    # Pydantic v2
+    from pydantic import TypeAdapter
+    parse_obj_as = TypeAdapter
+except ImportError:
+    # Pydantic v1 fallback
+    from pydantic import parse_obj_as
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
@@ -38,7 +44,12 @@ class WorkspaceServiceRepository(ResourceRepository):
         """
         query = WorkspaceServiceRepository.active_workspace_services_query(workspace_id)
         workspace_services = await self.query(query=query)
-        return parse_obj_as(List[WorkspaceService], workspace_services)
+        try:
+            # Pydantic v2
+            return TypeAdapter(List[WorkspaceService]).validate_python(workspace_services)
+        except AttributeError:
+            # Pydantic v1 fallback
+            return parse_obj_as(List[WorkspaceService], workspace_services)
 
     async def get_deployed_workspace_service_by_id(self, workspace_id: str, service_id: str, operations_repo: OperationRepository) -> WorkspaceService:
         workspace_service = await self.get_workspace_service_by_id(workspace_id, service_id)
@@ -53,7 +64,12 @@ class WorkspaceServiceRepository(ResourceRepository):
         workspace_services = await self.query(query=query)
         if not workspace_services:
             raise EntityDoesNotExist
-        return parse_obj_as(WorkspaceService, workspace_services[0])
+        try:
+            # Pydantic v2
+            return TypeAdapter(WorkspaceService).validate_python(workspace_services[0])
+        except AttributeError:
+            # Pydantic v1 fallback
+            return parse_obj_as(WorkspaceService, workspace_services[0])
 
     def get_workspace_service_spec_params(self):
         return self.get_resource_base_spec_params()

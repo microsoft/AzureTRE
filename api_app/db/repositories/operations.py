@@ -2,7 +2,13 @@ from datetime import datetime
 import uuid
 from typing import List
 
-from pydantic import parse_obj_as
+try:
+    # Pydantic v2
+    from pydantic import TypeAdapter
+    parse_obj_as = TypeAdapter
+except ImportError:
+    # Pydantic v1 fallback
+    from pydantic import parse_obj_as
 from db.repositories.resource_templates import ResourceTemplateRepository
 from resources import strings
 from models.domain.request_action import RequestAction
@@ -178,17 +184,32 @@ class OperationRepository(BaseRepository):
         operation = await self.query(query=query)
         if not operation:
             raise EntityDoesNotExist
-        return parse_obj_as(Operation, operation[0])
+        try:
+            # Pydantic v2
+            return TypeAdapter(Operation).validate_python(operation[0])
+        except AttributeError:
+            # Pydantic v1 fallback
+            return parse_obj_as(Operation, operation[0])
 
     async def get_my_operations(self, user_id: str) -> List[Operation]:
         query = self.operations_query() + f' c.user.id = "{user_id}" AND c.status IN ("{Status.AwaitingAction}", "{Status.InvokingAction}", "{Status.AwaitingDeployment}", "{Status.Deploying}", "{Status.AwaitingDeletion}", "{Status.Deleting}", "{Status.AwaitingUpdate}", "{Status.Updating}", "{Status.PipelineRunning}") ORDER BY c.createdWhen ASC'
         operations = await self.query(query=query)
-        return parse_obj_as(List[Operation], operations)
+        try:
+            # Pydantic v2
+            return TypeAdapter(List[Operation]).validate_python(operations)
+        except AttributeError:
+            # Pydantic v1 fallback
+            return parse_obj_as(List[Operation], operations)
 
     async def get_operations_by_resource_id(self, resource_id: str) -> List[Operation]:
         query = self.operations_query() + f' c.resourceId = "{resource_id}"'
         operations = await self.query(query=query)
-        return parse_obj_as(List[Operation], operations)
+        try:
+            # Pydantic v2
+            return TypeAdapter(List[Operation]).validate_python(operations)
+        except AttributeError:
+            # Pydantic v1 fallback
+            return parse_obj_as(List[Operation], operations)
 
     async def resource_has_deployed_operation(self, resource_id: str) -> bool:
         query = self.operations_query() + f' c.resourceId = "{resource_id}" AND ((c.action = "{RequestAction.Install}" AND c.status = "{Status.Deployed}") OR (c.action = "{RequestAction.Upgrade}" AND c.status = "{Status.Updated}"))'

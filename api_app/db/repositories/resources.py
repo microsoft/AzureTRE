@@ -65,22 +65,52 @@ class ResourceRepository(BaseRepository):
         resource = await self.get_resource_dict_by_id(resource_id)
 
         if resource["resourceType"] == ResourceType.SharedService:
-            return parse_obj_as(SharedService, resource)
+            try:
+                # Pydantic v2
+                return TypeAdapter(SharedService).validate_python(resource)
+            except AttributeError:
+                # Pydantic v1 fallback
+                return parse_obj_as(SharedService, resource)
         if resource["resourceType"] == ResourceType.Workspace:
-            return parse_obj_as(Workspace, resource)
+            try:
+                # Pydantic v2
+                return TypeAdapter(Workspace).validate_python(resource)
+            except AttributeError:
+                # Pydantic v1 fallback
+                return parse_obj_as(Workspace, resource)
         if resource["resourceType"] == ResourceType.WorkspaceService:
-            return parse_obj_as(WorkspaceService, resource)
+            try:
+                # Pydantic v2
+                return TypeAdapter(WorkspaceService).validate_python(resource)
+            except AttributeError:
+                # Pydantic v1 fallback
+                return parse_obj_as(WorkspaceService, resource)
         if resource["resourceType"] == ResourceType.UserResource:
-            return parse_obj_as(UserResource, resource)
+            try:
+                # Pydantic v2
+                return TypeAdapter(UserResource).validate_python(resource)
+            except AttributeError:
+                # Pydantic v1 fallback
+                return parse_obj_as(UserResource, resource)
 
-        return parse_obj_as(Resource, resource)
+        try:
+            # Pydantic v2
+            return TypeAdapter(Resource).validate_python(resource)
+        except AttributeError:
+            # Pydantic v1 fallback
+            return parse_obj_as(Resource, resource)
 
     async def get_active_resource_by_template_name(self, template_name: str) -> Resource:
         query = f"SELECT TOP 1 * FROM c WHERE c.templateName = '{template_name}' AND {IS_ACTIVE_RESOURCE}"
         resources = await self.query(query=query)
         if not resources:
             raise EntityDoesNotExist
-        return parse_obj_as(Resource, resources[0])
+        try:
+            # Pydantic v2
+            return TypeAdapter(Resource).validate_python(resources[0])
+        except AttributeError:
+            # Pydantic v1 fallback
+            return parse_obj_as(Resource, resources[0])
 
     async def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, user_roles: Optional[List[str]] = None, parent_template_name: Optional[str] = None) -> ResourceTemplate:
         try:
@@ -99,7 +129,12 @@ class ResourceRepository(BaseRepository):
 
         self._validate_resource_parameters(resource_input.model_dump(), template)
 
-        return parse_obj_as(ResourceTemplate, template)
+        try:
+            # Pydantic v2
+            return TypeAdapter(ResourceTemplate).validate_python(template)
+        except AttributeError:
+            # Pydantic v1 fallback
+            return parse_obj_as(ResourceTemplate, template)
 
     async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_action: str, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         await resource_history_repo.create_resource_history_item(resource)

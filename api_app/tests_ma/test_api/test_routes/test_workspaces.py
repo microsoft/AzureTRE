@@ -93,7 +93,7 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspa
         },
         resourcePath=f'/workspaces/{workspace_id}',
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_admin_user()
+        user=create_admin_user().model_dump()
     )
     if auth_info:
         workspace.properties = {**auth_info}
@@ -134,12 +134,14 @@ def sample_resource_operation(resource_id: str, operation_id: str):
         Status=Status.Deployed,
         createdWhen=FAKE_UPDATE_TIMESTAMP,
         updatedWhen=FAKE_UPDATE_TIMESTAMP,
-        user=create_test_user(),
+        user=create_test_user().model_dump(),
         steps=[
             OperationStep(
                 id="random-uuid",
                 templateStepId="main",
+                stepTitle="Main installation step",
                 resourceId=resource_id,
+                resourceType=ResourceType.Workspace,
                 resourceAction="install",
                 updatedWhen=FAKE_UPDATE_TIMESTAMP,
                 sourceTemplateResourceId=resource_id
@@ -328,7 +330,7 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
             },
             resourcePath=f'/workspaces/{WORKSPACE_ID}',
             updatedWhen=FAKE_CREATE_TIMESTAMP,
-            user=create_admin_user()
+            user=create_admin_user().model_dump()
         )
 
         workspace_mock.return_value = no_scope_id_workspace

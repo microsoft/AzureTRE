@@ -6,7 +6,13 @@ from typing import List, Optional
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
 from fastapi import HTTPException, status
-from pydantic import parse_obj_as
+try:
+    # Pydantic v2
+    from pydantic import TypeAdapter
+    parse_obj_as = TypeAdapter
+except ImportError:
+    # Pydantic v1 fallback
+    from pydantic import parse_obj_as
 from db.repositories.workspaces import WorkspaceRepository
 from services.authentication import get_access_service
 from models.domain.authentication import User
@@ -151,14 +157,24 @@ class AirlockRequestRepository(BaseRepository):
             query += ' ASC' if order_ascending else ' DESC'
 
         airlock_requests = await self.query(query=query, parameters=parameters)
-        return parse_obj_as(List[AirlockRequest], airlock_requests)
+        try:
+            # Pydantic v2
+            return TypeAdapter(List[AirlockRequest]).validate_python(airlock_requests)
+        except AttributeError:
+            # Pydantic v1 fallback
+            return parse_obj_as(List[AirlockRequest], airlock_requests)
 
     async def get_airlock_request_by_id(self, airlock_request_id: UUID4) -> AirlockRequest:
         try:
             airlock_requests = await self.read_item_by_id(str(airlock_request_id))
         except CosmosResourceNotFoundError:
             raise EntityDoesNotExist
-        return parse_obj_as(AirlockRequest, airlock_requests)
+        try:
+            # Pydantic v2
+            return TypeAdapter(AirlockRequest).validate_python(airlock_requests)
+        except AttributeError:
+            # Pydantic v1 fallback
+            return parse_obj_as(AirlockRequest, airlock_requests)
 
     async def get_airlock_requests_for_airlock_manager(self, user: User, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
         workspace_repo = await WorkspaceRepository.create()
