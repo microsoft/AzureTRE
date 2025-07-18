@@ -1,4 +1,8 @@
 <!-- markdownlint-disable MD041 -->
+## (Unreleased)
+
+* _No changes yet_
+
 ## 0.25.0 (Unreleased)
 
 ENHANCEMENTS:
