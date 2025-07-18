@@ -2,13 +2,7 @@ from sqlite3 import InternalError
 from typing import List, Tuple
 import uuid
 
-try:
-    # Pydantic v2
-    from pydantic import TypeAdapter
-    parse_obj_as = TypeAdapter
-except ImportError:
-    # Pydantic v1 fallback
-    from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 import resources.strings as strings
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
@@ -66,12 +60,7 @@ class SharedServiceRepository(ResourceRepository):
         shared_services = await self.query(query=query, parameters=parameters)
         if not shared_services:
             raise EntityDoesNotExist
-        try:
-            # Pydantic v2
-            return TypeAdapter(SharedService).validate_python(shared_services[0])
-        except AttributeError:
-            # Pydantic v1 fallback
-            return parse_obj_as(SharedService, shared_services[0])
+        return TypeAdapter(SharedService).validate_python(shared_services[0])
 
     async def get_active_shared_services(self) -> List[SharedService]:
         """
