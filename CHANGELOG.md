@@ -1,7 +1,10 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.26.0 (Unreleased)
 
-* _No changes yet_
+ENHANCEMENTS:
+* Change Guacamaole VM OS disk defaults to Standard SSD ([#4621](https://github.com/microsoft/AzureTRE/issues/4621))
+
+BUG FIXES:
 
 ## 0.25.0 (July 18, 2025)
 **IMPORTANT**:
@@ -34,7 +37,6 @@ BUG FIXES:
 * Fix UI display issue when workspace is deploying & user management is enabled ([#4521](https://github.com/microsoft/AzureTRE/issues/4521))
 * Fix error details display when workspace deletion fails with deleted Entra app ([#4500](https://github.com/microsoft/AzureTRE/pull/4500))
 * Fixed cloud-init failure on VMSS startup by upgrading `gnupg2` to the latest available version in Ubuntu Jammy([#4620](https://github.com/microsoft/AzureTRE/pull/4620))
-* Change Guacamaole VM OS disk defaults to Standard SSD ([#4621](https://github.com/microsoft/AzureTRE/issues/4621))
 * Fix terraform dependency introduced by the migration of Azure Firewall and Route Tables to Core Terraform ([#4624](https://github.com/microsoft/AzureTRE/issues/4624))
 
 ## 0.23.0 (June 10, 2025)
