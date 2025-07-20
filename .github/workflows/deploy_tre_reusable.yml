@@ -400,6 +400,8 @@ jobs:
           USER_MANAGEMENT_ENABLED: ${{ vars.USER_MANAGEMENT_ENABLED }}
           PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}
           AUTO_GRANT_WORKSPACE_CONSENT: ${{ vars.AUTO_GRANT_WORKSPACE_CONSENT }}
+          ENABLE_DNS_POLICY: ${{ vars.ENABLE_DNS_POLICY }}
+          ALLOWED_DNS: ${{ vars.ALLOWED_DNS }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command

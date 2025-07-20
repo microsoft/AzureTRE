@@ -1,7 +1,18 @@
 <!-- markdownlint-disable MD041 -->
-## 0.25.0 (Unreleased)
+## 0.26.0 (Unreleased)
 
 * _No changes yet_
+
+## 0.25.0 (July 18, 2025)
+**IMPORTANT**:
+* If you update core deployment prior to this release an upstream issue with Azure RM terraform provider means that
+ your App Gateway and certificates will be destroyed. ([#4632](https://github.com/microsoft/AzureTRE/issues/4632))
+
+ENHANCEMENTS:
+* Allow ENABLE_DNS_POLICY and ALLOWED_DNS variables to set via CI/CD ([#4623](https://github.com/microsoft/AzureTRE/issues/4623))
+
+BUG FIXES:
+* App Gateway is destroyed on 2nd and subsequent deploys ([#4632](https://github.com/microsoft/AzureTRE/issues/4632))
 
 ## 0.24.0 (July 16, 2025)
 

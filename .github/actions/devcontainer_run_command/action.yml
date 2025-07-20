@@ -165,6 +165,14 @@ inputs:
     description: "When set to true removes the need for users to manually grant consent when creating new workspaces"
     required: false
     default: "false"
+  ENABLE_DNS_POLICY:
+    description: "Enable the DNS security policy"
+    required: false
+    default: "false"
+  ALLOWED_DNS:
+    description: "Add allowed domain name to the DNS security policy"
+    required: false
+    default: "[]"
 
 runs:
   using: composite
@@ -297,6 +305,8 @@ runs:
           -e PRIVATE_AGENT_SUBNET_ID=${{ inputs.PRIVATE_AGENT_SUBNET_ID }} \
           -e TF_VAR_private_agent_subnet_id=${{ inputs.PRIVATE_AGENT_SUBNET_ID }} \
           -e TF_VAR_auto_grant_workspace_consent="${{ (inputs.AUTO_GRANT_WORKSPACE_CONSENT != '' && inputs.AUTO_GRANT_WORKSPACE_CONSENT) || 'false' }}" \
+          -e TF_VAR_enable_dns_policy="${{ (inputs.ENABLE_DNS_POLICY != '' && inputs.ENABLE_DNS_POLICY) || 'false' }}" \
+          -e TF_VAR_allowed_dns='${{ (toJson(inputs.ALLOWED_DNS) != '""' && inputs.ALLOWED_DNS) || '[]' }}' \
           -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c -x "./command.sh"
