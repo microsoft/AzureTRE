@@ -57,8 +57,8 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
 
     # For EventGridEvent, data should be a Dict[str, object]
     # Becuase data has nested objects, they all need to be recursively converted to dict
-    # To do that, we use a json() method implemented for all objects in AzureTREModel, and convert it back from json
-    data_dict = json.loads(data.json())
+    # To do that, we use a model_dump_json() method implemented for all objects in AzureTREModel, and convert it back from json
+    data_dict = json.loads(data.model_dump_json())
 
     airlock_notification = EventGridEvent(
         event_type="airlockNotification",

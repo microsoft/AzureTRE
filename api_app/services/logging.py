@@ -72,17 +72,24 @@ def initialize_logging() -> logging.Logger:
     elif LOGGING_LEVEL == "ERROR":
         logging_level = logging.ERROR
 
-    if APPLICATIONINSIGHTS_CONNECTION_STRING:
-        configure_azure_monitor(
-            logger_name="azuretre_api",
-            instrumentation_options={
-                "azure_sdk": {"enabled": False},
-                "flask": {"enabled": False},
-                "django": {"enabled": False},
-                "fastapi": {"enabled": True},
-                "psycopg2": {"enabled": False},
-            }
-        )
+    if APPLICATIONINSIGHTS_CONNECTION_STRING and APPLICATIONINSIGHTS_CONNECTION_STRING.strip():
+        try:
+            configure_azure_monitor(
+                connection_string=APPLICATIONINSIGHTS_CONNECTION_STRING,
+                logger_name="azuretre_api",
+                instrumentation_options={
+                    "azure_sdk": {"enabled": False},
+                    "flask": {"enabled": False},
+                    "django": {"enabled": False},
+                    "fastapi": {"enabled": True},
+                    "psycopg2": {"enabled": False},
+                }
+            )
+        except (ValueError, Exception) as e:
+            # Handle invalid connection strings or other Azure Monitor setup issues
+            # This is especially important for test environments
+            logging.warning(f"Failed to configure Azure Monitor: {e}")
+            pass
 
     LoggingInstrumentor().instrument(
         set_logging_format=True,

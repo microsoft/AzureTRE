@@ -286,7 +286,7 @@ async def get_template(
 
 
 def get_timestamp() -> float:
-    return datetime.utcnow().timestamp()
+    return datetime.now(datetime.UTC).timestamp()
 
 
 async def update_user_resource(

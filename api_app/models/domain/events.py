@@ -2,6 +2,7 @@ from typing import Dict, List, Optional
 
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.airlock_request import AirlockFile, AirlockRequestStatus, AirlockRequestType
+from pydantic import Field
 
 
 class AirlockNotificationUserData(AzureTREModel):
@@ -37,6 +38,6 @@ class AirlockNotificationData(AzureTREModel):
 class StatusChangedData(AzureTREModel):
     request_id: str
     new_status: str
-    previous_status: Optional[str]
+    previous_status: Optional[str] = Field(default=None)
     type: str
     workspace_id: str

@@ -2,6 +2,7 @@ import pytest
 from mock import patch, call
 
 import services.schema_service
+from models.domain.resource_template import Property
 
 
 @patch('services.schema_service.read_schema')
@@ -48,31 +49,31 @@ def test_enrich_user_resource_template_enriches_with_user_resource_defaults(enri
 @pytest.mark.parametrize('original, extra1, extra2, expected', [
     # basic scenario
     (
-        {'num_vms': {'type': 'string'}},
-        {'description': {'type': 'string'}, 'display_name': {'type': 'string'}},
-        {'client_id': {'type': 'string'}},
-        {'num_vms': {'type': 'string'}, 'description': {'type': 'string'}, 'display_name': {'type': 'string'}, 'client_id': {'type': 'string'}}
+        {'num_vms': Property(type='string')},
+        {'description': Property(type='string'), 'display_name': Property(type='string')},
+        {'client_id': Property(type='string')},
+        {'num_vms': {'type': 'string', 'title': '', 'description': ''}, 'description': {'type': 'string', 'title': '', 'description': ''}, 'display_name': {'type': 'string', 'title': '', 'description': ''}, 'client_id': {'type': 'string', 'title': '', 'description': ''}}
     ),
     # empty original
     (
         {},
-        {'description': {'type': 'string'}, 'display_name': {'type': 'string'}},
-        {'client_id': {'type': 'string'}},
-        {'description': {'type': 'string'}, 'display_name': {'type': 'string'}, 'client_id': {'type': 'string'}}
+        {'description': Property(type='string'), 'display_name': Property(type='string')},
+        {'client_id': Property(type='string')},
+        {'description': {'type': 'string', 'title': '', 'description': ''}, 'display_name': {'type': 'string', 'title': '', 'description': ''}, 'client_id': {'type': 'string', 'title': '', 'description': ''}}
     ),
     # duplicates
     (
-        {'description': {'type': 'string'}},
-        {'description': {'type': 'string'}, 'display_name': {'type': 'string'}},
-        {'client_id': {'type': 'string'}},
-        {'description': {'type': 'string'}, 'display_name': {'type': 'string'}, 'client_id': {'type': 'string'}}
+        {'description': Property(type='string')},
+        {'description': Property(type='string'), 'display_name': Property(type='string')},
+        {'client_id': Property(type='string')},
+        {'description': {'type': 'string', 'title': '', 'description': ''}, 'display_name': {'type': 'string', 'title': '', 'description': ''}, 'client_id': {'type': 'string', 'title': '', 'description': ''}}
     ),
     # duplicate names - different defaults
     (
-        {'description': {'type': 'string', 'default': 'service description'}, 'display_name': {'type': 'string'}},
-        {'description': {'type': 'string', 'default': ''}},
-        {'client_id': {'type': 'string'}},
-        {'description': {'type': 'string', 'default': 'service description'}, 'display_name': {'type': 'string'}, 'client_id': {'type': 'string'}}
+        {'description': Property(type='string', default='service description'), 'display_name': Property(type='string')},
+        {'description': Property(type='string', default='')},
+        {'client_id': Property(type='string')},
+        {'description': {'type': 'string', 'default': 'service description', 'title': '', 'description': ''}, 'display_name': {'type': 'string', 'title': '', 'description': ''}, 'client_id': {'type': 'string', 'title': '', 'description': ''}}
     )])
 def test_enrich_template_combines_properties(original, extra1, extra2, expected, basic_resource_template):
     original_template = basic_resource_template

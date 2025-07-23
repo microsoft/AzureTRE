@@ -54,7 +54,7 @@ class AirlockReview(AzureTREModel):
     Airlock review
     """
     id: str = Field(title="Id", description="GUID identifying the review")
-    reviewer: dict = {}
+    reviewer: dict = Field(default_factory=dict)
     dateCreated: float = 0
     reviewDecision: AirlockReviewDecision = Field("", title="Airlock review decision")
     decisionExplanation: str = Field(False, title="Explanation why the request was approved/rejected")
@@ -66,8 +66,8 @@ class AirlockRequestHistoryItem(AzureTREModel):
     """
     resourceVersion: int
     updatedWhen: float
-    updatedBy: dict = {}
-    properties: dict = {}
+    updatedBy: dict = Field(default_factory=dict)
+    properties: dict = Field(default_factory=dict)
 
 
 class AirlockReviewUserResource(AzureTREModel):
@@ -85,9 +85,9 @@ class AirlockRequest(AzureTREModel):
     """
     id: str = Field(title="Id", description="GUID identifying the resource")
     resourceVersion: int = 0
-    createdBy: dict = {}
+    createdBy: dict = Field(default_factory=dict)
     createdWhen: float = Field(None, title="Creation time of the request")
-    updatedBy: dict = {}
+    updatedBy: dict = Field(default_factory=dict)
     updatedWhen: float = 0
     history: List[AirlockRequestHistoryItem] = []
     workspaceId: str = Field("", title="Workspace ID", description="Service target Workspace id")

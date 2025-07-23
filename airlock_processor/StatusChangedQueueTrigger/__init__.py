@@ -10,7 +10,7 @@ import json
 from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
 
 from shared_code import blob_operations, constants
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel, TypeAdapter, Field
 
 
 def parse_obj_as(type_hint, obj):
@@ -22,7 +22,7 @@ def parse_obj_as(type_hint, obj):
 class RequestProperties(BaseModel):
     request_id: str
     new_status: str
-    previous_status: Optional[str]
+    previous_status: Optional[str] = Field(default=None)
     type: str
     workspace_id: str
 

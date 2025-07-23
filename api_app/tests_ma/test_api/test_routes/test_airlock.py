@@ -56,7 +56,19 @@ def sample_airlock_request_object(status=AirlockRequestStatus.Draft, airlock_req
         reviews=[sample_airlock_review_object()] if reviews else None,
         reviewUserResources={"user-guid-here": sample_airlock_user_resource_object()} if review_user_resource else {}
     )
-    return airlock_request
+    return AirlockRequest(
+        id=airlock_request_id,
+        resourceVersion=0,
+        createdBy={},
+        createdWhen=1620000000.0,  # valid float timestamp
+        updatedBy={},
+        updatedWhen=1620000000.0,
+        businessJustification="test business justification",
+        type="import",
+        status=status,
+        reviews=[sample_airlock_review_object()] if reviews else None,
+        reviewUserResources={"user-guid-here": sample_airlock_user_resource_object()} if review_user_resource else {}
+    )
 
 
 def sample_airlock_review_object():

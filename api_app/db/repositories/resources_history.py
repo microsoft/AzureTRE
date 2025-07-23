@@ -5,7 +5,7 @@ from pydantic import TypeAdapter
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from core import config
-from models.domain.resource import ResourceHistoryItem
+from models.domain.resource import Resource, ResourceHistoryItem
 from services.logging import logger
 
 
@@ -38,3 +38,24 @@ class ResourceHistoryRepository(BaseRepository):
             logger.info(f"No history for resource {resource_id}")
             resource_history_items = []
         return TypeAdapter(List[ResourceHistoryItem]).validate_python(resource_history_items)
+
+    async def create_resource_history_item(self, resource: Resource) -> ResourceHistoryItem:
+        logger.info(f"Creating a new history item for resource {resource.id}")
+        resource_history_item_id = str(uuid.uuid4())
+        resource_history_item = ResourceHistoryItem(
+            id=resource_history_item_id,
+            resourceId=resource.id,
+            isEnabled=resource.isEnabled,
+            properties=resource.properties,
+            resourceVersion=resource.resourceVersion,
+            updatedWhen=resource.updatedWhen,
+            user=resource.user,
+            templateVersion=resource.templateVersion
+        )
+        logger.info(f"Saving history item for {resource.id}")
+        try:
+            await self.save_item(resource_history_item)
+        except Exception:
+            logger.exception(f"Failed saving history item for {resource.id}")
+            raise
+        return resource_history_item

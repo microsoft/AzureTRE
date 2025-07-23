@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel, Field
 from enum import Enum
 
@@ -7,7 +7,7 @@ class AssignableUser(BaseModel):
     id: str
     displayName: str
     userPrincipalName: str
-    email: str = Field(default=None)
+    email: Optional[str] = Field(default=None)
 
 
 class AssignmentType(Enum):
@@ -32,5 +32,5 @@ class AssignedUser(BaseModel):
     id: str
     displayName: str
     userPrincipalName: str
-    email: str = Field(default=None)
+    email: Optional[str] = Field(default=None)
     roles: List[Role] = Field(default_factory=list)

@@ -25,8 +25,17 @@ def merge_required(all_required):
 
 def merge_properties(all_properties: List[Dict]) -> Dict:
     properties = {}
-    for prop in all_properties:
-        properties.update(prop)
+    for prop_dict in all_properties:
+        # Handle Property objects by converting them to dictionaries
+        converted_props = {}
+        for key, value in prop_dict.items():
+            if hasattr(value, 'model_dump'):
+                # This is a Property object, convert it to dict
+                converted_props[key] = value.model_dump(exclude_none=True)
+            else:
+                # This is already a dict
+                converted_props[key] = value
+        properties.update(converted_props)
     return properties
 
 

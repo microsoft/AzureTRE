@@ -1,4 +1,5 @@
 from datetime import datetime
+import datetime as dt
 import uuid
 from typing import List
 
@@ -29,7 +30,7 @@ class OperationRepository(BaseRepository):
 
     @staticmethod
     def get_timestamp() -> float:
-        return datetime.utcnow().timestamp()
+        return datetime.now(dt.UTC).timestamp()
 
     @staticmethod
     def create_operation_id() -> str:
@@ -64,7 +65,7 @@ class OperationRepository(BaseRepository):
                 primary_parent_workspace_service = await resource_repo.get_resource_by_id(resource["parentWorkspaceServiceId"])
                 primary_parent_service_name = primary_parent_workspace_service.templateName
             resource_template = await resource_template_repo.get_template_by_name_and_version(name, version, resource_type, primary_parent_service_name)
-            resource_template_dict = resource_template.dict(exclude_none=True)
+            resource_template_dict = resource_template.model_dump(exclude_none=True)
             # if the template has a pipeline defined for this action, copy over all the steps to the ops document
             steps = await self.build_step_list(
                 steps=[],
@@ -93,7 +94,7 @@ class OperationRepository(BaseRepository):
             updatedWhen=timestamp,
             action=action,
             message=message,
-            user=user,
+            user=user.model_dump(),
             steps=all_steps
         )
 
@@ -168,7 +169,7 @@ class OperationRepository(BaseRepository):
 
         operation.status = status
         operation.message = message
-        operation.updatedWhen = datetime.utcnow().timestamp()
+        operation.updatedWhen = datetime.now(dt.UTC).timestamp()
 
         await self.update_item(operation)
         return operation

@@ -51,7 +51,7 @@ class AirlockRequestRepository(BaseRepository):
 
         # now update the request props
         new_request.resourceVersion = new_request.resourceVersion + 1
-        new_request.updatedBy = updated_by
+        new_request.updatedBy = updated_by.model_dump() if hasattr(updated_by, 'model_dump') else updated_by
         new_request.updatedWhen = self.get_timestamp()
 
         await self.upsert_item_with_etag(new_request, new_request.etag)
@@ -119,10 +119,10 @@ class AirlockRequestRepository(BaseRepository):
             title=airlock_request_input.title,
             businessJustification=airlock_request_input.businessJustification,
             type=airlock_request_input.type,
-            createdBy=user,
-            createdWhen=datetime.utcnow().timestamp(),
-            updatedBy=user,
-            updatedWhen=datetime.utcnow().timestamp(),
+            createdBy=user.model_dump() if hasattr(user, 'model_dump') else user,
+            createdWhen=datetime.now(timezone.utc).timestamp(),
+            updatedBy=user.model_dump() if hasattr(user, 'model_dump') else user,
+            updatedWhen=datetime.now(timezone.utc).timestamp(),
             properties=resource_spec_parameters,
             reviews=[]
         )
@@ -249,7 +249,7 @@ class AirlockRequestRepository(BaseRepository):
             dateCreated=self.get_timestamp(),
             reviewDecision=AirlockReviewDecision.Revoked,
             decisionExplanation=revocation_reason,
-            reviewer=reviewer
+            reviewer=reviewer.model_dump() if hasattr(reviewer, 'model_dump') else reviewer
         )
 
         return airlock_review

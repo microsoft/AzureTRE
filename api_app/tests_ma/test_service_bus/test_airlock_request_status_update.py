@@ -85,12 +85,12 @@ def sample_airlock_request(status=AirlockRequestStatus.Submitted):
         createdBy=AirlockNotificationUserData(
             name="John Doe",
             email="john@example.com"
-        ),
+        ).model_dump(),
         updatedWhen=CURRENT_TIME,
         updatedBy=AirlockNotificationUserData(
             name="Test User",
             email="test@user.com"
-        )
+        ).model_dump()
     )
     return airlock_request
 

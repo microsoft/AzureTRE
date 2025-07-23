@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date as DateType
 from typing import List, Optional
 from pydantic import BaseModel
 from enum import StrEnum
@@ -93,7 +93,7 @@ def generate_workspace_cost_report_dict_example(name: str, granularity: Granular
 class CostRow(BaseModel):
     cost: float
     currency: str
-    date: Optional[date] = None
+    date: Optional[DateType] = None
 
 
 class CostItem(BaseModel):

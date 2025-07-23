@@ -36,19 +36,30 @@ def user_is_tre_admin(user):
 async def retrieve_shared_services(shared_services_repo=Depends(get_repository(SharedServiceRepository)), user=Depends(get_current_tre_user_or_tre_admin), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> SharedServicesInList:
     shared_services = await shared_services_repo.get_active_shared_services()
     await asyncio.gather(*[enrich_resource_with_available_upgrades(shared_service, resource_template_repo) for shared_service in shared_services])
+    # Ensure nested models and properties are dicts for Pydantic v2
+    shared_services_dicts = []
+    for s in shared_services:
+        s_dict = s.model_dump() if hasattr(s, 'model_dump') else s
+        # If properties is a model, convert to dict
+        if 'properties' in s_dict and hasattr(s_dict['properties'], 'model_dump'):
+            s_dict['properties'] = s_dict['properties'].model_dump()
+        shared_services_dicts.append(s_dict)
     if user_is_tre_admin(user):
-        return SharedServicesInList(sharedServices=shared_services)
+        return SharedServicesInList(sharedServices=shared_services_dicts)
     else:
-        return RestrictedSharedServicesInList(sharedServices=shared_services)
+        return RestrictedSharedServicesInList(sharedServices=shared_services_dicts)
 
 
 @shared_services_router.get("/shared-services/{shared_service_id}", response_model=SharedServiceInResponse, name=strings.API_GET_SHARED_SERVICE_BY_ID, dependencies=[Depends(get_current_tre_user_or_tre_admin), Depends(get_shared_service_by_id_from_path)])
 async def retrieve_shared_service_by_id(shared_service=Depends(get_shared_service_by_id_from_path), user=Depends(get_current_tre_user_or_tre_admin), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))):
     await enrich_resource_with_available_upgrades(shared_service, resource_template_repo)
     if user_is_tre_admin(user):
-        return SharedServiceInResponse(sharedService=shared_service)
+        # Ensure nested models are dicts for Pydantic v2
+        shared_service_dict = shared_service.model_dump() if hasattr(shared_service, 'model_dump') else shared_service
+        return SharedServiceInResponse(sharedService=shared_service_dict)
     else:
-        return RestrictedSharedServiceInResponse(sharedService=shared_service)
+        shared_service_dict = shared_service.model_dump() if hasattr(shared_service, 'model_dump') else shared_service
+        return RestrictedSharedServiceInResponse(sharedService=shared_service_dict)
 
 
 @shared_services_router.post("/shared-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])

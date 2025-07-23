@@ -27,5 +27,5 @@ class RestrictedResource(AzureTREModel):
     etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
     resourceVersion: int = 0
-    user: dict = {}
+    user: dict = Field(default_factory=dict)
     updatedWhen: float = 0

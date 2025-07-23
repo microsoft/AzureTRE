@@ -42,18 +42,18 @@ class PipelineStepProperty(AzureTREModel):
 
 
 class PipelineStep(AzureTREModel):
-    stepId: Optional[str] = Field(title="stepId", description="Unique id identifying the step")
-    stepTitle: Optional[str] = Field(title="stepTitle", description="Human readable title of what the step is for")
-    resourceTemplateName: Optional[str] = Field(title="resourceTemplateName", description="Name of the template for the resource under change")
-    resourceType: Optional[ResourceType] = Field(title="resourceType", description="Type of resource under change")
-    resourceAction: Optional[str] = Field(title="resourceAction", description="Action - install / upgrade / uninstall etc")
-    properties: Optional[List[PipelineStepProperty]]
+    stepId: Optional[str] = Field(default=None, title="stepId", description="Unique id identifying the step")
+    stepTitle: Optional[str] = Field(default=None, title="stepTitle", description="Human readable title of what the step is for")
+    resourceTemplateName: Optional[str] = Field(default=None, title="resourceTemplateName", description="Name of the template for the resource under change")
+    resourceType: Optional[ResourceType] = Field(default=None, title="resourceType", description="Type of resource under change")
+    resourceAction: Optional[str] = Field(default=None, title="resourceAction", description="Action - install / upgrade / uninstall etc")
+    properties: Optional[List[PipelineStepProperty]] = Field(default=None)
 
 
 class Pipeline(AzureTREModel):
-    install: Optional[List[PipelineStep]]
-    upgrade: Optional[List[PipelineStep]]
-    uninstall: Optional[List[PipelineStep]]
+    install: Optional[List[PipelineStep]] = Field(default=None)
+    upgrade: Optional[List[PipelineStep]] = Field(default=None)
+    uninstall: Optional[List[PipelineStep]] = Field(default=None)
 
 
 class ResourceTemplate(AzureTREModel):

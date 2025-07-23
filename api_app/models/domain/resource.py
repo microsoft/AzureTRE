@@ -28,7 +28,7 @@ class ResourceHistoryItem(AzureTREModel):
     isEnabled: bool = True
     resourceVersion: int = 0
     updatedWhen: float = 0
-    user: dict = {}
+    user: dict = Field(default_factory=dict)
     templateVersion: Optional[str] = Field(None, title="Resource template version", description="The version of the resource template (bundle) to deploy")
 
 
@@ -52,7 +52,7 @@ class Resource(AzureTREModel):
     etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
     resourceVersion: int = 0
-    user: dict = {}
+    user: dict = Field(default_factory=dict)
     updatedWhen: float = 0
 
     def get_resource_request_message_payload(self, operation_id: str, step_id: str, action: RequestAction) -> dict:

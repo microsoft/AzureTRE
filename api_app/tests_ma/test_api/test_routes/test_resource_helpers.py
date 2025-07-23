@@ -173,7 +173,7 @@ class TestResourceHelpers:
             resource=resource,
             operations_repo=operations_repo,
             resource_repo=resource_repo,
-            user=user,
+            user=user.model_dump(),  # Expect the dictionary version since that's what was passed
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=RequestAction.Install)

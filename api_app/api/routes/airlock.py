@@ -44,7 +44,8 @@ async def create_draft_request(airlock_request_input: AirlockRequestInCreate, us
         airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_input, workspace.id, user)
         await save_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace)
         allowed_actions = get_allowed_actions(airlock_request, user, airlock_request_repo)
-        return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request, allowedUserActions=allowed_actions)
+        airlock_request_dict = airlock_request.model_dump() if hasattr(airlock_request, 'model_dump') else airlock_request
+        return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request_dict, allowedUserActions=allowed_actions)
     except (ValidationError, ValueError) as e:
         logger.exception("Failed creating airlock request model instance")
         raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -80,7 +81,8 @@ async def retrieve_airlock_request_by_id(airlock_request=Depends(get_airlock_req
                                          airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
                                          user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)) -> AirlockRequestWithAllowedUserActions:
     allowed_actions = get_allowed_actions(airlock_request, user, airlock_request_repo)
-    return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request, allowedUserActions=allowed_actions)
+    airlock_request_dict = airlock_request.model_dump() if hasattr(airlock_request, 'model_dump') else airlock_request
+    return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request_dict, allowedUserActions=allowed_actions)
 
 
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/submit", status_code=status_code.HTTP_200_OK,
@@ -93,7 +95,8 @@ async def create_submit_request(airlock_request=Depends(get_airlock_request_by_i
     updated_request = await update_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace,
                                                                      new_status=AirlockRequestStatus.Submitted)
     allowed_actions = get_allowed_actions(updated_request, user, airlock_request_repo)
-    return AirlockRequestWithAllowedUserActions(airlockRequest=updated_request, allowedUserActions=allowed_actions)
+    updated_request_dict = updated_request.model_dump() if hasattr(updated_request, 'model_dump') else updated_request
+    return AirlockRequestWithAllowedUserActions(airlockRequest=updated_request_dict, allowedUserActions=allowed_actions)
 
 
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/cancel", status_code=status_code.HTTP_200_OK,
