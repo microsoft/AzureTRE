@@ -113,9 +113,9 @@ class AirlockRequestRepository(BaseRepository):
             title=airlock_request_input.title,
             businessJustification=airlock_request_input.businessJustification,
             type=airlock_request_input.type,
-            createdBy=user.model_dump() if hasattr(user, 'model_dump') else user,
+            createdBy=user,
             createdWhen=datetime.now(timezone.utc).timestamp(),
-            updatedBy=user.model_dump() if hasattr(user, 'model_dump') else user,
+            updatedBy=user,
             updatedWhen=datetime.now(timezone.utc).timestamp(),
             properties=resource_spec_parameters,
             reviews=[]

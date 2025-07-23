@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic.types import UUID4
 
 from models.domain.azuretremodel import AzureTREModel
@@ -94,6 +94,13 @@ class Operation(AzureTREModel):
     updatedWhen: float = Field("", title="POSIX Timestamp for When the operation was updated")
     user: dict = Field(default_factory=dict)
     steps: Optional[List[OperationStep]] = Field(None, title="Operation Steps")
+
+    @field_validator("user", mode="before")
+    @classmethod
+    def convert_user_to_dict(cls, value):
+        if hasattr(value, "model_dump"):
+            return value.model_dump()
+        return value
 
 
 class DeploymentStatusUpdateMessage(AzureTREModel):

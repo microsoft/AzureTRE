@@ -93,7 +93,7 @@ class OperationRepository(BaseRepository):
             updatedWhen=timestamp,
             action=action,
             message=message,
-            user=user.model_dump(),
+            user=user,
             steps=all_steps
         )
 

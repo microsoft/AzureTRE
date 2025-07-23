@@ -86,19 +86,23 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
 
 
 def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
-    properties = RestrictedProperties(
-        display_name="A display name",
-        description="desc here",
-        overview="overview here",
-        connection_uri="",
-        is_exposed_externally=True
-    )
-    # Pass the model directly - the Resource validator should convert it to a dict
+    # For admin users, SharedService should have full properties as a dict
+    # including both public and private fields
+    properties = {
+        "display_name": "A display name",
+        "description": "desc here",
+        "overview": "overview here",
+        "connection_uri": "",
+        "is_exposed_externally": True,
+        "private_field_1": "value_1",  # Admin-only field
+        "private_field_2": "value_2"   # Admin-only field
+    }
+
     return SharedService(
         id=shared_service_id,
         templateName="tre-shared-service-base",
         templateVersion="0.1.0",
-        properties=properties,
+        properties=properties,  # Pass dict directly - no field validation conversion needed
         updatedWhen=1609520755.0,
         user={
             "id": "user-guid-here",

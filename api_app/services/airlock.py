@@ -279,7 +279,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 
     try:
         logger.debug(f"Saving airlock request item: {airlock_request.id}")
-        airlock_request.updatedBy = user.model_dump() if hasattr(user, "model_dump") else user
+        airlock_request.updatedBy = user
         airlock_request.updatedWhen = get_timestamp()
         await airlock_request_repo.save_item(airlock_request)
     except Exception:
@@ -288,11 +288,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 
     try:
         logger.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
-        # Ensure createdBy and updatedBy are dicts before sending events
-        if hasattr(airlock_request, "createdBy") and not isinstance(airlock_request.createdBy, dict) and hasattr(airlock_request.createdBy, "model_dump"):
-            airlock_request.createdBy = airlock_request.createdBy.model_dump()
-        if hasattr(airlock_request, "updatedBy") and not isinstance(airlock_request.updatedBy, dict) and hasattr(airlock_request.updatedBy, "model_dump"):
-            airlock_request.updatedBy = airlock_request.updatedBy.model_dump()
+        # Field validators in AirlockRequest model automatically handle User->dict conversion
         await send_status_changed_event(airlock_request=airlock_request, previous_status=None)
         await send_airlock_notification_event(airlock_request, workspace, role_assignment_details)
     except Exception:
@@ -331,11 +327,7 @@ async def update_and_publish_event_airlock_request(
 
     if not new_status:
         logger.debug(f"Skipping sending 'status changed' event for airlock request item: {airlock_request.id} - there is no status change")
-        # Ensure createdBy and updatedBy are dicts before returning
-        if hasattr(updated_airlock_request, "createdBy") and not isinstance(updated_airlock_request.createdBy, dict) and hasattr(updated_airlock_request.createdBy, "model_dump"):
-            updated_airlock_request.createdBy = updated_airlock_request.createdBy.model_dump()
-        if hasattr(updated_airlock_request, "updatedBy") and not isinstance(updated_airlock_request.updatedBy, dict) and hasattr(updated_airlock_request.updatedBy, "model_dump"):
-            updated_airlock_request.updatedBy = updated_airlock_request.updatedBy.model_dump()
+        # Field validators in AirlockRequest model automatically handle User->dict conversion
         return updated_airlock_request
 
     try:

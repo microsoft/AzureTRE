@@ -105,8 +105,8 @@ class ResourceRepository(BaseRepository):
         await resource_history_repo.create_resource_history_item(resource)
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
-        # Ensure user is converted to dict for Pydantic v2 compatibility
-        resource.user = user.model_dump() if hasattr(user, 'model_dump') else user
+        # Field validator in Resource model automatically handles User->dict conversion
+        resource.user = user
         resource.updatedWhen = self.get_timestamp()
 
         if resource_patch.isEnabled is not None:

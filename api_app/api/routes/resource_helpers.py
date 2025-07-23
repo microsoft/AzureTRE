@@ -65,11 +65,8 @@ async def save_and_deploy_resource(
     resource_template: ResourceTemplate,
 ) -> Operation:
     try:
-        # Ensure user is a dict for serialization
-        if hasattr(user, 'model_dump'):
-            resource.user = user.model_dump()
-        else:
-            resource.user = user
+        # Field validator in Resource model automatically handles User->dict conversion
+        resource.user = user
         resource.updatedWhen = get_timestamp()
 
         # Making a copy to save with secrets masked

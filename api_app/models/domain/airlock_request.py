@@ -59,6 +59,13 @@ class AirlockReview(AzureTREModel):
     reviewDecision: AirlockReviewDecision = Field("", title="Airlock review decision")
     decisionExplanation: str = Field(False, title="Explanation why the request was approved/rejected")
 
+    @field_validator("reviewer", mode="before")
+    @classmethod
+    def convert_reviewer_to_dict(cls, value):
+        if hasattr(value, "model_dump"):
+            return value.model_dump()
+        return value
+
 
 class AirlockRequestHistoryItem(AzureTREModel):
     """
@@ -68,6 +75,13 @@ class AirlockRequestHistoryItem(AzureTREModel):
     updatedWhen: float
     updatedBy: dict = Field(default_factory=dict)
     properties: dict = Field(default_factory=dict)
+
+    @field_validator("updatedBy", mode="before")
+    @classmethod
+    def convert_updated_by_to_dict(cls, value):
+        if hasattr(value, "model_dump"):
+            return value.model_dump()
+        return value
 
 
 class AirlockReviewUserResource(AzureTREModel):
@@ -107,3 +121,17 @@ class AirlockRequest(AzureTREModel):
     def parse_etag_to_remove_escaped_quotes(cls, value):
         if value:
             return value.replace('\"', '')
+
+    @field_validator("createdBy", mode="before")
+    @classmethod
+    def convert_created_by_to_dict(cls, value):
+        if hasattr(value, "model_dump"):
+            return value.model_dump()
+        return value
+
+    @field_validator("updatedBy", mode="before")
+    @classmethod
+    def convert_updated_by_to_dict(cls, value):
+        if hasattr(value, "model_dump"):
+            return value.model_dump()
+        return value

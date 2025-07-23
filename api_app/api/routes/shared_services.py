@@ -14,6 +14,7 @@ from models.domain.resource import ResourceType
 from models.schemas.operation import OperationInList, OperationInResponse
 from models.schemas.shared_service import RestrictedSharedServiceInResponse, RestrictedSharedServicesInList, SharedServiceInCreate, SharedServicesInList, SharedServiceInResponse
 from models.schemas.resource import ResourceHistoryInList, ResourcePatch
+from models.domain.restricted_resource import RestrictedResource, RestrictedProperties
 from resources import strings
 from .workspaces import save_and_deploy_resource, construct_location_header
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
@@ -32,53 +33,60 @@ def user_is_tre_admin(user):
     return False
 
 
+def convert_to_restricted_resource(shared_service):
+    """Convert a SharedService to a RestrictedResource for non-admin users."""
+    # Ensure properties is a dict (should be already due to field validator)
+    properties_dict = shared_service.properties if isinstance(shared_service.properties, dict) else shared_service.properties.model_dump()
+
+    # Extract only the fields that RestrictedProperties supports
+    restricted_props = {
+        "display_name": properties_dict.get("display_name", ""),
+        "description": properties_dict.get("description", ""),
+        "overview": properties_dict.get("overview", ""),
+        "connection_uri": properties_dict.get("connection_uri", ""),
+        "is_exposed_externally": properties_dict.get("is_exposed_externally", True)
+    }
+
+    return RestrictedResource(
+        id=shared_service.id,
+        templateName=shared_service.templateName,
+        templateVersion=shared_service.templateVersion,
+        properties=RestrictedProperties(**restricted_props),
+        availableUpgrades=shared_service.availableUpgrades or [],
+        isEnabled=shared_service.isEnabled,
+        resourceType=shared_service.resourceType,
+        deploymentStatus=shared_service.deploymentStatus,
+        etag=shared_service.etag,
+        resourcePath=shared_service.resourcePath,
+        resourceVersion=shared_service.resourceVersion,
+        user=shared_service.user,
+        updatedWhen=shared_service.updatedWhen
+    )
+
+
 @shared_services_router.get("/shared-services", response_model=SharedServicesInList, name=strings.API_GET_ALL_SHARED_SERVICES, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 async def retrieve_shared_services(shared_services_repo=Depends(get_repository(SharedServiceRepository)), user=Depends(get_current_tre_user_or_tre_admin), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> SharedServicesInList:
     shared_services = await shared_services_repo.get_active_shared_services()
     await asyncio.gather(*[enrich_resource_with_available_upgrades(shared_service, resource_template_repo) for shared_service in shared_services])
-    # Ensure nested models and properties are dicts for Pydantic v2
-    shared_services_dicts = []
-    for s in shared_services:
-        # Convert the entire model to dict first
-        s_dict = s.model_dump() if hasattr(s, 'model_dump') else s
-        # Ensure properties field is a dict - handle both cases where it might be a model or already a dict
-        if 'properties' in s_dict:
-            if hasattr(s_dict['properties'], 'model_dump'):
-                s_dict['properties'] = s_dict['properties'].model_dump()
-            elif hasattr(s, 'properties') and hasattr(s.properties, 'model_dump'):
-                # Handle case where model_dump didn't serialize the properties field properly
-                s_dict['properties'] = s.properties.model_dump()
-        shared_services_dicts.append(s_dict)
+
     if user_is_tre_admin(user):
-        return SharedServicesInList(sharedServices=shared_services_dicts)
+        return SharedServicesInList(sharedServices=shared_services)
     else:
-        return RestrictedSharedServicesInList(sharedServices=shared_services_dicts)
+        # Convert SharedService objects to RestrictedResource objects for non-admin users
+        restricted_services = [convert_to_restricted_resource(service) for service in shared_services]
+        return RestrictedSharedServicesInList(sharedServices=restricted_services)
 
 
 @shared_services_router.get("/shared-services/{shared_service_id}", response_model=SharedServiceInResponse, name=strings.API_GET_SHARED_SERVICE_BY_ID, dependencies=[Depends(get_current_tre_user_or_tre_admin), Depends(get_shared_service_by_id_from_path)])
 async def retrieve_shared_service_by_id(shared_service=Depends(get_shared_service_by_id_from_path), user=Depends(get_current_tre_user_or_tre_admin), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))):
     await enrich_resource_with_available_upgrades(shared_service, resource_template_repo)
+
     if user_is_tre_admin(user):
-        # Ensure nested models and properties are dicts for Pydantic v2
-        shared_service_dict = shared_service.model_dump() if hasattr(shared_service, 'model_dump') else shared_service
-        # Ensure properties field is a dict - handle both cases where it might be a model or already a dict
-        if 'properties' in shared_service_dict:
-            if hasattr(shared_service_dict['properties'], 'model_dump'):
-                shared_service_dict['properties'] = shared_service_dict['properties'].model_dump()
-            elif hasattr(shared_service, 'properties') and hasattr(shared_service.properties, 'model_dump'):
-                # Handle case where model_dump didn't serialize the properties field properly
-                shared_service_dict['properties'] = shared_service.properties.model_dump()
-        return SharedServiceInResponse(sharedService=shared_service_dict)
+        return SharedServiceInResponse(sharedService=shared_service)
     else:
-        shared_service_dict = shared_service.model_dump() if hasattr(shared_service, 'model_dump') else shared_service
-        # Ensure properties field is a dict - handle both cases where it might be a model or already a dict
-        if 'properties' in shared_service_dict:
-            if hasattr(shared_service_dict['properties'], 'model_dump'):
-                shared_service_dict['properties'] = shared_service_dict['properties'].model_dump()
-            elif hasattr(shared_service, 'properties') and hasattr(shared_service.properties, 'model_dump'):
-                # Handle case where model_dump didn't serialize the properties field properly
-                shared_service_dict['properties'] = shared_service.properties.model_dump()
-        return RestrictedSharedServiceInResponse(sharedService=shared_service_dict)
+        # Convert SharedService to RestrictedResource for non-admin users
+        restricted_service = convert_to_restricted_resource(shared_service)
+        return RestrictedSharedServiceInResponse(sharedService=restricted_service)
 
 
 @shared_services_router.post("/shared-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
