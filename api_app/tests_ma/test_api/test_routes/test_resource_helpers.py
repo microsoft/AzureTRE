@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from unittest.mock import AsyncMock
 import uuid
 import pytest
@@ -21,9 +21,9 @@ from models.domain.workspace import Workspace
 
 
 WORKSPACE_ID = '933ad738-7265-4b5f-9eae-a1a62928772e'
-FAKE_CREATE_TIME = datetime.datetime(2021, 1, 1, 17, 5, 55)
+FAKE_CREATE_TIME = datetime(2021, 1, 1, 17, 5, 55)
 FAKE_CREATE_TIMESTAMP: float = FAKE_CREATE_TIME.timestamp()
-FAKE_UPDATE_TIME = datetime.datetime(2022, 1, 1, 17, 5, 55)
+FAKE_UPDATE_TIME = datetime(2022, 1, 1, 17, 5, 55)
 FAKE_UPDATE_TIMESTAMP: float = FAKE_UPDATE_TIME.timestamp()
 
 

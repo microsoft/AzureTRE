@@ -39,10 +39,15 @@ async def retrieve_shared_services(shared_services_repo=Depends(get_repository(S
     # Ensure nested models and properties are dicts for Pydantic v2
     shared_services_dicts = []
     for s in shared_services:
+        # Convert the entire model to dict first
         s_dict = s.model_dump() if hasattr(s, 'model_dump') else s
-        # If properties is a model, convert to dict
-        if 'properties' in s_dict and hasattr(s_dict['properties'], 'model_dump'):
-            s_dict['properties'] = s_dict['properties'].model_dump()
+        # Ensure properties field is a dict - handle both cases where it might be a model or already a dict
+        if 'properties' in s_dict:
+            if hasattr(s_dict['properties'], 'model_dump'):
+                s_dict['properties'] = s_dict['properties'].model_dump()
+            elif hasattr(s, 'properties') and hasattr(s.properties, 'model_dump'):
+                # Handle case where model_dump didn't serialize the properties field properly
+                s_dict['properties'] = s.properties.model_dump()
         shared_services_dicts.append(s_dict)
     if user_is_tre_admin(user):
         return SharedServicesInList(sharedServices=shared_services_dicts)
@@ -54,11 +59,25 @@ async def retrieve_shared_services(shared_services_repo=Depends(get_repository(S
 async def retrieve_shared_service_by_id(shared_service=Depends(get_shared_service_by_id_from_path), user=Depends(get_current_tre_user_or_tre_admin), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))):
     await enrich_resource_with_available_upgrades(shared_service, resource_template_repo)
     if user_is_tre_admin(user):
-        # Ensure nested models are dicts for Pydantic v2
+        # Ensure nested models and properties are dicts for Pydantic v2
         shared_service_dict = shared_service.model_dump() if hasattr(shared_service, 'model_dump') else shared_service
+        # Ensure properties field is a dict - handle both cases where it might be a model or already a dict
+        if 'properties' in shared_service_dict:
+            if hasattr(shared_service_dict['properties'], 'model_dump'):
+                shared_service_dict['properties'] = shared_service_dict['properties'].model_dump()
+            elif hasattr(shared_service, 'properties') and hasattr(shared_service.properties, 'model_dump'):
+                # Handle case where model_dump didn't serialize the properties field properly
+                shared_service_dict['properties'] = shared_service.properties.model_dump()
         return SharedServiceInResponse(sharedService=shared_service_dict)
     else:
         shared_service_dict = shared_service.model_dump() if hasattr(shared_service, 'model_dump') else shared_service
+        # Ensure properties field is a dict - handle both cases where it might be a model or already a dict
+        if 'properties' in shared_service_dict:
+            if hasattr(shared_service_dict['properties'], 'model_dump'):
+                shared_service_dict['properties'] = shared_service_dict['properties'].model_dump()
+            elif hasattr(shared_service, 'properties') and hasattr(shared_service.properties, 'model_dump'):
+                # Handle case where model_dump didn't serialize the properties field properly
+                shared_service_dict['properties'] = shared_service.properties.model_dump()
         return RestrictedSharedServiceInResponse(sharedService=shared_service_dict)
 
 

@@ -42,9 +42,9 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
         request=AirlockNotificationRequestData(
             id=request_id,
             created_when=airlock_request.createdWhen,
-            created_by=airlock_request.createdBy,
+            created_by=airlock_request.createdBy if isinstance(airlock_request.createdBy, dict) else airlock_request.createdBy.model_dump(),
             updated_when=airlock_request.updatedWhen,
-            updated_by=airlock_request.updatedBy,
+            updated_by=airlock_request.updatedBy if isinstance(airlock_request.updatedBy, dict) else airlock_request.updatedBy.model_dump(),
             request_type=airlock_request.type,
             files=airlock_request.files,
             status=airlock_request.status.value,

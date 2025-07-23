@@ -77,8 +77,9 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
         response = await client.get(app.url_path_for(strings.API_GET_ALL_SHARED_SERVICES))
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["sharedServices"][0]["id"] == sample_shared_service().id
-
+        shared_service = sample_shared_service()
+        expected_dict = shared_service.model_dump() if hasattr(shared_service, 'model_dump') else shared_service
+        assert response.json()["sharedServices"][0]["id"] == expected_dict["id"]
         # check that as a user we only get the restricted resource model
         assert 'private_field_1' not in response.json()["sharedServices"][0]["properties"]
         assert 'private_field_2' not in response.json()["sharedServices"][0]["properties"]
@@ -92,12 +93,12 @@ def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
         connection_uri="",
         is_exposed_externally=True
     )
-    properties_dict = properties.model_dump() if hasattr(properties, 'model_dump') else properties
+    # Pass the model directly - the Resource validator should convert it to a dict
     return SharedService(
         id=shared_service_id,
         templateName="tre-shared-service-base",
         templateVersion="0.1.0",
-        properties=properties_dict,
+        properties=properties,
         updatedWhen=1609520755.0,
         user={
             "id": "user-guid-here",

@@ -59,8 +59,8 @@ class TestWorkspaceTemplate:
 
         actual_template_infos = response.json()["templates"]
         assert len(actual_template_infos) == len(expected_template_infos)
-        for name in expected_template_infos:
-            assert name in actual_template_infos
+        for template_info in expected_template_infos:
+            assert template_info.model_dump() in actual_template_infos
 
     # POST /workspace-templates
     async def test_post_does_not_create_a_template_with_bad_payload(self, app, client):
@@ -97,7 +97,12 @@ class TestWorkspaceTemplate:
 
         updated_current_workspace_template = basic_resource_template
         updated_current_workspace_template.current = False
-        update_item_mock.assert_called_once_with(updated_current_workspace_template.model_dump())
+        called_args = update_item_mock.call_args[0][0]
+        # Compare dicts for Pydantic v2 compatibility
+        called_args_dict = called_args.model_dump() if hasattr(called_args, 'model_dump') else called_args
+        expected_dict = updated_current_workspace_template.model_dump() if hasattr(updated_current_workspace_template, 'model_dump') else updated_current_workspace_template
+        assert called_args_dict == expected_dict
+        update_item_mock.assert_called_once()
         assert response.status_code == status.HTTP_201_CREATED
 
     # POST /workspace-templates
@@ -221,4 +226,7 @@ class TestWorkspaceTemplate:
 
         await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.model_dump())
 
-        create_template_mock.assert_called_once_with(input_workspace_template, ResourceType.WorkspaceService, '')
+        # The API converts the input to WorkspaceServiceTemplateInCreate, so we need to match that type
+        from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate
+        expected_template = WorkspaceServiceTemplateInCreate(**input_workspace_template.model_dump())
+        create_template_mock.assert_called_once_with(expected_template, ResourceType.WorkspaceService, '')

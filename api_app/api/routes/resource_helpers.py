@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 import semantic_version
 from copy import deepcopy
 from typing import Dict, Any, Optional
@@ -65,7 +65,11 @@ async def save_and_deploy_resource(
     resource_template: ResourceTemplate,
 ) -> Operation:
     try:
-        resource.user = user
+        # Ensure user is a dict for serialization
+        if hasattr(user, 'model_dump'):
+            resource.user = user.model_dump()
+        else:
+            resource.user = user
         resource.updatedWhen = get_timestamp()
 
         # Making a copy to save with secrets masked
@@ -286,7 +290,7 @@ async def get_template(
 
 
 def get_timestamp() -> float:
-    return datetime.now(datetime.UTC).timestamp()
+    return datetime.datetime.now(datetime.timezone.utc).timestamp()
 
 
 async def update_user_resource(

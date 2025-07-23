@@ -78,7 +78,7 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         actual_template_infos = response.json()["templates"]
         assert len(actual_template_infos) == len(expected_template_infos)
         for template_info in expected_template_infos:
-            assert template_info in actual_template_infos
+            assert template_info.model_dump() in actual_template_infos
 
     # POST /workspace-service-templates/
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_template")
@@ -108,7 +108,12 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
 
         updated_current_workspace_template = basic_workspace_service_template
         updated_current_workspace_template.current = False
-        update_item_mock.assert_called_once_with(updated_current_workspace_template.model_dump())
+        called_args = update_item_mock.call_args[0][0]
+        # Compare dicts for Pydantic v2 compatibility
+        called_args_dict = called_args.model_dump() if hasattr(called_args, 'model_dump') else called_args
+        expected_dict = updated_current_workspace_template.model_dump() if hasattr(updated_current_workspace_template, 'model_dump') else updated_current_workspace_template
+        assert called_args_dict == expected_dict
+        update_item_mock.assert_called_once()
         assert response.status_code == status.HTTP_201_CREATED
 
     # POST /workspace-service-templates/

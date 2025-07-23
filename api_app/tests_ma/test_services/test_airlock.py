@@ -49,6 +49,7 @@ def sample_workspace():
 
 
 def sample_airlock_request(status=AirlockRequestStatus.Draft):
+    user_dict = create_test_user().model_dump() if hasattr(create_test_user(), 'model_dump') else create_test_user()
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
         workspaceId=WORKSPACE_ID,
@@ -61,15 +62,9 @@ def sample_airlock_request(status=AirlockRequestStatus.Draft):
         businessJustification="some test reason",
         status=status,
         createdWhen=CURRENT_TIME,
-        createdBy=AirlockNotificationUserData(
-            name="John Doe",
-            email="john@example.com"
-        ),
+        createdBy=user_dict,
         updatedWhen=CURRENT_TIME,
-        updatedBy=AirlockNotificationUserData(
-            name="Test User",
-            email="test@user.com"
-        )
+        updatedBy=user_dict
     )
     return airlock_request
 
@@ -93,6 +88,7 @@ def sample_status_changed_event(new_status="draft", previous_status=None):
 
 
 def sample_airlock_notification_event(status="draft"):
+    user_data = create_test_user()
     status_changed_event = EventGridEvent(
         event_type="airlockNotification",
         data=AirlockNotificationData(
@@ -102,13 +98,13 @@ def sample_airlock_notification_event(status="draft"):
                 id=AIRLOCK_REQUEST_ID,
                 created_when=CURRENT_TIME,
                 created_by=AirlockNotificationUserData(
-                    name="John Doe",
-                    email="john@example.com"
+                    name=user_data.name,
+                    email=user_data.email
                 ),
                 updated_when=CURRENT_TIME,
                 updated_by=AirlockNotificationUserData(
-                    name="Test User",
-                    email="test@user.com"
+                    name=user_data.name,
+                    email=user_data.email
                 ),
                 request_type=AirlockRequestType.Import,
                 files=[AirlockFile(
