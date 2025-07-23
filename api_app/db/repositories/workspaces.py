@@ -1,13 +1,7 @@
 import uuid
 from typing import List, Tuple
 from azure.mgmt.storage import StorageManagementClient
-try:
-    # Pydantic v2
-    from pydantic import TypeAdapter
-    parse_obj_as = TypeAdapter
-except ImportError:
-    # Pydantic v1 fallback
-    from pydantic import TypeAdapter
+from pydantic import TypeAdapter
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
@@ -50,22 +44,12 @@ class WorkspaceRepository(ResourceRepository):
     async def get_workspaces(self) -> List[Workspace]:
         query = WorkspaceRepository.workspaces_query_string()
         workspaces = await self.query(query=query)
-        try:
-            # Pydantic v2
-            return TypeAdapter(List[Workspace]).validate_python(workspaces)
-        except AttributeError:
-            # Pydantic v1 fallback
-            return TypeAdapter(List[Workspace]).validate_python(workspaces)
+        return TypeAdapter(List[Workspace]).validate_python(workspaces)
 
     async def get_active_workspaces(self) -> List[Workspace]:
         query = WorkspaceRepository.active_workspaces_query_string()
         workspaces = await self.query(query=query)
-        try:
-            # Pydantic v2
-            return TypeAdapter(List[Workspace]).validate_python(workspaces)
-        except AttributeError:
-            # Pydantic v1 fallback
-            return TypeAdapter(List[Workspace]).validate_python(workspaces)
+        return TypeAdapter(List[Workspace]).validate_python(workspaces)
 
     async def get_deployed_workspace_by_id(self, workspace_id: str, operations_repo: OperationRepository) -> Workspace:
         workspace = await self.get_workspace_by_id(workspace_id)
@@ -80,12 +64,7 @@ class WorkspaceRepository(ResourceRepository):
         workspaces = await self.query(query=query)
         if not workspaces:
             raise EntityDoesNotExist
-        try:
-            # Pydantic v2
-            return TypeAdapter(Workspace).validate_python(workspaces[0])
-        except AttributeError:
-            # Pydantic v1 fallback
-            return TypeAdapter(Workspace).validate_python(workspaces[0])
+        return TypeAdapter(Workspace).validate_python(workspaces[0])
 
     # Remove this method once not using last 4 digits for naming - https://github.com/microsoft/AzureTRE/issues/3666
     async def is_workspace_storage_account_available(self, workspace_id: str) -> bool:

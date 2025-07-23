@@ -1,5 +1,4 @@
-from datetime import datetime
-import datetime as dt
+import datetime
 import uuid
 from typing import List
 
@@ -30,7 +29,7 @@ class OperationRepository(BaseRepository):
 
     @staticmethod
     def get_timestamp() -> float:
-        return datetime.now(dt.UTC).timestamp()
+        return datetime.datetime.now(datetime.UTC).timestamp()
 
     @staticmethod
     def create_operation_id() -> str:
@@ -169,7 +168,7 @@ class OperationRepository(BaseRepository):
 
         operation.status = status
         operation.message = message
-        operation.updatedWhen = datetime.now(dt.UTC).timestamp()
+        operation.updatedWhen = datetime.datetime.now(datetime.UTC).timestamp()
 
         await self.update_item(operation)
         return operation

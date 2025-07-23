@@ -1,7 +1,7 @@
 import copy
 import semantic_version
 from datetime import datetime
-import datetime as dt
+import datetime
 from typing import Optional, Tuple, List
 
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
@@ -220,7 +220,7 @@ class ResourceRepository(BaseRepository):
         self._validate_resource_parameters(resource_patch.model_dump(), update_template)
 
     def get_timestamp(self) -> float:
-        return datetime.now(dt.UTC).timestamp()
+        return datetime.datetime.now(datetime.UTC).timestamp()
 
 
 # Cosmos query consts

@@ -13,12 +13,6 @@ from shared_code import blob_operations, constants
 from pydantic import BaseModel, TypeAdapter, Field
 
 
-def parse_obj_as(type_hint, obj):
-    """Compatibility function for parse_obj_as in Pydantic v2"""
-    adapter = TypeAdapter(type_hint)
-    return adapter.validate_python(obj)
-
-
 class RequestProperties(BaseModel):
     request_id: str
     new_status: str
@@ -89,7 +83,7 @@ def extract_properties(msg: func.ServiceBusMessage) -> RequestProperties:
         body = msg.get_body().decode('utf-8')
         logging.debug('Python ServiceBus queue trigger processed message: %s', body)
         json_body = json.loads(body)
-        result = parse_obj_as(RequestProperties, json_body["data"])
+        result = TypeAdapter(RequestProperties).validate_python(json_body["data"])
         if not result:
             raise Exception("Failed parsing request properties")
     except json.decoder.JSONDecodeError:

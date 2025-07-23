@@ -6,13 +6,7 @@ from typing import List, Optional
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
 from fastapi import HTTPException, status
-try:
-    # Pydantic v2
-    from pydantic import TypeAdapter
-    parse_obj_as = TypeAdapter
-except ImportError:
-    # Pydantic v1 fallback
-    from pydantic import TypeAdapter
+from pydantic import TypeAdapter
 from db.repositories.workspaces import WorkspaceRepository
 from services.authentication import get_access_service
 from models.domain.authentication import User
@@ -51,7 +45,7 @@ class AirlockRequestRepository(BaseRepository):
 
         # now update the request props
         new_request.resourceVersion = new_request.resourceVersion + 1
-        new_request.updatedBy = updated_by.model_dump() if hasattr(updated_by, 'model_dump') else updated_by
+        new_request.updatedBy = updated_by.model_dump()
         new_request.updatedWhen = self.get_timestamp()
 
         await self.upsert_item_with_etag(new_request, new_request.etag)
@@ -119,9 +113,9 @@ class AirlockRequestRepository(BaseRepository):
             title=airlock_request_input.title,
             businessJustification=airlock_request_input.businessJustification,
             type=airlock_request_input.type,
-            createdBy=user.model_dump() if hasattr(user, 'model_dump') else user,
+            createdBy=user.model_dump(),
             createdWhen=datetime.now(timezone.utc).timestamp(),
-            updatedBy=user.model_dump() if hasattr(user, 'model_dump') else user,
+            updatedBy=user.model_dump(),
             updatedWhen=datetime.now(timezone.utc).timestamp(),
             properties=resource_spec_parameters,
             reviews=[]
@@ -157,24 +151,14 @@ class AirlockRequestRepository(BaseRepository):
             query += ' ASC' if order_ascending else ' DESC'
 
         airlock_requests = await self.query(query=query, parameters=parameters)
-        try:
-            # Pydantic v2
-            return TypeAdapter(List[AirlockRequest]).validate_python(airlock_requests)
-        except AttributeError:
-            # Pydantic v1 fallback
-            return TypeAdapter(List[AirlockRequest]).validate_python(airlock_requests)
+        return TypeAdapter(List[AirlockRequest]).validate_python(airlock_requests)
 
     async def get_airlock_request_by_id(self, airlock_request_id: UUID4) -> AirlockRequest:
         try:
             airlock_requests = await self.read_item_by_id(str(airlock_request_id))
         except CosmosResourceNotFoundError:
             raise EntityDoesNotExist
-        try:
-            # Pydantic v2
-            return TypeAdapter(AirlockRequest).validate_python(airlock_requests)
-        except AttributeError:
-            # Pydantic v1 fallback
-            return TypeAdapter(AirlockRequest).validate_python(airlock_requests)
+        return TypeAdapter(AirlockRequest).validate_python(airlock_requests)
 
     async def get_airlock_requests_for_airlock_manager(self, user: User, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
         workspace_repo = await WorkspaceRepository.create()
@@ -249,7 +233,7 @@ class AirlockRequestRepository(BaseRepository):
             dateCreated=self.get_timestamp(),
             reviewDecision=AirlockReviewDecision.Revoked,
             decisionExplanation=revocation_reason,
-            reviewer=reviewer.model_dump() if hasattr(reviewer, 'model_dump') else reviewer
+            reviewer=reviewer.model_dump()
         )
 
         return airlock_review

@@ -1,13 +1,7 @@
 import uuid
 from typing import List, Optional, Union
 
-try:
-    # Pydantic v2
-    from pydantic import TypeAdapter
-    parse_obj_as = TypeAdapter
-except ImportError:
-    # Pydantic v1 fallback
-    from pydantic import TypeAdapter
+from pydantic import TypeAdapter
 
 from core import config
 from db.errors import DuplicateEntity, EntityDoesNotExist, EntityVersionExist, InvalidInput
@@ -72,19 +66,9 @@ class ResourceTemplateRepository(BaseRepository):
         if len(templates) > 1:
             raise DuplicateEntity
         if resource_type == ResourceType.UserResource:
-            try:
-                # Pydantic v2
-                return TypeAdapter(UserResourceTemplate).validate_python(templates[0])
-            except AttributeError:
-                # Pydantic v1 fallback
-                return TypeAdapter(UserResourceTemplate).validate_python(templates[0])
+            return TypeAdapter(UserResourceTemplate).validate_python(templates[0])
         else:
-            try:
-                # Pydantic v2
-                return TypeAdapter(ResourceTemplate).validate_python(templates[0])
-            except AttributeError:
-                # Pydantic v1 fallback
-                return TypeAdapter(ResourceTemplate).validate_python(templates[0])
+            return TypeAdapter(ResourceTemplate).validate_python(templates[0])
 
     async def get_template_by_name_and_version(self, name: str, version: str, resource_type: ResourceType, parent_service_name: Optional[str] = None) -> Union[ResourceTemplate, UserResourceTemplate]:
         """
@@ -106,19 +90,9 @@ class ResourceTemplateRepository(BaseRepository):
         if len(templates) != 1:
             raise EntityDoesNotExist
         if resource_type == ResourceType.UserResource:
-            try:
-                # Pydantic v2
-                return TypeAdapter(UserResourceTemplate).validate_python(templates[0])
-            except AttributeError:
-                # Pydantic v1 fallback
-                return TypeAdapter(UserResourceTemplate).validate_python(templates[0])
+            return TypeAdapter(UserResourceTemplate).validate_python(templates[0])
         else:
-            try:
-                # Pydantic v2
-                return TypeAdapter(ResourceTemplate).validate_python(templates[0])
-            except AttributeError:
-                # Pydantic v1 fallback
-                return TypeAdapter(ResourceTemplate).validate_python(templates[0])
+            return TypeAdapter(ResourceTemplate).validate_python(templates[0])
 
     async def get_all_template_versions(self, template_name: str) -> List[str]:
         query = 'SELECT VALUE c.version FROM c where c.name = @template_name'

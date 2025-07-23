@@ -1,8 +1,6 @@
 from enum import StrEnum
 from typing import Optional, Union, List
-
 from pydantic import field_validator, BaseModel, Field
-
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.request_action import RequestAction
 from resources import strings

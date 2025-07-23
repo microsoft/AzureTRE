@@ -355,7 +355,7 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
     expected_resource.user = user.model_dump()
     expected_resource.updatedWhen = FAKE_UPDATE_TIMESTAMP
 
-    await resource_repo.patch_resource(resource, resource_patch, None, etag, None, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE)
+    await resource_repo.patch_resource(resource, resource_patch, None, etag, None, resource_history_repo, user.model_dump(), strings.RESOURCE_ACTION_UPDATE)
     resource_repo.update_item_with_etag.assert_called_once_with(expected_resource, etag)
 
     # now patch again
@@ -366,7 +366,7 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
     expected_resource.isEnabled = False
     expected_resource.user = user.model_dump()
 
-    await resource_repo.patch_resource(new_resource, new_patch, None, etag, None, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE)
+    await resource_repo.patch_resource(new_resource, new_patch, None, etag, None, resource_history_repo, user.model_dump(), strings.RESOURCE_ACTION_UPDATE)
     resource_repo.update_item_with_etag.assert_called_with(expected_resource, etag)
 
 
