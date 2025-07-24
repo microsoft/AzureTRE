@@ -14,7 +14,7 @@ from models.domain.resource import ResourceType
 from models.schemas.operation import OperationInList, OperationInResponse
 from models.schemas.shared_service import RestrictedSharedServiceInResponse, RestrictedSharedServicesInList, SharedServiceInCreate, SharedServicesInList, SharedServiceInResponse
 from models.schemas.resource import ResourceHistoryInList, ResourcePatch
-from models.domain.restricted_resource import RestrictedResource, RestrictedProperties
+from models.domain.restricted_resource import RestrictedResource
 from resources import strings
 from .workspaces import save_and_deploy_resource, construct_location_header
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
@@ -33,37 +33,6 @@ def user_is_tre_admin(user):
     return False
 
 
-def convert_to_restricted_resource(shared_service):
-    """Convert a SharedService to a RestrictedResource for non-admin users."""
-    # Ensure properties is a dict (should be already due to field validator)
-    properties_dict = shared_service.properties if isinstance(shared_service.properties, dict) else shared_service.properties.model_dump()
-
-    # Extract only the fields that RestrictedProperties supports
-    restricted_props = {
-        "display_name": properties_dict.get("display_name", ""),
-        "description": properties_dict.get("description", ""),
-        "overview": properties_dict.get("overview", ""),
-        "connection_uri": properties_dict.get("connection_uri", ""),
-        "is_exposed_externally": properties_dict.get("is_exposed_externally", True)
-    }
-
-    return RestrictedResource(
-        id=shared_service.id,
-        templateName=shared_service.templateName,
-        templateVersion=shared_service.templateVersion,
-        properties=RestrictedProperties(**restricted_props),
-        availableUpgrades=shared_service.availableUpgrades or [],
-        isEnabled=shared_service.isEnabled,
-        resourceType=shared_service.resourceType,
-        deploymentStatus=shared_service.deploymentStatus,
-        etag=shared_service.etag,
-        resourcePath=shared_service.resourcePath,
-        resourceVersion=shared_service.resourceVersion,
-        user=shared_service.user,
-        updatedWhen=shared_service.updatedWhen
-    )
-
-
 @shared_services_router.get("/shared-services", response_model=SharedServicesInList, name=strings.API_GET_ALL_SHARED_SERVICES, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 async def retrieve_shared_services(shared_services_repo=Depends(get_repository(SharedServiceRepository)), user=Depends(get_current_tre_user_or_tre_admin), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> SharedServicesInList:
     shared_services = await shared_services_repo.get_active_shared_services()
@@ -73,7 +42,8 @@ async def retrieve_shared_services(shared_services_repo=Depends(get_repository(S
         return SharedServicesInList(sharedServices=shared_services)
     else:
         # Convert SharedService objects to RestrictedResource objects for non-admin users
-        restricted_services = [convert_to_restricted_resource(service) for service in shared_services]
+        # The RestrictedResource field validator will automatically filter properties to safe fields
+        restricted_services = [RestrictedResource.model_validate(service.model_dump()) for service in shared_services]
         return RestrictedSharedServicesInList(sharedServices=restricted_services)
 
 
@@ -85,7 +55,8 @@ async def retrieve_shared_service_by_id(shared_service=Depends(get_shared_servic
         return SharedServiceInResponse(sharedService=shared_service)
     else:
         # Convert SharedService to RestrictedResource for non-admin users
-        restricted_service = convert_to_restricted_resource(shared_service)
+        # The RestrictedResource field validator will automatically filter properties to safe fields
+        restricted_service = RestrictedResource.model_validate(shared_service.model_dump())
         return RestrictedSharedServiceInResponse(sharedService=restricted_service)
 
 

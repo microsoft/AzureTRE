@@ -49,17 +49,6 @@ class Resource(AzureTREModel):
     resourceType: ResourceType
     deploymentStatus: Optional[str] = Field(None, title="Deployment Status", description="Overall deployment status of the resource")
     etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
-
-    @field_validator('properties', mode='before')
-    @classmethod
-    def validate_properties(cls, v):
-        """Ensure properties is always a dict, converting from model if necessary"""
-        if v is None:
-            return {}
-        if hasattr(v, 'model_dump'):
-            return v.model_dump()
-        return v
-
     resourcePath: str = ""
     resourceVersion: int = 0
     user: Optional[User] = Field(default=None)
