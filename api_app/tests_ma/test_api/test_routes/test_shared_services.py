@@ -34,11 +34,37 @@ def shared_service_input():
     }
 
 
+def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
+    # For admin users, SharedService should have full properties as a dict
+    # including both public and private fields
+    return SharedService(
+        id=shared_service_id,
+        templateName="tre-shared-service-base",
+        templateVersion="0.1.0",
+        etag="",
+        properties={
+            "display_name": "A display name",
+            "description": "desc here",
+            "overview": "overview here",
+            "connection_uri": "",
+            "is_exposed_externally": True,
+            "private_field_1": "value_1",  # Admin-only field
+            "private_field_2": "value_2"   # Admin-only field
+        }
+        updatedWhen=1609520755.0,
+        user={
+            "id": "user-guid-here",
+            "name": "Test User",
+            "email": "test@user.com",
+            "roles": ["TREAdmin"],
+            "roleAssignments": [("ab123", "ab124")]
+        }
+    )
+
+
 def sample_resource_history(history_length, shared_service_id=SHARED_SERVICE_ID) -> ResourceHistoryItem:
     resource_history = []
     user = create_test_user()
-
-    user_dict = user.model_dump()
 
     for version in range(history_length):
         resource_history_item = ResourceHistoryItem(
@@ -53,7 +79,7 @@ def sample_resource_history(history_length, shared_service_id=SHARED_SERVICE_ID)
                 'computed_prop': 'computed_val'
             },
             updatedWhen=FAKE_CREATE_TIMESTAMP,
-            user=user_dict
+            user=user
         )
         resource_history.append(resource_history_item)
     return resource_history
@@ -84,36 +110,27 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
         assert 'private_field_1' not in response.json()["sharedServices"][0]["properties"]
         assert 'private_field_2' not in response.json()["sharedServices"][0]["properties"]
 
+    # [GET] /shared-services/<shared-service-id>
+    @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service())
+    @patch("api.routes.shared_services.enrich_resource_with_available_upgrades", return_value=None)
+    async def test_get_shared_service_returns_shared_service_result_for_user(self, _, get_shared_service_mock, app, client):
+        shared_service = sample_shared_service(shared_service_id=str(uuid.uuid4()))
+        get_shared_service_mock.return_value = shared_service
 
-def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
-    # For admin users, SharedService should have full properties as a dict
-    # including both public and private fields
-    properties = {
-        "display_name": "A display name",
-        "description": "desc here",
-        "overview": "overview here",
-        "connection_uri": "",
-        "is_exposed_externally": True,
-        "private_field_1": "value_1",  # Admin-only field
-        "private_field_2": "value_2"   # Admin-only field
-    }
+        response = await client.get(
+            app.url_path_for(strings.API_GET_SHARED_SERVICE_BY_ID, shared_service_id=SHARED_SERVICE_ID))
 
-    return SharedService(
-        id=shared_service_id,
-        templateName="tre-shared-service-base",
-        templateVersion="0.1.0",
-        properties=properties,  # Pass dict directly - no field validation conversion needed
-        updatedWhen=1609520755.0,
-        user={
-            "id": "user-guid-here",
-            "name": "Test User",
-            "email": "test@user.com",
-            "roles": ["TREAdmin"],
-            "roleAssignments": [("ab123", "ab124")]
-        },
-        _etag="dummy-etag"
-    )
+        assert response.status_code == status.HTTP_200_OK
+        obj = response.json()["sharedService"]
+        assert obj["id"] == shared_service.id
 
+        # check that as a user we only get the restricted resource model
+        assert 'private_field_1' not in obj["properties"]
+        assert 'private_field_2' not in obj["properties"]
+
+
+class TestSharedServiceRoutesThatRequireAdminRights:
+    @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
         with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=admin_user()):
             app.dependency_overrides[get_current_tre_user_or_tre_admin] = admin_user

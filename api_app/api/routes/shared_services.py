@@ -37,12 +37,9 @@ def user_is_tre_admin(user):
 async def retrieve_shared_services(shared_services_repo=Depends(get_repository(SharedServiceRepository)), user=Depends(get_current_tre_user_or_tre_admin), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> SharedServicesInList:
     shared_services = await shared_services_repo.get_active_shared_services()
     await asyncio.gather(*[enrich_resource_with_available_upgrades(shared_service, resource_template_repo) for shared_service in shared_services])
-
     if user_is_tre_admin(user):
         return SharedServicesInList(sharedServices=shared_services)
     else:
-        # Convert SharedService objects to RestrictedResource objects for non-admin users
-        # The RestrictedResource field validator will automatically filter properties to safe fields
         restricted_services = [RestrictedResource.model_validate(service.model_dump()) for service in shared_services]
         return RestrictedSharedServicesInList(sharedServices=restricted_services)
 
@@ -50,12 +47,9 @@ async def retrieve_shared_services(shared_services_repo=Depends(get_repository(S
 @shared_services_router.get("/shared-services/{shared_service_id}", response_model=SharedServiceInResponse, name=strings.API_GET_SHARED_SERVICE_BY_ID, dependencies=[Depends(get_current_tre_user_or_tre_admin), Depends(get_shared_service_by_id_from_path)])
 async def retrieve_shared_service_by_id(shared_service=Depends(get_shared_service_by_id_from_path), user=Depends(get_current_tre_user_or_tre_admin), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))):
     await enrich_resource_with_available_upgrades(shared_service, resource_template_repo)
-
     if user_is_tre_admin(user):
         return SharedServiceInResponse(sharedService=shared_service)
     else:
-        # Convert SharedService to RestrictedResource for non-admin users
-        # The RestrictedResource field validator will automatically filter properties to safe fields
         restricted_service = RestrictedResource.model_validate(shared_service.model_dump())
         return RestrictedSharedServiceInResponse(sharedService=restricted_service)
 

@@ -54,9 +54,7 @@ def sample_airlock_request_object(status=AirlockRequestStatus.Draft, airlock_req
         type="import",
         status=status,
         reviews=[sample_airlock_review_object()] if reviews else None,
-        reviewUserResources={"user-guid-here": sample_airlock_user_resource_object()} if review_user_resource else {},
-        createdBy=None,
-        updatedBy=None
+        reviewUserResources={"user-guid-here": sample_airlock_user_resource_object()} if review_user_resource else {}
     )
     return airlock_request
 

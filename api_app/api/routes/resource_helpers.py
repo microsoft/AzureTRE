@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import semantic_version
 from copy import deepcopy
 from typing import Dict, Any, Optional
@@ -65,7 +65,6 @@ async def save_and_deploy_resource(
     resource_template: ResourceTemplate,
 ) -> Operation:
     try:
-        # Resource now uses proper User typing, no conversion needed
         resource.user = user
         resource.updatedWhen = get_timestamp()
 
@@ -287,7 +286,7 @@ async def get_template(
 
 
 def get_timestamp() -> float:
-    return datetime.datetime.now(datetime.timezone.utc).timestamp()
+    return datetime.utcnow().timestamp()
 
 
 async def update_user_resource(

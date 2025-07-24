@@ -72,7 +72,7 @@ test_sb_step_result_message_with_invalid_status = {
 
 
 def sample_airlock_request(status=AirlockRequestStatus.Submitted):
-    user_dict = create_test_user().model_dump()
+    user_dict = create_test_user()
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
         workspaceId=WORKSPACE_ID,

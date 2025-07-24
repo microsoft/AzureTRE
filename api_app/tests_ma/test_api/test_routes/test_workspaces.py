@@ -117,7 +117,7 @@ def sample_resource_history(history_length, resource_id) -> ResourceHistoryItem:
                 'computed_prop': 'computed_val'
             },
             updatedWhen=FAKE_CREATE_TIMESTAMP,
-            user=user.model_dump()
+            user=user
         )
         resource_history.append(resource_history_item)
     return resource_history

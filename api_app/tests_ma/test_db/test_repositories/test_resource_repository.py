@@ -60,7 +60,7 @@ def sample_resource() -> Resource:
         etag="some-etag-value",
         resourceVersion=0,
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_test_user().model_dump()
+        user=create_test_user()
     )
 
 
@@ -352,10 +352,10 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
     expected_resource = sample_resource()
     expected_resource.properties['display_name'] = 'updated name'
     expected_resource.resourceVersion = 1
-    expected_resource.user = user.model_dump()
+    expected_resource.user = user
     expected_resource.updatedWhen = FAKE_UPDATE_TIMESTAMP
 
-    await resource_repo.patch_resource(resource, resource_patch, None, etag, None, resource_history_repo, user.model_dump(), strings.RESOURCE_ACTION_UPDATE)
+    await resource_repo.patch_resource(resource, resource_patch, None, etag, None, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE)
     resource_repo.update_item_with_etag.assert_called_once_with(expected_resource, etag)
 
     # now patch again
@@ -364,9 +364,9 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
     expected_resource.resourceVersion = 2
     expected_resource.properties['display_name'] = "updated name 2"
     expected_resource.isEnabled = False
-    expected_resource.user = user.model_dump()
+    expected_resource.user = user
 
-    await resource_repo.patch_resource(new_resource, new_patch, None, etag, None, resource_history_repo, user.model_dump(), strings.RESOURCE_ACTION_UPDATE)
+    await resource_repo.patch_resource(new_resource, new_patch, None, etag, None, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE)
     resource_repo.update_item_with_etag.assert_called_with(expected_resource, etag)
 
 

@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from unittest.mock import AsyncMock
 import uuid
 import pytest
@@ -21,9 +21,9 @@ from models.domain.workspace import Workspace
 
 
 WORKSPACE_ID = '933ad738-7265-4b5f-9eae-a1a62928772e'
-FAKE_CREATE_TIME = datetime(2021, 1, 1, 17, 5, 55)
+FAKE_CREATE_TIME = datetime.datetime(2021, 1, 1, 17, 5, 55)
 FAKE_CREATE_TIMESTAMP: float = FAKE_CREATE_TIME.timestamp()
-FAKE_UPDATE_TIME = datetime(2022, 1, 1, 17, 5, 55)
+FAKE_UPDATE_TIME = datetime.datetime(2022, 1, 1, 17, 5, 55)
 FAKE_UPDATE_TIMESTAMP: float = FAKE_UPDATE_TIME.timestamp()
 
 
@@ -56,7 +56,7 @@ def sample_resource(workspace_id=WORKSPACE_ID):
             "client_id": "12345"
         },
         resourcePath=f'/workspaces/{workspace_id}',
-        user=create_test_user().model_dump(),
+        user=create_test_user(),
         updatedWhen=FAKE_CREATE_TIMESTAMP
     )
 
@@ -75,7 +75,7 @@ def sample_resource_with_secret():
             }
         },
         resourcePath=f'/workspaces/{WORKSPACE_ID}',
-        user=create_test_user().model_dump(),
+        user=create_test_user(),
         updatedWhen=FAKE_CREATE_TIMESTAMP
     )
 
@@ -91,7 +91,7 @@ def sample_resource_operation(resource_id: str, operation_id: str):
         Status=Status.Deployed,
         createdWhen=FAKE_CREATE_TIMESTAMP,
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_test_user().model_dump(),
+        user=create_test_user(),
         steps=[
             OperationStep(
                 id="random-uuid-1",
@@ -126,7 +126,7 @@ class TestResourceHelpers:
             operations_repo=operations_repo,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
-            user=create_test_user().model_dump(),
+            user=create_test_user(),
             resource_template=basic_resource_template)
 
         resource_repo.save_item.assert_called_once_with(resource)
@@ -144,7 +144,7 @@ class TestResourceHelpers:
                 operations_repo=operations_repo,
                 resource_template_repo=resource_template_repo,
                 resource_history_repo=resource_history_repo,
-                user=create_test_user().model_dump(),
+                user=create_test_user(),
                 resource_template=basic_resource_template)
 
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
@@ -166,14 +166,14 @@ class TestResourceHelpers:
             operations_repo=operations_repo,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
-            user=create_test_user().model_dump(),
+            user=create_test_user(),
             resource_template=basic_resource_template)
 
         send_resource_request_mock.assert_called_once_with(
             resource=resource,
             operations_repo=operations_repo,
             resource_repo=resource_repo,
-            user=user.model_dump(),  # Expect the dictionary version since that's what was passed
+            user=user,
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=RequestAction.Install)
@@ -193,7 +193,7 @@ class TestResourceHelpers:
                 operations_repo=operations_repo,
                 resource_template_repo=resource_template_repo,
                 resource_history_repo=resource_history_repo,
-                user=create_test_user().model_dump(),
+                user=create_test_user(),
                 resource_template=basic_resource_template)
 
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
@@ -215,7 +215,7 @@ class TestResourceHelpers:
                 operations_repo=operations_repo,
                 resource_template_repo=resource_template_repo,
                 resource_history_repo=resource_history_repo,
-                user=create_test_user().model_dump(),
+                user=create_test_user(),
                 resource_template=basic_resource_template)
 
         resource_repo.delete_item.assert_called_once_with(resource.id)
@@ -260,7 +260,7 @@ class TestResourceHelpers:
                 resource_type=ResourceType.Workspace,
                 resource_template_repo=resource_template_repo,
                 resource_history_repo=resource_history_repo,
-                user=create_test_user().model_dump())
+                user=create_test_user())
 
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
