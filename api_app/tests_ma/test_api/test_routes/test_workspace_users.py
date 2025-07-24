@@ -37,7 +37,7 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspa
         },
         resourcePath=f'/workspaces/{workspace_id}',
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_admin_user().model_dump()
+        user=create_admin_user()
     )
     if auth_info:
         workspace.properties = {**auth_info}
