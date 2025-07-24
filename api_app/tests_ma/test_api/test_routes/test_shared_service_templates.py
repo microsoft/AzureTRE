@@ -47,8 +47,8 @@ class TestSharedServiceTemplates:
     @patch("api.routes.shared_service_templates.ResourceTemplateRepository.get_templates_information")
     async def test_get_shared_service_templates_returns_template_names_and_description(self, get_templates_info_mock, app, client):
         expected_template_infos = [
-            ResourceTemplateInformation(name="template1", title="template 1", description="description1"),
-            ResourceTemplateInformation(name="template2", title="template 2", description="description2")
+            ResourceTemplateInformation(name="template1", title="template 1", description="description1").model_dump(),
+            ResourceTemplateInformation(name="template2", title="template 2", description="description2").model_dump()
         ]
         get_templates_info_mock.return_value = expected_template_infos
 
