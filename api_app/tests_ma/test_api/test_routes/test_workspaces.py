@@ -134,7 +134,7 @@ def sample_resource_operation(resource_id: str, operation_id: str):
         Status=Status.Deployed,
         createdWhen=FAKE_UPDATE_TIMESTAMP,
         updatedWhen=FAKE_UPDATE_TIMESTAMP,
-        user=create_test_user().model_dump(),
+        user=create_test_user(),
         steps=[
             OperationStep(
                 id="random-uuid",

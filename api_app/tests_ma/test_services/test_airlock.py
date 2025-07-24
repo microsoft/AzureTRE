@@ -49,7 +49,7 @@ def sample_workspace():
 
 
 def sample_airlock_request(status=AirlockRequestStatus.Draft):
-    user_dict = create_test_user().model_dump()
+    user = create_test_user()
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
         workspaceId=WORKSPACE_ID,
@@ -62,9 +62,9 @@ def sample_airlock_request(status=AirlockRequestStatus.Draft):
         businessJustification="some test reason",
         status=status,
         createdWhen=CURRENT_TIME,
-        createdBy=user_dict,
+        createdBy=user,
         updatedWhen=CURRENT_TIME,
-        updatedBy=user_dict
+        updatedBy=user
     )
     return airlock_request
 
@@ -251,7 +251,7 @@ async def test_save_and_publish_event_airlock_request_saves_item(_, __, event_gr
     await save_and_publish_event_airlock_request(
         airlock_request=airlock_request_mock,
         airlock_request_repo=airlock_request_repo_mock,
-        user=create_test_user().model_dump(),
+        user=create_test_user(),
         workspace=sample_workspace())
 
     airlock_request_repo_mock.save_item.assert_called_once_with(airlock_request_mock)
@@ -262,7 +262,7 @@ async def test_save_and_publish_event_airlock_request_saves_item(_, __, event_gr
     assert actual_status_changed_event.data == status_changed_event_mock.data
     actual_airlock_notification_event = event_grid_sender_client_mock.send.await_args_list[1].args[0][0]
     # Compare data handling Pydantic v2 serialization
-    actual_data = actual_airlock_notification_event.data.model_dump()
+    actual_data = actual_airlock_notification_event.data.model_dump() if hasattr(actual_airlock_notification_event.data, 'model_dump') else actual_airlock_notification_event.data
     expected_data = airlock_notification_event_mock.data.model_dump()
     assert actual_data == expected_data
 
@@ -277,7 +277,7 @@ async def test_save_and_publish_event_airlock_request_raises_503_if_save_to_db_f
         await save_and_publish_event_airlock_request(
             airlock_request=airlock_request_mock,
             airlock_request_repo=airlock_request_repo_mock,
-            user=create_test_user().model_dump(),
+            user=create_test_user(),
             workspace=sample_workspace())
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
@@ -298,7 +298,7 @@ async def test_save_and_publish_event_airlock_request_raises_503_if_publish_even
         await save_and_publish_event_airlock_request(
             airlock_request=airlock_request_mock,
             airlock_request_repo=airlock_request_repo_mock,
-            user=create_test_user().model_dump(),
+            user=create_test_user(),
             workspace=sample_workspace())
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
@@ -344,7 +344,7 @@ async def test_save_and_publish_event_airlock_request_raises_417_if_email_not_pr
         await save_and_publish_event_airlock_request(
             airlock_request=airlock_request_mock,
             airlock_request_repo=None,
-            user=create_test_user().model_dump(),
+            user=create_test_user(),
             workspace=sample_workspace())
     assert ex.value.status_code == status.HTTP_417_EXPECTATION_FAILED
 
@@ -363,7 +363,7 @@ async def test_save_and_publish_event_airlock_notification_if_email_not_present(
     await save_and_publish_event_airlock_request(
         airlock_request=airlock_request_mock,
         airlock_request_repo=airlock_request_repo_mock,
-        user=create_test_user().model_dump(),
+        user=create_test_user(),
         workspace=sample_workspace())
 
     assert publish_event_mock.call_count == 2
@@ -398,7 +398,9 @@ async def test_update_and_publish_event_airlock_request_updates_item(_, event_gr
     assert actual_status_changed_event.data == status_changed_event_mock.data
     actual_airlock_notification_event = event_grid_sender_client_mock.send.await_args_list[1].args[0][0]
     # Compare serialized forms since Pydantic v2 may return dict vs object
-    expected_data = airlock_notification_event_mock.data.model_dump()
+    expected_data = airlock_notification_event_mock.data
+    if hasattr(expected_data, 'model_dump'):
+        expected_data = expected_data.model_dump()
     assert actual_airlock_notification_event.data == expected_data
 
 
@@ -562,7 +564,7 @@ async def test_revoke_request_calls_update_with_revoked_status(update_mock, airl
 async def test_cancel_request_deletes_review_resource(_, delete_review_user_resource, airlock_request_repo_mock):
     await cancel_request(
         airlock_request=sample_airlock_request(),
-        user=create_test_user().model_dump(),
+        user=create_test_user(),
         airlock_request_repo=airlock_request_repo_mock,
         workspace=sample_workspace(),
         user_resource_repo=AsyncMock(),
@@ -585,5 +587,5 @@ async def test_delete_review_user_resource_disables_the_resource_before_deletion
                                       resource_template_repo=AsyncMock(),
                                       operations_repo=AsyncMock(),
                                       resource_history_repo=AsyncMock(),
-                                      user=create_test_user().model_dump())
+                                      user=create_test_user())
     disable_user_resource.assert_called_once()
