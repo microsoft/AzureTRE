@@ -65,7 +65,7 @@ async def save_and_deploy_resource(
     resource_template: ResourceTemplate,
 ) -> Operation:
     try:
-        # Field validator in Resource model automatically handles User->dict conversion
+        # Resource now uses proper User typing, no conversion needed
         resource.user = user
         resource.updatedWhen = get_timestamp()
 

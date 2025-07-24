@@ -2,6 +2,7 @@ from enum import StrEnum
 from typing import List, Dict, Optional
 
 from models.domain.azuretremodel import AzureTREModel
+from models.domain.authentication import User
 from pydantic import field_validator, Field
 
 from resources import strings
@@ -54,17 +55,10 @@ class AirlockReview(AzureTREModel):
     Airlock review
     """
     id: str = Field(title="Id", description="GUID identifying the review")
-    reviewer: dict = Field(default_factory=dict)
+    reviewer: Optional[User] = Field(default=None)
     dateCreated: float = 0
     reviewDecision: AirlockReviewDecision = Field("", title="Airlock review decision")
     decisionExplanation: str = Field(False, title="Explanation why the request was approved/rejected")
-
-    @field_validator("reviewer", mode="before")
-    @classmethod
-    def convert_reviewer_to_dict(cls, value):
-        if hasattr(value, "model_dump"):
-            return value.model_dump()
-        return value
 
 
 class AirlockRequestHistoryItem(AzureTREModel):
@@ -73,15 +67,8 @@ class AirlockRequestHistoryItem(AzureTREModel):
     """
     resourceVersion: int
     updatedWhen: float
-    updatedBy: dict = Field(default_factory=dict)
+    updatedBy: Optional[User] = Field(default=None)
     properties: dict = Field(default_factory=dict)
-
-    @field_validator("updatedBy", mode="before")
-    @classmethod
-    def convert_updated_by_to_dict(cls, value):
-        if hasattr(value, "model_dump"):
-            return value.model_dump()
-        return value
 
 
 class AirlockReviewUserResource(AzureTREModel):
@@ -99,9 +86,9 @@ class AirlockRequest(AzureTREModel):
     """
     id: str = Field(title="Id", description="GUID identifying the resource")
     resourceVersion: int = 0
-    createdBy: dict = Field(default_factory=dict)
+    createdBy: Optional[User] = Field(default=None)
     createdWhen: float = Field(None, title="Creation time of the request")
-    updatedBy: dict = Field(default_factory=dict)
+    updatedBy: Optional[User] = Field(default=None)
     updatedWhen: float = 0
     history: List[AirlockRequestHistoryItem] = []
     workspaceId: str = Field("", title="Workspace ID", description="Service target Workspace id")
@@ -121,17 +108,3 @@ class AirlockRequest(AzureTREModel):
     def parse_etag_to_remove_escaped_quotes(cls, value):
         if value:
             return value.replace('\"', '')
-
-    @field_validator("createdBy", mode="before")
-    @classmethod
-    def convert_created_by_to_dict(cls, value):
-        if hasattr(value, "model_dump"):
-            return value.model_dump()
-        return value
-
-    @field_validator("updatedBy", mode="before")
-    @classmethod
-    def convert_updated_by_to_dict(cls, value):
-        if hasattr(value, "model_dump"):
-            return value.model_dump()
-        return value

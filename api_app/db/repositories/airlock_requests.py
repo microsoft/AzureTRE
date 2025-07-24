@@ -45,8 +45,10 @@ class AirlockRequestRepository(BaseRepository):
 
         # now update the request props
         new_request.resourceVersion = new_request.resourceVersion + 1
-        new_request.updatedBy = updated_by.model_dump()
         new_request.updatedWhen = self.get_timestamp()
+
+        # Field validators will handle User object properly
+        new_request.updatedBy = updated_by
 
         await self.upsert_item_with_etag(new_request, new_request.etag)
         return new_request
@@ -233,7 +235,7 @@ class AirlockRequestRepository(BaseRepository):
             dateCreated=self.get_timestamp(),
             reviewDecision=AirlockReviewDecision.Revoked,
             decisionExplanation=revocation_reason,
-            reviewer=reviewer.model_dump()
+            reviewer=reviewer
         )
 
         return airlock_review

@@ -1,10 +1,11 @@
 from enum import StrEnum
 from typing import List, Optional
 
-from pydantic import Field, field_validator
+from pydantic import Field
 from pydantic.types import UUID4
 
 from models.domain.azuretremodel import AzureTREModel
+from models.domain.authentication import User
 from models.domain.resource import Output, ResourceType
 from resources import strings
 
@@ -92,15 +93,8 @@ class Operation(AzureTREModel):
     message: str = Field("", title="Additional operation status information")
     createdWhen: float = Field("", title="POSIX Timestamp for when the operation was submitted")
     updatedWhen: float = Field("", title="POSIX Timestamp for When the operation was updated")
-    user: dict = Field(default_factory=dict)
+    user: Optional[User] = Field(default=None)
     steps: Optional[List[OperationStep]] = Field(None, title="Operation Steps")
-
-    @field_validator("user", mode="before")
-    @classmethod
-    def convert_user_to_dict(cls, value):
-        if hasattr(value, "model_dump"):
-            return value.model_dump()
-        return value
 
 
 class DeploymentStatusUpdateMessage(AzureTREModel):

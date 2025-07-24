@@ -1,6 +1,7 @@
 from typing import Optional, List
 from pydantic import Field
 from models.domain.resource import AvailableUpgrade, ResourceType
+from models.domain.authentication import User
 from models.domain.azuretremodel import AzureTREModel
 
 
@@ -27,5 +28,5 @@ class RestrictedResource(AzureTREModel):
     etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
     resourceVersion: int = 0
-    user: dict = Field(default_factory=dict)
+    user: Optional[User] = Field(default=None)
     updatedWhen: float = 0

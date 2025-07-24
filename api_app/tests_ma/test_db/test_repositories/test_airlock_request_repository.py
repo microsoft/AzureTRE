@@ -124,11 +124,11 @@ async def test_get_airlock_request_by_id_raises_entity_does_not_exist_if_no_such
 
 async def test_create_airlock_request_item_creates_an_airlock_request_with_the_right_values(sample_airlock_request_input, airlock_request_repo):
     airlock_request_item_to_create = sample_airlock_request_input
-    created_by_user = {'id': 'test_user_id'}
+    created_by_user = create_test_user()  # Use proper User object instead of dict
     airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_item_to_create, WORKSPACE_ID, created_by_user)
 
     assert airlock_request.workspaceId == WORKSPACE_ID
-    assert airlock_request.createdBy['id'] == 'test_user_id'
+    assert airlock_request.createdBy.id == 'user-guid-here'  # Access as User object
 
 
 @pytest.mark.parametrize("current_status, new_status", get_allowed_status_changes())

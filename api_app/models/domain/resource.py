@@ -2,6 +2,7 @@ from enum import StrEnum
 from typing import Optional, Union, List
 from pydantic import field_validator, BaseModel, Field
 from models.domain.azuretremodel import AzureTREModel
+from models.domain.authentication import User
 from models.domain.request_action import RequestAction
 from resources import strings
 
@@ -26,7 +27,7 @@ class ResourceHistoryItem(AzureTREModel):
     isEnabled: bool = True
     resourceVersion: int = 0
     updatedWhen: float = 0
-    user: dict = Field(default_factory=dict)
+    user: Optional[User] = Field(default=None)
     templateVersion: Optional[str] = Field(None, title="Resource template version", description="The version of the resource template (bundle) to deploy")
 
 
@@ -59,18 +60,9 @@ class Resource(AzureTREModel):
             return v.model_dump()
         return v
 
-    @field_validator('user', mode='before')
-    @classmethod
-    def validate_user(cls, v):
-        """Ensure user is always a dict, converting from model if necessary"""
-        if v is None:
-            return {}
-        if hasattr(v, 'model_dump'):
-            return v.model_dump()
-        return v
     resourcePath: str = ""
     resourceVersion: int = 0
-    user: dict = Field(default_factory=dict)
+    user: Optional[User] = Field(default=None)
     updatedWhen: float = 0
 
     def get_resource_request_message_payload(self, operation_id: str, step_id: str, action: RequestAction) -> dict:
