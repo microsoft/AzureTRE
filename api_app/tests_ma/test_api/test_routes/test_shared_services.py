@@ -1,4 +1,3 @@
-from models.domain.restricted_resource import RestrictedProperties
 import random
 from unittest.mock import AsyncMock
 import uuid

@@ -2,7 +2,7 @@ import pytest
 from mock import patch, call
 
 import services.schema_service
-from models.domain.resource_template import Property, ResourceTemplate
+from models.domain.resource_template import ResourceTemplate
 
 
 @patch('services.schema_service.read_schema')
