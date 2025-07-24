@@ -49,7 +49,7 @@ def sample_workspace():
 
 
 def sample_airlock_request(status=AirlockRequestStatus.Draft):
-    user_dict = create_test_user().model_dump() if hasattr(create_test_user(), 'model_dump') else create_test_user()
+    user_dict = create_test_user().model_dump()
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
         workspaceId=WORKSPACE_ID,
@@ -262,8 +262,8 @@ async def test_save_and_publish_event_airlock_request_saves_item(_, __, event_gr
     assert actual_status_changed_event.data == status_changed_event_mock.data
     actual_airlock_notification_event = event_grid_sender_client_mock.send.await_args_list[1].args[0][0]
     # Compare data handling Pydantic v2 serialization
-    actual_data = actual_airlock_notification_event.data.model_dump() if hasattr(actual_airlock_notification_event.data, 'model_dump') else actual_airlock_notification_event.data
-    expected_data = airlock_notification_event_mock.data.model_dump() if hasattr(airlock_notification_event_mock.data, 'model_dump') else airlock_notification_event_mock.data
+    actual_data = actual_airlock_notification_event.data.model_dump()
+    expected_data = airlock_notification_event_mock.data.model_dump()
     assert actual_data == expected_data
 
 
@@ -398,9 +398,7 @@ async def test_update_and_publish_event_airlock_request_updates_item(_, event_gr
     assert actual_status_changed_event.data == status_changed_event_mock.data
     actual_airlock_notification_event = event_grid_sender_client_mock.send.await_args_list[1].args[0][0]
     # Compare serialized forms since Pydantic v2 may return dict vs object
-    expected_data = airlock_notification_event_mock.data
-    if hasattr(expected_data, 'model_dump'):
-        expected_data = expected_data.model_dump()
+    expected_data = airlock_notification_event_mock.data.model_dump()
     assert actual_airlock_notification_event.data == expected_data
 
 

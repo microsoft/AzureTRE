@@ -123,7 +123,7 @@ class TestUserResourceTemplatesNotRequiringAdminRights:
         assert response.status_code == status.HTTP_200_OK
         actual_templates = response.json()["templates"]
         assert len(actual_templates) == len(expected_templates)
-        expected_dicts = [t.model_dump() if hasattr(t, 'model_dump') else t for t in expected_templates]
+        expected_dicts = [t.model_dump() for t in expected_templates]
         for template_dict in expected_dicts:
             assert template_dict in actual_templates
 

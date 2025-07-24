@@ -110,8 +110,8 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         updated_current_workspace_template.current = False
         called_args = update_item_mock.call_args[0][0]
         # Compare dicts for Pydantic v2 compatibility
-        called_args_dict = called_args.model_dump() if hasattr(called_args, 'model_dump') else called_args
-        expected_dict = updated_current_workspace_template.model_dump() if hasattr(updated_current_workspace_template, 'model_dump') else updated_current_workspace_template
+        called_args_dict = called_args.model_dump()
+        expected_dict = updated_current_workspace_template.model_dump()
         assert called_args_dict == expected_dict
         update_item_mock.assert_called_once()
         assert response.status_code == status.HTTP_201_CREATED

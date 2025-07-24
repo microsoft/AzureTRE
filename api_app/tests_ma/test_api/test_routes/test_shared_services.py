@@ -38,7 +38,7 @@ def sample_resource_history(history_length, shared_service_id=SHARED_SERVICE_ID)
     resource_history = []
     user = create_test_user()
 
-    user_dict = user.model_dump() if hasattr(user, 'model_dump') else user
+    user_dict = user.model_dump()
 
     for version in range(history_length):
         resource_history_item = ResourceHistoryItem(
@@ -78,7 +78,7 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
 
         assert response.status_code == status.HTTP_200_OK
         shared_service = sample_shared_service()
-        expected_dict = shared_service.model_dump() if hasattr(shared_service, 'model_dump') else shared_service
+        expected_dict = shared_service.model_dump()
         assert response.json()["sharedServices"][0]["id"] == expected_dict["id"]
         # check that as a user we only get the restricted resource model
         assert 'private_field_1' not in response.json()["sharedServices"][0]["properties"]

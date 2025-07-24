@@ -57,7 +57,7 @@ class TestSharedServiceTemplates:
         assert response.status_code == status.HTTP_200_OK
         actual_template_infos = response.json()["templates"]
         assert len(actual_template_infos) == len(expected_template_infos)
-        expected_dicts = [t.model_dump() if hasattr(t, 'model_dump') else t for t in expected_template_infos]
+        expected_dicts = [t.model_dump() for t in expected_template_infos]
         for expected in expected_dicts:
             assert expected in actual_template_infos
 
