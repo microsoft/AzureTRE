@@ -337,7 +337,7 @@ def basic_shared_service(test_user, basic_shared_service_template):
         },
         resourcePath=f"/shared-services/{id}",
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=test_user.model_dump(),
+        user=test_user,
     )
 
 
@@ -352,7 +352,7 @@ def user_resource_multi(test_user, multi_step_resource_template):
         properties={},
         resourcePath=f"/workspaces/foo/workspace-services/bar/user-resources/{id}",
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=test_user.model_dump(),
+        user=test_user,
     )
 
 
@@ -364,7 +364,7 @@ def multi_step_operation(
         id="op-guid-here",
         resourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
         action=RequestAction.Install,
-        user=test_user.model_dump(),
+        user=test_user,
         resourcePath="/workspaces/59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
         createdWhen=FAKE_CREATE_TIMESTAMP,
         updatedWhen=FAKE_CREATE_TIMESTAMP,
