@@ -42,9 +42,6 @@ class TestUserResourceTemplatesRequiringAdminRights:
         app.dependency_overrides = {}
 
     # POST /workspace-service-templates/{service_template_name}/user-resource-templates
-    import pytest
-
-    @pytest.mark.skip(reason="Route name does not exist in app")
     @patch("api.dependencies.workspace_service_templates.ResourceTemplateRepository.get_current_template", side_effect=EntityDoesNotExist)
     async def test_creating_user_resource_template_raises_404_if_service_template_does_not_exist(self, _, input_user_resource_template, app, client):
         parent_workspace_service_name = "some_template_name"
@@ -54,9 +51,6 @@ class TestUserResourceTemplatesRequiringAdminRights:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # POST /workspace-service-templates/{template_name}/user-resource-templates
-    import pytest
-
-    @pytest.mark.skip(reason="Route name does not exist in app")
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template")
     @patch("api.dependencies.workspace_service_templates.ResourceTemplateRepository.get_current_template")
     async def test_when_creating_user_resource_template_it_is_returned_as_expected(self, get_current_template_mock, create_template_mock, app, client, input_user_resource_template, basic_workspace_service_template, user_resource_template_in_response):
@@ -73,9 +67,6 @@ class TestUserResourceTemplatesRequiringAdminRights:
         assert json.loads(response.text)["name"] == user_resource_template_in_response.name
 
     # POST /workspace-service-templates/{template_name}/user-resource-templates
-    import pytest
-
-    @pytest.mark.skip(reason="Route name does not exist in app")
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template")
     @patch("api.dependencies.workspace_service_templates.ResourceTemplateRepository.get_current_template")
     async def test_when_creating_user_resource_template_enriched_service_template_is_returned(self, get_current_template_mock, create_template_mock, app, client, input_user_resource_template, basic_workspace_service_template, user_resource_template_in_response):
@@ -92,9 +83,6 @@ class TestUserResourceTemplatesRequiringAdminRights:
         assert json.loads(response.text)["required"] == expected_template.required
 
     # POST /workspace-service-templates/{template_name}/user-resource-templates
-    import pytest
-
-    @pytest.mark.skip(reason="Route name does not exist in app")
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template")
     @patch("api.dependencies.workspace_service_templates.ResourceTemplateRepository.get_current_template")
     async def test_when_creating_user_resource_template_returns_409_if_version_exists(self, get_current_template_mock, create_user_resource_template_mock, app, client, input_user_resource_template, basic_workspace_service_template, user_resource_template_in_response):
@@ -109,7 +97,6 @@ class TestUserResourceTemplatesRequiringAdminRights:
 
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template", side_effect=InvalidInput)
     @patch("api.dependencies.workspace_service_templates.ResourceTemplateRepository.get_current_template")
-    @pytest.mark.skip(reason="Route name does not exist in app")
     async def test_creating_a_user_resource_template_raises_http_422_if_step_ids_are_duplicated(self, _, __, client, app, input_user_resource_template):
         response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, service_template_name="guacamole"), json=input_user_resource_template.model_dump())
 

@@ -46,14 +46,4 @@ class RestrictedResource(AzureTREModel):
                 "connection_uri": v.get("connection_uri", ""),
                 "is_exposed_externally": v.get("is_exposed_externally", True)
             }
-        elif hasattr(v, 'model_dump'):
-            # If it's a Pydantic model, convert to dict first
-            v_dict = v.model_dump()
-            return {
-                "display_name": v_dict.get("display_name", ""),
-                "description": v_dict.get("description", ""),
-                "overview": v_dict.get("overview", ""),
-                "connection_uri": v_dict.get("connection_uri", ""),
-                "is_exposed_externally": v_dict.get("is_exposed_externally", True)
-            }
         return v
