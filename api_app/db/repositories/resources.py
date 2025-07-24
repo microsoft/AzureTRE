@@ -105,7 +105,6 @@ class ResourceRepository(BaseRepository):
         await resource_history_repo.create_resource_history_item(resource)
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
-        # Resource now uses proper User typing, no conversion needed
         resource.user = user
         resource.updatedWhen = self.get_timestamp()
 

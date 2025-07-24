@@ -85,11 +85,10 @@ def initialize_logging() -> logging.Logger:
                     "psycopg2": {"enabled": False},
                 }
             )
-        except (ValueError, Exception) as e:
-            # Handle invalid connection strings or other Azure Monitor setup issues
-            # This is especially important for test environments
-            logging.warning(f"Failed to configure Azure Monitor: {e}")
-            pass
+        except Exception:
+            # If Azure Monitor configuration fails, continue without it
+            # This ensures tests and local development can run without instrumentation
+            logging.warning("Failed to configure Azure Monitor instrumentation, continuing without it")
 
     LoggingInstrumentor().instrument(
         set_logging_format=True,

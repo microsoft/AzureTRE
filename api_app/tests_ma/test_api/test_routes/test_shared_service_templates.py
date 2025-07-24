@@ -57,9 +57,8 @@ class TestSharedServiceTemplates:
         assert response.status_code == status.HTTP_200_OK
         actual_template_infos = response.json()["templates"]
         assert len(actual_template_infos) == len(expected_template_infos)
-        expected_dicts = [t.model_dump() for t in expected_template_infos]
-        for expected in expected_dicts:
-            assert expected in actual_template_infos
+        for template_info in expected_template_infos:
+            assert template_info in actual_template_infos
 
     # GET /shared-service-templates/{service_template_name}
     @patch("api.routes.shared_service_templates.ResourceTemplateRepository.get_current_template")

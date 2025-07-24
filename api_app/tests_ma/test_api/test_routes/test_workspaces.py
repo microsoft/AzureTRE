@@ -93,7 +93,7 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspa
         },
         resourcePath=f'/workspaces/{workspace_id}',
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_admin_user().model_dump()
+        user=create_admin_user()
     )
     if auth_info:
         workspace.properties = {**auth_info}
@@ -181,7 +181,7 @@ def sample_workspace_service(workspace_service_id=SERVICE_ID, workspace_id=WORKS
         properties={},
         resourcePath=f'/workspaces/{workspace_id}/workspace-services/{workspace_service_id}',
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_workspace_owner_user().model_dump()
+        user=create_workspace_owner_user()
     )
 
 
@@ -196,7 +196,7 @@ def sample_user_resource_object(user_resource_id=USER_RESOURCE_ID, workspace_id=
         properties={},
         resourcePath=f'/workspaces/{workspace_id}/workspace-services/{parent_workspace_service_id}/user-resources/{user_resource_id}',
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_workspace_researcher_user().model_dump()
+        user=create_workspace_researcher_user()
     )
 
     return user_resource
@@ -330,7 +330,7 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
             },
             resourcePath=f'/workspaces/{WORKSPACE_ID}',
             updatedWhen=FAKE_CREATE_TIMESTAMP,
-            user=create_admin_user().model_dump()
+            user=create_admin_user()
         )
 
         workspace_mock.return_value = no_scope_id_workspace
@@ -506,7 +506,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json=workspace_patch)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-        assert ("('header', 'etag')" in response.text or "'loc': ('header', 'etag')" in response.text) and ("field required" in response.text or "Field required" in response.text)
+        assert ("('header', 'etag')" in response.text and "Field required" in response.text)
 
     # [PATCH] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
@@ -1649,7 +1649,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         modified_user_resource.isEnabled = False
         modified_user_resource.resourceVersion = 1
         modified_user_resource.updatedWhen = FAKE_UPDATE_TIMESTAMP
-        modified_user_resource.user = create_workspace_researcher_user()  # Now expect User object
+        modified_user_resource.user = create_workspace_researcher_user()
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
 

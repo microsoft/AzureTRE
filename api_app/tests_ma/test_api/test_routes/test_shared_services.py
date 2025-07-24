@@ -50,7 +50,7 @@ def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
             "is_exposed_externally": True,
             "private_field_1": "value_1",  # Admin-only field
             "private_field_2": "value_2"   # Admin-only field
-        }
+        },
         updatedWhen=1609520755.0,
         user={
             "id": "user-guid-here",
@@ -103,9 +103,8 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
         response = await client.get(app.url_path_for(strings.API_GET_ALL_SHARED_SERVICES))
 
         assert response.status_code == status.HTTP_200_OK
-        shared_service = sample_shared_service()
-        expected_dict = shared_service.model_dump()
-        assert response.json()["sharedServices"][0]["id"] == expected_dict["id"]
+        assert response.json()["sharedServices"][0]["id"] == sample_shared_service().id
+
         # check that as a user we only get the restricted resource model
         assert 'private_field_1' not in response.json()["sharedServices"][0]["properties"]
         assert 'private_field_2' not in response.json()["sharedServices"][0]["properties"]
@@ -356,4 +355,4 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-        assert response.text == "[{'loc': ('body', 'fakeField'), 'msg': 'extra fields not permitted', 'type': 'value_error.extra'}]"
+        assert response.text == "[{'type': 'extra_forbidden', 'loc': ('body', 'fakeField'), 'msg': 'Extra inputs are not permitted', 'input': 'someValue'}]"

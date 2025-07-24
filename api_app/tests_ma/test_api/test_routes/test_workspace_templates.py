@@ -97,12 +97,7 @@ class TestWorkspaceTemplate:
 
         updated_current_workspace_template = basic_resource_template
         updated_current_workspace_template.current = False
-        called_args = update_item_mock.call_args[0][0]
-        # Compare dicts for Pydantic v2 compatibility
-        called_args_dict = called_args.model_dump()
-        expected_dict = updated_current_workspace_template.model_dump()
-        assert called_args_dict == expected_dict
-        update_item_mock.assert_called_once()
+        update_item_mock.assert_called_once_with(updated_current_workspace_template)
         assert response.status_code == status.HTTP_201_CREATED
 
     # POST /workspace-templates
@@ -219,14 +214,11 @@ class TestWorkspaceTemplate:
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_template_by_name_and_version")
-    async def test_when_creating_workspace_service_template_service_resource_type_is_set(self, get_template_by_name_and_version_mock, get_current_template_mock, create_template_mock, app, client, input_workspace_template, basic_workspace_service_template):
+    async def test_when_creating_workspace_service_template_service_resource_type_is_set(self, get_template_by_name_and_version_mock, get_current_template_mock, create_template_mock, app, client, input_workspace_service_template, basic_workspace_service_template):
         get_template_by_name_and_version_mock.side_effect = EntityDoesNotExist
         get_current_template_mock.side_effect = EntityDoesNotExist
         create_template_mock.return_value = basic_workspace_service_template
 
-        await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.model_dump())
+        await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_service_template.model_dump())
 
-        # The API converts the input to WorkspaceServiceTemplateInCreate, so we need to match that type
-        from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate
-        expected_template = WorkspaceServiceTemplateInCreate(**input_workspace_template.model_dump())
-        create_template_mock.assert_called_once_with(expected_template, ResourceType.WorkspaceService, '')
+        create_template_mock.assert_called_once_with(input_workspace_service_template, ResourceType.WorkspaceService, '')

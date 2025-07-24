@@ -1,6 +1,6 @@
 from typing import Dict, Any, List, Optional, Union
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.resource import ResourceType
@@ -9,7 +9,7 @@ from models.domain.resource import ResourceType
 class Property(AzureTREModel):
     type: str = Field(title="Property type")
     title: str = Field("", title="Property description")
-    description: str = Field("", title="Property description")
+    description: Optional[str] = Field(None, title="Property description")
     default: Any = Field(None, title="Default value for the property")
     enum: Optional[List[str]] = Field(None, title="Enum values")
     const: Optional[Any] = Field(None, title="Constant value")
@@ -76,3 +76,19 @@ class ResourceTemplate(AzureTREModel):
 
     # setting this to false means if extra, unexpected fields are supplied, the request is invalidated
     unevaluatedProperties: bool = Field(default=False, title="Prevent unspecified properties being applied")
+
+    @field_validator('properties', mode='before')
+    @classmethod
+    def convert_properties_to_property_objects(cls, v):
+        """Convert plain dictionaries to Property objects for properties field."""
+        if isinstance(v, dict):
+            result = {}
+            for key, value in v.items():
+                if isinstance(value, dict):
+                    # Convert dict to Property object
+                    result[key] = Property(**value)
+                else:
+                    # Already a Property object
+                    result[key] = value
+            return result
+        return v
