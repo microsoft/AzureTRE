@@ -279,8 +279,12 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 
     try:
         logger.debug(f"Saving airlock request item: {airlock_request.id}")
-        airlock_request.updatedBy = user
-        airlock_request.updatedWhen = get_timestamp()
+        # Create a new instance to ensure field validators run
+        airlock_request = AirlockRequest.model_validate({
+            **airlock_request.model_dump(),
+            'updatedBy': user,
+            'updatedWhen': get_timestamp()
+        })
         await airlock_request_repo.save_item(airlock_request)
     except Exception:
         logger.exception(f'Failed saving airlock request {airlock_request}')
