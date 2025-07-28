@@ -35,7 +35,7 @@ class UserResourceInResponse(BaseModel):
 
 
 class UserResourcesInList(BaseModel):
-    userResources: List[UserResource] = Field([], title="User resources")
+    userResources: List[UserResource] = Field(default=[], title="User resources")
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "userResources": [
@@ -48,7 +48,7 @@ class UserResourcesInList(BaseModel):
 
 class UserResourceInCreate(BaseModel):
     templateName: str = Field(title="User resource type", description="Bundle name")
-    properties: dict = Field({}, title="User resource parameters", description="Values for the parameters required by the user resource specification")
+    properties: dict = Field(default={}, title="User resource parameters", description="Values for the parameters required by the user resource specification")
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "templateName": "user-resource-type",

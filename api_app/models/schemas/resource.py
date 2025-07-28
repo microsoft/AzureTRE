@@ -39,7 +39,7 @@ def get_sample_resource_history(resource_id: str) -> dict:
 
 
 class ResourceHistoryInList(BaseModel):
-    resource_history: List[ResourceHistoryItem] = Field([], title="Resource history")
+    resource_history: List[ResourceHistoryItem] = Field(default=[], title="Resource history")
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "resource_history": [
