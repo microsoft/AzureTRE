@@ -45,16 +45,16 @@ class OperationStep(AzureTREModel):
     """
     id: str = Field(title="Id", description="Unique id identifying the step")
     templateStepId: str = Field(title="templateStepId", description="Unique id identifying the step")
-    stepTitle: Optional[str] = Field(title="stepTitle", description="Human readable title of what the step is for")
-    resourceId: Optional[str] = Field(title="resourceId", description="Id of the resource to update")
-    resourceTemplateName: Optional[str] = Field("", title="resourceTemplateName", description="Name of the template for the resource under change")
-    resourceType: Optional[ResourceType] = Field(title="resourceType", description="Type of resource under change")
-    resourceAction: Optional[str] = Field(title="resourceAction", description="Action - install / upgrade / uninstall etc")
-    status: Optional[Status] = Field(None, title="Operation step status")
-    message: Optional[str] = Field("", title="Additional operation step status information")
-    updatedWhen: Optional[float] = Field("", title="POSIX Timestamp for When the operation step was updated")
+    stepTitle: Optional[str] = Field(default=None, title="stepTitle", description="Human readable title of what the step is for")
+    resourceId: Optional[str] = Field(default=None, title="resourceId", description="Id of the resource to update")
+    resourceTemplateName: Optional[str] = Field(default="", title="resourceTemplateName", description="Name of the template for the resource under change")
+    resourceType: Optional[ResourceType] = Field(default=None, title="resourceType", description="Type of resource under change")
+    resourceAction: Optional[str] = Field(default=None, title="resourceAction", description="Action - install / upgrade / uninstall etc")
+    status: Optional[Status] = Field(default=None, title="Operation step status")
+    message: Optional[str] = Field(default="", title="Additional operation step status information")
+    updatedWhen: Optional[float] = Field(default=0.0, title="POSIX Timestamp for When the operation step was updated")
     # An example for this property will be if we have a step that is responsible for updating the firewall, and its origin was the guacamole workspace service, the id here will be the guacamole id
-    sourceTemplateResourceId: Optional[str] = Field(title="sourceTemplateResourceId", description="Id of the parent of the resource to update")
+    sourceTemplateResourceId: Optional[str] = Field(default=None, title="sourceTemplateResourceId", description="Id of the parent of the resource to update")
 
     def is_success(self) -> bool:
         return self.status in (
@@ -90,9 +90,9 @@ class Operation(AzureTREModel):
     resourceVersion: int = Field(0, title="resourceVersion", description="Version of the resource this operation relates to")
     status: Status = Field(None, title="Operation status")
     action: str = Field(title="action", description="Name of the action being performed on the resource, i.e. install, uninstall, start")
-    message: str = Field("", title="Additional operation status information")
-    createdWhen: float = Field("", title="POSIX Timestamp for when the operation was submitted")
-    updatedWhen: float = Field("", title="POSIX Timestamp for When the operation was updated")
+    message: str = Field(default="", title="Additional operation status information")
+    createdWhen: float = Field(default=0.0, title="POSIX Timestamp for when the operation was submitted")
+    updatedWhen: float = Field(default=0.0, title="POSIX Timestamp for When the operation was updated")
     user: Optional[User] = Field(default=None)
     steps: Optional[List[OperationStep]] = Field(None, title="Operation Steps")
 

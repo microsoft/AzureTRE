@@ -30,7 +30,7 @@ class WorkspaceServiceInResponse(BaseModel):
 
 
 class WorkspaceServicesInList(BaseModel):
-    workspaceServices: List[WorkspaceService] = Field([], title="Workspace services")
+    workspaceServices: List[WorkspaceService] = Field(default_factory=list, title="Workspace services")
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "workspaceServices": [

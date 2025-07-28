@@ -57,8 +57,8 @@ class AirlockReview(AzureTREModel):
     id: str = Field(title="Id", description="GUID identifying the review")
     reviewer: Optional[User] = Field(default=None)
     dateCreated: float = 0
-    reviewDecision: AirlockReviewDecision = Field("", title="Airlock review decision")
-    decisionExplanation: str = Field(False, title="Explanation why the request was approved/rejected")
+    reviewDecision: AirlockReviewDecision = Field(default=AirlockReviewDecision.Approved, title="Airlock review decision")
+    decisionExplanation: str = Field(default="", title="Explanation why the request was approved/rejected")
 
 
 class AirlockRequestHistoryItem(AzureTREModel):
@@ -91,9 +91,9 @@ class AirlockRequest(AzureTREModel):
     updatedBy: Optional[User] = Field(default=None)
     updatedWhen: float = 0
     history: List[AirlockRequestHistoryItem] = []
-    workspaceId: str = Field("", title="Workspace ID", description="Service target Workspace id")
-    type: AirlockRequestType = Field("", title="Airlock request type")
-    files: List[AirlockFile] = Field([], title="Files of the request")
+    workspaceId: str = Field(default="", title="Workspace ID", description="Service target Workspace id")
+    type: AirlockRequestType = Field(default=AirlockRequestType.Import, title="Airlock request type")
+    files: List[AirlockFile] = Field(default_factory=list, title="Files of the request")
     title: str = Field("Airlock Request", title="Brief title for the request")
     businessJustification: str = Field("Business Justification", title="Explanation that will be provided to the request reviewer")
     status: AirlockRequestStatus = AirlockRequestStatus.Draft
