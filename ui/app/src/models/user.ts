@@ -5,3 +5,8 @@ export interface User {
   roleAssignments: Array<any>;
   roles: Array<string>;
 }
+
+export interface CachedUser {
+  displayName: string;
+  email?: string;
+}
