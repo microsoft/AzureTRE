@@ -8,37 +8,37 @@ from models.domain.resource import ResourceType
 
 class Property(AzureTREModel):
     type: str = Field(title="Property type")
-    title: str = Field("", title="Property description")
-    description: Optional[str] = Field(None, title="Property description")
-    default: Any = Field(None, title="Default value for the property")
-    enum: Optional[List[str]] = Field(None, title="Enum values")
-    const: Optional[Any] = Field(None, title="Constant value")
-    multipleOf: Optional[float] = Field(None, title="Multiple of")
-    maximum: Optional[float] = Field(None, title="Maximum value")
-    exclusiveMaximum: Optional[float] = Field(None, title="Exclusive maximum value")
-    minimum: Optional[float] = Field(None, title="Minimum value")
-    exclusiveMinimum: Optional[float] = Field(None, title="Exclusive minimum value")
-    maxLength: Optional[int] = Field(None, title="Maximum length")
-    minLength: Optional[int] = Field(None, title="Minimum length")
-    pattern: Optional[str] = Field(None, title="Pattern")
-    updateable: Optional[bool] = Field(None, title="Indicates that the field can be updated")
-    sensitive: Optional[bool] = Field(None, title="Indicates that the field is a sensitive value")
-    readOnly: Optional[bool] = Field(None, title="Indicates the field is read-only")
+    title: str = Field(default="", title="Property description")
+    description: Optional[str] = Field(default=None, title="Property description")
+    default: Any = Field(default=None, title="Default value for the property")
+    enum: Optional[List[str]] = Field(default=None, title="Enum values")
+    const: Optional[Any] = Field(default=None, title="Constant value")
+    multipleOf: Optional[float] = Field(default=None, title="Multiple of")
+    maximum: Optional[float] = Field(default=None, title="Maximum value")
+    exclusiveMaximum: Optional[float] = Field(default=None, title="Exclusive maximum value")
+    minimum: Optional[float] = Field(default=None, title="Minimum value")
+    exclusiveMinimum: Optional[float] = Field(default=None, title="Exclusive minimum value")
+    maxLength: Optional[int] = Field(default=None, title="Maximum length")
+    minLength: Optional[int] = Field(default=None, title="Minimum length")
+    pattern: Optional[str] = Field(default=None, title="Pattern")
+    updateable: Optional[bool] = Field(default=None, title="Indicates that the field can be updated")
+    sensitive: Optional[bool] = Field(default=None, title="Indicates that the field is a sensitive value")
+    readOnly: Optional[bool] = Field(default=None, title="Indicates the field is read-only")
     items: Optional[dict] = None  # items can contain sub-properties
     properties: Optional[dict] = None
 
 
 class CustomAction(AzureTREModel):
-    name: str = Field(None, title="Custom action name")
-    description: str = Field("", title="Action description")
+    name: Optional[str] = Field(default=None, title="Custom action name")
+    description: str = Field(default="", title="Action description")
 
 
 class PipelineStepProperty(AzureTREModel):
     name: str = Field(title="name", description="name of the property to update")
     type: str = Field(title="type", description="data type of the property to update")
-    value: Union[dict, str] = Field(None, title="value", description="value to use in substitution for the property to update")
-    arraySubstitutionAction: Optional[str] = Field("", title="Array Substitution Action", description="How to treat existing values of this property in an array [overwrite | append | replace | remove]")
-    arrayMatchField: Optional[str] = Field("", title="Array match field", description="Name of the field to use for finding an item in an array - to replace/remove it")
+    value: Union[dict, str] = Field(default=None, title="value", description="value to use in substitution for the property to update")
+    arraySubstitutionAction: Optional[str] = Field(default="", title="Array Substitution Action", description="How to treat existing values of this property in an array [overwrite | append | replace | remove]")
+    arrayMatchField: Optional[str] = Field(default="", title="Array match field", description="Name of the field to use for finding an item in an array - to replace/remove it")
 
 
 class PipelineStep(AzureTREModel):
@@ -59,8 +59,8 @@ class Pipeline(AzureTREModel):
 class ResourceTemplate(AzureTREModel):
     id: str
     name: str = Field(title="Unique template name")
-    title: str = Field("", title="Template title or friendly name")
-    description: str = Field(title="Template description")
+    title: str = Field(default="", title="Template title or friendly name")
+    description: str = Field(default="", title="Template description")
     version: str = Field(title="Template version")
     resourceType: ResourceType = Field(title="Type of resource this template is for (workspace/service)")
     current: bool = Field(title="Is this the current version of this template")

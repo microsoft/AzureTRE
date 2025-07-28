@@ -40,7 +40,7 @@ class RestrictedSharedServiceInResponse(BaseModel):
 
 
 class RestrictedSharedServicesInList(BaseModel):
-    sharedServices: List[RestrictedResource] = Field([], title="shared services")
+    sharedServices: List[RestrictedResource] = Field(default_factory=list, title="shared services")
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "sharedServices": [
@@ -52,7 +52,7 @@ class RestrictedSharedServicesInList(BaseModel):
 
 
 class SharedServicesInList(BaseModel):
-    sharedServices: List[SharedService] = Field([], title="shared services")
+    sharedServices: List[SharedService] = Field(default_factory=list, title="shared services")
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "sharedServices": [
@@ -65,7 +65,7 @@ class SharedServicesInList(BaseModel):
 
 class SharedServiceInCreate(BaseModel):
     templateName: str = Field(title="Shared service type", description="Bundle name")
-    properties: dict = Field({}, title="Shared service parameters", description="Values for the parameters required by the shared service resource specification")
+    properties: dict = Field(default={}, title="Shared service parameters", description="Values for the parameters required by the shared service resource specification")
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "templateName": "tre-shared-service-firewall",
