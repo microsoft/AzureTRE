@@ -17,5 +17,4 @@ async def test_frw_validation_error_format(app):
 
     assert response.status_code == HTTP_422_UNPROCESSABLE_ENTITY
 
-    # Pydantic v2 error format: check for 'int_parsing' type in response
     assert "int_parsing" in response.text

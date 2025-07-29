@@ -34,8 +34,6 @@ def shared_service_input():
 
 
 def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
-    # For admin users, SharedService should have full properties as a dict
-    # including both public and private fields
     return SharedService(
         id=shared_service_id,
         templateName="tre-shared-service-base",
