@@ -158,6 +158,13 @@ start:
         identity:
         username: ${ bundle.credentials.azure_client_id }
   - az:
+      description: "Select the Azure subscription"
+      arguments:
+        - account
+        - set
+      flags:
+        subscription: ${ bundle.credentials.azure_subscription_id }
+  - az:
       description: "Start the VM"
       arguments:
         - vm
@@ -193,6 +200,13 @@ stop:
       flags:
         identity:
         username: ${ bundle.credentials.azure_client_id }
+  - az:
+      description: "Select the Azure subscription"
+      arguments:
+        - account
+        - set
+      flags:
+        subscription: ${ bundle.credentials.azure_subscription_id }
   - az:
       description: "Stop the VM"
       arguments:

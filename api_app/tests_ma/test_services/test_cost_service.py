@@ -652,3 +652,58 @@ def __set_cost_management_client_mock_query_result():
                             QueryColumn(name="Currency", type="String")]
 
     return query_result
+
+
+@pytest.mark.asyncio
+@patch('db.repositories.workspaces.WorkspaceRepository')
+@patch('db.repositories.shared_services.SharedServiceRepository')
+@patch('services.cost_service.CostManagementClient')
+@patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
+async def test_subscription_id_includes_default_and_workspace_ids(get_resource_groups_by_tag_mock, client_mock, shared_service_repo_mock, workspace_repo_mock):
+    from services import cost_service as cs
+    cs.config.SUBSCRIPTION_ID = "default-sub-id"
+
+    # Workspace with and without subscription id
+    workspace_repo_mock.get_active_workspaces = AsyncMock(return_value=[
+        Workspace(id='ws1', templateName='t1', resourceType=ResourceType.Workspace, templateVersion="1", _etag="x", properties={}),
+        Workspace(id='ws2', templateName='t2', resourceType=ResourceType.Workspace, templateVersion="1", _etag="x", properties={"workspace_subscription_id": "sub-2"}),
+        Workspace(id='ws3', templateName='t3', resourceType=ResourceType.Workspace, templateVersion="1", _etag="x", properties={"workspace_subscription_id": "sub-3"}),
+        Workspace(id='ws4', templateName='t4', resourceType=ResourceType.Workspace, templateVersion="1", _etag="x", properties={"workspace_subscription_id": "sub-2"}),  # duplicate
+    ])
+    __set_shared_service_repo_mock_return_value(shared_service_repo_mock)
+    get_resource_groups_by_tag_mock.return_value = {}
+    client_mock.return_value.query.usage.return_value = QueryResult(rows=[], columns=[])
+
+    cost_service = CostService()
+    await cost_service.query_tre_costs(
+        "treid", GranularityEnum.none, datetime.now(), datetime.now(), workspace_repo_mock, shared_service_repo_mock)
+
+    # Collect all subscription_ids used in get_resource_groups_by_tag calls
+    called_sub_ids = set(call.args[2] for call in get_resource_groups_by_tag_mock.call_args_list)
+    # Should include default and both unique workspace ids
+    assert called_sub_ids == {"default-sub-id", "sub-2", "sub-3"}
+
+
+@pytest.mark.asyncio
+@patch('db.repositories.workspaces.WorkspaceRepository')
+@patch('db.repositories.shared_services.SharedServiceRepository')
+@patch('services.cost_service.CostManagementClient')
+@patch('services.cost_service.CostService.__wrapped__.get_resource_groups_by_tag')
+async def test_subscription_id_skips_workspaces_without_id(get_resource_groups_by_tag_mock, client_mock, shared_service_repo_mock, workspace_repo_mock):
+    from services import cost_service as cs
+    cs.config.SUBSCRIPTION_ID = "default-sub-id"
+
+    workspace_repo_mock.get_active_workspaces = AsyncMock(return_value=[
+        Workspace(id='ws1', templateName='t1', resourceType=ResourceType.Workspace, templateVersion="1", _etag="x", properties={}),
+        Workspace(id='ws2', templateName='t2', resourceType=ResourceType.Workspace, templateVersion="1", _etag="x", properties={}),
+    ])
+    __set_shared_service_repo_mock_return_value(shared_service_repo_mock)
+    get_resource_groups_by_tag_mock.return_value = {}
+    client_mock.return_value.query.usage.return_value = QueryResult(rows=[], columns=[])
+
+    cost_service = CostService()
+    await cost_service.query_tre_costs(
+        "treid", GranularityEnum.none, datetime.now(), datetime.now(), workspace_repo_mock, shared_service_repo_mock)
+
+    called_sub_ids = set(call.args[2] for call in get_resource_groups_by_tag_mock.call_args_list)
+    assert called_sub_ids == {"default-sub-id"}
