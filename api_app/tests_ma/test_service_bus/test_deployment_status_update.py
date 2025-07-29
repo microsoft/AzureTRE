@@ -401,17 +401,7 @@ async def test_convert_outputs_to_dict():
     assert status_updater.convert_outputs_to_dict(outputs_list) == expected_result
 
     # Test case 2: List of outputs with mixed types
-    try:
-
-        # Pydantic v2
-
-        deployment_status_update_message = TypeAdapter(DeploymentStatusUpdateMessage).validate_python(test_sb_message_with_outputs)
-
-    except AttributeError:
-
-        # Pydantic v1 fallback
-
-        deployment_status_update_message = TypeAdapter(DeploymentStatusUpdateMessage).validate_python(test_sb_message_with_outputs)
+    deployment_status_update_message = TypeAdapter(DeploymentStatusUpdateMessage).validate_python(test_sb_message_with_outputs)
 
     expected_result = {
         'string1': 'value1',
