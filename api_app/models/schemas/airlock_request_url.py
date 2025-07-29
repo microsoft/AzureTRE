@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 
 
 def get_sample_airlock_request_container_url(container_url: str) -> dict:
@@ -9,10 +9,8 @@ def get_sample_airlock_request_container_url(container_url: str) -> dict:
 
 class AirlockRequestTokenInResponse(BaseModel):
     containerUrl: str
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "container_url": get_sample_airlock_request_container_url("container_url")
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "container_url": get_sample_airlock_request_container_url("container_url")
         }
+    })

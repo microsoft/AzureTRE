@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from services.logging import logger
 
 from azure.storage.blob import generate_container_sas, ContainerSasPermissions, BlobServiceClient
@@ -108,8 +108,8 @@ def get_airlock_request_container_sas_token(account_name: str,
     blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
                                             credential=credentials.get_credential())
 
-    start = datetime.utcnow() - timedelta(minutes=15)
-    expiry = datetime.utcnow() + timedelta(hours=config.AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS)
+    start = datetime.now(timezone.utc) - timedelta(minutes=15)
+    expiry = datetime.now(timezone.utc) + timedelta(hours=config.AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS)
 
     try:
         udk = blob_service_client.get_user_delegation_key(key_start_time=start, key_expiry_time=expiry)
@@ -279,8 +279,12 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 
     try:
         logger.debug(f"Saving airlock request item: {airlock_request.id}")
-        airlock_request.updatedBy = user
-        airlock_request.updatedWhen = get_timestamp()
+        # Create a new instance to ensure field validators run
+        airlock_request = AirlockRequest.model_validate({
+            **airlock_request.model_dump(),
+            'updatedBy': user,
+            'updatedWhen': get_timestamp()
+        })
         await airlock_request_repo.save_item(airlock_request)
     except Exception:
         logger.exception(f'Failed saving airlock request {airlock_request}')
@@ -288,6 +292,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 
     try:
         logger.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
+        # Field validators in AirlockRequest model automatically handle User->dict conversion
         await send_status_changed_event(airlock_request=airlock_request, previous_status=None)
         await send_airlock_notification_event(airlock_request, workspace, role_assignment_details)
     except Exception:
@@ -326,6 +331,7 @@ async def update_and_publish_event_airlock_request(
 
     if not new_status:
         logger.debug(f"Skipping sending 'status changed' event for airlock request item: {airlock_request.id} - there is no status change")
+        # Field validators in AirlockRequest model automatically handle User->dict conversion
         return updated_airlock_request
 
     try:
@@ -341,7 +347,7 @@ async def update_and_publish_event_airlock_request(
 
 
 def get_timestamp() -> float:
-    return datetime.utcnow().timestamp()
+    return datetime.now(timezone.utc).timestamp()
 
 
 def check_email_exists(role_assignment_details: defaultdict(list)):

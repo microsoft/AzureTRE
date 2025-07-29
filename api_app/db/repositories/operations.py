@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from typing import List
 
-from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 from db.repositories.resource_templates import ResourceTemplateRepository
 from resources import strings
 from models.domain.request_action import RequestAction
@@ -29,7 +29,7 @@ class OperationRepository(BaseRepository):
 
     @staticmethod
     def get_timestamp() -> float:
-        return datetime.utcnow().timestamp()
+        return datetime.now(timezone.utc).timestamp()
 
     @staticmethod
     def create_operation_id() -> str:
@@ -64,7 +64,7 @@ class OperationRepository(BaseRepository):
                 primary_parent_workspace_service = await resource_repo.get_resource_by_id(resource["parentWorkspaceServiceId"])
                 primary_parent_service_name = primary_parent_workspace_service.templateName
             resource_template = await resource_template_repo.get_template_by_name_and_version(name, version, resource_type, primary_parent_service_name)
-            resource_template_dict = resource_template.dict(exclude_none=True)
+            resource_template_dict = resource_template.model_dump(exclude_none=True)
             # if the template has a pipeline defined for this action, copy over all the steps to the ops document
             steps = await self.build_step_list(
                 steps=[],
@@ -168,7 +168,7 @@ class OperationRepository(BaseRepository):
 
         operation.status = status
         operation.message = message
-        operation.updatedWhen = datetime.utcnow().timestamp()
+        operation.updatedWhen = datetime.now(timezone.utc).timestamp()
 
         await self.update_item(operation)
         return operation
@@ -178,17 +178,17 @@ class OperationRepository(BaseRepository):
         operation = await self.query(query=query)
         if not operation:
             raise EntityDoesNotExist
-        return parse_obj_as(Operation, operation[0])
+        return TypeAdapter(Operation).validate_python(operation[0])
 
     async def get_my_operations(self, user_id: str) -> List[Operation]:
         query = self.operations_query() + f' c.user.id = "{user_id}" AND c.status IN ("{Status.AwaitingAction}", "{Status.InvokingAction}", "{Status.AwaitingDeployment}", "{Status.Deploying}", "{Status.AwaitingDeletion}", "{Status.Deleting}", "{Status.AwaitingUpdate}", "{Status.Updating}", "{Status.PipelineRunning}") ORDER BY c.createdWhen ASC'
         operations = await self.query(query=query)
-        return parse_obj_as(List[Operation], operations)
+        return TypeAdapter(List[Operation]).validate_python(operations)
 
     async def get_operations_by_resource_id(self, resource_id: str) -> List[Operation]:
         query = self.operations_query() + f' c.resourceId = "{resource_id}"'
         operations = await self.query(query=query)
-        return parse_obj_as(List[Operation], operations)
+        return TypeAdapter(List[Operation]).validate_python(operations)
 
     async def resource_has_deployed_operation(self, resource_id: str) -> bool:
         query = self.operations_query() + f' c.resourceId = "{resource_id}" AND ((c.action = "{RequestAction.Install}" AND c.status = "{Status.Deployed}") OR (c.action = "{RequestAction.Upgrade}" AND c.status = "{Status.Updated}"))'

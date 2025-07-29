@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import ConfigDict, BaseModel, Field
 
 from models.domain.resource_template import CustomAction, ResourceTemplate, Property
 
@@ -26,21 +26,19 @@ class ResourceTemplateInformation(BaseModel):
 
 class ResourceTemplateInformationInList(BaseModel):
     templates: List[ResourceTemplateInformation]
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "templates": [
-                    {
-                        "name": "tre-workspace-base",
-                        "title": "Base Workspace",
-                        "description": "base description"
-                    },
-                    {
-                        "name": "tre-workspace-base",
-                        "title": "Base Workspace",
-                        "description": "base description"
-                    }
-                ]
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "templates": [
+                {
+                    "name": "tre-workspace-base",
+                    "title": "Base Workspace",
+                    "description": "base description"
+                },
+                {
+                    "name": "tre-workspace-base",
+                    "title": "Base Workspace",
+                    "description": "base description"
+                }
+            ]
         }
+    })

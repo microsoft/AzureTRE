@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 
 import azure.functions as func
-import datetime
+from datetime import datetime, timezone
 import os
 import uuid
 import json
@@ -10,13 +10,13 @@ import json
 from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
 
 from shared_code import blob_operations, constants
-from pydantic import BaseModel, parse_obj_as
+from pydantic import BaseModel, TypeAdapter, Field
 
 
 class RequestProperties(BaseModel):
     request_id: str
     new_status: str
-    previous_status: Optional[str]
+    previous_status: Optional[str] = Field(default=None)
     type: str
     workspace_id: str
 
@@ -83,7 +83,7 @@ def extract_properties(msg: func.ServiceBusMessage) -> RequestProperties:
         body = msg.get_body().decode('utf-8')
         logging.debug('Python ServiceBus queue trigger processed message: %s', body)
         json_body = json.loads(body)
-        result = parse_obj_as(RequestProperties, json_body["data"])
+        result = TypeAdapter(RequestProperties).validate_python(json_body["data"])
         if not result:
             raise Exception("Failed parsing request properties")
     except json.decoder.JSONDecodeError:
@@ -187,7 +187,7 @@ def set_output_event_to_report_failure(stepResultEvent, request_properties, fail
             data={"completed_step": request_properties.new_status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id, "request_files": request_files, "status_message": failure_reason},
             subject=request_properties.request_id,
             event_type="Airlock.StepResult",
-            event_time=datetime.datetime.utcnow(),
+            event_time=datetime.now(timezone.utc),
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
 
@@ -199,7 +199,7 @@ def set_output_event_to_report_request_files(stepResultEvent, request_properties
             data={"completed_step": request_properties.new_status, "request_id": request_properties.request_id, "request_files": request_files},
             subject=request_properties.request_id,
             event_type="Airlock.StepResult",
-            event_time=datetime.datetime.utcnow(),
+            event_time=datetime.now(timezone.utc),
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
 
@@ -211,7 +211,7 @@ def set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_pr
             data={"blob_to_delete": container_url},
             subject=request_properties.request_id,
             event_type="Airlock.DataDeletion",
-            event_time=datetime.datetime.utcnow(),
+            event_time=datetime.now(timezone.utc),
             data_version=constants.DATA_DELETION_EVENT_DATA_VERSION
         )
     )

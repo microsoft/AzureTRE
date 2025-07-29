@@ -2,7 +2,7 @@ import json
 import pytest
 from mock import patch
 
-from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 from starlette import status
 
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
@@ -78,7 +78,7 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         actual_template_infos = response.json()["templates"]
         assert len(actual_template_infos) == len(expected_template_infos)
         for template_info in expected_template_infos:
-            assert template_info in actual_template_infos
+            assert template_info.model_dump() in actual_template_infos
 
     # POST /workspace-service-templates/
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_template")
@@ -89,7 +89,7 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         get_current_mock.side_effect = EntityDoesNotExist
         create_template_mock.return_value = basic_workspace_service_template
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.model_dump())
 
         assert response.status_code == status.HTTP_201_CREATED
 
@@ -104,11 +104,11 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         get_current_template_mock.return_value = basic_workspace_service_template
         create_template_mock.return_value = basic_workspace_service_template
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.model_dump())
 
         updated_current_workspace_template = basic_workspace_service_template
         updated_current_workspace_template.current = False
-        update_item_mock.assert_called_once_with(updated_current_workspace_template.dict())
+        update_item_mock.assert_called_once_with(updated_current_workspace_template)
         assert response.status_code == status.HTTP_201_CREATED
 
     # POST /workspace-service-templates/
@@ -120,11 +120,11 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         get_current_template_mock.side_effect = EntityDoesNotExist
         create_template_mock.return_value = basic_workspace_service_template
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.model_dump())
 
-        expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_service_template(basic_workspace_service_template))
-        assert json.loads(response.text)["required"] == expected_template.dict(exclude_unset=True)["required"]
-        assert json.loads(response.text)["properties"] == expected_template.dict(exclude_unset=True)["properties"]
+        expected_template = TypeAdapter(WorkspaceTemplateInResponse).validate_python(enrich_workspace_service_template(basic_workspace_service_template))
+        assert json.loads(response.text)["required"] == expected_template.model_dump(exclude_unset=True)["required"]
+        assert json.loads(response.text)["properties"] == expected_template.model_dump(exclude_unset=True)["properties"]
 
     # POST /workspace-service-templates/
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_template")
@@ -135,20 +135,20 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         get_current_template_mock.side_effect = EntityDoesNotExist
         create_template_mock.return_value = basic_workspace_service_template
 
-        await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_service_template.dict())
+        await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_service_template.model_dump())
 
         create_template_mock.assert_called_once_with(input_workspace_service_template, ResourceType.WorkspaceService, '')
 
     # POST /workspace-service-templates/
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template", side_effect=EntityVersionExist)
     async def test_creating_a_template_raises_409_conflict_if_template_version_exists(self, _, client, app, input_workspace_service_template):
-        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_service_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_service_template.model_dump())
 
         assert response.status_code == status.HTTP_409_CONFLICT
 
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template", side_effect=InvalidInput)
     async def test_creating_a_workspace_service_template_raises_http_422_if_step_ids_are_duplicated(self, _, client, app, input_workspace_service_template):
-        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_service_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_service_template.model_dump())
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 

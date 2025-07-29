@@ -49,6 +49,7 @@ def sample_workspace():
 
 
 def sample_airlock_request(status=AirlockRequestStatus.Draft):
+    user = create_test_user()
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
         workspaceId=WORKSPACE_ID,
@@ -61,15 +62,9 @@ def sample_airlock_request(status=AirlockRequestStatus.Draft):
         businessJustification="some test reason",
         status=status,
         createdWhen=CURRENT_TIME,
-        createdBy=AirlockNotificationUserData(
-            name="John Doe",
-            email="john@example.com"
-        ),
+        createdBy=user,
         updatedWhen=CURRENT_TIME,
-        updatedBy=AirlockNotificationUserData(
-            name="Test User",
-            email="test@user.com"
-        )
+        updatedBy=user
     )
     return airlock_request
 
@@ -93,6 +88,7 @@ def sample_status_changed_event(new_status="draft", previous_status=None):
 
 
 def sample_airlock_notification_event(status="draft"):
+    user_data = create_test_user()
     status_changed_event = EventGridEvent(
         event_type="airlockNotification",
         data=AirlockNotificationData(
@@ -102,13 +98,13 @@ def sample_airlock_notification_event(status="draft"):
                 id=AIRLOCK_REQUEST_ID,
                 created_when=CURRENT_TIME,
                 created_by=AirlockNotificationUserData(
-                    name="John Doe",
-                    email="john@example.com"
+                    name=user_data.name,
+                    email=user_data.email
                 ),
                 updated_when=CURRENT_TIME,
                 updated_by=AirlockNotificationUserData(
-                    name="Test User",
-                    email="test@user.com"
+                    name=user_data.name,
+                    email=user_data.email
                 ),
                 request_type=AirlockRequestType.Import,
                 files=[AirlockFile(
@@ -265,7 +261,10 @@ async def test_save_and_publish_event_airlock_request_saves_item(_, __, event_gr
     actual_status_changed_event = event_grid_sender_client_mock.send.await_args_list[0].args[0][0]
     assert actual_status_changed_event.data == status_changed_event_mock.data
     actual_airlock_notification_event = event_grid_sender_client_mock.send.await_args_list[1].args[0][0]
-    assert actual_airlock_notification_event.data == airlock_notification_event_mock.data
+    # Compare data handling Pydantic v2 serialization
+    actual_data = actual_airlock_notification_event.data.model_dump() if hasattr(actual_airlock_notification_event.data, 'model_dump') else actual_airlock_notification_event.data
+    expected_data = airlock_notification_event_mock.data.model_dump()
+    assert actual_data == expected_data
 
 
 @pytest.mark.asyncio
@@ -398,7 +397,11 @@ async def test_update_and_publish_event_airlock_request_updates_item(_, event_gr
     actual_status_changed_event = event_grid_sender_client_mock.send.await_args_list[0].args[0][0]
     assert actual_status_changed_event.data == status_changed_event_mock.data
     actual_airlock_notification_event = event_grid_sender_client_mock.send.await_args_list[1].args[0][0]
-    assert actual_airlock_notification_event.data == airlock_notification_event_mock.data
+    # Compare serialized forms since Pydantic v2 may return dict vs object
+    expected_data = airlock_notification_event_mock.data
+    if hasattr(expected_data, 'model_dump'):
+        expected_data = expected_data.model_dump()
+    assert actual_airlock_notification_event.data == expected_data
 
 
 @pytest.mark.asyncio

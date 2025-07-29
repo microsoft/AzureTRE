@@ -2,7 +2,7 @@ import json
 import pytest
 from mock import patch
 
-from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 from starlette import status
 
 from db.errors import EntityDoesNotExist, EntityVersionExist, InvalidInput, UnableToAccessDatabase
@@ -47,8 +47,8 @@ class TestSharedServiceTemplates:
     @patch("api.routes.shared_service_templates.ResourceTemplateRepository.get_templates_information")
     async def test_get_shared_service_templates_returns_template_names_and_description(self, get_templates_info_mock, app, client):
         expected_template_infos = [
-            ResourceTemplateInformation(name="template1", title="template 1", description="description1"),
-            ResourceTemplateInformation(name="template2", title="template 2", description="description2")
+            ResourceTemplateInformation(name="template1", title="template 1", description="description1").model_dump(),
+            ResourceTemplateInformation(name="template2", title="template 2", description="description2").model_dump()
         ]
         get_templates_info_mock.return_value = expected_template_infos
 
@@ -94,21 +94,21 @@ class TestSharedServiceTemplates:
         get_current_template_mock.side_effect = EntityDoesNotExist
         create_template_mock.return_value = basic_shared_service_template
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_shared_service_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_shared_service_template.model_dump())
 
-        expected_template = parse_obj_as(SharedServiceTemplateInResponse, enrich_shared_service_template(basic_shared_service_template))
-        assert json.loads(response.text)["required"] == expected_template.dict(exclude_unset=True)["required"]
-        assert json.loads(response.text)["properties"] == expected_template.dict(exclude_unset=True)["properties"]
+        expected_template = TypeAdapter(SharedServiceTemplateInResponse).validate_python(enrich_shared_service_template(basic_shared_service_template))
+        assert json.loads(response.text)["required"] == expected_template.model_dump(exclude_unset=True)["required"]
+        assert json.loads(response.text)["properties"] == expected_template.model_dump(exclude_unset=True)["properties"]
 
     # POST /shared_services-templates
     @patch("api.routes.shared_service_templates.ResourceTemplateRepository.create_and_validate_template", side_effect=EntityVersionExist)
     async def test_version_exists_not_allowed(self, _, app, client, input_shared_service_template):
-        response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_shared_service_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_shared_service_template.model_dump())
 
         assert response.status_code == status.HTTP_409_CONFLICT
 
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template", side_effect=InvalidInput)
     async def test_creating_a_shared_service_template_raises_http_422_if_step_ids_are_duplicated(self, _, client, app, input_shared_service_template):
-        response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_shared_service_template.dict())
+        response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_shared_service_template.model_dump())
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

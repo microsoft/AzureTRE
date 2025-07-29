@@ -5,11 +5,12 @@ import time
 
 from mock import AsyncMock, patch
 from service_bus.airlock_request_status_update import AirlockStatusUpdater
-from models.domain.events import AirlockNotificationUserData, AirlockFile
+from models.domain.events import AirlockFile
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
 from models.domain.workspace import Workspace
 from db.errors import EntityDoesNotExist
 from resources import strings
+from tests_ma.test_api.conftest import create_test_user
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 AIRLOCK_REQUEST_ID = "5dbc15ae-40e1-49a5-834b-595f59d626b7"
@@ -71,6 +72,7 @@ test_sb_step_result_message_with_invalid_status = {
 
 
 def sample_airlock_request(status=AirlockRequestStatus.Submitted):
+    user_dict = create_test_user()
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
         workspaceId=WORKSPACE_ID,
@@ -82,15 +84,9 @@ def sample_airlock_request(status=AirlockRequestStatus.Submitted):
         businessJustification="some test reason",
         status=status,
         createdWhen=CURRENT_TIME,
-        createdBy=AirlockNotificationUserData(
-            name="John Doe",
-            email="john@example.com"
-        ),
+        createdBy=user_dict,
         updatedWhen=CURRENT_TIME,
-        updatedBy=AirlockNotificationUserData(
-            name="Test User",
-            email="test@user.com"
-        )
+        updatedBy=user_dict
     )
     return airlock_request
 

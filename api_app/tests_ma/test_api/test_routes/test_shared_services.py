@@ -40,15 +40,22 @@ def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
         templateVersion="0.1.0",
         etag="",
         properties={
-            'display_name': 'A display name',
-            'description': 'desc here',
-            'overview': 'overview here',
-            'private_field_1': 'value_1',
-            'private_field_2': 'value_2'
+            "display_name": "A display name",
+            "description": "desc here",
+            "overview": "overview here",
+            "connection_uri": "",
+            "is_exposed_externally": True,
+            "private_field_1": "value_1",  # Admin-only field
+            "private_field_2": "value_2"   # Admin-only field
         },
-        resourcePath=f'/shared-services/{shared_service_id}',
-        updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_admin_user()
+        updatedWhen=1609520755.0,
+        user={
+            "id": "user-guid-here",
+            "name": "Test User",
+            "email": "test@user.com",
+            "roles": ["TREAdmin"],
+            "roleAssignments": [("ab123", "ab124")]
+        }
     )
 
 
@@ -345,4 +352,4 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-        assert response.text == "[{'loc': ('body', 'fakeField'), 'msg': 'extra fields not permitted', 'type': 'value_error.extra'}]"
+        assert response.text == "[{'type': 'extra_forbidden', 'loc': ('body', 'fakeField'), 'msg': 'Extra inputs are not permitted', 'input': 'someValue'}]"

@@ -2,11 +2,12 @@ import copy
 import pytest
 
 from models.domain.resource_template import PipelineStep, PipelineStepProperty
+from models.domain.resource import ResourceType
 from service_bus.substitutions import substitute_properties, substitute_value
 
 
 def test_substitution_for_primary_resource_no_parents(primary_resource):
-    resource_dict = primary_resource.dict()
+    resource_dict = primary_resource.model_dump()
 
     # Verify mandatory param
     val_to_sub = "{{ resource.properties.address_prefix }}"
@@ -39,9 +40,9 @@ def test_substitution_for_primary_resource_no_parents(primary_resource):
 def test_substitution_for_user_resource_primary_resource_with_parents(
     primary_user_resource, resource_ws_parent, resource_ws_svc_parent
 ):
-    primary_user_resource_dict = primary_user_resource.dict()
-    parent_ws_resource_dict = resource_ws_parent.dict()
-    parent_ws_svc_resource_dict = resource_ws_svc_parent.dict()
+    primary_user_resource_dict = primary_user_resource.model_dump()
+    parent_ws_resource_dict = resource_ws_parent.model_dump()
+    parent_ws_svc_resource_dict = resource_ws_svc_parent.model_dump()
 
     # ws parent (2 levels up)
     # single array val
@@ -145,8 +146,8 @@ def test_substitution_for_user_resource_primary_resource_with_parents(
 def test_substitution_for_workspace_service_primary_resource__with_parents(
     primary_workspace_service_resource, resource_ws_parent
 ):
-    primary_workspace_service_resource_dict = primary_workspace_service_resource.dict()
-    parent_ws_resource_dict = resource_ws_parent.dict()
+    primary_workspace_service_resource_dict = primary_workspace_service_resource.model_dump()
+    parent_ws_resource_dict = resource_ws_parent.model_dump()
 
     # ws parent
     # single array val
@@ -180,7 +181,7 @@ def test_substitution_for_workspace_service_primary_resource__with_parents(
 
 
 def test_substitution_for_workspace_primary_resource_parents(primary_resource):
-    primary_resource_dict = primary_resource.dict()
+    primary_resource_dict = primary_resource.model_dump()
 
     # single array val
     val_to_sub = "I am a ws WITHOUT any parents, my name is '{{ resource.properties.display_name }}'"
@@ -198,7 +199,7 @@ def test_substitution_for_workspace_primary_resource_parents(primary_resource):
 
 
 def test_substitution_for_shared_service_primary_resource_parents(basic_shared_service):
-    primary_resource_dict = basic_shared_service.dict()
+    primary_resource_dict = basic_shared_service.model_dump()
 
     # single array val
     val_to_sub = "I am a shared service WITHOUT any parents, my name is '{{ resource.properties.display_name }}'"
@@ -232,6 +233,11 @@ def test_simple_substitution(
 
 def test_substitution_list_strings(primary_resource, resource_to_update):
     pipeline_step_with_list_strings = PipelineStep(
+        stepId="test-list-strings-step",
+        stepTitle="Test List Strings Step",
+        resourceTemplateName="test-template",
+        resourceType=ResourceType.Workspace,
+        resourceAction="install",
         properties=[
             PipelineStepProperty(
                 name="obj_list_strings",

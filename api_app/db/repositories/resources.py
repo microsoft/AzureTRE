@@ -1,6 +1,6 @@
 import copy
 import semantic_version
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Tuple, List
 
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
@@ -20,7 +20,7 @@ from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.resource import ResourcePatch
-from pydantic import UUID4, parse_obj_as
+from pydantic import UUID4, TypeAdapter
 
 
 class ResourceRepository(BaseRepository):
@@ -65,22 +65,22 @@ class ResourceRepository(BaseRepository):
         resource = await self.get_resource_dict_by_id(resource_id)
 
         if resource["resourceType"] == ResourceType.SharedService:
-            return parse_obj_as(SharedService, resource)
+            return TypeAdapter(SharedService).validate_python(resource)
         if resource["resourceType"] == ResourceType.Workspace:
-            return parse_obj_as(Workspace, resource)
+            return TypeAdapter(Workspace).validate_python(resource)
         if resource["resourceType"] == ResourceType.WorkspaceService:
-            return parse_obj_as(WorkspaceService, resource)
+            return TypeAdapter(WorkspaceService).validate_python(resource)
         if resource["resourceType"] == ResourceType.UserResource:
-            return parse_obj_as(UserResource, resource)
+            return TypeAdapter(UserResource).validate_python(resource)
 
-        return parse_obj_as(Resource, resource)
+        return TypeAdapter(Resource).validate_python(resource)
 
     async def get_active_resource_by_template_name(self, template_name: str) -> Resource:
         query = f"SELECT TOP 1 * FROM c WHERE c.templateName = '{template_name}' AND {IS_ACTIVE_RESOURCE}"
         resources = await self.query(query=query)
         if not resources:
             raise EntityDoesNotExist
-        return parse_obj_as(Resource, resources[0])
+        return TypeAdapter(Resource).validate_python(resources[0])
 
     async def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, user_roles: Optional[List[str]] = None, parent_template_name: Optional[str] = None) -> ResourceTemplate:
         try:
@@ -97,9 +97,9 @@ class ResourceRepository(BaseRepository):
             if len(set(template["authorizedRoles"]).intersection(set(user_roles))) == 0:
                 raise UserNotAuthorizedToUseTemplate(f"User not authorized to use template {template_name}")
 
-        self._validate_resource_parameters(resource_input.dict(), template)
+        self._validate_resource_parameters(resource_input.model_dump(), template)
 
-        return parse_obj_as(ResourceTemplate, template)
+        return TypeAdapter(ResourceTemplate).validate_python(template)
 
     async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_action: str, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         await resource_history_repo.create_resource_history_item(resource)
@@ -181,10 +181,10 @@ class ResourceRepository(BaseRepository):
             if (resource_action == RESOURCE_ACTION_INSTALL or prop.get("updateable", False) is True):
                 update_template["properties"][prop_name] = prop
 
-        self._validate_resource_parameters(resource_patch.dict(), update_template)
+        self._validate_resource_parameters(resource_patch.model_dump(), update_template)
 
     def get_timestamp(self) -> float:
-        return datetime.utcnow().timestamp()
+        return datetime.now(timezone.utc).timestamp()
 
 
 # Cosmos query consts

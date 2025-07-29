@@ -2,6 +2,7 @@ import pytest
 from mock import patch, call
 
 import services.schema_service
+from models.domain.resource_template import ResourceTemplate
 
 
 @patch('services.schema_service.read_schema')
@@ -76,9 +77,10 @@ def test_enrich_user_resource_template_enriches_with_user_resource_defaults(enri
     )])
 def test_enrich_template_combines_properties(original, extra1, extra2, expected, basic_resource_template):
     original_template = basic_resource_template
-    original_template.properties = original
+    # Use model validation to ensure field validator runs when setting properties
+    original_template = ResourceTemplate.model_validate(original_template.model_dump() | {"properties": original})
 
-    template = services.schema_service.enrich_template(original_template, [([], extra1), ([], extra2)])
+    template = services.schema_service.enrich_template(original_template.model_dump(), [([], extra1), ([], extra2)])
 
     assert template['properties'] == expected
 

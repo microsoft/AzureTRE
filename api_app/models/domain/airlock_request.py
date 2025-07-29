@@ -2,7 +2,9 @@ from enum import StrEnum
 from typing import List, Dict, Optional
 
 from models.domain.azuretremodel import AzureTREModel
-from pydantic import Field, validator
+from models.domain.authentication import User
+from pydantic import field_validator, Field
+
 from resources import strings
 
 
@@ -53,10 +55,10 @@ class AirlockReview(AzureTREModel):
     Airlock review
     """
     id: str = Field(title="Id", description="GUID identifying the review")
-    reviewer: dict = {}
+    reviewer: Optional[User] = Field(default=None)
     dateCreated: float = 0
-    reviewDecision: AirlockReviewDecision = Field("", title="Airlock review decision")
-    decisionExplanation: str = Field(False, title="Explanation why the request was approved/rejected")
+    reviewDecision: AirlockReviewDecision = Field(default=AirlockReviewDecision.Approved, title="Airlock review decision")
+    decisionExplanation: str = Field(default="", title="Explanation why the request was approved/rejected")
 
 
 class AirlockRequestHistoryItem(AzureTREModel):
@@ -65,8 +67,8 @@ class AirlockRequestHistoryItem(AzureTREModel):
     """
     resourceVersion: int
     updatedWhen: float
-    updatedBy: dict = {}
-    properties: dict = {}
+    updatedBy: Optional[User] = Field(default=None)
+    properties: dict = Field(default_factory=dict)
 
 
 class AirlockReviewUserResource(AzureTREModel):
@@ -84,24 +86,25 @@ class AirlockRequest(AzureTREModel):
     """
     id: str = Field(title="Id", description="GUID identifying the resource")
     resourceVersion: int = 0
-    createdBy: dict = {}
+    createdBy: Optional[User] = Field(default=None)
     createdWhen: float = Field(None, title="Creation time of the request")
-    updatedBy: dict = {}
+    updatedBy: Optional[User] = Field(default=None)
     updatedWhen: float = 0
     history: List[AirlockRequestHistoryItem] = []
-    workspaceId: str = Field("", title="Workspace ID", description="Service target Workspace id")
-    type: AirlockRequestType = Field("", title="Airlock request type")
-    files: List[AirlockFile] = Field([], title="Files of the request")
+    workspaceId: str = Field(default="", title="Workspace ID", description="Service target Workspace id")
+    type: AirlockRequestType = Field(default=AirlockRequestType.Import, title="Airlock request type")
+    files: List[AirlockFile] = Field(default_factory=list, title="Files of the request")
     title: str = Field("Airlock Request", title="Brief title for the request")
     businessJustification: str = Field("Business Justification", title="Explanation that will be provided to the request reviewer")
-    status = AirlockRequestStatus.Draft
-    statusMessage: Optional[str] = Field(title="Optional - contains additional information about the current status.")
-    reviews: Optional[List[AirlockReview]]
-    etag: Optional[str] = Field(title="_etag", alias="_etag")
+    status: AirlockRequestStatus = AirlockRequestStatus.Draft
+    statusMessage: Optional[str] = Field(None, title="Optional - contains additional information about the current status.")
+    reviews: Optional[List[AirlockReview]] = None
+    etag: Optional[str] = Field(None, title="_etag", alias="_etag")
     reviewUserResources: Dict[str, AirlockReviewUserResource] = Field({}, title="User resources created for Airlock Reviews")
 
     # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931
-    @validator("etag", pre=True)
+    @field_validator("etag", mode="before")
+    @classmethod
     def parse_etag_to_remove_escaped_quotes(cls, value):
         if value:
             return value.replace('\"', '')

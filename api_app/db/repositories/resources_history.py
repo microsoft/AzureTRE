@@ -1,6 +1,6 @@
 from typing import List
 import uuid
-from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
@@ -37,7 +37,7 @@ class ResourceHistoryRepository(BaseRepository):
         except EntityDoesNotExist:
             logger.info(f"No history for resource {resource_id}")
             resource_history_items = []
-        return parse_obj_as(List[ResourceHistoryItem], resource_history_items)
+        return TypeAdapter(List[ResourceHistoryItem]).validate_python(resource_history_items)
 
     async def create_resource_history_item(self, resource: Resource) -> ResourceHistoryItem:
         logger.info(f"Creating a new history item for resource {resource.id}")

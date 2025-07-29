@@ -9,7 +9,7 @@ from fastapi import status
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP
 from tests_ma.test_api.conftest import create_admin_user, create_test_user, create_workspace_owner_user, create_workspace_researcher_user
 
-from models.domain.resource_template import ResourceTemplate
+from models.domain.resource_template import ResourceTemplate, Property
 from models.schemas.operation import OperationInResponse
 
 from db.errors import EntityDoesNotExist
@@ -139,7 +139,9 @@ def sample_resource_operation(resource_id: str, operation_id: str):
             OperationStep(
                 id="random-uuid",
                 templateStepId="main",
+                stepTitle="Main installation step",
                 resourceId=resource_id,
+                resourceType=ResourceType.Workspace,
                 resourceAction="install",
                 updatedWhen=FAKE_UPDATE_TIMESTAMP,
                 sourceTemplateResourceId=resource_id
@@ -504,7 +506,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json=workspace_patch)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-        assert ("('header', 'etag')" in response.text and "field required" in response.text)
+        assert ("('header', 'etag')" in response.text and "Field required" in response.text)
 
     # [PATCH] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
@@ -750,7 +752,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         get_workspace_mock.return_value = workspace
         basic_workspace_service_template.properties["address_space"]: str = Field()
         create_workspace_service_item_mock.return_value = [sample_workspace_service(), basic_workspace_service_template]
-        basic_resource_template.properties["address_spaces"] = {"type": "array", "updateable": True}
+        basic_resource_template.properties["address_spaces"] = Property(type="array", updateable=True)
         resource_template_repo.side_effect = [basic_resource_template, basic_workspace_service_template]
 
         modified_workspace = sample_workspace()

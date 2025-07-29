@@ -17,4 +17,4 @@ async def test_frw_validation_error_format(app):
 
     assert response.status_code == HTTP_422_UNPROCESSABLE_ENTITY
 
-    assert "error" in response.text
+    assert "int_parsing" in response.text
