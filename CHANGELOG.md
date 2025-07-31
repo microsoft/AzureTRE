@@ -1,7 +1,11 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.26.0 (Unreleased)
 
-* _No changes yet_
+ENHANCEMENTS:
+* Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
+
+BUG FIXES:
+* Fix disable public network access for stwebcertsTREID is still flagging in Defender ([#4640](https://github.com/microsoft/AzureTRE/issues/4640))
 
 ## 0.25.0 (July 18, 2025)
 **IMPORTANT**:
