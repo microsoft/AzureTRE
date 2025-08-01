@@ -168,6 +168,7 @@ runs:
           -e SWAGGER_UI_CLIENT_ID="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
           -e TF_VAR_swagger_ui_client_id="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
           -e TF_VAR_core_address_space="${{ inputs.core_address_space }}" \
+          -e TF_VAR_secondary_address_space="${{ inputs.secondary_address_space }}" \
           -e TF_VAR_tre_address_space="${{ inputs.tre_address_space }}" \
           -e API_CLIENT_ID="${{ inputs.API_CLIENT_ID }}" \
           -e AAD_TENANT_ID="${{ inputs.AAD_TENANT_ID }}" \
