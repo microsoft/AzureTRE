@@ -26,6 +26,11 @@ variable "core_address_space" {
   }
 }
 
+variable "secondary_address_space" {
+  type        = string
+  description = "Additional Address space to be added to Core VNET"
+}
+
 variable "tre_address_space" {
   type        = string
   description = "Overall TRE Address Space pool, will be used for workspace VNETs, can be a supernet of address_space."

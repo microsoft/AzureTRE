@@ -2,7 +2,7 @@ resource "azurerm_virtual_network" "core" {
   name                = "vnet-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
-  address_space       = [var.core_address_space]
+  address_space       = [var.core_address_space, var.secondary_address_space]
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 }
@@ -162,6 +162,24 @@ resource "azurerm_subnet" "mysql_gitea_shared_service" {
       actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
     }
   }
+}
+
+resource "azurerm_subnet" "synapse_shared_service" {
+  name                 = "SynapseSharedServiceSubnet"
+  virtual_network_name = azurerm_virtual_network.core.name
+  resource_group_name  = var.resource_group_name
+  address_prefixes     = [local.synapse_shared_service_subnet_address_prefix]
+  depends_on           = [azurerm_subnet.firewall_management]
+  service_endpoints    = ["Microsoft.Storage"]
+
+  # delegation {
+  #   name = "delegation"
+
+  #   service_delegation {
+  #     name    = "Microsoft.DBforMySQL/flexibleServers"
+  #     actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+  #   }
+  # }
 }
 
 resource "azurerm_ip_group" "resource_processor" {

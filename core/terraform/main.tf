@@ -89,6 +89,7 @@ module "network" {
   location            = var.location
   resource_group_name = azurerm_resource_group.core.name
   core_address_space  = var.core_address_space
+  secondary_address_space  = var.secondary_address_space
 }
 
 module "virtual_network_gateway" {

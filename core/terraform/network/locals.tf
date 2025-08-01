@@ -22,6 +22,10 @@ locals {
   mysql_gitea_shared_service_subnet_address_prefix = local.core_services_vnet_subnets[11] # .128 - .191
   gateway_subnet_address_prefix                    = local.core_services_vnet_subnets[12] # .192 - .254
 
+  # Secondary address space
+  secondar_services_vnet_subnets = cidrsubnets(var.secondary_address_space, 4)
+  synapse_shared_service_subnet_address_prefix = local.secondar_services_vnet_subnets[0] # .0 - .15
+
   tre_core_tags = {
     tre_id              = var.tre_id
     tre_core_service_id = var.tre_id
