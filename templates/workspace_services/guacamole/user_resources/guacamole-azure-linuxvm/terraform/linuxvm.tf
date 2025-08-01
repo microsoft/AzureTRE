@@ -55,7 +55,7 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   os_disk {
     name                   = "osdisk-${local.vm_name}"
     caching                = "ReadWrite"
-    storage_account_type   = "Standard_LRS"
+    storage_account_type   = "StandardSSD_LRS"
     disk_encryption_set_id = var.enable_cmk_encryption ? azurerm_disk_encryption_set.linuxvm_disk_encryption[0].id : null
   }
 
@@ -68,7 +68,7 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
   # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
   #
-  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, admin_username, custom_data] }
+  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, admin_username, custom_data, os_disk[0].storage_account_type] }
 }
 
 resource "azurerm_disk_encryption_set" "linuxvm_disk_encryption" {
