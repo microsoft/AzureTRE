@@ -161,6 +161,7 @@ jobs:
       APPLICATION_ADMIN_CLIENT_ID: ${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}
       APPLICATION_ADMIN_CLIENT_SECRET: ${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}
       CORE_ADDRESS_SPACE: ${{ secrets.CORE_ADDRESS_SPACE }}
+      SECONDARY_ADDRESS_SPACE: ${{ secrets.SECONDARY_ADDRESS_SPACE }}
       LOCATION: ${{ secrets.LOCATION }}
       MGMT_RESOURCE_GROUP_NAME: ${{ format('rg-tre{0}-mgmt', needs.pr_comment.outputs.prRefId) }}
       MS_TEAMS_WEBHOOK_URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}

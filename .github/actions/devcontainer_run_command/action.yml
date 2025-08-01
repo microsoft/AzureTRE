@@ -48,6 +48,9 @@ inputs:
   CORE_ADDRESS_SPACE:
     description: "Core address space."
     required: false
+  SECONDARY_ADDRESS_SPACE:
+    description: "Core address space."
+    required: false
   TRE_ADDRESS_SPACE:
     description: "TRE address apace."
     required: false

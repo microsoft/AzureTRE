@@ -56,6 +56,9 @@ on:  # yamllint disable-line rule:truthy
       CORE_ADDRESS_SPACE:
         description: ""
         required: true
+      SECONDARY_ADDRESS_SPACE:
+        description: ""
+        required: true
       LOCATION:
         description: ""
         required: true
@@ -162,6 +165,9 @@ jobs:
           fi
           if [ "${{ secrets.CORE_ADDRESS_SPACE }}" == '' ]; then
             echo "Missing secret: CORE_ADDRESS_SPACE" && exit 1
+          fi
+          if [ "${{ secrets.SECONDARY_ADDRESS_SPACE }}" == '' ]; then
+            echo "Missing secret: SECONDARY_ADDRESS_SPACE" && exit 1
           fi
           if [ "${{ secrets.LOCATION }}" == '' ]; then
             echo "Missing secret: LOCATION" && exit 1
@@ -366,6 +372,7 @@ jobs:
           MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
           CORE_ADDRESS_SPACE: ${{ secrets.CORE_ADDRESS_SPACE }}
+          SECONDARY_ADDRESS_SPACE: ${{ secrets.SECONDARY_ADDRESS_SPACE }}
           TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
           ENABLE_SWAGGER: ${{ secrets.ENABLE_SWAGGER }}
           SWAGGER_UI_CLIENT_ID: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
