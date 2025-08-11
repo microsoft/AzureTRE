@@ -66,7 +66,7 @@ class WorkspaceRepository(ResourceRepository):
         return parse_obj_as(Workspace, workspaces[0])
 
     # Remove this method once not using last 4 digits for naming - https://github.com/microsoft/AzureTRE/issues/3666
-    async def is_worksapce_storage_account_available(self, workspace_id: str) -> bool:
+    async def is_workspace_storage_account_available(self, workspace_id: str) -> bool:
         storage_client = StorageManagementClient(credentials.get_credential(), config.SUBSCRIPTION_ID)
         # check for storage account with last 4 digits of workspace_id
         availability_result = storage_client.storage_accounts.check_name_availability(
@@ -81,7 +81,7 @@ class WorkspaceRepository(ResourceRepository):
         full_workspace_id = str(uuid.uuid4())
 
         # Ensure workspace with last four digits of ID does not already exist - remove when https://github.com/microsoft/AzureTRE/issues/3666 is resolved
-        while not await self.is_worksapce_storage_account_available(full_workspace_id):
+        while not await self.is_workspace_storage_account_available(full_workspace_id):
             full_workspace_id = str(uuid.uuid4())
 
         template = await self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
@@ -93,10 +93,6 @@ class WorkspaceRepository(ResourceRepository):
 
         auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}
         workspace_owner_param = {"workspace_owner_object_id": self.get_workspace_owner(workspace_input.properties, workspace_owner_object_id)}
-
-        # TODO: possibly the service_template_versions check currently in create_workspace in the API route belongs here.
-        # It needs the ResourceTemplateRepo to call get_templates_enabled_versions(). Issue #218
-        # Longer term the UI should be populating workspace_input.properties with that information.
 
         # we don't want something in the input to overwrite the system parameters,
         # so dict.update can't work. Priorities from right to left.

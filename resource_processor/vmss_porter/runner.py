@@ -4,14 +4,13 @@ import json
 import asyncio
 import logging
 import sys
-from resources.commands import azure_acr_login_command, azure_login_command, build_porter_command, build_porter_command_for_outputs, apply_porter_credentials_sets_command
+from helpers.commands import azure_acr_login_command, azure_login_command, build_porter_command, build_porter_command_for_outputs, apply_porter_credentials_sets_command
 from shared.config import get_config
-from resources.helpers import get_installation_id
-from resources.httpserver import start_server
+from helpers.httpserver import start_server
 
 from shared.logging import initialize_logging, logger, shell_output_logger, tracer
 from shared.config import VERSION
-from resources import statuses
+from helpers import statuses
 from contextlib import asynccontextmanager
 from azure.servicebus import ServiceBusMessage, NEXT_AVAILABLE_SESSION
 from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
@@ -38,7 +37,7 @@ async def default_credentials(msi_id):
     await credential.close()
 
 
-async def receive_message(service_bus_client, config: dict):
+async def receive_message(service_bus_client, config: dict, keep_running=lambda: True):
     """
     This method is run per process. Each process will connect to service bus and try to establish a session.
     If messages are there, the process will continue to receive all the messages associated with that session.
@@ -46,7 +45,7 @@ async def receive_message(service_bus_client, config: dict):
     """
     q_name = config["resource_request_queue"]
 
-    while True:
+    while keep_running():
         try:
             logger.info("Looking for new session...")
             # max_wait_time=1 -> don't hold the session open after processing of the message has finished
@@ -94,6 +93,7 @@ async def receive_message(service_bus_client, config: dict):
 
         except Exception:
             # Catch all other exceptions, log them via .exception to get the stack trace, sleep, and reconnect
+
             logger.exception("Unknown exception. Will retry...")
 
 
@@ -135,7 +135,7 @@ def service_bus_message_generator(sb_message: dict, status: str, deployment_mess
     """
     Generate a resource request message
     """
-    installation_id = get_installation_id(sb_message)
+    installation_id = sb_message["id"]
     message_dict = {
         "operationId": sb_message["operationId"],
         "stepId": sb_message["stepId"],
@@ -156,7 +156,7 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
     Handle resource message by invoking specified porter action (i.e. install, uninstall)
     """
 
-    installation_id = get_installation_id(msg_body)
+    installation_id = msg_body["id"]
     action = msg_body["action"]
     logger.info(f"{action} action starting for {installation_id}...")
     sb_sender = sb_client.get_queue_sender(queue_name=config["deployment_status_queue"])
@@ -173,12 +173,24 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
     logger.debug("Starting to run porter execution command...")
     returncode, _, err = await run_porter(porter_command, config)
     logger.debug("Finished running porter execution command.")
-    action_completed_without_error = True
+
+    action_completed_without_error = False
+
+    if returncode == 0:
+        action_completed_without_error = True
 
     # Handle command output
     if returncode != 0 and err is not None:
         error_message = "Error message: " + " ".join(err.split('\n')) + "; Command executed: " + " ".join(porter_command)
         action_completed_without_error = False
+
+        if "upgrade" == action and ("could not find installation" in err or "The installation cannot be upgraded, because it is not installed." in err):
+            logger.warning("Upgrade failed, attempting install...")
+            msg_body['action'] = "install"
+            porter_command = await build_porter_command(config, msg_body, False)
+            returncode, _, err = await run_porter(porter_command, config)
+            if returncode == 0:
+                action_completed_without_error = True
 
         if "uninstall" == action and "could not find installation" in err:
             logger.warning("The installation doesn't exist. Treating as a successful action to allow the flow to proceed.")
@@ -227,7 +239,8 @@ async def get_porter_outputs(msg_body: dict, config: dict):
 
     if returncode != 0:
         error_message = "Error context message = " + " ".join(err.split('\n'))
-        logger.info(f"{get_installation_id(msg_body)}: Failed to get outputs with error = {error_message}")
+        installation_id = msg_body["id"]
+        logger.info(f"{installation_id}: Failed to get outputs with error = {error_message}")
         return False, {}
     else:
         outputs_json = {}
@@ -253,10 +266,10 @@ async def runner(process_number: int, config: dict):
             await receive_message(service_bus_client, config)
 
 
-async def check_runners(processes: list, httpserver: Process):
+async def check_runners(processes: list, httpserver: Process, keep_running=lambda: True):
     logger.info("Starting runners check...")
 
-    while True:
+    while keep_running():
         await asyncio.sleep(30)
         if all(not process.is_alive() for process in processes):
             logger.error("All runner processes have failed!")
@@ -289,4 +302,4 @@ if __name__ == "__main__":
 
         asyncio.run(check_runners(processes, httpserver))
 
-        logger.warn("Exiting main...")
+        logger.warning("Exiting main...")

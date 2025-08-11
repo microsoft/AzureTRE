@@ -15,6 +15,8 @@ API_DELETE_WORKSPACE = "Delete workspace"
 API_UPDATE_WORKSPACE = "Update an existing workspace"
 API_INVOKE_ACTION_ON_WORKSPACE = "Invoke action on a workspace"
 
+API_GET_WORKSPACE_USERS = "Get all users for a workspace"
+
 API_GET_ALL_WORKSPACE_SERVICES = "Get all workspace services for workspace"
 API_GET_WORKSPACE_SERVICE_BY_ID = "Get workspace service by Id"
 API_CREATE_WORKSPACE_SERVICE = "Create a workspace service"
@@ -31,6 +33,8 @@ API_GET_USER_RESOURCE = "Get user resource by id"
 API_DELETE_USER_RESOURCE = "Delete user resource"
 API_UPDATE_USER_RESOURCE = "Update an existing user resource"
 API_INVOKE_ACTION_ON_USER_RESOURCE = "Invoke action on a user resource"
+
+API_LIST_REQUESTS = "Get requests"
 
 API_CREATE_AIRLOCK_REQUEST = "Create an airlock request"
 API_GET_AIRLOCK_REQUEST = "Get an airlock request"
@@ -49,7 +53,6 @@ API_CREATE_WORKSPACE_SERVICE_TEMPLATES = "Register workspace service template"
 API_GET_WORKSPACE_SERVICE_TEMPLATES = "Get workspace service templates"
 API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE = "Get workspace service templates (on workspace level)"  # only returns templates that the authenticated user is authorized to use
 API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME = "Get workspace service template by name and optional version"
-API_GET_WORKSPACE_SERVICE_TEMPLATES_ENABLED_VERSIONS = "Get workspace service templates versions and their user resource versions"
 
 API_CREATE_SHARED_SERVICE_TEMPLATES = "Register shared service template"
 API_GET_SHARED_SERVICE_TEMPLATES = "Get shared service templates"

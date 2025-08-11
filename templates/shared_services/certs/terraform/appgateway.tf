@@ -26,8 +26,8 @@ resource "azurerm_application_gateway" "agw" {
   tags                = local.tre_shared_service_tags
 
   sku {
-    name     = "Standard_v2"
-    tier     = "Standard_v2"
+    name     = "Basic"
+    tier     = "Basic"
     capacity = 1
   }
 
@@ -162,6 +162,6 @@ resource "azurerm_application_gateway" "agw" {
   }
 
   depends_on = [
-    azurerm_key_vault_access_policy.app_gw_managed_identity,
+    azurerm_role_assignment.keyvault_appgwcerts_role,
   ]
 }

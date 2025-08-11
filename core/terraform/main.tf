@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.108.0"
+      version = "=4.14.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -19,7 +19,7 @@ terraform {
     }
     azapi = {
       source  = "Azure/azapi"
-      version = "~> 1.13.0"
+      version = "~> 1.15.0"
     }
   }
 
@@ -73,9 +73,13 @@ module "azure_monitor" {
   blob_core_dns_zone_id                    = module.network.blob_core_dns_zone_id
   tre_core_tags                            = local.tre_core_tags
   enable_local_debugging                   = var.enable_local_debugging
+  enable_cmk_encryption                    = var.enable_cmk_encryption
+  encryption_key_versionless_id            = var.enable_cmk_encryption ? azurerm_key_vault_key.tre_encryption[0].versionless_id : null
+  encryption_identity_id                   = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
-    module.network
+    module.network,
+    azurerm_key_vault_key.tre_encryption[0]
   ]
 }
 
@@ -89,14 +93,15 @@ module "network" {
 }
 
 module "dns-resolver" {
-  source              = "./dns-resolver"
-  tre_id              = var.tre_id
-  location            = var.location
-  resource_group_name = azurerm_resource_group.core.name
-  core_address_space  = var.core_address_space
-  arm_environment     = var.arm_environment
-  core_vnet_name      = module.network.core_vnet_name
-  core_vnet_id        = module.network.core_vnet_id
+  source               = "./dns-resolver"
+  tre_id               = var.tre_id
+  location             = var.location
+  resource_group_name  = azurerm_resource_group.core.name
+  core_address_space   = var.core_address_space
+  arm_environment      = var.arm_environment
+  core_vnet_name       = module.network.core_vnet_name
+  core_vnet_id         = module.network.core_vnet_id
+  dns_resolver_snet_id = module.network.dns_resolver_subnet_id
 }
 
 module "appgateway" {
@@ -110,12 +115,18 @@ module "appgateway" {
   keyvault_id                = azurerm_key_vault.kv.id
   static_web_dns_zone_id     = module.network.static_web_dns_zone_id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
+  app_gateway_sku            = var.app_gateway_sku
+
+  enable_cmk_encryption         = var.enable_cmk_encryption
+  encryption_key_versionless_id = var.enable_cmk_encryption ? azurerm_key_vault_key.tre_encryption[0].versionless_id : null
+  encryption_identity_id        = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
     module.network,
     azurerm_key_vault.kv,
-    azurerm_key_vault_access_policy.deployer,
-    azurerm_private_endpoint.api_private_endpoint
+    azurerm_role_assignment.keyvault_deployer_role,
+    azurerm_private_endpoint.api_private_endpoint,
+    azurerm_key_vault_key.tre_encryption[0]
   ]
 }
 
@@ -133,6 +144,7 @@ module "airlock_resources" {
   airlock_app_service_plan_sku          = var.core_app_service_plan_sku
   airlock_processor_subnet_id           = module.network.airlock_processor_subnet_id
   airlock_servicebus                    = azurerm_servicebus_namespace.sb
+  airlock_servicebus_fqdn               = azurerm_servicebus_namespace.sb.endpoint
   applicationinsights_connection_string = module.azure_monitor.app_insights_connection_string
   enable_malware_scanning               = var.enable_airlock_malware_scanning
   arm_environment                       = var.arm_environment
@@ -143,12 +155,16 @@ module "airlock_resources" {
   queue_core_dns_zone_id                = module.network.queue_core_dns_zone_id
   table_core_dns_zone_id                = module.network.table_core_dns_zone_id
 
-  enable_local_debugging = var.enable_local_debugging
-  myip                   = local.myip
+  enable_local_debugging        = var.enable_local_debugging
+  myip                          = local.myip
+  enable_cmk_encryption         = var.enable_cmk_encryption
+  encryption_key_versionless_id = var.enable_cmk_encryption ? azurerm_key_vault_key.tre_encryption[0].versionless_id : null
+  encryption_identity_id        = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption[0].id : null
 
   depends_on = [
     azurerm_servicebus_namespace.sb,
-    module.network
+    module.network,
+    azurerm_key_vault_key.tre_encryption[0]
   ]
 }
 
@@ -180,16 +196,20 @@ module "resource_processor_vmss_porter" {
   logging_level                                    = var.logging_level
   firewall_sku                                     = var.firewall_sku
   rp_bundle_values                                 = var.rp_bundle_values
+  enable_cmk_encryption                            = var.enable_cmk_encryption
+  key_store_id                                     = local.key_store_id
+  kv_encryption_key_name                           = local.cmk_name
 
   depends_on = [
     module.network,
     module.azure_monitor,
     azurerm_key_vault.kv,
-    azurerm_key_vault_access_policy.deployer
+    azurerm_role_assignment.keyvault_deployer_role,
+    azurerm_key_vault_key.tre_encryption[0]
   ]
 }
 
 module "terraform_azurerm_environment_configuration" {
-  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.5.0"
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.6.0"
   arm_environment = var.arm_environment
 }

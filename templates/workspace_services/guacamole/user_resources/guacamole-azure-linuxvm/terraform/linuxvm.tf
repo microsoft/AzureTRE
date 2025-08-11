@@ -12,16 +12,6 @@ resource "azurerm_network_interface" "internal" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "random_string" "username" {
-  length      = 4
-  upper       = true
-  lower       = true
-  numeric     = true
-  min_numeric = 1
-  min_lower   = 1
-  special     = false
-}
-
 resource "random_password" "password" {
   length           = 16
   lower            = true
@@ -42,9 +32,11 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   network_interface_ids           = [azurerm_network_interface.internal.id]
   size                            = local.vm_sizes[var.vm_size]
   disable_password_authentication = false
-  admin_username                  = random_string.username.result
+  admin_username                  = local.admin_username
   admin_password                  = random_password.password.result
   encryption_at_host_enabled      = true
+  secure_boot_enabled             = local.secure_boot_enabled
+  vtpm_enabled                    = local.vtpm_enabled
 
   custom_data = data.template_cloudinit_config.config.rendered
 
@@ -61,9 +53,10 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   }
 
   os_disk {
-    name                 = "osdisk-${local.vm_name}"
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+    name                   = "osdisk-${local.vm_name}"
+    caching                = "ReadWrite"
+    storage_account_type   = "Standard_LRS"
+    disk_encryption_set_id = var.enable_cmk_encryption ? azurerm_disk_encryption_set.linuxvm_disk_encryption[0].id : null
   }
 
   identity {
@@ -72,7 +65,25 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
 
   tags = local.tre_user_resources_tags
 
-  lifecycle { ignore_changes = [tags] }
+  # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
+  # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
+  #
+  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, admin_username] }
+}
+
+resource "azurerm_disk_encryption_set" "linuxvm_disk_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  name                      = "disk-encryption-linuxvm-${var.tre_id}-${var.tre_resource_id}"
+  location                  = data.azurerm_resource_group.ws.location
+  resource_group_name       = data.azurerm_resource_group.ws.name
+  key_vault_key_id          = data.azurerm_key_vault_key.ws_encryption_key[0].versionless_id
+  encryption_type           = "EncryptionAtRestWithPlatformAndCustomerKeys"
+  auto_key_rotation_enabled = true
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [data.azurerm_user_assigned_identity.ws_encryption_identity[0].id]
+  }
 }
 
 data "template_cloudinit_config" "config" {
@@ -108,50 +119,32 @@ data "template_file" "vm_config" {
     STORAGE_ACCOUNT_NAME  = data.azurerm_storage_account.stg.name
     STORAGE_ACCOUNT_KEY   = data.azurerm_storage_account.stg.primary_access_key
     HTTP_ENDPOINT         = data.azurerm_storage_account.stg.primary_file_endpoint
-    FILESHARE_NAME        = var.shared_storage_access ? data.azurerm_storage_share.shared_storage[0].name : ""
+    FILESHARE_NAME        = var.shared_storage_access ? var.shared_storage_name : ""
     NEXUS_PROXY_URL       = local.nexus_proxy_url
     CONDA_CONFIG          = local.selected_image.conda_config ? 1 : 0
-    VM_USER               = random_string.username.result
-  }
-}
-
-data "template_file" "get_apt_keys" {
-  template = file("${path.module}/get_apt_keys.sh")
-  vars = {
-    NEXUS_PROXY_URL = local.nexus_proxy_url
-  }
-}
-
-data "template_file" "pypi_sources_config" {
-  template = file("${path.module}/pypi_sources_config.sh")
-  vars = {
-    nexus_proxy_url = local.nexus_proxy_url
-  }
-}
-
-data "template_file" "apt_sources_config" {
-  template = file("${path.module}/apt_sources_config.yml")
-  vars = {
-    nexus_proxy_url = local.nexus_proxy_url
+    VM_USER               = local.admin_username
+    # APT_SKU               = replace(local.apt_sku, ".", "")
   }
 }
 
 resource "azurerm_key_vault_secret" "linuxvm_password" {
   name         = local.vm_password_secret_name
-  value        = "${random_string.username.result}\n${random_password.password.result}"
+  value        = "${local.admin_username}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
   tags         = local.tre_user_resources_tags
 
   lifecycle { ignore_changes = [tags] }
 }
 
-data "azurerm_storage_account" "stg" {
-  name                = local.storage_name
-  resource_group_name = data.azurerm_resource_group.ws.name
-}
+resource "azurerm_dev_test_global_vm_shutdown_schedule" "shutdown_schedule" {
+  count = var.enable_shutdown_schedule ? 1 : 0
 
-data "azurerm_storage_share" "shared_storage" {
-  count                = var.shared_storage_access ? 1 : 0
-  name                 = var.shared_storage_name
-  storage_account_name = data.azurerm_storage_account.stg.name
+  location              = data.azurerm_resource_group.ws.location
+  virtual_machine_id    = azurerm_linux_virtual_machine.linuxvm.id
+  daily_recurrence_time = var.shutdown_time
+  timezone              = var.shutdown_timezone
+  enabled               = var.enable_shutdown_schedule
+  notification_settings {
+    enabled = false
+  }
 }

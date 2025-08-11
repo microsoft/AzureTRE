@@ -19,3 +19,7 @@ variable "core_vnet_name" {
 variable "core_vnet_id" {
   type = string
 }
+
+variable "dns_resolver_snet_id" {
+  type = string
+}

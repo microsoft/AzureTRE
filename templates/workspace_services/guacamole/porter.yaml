@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole
-version: 0.10.8
+version: 0.12.9
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -31,7 +31,7 @@ parameters:
     type: string
   - name: image_tag
     type: string
-    default: ""   # will use the value in the version.txt file unless provided
+    default: "" # will use the value in the version.txt file unless provided
     description: "The tag of the guacamole image"
   - name: mgmt_acr_name
     type: string
@@ -61,6 +61,11 @@ parameters:
     default: "/guac-transfer"
     env: GUAC_DRIVE_PATH
     description: "Guacamole drive path configuration"
+  - name: guac_server_layout
+    type: string
+    default: ""
+    env: GUAC_SERVER_LAYOUT
+    description: "Guacamole server keyboard layout  (defaults to en-us-qwerty when not set)"
   - name: is_exposed_externally
     type: boolean
     default: true
@@ -111,7 +116,7 @@ outputs:
 
 mixins:
   - terraform:
-      clientVersion: 1.4.6
+      clientVersion: 1.9.8
 
 install:
   - terraform:
@@ -127,11 +132,14 @@ install:
         guac_enable_drive: ${ bundle.parameters.guac_enable_drive }
         guac_drive_name: ${ bundle.parameters.guac_drive_name }
         guac_drive_path: ${ bundle.parameters.guac_drive_path }
+        guac_server_layout: ${ bundle.parameters.guac_server_layout }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -155,11 +163,14 @@ upgrade:
         guac_enable_drive: ${ bundle.parameters.guac_enable_drive }
         guac_drive_name: ${ bundle.parameters.guac_drive_name }
         guac_drive_path: ${ bundle.parameters.guac_drive_path }
+        guac_server_layout: ${ bundle.parameters.guac_server_layout }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -183,11 +194,14 @@ uninstall:
         guac_enable_drive: ${ bundle.parameters.guac_enable_drive }
         guac_drive_name: ${ bundle.parameters.guac_drive_name }
         guac_drive_path: ${ bundle.parameters.guac_drive_path }
+        guac_server_layout: ${ bundle.parameters.guac_server_layout }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }

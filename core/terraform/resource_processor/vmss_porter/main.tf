@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = ">= 3.8"
+      version = ">= 3.117"
     }
     random = {
       source  = "hashicorp/random"
@@ -50,6 +50,25 @@ resource "azurerm_user_assigned_identity" "vmss_msi" {
   lifecycle { ignore_changes = [tags] }
 }
 
+resource "azurerm_disk_encryption_set" "vmss_disk_encryption" {
+  count                     = var.enable_cmk_encryption ? 1 : 0
+  name                      = "vmss-disk-encryption-rp-porter-${var.tre_id}"
+  location                  = var.location
+  resource_group_name       = var.resource_group_name
+  key_vault_key_id          = data.azurerm_key_vault_key.tre_encryption[0].versionless_id
+  encryption_type           = "EncryptionAtRestWithPlatformAndCustomerKeys"
+  auto_key_rotation_enabled = true
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.vmss_msi.id]
+  }
+
+  depends_on = [
+    azurerm_role_assignment.vmss_kv_encryption_key_user
+  ]
+}
+
 resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
   name                            = "vmss-rp-porter-${var.tre_id}"
   location                        = var.location
@@ -60,9 +79,11 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
   disable_password_authentication = false
   admin_password                  = random_password.password.result
   custom_data                     = data.template_cloudinit_config.config.rendered
-  encryption_at_host_enabled      = false
+  encryption_at_host_enabled      = true
   upgrade_mode                    = "Automatic"
   tags                            = local.tre_core_tags
+  secure_boot_enabled             = true
+  vtpm_enabled                    = true
 
   extension {
     auto_upgrade_minor_version = true
@@ -108,14 +129,15 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
   source_image_reference {
     publisher = "Canonical"
     offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-lts"
+    sku       = "22_04-lts-gen2"
     version   = "latest"
   }
 
   os_disk {
-    storage_account_type = "Standard_LRS"
-    caching              = "ReadWrite"
-    disk_size_gb         = 64
+    storage_account_type   = "Standard_LRS"
+    caching                = "ReadWrite"
+    disk_size_gb           = 64
+    disk_encryption_set_id = var.enable_cmk_encryption ? azurerm_disk_encryption_set.vmss_disk_encryption[0].id : null
   }
 
   network_interface {
@@ -151,6 +173,12 @@ resource "terraform_data" "vm_linux_reimage" {
   ]
 }
 
+resource "azurerm_role_assignment" "mgmt_storage_account_blob_contributor" {
+  scope                = data.azurerm_storage_account.mgmt_storage.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
+}
+
 resource "azurerm_role_assignment" "vmss_acr_pull" {
   scope                = var.acr_id
   role_definition_name = "AcrPull"
@@ -183,13 +211,17 @@ resource "azurerm_role_assignment" "subscription_contributor" {
   principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
 }
 
-resource "azurerm_key_vault_access_policy" "resource_processor" {
-  key_vault_id = var.key_vault_id
-  tenant_id    = azurerm_user_assigned_identity.vmss_msi.tenant_id
-  object_id    = azurerm_user_assigned_identity.vmss_msi.principal_id
+resource "azurerm_role_assignment" "keyvault_vmss_role" {
+  scope                = var.key_vault_id
+  role_definition_name = "Key Vault Administrator"
+  principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id // id-vmss-<TRE_ID>
+}
 
-  secret_permissions      = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
-  certificate_permissions = ["Get", "Recover", "Import", "Delete", "Purge"]
+resource "azurerm_role_assignment" "vmss_kv_encryption_key_user" {
+  count                = var.enable_cmk_encryption ? 1 : 0
+  scope                = var.key_store_id
+  role_definition_name = "Key Vault Crypto Officer"
+  principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
 }
 
 module "terraform_azurerm_environment_configuration" {

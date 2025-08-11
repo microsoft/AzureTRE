@@ -1,54 +1,71 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm/template_schema.json",
-    "type": "object",
-    "title": "Windows Virtual Machine",
-    "description": "Windows virtual machine.",
-    "required": [
-    ],
-    "authorizedRoles": [
-      "WorkspaceOwner", "WorkspaceResearcher"
-    ],
-    "properties": {
-      "os_image": {
-        "$id": "#/properties/os_image",
-        "type": "string",
-        "title": "Windows image",
-        "description": "Select Windows image to use for VM",
-        "enum": [
-          "Custom Server 2019 Data Science VM",
-          "Custom Windows 10",
-          "Server 2019 Data Science VM",
-          "Windows 10",
-          "Windows 11"
-        ]
-      },
-      "vm_size": {
-        "$id": "#/properties/vm_size",
-        "type": "string",
-        "title": "VM Size",
-        "description": "Select size of VM",
-        "enum": [
-          "2 CPU | 8GB RAM",
-          "4 CPU | 16GB RAM",
-          "8 CPU | 32GB RAM",
-          "16 CPU | 64GB RAM",
-          "32 CPU | 128GB RAM",
-          "64 CPU | 256GB RAM",
-          "6 CPU | 55GB RAM | 1/6 x A10 GPU",
-          "12 CPU | 110GB RAM | 1/3 x A10 GPU",
-          "18 CPU | 220GB RAM | 1/2 x A10 GPU",
-          "36 CPU | 440GB | 1 x A10 GPU",
-          "36 CPU | 880GB | 1 x A10 GPU"
-        ],
-        "updateable": true
-      },
-      "shared_storage_access": {
-        "$id": "#/properties/shared_storage_access",
-        "type": "boolean",
-        "title": "Shared storage",
-        "default": true,
-        "description": "Enable access to shared storage"
-      }
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm/template_schema.json",
+  "type": "object",
+  "title": "Windows Virtual Machine",
+  "description": "Windows virtual machine.",
+  "required": [],
+  "authorizedRoles": [
+    "WorkspaceOwner",
+    "WorkspaceResearcher"
+  ],
+  "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Display name for the VM",
+      "description": "The display name of the VM.",
+      "default": "My Windows VM",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the VM",
+      "description": "Describe what this VM is used for.",
+      "default": "I will use this VM for research.",
+      "updateable": true
+    },
+    "os_image": {
+      "$id": "#/properties/os_image",
+      "type": "string",
+      "title": "Windows image",
+      "description": "Select Windows image to use for VM",
+      "enum": [
+        "(2025-03) Custom Windows 2019 Data Science VM",
+        "(2025-03) Custom Windows 11",
+        "(2025-03) Custom Windows 10",
+        "Custom Windows 11",
+        "Custom Windows 10",
+        "(deprecated) Server 2019 Data Science VM",
+        "(deprecated) Windows 10",
+        "(deprecated) Windows 11"
+      ]
+    },
+    "vm_size": {
+      "$id": "#/properties/vm_size",
+      "type": "string",
+      "title": "VM Size",
+      "description": "Select size of VM",
+      "enum": [
+        "2 CPU | 8GB RAM",
+        "4 CPU | 16GB RAM",
+        "8 CPU | 32GB RAM",
+        "16 CPU | 64GB RAM",
+        "32 CPU | 128GB RAM",
+        "64 CPU | 256GB RAM",
+        "6 CPU | 55GB RAM | 1/6 x A10 GPU",
+        "12 CPU | 110GB RAM | 1/3 x A10 GPU",
+        "18 CPU | 220GB RAM | 1/2 x A10 GPU",
+        "36 CPU | 440GB | 1 x A10 GPU",
+        "36 CPU | 880GB | 1 x A10 GPU"
+      ],
+      "updateable": true
+    },
+    "shared_storage_access": {
+      "$id": "#/properties/shared_storage_access",
+      "type": "boolean",
+      "title": "Shared storage",
+      "default": true,
+      "description": "Enable access to shared storage"
     }
+  }
 }

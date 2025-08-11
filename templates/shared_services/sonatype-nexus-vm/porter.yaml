@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-sonatype-nexus
-version: 3.0.1
+version: 3.3.2
 description: "A Sonatype Nexus shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -47,6 +47,16 @@ parameters:
     type: string
     default: "nexus-ssl"
     description: "Name of the certificate for configuring Nexus SSL with (stored in the core KeyVault)"
+  - name: enable_cmk_encryption
+    type: boolean
+    default: false
+  - name: key_store_id
+    type: string
+    default: ""
+  - name: vm_size
+    type: string
+    default: "Standard_B8ms"
+    description: "The size of the VM to be deployed"
 outputs:
   - name: workspace_vm_allowed_fqdns_list
     type: string
@@ -76,7 +86,7 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.4.5
+      clientVersion: 1.9.8
 
 install:
   - terraform:
@@ -85,7 +95,12 @@ install:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         ssl_cert_name: ${ bundle.parameters.ssl_cert_name }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
+        vm_size: ${ bundle.parameters.vm_size }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -104,7 +119,12 @@ upgrade:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         ssl_cert_name: ${ bundle.parameters.ssl_cert_name }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
+        vm_size: ${ bundle.parameters.vm_size }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -123,7 +143,12 @@ uninstall:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         ssl_cert_name: ${ bundle.parameters.ssl_cert_name }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
+        vm_size: ${ bundle.parameters.vm_size }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }

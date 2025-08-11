@@ -27,10 +27,22 @@
       "title": "App Service Plan SKU",
       "description": "The SKU that will be used when deploying an Azure App Service Plan.",
       "default": "P1v3",
+      "updateable": true,
       "enum": [
+        "P0v3",
         "P1v3",
         "P1v2",
         "S1"
+      ]
+    },
+    "storage_account_redundancy": {
+      "type": "string",
+      "title": "Storage Account Redundancy",
+      "description": "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage).",
+      "default": "GRS",
+      "enum": [
+        "GRS",
+        "ZRS"
       ]
     },
     "address_space_size": {
@@ -49,12 +61,6 @@
       "type": "array",
       "title": "Address spaces",
       "description": "Network address space to be used by the workspace.",
-      "updateable": true
-    },
-    "service_template_versions": {
-      "type": "array",
-      "title": "Workspace services versions",
-      "description": "List of service and user resource versions and whether they are enabled.",
       "updateable": true
     },
     "auth_type": {
@@ -285,14 +291,12 @@
     "address_spaces": {
       "classNames": "tre-hidden"
     },
-    "service_template_versions": {
-      "classNames": "tre-hidden"
-    },
     "ui:order": [
       "display_name",
       "description",
       "overview",
       "shared_storage_quota",
+      "storage_account_redundancy",
       "app_service_plan_sku",
       "address_space_size",
       "address_space",

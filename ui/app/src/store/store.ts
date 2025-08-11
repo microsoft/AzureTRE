@@ -3,8 +3,8 @@ import operationsReducer from "../components/shared/notifications/operationsSlic
 
 export const store = configureStore({
   reducer: {
-    operations: operationsReducer
-  }
+    operations: operationsReducer,
+  },
 });
 
 export type AppDispatch = typeof store.dispatch;

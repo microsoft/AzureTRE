@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.108.0"
+      version = "=4.14.0"
     }
     local = {
       source  = "hashicorp/local"
@@ -28,6 +28,7 @@ provider "azurerm" {
       recover_soft_deleted_keys         = true
     }
   }
+  storage_use_azuread = true
 }
 
 module "terraform_azurerm_environment_configuration" {

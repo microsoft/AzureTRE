@@ -149,16 +149,6 @@ moved {
 }
 
 moved {
-  from = module.keyvault.azurerm_key_vault_access_policy.deployer
-  to   = azurerm_key_vault_access_policy.deployer
-}
-
-moved {
-  from = module.keyvault.azurerm_key_vault_access_policy.managed_identity
-  to   = azurerm_key_vault_access_policy.managed_identity
-}
-
-moved {
   from = module.keyvault.azurerm_private_endpoint.kvpe
   to   = azurerm_private_endpoint.kvpe
 }

@@ -18,15 +18,17 @@ resource "azurerm_service_plan" "core" {
 }
 
 resource "azurerm_linux_web_app" "api" {
-  name                            = "api-${var.tre_id}"
-  resource_group_name             = azurerm_resource_group.core.name
-  location                        = azurerm_resource_group.core.location
-  service_plan_id                 = azurerm_service_plan.core.id
-  https_only                      = true
-  key_vault_reference_identity_id = azurerm_user_assigned_identity.id.id
-  virtual_network_subnet_id       = module.network.web_app_subnet_id
-  public_network_access_enabled   = false
-  tags                            = local.tre_core_tags
+  name                                           = "api-${var.tre_id}"
+  resource_group_name                            = azurerm_resource_group.core.name
+  location                                       = azurerm_resource_group.core.location
+  service_plan_id                                = azurerm_service_plan.core.id
+  https_only                                     = true
+  key_vault_reference_identity_id                = azurerm_user_assigned_identity.id.id
+  virtual_network_subnet_id                      = module.network.web_app_subnet_id
+  public_network_access_enabled                  = false
+  ftp_publish_basic_authentication_enabled       = false
+  webdeploy_publish_basic_authentication_enabled = false
+  tags                                           = local.tre_core_tags
 
   app_settings = {
     "APPLICATIONINSIGHTS_CONNECTION_STRING"          = module.azure_monitor.app_insights_connection_string
@@ -47,9 +49,9 @@ resource "azurerm_linux_web_app" "api" {
     "RESOURCE_LOCATION"                              = azurerm_resource_group.core.location
     "ENABLE_SWAGGER"                                 = var.enable_swagger
     "SWAGGER_UI_CLIENT_ID"                           = var.swagger_ui_client_id
-    "AAD_TENANT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.auth_tenant_id.id})"
-    "API_CLIENT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_id.id})"
-    "API_CLIENT_SECRET"                              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_secret.id})"
+    "AAD_TENANT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.kv.vault_uri}secrets/${azurerm_key_vault_secret.auth_tenant_id.name}/${azurerm_key_vault_secret.auth_tenant_id.version})"
+    "API_CLIENT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.kv.vault_uri}secrets/${azurerm_key_vault_secret.api_client_id.name}/${azurerm_key_vault_secret.api_client_id.version})"
+    "API_CLIENT_SECRET"                              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.kv.vault_uri}secrets/${azurerm_key_vault_secret.api_client_secret.name}/${azurerm_key_vault_secret.api_client_secret.version})"
     "RESOURCE_GROUP_NAME"                            = azurerm_resource_group.core.name
     "SUBSCRIPTION_ID"                                = data.azurerm_subscription.current.subscription_id
     CORE_ADDRESS_SPACE                               = var.core_address_space
@@ -81,12 +83,12 @@ resource "azurerm_linux_web_app" "api" {
     vnet_route_all_enabled                        = true
     container_registry_use_managed_identity       = true
     container_registry_managed_identity_client_id = azurerm_user_assigned_identity.id.client_id
-    minimum_tls_version                           = "1.2"
+    minimum_tls_version                           = "1.3"
     ftps_state                                    = "Disabled"
 
     application_stack {
-      docker_image     = "${local.docker_registry_server}/${var.api_image_repository}"
-      docker_image_tag = local.version
+      docker_registry_url = "https://${local.docker_registry_server}"
+      docker_image_name   = "${var.api_image_repository}:${local.version}"
     }
 
     cors {

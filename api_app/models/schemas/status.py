@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import List
 
 from pydantic import BaseModel
@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from resources import strings
 
 
-class StatusEnum(str, Enum):
+class StatusEnum(StrEnum):
     ok = strings.OK
     not_ok = strings.NOT_OK
 

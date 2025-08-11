@@ -87,6 +87,18 @@
       "source": {
         "env": "ARM_ENVIRONMENT"
       }
+    },
+    {
+      "name": "enable_cmk_encryption",
+      "source": {
+        "env": "ENABLE_CMK_ENCRYPTION"
+      }
+    },
+    {
+      "name": "key_store_id",
+      "source": {
+        "env": "KEY_STORE_ID"
+      }
     }
   ]
 }

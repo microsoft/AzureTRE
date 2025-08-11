@@ -60,3 +60,11 @@ local({
 "@
 $RConfig | Out-File -Encoding Ascii ( New-Item -Path $Env:ProgramFiles\R\R-4.1.2\etc\Rprofile.site -Force )
 
+#
+# The new 2025-03 images have a conda config that doesn't get cleaned up. Do that here.
+# Turn off error handling since I don't know how this will work in older images. For
+# the same reason, put it at the end of the script.
+$ErrorActionPreference = "Continue"
+conda config --remove channels https://repo.anaconda.com/pkgs/main --system
+conda config --remove channels https://repo.anaconda.com/pkgs/r --system
+conda config --remove channels https://repo.anaconda.com/pkgs/msys2 --system

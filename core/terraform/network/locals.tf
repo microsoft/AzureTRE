@@ -19,7 +19,7 @@ locals {
   # .3
   resource_processor_subnet_address_prefix  = local.core_services_vnet_subnets[9]  # .0 - .63
   firewall_management_subnet_address_prefix = local.core_services_vnet_subnets[10] # .64 - .127
-  # see the dns-resolver module = local.core_services_vnet_subnets[11] # .128 - .191
+  dns_resolver_subnet_address_prefix        = local.core_services_vnet_subnets[11] # .128 - .191
   # FREE = local.core_services_vnet_subnets[12] # .192 - .254
 
   tre_core_tags = {
@@ -32,4 +32,6 @@ locals {
     "privatelink.queue.core.windows.net",
     "privatelink.table.core.windows.net"
   ])
+
+  subnet_ids_map = { for subnet in azurerm_virtual_network.core.subnet : subnet.name => subnet.id }
 }

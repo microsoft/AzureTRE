@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-import-reviewvm
-version: 0.2.8
+version: 0.3.2
 description: "An Azure TRE User Resource Template for reviewing Airlock import requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -18,11 +18,15 @@ custom:
         sku: winserver-2019
         version: latest
       conda_config: true
+      secure_boot_enabled: false # dsvm-win-2019 is not a gen2 image
+      vtpm_enabled: false
     # For information on using custom images, see README.me in the guacamole/user-resources folder
     # "Custom Image From Gallery":
     #   source_image_name: sltestwin1
     #   source_image_reference: null,
     #   conda_config: true
+    #   secure_boot_enabled: false
+    #   vtpm_enabled: false
 
 credentials:
   - name: azure_tenant_id
@@ -84,6 +88,12 @@ parameters:
     type: string
     description: "A SAS token to access storage resource in workspace under review"
     env: airlock_request_sas_url
+  - name: enable_cmk_encryption
+    type: boolean
+    default: false
+  - name: key_store_id
+    type: string
+    default: ""
 
 outputs:
   - name: ip
@@ -112,9 +122,9 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.3.6
+      clientVersion: 1.9.8
   - az:
-      clientVersion: 2.37.0
+      clientVersion: 2.67.0
 
 install:
   - terraform:
@@ -128,7 +138,11 @@ install:
         vm_size: ${ bundle.parameters.vm_size }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
         airlock_request_sas_url: ${ bundle.parameters.airlock_request_sas_url }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -151,7 +165,11 @@ upgrade:
         vm_size: ${ bundle.parameters.vm_size }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
         airlock_request_sas_url: "unused"
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -171,6 +189,9 @@ uninstall:
         - ${ bundle.parameters.tfstate_storage_account_name }
         - ${ bundle.parameters.tfstate_container_name }
         - ${ bundle.parameters.id }
+      envs:
+        ARM_USE_AZUREAD: "true"
+        ARM_USE_OIDC: "true"
 
   - terraform:
       description: "Delete the Guacamole User Resource Service"
@@ -183,7 +204,11 @@ uninstall:
         vm_size: ${ bundle.parameters.vm_size }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
         airlock_request_sas_url: "unused"
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -195,6 +220,8 @@ start:
         - "output"
       description: "Get resource ID from Terraform outputs"
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -229,6 +256,8 @@ stop:
         - "output"
       description: "Get VM hostname and rg from Terraform outputs"
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
@@ -263,6 +292,8 @@ reset_password:
         - "output"
       description: "Get VM details from Terraform outputs"
       backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
         resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
         storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
         container_name: ${ bundle.parameters.tfstate_container_name }
