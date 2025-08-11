@@ -146,18 +146,19 @@ resource "terraform_data" "postgres_subnet_wait" {
 }
 
 resource "azurerm_postgresql_flexible_server" "postgres" {
-  name                   = "psql-server-${local.service_suffix}"
-  resource_group_name    = data.azurerm_resource_group.ws.name
-  location               = data.azurerm_resource_group.ws.location
-  delegated_subnet_id    = azurerm_subnet.postgres.id
-  private_dns_zone_id    = data.azurerm_private_dns_zone.postgres.id
-  sku_name               = var.postgres_sku
-  version                = local.postgres_version
-  administrator_login    = local.postgres_admin_username
-  administrator_password = azurerm_key_vault_secret.postgres_admin_password.value
-  storage_mb             = var.postgres_storage_size_in_mb
-  zone                   = "1"
-  tags                   = local.tre_workspace_service_tags
+  name                          = "psql-server-${local.service_suffix}"
+  resource_group_name           = data.azurerm_resource_group.ws.name
+  location                      = data.azurerm_resource_group.ws.location
+  public_network_access_enabled = false
+  delegated_subnet_id           = azurerm_subnet.postgres.id
+  private_dns_zone_id           = data.azurerm_private_dns_zone.postgres.id
+  sku_name                      = var.postgres_sku
+  version                       = local.postgres_version
+  administrator_login           = local.postgres_admin_username
+  administrator_password        = azurerm_key_vault_secret.postgres_admin_password.value
+  storage_mb                    = var.postgres_storage_size_in_mb
+  zone                          = "1"
+  tags                          = local.tre_workspace_service_tags
 
   timeouts {
     # If this doesn't complete in a realistic time, no point in waiting the full/default 60m
@@ -204,8 +205,9 @@ resource "terraform_data" "deployment_ohdsi_webapi_init" {
   provisioner "local-exec" {
 
     environment = {
-      MAIN_CONNECTION_STRING        = "host=${azurerm_postgresql_flexible_server.postgres.fqdn} port=5432 dbname=${local.postgres_webapi_database_name} user=${local.postgres_admin_username} password=${azurerm_key_vault_secret.postgres_admin_password.value} sslmode=require"
-      OHDSI_ADMIN_CONNECTION_STRING = "host=${azurerm_postgresql_flexible_server.postgres.fqdn} port=5432 dbname=${local.postgres_webapi_database_name} user=${local.postgres_webapi_admin_username} password=${azurerm_key_vault_secret.postgres_webapi_admin_password.value} sslmode=require"
+      MAIN_CONNECTION_STRING        = "host=${azurerm_postgresql_flexible_server.postgres.name}.postgres.database.azure.com port=5432 dbname=${local.postgres_webapi_database_name} user=${local.postgres_admin_username} password=${azurerm_key_vault_secret.postgres_admin_password.value} sslmode=require"
+      OHDSI_ADMIN_CONNECTION_STRING = "host=${azurerm_postgresql_flexible_server.postgres.name}.postgres.database.azure.com port=5432 dbname=${local.postgres_webapi_database_name} user=${local.postgres_webapi_admin_username} password=${azurerm_key_vault_secret.postgres_webapi_admin_password.value} sslmode=require"
+      SERVER_NAME                   = azurerm_postgresql_flexible_server.postgres.name
       DATABASE_NAME                 = local.postgres_webapi_database_name
       SCHEMA_NAME                   = local.postgres_schema_name
       OHDSI_ADMIN_PASSWORD          = azurerm_key_vault_secret.postgres_webapi_admin_password.value

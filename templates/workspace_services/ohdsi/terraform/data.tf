@@ -74,3 +74,8 @@ data "azurerm_private_dns_zone" "postgres" {
   name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.postgres.database.azure.com"]
   resource_group_name = local.core_resource_group_name
 }
+
+data "azurerm_synapse_workspace" "synapse_cdm" {
+  name                = local.synapse_workspace_name
+  resource_group_name = local.synapse_resource_group
+}

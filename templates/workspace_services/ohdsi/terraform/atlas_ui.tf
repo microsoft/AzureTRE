@@ -67,6 +67,7 @@ resource "azurerm_linux_web_app" "atlas_ui" {
   }
 
   depends_on = [
+    data.azurerm_subnet.web_app,
     azurerm_storage_share_file.config_local,
   ]
 

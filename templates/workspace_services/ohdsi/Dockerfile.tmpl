@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile-upstream:1.4.0
 FROM --platform=linux/amd64 debian:bullseye-slim
 
+ENV ACCEPT_EULA=Y
 # PORTER_INIT
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
@@ -9,10 +10,14 @@ RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloa
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # ignore lint rule that requires `--no-install-recommends` to allow the microsoft packeges to get everything they need and clear it all up in the end
 # hadolint ignore=DL3015
-RUN apt-get update && apt-get install -y curl gnupg && \
+RUN apt-get update && \
+  apt-get install -y curl gnupg && \
   curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
   echo 'deb https://packages.microsoft.com/debian/11/prod bullseye main'> /etc/apt/sources.list.d/prod.list && \
-  apt-get update && apt-get -y install sqlcmd --no-install-recommends && \
+  apt-get update && \
+  apt-get -y install sqlcmd --no-install-recommends && \
+  apt-get install -y msodbcsql18 mssql-tools18 && \
+  echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> /etc/bash.bashrc && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Git is required for terraform_azurerm_environment_configuration

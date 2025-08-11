@@ -40,7 +40,7 @@ else
   export SQLCMDPASSWORD="$(jq -r '.password' <<< "$ds_config")"
 
   printf 'Execute Synapse SQL script'
-  sqlcmd -U "${admin_user}" -S "${synapse_server}" -d "${synapse_db}" -W -v RESULTS_SCHEMA_NAME="${results_schema_name}" -v TEMP_SCHEMA_NAME="${temp_schema_name}" -v ORIGIN_RESULTS_SCHEMA_NAME="${origin_results_schema_name}" -i "${SCRIPT_PATH}"
+  sqlcmd -I -U "${admin_user}" -S "${synapse_server}" -d "${synapse_db}" -W -v RESULTS_SCHEMA_NAME="${results_schema_name}" -v TEMP_SCHEMA_NAME="${temp_schema_name}" -v ORIGIN_RESULTS_SCHEMA_NAME="${origin_results_schema_name}" -i "${SCRIPT_PATH}"
   printf 'Execute Synapse SQL script: done.'
   exit 0
 fi
