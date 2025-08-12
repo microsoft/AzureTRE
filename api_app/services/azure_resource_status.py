@@ -12,9 +12,12 @@ def get_azure_resource_status(resource_id):
     resource_type = resource_id.split('/')[-3] + '/' + resource_id.split('/')[-2]
 
     try:
+        logging.info("Before API VM Call")
         if resource_type == 'Microsoft.Compute/virtualMachines':
+            logging.info("Before API VM Call")
             vm_instance_view: models.VirtualMachineInstanceView = get_azure_vm_instance_view(resource_name, resource_group_name)
             power_state = None
+            logging.info("Before statuses object available for VM")
             if vm_instance_view.statuses is not None:
                 logging.info("statuses object available for VM")
                 power_states = [x for x in vm_instance_view.statuses if x.code is not None and x.code.startswith('PowerState')]
