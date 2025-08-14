@@ -594,7 +594,7 @@ async def retrieve_active_vm_count(
                 if ("WorkspaceResearcher" in user.roles or "AirlockManager" in user.roles) and "WorkspaceOwner" not in user.roles:
                     user_resources = [resource for resource in user_resources if resource.ownerId == user.id]
 
-                count = user_resources.count
+                count = len(user_resources)
                 # Count active VMs
                 for user_resource in user_resources:
                     if 'azure_resource_id' in user_resource.properties:
