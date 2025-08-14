@@ -34,4 +34,9 @@ def get_azure_resource_status(resource_id):
 
 def get_azure_vm_instance_view(vm_name, resource_group_name) -> models.VirtualMachineInstanceView:
     compute_client = ComputeManagementClient(credentials.get_credential(), config.SUBSCRIPTION_ID)
-    return compute_client.virtual_machines.instance_view(resource_group_name, vm_name)
+    try:
+        logging.info(f"{resource_group_name} == {vm_name}")
+        instance_view = compute_client.virtual_machines.instance_view(resource_group_name, vm_name)
+        return instance_view
+    except Exception as e:
+        logging.error(f"Error getting VM instance view: {e}")
