@@ -1,5 +1,5 @@
 import datetime, logging, math
-from models.domain.data_usage import MHRAWorkspaceDataUsage, MHRAContainerUsageItem, MHRAFileshareUsageItem, MHRAStorageAccountLimits, MHRAStorageAccountLimitsItem, StorageAccountLimitsInput
+from models.domain.data_usage import MHRAProtocolItem, MHRAProtocolList, MHRAWorkspaceDataUsage, MHRAContainerUsageItem, MHRAFileshareUsageItem, MHRAStorageAccountLimits, MHRAStorageAccountLimitsItem, StorageAccountLimitsInput
 from models.schemas.storage_info_request import StorageInfoRequest
 from core import config, credentials
 from resources import constants, strings
@@ -234,6 +234,35 @@ class DataUsageService:
         except:
             logging.exception("Unknown error when calling table_client.")
             raise Exception("Unknown error when calling table_client.")
+
+    async def get_perstudy_items(self, workspaceId: str) -> MHRAProtocolList:
+        container_perstudy_table = constants.WORKSPACE_PERSTUDY_USAGE_TABLE_NAME
+
+        try:
+            protocol_items = []
+            query_filter = f"WorkspaceName eq '{workspaceId}'"
+            table_client = self.client.get_table_client(table_name=container_perstudy_table)
+            entities = table_client.query_entities(query_filter)
+
+            for entity in entities:
+                protocol_items.append(
+                    MHRAProtocolItem(
+                        workspace_name=entity['WorkspaceName'],
+                        storage_name=entity['StorageName'],
+                        protocol_id=entity['ProtocolId'],
+                        protocol_data_usage=entity['ProtocolDataUsage'],
+                        protocol_percentage_used=entity['ProtocolPercentageUsed']
+                    )
+                )
+
+            return MHRAProtocolList(protocol_items=protocol_items)
+
+        except HttpResponseError as e:
+            logging.exception("HTTP error when calling table_client.")
+            raise
+        except Exception as e:
+            logging.exception("Unknown error when calling table_client.")
+            raise
 
 
 @lru_cache(maxsize=None)

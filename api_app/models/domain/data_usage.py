@@ -48,3 +48,13 @@ class MHRAFileshareUsageItem(BaseModel):
 class MHRAWorkspaceDataUsage(BaseModel):
     workspace_container_usage_items: List[MHRAContainerUsageItem]
     workspace_fileshare_usage_items: List[MHRAFileshareUsageItem]
+
+class MHRAProtocolItem(BaseModel):
+    workspace_name: str
+    storage_name: str
+    protocol_id: str
+    protocol_data_usage: float
+    protocol_percentage_used: float
+
+class MHRAProtocolList(BaseModel):
+    protocol_items: List[MHRAProtocolItem]
