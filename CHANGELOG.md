@@ -6,6 +6,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Fix disable public network access for stwebcertsTREID is still flagging in Defender ([#4640](https://github.com/microsoft/AzureTRE/issues/4640))
+* Fix R configuration with incorrect quotes preventing package installation on Linux VMs ([#4657](https://github.com/microsoft/AzureTRE/issues/4657))
 
 ## 0.25.0 (July 18, 2025)
 **IMPORTANT**:
