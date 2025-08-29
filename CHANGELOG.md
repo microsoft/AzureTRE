@@ -2,10 +2,14 @@
 ## 0.26.0 (Unreleased)
 
 ENHANCEMENTS:
+* Make workspace shared storage quota updateable ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
 * Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
 
 BUG FIXES:
 * Fix disable public network access for stwebcertsTREID is still flagging in Defender ([#4640](https://github.com/microsoft/AzureTRE/issues/4640))
+
+COMPONENTS:
+* Base workspace version bumped to 2.5.0 ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
 
 ## 0.25.0 (July 18, 2025)
 **IMPORTANT**:
