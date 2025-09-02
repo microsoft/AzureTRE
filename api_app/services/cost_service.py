@@ -93,14 +93,8 @@ class CostService:
     def __init__(self) -> None:
         self.scope = "/subscriptions/{}".format(config.SUBSCRIPTION_ID)
         self.client = CostManagementClient(credential=credentials.get_credential())
-        self.__resource_clients = {
-            config.SUBSCRIPTION_ID: ResourceManagementClient(
-                credentials.get_credential(),
-                config.SUBSCRIPTION_ID,
-                base_url=config.RESOURCE_MANAGER_ENDPOINT,
-                credential_scopes=config.CREDENTIAL_SCOPES
-            )
-        }
+        self.__resource_clients = {}
+        self.get_resource_management_client(config.SUBSCRIPTION_ID)
         self.cache = {}
 
     def get_resource_management_client(self, subscription_id: Optional[str] = None) -> ResourceManagementClient:
