@@ -268,34 +268,35 @@ async def test_invoke_porter_action_custom_action(mock_service_bus_message_gener
     assert result is True
     mock_sb_sender.send_messages.assert_called()
 
-    @pytest.mark.asyncio
-    @patch("vmss_porter.runner.run_command_helper")
-    async def test_run_porter_success(mock_run_command_helper):
-        """Test run_porter function with successful command execution for all steps."""
-        config = {
-            "azure_environment": "AzureCloud",
-            "vmss_msi_id": "msi_id",
-            "registry_server": "myregistry.azurecr.io",
-            "porter_env": {}
-        }
-        command = [["porter", "install", "test_installation"]]
 
-        # Mock successful execution of all commands - need more responses for the multiple commands now
-        mock_run_command_helper.side_effect = [
-            (0, "azure cloud set output", None),  # Azure cloud set succeeds
-            (0, "azure login output", None),      # Azure login succeeds
-            (0, "acr login output", None),        # ACR login succeeds
-            (0, "porter cred output 1", None),    # Porter credential set 1 succeeds
-            (0, "porter cred output 2", None),    # Porter credential set 2 succeeds
-            (0, "porter command output", None)    # Porter command succeeds
-        ]
+@pytest.mark.asyncio
+@patch("vmss_porter.runner.run_command_helper")
+async def test_run_porter_success(mock_run_command_helper):
+    """Test run_porter function with successful command execution for all steps."""
+    config = {
+        "azure_environment": "AzureCloud",
+        "vmss_msi_id": "msi_id",
+        "registry_server": "myregistry.azurecr.io",
+        "porter_env": {}
+    }
+    command = [["porter", "install", "test_installation"]]
 
-        returncode, stdout, stderr = await run_porter(command, config)
+    # Mock successful execution of all commands - need more responses for the multiple commands now
+    mock_run_command_helper.side_effect = [
+        (0, "azure cloud set output", None),  # Azure cloud set succeeds
+        (0, "azure login output", None),      # Azure login succeeds
+        (0, "acr login output", None),        # ACR login succeeds
+        (0, "porter cred output 1", None),    # Porter credential set 1 succeeds
+        (0, "porter cred output 2", None),    # Porter credential set 2 succeeds
+        (0, "porter command output", None)    # Porter command succeeds
+    ]
 
-        assert returncode == 0
-        assert stdout == "porter command output"
-        assert stderr is None
-        assert mock_run_command_helper.call_count == 6
+    returncode, stdout, stderr = await run_porter(command, config)
+
+    assert returncode == 0
+    assert stdout == "porter command output"
+    assert stderr is None
+    assert mock_run_command_helper.call_count == 6
 
 
 @pytest.mark.asyncio
@@ -451,4 +452,4 @@ async def test_check_runners(_):
     run_once = Mock(side_effect=[True, False])
 
     await check_runners(processes, mock_httpserver, keep_running=run_once)
-    assert mock_httpserver.kill.await_count == 1
+    assert mock_httpserver.kill.call_count == 1
