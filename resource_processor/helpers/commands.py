@@ -8,7 +8,7 @@ from shared.logging import logger, shell_output_logger
 
 
 async def run_command_helper(cmd_parts: list, config: dict, description: str):
-    logger.debug(f"Executing {description}: {' '.join(cmd_parts)}")
+    logger.debug(f"Executing {description}")
 
     proc = await asyncio.create_subprocess_exec(
         *cmd_parts,
