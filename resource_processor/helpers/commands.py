@@ -7,40 +7,78 @@ from urllib.parse import urlparse
 from shared.logging import logger, shell_output_logger
 
 
+async def run_command_helper(cmd_parts: list, config: dict, description: str):
+    logger.debug(f"Executing {description}")
+
+    proc = await asyncio.create_subprocess_exec(
+        *cmd_parts,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        env=config["porter_env"]
+    )
+
+    stdout, stderr = await proc.communicate()
+
+    stdout_text = None
+    stderr_text = None
+
+    if stdout:
+        stdout_text = stdout.decode()
+        shell_output_logger(stdout_text, '[stdout]', logging.INFO)
+
+    if stderr:
+        stderr_text = stderr.decode()
+        shell_output_logger(stderr_text, '[stderr]', logging.WARN)
+
+    if proc.returncode != 0:
+        logger.error(f"{description} failed with return code {proc.returncode}")
+    else:
+        logger.debug(f"{description} completed successfully")
+
+    return (proc.returncode, stdout_text, stderr_text)
+
+
 def azure_login_command(config):
-    set_cloud_command = f"az cloud set --name {config['azure_environment']} >/dev/null "
+    commands = [
+        ["az", "cloud", "set", "--name", config['azure_environment']]
+    ]
 
     if config.get("vmss_msi_id"):
         # Use the Managed Identity when in VMSS context
-        login_command = f"az login --identity -u {config['vmss_msi_id']} >/dev/null "
-
+        commands.append(["az", "login", "--identity", "-u", config['vmss_msi_id']])
     else:
         # Use a Service Principal when running locally
-        login_command = f"az login --service-principal --username {config['arm_client_id']} --password {config['arm_client_secret']} --tenant {config['arm_tenant_id']} >/dev/null"
+        commands.append(["az", "login", "--service-principal",
+                         "--username", config['arm_client_id'],
+                         "--password", config['arm_client_secret'],
+                         "--tenant", config['arm_tenant_id']])
 
-    return f"{set_cloud_command} && {login_command}"
+    return commands
 
 
 def apply_porter_credentials_sets_command(config):
+    commands = []
+
     if config.get("vmss_msi_id"):
         # Use the Managed Identity when in VMSS context
-        porter_credential_sets = "porter credentials apply vmss_porter/arm_auth_local_debugging.json >/dev/null 2>&1 && porter credentials apply vmss_porter/aad_auth.json >/dev/null 2>&1"
-
+        commands.append(["porter", "credentials", "apply", "vmss_porter/arm_auth_local_debugging.json"])
+        commands.append(["porter", "credentials", "apply", "vmss_porter/aad_auth.json"])
     else:
         # Use a Service Principal when running locally
-        porter_credential_sets = "porter credentials apply vmss_porter/arm_auth_local_debugging.json >/dev/null 2>&1 && porter credentials apply vmss_porter/aad_auth_local_debugging.json >/dev/null 2>&1"
+        commands.append(["porter", "credentials", "apply", "vmss_porter/arm_auth_local_debugging.json"])
+        commands.append(["porter", "credentials", "apply", "vmss_porter/aad_auth_local_debugging.json"])
 
-    return f"{porter_credential_sets}"
+    return commands
 
 
 def azure_acr_login_command(config):
     acr_name = _get_acr_name(acr_fqdn=config['registry_server'])
-    return f"az acr login --name {acr_name} >/dev/null "
+    return [["az", "acr", "login", "--name", acr_name]]
 
 
 async def build_porter_command(config, msg_body, custom_action=False):
     porter_parameter_keys = await get_porter_parameter_keys(config, msg_body)
-    porter_parameters = ""
+    porter_parameters = []
 
     if porter_parameter_keys is None:
         logger.warning("Unknown porter parameters - explain probably failed.")
@@ -79,59 +117,80 @@ async def build_porter_command(config, msg_body, custom_action=False):
                     val_base64_bytes = base64.b64encode(val_bytes)
                     parameter_value = val_base64_bytes.decode("ascii")
 
-                porter_parameters += f" --param {parameter_name}=\"{parameter_value}\""
+                porter_parameters.extend(["--param", f"{parameter_name}={parameter_value}"])
 
     installation_id = msg_body['id']
 
-    command_line = [f"porter"
-                    # If a custom action (i.e. not install, uninstall, upgrade) we need to use 'invoke'
-                    f"{' invoke --action' if custom_action else ''} "
-                    f"{msg_body['action']} \"{installation_id}\" "
-                    f"--reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
-                    f"{porter_parameters} "
-                    f"--force "
-                    f"--credential-set arm_auth "
-                    f"--credential-set aad_auth "
-                    ]
+    command = ["porter"]
+    if custom_action:
+        command.extend(["invoke", "--action"])
+
+    command.append(msg_body['action'])
+    command.append(installation_id)
+    command.extend([
+        "--reference",
+        f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
+    ])
+    command.extend(porter_parameters)
+    command.append("--force")
+    command.extend(["--credential-set", "arm_auth"])
+    command.extend(["--credential-set", "aad_auth"])
 
     if msg_body['action'] == 'upgrade':
-        command_line[0] = command_line[0] + "--force-upgrade "
+        command.append("--force-upgrade")
 
-    command_line[0] = command_line[0].strip()
-
-    return command_line
+    return [command]
 
 
 async def build_porter_command_for_outputs(msg_body):
     installation_id = msg_body['id']
-    command_line = [f"porter installations output list --installation {installation_id} --output json"]
-    return command_line
+    command = [
+        "porter",
+        "installations",
+        "output",
+        "list",
+        "--installation",
+        installation_id,
+        "--output",
+        "json"
+    ]
+    return [command]
 
 
 async def get_porter_parameter_keys(config, msg_body):
-    command = [f"{azure_login_command(config)} && \
-        {azure_acr_login_command(config)} && \
-        porter explain --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']} --output json"]
+    login_commands = azure_login_command(config)
+    for cmd in login_commands:
+        returncode, _, _ = await run_command_helper(cmd, config, "Azure login for Porter explain")
+        if returncode != 0:
+            return None
 
-    proc = await asyncio.create_subprocess_shell(
-        ''.join(command),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        env=config["porter_env"])
+    acr_login_commands = azure_acr_login_command(config)
+    for cmd in acr_login_commands:
+        returncode, _, _ = await run_command_helper(cmd, config, "Azure ACR login for Porter explain")
+        if returncode != 0:
+            return None
 
-    stdout, stderr = await proc.communicate()
-    logger.debug(f'get_porter_parameter_keys exited with {proc.returncode}')
-    result_stdout = None
-    result_stderr = None
+    explain_cmd = [
+        "porter",
+        "explain",
+        "--reference",
+        f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}",
+        "--output",
+        "json"
+    ]
 
-    if stdout:
-        result_stdout = stdout.decode()
-        porter_explain_parameters = json.loads(result_stdout)["parameters"]
+    returncode, stdout_text, _ = await run_command_helper(explain_cmd, config, "Porter explain command")
+
+    if returncode != 0 or not stdout_text:
+        return None
+
+    try:
+        porter_explain_parameters = json.loads(stdout_text)["parameters"]
         porter_parameter_keys = [item["name"] for item in porter_explain_parameters]
         return porter_parameter_keys
-    if stderr:
-        result_stderr = stderr.decode()
-        shell_output_logger(result_stderr, '[stderr]', logging.WARN)
+    except (json.JSONDecodeError, KeyError) as e:
+        logger.error(f"Failed to parse Porter explain output: {e}")
+        return None
 
 
 def get_special_porter_param_value(config, parameter_name: str, msg_body):
