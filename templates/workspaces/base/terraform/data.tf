@@ -13,3 +13,5 @@ data "azurerm_user_assigned_identity" "resource_processor_vmss_id" {
   name                = "id-vmss-${var.tre_id}"
   resource_group_name = "rg-${var.tre_id}"
 }
+
+data "azurerm_client_config" "current" {}
