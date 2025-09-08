@@ -48,6 +48,28 @@ resource "azurerm_storage_account" "stg" {
   }
 }
 
+resource "terraform_data" "wait_for_backup_lock" {
+  count = var.enable_backup ? 1 : 0
+
+  # Construct storage account resource ID without referencing the storage account resource
+  input = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${azurerm_resource_group.ws.name}/providers/Microsoft.Storage/storageAccounts/${local.storage_name}"
+
+  depends_on = [
+    azurerm_backup_container_storage_account.storage_account
+  ]
+  provisioner "local-exec" {
+    when        = destroy
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<EOT
+set -euo pipefail
+for attempt in 1 2 3; do
+  az lock list --scope "${self.input}" --query '[].id' -o tsv | grep -q . && [ "$attempt" -lt 3 ] && sleep 10 || exit 0
+done
+exit 0
+EOT
+  }
+}
+
 # Using AzAPI as AzureRM uses shared account key for Azure files operations
 resource "azapi_resource" "shared_storage" {
   type      = "Microsoft.Storage/storageAccounts/fileServices/shares@2023-05-01"

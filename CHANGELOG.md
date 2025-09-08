@@ -18,6 +18,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * App Gateway is destroyed on 2nd and subsequent deploys ([#4632](https://github.com/microsoft/AzureTRE/issues/4632))
+* Fix issue where workspace deletion fails due to storage account lock ([#4664](https://github.com/microsoft/AzureTRE/issues/4664))
 
 ## 0.24.0 (July 16, 2025)
 
