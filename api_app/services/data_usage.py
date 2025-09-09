@@ -281,7 +281,7 @@ class DataUsageService:
             container_usage_item = None
             if entities:
                 for entity in entities:
-                    container_usage_item = 6(
+                    container_usage_item = MHRAContainerUsageItem(
                         workspace_name=entity.get('WorkspaceName'),
                         storage_name=entity.get('StorageName'),
                         storage_usage=entity.get('StorageUsage'),
@@ -291,7 +291,7 @@ class DataUsageService:
                         storage_percentage_used=entity.get('StoragePercentage'),
                         update_time=entity.get('UpdateTime')
                     )
-                    break
+                    break  # Only take the first matching item
 
             # Fileshare usage
             table_client = self.client.get_table_client(table_name=fileshare_usage_table)
@@ -310,7 +310,7 @@ class DataUsageService:
                         fileshare_percentage_used=entity.get('FilesharePercentage'),
                         update_time=entity.get('UpdateTime')
                     )
-                    break
+                    break  # Only take the first matching item
 
             return WorkspaceDataUsage(
                 container_usage_item=container_usage_item,
