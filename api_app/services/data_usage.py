@@ -1,5 +1,5 @@
 import datetime, logging, math
-from models.domain.data_usage import MHRAProtocolItem, MHRAProtocolList, MHRAWorkspaceDataUsage, MHRAContainerUsageItem, MHRAFileshareUsageItem, MHRAStorageAccountLimits, MHRAStorageAccountLimitsItem, StorageAccountLimitsInput
+from models.domain.data_usage import MHRAProtocolItem, MHRAProtocolList, MHRAWorkspaceDataUsage, MHRAContainerUsageItem, MHRAFileshareUsageItem, MHRAStorageAccountLimits, MHRAStorageAccountLimitsItem, StorageAccountLimitsInput, WorkspaceDataUsage
 from models.schemas.storage_info_request import StorageInfoRequest
 from core import config, credentials
 from resources import constants, strings
@@ -264,28 +264,58 @@ class DataUsageService:
             logging.exception("Unknown error when calling table_client.")
             raise
 
-    async def get_data_usage_for_workspace(self, workspaceId: str) -> MHRAContainerUsageItem:
+    async def get_data_usage_for_workspace(self, workspaceId: str) -> WorkspaceDataUsage:
         container_usage_table = constants.WORKSPACE_CONTAINER_USAGE_TABLE_NAME
+        fileshare_usage_table = constants.WORKSPACE_FILESHARE_USAGE_TABLE_NAME
+
         tre_id = config.TRE_ID
         workspace = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, workspaceId[-4:])
+
         try:
             query_filter = f"WorkspaceName eq '{workspace}'"
+
+            # Container usage
             table_client = self.client.get_table_client(table_name=container_usage_table)
             entities = table_client.query_entities(query_filter)
 
-            for entity in entities:
-                return MHRAContainerUsageItem(
-                    workspace_name=entity['WorkspaceName'],
-                    storage_name=entity['StorageName'],
-                    storage_usage=entity['StorageUsage'],
-                    storage_limits=entity['StorageLimits'],
-                    storage_remaining=entity['StorageLimits'] - entity['StorageUsage'],
-                    storage_limits_update_time=entity['StorageLimitsUpdateTime'],
-                    storage_percentage_used=entity['StoragePercentage'],
-                    update_time=entity['UpdateTime']
-                )
+            container_usage_item = None
+            if entities:
+                for entity in entities:
+                    container_usage_item = 6(
+                        workspace_name=entity.get('WorkspaceName'),
+                        storage_name=entity.get('StorageName'),
+                        storage_usage=entity.get('StorageUsage'),
+                        storage_limits=entity.get('StorageLimits'),
+                        storage_remaining=entity.get('StorageLimits') - entity.get('StorageUsage'),
+                        storage_limits_update_time=entity.get('StorageLimitsUpdateTime'),
+                        storage_percentage_used=entity.get('StoragePercentage'),
+                        update_time=entity.get('UpdateTime')
+                    )
+                    break
 
-            return {}  # If no matching entity is found
+            # Fileshare usage
+            table_client = self.client.get_table_client(table_name=fileshare_usage_table)
+            entities = table_client.query_entities(query_filter)
+
+            fileshare_usage_item = None
+            if entities:
+                for entity in entities:
+                    fileshare_usage_item = MHRAFileshareUsageItem(
+                        workspace_name=entity.get('WorkspaceName'),
+                        storage_name=entity.get('StorageName'),
+                        fileshare_usage=entity.get('FileshareUsage'),
+                        fileshare_limits=entity.get('FileshareLimits'),
+                        fileshare_remaining=entity.get('FileshareLimits') - entity.get('FileshareUsage'),
+                        fileshare_limits_update_time=entity.get('FileshareLimitsUpdateTime'),
+                        fileshare_percentage_used=entity.get('FilesharePercentage'),
+                        update_time=entity.get('UpdateTime')
+                    )
+                    break
+
+            return WorkspaceDataUsage(
+                container_usage_item=container_usage_item,
+                fileshare_usage_item=fileshare_usage_item
+            )
 
         except HttpResponseError:
             logging.exception("HTTP error when calling table_client.")
@@ -293,7 +323,6 @@ class DataUsageService:
         except Exception:
             logging.exception("Unknown error when calling table_client.")
             raise
-
 
 @lru_cache(maxsize=None)
 def data_usage_service_factory() -> DataUsageService:

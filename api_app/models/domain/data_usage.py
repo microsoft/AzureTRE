@@ -26,35 +26,40 @@ class MHRAStorageAccountLimits(BaseModel):
     storage_account_limits_items: List[MHRAStorageAccountLimitsItem]
 
 class MHRAContainerUsageItem(BaseModel):
-    workspace_name: str
-    storage_name: str
-    storage_usage: float
-    storage_limits: float
-    storage_remaining: float
-    storage_limits_update_time: str
-    storage_percentage_used: float
-    update_time: str
+    workspace_name: Optional[str] = None
+    storage_name: Optional[str] = None
+    storage_usage: Optional[float] = None
+    storage_limits: Optional[float] = None
+    storage_remaining: Optional[float] = None
+    storage_limits_update_time: Optional[str] = None
+    storage_percentage_used: Optional[float] = None
+    update_time: Optional[str] = None
+
 
 class MHRAFileshareUsageItem(BaseModel):
-    workspace_name: str
-    storage_name: str
-    fileshare_usage: float
-    fileshare_limits: float
-    fileshare_remaining: float
+    workspace_name: Optional[str] = None
+    storage_name: Optional[str] = None
+    fileshare_usage:  Optional[float] = None
+    fileshare_limits:  Optional[float] = None
+    fileshare_remaining:  Optional[float] = None
     fileshare_limits_update_time: str
-    fileshare_percentage_used: float
-    update_time: str
+    fileshare_percentage_used:  Optional[float] = None
+    update_time: Optional[str] = None
 
 class MHRAWorkspaceDataUsage(BaseModel):
     workspace_container_usage_items: List[MHRAContainerUsageItem]
     workspace_fileshare_usage_items: List[MHRAFileshareUsageItem]
 
+class WorkspaceDataUsage(BaseModel):
+    container_usage_item: MHRAContainerUsageItem
+    fileshare_usage_item: MHRAFileshareUsageItem
+
 class MHRAProtocolItem(BaseModel):
-    workspace_name: str
-    storage_name: str
-    protocol_id: str
-    protocol_data_usage: float
-    protocol_percentage_used: float
+    workspace_name: Optional[str] = None
+    storage_name: Optional[str] = None
+    protocol_id: Optional[str] = None
+    protocol_data_usage: Optional[float] = None
+    protocol_percentage_used: Optional[float] = None
 
 class MHRAProtocolList(BaseModel):
     protocol_items: List[MHRAProtocolItem]
