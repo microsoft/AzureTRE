@@ -264,6 +264,36 @@ class DataUsageService:
             logging.exception("Unknown error when calling table_client.")
             raise
 
+    async def get_data_usage_for_workspace(self, workspaceId: str) -> MHRAContainerUsageItem:
+        container_usage_table = constants.WORKSPACE_CONTAINER_USAGE_TABLE_NAME
+        tre_id = config.TRE_ID
+        workspace = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, workspaceId[-4:])
+        try:
+            query_filter = f"WorkspaceName eq '{workspace}'"
+            table_client = self.client.get_table_client(table_name=container_usage_table)
+            entities = table_client.query_entities(query_filter)
+
+            for entity in entities:
+                return MHRAContainerUsageItem(
+                    workspace_name=entity['WorkspaceName'],
+                    storage_name=entity['StorageName'],
+                    storage_usage=entity['StorageUsage'],
+                    storage_limits=entity['StorageLimits'],
+                    storage_remaining=entity['StorageLimits'] - entity['StorageUsage'],
+                    storage_limits_update_time=entity['StorageLimitsUpdateTime'],
+                    storage_percentage_used=entity['StoragePercentage'],
+                    update_time=entity['UpdateTime']
+                )
+
+            return {}  # If no matching entity is found
+
+        except HttpResponseError:
+            logging.exception("HTTP error when calling table_client.")
+            raise
+        except Exception:
+            logging.exception("Unknown error when calling table_client.")
+            raise
+
 
 @lru_cache(maxsize=None)
 def data_usage_service_factory() -> DataUsageService:

@@ -5,7 +5,7 @@ import logging
 
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_tre_user_or_tre_admin
-from models.domain.data_usage import MHRAProtocolList, MHRAWorkspaceDataUsage, MHRAStorageAccountLimits, MHRAStorageAccountLimitsItem, StorageAccountLimitsInput
+from models.domain.data_usage import MHRAContainerUsageItem, MHRAProtocolList, MHRAWorkspaceDataUsage, MHRAStorageAccountLimits, MHRAStorageAccountLimitsItem, StorageAccountLimitsInput
 from models.schemas.data_usage import get_workspace_data_usage_responses, get_storage_account_limits_responses, get_storage_info_responses
 from models.schemas.storage_info_request import StorageInfoRequest
 from services.data_usage import DataUsageService, data_usage_service_factory
@@ -82,3 +82,15 @@ async def get_perstudy_items_method(workspaceId: str, data_usage_service: DataUs
     except Exception as exc:
         logging.exception("Failed to retrieve Protocol item: %s", exc)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.API_GET_WORKSPACE_DATA_USAGE_INTERNAL_SERVER_ERROR)
+
+@get_storage_account_limits.get("/data_usage/{workspaceId}", response_model=MHRAContainerUsageItem,
+                       status_code=status.HTTP_200_OK,
+                       name=strings.API_GET_WORKSPACE_DATA_USAGE_CLIENTS,
+                       dependencies=[Depends(get_current_workspace_owner_or_tre_user_or_tre_admin)])
+async def get_data_usage_for_workspace(workspaceId: str,data_usage_service: DataUsageService = Depends(data_usage_service_factory)) -> MHRAContainerUsageItem:
+    try:
+        return await data_usage_service.get_data_usage_for_workspace(workspaceId)
+    except:
+        logging.exception("Failed to retrieve Workspace data usage.")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.API_GET_WORKSPACE_DATA_USAGE_INTERNAL_SERVER_ERROR)
+
