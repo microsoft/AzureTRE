@@ -205,6 +205,8 @@ resource "azurerm_backup_protected_file_share" "file_share" {
   backup_policy_id          = module.backup[0].fileshare_backup_policy_id
 
   depends_on = [
-    azurerm_backup_container_storage_account.storage_account
+    azurerm_backup_container_storage_account.storage_account,
+    azapi_resource.shared_storage,
+    azurerm_private_endpoint.stgfilepe
   ]
 }

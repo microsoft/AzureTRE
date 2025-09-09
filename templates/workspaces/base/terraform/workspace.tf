@@ -115,12 +115,4 @@ module "backup" {
   resource_group_name   = azurerm_resource_group.ws.name
   tre_workspace_tags    = local.tre_workspace_tags
   enable_cmk_encryption = var.enable_cmk_encryption
-
-  depends_on = [
-    azurerm_storage_account.stg,
-    azurerm_private_endpoint.stgfilepe,
-    azurerm_private_endpoint.stgblobpe,
-    azurerm_private_endpoint.stgdfspe,
-    azapi_resource.shared_storage
-  ]
 }
