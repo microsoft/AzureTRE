@@ -63,7 +63,7 @@ resource "terraform_data" "wait_for_backup_lock" {
     command     = <<EOT
 set -euo pipefail
 for attempt in 1 2 3; do
-  az lock list --scope "${self.input}" --query '[].id' -o tsv | grep -q . && [ "$attempt" -lt 3 ] && sleep 10 || exit 0
+  az lock list --scope "${self.input}" --query '[].id' -o tsv | grep -q . && [ "$attempt" -lt 3 ] && sleep 30 || exit 0
 done
 exit 0
 EOT
@@ -84,7 +84,8 @@ resource "azapi_resource" "shared_storage" {
 
   depends_on = [
     azurerm_private_endpoint.stgfilepe,
-    azurerm_storage_account_network_rules.stgrules
+    azurerm_storage_account_network_rules.stgrules,
+    terraform_data.wait_for_backup_lock
   ]
 }
 
@@ -95,7 +96,8 @@ resource "azurerm_storage_container" "stgcontainer" {
 
   depends_on = [
     azurerm_private_endpoint.stgblobpe,
-    azurerm_storage_account_network_rules.stgrules
+    azurerm_storage_account_network_rules.stgrules,
+    terraform_data.wait_for_backup_lock
   ]
 }
 
