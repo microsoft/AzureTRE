@@ -52,7 +52,7 @@ class MHRAWorkspaceDataUsage(BaseModel):
 
 class WorkspaceDataUsage(BaseModel):
     container_usage_item: MHRAContainerUsageItem
-    fileshare_usage_item: MHRAFileshareUsageItem
+    fileshare_usage_item: Optional[MHRAFileshareUsageItem] = None
 
 class MHRAProtocolItem(BaseModel):
     workspace_name: Optional[str] = None
