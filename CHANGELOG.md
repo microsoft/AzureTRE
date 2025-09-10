@@ -2,7 +2,7 @@
 ## 0.26.0 (Unreleased)
 
 ENHANCEMENTS:
-* Change Guacamaole VM OS disk defaults to Standard SSD ([#4621](https://github.com/microsoft/AzureTRE/issues/4621))
+* Change Guacamole VM OS disk defaults to Standard SSD ([#4621](https://github.com/microsoft/AzureTRE/issues/4621))
 * Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
 * Refactor the implementation of porter commands for improved clarity and maintainability ([#4663](https://github.com/microsoft/AzureTRE/pull/4663))
 
