@@ -57,6 +57,15 @@ resource "azurerm_linux_web_app" "gitea" {
     GITEA__service__DISABLE_REGISTRATION             = false
     GITEA__service__ALLOW_ONLY_EXTERNAL_REGISTRATION = true
     GITEA__service__SHOW_REGISTRATION_BUTTON         = false
+
+    GITEA__migrations__ALLOW_LOCALNETWORKS           = "true"
+
+    GITEA__storage__STORAGE_TYPE                     = "azureblob"
+    GITEA__storage__AZURE_BLOB_ENDPOINT              = azurerm_storage_account.gitea.primary_blob_endpoint
+    GITEA__storage__AZURE_BLOB_ACCOUNT_NAME          = azurerm_storage_account.gitea.name
+    GITEA__storage__AZURE_BLOB_ACCOUNT_KEY           = azurerm_storage_account.gitea.primary_access_key
+    GITEA__storage__AZURE_BLOB_CONTAINER             = azurerm_storage_container.gitea_blob_container.name
+
     GITEA__database__SSL_MODE                        = "true"
     GITEA__database__DB_TYPE                         = "mysql"
     GITEA__database__HOST                            = azurerm_mysql_flexible_server.gitea.fqdn
@@ -86,14 +95,6 @@ resource "azurerm_linux_web_app" "gitea" {
     }
   }
 
-  storage_account {
-    name         = "gitea-data"
-    type         = "AzureFiles"
-    account_name = azurerm_storage_account.gitea.name
-    access_key   = azurerm_storage_account.gitea.primary_access_key
-    share_name   = azurerm_storage_share.gitea.name
-    mount_path   = "/data/gitea/"
-  }
 
   logs {
     application_logs {
@@ -109,7 +110,9 @@ resource "azurerm_linux_web_app" "gitea" {
   }
 
   depends_on = [
-    azurerm_key_vault_secret.gitea_password
+    azurerm_key_vault_secret.gitea_password,
+    azurerm_storage_account.gitea,
+    azurerm_storage_container.gitea_blob_container
   ]
 }
 

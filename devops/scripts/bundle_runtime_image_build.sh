@@ -32,15 +32,13 @@ if [ -n "${CI_CACHE_ACR_NAME:-}" ]; then
 	docker_cache+=("--cache-from" "${CI_CACHE_ACR_NAME}${acr_domain_suffix}/${IMAGE_NAME_PREFIX}/${image_name}:${version}")
 fi
 
-ARCHITECTURE=$(docker info --format "{{ .Architecture }}" )
-
-if [ "${ARCHITECTURE}" == "aarch64" ]; then
-    DOCKER_BUILD_COMMAND="docker buildx build --platform linux/amd64"
-else
-    DOCKER_BUILD_COMMAND="docker build"
-fi
+# Force BuildKit + buildx for amd64 + load into local docker
+export DOCKER_BUILDKIT=1
+DOCKER_BUILD_COMMAND="docker buildx build --platform linux/amd64 --load"
 
 ${DOCKER_BUILD_COMMAND} --build-arg BUILDKIT_INLINE_CACHE=1 \
   -t "${FULL_IMAGE_NAME_PREFIX}/${image_name}:${version}" \
   "${docker_cache[@]}" -f "${docker_file}" "${docker_context}"
+
+## Needed as workaround for v1 manifests not being supported in Azure App Service on Linux.
 

@@ -1,4 +1,4 @@
-ARG GITEA_TAG=1.17.3
+ARG GITEA_TAG=1.24.5
 ARG CERTIFICATE_URL=https://www.digicert.com/CACerts/BaltimoreCyberTrustRoot.crt.pem
 
 FROM gitea/gitea:${GITEA_TAG}
@@ -6,6 +6,8 @@ FROM gitea/gitea:${GITEA_TAG}
 ARG CERTIFICATE_URL
 RUN wget -q -O /usr/local/share/ca-certificates/mysql.crt.pem ${CERTIFICATE_URL} && update-ca-certificates
 COPY . /
+
+RUN chmod +x ./configure_gitea.sh
 
 RUN /usr/sbin/adduser -D -g users gitea
 
