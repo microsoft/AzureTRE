@@ -48,27 +48,6 @@ resource "azurerm_storage_account" "stg" {
   }
 }
 
-resource "terraform_data" "wait_for_backup_lock" {
-  count = var.enable_backup ? 1 : 0
-
-  # Construct storage account resource ID without referencing the storage account resource
-  input = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${azurerm_resource_group.ws.name}/providers/Microsoft.Storage/storageAccounts/${local.storage_name}"
-
-  depends_on = [
-    azurerm_backup_container_storage_account.storage_account
-  ]
-  provisioner "local-exec" {
-    when        = destroy
-    interpreter = ["/bin/bash", "-c"]
-    command     = <<EOT
-set -euo pipefail
-for attempt in 1 2 3; do
-  az lock list --scope "${self.input}" --query '[].id' -o tsv | grep -q . && [ "$attempt" -lt 3 ] && sleep 10 || exit 0
-done
-exit 0
-EOT
-  }
-}
 
 # Using AzAPI as AzureRM uses shared account key for Azure files operations
 resource "azapi_resource" "shared_storage" {
@@ -90,7 +69,7 @@ resource "azapi_resource" "shared_storage" {
 
 resource "azurerm_storage_container" "stgcontainer" {
   name                  = "datalake"
-  storage_account_name  = azurerm_storage_account.stg.name
+  storage_account_id    = azurerm_storage_account.stg.id
   container_access_type = "private"
 
   depends_on = [
@@ -194,6 +173,52 @@ resource "azurerm_backup_container_storage_account" "storage_account" {
   storage_account_id  = azurerm_storage_account.stg.id
 }
 
+resource "terraform_data" "wait_for_backup_cleanup" {
+  count = var.enable_backup ? 1 : 0
+
+  input = {
+    storage_account_id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${azurerm_resource_group.ws.name}/providers/Microsoft.Storage/storageAccounts/${azurerm_storage_account.stg.name}"
+    subscription_id    = data.azurerm_client_config.current.subscription_id
+  }
+
+  provisioner "local-exec" {
+    when        = destroy
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<EOT
+set -euo pipefail
+az login --identity
+az account set --subscription "${self.input.subscription_id}"
+echo "Checking for backup locks on storage account..."
+for attempt in 1 2 3 4 5; do
+  locks=$(az lock list --resource "${self.input.storage_account_id}" --query '[].id' -o tsv)
+  if [ -z "$locks" ]; then
+    echo "No locks found on storage account"
+    sleep 30
+    exit 0
+  else
+    echo "Attempt $attempt: Found locks, waiting for removal..."
+    echo "$locks"
+    if [ "$attempt" -lt 5 ]; then
+      sleep 60
+    else
+      echo "Warning: Locks still present after 5 attempts, proceeding anyway"
+      exit 0
+    fi
+  fi
+done
+EOT
+  }
+
+  depends_on = [
+    azurerm_storage_container.stgcontainer,
+    azapi_resource.shared_storage,
+    azurerm_private_endpoint.stgdfspe,
+    azurerm_private_endpoint.stgblobpe,
+    azurerm_private_endpoint.stgfilepe
+
+  ]
+}
+
 resource "azurerm_backup_protected_file_share" "file_share" {
   count                     = var.enable_backup ? 1 : 0
   resource_group_name       = azurerm_resource_group.ws.name
@@ -203,6 +228,8 @@ resource "azurerm_backup_protected_file_share" "file_share" {
   backup_policy_id          = module.backup[0].fileshare_backup_policy_id
 
   depends_on = [
-    azurerm_backup_container_storage_account.storage_account
+    azurerm_backup_container_storage_account.storage_account,
+    azapi_resource.shared_storage,
+    azurerm_private_endpoint.stgfilepe
   ]
 }
