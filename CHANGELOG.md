@@ -1,5 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.26.0 (Unreleased)
+**BREAKING CHANGES & MIGRATIONS**:
+* Updated the version of gitea and the runtime build script. Updating Gitea will remove the storage from underneath it and result in a redeploy. ([#4672](https://github.com/microsoft/AzureTRE/pull/4672))
 
 ENHANCEMENTS:
 * Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
