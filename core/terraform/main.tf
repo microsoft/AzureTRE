@@ -60,6 +60,30 @@ resource "azurerm_resource_group" "core" {
   lifecycle { ignore_changes = [tags] }
 }
 
+# Route table needs to be created before network module to avoid circular dependencies
+resource "azurerm_route_table" "rt" {
+  name                = "rt-${var.tre_id}"
+  resource_group_name = azurerm_resource_group.core.name
+  location            = var.location
+  tags                = local.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+# Route is added separately after firewall is created
+resource "azurerm_route" "default_route" {
+  name                   = "DefaultRoute"
+  resource_group_name    = azurerm_resource_group.core.name
+  route_table_name       = azurerm_route_table.rt.name
+  address_prefix         = "0.0.0.0/0"
+  next_hop_type          = "VirtualAppliance"
+  next_hop_in_ip_address = module.firewall.private_ip_address
+
+  depends_on = [
+    module.firewall
+  ]
+}
+
 module "azure_monitor" {
   source                                   = "./azure-monitor"
   tre_id                                   = var.tre_id
@@ -90,6 +114,7 @@ module "network" {
   resource_group_name = azurerm_resource_group.core.name
   core_address_space  = var.core_address_space
   arm_environment     = var.arm_environment
+  route_table_id      = azurerm_route_table.rt.id
 }
 
 module "firewall" {
