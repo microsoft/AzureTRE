@@ -26,7 +26,7 @@ RUN apk add --update --no-cache wget openssh openjdk11-jre \
 
 ENV CATALINA_BASE=/usr/share/tomcat9/
 RUN TOMCAT_ARCHIVE="tomcat.tar.gz" && \
-    TOMCAT_VER="9.0.98" && \
+    TOMCAT_VER="9.0.109" && \
     wget -O "$TOMCAT_ARCHIVE" -N "https://archive.apache.org/dist/tomcat/tomcat-9/v${TOMCAT_VER}/bin/apache-tomcat-${TOMCAT_VER}.tar.gz" --progress=dot:giga && \
     tar xzf "$TOMCAT_ARCHIVE" && \
     rm -f "$TOMCAT_ARCHIVE" && \
@@ -57,7 +57,7 @@ RUN wget -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?
 
 ENV OAUTH2_PROXY_HOME=/etc/oauth2-proxy
 RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
-    wget -O "$OAUTH2_PROXY_ARCHIVE" "https://github.com/oauth2-proxy/oauth2-proxy/releases/download/v7.7.1/oauth2-proxy-v7.7.1.linux-amd64.tar.gz" --progress=dot:giga && \
+    wget -O "$OAUTH2_PROXY_ARCHIVE" "https://github.com/oauth2-proxy/oauth2-proxy/releases/download/v7.12.0/oauth2-proxy-v7.12.0.linux-amd64.tar.gz" --progress=dot:giga && \
     mkdir -p "$OAUTH2_PROXY_HOME" && \
     tar zxpf "$OAUTH2_PROXY_ARCHIVE" -C "$OAUTH2_PROXY_HOME" --strip-components=1 && \
     rm -f "$OAUTH2_PROXY_ARCHIVE"
