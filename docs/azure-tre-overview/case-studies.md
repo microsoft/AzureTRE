@@ -1,7 +1,9 @@
 # Case Studies
 
 ## Barts Health Data Platform
-Launched in April 2025 with the support of PA Consulting, the [Barts Health Data Platform](https://data.bartshealth.nhs.uk/) brings together hospital, imaging and laboratory records for 2.5 million patients, reflecting the extraordinary diversity of East London. A key component of the platform is an Azure Trusted Research Environment that gives clinicians and academics a ready-to-analyse view of over a decade of longitudinal data. Early projects have already yielded impact—one study identified previously missed diabetes-related vascular problems, enabling earlier treatment and fewer amputations. Looking ahead, Barts Health NHS Trust plans to grow the platform so that the integrated TRE can host up to 300 concurrent research projects, opening the door to wider collaboration across academia, industry and the NHS.
+Launched in April 2025 with the support of PA Consulting, the [Barts Health Data Platform](https://data.bartshealth.nhs.uk/)
+ brings together hospital, imaging and laboratory records for 2.5 million patients, reflecting the extraordinary diversity of East London. A key component of the platform is an Azure Trusted Research Environment that gives clinicians and academics a ready-to-analyse view of over a decade of longitudinal data. 
+ Early projects have already yielded impact—one study identified previously missed diabetes-related vascular problems, enabling earlier treatment and fewer amputations. Looking ahead, Barts Health NHS Trust plans to grow the platform so that the integrated TRE can host up to 300 concurrent research projects, opening the door to wider collaboration across academia, industry and the NHS.
 
 Click [here](https://bartslifesciences.org/launching-the-barts-health-data-platform/){target="_blank"} and [here](https://www.paconsulting.com/client-story/barts-health-nhs-trust-powering-ai-driven-healthcare-research-with-microsoft-azure){target="_blank"} for more information.
 
