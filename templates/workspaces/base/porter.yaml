@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.5.0
+version: 2.7.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -38,6 +38,10 @@ parameters:
   - name: azure_location
     type: string
     description: "Azure location (region) to deploy to"
+  - name: workspace_subscription_id
+    type: string
+    description: "Azure subscription ID for the workspace resources"
+    default: ""
   - name: address_spaces
     type: string
     description: "VNet address spaces"
@@ -235,6 +239,7 @@ install:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         location: ${ bundle.parameters.azure_location }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         address_spaces: ${ bundle.parameters.address_spaces }
         shared_storage_quota: ${ bundle.parameters.shared_storage_quota }
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
@@ -294,6 +299,7 @@ upgrade:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         location: ${ bundle.parameters.azure_location }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         address_spaces: ${ bundle.parameters.address_spaces }
         shared_storage_quota: ${ bundle.parameters.shared_storage_quota }
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
@@ -377,6 +383,7 @@ uninstall:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         location: ${ bundle.parameters.azure_location }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         address_spaces: ${ bundle.parameters.address_spaces }
         shared_storage_quota: ${ bundle.parameters.shared_storage_quota }
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
