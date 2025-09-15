@@ -230,5 +230,7 @@
         "stepId": "main"
       }
     ]
+  },
+  "uiSchema": {
   }
 }

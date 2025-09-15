@@ -3,10 +3,15 @@
 
 ENHANCEMENTS:
 * Make workspace shared storage quota updateable ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
+* Change Guacamole VM OS disk defaults to Standard SSD ([#4621](https://github.com/microsoft/AzureTRE/issues/4621))
+* Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
+* Add case study for Barts Health NHS Trust ([#4656](https://github.com/microsoft/AzureTRE/pull/4656))
+* Refactor the implementation of porter commands for improved clarity and maintainability ([#4663](https://github.com/microsoft/AzureTRE/pull/4663))
 * Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
 
 BUG FIXES:
 * Fix disable public network access for stwebcertsTREID is still flagging in Defender ([#4640](https://github.com/microsoft/AzureTRE/issues/4640))
+* Fix error 'resource with the ID pip-fw-management already exists' during firewall migration ([#4661](https://github.com/microsoft/AzureTRE/issues/4661))
 
 COMPONENTS:
 * Base workspace version bumped to 2.5.0 ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
@@ -21,6 +26,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * App Gateway is destroyed on 2nd and subsequent deploys ([#4632](https://github.com/microsoft/AzureTRE/issues/4632))
+* Fix issue where workspace deletion fails due to storage account lock ([#4664](https://github.com/microsoft/AzureTRE/issues/4664))
 
 ## 0.24.0 (July 16, 2025)
 
