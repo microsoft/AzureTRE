@@ -1,4 +1,6 @@
 import datetime, logging, math
+from db.repositories.workspaces import WorkspaceRepository
+from models.schemas.container_reation_request import ContainerCreateRequest
 from models.domain.data_usage import MHRAProtocolItem, MHRAProtocolList, MHRAWorkspaceDataUsage, MHRAContainerUsageItem, MHRAFileshareUsageItem, MHRAStorageAccountLimits, MHRAStorageAccountLimitsItem, StorageAccountLimitsInput, WorkspaceDataUsage
 from models.schemas.storage_info_request import StorageInfoRequest
 from core import config, credentials
@@ -6,6 +8,7 @@ from resources import constants, strings
 from functools import lru_cache
 from fastapi import HTTPException, status
 from azure.data.tables import TableServiceClient, UpdateMode
+from azure.storage.blob import BlobServiceClient
 
 # make sure CostService is singleton
 @lru_cache(maxsize=None)
@@ -323,6 +326,35 @@ class DataUsageService:
         except Exception:
             logging.exception("Unknown error when calling table_client.")
             raise
+
+    async def create_container(self, container_create_request: ContainerCreateRequest, workspace_repo: WorkspaceRepository):
+        workspace = await workspace_repo.get_workspace_by_id(container_create_request.workspaceId)
+        account_name = constants.STORAGE_ACCOUNT_NAME_WORKSPACE_RESOURCE_GROUP.format(container_create_request.workspaceId[-4:])
+
+        blob_service_client = BlobServiceClient(
+            account_url=self.get_account_url(account_name),
+            credential=credentials.get_credential()
+        )
+        container_name = container_create_request.protocolId
+        try:
+            container_client =  blob_service_client.create_container(container_name)
+        except Exception as e:
+            raise Exception(f"Error occurred while creating container: {e}")
+
+        template = workspace.templateName
+        folder_names = ['Type1/', 'Type2/']
+        folderName = "ReceiveFromExplore" if template.endswith("a-msl") else "SendToAnalyse"
+        folder_names.append(folderName + '/')
+
+        for folder_name in folder_names:
+            try:
+                blob_name = f"{folder_name}/.emptyFile"
+                container_client.upload_blob(blob_name, b'', overwrite=True)
+            except Exception as e:
+                raise Exception(f"Error occurred while creating blob folder '{folder_name}': {e}")
+
+        return {"container": container_name, "folders": folder_names}
+
 
 @lru_cache(maxsize=None)
 def data_usage_service_factory() -> DataUsageService:

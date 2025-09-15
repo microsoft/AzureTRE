@@ -15,6 +15,7 @@ API_CREATE_WORKSPACE = "Create a workspace"
 API_DELETE_WORKSPACE = "Delete workspace"
 API_UPDATE_WORKSPACE = "Update an existing workspace"
 API_INVOKE_ACTION_ON_WORKSPACE = "Invoke action on a workspace"
+API_CREATE_CONTAINER_AND_FOLDER="Create Container and blob folders"
 
 API_GET_ALL_WORKSPACE_SERVICES = "Get all workspace services for workspace"
 API_GET_WORKSPACE_SERVICE_BY_ID = "Get workspace service by Id"

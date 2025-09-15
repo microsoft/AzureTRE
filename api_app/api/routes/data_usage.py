@@ -3,6 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from azure.core.exceptions import HttpResponseError
 import logging
 
+from api.dependencies.database import get_repository
+from models.schemas.container_reation_request import ContainerCreateRequest
+from db.repositories.workspaces import WorkspaceRepository
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_tre_user_or_tre_admin
 from models.domain.data_usage import MHRAProtocolList, MHRAWorkspaceDataUsage, MHRAStorageAccountLimits, MHRAStorageAccountLimitsItem, StorageAccountLimitsInput, WorkspaceDataUsage
@@ -94,3 +97,16 @@ async def get_data_usage_for_workspace(workspaceId: str,data_usage_service: Data
         logging.exception("Failed to retrieve Workspace data usage.")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.API_GET_WORKSPACE_DATA_USAGE_INTERNAL_SERVER_ERROR)
 
+@data_usage_router.post("/container-creation",
+                       status_code=status.HTTP_201_CREATED,
+                       name=strings.API_CREATE_CONTAINER_AND_FOLDER,
+                       dependencies=[Depends(get_current_workspace_owner_or_tre_user_or_tre_admin)])
+async def create_container(conatiner_create_request: ContainerCreateRequest = None,
+                           data_usage_service: DataUsageService = Depends(data_usage_service_factory),
+                           workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))) -> dict:
+    try:
+        await data_usage_service.create_container(conatiner_create_request, workspace_repo)
+        return {"message": "Container created successfully"}
+    except Exception as e:
+        logging.exception("Failed to create container.")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create container")
