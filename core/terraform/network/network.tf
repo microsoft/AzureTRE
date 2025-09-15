@@ -15,6 +15,7 @@ resource "azurerm_virtual_network" "core" {
   subnet {
     name             = "AzureFirewallSubnet"
     address_prefixes = [local.firewall_subnet_address_space]
+    route_table_id   = var.firewall_force_tunnel_ip != "" ? azurerm_route_table.fw_tunnel_rt[0].id : null
   }
 
   subnet {
@@ -31,7 +32,7 @@ resource "azurerm_virtual_network" "core" {
     private_endpoint_network_policies             = "Disabled"
     private_link_service_network_policies_enabled = true
     security_group                                = azurerm_network_security_group.default_rules.id
-    route_table_id                                = var.route_table_id
+    route_table_id                                = azurerm_route_table.rt.id
 
     delegation {
       name = "delegation"
@@ -48,7 +49,7 @@ resource "azurerm_virtual_network" "core" {
     address_prefixes                  = [local.shared_services_subnet_address_prefix]
     private_endpoint_network_policies = "Disabled"
     security_group                    = azurerm_network_security_group.default_rules.id
-    route_table_id                    = var.route_table_id
+    route_table_id                    = azurerm_route_table.rt.id
   }
 
   subnet {
@@ -56,7 +57,7 @@ resource "azurerm_virtual_network" "core" {
     address_prefixes                  = [local.resource_processor_subnet_address_prefix]
     private_endpoint_network_policies = "Disabled"
     security_group                    = azurerm_network_security_group.default_rules.id
-    route_table_id                    = var.route_table_id
+    route_table_id                    = azurerm_route_table.rt.id
   }
 
   subnet {
@@ -64,7 +65,7 @@ resource "azurerm_virtual_network" "core" {
     address_prefixes                  = [local.airlock_processor_subnet_address_prefix]
     private_endpoint_network_policies = "Disabled"
     security_group                    = azurerm_network_security_group.default_rules.id
-    route_table_id                    = var.route_table_id
+    route_table_id                    = azurerm_route_table.rt.id
 
     delegation {
       name = "delegation"
@@ -100,7 +101,7 @@ resource "azurerm_virtual_network" "core" {
     address_prefixes                  = [local.airlock_storage_subnet_address_prefix]
     private_endpoint_network_policies = "Disabled"
     security_group                    = azurerm_network_security_group.default_rules.id
-    route_table_id                    = var.route_table_id
+    route_table_id                    = azurerm_route_table.rt.id
   }
 
   subnet {
@@ -108,7 +109,7 @@ resource "azurerm_virtual_network" "core" {
     address_prefixes                  = [local.airlock_events_subnet_address_prefix]
     private_endpoint_network_policies = "Disabled"
     security_group                    = azurerm_network_security_group.default_rules.id
-    route_table_id                    = var.route_table_id
+    route_table_id                    = azurerm_route_table.rt.id
 
     service_endpoints = ["Microsoft.ServiceBus"]
   }

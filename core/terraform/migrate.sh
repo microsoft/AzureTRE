@@ -231,6 +231,6 @@ if az group show --name "${CORE_RESOURCE_GROUP_NAME}" > /dev/null 2>&1; then
     "az monitor diagnostic-settings show --resource /subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/rg-${TRE_ID}/providers/microsoft.network/azureFirewalls/fw-${TRE_ID} --name diagnostics-fw-${TRE_ID}"
 
   # Route tables
-  import_if_exists azurerm_route_table.rt \
+  import_if_exists module.network.azurerm_route_table.rt \
     "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${CORE_RESOURCE_GROUP_NAME}/providers/Microsoft.Network/routeTables/rt-${TRE_ID}"
 fi
