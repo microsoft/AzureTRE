@@ -13,3 +13,6 @@ variable "core_address_space" {
 variable "arm_environment" {
   type = string
 }
+variable "firewall_force_tunnel_ip" {
+  type = string
+}
