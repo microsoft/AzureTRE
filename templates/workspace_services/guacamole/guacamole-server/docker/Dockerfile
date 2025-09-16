@@ -64,7 +64,7 @@ RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
 
 COPY ./docker/index.jsp "$CATALINA_BASE"/webapps/ROOT/index.jsp
 
-RUN wget -O "/tmp/applicationinsights-agent.jar" "https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.6.2/applicationinsights-agent-3.6.2.jar" --progress=dot:giga
+RUN wget -O "/tmp/applicationinsights-agent.jar" "https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.7.4/applicationinsights-agent-3.7.4.jar" --progress=dot:giga
 ENV CATALINA_OPTS="$CATALINA_OPTS -javaagent:/tmp/applicationinsights-agent.jar"
 
 ENTRYPOINT [ "/init" ]
