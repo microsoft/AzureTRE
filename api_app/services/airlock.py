@@ -581,17 +581,26 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
          raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=raiseMessage)
 
     # Check MHRA's validation criteria.
-    criteriumCheck1 = (airlock_request.statisticsStatements[0].statisticalTests and
-                       not airlock_request.statisticsStatements[0].statisticalTestsConfirmation)
+    # criteriumCheck1 = (airlock_request.statisticsStatements[0].statisticalTests and
+    #                    not airlock_request.statisticsStatements[0].statisticalTestsConfirmation)
 
-    criteriumCheck2 = (airlock_request.statisticsStatements[0].coefficientsAssociation and
-                       (not airlock_request.statisticsStatements[0].coefficientsAssociationResidualDegrees or
+    # criteriumCheck2 = (airlock_request.statisticsStatements[0].coefficientsAssociation and
+    #                    (not airlock_request.statisticsStatements[0].coefficientsAssociationResidualDegrees or
+    #                    not airlock_request.statisticsStatements[0].coefficientsAssociationModelNotSaturated or
+    #                    not airlock_request.statisticsStatements[0].coefficientsAssociationRegressionNotIncluded))
+
+    # criteriumCheck3 = (airlock_request.statisticsStatements[0].shape and
+    #                    (not airlock_request.statisticsStatements[0].shapeStandardDeviations or
+    #                    not airlock_request.statisticsStatements[0].shapeMinFive))
+
+    criteriumCheck1 = not airlock_request.statisticsStatements[0].statisticalTestsConfirmation
+
+    criteriumCheck2 = (not airlock_request.statisticsStatements[0].coefficientsAssociationResidualDegrees or
                        not airlock_request.statisticsStatements[0].coefficientsAssociationModelNotSaturated or
-                       not airlock_request.statisticsStatements[0].coefficientsAssociationRegressionNotIncluded))
+                       not airlock_request.statisticsStatements[0].coefficientsAssociationRegressionNotIncluded)
 
-    criteriumCheck3 = (airlock_request.statisticsStatements[0].shape and
-                       (not airlock_request.statisticsStatements[0].shapeStandardDeviations or
-                       not airlock_request.statisticsStatements[0].shapeMinFive))
+    criteriumCheck3 = (not airlock_request.statisticsStatements[0].shapeStandardDeviations or
+                       not airlock_request.statisticsStatements[0].shapeMinFive)
 
     criteriumCheck4 = (airlock_request.statisticsStatements[0].mode and
                        not airlock_request.statisticsStatements[0].modeConfirmation)
@@ -718,12 +727,14 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
         return airlock_request
 
     # if criteriumCheck15 or criteriumCheck18 or criteriumCheck21:
-    if (criteriumCheck15 and criteriumCheck18) or (criteriumCheck14 and criteriumCheck18) or (criteriumCheck15 and criteriumCheck17):
+    # if (criteriumCheck15 and criteriumCheck18) or (criteriumCheck14 and criteriumCheck18) or (criteriumCheck15 and criteriumCheck17):
+    if (criteriumCheck15 and criteriumCheck18) or (criteriumCheck14 and criteriumCheck18) or (criteriumCheck15 and criteriumCheck17) or criteriumCheck21:
         triage_level_input = strings.API_TRIAGE_LEVEL2A
         airlock_request = await airlock_request_repo.set_triage_level_and_review_due_date(airlock_request, triage_level_input)
         return airlock_request
 
-    if criteriumCheck13 or criteriumCheck14 or criteriumCheck16 or criteriumCheck17 or criteriumCheck19 or criteriumCheck20:
+    # if criteriumCheck13 or criteriumCheck14 or criteriumCheck16 or criteriumCheck17 or criteriumCheck19 or criteriumCheck20:
+    if criteriumCheck13 or criteriumCheck14 or criteriumCheck16 or criteriumCheck17 or criteriumCheck19:
         triage_level_input = strings.API_TRIAGE_LEVEL2B
         airlock_request = await airlock_request_repo.set_triage_level_and_review_due_date(airlock_request, triage_level_input)
         return airlock_request
