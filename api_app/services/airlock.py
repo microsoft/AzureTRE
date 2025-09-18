@@ -728,7 +728,7 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
 
     # if criteriumCheck15 or criteriumCheck18 or criteriumCheck21:
     # if (criteriumCheck15 and criteriumCheck18) or (criteriumCheck14 and criteriumCheck18) or (criteriumCheck15 and criteriumCheck17):
-    if (criteriumCheck15 and criteriumCheck18) or (criteriumCheck14 and criteriumCheck18) or (criteriumCheck15 and criteriumCheck17) or criteriumCheck21:
+    if (criteriumCheck15 and criteriumCheck18) or criteriumCheck21:
         triage_level_input = strings.API_TRIAGE_LEVEL2A
         airlock_request = await airlock_request_repo.set_triage_level_and_review_due_date(airlock_request, triage_level_input)
         return airlock_request
