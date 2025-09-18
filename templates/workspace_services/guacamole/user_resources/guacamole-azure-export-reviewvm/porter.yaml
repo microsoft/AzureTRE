@@ -128,7 +128,7 @@ install:
         parent_service_id: ${ bundle.parameters.parent_service_id }
         tre_resource_id: ${ bundle.parameters.id }
         image: ${ bundle.parameters.os_image }
-        vm_size: ${ bundle.parameters.vm_size
+        vm_size: ${ bundle.parameters.vm_size }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
         airlock_request_sas_url: ${ bundle.parameters.airlock_request_sas_url }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
