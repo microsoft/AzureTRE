@@ -285,14 +285,16 @@ class DataUsageService:
             if entities:
                 for entity in entities:
                     container_usage_item = MHRAContainerUsageItem(
-                        workspace_name = entity.get('WorkspaceName'),
-                        storage_name = entity.get('StorageName'),
+                        workspace_name = entity.get('WorkspaceName', ''),
+                        storage_name = entity.get('StorageName', ''),
                         storage_usage = self._format_size(entity.get('StorageUsage')),
                         storage_limits = self._format_size(entity.get('StorageLimits')),
-                        storage_remaining = self._format_size((entity.get('StorageLimits') - entity.get('StorageUsage'))),
-                        storage_limits_update_time = entity.get('StorageLimitsUpdateTime'),
-                        storage_percentage_used = math.floor(entity.get('StoragePercentage')),
-                        update_time = entity.get('UpdateTime')
+                        storage_remaining = self._format_size(
+                            (entity.get('StorageLimits', 0) - entity.get('StorageUsage', 0))
+                        ),
+                        storage_limits_update_time = entity.get('StorageLimitsUpdateTime', ''),
+                        storage_percentage_used = math.floor(entity.get('StoragePercentage', 0)),
+                        update_time = entity.get('UpdateTime', '')
                     )
                     break  # Only take the first matching item
 
@@ -304,14 +306,16 @@ class DataUsageService:
             if entities:
                 for entity in entities:
                     fileshare_usage_item = MHRAFileshareUsageItem(
-                        workspace_name = entity.get('WorkspaceName'),
-                        storage_name = entity.get('StorageName'),
+                        workspace_name = entity.get('WorkspaceName', ''),
+                        storage_name = entity.get('StorageName', ''),
                         fileshare_usage = self._format_size(entity.get('FileshareUsage')),
                         fileshare_limits = self._format_size(entity.get('FileshareLimits')),
-                        fileshare_remaining = self._format_size((entity.get('FileshareLimits') - entity.get('FileshareUsage'))),
-                        fileshare_limits_update_time = entity.get('FileshareLimitsUpdateTime'),
-                        fileshare_percentage_used = math.floor(entity.get('FilesharePercentage')),
-                        update_time=entity.get('UpdateTime')
+                        fileshare_remaining = self._format_size(
+                            (entity.get('FileshareLimits', 0) - entity.get('FileshareUsage', 0))
+                        ),
+                        fileshare_limits_update_time = entity.get('FileshareLimitsUpdateTime', ''),
+                        fileshare_percentage_used = math.floor(entity.get('FilesharePercentage', 0)),
+                        update_time = entity.get('UpdateTime', '')
                     )
                     break  # Only take the first matching item
 

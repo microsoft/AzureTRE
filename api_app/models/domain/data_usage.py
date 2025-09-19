@@ -28,9 +28,9 @@ class MHRAStorageAccountLimits(BaseModel):
 class MHRAContainerUsageItem(BaseModel):
     workspace_name: Optional[str] = None
     storage_name: Optional[str] = None
-    storage_usage: Optional[float] = None
-    storage_limits: Optional[float] = None
-    storage_remaining: Optional[float] = None
+    storage_usage: Optional[str] = None
+    storage_limits: Optional[str] = None
+    storage_remaining: Optional[str] = None
     storage_limits_update_time: Optional[str] = None
     storage_percentage_used: Optional[float] = None
     update_time: Optional[str] = None
@@ -39,9 +39,9 @@ class MHRAContainerUsageItem(BaseModel):
 class MHRAFileshareUsageItem(BaseModel):
     workspace_name: Optional[str] = None
     storage_name: Optional[str] = None
-    fileshare_usage:  Optional[float] = None
-    fileshare_limits:  Optional[float] = None
-    fileshare_remaining:  Optional[float] = None
+    fileshare_usage:  Optional[str] = None
+    fileshare_limits:  Optional[str] = None
+    fileshare_remaining:  Optional[str] = None
     fileshare_limits_update_time: str
     fileshare_percentage_used:  Optional[float] = None
     update_time: Optional[str] = None
@@ -58,8 +58,8 @@ class MHRAProtocolItem(BaseModel):
     workspace_name: Optional[str] = None
     storage_name: Optional[str] = None
     protocol_id: Optional[str] = None
-    protocol_data_usage: Optional[float] = None
-    protocol_percentage_used: Optional[float] = None
+    protocol_data_usage: Optional[str] = None
+    protocol_percentage_used: Optional[str] = None
 
 class MHRAProtocolList(BaseModel):
     protocol_items: List[MHRAProtocolItem]
