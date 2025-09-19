@@ -253,8 +253,8 @@ class DataUsageService:
                         workspace_name=entity['WorkspaceName'],
                         storage_name=entity['StorageName'],
                         protocol_id=entity['ProtocolId'],
-                        protocol_data_usage = self._format_size(entity['ProtocolDataUsage']),
-                        protocol_percentage_used = self._format_size(entity['ProtocolPercentageUsed'])
+                        protocol_data_usage = entity['ProtocolDataUsage'],
+                        protocol_percentage_used = entity['ProtocolPercentageUsed']
                     )
                 )
 

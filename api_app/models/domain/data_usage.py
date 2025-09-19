@@ -58,8 +58,8 @@ class MHRAProtocolItem(BaseModel):
     workspace_name: Optional[str] = None
     storage_name: Optional[str] = None
     protocol_id: Optional[str] = None
-    protocol_data_usage: Optional[str] = None
-    protocol_percentage_used: Optional[str] = None
+    protocol_data_usage: Optional[float] = None
+    protocol_percentage_used: Optional[float] = None
 
 class MHRAProtocolList(BaseModel):
     protocol_items: List[MHRAProtocolItem]
