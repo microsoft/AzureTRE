@@ -205,7 +205,7 @@ class DataUsageService:
                         storage_limits=entity['StorageLimits'],
                         storage_remaining=entity['StorageLimits']-entity['StorageUsage'],
                         storage_limits_update_time=entity['StorageLimitsUpdateTime'],
-                        storage_percentage_used=entity['StoragePercentage'],
+                        storage_percentage_used = math.floor(entity['StoragePercentage']),
                         update_time=entity['UpdateTime']
                     )
                 )
@@ -253,8 +253,8 @@ class DataUsageService:
                         workspace_name=entity['WorkspaceName'],
                         storage_name=entity['StorageName'],
                         protocol_id=entity['ProtocolId'],
-                        protocol_data_usage=entity['ProtocolDataUsage'],
-                        protocol_percentage_used=entity['ProtocolPercentageUsed']
+                        protocol_data_usage = self._format_size(entity['ProtocolDataUsage']),
+                        protocol_percentage_used = self._format_size(entity['ProtocolPercentageUsed'])
                     )
                 )
 
@@ -285,14 +285,14 @@ class DataUsageService:
             if entities:
                 for entity in entities:
                     container_usage_item = MHRAContainerUsageItem(
-                        workspace_name=entity.get('WorkspaceName'),
-                        storage_name=entity.get('StorageName'),
-                        storage_usage=entity.get('StorageUsage'),
-                        storage_limits=entity.get('StorageLimits'),
-                        storage_remaining=entity.get('StorageLimits') - entity.get('StorageUsage'),
-                        storage_limits_update_time=entity.get('StorageLimitsUpdateTime'),
-                        storage_percentage_used=entity.get('StoragePercentage'),
-                        update_time=entity.get('UpdateTime')
+                        workspace_name = entity.get('WorkspaceName'),
+                        storage_name = entity.get('StorageName'),
+                        storage_usage = self._format_size(entity.get('StorageUsage')),
+                        storage_limits = self._format_size(entity.get('StorageLimits')),
+                        storage_remaining = self._format_size((entity.get('StorageLimits') - entity.get('StorageUsage'))),
+                        storage_limits_update_time = entity.get('StorageLimitsUpdateTime'),
+                        storage_percentage_used = math.floor(entity.get('StoragePercentage')),
+                        update_time = entity.get('UpdateTime')
                     )
                     break  # Only take the first matching item
 
@@ -304,13 +304,13 @@ class DataUsageService:
             if entities:
                 for entity in entities:
                     fileshare_usage_item = MHRAFileshareUsageItem(
-                        workspace_name=entity.get('WorkspaceName'),
-                        storage_name=entity.get('StorageName'),
-                        fileshare_usage=entity.get('FileshareUsage'),
-                        fileshare_limits=entity.get('FileshareLimits'),
-                        fileshare_remaining=entity.get('FileshareLimits') - entity.get('FileshareUsage'),
-                        fileshare_limits_update_time=entity.get('FileshareLimitsUpdateTime'),
-                        fileshare_percentage_used=entity.get('FilesharePercentage'),
+                        workspace_name = entity.get('WorkspaceName'),
+                        storage_name = entity.get('StorageName'),
+                        fileshare_usage = self._format_size(entity.get('FileshareUsage')),
+                        fileshare_limits = self._format_size(entity.get('FileshareLimits')),
+                        fileshare_remaining = self._format_size((entity.get('FileshareLimits') - entity.get('FileshareUsage'))),
+                        fileshare_limits_update_time = entity.get('FileshareLimitsUpdateTime'),
+                        fileshare_percentage_used = math.floor(entity.get('FilesharePercentage')),
                         update_time=entity.get('UpdateTime')
                     )
                     break  # Only take the first matching item
@@ -355,6 +355,16 @@ class DataUsageService:
 
         return {"container": container_name, "folders": folder_names}
 
+
+    def _format_size(self, size_gb):
+
+        if size_gb is None or not isinstance(size_gb, (int, float)) or size_gb < 0:
+            return "N/A"
+        if size_gb < 1024:
+            return f"{size_gb}GB"
+        else:
+            size_tb = size_gb / 1024
+            return f"{size_tb:.2f}TB"
 
 @lru_cache(maxsize=None)
 def data_usage_service_factory() -> DataUsageService:
