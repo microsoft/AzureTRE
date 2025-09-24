@@ -8,11 +8,7 @@ moved {
   to   = module.network.azurerm_route_table.fw_tunnel_rt
 }
 
-import {
-  to = azurerm_route.default_route
-  id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${azurerm_resource_group.core.name}/providers/Microsoft.Network/routeTables/${module.network.route_table_name}/routes/DefaultRoute"
-}
-
+# Default route is added separately to avoid circular dependency between network and firewall modules
 resource "azurerm_route" "default_route" {
   name                   = "DefaultRoute"
   resource_group_name    = azurerm_resource_group.core.name
@@ -22,6 +18,7 @@ resource "azurerm_route" "default_route" {
   next_hop_in_ip_address = module.firewall.private_ip_address
 
   depends_on = [
-    module.firewall
+    module.firewall,
+    module.network
   ]
 }
