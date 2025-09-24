@@ -1,3 +1,5 @@
+# These moves handle migration from root level to network module
+# (there's also a move from module.routetable -> root in modules_move_definitions.tf for older migrations)
 moved {
   from = azurerm_route_table.rt
   to   = module.network.azurerm_route_table.rt
