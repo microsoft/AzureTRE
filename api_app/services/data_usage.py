@@ -253,8 +253,8 @@ class DataUsageService:
                         workspace_name=entity['WorkspaceName'],
                         storage_name=entity['StorageName'],
                         protocol_id=entity['ProtocolId'],
-                        protocol_data_usage = entity['ProtocolDataUsage'],
-                        protocol_percentage_used = entity['ProtocolPercentageUsed']
+                        protocol_data_usage = self._format_size(entity.get('ProtocolDataUsage')),
+                        protocol_percentage_used = math.floor(entity.get('ProtocolPercentageUsed',0))
                     )
                 )
 
@@ -363,9 +363,9 @@ class DataUsageService:
     def _format_size(self, size_gb):
 
         if size_gb is None or not isinstance(size_gb, (int, float)) or size_gb < 0:
-            return "N/A"
+            return "0.00GB"
         if size_gb < 1024:
-            return f"{size_gb}GB"
+            return f"{size_gb:.2f}GB"
         else:
             size_tb = size_gb / 1024
             return f"{size_tb:.2f}TB"
